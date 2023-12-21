@@ -31,26 +31,42 @@ export async function findImpressionsURL(user_id: number, site_url: string): Pro
 		.where({ [siteColumns.url]: site_url, [siteColumns.user_id]: user_id });
 }
 
-export async function findImpressionsURLDate(user_id: number, site_url: string, startDate: string, endDate: string) {
-	const results = await database(TABLE)
-		.select(database.raw('DATE(createAt) as date'))
-		.count('* as totalImpressions')
-		.count(database.raw(`CASE WHEN widget_opened = true OR widget_closed = true THEN 1 ELSE null END as engagedImpressions`))
-		.whereBetween('createAt', [startDate, endDate])
-		.groupBy('date')
+export async function findEngagementURLDate(
+	user_id: number,
+	site_url: string,
+	startDate: string,
+	endDate: string
+) {
+	
+	const results = await database('impressions')
+		.join('allowed_sites', 'impressions.site_id', 'allowed_sites.id')
+		.select([
+			database.raw('DATE(impressions.created_at) as date'),
+			database.raw('COUNT(*) as totalImpressions'),
+			database.raw(`
+		COUNT(CASE WHEN impressions.widget_opened = true OR impressions.widget_closed = true THEN 1 ELSE NULL END) as engagedImpressions
+	  `)
+		])
+		.whereBetween('impressions.created_at', [startDate, endDate])
+		.andWhere({ 'allowed_sites.url': site_url, 'allowed_sites.user_id': user_id })
+		.groupByRaw('DATE(impressions.created_at)')
 		.orderBy('date', 'asc');
 
-		const engagementRates = results.map(result => {
-			const engagementRate =(Number(result.engagedImpressions) / Number(result.totalImpressions)) * 100;
-
+		const engagementRates = results.map((result: any) => {
+			// Convert the UTC date to the desired time zone
+			const localDate = new Date(result.date + 'Z'); // Assuming result.date is in 'YYYY-MM-DD' format
+	
+			const engagementRate = (Number(result.engagedImpressions) / Number(result.totalImpressions)) * 100;
+	
 			return {
-				engagementRate: engagementRate.toFixed(2), 
-				date: result.date,
+				date: localDate.toISOString().split('T')[0],
+				engagementRate: engagementRate
 			};
 		});
-
+	
 		return engagementRates;
 }
+
 
 export async function findImpressionsSiteId(site_id: number): Promise<impressionsProps[]> {
 
@@ -75,6 +91,20 @@ export async function updateImpressions(id: number, interaction: string): Promis
 }
 
 export async function insertImpressions(data: impressionsProps) {
-	console.log('dound')
 	return database(TABLE).insert(data);
+}
+
+export async function insertImpressionURL(data: any, url: string) {
+	const site = await database(TABLES.allowed_sites)
+		.select('id')
+		.where({ url: url })
+		.first();
+
+	// Now, insert the impression data with the found site_id
+	const dataToInsert = {
+		...data,
+		site_id: site.id, // Using the site_id from the found site
+	};
+
+	return database(TABLE).insert(dataToInsert);
 }

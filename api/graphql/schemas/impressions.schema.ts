@@ -22,7 +22,7 @@ export const ImpressionsSchema = gql`
 		}
 
 		type engagementRate {
-			engagement: Float,
+			engagementRate: Float,
 			date: String
 		}
 
@@ -30,11 +30,12 @@ export const ImpressionsSchema = gql`
 		extend type Query {
 				getImpressionsByURL(url: String!): ImpressionList
 				getImpressionsBySiteId(siteId: Int!): ImpressionList
-				getImpressionsByURLDate(url: String!, startDate: String, endDate: String): [engagementRate]
+				getEngagementRates(url: String!, startDate: String, endDate: String): [engagementRate]
 		}
 
 		extend type Mutation {
 				addImpression(siteId: Int!): [Int]
+				addImpressionsURL(url: String): [Int]
 				registerInteraction(impressionId: Int!, interaction: String!): Int!
 		}
 		`;

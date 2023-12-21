@@ -3,7 +3,7 @@ import logger from '~/utils/logger';
 import { FindAllowedSitesProps } from '~/repository/sites_allowed.repository';
 
 import { findVisitorByIp } from '~/repository/visitors.repository';
-import { findImpressionsSiteId, insertImpressions, updateImpressions, findImpressionsURL, findImpressionsURLDate } from '~/repository/impressions.repository';
+import { findImpressionsSiteId, insertImpressions, updateImpressions, findImpressionsURL, insertImpressionURL, findEngagementURLDate } from '~/repository/impressions.repository';
 
 // type GetDocumentsResponse = {
 //   documents: FindDocumentsResponse;
@@ -32,6 +32,29 @@ export async function addImpressions(siteId: number, ipAddress: string): Promise
             }
 
             const response = await insertImpressions(data);
+            return response
+        }
+
+    } catch (error) {
+        logger.error(error);
+        throw error;
+    }
+}
+export async function addImpressionsURL(url: string ,ipAddress: string): Promise<number[]> {
+    //   const validateResult = createValidation({ name, body });
+    //   if (Array.isArray(validateResult) && validateResult.length) {
+    //     throw new ValidationError(validateResult.map((it) => it.message).join(','));
+    //   }
+
+    try {
+        const visitor = await findVisitorByIp(ipAddress);
+
+        if (visitor) {
+            const data = {
+                visitor_id: visitor.id
+            }
+
+            const response = await insertImpressionURL(data, url);
             return response
         }
 
@@ -93,9 +116,9 @@ export async function addInteraction(siteId: number, interaction: string) {
     }
 }
 
-export async function findImpressionsByURLDate(userId: number, url:string, startDate: string, endDate: string) {
+export async function getEngagementRates(userId: number, url:string, startDate: string, endDate: string) {
     try {
-        const impressions = findImpressionsURLDate(userId, url, startDate, endDate);
+        const impressions = await findEngagementURLDate(userId, url, startDate, endDate);
         return impressions;
     }
     catch (e) {

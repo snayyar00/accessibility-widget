@@ -1,5 +1,5 @@
 import { combineResolvers } from 'graphql-resolvers';
-import { addImpressions, addInteraction, findImpressionsBySiteId, findImpressionsByURL, findImpressionsByURLDate } from '~/services/Impressions/impressions.service';
+import { addImpressions, addImpressionsURL, addInteraction, findImpressionsBySiteId, findImpressionsByURL, getEngagementRates} from '~/services/Impressions/impressions.service';
 
 const resolvers = {
     Query: {
@@ -11,9 +11,9 @@ const resolvers = {
             // isAuthenticated,
             (_, { siteId }) => findImpressionsBySiteId(siteId)
         ),
-        getImpressionsByURLDate: combineResolvers(
+        getEngagementRates: combineResolvers(
             // isAuthenticated,
-            (_, { url, startDate, endDate }, {user}) => findImpressionsByURLDate(user.id, url, startDate, endDate)
+            (_, { url, startDate, endDate }, {user}) => getEngagementRates(user.id, url, startDate, endDate)
         ),
 
     },
@@ -21,6 +21,10 @@ const resolvers = {
         addImpression: combineResolvers(
             (_, { siteId }, { ip }) => addImpressions(siteId, ip)
         ),
+        addImpressionsURL: combineResolvers(
+            (_, { url }, { ip }) => addImpressionsURL(url, ip)
+        ),
+
         registerInteraction: combineResolvers(
             (_, { impressionId, interaction}, ) => addInteraction(impressionId, interaction)
         ),
