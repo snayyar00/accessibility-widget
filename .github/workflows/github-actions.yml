@@ -21,6 +21,7 @@ jobs:
           npm install
       - name: Install dependencies in App
         run: |
+          pwd
           cd ../app
           npm i
         
