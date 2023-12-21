@@ -24,3 +24,5 @@ jobs:
         run: |
           cd api
           npm install
+      - name: List API directory contents
+        run: ls -l api
