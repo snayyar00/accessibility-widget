@@ -3,7 +3,7 @@ import logger from '~/utils/logger';
 import { FindAllowedSitesProps } from '~/repository/sites_allowed.repository';
 
 import { findVisitorByIp } from '~/repository/visitors.repository';
-import { findImpressionsSiteId, insertImpressions, updateImpressions, findImpressionsURL } from '~/repository/impressions.repository';
+import { findImpressionsSiteId, insertImpressions, updateImpressions, findImpressionsURL, findImpressionsURLDate } from '~/repository/impressions.repository';
 
 // type GetDocumentsResponse = {
 //   documents: FindDocumentsResponse;
@@ -86,6 +86,17 @@ export async function addInteraction(siteId: number, interaction: string) {
             throw new Error('Invalid interaction type. Only "widgetClosed" or "widgetOpened" are acceptable.');
         }
         return await updateImpressions(siteId, interaction)
+    }
+    catch (e) {
+        logger.error(e);
+        throw e;
+    }
+}
+
+export async function findImpressionsByURLDate(userId: number, url:string, startDate: string, endDate: string) {
+    try {
+        const impressions = findImpressionsURLDate(userId, url, startDate, endDate);
+        return impressions;
     }
     catch (e) {
         logger.error(e);

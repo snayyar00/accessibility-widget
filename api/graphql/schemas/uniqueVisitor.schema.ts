@@ -31,7 +31,7 @@ export const UniqueVisitorSchema = gql`
         extend type Query {
             getSiteVisitors(siteId: Int!): visitorResponse
             getSiteVisitorsByIp(ipAddress: String!): Visitor
-            getSiteVisitorByURL(url: String!): visitorResponse
+            getSiteVisitorsByURL(url: String!): visitorResponse
         }
 
 		extend type Mutation {

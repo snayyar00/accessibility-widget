@@ -21,9 +21,16 @@ export const ImpressionsSchema = gql`
 				count: Int!
 		}
 
+		type engagementRate {
+			engagement: Float,
+			date: String
+		}
+
+
 		extend type Query {
-				getImpressionsByURL(url: String!): ImpressionList,
+				getImpressionsByURL(url: String!): ImpressionList
 				getImpressionsBySiteId(siteId: Int!): ImpressionList
+				getImpressionsByURLDate(url: String!, startDate: String, endDate: String): [engagementRate]
 		}
 
 		extend type Mutation {

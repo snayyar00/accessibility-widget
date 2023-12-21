@@ -31,8 +31,29 @@ export async function findImpressionsURL(user_id: number, site_url: string): Pro
 		.where({ [siteColumns.url]: site_url, [siteColumns.user_id]: user_id });
 }
 
+export async function findImpressionsURLDate(user_id: number, site_url: string, startDate: string, endDate: string) {
+	const results = await database(TABLE)
+		.select(database.raw('DATE(createAt) as date'))
+		.count('* as totalImpressions')
+		.count(database.raw(`CASE WHEN widget_opened = true OR widget_closed = true THEN 1 ELSE null END as engagedImpressions`))
+		.whereBetween('createAt', [startDate, endDate])
+		.groupBy('date')
+		.orderBy('date', 'asc');
+
+		const engagementRates = results.map(result => {
+			const engagementRate =(Number(result.engagedImpressions) / Number(result.totalImpressions)) * 100;
+
+			return {
+				engagementRate: engagementRate.toFixed(2), 
+				date: result.date,
+			};
+		});
+
+		return engagementRates;
+}
+
 export async function findImpressionsSiteId(site_id: number): Promise<impressionsProps[]> {
-	
+
 	return database(TABLE)
 		.select(impressionsColumns)
 		.where('site_id', site_id);

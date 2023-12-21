@@ -1,6 +1,5 @@
 import { combineResolvers } from 'graphql-resolvers';
-import { addImpressions, addInteraction, findImpressionsBySiteId, findImpressionsByURL } from '~/services/Impressions/impressions.service';
-import { addNewVisitor, deleteVisitorById, deleteVisitorByIp, getSiteVisitors, getVisitorByIp, updateVisitorDetails } from '~/services/uniqueVisitors/uniqueVisitor.service';
+import { addImpressions, addInteraction, findImpressionsBySiteId, findImpressionsByURL, findImpressionsByURLDate } from '~/services/Impressions/impressions.service';
 
 const resolvers = {
     Query: {
@@ -11,6 +10,10 @@ const resolvers = {
         getImpressionsBySiteId: combineResolvers(
             // isAuthenticated,
             (_, { siteId }) => findImpressionsBySiteId(siteId)
+        ),
+        getImpressionsByURLDate: combineResolvers(
+            // isAuthenticated,
+            (_, { url, startDate, endDate }, {user}) => findImpressionsByURLDate(user.id, url, startDate, endDate)
         ),
 
     },
