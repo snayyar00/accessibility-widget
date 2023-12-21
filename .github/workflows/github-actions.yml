@@ -1,3 +1,4 @@
+
 name: API Deploy
 
 on:
@@ -18,4 +19,10 @@ jobs:
         run: |
           cd api
           npm install
+      - name: Install dependencies in App
+        run: |
+          cd ../app
+          npm i
+        
+      
       
