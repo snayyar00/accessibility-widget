@@ -17,8 +17,5 @@ jobs:
       - name: Install dependencies in API
         run: |
           cd api
-          pwd
-          ls -a
           npm install
-          cd api
       
