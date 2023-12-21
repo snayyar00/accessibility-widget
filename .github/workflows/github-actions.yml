@@ -15,21 +15,12 @@ jobs:
         node-version: [20.x]
     
     steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
 
-      step:
-        -run:
-        echo pwd
-        cd api
-
-      step:
-        - uses: actions/checkout@v3
-        - name: Use Node.js ${{ matrix.node-version }}
-          uses: actions/setup-node@v3
-          with:
-            node-version: ${{ matrix.node-version }}
-            cache: 'npm'
-
-        - run: 
-        echo pwd
-            npm i
-      
+      - run: 
+          cd api && npm i
