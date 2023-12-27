@@ -95,6 +95,27 @@ export async function findVisitorByURL(url: string) {
   }));
 }
 
+
+export async function findVisitorByURLDate(url: string, startDate: Date, endDate: Date) {
+  const visitors = await database(TABLE)
+    .join(TABLES.allowed_sites, visitorColumns.site_id, siteColumns.id)
+    .select(visitorColumns, `${siteColumns.url} as site`)
+    .where({ [siteColumns.url]: url })
+    .andWhere(visitorColumns.first_visit, '>=', startDate)
+    .andWhere(visitorColumns.first_visit, '<=', endDate);
+
+  return visitors.map(visitor => ({
+    id: visitor.id,
+    siteId: visitor.site_id, // Mapping from 'site_id' to 'siteId'
+    ipAddress: visitor.ip_address, // Mapping from 'ip_address' to 'ipAddress'
+    city: visitor.city,
+    country: visitor.country,
+    zipcode: visitor.zipcode,
+    continent: visitor.continent,
+    firstVisit: visitor.first_visit // Mapping from 'first_visit' to 'firstVisit'
+  }));
+}
+
 /**
  * Find Documents
  *

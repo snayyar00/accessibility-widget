@@ -3,7 +3,7 @@ import logger from '~/utils/logger';
 import { FindAllowedSitesProps } from '~/repository/sites_allowed.repository';
 
 import { findVisitorByIp } from '~/repository/visitors.repository';
-import { findImpressionsSiteId, insertImpressions, updateImpressions, findImpressionsURL, insertImpressionURL, findEngagementURLDate } from '~/repository/impressions.repository';
+import { findImpressionsSiteId, insertImpressions, updateImpressions, findImpressionsURL, insertImpressionURL, findEngagementURLDate, findImpressionsURLDate } from '~/repository/impressions.repository';
 
 // type GetDocumentsResponse = {
 //   documents: FindDocumentsResponse;
@@ -82,6 +82,18 @@ export async function findImpressionsByURL(userId: number, url: string) {
         throw e
     }
 }
+
+export async function findImpressionsByURLAndDate(userId: number, url: string, startDate: Date, endDate: Date) {
+    try {
+        const impressions = await findImpressionsURLDate(userId, url, startDate, endDate);
+        return { impressions: impressions, count: impressions.length };
+    }
+    catch (e) {
+        logger.error(e);
+        throw e;
+    }
+}
+
 
 export async function findImpressionsBySiteId(siteId: number) {
     try {

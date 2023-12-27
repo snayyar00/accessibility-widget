@@ -1,5 +1,5 @@
 import { combineResolvers } from 'graphql-resolvers';
-import { addNewVisitor, deleteVisitorById, deleteVisitorByIp, getSiteVisitors, getSiteVisitorsByURL, getVisitorByIp, updateVisitorDetails } from '~/services/uniqueVisitors/uniqueVisitor.service';
+import { addNewVisitor, deleteVisitorById, deleteVisitorByIp, getSiteVisitors, getSiteVisitorsByURL, getSiteVisitorsByURLAndDate, getVisitorByIp, updateVisitorDetails } from '~/services/uniqueVisitors/uniqueVisitor.service';
 
 const resolvers = {
     Query: {
@@ -14,6 +14,10 @@ const resolvers = {
         getSiteVisitorsByIp: combineResolvers(
             // isAuthenticated,
             (_, { ipAddress }) => getVisitorByIp(ipAddress)
+        ),
+        getSiteVisitorsByURLAndDate: combineResolvers(
+            // isAuthenticated,
+            (_, { url, startDate, endDate }, {user}) => getSiteVisitorsByURLAndDate(url, new Date(startDate), new Date(endDate))
         ),
 
     },
