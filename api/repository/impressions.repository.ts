@@ -10,7 +10,7 @@ export const impressionsColumns = {
 	visitor_id: 'impressions.visitor_id',
 	widget_opened: 'impressions.widget_opened',
 	widget_closed: 'impressions.widget_closed',
-	createAt: 'impressions.created_at',
+	createdAt: 'impressions.created_at',
 
 };
 
@@ -20,7 +20,7 @@ type impressionsProps = {
 	visitor_id?: number,
 	widget_opened?: boolean,
 	widget_closed?: boolean,
-	createAt?: string
+	createdAt?: string
 };
 
 
@@ -29,6 +29,15 @@ export async function findImpressionsURL(user_id: number, site_url: string): Pro
 		.join(TABLES.allowed_sites, impressionsColumns.site_id, siteColumns.id)
 		.select(impressionsColumns, `${siteColumns.url} as url`)
 		.where({ [siteColumns.url]: site_url, [siteColumns.user_id]: user_id });
+}
+
+export async function findImpressionsURLDate(user_id: number, site_url: string, startDate: Date, endDate: Date): Promise<impressionsProps[]> {
+    return database(TABLE)
+        .join(TABLES.allowed_sites, impressionsColumns.site_id, siteColumns.id)
+        .select(impressionsColumns, `${siteColumns.url} as url`)
+        .where({ [siteColumns.url]: site_url, [siteColumns.user_id]: user_id })
+        .andWhere(impressionsColumns.createdAt, '>=', startDate)
+        .andWhere(impressionsColumns.createdAt, '<=', endDate);
 }
 
 export async function findEngagementURLDate(

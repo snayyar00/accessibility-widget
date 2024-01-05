@@ -32,6 +32,7 @@ export const UniqueVisitorSchema = gql`
             getSiteVisitors(siteId: Int!): visitorResponse
             getSiteVisitorsByIp(ipAddress: String!): Visitor
             getSiteVisitorsByURL(url: String!): visitorResponse
+            getSiteVisitorsByURLAndDate(url: String!, startDate: String!, endDate: String!): visitorResponse
         }
 
 		extend type Mutation {

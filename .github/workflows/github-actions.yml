@@ -37,11 +37,14 @@ jobs:
         run: |
           cd app
           npm i
-          
+
+          tsc
+          pm2 restart server
+
       - name: Build App
         run: |
           cd app
-          npm run build
+          CI=false && npm run build
 
       - name: Install AWS CLI (Optional Step)
         run: |

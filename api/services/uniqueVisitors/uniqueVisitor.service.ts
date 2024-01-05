@@ -2,7 +2,7 @@ import { ApolloError, ValidationError } from 'apollo-server-express';
 
 import logger from '~/utils/logger';
 import { getCityAndCountry } from '~/helpers/uniqueVisitor.helper';
-import {  VisitorInfo, deleteVisitorId, deleteVisitorIp, findVisitorByIp, findVisitorBySiteId, findVisitorByURL, insertVisitor, updateVisitorByIp } from '~/repository/visitors.repository';
+import {  VisitorInfo, deleteVisitorId, deleteVisitorIp, findVisitorByIp, findVisitorBySiteId, findVisitorByURL, findVisitorByURLDate, insertVisitor, updateVisitorByIp } from '~/repository/visitors.repository';
 
 
 /**
@@ -59,6 +59,19 @@ export async function getSiteVisitorsByURL(url: string){
         throw e;
     }
 }
+
+export async function getSiteVisitorsByURLAndDate(url: string, startDate: Date, endDate: Date){
+    try{
+        const visitors = await findVisitorByURLDate(url, startDate, endDate);
+        return { visitors: visitors, count: visitors.length }
+    }
+    catch(e){
+        logger.error(e);
+        throw e;
+    }
+}
+
+
 export async function getVisitorByIp(ipAddress: string){
     try{
         const visitor = await findVisitorByIp(ipAddress);

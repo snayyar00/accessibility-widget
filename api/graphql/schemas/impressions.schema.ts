@@ -8,7 +8,7 @@ export const ImpressionsSchema = gql`
 				visitor_id: Int!
 				widget_opened: Boolean!
 				widget_closed: Boolean!
-				createAt: String!
+				createdAt: String!
 		}
 
 		type ImpressionUpdateResponse{
@@ -31,6 +31,7 @@ export const ImpressionsSchema = gql`
 				getImpressionsByURL(url: String!): ImpressionList
 				getImpressionsBySiteId(siteId: Int!): ImpressionList
 				getEngagementRates(url: String!, startDate: String, endDate: String): [engagementRate]
+				getImpressionsByURLAndDate( url: String!, startDate: String!, endDate: String!): ImpressionList
 		}
 
 		extend type Mutation {
