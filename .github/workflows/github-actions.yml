@@ -38,8 +38,7 @@ jobs:
       - name: Build App
         run: |
           cd app
-          npm i yarn
-          yarn build
+          npm run build
 
       - name: Deploy to AWS S3
         run: |
