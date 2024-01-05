@@ -21,6 +21,9 @@ jobs:
         run: |
           cd api
           npm install
+          npm install ts-node
+          pm2 stop all
+          pm2 start server.ts --interpreter="./node_modules/.bin/ts-node"
 
   APP:
     runs-on: self-hosted
