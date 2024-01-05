@@ -34,10 +34,11 @@ jobs:
         run: |
           cd app
           npm i
+          npm i yarn
       - name: Build App
         run: |
           cd app
-          npm run build
+          yarn build
 
       - name: Deploy to AWS S3
         run: |
