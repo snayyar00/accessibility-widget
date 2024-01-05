@@ -17,12 +17,16 @@ jobs:
         node-version: [20.x]
 
     steps:
+
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
       - name: Install dependencies in API
         run: |
           cd api
           npm install
 
-          tsc
+          npx tsc
           pm2 restart server
 
 
