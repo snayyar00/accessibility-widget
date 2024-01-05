@@ -21,9 +21,11 @@ jobs:
         run: |
           cd api
           npm install
-          npm install ts-node
-          pm2 stop all
-          pm2 start server.ts --interpreter="./node_modules/.bin/ts-node"
+
+          tsc
+          pm2 restart server
+
+
 
   APP:
     runs-on: self-hosted
@@ -37,9 +39,6 @@ jobs:
         run: |
           cd app
           npm i
-
-          tsc
-          pm2 restart server
 
       - name: Build App
         run: |
