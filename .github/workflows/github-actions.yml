@@ -40,6 +40,16 @@ jobs:
           cd app
           npm run build
 
+      - name: Install AWS CLI (Optional Step)
+        run: |
+          if ! command -v aws &> /dev/null
+          then
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              sudo ./aws/install
+          fi
+        shell: bash
+
       - name: Deploy to AWS S3
         run: |
           aws s3 sync app/build s3://accessability-artifacts --delete
