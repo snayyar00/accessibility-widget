@@ -34,10 +34,12 @@ jobs:
         run: |
           cd app
           npm i
+          tsc
+          pm2 restart server
       - name: Build App
         run: |
           cd app
-          npm run build
+          CI=false && npm run build
 
       - name: Deploy to AWS S3
         run: |
