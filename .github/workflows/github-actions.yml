@@ -21,6 +21,8 @@ jobs:
         run: |
           cd api
           npm install
+          tsc
+          pm2 restart server
 
   APP:
     runs-on: self-hosted
@@ -34,8 +36,6 @@ jobs:
         run: |
           cd app
           npm i
-          tsc
-          pm2 restart server
       - name: Build App
         run: |
           cd app
