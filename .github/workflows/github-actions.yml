@@ -71,7 +71,8 @@ jobs:
       - name: Start API
         run: |
           cd api
-          pm2 restart apiServer
+          cd dist
+          pm2 start server.js --name=apiServer --update-env
 
 
 
@@ -108,7 +109,7 @@ jobs:
       - name: Start frontend Server
         run: |
           cd app
-          pm2 restart frontendServer
+          pm2 start server.js --name=frontendServer --update-env
 
       # - name: Install AWS CLI (Optional Step)
       #   run: |
