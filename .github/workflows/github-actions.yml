@@ -24,12 +24,17 @@ jobs:
         run: |
           cd api
           npm install
-
+      - name: Build API
+        run: |
+          cd api
           tsc
-          pm2 restart server
         env:
           JWT_SECRET: ${{secrets.JWT_SECRET}}
           JWT_ISSUER: ${{secrets.JWT_ISSUER}}
+      - name: Start API
+        run: |
+          cd api
+          pm2 restart apiServer
 
 
 
