@@ -72,10 +72,6 @@ jobs:
         run: |
           cd api
           pm2 restart apiServer
-        env:
-          JWT_SECRET: ${{secrets.JWT_SECRET}}
-          JWT_ISSUER: ${{secrets.JWT_ISSUER}}
-          PORT: ${{secrets.BACKEND_PORT}}
 
 
 
@@ -91,6 +87,15 @@ jobs:
         run: |
           cd app
           npm i
+      
+      - name: Create .env file
+        run: |
+          cd app
+          echo "REACT_APP_GRAPHQL_URL=${{ secrets.REACT_APP_GRAPHQL_URL }}" >> .env
+          echo "REACT_APP_LANDING_PAGE=${{ secrets.REACT_APP_LANDING_PAGE }}" >> .env
+          echo "REACT_APP_STRIPE_PUBLIC_KEY=${{ secrets.REACT_APP_STRIPE_PUBLIC_KEY }}" >> .env
+          echo "REACT_APP_GOOGLE_CLIENT_KEY=${{ secrets.REACT_APP_GOOGLE_CLIENT_KEY }}" >> .env
+          echo "REACT_APP_DOMAIN=${{ secrets.REACT_APP_DOMAIN }}" >> .env
 
       - name: Build App
         run: |
