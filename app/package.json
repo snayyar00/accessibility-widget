@@ -21,6 +21,7 @@
     "classnames": "^2.3.2",
     "dayjs": "^1.9.4",
     "dompurify": "^2.2.3",
+    "dotenv": "^16.3.1",
     "draft-js": "^0.11.7",
     "draftjs-to-html": "^0.9.1",
     "fb": "^2.0.0",
