@@ -29,7 +29,7 @@ jobs:
         run: |
           cd api
           echo "PORT=${{ secrets.BACKEND_PORT }}" >> .env
-          echo "FRONTEND_URL=http://localhost:3000" >> .env
+          echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
           echo "JWT_ISSUER=${{ secrets.JWT_ISSUER }}" >> .env
           echo "JWT_SUBJECT=${{ secrets.JWT_SUBJECT }}" >> .env
@@ -71,8 +71,7 @@ jobs:
       - name: Start API
         run: |
           cd api
-          cd dist
-          pm2 start server.js --name=apiServer --update-env
+          pm2 restart apiServer
 
 
 
@@ -97,6 +96,7 @@ jobs:
           echo "REACT_APP_STRIPE_PUBLIC_KEY=${{ secrets.REACT_APP_STRIPE_PUBLIC_KEY }}" >> .env
           echo "REACT_APP_GOOGLE_CLIENT_KEY=${{ secrets.REACT_APP_GOOGLE_CLIENT_KEY }}" >> .env
           echo "REACT_APP_DOMAIN=${{ secrets.REACT_APP_DOMAIN }}" >> .env
+          echo "PORT=${{ secrets.FRONTEND_PORT }}" >> .env
 
       - name: Build App
         run: |
@@ -109,7 +109,7 @@ jobs:
       - name: Start frontend Server
         run: |
           cd app
-          pm2 start server.js --name=frontendServer --update-env
+          pm2 restart frontendServer
 
       # - name: Install AWS CLI (Optional Step)
       #   run: |
