@@ -1,7 +1,5 @@
 import { combineResolvers } from 'graphql-resolvers';
-import { isAuthenticated } from './authorization.resolver';
-import { addSite, changeURL, deleteSite, findSite, findUserSites } from '~/services/allowedSites/allowedSites.service';
-import { addNewVisitor, deleteVisitorById, deleteVisitorByIp, getSiteVisitors, getVisitorByIp, updateVisitorDetails } from '~/services/uniqueVisitors/uniqueVisitor.service';
+import { addNewVisitor, deleteVisitorById, deleteVisitorByIp, getSiteVisitors, getSiteVisitorsByURL, getSiteVisitorsByURLAndDate, getVisitorByIp, updateVisitorDetails } from '~/services/uniqueVisitors/uniqueVisitor.service';
 
 const resolvers = {
     Query: {
@@ -9,9 +7,17 @@ const resolvers = {
             // isAuthenticated,
             (_, { siteId }) => getSiteVisitors(siteId)
         ),
-        getVisitorByIp: combineResolvers(
+        getSiteVisitorsByURL: combineResolvers(
+            // isAuthenticated,
+            (_, { url }) => getSiteVisitorsByURL(url)
+        ),
+        getSiteVisitorsByIp: combineResolvers(
             // isAuthenticated,
             (_, { ipAddress }) => getVisitorByIp(ipAddress)
+        ),
+        getSiteVisitorsByURLAndDate: combineResolvers(
+            // isAuthenticated,
+            (_, { url, startDate, endDate }, {user}) => getSiteVisitorsByURLAndDate(url, new Date(startDate), new Date(endDate))
         ),
 
     },

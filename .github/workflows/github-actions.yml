@@ -1,26 +1,132 @@
+
 name: API Deploy
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build:
-    
+  API:
     runs-on: self-hosted
-
     strategy:
       matrix:
         node-version: [20.x]
-    
-    steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
 
-      - run: 
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Install dependencies in API
+        run: |
+          cd api
+          npm install
+
+      - name: Create .env file
+        run: |
+          cd api
+          echo "PORT=${{ secrets.BACKEND_PORT }}" >> .env
+          echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "JWT_ISSUER=${{ secrets.JWT_ISSUER }}" >> .env
+          echo "JWT_SUBJECT=${{ secrets.JWT_SUBJECT }}" >> .env
+          echo "JWT_AUDIENCE=${{ secrets.JWT_AUDIENCE }}" >> .env
+          echo "JWT_EXPIRESIN=${{ secrets.JWT_EXPIRESIN }}" >> .env
+          echo "JWT_ALGORITHM=${{ secrets.JWT_ALGORITHM }}" >> .env
+          echo "MAILGUN_API_KEY=${{ secrets.MAILGUN_API_KEY }}" >> .env
+          echo "MAILGUN_DOMAIN=${{ secrets.MAILGUN_DOMAIN }}" >> .env
+          echo "SMTP_DEFAULT_FROM_EMAIL=${{ secrets.SMTP_DEFAULT_FROM_EMAIL }}" >> .env
+          echo "SMTP_HOST=${{ secrets.SMTP_HOST }}" >> .env
+          echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> .env
+          echo "SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}" >> .env
+          echo "SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}" >> .env
+          echo "STRIPE_PRIVATE_KEY=${{ secrets.STRIPE_PRIVATE_KEY }}" >> .env
+          echo "GITHUB_SECRET_KEY=${{ secrets.GITHUB_SECRET_KEY }}" >> .env
+          echo "GITHUB_CLIENT_KEY=${{ secrets.GITHUB_CLIENT_KEY }}" >> .env
+          echo "FACEBOOK_CLIENT_KEY=${{ secrets.FACEBOOK_CLIENT_KEY }}" >> .env
+          echo "FACEBOOK_CLIENT_SECRET_KEY=${{ secrets.FACEBOOK_CLIENT_SECRET_KEY }}" >> .env
+          echo "GOOGLE_CLIENT_KEY=${{ secrets.GOOGLE_CLIENT_KEY }}" >> .env
+          echo "GOOGLE_SECRET_KEY=${{ secrets.GOOGLE_SECRET_KEY }}" >> .env
+          echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
+          echo "WEBAIM_API=${{ secrets.WEBAIM_API }}" >> .env
+          echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}" >> .env
+          echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}" >> .env
+          echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
+          echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
+          echo "DATABASE_PORT=${{ secrets.DATABASE_PORT }}" >> .env
+          echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env
+          echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env
+          echo "EMAIL_PASS=${{ secrets.EMAIL_PASS }}" >> .env
+          echo "EMAIL_HOST=${{ secrets.EMAIL_HOST }}" >> .env
+          echo "EMAIL_PORT=${{ secrets.EMAIL_PORT }}" >> .env
+          echo "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" >> .env
+
+      - name: Build API
+        run: |
+          cd api
+          tsc
+      - name: Start API
+        run: |
+          cd api
+          pm2 restart apiServer
+
+
+
+  APP:
+    needs: API
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+
+      - name: Install dependencies in App
+        run: |
+          cd app
           npm i
+      
+      - name: Create .env file
+        run: |
+          cd app
+          echo "REACT_APP_GRAPHQL_URL=${{ secrets.REACT_APP_GRAPHQL_URL }}" >> .env
+          echo "REACT_APP_LANDING_PAGE=${{ secrets.REACT_APP_LANDING_PAGE }}" >> .env
+          echo "REACT_APP_STRIPE_PUBLIC_KEY=${{ secrets.REACT_APP_STRIPE_PUBLIC_KEY }}" >> .env
+          echo "REACT_APP_GOOGLE_CLIENT_KEY=${{ secrets.REACT_APP_GOOGLE_CLIENT_KEY }}" >> .env
+          echo "REACT_APP_DOMAIN=${{ secrets.REACT_APP_DOMAIN }}" >> .env
+          echo "PORT=${{ secrets.FRONTEND_PORT }}" >> .env
+
+      - name: Build App
+        run: |
+          cd app
+          CI=false && npm run build
+        env:
+          REACT_APP_GOOGLE_CLIENT_KEY: ${{secrets.REACT_APP_GOOGLE_CLIENT_KEY}}
+          REACT_APP_GRAPHQL_URL: ${{secrets.REACT_APP_GRAPHQL_URL}}
+      
+      - name: Start frontend Server
+        run: |
+          cd app
+          pm2 restart frontendServer
+
+      # - name: Install AWS CLI (Optional Step)
+      #   run: |
+      #     if ! command -v aws &> /dev/null
+      #     then
+      #         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      #         unzip awscliv2.zip
+      #         sudo ./aws/install
+      #     fi
+      #   shell: bash
+
+      # - name: Deploy to AWS S3
+      #   run: |
+      #     aws s3 sync app/build s3://accessability-artifacts --delete
+      #   env:
+      #     AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     AWS_REGION: 'us-east-2'

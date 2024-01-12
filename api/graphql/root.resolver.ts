@@ -5,5 +5,6 @@ import documentResolves from './resolvers/document.resolver';
 import allowedSitesResolves from './resolvers/allowedSites.resolver';
 import uniqueVisitorResolves from './resolvers/uniqueVisitor.resolver';
 import impressionResolves from './resolvers/impressions.resolver';
+import accessibilityResolves from './resolvers/accessibilityReport.resolver';
 
-export default [userResolves, userPlanResolves, teamResolves, documentResolves, allowedSitesResolves, uniqueVisitorResolves,impressionResolves ];
+export default [userResolves, userPlanResolves, teamResolves, documentResolves, allowedSitesResolves, uniqueVisitorResolves,impressionResolves, accessibilityResolves ];

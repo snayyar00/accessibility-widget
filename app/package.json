@@ -21,6 +21,7 @@
     "classnames": "^2.3.2",
     "dayjs": "^1.9.4",
     "dompurify": "^2.2.3",
+    "dotenv": "^16.3.1",
     "draft-js": "^0.11.7",
     "draftjs-to-html": "^0.9.1",
     "fb": "^2.0.0",
@@ -52,9 +53,9 @@
     "lint": "stylelint **/*.{js,jsx} && eslint --ext .js --ext .jsx .",
     "lint:fix": "eslint --ext .js --ext .jsx . --fix",
     "lint:staged": "lint-staged",
-    "lint:prod": "NODE_ENV=production npm run lint",
+    "lint:prod": "cross-env NODE_ENV=production npm run lint",
     "start": "craco start",
-    "build": "npm run lint:prod && npm run build:css && craco build",
+    "build": "craco build",
     "eject": "craco eject"
   },
   "eslintConfig": {

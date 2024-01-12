@@ -1,11 +1,8 @@
 import { ApolloError, ValidationError } from 'apollo-server-express';
 
 import logger from '~/utils/logger';
-import { insertDocument, findDocumentById, findDocuments, updateDocumentById, deleteDocumentById, FindDocumentsResponse, FindDocumentById } from '~/repository/documents.repository';
-import { FindAllowedSitesProps, deleteSiteByURL, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL} from '~/repository/sites_allowed.repository';
-import { createValidation } from '~/validations/document.validation';
 import { getCityAndCountry } from '~/helpers/uniqueVisitor.helper';
-import { FindVisitorsResponse, VisitorInfo, deleteVisitorId, deleteVisitorIp, findVisitorByIp, findVisitorBySiteId, insertVisitor, updateVisitorByIp } from '~/repository/visitors.repository';
+import {  VisitorInfo, deleteVisitorId, deleteVisitorIp, findVisitorByIp, findVisitorBySiteId, findVisitorByURL, findVisitorByURLDate, insertVisitor, updateVisitorByIp } from '~/repository/visitors.repository';
 
 
 /**
@@ -51,6 +48,30 @@ export async function getSiteVisitors(siteId:number){
         throw e
     }
 }
+
+export async function getSiteVisitorsByURL(url: string){
+    try{
+        const visitors = await findVisitorByURL(url);
+        return {visitors: visitors, count: visitors.length}
+    }
+    catch(e){
+        logger.error(e);
+        throw e;
+    }
+}
+
+export async function getSiteVisitorsByURLAndDate(url: string, startDate: Date, endDate: Date){
+    try{
+        const visitors = await findVisitorByURLDate(url, startDate, endDate);
+        return { visitors: visitors, count: visitors.length }
+    }
+    catch(e){
+        logger.error(e);
+        throw e;
+    }
+}
+
+
 export async function getVisitorByIp(ipAddress: string){
     try{
         const visitor = await findVisitorByIp(ipAddress);
