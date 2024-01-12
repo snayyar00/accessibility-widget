@@ -76,6 +76,7 @@ jobs:
 
 
   APP:
+    needs: API
     runs-on: self-hosted
     strategy:
       matrix:
