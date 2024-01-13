@@ -43,7 +43,7 @@ const Topbar: React.FC<Props> = ({ signout }) => {
         <div onClick={() => dispath(toggleSidebar(true))} role='presentation' className="hidden absolute top-1/2 translate-y-[-50%] left-[10px] z-[15] sm:block">
           <MenuIcon />
         </div>
-        <Input placeholder="Search..." className="w-[468px] border-[#d2d5e1] sm:w-full" />
+        {/* <Input placeholder="Search..." className="w-[468px] border-[#d2d5e1] sm:w-full" /> */}
       </div>
       <div>
         <div onClick={() => setIsShowMenu(!isShowMenu)} ref={profileRef} role='presentation' className="flex items-center cursor-pointer [&>svg]:sm:hidden">
