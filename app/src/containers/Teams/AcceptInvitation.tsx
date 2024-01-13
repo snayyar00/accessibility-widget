@@ -7,6 +7,7 @@ import getProfileQuery from '@/queries/auth/getProfile';
 import joinTeamQuery from '@/queries/teams/joinTeam';
 import Logo from '@/components/Common/Logo';
 import Button from '@/components/Common/Button';
+import { CircularProgress } from '@mui/material';
 
 type TeamInfo = {
   teamName?: string;
@@ -56,7 +57,7 @@ const AcceptInvitation: React.FC = () => {
   }
 
   return loading && getProfileLoading ? (
-    <div> {t('Common.text.loading')}</div>
+    <CircularProgress size={100}/>
   ) : (
     <div className="h-screen overflow-hidden flex w-full min-h-screen items-center justify-center relative">
       <div className="absolute w-full h-full bg-primary z-[-2]" />

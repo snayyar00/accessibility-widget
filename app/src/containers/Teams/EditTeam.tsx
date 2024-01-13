@@ -12,6 +12,7 @@ import getTeamDetailQuery from '@/queries/teams/getTeamDetail';
 import InviteMember from './InviteMember';
 import TeamDetail from './TeamDetail';
 import TeamMember from './TeamMember';
+import { CircularProgress } from '@mui/material';
 
 type Params = {
   teamId: string;
@@ -63,8 +64,8 @@ const EditTeam: React.FC = () => {
       )}
     </>
   ) : (
-    <div>{t('Common.text.loading')}</div>
-  );
+    <div className='flex items-center justify-center h-screen w-screen'><CircularProgress size={150}/></div>
+      );
 }
 
-export default EditTeam;
+      export default EditTeam;

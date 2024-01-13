@@ -10,6 +10,7 @@ import getProfileQuery from '@/queries/auth/getProfile';
 
 // Actions
 import { setProfileUser } from '@/features/auth/user';
+import { CircularProgress } from '@mui/material';
 
 type Props = {
   render: RouteProps['render'];
@@ -47,7 +48,7 @@ const PrivateRoute: React.FC<Props> = ({ render }) => {
         />
       )}
       {(!data || !data.id || loadingUserProfile) && (
-        <div>{t('Common.text.loading')}</div>
+        <div className='flex items-center justify-center h-screen w-screen'><CircularProgress size={150}/></div>
       )}
     </>
   );
