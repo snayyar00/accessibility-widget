@@ -1,18 +1,45 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import "./DropDown.css";
+import { useQuery } from '@apollo/client';
 
-interface DropdownProps {
-  options: string[];
+import getSites from '@/queries/sites/getSites';
+import AddDomainModal from './AddDomainModal'
+
+interface siteDetails {
+  url: string,
+  id: number | string | null | undefined
 }
 
-const DropDown: React.FC<DropdownProps> = ({ options }) => {
-  const [selectedOption, setSelectedOption] = useState<string>(options[0] || 'Select a Domain');
+const DropDown = () => {
+  const [reloadSites, setReloadSites] = useState(false);
+  const { data, refetch } = useQuery(getSites);
+
+  useEffect(() => {
+    if (reloadSites) {
+      refetch();
+      setReloadSites(false);
+    }
+  }, [reloadSites])
+
+  const [selectedOption, setSelectedOption] = useState<string>('Select a Domain');
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [showPopup, setShowPopup] = useState(false);
 
   const handleOptionClick = (option: string) => {
     setSelectedOption(option);
     setIsOpen(false);
   };
+
+
+  useEffect(() => {
+
+    if (data)
+      data.getUserSites.map((site: siteDetails) => {
+        console.log(site)
+        return site
+      })
+  }, [data])
+
 
   return (
     <div className="dropdown-container relative w-full text-left mt-5">
@@ -36,27 +63,49 @@ const DropDown: React.FC<DropdownProps> = ({ options }) => {
       </button>
 
       {isOpen && (
-        <div className="dropdown-menu origin-top-right absolute right-0 mt-2 w-full rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+        <div className="dropdown-menu origin-top-right absolute right-0 mt-2 w-full overflow-x-auto rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
           <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-            {options.map((option) => (
+            {data && data.getUserSites.map((site: siteDetails) => (
               <div
-                key={option}
+                key={site.id}
                 className="dropdown-item block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                 role="menuitem"
                 tabIndex={0}
-                onClick={() => handleOptionClick(option)}
+                onClick={() => handleOptionClick(site.url)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
-                    handleOptionClick(option);
+                    handleOptionClick(site.url);
                   }
                 }}
               >
-                {option}
+                {site.url}
               </div>
             ))}
+
+            <div
+              key={-5}
+              className="dropdown-item block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer hover:text-[#0033ED] text-[#a6a6a6] "
+              role="menuitem"
+              tabIndex={0}
+              onClick={() => {
+                setShowPopup(true);
+                setIsOpen(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setShowPopup(true)
+                  setIsOpen(false);
+                }
+              }}
+            >
+              Add New Domain
+            </div>
+
+
           </div>
         </div>
       )}
+      {showPopup && <AddDomainModal setShowPopup={setShowPopup} setReloadSites={setReloadSites}/>}
     </div>
   );
 };

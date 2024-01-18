@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ApolloProvider } from '@apollo/client';
+import { ApolloProvider, useQuery } from '@apollo/client';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
@@ -19,14 +19,17 @@ import useDocumentHeader from './hooks/useDocumentTitle';
 import { RootState } from './config/store';
 
 type props = {
-  options:string[];
+  options: string[];
 }
 const client = createClient();
 
-const App: React.FC<props> = ({options}) => {
+const App: React.FC<props> = ({ options }) => {
+
   const { t } = useTranslation();
   useDocumentHeader({ title: t('WebAbility') });
   const { error } = useSelector((state: RootState) => state.user);
+
+
 
   useEffect(() => {
     if (error) {

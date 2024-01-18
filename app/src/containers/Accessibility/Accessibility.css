@@ -27,23 +27,20 @@
 }
 
 .not-compliant {
-  color: red;
-}
-
-.high {
+  font-weight: bold;
   color: #d9534f;
 }
 
-.score-circle {
-  border: 3px solid grey;
-  border-radius: 50%;
-  height: 100px;
-  width: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: auto;
+.high {
+  font-weight: bold;
+  color: #d9534f;
 }
+
+.low{
+  font-weight: bold;
+  color: green
+}
+
 
 .score-circle span {
   display: inline-block;
@@ -144,4 +141,60 @@
   .accessibility-card {
     width: 100%;
   }
+}
+
+
+@keyframes slideIn {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+  50% {
+    width: 3rem; /* Arrow body length */
+    opacity: 1;
+  }
+  100% {
+    width: 3rem;
+    opacity: 0;
+  }
+}
+
+@keyframes drawIn {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.arrow-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-right: 1rem; /* Distance from the button */
+}
+
+.arrow-animation {
+  display: flex;
+  align-items: center;
+}
+
+.arrow-body {
+  background-color: #3490dc; /* Primary color */
+  height: 2px; /* Line thickness */
+  animation: slideIn 2s infinite;
+}
+
+.arrow-head {
+  width: 0; 
+  height: 0; 
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 5px solid #3490dc; /* Primary color for the arrow head */
+  animation: drawIn 2s infinite;
+  animation-delay: 1s; /* Starts drawing the head after the body animation begins */
 }

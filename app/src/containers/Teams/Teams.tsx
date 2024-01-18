@@ -1,11 +1,16 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useEffect } from 'react';
 import './Teams.css';
+import { useMutation } from '@apollo/client';
+import addSite from '@/queries/sites/addSite';
+import { toast } from 'react-toastify';
+import isValidDomain from '@/utils/verifyDomain';
 
 interface DomainFormData {
   domainName: string;
 }
 
 const Teams: React.FC = () => {
+  const [addSiteMutation, { error, loading }] = useMutation(addSite);
   const [formData, setFormData] = useState<DomainFormData>({ domainName: '' });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -14,29 +19,15 @@ const Teams: React.FC = () => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-
-    try {
-      const response = await fetch(
-        'https://your-backend-endpoint.com/domains',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('Success:', result);
-    } catch (error) {
-      console.error('Error adding domain:', error);
+    if (!isValidDomain(formData.domainName)) {
+      toast.error('You must enter a valid domain name!');
+      return;
     }
+    console.log(formData.domainName)
+    addSiteMutation({ variables: { url: formData.domainName } })
+
   };
+
 
   return (
     <>
@@ -52,16 +43,17 @@ const Teams: React.FC = () => {
                 type="text"
                 id="domainName"
                 name="domainName"
-                placeholder="Enter domain name"
+                placeholder="Add a new domain name"
                 value={formData.domainName}
                 onChange={handleInputChange}
                 className="form-control"
               />
             </div>
             <button type="submit" className="submit-btn">
-              Add Domain
+              {loading ? 'Adding...' : 'Add Domain'}
             </button>
           </form>
+          {error ? toast.error('There was an error adding the domain to the database.') : <></>}
         </div>
       </div>
     </>

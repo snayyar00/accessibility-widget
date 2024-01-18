@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import cn from 'classnames';
@@ -10,11 +10,14 @@ import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import routes from '@/routes';
 import Dropdown from '@/containers/Dashboard/DropDown';
 
+
 interface SidebarProps {
   options: string[];
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ options }) => {
+
+
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const { isOpen } = useSelector((state: RootState) => state.sidebar);
@@ -77,7 +80,7 @@ const Sidebar: React.FC<SidebarProps> = ({ options }) => {
         </a>
         <div className="flex-grow">
           <div className="mb-2 w-full pl-[27px] border-l-2 border-solid border-transparent flex items-center [&.active]:rounded-r-[10px] [&.active]:rounded-b-[10px] [&.active]:rounded-t-[0px] [&.active]:rounded-l-[0px] [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>svg_*[fill]]:fill-primary [&.active>svg_*[stroke]]:stroke-primary">
-            <Dropdown options={options} />
+            <Dropdown />
           </div>
           <ul className="p-0 pr-[14px]">
             {routes

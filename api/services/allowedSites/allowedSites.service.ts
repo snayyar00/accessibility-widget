@@ -59,9 +59,9 @@ export async function findUserSites(userId:number): Promise<FindAllowedSitesProp
     }
 }
 
-export async function findSite(userId: number, url: string){
+export async function findSite(url: string){
     try{
-        const site = await findSiteByURL(userId, url);
+        const site = await findSiteByURL( url);
         return site;
     }
     catch (e){
