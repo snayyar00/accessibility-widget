@@ -35,7 +35,7 @@ export async function findImpressionsURLDate(user_id: number, site_url: string, 
     return database(TABLE)
         .join(TABLES.allowed_sites, impressionsColumns.site_id, siteColumns.id)
         .select(impressionsColumns, `${siteColumns.url} as url`)
-        .where({ [siteColumns.url]: site_url, [siteColumns.user_id]: user_id })
+        .where({ [siteColumns.url]: site_url })
         .andWhere(impressionsColumns.createdAt, '>=', startDate)
         .andWhere(impressionsColumns.createdAt, '<=', endDate);
 }
@@ -69,7 +69,9 @@ export async function findEngagementURLDate(
 	
 			return {
 				date: localDate.toISOString().split('T')[0],
-				engagementRate: engagementRate
+				engagementRate: engagementRate,
+				totalEngagements: result.engagedImpressions,
+				totalImpressions: result.totalImpressions
 			};
 		});
 	

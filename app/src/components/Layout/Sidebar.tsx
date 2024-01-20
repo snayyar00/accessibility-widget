@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import cn from 'classnames';
 import { useTranslation } from 'react-i18next';
-
+import { ReactComponent as DashboardIcon } from '@/assets/images/svg/dashboard.svg';
 import type { RootState } from '@/config/store';
 import { toggleSidebar } from '@/features/admin/sidebar';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
@@ -11,11 +11,9 @@ import routes from '@/routes';
 import Dropdown from '@/containers/Dashboard/DropDown';
 
 
-interface SidebarProps {
-  options: string[];
-}
 
-const Sidebar: React.FC<SidebarProps> = ({ options }) => {
+
+const Sidebar = ({options, setReloadSites, selectedOption, setSelectedOption }: any) => {
 
 
   const dispatch = useDispatch();
@@ -80,9 +78,22 @@ const Sidebar: React.FC<SidebarProps> = ({ options }) => {
         </a>
         <div className="flex-grow">
           <div className="mb-2 w-full pl-[27px] border-l-2 border-solid border-transparent flex items-center [&.active]:rounded-r-[10px] [&.active]:rounded-b-[10px] [&.active]:rounded-t-[0px] [&.active]:rounded-l-[0px] [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>svg_*[fill]]:fill-primary [&.active>svg_*[stroke]]:stroke-primary">
-            <Dropdown />
+            <Dropdown data={options} setReloadSites={setReloadSites} selectedOption={selectedOption} setSelectedOption={setSelectedOption} />
           </div>
           <ul className="p-0 pr-[14px]">
+            <li key='/dashboard' className="h-[60px] flex items-center">
+              <NavLink
+                to='/dashboard'
+                activeClassName="active"
+                onClick={closeSidebar}
+                className="w-full h-full pl-[27px] border-l-2 border-solid border-transparent flex items-center [&.active]:rounded-r-[10px] [&.active]:rounded-b-[10px] [&.active]:rounded-t-[0px] [&.active]:rounded-l-[0px] [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>svg_*[fill]]:fill-primary [&.active>svg_*[stroke]]:stroke-primary"
+              >
+                <DashboardIcon />
+                <span className="menu-text text-[18px] leading-[22px] text-white-blue ml-[10px]">
+                  Dashboard
+                </span>
+              </NavLink>
+            </li>
             {routes
               .filter((route) => route.isSidebar)
               .map((route) => (
@@ -100,6 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({ options }) => {
                   </NavLink>
                 </li>
               ))}
+
           </ul>
         </div>
       </div>

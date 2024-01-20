@@ -10,18 +10,9 @@ interface siteDetails {
   id: number | string | null | undefined
 }
 
-const DropDown = () => {
-  const [reloadSites, setReloadSites] = useState(false);
-  const { data, refetch } = useQuery(getSites);
+const DropDown = ({data, setReloadSites, selectedOption, setSelectedOption }: any) => {
 
-  useEffect(() => {
-    if (reloadSites) {
-      refetch();
-      setReloadSites(false);
-    }
-  }, [reloadSites])
-
-  const [selectedOption, setSelectedOption] = useState<string>('Select a Domain');
+  // const [selectedOption, setSelectedOption] = useState<string>('Select a Domain');
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [showPopup, setShowPopup] = useState(false);
 
@@ -30,15 +21,6 @@ const DropDown = () => {
     setIsOpen(false);
   };
 
-
-  useEffect(() => {
-
-    if (data)
-      data.getUserSites.map((site: siteDetails) => {
-        console.log(site)
-        return site
-      })
-  }, [data])
 
 
   return (

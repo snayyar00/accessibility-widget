@@ -129,16 +129,20 @@ export async function findVisitorByIp(ip_address: string) {
     .select(visitorColumns)
     .where({ [visitorColumns.ip_address]: ip_address })
     .first();
-
-  return {
-    id: visitor.id,
-    siteId: visitor.site_id, // Mapping from 'site_id' to 'siteId'
-    ipAddress: visitor.ip_address, // Mapping from 'ip_address' to 'ipAddress'
-    city: visitor.city,
-    country: visitor.country,
-    zipcode: visitor.zipcode,
-    continent: visitor.continent,
-    firstVisit: visitor.first_visit
+  if (visitor) {
+    return {
+      id: visitor.id,
+      siteId: visitor.site_id, // Mapping from 'site_id' to 'siteId'
+      ipAddress: visitor.ip_address, // Mapping from 'ip_address' to 'ipAddress'
+      city: visitor.city,
+      country: visitor.country,
+      zipcode: visitor.zipcode,
+      continent: visitor.continent,
+      firstVisit: visitor.first_visit
+    }
+  }
+  else {
+    return undefined
   }
 }
 

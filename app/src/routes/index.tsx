@@ -13,14 +13,14 @@ import Accessibility from '@/containers/Accessibility/Accessibility';
 import { ReactComponent as AccessibilityIcon} from '@/assets/images/svg/Accessibility.svg';
 
 const routes = [
-  {
-    path: '/dashboard',
-    name: 'Dashboard',
-    exact: false,
-    component:Dashboard,
-    icon: <DashboardIcon />,
-    isSidebar: true,
-  },
+  // {
+  //   path: '/dashboard',
+  //   name: 'Dashboard',
+  //   exact: false,
+  //   component:Dashboard,
+  //   icon: <DashboardIcon />,
+  //   isSidebar: true,
+  // },
   {
     path: '/document',
     name: 'Document',
