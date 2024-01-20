@@ -7,6 +7,7 @@ import { ImpressionsSchema } from './schemas/impressions.schema';
 import { AllowedSitesSchema } from './schemas/allowedSites.schema';
 import { UniqueVisitorSchema } from './schemas/uniqueVisitor.schema';
 import { AccessibilitySchema } from './schemas/accessibilityReport.schema';
+import { uniqueTokenSchema } from './schemas/uniqueToken.schema';
 
 const rootSchema = gql`
   scalar Date
@@ -26,4 +27,4 @@ const rootSchema = gql`
   }
 `;
 
-export default [rootSchema, UserSchema, UserPlanSchema, TeamSchema, DocumentSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema];
+export default [rootSchema, UserSchema, UserPlanSchema, TeamSchema, DocumentSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, uniqueTokenSchema];

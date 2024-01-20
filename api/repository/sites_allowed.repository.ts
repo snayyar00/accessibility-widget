@@ -1,5 +1,7 @@
 import database from '~/config/database.config';
 import { TABLES } from '~/constants/database.constant';
+import { findUser } from './user.repository';
+import { AddTokenToDB } from '~/services/webToken/mongoVisitors';
 
 const TABLE = TABLES.allowed_sites;
 
@@ -42,14 +44,15 @@ export async function insertSite(data: allowedSites): Promise<string> {
 
 	const exisitingSites = await database(TABLE).select(siteColumns).where({ [siteColumns.url]: data.url }).first();
 	if (exisitingSites !== undefined) return 'You have already added this site.';
-
-
+	
 	else {
+		const user = await findUser({ id: data.user_id });
 		return database(TABLE).insert(data).onConflict('url').ignore()
-			.then((result) => {
+			.then(async (result) => {
 				if (result.length === 0) {
 					return 'You have already added this site.';
 				} else {
+					await AddTokenToDB(user.company ? user.company : '', user.email, data.url );
 					return 'The site was successfully added.';
 				}
 			})

@@ -21,14 +21,14 @@ const routes = [
   //   icon: <DashboardIcon />,
   //   isSidebar: true,
   // },
-  {
-    path: '/document',
-    name: 'Document',
-    exact: true,
-    component: Document,
-    icon: <DocumentIcon />,
-    isSidebar: true,
-  },
+  // {
+  //   path: '/document',
+  //   name: 'Document',
+  //   exact: true,
+  //   component: Document,
+  //   icon: <DocumentIcon />,
+  //   isSidebar: true,
+  // },
   {
     path: '/add-domain',
     name: 'Add Domain',
