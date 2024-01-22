@@ -1,5 +1,7 @@
 import database from '~/config/database.config';
 import { TABLES } from '~/constants/database.constant';
+import { findUser } from './user.repository';
+import { AddTokenToDB } from '~/services/webToken/mongoVisitors';
 
 const TABLE = TABLES.allowed_sites;
 
@@ -31,25 +33,33 @@ export async function findSitesByUserId(id: number): Promise<FindAllowedSitesPro
 		.select(siteColumns).where({ [siteColumns.user_id]: id });
 }
 
-export async function findSiteByURL(userId: number, url: string): Promise<FindAllowedSitesProps> {
+export async function findSiteByURL(url: string): Promise<FindAllowedSitesProps> {
 	return database(TABLE)
 		.select(siteColumns)
-		.where({ [siteColumns.url]: url , [siteColumns.user_id]: userId})
+		.where({ [siteColumns.url]: url })
 		.first();
 }
 
 export async function insertSite(data: allowedSites): Promise<string> {
-	return database(TABLE).insert(data).onConflict('site_url').ignore()
-		.then((result) => {
-			if (result.length === 0) {
-				return 'You have already added this site.';
-			} else {
-				return 'The site was successfully added.';
-			}
-		})
-		.catch((error) => {
-			return `insert failed: ${error.message}`;
-		});
+
+	const exisitingSites = await database(TABLE).select(siteColumns).where({ [siteColumns.url]: data.url }).first();
+	if (exisitingSites !== undefined) return 'You have already added this site.';
+	
+	else {
+		const user = await findUser({ id: data.user_id });
+		return database(TABLE).insert(data).onConflict('url').ignore()
+			.then(async (result) => {
+				if (result.length === 0) {
+					return 'You have already added this site.';
+				} else {
+					await AddTokenToDB(user.company ? user.company : '', user.email, data.url );
+					return 'The site was successfully added.';
+				}
+			})
+			.catch((error) => {
+				return `insert failed: ${error.message}`;
+			});
+	}
 }
 
 export function deleteSiteByURL(url: string, user_id: number): Promise<number> {
@@ -57,7 +67,7 @@ export function deleteSiteByURL(url: string, user_id: number): Promise<number> {
 }
 
 export function updateAllowedSiteURL(site_id: number, url: string, user_id: number): Promise<number> {
-	return database(TABLE).where({'allowed_sites.user_id': user_id, 'allowed_sites.id': site_id} ).update({
+	return database(TABLE).where({ 'allowed_sites.user_id': user_id, 'allowed_sites.id': site_id }).update({
 		'url': url
 	});
 }

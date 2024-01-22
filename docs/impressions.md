@@ -116,8 +116,10 @@ interaction (String!): The type or nature of the interaction to be registered.
 #### Example Mutation:
 ```
 mutation {
-  registerInteraction(impressionId: 1, interaction: "click")
+  registerInteraction(impressionId: 1, interaction: "widgetOpened") 
 }
+
+Possible values of interaction can be widgetOpened or widgetClosed
 
 ```
 

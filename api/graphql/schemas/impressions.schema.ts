@@ -23,6 +23,8 @@ export const ImpressionsSchema = gql`
 
 		type engagementRate {
 			engagementRate: Float,
+			totalEngagements: Int,
+			totalImpressions: Int
 			date: String
 		}
 

@@ -10,8 +10,7 @@ const resolvers = {
     ),
     
     getSiteByURL: combineResolvers(
-      isAuthenticated,
-      (_, {url},  { user }) => findSite(user.id, url)
+      (_, {url},  { user }) => findSite( url)
     ),
   },
   Mutation: {

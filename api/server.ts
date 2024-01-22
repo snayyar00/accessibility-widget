@@ -1,4 +1,5 @@
 /* eslint-disable wrap-iife */
+import db from './utils/connectMongo'; 
 import dotenv from 'dotenv';
 import { resolve, join } from 'path';
 import express, { Request, Response } from 'express';
@@ -15,9 +16,10 @@ import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
 import stripeHooks from './services/stripe/webhooks.servive';
 import { getIpAddress } from './helpers/uniqueVisitor.helper';
-import crypto from 'crypto';
 import mongoose from 'mongoose';
 import nodemailer from 'nodemailer';
+import Visitor from './mongoSchema/visitor.model';
+import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 
 type ContextParams = {
   req: Request;
@@ -26,22 +28,12 @@ type ContextParams = {
 
 dotenv.config();
 
+
+
 const app = express();
 const port = process.env.PORT || 3001;
 
-const dbURI = process.env.MONGODB_URI;
 
-mongoose.connect(dbURI);
-
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', () => {
-  console.log('Connected to MongoDB');
-});
-
-function generateUniqueToken() {
-  return crypto.randomBytes(16).toString('hex');
-}
 
 async function sendEmail(sendTo: string, subject: string, text: string) {
   if (!sendTo || sendTo.trim() === '') {
@@ -74,15 +66,6 @@ async function sendEmail(sendTo: string, subject: string, text: string) {
   }
 }
 
-const visitorSchema = new mongoose.Schema({
-  Businessname: String,
-  Email: String,
-  Website: String,
-  Uniquetoken: String,
-});
-
-const Visitor = mongoose.model('Visitor', visitorSchema);
-
 
 const corsOptions = {
   optionsSuccessStatus: 200,
@@ -111,23 +94,21 @@ const corsOptions = {
     res.send('Hello orld!');
   });
   app.post('/stripe-hooks', bodyParser.raw({ type: 'application/json' }), stripeHooks);
+  app.get('/token/:url', async (req, res)=>{
+    const url = req.params.url;
+    const token = await GetVisitorTokenByWebsite(url);
+    res.send(token);
+  } )
 
   app.post('/form', async (req, res) => {
-    const uniqueToken = generateUniqueToken();
     console.log('Received POST request for /form:', req.body);
-    const visitorDocument = new Visitor({
-      businessName: req.body.businessName,
-      email: req.body.email,
-      website: req.body.website,
-      Uniquetoken: uniqueToken,
-    });
-
-    try {
-      await visitorDocument.save();
+    const uniqueToken = await AddTokenToDB(req.body.businessName, req.body.email, req.body.website);
+    if (uniqueToken !== ''){
       res.send('Received POST request for /form');
-    } catch (error) {
-      console.error('Error inserting data:', error);
+    }
+    else{
       res.status(500).send('Internal Server Error');
+      return;
     }
 
     try {
