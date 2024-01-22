@@ -1,11 +1,14 @@
 import { combineResolvers } from 'graphql-resolvers';
-import { GetVisitorTokenByWebsite } from '~/services/webToken/mongoVisitors';
+import { GetVisitorTokenByWebsite, ValidateToken } from '~/services/webToken/mongoVisitors';
 
 const resolvers = {
     Query: {
       
       getVisitorTokenByWebsite: combineResolvers(
         (_, {url},  { user }) => GetVisitorTokenByWebsite(url)
+      ),
+      validateToken: combineResolvers(
+        (_, {token} ) => ValidateToken(token)
       )
     },
    

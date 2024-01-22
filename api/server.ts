@@ -1,5 +1,4 @@
 /* eslint-disable wrap-iife */
-import db from './utils/connectMongo'; 
 import dotenv from 'dotenv';
 import { resolve, join } from 'path';
 import express, { Request, Response } from 'express';

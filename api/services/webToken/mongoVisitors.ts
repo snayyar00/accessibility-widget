@@ -2,6 +2,7 @@
 import Visitor from "~/mongoSchema/visitor.model";
 import logger from "~/utils/logger";
 import crypto from 'crypto';
+import { findSite } from "../allowedSites/allowedSites.service";
 
 function generateUniqueToken() {
   return crypto.randomBytes(16).toString('hex');
@@ -45,6 +46,28 @@ export const GetURLByUniqueToken = async (uniqueToken: string) => {
   catch (error) {
     console.error('Error fetching visitor by website:', error);
     logger.error('Error fetching visitor by website:', error);
+    return 'error';
+  }
+}
+
+export async function ValidateToken(uniqueToken: string) {
+  try{
+    const record = await Visitor.findOne({ Uniquetoken: uniqueToken });
+    if (record === null){
+      return 'notFound';
+    }
+    else{
+      const site = await findSite(record.Website);
+      if (site === undefined){
+        return 'notFound';
+      }
+      else {
+        return 'found';
+      }
+    }
+  }
+  catch(e){
+    logger.error('There was an error validating the provided unique token. ',e);
     return 'error';
   }
 }
