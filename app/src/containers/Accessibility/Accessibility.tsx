@@ -23,7 +23,7 @@ const Accessibility = () =>
   (
 
     <div>
-      <AccessibilityReport currentDomain='https://google.com'/>
+      <AccessibilityReport currentDomain=''/>
     </div>
   );
 
