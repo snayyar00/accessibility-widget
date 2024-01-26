@@ -23,7 +23,6 @@ export default function Installation({ domain }: any) {
     if (loading === false && data.getVisitorTokenByWebsite !== 'none') {
       setCodeString(getCodeString(data.getVisitorTokenByWebsite));
     }
-    console.log(loading)
   }, [loading]);
 
 
