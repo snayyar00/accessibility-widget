@@ -6,21 +6,26 @@ import getUniqueToken from '../../queries/uniqueToken/getUniqueToken';
 
 export default function Installation({ domain }: any) {
   const { data, loading, refetch } = useQuery(getUniqueToken, { variables: { url: domain } });
-  const [uniqueToken, setUniqueToken] = useState('');
-  const template = `
+  
+
+  function getCodeString(uniqueToken: string):string {
+    return `
     <script src="https://webability.ca/webAbility.min.js" 
             token="${uniqueToken}">
     </script>
   `;
-  const [codeString, setCodeString] = useState(template);
+  }
+
+  const [codeString, setCodeString] = useState(getCodeString(''));
 
 
   useEffect(() => {
-    if (data && data.getVisitorTokenByWebsite !== 'none') {
-      setUniqueToken(data.getVisitorTokenByWebsite);
-      setCodeString(template);
+    if (loading === false && data.getVisitorTokenByWebsite !== 'none') {
+      setCodeString(getCodeString(data.getVisitorTokenByWebsite));
     }
-  }, [data]);
+    console.log(loading)
+  }, [loading]);
+
 
   useEffect(() => { refetch() }, [domain]);
 
