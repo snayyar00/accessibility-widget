@@ -1,0 +1,14 @@
+options to domain -------------------------------------- DONE
+document to embed -accessibe installation -------------  DONE
+audit fix API -----------------------------------------  DONE
+score change for accessibility ------------------------  DONE
+button ------------------------------------------------  DONE
+free trial --------------------------------------------  DONE
+prevent addition of empty or duplicate domains --------  DONE
+audit page connetion ----------------------------------  DONE
+connect dashboard to backend --------------------------  DONE
+
+use less red color on accessibility page
+remove https while saving domain to db
+add url check in token verification
+generate all date ranges for dates that have data as well

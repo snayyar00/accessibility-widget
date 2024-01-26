@@ -20,7 +20,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
 
 
-  const { data, loading, refetch, error } = useQuery(getAccessibilityStats, { variables: { url: domain } });
+  const { data, loading, refetch, error } = useQuery(getAccessibilityStats, {
+    variables: { url: domain },
+    skip: currentDomain === ''
+  });
 
   useEffect(() => {
     console.log(data)
