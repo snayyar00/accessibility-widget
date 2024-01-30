@@ -26,13 +26,13 @@ const AuthAdsArea: React.FC = () => {
         <Slide
           easing="ease"
           arrows={false}
-          canSwipe={false}
-          duration={3000}
-          indicators
+          canSwipe
+          duration={2000}
+          indicators={false}
         >
           <div>
-            <div className="max-w-[80%] block mx-auto my-0 text-center">
-              <img src="https://placeimg.com/517/337/any" alt="asd" className="mx-auto my-0 max-w-full" />
+            <div className="max-w-[70%] block mx-auto my-0 mt-16 text-center">
+              <img src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsection_1_right.bf6223d4.png&w=750&q=75" alt="Graphic showing increase in accessibility score" className="mx-auto my-0 max-w-full" />
               <h4 className="font-bold text-[26px] leading-[36px] text-center tracking-[0.5px] text-white mt-[82px] mb-[12px]">
                 {t('Advertisement.ad1_title')}
               </h4>
@@ -42,8 +42,8 @@ const AuthAdsArea: React.FC = () => {
             </div>
           </div>
           <div>
-            <div className="max-w-[80%] block mx-auto my-0 text-center">
-              <img src="https://placeimg.com/517/337/any" alt="asd" className="mx-auto my-0 max-w-full" />
+            <div className="max-w-[60%] block mx-auto my-0 text-center">
+              <img src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsection5-solution.85714b87.png&w=1920&q=75" alt="Screenshot of the webability accessibility widget working on a real website" className="mx-auto my-0 max-w-full" />
               <div className="font-bold text-[26px] leading-[36px] text-center tracking-[0.5px] text-white mt-[82px] mb-[12px]">
                 {t('Advertisement.ad2_title')}
               </div>
@@ -53,8 +53,8 @@ const AuthAdsArea: React.FC = () => {
             </div>
           </div>
           <div>
-            <div className="max-w-[80%] block mx-auto my-0 text-center">
-              <img src="https://placeimg.com/517/337/any" alt="asd" className="mx-auto my-0 max-w-full" />
+            <div className="max-w-[80%] block mx-auto my-0 mt-20 text-center">
+              <img src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fpartner-banner.aa45114f.png&w=1080&q=75" alt="Become a WebAbility partner" className="mx-auto my-0 max-w-full" />
               <div className="font-bold text-[26px] leading-[36px] text-center tracking-[0.5px] text-white mt-[82px] mb-[12px]">
                 {t('Advertisement.ad3_title')}
               </div>

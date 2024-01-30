@@ -5,7 +5,7 @@
       "gear": "gear"
     },
     "title": {
-      "saasgear": "SaaSgear",
+      "saasgear": "WebAbility.io",
       "profile": "Profile",
       "sign_in": "Sign In",
       "sign_out": "Sign Out",
@@ -62,7 +62,7 @@
       "name": "David",
       "confirm_password": "Confirm your password",
       "search": "Search..",
-      "g_email": "david@jslancer.com"
+      "g_email": "yourname@WebAbility.io"
     },
     "status": {
       "update_success": "Update profile successfully!",
@@ -121,12 +121,12 @@
     "please_wait": "Please wait ..."
   },
   "Advertisement": {
-    "ad1_title": "ReactJS",
-    "ad1": "High-performance and powerful interactive UI with React.",
-    "ad2_title": "Subscription payments",
-    "ad2": "We have integrated Stripe subscription payments to allow you to monetize your SaaS.",
-    "ad3_title": "Teams",
-    "ad3": "Your users are able to invite their teammates to their account."
+    "ad1_title": "Ultimate WCAG Compliance Widget",
+    "ad1": "Easily Navigate ADA & WCAG Compliance with WebAbility.io's Accessibility Widget",
+    "ad2_title": "A Profile for Every Disability",
+    "ad2": "Whether You Have An Issue With Your Vision Or Mental Health Condition That Makes It Harder To Concentrate, We Have A Profile To Help You Out! ",
+    "ad3_title": "Become an Web Ability partner",
+    "ad3": "Help millions of people by promoting web Web Ability.Join our partner program and ensure the best for your customers."
   },
   "Verify_email": {
     "title": "Verify Account",
