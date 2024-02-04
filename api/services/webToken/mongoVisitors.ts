@@ -50,7 +50,7 @@ export const GetURLByUniqueToken = async (uniqueToken: string) => {
   }
 }
 
-export async function ValidateToken(uniqueToken: string) {
+export async function ValidateToken(url: string, uniqueToken: string) {
   try{
     const record = await Visitor.findOne({ Uniquetoken: uniqueToken });
     if (record === null){
@@ -58,7 +58,7 @@ export async function ValidateToken(uniqueToken: string) {
     }
     else{
       const site = await findSite(record.Website);
-      if (site === undefined){
+      if (site === undefined || url !== record.Website){
         return 'notFound';
       }
       else {
