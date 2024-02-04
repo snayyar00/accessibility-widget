@@ -1,7 +1,7 @@
 /* eslint-disable wrap-iife */
 import dotenv from 'dotenv';
 import { resolve, join } from 'path';
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -31,8 +31,9 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
+const allowedOrigins = [process.env.FRONTEND_URL, undefined, 'http://localhost:5000', 'https://www.webability.io' ]
 
-
+app.use(express.json());
 
 async function sendEmail(sendTo: string, subject: string, text: string) {
   if (!sendTo || sendTo.trim() === '') {
@@ -66,46 +67,63 @@ async function sendEmail(sendTo: string, subject: string, text: string) {
 }
 
 
-const corsOptions = {
-  optionsSuccessStatus: 200,
-  credentials: true,
-  origin: process.env.FRONTEND_URL,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-};
+function dynamicCors(req: Request, res: Response, next: NextFunction) {
+  const corsOptions = {
+    optionsSuccessStatus: 200,
+    credentials: true,
+    origin: (origin:any, callback:any) => {
+      if (req.body && req.body.operationName === 'validateToken') {
+        // Allow any origin for 'validateToken'
+        callback(null, true);
+      } else if (allowedOrigins.includes(origin) || req.method === 'OPTIONS') {
+        // Allow your specific frontend origin
+        callback(null,true);
+      } 
+      // else {
+      //   // Disallow other origins
+      //   callback(new Error('Not allowed by CORS'));
+      // }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  };
+
+  cors(corsOptions)(req, res, next);
+}
 
 (function startServer() {
   app.use(morgan('combined', { stream: accessLogStream }));
-  app.use(cors(corsOptions));
-  app.use(cors({
-    origin: 'https://www.webability.io',
-    methods: 'GET,POST',
-    credentials: true
-  }));
+
+  // app.use(cors({
+  //   origin: 'https://www.webability.io',
+  //   methods: 'GET,POST',
+  //   credentials: true
+  // }));
+  app.use(dynamicCors)
 
 
 
   app.use(express.static(join(resolve(), 'public', 'uploads')));
   app.use(cookieParser());
-  app.use(express.json());
+
   app.use(bodyParser.urlencoded({ extended: true }));
 
   app.get('/', (req, res) => {
     res.send('Hello orld!');
   });
   app.post('/stripe-hooks', bodyParser.raw({ type: 'application/json' }), stripeHooks);
-  app.get('/token/:url', async (req, res)=>{
+  app.get('/token/:url', async (req, res) => {
     const url = req.params.url;
     const token = await GetVisitorTokenByWebsite(url);
     res.send(token);
-  } )
+  })
 
   app.post('/form', async (req, res) => {
     console.log('Received POST request for /form:', req.body);
     const uniqueToken = await AddTokenToDB(req.body.businessName, req.body.email, req.body.website);
-    if (uniqueToken !== ''){
+    if (uniqueToken !== '') {
       res.send('Received POST request for /form');
     }
-    else{
+    else {
       res.status(500).send('Internal Server Error');
       return;
     }
@@ -165,7 +183,7 @@ const corsOptions = {
       {
         requestDidStart() {
           return {
-            didEncounterErrors(ctx:any) {
+            didEncounterErrors(ctx: any) {
               if (!ctx.operation) return;
               for (const err of ctx.errors) {
                 if (err instanceof ApolloError) {
@@ -210,7 +228,7 @@ const corsOptions = {
     },
   });
 
-  serverGraph.applyMiddleware({ app, cors: corsOptions });
+  serverGraph.applyMiddleware({ app, cors: false });
   init({ dsn: process.env.SENTRY_DSN });
   app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);

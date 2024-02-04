@@ -5,7 +5,6 @@ import 'react-slideshow-image/dist/styles.css';
 import '@/assets/css/react-slide-custom.css';
 import squareGrid from '@/assets/images/svg/square-grid.svg';
 import squareRadiusPrimary from '@/assets/images/svg/square-radius-primary.svg';
-import squareRadiusTopBig from '@/assets/images/svg/square-radius-top-big.svg';
 
 const AuthAdsArea: React.FC = () => {
   const { t } = useTranslation();
@@ -19,9 +18,6 @@ const AuthAdsArea: React.FC = () => {
         <img src={squareRadiusPrimary} alt="" />
       </div>
       <div className="absolute left-[38px] bottom-[110px] border-[1px] border-solid border-light-blue rounded-[50%] w-[58px] h-[58px]" />
-      <div className="absolute left-[240px] right-0 bottom-0">
-        <img src={squareRadiusTopBig} alt="" />
-      </div>
       <div className="max-w-full h-full [&>div]:h-full">
         <Slide
           easing="ease"

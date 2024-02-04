@@ -8,7 +8,7 @@ const resolvers = {
         (_, {url},  { user }) => GetVisitorTokenByWebsite(url)
       ),
       validateToken: combineResolvers(
-        (_, {token} ) => ValidateToken(token)
+        (_, {url,token} ) => ValidateToken(url,token)
       )
     },
    
