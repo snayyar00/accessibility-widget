@@ -17,6 +17,7 @@ import stripeHooks from './services/stripe/webhooks.servive';
 import { getIpAddress } from './helpers/uniqueVisitor.helper';
 import mongoose from 'mongoose';
 import nodemailer from 'nodemailer';
+import sendMail from '~/libs/mail'
 import Visitor from './mongoSchema/visitor.model';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 
@@ -34,37 +35,6 @@ const port = process.env.PORT || 3001;
 const allowedOrigins = [process.env.FRONTEND_URL, undefined, 'http://localhost:5000', 'https://www.webability.io' ]
 
 app.use(express.json());
-
-async function sendEmail(sendTo: string, subject: string, text: string) {
-  if (!sendTo || sendTo.trim() === '') {
-    console.error('Recipient email address is missing or empty.');
-    return;
-  }
-
-  const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT, 10),
-    secure: process.env.EMAIL_SECURE === 'true', // should be true if EMAIL_PORT is 465
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  } as nodemailer.TransportOptions);
-
-  const mailOptions = {
-    from: process.env.EMAIL_FROM,
-    to: sendTo,
-    subject: subject,
-    text: text
-  };
-
-  try {
-    const info: any = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', info.messageId);
-  } catch (error) {
-    console.error('Error sending email:', error);
-  }
-}
 
 
 function dynamicCors(req: Request, res: Response, next: NextFunction) {
@@ -129,7 +99,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
 
     try {
-      sendEmail(req.body.email, 'Welcome to Webability', `
+      sendMail(req.body.email, 'Welcome to Webability', `
             <html>
             <head>
             <style>

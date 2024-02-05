@@ -22,7 +22,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
   const { data, loading, refetch, error } = useQuery(getAccessibilityStats, {
     variables: { url: domain },
-    skip: currentDomain === ''
+    skip: domain === ''
   });
 
   useEffect(() => {
@@ -50,15 +50,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   };
 
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     if (!isValidDomain(domain)) {
       setDomain(currentDomain);
       return toast.error('You must enter a valid domain name!');
     }
 
-    return refetch();
-
+    const response =  await refetch();
+    console.log(response)
+    return '';
   };
 
   return (

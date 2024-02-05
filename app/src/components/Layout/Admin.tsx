@@ -27,6 +27,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
   const [selectedOption, setSelectedOption] = useState('Select a Domain');
   const { data, refetch } = useQuery(getSites);
 
+
   useEffect(() => {
     if (reloadSites) {
       refetch();
@@ -34,18 +35,25 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
     }
   }, [reloadSites]);
 
-  
+
 
   useEffect(() => {
 
-    if (data) setSelectedOption(data.getUserSites[0].url)
+    if (data) {
+      if (data.getUserSites.length > 0) {
+        setSelectedOption(data.getUserSites[0].url);
+      }
+      else {
+        setSelectedOption('Add a new Domain')
+      }
+    }
   }, [data])
 
 
   return (
 
     <div className="flex">
-      <Sidebar options={data} setReloadSites={setReloadSites}  selectedOption={selectedOption} setSelectedOption={setSelectedOption}/>
+      <Sidebar options={data} setReloadSites={setReloadSites} selectedOption={selectedOption} setSelectedOption={setSelectedOption} />
       <div className="flex flex-col flex-grow">
         <Topbar signout={signout} />
         <div className="flex-grow bg-body overflow-y-auto px-[15px] py-[32px] sm:min-h-[calc(100vh_-_64px)]">
