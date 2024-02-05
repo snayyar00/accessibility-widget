@@ -32,7 +32,8 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
-const allowedOrigins = [process.env.FRONTEND_URL, undefined, 'http://localhost:5000', 'https://www.webability.io' ]
+const allowedOrigins = [process.env.FRONTEND_URL, undefined, 'http://localhost:5000', 'https://www.webability.io']
+const allowOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction']
 
 app.use(express.json());
 
@@ -41,14 +42,14 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   const corsOptions = {
     optionsSuccessStatus: 200,
     credentials: true,
-    origin: (origin:any, callback:any) => {
-      if (req.body && req.body.operationName === 'validateToken') {
+    origin: (origin: any, callback: any) => {
+      if (req.body && allowedOrigins.includes(req.body.operationName)) {
         // Allow any origin for 'validateToken'
         callback(null, true);
       } else if (allowedOrigins.includes(origin) || req.method === 'OPTIONS') {
         // Allow your specific frontend origin
-        callback(null,true);
-      } 
+        callback(null, true);
+      }
       // else {
       //   // Disallow other origins
       //   callback(new Error('Not allowed by CORS'));
