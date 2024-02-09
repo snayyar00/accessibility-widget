@@ -43,6 +43,7 @@ const Dashboard: React.FC<any> = ({ domain }: any) => {
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [cards, setCards] = useState<CardData[]>([]);
   const [granularity, setGranularity] = useState<string>('Day');
+  const [loadingAnimation, setLoadingAnimation] = useState<boolean>(true);
 
   const getStartOfWeek = () => {
     const currentDate = new Date();
@@ -77,7 +78,6 @@ const Dashboard: React.FC<any> = ({ domain }: any) => {
   };
 
   function setChart(data: any) {
-    console.log(data.getEngagementRates);
     if (data.getEngagementRates.length !== 0) {
       setChartData(
         data.getEngagementRates.map((engagement: EngagementResponse) => ({
@@ -106,12 +106,15 @@ const Dashboard: React.FC<any> = ({ domain }: any) => {
     setStartDate(getStartOfWeek());
   }, []);
 
-  const { data, refetch, loading, error } = useQuery(fetchDashboardQuery, { variables: { url: domain, startDate, endDate } });
+  const { data, refetch, loading, error } = useQuery(fetchDashboardQuery, {
+    variables: { url: domain, startDate, endDate },
+    onCompleted: () => setLoadingAnimation(false)
+  });
 
   useEffect(() => {
     if (data) {
       setChart(data);
-      setUniqueVisitors(data.getSiteVisitorsByURLAndDate.count);
+      setUniqueVisitors(data.getSiteVisitorsByURL.count);
       const impressionsOutput = data.getImpressionsByURLAndDate.impressions;
       let wC = 0;
       let wO = 0;
@@ -155,20 +158,25 @@ const Dashboard: React.FC<any> = ({ domain }: any) => {
         count: widgetOpened,
         countType: 'times',
       },
-      {
-        id: 4,
-        heading: 'Widget Closed',
-        count: widgetClosed,
-        countType: 'times',
-      },
+      // {
+      //   id: 4,
+      //   heading: 'Widget Closed',
+      //   count: widgetClosed,
+      //   countType: 'times',
+      // },
       // ... more card data
     ]);
 
   }, [widgetClosed, widgetOpened, impressions, uniqueVisitors]);
 
   useEffect(() => {
+    setLoadingAnimation(true);
     refetch();
   }, [domain]);
+
+  useEffect(() => {
+    refetch()
+  }, [startDate])
 
 
   useEffect(() => {
@@ -193,7 +201,7 @@ const Dashboard: React.FC<any> = ({ domain }: any) => {
   return (
     <>
       {loading && <div className='flex items-center justify-center h-screen w-screen'><CircularProgress size={150} /></div>}
-      {!loading &&
+      {!loadingAnimation &&
         <div className="container">
           {/* Dropdown, Plus Button, and ExportButton */}
           <div className="ml-4 flex gap-4 mb-4">
@@ -229,7 +237,6 @@ const Dashboard: React.FC<any> = ({ domain }: any) => {
               weekStart={getStartOfWeek()}
               monthStart={getStartOfMonth()}
               yearStart={getStartOfYear()}
-              refetch={() => { console.log('refetch'); refetch() }}
             />
           </div>
 

@@ -12,3 +12,4 @@ use less red color on accessibility page
 remove https while saving domain to db
 add url check in token verification
 generate all date ranges for dates that have data as well
+show tool usage of widget in dashboard in list form or something appropriate

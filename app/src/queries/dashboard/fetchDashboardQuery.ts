@@ -2,7 +2,7 @@ import { gql } from 'graphql.macro';
 
 export default gql`
   query fetchDashboardQuery($url: String!, $startDate: String!, $endDate: String!) {
-    getSiteVisitorsByURLAndDate(url: $url, startDate: $startDate, endDate: $endDate) {
+    getSiteVisitorsByURL(url: $url) {
         count
       }
     

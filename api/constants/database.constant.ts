@@ -12,6 +12,7 @@ export const TABLES = {
   allowed_sites: 'allowed_sites',
   visitors: 'unique_visitors',
   impressions: 'impressions',
+  accessibilityIssues: 'accessibility-issues'
 };
 
 export const DEFAULT_LIMIT = 20;

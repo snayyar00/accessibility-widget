@@ -12,7 +12,7 @@ export default function Installation({ domain }: any) {
     return `
 <script src="https://webability.ca/webAbility.min.js" 
     token="${uniqueToken}"
-    lang="en">
+    data-asw-lang="en">
 </script>
   `;
   }

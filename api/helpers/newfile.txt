@@ -1,0 +1,3446 @@
+{
+  "documentTitle": "TECQIFY",
+  "pageUrl": "https://tecqify.com/",
+  "issues": [
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<strong>WE HELP BUSINESSES</strong>",
+      "selector": "#heading-X-KQxJL8v > div > div > p > strong",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<strong>GET NEW CLIENTS USING OUR SOFTW...</strong>",
+      "selector": "#heading-X-KQxJL8v > div > div > h1 > strong",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Growing a business is hard. We ...</p>",
+      "selector": "#sub-heading-cV_o7KZze > div > div > p:nth-child(1)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"sub-heading-button\">TAKE YOUR BUSINESS TO NEXT LEVE...</div>",
+      "selector": "#button-D4Gg6zcSt_btn > div:nth-child(2) > div",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "empty-heading",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Headings should not be empty (https://dequeuniversity.com/rules/axe/4.8/empty-heading?application=axeAPI)",
+      "context": "<h1><strong><span class=\"ql-cursor\"...</h1>",
+      "selector": "#heading-3bE27aKK4 > div > div > h1",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures headings have discernible text",
+        "impact": "minor",
+        "help": "Headings should not be empty",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/empty-heading?application=axeAPI"
+      }
+    },
+    {
+      "code": "empty-heading",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Headings should not be empty (https://dequeuniversity.com/rules/axe/4.8/empty-heading?application=axeAPI)",
+      "context": "<h1><br></h1>",
+      "selector": "#heading-MakeKm3wt > div > div > h1",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures headings have discernible text",
+        "impact": "minor",
+        "help": "Headings should not be empty",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/empty-heading?application=axeAPI"
+      }
+    },
+    {
+      "code": "empty-heading",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Headings should not be empty (https://dequeuniversity.com/rules/axe/4.8/empty-heading?application=axeAPI)",
+      "context": "<h1><br></h1>",
+      "selector": "#heading-NxkiZ6rCTY > div > div > h1",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures headings have discernible text",
+        "impact": "minor",
+        "help": "Headings should not be empty",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/empty-heading?application=axeAPI"
+      }
+    },
+    {
+      "code": "empty-heading",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Headings should not be empty (https://dequeuniversity.com/rules/axe/4.8/empty-heading?application=axeAPI)",
+      "context": "<h1></h1>",
+      "selector": "#paragraph-pv-5c37zH > div > div > h1:nth-child(5)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures headings have discernible text",
+        "impact": "minor",
+        "help": "Headings should not be empty",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/empty-heading?application=axeAPI"
+      }
+    },
+    {
+      "code": "heading-order",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Heading levels should only increase by one (https://dequeuniversity.com/rules/axe/4.8/heading-order?application=axeAPI)",
+      "context": "<h3><strong>Search Engine Optimizat...</h3>",
+      "selector": "#heading-w1LMSPItC_ > div > div > h3",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the order of headings is semantically correct",
+        "impact": "moderate",
+        "help": "Heading levels should only increase by one",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/heading-order?application=axeAPI"
+      }
+    },
+    {
+      "code": "heading-order",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Heading levels should only increase by one (https://dequeuniversity.com/rules/axe/4.8/heading-order?application=axeAPI)",
+      "context": "<h3><strong>Landing Pages</strong></h3>",
+      "selector": "#heading-SLgZ62iZ0D > div > div > h3",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the order of headings is semantically correct",
+        "impact": "moderate",
+        "help": "Heading levels should only increase by one",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/heading-order?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<ul class=\"nav-menu\"><!--[--><li class=\"nav-menu-ite...</ul>",
+      "selector": "#nav-menu-k54x0224F > div > div:nth-child(2) > ul",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-X-KQxJL8v\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-X-KQxJL8v",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"sub-heading-cV_o7KZze\" class=\"c-sub-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#sub-heading-cV_o7KZze",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-edvYkUcfh\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-edvYkUcfh",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"sub-heading-5v3t01jbY\" class=\"c-sub-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#sub-heading-5v3t01jbY",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-CxkX6ZbsTK\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-CxkX6ZbsTK",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"sub-heading-EcPZuEjYXl\" class=\"c-sub-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#sub-heading-EcPZuEjYXl",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div class=\"row-align-center none noBorder radius0 none c-row c-wrapper row-YJMaZj-bMq\" id=\"row-YJMaZj-bMq\"><!----><!----><div class=\"inner...</div>",
+      "selector": "#row-YJMaZj-bMq",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-eHPXijhZHn\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-eHPXijhZHn",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-zQLlqJoKQ3\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-zQLlqJoKQ3",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-cB4evgsO9s\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-cB4evgsO9s",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-UQZ6Csz1jr\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-UQZ6Csz1jr",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-isWfHr-6Yj\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-isWfHr-6Yj",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-xk7QhHCRYA\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-xk7QhHCRYA",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-8wZZfoHVyR\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-8wZZfoHVyR",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-RT6ji566gU\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-RT6ji566gU",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"image-QNjXJTws05\" class=\"c-image c-wrapper image-QNjXJTws05\"><!----><!----><!----><!----><!-...</div>",
+      "selector": "#image-QNjXJTws05",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-0UoANRVfS2\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-0UoANRVfS2",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-MOTGJ8VZaj\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-MOTGJ8VZaj",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"image-ksqSkPEQ4p\" class=\"c-image c-wrapper image-ksqSkPEQ4p\"><!----><!----><!----><!----><!-...</div>",
+      "selector": "#image-ksqSkPEQ4p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-0nblC5wWLt\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-0nblC5wWLt",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-hQo9Ndp23f\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-hQo9Ndp23f",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"image-HuXmqMcwCR\" class=\"c-image c-wrapper image-HuXmqMcwCR\"><!----><!----><!----><!----><!-...</div>",
+      "selector": "#image-HuXmqMcwCR",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-Am1XZf79mj\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-Am1XZf79mj",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-Zw2MBmM6Sr\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-Zw2MBmM6Sr",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"image-Q5gKIsqiQN\" class=\"c-image c-wrapper image-Q5gKIsqiQN\"><!----><!----><!----><!----><!-...</div>",
+      "selector": "#image-Q5gKIsqiQN",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-8pkQ_jBsqo\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-8pkQ_jBsqo",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-FYrAAhinS4\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-FYrAAhinS4",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"image-c5TrNksGw_\" class=\"c-image c-wrapper image-c5TrNksGw_\"><!----><!----><!----><!----><!-...</div>",
+      "selector": "#image-c5TrNksGw_",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-D3Nfa8pBwA\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-D3Nfa8pBwA",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-JgNkcnMk2o\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-JgNkcnMk2o",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"image-hHg6UBNR9P\" class=\"c-image c-wrapper image-hHg6UBNR9P\"><!----><!----><!----><!----><!-...</div>",
+      "selector": "#image-hHg6UBNR9P",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-ZUC4SzM83v\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-ZUC4SzM83v",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-Cm69VGBXka\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-Cm69VGBXka",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"image-bjKQsgubLM\" class=\"c-image c-wrapper image-bjKQsgubLM\"><!----><!----><!----><!----><!-...</div>",
+      "selector": "#image-bjKQsgubLM",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-cnOzhTMaPa\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-cnOzhTMaPa",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-B8IZae5FK4\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-B8IZae5FK4",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"image-O7KIKcftBS\" class=\"c-image c-wrapper image-O7KIKcftBS\"><!----><!----><!----><!----><!-...</div>",
+      "selector": "#image-O7KIKcftBS",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-w1LMSPItC_\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-w1LMSPItC_",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph--mk7IjCPM2\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph--mk7IjCPM2",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-6m18awSZQy\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-6m18awSZQy",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-ik4lm39eTs\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-ik4lm39eTs",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-FXRXpLn6JH\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-FXRXpLn6JH",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-6nUJsjQxTT\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-6nUJsjQxTT",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"image-9h5TBzsVcL\" class=\"c-image c-wrapper image-9h5TBzsVcL\"><!----><!----><!----><!----><!-...</div>",
+      "selector": "#image-9h5TBzsVcL",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-LGFKAStp_K\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-LGFKAStp_K",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-uC5JO_eDnT\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-uC5JO_eDnT",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-SLgZ62iZ0D\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-SLgZ62iZ0D",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"image-ijmtqSIymH\" class=\"c-image c-wrapper image-ijmtqSIymH\"><!----><!----><!----><!----><!-...</div>",
+      "selector": "#image-ijmtqSIymH",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-1csQONG1h3\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-1csQONG1h3",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"image-GKd1Z-yxlG\" class=\"c-image c-wrapper image-GKd1Z-yxlG\"><!----><!----><!----><!----><!-...</div>",
+      "selector": "#image-GKd1Z-yxlG",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"heading-wftei3pu8x\" class=\"c-heading c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#heading-wftei3pu8x",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-rjT8CsyOxJ\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-rjT8CsyOxJ",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div class=\"row-align-center none noBorder radius0 none c-row c-wrapper row-G2fGKa3WWx\" id=\"row-G2fGKa3WWx\"><!----><!----><div class=\"inner...</div>",
+      "selector": "#row-G2fGKa3WWx",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div class=\"row-align-center none noBorder radius0 none c-row c-wrapper row-uEUCa117e6\" id=\"row-uEUCa117e6\"><!----><!----><div class=\"inner...</div>",
+      "selector": "#row-uEUCa117e6",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div class=\"row-align-center none noBorder radius0 none c-row c-wrapper row-hqu6qM1X6\" id=\"row-hqu6qM1X6\"><!----><!----><div class=\"inner...</div>",
+      "selector": "#row-hqu6qM1X6",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div class=\"c-column c-wrapper col-7BYxiN4oW\" id=\"col-7BYxiN4oW\"><!----><!----><div class=\"none ...</div>",
+      "selector": "#col-7BYxiN4oW",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"bulletList-XBScOZJ2o\" class=\"c-bullet-list c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#bulletList-XBScOZJ2o",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-pv-5c37zH\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-pv-5c37zH",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div class=\"c-column c-wrapper col-NLhjU64Jn\" id=\"col-NLhjU64Jn\"><!----><!----><div class=\"none ...</div>",
+      "selector": "#col-NLhjU64Jn",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div class=\"c-column c-wrapper col-4bZqe9iD-s\" id=\"col-4bZqe9iD-s\"><!----><!----><div class=\"none ...</div>",
+      "selector": "#col-4bZqe9iD-s",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"bulletList-EpWQRAGRQS\" class=\"c-bullet-list c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#bulletList-EpWQRAGRQS",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div id=\"paragraph-k3YOg1Z8Eg\" class=\"c-paragraph c-wrapper\"><!----><!----><!----><div class...</div>",
+      "selector": "#paragraph-k3YOg1Z8Eg",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "region",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "All page content should be contained by landmarks (https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI)",
+      "context": "<div class=\"fullSection none noBorder radius0 none c-section c-wrapper section-HeLZaMtvKi\" style=\"\" id=\"section-HeLZaMtvKi\"><!----><!----><div class=\"inner...</div>",
+      "selector": "#section-HeLZaMtvKi",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures all page content is contained by landmarks",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/region?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<a href=\"https://forms.gle/KFJG5be1WDo8kf1j9\" aria-label=\"Send your Resume\" target=\"_blank\">Send your Resume</a>",
+      "selector": "#nav-menu-k54x0224F > div > div:nth-child(2) > ul > li:nth-child(5) > a",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<a href=\"https://immigrationsupport.ca/\" aria-label=\"Immigrationsupport\" target=\"\">Immigrationsupport</a>",
+      "selector": "#nav-menu-k54x0224F > div > div:nth-child(2) > ul > li:nth-child(6) > a",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<a href=\"https://cdap.capitalsupportservices.com/\" aria-label=\"Grant Assistance\" target=\"\">Grant Assistance</a>",
+      "selector": "#nav-menu-k54x0224F > div > div:nth-child(2) > ul > li:nth-child(7) > a",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>GROW YOUR BUSINESS</p>",
+      "selector": "#heading-edvYkUcfh > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<h1>4X FASTER &amp; SMARTER<strong>...</h1>",
+      "selector": "#heading-edvYkUcfh > div > div > h1",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Avoid the guesswork, trial and ...</p>",
+      "selector": "#sub-heading-5v3t01jbY > div > div > p:nth-child(1)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">SCHEDULE A DEMO</div>",
+      "selector": "#button-yusfxgU-6_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<h1>OUR EXPERTISE.</h1>",
+      "selector": "#heading-H_pmdovKZ > div > div > h1",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>GRANTS/</p>",
+      "selector": "#heading-eHPXijhZHn > div > div > p:nth-child(1)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>FUNDING</p>",
+      "selector": "#heading-eHPXijhZHn > div > div > p:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p><br>Grants upto$15000 for Techn...</p>",
+      "selector": "#paragraph-zQLlqJoKQ3 > div > div > p:nth-child(1)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p> Additional fundings also avaib...</p>",
+      "selector": "#paragraph-zQLlqJoKQ3 > div > div > p:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-92lc5XQVpX_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>SOFTWARE AUTOMATION</p>",
+      "selector": "#heading-cB4evgsO9s > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Increase efficiency, save time,...</p>",
+      "selector": "#paragraph-UQZ6Csz1jr > div > div > p:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-zrdnMqdgBC_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>AI AUTOMATION</p>",
+      "selector": "#heading-isWfHr-6Yj > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p><br>We Automate your business m...</p>",
+      "selector": "#paragraph-xk7QhHCRYA > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-2uvKooP-v9_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>IT MANAGEMENT and Cybersecurity...</p>",
+      "selector": "#heading-8wZZfoHVyR > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>You keep having problems that y...</p>",
+      "selector": "#paragraph-RT6ji566gU > div > div > p:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-dHG9NL1Jqa_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Immigration Support Sales and M...</p>",
+      "selector": "#heading-0UoANRVfS2 > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p><br>Focus on using modern softw...</p>",
+      "selector": "#paragraph-MOTGJ8VZaj > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button--K_LkbEuy1_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Lead Generation</p>",
+      "selector": "#heading-0nblC5wWLt > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Brand New way to unlock wild sc...</p>",
+      "selector": "#paragraph-hQo9Ndp23f > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-63naCP4-gr_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>GOOGLE ADS</p>",
+      "selector": "#heading-Am1XZf79mj > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Hand over your Google Ads Manag...</p>",
+      "selector": "#paragraph-Zw2MBmM6Sr > div > div > p:nth-child(1)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Google Search &amp; Display Ad ...</p>",
+      "selector": "#paragraph-Zw2MBmM6Sr > div > div > p:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-Yc6gCAMpnw_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>META ADS</p>",
+      "selector": "#heading-8pkQ_jBsqo > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Easiest way to get in front of ...</p>",
+      "selector": "#paragraph-FYrAAhinS4 > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-wlbQ2euTvQ_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Logo &amp; Branding</p>",
+      "selector": "#heading-D3Nfa8pBwA > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Branding is all about the impre...</p>",
+      "selector": "#paragraph-JgNkcnMk2o > div > div > p:nth-child(3)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-EN6EM-XkZP_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Website Design/E-COMMERCE DEVEL...</p>",
+      "selector": "#heading-ZUC4SzM83v > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Regardless of what stage your w...</p>",
+      "selector": "#paragraph-Cm69VGBXka > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-QgZT5o7QLF_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<strong>Newsletter EDM Management</strong>",
+      "selector": "#heading-cnOzhTMaPa > div > div > h1 > strong",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>EDMs and email marketing campai...</p>",
+      "selector": "#paragraph-B8IZae5FK4 > div > div > p:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-KAoHHK4T77_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>SEO.</p>",
+      "selector": "#heading-w1LMSPItC_ > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<strong>Search Engine Optimization</strong>",
+      "selector": "#heading-w1LMSPItC_ > div > div > h3 > strong",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Get to the top of Google search...</p>",
+      "selector": "#paragraph--mk7IjCPM2 > div > div > p:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>&nbsp;Search Engine Optimisatio...</p>",
+      "selector": "#paragraph--mk7IjCPM2 > div > div > p:nth-child(3)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-oPqV1of6Rs_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<strong>Listings Management</strong>",
+      "selector": "#heading-6m18awSZQy > div > div > h3 > strong",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Can they find you?</p>",
+      "selector": "#paragraph-ik4lm39eTs > div > div > p:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Control your company’s message ...</p>",
+      "selector": "#paragraph-ik4lm39eTs > div > div > p:nth-child(4)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-XG6PM1LlDV_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<strong>Reputation Management</strong>",
+      "selector": "#heading-FXRXpLn6JH > div > div > h3 > strong",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Do they trust you?</p>",
+      "selector": "#paragraph-6nUJsjQxTT > div > div > p:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Customer reviews are everything...</p>",
+      "selector": "#paragraph-6nUJsjQxTT > div > div > p:nth-child(4)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-SFxe0vMc6-_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<strong>Social Media Management</strong>",
+      "selector": "#heading-LGFKAStp_K > div > div > h1 > strong",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<strong>/GRAPICS DESIGN</strong>",
+      "selector": "#heading-LGFKAStp_K > div > div > p:nth-child(3) > strong",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>Do they&nbsp;like you?</p>",
+      "selector": "#paragraph-uC5JO_eDnT > div > div > p:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>We give you content and strateg...</p>",
+      "selector": "#paragraph-uC5JO_eDnT > div > div > p:nth-child(3)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-euAhgAyXyt_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<strong>Landing Pages</strong>",
+      "selector": "#heading-SLgZ62iZ0D > div > div > h3 > strong",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>The only SALES-PERSON that your...</p>",
+      "selector": "#paragraph-1csQONG1h3 > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-UsyqJHtixN_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>SOFTWARE AUTOMATION</p>",
+      "selector": "#heading-wftei3pu8x > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<p>All-in-one CRM for Growing Sale...</p>",
+      "selector": "#paragraph-rjT8CsyOxJ > div > div > p",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "color-contrast",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Elements must meet minimum color contrast ratio thresholds (https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI)",
+      "context": "<div class=\"main-heading-button\">GET STARTED</div>",
+      "selector": "#button-XEpyYls4q0_btn > div:nth-child(1) > div:nth-child(2)",
+      "runner": "axe",
+      "runnerExtras": {
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast?application=axeAPI"
+      }
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_2.H25.2",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that the title element describes the document.",
+      "context": "<title>TECQIFY </title>",
+      "selector": "html > head > title",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_4.1_4_10.C32,C31,C33,C38,SCR34,G206",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "This element has \"position: fixed\". This may require scrolling in two dimensions, which is considered a failure of this Success Criterion.",
+      "context": "<div class=\"bgCover bg-fixed\"></div>",
+      "selector": "#__nuxt > div > div:nth-child(1)",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_4.1_4_10.C32,C31,C33,C38,SCR34,G206",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "This element has \"position: fixed\". This may require scrolling in two dimensions, which is considered a failure of this Success Criterion.",
+      "context": "<div id=\"nav-menu-popup\" style=\"display:none;\" class=\"hide\"><div class=\"nav-menu-body\"><i c...</div>",
+      "selector": "#nav-menu-popup",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_4.H77,H78,H79,H80,H81",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that the link text combined with programmatically determined link context identifies the purpose of the link.",
+      "context": "<a href=\"https://calendly.com/dilmanpreetnandu/15min?back=1&amp;month=2023-08\" aria-label=\"Book a Consultation\" target=\"\">Book a Consultation</a>",
+      "selector": "#nav-menu-k54x0224F > div > div:nth-child(2) > ul > li:nth-child(1) > a",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_4.H77,H78,H79,H80,H81",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that the link text combined with programmatically determined link context identifies the purpose of the link.",
+      "context": "<a href=\"https://tecqify.company.site/\" aria-label=\"Online Store\" target=\"_blank\">Online Store</a>",
+      "selector": "#nav-menu-k54x0224F > div > div:nth-child(2) > ul > li:nth-child(2) > a",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_4.H77,H78,H79,H80,H81",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that the link text combined with programmatically determined link context identifies the purpose of the link.",
+      "context": "<a href=\"https://start.tecqify.com/\" aria-label=\"Scan My Digital Presence\" target=\"\">Scan My Digital Presence</a>",
+      "selector": "#nav-menu-k54x0224F > div > div:nth-child(2) > ul > li:nth-child(3) > a",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_4.H77,H78,H79,H80,H81",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that the link text combined with programmatically determined link context identifies the purpose of the link.",
+      "context": "<a href=\"https://login.tecqify.com/\" aria-label=\"Login\" target=\"\">Login</a>",
+      "selector": "#nav-menu-k54x0224F > div > div:nth-child(2) > ul > li:nth-child(4) > a",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_4.H77,H78,H79,H80,H81",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that the link text combined with programmatically determined link context identifies the purpose of the link.",
+      "context": "<a href=\"https://forms.gle/KFJG5be1WDo8kf1j9\" aria-label=\"Send your Resume\" target=\"_blank\">Send your Resume</a>",
+      "selector": "#nav-menu-k54x0224F > div > div:nth-child(2) > ul > li:nth-child(5) > a",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_4.H77,H78,H79,H80,H81",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that the link text combined with programmatically determined link context identifies the purpose of the link.",
+      "context": "<a href=\"https://immigrationsupport.ca/\" aria-label=\"Immigrationsupport\" target=\"\">Immigrationsupport</a>",
+      "selector": "#nav-menu-k54x0224F > div > div:nth-child(2) > ul > li:nth-child(6) > a",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_4.H77,H78,H79,H80,H81",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that the link text combined with programmatically determined link context identifies the purpose of the link.",
+      "context": "<a href=\"https://cdap.capitalsupportservices.com/\" aria-label=\"Grant Assistance\" target=\"\">Grant Assistance</a>",
+      "selector": "#nav-menu-k54x0224F > div > div:nth-child(2) > ul > li:nth-child(7) > a",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1.H42",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Heading markup should be used if this content is intended as a heading.",
+      "context": "<p><strong>WE HELP BUSINESSES</str...</p>",
+      "selector": "#heading-X-KQxJL8v > div > div > p",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_4.1_4_3.G145.Fail",
+      "type": "error",
+      "typeCode": 1,
+      "message": "This element has insufficient contrast at this conformance level. Expected a contrast ratio of at least 3:1, but text in this element has a contrast ratio of 2.17:1. Recommendation:  change background to #19ac19.",
+      "context": "<strong>WE HELP BUSINESSES</strong>",
+      "selector": "#heading-X-KQxJL8v > div > div > p > strong",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_4.1_4_3.G145.Fail",
+      "type": "error",
+      "typeCode": 1,
+      "message": "This element has insufficient contrast at this conformance level. Expected a contrast ratio of at least 3:1, but text in this element has a contrast ratio of 2.17:1. Recommendation:  change background to #19ac19.",
+      "context": "<strong>GET NEW CLIENTS USING OUR SOFTW...</strong>",
+      "selector": "#heading-X-KQxJL8v > div > div > h1 > strong",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_4.1_4_3.G145.Fail",
+      "type": "error",
+      "typeCode": 1,
+      "message": "This element has insufficient contrast at this conformance level. Expected a contrast ratio of at least 3:1, but text in this element has a contrast ratio of 2.17:1. Recommendation:  change background to #19ac19.",
+      "context": "<p>Growing a business is hard. We ...</p>",
+      "selector": "#sub-heading-cV_o7KZze > div > div > p:nth-child(1)",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-kYENOphG0_btn\" class=\"cbutton-kYENOphG0 none btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"REQUEST A CALL \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-kYENOphG0_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1.H42.2",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Heading tag found with no content. Text that is not intended as a heading should not be marked up with heading tags.",
+      "context": "<h1><strong><span class=\"ql-cursor\"...</h1>",
+      "selector": "#heading-3bE27aKK4 > div > div > h1",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-2UwAYRkvU_btn\" class=\"cbutton-2UwAYRkvU buttonRocking button-shadow3 custom btn-vp btn-hp borderFull radius50 none\" aria-label=\"NEED INFO ABOUT GRANT  \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-2UwAYRkvU_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-yusfxgU-6_btn\" class=\"cbutton-yusfxgU-6 buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius15 none\" aria-label=\"SCHEDULE A DEMO \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-yusfxgU-6_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1.H42.2",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Heading tag found with no content. Text that is not intended as a heading should not be marked up with heading tags.",
+      "context": "<h1><br></h1>",
+      "selector": "#heading-MakeKm3wt > div > div > h1",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button--zEqHDdGid_btn\" class=\"cbutton--zEqHDdGid buttonRocking button-shadow3 custom btn-vp btn-hp borderFull radius50 none\" aria-label=\"Automations That Really Works \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button--zEqHDdGid_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-JwVqbtxOMC_btn\" class=\"cbutton-JwVqbtxOMC buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius15 none\" aria-label=\"SCHEDULE A DEMO \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-JwVqbtxOMC_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1.H42.2",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Heading tag found with no content. Text that is not intended as a heading should not be marked up with heading tags.",
+      "context": "<h1><br></h1>",
+      "selector": "#heading-NxkiZ6rCTY > div > div > h1",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-92lc5XQVpX_btn\" class=\"cbutton-92lc5XQVpX buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-92lc5XQVpX_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-zrdnMqdgBC_btn\" class=\"cbutton-zrdnMqdgBC buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-zrdnMqdgBC_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-2uvKooP-v9_btn\" class=\"cbutton-2uvKooP-v9 buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-2uvKooP-v9_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-dHG9NL1Jqa_btn\" class=\"cbutton-dHG9NL1Jqa buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-dHG9NL1Jqa_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49b90d7fd0479fb7f0954.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-QNjXJTws05 > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49b90d7fd0479fb7f0954.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-QNjXJTws05 > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button--K_LkbEuy1_btn\" class=\"cbutton--K_LkbEuy1 buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button--K_LkbEuy1_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49b90d7fd0479fb7f0954.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-ksqSkPEQ4p > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49b90d7fd0479fb7f0954.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-ksqSkPEQ4p > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-63naCP4-gr_btn\" class=\"cbutton-63naCP4-gr buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-63naCP4-gr_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d07d7fd04ba777f09f3.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-HuXmqMcwCR > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d07d7fd04ba777f09f3.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-HuXmqMcwCR > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-Yc6gCAMpnw_btn\" class=\"cbutton-Yc6gCAMpnw buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-Yc6gCAMpnw_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d0dd7fd04c41e7f09f4.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-Q5gKIsqiQN > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d0dd7fd04c41e7f09f4.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-Q5gKIsqiQN > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-wlbQ2euTvQ_btn\" class=\"cbutton-wlbQ2euTvQ buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-wlbQ2euTvQ_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49b90d7fd0479fb7f0954.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-c5TrNksGw_ > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49b90d7fd0479fb7f0954.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-c5TrNksGw_ > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-EN6EM-XkZP_btn\" class=\"cbutton-EN6EM-XkZP buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-EN6EM-XkZP_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d07d7fd04ba777f09f3.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-hHg6UBNR9P > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d07d7fd04ba777f09f3.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-hHg6UBNR9P > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-QgZT5o7QLF_btn\" class=\"cbutton-QgZT5o7QLF buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-QgZT5o7QLF_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/63629482741a28013972f3b8.jpeg\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-borde...",
+      "selector": "#image-bjKQsgubLM > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/63629482741a28013972f3b8.jpeg\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-borde...",
+      "selector": "#image-bjKQsgubLM > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-KAoHHK4T77_btn\" class=\"cbutton-KAoHHK4T77 buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-KAoHHK4T77_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d0dd7fd0482517f09f6.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-O7KIKcftBS > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d0dd7fd0482517f09f6.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-O7KIKcftBS > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1_A.G141",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "The heading structure is not logically nested. This h3 element should be an h2 to be properly nested.",
+      "context": "<h3><strong>Search Engine Optimizat...</h3>",
+      "selector": "#heading-w1LMSPItC_ > div > div > h3",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-oPqV1of6Rs_btn\" class=\"cbutton-oPqV1of6Rs buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-oPqV1of6Rs_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-XG6PM1LlDV_btn\" class=\"cbutton-XG6PM1LlDV buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-XG6PM1LlDV_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-SFxe0vMc6-_btn\" class=\"cbutton-SFxe0vMc6- buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-SFxe0vMc6-_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d0dd7fd0482517f09f6.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-9h5TBzsVcL > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d0dd7fd0482517f09f6.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-9h5TBzsVcL > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1.H42",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Heading markup should be used if this content is intended as a heading.",
+      "context": "<p><strong>/GRAPICS DESIGN</strong...</p>",
+      "selector": "#heading-LGFKAStp_K > div > div > p:nth-child(3)",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-euAhgAyXyt_btn\" class=\"cbutton-euAhgAyXyt buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-euAhgAyXyt_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1_A.G141",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "The heading structure is not logically nested. This h3 element should be an h2 to be properly nested.",
+      "context": "<h3><strong>Landing Pages</strong></h3>",
+      "selector": "#heading-SLgZ62iZ0D > div > div > h3",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d0dd7fd0456127f09f7.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-ijmtqSIymH > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d0dd7fd0456127f09f7.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-ijmtqSIymH > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-UsyqJHtixN_btn\" class=\"cbutton-UsyqJHtixN buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-UsyqJHtixN_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d0dd7fd0432b07f09f5.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-GKd1Z-yxlG > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f49d0dd7fd0432b07f09f5.png\" alt=\"\" style=\"height:50px !important;width:50px !important;\" class=\"img-none img-border...",
+      "selector": "#image-GKd1Z-yxlG > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-XEpyYls4q0_btn\" class=\"cbutton-XEpyYls4q0 buttonPulseGlow btnshadow custom btn-vp btn-hp borderFull radius20 none\" aria-label=\"GET STARTED \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-XEpyYls4q0_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68fcb799e16f3.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-zg-bdM5o9 > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68fcb799e16f3.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-zg-bdM5o9 > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_4.H77,H78,H79,H80,H81",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that the link text combined with programmatically determined link context identifies the purpose of the link.",
+      "context": "<a style=\"\" href=\"https://immigrationsupport.ca/\" target=\"_self\" aria-label=\"https://immigrationsupport.ca/\"><picture class=\"hl-image-pictur...</a>",
+      "selector": "#image-RPpiHoLq-d > div > div > a",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f78039e16ef.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-RPpiHoLq-d > div > div > a > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f78039e16ef.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-RPpiHoLq-d > div > div > a > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1.H42",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Heading markup should be used if this content is intended as a heading.",
+      "context": "<p><strong>Immigration</strong></p>",
+      "selector": "#sub-heading-sq23AbptFl > div > div > p",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b49aeed68f28799e16f7.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-bFFdCuCpCw > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b49aeed68f28799e16f7.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-bFFdCuCpCw > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1.H42",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Heading markup should be used if this content is intended as a heading.",
+      "context": "<p><strong>Real Estate</strong></p>",
+      "selector": "#sub-heading-rVpkxY8YM6 > div > div > p",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b49aeed68f28b39e16f6.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-NUlpVU_A1Q > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b49aeed68f28b39e16f6.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-NUlpVU_A1Q > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f237c9e16ee.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-XuJG0qcTR2 > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f237c9e16ee.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-XuJG0qcTR2 > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1.H42",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Heading markup should be used if this content is intended as a heading.",
+      "context": "<p><strong>Law Firms</strong></p>",
+      "selector": "#sub-heading-fvzSlf9Cb7 > div > div > p",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f47669e16f1.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-YhwHBYWmLZ > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f47669e16f1.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-YhwHBYWmLZ > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f31ad9e16f2.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-P_g2CEv7Ik > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f31ad9e16f2.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-P_g2CEv7Ik > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f87c49e16f0.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-k3SBfaWoGD > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f87c49e16f0.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-k3SBfaWoGD > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1.H42",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Heading markup should be used if this content is intended as a heading.",
+      "context": "<p><strong>Ecommerce</strong></p>",
+      "selector": "#sub-heading-RfSg44nqs4 > div > div > p",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f285e9e16f4.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-1x9hAm8coh > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f285e9e16f4.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-1x9hAm8coh > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1.H42",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Heading markup should be used if this content is intended as a heading.",
+      "context": "<p><strong>Start-ups</strong></p>",
+      "selector": "#sub-heading-ZI34n73wbo > div > div > p",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.H67.2",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Img element is marked so that it is ignored by Assistive Technology.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f0a529e16f5.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-KLrZt4kvj4 > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/LDuHoDPKJW05ohPPqX5L/media/62f8b499eed68f0a529e16f5.png\" alt=\"\" style=\"height:150px !important;width:150px !important;\" class=\"img-none img-bord...",
+      "selector": "#image-KLrZt4kvj4 > div > div > div > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1.H42",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Heading markup should be used if this content is intended as a heading.",
+      "context": "<p><strong>Political Campaigns</st...</p>",
+      "selector": "#sub-heading-h4KWqjO5iM > div > div > p",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1.H42.2",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Heading tag found with no content. Text that is not intended as a heading should not be marked up with heading tags.",
+      "context": "<h1></h1>",
+      "selector": "#paragraph-pv-5c37zH > div > div > h1:nth-child(5)",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-D4Gg6zcSt_btn\" class=\"cbutton-D4Gg6zcSt none btnshadow custom btn-vp btn-hp noBorder radius0 none\" aria-label=\"SIGN UP TAKE YOUR BUSINESS TO NEXT LEVEL\"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-D4Gg6zcSt_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_4.1_4_3.G18.Fail",
+      "type": "error",
+      "typeCode": 1,
+      "message": "This element has insufficient contrast at this conformance level. Expected a contrast ratio of at least 4.5:1, but text in this element has a contrast ratio of 3.19:1. Recommendation:  change background to #d93f00.",
+      "context": "<div class=\"sub-heading-button\">TAKE YOUR BUSINESS TO NEXT LEVE...</div>",
+      "selector": "#button-D4Gg6zcSt_btn > div:nth-child(2) > div",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G94.Image",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Ensure that the img element's alt text serves the same purpose and presents the same information as the image.",
+      "context": "<img style=\"width:auto;height:auto;\" src=\"https://assets.cdn.filesafe.space/FeUwaxEeVdNX9cYgpmpi/media/6206d2f28567b3866e5dc637.png\" alt=\"MA\" class=\"img-none img-border-none img-shadow-none img-effects-none\">",
+      "selector": "#image-RbTlNM74CK > div > div > div > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img style=\"width:auto;height:auto;\" src=\"https://assets.cdn.filesafe.space/FeUwaxEeVdNX9cYgpmpi/media/6206d2f28567b3866e5dc637.png\" alt=\"MA\" class=\"img-none img-border-none img-shadow-none img-effects-none\">",
+      "selector": "#image-RbTlNM74CK > div > div > div > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_1.H42",
+      "type": "warning",
+      "typeCode": 2,
+      "message": "Heading markup should be used if this content is intended as a heading.",
+      "context": "<p><strong>Let’s take the &nbsp; m...</p>",
+      "selector": "#bulletList-EpWQRAGRQS > div > div > p",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_1.G107",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that a change of context does not occur when this input field receives focus.",
+      "context": "<button style=\"\" id=\"button-NnCbPlTJNR_btn\" class=\"cbutton-NnCbPlTJNR none btnshadow custom btn-vp btn-hp noBorder radius0 none\" aria-label=\"Say Hello \"><div style=\"\" class=\"main-headi...</button>",
+      "selector": "#button-NnCbPlTJNR_btn",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_4.H77,H78,H79,H80,H81",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that the link text combined with programmatically determined link context identifies the purpose of the link.",
+      "context": "<a href=\"https://www.google.com/maps/search/?api=1&amp;query=Google&amp;query_place_id=EjQyNzYwIEdsYWR3aW4gUmQgIzEwMywgQWJib3RzZm9yZCwgQkMgVjJUIDRTNiwgQ2FuYWRhIh8aHQoWChQKEgktwm7aXDWEVBEjwzpHnGz--BIDMTAz\" target=\"_self\" aria-label=\"href\" data-v-e1cec...",
+      "selector": "#map-6p_iBbn2AD > div > a",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G94.Image",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Ensure that the img element's alt text serves the same purpose and presents the same information as the image.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://firebasestorage.googleapis.com/v0/b/highlevel-backend.appspot.com/o/location%2FLDuHoDPKJW05ohPPqX5L%2Fimages%2FGKnltqlvouVQCAlrFnZQ%2FEjQyNzYwIEdsYWR3aW4gUmQgIzEwMywgQWJi...",
+      "selector": "#map-6p_iBbn2AD > div > a > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_1.1_1_1.G73,G74",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this image cannot be fully described in a short text alternative, ensure a long text alternative is also available, such as in the body text or through a link.",
+      "context": "<img src=\"https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://firebasestorage.googleapis.com/v0/b/highlevel-backend.appspot.com/o/location%2FLDuHoDPKJW05ohPPqX5L%2Fimages%2FGKnltqlvouVQCAlrFnZQ%2FEjQyNzYwIEdsYWR3aW4gUmQgIzEwMywgQWJi...",
+      "selector": "#map-6p_iBbn2AD > div > a > picture > img",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle4.Guideline4_1.4_1_1.F77",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Duplicate id attribute value \"custom-code-zbb24javoe\" found on the web page.",
+      "context": "<div class=\"custom-code-container ccustom-code-zbb24javoe\" id=\"custom-code-zbb24javoe\"><span id=\"custom-code-zbb24javo...</div>",
+      "selector": "#custom-code-zbb24javoe",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle4.Guideline4_1.4_1_1.F77",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Duplicate id attribute value \"custom-code-zbb24javoe\" found on the web page.",
+      "context": "<span id=\"custom-code-zbb24javoe\"><!-- Start Engagement Widget Sc...</span>",
+      "selector": "#custom-code-zbb24javoe",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle4.Guideline4_1.4_1_1.F77",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Duplicate id attribute value \"custom-code-hcPyVXojVI\" found on the web page.",
+      "context": "<div class=\"custom-code-container ccustom-code-hcPyVXojVI\" id=\"custom-code-hcPyVXojVI\"><!----><!--[--><!----><div id=\"...</div>",
+      "selector": "#custom-code-hcPyVXojVI",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle4.Guideline4_1.4_1_1.F77",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Duplicate id attribute value \"custom-code-pTPd0jTKZr\" found on the web page.",
+      "context": "<div class=\"custom-code-container ccustom-code-pTPd0jTKZr\" id=\"custom-code-pTPd0jTKZr\"><span id=\"custom-code-pTPd0jTKZ...</div>",
+      "selector": "#custom-code-pTPd0jTKZr",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle4.Guideline4_1.4_1_1.F77",
+      "type": "error",
+      "typeCode": 1,
+      "message": "Duplicate id attribute value \"custom-code-pTPd0jTKZr\" found on the web page.",
+      "context": "<span id=\"custom-code-pTPd0jTKZr\">\n\n</span>",
+      "selector": "#custom-code-pTPd0jTKZr",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_2.G57",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that the content is ordered in a meaningful sequence when linearised, such as when style sheets are disabled.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_3.G96",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Where instructions are provided for understanding the content, do not rely on sensory characteristics alone (such as shape, size or location) to describe objects.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_3.1_3_4.",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that content does not restrict its view and operation to a single display orientation, such as portrait or landscape, unless a specific display orientation is essential.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_4.1_4_1.G14,G182",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that any information conveyed using colour alone is also available in text, or through other visual cues.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_4.1_4_4.G142",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that text can be resized without assistive technology up to 200 percent without loss of content or functionality.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_4.1_4_5.G140,C22,C30.AALevel",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If the technologies being used can achieve the visual presentation, check that text is used to convey information rather than images of text, except when the image of text is essential to the information being conveyed, or can be visually customised to the user's requirements.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_4.1_4_10.C32,C31,C33,C38,SCR34,G206",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that content can be presented without loss of information or functionality, and without requiring scrolling in two dimensions for:     Vertical scrolling content at a width equivalent to 320 CSS pixels;     Horizontal scrolling content at a height equivalent to 256 CSS pixels;     Except for parts of the content which require two-dimensional layout for usage or meaning.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_4.1_4_11.G195,G207,G18,G145,G174,F78",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that the visual presentation of the following have a contrast ratio of at least 3:1 against adjacent color(s):     User Interface Components: Visual information required to identify user interface components and states, except for inactive components or where the appearance of the component is determined by the user agent and not modified by the author;     Graphical Objects: Parts of graphics required to understand the content, except when a particular presentation of graphics is essential to the information being conveyed.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_4.1_4_12.C36,C35",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that no loss of content or functionality occurs by setting all of the following and by changing no other style property:              Line height (line spacing) to at least 1.5 times the font size;         Spacing following paragraphs to at least 2 times the font size;         Letter spacing (tracking) to at least 0.12 times the font size;         Word spacing to at least 0.16 times the font size.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle1.Guideline1_4.1_4_13.F95",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that where receiving and then removing pointer hover or keyboard focus triggers additional content to become visible and then hidden, the following are true:              Dismissable: A mechanism is available to dismiss the additional content without moving pointer hover or keyboard focus, unless the additional content communicates an input error or does not obscure or replace other content;         Hoverable: If pointer hover can trigger the additional content, then the pointer can be moved over the additional content without the additional content disappearing;         Persistent: The additional content remains visible until the hover or focus trigger is removed, the user dismisses it, or its information is no longer valid.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_1.2_1_4.",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that if a keyboard shortcut is implemented in content using only letter (including upper- and lower-case letters), punctuation, number, or symbol characters, then at least one of the following is true:              Turn off: A mechanism is available to turn the shortcut off;         Remap: A mechanism is available to remap the shortcut to use one or more non-printable keyboard characters (e.g. Ctrl, Alt, etc);         Active only on focus: The keyboard shortcut for a user interface component is only active when that component has focus.     ",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_2.2_2_2.SCR33,SCR22,G187,G152,G186,G191",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If any part of the content moves, scrolls or blinks for more than 5 seconds, or auto-updates, check that there is a mechanism available to pause, stop, or hide the content.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_3.2_3_1.G19,G176",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that no component of the content flashes more than three times in any 1-second period, or that the size of any flashing area is sufficiently small.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_1.G1,G123,G124,H69",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Ensure that any common navigation elements can be bypassed; for instance, by use of skip links, header elements, or ARIA landmark roles.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_5.G125,G64,G63,G161,G126,G185",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "If this Web page is not part of a linear process, check that there is more than one way of locating this Web page within a set of Web pages.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_6.G130,G131",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that headings and labels describe topic or purpose.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_4.2_4_7.G149,G165,G195,C15,SCR31",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that there is at least one mode of operation where the keyboard focus indicator can be visually located on user interface controls.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_5.2_5_1.",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that all functionality that uses multipoint or path-based gestures for operation can be operated with a single pointer without a path-based gesture, unless a multipoint or path-based gesture is essential.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_5.2_5_2.",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that for functionality that can be operated using a single pointer, at least one of the following is true:         No Down-Event: The down-event of the pointer is not used to execute any part of the function;         Abort or Undo: Completion of the function is on the up-event, and a mechanism is available to abort the function before completion or to undo the function after completion;         Up Reversal: The up-event reverses any outcome of the preceding down-event;         Essential: Completing the function on the down-event is essential.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_5.2_5_3.F96",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that for user interface components with labels that include text or images of text, the name contains the text that is presented visually.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle2.Guideline2_5.2_5_4.",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that functionality that can be operated by device motion or user motion can also be operated by user interface components and responding to the motion can be disabled to prevent accidental actuation, except when:              Supported Interface: The motion is used to operate functionality through an accessibility supported interface;         Essential: The motion is essential for the function and doing so would invalidate the activity.     ",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_1.3_1_2.H58",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Ensure that any change in language is marked using the lang and/or xml:lang attribute on an element, as appropriate.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_3.G61",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that navigational mechanisms that are repeated on multiple Web pages occur in the same relative order each time they are repeated, unless a change is initiated by the user.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_4.G197",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that components that have the same functionality within this Web page are identified consistently in the set of Web pages to which it belongs.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    },
+    {
+      "code": "WCAG2AA.Principle4.Guideline4_1.4_1_3.",
+      "type": "notice",
+      "typeCode": 3,
+      "message": "Check that status messages can be programmatically determined through role or properties such that they can be presented to the user by assistive technologies without receiving focus.",
+      "context": null,
+      "selector": "",
+      "runner": "htmlcs",
+      "runnerExtras": {}
+    }
+  ]
+}
