@@ -90,7 +90,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   })
 
   app.get('/webAbilityV1.0.min.js', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'webAbilityV1.0.min.js'));
+    res.sendFile(path.join(__dirname, 'webAbilityV1.0.min.js'));
 });
 
   app.post('/form', async (req, res) => {
