@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { resolve, join } from 'path';
 import express, { NextFunction, Request, Response } from 'express';
 import morgan from 'morgan';
+import path from 'path';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
@@ -87,6 +88,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     const token = await GetVisitorTokenByWebsite(url);
     res.send(token);
   })
+
+  app.get('/webAbilityV1.0.min.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'webAbilityV1.0.min.js'));
+});
 
   app.post('/form', async (req, res) => {
     console.log('Received POST request for /form:', req.body);

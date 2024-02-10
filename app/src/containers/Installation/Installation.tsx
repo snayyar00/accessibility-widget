@@ -10,7 +10,7 @@ export default function Installation({ domain }: any) {
 
   function getCodeString(uniqueToken: string):string {
     return `
-<script src="https://webabilityv.ca/webAbilityV1.0.min.js" 
+<script src="https://webability.ca/webAbilityV1.0.min.js" 
     token="${uniqueToken}"
     data-asw-lang="en">
 </script>
