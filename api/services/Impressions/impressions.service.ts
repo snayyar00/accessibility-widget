@@ -63,7 +63,6 @@ export async function addImpressionsURL(url: string, ipAddress: string): Promise
         const visitor = await findVisitorByIp(ipAddress);
 
         if (visitor) {
-            console.log(visitor)
             const data = {
                 visitor_id: visitor.id
             }

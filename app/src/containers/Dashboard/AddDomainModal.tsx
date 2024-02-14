@@ -51,8 +51,7 @@ export default function AddDomainModal({ setShowPopup, setReloadSites }: AddDoma
       setShowPopup(false)
       return;
     }
-    const sanitizedDomain = newDomain.replace(/^(https?:\/\/)/, '');
-    // const sanitizedDomain = newDomain.replace(/^(https?:\/\/)?(www\.)?/, '');
+    const sanitizedDomain = newDomain.replace(/^(https?:\/\/)?(www\.)?/, '');
     addSiteMutation({ variables: { url: sanitizedDomain } });
 
   };

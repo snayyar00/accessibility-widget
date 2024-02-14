@@ -83,7 +83,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           <div className='flex justify-center w-full'>
             {score > 89 ?
               <FaCheckCircle size={90} color='green' /> :
-              <AiFillCloseCircle size={90} color='red' />
+              <AiFillCloseCircle size={90} color='#ec4545' />
             }
           </div>
           <div className={`card-status ${score > 89 ? 'low' : 'not-compliant'}`}>{score > 89 ? 'Compliant' : 'Not Compliant'}</div>
@@ -95,7 +95,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         <div className="accessibility-card">
           <div className="card-header">Lawsuit Risk</div>
           <div className='flex justify-center'>
-            <FaGaugeSimpleHigh style={score > 89 ? { transform: 'scaleX(-1)' } : {}} size={90} color={score > 89 ? 'green' : 'red'} />
+            <FaGaugeSimpleHigh style={score > 89 ? { transform: 'scaleX(-1)' } : {}} size={90} color={score > 89 ? 'green' : '#ec4545'} />
           </div>
           <div className={`card-risk ${score > 89 ? 'low' : 'high'}`}>{score > 89 ? 'Low' : 'High'}</div>
           <p>Multiple violations may be exposing your site to legal action.</p>

@@ -1,3 +1,5 @@
+import { readAccessibilityDescriptionFromDb } from "../services/accessibilityReport/accessibilityIssues.service";
+
 const pa11y = require('pa11y');
 const fs = require('fs');
 
@@ -64,23 +66,15 @@ function createHtmlcsArrayObj(issue: any) {
     return obj;
 }
 
-pa11y('tecqify.com', {
-    includeNotices: true,
-    includeWarnings: true,
-    runners: [
-        'axe',
-        'htmlcs'
-    ]
-}).then((results: any) => {
-    console.log(results)
-    // const issueArray = results.issues.map((result:any) => {
-    //     return {
-    //         code: result.code,
-    //         message: result.message,
-    //         context: result.context
-    //     }
-    // })
-    // results.issues = issueArray
+export async function getAccessibilityInformationPally(domain: string) {
+    const results = await pa11y(domain, {
+        includeNotices: true,
+        includeWarnings: true,
+        runners: [
+            'axe',
+            'htmlcs'
+        ]
+    });
 
     results.issues.forEach((issue: any) => {
         if (issue.runner === 'axe') {
@@ -156,15 +150,8 @@ pa11y('tecqify.com', {
             }
         }
     });
+    
+    const result = await readAccessibilityDescriptionFromDb(output.htmlcs)
+    output.htmlcs = result;
 
-    console.log(output);
-
-    const resultsString = JSON.stringify(results, null, 2); // format for readability
-    fs.writeFile('newfile.txt', resultsString, (err: any) => {
-        if (err) {
-            console.error('Error writing file:', err);
-        } else {
-            console.log(`Results written to newfile.txt. Total issues: ${results.issues.length}`);
-        }
-    });
-});
+}

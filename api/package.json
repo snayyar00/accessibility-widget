@@ -51,6 +51,7 @@
     "mysql2": "^2.2.5",
     "nodemailer": "^6.9.7",
     "nodemailer-smtp-transport": "^2.7.4",
+    "openai": "^4.27.0",
     "pa11y": "^7.0.0",
     "redis": "^3.0.2",
     "stripe": "^8.121.0",

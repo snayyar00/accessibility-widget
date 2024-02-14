@@ -23,8 +23,8 @@ const Teams: React.FC = () => {
       toast.error('You must enter a valid domain name!');
       return;
     }
-    const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)/, '');
-    // const sanitizedDomain = newDomain.replace(/^(https?:\/\/)?(www\.)?/, '');
+    // const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)/, '');
+    const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)?(www\.)?/, '');
     addSiteMutation({ variables: { url: sanitizedDomain } })
 
   };

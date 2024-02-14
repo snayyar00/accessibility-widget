@@ -18,5 +18,5 @@ export function up(knex: Knex): Knex.SchemaBuilder {
 }
 
 export function down(knex: Knex): Knex.SchemaBuilder {
-	return knex.schema.dropTable('unique_visitors');
+	return knex.schema.dropTableIfExists('unique_visitors');
 }
