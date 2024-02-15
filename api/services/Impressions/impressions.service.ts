@@ -30,11 +30,11 @@ export async function addImpressions(siteId: number, ipAddress: string): Promise
         if (visitor) {
             const data = {
                 site_id: siteId,
-                visitor_id: visitor.id
-            }
+                visitor_id: visitor.id,
+            };
 
             const response = await insertImpressions(data);
-            return response
+            return response;
         }
         else {
             await addNewVisitor(ipAddress, siteId);

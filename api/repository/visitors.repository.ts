@@ -13,7 +13,7 @@ export const visitorColumns = {
   country: 'unique_visitors.country',
   zipcode: 'unique_visitors.zipcode',
   continent: 'unique_visitors.continent',
-  first_visit: 'unique_visitors.first_visit'
+  first_visit: 'unique_visitors.first_visit',
 };
 
 export type VisitorInfo = {
@@ -75,7 +75,7 @@ export async function findVisitorBySiteId(id: number) {
     country: visitor.country,
     zipcode: visitor.zipcode,
     continent: visitor.continent,
-    firstVisit: visitor.first_visit // Mapping from 'first_visit' to 'firstVisit'
+    firstVisit: visitor.first_visit, // Mapping from 'first_visit' to 'firstVisit'
   }));
 }
 export async function findVisitorByURL(url: string) {
@@ -112,7 +112,7 @@ export async function findVisitorByURLDate(url: string, startDate: Date, endDate
     country: visitor.country,
     zipcode: visitor.zipcode,
     continent: visitor.continent,
-    firstVisit: visitor.first_visit // Mapping from 'first_visit' to 'firstVisit'
+    firstVisit: visitor.first_visit, // Mapping from 'first_visit' to 'firstVisit'
   }));
 }
 
@@ -138,11 +138,11 @@ export async function findVisitorByIp(ip_address: string) {
       country: visitor.country,
       zipcode: visitor.zipcode,
       continent: visitor.continent,
-      firstVisit: visitor.first_visit
-    }
+      firstVisit: visitor.first_visit,
+    };
   }
   else {
-    return undefined
+    return undefined;
   }
 }
 

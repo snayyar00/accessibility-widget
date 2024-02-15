@@ -4,7 +4,7 @@ import { fetchAccessibilityReport } from '~/services/accessibilityReport/accessi
 const resolvers = {
   Query: {
     getAccessibilityReport: combineResolvers(
-      (_, { url, reportType }) => fetchAccessibilityReport(url, reportType)
+      (_, { url}) => fetchAccessibilityReport(url)
     ),
   },
 };

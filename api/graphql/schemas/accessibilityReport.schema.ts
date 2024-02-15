@@ -2,35 +2,43 @@ import { gql } from 'apollo-server-express';
 
 export const AccessibilitySchema = gql`
 
-type Status {
-  success: Boolean
-  httpstatuscode: Int
+type axeOutput{
+  message: String
+  context: [String]
+  selectors: [String]
+  impact: String
+  description: String
+  help: String
 }
 
-type Statistics {
-  pagetitle: String
-  pageurl: String
-  time: Float
-  creditsremaining: Int
-  allitemcount: Int
-  totalelements: Int
-  waveurl: String
+type htmlCsOutput{
+  code: String,
+  message: String,
+  context: [String]
+  selectors: [String]
 }
 
-type AccessibilityScore{
-    score: Int,
-    totalElements: Int
+type axeResult{
+  errors: [axeOutput]
+  notices: [axeOutput]
+  warnings: [axeOutput]
+}
+
+type htmlCsResult{
+  errors: [htmlCsOutput]
+  notices: [htmlCsOutput]
+  warnings: [htmlCsOutput]
 }
 
 type Report {
-  status: Status
-  statistics: Statistics
-  categories: JSON
-  accessibilityScore: AccessibilityScore
+  axe: axeResult
+  htmlcs: htmlCsResult
+  score: Int
+  totalElements: Int
 }
 
 extend type Query {
-  getAccessibilityReport(url: String!, reportType: Int!): Report
+  getAccessibilityReport(url: String!): Report
 }
 
 `;
