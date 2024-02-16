@@ -16,10 +16,7 @@ import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
 import stripeHooks from './services/stripe/webhooks.servive';
 import { getIpAddress } from './helpers/uniqueVisitor.helper';
-import mongoose from 'mongoose';
-import nodemailer from 'nodemailer';
 import sendMail from '~/libs/mail'
-import Visitor from './mongoSchema/visitor.model';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 
 type ContextParams = {
@@ -33,8 +30,8 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
-const allowedOrigins = [process.env.FRONTEND_URL, undefined, 'http://localhost:5000', 'https://www.webability.io']
-const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction']
+const allowedOrigins = [process.env.FRONTEND_URL, undefined, 'http://localhost:5000', 'https://www.webability.io'];
+const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction'];
 
 app.use(express.json());
 

@@ -29,14 +29,14 @@ const routes = [
   //   icon: <DocumentIcon />,
   //   isSidebar: true,
   // },
-  {
-    path: '/add-domain',
-    name: 'Add Domain',
-    exact: false,
-    component: Teams,
-    icon: <UserIcon />,
-    isSidebar: true,
-  },
+  // {
+  //   path: '/add-domain',
+  //   name: 'Add Domain',
+  //   exact: false,
+  //   component: Teams,
+  //   icon: <UserIcon />,
+  //   isSidebar: true,
+  // },
   {
     path: '/document/create',
     name: 'Create Document',

@@ -55,11 +55,11 @@ const updateIssueDetails = (matchedRecords: dbIssue[], issueList: any[]) => {
     });
 };
 
-async function populateMissingDescriptions(matchedRecords: dbIssue[], issueHeadings: any) {
+async function populateMissingDescriptions(matchedRecords: dbIssue[], issueHeadings: any, type:string) {
+    console.log(type)
     const notFoundIssues = issueHeadings.filter((message: any) => {
         return !matchedRecords.some(record => record.heading === message);
     });
-
     if (notFoundIssues.length > 0) {
         const apiResult = await getIssueDescription(notFoundIssues);
         console.log(apiResult.finish_reason)
@@ -81,9 +81,9 @@ export async function readAccessibilityDescriptionFromDb(issues: any) {
         let matchedRecords = await getAccessibilityDescription(headings);
 
         const results = await Promise.all([
-            populateMissingDescriptions(matchedRecords, errorHeadings),
-            populateMissingDescriptions(matchedRecords, warningHeadings),
-            populateMissingDescriptions(matchedRecords, noticesHeadings)
+            populateMissingDescriptions(matchedRecords, errorHeadings, 'error'),
+            populateMissingDescriptions(matchedRecords, warningHeadings, 'warning'),
+            populateMissingDescriptions(matchedRecords, noticesHeadings, 'notice')
         ]);
         const added = results.some(result => result === true);
 

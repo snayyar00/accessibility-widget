@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAccessibilityInformationPally } from '~/helpers/accessibility.helper';
 import logger from '~/utils/logger';
 const { GraphQLJSON } = require('graphql-type-json');
 
@@ -112,42 +113,10 @@ function calculateAccessibilityScore(data: any) {
 }
 
 
-export const fetchAccessibilityReport = async (url: string, reportType: number) => {
+export const fetchAccessibilityReport = async (url: string) => {
     try {
-        const response = await axios.get(`https://wave.webaim.org/api/request?key=${process.env.WEBAIM_API}&url=${url}&reporttype=${reportType}`);
-        const data =  response.data
-
-        
-
-        const categoriesArray = Object.keys(data.categories).map((categoryKey) => {
-            const category = data.categories[categoryKey as keyof typeof data.categories];
-    
-            const items = Object.keys(category.items).map((itemKey) => {
-                const item:object = category.items[itemKey as keyof typeof category.items];
-                if (item) {
-                    return { id: itemKey, ...item };
-                } else {
-                    // Handle the case where item is not a CategoryItem
-                    return { id: itemKey, description: 'Unknown', count: 0 };
-                }
-            });
-    
-            return {
-                description: category.description,
-                count: category.count,
-                items,
-            };
-        });
-        
-        const accessibilityScore = calculateAccessibilityScore(data);
-        console.log(response.data, 'accessibilityScore', accessibilityScore);
-        return { 
-            status: data.status,
-            accessibilityScore: accessibilityScore,
-            statistics: data.statistics,
-            categories: data.categories, // use the transformed categories array here
-        };
-
+        const result = await getAccessibilityInformationPally(url);
+        return result;
 
     } catch (error) {
         logger.error(error);

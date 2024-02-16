@@ -30,6 +30,8 @@ interface finalOutput {
         notices: htmlcsOutput[];
         warnings: htmlcsOutput[];
     };
+    score?: number;
+    totalElements: number
 }
 
 const output: finalOutput = {
@@ -42,7 +44,8 @@ const output: finalOutput = {
         errors: [],
         notices: [],
         warnings: []
-    }
+    },
+    totalElements: 0
 }
 
 function createAxeArrayObj(message: string, issue: any) {
@@ -65,6 +68,32 @@ function createHtmlcsArrayObj(issue: any) {
     }
     return obj;
 }
+
+function calculateAccessibilityScore(issues: { errors: axeOutput[], warnings: axeOutput[], notices: axeOutput[] }) {
+    let score = 0;
+    const issueWeights: Record<string, number> = { "error": 3, "warning": 2, "notice": 1 };
+    const impactWeights: Record<string, number> = { "critical": 4, "serious": 3, "moderate": 2, "minor": 1 };
+
+    issues.errors.forEach(issue => {
+        const impactWeight = impactWeights[issue.impact.toLowerCase()] || 0;
+        score += issueWeights["error"] * impactWeight * issue.selectors.length;
+    });
+
+    issues.warnings.forEach(issue => {
+        const impactWeight = impactWeights[issue.impact.toLowerCase()] || 0;
+        score += issueWeights["warning"] * impactWeight * issue.selectors.length;
+    });
+
+    issues.notices.forEach(issue => {
+        const impactWeight = impactWeights[issue.impact.toLowerCase()] || 0;
+        score += issueWeights["notice"] * impactWeight * issue.selectors.length;
+    });
+
+    // Normalize the score to a maximum of 70%
+    const maxScore = 70;
+    return Math.min(score, maxScore);
+}
+
 
 export async function getAccessibilityInformationPally(domain: string) {
     const results = await pa11y(domain, {
@@ -112,6 +141,7 @@ export async function getAccessibilityInformationPally(domain: string) {
                     output.axe.warnings[warningIndex].selectors.push(issue.selector);
                 }
             }
+            output.totalElements += 1;
         }
         else if (issue.runner === 'htmlcs') {
             if (issue.type === 'error') {
@@ -150,8 +180,9 @@ export async function getAccessibilityInformationPally(domain: string) {
             }
         }
     });
-    
+    output.score = calculateAccessibilityScore(output.axe);
     const result = await readAccessibilityDescriptionFromDb(output.htmlcs)
     output.htmlcs = result;
+    return output;
 
 }
