@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ApolloProvider } from '@apollo/client';
+import { ApolloProvider, useQuery } from '@apollo/client';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
@@ -18,12 +18,18 @@ import 'react-toastify/dist/ReactToastify.css';
 import useDocumentHeader from './hooks/useDocumentTitle';
 import { RootState } from './config/store';
 
+type props = {
+  options: string[];
+}
 const client = createClient();
 
-const App: React.FC = () => {
+const App: React.FC<props> = ({ options }) => {
+
   const { t } = useTranslation();
-  useDocumentHeader({ title: t('Common.title.saasgear') });
+  useDocumentHeader({ title: t('WebAbility') });
   const { error } = useSelector((state: RootState) => state.user);
+
+
 
   useEffect(() => {
     if (error) {
@@ -44,7 +50,7 @@ const App: React.FC = () => {
             component={AcceptInvitation}
           />
           <PublicRoute path="/auth" component={Auth} />
-          <PrivateRoute render={() => <AdminLayout />} />
+          <PrivateRoute render={() => <AdminLayout options={options} />} />
           <Redirect from="*" to="/" />
         </Switch>
       </BrowserRouter>

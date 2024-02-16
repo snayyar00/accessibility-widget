@@ -1,23 +1,71 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Route, Switch } from 'react-router-dom';
-import TeamDetail from './TeamDetail';
-import EditTeam from './EditTeam';
-import ListTeam from './ListTeam';
+import React, { useState, FormEvent, useEffect } from 'react';
+import './Teams.css';
+import { useMutation } from '@apollo/client';
+import addSite from '@/queries/sites/addSite';
+import { toast } from 'react-toastify';
+import isValidDomain from '@/utils/verifyDomain';
+import DomainTable from './DomainTable';
 
-const Teams: React.FC = () => {
-  const { t } = useTranslation();
+interface DomainFormData {
+  domainName: string;
+}
+
+const Teams = ({ domains, setReloadSites }: any) => {
+  const [addSiteMutation, { error, loading }] = useMutation(addSite, {
+    onCompleted: () => {
+      setReloadSites(true);
+      toast.success('The domain was successfully added to the database.');
+    },
+  });
+  const [formData, setFormData] = useState<DomainFormData>({ domainName: '' });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!isValidDomain(formData.domainName)) {
+      toast.error('You must enter a valid domain name!');
+      return;
+    }
+    // const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)/, '');
+    const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)?(www\.)?/, '');
+    addSiteMutation({ variables: { url: sanitizedDomain } })
+
+  };
+
+
   return (
-    <div>
+    <>
       <h3 className="font-bold text-[26px] leading-9 text-sapphire-blue mb-8">
-        {t('Common.title.teams')}
+        Add new domain
       </h3>
-      <Switch>
-        <Route path="/teams/new" exact component={TeamDetail} />
-        <Route path="/teams/edit/:teamId" exact component={EditTeam} />
-        <Route component={ListTeam} />
-      </Switch>
-    </div>
+      <div className="add-domain-container">
+
+        <div className="add-domain-form-container">
+          <form onSubmit={handleSubmit} className="add-domain-form">
+            <div className="form-group">
+              <input
+                type="text"
+                id="domainName"
+                name="domainName"
+                placeholder="Add a new domain name"
+                value={formData.domainName}
+                onChange={handleInputChange}
+                className="form-control"
+              />
+            </div>
+            <button type="submit" className="submit-btn">
+              {loading ? 'Adding...' : 'Add Domain'}
+            </button>
+          </form>
+          {error ? toast.error('There was an error adding the domain to the database.') : <></>}
+        </div>
+        <DomainTable data={domains} setReloadSites={setReloadSites} />
+      </div>
+    </>
   );
 };
+
 export default Teams;

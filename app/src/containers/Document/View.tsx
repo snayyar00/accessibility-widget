@@ -5,6 +5,7 @@ import { useLazyQuery } from '@apollo/client';
 import { useRouteMatch } from 'react-router-dom';
 
 import getDocumentDetailQuery from '@/queries/document/getDocumentDetail';
+import { CircularProgress } from '@mui/material';
 
 type MatchParams = {
   id: string;
@@ -32,7 +33,7 @@ const ViewDocument: React.FC = () => {
 
   return (
     <div className="min-h-[calc(100vh_-_64px)]">
-      {loading && <div>{t('Common.text.loading')}</div>}
+      {loading && <div className='flex items-center justify-center h-screen w-screen'><CircularProgress size={150}/></div>}
 
       {!loading && documentData?.getDocumentDetail && (
         <>

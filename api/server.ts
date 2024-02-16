@@ -1,8 +1,9 @@
 /* eslint-disable wrap-iife */
 import dotenv from 'dotenv';
 import { resolve, join } from 'path';
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import morgan from 'morgan';
+import path from 'path';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
@@ -15,9 +16,8 @@ import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
 import stripeHooks from './services/stripe/webhooks.servive';
 import { getIpAddress } from './helpers/uniqueVisitor.helper';
-import crypto from 'crypto';
-import mongoose from 'mongoose';
-import nodemailer from 'nodemailer';
+import sendMail from '~/libs/mail'
+import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 
 type ContextParams = {
   req: Request;
@@ -26,112 +26,83 @@ type ContextParams = {
 
 dotenv.config();
 
+
+
 const app = express();
 const port = process.env.PORT || 3001;
+const allowedOrigins = [process.env.FRONTEND_URL, undefined, 'http://localhost:5000', 'https://www.webability.io'];
+const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction'];
 
-const dbURI = process.env.MONGODB_URI;
+app.use(express.json());
 
-mongoose.connect(dbURI);
 
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', () => {
-  console.log('Connected to MongoDB');
-});
-
-function generateUniqueToken() {
-  return crypto.randomBytes(16).toString('hex');
-}
-
-async function sendEmail(sendTo: string, subject: string, text: string) {
-  if (!sendTo || sendTo.trim() === '') {
-    console.error('Recipient email address is missing or empty.');
-    return;
-  }
-
-  const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT, 10),
-    secure: process.env.EMAIL_SECURE === 'true', // should be true if EMAIL_PORT is 465
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+function dynamicCors(req: Request, res: Response, next: NextFunction) {
+  const corsOptions = {
+    optionsSuccessStatus: 200,
+    credentials: true,
+    origin: (origin: any, callback: any) => {
+      if (req.body && allowedOperations.includes(req.body.operationName)) {
+        // Allow any origin for 'validateToken'
+        callback(null, true);
+      } else if (allowedOrigins.includes(origin) || req.method === 'OPTIONS') {
+        // Allow your specific frontend origin
+        callback(null, true);
+      }
+      // else {
+      //   // Disallow other origins
+      //   callback(new Error('Not allowed by CORS'));
+      // }
     },
-  } as nodemailer.TransportOptions);
-
-  const mailOptions = {
-    from: process.env.EMAIL_FROM,
-    to: sendTo,
-    subject: subject,
-    text: text
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   };
 
-  try {
-    const info: any = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', info.messageId);
-  } catch (error) {
-    console.error('Error sending email:', error);
-  }
+  cors(corsOptions)(req, res, next);
 }
-
-const visitorSchema = new mongoose.Schema({
-  Businessname: String,
-  Email: String,
-  Website: String,
-  Uniquetoken: String,
-});
-
-const Visitor = mongoose.model('Visitor', visitorSchema);
-
-
-const corsOptions = {
-  optionsSuccessStatus: 200,
-  credentials: true,
-  origin: process.env.FRONTEND_URL,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-};
 
 (function startServer() {
   app.use(morgan('combined', { stream: accessLogStream }));
-  app.use(cors(corsOptions));
-  app.use(cors({
-    origin: 'https://www.webability.io',
-    methods: 'GET,POST',
-    credentials: true
-  }));
+
+  // app.use(cors({
+  //   origin: 'https://www.webability.io',
+  //   methods: 'GET,POST',
+  //   credentials: true
+  // }));
+  app.use(dynamicCors)
 
 
 
   app.use(express.static(join(resolve(), 'public', 'uploads')));
   app.use(cookieParser());
-  app.use(express.json());
+
   app.use(bodyParser.urlencoded({ extended: true }));
 
   app.get('/', (req, res) => {
     res.send('Hello orld!');
   });
   app.post('/stripe-hooks', bodyParser.raw({ type: 'application/json' }), stripeHooks);
+  app.get('/token/:url', async (req, res) => {
+    const url = req.params.url;
+    const token = await GetVisitorTokenByWebsite(url);
+    res.send(token);
+  })
+
+  app.get('/webAbilityV1.0.min.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'webAbilityV1.0.min.js'));
+});
 
   app.post('/form', async (req, res) => {
-    const uniqueToken = generateUniqueToken();
     console.log('Received POST request for /form:', req.body);
-    const visitorDocument = new Visitor({
-      businessName: req.body.businessName,
-      email: req.body.email,
-      website: req.body.website,
-      Uniquetoken: uniqueToken,
-    });
-
-    try {
-      await visitorDocument.save();
+    const uniqueToken = await AddTokenToDB(req.body.businessName, req.body.email, req.body.website);
+    if (uniqueToken !== '') {
       res.send('Received POST request for /form');
-    } catch (error) {
-      console.error('Error inserting data:', error);
+    }
+    else {
       res.status(500).send('Internal Server Error');
+      return;
     }
 
     try {
-      sendEmail(req.body.email, 'Welcome to Webability', `
+      sendMail(req.body.email, 'Welcome to Webability', `
             <html>
             <head>
             <style>
@@ -185,7 +156,7 @@ const corsOptions = {
       {
         requestDidStart() {
           return {
-            didEncounterErrors(ctx:any) {
+            didEncounterErrors(ctx: any) {
               if (!ctx.operation) return;
               for (const err of ctx.errors) {
                 if (err instanceof ApolloError) {
@@ -230,7 +201,7 @@ const corsOptions = {
     },
   });
 
-  serverGraph.applyMiddleware({ app, cors: corsOptions });
+  serverGraph.applyMiddleware({ app, cors: false });
   init({ dsn: process.env.SENTRY_DSN });
   app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);

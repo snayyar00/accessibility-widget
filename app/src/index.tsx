@@ -1,16 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { init, ErrorBoundary } from '@sentry/react';
 import { Integrations } from '@sentry/tracing';
+import { useQuery } from '@apollo/client';
+
 
 import store from '@/config/store';
 import App from './App';
 
-import './index.css'
+import './index.css';
 
 import './config/i18n';
 
+
+
+const options = ["Option1", "Option2"];
 init({
   dsn: process.env.REACT_APP_SENTRY_DSN,
   integrations: [new Integrations.BrowserTracing()],
@@ -21,7 +26,7 @@ const render = () => {
   ReactDOM.render(
     <ErrorBoundary fallback="An error has occurred">
       <Provider store={store}>
-        <App />
+        <App options={options} />
       </Provider>
     </ErrorBoundary>,
     document.getElementById('root')

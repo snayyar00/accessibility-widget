@@ -4,6 +4,8 @@ import { FindAllowedSitesProps } from '~/repository/sites_allowed.repository';
 
 import { findVisitorByIp } from '~/repository/visitors.repository';
 import { findImpressionsSiteId, insertImpressions, updateImpressions, findImpressionsURL, insertImpressionURL, findEngagementURLDate, findImpressionsURLDate } from '~/repository/impressions.repository';
+import { findSite } from '../allowedSites/allowedSites.service';
+import { addNewVisitor } from '../uniqueVisitors/uniqueVisitor.service';
 
 // type GetDocumentsResponse = {
 //   documents: FindDocumentsResponse;
@@ -28,11 +30,22 @@ export async function addImpressions(siteId: number, ipAddress: string): Promise
         if (visitor) {
             const data = {
                 site_id: siteId,
+                visitor_id: visitor.id,
+            };
+
+            const response = await insertImpressions(data);
+            return response;
+        }
+        else {
+            await addNewVisitor(ipAddress, siteId);
+            const visitor = await findVisitorByIp(ipAddress);
+            const data = {
+                site_id: siteId,
                 visitor_id: visitor.id
             }
 
             const response = await insertImpressions(data);
-            return response
+            return response;
         }
 
     } catch (error) {
@@ -40,7 +53,7 @@ export async function addImpressions(siteId: number, ipAddress: string): Promise
         throw error;
     }
 }
-export async function addImpressionsURL(url: string ,ipAddress: string): Promise<number[]> {
+export async function addImpressionsURL(url: string, ipAddress: string): Promise<number[]> {
     //   const validateResult = createValidation({ name, body });
     //   if (Array.isArray(validateResult) && validateResult.length) {
     //     throw new ValidationError(validateResult.map((it) => it.message).join(','));
@@ -56,6 +69,16 @@ export async function addImpressionsURL(url: string ,ipAddress: string): Promise
 
             const response = await insertImpressionURL(data, url);
             return response
+        }
+        else {
+            const site = await findSite(url);
+            await addNewVisitor(ipAddress, site.id);
+            const visitor = await findVisitorByIp(ipAddress);
+            const data = {
+                visitor_id: visitor.id
+            }
+            const response = await insertImpressionURL(data, url);
+            return response;
         }
 
     } catch (error) {
@@ -128,7 +151,7 @@ export async function addInteraction(siteId: number, interaction: string) {
     }
 }
 
-export async function getEngagementRates(userId: number, url:string, startDate: string, endDate: string) {
+export async function getEngagementRates(userId: number, url: string, startDate: string, endDate: string) {
     try {
         const impressions = await findEngagementURLDate(userId, url, startDate, endDate);
         return impressions;

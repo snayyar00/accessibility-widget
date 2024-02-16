@@ -34,7 +34,7 @@ export async function forgotPasswordUser(email: string): Promise<boolean> {
       },
     });
 
-    await sendMail(session.email, 'Reset Password from SaaSgear', template);
+    await sendMail(session.email, 'Reset Password from WebAbility', template);
     return true;
   } catch (error) {
     logger.error(error);

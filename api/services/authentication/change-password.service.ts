@@ -37,7 +37,7 @@ export async function changePasswordUser(userId: number, currentPassword: string
       },
     });
 
-    await sendMail(user.email, 'Change Password from SaaSgear', template);
+    await sendMail(user.email, 'Change Password from WebAbility', template);
     return true;
   } catch (error) {
     logger.error(error);

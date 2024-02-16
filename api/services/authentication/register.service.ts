@@ -25,6 +25,7 @@ async function registerUser(email: string, password: string, name: string, payme
   try {
     const user = await findUser({ email });
     if (user) {
+      console.log('register service', user)
       return new ApolloError('Email address has been used');
     }
 
@@ -41,6 +42,7 @@ async function registerUser(email: string, password: string, name: string, payme
     let newUserId = null;
 
     if (planName) {
+      console.log(planName)
       const product = await findProductAndPriceByType(planName, billingType);
       if (!product) {
         return new ApolloError('Can not find any plan');
@@ -62,6 +64,7 @@ async function registerUser(email: string, password: string, name: string, payme
         }
       }
     } else {
+      console.log('no plan')
       newUserId = await createUser(userData);
     }
 
