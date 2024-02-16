@@ -23,6 +23,26 @@ export async function RemoveTokenFromDB(website: string) {
   }
 }
 
+export async function UpdateWebsiteURL(oldURL: string, newURL: string) {
+  try {
+    const result = await Visitor.findOneAndUpdate(
+      { Website: oldURL },
+      { $set: { Website: newURL } },
+      { new: true }
+    );
+
+    if (result) {
+      return true; // Successfully updated
+    } else {
+      return false; // No document found to update
+    }
+  } catch (error) {
+    console.error('Error updating website URL:', error);
+    logger.error('Error updating website URL:', error);
+    return false;
+  }
+}
+
 export async function AddTokenToDB(businessName: string, email: string, website: string) {
   const uniqueToken = generateUniqueToken();
   const visitorDocument = new Visitor({

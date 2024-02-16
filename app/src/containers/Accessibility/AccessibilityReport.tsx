@@ -5,9 +5,21 @@ import { FaGaugeSimpleHigh } from "react-icons/fa6";
 import { FaCheckCircle } from "react-icons/fa";
 import { Link } from 'react-router-dom';
 import getAccessibilityStats from '@/queries/accessibility/accessibility';
-import { useQuery } from '@apollo/client';
+import { useLazyQuery } from '@apollo/client';
 import { toast } from 'react-toastify';
 import isValidDomain from '@/utils/verifyDomain';
+import Button from '@mui/joy/Button';
+import AccordionGroup from '@mui/joy/AccordionGroup';
+import Accordion from '@mui/joy/Accordion';
+import ToggleButtonGroup from '@mui/joy/ToggleButtonGroup';
+import Stack from '@mui/joy/Stack';
+import AccordionDetails, {
+  accordionDetailsClasses,
+} from '@mui/joy/AccordionDetails';
+import AccordionSummary, {
+  accordionSummaryClasses,
+} from '@mui/joy/AccordionSummary';
+
 import AccessibilityScoreCard from './AccessibiltyScoreCard';
 import AccordionCard from './AccordionCard';
 
@@ -17,22 +29,26 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [scoreBackup, setScoreBackup] = useState(0);
   const [enabled, setEnabled] = useState(false);
   const [domain, setDomain] = useState(currentDomain);
+  const [issueType, setIssueType] = useState('Errors');
 
-
-
-  const { data, loading, refetch, error } = useQuery(getAccessibilityStats, {
-    variables: { url: domain },
-    skip: domain === ''
+  const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(getAccessibilityStats, {
+    variables: { url: domain }
   });
 
   useEffect(() => {
     console.log(data)
     if (data) {
       console.log(data.getAccessibilityReport.categories)
-      setScoreBackup(data.getAccessibilityReport.accessibilityScore.score);
-      setScore(data.getAccessibilityReport.accessibilityScore.score);
+      setScoreBackup(data.getAccessibilityReport.score);
+      setScore(data.getAccessibilityReport.score);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (currentDomain !== '') {
+      getAccessibilityStatsQuery();
+    }
+  }, []);
 
   function enableButton() {
     if (enabled) {
@@ -54,12 +70,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     e.preventDefault();
     if (!isValidDomain(domain)) {
       setDomain(currentDomain);
-      return toast.error('You must enter a valid domain name!');
+      toast.error('You must enter a valid domain name!');
+      return;
     }
-
-    const response =  await refetch();
-    console.log(response)
-    return '';
+    getAccessibilityStatsQuery(); // Manually trigger the query
   };
 
   return (
@@ -129,22 +143,53 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         <div className='flex w-full items-center justify-center text-lg mb-3 '>
           <Link to='/dashboard' className='hover:text-sapphire-blue underline' >Try free for 7 days!</Link>
         </div>
+        <ToggleButtonGroup
+          size="sm"
+          buttonFlex={1}
+          value={issueType}
+          onChange={(event, newValue) => setIssueType(newValue || issueType)}
+        >
+          <Button value="Errors">Errors</Button>
+          <Button value="Warnings">Warnings</Button>
+          <Button value="Notices">Notices</Button>
+        </ToggleButtonGroup>
+        <AccordionGroup
+          className="bg-gray"
+          sx={{
+            padding: '1%',
+            borderRadius: 'md'
+          }}
+        >
+          {data && issueType === 'Errors' && data.getAccessibilityReport.htmlcs.errors.map((item: any) =>
+            <Accordion>
+              <AccordionSummary className="text-sm font-medium p-1">{item.code}</AccordionSummary>
+              <AccordionDetails className="p-2">
+                <AccordionCard heading={item.message} description={item.description} help={item.recommended_action} />
+              </AccordionDetails>
+            </Accordion>
 
-        {
-          data && Object.keys(data.getAccessibilityReport.categories).map((key: any) => {
-            const category = data.getAccessibilityReport.categories[key];
-            return <AccordionCard heading={category.description} noOfFails={category.count} items={category.items} />
-          }
-          )
-        }
+          )}
+          {data && issueType === 'Warnings' && data.getAccessibilityReport.htmlcs.warnings.map((item: any) =>
+            <Accordion>
+              <AccordionSummary className="text-sm font-medium p-1">{item.code}</AccordionSummary>
+              <AccordionDetails className="p-2">
+                <AccordionCard heading={item.message} description={item.description} help={item.recommended_action} />
+              </AccordionDetails>
+            </Accordion>
 
-        {/* <div className="accordion w-full">
-          
-          <details>
-            <summary>Low Vision <span className="fail-count">24 Fail</span></summary>
-            <p>Details about Low Vision accessibility issues...</p>
-          </details>
-        </div> */}
+          )}
+          {data && issueType === 'Notices' && data.getAccessibilityReport.htmlcs.notices.map((item: any) =>
+            <Accordion>
+              <AccordionSummary className="text-sm font-medium p-1">{item.code}</AccordionSummary>
+              <AccordionDetails className="p-2">
+                <AccordionCard heading={item.message} description={item.description} help={item.recommended_action} />
+              </AccordionDetails>
+            </Accordion>
+
+          )}
+        </AccordionGroup>
+
+        
       </div>
     </div>
   );

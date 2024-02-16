@@ -12,10 +12,12 @@ type axeOutput{
 }
 
 type htmlCsOutput{
-  code: String,
-  message: String,
+  code: String
+  message: String
   context: [String]
   selectors: [String]
+  description: String
+  recommended_action:String
 }
 
 type axeResult{
