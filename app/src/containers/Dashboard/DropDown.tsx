@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import "./DropDown.css";
-import { useQuery } from '@apollo/client';
-
-import getSites from '@/queries/sites/getSites';
+import { useMutation, useQuery } from '@apollo/client';
+import deleteSite from '@/queries/sites/deleteSite';
+import { MdDelete } from "react-icons/md";
+import { toast } from 'react-toastify';
 import AddDomainModal from './AddDomainModal'
 
 interface siteDetails {
@@ -10,17 +11,28 @@ interface siteDetails {
   id: number | string | null | undefined
 }
 
-const DropDown = ({data, setReloadSites, selectedOption, setSelectedOption }: any) => {
+const DropDown = ({ data, setReloadSites, selectedOption, setSelectedOption }: any) => {
 
   // const [selectedOption, setSelectedOption] = useState<string>('Select a Domain');
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [deleteSiteMutation] = useMutation(deleteSite, {
+    onCompleted: () => {
+      setReloadSites(true);
+    },
+    onError: (error) => {
+      toast.error('There was an error while deleting the domain from the database.');
+    }
+  })
 
   const handleOptionClick = (option: string) => {
     setSelectedOption(option);
     setIsOpen(false);
   };
 
+  const handleDeleteDomain = (url: string) => {
+    deleteSiteMutation({ variables: { url } });
+  }
 
 
   return (
@@ -50,7 +62,7 @@ const DropDown = ({data, setReloadSites, selectedOption, setSelectedOption }: an
             {data && data.getUserSites.map((site: siteDetails) => (
               <div
                 key={site.id}
-                className="dropdown-item block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                className="dropdown-item flex justify-between w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                 role="menuitem"
                 tabIndex={0}
                 onClick={() => handleOptionClick(site.url)}
@@ -61,6 +73,9 @@ const DropDown = ({data, setReloadSites, selectedOption, setSelectedOption }: an
                 }}
               >
                 {site.url}
+                <button onClick={() => handleDeleteDomain(site.url)}>
+                  <MdDelete color='#EC4545' size={16} />
+                </button>
               </div>
             ))}
 
@@ -87,7 +102,7 @@ const DropDown = ({data, setReloadSites, selectedOption, setSelectedOption }: an
           </div>
         </div>
       )}
-      {showPopup && <AddDomainModal setShowPopup={setShowPopup} setReloadSites={setReloadSites}/>}
+      {showPopup && <AddDomainModal setShowPopup={setShowPopup} setReloadSites={setReloadSites} />}
     </div>
   );
 };

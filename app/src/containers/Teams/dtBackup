@@ -1,0 +1,101 @@
+import React, { useState } from 'react';
+import { FaTrash, FaPencilAlt, FaCheck, FaTimes } from 'react-icons/fa';
+
+const DomainTable = () => {
+  const [domains, setDomains] = useState([
+    { id: 1, name: 'example.com', status: 'Active', expiration: '2024-01-01' },
+    { id: 2, name: 'example.org', status: 'Inactive', expiration: '2025-01-01' },
+    // ... other domains
+  ]);
+  const [editingId, setEditingId] = useState(null);
+  const [tempDomain, setTempDomain] = useState('');
+
+  const handleDelete = (id:number) => {
+    // Here you would handle the deletion logic
+    setDomains(domains.filter((domain) => domain.id !== id));
+  };
+
+  const handleEdit = (domain:any) => {
+    setEditingId(domain.id);
+    setTempDomain(domain.name);
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+  };
+
+  const handleSave = (id:number) => {
+    setDomains(domains.map((domain) => (domain.id === id ? { ...domain, name: tempDomain } : domain)));
+    setEditingId(null);
+  };
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full bg-white">
+        <thead>
+          <tr>
+            <th className="border-b font-medium p-4 pl-8 pt-0 pb-3 text-gray-800 text-left">Domain Name</th>
+            <th className="border-b font-medium p-4 pt-0 pb-3 text-gray-800 text-left">License Status</th>
+            <th className="border-b font-medium p-4 pt-0 pb-3 text-gray-800 text-left">Expiration Date</th>
+            <th className="border-b font-medium p-4 pt-0 pb-3 text-gray-800 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {domains.map((domain) => (
+            <tr key={domain.id}>
+              <td className="border-b p-4 pl-8 text-gray-700">
+                {editingId === domain.id ? (
+                  <input
+                    type="text"
+                    value={tempDomain}
+                    onChange={(e) => setTempDomain(e.target.value)}
+                    className="border p-2 rounded"
+                  />
+                ) : (
+                  <span>{domain.name}</span>
+                )}
+              </td>
+              <td className="border-b p-4 text-gray-700">{domain.status}</td>
+              <td className="border-b p-4 text-gray-700">{domain.expiration}</td>
+              <td className="border-b p-4 text-right">
+                {editingId === domain.id ? (
+                  <div className="flex justify-end items-center space-x-2">
+                    <button
+                      onClick={() => handleSave(domain.id)}
+                      className="p-2 text-green-600 hover:text-green-800"
+                    >
+                      <FaCheck />
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      className="p-2 text-red-600 hover:text-red-800"
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex justify-end items-center space-x-2">
+                    <button
+                      onClick={() => handleEdit(domain)}
+                      className="p-2 text-indigo-600 hover:text-indigo-800"
+                    >
+                      <HiMiniPencil color='gray' />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(domain.id)}
+                      className="p-2 text-red-600 hover:text-red-800"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+export default DomainTable;

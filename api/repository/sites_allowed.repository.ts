@@ -1,7 +1,7 @@
 import database from '~/config/database.config';
 import { TABLES } from '~/constants/database.constant';
 import { findUser } from './user.repository';
-import { AddTokenToDB } from '~/services/webToken/mongoVisitors';
+import { AddTokenToDB, RemoveTokenFromDB } from '~/services/webToken/mongoVisitors';
 
 const TABLE = TABLES.allowed_sites;
 
@@ -62,7 +62,8 @@ export async function insertSite(data: allowedSites): Promise<string> {
 	}
 }
 
-export function deleteSiteByURL(url: string, user_id: number): Promise<number> {
+export async function deleteSiteByURL(url: string, user_id: number): Promise<number> {
+	await RemoveTokenFromDB(url);
 	return database(TABLE).where({ 'user_id': user_id, 'url': url }).del()
 }
 

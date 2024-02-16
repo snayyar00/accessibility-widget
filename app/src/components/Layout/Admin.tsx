@@ -9,6 +9,7 @@ import getSites from '@/queries/sites/getSites';
 import routes from '@/routes';
 import Dashboard from '@/containers/Dashboard';
 import Installation from '@/containers/Installation/Installation';
+import Teams from '@/containers/Teams';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 
@@ -67,7 +68,8 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
               />
             ))}
             <Route path='/dashboard' render={() => <Dashboard domain={selectedOption} />} key='/dashboard' exact={false} />
-            <Route path='/installation' render={() => <Installation domain={selectedOption} />} key='/dashboard' exact={false} />
+            <Route path='/add-domain' render={() => <Teams domains={data} setReloadSites={setReloadSites} /> } key='/Add-Domain' exact={false} />
+            <Route path='/installation' render={() => <Installation domain={selectedOption} />} key='/installation' exact={false} />
             <Redirect from="*" to="/dashboard" />
           </Switch>
         </div>

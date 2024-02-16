@@ -60,7 +60,6 @@ async function populateMissingDescriptions(matchedRecords: dbIssue[], issueHeadi
     const notFoundIssues = issueHeadings.filter((message: any) => {
         return !matchedRecords.some(record => record.heading === message);
     });
-    console.log(notFoundIssues);
     if (notFoundIssues.length > 0) {
         const apiResult = await getIssueDescription(notFoundIssues);
         console.log(apiResult.finish_reason)

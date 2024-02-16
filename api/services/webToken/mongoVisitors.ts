@@ -8,7 +8,22 @@ function generateUniqueToken() {
   return crypto.randomBytes(16).toString('hex');
 }
 
-export async function AddTokenToDB(businessName: string, email: string, website: string){
+export async function RemoveTokenFromDB(website: string) {
+  try {
+    const result = await Visitor.findOneAndDelete({ Website: website });
+    if (result) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    console.error('Error removing token:', error);
+    logger.error('Error removing token:', error);
+    return false;
+  }
+}
+
+export async function AddTokenToDB(businessName: string, email: string, website: string) {
   const uniqueToken = generateUniqueToken();
   const visitorDocument = new Visitor({
     BusinessName: businessName,
@@ -33,7 +48,7 @@ export const GetVisitorTokenByWebsite = async (websiteName: string) => {
     return (visitor !== null ? visitor.Uniquetoken : 'none');
   } catch (error) {
     console.error('Error fetching visitor by website:', error);
-    logger.error( error);
+    logger.error(error);
     return 'error';
   }
 };
@@ -51,14 +66,14 @@ export const GetURLByUniqueToken = async (uniqueToken: string) => {
 }
 
 export async function ValidateToken(url: string, uniqueToken: string) {
-  try{
+  try {
     const record = await Visitor.findOne({ Uniquetoken: uniqueToken });
-    if (record === null){
+    if (record === null) {
       return 'notFound';
     }
-    else{
+    else {
       const site = await findSite(record.Website);
-      if (site === undefined || url !== record.Website){
+      if (site === undefined || url !== record.Website) {
         return 'notFound';
       }
       else {
@@ -66,8 +81,8 @@ export async function ValidateToken(url: string, uniqueToken: string) {
       }
     }
   }
-  catch(e){
-    logger.error('There was an error validating the provided unique token. ',e);
+  catch (e) {
+    logger.error('There was an error validating the provided unique token. ', e);
     return 'error';
   }
 }
