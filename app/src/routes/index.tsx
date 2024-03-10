@@ -65,14 +65,14 @@ const routes = [
     component: Profile,
     isSidebar: false,
   },
-  // {
-  //   path:'/accessibility-test',
-  //   name:'Accessibility',
-  //   exact:true,
-  //   component: Accessibility,
-  //   icon: <AccessibilityIcon />,
-  //   isSidebar:true,
-  // },
+  {
+    path:'/accessibility-test',
+    name:'Accessibility',
+    exact:true,
+    component: Accessibility,
+    icon: <AccessibilityIcon />,
+    isSidebar:false,
+  },
 ];
 
 export default routes;
