@@ -13,8 +13,9 @@ export const TABLES = {
   visitors: 'unique_visitors',
   impressions: 'impressions',
   accessibilityDescription: 'accessibility_description',
-  affectedDisability: 'affected_disability'
-  
+  affectedDisability: 'affected_disability',
+  sitesPlans: 'sites_plans',
+  sitePermissions: 'sites_permissions',
 };
 
 export const DEFAULT_LIMIT = 20;

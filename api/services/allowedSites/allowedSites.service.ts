@@ -2,8 +2,9 @@ import { ApolloError, ValidationError } from 'apollo-server-express';
 
 import logger from '~/utils/logger';
 import { insertDocument, findDocumentById, findDocuments, updateDocumentById, deleteDocumentById, FindDocumentsResponse, FindDocumentById } from '~/repository/documents.repository';
-import { FindAllowedSitesProps, deleteSiteByURL, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL} from '~/repository/sites_allowed.repository';
+import { FindAllowedSitesProps, IUserSites, deleteSiteByURL, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL} from '~/repository/sites_allowed.repository';
 import { createValidation } from '~/validations/document.validation';
+import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
 
 // type GetDocumentsResponse = {
 //   documents: FindDocumentsResponse;
@@ -48,10 +49,19 @@ export async function addSite(userId: number, url: string): Promise<string> {
  *
  */
 
-export async function findUserSites(userId:number): Promise<FindAllowedSitesProps[]> {
+
+export async function findUserSites(userId:number): Promise<IUserSites[]> {
     try{
         const sites = await findSitesByUserId(userId);
-        return sites;
+        const result = await Promise.all(sites.map(async (site) => {
+            const data = await getSitePlanBySiteId(site.id);
+            
+            return {
+                ...site,
+                expiredAt: data?.expiredAt
+            };
+        }))
+        return result;
     }
     catch(e){
         logger.error(e)

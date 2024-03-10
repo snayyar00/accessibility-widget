@@ -108,3 +108,14 @@ export async function cancelSubcription(customerId: string): Promise<boolean> {
     throw new ApolloError('Something went wrong!');
   }
 }
+
+export async function cancelSubcriptionBySubId(subId: string): Promise<boolean> {
+  try {
+    await stripe.subscriptions.del(subId);
+
+    return true;
+  } catch (error) {
+    logger.error(error);
+    throw new ApolloError('Something went wrong!');
+  }
+}

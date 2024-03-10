@@ -6,7 +6,7 @@
   "scripts": {
     "start": "ts-node -r tsconfig-paths/register server.ts",
     "dev": "nodemon server",
-    "db:create-products": "node --experimental-modules --es-module-specifier-resolution=node scripts/create-products.js",
+    "db:create-products": "node --experimental-modules --es-module-specifier-resolution=node dist/scripts/create-products.js",
     "db:migrate": "knex migrate:latest --knexfile config/knexfile.ts",
     "db:rollback": "knex migrate:rollback --knexfile config/knexfile.ts",
     "db:create": "knex migrate:make --knexfile config/knexfile.ts",
@@ -49,7 +49,7 @@
     "mongoose": "^8.0.3",
     "morgan": "^1.10.0",
     "mysql2": "^2.2.5",
-    "nodemailer": "^6.9.12",
+    "nodemailer": "^6.9.7",
     "nodemailer-smtp-transport": "^2.7.4",
     "openai": "^4.27.0",
     "pa11y": "^7.0.0",
@@ -92,10 +92,10 @@
   },
   "husky": {
     "hooks": {
-      
+     
     }
   },
   "_moduleAliases": {
-    "~": "."
+    "~": "./"
   }
 }

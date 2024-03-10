@@ -1,14 +1,14 @@
 import Stripe from 'stripe';
-import Sentry from '@sentry/node';
-import { insertProduct, findProductInType } from '~/repository/products.repository';
+import { insertProduct, findProductInType } from '../repository/products.repository';
 
 const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY, {
   apiVersion: '2020-08-27',
 });
 
 const products = [
-  { name: 'Starter', amount: 75 },
-  { name: 'Professional', amount: 295 },
+  { name: 'package1', amount: 1 },
+  { name: 'package2', amount: 2 },
+  { name: 'package3', amount: 3 },
 ];
 
 type Item = {
@@ -22,7 +22,7 @@ type StripeProductData = {
   prices?: {
     id?: string;
     type?: Stripe.Price.Recurring.Interval;
-  }[]
+  }[];
 };
 
 async function createProductItem(item: Item, dataStripe: StripeProductData[]): Promise<boolean> {
@@ -130,4 +130,9 @@ async function run(): Promise<true | boolean[]> {
   return true;
 }
 
-run().then(() => console.log('insert successfully')).then(() => process.exit()).catch((err) => Sentry.captureException(err));
+run()
+  .then(() => console.log('insert successfully'))
+  .then(() => process.exit())
+  .catch((err) => {});
+
+export default run;
