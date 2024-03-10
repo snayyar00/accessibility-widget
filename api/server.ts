@@ -3,11 +3,10 @@ import dotenv from 'dotenv';
 import { resolve, join } from 'path';
 import express, { NextFunction, Request, Response } from 'express';
 import morgan from 'morgan';
-import path from 'path';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
-require('module-alias/register');
+import 'module-alias/register';
 import { ApolloServer, makeExecutableSchema, IResolvers, ApolloError } from 'apollo-server-express';
 import { withScope, Severity, captureException, init } from '@sentry/node';
 import accessLogStream from '~/middlewares/logger.middleware';
@@ -18,7 +17,7 @@ import stripeHooks from './services/stripe/webhooks.servive';
 import { getIpAddress } from './helpers/uniqueVisitor.helper';
 import sendMail from '~/libs/mail';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
-import run from './scripts/create-products';
+// import run from './scripts/create-products';
 
 type ContextParams = {
   req: Request;
