@@ -73,7 +73,11 @@ jobs:
           cd api
           pm2 restart apiServer
 
-
+      - name: Debugging information
+        run: |
+          node --version
+          npm --version
+          npm list apollo-server-express @graphql-tools/schema @graphql-tools/utils typescript
 
   APP:
     needs: API
