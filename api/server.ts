@@ -82,9 +82,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     res.send(token);
   });
 
-  app.get('/webAbilityV1.0.min.js', (req, res) => {
-    res.sendFile(path.join(__dirname, 'webAbilityV1.0.min.js'));
-  });
+  // app.get('/webAbilityV1.0.min.js', (req, res) => {
+  //   res.sendFile(path.join(__dirname, 'webAbilityV1.0.min.js'));
+  // });
 
   // app.get('/create-products', (req, res) => {
   //   run().then(() => res.send('insert successfully')).catch((err) => res.send(err));
