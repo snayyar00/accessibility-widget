@@ -15,4 +15,9 @@ module.exports = {
   webpack: {
     alias: resolvedAliases,
   },
+  devServer: {
+    client: {
+      overlay: false,
+    }
+  }
 };

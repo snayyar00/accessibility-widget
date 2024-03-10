@@ -1,4 +1,4 @@
-import React,  { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import isEmpty from 'lodash/isEmpty';
 import { useLazyQuery, useMutation } from '@apollo/client';
 import { useDispatch, useSelector } from 'react-redux';
@@ -19,9 +19,9 @@ import Button from '@/components/Common/Button';
 
 const plans = [
   {
-    id: 'starter',
-    name: 'Starter',
-    price: 75,
+    id: 'package1',
+    name: 'package1',
+    price: 1,
     desc: 'Kickstart your project with all features and code',
     features: [
       'Save weeks of development time.',
@@ -32,9 +32,22 @@ const plans = [
     ]
   },
   {
-    id: 'professional',
-    name: 'Professional',
-    price: 295,
+    id: 'package2',
+    name: 'package2',
+    price: 2,
+    desc: 'Kickstart your project with all features and code',
+    features: [
+      'Save weeks of development time.',
+      'Full source code download.',
+      'Self-service documentation.',
+      'Slack community support',
+      'One year of product updates',
+    ]
+  },
+  {
+    id: 'package3',
+    name: 'package3',
+    price: 3,
     desc: 'We help you get up and running even faster',
     features: [
       'Everything in the Starter plan.',
@@ -97,17 +110,19 @@ const PlanSetting: React.FC = () => {
       planName: planChanged.id,
       billingType: isYearly ? 'YEARLY' : 'MONTHLY',
     }
-    await createUserPlanMutation({ variables: data});
+    await createUserPlanMutation({ variables: data });
     fetchUserPlan();
   }
 
   async function handleChangeSubcription() {
     if (!planChanged) return;
-    await updateUserPlanMutation({ variables: {
-      userPlanId: currentPlan.id,
-      planName: planChanged.id,
-      billingType: isYearly ? 'YEARLY' : 'MONTHLY',
-    }});
+    await updateUserPlanMutation({
+      variables: {
+        userPlanId: currentPlan.id,
+        planName: planChanged.id,
+        billingType: isYearly ? 'YEARLY' : 'MONTHLY',
+      }
+    });
 
     fetchUserPlan();
   }
@@ -133,73 +148,75 @@ const PlanSetting: React.FC = () => {
             checkIsCurrentPlan={checkIsCurrentPlan}
           />
         </div>
-        {planChanged && (
-          <div className="pl-6 pt-[74px] flex sm:p-0 sm:flex-col-reverse">
-            {checkIsCurrentPlan(planChanged.id) ? (
-              <div className="min-w-[300px] [&_button]:w-full">
-                {currentPlan.deletedAt ? (
-                  <p>Plan will expire on <b>{dayjs(currentPlan.expiredAt).format('YYYY-MM-DD HH:mm')}</b>
-                    <Trans
-                      components={[<b></b>]}
-                      values={{ data: dayjs(currentPlan.expiredAt).format('YYYY-MM-DD HH:mm') }}
-                    >
-                      {t('Profile.text.expire')}
-                    </Trans>
-                  </p>
-                ) : (
-                  <Button
-                    color="primary"
-                    disabled={isDeletingUserPlan}
-                    onClick={handleCancelSubscription}
-                  >{t('Profile.text.cancel_sub')}</Button>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col min-w-[300px]">
-                <div className="font-bold text-[22px] leading-[30px] text-sapphire-blue mb-6">{t('Profile.text.order_sumary')}</div>
-                <ul className="flex-grow">
-                  <li className="flex justify-between items-center list-none mb-4">
-                    <p className="text-[16px] leading-[26px] text-white-gray flex-grow">{t('Profile.text.curreny_sub')}</p>
-                    <span className="font-bold text-[18px] leading-6 text-sapphire-blue">${amountCurrent}</span>
-                  </li>
-                  <li className="flex justify-between items-center list-none mb-4">
-                    <p className="text-[16px] leading-[26px] text-white-gray flex-grow">{t('Profile.text.new_sub')}</p>
-                    <span className="font-bold text-[18px] leading-6 text-sapphire-blue">${isYearly ? amountNew * 9 : amountNew}</span>
-                  </li>
-                  <li className="flex justify-between items-center list-none mb-4">
-                    <p className="text-[16px] leading-[26px] text-white-gray flex-grow">{t('Profile.text.balance_due')}</p>
-                    <span className="font-bold text-[18px] leading-6 text-sapphire-blue">${Math.max((isYearly ? amountNew * 9 : amountNew) - amountCurrent, 0)}</span>
-                  </li>
-                </ul>
-                {(isEmpty(currentPlan) || (currentPlan && currentPlan.deletedAt)) ? (
-                  <StripeContainer
-                    onSubmitSuccess={createPaymentMethodSuccess}
-                    apiLoading={isCreatingUserPlan}
-                    submitText={currentPlan && currentPlan.deletedAt && t('Profile.text.change_plan') as string}
-                  />
-                ) : (
-                  <Button
-                    color="primary"
-                    onClick={handleChangeSubcription}
-                    disabled={isUpdatingUserPlan}
-                  >{isUpdatingUserPlan ? t('Common.text.please_wait') : t('Profile.text.change_sub')}</Button>
-                )}
-              </div>
-            )}
+        <div>
+          {planChanged && (
+            <div className="pl-6 pt-[74px] flex sm:p-0 sm:flex-col-reverse">
+              {checkIsCurrentPlan(planChanged.id) ? (
+                <div className="min-w-[300px] [&_button]:w-full">
+                  {currentPlan.deletedAt ? (
+                    <p>Plan will expire on <b>{dayjs(currentPlan.expiredAt).format('YYYY-MM-DD HH:mm')}</b>
+                      <Trans
+                        components={[<b></b>]}
+                        values={{ data: dayjs(currentPlan.expiredAt).format('YYYY-MM-DD HH:mm') }}
+                      >
+                        {t('Profile.text.expire')}
+                      </Trans>
+                    </p>
+                  ) : (
+                    <Button
+                      color="primary"
+                      disabled={isDeletingUserPlan}
+                      onClick={handleCancelSubscription}
+                    >{t('Profile.text.cancel_sub')}</Button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col min-w-[300px]">
+                  <div className="font-bold text-[22px] leading-[30px] text-sapphire-blue mb-6">{t('Profile.text.order_sumary')}</div>
+                  <ul className="flex-grow">
+                    <li className="flex justify-between items-center list-none mb-4">
+                      <p className="text-[16px] leading-[26px] text-white-gray flex-grow">{t('Profile.text.curreny_sub')}</p>
+                      <span className="font-bold text-[18px] leading-6 text-sapphire-blue">${amountCurrent}</span>
+                    </li>
+                    <li className="flex justify-between items-center list-none mb-4">
+                      <p className="text-[16px] leading-[26px] text-white-gray flex-grow">{t('Profile.text.new_sub')}</p>
+                      <span className="font-bold text-[18px] leading-6 text-sapphire-blue">${isYearly ? amountNew * 9 : amountNew}</span>
+                    </li>
+                    <li className="flex justify-between items-center list-none mb-4">
+                      <p className="text-[16px] leading-[26px] text-white-gray flex-grow">{t('Profile.text.balance_due')}</p>
+                      <span className="font-bold text-[18px] leading-6 text-sapphire-blue">${Math.max((isYearly ? amountNew * 9 : amountNew) - amountCurrent, 0)}</span>
+                    </li>
+                  </ul>
+                  {(isEmpty(currentPlan) || (currentPlan && currentPlan.deletedAt)) ? (
+                    <StripeContainer
+                      onSubmitSuccess={createPaymentMethodSuccess}
+                      apiLoading={isCreatingUserPlan}
+                      submitText={currentPlan && currentPlan.deletedAt && t('Profile.text.change_plan') as string}
+                    />
+                  ) : (
+                    <Button
+                      color="primary"
+                      onClick={handleChangeSubcription}
+                      disabled={isUpdatingUserPlan}
+                    >{isUpdatingUserPlan ? t('Common.text.please_wait') : t('Profile.text.change_sub')}</Button>
+                  )}
+                </div>
+              )}
 
-            {errorCreate?.message && (
-              <ErrorText message={errorCreate.message} />
-            )}
+              {errorCreate?.message && (
+                <ErrorText message={errorCreate.message} />
+              )}
 
-            {errorUpdate?.message && (
-              <ErrorText message={errorUpdate.message} />
-            )}
+              {errorUpdate?.message && (
+                <ErrorText message={errorUpdate.message} />
+              )}
 
-            {errorDelete?.message && (
-              <ErrorText message={errorDelete.message} />
-            )}
-          </div>
-        )}
+              {errorDelete?.message && (
+                <ErrorText message={errorDelete.message} />
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

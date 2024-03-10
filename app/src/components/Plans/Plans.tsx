@@ -86,13 +86,13 @@ const Plans: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   return (
-    <div className="flex justify-center sm:flex-col">
+    <div className="flex flex-wrap sm:flex-col">
       {plans.map((plan) => (
         <div
           onClick={() => onChange(plan.id)}
           key={plan.id}
           role="presentation"
-          className={classNames("flex flex-col w-[430px] border border-solid border-dark-gray rounded-[10px] p-6 cursor-pointer [&:first-child]:mr-[25px] [&:first-child]:sm:mr-0 sm:w-full sm:max-w-full sm:mr-0 sm:mb-[15px]", {
+          className={classNames("flex flex-col w-[400px] border border-solid border-dark-gray rounded-[10px] p-6 cursor-pointer m-2 sm:w-full sm:max-w-full sm:mr-0 sm:mb-[15px]", {
             "plan-wrapper": planChanged ? plan.id === planChanged.id : false
           })}
         >

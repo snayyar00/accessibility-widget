@@ -9,7 +9,6 @@ interface DropdownSelectorProps {
   yearStart: string;
   onGranularityChange: (newGranularity: string) => void;
   setStartDate: (startDate: string) => void;
-  refetch: () => void;
 }
 
 const DropdownSelector: React.FC<DropdownSelectorProps> = ({
@@ -18,25 +17,21 @@ const DropdownSelector: React.FC<DropdownSelectorProps> = ({
   setStartDate,
   weekStart,
   monthStart,
-  yearStart,
-  refetch
+  yearStart
 }) => {
   const [timeRange, setTimeRange] = useState<string>('Week To Date');
+  console.log(monthStart, yearStart, weekStart)
 
-  function changeTimePeriod(range: string) {
-    if (range === 'Month to Date') {
+  async function changeTimePeriod(range: string) {
+    if (range === 'Month To Date') {
       setStartDate(monthStart);
-      refetch();
     }
-    else if (range === 'Week to Date') {
+    else if (range === 'Week To Date') {
       setStartDate(weekStart);
-      refetch();
     }
-    else if (range === 'Year to Date') {
+    else if (range === 'Year To Date') {
       setStartDate(yearStart);
-      refetch();
     }
-
     setTimeRange(range);
   }
 
@@ -57,7 +52,7 @@ const DropdownSelector: React.FC<DropdownSelectorProps> = ({
           <option value="Year To Date">Year To Date</option>
         </select>
       </div>
-      <div className="dropdown-selector">
+      {/* <div className="dropdown-selector">
         <label htmlFor="granularity" className="dropdown-label">
           Granularity
         </label>
@@ -71,7 +66,7 @@ const DropdownSelector: React.FC<DropdownSelectorProps> = ({
           <option value="Week">Week</option>
           <option value="Month">Month</option>
         </select>
-      </div>
+      </div> */}
     </div>
   );
 };

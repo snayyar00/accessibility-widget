@@ -4,13 +4,19 @@ import { useMutation } from '@apollo/client';
 import addSite from '@/queries/sites/addSite';
 import { toast } from 'react-toastify';
 import isValidDomain from '@/utils/verifyDomain';
+import DomainTable from './DomainTable';
 
 interface DomainFormData {
   domainName: string;
 }
 
-const Teams: React.FC = () => {
-  const [addSiteMutation, { error, loading }] = useMutation(addSite);
+const Teams = ({ domains, setReloadSites }: any) => {
+  const [addSiteMutation, { error, loading }] = useMutation(addSite, {
+    onCompleted: () => {
+      setReloadSites(true);
+      toast.success('The domain was successfully added to the database.');
+    },
+  });
   const [formData, setFormData] = useState<DomainFormData>({ domainName: '' });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,8 +29,9 @@ const Teams: React.FC = () => {
       toast.error('You must enter a valid domain name!');
       return;
     }
-    console.log(formData.domainName)
-    addSiteMutation({ variables: { url: formData.domainName } })
+    // const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)/, '');
+    const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)?(www\.)?/, '');
+    addSiteMutation({ variables: { url: sanitizedDomain } })
 
   };
 
@@ -55,6 +62,7 @@ const Teams: React.FC = () => {
           </form>
           {error ? toast.error('There was an error adding the domain to the database.') : <></>}
         </div>
+        <DomainTable data={domains} setReloadSites={setReloadSites} />
       </div>
     </>
   );

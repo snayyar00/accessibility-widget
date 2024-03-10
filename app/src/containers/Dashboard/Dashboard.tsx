@@ -31,7 +31,7 @@ interface CardData {
 
 
 
-const Dashboard: React.FC<any> = ({ domain }: any) => {
+const Dashboard: React.FC<any> = ({ domain, domainData }: any) => {
 
   const [startDate, setStartDate] = useState<string>();
   const [endDate, setEndDate] = useState<string>();
@@ -43,6 +43,7 @@ const Dashboard: React.FC<any> = ({ domain }: any) => {
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [cards, setCards] = useState<CardData[]>([]);
   const [granularity, setGranularity] = useState<string>('Day');
+  const [loadingAnimation, setLoadingAnimation] = useState<boolean>(true);
 
   const getStartOfWeek = () => {
     const currentDate = new Date();
@@ -77,7 +78,6 @@ const Dashboard: React.FC<any> = ({ domain }: any) => {
   };
 
   function setChart(data: any) {
-    console.log(data.getEngagementRates);
     if (data.getEngagementRates.length !== 0) {
       setChartData(
         data.getEngagementRates.map((engagement: EngagementResponse) => ({
@@ -106,12 +106,15 @@ const Dashboard: React.FC<any> = ({ domain }: any) => {
     setStartDate(getStartOfWeek());
   }, []);
 
-  const { data, refetch, loading, error } = useQuery(fetchDashboardQuery, { variables: { url: domain, startDate, endDate } });
+  const { data, refetch, loading, error } = useQuery(fetchDashboardQuery, {
+    variables: { url: domain, startDate, endDate },
+    onCompleted: () => setLoadingAnimation(false)
+  });
 
   useEffect(() => {
     if (data) {
       setChart(data);
-      setUniqueVisitors(data.getSiteVisitorsByURLAndDate.count);
+      setUniqueVisitors(data.getSiteVisitorsByURL.count);
       const impressionsOutput = data.getImpressionsByURLAndDate.impressions;
       let wC = 0;
       let wO = 0;
@@ -155,20 +158,25 @@ const Dashboard: React.FC<any> = ({ domain }: any) => {
         count: widgetOpened,
         countType: 'times',
       },
-      {
-        id: 4,
-        heading: 'Widget Closed',
-        count: widgetClosed,
-        countType: 'times',
-      },
+      // {
+      //   id: 4,
+      //   heading: 'Widget Closed',
+      //   count: widgetClosed,
+      //   countType: 'times',
+      // },
       // ... more card data
     ]);
 
   }, [widgetClosed, widgetOpened, impressions, uniqueVisitors]);
 
   useEffect(() => {
+    setLoadingAnimation(true);
     refetch();
   }, [domain]);
+
+  useEffect(() => {
+    refetch()
+  }, [startDate])
 
 
   useEffect(() => {
@@ -178,6 +186,40 @@ const Dashboard: React.FC<any> = ({ domain }: any) => {
       })),
     );
   }, [granularity]);
+
+  const applyStatusClass = (status: string): string => {
+    if (!status) {
+      return 'bg-yellow-200 text-200';
+    }
+    const currentTime = new Date().getTime();
+    const timeDifference = new Date(parseInt(status)).getTime() - currentTime;
+    const sevendays = 7 * 24 * 60 * 60 * 1000;
+
+    if (timeDifference > sevendays) {
+      return 'bg-green-200 text-green-600';
+    }
+    if (timeDifference < sevendays && timeDifference > 0) {
+      return 'bg-red-200 text-red-600';
+    }
+    return 'bg-yellow-200 text-200';
+  }
+
+  const getDomainStatus = (status: string): string => {
+    if (!status) {
+      return 'Not Available';
+    }
+    const currentTime = new Date().getTime();
+    const timeDifference = new Date(parseInt(status)).getTime() - currentTime;
+    const sevendays = 7 * 24 * 60 * 60 * 1000;
+
+    if (timeDifference > sevendays) {
+      return 'Active';
+    }
+    if (timeDifference < sevendays && timeDifference > 0) {
+      return 'Expiring';
+    }
+    return 'Expired';
+  }
 
   const adjustCountByGranularity = (baseCount: number): number => {
     switch (granularity) {
@@ -193,7 +235,15 @@ const Dashboard: React.FC<any> = ({ domain }: any) => {
   return (
     <>
       {loading && <div className='flex items-center justify-center h-screen w-screen'><CircularProgress size={150} /></div>}
-      {!loading &&
+      {domainData ? (
+        <div className="flex gap-3">
+          <p className={`p-1.5 text-xs font-semibold rounded w-fit whitespace-no-wrap ${applyStatusClass(domainData.expiredAt)}`}>{getDomainStatus(domainData.expiredAt)}</p>
+          <p className="text-gray-900 whitespace-no-wrap">{domainData.expiredAt ? (new Date(parseInt(domainData.expiredAt))).toLocaleString() ?? "-" : "-"}</p>
+        </div>
+      ): (
+        <p>-</p>
+      )}
+      {!loadingAnimation &&
         <div className="container">
           {/* Dropdown, Plus Button, and ExportButton */}
           <div className="ml-4 flex gap-4 mb-4">
@@ -229,7 +279,6 @@ const Dashboard: React.FC<any> = ({ domain }: any) => {
               weekStart={getStartOfWeek()}
               monthStart={getStartOfMonth()}
               yearStart={getStartOfYear()}
-              refetch={() => { console.log('refetch'); refetch() }}
             />
           </div>
 

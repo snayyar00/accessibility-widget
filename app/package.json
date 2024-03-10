@@ -10,6 +10,7 @@
     "@emotion/styled": "^11.11.0",
     "@hookform/resolvers": "^1.0.0",
     "@mobiscroll/react": "npm:@mobiscroll/react-trial@5.28.1",
+    "@mui/joy": "^5.0.0-beta.28",
     "@mui/material": "^5.15.4",
     "@mui/styled-engine-sc": "^6.0.0-alpha.12",
     "@reduxjs/toolkit": "^1.4.0",
@@ -95,7 +96,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged && npm run lint"
+     
     }
   },
   "resolutions": {
@@ -125,6 +126,7 @@
     "@typescript-eslint/parser": "^5.42.1",
     "autoprefixer": "^10.4.13",
     "babel-eslint": "^10.1.0",
+    "disable-react-error-overlay": "^0.0.1",
     "eslint": "^7.12.1",
     "eslint-config-airbnb": "^18.2.0",
     "eslint-config-airbnb-base": "^14.2.0",

@@ -27,7 +27,7 @@ const Profile: React.FC = () => {
             <InformationSetting user={data} />
             <PasswordSetting />
           </div>
-          <PlanSetting />
+          {/* <PlanSetting /> */}
         </>
       )}
     </div>
