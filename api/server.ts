@@ -18,6 +18,7 @@ import stripeHooks from './services/stripe/webhooks.servive';
 import { getIpAddress } from './helpers/uniqueVisitor.helper';
 import sendMail from '~/libs/mail';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
+import run from './scripts/create-products';
 
 type ContextParams = {
   req: Request;

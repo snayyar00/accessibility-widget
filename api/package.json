@@ -6,7 +6,8 @@
   "scripts": {
     "start": "ts-node -r tsconfig-paths/register server.ts",
     "dev": "nodemon server",
-    "db:create-products": "node --experimental-modules --es-module-specifier-resolution=node dist/scripts/create-products.js",
+    "build": "tsc",
+    "db:create-products": "tsc && node --experimental-modules --es-module-specifier-resolution=node dist/scripts/create-products.js",
     "db:migrate": "knex migrate:latest --knexfile config/knexfile.ts",
     "db:rollback": "knex migrate:rollback --knexfile config/knexfile.ts",
     "db:create": "knex migrate:make --knexfile config/knexfile.ts",
@@ -22,7 +23,8 @@
   },
   "dependencies": {
     "@getbrevo/brevo": "^2.0.0-beta.4",
-    "@sentry/node": "^5.30.0",
+    "@sentry/node": "^5.27.6",
+    "apollo-server-express": "^2.19.0",
     "axios": "^0.21.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
@@ -31,6 +33,7 @@
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dayjs": "^1.9.6",
+    "dotenv": "^8.6.0",
     "express": "^4.17.1",
     "fastest-validator": "^1.8.0",
     "graphql": "^15.5.0",
@@ -76,9 +79,7 @@
     "@types/nodemailer-smtp-transport": "^2.7.8",
     "@typescript-eslint/eslint-plugin": "^4.31.2",
     "@typescript-eslint/parser": "^4.31.2",
-    "apollo-server-express": "^3.13.0",
     "babel-eslint": "^10.1.0",
-    "dotenv": "^16.4.5",
     "eslint": "^7.13.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-config-airbnb-typescript": "^14.0.0",
@@ -91,7 +92,9 @@
     "tsconfig-paths": "^3.11.0"
   },
   "husky": {
-    "hooks": {}
+    "hooks": {
+     
+    }
   },
   "_moduleAliases": {
     "~": "./"
