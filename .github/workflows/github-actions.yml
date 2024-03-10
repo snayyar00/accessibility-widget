@@ -67,7 +67,7 @@ jobs:
       - name: Build API
         run: |
           cd api
-          tsc
+          npm run build
       - name: Start API
         run: |
           cd api
