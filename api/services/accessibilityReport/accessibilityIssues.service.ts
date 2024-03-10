@@ -57,17 +57,17 @@ const updateIssueDetails = (matchedRecords: dbIssue[], issueList: any[]) => {
 };
 
 async function populateMissingDescriptions(matchedRecords: dbIssue[], issueHeadings: any, type: string) {
-  console.log(type);
-  const notFoundIssues = issueHeadings.filter((message: any) => {
-    return !matchedRecords.some((record) => record.heading === message);
-  });
-  if (notFoundIssues.length > 0) {
-    const apiResult = await getIssueDescription(notFoundIssues);
-    console.log(apiResult.finish_reason);
-    const result = stringToJson(apiResult.message.content);
-    await Promise.all(result.map(async (issue: any) => addAccessibilityIssuesToDB(issue)));
-    return true;
-  }
+  //   console.log(type);
+  //   const notFoundIssues = issueHeadings.filter((message: any) => {
+  //     return !matchedRecords.some((record) => record.heading === message);
+  //   });
+  //   if (notFoundIssues.length > 0) {
+  //     const apiResult = await getIssueDescription(notFoundIssues);
+  //     // console.log(apiResult.finish_reason);
+  //     const result = stringToJson(apiResult.message.content);
+  //     await Promise.all(result.map(async (issue: any) => addAccessibilityIssuesToDB(issue)));
+  //     return true;
+  //   }
   return false;
 }
 
