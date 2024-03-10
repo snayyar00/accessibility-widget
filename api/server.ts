@@ -16,8 +16,9 @@ import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
 import stripeHooks from './services/stripe/webhooks.servive';
 import { getIpAddress } from './helpers/uniqueVisitor.helper';
-import sendMail from '~/libs/mail'
+import sendMail from '~/libs/mail';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
+import run from './scripts/create-products';
 
 type ContextParams = {
   req: Request;
@@ -26,15 +27,12 @@ type ContextParams = {
 
 dotenv.config();
 
-
-
 const app = express();
 const port = process.env.PORT || 3001;
 const allowedOrigins = [process.env.FRONTEND_URL, undefined, 'http://localhost:5000', 'https://www.webability.io'];
 const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction'];
 
 app.use(express.json());
-
 
 function dynamicCors(req: Request, res: Response, next: NextFunction) {
   const corsOptions = {
@@ -67,9 +65,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   //   methods: 'GET,POST',
   //   credentials: true
   // }));
-  app.use(dynamicCors)
-
-
+  app.use(dynamicCors);
 
   app.use(express.static(join(resolve(), 'public', 'uploads')));
   app.use(cookieParser());
@@ -84,25 +80,31 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     const url = req.params.url;
     const token = await GetVisitorTokenByWebsite(url);
     res.send(token);
-  })
+  });
 
   app.get('/webAbilityV1.0.min.js', (req, res) => {
     res.sendFile(path.join(__dirname, 'webAbilityV1.0.min.js'));
-});
+  });
+
+  // app.get('/create-products', (req, res) => {
+  //   run().then(() => res.send('insert successfully')).catch((err) => res.send(err));
+  // });
 
   app.post('/form', async (req, res) => {
     console.log('Received POST request for /form:', req.body);
     const uniqueToken = await AddTokenToDB(req.body.businessName, req.body.email, req.body.website);
     if (uniqueToken !== '') {
       res.send('Received POST request for /form');
-    }
-    else {
+    } else {
       res.status(500).send('Internal Server Error');
       return;
     }
 
     try {
-      sendMail(req.body.email, 'Welcome to Webability', `
+      sendMail(
+        req.body.email,
+        'Welcome to Webability',
+        `
             <html>
             <head>
             <style>
@@ -139,12 +141,12 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             <p>Thank you for choosing Webability!</p>
         </body>
             </html>
-        `);
+        `,
+      );
     } catch (error) {
       console.error('Error sending email:', error);
     }
   });
-
 
   const serverGraph = new ApolloServer({
     uploads: false,
@@ -196,7 +198,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         user,
         ip,
         res,
-
       };
     },
   });

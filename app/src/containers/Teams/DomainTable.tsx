@@ -2,15 +2,15 @@ import deleteSite from '@/queries/sites/deleteSite';
 import updateSite from '@/queries/sites/updateSite';
 import { useMutation } from '@apollo/client';
 import React, { useEffect, useState } from 'react';
-import { FaTrash, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaTrash, FaCheck, FaTimes, FaDollarSign } from 'react-icons/fa';
 import { HiMiniPencil } from "react-icons/hi2";
 import { toast } from 'react-toastify';
-
+import { NavLink } from 'react-router-dom';
 
 
 const DomainTable = ({ data, setReloadSites}: any) => {
   const [domains, setDomains] = useState([
-    { id: 0, url: '', expiration: '', status: '' }
+    { id: 0, url: '', expiredAt: '', status: '' }
   ]);
 
   const [deleteSiteMutation] = useMutation(deleteSite, {
@@ -62,14 +62,37 @@ const DomainTable = ({ data, setReloadSites}: any) => {
   };
 
   const applyStatusClass = (status: string): string => {
-    if (status === 'Active') {
+    if (!status) {
+      return 'bg-yellow-200 text-200';
+    }
+    const currentTime = new Date().getTime();
+    const timeDifference = new Date(parseInt(status)).getTime() - currentTime;
+    const sevendays = 7 * 24 * 60 * 60 * 1000;
+
+    if (timeDifference > sevendays) {
       return 'bg-green-200 text-green-600';
     }
-    if (status === 'Expired') {
+    if (timeDifference < sevendays && timeDifference > 0) {
       return 'bg-red-200 text-red-600';
     }
     return 'bg-yellow-200 text-200';
+  }
 
+  const getDomainStatus = (status: string): string => {
+    if (!status) {
+      return 'Not Available';
+    }
+    const currentTime = new Date().getTime();
+    const timeDifference = new Date(parseInt(status)).getTime() - currentTime;
+    const sevendays = 7 * 24 * 60 * 60 * 1000;
+
+    if (timeDifference > sevendays) {
+      return 'Active';
+    }
+    if (timeDifference < sevendays && timeDifference > 0) {
+      return 'Expiring';
+    }
+    return 'Expired';
   }
 
   useEffect(() => {
@@ -132,10 +155,10 @@ const DomainTable = ({ data, setReloadSites}: any) => {
                       </div>
                     </td>
                     <td className="px-5 py-5 border-b border-light-grey bg-white text-sm">
-                      <p className={`p-1.5 text-xs font-semibold rounded w-fit whitespace-no-wrap ${applyStatusClass(domain.status)}`}>{domain.status}</p>
+                      <p className={`p-1.5 text-xs font-semibold rounded w-fit whitespace-no-wrap ${applyStatusClass(domain.expiredAt)}`}>{getDomainStatus(domain.expiredAt)}</p>
                     </td>
                     <td className="px-5 py-5 border-b border-light-grey bg-white text-sm">
-                      <p className="text-gray-900 whitespace-no-wrap">{domain.expiration}</p>
+                      <p className="text-gray-900 whitespace-no-wrap">{domain.expiredAt ? (new Date(parseInt(domain.expiredAt))).toLocaleString() ?? "-" : "-"}</p>
                     </td>
                     <td className="px-5 py-5 border-b border-light-grey bg-white text-sm text-right">
                       {editingId === domain.id ? (
@@ -161,6 +184,12 @@ const DomainTable = ({ data, setReloadSites}: any) => {
                           >
                             <HiMiniPencil />
                           </button>
+                          <NavLink
+                            to={`/domain-plans/${domain.id}`}
+                            className="p-2 text-green-600 hover:text-green-800"
+                          >
+                            <FaDollarSign />
+                          </NavLink>
                           <button
                             onClick={() => handleDelete(domain.id)}
                             className="p-2 text-red-600 hover:text-red-800"

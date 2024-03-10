@@ -13,6 +13,12 @@ import './index.css';
 
 import './config/i18n';
 
+if (process.env.NODE_ENV === 'development') {
+  import("disable-react-error-overlay").then(() => {
+      const iframe = document.querySelector('iframe');
+      if (iframe) iframe.remove();
+  });
+}
 
 
 const options = ["Option1", "Option2"];

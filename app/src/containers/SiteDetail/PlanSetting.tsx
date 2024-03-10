@@ -7,82 +7,85 @@ import { useTranslation, Trans } from 'react-i18next';
 
 import { RootState } from '@/config/store';
 import StripeContainer from '@/containers/Stripe';
-import deleteUserPlanQuery from '@/queries/userPlans/deleteUserPlan';
-import updateUserPlanQuery from '@/queries/userPlans/updateUserPlan';
-import createUserPlanQuery from '@/queries/userPlans/createUserPlan';
-import getUserPlanQuery from '@/queries/userPlans/getUserPlan';
+import deleteSitePlanQuery from '@/queries/sitePlans/deleteSitePlan';
+import updateSitePlanQuery from '@/queries/sitePlans/updateSitePlan';
+import createSitePlanQuery from '@/queries/sitePlans/createSitePlan';
+import getSitePlanQuery from '@/queries/sitePlans/getSitePlan';
 import { setUserPlan } from '@/features/auth/userPlan';
 import Plans from '@/components/Plans';
 import Toggle from '@/components/Common/Input/Toggle';
 import ErrorText from '@/components/Common/ErrorText';
 import Button from '@/components/Common/Button';
+import { TDomain } from '.';
+import { setSitePlan } from '@/features/site/sitePlan';
 
 const plans = [
   {
-    id: 'package1',
-    name: 'package1',
-    price: 1,
-    desc: 'Kickstart your project with all features and code',
+    id: 'Free',
+    name: 'Free',
+    price: 0,
+    desc: 'For Website under 1000 Impressions per month.',
     features: [
-      'Save weeks of development time.',
-      'Full source code download.',
-      'Self-service documentation.',
-      'Slack community support',
-      'One year of product updates',
+      'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
+      'Accessbility Statement',
+      'AI powered Screen Reader and Accessbility Profiles',
+      'Web Ability accesbility Statement',
     ]
   },
   {
-    id: 'package2',
-    name: 'package2',
-    price: 2,
-    desc: 'Kickstart your project with all features and code',
+    id: 'Pro',
+    name: 'Pro',
+    price: 45,
+    desc: 'For Website under 10,000 Impressions per month.',
     features: [
-      'Save weeks of development time.',
-      'Full source code download.',
-      'Self-service documentation.',
-      'Slack community support',
-      'One year of product updates',
+      'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
+      'Accessbility Statement',
+      'AI powered Screen Reader and Accessbility Profiles',
+      'Web Ability accesbility Statement',
     ]
   },
   {
-    id: 'package3',
-    name: 'package3',
-    price: 3,
-    desc: 'We help you get up and running even faster',
+    id: 'Business',
+    name: 'Business',
+    price: 75,
+    desc: 'For Website under 100,000 Impressions per month.',
     features: [
-      'Everything in the Starter plan.',
-      'One-on-one onboarding and setup.',
-      'Design consulting session with you/your team.',
-      'Customized code working towards your MVP',
-      'Production deployment to a VPS of your choice',
-      'Automated server setup and deploy scripts',
+      'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
+      'Accessbility Statement',
+      'AI powered Screen Reader and Accessbility Profiles',
+      'Web Ability accesbility Statement',
     ]
   },
 ];
 
-const PlanSetting: React.FC = () => {
+const PlanSetting: React.FC<{
+  domain: TDomain,
+  setReloadSites: (value: boolean) => void
+}> = ({ domain, setReloadSites }) => {
   const [isYearly, setIsYearly] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('');
-  const { data: currentPlan } = useSelector((state: RootState) => state.userPlan);
-  const [deleteUserPlanMutation, { error: errorDelete, loading: isDeletingUserPlan }] = useMutation(deleteUserPlanQuery);
-  const [updateUserPlanMutation, { error: errorUpdate, loading: isUpdatingUserPlan }] = useMutation(updateUserPlanQuery);
-  const [createUserPlanMutation, { error: errorCreate, loading: isCreatingUserPlan }] = useMutation(createUserPlanQuery);
-  const [fetchUserPlan, { data: userPlanData }] = useLazyQuery(getUserPlanQuery);
+  const { data: currentPlan } = useSelector((state: RootState) => state.sitePlan);
+  const [deleteSitePlanMutation, { error: errorDelete, loading: isDeletingSitePlan }] = useMutation(deleteSitePlanQuery);
+  const [updateSitePlanMutation, { error: errorUpdate, loading: isUpdatingSitePlan }] = useMutation(updateSitePlanQuery);
+  const [createSitePlanMutation, { error: errorCreate, loading: isCreatingSitePlan }] = useMutation(createSitePlanQuery);
+  const [fetchSitePlan, { data: sitePlanData }] = useLazyQuery(getSitePlanQuery);
   const dispatch = useDispatch();
   const { t } = useTranslation();
 
-  useEffect(() => {
-    if (!isEmpty(currentPlan)) {
-      setSelectedPlan(currentPlan.productType);
-      setIsYearly(currentPlan.priceType === 'yearly');
-    }
-  }, [currentPlan])
+  const siteId = parseInt(domain.id);
 
   useEffect(() => {
-    if (userPlanData?.getUserPlan) {
-      dispatch(setUserPlan({ data: userPlanData?.getUserPlan }));
+    dispatch(setSitePlan({ data: {} }));
+    fetchSitePlan({
+      variables: { siteId }
+    });
+  }, [])
+
+  useEffect(() => {
+    if (sitePlanData?.getPlanBySiteIdAndUserId) {
+      dispatch(setSitePlan({ data: sitePlanData?.getPlanBySiteIdAndUserId }));
     }
-  }, [userPlanData])
+  }, [sitePlanData])
 
   function toggle() {
     setIsYearly(!isYearly);
@@ -97,34 +100,45 @@ const PlanSetting: React.FC = () => {
   }
 
   async function handleCancelSubscription() {
-    await deleteUserPlanMutation({
-      variables: { userPlanId: currentPlan.id }
+    await deleteSitePlanMutation({
+      variables: { sitesPlanId: currentPlan.id }
     });
-    fetchUserPlan();
+    setReloadSites(true);
+    fetchSitePlan({
+      variables: { siteId }
+    });
   }
 
   async function createPaymentMethodSuccess(token: string) {
     if (!planChanged) return;
     const data = {
-      paymentMethodToken: token,
+      paymentMethodToken: process.env.NODE_ENV === 'development' ? "tok_visa" : token,
       planName: planChanged.id,
       billingType: isYearly ? 'YEARLY' : 'MONTHLY',
+      siteId: domain.id
     }
-    await createUserPlanMutation({ variables: data });
-    fetchUserPlan();
+    await createSitePlanMutation({
+      variables: data
+    });
+    setReloadSites(true);
+    fetchSitePlan({
+      variables: { siteId }
+    });
   }
 
   async function handleChangeSubcription() {
     if (!planChanged) return;
-    await updateUserPlanMutation({
+    await updateSitePlanMutation({
       variables: {
-        userPlanId: currentPlan.id,
+        sitesPlanId: currentPlan.id,
         planName: planChanged.id,
         billingType: isYearly ? 'YEARLY' : 'MONTHLY',
       }
     });
-
-    fetchUserPlan();
+    setReloadSites(true);
+    fetchSitePlan({
+      variables: { siteId }
+    });
   }
 
   const planChanged = plans.find(item => item.id === selectedPlan);
@@ -165,7 +179,7 @@ const PlanSetting: React.FC = () => {
                   ) : (
                     <Button
                       color="primary"
-                      disabled={isDeletingUserPlan}
+                      disabled={isDeletingSitePlan}
                       onClick={handleCancelSubscription}
                     >{t('Profile.text.cancel_sub')}</Button>
                   )}
@@ -190,30 +204,30 @@ const PlanSetting: React.FC = () => {
                   {(isEmpty(currentPlan) || (currentPlan && currentPlan.deletedAt)) ? (
                     <StripeContainer
                       onSubmitSuccess={createPaymentMethodSuccess}
-                      apiLoading={isCreatingUserPlan}
+                      apiLoading={isCreatingSitePlan}
                       submitText={currentPlan && currentPlan.deletedAt && t('Profile.text.change_plan') as string}
                     />
                   ) : (
                     <Button
                       color="primary"
                       onClick={handleChangeSubcription}
-                      disabled={isUpdatingUserPlan}
-                    >{isUpdatingUserPlan ? t('Common.text.please_wait') : t('Profile.text.change_sub')}</Button>
+                      disabled={isUpdatingSitePlan}
+                    >{isUpdatingSitePlan ? t('Common.text.please_wait') : t('Profile.text.change_sub')}</Button>
                   )}
                 </div>
               )}
 
-              {errorCreate?.message && (
-                <ErrorText message={errorCreate.message} />
-              )}
+                {errorCreate?.message && (
+                  <ErrorText message={errorCreate.message} />
+                )}
 
-              {errorUpdate?.message && (
-                <ErrorText message={errorUpdate.message} />
-              )}
+                {errorUpdate?.message && (
+                  <ErrorText message={errorUpdate.message} />
+                )}
 
-              {errorDelete?.message && (
-                <ErrorText message={errorDelete.message} />
-              )}
+                {errorDelete?.message && (
+                  <ErrorText message={errorDelete.message} />
+                )}
             </div>
           )}
         </div>
