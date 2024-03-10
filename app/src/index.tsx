@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { init, ErrorBoundary } from '@sentry/react';
-import { Integrations } from '@sentry/tracing';
+// import { Integrations } from '@sentry/tracing';
 import { useQuery } from '@apollo/client';
 
 
@@ -13,18 +13,18 @@ import './index.css';
 
 import './config/i18n';
 
-if (process.env.NODE_ENV === 'development') {
-  import("disable-react-error-overlay").then(() => {
-      const iframe = document.querySelector('iframe');
-      if (iframe) iframe.remove();
-  });
-}
+// if (process.env.NODE_ENV === 'development') {
+//   import("disable-react-error-overlay").then(() => {
+//       const iframe = document.querySelector('iframe');
+//       if (iframe) iframe.remove();
+//   });
+// }
 
 
 const options = ["Option1", "Option2"];
 init({
   dsn: process.env.REACT_APP_SENTRY_DSN,
-  integrations: [new Integrations.BrowserTracing()],
+  // integrations: [new Integrations.BrowserTracing()],
   tracesSampleRate: 1.0,
 });
 
