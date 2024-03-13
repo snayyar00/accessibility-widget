@@ -6,9 +6,9 @@ const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY, {
 });
 
 const products = [
-  { name: 'package1', amount: 1 },
-  { name: 'package2', amount: 2 },
-  { name: 'package3', amount: 3 },
+  { name: 'Free', amount: 15 },
+  { name: 'Pro', amount: 45 },
+  { name: 'Business', amount: 75 },
 ];
 
 type Item = {
