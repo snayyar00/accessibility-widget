@@ -7,14 +7,10 @@ import getUniqueToken from '../../queries/uniqueToken/getUniqueToken';
 export default function Installation({ domain }: any) {
   const { data, loading, refetch } = useQuery(getUniqueToken, { variables: { url: domain } });
   
-
+let side='left';
   function getCodeString(uniqueToken: string):string {
     return `
-<script src="https://webability.ca/webAbilityV1.0.min.js" 
-    token="${uniqueToken}"
-    data-asw-lang="en">
-</script>
-  `;
+    <script src="https://widget.webability.io/webAbilityV2.0.min.js?token=${uniqueToken}&side=${side}&data-asw-lang=en"></script>`;
   }
 
   const [codeString, setCodeString] = useState(getCodeString(''));
