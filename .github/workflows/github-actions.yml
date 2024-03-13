@@ -1,4 +1,3 @@
-
 name: API Deploy
 
 on:
@@ -73,12 +72,7 @@ jobs:
           cd api
           pm2 restart apiServer
 
-      - name: Debugging information
-        run: |
-          node --version
-          npm --version
-          npm list apollo-server-express @graphql-tools/schema @graphql-tools/utils typescript
-
+      
   APP:
     needs: API
     runs-on: self-hosted
@@ -115,22 +109,3 @@ jobs:
         run: |
           cd app
           pm2 restart frontendServer
-
-      # - name: Install AWS CLI (Optional Step)
-      #   run: |
-      #     if ! command -v aws &> /dev/null
-      #     then
-      #         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-      #         unzip awscliv2.zip
-      #         sudo ./aws/install
-      #     fi
-      #   shell: bash
-
-      # - name: Deploy to AWS S3
-      #   run: |
-      #     aws s3 sync app/build s3://accessability-artifacts --delete
-      #   env:
-      #     AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     AWS_REGION: 'us-east-2'
