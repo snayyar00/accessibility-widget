@@ -9,7 +9,7 @@ import cookieParser from 'cookie-parser';
 import 'module-alias/register';
 import { ApolloServer, ApolloError } from 'apollo-server-express';
 import { withScope, Severity, captureException, init } from '@sentry/node';
-import { IResolvers } from 'graphql-tools';
+import { IResolvers } from '@graphql-tools/utils';
 import { makeExecutableSchema } from 'graphql-tools';
 import accessLogStream from '~/middlewares/logger.middleware';
 import RootSchema from './graphql/root.schema';
