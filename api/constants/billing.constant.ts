@@ -4,7 +4,7 @@ export const PERMISSION_PLAN = {
 };
 
 export const PERMISSION_SITE_PLAN = {
-  Free: ['a', 'b', 'c'],
-  Pro: ['d', 'e', 'f'],
-  Business: ['g', 'h', 'i'],
+  small: ['a', 'b', 'c'],
+  big: ['d', 'e', 'f'],
+  large: ['g', 'h', 'i'],
 };

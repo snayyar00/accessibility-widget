@@ -64,8 +64,8 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
       const sitePlanId = await insertSitePlan(dataUserPlan as any);
       let sitePermissionData;
 
-      if (product.type === 'Free' || product.type === 'Pro' || product.type === 'Business') {
-        sitePermissionData = PERMISSION_SITE_PLAN[product.type].map((permission: string) => ({
+      if (product.type === 'small' || product.type === 'medium' || product.type === 'large') {
+        sitePermissionData = PERMISSION_SITE_PLAN[product.type as keyof typeof PERMISSION_SITE_PLAN].map((permission: string) => ({
           allowed_site_id: siteId,
           sites_plan_id: sitePlanId[0],
           permission,
@@ -105,8 +105,8 @@ export async function updateSitesPlan(sitePlanId: number, planName: string, bill
     await updateSitePlanById(sitePlanId, dataSitePlan);
     let sitePermissionData;
 
-    if (product.type === 'Free' || product.type === 'Pro' || product.type === 'Business') {
-      sitePermissionData = PERMISSION_SITE_PLAN[product.type].map((permission: string) => ({
+    if (product.type === 'small' || product.type === 'medium' || product.type === 'large') {
+      sitePermissionData = PERMISSION_SITE_PLAN[product.type as keyof typeof PERMISSION_SITE_PLAN].map((permission: string) => ({
         allowed_site_id: sitePlan.allowed_site_id,
         sites_plan_id: sitePlanId,
         permission,

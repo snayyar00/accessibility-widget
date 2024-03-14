@@ -21,9 +21,9 @@ import { setSitePlan } from '@/features/site/sitePlan';
 
 const plans = [
   {
-    id: 'Free',
-    name: 'Free',
-    price: 0,
+    id: 'small',
+    name: 'Small Business',
+    price: 15,
     desc: 'For Website under 1000 Impressions per month.',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
@@ -33,8 +33,8 @@ const plans = [
     ]
   },
   {
-    id: 'Pro',
-    name: 'Pro',
+    id: 'medium',
+    name: 'Medium Business',
     price: 45,
     desc: 'For Website under 10,000 Impressions per month.',
     features: [
@@ -45,8 +45,8 @@ const plans = [
     ]
   },
   {
-    id: 'Business',
-    name: 'Business',
+    id: 'large',
+    name: 'Enterprise',
     price: 75,
     desc: 'For Website under 100,000 Impressions per month.',
     features: [

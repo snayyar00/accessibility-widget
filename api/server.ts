@@ -88,7 +88,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   // });
 
   // app.get('/create-products', (req, res) => {
-  //   run().then(() => res.send('insert successfully')).catch((err) => res.send(err));
+  //   run()
+  //     .then(() => res.send('insert successfully'))
+  //     .catch((err) => res.send(err));
   // });
 
   app.post('/form', async (req, res) => {
