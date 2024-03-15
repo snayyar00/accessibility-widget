@@ -112,7 +112,7 @@ const PlanSetting: React.FC<{
   async function createPaymentMethodSuccess(token: string) {
     if (!planChanged) return;
     const data = {
-      paymentMethodToken: process.env.NODE_ENV === 'development' ? "tok_visa" : token,
+      paymentMethodToken:token,
       planName: planChanged.id,
       billingType: isYearly ? 'YEARLY' : 'MONTHLY',
       siteId: domain.id
