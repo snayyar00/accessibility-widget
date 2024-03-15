@@ -11,13 +11,13 @@ import { ApolloServer, ApolloError } from 'apollo-server-express';
 import { withScope, Severity, captureException, init } from '@sentry/node';
 import { IResolvers } from '@graphql-tools/utils';
 import { makeExecutableSchema } from 'graphql-tools';
-import accessLogStream from '~/middlewares/logger.middleware';
+import accessLogStream from './middlewares/logger.middleware';
 import RootSchema from './graphql/root.schema';
 import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
 import stripeHooks from './services/stripe/webhooks.servive';
 import { getIpAddress } from './helpers/uniqueVisitor.helper';
-import sendMail from '~/libs/mail';
+import sendMail from './libs/mail';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 // import run from './scripts/create-products';
 
