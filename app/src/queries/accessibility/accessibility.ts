@@ -1,7 +1,7 @@
 import { gql } from 'graphql.macro';
 
 export default gql`
-  query GetUserSites($url: String!) {
+  query getAccessibilityReport($url: String!) {
     getAccessibilityReport(url: $url) {
       axe {
         errors {
@@ -43,12 +43,16 @@ export default gql`
           message
           context
           selectors
+          description
+          recommended_action
         }
         warnings {
           code
           message
           context
           selectors
+          description
+          recommended_action
         }
       }
       score

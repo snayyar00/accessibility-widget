@@ -19,9 +19,15 @@ import AccordionDetails, {
 import AccordionSummary, {
   accordionSummaryClasses,
 } from '@mui/joy/AccordionSummary';
+import { CircularProgress } from '@mui/material';
 
+import WebsiteScanAnimation from '@/components/Animations/WebsiteScanAnimation';
+import LeftArrowAnimation from '@/components/Animations/LeftArrowAnimation';
 import AccessibilityScoreCard from './AccessibiltyScoreCard';
 import AccordionCard from './AccordionCard';
+import AccessibilityIssuesGroup from './AccessibilityIssuesGroup';
+import './AccessibilityReport.css';
+import IssueCategoryCard from './IssueCategoryCard';
 
 
 const AccessibilityReport = ({ currentDomain }: any) => {
@@ -30,6 +36,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [enabled, setEnabled] = useState(false);
   const [domain, setDomain] = useState(currentDomain);
   const [issueType, setIssueType] = useState('Errors');
+  // const [accessibilityData, setAccessibilityData] = useState({});
 
   const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(getAccessibilityStats, {
     variables: { url: domain }
@@ -38,9 +45,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   useEffect(() => {
     console.log(data)
     if (data) {
-      console.log(data.getAccessibilityReport.categories)
+      const { htmlcs } = data.getAccessibilityReport;
       setScoreBackup(data.getAccessibilityReport.score);
       setScore(data.getAccessibilityReport.score);
+      groupByCode(htmlcs);
+      // setAccessibilityData(htmlcs);
+      console.log(data.getAccessibilityReport.htmlcs)
     }
   }, [data]);
 
@@ -62,7 +72,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   }
   const handleInputChange = (e: any) => {
-    setDomain(e.target.value); // Update state with input value
+    setDomain(e.target.value);
+     // Update state with input value
   };
 
 
@@ -75,6 +86,30 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
     getAccessibilityStatsQuery(); // Manually trigger the query
   };
+
+  function groupByCodeUtil(issues: any) {
+    const groupedByCode: any = {};
+    if (Array.isArray(issues)) {
+      issues.forEach((warning) => {
+        const { code } = warning;
+        if (!groupedByCode[code]) {
+          groupedByCode[code] = [];
+        }
+        groupedByCode[code].push(warning);
+      });
+    }
+    return groupedByCode;
+  }
+
+  function groupByCode(issues: any) {
+    console.log('group code called')
+    if (issues && typeof issues === 'object') {
+      issues.errors = groupByCodeUtil(issues.errors);
+      issues.warnings = groupByCodeUtil(issues.warnings);
+      issues.notices = groupByCodeUtil(issues.notices);
+    }
+  }
+
 
   return (
 
@@ -89,11 +124,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         />
         <button type="submit" className="search-button bg-primary">
           Free Scan
+          {loading && <CircularProgress size={14} sx={{ color: 'white' }} className='ml-2 my-auto' />}
         </button>
       </form>
-      <div className="accessibility-container">
+      {loading ? <WebsiteScanAnimation className='mt-8' /> : <div className="accessibility-container">
         <div className="accessibility-card">
-          <div className="card-header">Status</div>
+          <h3 className='text-center font-bold text-sapphire-blue text-lg mb-3'>Status</h3>
           <div className='flex justify-center w-full'>
             {score > 89 ?
               <FaCheckCircle size={90} color='green' /> :
@@ -107,7 +143,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         <AccessibilityScoreCard score={score} />
 
         <div className="accessibility-card">
-          <div className="card-header">Lawsuit Risk</div>
+          <h3 className='text-center font-bold text-sapphire-blue text-lg mb-3'>Lawsuit Risk</h3>
           <div className='flex justify-center'>
             <FaGaugeSimpleHigh style={score > 89 ? { transform: 'scaleX(-1)' } : {}} size={90} color={score > 89 ? 'green' : '#ec4545'} />
           </div>
@@ -115,13 +151,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           <p>Multiple violations may be exposing your site to legal action.</p>
         </div>
 
-        <div className='flex items-center mt-3'>
+        <div className='flex items-center justify-center mt-3'>
           See your results with WebAbility! 🚀
 
           <button
             type="button"
             aria-pressed="false"
-            aria-label="Toggle"
+            aria-label="Toggle to see results with webability turned on."
             className={`${enabled ? 'bg-primary' : 'bg-dark-gray'} ml-6 relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
             onClick={enableButton}
           >
@@ -130,6 +166,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               className={`${enabled ? 'translate-x-5' : 'translate-x-0'} bg inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`}
             />
           </button>
+          <LeftArrowAnimation />
+
           {/* <div className="arrow-container justify-self-end ml-8">
             <div className="arrow-animation">
               <div className="arrow-head"></div>
@@ -138,12 +176,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           </div> */}
 
         </div>
-
-
-        <div className='flex w-full items-center justify-center text-lg mb-3 '>
-          <Link to='/dashboard' className='hover:text-sapphire-blue underline' >Try free for 7 days!</Link>
-        </div>
-        <ToggleButtonGroup
+        {data && <>
+          <h3 className='text-3xl font-semibold text-sapphire-blue mb-2'>Accessibility Issues</h3>
+          {/* <ToggleButtonGroup
           size="sm"
           buttonFlex={1}
           value={issueType}
@@ -152,45 +187,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           <Button value="Errors">Errors</Button>
           <Button value="Warnings">Warnings</Button>
           <Button value="Notices">Notices</Button>
-        </ToggleButtonGroup>
-        <AccordionGroup
-          className="bg-gray"
-          sx={{
-            padding: '1%',
-            borderRadius: 'md'
-          }}
-        >
-          {data && issueType === 'Errors' && data.getAccessibilityReport.htmlcs.errors.map((item: any) =>
-            <Accordion>
-              <AccordionSummary className="text-sm font-medium p-1">{item.code}</AccordionSummary>
-              <AccordionDetails className="p-2">
-                <AccordionCard heading={item.message} description={item.description} help={item.recommended_action} />
-              </AccordionDetails>
-            </Accordion>
-
-          )}
-          {data && issueType === 'Warnings' && data.getAccessibilityReport.htmlcs.warnings.map((item: any) =>
-            <Accordion>
-              <AccordionSummary className="text-sm font-medium p-1">{item.code}</AccordionSummary>
-              <AccordionDetails className="p-2">
-                <AccordionCard heading={item.message} description={item.description} help={item.recommended_action} />
-              </AccordionDetails>
-            </Accordion>
-
-          )}
-          {data && issueType === 'Notices' && data.getAccessibilityReport.htmlcs.notices.map((item: any) =>
-            <Accordion>
-              <AccordionSummary className="text-sm font-medium p-1">{item.code}</AccordionSummary>
-              <AccordionDetails className="p-2">
-                <AccordionCard heading={item.message} description={item.description} help={item.recommended_action} />
-              </AccordionDetails>
-            </Accordion>
-
-          )}
-        </AccordionGroup>
-
-        
-      </div>
+        </ToggleButtonGroup> */}
+          <IssueCategoryCard data={data} issueType='Errors' />
+          <IssueCategoryCard data={data} issueType='Warnings' />
+          <IssueCategoryCard data={data} issueType='Notices' />
+        </>
+        }
+      </div>}
     </div>
   );
 }

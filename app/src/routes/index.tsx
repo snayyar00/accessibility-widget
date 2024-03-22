@@ -71,7 +71,7 @@ const routes = [
     exact:true,
     component: Accessibility,
     icon: <AccessibilityIcon />,
-    isSidebar:false,
+    isSidebar:true,
   },
 ];
 
