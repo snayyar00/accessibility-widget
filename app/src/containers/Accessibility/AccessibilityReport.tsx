@@ -46,15 +46,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   );
 
   useEffect(() => {
-    console.log(data);
     if (data) {
       const { htmlcs } = data.getAccessibilityReport;
       setSiteImg(data.getAccessibilityReport?.siteImg)
       setScoreBackup(data.getAccessibilityReport.score);
+      console.log("ByFunction data = ",data?.getAccessibilityReport?.ByFunctions);
       setScore(data.getAccessibilityReport.score);
       groupByCode(htmlcs);
       // setAccessibilityData(htmlcs);
       console.log(data.getAccessibilityReport.htmlcs);
+      console.log("Full Report",data.getAccessibilityReport);
     }
   }, [data]);
 
@@ -334,7 +335,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     <IssueCategoryCard data={data} issueType="Warnings" />
                     <IssueCategoryCard data={data} issueType="Notices" />
                   </>
-                ) : null}
+                ) : (<>
+                  <IssueCategoryCard data={data} issueType="Function" />
+                </>)}
               </div>
             </>
           }
