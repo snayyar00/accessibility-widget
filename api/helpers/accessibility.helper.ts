@@ -31,6 +31,7 @@ interface finalOutput {
   };
   score?: number;
   totalElements: number;
+  siteImg?:string;
 }
 
 function createAxeArrayObj(message: string, issue: any) {

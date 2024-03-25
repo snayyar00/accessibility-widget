@@ -19,6 +19,7 @@ import stripeHooks from './services/stripe/webhooks.servive';
 import { getIpAddress } from './helpers/uniqueVisitor.helper';
 import sendMail from './libs/mail';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
+import { fetchSitePreview } from './services/accessibilityReport/accessibilityReport.service';
 // import run from './scripts/create-products';
 
 type ContextParams = {
@@ -92,6 +93,16 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   //     .then(() => res.send('insert successfully'))
   //     .catch((err) => res.send(err));
   // });
+  app.post('/getScreenshortUrl', async (req: Request, res: Response) => {
+    try {
+        const url = req.body.url; // Extract URL from request body
+        const dataUrl = await fetchSitePreview(url); // Call fetchSitePreview function
+        res.send(dataUrl); // Send the generated Data URL as response
+    } catch (error) {
+        console.error('Error generating screenshot:', error);
+        res.status(500).send('Error generating screenshot');
+    }
+});
 
   app.post('/form', async (req, res) => {
     console.log('Received POST request for /form:', req.body);

@@ -31,11 +31,16 @@ export default function AccessibilityIssuesGroup({ issueObj }: AccessibilityErro
 
       return (
         <Accordion key={key}>
-          <AccordionSummary className="text-sm font-medium p-1">
+          <AccordionSummary
+            className="text-sm font-medium p-1"
+            sx={{
+              paddingY: 1,
+            }}
+          >
             {errorDetails[firstIndex].code}
           </AccordionSummary>
           {errorDetails.map((issue, index) => (
-            <AccordionDetails className="p-2">
+            <AccordionDetails >
               <AccordionCard
                 heading={issue.message}
                 description={issue.description}

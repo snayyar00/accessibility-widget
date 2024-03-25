@@ -2,6 +2,7 @@ import axios from 'axios';
 import { getAccessibilityInformationPally } from '~/helpers/accessibility.helper';
 import logger from '~/utils/logger';
 const { GraphQLJSON } = require('graphql-type-json');
+const puppeteer = require('puppeteer');
 
 interface Status {
     success: boolean;
@@ -116,11 +117,43 @@ function calculateAccessibilityScore(data: any) {
 export const fetchAccessibilityReport = async (url: string) => {
     try {
         const result = await getAccessibilityInformationPally(url);
+        
+        if (!url.startsWith('https://') && !url.startsWith('http://')) {
+          url = 'https://' + url;
+        }
+        const siteImg = await fetchSitePreview(url);
+        if(siteImg)
+        {
+            result.siteImg = siteImg;
+        }
+        
+
         return result;
 
     } catch (error) {
         logger.error(error);
         throw new Error(`${error} Error fetching data from WebAIM API `);
+    }
+};
+
+export const fetchSitePreview = async (url:string) => {
+    try {
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.setViewport({
+            width: 1920, 
+            height: 1080
+        });
+        await page.goto(url);
+        const screenshotBuffer = await page.screenshot({ encoding: 'base64' });
+        await browser.close();
+
+        // Create Data URL from the screenshot buffer
+        const dataUrl = `data:image/png;base64,${screenshotBuffer.toString('base64')}`;
+        return dataUrl;
+    } catch (error) {
+        console.error('Error generating screenshot:', error);
+        return null;
     }
 };
 

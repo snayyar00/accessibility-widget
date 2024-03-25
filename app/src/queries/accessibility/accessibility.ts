@@ -57,6 +57,7 @@ export default gql`
       }
       score
       totalElements
+      siteImg
     }
   }
 `;

@@ -31,7 +31,8 @@ export default function IssueCategoryCard({ data, issueType }: any) {
         sx={{
           paddingTop: '0.5%',
           backgroundColor: '#007bff',
-          borderRadius: 'md'
+          borderRadius: 'md',
+          marginBottom:3
         }}
       >
         <AccordionSummary
@@ -49,6 +50,7 @@ export default function IssueCategoryCard({ data, issueType }: any) {
             }}
           >
             {data && <AccessibilityIssuesGroup issueObj={getObject(issueType, data)} />}
+            
           </AccordionGroup>
         </AccordionDetails>
       </Accordion>

@@ -36,6 +36,7 @@ export const AccessibilitySchema = gql`
     htmlcs: htmlCsResult
     score: Int
     totalElements: Int
+    siteImg: String
   }
 
   extend type Query {
