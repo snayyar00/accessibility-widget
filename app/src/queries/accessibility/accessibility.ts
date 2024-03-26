@@ -57,6 +57,35 @@ export default gql`
       }
       score
       totalElements
+      siteImg
+
+      ByFunctions {
+            FunctionalityName
+            Errors {
+              code
+              message
+              context
+              selectors
+              description
+              recommended_action
+            } 
+      }
     }
   }
 `;
+
+
+// ByFunctions {
+//   Human functionalities
+//     {
+//       Functionality Name
+//       errors {
+//         code
+//         message
+//         context
+//         selectors
+//         description
+//         recommended_action
+//       } 
+//     }
+// }
