@@ -217,31 +217,30 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             </div>
           </div> */}
           </div>
-          {data &&
+          {data && (
             <>
-              <h3 className="text-3xl font-semibold text-sapphire-blue mb-2">
-                Accessibility Issues
-              </h3>
-              {/* <ToggleButtonGroup
-          size="sm"
-          buttonFlex={1}
-          value={issueType}
-          onChange={(event, newValue) => setIssueType(newValue || issueType)}
-        >
-          <Button value="Errors">Errors</Button>
-          <Button value="Warnings">Warnings</Button>
-          <Button value="Notices">Notices</Button>
-        </ToggleButtonGroup> */}
-              <Card  sx={{ maxWidth: 400,borderRadius: 'md', marginY:4 }}>
-                <CardMedia
-                  component="img"
-                  height="250"
-                  image={siteImg}
-                  alt="Site Preview Image"
-                />
-              </Card>
-
               <div>
+                  <div className='text-center'>
+                    <h3 className="text-3xl font-semibold text-sapphire-blue mb-2">
+                      Accessibility Issues
+                    </h3>
+                  </div>
+                <div className="flex justify-center justify-self-center">
+                  
+                  <div>
+                    <Card
+                      sx={{ maxWidth: 400, borderRadius: 'md', marginY: 4 }}
+                    >
+                      <CardMedia
+                        component="img"
+                        height="250"
+                        image={siteImg}
+                        alt="Site Preview Image"
+                      />
+                    </Card>
+                  </div>
+                </div>
+
                 <div>
                   <div className="flex justify-center items-center -mx-4 overflow-x-auto overflow-y-hidden sm:justify-center flex-nowrap dark:text-white-800">
                     <a
@@ -328,19 +327,22 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     </a>
                   </div>
                 </div>
-
-                {activeTab === 'By WCGA Guidelines' ? (
-                  <>
-                    <IssueCategoryCard data={data} issueType="Errors" />
-                    <IssueCategoryCard data={data} issueType="Warnings" />
-                    <IssueCategoryCard data={data} issueType="Notices" />
-                  </>
-                ) : (<>
-                  <IssueCategoryCard data={data} issueType="Function" />
-                </>)}
+                <div>
+                  {activeTab === 'By WCGA Guidelines' ? (
+                    <>
+                      <IssueCategoryCard data={data} issueType="Errors" />
+                      <IssueCategoryCard data={data} issueType="Warnings" />
+                      <IssueCategoryCard data={data} issueType="Notices" />
+                    </>
+                  ) : (
+                    <>
+                      <IssueCategoryCard data={data} issueType="Function" />
+                    </>
+                  )}
+                </div>
               </div>
             </>
-          }
+          )}
         </div>
       )}
     </div>

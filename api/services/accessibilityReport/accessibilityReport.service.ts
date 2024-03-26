@@ -211,15 +211,15 @@ export const fetchAccessibilityReport = async (url: string) => {
                     delete error['Error Guideline'];
 
                     error["description"] =
-                      errorCodeWithDescriptions[error["code"]]["description"];
+                      errorCodeWithDescriptions[error["code"]]?.description;
                     error["context"] =
-                    errorCodeWithDescriptions[error["code"]]['context'];
+                    errorCodeWithDescriptions[error["code"]]?.context;
                     error["message"] =
-                    errorCodeWithDescriptions[error["code"]]['message'];
+                    errorCodeWithDescriptions[error["code"]]?.message;
                     error["recommended_action"] =
-                    errorCodeWithDescriptions[error["code"]]['recommended_action'];
+                    errorCodeWithDescriptions[error["code"]]?.recommended_action;
                     error["selectors"] =
-                    errorCodeWithDescriptions[error["code"]]['selectors'];
+                    errorCodeWithDescriptions[error["code"]]?.selectors;
                   });
                 }
               );

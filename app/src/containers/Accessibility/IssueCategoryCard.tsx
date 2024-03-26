@@ -35,7 +35,7 @@ export default function IssueCategoryCard({ data, issueType }: any) {
     <>
       {issueType === 'Function' ? (
         <>
-          {functionData.map((func, index) => (
+          {data?.getAccessibilityReport?.ByFunctions.map((func:any, index:any) => (
             <AccordionGroup>
               <Accordion
                 key={index}
