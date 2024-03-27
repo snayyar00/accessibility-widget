@@ -225,7 +225,6 @@ export const fetchAccessibilityReport = async (url: string) => {
               );
               
                 result.ByFunctions = completion.HumanFunctionalities;
-                console.log(result.ByFunctions[0].Errors[0]);
             }
         }
         

@@ -36,14 +36,12 @@ const Sidebar = ({ options, setReloadSites, selectedOption, setSelectedOption }:
         />
       )}
       <div
-        className={cn(
-          'w-[235px] h-screen flex flex-col sm:fixed sm:left-[-235px] sm:z-[50] sm:bg-white sm:transition-all sm:duration-[400ms] sm:active:left-0 sm:active:z-[50]',
-          { active: isOpen },
-        )}
+        className={`w-[235px] h-screen flex flex-col sm:fixed sm:bg-white sm:transition-all sm:duration-[400ms]
+         ${isOpen ? 'sm:left-0 sm:z-[50] ' : 'sm:left-[-235px] sm:z-[50] '}`}
       >
         <a
           href="/"
-          className="flex h-[81px] items-center pl-[30px] border-b border-r border-solid border-gray"
+          className="flex h-[81px] items-center pl-[5px] border-b border-r border-solid border-gray"
         >
           <LogoIcon />
 
@@ -51,7 +49,7 @@ const Sidebar = ({ options, setReloadSites, selectedOption, setSelectedOption }:
             <span>{t('Common.logo.saas')}</span>
             <span>{t('Common.logo.gear')}</span>
           </div> */}
-          <div className='pr-12'>
+          <div className='pr-5'>
             <svg
               width="198"
               height="47"

@@ -180,7 +180,7 @@ export const GPTChunks = async (errorCodes: string[]) => {
           },
         },
       ],
-      model: "gpt-4-0125-preview",
+      model: "gpt-3.5-turbo",
     });
     return completion.choices[0].message.tool_calls?.[0].function.arguments;
   });
