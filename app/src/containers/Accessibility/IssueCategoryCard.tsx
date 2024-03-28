@@ -6,7 +6,7 @@ import AccordionDetails, {
 import AccordionSummary, {
   accordionSummaryClasses,
 } from '@mui/joy/AccordionSummary';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import AccessibilityIssuesGroup from './AccessibilityIssuesGroup';
 
 function getObject(issueType: string, data: any) {
@@ -16,42 +16,102 @@ function getObject(issueType: string, data: any) {
   if (issueType === 'Warnings') {
     return data.getAccessibilityReport.htmlcs.warnings;
   }
-  return data.getAccessibilityReport.htmlcs.notices;
+  if(issueType === 'Notices')
+  {
+    return data.getAccessibilityReport.htmlcs.notices;
+  }
+  return data.getAccessibilityReport.ByFunctions;
 }
 
 export default function IssueCategoryCard({ data, issueType }: any) {
+  const [functionData,setFunctionData] = useState([]); 
+  useEffect(()=>{
+    if(issueType === "Function")
+    {
+      setFunctionData(data.getAccessibilityReport.ByFunctions);
+    }
+  },[])
   return (
-    <AccordionGroup
-    >
-      <Accordion
-        key={issueType}
-        defaultExpanded
-        disabled
-        variant='soft'
-        sx={{
-          paddingTop: '0.5%',
-          backgroundColor: '#007bff',
-          borderRadius: 'md'
-        }}
-      >
-        <AccordionSummary
-          indicator=''
-          sx={{ borderBottom: '1px solid #fff', marginBottom: '1%' }}
-          className='text-lg'
-        >
-          {issueType}</AccordionSummary>
-        <AccordionDetails>
-          <AccordionGroup
-            className="bg-white"
+    <>
+      {issueType === 'Function' ? (
+        <>
+          {data?.getAccessibilityReport?.ByFunctions.map((func:any, index:any) => (
+            <AccordionGroup>
+              <Accordion
+                key={index}
+                defaultExpanded
+                disabled
+                variant="soft"
+                sx={{
+                  paddingTop: '0.5%',
+                  backgroundColor: '#007bff',
+                  borderRadius: 'md',
+                  marginBottom: 3,
+                }}
+              >
+                <AccordionSummary
+                  indicator=""
+                  sx={{ borderBottom: '1px solid #fff', marginBottom: '1%' }}
+                  className="text-lg"
+                >
+                  {func['FunctionalityName']}
+                </AccordionSummary>
+                <AccordionDetails>
+                  <AccordionGroup
+                    className="bg-white"
+                    sx={{
+                      padding: '1%',
+                      borderRadius: 'md',
+                    }}
+                  >
+                    {func['Errors'] && (
+                      <AccessibilityIssuesGroup issueObj={func['Errors']} />
+                    )}
+                  </AccordionGroup>
+                </AccordionDetails>
+              </Accordion>
+            </AccordionGroup>
+          ))}
+        </>
+      ) : (
+        <AccordionGroup>
+          <Accordion
+            key={issueType}
+            defaultExpanded
+            disabled
+            variant="soft"
             sx={{
-              padding: '1%',
-              borderRadius: 'md'
+              paddingTop: '0.5%',
+              backgroundColor: '#007bff',
+              borderRadius: 'md',
+              marginBottom: 3,
             }}
           >
-            {data && <AccessibilityIssuesGroup issueObj={getObject(issueType, data)} />}
-          </AccordionGroup>
-        </AccordionDetails>
-      </Accordion>
-    </AccordionGroup>
-  )
+            <AccordionSummary
+              indicator=""
+              sx={{ borderBottom: '1px solid #fff', marginBottom: '1%' }}
+              className="text-lg"
+            >
+              {issueType}
+            </AccordionSummary>
+            <AccordionDetails>
+              <AccordionGroup
+                className="bg-white"
+                sx={{
+                  padding: '1%',
+                  borderRadius: 'md',
+                }}
+              >
+                {data && (
+                  <AccessibilityIssuesGroup
+                    issueObj={getObject(issueType, data)}
+                  />
+                )}
+              </AccordionGroup>
+            </AccordionDetails>
+          </Accordion>
+        </AccordionGroup>
+      )}
+    </>
+  );
 }

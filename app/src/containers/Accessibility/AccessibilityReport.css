@@ -1,3 +1,6 @@
 .css-1twr7re-JoyAccordionSummary-button.Mui-disabled{
     color: white !important;
 }
+.css-1twr7re-JoyAccordionSummary-button:not(.Mui-selected, [aria-selected="true"]):hover {
+    border-radius: 12px;
+}

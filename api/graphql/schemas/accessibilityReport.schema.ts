@@ -31,11 +31,18 @@ export const AccessibilitySchema = gql`
     warnings: [htmlCsOutput]
   }
 
+  type HumanFunctionality {
+    FunctionalityName: String
+    Errors: [htmlCsOutput] 
+  }
+
   type Report {
     axe: axeResult
     htmlcs: htmlCsResult
     score: Int
     totalElements: Int
+    siteImg: String
+    ByFunctions: [HumanFunctionality]
   }
 
   extend type Query {

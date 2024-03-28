@@ -96,3 +96,143 @@ export async function readAccessibilityDescriptionFromDb(issues: any) {
     console.log(error, '\nError retrieving accessibility issue description from database.');
   }
 }
+
+interface Error {
+  'Error Guideline'?: string;
+  code?: string;
+  description?: string | string[];
+  message?: string | string[];
+  context?: string | string[];
+  recommended_action?: string | string[];
+  selectors?: string | string[];
+}
+
+interface HumanFunctionality {
+  'FunctionalityName': string;
+  Errors: Error[];
+}
+
+interface GPTData {
+  'HumanFunctionalities': HumanFunctionality[];
+}
+
+export const GPTChunks = async (errorCodes: string[]) => {
+  const chunkSize = Math.ceil(errorCodes.length / 3);
+  const errorChunks: string[][] = [];
+  for (let i = 0; i < errorCodes.length; i += chunkSize) {
+    errorChunks.push(errorCodes.slice(i, i + chunkSize));
+  }
+  // Making API calls and aggregating the results
+  const promises = errorChunks.map(async (chunk) => {
+    const completion = await openai.chat.completions.create({
+      seed: chunk.length,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a website accessibility report expert. You are given a List of WCGA Guideline Error Codes. You must group the error codes based on human functionality e.g 'deaf', 'blind',' Mobility','Low vision','Cognitive' and other such functionality.Remeber to group all of the given error codes. Donot Group One error code under more than one Human Functionality .Always provide the result in JSON format.",
+        },
+        {
+          role: "user",
+          content:
+            "These are WCGA error Codes give JSON Object where each error code is mapped to a human functionality : [" +
+            chunk.join(" , ") +
+            "]",
+        },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "map_errorcodes",
+            parameters: {
+              type: "object",
+              properties: {
+                "HumanFunctionalities": {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      "FunctionalityName": {
+                        type: "string",
+                        description: "Name of the human functionality",
+                      },
+                      Errors: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            "Error Guideline": {
+                              type: "string",
+                              description: "WCGA Error Codes",
+                            },
+                          },
+                          required: ["Error Guideline"], // Ensure these properties are required
+                        },
+                        description: "Errors related to this functionality",
+                      },
+                    },
+                    required: ["FunctionalityName", "Errors"], // Ensure these properties are required
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
+      model: "gpt-3.5-turbo",
+    });
+    return completion.choices[0].message.tool_calls?.[0].function.arguments;
+  });
+
+  try {
+    // Wait for all promises to resolve
+    const results = await Promise.all(promises);
+
+    // Flatten the array of arrays into a single array
+    const aggregatedResult = results.flat();
+    let mergedObject: GPTData = {
+      "HumanFunctionalities": [],
+    };
+
+    if (aggregatedResult[0] && aggregatedResult[1] && aggregatedResult[2]) {
+      const jsonObject1 = JSON.parse(aggregatedResult[0]);
+      const jsonObject2 = JSON.parse(aggregatedResult[1]);
+      const jsonObject3 = JSON.parse(aggregatedResult[2]);
+
+      mergedObject = {
+        "HumanFunctionalities": [
+          ...jsonObject1["HumanFunctionalities"],
+          ...jsonObject2["HumanFunctionalities"],
+          ...jsonObject3["HumanFunctionalities"],
+        ],
+      };
+
+      const mergedData = mergedObject["HumanFunctionalities"].reduce(
+        (acc: HumanFunctionality[], curr: HumanFunctionality) => {
+          const existingItem = acc.find(
+            (item) => item["FunctionalityName"] === curr["FunctionalityName"]
+          );
+          if (existingItem) {
+            existingItem.Errors.push(...curr.Errors);
+          } else {
+            acc.push(curr);
+          }
+          return acc;
+        },
+        []
+      );
+
+      const final = {
+        "HumanFunctionalities": mergedData,
+      };
+
+      mergedObject = final;
+    }
+
+    return mergedObject;
+  } catch (error) {
+    console.error("Error occurred while querying:", error);
+    throw error;
+  }
+};

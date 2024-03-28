@@ -41,7 +41,7 @@ const Topbar: React.FC<Props> = ({ signout }) => {
     <div className="h-[80px] flex items-center justify-between pl-[25px] pr-[32px] relative sm:py-0 sm:px-[15px] sm:h-16">
       <div className="relative sm:w-full sm:mr-[15px] [&>input]:sm:h-[38px] [&>input]:sm:pl-[30px]">
         <div onClick={() => dispath(toggleSidebar(true))} role='presentation' className="hidden absolute top-1/2 translate-y-[-50%] left-[10px] z-[15] sm:block">
-          <MenuIcon />
+          <MenuIcon className="w-8 h-auto"/>
         </div>
         {/* <Input placeholder="Search..." className="w-[468px] border-[#d2d5e1] sm:w-full" /> */}
       </div>

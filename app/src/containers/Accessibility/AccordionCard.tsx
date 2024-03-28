@@ -2,9 +2,10 @@ import Accordion, {accordionClasses} from "@mui/joy/Accordion";
 import AccordionDetails, { accordionDetailsClasses } from "@mui/joy/AccordionDetails";
 import AccordionGroup from "@mui/joy/AccordionGroup";
 import AccordionSummary, { accordionSummaryClasses } from "@mui/joy/AccordionSummary";
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function AccordionCard({ heading, noOfFails, description, selectors, help }: any) {
+  const [expanded, setExpanded] = useState(false);
   return (<AccordionGroup
     variant="outlined"
     transition="0.2s"
@@ -28,8 +29,8 @@ export default function AccordionCard({ heading, noOfFails, description, selecto
     }}
   >
 
-    <Accordion>
-      <AccordionSummary indicator=''>{heading}</AccordionSummary>
+    <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)}>
+      <AccordionSummary indicator='' sx={{backgroundColor:'#f0f4f8',borderRadius: expanded ? '12px 12px 0 0' : 'lg'}}>{heading}</AccordionSummary>
       <AccordionDetails variant="soft">
         <h4 className="text-xs font-medium text-dark-gray p-1.5">Description</h4>
         <p className="m-1.5">

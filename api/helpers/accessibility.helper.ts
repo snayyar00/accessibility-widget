@@ -31,6 +31,27 @@ interface finalOutput {
   };
   score?: number;
   totalElements: number;
+  siteImg?:string;
+  ByFunctions?: HumanFunctionality[];
+}
+
+interface Error {
+  'Error Guideline'?: string;
+  code?: string;
+  description?: string | string[];
+  message?: string | string[];
+  context?: string | string[];
+  recommended_action?: string | string[];
+  selectors?: string | string[];
+}
+
+interface HumanFunctionality {
+  'FunctionalityName': string;
+  Errors: Error[];
+}
+
+interface GPTData {
+  'HumanFunctionalities': HumanFunctionality[];
 }
 
 function createAxeArrayObj(message: string, issue: any) {
