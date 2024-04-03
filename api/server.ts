@@ -32,7 +32,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
 const allowedOrigins = [process.env.FRONTEND_URL, undefined, 'http://localhost:5000', 'https://www.webability.io'];
-const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction'];
+const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction','updateImpressionProfileCounts'];
 
 app.use(express.json());
 

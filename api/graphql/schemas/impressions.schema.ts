@@ -9,6 +9,7 @@ export const ImpressionsSchema = gql`
 				widget_opened: Boolean!
 				widget_closed: Boolean!
 				createdAt: String!
+				profileCounts: JSON!
 		}
 
 		type ImpressionUpdateResponse{
@@ -40,5 +41,6 @@ export const ImpressionsSchema = gql`
 				addImpression(siteId: Int!): [Int]
 				addImpressionsURL(url: String): [Int]
 				registerInteraction(impressionId: Int!, interaction: String!): Int!
+				updateImpressionProfileCounts(impressionId: Int!, profileCounts: JSON!): ImpressionUpdateResponse
 		}
 		`;
