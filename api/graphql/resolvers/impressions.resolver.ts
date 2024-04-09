@@ -1,5 +1,5 @@
 import { combineResolvers } from 'graphql-resolvers';
-import { addImpressions, addImpressionsURL, addInteraction, findImpressionsBySiteId, findImpressionsByURL, findImpressionsByURLAndDate, getEngagementRates, updateImpressionProfileCounts} from '~/services/Impressions/impressions.service';
+import { addImpressions, addImpressionsURL, addInteraction, findImpressionsBySiteId, findImpressionsByURL, findImpressionsByURLAndDate, getEngagementRates, updateImpressionProfileCounts, AggregateProfileCountsBySiteId} from '~/services/Impressions/impressions.service';
 
 const resolvers = {
     Query: {
@@ -18,6 +18,10 @@ const resolvers = {
         getImpressionsByURLAndDate: combineResolvers(
             // isAuthenticated,
             (_, {  url, startDate, endDate }, {user}) => findImpressionsByURLAndDate(user.id, url, new Date(startDate), new Date(endDate))
+        ),
+        getAggregateProfileCountsBySiteId: combineResolvers(
+            // isAuthenticated,
+            (_, { siteId }) => AggregateProfileCountsBySiteId(siteId)
         ),
         
     },

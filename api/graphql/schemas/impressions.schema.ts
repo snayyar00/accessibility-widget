@@ -29,12 +29,17 @@ export const ImpressionsSchema = gql`
 			date: String
 		}
 
+		type AggregateProfileCountsResponse {
+			siteId: Int!
+			aggregateCounts: JSON!
+	}
 
 		extend type Query {
 				getImpressionsByURL(url: String!): ImpressionList
 				getImpressionsBySiteId(siteId: Int!): ImpressionList
 				getEngagementRates(url: String!, startDate: String, endDate: String): [engagementRate]
 				getImpressionsByURLAndDate( url: String!, startDate: String!, endDate: String!): ImpressionList
+				getAggregateProfileCountsBySiteId(siteId: Int!): AggregateProfileCountsResponse
 		}
 
 		extend type Mutation {

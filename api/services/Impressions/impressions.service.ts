@@ -3,7 +3,7 @@ import logger from '~/utils/logger';
 import { FindAllowedSitesProps } from '~/repository/sites_allowed.repository';
 
 import { findVisitorByIp } from '~/repository/visitors.repository';
-import { findImpressionsSiteId, insertImpressions, updateImpressions, findImpressionsURL, insertImpressionURL, findEngagementURLDate, findImpressionsURLDate, updateImpressionsWithProfileCounts } from '~/repository/impressions.repository';
+import { findImpressionsSiteId, insertImpressions, updateImpressions, findImpressionsURL, insertImpressionURL, findEngagementURLDate, findImpressionsURLDate, updateImpressionsWithProfileCounts, findProfileCountsByImpressionId } from '~/repository/impressions.repository';
 import { findSite } from '../allowedSites/allowedSites.service';
 import { addNewVisitor } from '../uniqueVisitors/uniqueVisitor.service';
 
@@ -181,3 +181,33 @@ export async function updateImpressionProfileCounts(impressionId:number, profile
         //return { success: false, message: `Update failed: ${e.message}` };
     }
 }
+
+export async function AggregateProfileCountsBySiteId(siteId: number) {
+    try {
+        const impressions = await findImpressionsSiteId(siteId);
+        let aggregatedCounts: { [key: string]: number } = {}; //: AggregatedCounts = { count: 0 };
+        for (const impression of impressions) {
+            if (impression.profileCounts != null) {
+                const profileCounts = await findProfileCountsByImpressionId(impression.id);
+                //console.log(`Impression ID: ${impression.id}, Profile Counts: `, profileCounts);
+                if (Object.keys(profileCounts).length > 0) {
+                    for (const profileType in profileCounts as { [key: string]: number }) {
+                        if (profileCounts.hasOwnProperty(profileType)) {
+                            if (!aggregatedCounts[profileType]) {
+                            aggregatedCounts[profileType] = 0;
+                            }
+                            aggregatedCounts[profileType] += profileCounts[profileType];
+                        }
+                    }
+                } else {
+                    console.log(`No profileCounts found for Impression ID: ${impression.id}`);
+                }
+            }
+        }
+        return { siteId: siteId, aggregateCounts: aggregatedCounts };
+    } catch (error) {
+        logger.error(error);
+        throw error;
+    }
+}
+

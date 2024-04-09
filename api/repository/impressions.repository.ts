@@ -126,3 +126,13 @@ export async function updateImpressionsWithProfileCounts(impressionId: number, p
 			.where({ id: impressionId })
 			.update({ profileCounts: JSON.stringify(profileCounts) });
 }
+
+export async function findProfileCountsByImpressionId(impressionId: number) {
+
+	const result = await database(TABLE)
+			.select('profileCounts')
+			.where({ id: impressionId })
+			.first(); // Using .first() as we are querying by ID, which should be unique
+
+  return result ? result.profileCounts : {};
+}
