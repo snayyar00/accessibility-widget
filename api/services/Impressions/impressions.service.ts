@@ -107,8 +107,10 @@ export async function findImpressionsByURL(userId: number, url: string) {
 }
 
 export async function findImpressionsByURLAndDate(userId: number, url: string, startDate: Date, endDate: Date) {
+    console.log('userId return value:', JSON.stringify(userId, null, 2));
     try {
         const impressions = await findImpressionsURLDate(userId, url, startDate, endDate);
+        console.log(impressions,'impressions')
         return { impressions: impressions, count: impressions.length };
     }
     catch (e) {

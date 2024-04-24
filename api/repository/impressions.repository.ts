@@ -11,6 +11,7 @@ export const impressionsColumns = {
 	widget_opened: 'impressions.widget_opened',
 	widget_closed: 'impressions.widget_closed',
 	createdAt: 'impressions.created_at',
+	profileCounts: 'impressions.profileCounts',
 
 };
 
@@ -21,23 +22,27 @@ type impressionsProps = {
 	widget_opened?: boolean,
 	widget_closed?: boolean,
 	createdAt?: string
+	profileCounts?: any
 };
 
 
 export async function findImpressionsURL(user_id: number, site_url: string): Promise<impressionsProps[]> {
 	return database(TABLE)
 		.join(TABLES.allowed_sites, impressionsColumns.site_id, siteColumns.id)
-		.select(impressionsColumns, `${siteColumns.url} as url`)
+		.select(impressionsColumns, url: `${siteColumns.url} as url` )
 		.where({ [siteColumns.url]: site_url, [siteColumns.user_id]: user_id });
 }
 
 export async function findImpressionsURLDate(user_id: number, site_url: string, startDate: Date, endDate: Date): Promise<impressionsProps[]> {
-    return database(TABLE)
+    const result = await database(TABLE)
         .join(TABLES.allowed_sites, impressionsColumns.site_id, siteColumns.id)
         .select(impressionsColumns, `${siteColumns.url} as url`)
         .where({ [siteColumns.url]: site_url })
         .andWhere(impressionsColumns.createdAt, '>=', startDate)
         .andWhere(impressionsColumns.createdAt, '<=', endDate);
+
+		throw new Error('Method not implemented.');
+		return result;
 }
 
 export async function findEngagementURLDate(
