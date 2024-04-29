@@ -49,7 +49,7 @@ const Sidebar = ({ options, setReloadSites, selectedOption, setSelectedOption }:
             <span>{t('Common.logo.saas')}</span>
             <span>{t('Common.logo.gear')}</span>
           </div> */}
-          <div className='pr-5'>
+          {/* <div className='pr-5'>
             <svg
               width="198"
               height="47"
@@ -72,9 +72,9 @@ const Sidebar = ({ options, setReloadSites, selectedOption, setSelectedOption }:
                   />
                 </pattern>
                 {/* Make sure to include the definition of #image0_18_1286 here */}
-              </defs>
-            </svg>
-          </div>
+              {/* </defs>
+            </svg> */}
+          {/* </div>  */}
         </a>
         <div className="flex-grow">
           <div className="mb-2 w-full pl-[27px] border-l-2 border-solid border-transparent flex items-center [&.active]:rounded-r-[10px] [&.active]:rounded-b-[10px] [&.active]:rounded-t-[0px] [&.active]:rounded-l-[0px] [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>svg_*[fill]]:fill-primary [&.active>svg_*[stroke]]:stroke-primary">

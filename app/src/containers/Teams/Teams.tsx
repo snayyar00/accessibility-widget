@@ -5,6 +5,8 @@ import addSite from '@/queries/sites/addSite';
 import { toast } from 'react-toastify';
 import isValidDomain from '@/utils/verifyDomain';
 import DomainTable from './DomainTable';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../config/store';
 
 interface DomainFormData {
   domainName: string;
@@ -18,6 +20,8 @@ const Teams = ({ domains, setReloadSites }: any) => {
     },
   });
   const [formData, setFormData] = useState<DomainFormData>({ domainName: '' });
+
+  const { data, reduxloading } = useSelector((state: RootState) => state.user);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -35,6 +39,34 @@ const Teams = ({ domains, setReloadSites }: any) => {
 
   };
 
+  const handleBilling = () => {
+    const url = 'http://localhost:5000/create-customer-portal-session';
+    const bodyData = { email: data.email,name:data.name };
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(bodyData)
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+        response.json().then(data => {
+          // Handle the JSON data received from the backend
+          window.location.href = data.url;
+        });
+      // Handle response
+      console.log('Request successful',response);
+    })
+    .catch(error => {
+      // Handle error
+      console.error('There was a problem with the fetch operation:', error);
+    });
+  }
+
 
   return (
     <>
@@ -42,7 +74,6 @@ const Teams = ({ domains, setReloadSites }: any) => {
         Add new domain
       </h3>
       <div className="add-domain-container">
-
         <div className="add-domain-form-container">
           <form onSubmit={handleSubmit} className="add-domain-form">
             <div className="form-group">
@@ -56,11 +87,20 @@ const Teams = ({ domains, setReloadSites }: any) => {
                 className="form-control"
               />
             </div>
+            
             <button type="submit" className="submit-btn">
               {loading ? 'Adding...' : 'Add Domain'}
             </button>
           </form>
-          {error ? toast.error('There was an error adding the domain to the database.') : <></>}
+          
+          {error ? (
+            toast.error('There was an error adding the domain to the database.')
+          ) : (
+            <></>
+          )}
+        </div>
+        <div className="flex items-center mt-2">
+          <button className="submit-btn" onClick={handleBilling}>Manage billing</button>
         </div>
         <DomainTable data={domains} setReloadSites={setReloadSites} />
       </div>

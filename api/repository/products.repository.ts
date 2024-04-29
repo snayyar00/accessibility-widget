@@ -47,6 +47,7 @@ export async function insertProduct(productData: ProductData, priceDatas: Price[
     await t.commit();
     return true;
   } catch (error) {
+    console.log(error);
     if (t) t.rollback();
     return false;
   }
@@ -66,4 +67,13 @@ export function findProductAndPriceByType(productType: string, priceType: 'MONTH
     .select(productColumns, `${priceColumns.id} as price_id`, priceColumns.amount, `${priceColumns.type} as price_type`, `${priceColumns.stripeId} as price_stripe_id`)
     .where({ [productColumns.type]: productType, [priceColumns.type]: priceType })
     .first();
+}
+
+export function findProductByStripeId(stripeID: string): any {
+  console.log("FInding",stripeID);
+  return database(TABLE)
+    .join(TABLES.prices, productColumns.id, priceColumns.productId)
+    .select(productColumns, `${priceColumns.id} as price_id`, priceColumns.amount, `${priceColumns.type} as price_type`, `${priceColumns.stripeId} as price_stripe_id`)
+    .where({ [productColumns.stripeId]: stripeID })
+    // .first();
 }

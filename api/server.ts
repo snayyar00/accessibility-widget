@@ -33,6 +33,7 @@ const app = express();
 const port = process.env.PORT || 3001;
 const allowedOrigins = [process.env.FRONTEND_URL, undefined, 'http://localhost:5000', 'https://www.webability.io'];
 const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction'];
+const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 app.use(express.json());
 
@@ -83,6 +84,47 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     const token = await GetVisitorTokenByWebsite(url);
     res.send(token);
   });
+
+  app.post('/create-customer-portal-session',async (req,res)=>{
+    const {email,name} = req.body;
+    let customer;
+    try {
+      // List customers with the specified email
+      const customers = await stripe.customers.list({ email: email });
+
+      // Check if any customers were found
+      if (customers.data.length > 0) {
+        // Return the first customer found (assuming unique emails)
+        customer = customers.data[0];
+        console.log("found = ",customer)
+      } else {
+        // If no customer found with the specified 
+        console.log("No user");
+        customer = await stripe.customers.create({
+          email: email,
+          name: name,
+          // You can add more fields like address, phone, etc. as needed
+        });
+        console.log("created = ",customer);
+      }
+    } catch (error) {
+      // Handle any errors
+      console.error('Error retrieving Stripe customer by email:', error);
+      return res.status(500).json("error");
+    }
+
+
+    try {
+      const session = await stripe.billingPortal.sessions.create({
+        customer: customer.id,
+      });
+      return res.status(200).json(session);
+    } catch (error) {
+      console.log(error);
+      return res.status(500);
+    }
+    
+  })
 
   // app.get('/webAbilityV1.0.min.js', (req, res) => {
   //   res.sendFile(path.join(__dirname, 'webAbilityV1.0.min.js'));
