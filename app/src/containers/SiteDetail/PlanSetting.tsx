@@ -19,11 +19,19 @@ import Button from '@/components/Common/Button';
 import { TDomain } from '.';
 import { setSitePlan } from '@/features/site/sitePlan';
 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'stripe-pricing-table': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    }
+  }
+}
+
 const plans = [
   {
-    id: 'small',
+    id: 'test_small',
     name: 'Small Business',
-    price: 15,
+    price: 25,
     desc: 'For Website under 1000 Impressions per month.',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
@@ -33,9 +41,9 @@ const plans = [
     ]
   },
   {
-    id: 'medium',
+    id: 'test_medium',
     name: 'Medium Business',
-    price: 45,
+    price: 35,
     desc: 'For Website under 10,000 Impressions per month.',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
@@ -45,9 +53,9 @@ const plans = [
     ]
   },
   {
-    id: 'large',
+    id: 'test_large',
     name: 'Enterprise',
-    price: 75,
+    price: 65,
     desc: 'For Website under 100,000 Impressions per month.',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
@@ -71,7 +79,7 @@ const PlanSetting: React.FC<{
   const [fetchSitePlan, { data: sitePlanData }] = useLazyQuery(getSitePlanQuery);
   const dispatch = useDispatch();
   const { t } = useTranslation();
-
+  const { data, loading } = useSelector((state: RootState) => state.user);
   const siteId = parseInt(domain.id);
 
   useEffect(() => {
@@ -117,9 +125,11 @@ const PlanSetting: React.FC<{
       billingType: isYearly ? 'YEARLY' : 'MONTHLY',
       siteId: domain.id
     }
+    console.log("Creating PLan = ",data);
     await createSitePlanMutation({
       variables: data
     });
+    console.log("error = ",errorCreate);
     setReloadSites(true);
     fetchSitePlan({
       variables: { siteId }
@@ -141,16 +151,51 @@ const PlanSetting: React.FC<{
     });
   }
 
+  const handleBilling = async () => {
+    const url = 'http://localhost:5000/create-customer-portal-session';
+    const bodyData = { id:sitePlanData?.getPlanBySiteIdAndUserId?.customerId };
+    await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(bodyData)
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+        response.json().then(data => {
+          // Handle the JSON data received from the backend
+          window.location.href = data.url;
+        });
+      // Handle response
+      console.log('Request successful',response);
+    })
+    .catch(error => {
+      // Handle error
+      console.error('There was a problem with the fetch operation:', error);
+    });
+  }
+
   const planChanged = plans.find(item => item.id === selectedPlan);
   const amountCurrent = currentPlan.amount || 0;
   const amountNew = planChanged ? planChanged.price : 0;
 
   return (
     <div className="bg-white border border-solid border-dark-grey shadow-xxl rounded-[10px] p-6 mb-[25px] sm:px-[10px] sm:py-6">
-      <h5 className="font-bold text-[22px] leading-[30px] text-sapphire-blue mb-1">{t('Profile.text.plan')}</h5>
-      <p className="text-[16px] leading-[26px] text-white-gray mb-[14px]">{t('Profile.text.plan_desc')}</p>
+      <h5 className="font-bold text-[22px] leading-[30px] text-sapphire-blue mb-1">
+        {t('Profile.text.plan')}
+      </h5>
+      <p className="text-[16px] leading-[26px] text-white-gray mb-[14px]">
+        {t('Profile.text.plan_desc')}
+      </p>
       <div className="flex justify-between sm:flex-col-reverse">
         <div>
+        <div className="flex items-center mt-2">
+          <button className="submit-btn" onClick={handleBilling}>Manage billing</button>
+        </div>
           <div className="flex justify-center mb-[25px] sm:mt-[25px] [&_label]:mx-auto [&_label]:my-0">
             <Toggle onChange={toggle} label="Bill Yearly" />
           </div>

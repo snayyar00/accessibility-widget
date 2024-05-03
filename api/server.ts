@@ -86,44 +86,16 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 
   app.post('/create-customer-portal-session',async (req,res)=>{
-    const {email,name} = req.body;
-    let customer;
-    try {
-      // List customers with the specified email
-      const customers = await stripe.customers.list({ email: email });
-
-      // Check if any customers were found
-      if (customers.data.length > 0) {
-        // Return the first customer found (assuming unique emails)
-        customer = customers.data[0];
-        console.log("found = ",customer)
-      } else {
-        // If no customer found with the specified 
-        console.log("No user");
-        customer = await stripe.customers.create({
-          email: email,
-          name: name,
-          // You can add more fields like address, phone, etc. as needed
-        });
-        console.log("created = ",customer);
-      }
-    } catch (error) {
-      // Handle any errors
-      console.error('Error retrieving Stripe customer by email:', error);
-      return res.status(500).json("error");
-    }
-
-
+    const {id} = req.body;
     try {
       const session = await stripe.billingPortal.sessions.create({
-        customer: customer.id,
+        customer:id,
       });
       return res.status(200).json(session);
     } catch (error) {
       console.log(error);
       return res.status(500);
     }
-    
   })
 
   // app.get('/webAbilityV1.0.min.js', (req, res) => {
