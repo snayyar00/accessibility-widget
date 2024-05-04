@@ -37,7 +37,7 @@ export const productColumns = {
 
 export async function insertProduct(productData: ProductData, priceDatas: Price[] = []): Promise<boolean> {
   let t;
-  console.log("Insert")
+  
   try {
     t = await database.transaction();
     const [productId] = await database(TABLE).transacting(t).insert(productData);
@@ -46,7 +46,6 @@ export async function insertProduct(productData: ProductData, priceDatas: Price[
       product_id: productId,
     })), t);
     await t.commit();
-    console.log("Insert");
     return true;
   } catch (error) {
     console.log(error);
