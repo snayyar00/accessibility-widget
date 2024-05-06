@@ -29,9 +29,21 @@ declare global {
 
 const plans = [
   {
-    id: 'test_small',
+    id: 'free',
+    name: 'Free Plan',
+    price: 0,
+    desc: 'For Website under 500 Impressions per month.',
+    features: [
+      'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
+      'Accessbility Statement',
+      'AI powered Screen Reader and Accessbility Profiles',
+      'Web Ability accesbility Statement',
+    ]
+  },
+  {
+    id: 'small',
     name: 'Small Business',
-    price: 25,
+    price: 15,
     desc: 'For Website under 1000 Impressions per month.',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
@@ -41,9 +53,9 @@ const plans = [
     ]
   },
   {
-    id: 'test_medium',
+    id: 'medium',
     name: 'Medium Business',
-    price: 35,
+    price: 45,
     desc: 'For Website under 10,000 Impressions per month.',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
@@ -53,9 +65,9 @@ const plans = [
     ]
   },
   {
-    id: 'test_large',
+    id: 'large',
     name: 'Enterprise',
-    price: 65,
+    price: 75,
     desc: 'For Website under 100,000 Impressions per month.',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
