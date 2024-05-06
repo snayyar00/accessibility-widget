@@ -39,34 +39,6 @@ const Teams = ({ domains, setReloadSites }: any) => {
 
   };
 
-  const handleBilling = () => {
-    const url = 'http://localhost:5000/create-customer-portal-session';
-    const bodyData = { email: data.email,name:data.name };
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(bodyData)
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-        response.json().then(data => {
-          // Handle the JSON data received from the backend
-          window.location.href = data.url;
-        });
-      // Handle response
-      console.log('Request successful',response);
-    })
-    .catch(error => {
-      // Handle error
-      console.error('There was a problem with the fetch operation:', error);
-    });
-  }
-
 
   return (
     <>
@@ -98,9 +70,6 @@ const Teams = ({ domains, setReloadSites }: any) => {
           ) : (
             <></>
           )}
-        </div>
-        <div className="flex items-center mt-2">
-          <button className="submit-btn" onClick={handleBilling}>Manage billing</button>
         </div>
         <DomainTable data={domains} setReloadSites={setReloadSites} />
       </div>
