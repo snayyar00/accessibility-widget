@@ -130,8 +130,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData }: any) => {
         }
     });
     
-    // console.log("out = ",combinedProfileCounts);
-    setProfileCounts(combinedProfileCounts);
+      setProfileCounts(combinedProfileCounts);
 
       const impressionsOutput = data.getImpressionsByURLAndDate?.impressions;
       // console.log(data);
@@ -177,12 +176,12 @@ const Dashboard: React.FC<any> = ({ domain, domainData }: any) => {
         count: widgetOpened,
         countType: 'times',
       },
-      {
-        id: 4,
-        heading: 'Widget Closed',
-        count: widgetClosed,
-        countType: 'times',
-      },
+      // {
+      //   id: 4,
+      //   heading: 'Widget Closed',
+      //   count: widgetClosed,
+      //   countType: 'times',
+      // },
       // ... more card data
     ]);
 
