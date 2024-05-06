@@ -9,7 +9,7 @@ export const ImpressionsSchema = gql`
 				widget_opened: Boolean!
 				widget_closed: Boolean!
 				createdAt: String!
-				profileCounts: JSONObject
+				profileCounts: JSON
 		}
 
 		type ImpressionUpdateResponse {

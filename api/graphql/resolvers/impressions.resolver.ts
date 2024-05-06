@@ -20,8 +20,7 @@ const resolvers = {
             async (_, {  url, startDate, endDate }, {user}) => {
              
                 try {
-                    const result =  await findImpressionsByURLAndDate(1, "www.webability.io", new Date(startDate), new Date(endDate));
-                    // console.log('Resolver return value:', JSON.stringify(result, null, 2));
+                    const result =  await findImpressionsByURLAndDate(35, "127.0.0.1", new Date(startDate), new Date(endDate));
                     return result;
                 } catch (error) {
                     console.error(error);
