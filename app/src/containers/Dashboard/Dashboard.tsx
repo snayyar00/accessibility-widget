@@ -8,6 +8,7 @@ import ExportButton from './ExportButton';
 import DropdownSelector from './DropdownSelector';
 import CustomChart from './CustomChart';
 import './Dashboard.css';
+import ImpressionCard from './ImpressionCard';
 
 
 interface ChartData {
@@ -44,6 +45,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData }: any) => {
   const [cards, setCards] = useState<CardData[]>([]);
   const [granularity, setGranularity] = useState<string>('Day');
   const [loadingAnimation, setLoadingAnimation] = useState<boolean>(true);
+  const [profileCounts,setProfileCounts] = useState({});
 
   const getStartOfWeek = () => {
     const currentDate = new Date();
@@ -115,11 +117,27 @@ const Dashboard: React.FC<any> = ({ domain, domainData }: any) => {
     if (data) {
       setChart(data);
       setUniqueVisitors(data.getSiteVisitorsByURL.count);
-      const impressionsOutput = data.getImpressionsByURLAndDate.impressions;
+      // console.log("data = ",data);
+      let combinedProfileCounts:any = {};
+
+      data.getImpressionsByURLAndDate?.impressions.forEach((impression:any) => {
+        // Check if profileCounts is not null
+        if (impression.profileCounts !== null) {
+            // console.log("non null",impression.profileCounts);
+            Object.entries(impression.profileCounts).forEach(([key, value]) => {
+                combinedProfileCounts[key] = (combinedProfileCounts[key] || 0) + value;
+            });
+        }
+    });
+    
+      setProfileCounts(combinedProfileCounts);
+
+      const impressionsOutput = data.getImpressionsByURLAndDate?.impressions;
+      // console.log(data);
       let wC = 0;
       let wO = 0;
       let i = 0;
-      if (impressionsOutput.length > 0) {
+      if (impressionsOutput?.length > 0) {
         impressionsOutput.forEach((imp: any) => {
           if (imp.widget_opened) {
             wO += 1;
@@ -298,6 +316,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData }: any) => {
             {/* </div> */}
             {/* Render second row of DashboardCards */}
             {/* <div className="cards-row flex"> */}
+            
             {cards.slice(4, 9).map((card) => (
               <DashboardCard
                 key={card.id}
@@ -307,8 +326,14 @@ const Dashboard: React.FC<any> = ({ domain, domainData }: any) => {
               />
             ))}
             {/* </div> */}
-          </div>
 
+          </div>
+          {Object.keys(profileCounts).length ? ( <div className="cards-row">
+              <ImpressionCard
+                heading={"Accessiblity Profiles"}
+                profileCounts={profileCounts}
+              />
+          </div>):(null)}
           <div>
             <CustomChart data={chartData} />
           </div>
