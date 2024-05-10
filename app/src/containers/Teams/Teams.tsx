@@ -1,12 +1,10 @@
-import React, { useState, FormEvent, useEffect } from 'react';
+import React, { useState, FormEvent } from 'react';
 import './Teams.css';
 import { useMutation } from '@apollo/client';
 import addSite from '@/queries/sites/addSite';
 import { toast } from 'react-toastify';
 import isValidDomain from '@/utils/verifyDomain';
 import DomainTable from './DomainTable';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../config/store';
 
 interface DomainFormData {
   domainName: string;
