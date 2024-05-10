@@ -5,6 +5,8 @@ import addSite from '@/queries/sites/addSite';
 import { toast } from 'react-toastify';
 import isValidDomain from '@/utils/verifyDomain';
 import DomainTable from './DomainTable';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../config/store';
 
 interface DomainFormData {
   domainName: string;
@@ -18,6 +20,8 @@ const Teams = ({ domains, setReloadSites }: any) => {
     },
   });
   const [formData, setFormData] = useState<DomainFormData>({ domainName: '' });
+
+  const { data, reduxloading } = useSelector((state: RootState) => state.user);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -42,7 +46,6 @@ const Teams = ({ domains, setReloadSites }: any) => {
         Add new domain
       </h3>
       <div className="add-domain-container">
-
         <div className="add-domain-form-container">
           <form onSubmit={handleSubmit} className="add-domain-form">
             <div className="form-group">
@@ -56,11 +59,17 @@ const Teams = ({ domains, setReloadSites }: any) => {
                 className="form-control"
               />
             </div>
+            
             <button type="submit" className="submit-btn">
               {loading ? 'Adding...' : 'Add Domain'}
             </button>
           </form>
-          {error ? toast.error('There was an error adding the domain to the database.') : <></>}
+          
+          {error ? (
+            toast.error('There was an error adding the domain to the database.')
+          ) : (
+            <></>
+          )}
         </div>
         <DomainTable data={domains} setReloadSites={setReloadSites} />
       </div>

@@ -33,6 +33,7 @@ const app = express();
 const port = process.env.PORT || 3001;
 const allowedOrigins = [process.env.FRONTEND_URL, undefined, 'http://localhost:5000', 'https://www.webability.io'];
 const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction'];
+const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 app.use(express.json());
 
@@ -83,6 +84,19 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     const token = await GetVisitorTokenByWebsite(url);
     res.send(token);
   });
+
+  app.post('/create-customer-portal-session',async (req,res)=>{
+    const {id} = req.body;
+    try {
+      const session = await stripe.billingPortal.sessions.create({
+        customer:id,
+      });
+      return res.status(200).json(session);
+    } catch (error) {
+      console.log(error);
+      return res.status(500);
+    }
+  })
 
   // app.get('/webAbilityV1.0.min.js', (req, res) => {
   //   res.sendFile(path.join(__dirname, 'webAbilityV1.0.min.js'));

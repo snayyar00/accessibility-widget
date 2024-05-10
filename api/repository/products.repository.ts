@@ -37,6 +37,7 @@ export const productColumns = {
 
 export async function insertProduct(productData: ProductData, priceDatas: Price[] = []): Promise<boolean> {
   let t;
+  
   try {
     t = await database.transaction();
     const [productId] = await database(TABLE).transacting(t).insert(productData);
@@ -47,6 +48,7 @@ export async function insertProduct(productData: ProductData, priceDatas: Price[
     await t.commit();
     return true;
   } catch (error) {
+    console.log(error);
     if (t) t.rollback();
     return false;
   }
@@ -67,3 +69,52 @@ export function findProductAndPriceByType(productType: string, priceType: 'MONTH
     .where({ [productColumns.type]: productType, [priceColumns.type]: priceType })
     .first();
 }
+
+export function findProductByStripeId(stripeID: string): any {
+  console.log("FInding",stripeID);
+  return database(TABLE)
+    .join(TABLES.prices, productColumns.id, priceColumns.productId)
+    .select(productColumns, `${priceColumns.id} as price_id`, priceColumns.amount, `${priceColumns.type} as price_type`, `${priceColumns.stripeId} as price_stripe_id`)
+    .where({ [productColumns.stripeId]: stripeID })
+    .first();
+}
+
+export async function updateProduct(productId: number, productData: ProductData, priceDatas: Price[] = []): Promise<boolean> {
+  let t;
+  console.log("Updating");
+  try {
+    t = await database.transaction();
+
+    // Update the product data
+    await database(TABLE)
+      .transacting(t)
+      .where({ id: productId })
+      .update(productData);
+
+    // Delete existing prices associated with the product
+    await database(TABLES.prices)
+      .transacting(t)
+      .where({ product_id: productId })
+      .del();
+
+    // Insert new prices
+    await insertPrice(
+      priceDatas.map((priceItem) => ({
+        ...priceItem,
+        product_id: productId,
+      })),
+      t
+    );
+
+    // Commit the transaction
+    await t.commit();
+    
+    return true;
+  } catch (error) {
+    console.error(error);
+    // Rollback the transaction if an error occurs
+    if (t) await t.rollback();
+    return false;
+  }
+}
+
