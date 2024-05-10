@@ -21,8 +21,6 @@ const Teams = ({ domains, setReloadSites }: any) => {
   });
   const [formData, setFormData] = useState<DomainFormData>({ domainName: '' });
 
-  const { data, reduxloading } = useSelector((state: RootState) => state.user);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
