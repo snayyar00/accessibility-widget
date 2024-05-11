@@ -4,9 +4,10 @@ import { createUserPlan, invoicePaymentFailed, invoicePaymentSuccess, trialWillE
 import Stripe from 'stripe';
 import sendMail from '~/libs/mail';
 import { DataSubcription, createNewSubcription } from '~/services/stripe/subcription.service';
-import { createSitesPlan } from '../allowedSites/plans-sites.service';
+import { createSitesPlan, updateSitesPlan } from '../allowedSites/plans-sites.service';
 import { updateAllowedSiteURL } from '~/repository/sites_allowed.repository';
 import { ProductData, findProductByStripeId, insertProduct, updateProduct } from '~/repository/products.repository';
+import { getSitesPlanByCustomerIdAndSubscriptionId } from '~/repository/sites_plans.repository';
 
 // async function webhookStripe(req: Request, res: Response): Promise<void> {
 //   let event;
@@ -50,23 +51,7 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
   }
 
   try {
-    if (event.type === 'invoice.paid') {
-      const invoice = event.data.object as Stripe.Invoice;
-      const userStripeId = invoice.customer as string;
-
-      const subscription_id = String(invoice.subscription);
-      const subscription = await stripe.subscriptions.retrieve(subscription_id);
-      const items: { price: string }[] = invoice.lines.data.map((lineItem: any) => {
-        return { price: lineItem.price.toString() }; 
-      });
-      invoicePaymentSuccess(
-      { customer: userStripeId,
-        items: items,
-        trial_end: subscription?.trial_end,
-        hosted_invoice_url: invoice.hosted_invoice_url 
-      });
-      console.log("Invoice Payment Succesful");
-    }else if (event.type === 'product.updated') {
+    if (event.type === 'product.updated') {
       // Handles product save and update in DB when you do so from the stripe dashboard
       let product = event.data.object as Stripe.Product;
 
@@ -131,24 +116,36 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
           console.log("error in insert",error);
         }
       }
-    } else if (event.type === 'invoice.payment_failed') {
-      // Handles product save and update in DB when you do so from the stripe dashboard
-      const invoice = event.data.object as Stripe.Invoice;
-      const userStripeId = invoice.customer as string;
+    }else if (event.type === 'customer.subscription.updated') {
+      // Existing SitePlan ID done
+      // New Plan name done
+      // New plan billing cycle
+      console.log("Updating subscription");
+      const subscription = event.data.object as Stripe.Subscription;
+      const userStripeId = subscription.customer as string;
+      const productId = subscription.items.data[0].plan.product as string;
+      const interval = subscription.items.data[0].plan.interval == 'month' ? 'MONTHLY' : 'YEARLY';
+      const new_product = await stripe.products.retrieve(productId);
+      let previous_plan;
+      try {
+        previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(userStripeId,subscription?.id);
+      } catch (error) {
+        console.log("err = ",error);
+      }
 
-      const subscription_id = String(invoice.subscription);
-      const subscription = await stripe.subscriptions.retrieve(subscription_id);
-      const items: { price: string }[] = invoice.lines.data.map((lineItem: any) => {
-        return { price: lineItem.price.toString() }; 
-      });
-      invoicePaymentFailed(
-      { customer: userStripeId,
-        items: items,
-        trial_end: subscription?.trial_end,
-        hosted_invoice_url: invoice.hosted_invoice_url 
-      });
 
-    } else if (event.type === 'customer.subscription.trial_will_end') {
+      if (subscription.status === 'active') {
+        try {
+          await updateSitesPlan(previous_plan[0].id,new_product.name,interval);
+
+          console.log("Updated Subscription");
+        } catch (error) {
+          console.log("error=",error);
+        }
+      }
+
+      
+    }else if (event.type === 'customer.subscription.trial_will_end') {
       // Handles product save and update in DB when you do so from the stripe dashboard
       const invoice = event.data.object as Stripe.Invoice;
       const userStripeId = invoice.customer as string;
@@ -176,6 +173,47 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
 
 export default stripeWebhook;
 
+
+
+// Backend Not implemented since no user plans
+// if (event.type === 'invoice.paid') {
+    //   const invoice = event.data.object as Stripe.Invoice;
+    //   const userStripeId = invoice.customer as string;
+
+    //   const subscription_id = String(invoice.subscription);
+    //   const subscription = await stripe.subscriptions.retrieve(subscription_id);
+    //   const items: { price: string }[] = invoice.lines.data.map((lineItem: any) => {
+    //     return { price: lineItem.price.toString() }; 
+    //   });
+    //   invoicePaymentSuccess(
+    //   { customer: userStripeId,
+    //     items: items,
+    //     trial_end: subscription?.trial_end,
+    //     hosted_invoice_url: invoice.hosted_invoice_url 
+    //   });
+    //   console.log("Invoice Payment Succesful");}
+
+    // else if (event.type === 'invoice.payment_failed') {
+    //   // Handles product save and update in DB when you do so from the stripe dashboard
+    //   // const invoice = event.data.object as Stripe.Invoice;
+    //   // const userStripeId = invoice.customer as string;
+
+    //   // const subscription_id = String(invoice.subscription);
+    //   // const subscription = await stripe.subscriptions.retrieve(subscription_id);
+    //   // const items: { price: string }[] = invoice.lines.data.map((lineItem: any) => {
+    //   //   return { price: lineItem.price.toString() }; 
+    //   // });
+    //   // invoicePaymentFailed(
+    //   // { customer: userStripeId,
+    //   //   items: items,
+    //   //   trial_end: subscription?.trial_end,
+    //   //   hosted_invoice_url: invoice.hosted_invoice_url 
+    //   // });
+
+    // } 
+
+
+/////////////////////////////////////////////////////////////////////////
 // if (event.type === 'checkout.session.completed') {
 //   console.log('Checkout session completed');
 //   const session = event.data.object as Stripe.Checkout.Session;
