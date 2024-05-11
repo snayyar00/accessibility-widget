@@ -4,7 +4,7 @@ import { createUserPlan, invoicePaymentFailed, invoicePaymentSuccess, trialWillE
 import Stripe from 'stripe';
 import sendMail from '~/libs/mail';
 import { DataSubcription, createNewSubcription } from '~/services/stripe/subcription.service';
-import { createSitesPlan, updateSitesPlan } from '../allowedSites/plans-sites.service';
+import { createSitesPlan, deleteSitesPlan, updateSitesPlan } from '../allowedSites/plans-sites.service';
 import { updateAllowedSiteURL } from '~/repository/sites_allowed.repository';
 import { ProductData, findProductByStripeId, insertProduct, updateProduct } from '~/repository/products.repository';
 import { getSitesPlanByCustomerIdAndSubscriptionId } from '~/repository/sites_plans.repository';
@@ -133,8 +133,16 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
         console.log("err = ",error);
       }
 
-
-      if (subscription.status === 'active') {
+      if (subscription.cancel_at_period_end) {
+        try {
+          await deleteSitesPlan(previous_plan[0].id);
+  
+          console.log('Subscription Deleted');
+        } catch (error) {
+          console.log('error=', error);
+        }
+      }
+      else if (subscription.status === 'active') {
         try {
           await updateSitesPlan(previous_plan[0].id,new_product.name,interval);
 
@@ -145,23 +153,7 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
       }
 
       
-    }else if (event.type === 'customer.subscription.trial_will_end') {
-      // Handles product save and update in DB when you do so from the stripe dashboard
-      const invoice = event.data.object as Stripe.Invoice;
-      const userStripeId = invoice.customer as string;
-
-      const subscription_id = String(invoice.subscription);
-      const subscription = await stripe.subscriptions.retrieve(subscription_id);
-      const items: { price: string }[] = invoice.lines.data.map((lineItem: any) => {
-        return { price: lineItem.price.toString() }; 
-      });
-      trialWillEnd(
-      { customer: userStripeId,
-        items: items,
-        trial_end: subscription?.trial_end,
-        hosted_invoice_url: invoice.hosted_invoice_url 
-      });
-    } else {
+    }else {
       console.log(`Unhandled event type ${event.type}`);
     }
 
@@ -211,7 +203,23 @@ export default stripeWebhook;
     //   // });
 
     // } 
+    // else if (event.type === 'customer.subscription.trial_will_end') {
+    //   // Handles product save and update in DB when you do so from the stripe dashboard
+    //   const invoice = event.data.object as Stripe.Invoice;
+    //   const userStripeId = invoice.customer as string;
 
+    //   const subscription_id = String(invoice.subscription);
+    //   const subscription = await stripe.subscriptions.retrieve(subscription_id);
+    //   const items: { price: string }[] = invoice.lines.data.map((lineItem: any) => {
+    //     return { price: lineItem.price.toString() }; 
+    //   });
+    //   trialWillEnd(
+    //   { customer: userStripeId,
+    //     items: items,
+    //     trial_end: subscription?.trial_end,
+    //     hosted_invoice_url: invoice.hosted_invoice_url 
+    //   });
+    // } 
 
 /////////////////////////////////////////////////////////////////////////
 // if (event.type === 'checkout.session.completed') {
