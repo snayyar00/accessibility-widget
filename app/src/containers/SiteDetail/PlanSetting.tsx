@@ -93,8 +93,8 @@ const PlanSetting: React.FC<{
   const { t } = useTranslation();
   const { data, loading } = useSelector((state: RootState) => state.user);
   const siteId = parseInt(domain.id);
-  const [clicked,setClicked] = useState(false);
-  
+  const [clicked, setClicked] = useState(false);
+
   useEffect(() => {
     dispatch(setSitePlan({ data: {} }));
     fetchSitePlan({
@@ -133,7 +133,7 @@ const PlanSetting: React.FC<{
   async function createPaymentMethodSuccess(token: string) {
     if (!planChanged) return;
     const data = {
-      paymentMethodToken:token,
+      paymentMethodToken: token,
       planName: planChanged.id,
       billingType: isYearly ? 'YEARLY' : 'MONTHLY',
       siteId: domain.id
@@ -164,8 +164,10 @@ const PlanSetting: React.FC<{
 
   const handleBilling = async () => {
     setClicked(true);
+
     const url = 'http://localhost:5000/create-customer-portal-session';
     const bodyData = { id:sitePlanData?.getPlanBySiteIdAndUserId?.customerId,returnURL:window.location.href };
+
     await fetch(url, {
       method: 'POST',
       headers: {
@@ -173,21 +175,22 @@ const PlanSetting: React.FC<{
       },
       body: JSON.stringify(bodyData)
     })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
 
         response.json().then(data => {
           // Handle the JSON data received from the backend
           window.location.href = data.url;
         });
-    })
-    .catch(error => {
-      // Handle error
-      console.error('There was a problem with the fetch operation:', error);
-    });
+      })
+      .catch(error => {
+        // Handle error
+        console.error('There was a problem with the fetch operation:', error);
+      });
   }
+
   const planChanged = plans.find((item:any) => item.id === selectedPlan);
   const amountCurrent = currentPlan.amount || 0;
   const amountNew = planChanged ? planChanged.price : 0;
@@ -201,6 +204,7 @@ const PlanSetting: React.FC<{
       </p>
       <div className="flex justify-between sm:flex-col-reverse flex-col flex-wrap">
         <div>
+
           {(planChanged || (Object.keys(currentPlan).length == 0)) && (<div className="flex justify-center mb-[25px] sm:mt-[25px] [&_label]:mx-auto [&_label]:my-0">
             <Toggle onChange={toggle} label="Bill Yearly" />
           </div>)}
@@ -326,14 +330,13 @@ const PlanSetting: React.FC<{
                   </div>
                 )}
 
-                {errorCreate?.message && (
-                  <ErrorText message={errorCreate.message} />
-                )}
+              {errorCreate?.message && (
+                <ErrorText message={errorCreate.message} />
+              )}
 
-                {errorUpdate?.message && (
-                  <ErrorText message={errorUpdate.message} />
-                )}
-
+              {errorUpdate?.message && (
+                <ErrorText message={errorUpdate.message} />
+              )}
                 {errorDelete?.message && (
                   <ErrorText message={errorDelete.message} />
                 )}
