@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import { Redirect, Route, Switch,useHistory } from 'react-router-dom';
 
 
 import { useQuery } from '@apollo/client';
@@ -42,8 +42,8 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
 
     if (data) {
       if (data.getUserSites.length > 0) {
-        setSelectedOption(data.getUserSites[0].url);
-        setDomainData(data.getUserSites[0]);
+        // setSelectedOption(data.getUserSites[0].url);
+        // setDomainData(data.getUserSites[0]);
       }
       else {
         setSelectedOption('Add a new Domain')
@@ -52,11 +52,28 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
     }
   }, [data])
 
+  const history = useHistory();
+
   useEffect(() => {
     if (data?.getUserSites) {
       setDomainData(data.getUserSites.filter((site: siteDetails) => site.url === selectedOption)[0]);
     }
   }, [selectedOption]);
+
+  useEffect(()=>{
+    if(domainData)
+    {
+      try {
+        if (window.location.pathname.startsWith("/domain-plans/"))
+        {
+          const id = data.getUserSites.filter((site: siteDetails) => site.url === selectedOption)[0]['id'];
+          history.push("/domain-plans/"+id);
+        }
+      } catch (error) {
+        console.log("error",error);
+      }
+    }
+  },[domainData])
 
 
   return (

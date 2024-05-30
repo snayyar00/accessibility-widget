@@ -11,7 +11,9 @@ export default gql`
             widget_opened,
             widget_closed,
             createdAt,
-            id
+            id,
+            site_id,
+            profileCounts
         }
     }
 

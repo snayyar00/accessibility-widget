@@ -86,10 +86,11 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 
   app.post('/create-customer-portal-session',async (req,res)=>{
-    const {id} = req.body;
+    const {id,returnURL} = req.body;
     try {
       const session = await stripe.billingPortal.sessions.create({
         customer:id,
+        return_url:returnURL
       });
       return res.status(200).json(session);
     } catch (error) {

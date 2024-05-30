@@ -19,14 +19,14 @@ const SiteDetail = ({ domains, setReloadSites }: any) => {
   const [domain, setDomain] = useState<null | TDomain>(null);
 
   const match = useRouteMatch<{ id: string }>();
-  const siteId = match.params.id;
 
   useEffect(() => {
+    const siteId = match.params.id;
     if (domains) {
       const domain = domains.getUserSites.filter((site: any) => site.id == siteId)[0];
       setDomain(domain)
     }
-  }, [domains]);
+  }, [domains,match]);
 
   const { data, loading } = useSelector((state: RootState) => state.user);
   const { t } = useTranslation();
@@ -41,7 +41,7 @@ const SiteDetail = ({ domains, setReloadSites }: any) => {
               Domain : {domain.url}
             </h5>
           </div>
-          <PlanSetting domain={domain} setReloadSites={setReloadSites} />
+          <PlanSetting key={domain.url} domain={domain} setReloadSites={setReloadSites} />
         </>
       ): (
         <div>Domain not found</div>

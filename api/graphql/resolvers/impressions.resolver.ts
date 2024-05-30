@@ -1,4 +1,5 @@
 import { combineResolvers } from 'graphql-resolvers';
+
 import { addImpressions, addImpressionsURL, addInteraction, findImpressionsBySiteId, findImpressionsByURL, findImpressionsByURLAndDate, getEngagementRates} from '~/services/Impressions/impressions.service';
 
 const resolvers = {
@@ -16,9 +17,16 @@ const resolvers = {
             (_, { url, startDate, endDate }, {user}) => getEngagementRates(user.id, url, startDate, endDate)
         ),
         getImpressionsByURLAndDate: combineResolvers(
-            // isAuthenticated,
-            (_, {  url, startDate, endDate }, {user}) => findImpressionsByURLAndDate(user.id, url, new Date(startDate), new Date(endDate))
-        ),
+            async (_, {  url, startDate, endDate }, {user}) => {
+             
+                try {
+                    const result =  await findImpressionsByURLAndDate(user.id, url, new Date(startDate), new Date(endDate));
+                    return result;
+                } catch (error) {
+                    console.error(error);
+                    throw new Error('Error fetching impressions by URL and date');
+                }
+            }),
         
     },
     Mutation: {
