@@ -99,6 +99,29 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   })
 
+  app.post('/validate-coupon', async (req, res) => {
+    const { couponCode } = req.body;
+  
+    try {
+      const promoCodes = await stripe.promotionCodes.list({ limit: 100 });
+      const promoCodeData = await promoCodes.data.find((pc:any) => pc?.code == couponCode);
+      
+      if (!promoCodeData) {
+        return res.json({ valid: false, error: 'Invalid promo code' });
+      }
+      if(promoCodeData.coupon.percent_off)
+      {
+        res.json({ valid: true, discount: (Number(promoCodeData.coupon.percent_off)/100),id:promoCodeData?.coupon?.id,percent:true});
+      }
+      else
+      {
+        res.json({ valid: true, discount: (Number(promoCodeData.coupon.amount_off)/100),id:promoCodeData?.coupon?.id,percent:false });
+      }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // app.get('/webAbilityV1.0.min.js', (req, res) => {
   //   res.sendFile(path.join(__dirname, 'webAbilityV1.0.min.js'));
   // });

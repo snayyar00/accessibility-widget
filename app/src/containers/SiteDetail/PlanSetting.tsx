@@ -94,6 +94,9 @@ const PlanSetting: React.FC<{
   const { data, loading } = useSelector((state: RootState) => state.user);
   const siteId = parseInt(domain.id);
   const [clicked, setClicked] = useState(false);
+  const [coupon,setCoupon] = useState("");
+  const [discount,setDiscount] = useState(0);
+  const [percentDiscount,setpercentDiscount] = useState(false);
 
   useEffect(() => {
     dispatch(setSitePlan({ data: {} }));
@@ -136,11 +139,17 @@ const PlanSetting: React.FC<{
       paymentMethodToken: token,
       planName: planChanged.id,
       billingType: isYearly ? 'YEARLY' : 'MONTHLY',
-      siteId: domain.id
+      siteId: domain.id,
+      couponCode:coupon,
     }
-    await createSitePlanMutation({
-      variables: data
-    });
+    try {
+      await createSitePlanMutation({
+        variables: data
+      });
+    } catch (error) {
+      console.log("error = ",error);
+    }
+    
     setReloadSites(true);
     fetchSitePlan({
       variables: { siteId }
@@ -273,15 +282,19 @@ const PlanSetting: React.FC<{
                         <p className="text-[16px] leading-[26px] text-white-gray flex-grow">
                           {t('Profile.text.new_sub')}
                         </p>
-                        <span className="font-bold text-[18px] leading-6 text-sapphire-blue">
+                        <span className="font-bold text-[18px] leading-6 text-sapphire-blue" style={{textDecoration:coupon !=="" ? "line-through":"none"}}>
                           ${isYearly ? amountNew * 9 : amountNew}
                         </span>
+                        {coupon !== "" ? (
+                        <span className="font-bold text-[18px] leading-6 pl-2 text-sapphire-blue">
+                          ${isYearly ? ((amountNew * 9) - (percentDiscount ? ((amountNew * 9)*discount):(discount) )) : (amountNew - ( percentDiscount ? (amountNew*discount):(discount)))}
+                        </span>):(null)}
                       </li>
                       <li className="flex justify-between items-center list-none mb-4">
                         <p className="text-[16px] leading-[26px] text-white-gray flex-grow">
                           {t('Profile.text.balance_due')}
                         </p>
-                        <span className="font-bold text-[18px] leading-6 text-sapphire-blue">
+                        <span className="font-bold text-[18px] leading-6 text-sapphire-blue" style={{textDecoration:coupon !=="" ? "line-through":"none"}}>
                           $
                           {Math.max(
                             (isYearly ? amountNew * 9 : amountNew) -
@@ -289,6 +302,14 @@ const PlanSetting: React.FC<{
                             0,
                           )}
                         </span>
+                        {coupon !== "" ? (<span className="font-bold text-[18px] leading-6 pl-2 text-sapphire-blue">
+                          $
+                          {Math.max(
+                            (isYearly ? ((amountNew * 9) - (percentDiscount ? (amountNew*9*discount):(discount))) : (amountNew - (percentDiscount ? (amountNew*discount):(discount)))) -
+                              amountCurrent,
+                            0,
+                          )}
+                        </span>):(null)}
                       </li>
                     </ul>
                     {isEmpty(currentPlan) ||
@@ -301,6 +322,9 @@ const PlanSetting: React.FC<{
                           currentPlan.deletedAt &&
                           (t('Profile.text.change_plan') as string)
                         }
+                        setCoupon={setCoupon}
+                        setDiscount={setDiscount}
+                        setpercentDiscount={setpercentDiscount}
                       />
                     ) : (
                       <>
@@ -351,6 +375,8 @@ const PlanSetting: React.FC<{
             checkIsCurrentPlan={checkIsCurrentPlan}
             handleBilling={handleBilling}
           />
+        </div>
+        <div>
         </div>
       </div>
     </div>

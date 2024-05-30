@@ -11,6 +11,7 @@ export type DataSubcription = {
   }[];
   trial_end?: number;
   hosted_invoice_url?: string;
+  coupon?:string;
 };
 
 type NewSubcription = {
@@ -30,10 +31,10 @@ const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY, {
  * @param {string} name
  * @param {string} priceId
  * @param {boolean} isTrial
- *
+ * @param {string} couponCode
  * @returns {Promise<any>}
  */
-export async function createNewSubcription(token: string, email: string, name: string, priceId: string, isTrial = false): Promise<NewSubcription> {
+export async function createNewSubcription(token: string, email: string, name: string, priceId: string, isTrial = false,couponCode=""): Promise<NewSubcription> {
   if (!token) {
     throw new ApolloError('Invalid token');
   }
@@ -45,10 +46,25 @@ export async function createNewSubcription(token: string, email: string, name: s
       source: token,
     });
 
-    const dataSubcription: DataSubcription = {
-      customer: customer.id,
-      items: [{ price: priceId }],
-    };
+    let dataSubcription:DataSubcription;
+
+    if (couponCode !== "")
+    {
+      dataSubcription = {
+        customer: customer.id,
+        items: [{ price: priceId }],
+        coupon:couponCode
+      };
+    }
+    else
+    {
+      dataSubcription = {
+        customer: customer.id,
+        items: [{ price: priceId }]
+      };
+    }
+
+
     if (isTrial) {
       dataSubcription.trial_end = dayjs().add(14, 'd').unix();
     }
@@ -60,6 +76,7 @@ export async function createNewSubcription(token: string, email: string, name: s
       subcription_id: result.id,
     };
   } catch (error) {
+    console.log("Sub Func error = ",error);
     logger.error(error);
     throw new ApolloError('Payment failed! Please check your card.');
   }
