@@ -42,8 +42,8 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
 
     if (data) {
       if (data.getUserSites.length > 0) {
-        // setSelectedOption(data.getUserSites[0].url);
-        // setDomainData(data.getUserSites[0]);
+        setSelectedOption(data.getUserSites[0].url);
+        setDomainData(data.getUserSites[0]);
       }
       else {
         setSelectedOption('Add a new Domain')
@@ -74,6 +74,23 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
       }
     }
   },[domainData])
+
+  useEffect(()=>{
+    if(domainData)
+    {
+      try {
+        if (window.location.pathname.startsWith("/domain-plans/"))
+        {
+          const numberPattern = /\d+/;  // Regular expression to match one or more digits
+          const match = Number(window.location.pathname.match(numberPattern));
+          const id = data.getUserSites.filter((site: siteDetails) => site.id === match)[0];
+          setSelectedOption(id['url']);
+        } 
+      } catch (error) {
+        console.log("error",error);
+      }
+    }
+  },[window.location.pathname])
 
 
   return (
