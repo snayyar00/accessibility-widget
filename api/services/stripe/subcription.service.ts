@@ -38,6 +38,15 @@ export async function createNewSubcription(token: string, email: string, name: s
   if (!token) {
     throw new ApolloError('Invalid token');
   }
+  const existing_sub = await stripe.subscriptions.retrieve(token);
+
+  if(existing_sub)
+  {
+    return {
+      customer_id: String(existing_sub.customer),
+      subcription_id: existing_sub.id,
+    };
+  }
 
   try {
     const customer = await stripe.customers.create({

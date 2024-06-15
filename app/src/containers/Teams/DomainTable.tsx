@@ -1,7 +1,7 @@
 import deleteSite from '@/queries/sites/deleteSite';
 import updateSite from '@/queries/sites/updateSite';
 import { useMutation } from '@apollo/client';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FaTrash, FaCheck, FaTimes, FaDollarSign } from 'react-icons/fa';
 import { HiMiniPencil } from "react-icons/hi2";
 import { toast } from 'react-toastify';
@@ -38,11 +38,11 @@ const DomainTable = ({ data, setReloadSites}: any) => {
   const [editingId, setEditingId] = useState(null);
   const [tempDomain, setTempDomain] = useState('');
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     // Here you would also handle the deletion on the backend
     const index = domains.findIndex(domain => domain.id === id)
     const foundUrl = domains[index].url;
-    deleteSiteMutation({ variables: { url:foundUrl } });
+    await deleteSiteMutation({ variables: { url:foundUrl } });
     setDomains(domains.filter((domain) => domain.id !== id));
   };
 

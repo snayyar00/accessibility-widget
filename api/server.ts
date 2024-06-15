@@ -20,6 +20,8 @@ import { getIpAddress } from './helpers/uniqueVisitor.helper';
 import sendMail from './libs/mail';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 import { fetchAccessibilityReport, fetchSitePreview } from './services/accessibilityReport/accessibilityReport.service';
+import { findProductAndPriceByType, findProductByType } from './repository/products.repository';
+import { createSitesPlan } from './services/allowedSites/plans-sites.service';
 // import run from './scripts/create-products';
 
 type ContextParams = {
@@ -99,6 +101,37 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   })
 
+  app.post('/billing-portal-session',async (req,res)=>{
+    const {email,returnURL} = req.body;
+
+    // Search for an existing customer by email
+    const customers = await stripe.customers.list({
+      email: email,
+      limit: 1
+    });
+
+    let customer;
+
+    // Check if customer exists
+    if (customers.data.length > 0) {
+      customer = customers.data[0];
+      // console.log("customer exists = ",customer);
+    }
+
+
+    try {
+      const session = await stripe.billingPortal.sessions.create({
+        customer:customer.id,
+        return_url:returnURL
+      });
+      return res.status(200).json(session);
+    } catch (error) {
+      console.log(error);
+      return res.status(500);
+    }
+
+  })
+
   app.post('/validate-coupon', async (req, res) => {
     const { couponCode } = req.body;
   
@@ -118,6 +151,139 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         res.json({ valid: true, discount: (Number(promoCodeData.coupon.amount_off)/100),id:promoCodeData?.coupon?.id,percent:false });
       }
     } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app.post('/create-checkout-session',async (req,res)=>{
+    const { email,planName,billingInterval,returnUrl,domainId,userId,domain} = req.body;
+     
+    const price = await findProductAndPriceByType(planName,billingInterval);
+
+    try {
+      // Search for an existing customer by email
+      const customers = await stripe.customers.list({
+        email: email,
+        limit: 1
+      });
+
+      let customer;
+
+      // Check if customer exists
+      if (customers.data.length > 0) {
+        customer = customers.data[0];
+        // console.log("customer exists = ",customer);
+      } else {
+        // Create a new customer if not found
+        customer = await stripe.customers.create({
+          email: email,
+        });
+        // return;
+      }
+
+      // Create the checkout session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'subscription',
+        line_items: [{
+          price: price.price_stripe_id,
+          quantity: 1,
+        }],
+        customer: customer.id,
+        success_url: `${returnUrl}`,
+        cancel_url: returnUrl,
+        metadata: {
+          domainId: domainId,
+          userId:userId
+        },
+        subscription_data:{
+          metadata: {
+            domainId: domainId,
+            userId:userId
+          },
+          description:`Plan for ${domain}`
+        }
+      });
+
+      res.status(303).json({ url: session.url });
+
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/create-subscription',async (req,res)=>{
+    const { email,returnURL, planName,billingInterval,domainId,domainUrl,userId } = req.body;
+
+    const price = await findProductAndPriceByType(planName,billingInterval);
+
+    try {
+      // Search for an existing customer by email
+      const customers = await stripe.customers.list({
+        email: email,
+        limit: 1
+      });
+
+      let customer;
+
+      // Check if customer exists
+      if (customers.data.length > 0) {
+        customer = customers.data[0];
+      }
+      else
+      {
+        res.status(404);
+      }
+
+      const subscription = await stripe.subscriptions.create({
+        customer: customer.id,
+        items: [{ price: price.price_stripe_id }],
+        expand: ['latest_invoice.payment_intent'],
+        metadata: {
+          domainId: domainId,
+          userId:userId
+        },
+        description:`Plan for ${domainUrl}`
+      });
+
+      await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
+      console.log("created");
+
+      res.status(200).json({success:true});
+
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/check-customer',async (req,res)=>{
+    const { email} = req.body;
+
+    try {
+      // Search for an existing customer by email
+      const customers = await stripe.customers.list({
+        email: email,
+        limit: 1
+      });
+
+      let customer;
+
+      // Check if customer exists
+      if (customers.data.length > 0) {
+        customer = customers.data[0];
+
+        res.status(200).json({ isCustomer: true });
+      }
+      else
+      {
+        res.status(200).json({ isCustomer: false });
+      }
+
+      
+
+    } catch (error) {
+      console.log(error);
       res.status(500).json({ error: error.message });
     }
   });

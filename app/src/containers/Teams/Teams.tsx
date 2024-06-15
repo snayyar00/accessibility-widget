@@ -19,7 +19,7 @@ const Teams = ({ domains, setReloadSites }: any) => {
   });
   const [formData, setFormData] = useState<DomainFormData>({ domainName: '' });
 
- 
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,7 +36,6 @@ const Teams = ({ domains, setReloadSites }: any) => {
     addSiteMutation({ variables: { url: sanitizedDomain } })
 
   };
-
 
   return (
     <>
@@ -69,7 +68,7 @@ const Teams = ({ domains, setReloadSites }: any) => {
             <></>
           )}
         </div>
-        <DomainTable data={domains} setReloadSites={setReloadSites} />
+        <DomainTable data={domains} setReloadSites={setReloadSites}/>
       </div>
     </>
   );

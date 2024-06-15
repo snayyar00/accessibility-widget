@@ -27,6 +27,12 @@ declare global {
   }
 }
 
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}
+
 const plans = [
   {
     id: 'free',
@@ -97,14 +103,20 @@ const PlanSetting: React.FC<{
   const [coupon,setCoupon] = useState("");
   const [discount,setDiscount] = useState(0);
   const [percentDiscount,setpercentDiscount] = useState(false);
+  const [isStripeCustomer,setisStripeCustomer] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => {setIsModalOpen(false);window.location.reload()};
+  const [billingClick,setbillingClick] = useState(false);
 
   useEffect(() => {
+    customerCheck();
     dispatch(setSitePlan({ data: {} }));
     fetchSitePlan({
       variables: { siteId }
     });
   }, [])
-
+  
   useEffect(() => {
     if (sitePlanData?.getPlanBySiteIdAndUserId) {
       dispatch(setSitePlan({ data: sitePlanData?.getPlanBySiteIdAndUserId }));
@@ -200,6 +212,117 @@ const PlanSetting: React.FC<{
       });
   }
 
+  const handleCheckout = async ()=>{
+    setbillingClick(true);
+    const url = 'http://localhost:5000/create-checkout-session';
+    const bodyData = { email:data.email,planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.href,domainId:domain.id,userId:data.id,domain:domain.url };
+
+    await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(bodyData)
+    })
+      .then(response => {
+        // if (!response.ok) {
+        //   throw new Error('Network response was not ok');
+        // }
+        response.json().then(data => {
+          setbillingClick(false);
+          window.location.href = data.url;
+          // console.log("Url = ",data);
+        });
+      })
+      .catch((error) => {
+        // Handle error
+        console.log("error = ",error)
+        console.error('There was a problem with the fetch operation:', error);
+      });
+  }
+
+  const handleSubscription = async () => {
+    setbillingClick(true);
+    const url = 'http://localhost:5000/create-subscription';
+    const bodyData = { email:data.email,returnURL:window.location.href, planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",domainId:domain.id,domainUrl:domain.url,userId:data.id };
+
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bodyData)
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+  
+          response.json().then(data => {
+            // Handle the JSON data received from the backend
+            setbillingClick(false);
+            openModal();
+          });
+        })
+        .catch(error => {
+          // Handle error
+          console.error('There was a problem with the fetch operation:', error);
+        });
+    } catch (error) {
+      console.log("error",error);
+    }
+    
+  }
+
+  const customerCheck = async () => {
+
+    const url = 'http://localhost:5000/check-customer';
+    const bodyData = { email:data.email};
+
+    await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(bodyData)
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        response.json().then(data => {
+          // Handle the JSON data received from the backend
+          if(data.isCustomer == true)
+          {
+            setisStripeCustomer(true);
+          }
+        });
+      })
+      .catch(error => {
+        // Handle error
+        console.error('There was a problem with the fetch operation:', error);
+      });
+  }
+  
+  const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+    if (!isOpen) return null;
+  
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+        <div className="bg-white rounded-lg p-4 w-1/3">
+          <div className="flex justify-end">
+            <button className="text-gray-800 text-3xl hover:text-gray-700" onClick={onClose}>
+              ×
+            </button>
+          </div>
+          <div>{children}</div>
+        </div>
+      </div>
+    );
+  }
+
   const planChanged = plans.find((item:any) => item.id === selectedPlan);
   const amountCurrent = currentPlan.amount || 0;
   const amountNew = planChanged ? planChanged.price : 0;
@@ -208,6 +331,17 @@ const PlanSetting: React.FC<{
       <h5 className="font-bold text-[22px] leading-[30px] text-sapphire-blue mb-1">
         {t('Profile.text.plan')}
       </h5>
+      <div className="p-4">
+      <Modal isOpen={isModalOpen} onClose={closeModal}>
+        <h2 className="text-xl font-bold mb-4">Plan Subscribed</h2>
+        <button
+          className="submit-btn"
+          onClick={closeModal}
+        >
+          Close
+        </button>
+      </Modal>
+      </div>
       <p className="text-[16px] leading-[26px] text-white-gray mb-[14px]">
         {t('Profile.text.plan_desc')}
       </p>
@@ -314,18 +448,19 @@ const PlanSetting: React.FC<{
                     </ul>
                     {isEmpty(currentPlan) ||
                     (currentPlan && currentPlan.deletedAt) ? (
-                      <StripeContainer
-                        onSubmitSuccess={createPaymentMethodSuccess}
-                        apiLoading={isCreatingSitePlan}
-                        submitText={
-                          currentPlan &&
-                          currentPlan.deletedAt &&
-                          (t('Profile.text.change_plan') as string)
-                        }
-                        setCoupon={setCoupon}
-                        setDiscount={setDiscount}
-                        setpercentDiscount={setpercentDiscount}
-                      />
+                      // <StripeContainer
+                      //   onSubmitSuccess={createPaymentMethodSuccess}
+                      //   apiLoading={isCreatingSitePlan}
+                      //   submitText={
+                      //     currentPlan &&
+                      //     currentPlan.deletedAt &&
+                      //     (t('Profile.text.change_plan') as string)
+                      //   }
+                      //   setCoupon={setCoupon}
+                      //   setDiscount={setDiscount}
+                      //   setpercentDiscount={setpercentDiscount}
+                      // />
+                      isStripeCustomer?(<button className='submit-btn' onClick={handleSubscription}>{billingClick ? ("Please Wait..."):("Add to Billing")}</button>):(<button className='submit-btn' onClick={handleCheckout}>{billingClick ? ("Please Wait..."):("Checkout")}</button>)
                     ) : (
                       <>
                         <Button
