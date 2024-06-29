@@ -108,6 +108,9 @@ const PlanSetting: React.FC<{
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {setIsModalOpen(false);window.location.reload()};
   const [billingClick,setbillingClick] = useState(false);
+  const [subFailed, setSubFailed] = useState(false);
+  const [currentActivePlan,setCurrentActivePlan] = useState("");
+  const [showPlans,setShowPlans] = useState(false);
 
   useEffect(() => {
     customerCheck();
@@ -143,6 +146,7 @@ const PlanSetting: React.FC<{
     fetchSitePlan({
       variables: { siteId }
     });
+    window.location.reload();
   }
 
   async function createPaymentMethodSuccess(token: string) {
@@ -231,7 +235,6 @@ const PlanSetting: React.FC<{
         response.json().then(data => {
           setbillingClick(false);
           window.location.href = data.url;
-          // console.log("Url = ",data);
         });
       })
       .catch((error) => {
@@ -263,11 +266,18 @@ const PlanSetting: React.FC<{
             // Handle the JSON data received from the backend
             setbillingClick(false);
             openModal();
+            setReloadSites(true);
+            fetchSitePlan({
+              variables: { siteId }
+            });
           });
         })
         .catch(error => {
           // Handle error
           console.error('There was a problem with the fetch operation:', error);
+          setSubFailed(true);
+          setbillingClick(false);
+          openModal();
         });
     } catch (error) {
       console.log("error",error);
@@ -278,7 +288,7 @@ const PlanSetting: React.FC<{
   const customerCheck = async () => {
 
     const url = 'http://localhost:5000/check-customer';
-    const bodyData = { email:data.email};
+    const bodyData = { email:data.email,userId:data.id};
 
     await fetch(url, {
       method: 'POST',
@@ -297,6 +307,12 @@ const PlanSetting: React.FC<{
           if(data.isCustomer == true)
           {
             setisStripeCustomer(true);
+            setCurrentActivePlan(data.plan_name);
+
+            if(data.interval == "yearly")
+            {
+              setIsYearly(true);
+            }
           }
         });
       })
@@ -322,7 +338,6 @@ const PlanSetting: React.FC<{
       </div>
     );
   }
-
   const planChanged = plans.find((item:any) => item.id === selectedPlan);
   const amountCurrent = currentPlan.amount || 0;
   const amountNew = planChanged ? planChanged.price : 0;
@@ -333,7 +348,7 @@ const PlanSetting: React.FC<{
       </h5>
       <div className="p-4">
       <Modal isOpen={isModalOpen} onClose={closeModal}>
-        <h2 className="text-xl font-bold mb-4">Plan Subscribed</h2>
+        <h2 className="text-xl font-bold mb-4">{subFailed ? ('You have reached the maximum number of allowed domains for this plan'):('Plan Subscribed')}</h2>
         <button
           className="submit-btn"
           onClick={closeModal}
@@ -347,10 +362,10 @@ const PlanSetting: React.FC<{
       </p>
       <div className="flex justify-between sm:flex-col-reverse flex-col flex-wrap">
         <div>
-
-          {(planChanged || (Object.keys(currentPlan).length == 0)) && (<div className="flex justify-center mb-[25px] sm:mt-[25px] [&_label]:mx-auto [&_label]:my-0">
+          {/* No Plan No Sub */}
+          {((showPlans || ((planChanged || (Object.keys(currentPlan).length == 0)) && ((Object.keys(currentPlan).length == 0) && currentActivePlan == "")) ) && (<div className="flex justify-center mb-[25px] sm:mt-[25px] [&_label]:mx-auto [&_label]:my-0">
             <Toggle onChange={toggle} label="Bill Yearly" />
-          </div>)}
+          </div>))}          
           <div>
             {planChanged && (
               <div className="p-6 sm:mx-2 mx-32 lg:mx-80 screen-4k-mx-80 mb-3 border border-solid border-dark-gray rounded-[10px] flex sm:p-6 sm:flex-col-reverse flex-col flex-wrap">
@@ -503,12 +518,13 @@ const PlanSetting: React.FC<{
             )}
           </div>
           <Plans
-            plans={plans}
+            plans={((Object.keys(currentPlan).length == 0 && currentActivePlan != "")) ? (plans.filter((plan)=>plan.id == currentActivePlan)):(plans)}
             onChange={changePlan}
             planChanged={planChanged}
             isYearly={isYearly}
             checkIsCurrentPlan={checkIsCurrentPlan}
             handleBilling={handleBilling}
+            showPlans={setShowPlans}
           />
         </div>
         <div>

@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import Stripe from 'stripe';
 import logger from '~/utils/logger';
 import { normalizeEmail } from '~/helpers/string.helper';
+import { getSitesPlanByCustomerIdAndSubscriptionId } from '~/repository/sites_plans.repository';
 
 export type DataSubcription = {
   customer: string;
@@ -102,18 +103,45 @@ export async function createNewSubcription(token: string, email: string, name: s
 export async function updateSubcription(subId: string, priceId: string): Promise<boolean> {
   try {
     const subscription = await stripe.subscriptions.retrieve(subId);
+    const new_price = await stripe.prices.retrieve(priceId);
+    const userStripeId = subscription.customer as string;
 
-    await stripe.subscriptions.update(subId, {
-      items: [{
-        id: subscription.items.data[0].id,
-        price: priceId,
-      }],
-    });
+    let previous_plan;
+    try {
+      previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(userStripeId, subscription?.id);
+    } catch (error) {
+      console.log('err = ', error);
+    }
 
-    return true;
+    if(new_price?.transform_quantity)
+    {
+      if(Number(new_price.transform_quantity.divide_by) < previous_plan.length)
+      {
+        throw new ApolloError(`This plan has a domain limit of ${new_price.transform_quantity.divide_by}. please decrease your added domains to subscribe to this plan`)
+      }
+    }
+    else
+    { 
+      const metadata = subscription.metadata;
+
+      const updatedMetadata:any = { ...metadata, maxDomains: new_price.transform_quantity['divide_by'], usedDomains: Number(previous_plan.length),updateMetaData:"true" };
+
+      await stripe.subscriptions.update(subId, {
+        items: [{
+          id: subscription.items.data[0].id,
+          price: priceId,
+        }],
+        metadata:updatedMetadata
+      });
+
+      return true;
+
+    }
+
+    
   } catch (error) {
     logger.error(error);
-    throw new ApolloError('Payment failed! Please check your card.');
+    throw new ApolloError(error.message);
   }
 }
 
@@ -141,6 +169,21 @@ export async function cancelSubcriptionBySubId(subId: string): Promise<boolean> 
 
     return true;
   } catch (error) {
+    console.log("Sub del func error",error);
+    logger.error(error);
+    throw new ApolloError('Something went wrong!');
+  }
+}
+
+export async function getSubcriptionCustomerIDBySubId(subId: string): Promise<string> {
+  try {
+    const sub = await stripe.subscriptions.retrieve(subId);
+
+    const customer = sub.customer;
+
+    return String(customer);
+  } catch (error) {
+    console.log("Sub del func error",error);
     logger.error(error);
     throw new ApolloError('Something went wrong!');
   }

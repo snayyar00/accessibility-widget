@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Dispatch, SetStateAction } from 'react';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as CheckCircleIcon } from '@/assets/images/svg/check-circle.svg';
@@ -78,6 +78,7 @@ type Props = {
   planChanged?: Plans;
   isYearly: boolean;
   handleBilling:()=>void;
+  showPlans:Dispatch<SetStateAction<boolean>>;
 }
 
 const Plans: React.FC<Props> = ({
@@ -87,6 +88,7 @@ const Plans: React.FC<Props> = ({
   isYearly,
   checkIsCurrentPlan,
   handleBilling,
+  showPlans,
 }) => {
   const { t } = useTranslation();
   const currentPlan = plans.find((plan) => checkIsCurrentPlan(plan.id));
@@ -114,18 +116,23 @@ const Plans: React.FC<Props> = ({
                   <CheckCircleIcon />
                 </span>
                 <span className="feature-text text-[14px] leading-6 text-white-gray ml-3">{feature}</span>
-              </li>
+              </li> 
             ))}
           </ul>
           <Button className="get-start-btn w-full mt-2" onClick={handleBilling}>Manage Billing</Button>
-          <Button className="get-start-btn w-full mt-2" onClick={() => onChange(String(currentPlan?.id))} >Update/Cancel Plan</Button>
+          <Button className="get-start-btn w-full mt-2" onClick={() => {onChange(String(currentPlan?.id));showPlans(true)}} >Update/Cancel Plan</Button>
         </div>):(null)}
       
       {(planChanged || (Object.keys(subscribedPlan).length == 0)) && (plans.map((plan) =>{ 
+      // {(planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.productType != subPlan ) && (plans.map((plan) =>{ 
         if(checkIsCurrentPlan(plan.id))
         {
           return null;
         }
+        // if(currentPlan == undefined && subPlan !== undefined && plan?.id !== subPlan?.id )
+        // {
+        //   return null
+        // }
         return(
         <div
           onClick={() => onChange(plan.id)}

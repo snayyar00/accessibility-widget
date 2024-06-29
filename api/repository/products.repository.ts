@@ -58,6 +58,10 @@ export function findProductByType(type: string): Promise<ProductData> {
   return database(TABLE).where({ type }).first();
 }
 
+export function findProductById(ID: number): Promise<ProductData> {
+  return database(TABLE).where({ ID }).first();
+}
+
 export function findProductInType(types: string[]): Promise<ProductData[]> {
   return database(TABLE).whereIn('type', types);
 }

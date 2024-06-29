@@ -40,8 +40,8 @@ export const sitesPlansColumns = {
 
 export function getSitesPlanByUserId(userId: number) {
   return database(TABLE)
-    .leftJoin(TABLES.allowed_sites, sitesPlansColumns.siteId, 'sites_allowed.id')
-    .select(sitesPlansColumns, 'sites_allowed.name as siteName')
+    .leftJoin(TABLES.allowed_sites, sitesPlansColumns.siteId, 'allowed_sites.id')
+    .select(sitesPlansColumns,'allowed_sites.url as siteName')
     .where({ [siteColumns.user_id]: userId, [sitesPlansColumns.isActive]: true })
     .where(sitesPlansColumns.expiredAt, '>=', formatDateDB());
 }
@@ -85,4 +85,8 @@ export function getSitePlanBySiteId(siteId: number) {
 
 export function deleteSitesPlanById(id: number): Promise<number> {
   return database(TABLE).where({ id }).update({ [sitesPlansColumns.deletedAt]: formatDateDB() });
+}
+
+export function deleteSitePlanById(id: number): Promise<number> {
+  return database(TABLE).where({ id }).del();
 }

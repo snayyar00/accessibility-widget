@@ -38,6 +38,11 @@ export async function findSitesByUserId(id: number): Promise<IUserSites[]> {
 		.where({ [siteColumns.user_id]: id });
 }
 
+export async function findSiteById(id: number): Promise<IUserSites[]> {
+	return database(TABLE)
+		.where({ [siteColumns.id]: id }).first();
+}
+
 export async function findSiteByURL(url: string): Promise<FindAllowedSitesProps> {
 	return database(TABLE)
 		.select(siteColumns)
