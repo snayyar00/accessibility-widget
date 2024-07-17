@@ -24,7 +24,8 @@ export type FindAllowedSitesProps = {
 };
 
 export interface IUserSites extends FindAllowedSitesProps {
-	expiredAt?: string | null | undefined;
+	expiredAt?: string | null | undefined,
+	trial?:number|null|undefined
 }
 
 export type allowedSites = {

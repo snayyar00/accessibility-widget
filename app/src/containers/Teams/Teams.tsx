@@ -5,6 +5,7 @@ import addSite from '@/queries/sites/addSite';
 import { toast } from 'react-toastify';
 import isValidDomain from '@/utils/verifyDomain';
 import DomainTable from './DomainTable';
+import TrialBannerAndModal from '../Dashboard/TrialBannerAndModal';
 
 interface DomainFormData {
   domainName: string;
@@ -17,25 +18,28 @@ const Teams = ({ domains, setReloadSites }: any) => {
       toast.success('The domain was successfully added to the database.');
     },
   });
-  const [formData, setFormData] = useState<DomainFormData>({ domainName: '' });
+  // const [formData, setFormData] = useState<DomainFormData>({ domainName: '' });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+  const [paymentView, setPaymentView] = useState(false);
+  const [optionalDomain,setOptionalDomain] = useState("");
 
+  // const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   setFormData({ ...formData, [e.target.name]: e.target.value });
+  // };
 
+  // const handleSubmit = async (e: FormEvent) => {
+  //   e.preventDefault();
+  //   if (!isValidDomain(formData.domainName)) {
+  //     toast.error('You must enter a valid domain name!');
+  //     return;
+  //   }
+  //   // const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)/, '');
+  //   const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)?(www\.)?/, '');
+  //   addSiteMutation({ variables: { url: sanitizedDomain } })
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!isValidDomain(formData.domainName)) {
-      toast.error('You must enter a valid domain name!');
-      return;
-    }
-    // const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)/, '');
-    const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)?(www\.)?/, '');
-    addSiteMutation({ variables: { url: sanitizedDomain } })
-
-  };
+  // };
 
   return (
     <>
@@ -43,7 +47,7 @@ const Teams = ({ domains, setReloadSites }: any) => {
         Add new domain
       </h3>
       <div className="add-domain-container">
-        <div className="add-domain-form-container">
+        {/* <div className="add-domain-form-container">
           <form onSubmit={handleSubmit} className="add-domain-form">
             <div className="form-group">
               <input
@@ -67,8 +71,9 @@ const Teams = ({ domains, setReloadSites }: any) => {
           ) : (
             <></>
           )}
-        </div>
-        <DomainTable data={domains} setReloadSites={setReloadSites}/>
+        </div> */}
+        <TrialBannerAndModal allDomains={domains} setReloadSites={setReloadSites} isModalOpen={isModalOpen} closeModal={closeModal} openModal={openModal} paymentView={paymentView} setPaymentView={setPaymentView} optionalDomain={optionalDomain}/>
+        <DomainTable data={domains} setReloadSites={setReloadSites} setPaymentView={setPaymentView} openModal={openModal} setOptionalDomain={setOptionalDomain}/>
       </div>
     </>
   );

@@ -4,10 +4,10 @@ import { createUserPlan, invoicePaymentFailed, invoicePaymentSuccess, trialWillE
 import Stripe from 'stripe';
 import sendMail from '~/libs/mail';
 import { DataSubcription, createNewSubcription } from '~/services/stripe/subcription.service';
-import { createSitesPlan, deleteSitesPlan, updateSitesPlan } from '../allowedSites/plans-sites.service';
+import { createSitesPlan, deleteSitesPlan, deleteTrialPlan, updateSitesPlan } from '../allowedSites/plans-sites.service';
 import { updateAllowedSiteURL } from '~/repository/sites_allowed.repository';
 import { ProductData, findProductById, findProductByStripeId, insertProduct, updateProduct } from '~/repository/products.repository';
-import { getSitesPlanByCustomerIdAndSubscriptionId } from '~/repository/sites_plans.repository';
+import { getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId } from '~/repository/sites_plans.repository';
 
 // async function webhookStripe(req: Request, res: Response): Promise<void> {
 //   let event;
@@ -341,7 +341,15 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
           metadata: updatedMetadata,
         });
         console.log('Subscription Meta Data Updated',updatedSubscription.metadata);
-
+        
+        // deletes the Trial Plan for the site
+        let previous_plan;
+        try {
+          previous_plan = await getSitePlanBySiteId(Number(siteID));
+          await deleteTrialPlan(previous_plan.id);
+        } catch (error) {
+          console.log('err = ', error);
+        }
         await createSitesPlan(Number(userID), updatedSubscription.id, line_items.data[0].description, planInterval, Number(siteID), '');
         console.log('Created');
 

@@ -219,7 +219,7 @@ const PlanSetting: React.FC<{
   const handleCheckout = async ()=>{
     setbillingClick(true);
     const url = 'http://localhost:5000/create-checkout-session';
-    const bodyData = { email:data.email,planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.href,domainId:domain.id,userId:data.id,domain:domain.url };
+    const bodyData = { email:data.email,planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url };
 
     await fetch(url, {
       method: 'POST',
@@ -341,10 +341,11 @@ const PlanSetting: React.FC<{
   const planChanged = plans.find((item:any) => item.id === selectedPlan);
   const amountCurrent = currentPlan.amount || 0;
   const amountNew = planChanged ? planChanged.price : 0;
+
   return (
     <div className="bg-white border border-solid border-dark-grey shadow-xxl rounded-[10px] p-6 mb-[25px] sm:px-[10px] sm:py-6">
       <h5 className="font-bold text-[22px] leading-[30px] text-sapphire-blue mb-1">
-        {t('Profile.text.plan')}
+        {t('Profile.text.plan')} for {domain.url}
       </h5>
       <div className="p-4">
       <Modal isOpen={isModalOpen} onClose={closeModal}>
@@ -363,7 +364,7 @@ const PlanSetting: React.FC<{
       <div className="flex justify-between sm:flex-col-reverse flex-col flex-wrap">
         <div>
           {/* No Plan No Sub */}
-          {((showPlans || ((planChanged || (Object.keys(currentPlan).length == 0)) && ((Object.keys(currentPlan).length == 0) && currentActivePlan == "")) ) && (<div className="flex justify-center mb-[25px] sm:mt-[25px] [&_label]:mx-auto [&_label]:my-0">
+          {((currentPlan.isTrial ||showPlans || ((planChanged || (Object.keys(currentPlan).length == 0)) && ((Object.keys(currentPlan).length == 0) && currentActivePlan == "")) ) && (<div className="flex justify-center mb-[25px] sm:mt-[25px] [&_label]:mx-auto [&_label]:my-0">
             <Toggle onChange={toggle} label="Bill Yearly" />
           </div>))}          
           <div>
@@ -462,7 +463,7 @@ const PlanSetting: React.FC<{
                       </li>
                     </ul>
                     {isEmpty(currentPlan) ||
-                    (currentPlan && currentPlan.deletedAt) ? (
+                    (currentPlan && currentPlan.deletedAt) || currentPlan.isTrial ? (
                       // <StripeContainer
                       //   onSubmitSuccess={createPaymentMethodSuccess}
                       //   apiLoading={isCreatingSitePlan}
@@ -518,7 +519,10 @@ const PlanSetting: React.FC<{
             )}
           </div>
           <Plans
-            plans={((Object.keys(currentPlan).length == 0 && currentActivePlan != "")) ? (plans.filter((plan)=>plan.id == currentActivePlan)):(plans)}
+            plans={currentPlan.isTrial ? (plans) : 
+              (((Object.keys(currentPlan).length == 0 && currentActivePlan != "")) 
+              ? 
+              (plans.filter((plan)=>plan.id == currentActivePlan)):(plans))}
             onChange={changePlan}
             planChanged={planChanged}
             isYearly={isYearly}

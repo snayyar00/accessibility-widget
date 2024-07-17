@@ -93,6 +93,8 @@ const Plans: React.FC<Props> = ({
   const { t } = useTranslation();
   const currentPlan = plans.find((plan) => checkIsCurrentPlan(plan.id));
   const { data: subscribedPlan } = useSelector((state: RootState) => state.sitePlan);
+  console.log("",subscribedPlan,subscribedPlan.isTrial);
+  console.log("plans",currentPlan);
   return (
     <div className="flex flex-wrap sm:flex-col justify-center">
       {currentPlan ? (<div
@@ -123,7 +125,7 @@ const Plans: React.FC<Props> = ({
           <Button className="get-start-btn w-full mt-2" onClick={() => {onChange(String(currentPlan?.id));showPlans(true)}} >Update/Cancel Plan</Button>
         </div>):(null)}
       
-      {(planChanged || (Object.keys(subscribedPlan).length == 0)) && (plans.map((plan) =>{ 
+      {(planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.isTrial) && (plans.map((plan) =>{ 
       // {(planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.productType != subPlan ) && (plans.map((plan) =>{ 
         if(checkIsCurrentPlan(plan.id))
         {

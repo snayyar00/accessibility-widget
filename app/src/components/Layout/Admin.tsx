@@ -92,7 +92,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
                 exact={route.exact}
               />
             ))}
-            <Route path='/dashboard' render={() => <Dashboard domain={selectedOption} domainData={domainData} />} key='/dashboard' exact={false} />
+            <Route path='/dashboard' render={() => <Dashboard domain={selectedOption} domainData={domainData} allDomains={data} setReloadSites={setReloadSites} />} key='/dashboard' exact={false} />
             <Route path='/add-domain' render={() => <Teams domains={data} setReloadSites={setReloadSites} /> } key='/Add-Domain' exact={false} />
             <Route path='/domain-plans/:id' render={() => <SiteDetail domains={data} setReloadSites={setReloadSites} /> } key='/Domain-Plans' exact={false} />
             <Route path='/installation' render={() => <Installation domain={selectedOption} />} key='/installation' exact={false} />

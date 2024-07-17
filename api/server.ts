@@ -21,9 +21,9 @@ import sendMail from './libs/mail';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 import { fetchAccessibilityReport } from './services/accessibilityReport/accessibilityReport.service';
 import { findProductAndPriceByType, findProductById } from './repository/products.repository';
-import { createSitesPlan } from './services/allowedSites/plans-sites.service';
+import { createSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-sites.service';
 import Stripe from 'stripe';
-import { getSitesPlanByUserId } from './repository/sites_plans.repository';
+import { getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
 // import run from './scripts/create-products';
 
@@ -280,6 +280,11 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         // return;
       }
 
+      const subscriptions = await stripe.subscriptions.list({ customer: customer.id });
+      for (const subscription of subscriptions.data) {
+        await stripe.subscriptions.del(subscription.id);
+      }
+
       // Create the checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -289,6 +294,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           quantity: 1,
         }],
         customer: customer.id,
+        allow_promotion_codes: true,
         success_url: `${returnUrl}`,
         cancel_url: returnUrl,
         metadata: {
@@ -336,7 +342,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       try {
         subscription = await stripe.subscriptions.retrieve(sub_id) as Stripe.Subscription;
       } catch (error) {
-        console.log("error",error);
+        // console.log("error",error);
         no_sub = true;
       }
     }
@@ -359,6 +365,16 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         res.status(404);
       }
 
+      const subscriptions = await stripe.subscriptions.list({
+          customer: customer.id
+      });
+
+      if (subscriptions.data.length > 0) {
+        subscription = subscriptions.data[0];
+        no_sub=false;
+      }
+
+
       if(no_sub)
       {   
 
@@ -377,6 +393,15 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         },
         description:`Plan for ${domainUrl}`
         });
+
+
+        let previous_plan;
+        try {
+          previous_plan = await getSitePlanBySiteId(Number(domainId));
+          await deleteTrialPlan(previous_plan.id);
+        } catch (error) {
+          console.log('err = ', error);
+        }
 
         await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
 
@@ -406,6 +431,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             });
 
             console.log('meta data updated');
+            let previous_plan;
+            try {
+              previous_plan = await getSitePlanBySiteId(Number(domainId));
+              await deleteTrialPlan(previous_plan.id);
+            } catch (error) {
+              console.log('err = ', error);
+            }
 
             await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
 
@@ -431,18 +463,21 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     
     try {
       const plans = await getSitesPlanByUserId(userId);
-    if(plans.length > 0)
-    {
-      let prodId = plans[0].productId;
-      let priceId = plans[0].priceId;
-      const prod = await findProductById(Number(prodId));
-      const price = await findPriceById(Number(priceId));
-      plan_name = prod.type;
-      interval = price.type;
-    }
-    } catch (error) {
-      
-    }
+      if (plans.length > 0) {
+        for (let i = 0; i < plans.length; i++) {
+          let plan = plans[i];
+          if (plan.subscription_id !== 'Trial') {
+            let prodId = plan.productId;
+            let priceId = plan.priceId;
+            const prod = await findProductById(Number(prodId));
+            const price = await findPriceById(Number(priceId));
+            plan_name = prod.type;
+            interval = price.type;
+            break; // This will exit the loop
+          }
+        }
+      }
+    } catch (error) {}
     
 
     try {

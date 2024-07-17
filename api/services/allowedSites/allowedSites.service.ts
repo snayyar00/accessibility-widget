@@ -5,6 +5,7 @@ import { insertDocument, findDocumentById, findDocuments, updateDocumentById, de
 import { FindAllowedSitesProps, IUserSites, deleteSiteByURL, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL} from '~/repository/sites_allowed.repository';
 import { createValidation } from '~/validations/document.validation';
 import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
+import { createSitesPlan } from './plans-sites.service';
 
 // type GetDocumentsResponse = {
 //   documents: FindDocumentsResponse;
@@ -29,6 +30,9 @@ export async function addSite(userId: number, url: string): Promise<string> {
         url: url
     }
     const response = await insertSite(data);
+    const site = await findSiteByURL(url)
+
+    await createSitesPlan(userId,"Trial","free_test","MONTHLY",site.id,"")
     return response
     
     // const data = await insertDocument({ name, body, user_id: userId });
@@ -58,7 +62,8 @@ export async function findUserSites(userId:number): Promise<IUserSites[]> {
             
             return {
                 ...site,
-                expiredAt: data?.expiredAt
+                expiredAt: data?.expiredAt,
+                trial:data?.isTrial
             };
         }))
         return result;

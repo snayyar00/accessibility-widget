@@ -4,14 +4,21 @@ import { useMutation } from '@apollo/client';
 import { useEffect, useState } from 'react';
 import { FaTrash, FaCheck, FaTimes, FaDollarSign } from 'react-icons/fa';
 import { HiMiniPencil } from "react-icons/hi2";
+import { FaGear } from "react-icons/fa6";
 import { toast } from 'react-toastify';
 import { NavLink } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/config/store';
 
 
-const DomainTable = ({ data, setReloadSites}: any) => {
+const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptionalDomain}: any) => {
   const [domains, setDomains] = useState([
-    { id: 0, url: '', expiredAt: '', status: '' }
+    { id: 0, url: '', expiredAt: '', status: '',trial:0 }
   ]);
+  const { data: userData, loading: userLoading } = useSelector((state: RootState) => state.user);
+  const [billingLoading,setBillingLoading] = useState(false);
+  const [activePlan,setActivePlan] = useState("");
+  const [isYearly,setIsYearly] = useState(false);
 
   const [deleteSiteMutation] = useMutation(deleteSite, {
     onCompleted: (response) => {
@@ -61,8 +68,12 @@ const DomainTable = ({ data, setReloadSites}: any) => {
     setEditingId(null);
   };
 
-  const applyStatusClass = (status: string): string => {
+  const applyStatusClass = (status: string,trial:number): string => {
     if (!status) {
+      return 'bg-yellow-200 text-200';
+    }
+    if(trial)
+    {
       return 'bg-yellow-200 text-200';
     }
     const currentTime = new Date().getTime();
@@ -78,7 +89,7 @@ const DomainTable = ({ data, setReloadSites}: any) => {
     return 'bg-yellow-200 text-200';
   }
 
-  const getDomainStatus = (status: string): string => {
+  const getDomainStatus = (status: string,trial:number): string => {
     if (!status) {
       return 'Not Available';
     }
@@ -90,16 +101,95 @@ const DomainTable = ({ data, setReloadSites}: any) => {
       return 'Active';
     }
     if (timeDifference < sevendays && timeDifference > 0) {
-      return 'Expiring';
+      if(trial == 1)
+      {
+        return 'Trial'
+      }
+      else
+      {
+        return 'Expiring';
+      }
     }
     return 'Expired';
   }
+
+  const customerCheck = async () => {
+
+    const url = 'http://localhost:5000/check-customer';
+    const bodyData = { email: userData.email, userId: userData.id };
+
+    await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bodyData)
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            response.json().then(data => {
+                // Handle the JSON data received from the backend
+                if (data.isCustomer == true) {
+                    setActivePlan(data.plan_name);
+                    if (data.interval == "yearly") {
+                        setIsYearly(true);
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            // Handle error
+            console.error('There was a problem with the fetch operation:', error);
+        });
+}
+
+  const handleSubscription = async (selectedDomain:any) => {
+    setBillingLoading(true);
+    const url = 'http://localhost:5000/create-subscription';
+    const bodyData = { email: userData.email, returnURL: window.location.href, planName: activePlan, billingInterval: isYearly ? "YEARLY" : "MONTHLY", domainId: selectedDomain.id, domainUrl: selectedDomain.url, userId: userData.id };
+
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bodyData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                response.json().then(data => {
+                    toast.success('The domain was successfully added to your active plan');
+                    setBillingLoading(false);
+                    window.location.reload();
+                });
+            })
+            .catch(error => {
+                // Handle error
+                toast.error('You have reached the maximum number of allowed domains for this plan');
+                console.error('There was a problem with the fetch operation:', error);
+            });
+    } catch (error) {
+        console.log("error", error);
+    }
+
+}
 
   useEffect(() => {
     if (data) {
       setDomains(data.getUserSites);
     }
   }, [data])
+
+  useEffect(()=>{
+    customerCheck();
+  },[])
 
   return (
     <div className="container mx-auto px-4 sm:px-8">
@@ -155,7 +245,7 @@ const DomainTable = ({ data, setReloadSites}: any) => {
                       </div>
                     </td>
                     <td className="px-5 py-5 border-b border-light-grey bg-white text-sm">
-                      <p className={`p-1.5 text-xs font-semibold rounded w-fit whitespace-no-wrap ${applyStatusClass(domain.expiredAt)}`}>{getDomainStatus(domain.expiredAt)}</p>
+                      <p className={`p-1.5 text-xs font-semibold rounded w-fit whitespace-no-wrap ${applyStatusClass(domain.expiredAt,domain.trial)}`}>{getDomainStatus(domain.expiredAt,domain.trial)}</p>
                     </td>
                     <td className="px-5 py-5 border-b border-light-grey bg-white text-sm">
                       <p className="text-gray-900 whitespace-no-wrap">{domain.expiredAt ? (new Date(parseInt(domain.expiredAt))).toLocaleString() ?? "-" : "-"}</p>
@@ -178,18 +268,24 @@ const DomainTable = ({ data, setReloadSites}: any) => {
                         </div>
                       ) : (
                         <div className="flex justify-end items-center space-x-2">
+                          {getDomainStatus(domain.expiredAt, domain.trial) == 'Active' || getDomainStatus(domain.expiredAt, domain.trial) == 'Expiring' ? (null) : (activePlan !== "" ? (<button disabled={billingLoading} onClick={() => { handleSubscription(domain) }} type="submit" className="py-3 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-[45%] sm:my-4 sm:w-full transition duration-300">
+                            {billingLoading ? "Please Wait..." : "Activate"}
+                          </button>) : (<button onClick={() => { setPaymentView(true); openModal(); setOptionalDomain(domain.url) }} type="submit" className="py-3 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-[45%] sm:my-4 sm:w-full transition duration-300">
+                            Buy Plan
+                          </button>))}
                           <button
                             onClick={() => handleEdit(domain)}
                             className="p-2 text-indigo-600 hover:text-indigo-800"
                           >
-                            <HiMiniPencil />
+                            {/* <HiMiniPencil /> */}
+                            <FaGear/>
                           </button>
-                          <NavLink
+                          {/* <NavLink
                             to={`/domain-plans/${domain.id}`}
                             className="p-2 text-green-600 hover:text-green-800"
                           >
                             <FaDollarSign />
-                          </NavLink>
+                          </NavLink> */}
                           <button
                             onClick={() => handleDelete(domain.id)}
                             className="p-2 text-red-600 hover:text-red-800"

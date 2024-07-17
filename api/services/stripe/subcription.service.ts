@@ -13,6 +13,7 @@ export type DataSubcription = {
   trial_end?: number;
   hosted_invoice_url?: string;
   coupon?:string;
+  trial_settings?:any
 };
 
 type NewSubcription = {
@@ -39,22 +40,50 @@ export async function createNewSubcription(token: string, email: string, name: s
   if (!token) {
     throw new ApolloError('Invalid token');
   }
-  const existing_sub = await stripe.subscriptions.retrieve(token);
 
-  if(existing_sub)
-  {
-    return {
-      customer_id: String(existing_sub.customer),
-      subcription_id: existing_sub.id,
-    };
+  try {
+    const existing_sub = await stripe.subscriptions.retrieve(token);
+
+    if(existing_sub)
+    {
+      return {
+        customer_id: String(existing_sub.customer),
+        subcription_id: existing_sub.id,
+      };
+    }
+    
+  } catch (error) {
+    
   }
 
   try {
-    const customer = await stripe.customers.create({
-      email: normalizeEmail(email),
-      name,
-      source: token,
+
+    const customers = await stripe.customers.list({
+      email: email,
+      limit: 1,
     });
+
+    let customer;
+
+    // Check if customer exists
+    if (customers.data.length > 0) {
+      customer = customers.data[0];
+      // console.log("customer exists = ",customer);
+    } else {
+      // Create a new customer if not found
+      if (token !== 'Trial') {
+        customer = await stripe.customers.create({
+          email: normalizeEmail(email),
+          name,
+          source: token,
+        });
+      } else {
+        customer = await stripe.customers.create({
+          email: normalizeEmail(email),
+          name,
+        });
+      }
+    }
 
     let dataSubcription:DataSubcription;
 
@@ -76,15 +105,28 @@ export async function createNewSubcription(token: string, email: string, name: s
 
 
     if (isTrial) {
-      dataSubcription.trial_end = dayjs().add(14, 'd').unix();
+      dataSubcription.trial_end = dayjs().add(7, 'd').unix();
+      dataSubcription.trial_settings = {
+        end_behavior: {
+          missing_payment_method: 'cancel',
+        },
+      }
+
+      return {
+        customer_id: customer.id,
+        subcription_id: "Trial",
+      };
     }
+    else
+    {
+      const result = await stripe.subscriptions.create(dataSubcription);
 
-    const result = await stripe.subscriptions.create(dataSubcription);
-
-    return {
-      customer_id: customer.id,
-      subcription_id: result.id,
-    };
+      return {
+        customer_id: customer.id,
+        subcription_id: result.id,
+      };
+    }
+   
   } catch (error) {
     console.log("Sub Func error = ",error);
     logger.error(error);

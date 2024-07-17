@@ -13,6 +13,7 @@ import sendMail from '~/libs/mail';
 import { FindAllowedSitesProps, deleteSiteByURL, findSiteById, findSiteByUserIdAndSiteId } from '~/repository/sites_allowed.repository';
 import { SitesPlanData, deleteSitePlanById, deleteSitesPlanById, getSitePlanById, getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId, getSitesPlanByUserId, insertSitePlan, updateSitePlanById } from '~/repository/sites_plans.repository';
 import { deletePermissionBySitePlanId, insertMultiSitePermission } from '~/repository/sites_permission.repository';
+import { Token } from '../authentication/login.service';
 
 export function getUserSitesPlan(userId: number) {
   return getSitePlanById(userId);
@@ -56,7 +57,7 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
       await deletePermissionBySitePlanId(sitePlan.id);
     }
 
-    const { subcription_id, customer_id } = await createNewSubcription(paymentMethodToken, user.email, user.name, product.price_stripe_id,false,coupon);
+    const { subcription_id, customer_id } = await createNewSubcription(paymentMethodToken, user.email, user.name, product.price_stripe_id,paymentMethodToken == "Trial" ? true : false,coupon);
     if (subcription_id && customer_id) {
       const dataUserPlan = {
         allowed_site_id: siteId,
@@ -64,7 +65,8 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
         price_id: product.price_id,
         customer_id,
         subcription_id,
-        expired_at: formatDateDB(dayjs().add(1, product.price_type === 'yearly' ? 'y' : 'M')),
+        is_trial:paymentMethodToken == "Trial" ? 1:0,
+        expired_at: formatDateDB(dayjs().add(paymentMethodToken == "Trial" ? 7 : 1, paymentMethodToken == "Trial" ? 'day' : product.price_type === 'yearly' ? 'y' : 'M')),
       };
       const sitePlanId = await insertSitePlan(dataUserPlan as any);
       let sitePermissionData;
@@ -127,6 +129,24 @@ export async function updateSitesPlan(sitePlanId: number, planName: string, bill
   } catch (error) {
     logger.error(error);
     throw new ApolloError(error.message);
+  }
+}
+
+export async function deleteTrialPlan(id: number): Promise<true | ApolloError> {
+  try {
+    const sitePlan = await getSitePlanById(id);
+
+    if (!sitePlan) {
+      return new ApolloError('Can not find any user plan');
+    }
+    await deleteSitePlanById(sitePlan.id);
+    // await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)]);
+
+    return true;
+  } catch (error) {
+    console.log("This is error",error);
+    logger.error(error);
+    throw new ApolloError('Something went wrong!');
   }
 }
 

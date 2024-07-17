@@ -13,6 +13,7 @@ export type TDomain = {
   id: string;
   url: string;
   __typename: string;
+  trial?:number;
 }
 
 const SiteDetail = ({ domains, setReloadSites }: any) => {
