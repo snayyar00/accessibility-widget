@@ -270,8 +270,8 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
                         <div className="flex justify-end items-center space-x-2">
                           {getDomainStatus(domain.expiredAt, domain.trial) == 'Active' || getDomainStatus(domain.expiredAt, domain.trial) == 'Expiring' ? (null) : (activePlan !== "" ? (<button disabled={billingLoading} onClick={() => { handleSubscription(domain) }} type="submit" className="py-3 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-[45%] sm:my-4 sm:w-full transition duration-300">
                             {billingLoading ? "Please Wait..." : "Activate"}
-                          </button>) : (<button onClick={() => { setPaymentView(true); openModal(); setOptionalDomain(domain.url) }} type="submit" className="py-3 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-[45%] sm:my-4 sm:w-full transition duration-300">
-                            Buy Plan
+                          </button>) : (<button onClick={() => { setPaymentView(true); openModal(); setOptionalDomain(domain.url) }} type="submit" className="py-3 text-white text-center rounded-xl bg-green-400 hover:bg-green-600 w-[45%] sm:my-4 sm:w-full transition duration-300">
+                            Activate License
                           </button>))}
                           <button
                             onClick={() => handleEdit(domain)}

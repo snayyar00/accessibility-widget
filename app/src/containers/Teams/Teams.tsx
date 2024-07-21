@@ -20,10 +20,10 @@ const Teams = ({ domains, setReloadSites }: any) => {
   });
   // const [formData, setFormData] = useState<DomainFormData>({ domainName: '' });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const openModal = () => {setIsModalOpen(true)};
+  const closeModal = () => {setIsModalOpen(false);setOptionalDomain("yes");setPaymentView(false);};
   const [paymentView, setPaymentView] = useState(false);
-  const [optionalDomain,setOptionalDomain] = useState("");
+  const [optionalDomain,setOptionalDomain] = useState("yes");
 
   // const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   //   setFormData({ ...formData, [e.target.name]: e.target.value });
