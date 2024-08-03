@@ -163,7 +163,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       is_default: true,
     });
 
-    console.log(productPriceArray);
+    // console.log(productPriceArray);
     if(productPriceArray.length)
     {
       const configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
@@ -242,6 +242,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       if (!promoCodeData) {
         return res.json({ valid: false, error: 'Invalid promo code' });
       }
+      if(promoCodeData.coupon.id != 'vHrO7ymd')
+      {
+        return res.json({ valid: false, error: 'Invalid promo code Not from App Sumo' });
+      }
       if(promoCodeData.coupon.percent_off)
       {
         res.json({ valid: true, discount: (Number(promoCodeData.coupon.percent_off)/100),id:promoCodeData?.coupon?.id,percent:true});
@@ -313,6 +317,88 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       });
 
       res.status(303).json({ url: session.url });
+
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/app-sumo-checkout-session',async (req,res)=>{
+    const { email,planName,promoCode,returnUrl,domainId,userId,domain} = req.body;
+     
+    const price = await findProductAndPriceByType(planName,"YEARLY");
+
+    try {
+      // Search for an existing customer by email
+      const customers = await stripe.customers.list({
+        email: email,
+        limit: 1
+      });
+
+      let customer;
+
+      // Check if customer exists
+      if (customers.data.length > 0) {
+        customer = customers.data[0];
+      } else {
+        // Create a new customer if not found
+        customer = await stripe.customers.create({
+          email: email,
+        });
+      }
+
+      const promoCodes = await stripe.promotionCodes.list({ limit: 100 });
+      const promoCodeData = await promoCodes.data.find((pc:any) => pc?.code == promoCode);
+      
+      if (!promoCodeData) {
+        return res.json({ valid: false, error: 'Invalid promo code' });
+      }
+      if(promoCodeData.coupon.valid && promoCodeData.coupon.id == 'vHrO7ymd')
+      {
+        const subscriptions = await stripe.subscriptions.list({ customer: customer.id });
+
+        for (const subscription of subscriptions.data) {
+          await stripe.subscriptions.del(subscription.id);
+        }
+
+        // Create the checkout session
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          mode: 'subscription',
+          line_items: [{
+            price: price.price_stripe_id,
+            quantity: 1,
+          }],
+          customer: customer.id,
+          discounts:[{
+            coupon: promoCodeData?.coupon?.id,
+          }],
+          payment_method_collection:'if_required',
+          success_url: `${returnUrl}`,
+          cancel_url: returnUrl,
+          metadata: {
+            domainId: domainId,
+            userId:userId,
+            updateMetaData:"true",
+          },
+          subscription_data:{
+            metadata: {
+              domainId: domainId,
+              userId:userId,
+              updateMetaData:"true",
+            },
+            description:`Plan for ${domain}`
+          }
+        });
+
+        res.status(303).json({ url: session.url });
+
+      }
+      else
+      {
+        return res.json({ valid: false, error: 'Invalid promo code' });
+      }
 
     } catch (error) {
       console.log(error);
@@ -436,10 +522,161 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               previous_plan = await getSitePlanBySiteId(Number(domainId));
               await deleteTrialPlan(previous_plan.id);
             } catch (error) {
-              console.log('err = ', error);
+              // console.log('err = ', error);
             }
 
             await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
+
+            console.log('Old Sub created');
+
+            res.status(200).json({ success: true });
+          }
+        } else {
+          res.status(500).json({ error: 'Meta Data Not Configured' });
+        }
+      }
+
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/create-appsumo-subscription',async (req,res)=>{
+    const { email,returnURL, planName,domainId,domainUrl,userId,promoCode } = req.body;
+
+    const appSumoInterval = 'YEARLY';
+
+    const price = await findProductAndPriceByType(planName,appSumoInterval);
+
+    const sites = await getSitesPlanByUserId(Number(userId));
+
+    const sub_id = sites[0]?.subcriptionId;
+    
+
+    let no_sub = false;
+    let subscription;
+
+    if(sub_id == undefined)
+    {
+      no_sub = true;
+    }
+    else
+    {
+      try {
+        subscription = await stripe.subscriptions.retrieve(sub_id) as Stripe.Subscription;
+      } catch (error) {
+        // console.log("error",error);
+        no_sub = true;
+      }
+    }
+
+    try {
+      // Search for an existing customer by email
+      const customers = await stripe.customers.list({
+        email: email,
+        limit: 1
+      });
+
+      let customer;
+
+      // Check if customer exists
+      if (customers.data.length > 0) {
+        customer = customers.data[0];
+      }
+      else
+      {
+        res.status(404);
+      }
+
+      const subscriptions = await stripe.subscriptions.list({
+          customer: customer.id
+      });
+
+      if (subscriptions.data.length > 0) {
+        subscription = subscriptions.data[0];
+        no_sub=false;
+      }
+
+
+      if(no_sub)
+      {   
+        const promoCodes = await stripe.promotionCodes.list({ limit: 100 });
+        const promoCodeData = await promoCodes.data.find((pc:any) => pc?.code == promoCode);
+      
+        if (!promoCodeData) {
+          return res.json({ valid: false, error: 'Invalid Promo Code' });
+        }
+        if (promoCodeData.coupon.valid && promoCodeData.coupon.id == 'vHrO7ymd') {
+          let price_data = await stripe.prices.retrieve(String(price.price_stripe_id));
+
+          subscription = await stripe.subscriptions.create({
+            customer: customer.id,
+            items: [{ price: price.price_stripe_id }],
+            expand: ['latest_invoice.payment_intent'],
+            default_payment_method: customer.invoice_settings.default_payment_method,
+            discounts: [
+              {
+                coupon: promoCodeData?.coupon?.id,
+              },
+            ],
+            metadata: {
+              domainId: domainId,
+              userId: userId,
+              maxDomains: Number(price_data.transform_quantity['divide_by']),
+              usedDomains: 1,
+            },
+            description: `Plan for ${domainUrl}`,
+          });
+
+          let previous_plan;
+          try {
+            previous_plan = await getSitePlanBySiteId(Number(domainId));
+            await deleteTrialPlan(previous_plan.id);
+          } catch (error) {
+            console.log('err = ', error);
+          }
+
+          await createSitesPlan(Number(userId), String(subscription.id), planName, appSumoInterval, Number(domainId), '');
+
+          console.log('New Sub created');
+
+          res.status(200).json({ success: true });
+        } else {
+          res.status(500).json({ error: "Invalid Promo Code" });
+        }
+
+      }
+      else
+      {
+        
+
+        if ('usedDomains' in subscription.metadata) {
+          const UsedDomains = Number(subscription.metadata['usedDomains']);
+          // console.log('UD', UsedDomains);
+          // console.log(subscription.metadata);
+          if (UsedDomains >= Number(subscription.metadata['maxDomains'])) {
+            res.status(500).json({ error: 'Your Plan Limit has Fulfilled' });
+          } else {
+            let metaData: any = subscription.metadata;
+
+            metaData['usedDomains'] = Number(UsedDomains + 1);
+            metaData['updateMetaData'] = true;
+
+            await stripe.subscriptions.update(subscription.id, {
+              metadata: metaData,
+            });
+
+            console.log('meta data updated');
+            let previous_plan;
+            try {
+              previous_plan = await getSitePlanBySiteId(Number(domainId));
+              await deleteTrialPlan(previous_plan.id);
+            } catch (error) {
+              // console.log('err = ', error);
+            }
+
+            await createSitesPlan(Number(userId), String(subscription.id), planName, appSumoInterval, Number(domainId), '');
 
             console.log('Old Sub created');
 
@@ -491,7 +728,26 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       
 
       // Check if customer exists
-      if (customers.data.length > 0 && customers.data[0].invoice_settings.default_payment_method) {
+      if(customers.data.length > 0 && plan_name == "app sumo bundle")
+      {
+        customer = customers.data[0];
+
+        try {
+          const subscriptions = await stripe.subscriptions.list({
+            customer: customer.id,
+            status: 'active', // Retrieve all statuses to filter manually
+          });
+  
+          const prod = await stripe.products.retrieve(String(subscriptions.data[0].plan.product));
+  
+          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:interval });
+          
+        } catch (error) {
+          res.status(200).json({ isCustomer: true,plan_name:"",interval:"" });
+          
+        }
+      }
+      else if (customers.data.length > 0 && customers.data[0].invoice_settings.default_payment_method) {
         customer = customers.data[0];
 
         try {

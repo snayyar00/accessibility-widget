@@ -18,6 +18,7 @@ import ErrorText from '@/components/Common/ErrorText';
 import Button from '@/components/Common/Button';
 import { TDomain } from '.';
 import { setSitePlan } from '@/features/site/sitePlan';
+import { toast } from 'react-toastify';
 
 declare global {
   namespace JSX {
@@ -84,6 +85,19 @@ const plans = [
   },
 ];
 
+const appSumoPlan = [{
+  id: 'app sumo bundle',
+  name: 'App Sumo',
+  price: 100,
+  desc: 'For Website under 100,000 Impressions per month.',
+  features: [
+    'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
+    'Accessbility Statement',
+    'AI powered Screen Reader and Accessbility Profiles',
+    'Web Ability accesbility Statement',
+  ]
+}];
+
 const PlanSetting: React.FC<{
   domain: TDomain,
   setReloadSites: (value: boolean) => void
@@ -111,6 +125,7 @@ const PlanSetting: React.FC<{
   const [subFailed, setSubFailed] = useState(false);
   const [currentActivePlan,setCurrentActivePlan] = useState("");
   const [showPlans,setShowPlans] = useState(false);
+  const [validCoupon,setValidCoupon] = useState(false);
 
   useEffect(() => {
     customerCheck();
@@ -218,8 +233,13 @@ const PlanSetting: React.FC<{
 
   const handleCheckout = async ()=>{
     setbillingClick(true);
-    const url = 'http://localhost:5000/create-checkout-session';
-    const bodyData = { email:data.email,planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url };
+    let url = 'http://localhost:5000/create-checkout-session';
+    const bodyData = { email:data.email,planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url,promoCode:coupon };
+
+    if(planChanged?.id == "app sumo bundle")
+    {
+      url = "http://localhost:5000/app-sumo-checkout-session"
+    }
 
     await fetch(url, {
       method: 'POST',
@@ -239,6 +259,7 @@ const PlanSetting: React.FC<{
       })
       .catch((error) => {
         // Handle error
+        toast.error(error);
         console.log("error = ",error)
         console.error('There was a problem with the fetch operation:', error);
       });
@@ -246,8 +267,13 @@ const PlanSetting: React.FC<{
 
   const handleSubscription = async () => {
     setbillingClick(true);
-    const url = 'http://localhost:5000/create-subscription';
-    const bodyData = { email:data.email,returnURL:window.location.href, planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",domainId:domain.id,domainUrl:domain.url,userId:data.id };
+    let url = 'http://localhost:5000/create-subscription';
+    const bodyData = { email:data.email,returnURL:window.location.href, planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:coupon };
+
+    if(planChanged?.id == "app sumo bundle")
+    {
+      url = "http://localhost:5000/create-appsumo-subscription"
+    }
 
     try {
       await fetch(url, {
@@ -283,6 +309,42 @@ const PlanSetting: React.FC<{
       console.log("error",error);
     }
     
+  }
+
+  const handleCouponValidation = async () => {
+    const url = 'http://localhost:5000/validate-coupon';
+    const bodyData = { couponCode:coupon};
+
+    await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(bodyData)
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        response.json().then(data => {
+          // Handle the JSON data received from the backend
+          if(data?.valid == true)
+          {
+            setValidCoupon(true);
+            setpercentDiscount(true);
+            setDiscount(data.discount);
+          }
+          else
+          {
+            toast.error(data?.error);
+          }
+        });
+      })
+      .catch(error => {
+        // Handle error
+        console.error('There was a problem with the fetch operation:', error);
+      });
   }
 
   const customerCheck = async () => {
@@ -338,7 +400,7 @@ const PlanSetting: React.FC<{
       </div>
     );
   }
-  const planChanged = plans.find((item:any) => item.id === selectedPlan);
+  const planChanged = validCoupon ? (appSumoPlan[0]): plans.find((item:any) => item.id === selectedPlan);
   const amountCurrent = currentPlan.amount || 0;
   const amountNew = planChanged ? planChanged.price : 0;
 
@@ -518,8 +580,27 @@ const PlanSetting: React.FC<{
               </div>
             )}
           </div>
+          <div className="block w-full mb-4">
+            <label className="font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block uppercase mb-[19px]" htmlFor="coupon_code">
+              App Sumo {t('Coupon Code')}
+            </label>
+            <div className="flex items-center">
+              <input
+                type="text"
+                value={coupon}
+                placeholder='Coupon Code'
+                onChange={(e) => setCoupon(e.target.value)}
+                className="p-[10px] py-[11.6px] bg-light-gray border border-solid border-white-blue rounded-[10px] text-[16px] leading-[19px] text-white-gray w-full box-border"
+              />
+              <Button type="button" onClick={handleCouponValidation} className="mx-3">
+                {t('Apply Coupon')}
+              </Button>
+            </div>
+          </div>
           <Plans
-            plans={currentPlan.isTrial ? (plans) : 
+            plans={
+              validCoupon ? (appSumoPlan) :
+              currentPlan.isTrial ? (plans) : 
               (((Object.keys(currentPlan).length == 0 && currentActivePlan != "")) 
               ? 
               (plans.filter((plan)=>plan.id == currentActivePlan)):(plans))}

@@ -308,7 +308,8 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
         // console.log("invoice intent = ",invoice_intent);
         if ((session as any) !== undefined) {
           // Get the payment method ID
-          const paymentIntent = await stripe.paymentIntents.retrieve(String(invoice_intent));
+          try {
+            const paymentIntent = await stripe.paymentIntents.retrieve(String(invoice_intent));
           // console.log("payment",paymentIntent)
           const paymentMethodId = paymentIntent.payment_method;
 
@@ -318,6 +319,10 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
               default_payment_method: String(paymentMethodId),
             },
           });
+          } catch (error) {
+            // No Payment Intent
+          }
+          
         }
 
         const { line_items } = await stripe.checkout.sessions.retrieve(session.id, {
@@ -340,7 +345,7 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
         const updatedSubscription = await stripe.subscriptions.update(String(session.subscription), {
           metadata: updatedMetadata,
         });
-        console.log('Subscription Meta Data Updated',updatedSubscription.metadata);
+        // console.log('Subscription Meta Data Updated',updatedSubscription.metadata);
         
         // deletes the Trial Plan for the site
         let previous_plan;
