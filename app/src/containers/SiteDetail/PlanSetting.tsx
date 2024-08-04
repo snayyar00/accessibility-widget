@@ -19,6 +19,7 @@ import Button from '@/components/Common/Button';
 import { TDomain } from '.';
 import { setSitePlan } from '@/features/site/sitePlan';
 import { toast } from 'react-toastify';
+import { APP_SUMO_BUNDLE_NAME } from '@/constants';
 
 declare global {
   namespace JSX {
@@ -236,7 +237,7 @@ const PlanSetting: React.FC<{
     let url = 'http://localhost:5000/create-checkout-session';
     const bodyData = { email:data.email,planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url,promoCode:coupon };
 
-    if(planChanged?.id == "app sumo bundle")
+    if(planChanged?.id == APP_SUMO_BUNDLE_NAME)
     {
       url = "http://localhost:5000/app-sumo-checkout-session"
     }
@@ -278,7 +279,7 @@ const PlanSetting: React.FC<{
     let url = 'http://localhost:5000/create-subscription';
     const bodyData = { email:data.email,returnURL:window.location.href, planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:coupon };
 
-    if(planChanged?.id == "app sumo bundle")
+    if(planChanged?.id == APP_SUMO_BUNDLE_NAME)
     {
       url = "http://localhost:5000/create-appsumo-subscription"
     }

@@ -9,4 +9,5 @@ export const PERMISSION_SITE_PLAN = {
   large: ['g', 'h', 'i'],
 };
 
-export const APP_SUMO_COUPON_ID ="vHrO7ymd";
+export const APP_SUMO_COUPON_ID ="FeACotfd";
+// vHrO7ymd   TestMode Coupon ID

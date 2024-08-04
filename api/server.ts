@@ -235,43 +235,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
   app.post('/validate-coupon', async (req, res) => {
     const { couponCode } = req.body;
-    // Code for Promo Code List
-    // let promotionCodes:any = [];
-    // let hasMore = true;
-    // let startingAfter = null;
-
-    // try {
-    //   // Retrieve all promotion codes for the coupon
-    //   while (hasMore) {
-    //     let response:any;
-    //     if(startingAfter == null)
-    //     {
-    //       response = await stripe.promotionCodes.list({
-    //         coupon: APP_SUMO_COUPON_ID,
-    //         limit: 100, // Stripe's max limit per request
-    //       });
-    //     }
-    //     else{
-    //       response = await stripe.promotionCodes.list({
-    //         coupon: APP_SUMO_COUPON_ID,
-    //         limit: 100, // Stripe's max limit per request
-    //         starting_after: startingAfter,
-    //       });  
-    //     }
-    //     const codes = response.data.map((promo:any) => promo.code);
-    //     promotionCodes = promotionCodes.concat(codes);
-    //     // promotionCodes = promotionCodes.concat(response.data);
-    //     hasMore = response.has_more;
-    //     if (hasMore) {
-    //       startingAfter = response.data[response.data.length - 1].id;
-    //     }
-    //     console.log("yes");
-    //   }
-    // } catch (error) {
-    //   console.error('Error listing promotion codes:', error);
-    // }
-    // res.status(200).json({ error: "error.message",codes:promotionCodes });
-  
     try {
       const promoCodes = await stripe.promotionCodes.list({ limit: 100 });
       const promoCodeData = await promoCodes.data.find((pc:any) => pc?.code == couponCode);
@@ -956,3 +919,60 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     console.log(`App listening at http://localhost:${port}`);
   });
 })();
+
+
+// 1000 Promo Code Generation Code
+
+// try {
+//   for (let i = 0; i < 1000; i++) {
+//     const promotionCode = await stripe.promotionCodes.create({
+//       coupon: APP_SUMO_COUPON_ID,
+//       max_redemptions: 1, // Ensure the code can only be redeemed once
+//       active: true,
+//     });
+//     if(i % 10 == 0)
+//     {
+//       console.log(i, "Codes generated")
+//     }
+//   }
+// } catch (error) {
+//   console.error('Error creating promotion code:', error);
+// }
+// res.status(200).json({error:"1000 Created"});
+
+// Code for Promo Code List
+    // let promotionCodes:any = [];
+    // let hasMore = true;
+    // let startingAfter = null;
+
+    // try {
+    //   // Retrieve all promotion codes for the coupon
+    //   while (hasMore) {
+    //     let response:any;
+    //     if(startingAfter == null)
+    //     {
+    //       response = await stripe.promotionCodes.list({
+    //         coupon: APP_SUMO_COUPON_ID,
+    //         limit: 100, // Stripe's max limit per request
+    //       });
+    //     }
+    //     else{
+    //       response = await stripe.promotionCodes.list({
+    //         coupon: APP_SUMO_COUPON_ID,
+    //         limit: 100, // Stripe's max limit per request
+    //         starting_after: startingAfter,
+    //       });  
+    //     }
+    //     const codes = response.data.map((promo:any) => promo.code);
+    //     promotionCodes = promotionCodes.concat(codes);
+    //     // promotionCodes = promotionCodes.concat(response.data);
+    //     hasMore = response.has_more;
+    //     if (hasMore) {
+    //       startingAfter = response.data[response.data.length - 1].id;
+    //     }
+    //     console.log("yes");
+    //   }
+    // } catch (error) {
+    //   console.error('Error listing promotion codes:', error);
+    // }
+    // res.status(200).json({ error: "error.message",codes:promotionCodes });
