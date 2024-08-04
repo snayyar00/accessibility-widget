@@ -242,6 +242,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       if (!promoCodeData) {
         return res.json({ valid: false, error: 'Invalid promo code' });
       }
+      if(!promoCodeData.active)
+      {
+        return res.json({ valid: false, error: 'Promo Expired' });
+      }
       if(promoCodeData.coupon.id != 'vHrO7ymd')
       {
         return res.json({ valid: false, error: 'Invalid promo code Not from App Sumo' });
@@ -354,7 +358,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       if (!promoCodeData) {
         return res.json({ valid: false, error: 'Invalid promo code' });
       }
-      if(promoCodeData.coupon.valid && promoCodeData.coupon.id == 'vHrO7ymd')
+      if(promoCodeData.coupon.valid && promoCodeData.active && promoCodeData.coupon.id == 'vHrO7ymd')
       {
         const subscriptions = await stripe.subscriptions.list({ customer: customer.id });
 
@@ -372,7 +376,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           }],
           customer: customer.id,
           discounts:[{
-            coupon: promoCodeData?.coupon?.id,
+            promotion_code: promoCodeData?.id,
           }],
           payment_method_collection:'if_required',
           success_url: `${returnUrl}`,
@@ -607,7 +611,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         if (!promoCodeData) {
           return res.json({ valid: false, error: 'Invalid Promo Code' });
         }
-        if (promoCodeData.coupon.valid && promoCodeData.coupon.id == 'vHrO7ymd') {
+        if (promoCodeData.coupon.valid && promoCodeData.active && promoCodeData.coupon.id == 'vHrO7ymd') {
           let price_data = await stripe.prices.retrieve(String(price.price_stripe_id));
 
           subscription = await stripe.subscriptions.create({
@@ -615,11 +619,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             items: [{ price: price.price_stripe_id }],
             expand: ['latest_invoice.payment_intent'],
             default_payment_method: customer.invoice_settings.default_payment_method,
-            discounts: [
-              {
-                coupon: promoCodeData?.coupon?.id,
-              },
-            ],
+            discounts:[{
+              promotion_code: promoCodeData?.id,
+            }],
             metadata: {
               domainId: domainId,
               userId: userId,
@@ -728,8 +730,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       
 
       // Check if customer exists
-      if(customers.data.length > 0 && plan_name == "app sumo bundle")
-      {
+      if (customers.data.length > 0 && customers.data[0].invoice_settings.default_payment_method) {
         customer = customers.data[0];
 
         try {
@@ -740,31 +741,30 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   
           const prod = await stripe.products.retrieve(String(subscriptions.data[0].plan.product));
   
-          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:interval });
-          
-        } catch (error) {
-          res.status(200).json({ isCustomer: true,plan_name:"",interval:"" });
-          
-        }
-      }
-      else if (customers.data.length > 0 && customers.data[0].invoice_settings.default_payment_method) {
-        customer = customers.data[0];
-
-        try {
-          const subscriptions = await stripe.subscriptions.list({
-            customer: customer.id,
-            status: 'active', // Retrieve all statuses to filter manually
-          });
-  
-          const prod = await stripe.products.retrieve(String(subscriptions.data[0].plan.product));
-  
-          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:interval });
+          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval });
           
         } catch (error) {
           res.status(200).json({ isCustomer: true,plan_name:"",interval:"" });
           
         }
         
+      }
+      else if(customers.data.length > 0){
+        customer = customers.data[0];
+
+        try {
+          const subscriptions = await stripe.subscriptions.list({
+            customer: customer.id,
+            status: 'active', // Retrieve all statuses to filter manually
+          });
+  
+          const prod = await stripe.products.retrieve(String(subscriptions.data[0].plan.product));
+  
+          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval });
+          
+        } catch (error) {
+          res.status(200).json({ isCustomer: true,plan_name:"",interval:"" });
+        }
       }
       else
       {

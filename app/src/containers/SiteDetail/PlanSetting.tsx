@@ -254,7 +254,15 @@ const PlanSetting: React.FC<{
         // }
         response.json().then(data => {
           setbillingClick(false);
-          window.location.href = data.url;
+          if(data.error)
+          {
+            toast.error("An Error Occured");
+            setTimeout(()=>{window.location.reload()},2000);
+          }
+          else
+          {
+            window.location.href = data.url;
+          }
         });
       })
       .catch((error) => {
@@ -371,7 +379,7 @@ const PlanSetting: React.FC<{
             setisStripeCustomer(true);
             setCurrentActivePlan(data.plan_name);
 
-            if(data.interval == "yearly")
+            if(data.interval == "year")
             {
               setIsYearly(true);
             }
