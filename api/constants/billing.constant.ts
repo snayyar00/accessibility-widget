@@ -8,3 +8,5 @@ export const PERMISSION_SITE_PLAN = {
   big: ['d', 'e', 'f'],
   large: ['g', 'h', 'i'],
 };
+
+export const APP_SUMO_COUPON_ID ="vHrO7ymd";

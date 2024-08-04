@@ -25,6 +25,7 @@ import { createSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-
 import Stripe from 'stripe';
 import { getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
+import { APP_SUMO_COUPON_ID } from './constants/billing.constant';
 // import run from './scripts/create-products';
 
 type ContextParams = {
@@ -234,6 +235,42 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
   app.post('/validate-coupon', async (req, res) => {
     const { couponCode } = req.body;
+    // Code for Promo Code List
+    // let promotionCodes:any = [];
+    // let hasMore = true;
+    // let startingAfter = null;
+
+    // try {
+    //   // Retrieve all promotion codes for the coupon
+    //   while (hasMore) {
+    //     let response:any;
+    //     if(startingAfter == null)
+    //     {
+    //       response = await stripe.promotionCodes.list({
+    //         coupon: APP_SUMO_COUPON_ID,
+    //         limit: 100, // Stripe's max limit per request
+    //       });
+    //     }
+    //     else{
+    //       response = await stripe.promotionCodes.list({
+    //         coupon: APP_SUMO_COUPON_ID,
+    //         limit: 100, // Stripe's max limit per request
+    //         starting_after: startingAfter,
+    //       });  
+    //     }
+    //     const codes = response.data.map((promo:any) => promo.code);
+    //     promotionCodes = promotionCodes.concat(codes);
+    //     // promotionCodes = promotionCodes.concat(response.data);
+    //     hasMore = response.has_more;
+    //     if (hasMore) {
+    //       startingAfter = response.data[response.data.length - 1].id;
+    //     }
+    //     console.log("yes");
+    //   }
+    // } catch (error) {
+    //   console.error('Error listing promotion codes:', error);
+    // }
+    // res.status(200).json({ error: "error.message",codes:promotionCodes });
   
     try {
       const promoCodes = await stripe.promotionCodes.list({ limit: 100 });
@@ -246,7 +283,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       {
         return res.json({ valid: false, error: 'Promo Expired' });
       }
-      if(promoCodeData.coupon.id != 'vHrO7ymd')
+      if(promoCodeData.coupon.id != APP_SUMO_COUPON_ID)
       {
         return res.json({ valid: false, error: 'Invalid promo code Not from App Sumo' });
       }
@@ -358,7 +395,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       if (!promoCodeData) {
         return res.json({ valid: false, error: 'Invalid promo code' });
       }
-      if(promoCodeData.coupon.valid && promoCodeData.active && promoCodeData.coupon.id == 'vHrO7ymd')
+      if(promoCodeData.coupon.valid && promoCodeData.active && promoCodeData.coupon.id == APP_SUMO_COUPON_ID)
       {
         const subscriptions = await stripe.subscriptions.list({ customer: customer.id });
 
@@ -611,7 +648,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         if (!promoCodeData) {
           return res.json({ valid: false, error: 'Invalid Promo Code' });
         }
-        if (promoCodeData.coupon.valid && promoCodeData.active && promoCodeData.coupon.id == 'vHrO7ymd') {
+        if (promoCodeData.coupon.valid && promoCodeData.active && promoCodeData.coupon.id == APP_SUMO_COUPON_ID) {
           let price_data = await stripe.prices.retrieve(String(price.price_stripe_id));
 
           subscription = await stripe.subscriptions.create({
