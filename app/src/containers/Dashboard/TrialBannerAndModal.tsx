@@ -19,13 +19,14 @@ interface ModalProps {
     children: React.ReactNode;
     optionalDomain:any;
     isStripeCustomer:boolean;
+    domainCount:number;
 }
 
 interface DomainFormData {
     domainName: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ isStripeCustomer,isOpen, onClose, children, paymentView,optionalDomain }) => {
+const Modal: React.FC<ModalProps> = ({ isStripeCustomer,isOpen, onClose, children, paymentView,optionalDomain,domainCount }) => {
     if (!isOpen) return null;
 
 
@@ -35,7 +36,7 @@ const Modal: React.FC<ModalProps> = ({ isStripeCustomer,isOpen, onClose, childre
         // Add more responsive classes as needed
     });
     return (
-        <div className={`${responsiveClass} md:w-full  absolute top-0 left-0 right-0 ${optionalDomain !== "yes" && optionalDomain != undefined ? isStripeCustomer ?  'bottom-0':'':''} ${paymentView ? '' : 'bottom-0'} flex items-center justify-center z-50 bg-black bg-opacity-50`}
+        <div className={`${responsiveClass} md:w-full  absolute top-0 left-0 right-0 ${domainCount >= 10 ? 'bottom-0':''} ${paymentView ? '' : 'bottom-0'} flex items-center justify-center z-50 bg-black bg-opacity-50`}
         // style={{width: window.outerWidth <= 425 ? optionalDomain ? "490px": "410px":"100%"}}
         >
             <div className="bg-white rounded-lg w-3/4 overflow-y-auto top-0">
@@ -71,6 +72,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
     const [billingLoading, setBillingLoading] = useState(false);
     const [domainName, setDomainName] = useState(optionalDomain ? optionalDomain : "");
     const [addedDomain, setAddedDomain] = useState<TDomain>({ id: "", url: "", __typename: "" });
+    const [domainCount,setDomainCount] = useState(0);
 
     const showPaymentModal = async () => {
         if (!isValidDomain(formData.domainName)) {
@@ -99,6 +101,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
         if (allDomains) {
             if (domainName) {
                 const newdomain = allDomains.getUserSites.filter((site: any) => site.url == domainName)[0];
+                setDomainCount(allDomains.getUserSites.length);
                 if (newdomain) {
                     setAddedDomain(newdomain);
                 }
@@ -109,6 +112,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
     useEffect(() => {
         if (allDomains) {
             const newdomain = allDomains.getUserSites.filter((site: any) => site.url == optionalDomain)[0];
+            setDomainCount(allDomains.getUserSites.length);
             if (newdomain) {
                 setAddedDomain(newdomain);
             }
@@ -117,7 +121,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
 
     const customerCheck = async () => {
 
-        const url = 'http://localhost:5000/check-customer';
+        const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
         const bodyData = { email: userData.email, userId: userData.id };
 
         await fetch(url, {
@@ -152,7 +156,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
 
     const handleSubscription = async () => {
         setBillingLoading(true);
-        const url = 'http://localhost:5000/create-subscription';
+        const url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
         const bodyData = { email: userData.email, returnURL: window.location.href, planName: activePlan, billingInterval: isYearly ? "YEARLY" : "MONTHLY", domainId: addedDomain.id, domainUrl: addedDomain.url, userId: userData.id };
 
         try {
@@ -219,7 +223,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
     return (
         <>
         <div>
-            <Modal isStripeCustomer={isStripeCustomer} isOpen={isModalOpen} onClose={closeModal} paymentView={paymentView} optionalDomain={optionalDomain}>
+            <Modal isStripeCustomer={isStripeCustomer} isOpen={isModalOpen} onClose={closeModal} paymentView={paymentView} optionalDomain={optionalDomain} domainCount={domainCount}>
                 {paymentView ? (
                     <PlanSetting key={domainName} domain={addedDomain} setReloadSites={setReloadSites} />
                 ) : (

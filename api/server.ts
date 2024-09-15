@@ -37,7 +37,7 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
-const allowedOrigins = [process.env.FRONTEND_URL, undefined, 'http://localhost:5000', 'https://www.webability.io'];
+const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, 'https://www.webability.io'];
 const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction'];
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
@@ -445,13 +445,14 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       });
 
       let customer;
-
+      
       // Check if customer exists
       if (customers.data.length > 0) {
         customer = customers.data[0];
       }
       else
       {
+        // console.log("customer not found");
         res.status(404);
       }
 
@@ -464,10 +465,8 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         no_sub=false;
       }
 
-
       if(no_sub)
       {   
-
         let price_data = await stripe.prices.retrieve(String(price.price_stripe_id));
 
         subscription = await stripe.subscriptions.create({
@@ -483,7 +482,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         },
         description:`Plan for ${domainUrl}`
         });
-
 
         let previous_plan;
         try {
@@ -730,7 +728,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       
 
       // Check if customer exists
-      if (customers.data.length > 0 && customers.data[0].invoice_settings.default_payment_method) {
+      if (customers.data.length > 0 && customers?.data[0]?.invoice_settings.default_payment_method) {
         customer = customers.data[0];
 
         try {
@@ -741,10 +739,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   
           const prod = await stripe.products.retrieve(String(subscriptions.data[0].plan.product));
   
-          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval });
+          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,card:customers?.data[0]?.invoice_settings.default_payment_method});
           
         } catch (error) {
-          res.status(200).json({ isCustomer: true,plan_name:"",interval:"" });
+          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method });
           
         }
         
@@ -760,15 +758,15 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   
           const prod = await stripe.products.retrieve(String(subscriptions.data[0].plan.product));
   
-          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval });
+          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,card:customers?.data[0]?.invoice_settings.default_payment_method });
           
         } catch (error) {
-          res.status(200).json({ isCustomer: true,plan_name:"",interval:"" });
+          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method});
         }
       }
       else
       {
-        res.status(200).json({ isCustomer: false,plan_name:"",interval:"" });
+        res.status(200).json({ isCustomer: false,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method });
       }
 
     } catch (error) {

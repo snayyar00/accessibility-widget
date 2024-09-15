@@ -87,7 +87,7 @@ const plans = [
 ];
 
 const appSumoPlan = [{
-  id: 'app sumo bundle',
+  id: APP_SUMO_BUNDLE_NAME,
   name: 'App Sumo',
   price: 100,
   desc: 'For Website under 100,000 Impressions per month.',
@@ -206,7 +206,7 @@ const PlanSetting: React.FC<{
   const handleBilling = async () => {
     setClicked(true);
 
-    const url = 'http://localhost:5000/create-customer-portal-session';
+    const url = `${process.env.REACT_APP_BACKEND_URL}/create-customer-portal-session`;
     const bodyData = { id:sitePlanData?.getPlanBySiteIdAndUserId?.customerId,returnURL:window.location.href };
 
     await fetch(url, {
@@ -234,12 +234,12 @@ const PlanSetting: React.FC<{
 
   const handleCheckout = async ()=>{
     setbillingClick(true);
-    let url = 'http://localhost:5000/create-checkout-session';
+    let url = `${process.env.REACT_APP_BACKEND_URL}/create-checkout-session`;
     const bodyData = { email:data.email,planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url,promoCode:coupon };
 
     if(planChanged?.id == APP_SUMO_BUNDLE_NAME)
     {
-      url = "http://localhost:5000/app-sumo-checkout-session"
+      url = `${process.env.REACT_APP_BACKEND_URL}/app-sumo-checkout-session`
     }
 
     await fetch(url, {
@@ -276,12 +276,12 @@ const PlanSetting: React.FC<{
 
   const handleSubscription = async () => {
     setbillingClick(true);
-    let url = 'http://localhost:5000/create-subscription';
+    let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
     const bodyData = { email:data.email,returnURL:window.location.href, planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:coupon };
 
     if(planChanged?.id == APP_SUMO_BUNDLE_NAME)
     {
-      url = "http://localhost:5000/create-appsumo-subscription"
+      url = `${process.env.REACT_APP_BACKEND_URL}/create-appsumo-subscription`
     }
 
     try {
@@ -321,7 +321,7 @@ const PlanSetting: React.FC<{
   }
 
   const handleCouponValidation = async () => {
-    const url = 'http://localhost:5000/validate-coupon';
+    const url = `${process.env.REACT_APP_BACKEND_URL}/validate-coupon`;
     const bodyData = { couponCode:coupon};
 
     await fetch(url, {
@@ -358,7 +358,7 @@ const PlanSetting: React.FC<{
 
   const customerCheck = async () => {
 
-    const url = 'http://localhost:5000/check-customer';
+    const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
     const bodyData = { email:data.email,userId:data.id};
 
     await fetch(url, {
@@ -375,7 +375,7 @@ const PlanSetting: React.FC<{
 
         response.json().then(data => {
           // Handle the JSON data received from the backend
-          if(data.isCustomer == true)
+          if(data.isCustomer == true && data.card)
           {
             setisStripeCustomer(true);
             setCurrentActivePlan(data.plan_name);
@@ -412,6 +412,7 @@ const PlanSetting: React.FC<{
   const planChanged = validCoupon ? (appSumoPlan[0]): plans.find((item:any) => item.id === selectedPlan);
   const amountCurrent = currentPlan.amount || 0;
   const amountNew = planChanged ? planChanged.price : 0;
+
 
   return (
     <div className="bg-white border border-solid border-dark-grey shadow-xxl rounded-[10px] p-6 mb-[25px] sm:px-[10px] sm:py-6">

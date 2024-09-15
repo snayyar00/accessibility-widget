@@ -53,7 +53,7 @@ const StripeForm: React.FC<Props> = ({
     setCouponError('');
     setDiscountVal(null);
     try {
-      const response = await fetch('http://localhost:5000/validate-coupon', {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/validate-coupon`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

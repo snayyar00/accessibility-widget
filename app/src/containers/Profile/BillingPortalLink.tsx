@@ -8,7 +8,7 @@ function BillingPortalLink() {
 
   const handleBilling = async () => {
     setClicked(true);
-    const url = 'http://localhost:5000/billing-portal-session';
+    const url = `${process.env.REACT_APP_BACKEND_URL}/billing-portal-session`;
     const bodyData = { email:data.email,returnURL:window.location.href };
 
     await fetch(url, {

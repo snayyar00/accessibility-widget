@@ -115,7 +115,7 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
 
   const customerCheck = async () => {
 
-    const url = 'http://localhost:5000/check-customer';
+    const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
     const bodyData = { email: userData.email, userId: userData.id };
 
     await fetch(url, {
@@ -148,7 +148,7 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
 
   const handleSubscription = async (selectedDomain:any) => {
     setBillingLoading(true);
-    const url = 'http://localhost:5000/create-subscription';
+    const url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
     const bodyData = { email: userData.email, returnURL: window.location.href, planName: activePlan, billingInterval: isYearly ? "YEARLY" : "MONTHLY", domainId: selectedDomain.id, domainUrl: selectedDomain.url, userId: userData.id };
 
     try {
