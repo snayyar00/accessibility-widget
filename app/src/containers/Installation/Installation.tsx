@@ -5,25 +5,25 @@ import CodeContainer from './CodeContainer';
 import getUniqueToken from '../../queries/uniqueToken/getUniqueToken';
 
 export default function Installation({ domain }: any) {
-  const { data, loading, refetch } = useQuery(getUniqueToken, { variables: { url: domain } });
+  // const { data, loading, refetch } = useQuery(getUniqueToken, { variables: { url: domain } });
   
 let side='left';
   function getCodeString(uniqueToken: string):string {
     return `
-    <script src="https://widget.webability.io/webAbilityV2.0.min.js?token=${uniqueToken}&side=${side}&data-asw-lang=en"></script>`;
+    <script src="https://widget.webability.io/webAbilityV2.0.min.js"></script>`;
   }
 
   const [codeString, setCodeString] = useState(getCodeString(''));
 
 
-  useEffect(() => {
-    if (loading === false && data.getVisitorTokenByWebsite !== 'none') {
-      setCodeString(getCodeString(data.getVisitorTokenByWebsite));
-    }
-  }, [loading]);
+  // useEffect(() => {
+  //   if (loading === false && data.getVisitorTokenByWebsite !== 'none') {
+  //     setCodeString(getCodeString(data.getVisitorTokenByWebsite));
+  //   }
+  // }, [loading]);
 
 
-  useEffect(() => { refetch() }, [domain]);
+  // useEffect(() => { refetch() }, [domain]);
 
 
   return (
