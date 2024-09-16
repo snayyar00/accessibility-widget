@@ -16,7 +16,7 @@ const resolvers = {
   Mutation: {
     createSitesPlan: combineResolvers(
       isAuthenticated,
-      (_, { paymentMethodToken, planName, billingType, siteId }, { user }) => createSitesPlan(user.id, paymentMethodToken, planName, billingType, siteId),
+      (_, { paymentMethodToken, planName, billingType, siteId,couponCode }, { user }) => createSitesPlan(user.id, paymentMethodToken, planName, billingType, siteId,couponCode),
     ),
     updateSitesPlan: combineResolvers(
       isAuthenticated,

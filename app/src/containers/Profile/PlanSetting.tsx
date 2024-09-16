@@ -140,13 +140,13 @@ const PlanSetting: React.FC = () => {
           <div className="flex justify-center mb-[25px] sm:mt-[25px] [&_label]:mx-auto [&_label]:my-0">
             <Toggle onChange={toggle} label="Bill Yearly" />
           </div>
-          <Plans
+          {/* <Plans
             plans={plans}
             onChange={changePlan}
             planChanged={planChanged}
             isYearly={isYearly}
             checkIsCurrentPlan={checkIsCurrentPlan}
-          />
+          /> */}
         </div>
         <div>
           {planChanged && (
@@ -188,11 +188,12 @@ const PlanSetting: React.FC = () => {
                     </li>
                   </ul>
                   {(isEmpty(currentPlan) || (currentPlan && currentPlan.deletedAt)) ? (
-                    <StripeContainer
-                      onSubmitSuccess={createPaymentMethodSuccess}
-                      apiLoading={isCreatingUserPlan}
-                      submitText={currentPlan && currentPlan.deletedAt && t('Profile.text.change_plan') as string}
-                    />
+                    // <StripeContainer
+                    //   onSubmitSuccess={createPaymentMethodSuccess}
+                    //   apiLoading={isCreatingUserPlan}
+                    //   submitText={currentPlan && currentPlan.deletedAt && t('Profile.text.change_plan') as string}
+                    // />
+                    <></>
                   ) : (
                     <Button
                       color="primary"

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { RootState } from '@/config/store';
@@ -6,6 +6,7 @@ import { CircularProgress } from '@mui/material';
 import InformationSetting from './InformationSetting';
 import PasswordSetting from './PasswordSetting';
 import PlanSetting from './PlanSetting';
+import BillingPortalLink from './BillingPortalLink';
 
 
 const Profile: React.FC = () => {
@@ -26,6 +27,7 @@ const Profile: React.FC = () => {
             </p>
             <InformationSetting user={data} />
             <PasswordSetting />
+            <BillingPortalLink/>
           </div>
           {/* <PlanSetting /> */}
         </>

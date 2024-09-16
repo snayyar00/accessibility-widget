@@ -4,10 +4,10 @@ import { createUserPlan, invoicePaymentFailed, invoicePaymentSuccess, trialWillE
 import Stripe from 'stripe';
 import sendMail from '~/libs/mail';
 import { DataSubcription, createNewSubcription } from '~/services/stripe/subcription.service';
-import { createSitesPlan, deleteSitesPlan, updateSitesPlan } from '../allowedSites/plans-sites.service';
+import { createSitesPlan, deleteSitesPlan, deleteTrialPlan, updateSitesPlan } from '../allowedSites/plans-sites.service';
 import { updateAllowedSiteURL } from '~/repository/sites_allowed.repository';
-import { ProductData, findProductByStripeId, insertProduct, updateProduct } from '~/repository/products.repository';
-import { getSitesPlanByCustomerIdAndSubscriptionId } from '~/repository/sites_plans.repository';
+import { ProductData, findProductById, findProductByStripeId, insertProduct, updateProduct } from '~/repository/products.repository';
+import { getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId } from '~/repository/sites_plans.repository';
 
 // async function webhookStripe(req: Request, res: Response): Promise<void> {
 //   let event;
@@ -49,111 +49,350 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
   } catch (error) {
     console.log("error = ",error);
   }
-
   try {
     if (event.type === 'product.updated') {
       // Handles product save and update in DB when you do so from the stripe dashboard
       let product = event.data.object as Stripe.Product;
 
-      console.log("product to be updated = ",product);
+      console.log('product to be updated = ', product);
 
       const prices = await stripe.prices.list({
         product: product.id,
       });
 
-      console.log("prices = ",prices);
+      // console.log('prices = ', JSON.stringify(prices));
 
       let findProduct;
       try {
         findProduct = await findProductByStripeId(product.id);
-        console.log("found product = ",findProduct);
+        console.log('found product = ', findProduct);
       } catch (error) {
-        console.log("error in find",error);
+        console.log('error in find', error);
       }
 
-      if(findProduct)
-      {
+      if (findProduct) {
         //update product prices
-        console.log("product exists update it");
+        console.log('product exists update it');
         try {
-          const productObject = {"name":product.name,"type":product.name.toLowerCase(),"stripe_id":product.id};
-          const pricesArray = prices.data?.map((getPrice:any)=>({
-            amount: (getPrice?.unit_amount / 100),
-            type: (getPrice?.recurring?.interval+"ly"),
+          const productObject = { name: product.name, type: product.name.toLowerCase(), stripe_id: product.id };
+          const pricesArray = prices.data?.map((getPrice: any) => ({
+            amount: getPrice?.unit_amount / 100,
+            type: getPrice?.recurring?.interval + 'ly',
             stripe_id: getPrice?.id,
           }));
-          if(await updateProduct(findProduct?.id,productObject,pricesArray))
-          {
-            console.log("Updated Product");
-          }
-          else
-          {
-            console.log("Updation Failed");
+          if (await updateProduct(findProduct?.id, productObject, pricesArray)) {
+            console.log('Updated Product');
+          } else {
+            console.log('Updation Failed');
           }
         } catch (error) {
-          console.log("error in update",error);
+          console.log('error in update', error);
         }
+      } else {
+        try {
+          console.log('inserting Product');
+          const productObject = { name: product.name, type: product.name.toLowerCase(), stripe_id: product.id };
+          const pricesArray = prices.data?.map((getPrice: any) => ({
+            amount: getPrice?.unit_amount / 100,
+            type: getPrice?.recurring?.interval + 'ly',
+            stripe_id: getPrice?.id,
+          }));
+          if (await insertProduct(productObject, pricesArray)) {
+            console.log('inserted Product');
+          } else {
+            console.log('Insertion Failed');
+          }
+        } catch (error) {
+          console.log('error in insert', error);
+        }
+      }
+    } else if (event.type === 'customer.subscription.updated') {
+      // Handles Subscription Updation
+      console.log("Updating subscription");
+      const subscription = event.data.object as Stripe.Subscription;
+
+      if(subscription.metadata.hasOwnProperty('updateMetaData') && subscription.metadata['updateMetaData'] == 'true' )
+      {
+        console.log("Updating Metadata to stop create sub (only update metadata)")
+        const metadata = subscription.metadata;
+        metadata['updateMetaData'] = "false";
+        await stripe.subscriptions.update(String(subscription.id), {
+          metadata: metadata,
+        });
       }
       else
       {
+        console.log("Updating Metadata to stop update sub from stripe (update meta data and db)")
+
+        const userStripeId = subscription.customer as string;
+        const productId = subscription.items.data[0].plan.product as string;
+        const interval = subscription.items.data[0].plan.interval == 'month' ? 'MONTHLY' : 'YEARLY';
+        const new_product = await stripe.products.retrieve(productId);
+        let previous_plan;
         try {
-          console.log("inserting Product");
-          const productObject = {"name":product.name,"type":product.name.toLowerCase(),"stripe_id":product.id};
-          const pricesArray = prices.data?.map((getPrice:any)=>({
-            amount: (getPrice?.unit_amount / 100),
-            type: (getPrice?.recurring?.interval+"ly"),
-            stripe_id: product?.id,
-          }));
-          if(await insertProduct(productObject,pricesArray))
-          {
-            console.log("inserted Product");
-          }
-          else
-          {
-            console.log("Insertion Failed");
-          }
+          previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(userStripeId, subscription?.id);
         } catch (error) {
-          console.log("error in insert",error);
+          console.log('err = ', error);
         }
+        if(previous_plan)
+        {
+          let prod = await findProductById(previous_plan[0].productId);
+          if(prod.name == new_product.name )
+          {
+            console.log("No new change so Skip")
+          }
+          else if (subscription.status === 'active') {
+            try {
+              const updatePromises = previous_plan.map(async (plan) => {
+                try {
+                  await updateSitesPlan(plan.id, new_product.name, interval, true);
+                  // Retrieve the current price object to check metadata
+                  console.log('Updated Plan for site', plan.siteId);
+                } catch (error) {
+                  console.log('Error updating Plan for site:', plan.siteId);
+                  throw error;
+                }
+              });
+  
+              await Promise.all(updatePromises);
+  
+              const metadata = subscription.metadata;
+  
+              const updatedMetadata = { ...metadata, maxDomains: subscription.items.data[0].price.transform_quantity['divide_by'], usedDomains: Number(previous_plan.length) };
+  
+              await stripe.subscriptions.update(String(subscription.id), {
+                metadata: updatedMetadata,
+              });
+  
+              console.log('All Subscriptions updated successfully.');
+
+            } catch (error) {
+              console.log('error=', error);
+            }
+          }
+        }
+        
       }
-    }else if (event.type === 'customer.subscription.updated') {
-      // Existing SitePlan ID done
-      // New Plan name done
-      // New plan billing cycle
-      console.log("Updating subscription");
+
+      // if(subscription.metadata.hasOwnProperty('newOldSub'))
+      // {
+      //   if(subscription.metadata['newOldSub'] == "true" && subscription.metadata['webhookSub'] == "false" )
+      //   {
+      //     console.log("Updating Metadata stop NewOldSub")
+      //     const metadata = subscription.metadata;
+      //     metadata['newOldSub'] = "false";
+      //     metadata['webhookSub'] = "true";
+
+      //     await stripe.subscriptions.update(String(subscription.id), {
+      //       metadata: metadata,
+      //     });
+      //   }
+      //   if(subscription.metadata['newOldSub'] == "false" && subscription.metadata['webhookSub'] == "true" )
+      //   {
+      //     console.log("Skip for New Old Sub Domain Update")
+      //   }
+      // }
+      // else if (subscription.metadata && subscription.metadata.hasOwnProperty('checkout')) {
+      //   if (subscription.metadata['checkout'] == 'true') {
+      //     console.log('checkout sub');
+      //     const currentMetadata = subscription.metadata || {};
+      //     currentMetadata['checkout'] = 'false';
+      //     const updatedMetadata = { ...currentMetadata };
+      //     const updatedSubscription = await stripe.subscriptions.update(String(subscription.id), {
+      //       metadata: updatedMetadata,
+      //     });
+      //     // console.log('Subscription Meta Data Updated', updatedSubscription.metadata);
+      //   } else {
+      //     const userStripeId = subscription.customer as string;
+      //     const productId = subscription.items.data[0].plan.product as string;
+      //     const interval = subscription.items.data[0].plan.interval == 'month' ? 'MONTHLY' : 'YEARLY';
+      //     const new_product = await stripe.products.retrieve(productId);
+      //     let previous_plan;
+      //     try {
+      //       previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(userStripeId, subscription?.id);
+      //     } catch (error) {
+      //       console.log('err = ', error);
+      //     }
+      //     if (subscription.status === 'active') {
+      //       try {
+      //         const updatePromises = previous_plan.map(async (plan) => {
+      //           try {
+      //             await updateSitesPlan(plan.id, new_product.name, interval, true);
+      //             // Retrieve the current price object to check metadata
+      //             console.log('Updated Plan for site',plan.siteId);
+      //           } catch (error) {
+      //             console.log('Error updating Plan for site:', plan.siteId);
+      //             throw error;
+      //           }
+      //         });
+
+      //         await Promise.all(updatePromises);
+
+      //         const currentMetadata = subscription.metadata || {};
+
+      //         const updatedMetadata = { ...currentMetadata, maxDomains: subscription.items.data[0].price.transform_quantity['divide_by'], usedDomains: Number(previous_plan.length) };
+
+      //         const updatedSubscription = await stripe.subscriptions.update(String(subscription.id), {
+      //           metadata: updatedMetadata,
+      //         });
+
+      //         // console.log('Subscription Meta Data Updated',updatedSubscription.metadata);
+      //         console.log('All Subscriptions updated successfully.');
+      //         // await updateSitesPlan(previous_plan[0].id,new_product.name,interval);
+      //         // console.log("Updated Subscription");
+      //       } catch (error) {
+      //         console.log('error=', error);
+      //       }
+      //     }
+      //   }
+      // } else {
+      //   const userStripeId = subscription.customer as string;
+      //   const productId = subscription.items.data[0].plan.product as string;
+      //   const interval = subscription.items.data[0].plan.interval == 'month' ? 'MONTHLY' : 'YEARLY';
+      //   const new_product = await stripe.products.retrieve(productId);
+      //   let previous_plan;
+      //   try {
+      //     previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(userStripeId, subscription?.id);
+      //   } catch (error) {
+      //     console.log('err = ', error);
+      //   }
+      //   if (subscription.status === 'active') {
+      //     try {
+      //       const updatePromises = previous_plan.map(async (plan) => {
+      //         try {
+      //           await updateSitesPlan(plan.id, new_product.name, interval, true);
+      //           // Retrieve the current price object to check metadata
+      //           console.log('Updated Plan for site', plan.siteId);
+      //         } catch (error) {
+      //           console.log('Error updating Plan for site:', plan.siteId);
+      //           throw error;
+      //         }
+      //       });
+
+      //       await Promise.all(updatePromises);
+
+      //       const currentMetadata = subscription.metadata || {};
+
+      //       const updatedMetadata = { ...currentMetadata, maxDomains: subscription.items.data[0].price.transform_quantity['divide_by'], usedDomains: Number(previous_plan.length) };
+
+      //       const updatedSubscription = await stripe.subscriptions.update(String(subscription.id), {
+      //         metadata: updatedMetadata,
+      //       });
+
+      //       // console.log('Subscription Meta Data Updated', updatedSubscription.metadata);
+      //       console.log('All Subscriptions updated successfully.');
+      //       // await updateSitesPlan(previous_plan[0].id,new_product.name,interval);
+      //       // console.log("Updated Subscription");
+      //     } catch (error) {
+      //       console.log('error=', error);
+      //     }
+      //   }
+      // }
+    } else if (event.type === 'checkout.session.completed') {
+      console.log('Checkout Complete subscription');
+      try {
+        const session = event.data.object as Stripe.Checkout.Session;
+        // console.log("session = ",session)
+        const userID = session?.metadata['userId'];
+        const siteID = session?.metadata['domainId'];
+
+        let paymentInvoiceID = '';
+        let invoice_intent;
+
+        if ((session as any).invoice !== undefined) {
+          paymentInvoiceID = (session as any).invoice;
+
+          const invoice = await stripe.invoices.retrieve(paymentInvoiceID);
+          invoice_intent = invoice.payment_intent;
+        }
+        // console.log("invoice intent = ",invoice_intent);
+        if ((session as any) !== undefined) {
+          // Get the payment method ID
+          try {
+            const paymentIntent = await stripe.paymentIntents.retrieve(String(invoice_intent));
+          // console.log("payment",paymentIntent)
+          const paymentMethodId = paymentIntent.payment_method;
+
+          // Set the payment method as the default payment method for the customer
+          await stripe.customers.update((session as any).customer, {
+            invoice_settings: {
+              default_payment_method: String(paymentMethodId),
+            },
+          });
+          } catch (error) {
+            // No Payment Intent
+          }
+          
+        }
+
+        const { line_items } = await stripe.checkout.sessions.retrieve(session.id, {
+          expand: ['line_items'],
+        });
+
+        const price = await stripe.prices.retrieve(line_items.data[0].price.id);
+        let planInterval: 'MONTHLY' | 'YEARLY' = 'MONTHLY'; // Default to 'MONTHLY'
+
+        if (price.recurring && price.recurring.interval === 'year') {
+          planInterval = 'YEARLY';
+        }
+
+        // session.subscription
+        const subscription = await stripe.subscriptions.retrieve(String(session.subscription));
+        const currentMetadata = subscription.metadata || {};
+
+        const updatedMetadata = { ...currentMetadata,maxDomains: price.transform_quantity['divide_by'],usedDomains:1};
+
+        const updatedSubscription = await stripe.subscriptions.update(String(session.subscription), {
+          metadata: updatedMetadata,
+        });
+        // console.log('Subscription Meta Data Updated',updatedSubscription.metadata);
+        
+        // deletes the Trial Plan for the site
+        let previous_plan;
+        try {
+          previous_plan = await getSitePlanBySiteId(Number(siteID));
+          await deleteTrialPlan(previous_plan.id);
+        } catch (error) {
+          console.log('err = ', error);
+        }
+        await createSitesPlan(Number(userID), updatedSubscription.id, line_items.data[0].description, planInterval, Number(siteID), '');
+        console.log('Created');
+
+      } catch (error) {
+        console.log('error in checkout', error);
+      }
+    }else if (event.type === 'customer.subscription.deleted') {
+      // Handles Deletion Only
+      console.log("Deleting subscription");
       const subscription = event.data.object as Stripe.Subscription;
+
       const userStripeId = subscription.customer as string;
-      const productId = subscription.items.data[0].plan.product as string;
-      const interval = subscription.items.data[0].plan.interval == 'month' ? 'MONTHLY' : 'YEARLY';
-      const new_product = await stripe.products.retrieve(productId);
+
       let previous_plan;
       try {
-        previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(userStripeId,subscription?.id);
+        previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(userStripeId, subscription?.id);
       } catch (error) {
-        console.log("err = ",error);
+        console.log('err = ', error);
       }
 
-      if (subscription.cancel_at_period_end) {
-        try {
-          await deleteSitesPlan(previous_plan[0].id);
-  
-          console.log('Subscription Deleted');
-        } catch (error) {
-          console.log('error=', error);
-        }
-      }
-      else if (subscription.status === 'active') {
-        try {
-          await updateSitesPlan(previous_plan[0].id,new_product.name,interval);
+      try {
+        const updatePromises = previous_plan.map(async (plan) => {
+          try {
+            await deleteSitesPlan(plan.id, true);
+            console.log('Deleted Plan for site', plan.siteId);
+          } catch (error) {
+            console.log('Error Deleting Plan for site:', plan.siteId);
+            throw error;
+          }
+        });
 
-          console.log("Updated Subscription");
-        } catch (error) {
-          console.log("error=",error);
-        }
+        await Promise.all(updatePromises);
+        console.log('Subscription Deleted');
+      } catch (error) {
+        console.log('error=', error);
       }
 
-      
-    }else {
+    } else {
       console.log(`Unhandled event type ${event.type}`);
     }
 

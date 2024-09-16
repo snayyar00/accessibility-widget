@@ -9,6 +9,7 @@ export const AllowedSitesSchema = gql`
 				updatedAt: String
 				createAt: String
 				expiredAt: String
+				trial:Int
 		}
 
 		type siteUpdateResponse{

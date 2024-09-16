@@ -27,3 +27,7 @@ export const priceColumns = {
 export function insertPrice(priceData: Price[] = [], transaction: Knex.Transaction): Promise<number[]> {
   return database(TABLE).insert(priceData).transacting(transaction);
 }
+
+export function findPriceById(ID: number): Promise<Price> {
+  return database(TABLE).where({ ID }).first();
+}

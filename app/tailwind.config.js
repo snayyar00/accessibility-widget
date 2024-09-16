@@ -67,7 +67,14 @@ module.exports = {
       }
     },
     screens: {
+      'ms':'320px',
+      'mm':'375px',
+      'ml':'425px',
+      'md':'768px',
       'sm': {'max': '768px'},
+      lg: '1024px',
+      xl: '1440px',
+      xxl: '2560px',
     }
   },
   plugins: [],
