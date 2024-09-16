@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import { Redirect, Route, Switch,useHistory } from 'react-router-dom';
 
 
 import { useQuery } from '@apollo/client';
@@ -52,11 +52,45 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
     }
   }, [data])
 
+  const history = useHistory();
+
   useEffect(() => {
     if (data?.getUserSites) {
       setDomainData(data.getUserSites.filter((site: siteDetails) => site.url === selectedOption)[0]);
     }
   }, [selectedOption]);
+
+  useEffect(()=>{
+    if(domainData)
+    {
+      try {
+        if (window.location.pathname.startsWith("/domain-plans/"))
+        {
+          const id = data.getUserSites.filter((site: siteDetails) => site.url === selectedOption)[0]['id'];
+          history.push("/domain-plans/"+id);
+        }
+      } catch (error) {
+        console.log("error",error);
+      }
+    }
+  },[domainData])
+
+  useEffect(()=>{
+    if(domainData)
+    {
+      try {
+        if (window.location.pathname.startsWith("/domain-plans/"))
+        {
+          const numberPattern = /\d+/;  // Regular expression to match one or more digits
+          const match = Number(window.location.pathname.match(numberPattern));
+          const id = data.getUserSites.filter((site: siteDetails) => site.id === match)[0];
+          setSelectedOption(id['url']);
+        } 
+      } catch (error) {
+        console.log("error",error);
+      }
+    }
+  },[window.location.pathname])
 
 
   return (
@@ -75,7 +109,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
                 exact={route.exact}
               />
             ))}
-            <Route path='/dashboard' render={() => <Dashboard domain={selectedOption} domainData={domainData} />} key='/dashboard' exact={false} />
+            <Route path='/dashboard' render={() => <Dashboard domain={selectedOption} domainData={domainData} allDomains={data} setReloadSites={setReloadSites} />} key='/dashboard' exact={false} />
             <Route path='/add-domain' render={() => <Teams domains={data} setReloadSites={setReloadSites} /> } key='/Add-Domain' exact={false} />
             <Route path='/domain-plans/:id' render={() => <SiteDetail domains={data} setReloadSites={setReloadSites} /> } key='/Domain-Plans' exact={false} />
             <Route path='/installation' render={() => <Installation domain={selectedOption} />} key='/installation' exact={false} />

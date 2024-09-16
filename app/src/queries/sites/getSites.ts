@@ -5,7 +5,8 @@ export default gql`
     getUserSites{
       url,
       id,
-      expiredAt
+      expiredAt,
+      trial
     }
   }
 `;

@@ -13,6 +13,9 @@ type Props = {
   apiLoading: boolean;
   apiError?: string;
   submitText?: string;
+  setCoupon: (newValue: string) => void;
+  setDiscount: (newValue: number) => void;
+  setpercentDiscount: (newValue: boolean) => void;
 }
 
 const StripeContainer: React.FC<Props> = ({
@@ -22,6 +25,9 @@ const StripeContainer: React.FC<Props> = ({
   apiLoading,
   apiError,
   submitText,
+  setCoupon,
+  setDiscount,
+  setpercentDiscount,
 }) => (
   <Elements stripe={stripePromise}>
     <StripeForm
@@ -31,6 +37,9 @@ const StripeContainer: React.FC<Props> = ({
       apiLoading={apiLoading}
       apiError={apiError}
       submitText={submitText}
+      setCoupon={setCoupon}
+      setDiscount={setDiscount}
+      setpercentDiscount={setpercentDiscount}
     />
   </Elements>
 );

@@ -24,7 +24,8 @@ export type FindAllowedSitesProps = {
 };
 
 export interface IUserSites extends FindAllowedSitesProps {
-	expiredAt?: string | null | undefined;
+	expiredAt?: string | null | undefined,
+	trial?:number|null|undefined
 }
 
 export type allowedSites = {
@@ -36,6 +37,11 @@ export type allowedSites = {
 export async function findSitesByUserId(id: number): Promise<IUserSites[]> {
 	return database(TABLE)
 		.where({ [siteColumns.user_id]: id });
+}
+
+export async function findSiteById(id: number): Promise<IUserSites[]> {
+	return database(TABLE)
+		.where({ [siteColumns.id]: id }).first();
 }
 
 export async function findSiteByURL(url: string): Promise<FindAllowedSitesProps> {

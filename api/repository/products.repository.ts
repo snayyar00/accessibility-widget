@@ -58,6 +58,10 @@ export function findProductByType(type: string): Promise<ProductData> {
   return database(TABLE).where({ type }).first();
 }
 
+export function findProductById(ID: number): Promise<ProductData> {
+  return database(TABLE).where({ ID }).first();
+}
+
 export function findProductInType(types: string[]): Promise<ProductData[]> {
   return database(TABLE).whereIn('type', types);
 }
@@ -71,7 +75,6 @@ export function findProductAndPriceByType(productType: string, priceType: 'MONTH
 }
 
 export function findProductByStripeId(stripeID: string): any {
-  console.log("FInding",stripeID);
   return database(TABLE)
     .join(TABLES.prices, productColumns.id, priceColumns.productId)
     .select(productColumns, `${priceColumns.id} as price_id`, priceColumns.amount, `${priceColumns.type} as price_type`, `${priceColumns.stripeId} as price_stripe_id`)

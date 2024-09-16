@@ -19,3 +19,6 @@ export const TABLES = {
 };
 
 export const DEFAULT_LIMIT = 20;
+
+export const TRIAL_PLAN_NAME = "free_test";
+export const TRIAL_PLAN_INTERVAL = "MONTHLY"

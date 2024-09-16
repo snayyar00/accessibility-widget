@@ -41,7 +41,7 @@ export const SitesPlanSchema = gql`
     }
   
     extend type Mutation {
-      createSitesPlan(paymentMethodToken: String!, planName: String!, billingType: BillingType!, siteId: Int!): Boolean!
+      createSitesPlan(paymentMethodToken: String!, planName: String!, billingType: BillingType!, siteId: Int!,couponCode:String!): Boolean!
       updateSitesPlan(sitesPlanId: Int!, planName: String!, billingType: BillingType!): Boolean!
       deleteSitesPlan(sitesPlanId: Int!): Boolean!
     }

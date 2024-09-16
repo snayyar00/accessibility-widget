@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import fetchDashboardQuery from '@/queries/dashboard/fetchDashboardQuery';
 import { useQuery } from '@apollo/client';
@@ -9,6 +9,7 @@ import DropdownSelector from './DropdownSelector';
 import CustomChart from './CustomChart';
 import './Dashboard.css';
 import ImpressionCard from './ImpressionCard';
+import TrialBannerAndModal from './TrialBannerAndModal';
 
 
 interface ChartData {
@@ -32,7 +33,15 @@ interface CardData {
 
 
 
-const Dashboard: React.FC<any> = ({ domain, domainData }: any) => {
+export type TDomain = {
+  id: string;
+  url: string;
+  __typename: string;
+  trial?:number;
+}
+
+
+const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites }: any) => {
 
   const [startDate, setStartDate] = useState<string>();
   const [endDate, setEndDate] = useState<string>();
@@ -46,6 +55,10 @@ const Dashboard: React.FC<any> = ({ domain, domainData }: any) => {
   const [granularity, setGranularity] = useState<string>('Day');
   const [loadingAnimation, setLoadingAnimation] = useState<boolean>(true);
   const [profileCounts,setProfileCounts] = useState({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+  const [paymentView, setPaymentView] = useState(false);
 
   const getStartOfWeek = () => {
     const currentDate = new Date();
@@ -262,7 +275,11 @@ const Dashboard: React.FC<any> = ({ domain, domainData }: any) => {
         <p>-</p>
       )}
       {!loadingAnimation &&
-        <div className="container">
+        <div className="container py-4">
+          <div className="flex flex-col items-start justify-center w-full mb-8 pl-0 pr-3">
+          <TrialBannerAndModal allDomains={allDomains} setReloadSites={setReloadSites} isModalOpen={isModalOpen} closeModal={closeModal} openModal={openModal} paymentView={paymentView} setPaymentView={setPaymentView}/>
+          </div>
+
           {/* Dropdown, Plus Button, and ExportButton */}
           <div className="ml-4 flex gap-4 mb-4">
             <button
