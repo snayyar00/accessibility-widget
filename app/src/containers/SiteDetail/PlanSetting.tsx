@@ -37,21 +37,9 @@ interface ModalProps {
 
 const plans = [
   {
-    id: 'free',
-    name: 'Free Plan',
-    price: 0,
-    desc: 'For Website under 500 Impressions per month.',
-    features: [
-      'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
-      'Accessbility Statement',
-      'AI powered Screen Reader and Accessbility Profiles',
-      'Web Ability accesbility Statement',
-    ]
-  },
-  {
-    id: 'small',
+    id: 'small bundle',
     name: 'Small Business',
-    price: 15,
+    price: 30,
     desc: 'For Website under 1000 Impressions per month.',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
@@ -61,9 +49,9 @@ const plans = [
     ]
   },
   {
-    id: 'medium',
+    id: 'medium bundle',
     name: 'Medium Business',
-    price: 45,
+    price: 60,
     desc: 'For Website under 10,000 Impressions per month.',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
@@ -73,9 +61,9 @@ const plans = [
     ]
   },
   {
-    id: 'large',
+    id: 'large bundle',
     name: 'Enterprise',
-    price: 75,
+    price: 90,
     desc: 'For Website under 100,000 Impressions per month.',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
