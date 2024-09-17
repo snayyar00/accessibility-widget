@@ -41,15 +41,15 @@ export const sitesPlansColumns = {
 export function getSitesPlanByUserId(userId: number) {
   return database(TABLE)
     .leftJoin(TABLES.allowed_sites, sitesPlansColumns.siteId, 'allowed_sites.id')
-    .select(sitesPlansColumns,'allowed_sites.url as siteName')
+    .select(sitesPlansColumns, 'allowed_sites.url as siteName')
     .where({ [siteColumns.user_id]: userId, [sitesPlansColumns.isActive]: true })
     .where(sitesPlansColumns.expiredAt, '>=', formatDateDB());
 }
 
-export function getSitesPlanByCustomerIdAndSubscriptionId(customerId: string,subscriptionId:string) {
+export function getSitesPlanByCustomerIdAndSubscriptionId(customerId: string, subscriptionId:string) {
   return database(TABLE)
     .select(sitesPlansColumns)
-    .where({ [sitesPlansColumns.customerId]: customerId, [sitesPlansColumns.isActive]: true,[sitesPlansColumns.subcriptionId]:subscriptionId })
+    .where({ [sitesPlansColumns.customerId]: customerId, [sitesPlansColumns.isActive]: true, [sitesPlansColumns.subcriptionId]:subscriptionId })
     .where(sitesPlansColumns.expiredAt, '>=', formatDateDB());
 }
 
@@ -77,7 +77,15 @@ export function getSitePlanBySiteId(siteId: number) {
     .leftJoin(TABLES.allowed_sites, sitesPlansColumns.siteId, siteColumns.id)
     .leftJoin(TABLES.products, sitesPlansColumns.productId, productColumns.id)
     .leftJoin(TABLES.prices, sitesPlansColumns.priceId, priceColumns.id)
-    .select(sitesPlansColumns, `${siteColumns.url} as siteName`, productColumns.name, `${productColumns.type} as productType`, priceColumns.amount, `${priceColumns.type} as priceType`)
+    .select(
+      sitesPlansColumns,
+      `${siteColumns.url} as siteName`,
+      productColumns.name,
+      `${productColumns.type} as productType`,
+      priceColumns.amount,
+      `${priceColumns.type} as priceType`,
+      `${sitesPlansColumns.isActive} as is_active`,  // Change this line
+    )
     .where({ [sitesPlansColumns.siteId]: siteId, [sitesPlansColumns.isActive]: true })
     .where(sitesPlansColumns.expiredAt, '>=', formatDateDB())
     .first();

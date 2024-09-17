@@ -10,7 +10,11 @@ const resolvers = {
     ),
     getPlanBySiteIdAndUserId: combineResolvers(
       isAuthenticated,
-      (_, { siteId }, { user }) => getPlanBySiteIdAndUserId(user.id, siteId),
+      async (_, { siteId }, { user }) => {
+        const result = await getPlanBySiteIdAndUserId(user.id, siteId);
+        console.log('Resolver result:', result);
+        return result;
+      },
     ),
   },
   Mutation: {
