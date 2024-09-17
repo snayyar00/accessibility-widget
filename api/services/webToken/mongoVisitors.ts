@@ -3,6 +3,8 @@ import Visitor from "~/mongoSchema/visitor.model";
 import logger from "~/utils/logger";
 import crypto from 'crypto';
 import { findSite } from "../allowedSites/allowedSites.service";
+import { findSiteByURL } from "~/repository/sites_allowed.repository";
+import { getSitePlanBySiteId } from "~/repository/sites_plans.repository";
 
 function generateUniqueToken() {
   return crypto.randomBytes(16).toString('hex');
@@ -87,19 +89,31 @@ export const GetURLByUniqueToken = async (uniqueToken: string) => {
 
 export async function ValidateToken(url: string, uniqueToken: string) {
   try {
-    const record = await Visitor.findOne({ Uniquetoken: uniqueToken });
-    if (record === null) {
-      return 'notFound';
+
+    const site =  await findSiteByURL(url);
+
+    const active = await getSitePlanBySiteId(site?.id);
+
+    if (active?.is_active) {
+      return 'found';
     }
     else {
-      const site = await findSite(record.Website);
-      if (site === undefined || url !== record.Website) {
-        return 'notFound';
-      }
-      else {
-        return 'found';
-      }
+      return 'notFound';
     }
+    
+    // const record = await Visitor.findOne({ Uniquetoken: uniqueToken });
+    // if (record === null) {
+    //   return 'notFound';
+    // }
+    // else {
+    //   const site = await findSite(record.Website);
+    //   if (site === undefined || url !== record.Website) {
+    //     return 'notFound';
+    //   }
+    //   else {
+    //     return 'found';
+    //   }
+    // }
   }
   catch (e) {
     logger.error('There was an error validating the provided unique token. ', e);
