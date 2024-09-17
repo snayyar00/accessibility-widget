@@ -22,7 +22,7 @@ export async function resetPasswordUser(token: string, password: string, confirm
     }
 
 
-    const modifiedDateStr = session.updated_at.toString().replace(/GMT[+-]\d{4}.*$/, ''); // Remove the timezone part
+    const modifiedDateStr = session.updated_at.toString().replace(/(GMT|UTC|UMT)[+-]\d{4}.*$/, ''); // Remove the timezone part
 
     // Parse the components manually
     const dateParts = modifiedDateStr.split(' ');
