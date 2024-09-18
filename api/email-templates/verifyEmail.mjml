@@ -3,8 +3,8 @@
     <mj-section background-color="#fff">
       <mj-column>
         <mj-image
-          width="100px"
-          src="https://jslancer.com/assets/images/logo/jslancer.png"
+          width="500px"
+          src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsection_1_right.bf6223d4.png&w=750&q=75"
         ></mj-image>
       </mj-column>
     </mj-section>
@@ -15,7 +15,7 @@
         </mj-text>
         <mj-text font-size="18px" align="center" color="#555" line-height="30px"
           >Hi {{name}}! Please confirm that you want to use this as your
-          SaaSgear account email address.</mj-text
+          Web Ability account email address.</mj-text
         >
         <mj-button
           background-color="#06adef"
