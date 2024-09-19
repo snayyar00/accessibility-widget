@@ -109,7 +109,7 @@
   },
   "Forgot_password": {
     "description": "Enter your username, or the email address you used to register. We will send you an email containing your username and a link to reset your password.",
-    "footer": "If you still need help, contact <0>Saasgear Support</0>",
+    "footer": "If you still need help, contact <0>WebAbility Support</0>",
     "confirm": "We've sent you an email with a link to reset password. Please check your email so create new password",
     "go_to": "Go to <0>Sign In</0>"
   },
@@ -117,7 +117,7 @@
     "change_success": "Change password successfully!",
     "description": "Enter your username, or the email address you used to register. We will send you an email containing your username and a link to reset your password.",
     "footer": "If you still need help, contact",
-    "support": "Saasgear Support",
+    "support": "WebAbility Support",
     "please_wait": "Please wait ..."
   },
   "Advertisement": {

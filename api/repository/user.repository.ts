@@ -97,6 +97,12 @@ export async function updateUser(id: number, data: UserProfile): Promise<number>
   return database(TABLE).where({ id }).update(data);
 }
 
+export async function getUserbyId(id: number): Promise<UserProfile> {
+  return database(TABLE).where({ id }).first();
+}
+
+
+
 export async function getUserByIdAndJoinUserToken(id: number, type: 'verify_email' | 'forgot_password' | 'team_invitation_email'): Promise<GetUserByIdAndJoinUserTokenResponse> {
   const users = Object.values(usersColumns);
   const userToken = Object.values(userTokenColumns);

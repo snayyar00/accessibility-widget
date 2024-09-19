@@ -61,9 +61,10 @@ const ForgotPasswordForm: React.FC<Props> = ({
             </div>
             {apiError && <ErrorText message={String(t(`Forgot_password.error.${apiError}`))} position="center" />}
             <div className="text-[14px] leading-6 text-sapphire-blue text-center mt-[69px]">
-              <Trans components={[<Link to="##"></Link>]}>
-                {t('Forgot_password.footer')}
-              </Trans>
+            <Trans
+                i18nKey="Forgot_password.footer"
+                components={[<a href="mailto:support@webability.com"></a>]}
+              />
             </div>
           </div>
         </form>

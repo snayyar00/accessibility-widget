@@ -85,13 +85,37 @@ export const GetURLByUniqueToken = async (uniqueToken: string) => {
   }
 };
 
-export async function ValidateToken(url: string) {
+
+export async function ValidateToken(url: string, uniqueToken?: string) {
   try {
-    const site = await findSiteByURL(url);
-    
-    if (!site) {
-      return 'notFoundSite';
+
+    const site =  await findSiteByURL(url);
+
+    const activePlan = await getSitePlanBySiteId(site?.id);
+
+    if (!activePlan) {
+      return 'notFound';
     }
+    // console.log(activePlan);
+    const currentTime = new Date().getTime();
+    const timeDifference = new Date(activePlan?.expiredAt).getTime() - currentTime;
+    const sevendays = 7 * 24 * 60 * 60 * 1000;
+
+    // console.log(timeDifference,"seven = ",sevendays);
+    if (timeDifference > sevendays) {
+      return 'found';
+    }
+    if (timeDifference < sevendays && timeDifference > 0) {
+      return 'found'
+    }
+    return 'notFound';
+
+    // if (activePlan && (activePlan?.isActive || activePlan?.isTrial) ) {
+    //   return 'found';
+    // }
+    // else {
+    //   return 'notFound';
+    // }
     
     const activePlan = await getSitePlanBySiteId(site.id);
     

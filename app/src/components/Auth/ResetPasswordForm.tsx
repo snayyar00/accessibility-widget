@@ -77,9 +77,11 @@ const ResetPasswordForm:React.FC<Props> = ({
           </div>
           {apiError && <Badge type="error">{apiError}</Badge>}
           <div className="text-[14px] leading-6 text-sapphire-blue text-center mt-[69px]">
-            <Trans components={[<Link to="##"></Link>]}>
-              {t('Forgot_password.footer')}
-            </Trans>
+          <Trans
+              i18nKey="Forgot_password.footer"
+              components={[<a href="mailto:support@webability.com"></a>]}
+            />
+
           </div>
         </div>
       </form>

@@ -1,0 +1,44 @@
+<mjml>
+  <mj-body background-color="#f1f1f1">
+    <!-- Header Section with Image -->
+    <mj-section background-color="#fff">
+      <mj-column>
+        <mj-image width="500px" src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsection_1_right.bf6223d4.png&w=750&q=75"></mj-image>
+      </mj-column>
+    </mj-section>
+
+    <!-- Welcome Text Section -->
+    <mj-section background-color="#fff">
+      <mj-column>
+        <mj-text font-size="30px" align="left" font-weight="bold">
+          Welcome to Web Ability
+        </mj-text>
+        <mj-text font-size="18px" align="left" color="#555" line-height="30px">
+          Hi {{name}}! We’re thrilled to have you join our community dedicated to making the web a more inclusive place for everyone. At Web Ability, we believe that the web should be accessible to all, regardless of ability, and with your help, we can continue to make this vision a reality.
+        </mj-text>
+
+        <!-- How to Get Started Section -->
+        <mj-text font-size="20px" align="left" font-weight="bold" color="#333">
+          How to Get Started
+        </mj-text>
+        <mj-text font-size="18px" align="left" color="#555" line-height="28px">
+  <ol style="padding-left: 20px; text-align: left;">
+    <li>Log in to your account by clicking the button below.</li>
+    <li>Set up your profile and let us know about your goals in accessibility.</li>
+    <li>Access our resources like tutorials, checklists, and tools to help you build an accessible and inclusive website.</li>
+  </ol>
+</mj-text>
+
+
+        <!-- Call to Action Button -->
+        <mj-button background-color="#06adef" border-radius="50px" color="white" font-size="15px" href="https://app.webability.io/" padding="15px 30px">
+          Web Ability Login
+        </mj-button>
+
+        <!-- Divider -->
+        <mj-divider border-color="#06adef" width="full" padding="20px 0"></mj-divider>
+
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
