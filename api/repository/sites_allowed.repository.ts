@@ -45,10 +45,13 @@ export async function findSiteById(id: number): Promise<IUserSites[]> {
 }
 
 export async function findSiteByURL(url: string): Promise<FindAllowedSitesProps> {
-	return database(TABLE)
+	console.log(url);
+	const result = await database(TABLE)
 		.select(siteColumns)
 		.where({ [siteColumns.url]: url })
 		.first();
+	console.log(result);
+	return result;
 }
 
 export async function findSiteByUserIdAndSiteId(user_id: number, site_id: number): Promise<FindAllowedSitesProps> {

@@ -13,6 +13,7 @@ export const SitesPlanSchema = gql`
       priceType: String!
       expiredAt: Date
       deletedAt: Date
+      isActive: Boolean!
     }
 
     type SitesPlanData {

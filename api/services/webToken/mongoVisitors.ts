@@ -1,10 +1,9 @@
-
-import Visitor from "~/mongoSchema/visitor.model";
-import logger from "~/utils/logger";
+import Visitor from '~/mongoSchema/visitor.model';
+import logger from '~/utils/logger';
 import crypto from 'crypto';
-import { findSite } from "../allowedSites/allowedSites.service";
-import { findSiteByURL } from "~/repository/sites_allowed.repository";
-import { getSitePlanBySiteId } from "~/repository/sites_plans.repository";
+import { findSite } from '../allowedSites/allowedSites.service';
+import { findSiteByURL } from '~/repository/sites_allowed.repository';
+import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
 
 function generateUniqueToken() {
   return crypto.randomBytes(16).toString('hex');
@@ -30,7 +29,7 @@ export async function UpdateWebsiteURL(oldURL: string, newURL: string) {
     const result = await Visitor.findOneAndUpdate(
       { Website: oldURL },
       { $set: { Website: newURL } },
-      { new: true }
+      { new: true },
     );
 
     if (result) {
@@ -59,7 +58,7 @@ export async function AddTokenToDB(businessName: string, email: string, website:
     return uniqueToken;
   } catch (error) {
     console.error('Error inserting data:', error);
-    logger.error('Error inserting data:', error)
+    logger.error('Error inserting data:', error);
     return '';
   }
 }
@@ -79,13 +78,13 @@ export const GetURLByUniqueToken = async (uniqueToken: string) => {
   try {
     const visitor = await Visitor.findOne({ Uniquetoken: uniqueToken });
     return (visitor !== null ? visitor.Website : null);
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Error fetching visitor by website:', error);
     logger.error('Error fetching visitor by website:', error);
     return 'error';
   }
-}
+};
+
 
 export async function ValidateToken(url: string, uniqueToken?: string) {
   try {
@@ -118,22 +117,16 @@ export async function ValidateToken(url: string, uniqueToken?: string) {
     //   return 'notFound';
     // }
     
-    // const record = await Visitor.findOne({ Uniquetoken: uniqueToken });
-    // if (record === null) {
-    //   return 'notFound';
-    // }
-    // else {
-    //   const site = await findSite(record.Website);
-    //   if (site === undefined || url !== record.Website) {
-    //     return 'notFound';
-    //   }
-    //   else {
-    //     return 'found';
-    //   }
-    // }
-  }
-  catch (e) {
-    logger.error('There was an error validating the provided unique token. ', e);
+    const activePlan = await getSitePlanBySiteId(site.id);
+    
+    if (activePlan && (activePlan.isActive || activePlan.is_active)) {
+      return 'found';
+    } else {
+      return 'notFoundActive';
+    }
+  } catch (error) {
+    console.error('Error in ValidateToken:', error);
+    logger.error('There was an error validating the provided unique token.', error);
     return 'error';
   }
 }

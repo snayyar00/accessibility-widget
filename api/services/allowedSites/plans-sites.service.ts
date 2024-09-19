@@ -14,41 +14,108 @@ import { FindAllowedSitesProps, deleteSiteByURL, findSiteById, findSiteByUserIdA
 import { SitesPlanData, deleteSitePlanById, deleteSitesPlanById, getSitePlanById, getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId, getSitesPlanByUserId, insertSitePlan, updateSitePlanById } from '~/repository/sites_plans.repository';
 import { deletePermissionBySitePlanId, insertMultiSitePermission } from '~/repository/sites_permission.repository';
 import { Token } from '../authentication/login.service';
+import database from '~/config/database.config';
+import { TABLES } from '~/constants/database.constant';
 
-export function getUserSitesPlan(userId: number) {
-  return getSitePlanById(userId);
+const TABLE = TABLES.sitesPlans;
+
+// Add this interface definition
+export interface ResponseSitesPlan {
+  id: number;
+  allowedSiteId: number;
+  productId: number;
+  priceId: number;
+  name: string;
+  amount: number;
+  productType: string;
+  priceType: string;
+  expiredAt?: Date;
+  deletedAt?: Date;
+  isActive: boolean;
+}
+
+export async function getUserSitesPlan(userId: number): Promise<ResponseSitesPlan[]> {
+  const sitePlans = await database(TABLE)
+    .where({ user_id: userId, is_active: true })
+    .select('*');
+  
+  if (sitePlans.length === 0) {
+    throw new ApolloError('No active plans found for the user');
+  }
+
+  // Map database results to ResponseSitesPlan
+  return sitePlans.map(plan => ({
+    id: plan.id,
+    allowedSiteId: plan.allowed_site_id,
+    productId: plan.product_id,
+    priceId: plan.price_id,
+    name: plan.name,
+    amount: plan.amount,
+    productType: plan.product_type,
+    priceType: plan.price_type,
+    expiredAt: plan.expired_at,
+    deletedAt: plan.deleted_at,
+    isActive: plan.is_active,
+  }));
 }
 
 export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
+  console.log(`getPlanBySiteIdAndUserId called with userId: ${userId}, siteId: ${siteId}`);
+
   const site = await findSiteByUserIdAndSiteId(userId, siteId);
 
   if (!site) {
-    return new ApolloError('Can not find any site');
+    console.log(`Site not found for userId: ${userId}, siteId: ${siteId}`);
+    throw new ApolloError('Can not find any site');
   }
 
-  return await getSitePlanBySiteId(site.id);
+  console.log('Site found:', JSON.stringify(site, null, 2));
+
+  const plan = await getSitePlanBySiteId(site.id);
+  
+  console.log('Raw plan data:', JSON.stringify(plan, null, 2));
+
+  if (!plan) {
+    console.log(`No plan found for site: ${site.id}`);
+    return null;
+  }
+
+  const result = {
+    ...plan,
+    isActive: Boolean(plan.isActive || plan.is_active),
+    isTrial: Boolean(plan.isTrial || plan.is_trial)
+  };
+
+  console.log('Processed plan data:', JSON.stringify(result, null, 2));
+  return result;
 }
 
-export async function createSitesPlan(userId: number, paymentMethodToken: string, planName: string, billingType: 'MONTHLY' | 'YEARLY', siteId: number,couponCode:string): Promise<true | ApolloError> {
+export async function createSitesPlan(
+  userId: number,
+  paymentMethodToken: string,
+  planName: string,
+  billingType: 'MONTHLY' | 'YEARLY',
+  siteId: number,
+  couponCode: string
+): Promise<true> {
   try {
     const user = await findUser({ id: userId });
-    let coupon = ""
-    if(couponCode)
-    {
+    let coupon = "";
+    if (couponCode) {
       coupon = couponCode;
     }
     if (!user) {
-      return new ApolloError('Can not find any user');
+      throw new ApolloError('Can not find any user');
     }
 
     const site = await findSiteByUserIdAndSiteId(userId, siteId);
     if (!site) {
-      return new ApolloError('Can not find any site');
+      throw new ApolloError('Can not find any site');
     }
 
     const product: FindProductAndPriceByTypeResponse = await findProductAndPriceByType(planName, billingType);
     if (!product) {
-      return new ApolloError('Can not find any plan');
+      throw new ApolloError('Can not find any plan');
     }
 
     const sitePlan = await getSitePlanBySiteId(siteId);
@@ -57,7 +124,14 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
       await deletePermissionBySitePlanId(sitePlan.id);
     }
 
-    const { subcription_id, customer_id } = await createNewSubcription(paymentMethodToken, user.email, user.name, product.price_stripe_id,paymentMethodToken == "Trial" ? true : false,coupon);
+    const { subcription_id, customer_id } = await createNewSubcription(
+      paymentMethodToken,
+      user.email,
+      user.name,
+      product.price_stripe_id,
+      paymentMethodToken === "Trial",
+      coupon
+    );
     if (subcription_id && customer_id) {
       const dataUserPlan = {
         allowed_site_id: siteId,
@@ -65,8 +139,17 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
         price_id: product.price_id,
         customer_id,
         subcription_id,
-        is_trial:paymentMethodToken == "Trial" ? 1:0,
-        expired_at: formatDateDB(dayjs().add(paymentMethodToken == "Trial" ? 7 : 1, paymentMethodToken == "Trial" ? 'day' : product.price_type === 'yearly' ? 'y' : 'M')),
+        is_trial: paymentMethodToken === "Trial" ? 1 : 0,
+        expired_at: formatDateDB(
+          dayjs().add(
+            paymentMethodToken === "Trial" ? 7 : 1,
+            paymentMethodToken === "Trial"
+              ? 'day'
+              : product.price_type === 'yearly'
+              ? 'y'
+              : 'M'
+          )
+        ),
       };
       const sitePlanId = await insertSitePlan(dataUserPlan as any);
       let sitePermissionData;
@@ -82,26 +165,30 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
     }
     return true;
   } catch (error) {
-    console.log("error = ",error);
+    console.log("error = ", error);
     logger.error(error);
     throw new ApolloError('Something went wrong!');
   }
 }
 
-export async function updateSitesPlan(sitePlanId: number, planName: string, billingType: 'MONTHLY' | 'YEARLY',hook=false): Promise<true | ApolloError> {
+export async function updateSitesPlan(
+  sitePlanId: number,
+  planName: string,
+  billingType: 'MONTHLY' | 'YEARLY',
+  hook = false
+): Promise<true> {
   try {
     const sitePlan = await getSitePlanById(sitePlanId);
     if (!sitePlan) {
-      return new ApolloError('Can not find any user plan');
+      throw new ApolloError('Can not find any user plan');
     }
 
     const product: FindProductAndPriceByTypeResponse = await findProductAndPriceByType(planName, billingType);
     if (!product) {
-      return new ApolloError('Can not find any plan');
+      throw new ApolloError('Can not find any plan');
     }
 
-    if(hook==false)
-    {
+    if (hook === false) {
       await updateSubcription(sitePlan.subcription_id, product.price_stripe_id);  
     }
     
@@ -132,36 +219,35 @@ export async function updateSitesPlan(sitePlanId: number, planName: string, bill
   }
 }
 
-export async function deleteTrialPlan(id: number): Promise<true | ApolloError> {
+export async function deleteTrialPlan(id: number): Promise<true> {
   try {
     const sitePlan = await getSitePlanById(id);
 
     if (!sitePlan) {
-      return new ApolloError('Can not find any user plan');
+      throw new ApolloError('Can not find any user plan');
     }
     await deleteSitePlanById(sitePlan.id);
     // await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)]);
 
     return true;
   } catch (error) {
-    console.log("This is error",error);
+    console.log("This is error", error);
     logger.error(error);
     throw new ApolloError('Something went wrong!');
   }
 }
 
-export async function deleteSitesPlan(id: number,hook=false): Promise<true | ApolloError> {
+export async function deleteSitesPlan(id: number, hook = false): Promise<true> {
   try {
     const sitePlan = await getSitePlanById(id);
 
     if (!sitePlan) {
-      return new ApolloError('Can not find any user plan');
+      throw new ApolloError('Can not find any user plan');
     }
 
     const customer = await getSubcriptionCustomerIDBySubId(sitePlan.subcription_id);
 
-    if(hook == false)
-    {
+    if (hook === false) {
       await cancelSubcriptionBySubId(sitePlan.subcription_id);
     }
 
@@ -189,7 +275,7 @@ export async function deleteSitesPlan(id: number,hook=false): Promise<true | Apo
 
     return true;
   } catch (error) {
-    console.log("This is error",error);
+    console.log("This is error", error);
     logger.error(error);
     throw new ApolloError('Something went wrong!');
   }
