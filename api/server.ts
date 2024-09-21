@@ -26,6 +26,7 @@ import Stripe from 'stripe';
 import { getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
 import { APP_SUMO_COUPON_ID } from './constants/billing.constant';
+const puppeteer = require('puppeteer');
 // import run from './scripts/create-products';
 
 type ContextParams = {
@@ -692,6 +693,76 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       res.status(500).json({ error: error.message });
     }
   });
+
+  function ensureHttps(url:string) {
+    // Check if the URL starts with 'http://' or 'https://'
+    if (!/^https?:\/\//i.test(url)) {
+      // If not, prepend 'https://'
+      return `https://${url}`;
+    }
+    return url;
+  }
+  async function checkScriptLoaded(url:string) {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    url = ensureHttps(url);
+    await page.goto(url, { waitUntil: 'networkidle2' });
+    await page.waitForTimeout(2000);
+
+    // Output all script tags
+    const scripts = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('script')).map(script => script.src);
+    });
+
+    const ourScript = scripts.some((scriptUrl: any) => {
+      if (['https://webability'].some((keyword) => scriptUrl.includes(keyword))) {
+        console.log("Our script found")
+        console.log(scriptUrl);
+        return true; // Return true if a keyword is found
+      }
+      return false; // Return false if no keyword is found
+    });
+
+    const scriptExists = scripts.some((scriptUrl: any) => {
+      if (['access', 'accessibility', 'userway', 'accessibe'].some((keyword) => scriptUrl.includes(keyword))) {
+        return true; // Return true if a keyword is found
+      }
+      return false; // Return false if no keyword is found
+    });
+
+  
+    await browser.close();
+    if(ourScript)
+    {
+      return "Web Ability";
+    }
+    else
+    {
+      return scriptExists;
+    }
+    
+  }
+
+  app.post('/check-script',async(req,res)=>{
+    const {siteUrl} = req.body;
+
+    checkScriptLoaded(siteUrl)
+    .then(scriptExists => {
+      if(scriptExists == "Web Ability")
+      {
+        res.status(200).json("Web Ability");
+      }
+      else
+      {
+        console.log(scriptExists ? 'Target Site has Accessiblity Scripts' : 'Target Site does not have Accessiblity Scripts');
+        scriptExists ? (res.status(200).json("true")):(res.status(200).json("false"))
+      }
+    })
+    .catch(error => {
+      res.status(500).json("true");
+      console.error('Error:', error);
+    });
+  })
 
   app.post('/check-customer',async (req,res)=>{
     const {email,userId} = req.body;

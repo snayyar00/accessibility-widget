@@ -59,11 +59,11 @@ const updateIssueDetails = (matchedRecords: dbIssue[], issueList: any[]) =>
   });
 
 async function populateMissingDescriptions(matchedRecords: dbIssue[], issueHeadings: any, type: string) {
-  console.log(type);
+  // console.log(type);
   const notFoundIssues = issueHeadings.filter((message: any) => !matchedRecords.some((record) => record.heading === message));
   if (notFoundIssues.length > 0) {
     const apiResult = await getIssueDescription(notFoundIssues);
-    console.log(apiResult.finish_reason);
+    // console.log(apiResult.finish_reason);
     const result = stringToJson(apiResult.message.content);
     await Promise.all(result.map(async (issue: any) => addAccessibilityIssuesToDB(issue)));
     return true;
@@ -90,7 +90,7 @@ export async function readAccessibilityDescriptionFromDb(issues: any) {
     issues.errors = updateIssueDetails(matchedRecords, issues.errors);
     issues.warnings = updateIssueDetails(matchedRecords, issues.warnings);
     issues.notices = updateIssueDetails(matchedRecords, issues.notices);
-    console.log(issues.warnings);
+    // console.log(issues.warnings);
     return issues;
   } catch (error) {
     console.log(error, '\nError retrieving accessibility issue description from database.');
