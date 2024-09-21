@@ -86,7 +86,7 @@ export const GetURLByUniqueToken = async (uniqueToken: string) => {
 };
 
 
-export async function ValidateToken(url: string, uniqueToken?: string) {
+export async function ValidateToken(url: string) {
   try {
 
     const site =  await findSiteByURL(url);
@@ -110,20 +110,6 @@ export async function ValidateToken(url: string, uniqueToken?: string) {
     }
     return 'notFound';
 
-    // if (activePlan && (activePlan?.isActive || activePlan?.isTrial) ) {
-    //   return 'found';
-    // }
-    // else {
-    //   return 'notFound';
-    // }
-    
-    const activePlan = await getSitePlanBySiteId(site.id);
-    
-    if (activePlan && (activePlan.isActive || activePlan.is_active)) {
-      return 'found';
-    } else {
-      return 'notFoundActive';
-    }
   } catch (error) {
     console.error('Error in ValidateToken:', error);
     logger.error('There was an error validating the provided unique token.', error);
