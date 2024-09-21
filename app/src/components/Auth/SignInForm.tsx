@@ -73,7 +73,7 @@ const SignInForm: React.FC<Props> = ({
             {isSubmitting ? t('Common.text.please_wait') : t('Sign_in.text.button_text')}
           </Button>
           <div>
-            <Link to="/auth/forgot-password" className="text-[14px] leading-[24px] text-light-primary text-right block mt-6">
+            <Link to="/auth/forgot-password" className="text-[14px] leading-[24px] text-light-primary text-center block mt-6">
               {t('Sign_in.text.forgot_password')}
             </Link>
           </div>

@@ -12,14 +12,23 @@ import registerQuery from '@/queries/auth/register';
 import getQueryParam from '@/utils/getQueryParam';
 import StripeContainer from '@/containers/Stripe';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
+import zxcvbn from 'zxcvbn';
 
 const SignUpSchema = yup.object().shape({
   name: yup.string().required('Common.validation.require_name'),
-  email: yup.string().required('Common.validation.require_email').email('Common.validation.valid_email'),
+  email: yup
+    .string()
+    .required('Common.validation.require_email')
+    .email('Common.validation.valid_email')
+    .test('no-plus-sign', 'Common.validation.no_plus_in_email', (value:string|null|undefined) => !value?.includes('+')), // Custom test to disallow "+" sign in email
   password: yup
     .string()
     .required('Common.validation.require_password')
-    .min(6, 'Common.validation.min_password'),
+    .min(8, 'Common.validation.min_password')
+    .test('strong-password', 'Common.validation.weak_password', (value:any) => {
+      const passwordStrength = zxcvbn(value);
+      return passwordStrength.score >= 3; // Ensure password is at least "strong"
+    }),
   passwordConfirmation: yup
     .string()
     .required('Common.validation.require_password_confirm')
