@@ -88,7 +88,9 @@ export const GetURLByUniqueToken = async (uniqueToken: string) => {
 
 export async function ValidateToken(url: string) {
   try {
-
+    if (url === 'webability.io' || url === 'localhost'){
+      return 'found';
+    }
     const site =  await findSiteByURL(url);
 
     const activePlan = await getSitePlanBySiteId(site?.id);
@@ -106,7 +108,7 @@ export async function ValidateToken(url: string) {
       return 'found';
     }
     if (timeDifference < sevendays && timeDifference > 0) {
-      return 'found'
+      return 'found';
     }
     return 'notFound';
 
