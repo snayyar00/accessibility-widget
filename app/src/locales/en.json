@@ -50,11 +50,13 @@
       "require_email": "Email is required",
       "valid_email": "Email invalid",
       "require_password": "Password is required",
-      "min_password": "Password must be at least 6 characters",
+      "min_password": "Password must be at least 8 characters",
       "require_password_confirm": "Password confirm is required",
       "password_match": "Password must match",
       "require_current_password": "Current password is required",
-      "require_new_password": "New password is required"
+      "require_new_password": "New password is required",
+      "no_plus_in_email":"Email Cannot contain a + sign",
+      "weak_password":"Your Password is weak, please use a mix of upper and lower case characters with symbols"
     },
     "placeholder": {
       "email": "yourname@yourbusiness.com",
@@ -97,7 +99,7 @@
       "heading": "Create Account",
       "button_text": "Sign up",
       "next": "Next",
-      "footer_desc": "By clicking Sign Up, you agree to our <0>Terms</0>, <1>Data Policy</1> and <2>Cookie Policy</2>.",
+      "footer_desc": "By clicking Sign Up, you agree to our <0>Terms and conditons</0>, <1>Privacy Policy</1>.",
       "have_account": "Already have account? <0>Sign In</0>."
     },
     "error": {
