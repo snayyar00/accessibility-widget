@@ -24,6 +24,11 @@ jobs:
           cd api
           npm install
 
+      - name: Create dist directory
+        run: |
+          cd api
+          mkdir -p dist
+
       - name: Build API
         run: |
           cd api
