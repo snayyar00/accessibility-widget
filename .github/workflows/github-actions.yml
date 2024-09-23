@@ -19,6 +19,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
+      - name: Create dist directory
+        run: |
+          cd api
+          mkdir -p dist
+
       - name: Install dependencies in API
         run: |
           cd api
@@ -28,41 +33,11 @@ jobs:
         run: |
           cd api
           npm run build
-          
+
       - name: Start API
         run: |
           cd api
-          pm2 restart apiServer
-        env:
-          PORT: ${{ secrets.PORT }}
-          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          JWT_ISSUER: ${{ secrets.JWT_ISSUER }}
-          JWT_SUBJECT: ${{ secrets.JWT_SUBJECT }}
-          JWT_AUDIENCE: ${{ secrets.JWT_AUDIENCE }}
-          JWT_EXPIRESIN: ${{ secrets.JWT_EXPIRESIN }}
-          JWT_ALGORITHM: ${{ secrets.JWT_ALGORITHM }}
-          MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
-          MAILGUN_DOMAIN: ${{ secrets.MAILGUN_DOMAIN }}
-          SMTP_DEFAULT_FROM_EMAIL: ${{ secrets.SMTP_DEFAULT_FROM_EMAIL }}
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          STRIPE_PRIVATE_KEY: ${{ secrets.STRIPE_PRIVATE_KEY }}
-          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
-          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
-          DATABASE_USER: ${{ secrets.DATABASE_USER }}
-          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-          DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
-          EMAIL_USER: ${{ secrets.EMAIL_USER }}
-          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
-          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
-          EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
-          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-          NODE_ENV: ${{ secrets.NODE_ENV }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          pm2 restart apiServer || pm2 start apiServer --name apiServer
 
   APP:
     needs: API
@@ -75,6 +50,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
+      - name: Create dist directory for App
+        run: |
+          cd app
+          mkdir -p dist
+
       - name: Install dependencies in App
         run: |
           cd app
@@ -84,14 +64,8 @@ jobs:
         run: |
           cd app
           CI=false npm run build
-        env:
-          REACT_APP_GOOGLE_CLIENT_KEY: ${{ secrets.REACT_APP_GOOGLE_CLIENT_KEY }}
-          REACT_APP_GRAPHQL_URL: ${{ secrets.REACT_APP_GRAPHQL_URL }}
 
       - name: Start frontend Server
         run: |
           cd app
-          pm2 restart frontendServer
-        env:
-          GOOGLE_CLIENT_KEY: ${{ secrets.GOOGLE_CLIENT_KEY }}
-          GOOGLE_SECRET_KEY: ${{ secrets.GOOGLE_SECRET_KEY }}
+          pm2 restart frontendServer || pm2 start app --name frontendServer
