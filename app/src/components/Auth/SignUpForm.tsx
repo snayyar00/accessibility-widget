@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
 import FormControl from '@/components/Common/FormControl';
@@ -8,7 +8,7 @@ import Button from '@/components/Common/Button';
 import Logo from '@/components/Common/Logo';
 import { ReactHookFormType } from "@/typeReactHookForm";
 import SocialAuth from '@/containers/Auth/SocialAuth';
-
+import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Import icons for visibility toggle
 
 type CustomProps = ReactHookFormType & {
   isSubmitting: boolean;
@@ -25,6 +25,20 @@ const SignUpForm: React.FC<CustomProps> = ({
   submitText = 'Submit',
 }) => {
   const { t } = useTranslation();
+  
+  // State to manage password visibility
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+
+  // Function to toggle password visibility
+  const togglePasswordVisibility = () => {
+    setPasswordVisible(!passwordVisible);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setConfirmPasswordVisible(!confirmPasswordVisible);
+  };
+
   return (
     <div className="bg-white max-w-[300px]">
       <Logo />
@@ -65,13 +79,21 @@ const SignUpForm: React.FC<CustomProps> = ({
           </div>
           <div className="mb-4 w-full block">
             <label className="font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block mb-[19px] uppercase">{t('Common.label.password')}</label>
-            <FormControl>
+            <FormControl className="relative">
               <Input
-                type="password"
+                type={passwordVisible ? 'text' : 'password'}
                 placeholder={t('Common.placeholder.password')}
                 name="password"
                 ref={register}
+                className='pr-10'
               />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute right-3 top-3.5 text-gray-500"
+              >
+                {passwordVisible ? <FaEyeSlash /> : <FaEye />}
+              </button>
               {formErrors?.password?.message && (
                 <ErrorText message={String(t(formErrors.password.message))} />
               )}
@@ -79,13 +101,21 @@ const SignUpForm: React.FC<CustomProps> = ({
           </div>
           <div className="mb-4 w-full block">
             <label className="font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block mb-[19px] uppercase">{t('Common.label.confirm_password')}</label>
-            <FormControl>
+            <FormControl className="relative">
               <Input
-                type="password"
+                type={confirmPasswordVisible ? 'text' : 'password'}
                 placeholder={t('Common.placeholder.confirm_password')}
                 name="passwordConfirmation"
                 ref={register}
+                className='pr-10'
               />
+              <button
+                type="button"
+                onClick={toggleConfirmPasswordVisibility}
+                className="absolute right-3 top-3.5 text-gray-500"
+              >
+                {confirmPasswordVisible ? <FaEyeSlash /> : <FaEye />}
+              </button>
               {formErrors?.passwordConfirmation?.message && (
                 <ErrorText message={String(t(formErrors.passwordConfirmation.message))} />
               )}
@@ -108,7 +138,6 @@ const SignUpForm: React.FC<CustomProps> = ({
           {t('Sign_up.text.have_account')}
         </Trans>
       </div>
-     
     </div>
   );
 };
