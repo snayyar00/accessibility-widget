@@ -19,21 +19,21 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Install dependencies in API
-        run: |
-          cd api
-          npm install
-
       - name: Create dist directory
         run: |
           cd api
           mkdir -p dist
 
+      - name: Install dependencies in API
+        run: |
+          cd api
+          npm install
+
       - name: Build API
         run: |
           cd api
           npm run build
-          
+
       - name: Start API
         run: |
           cd api
@@ -49,6 +49,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+
+      - name: Create dist directory for App
+        run: |
+          cd app
+          mkdir -p dist
 
       - name: Install dependencies in App
         run: |
