@@ -16,7 +16,7 @@
     "postinstall": "link-module-alias && npx npm-force-resolutions",
     "lint": "eslint --ext .ts .",
     "lint:fix": "eslint --ext .ts . --fix",
-    "copy-email-templates": "mkdir -p ./dist/email-templates && cp -R ./api/email-templates ./dist/"
+    "copy-email-templates": "mkdir -p ./dist/email-templates && cp -R ./email-templates ./dist/"
   },
   "resolutions": {
     "**/**/fs-capacitor": "^6.2.0",
