@@ -6,7 +6,7 @@
   "scripts": {
     "start": "ts-node -r tsconfig-paths/register server.ts",
     "dev": "nodemon server",
-    "build": "tsc",
+    "build": "tsc && npm run copy-email-templates",
     "db:create-products": "tsc && node --experimental-modules --es-module-specifier-resolution=node dist/scripts/create-products.js",
     "db:migrate": "knex migrate:latest --knexfile config/knexfile.ts",
     "db:rollback": "knex migrate:rollback --knexfile config/knexfile.ts",
@@ -15,7 +15,8 @@
     "db:seed": "knex seed:run --knexfile config/knexfile.ts",
     "postinstall": "link-module-alias && npx npm-force-resolutions",
     "lint": "eslint --ext .ts .",
-    "lint:fix": "eslint --ext .ts . --fix"
+    "lint:fix": "eslint --ext .ts . --fix",
+    "copy-email-templates": "mkdir -p ./dist/email-templates && cp -R ./api/email-templates ./dist/"
   },
   "resolutions": {
     "**/**/fs-capacitor": "^6.2.0",

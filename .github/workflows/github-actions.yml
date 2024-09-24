@@ -1,4 +1,4 @@
-name: API Deploy
+name: API and App Deploy
 
 on:
   push:
@@ -19,6 +19,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
+      - name: Preserve existing API .env file
+        run: |
+          if [ -f api/.env ]; then
+            cp api/.env api/.env.backup
+          fi
+
       - name: Create dist directory
         run: |
           cd api
@@ -34,10 +40,21 @@ jobs:
           cd api
           npm run build
 
+      - name: Restore API .env file
+        run: |
+          if [ -f api/.env.backup ]; then
+            mv api/.env.backup api/.env
+          fi
+
       - name: Start API
         run: |
           cd api
           pm2 restart apiServer || pm2 start apiServer --name apiServer
+
+      - name: Copy email templates
+        run: |
+          mkdir -p ./api/dist/email-templates
+          cp -R ./api/email-templates ./api/dist/
 
   APP:
     needs: API
@@ -49,6 +66,12 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+
+      - name: Preserve existing App .env file
+        run: |
+          if [ -f app/.env ]; then
+            cp app/.env app/.env.backup
+          fi
 
       - name: Create dist directory for App
         run: |
@@ -65,7 +88,13 @@ jobs:
           cd app
           CI=false npm run build
 
-      - name: Start frontend Server
+      - name: Restore App .env file
+        run: |
+          if [ -f app/.env.backup ]; then
+            mv app/.env.backup app/.env
+          fi
+
+      - name: Start App
         run: |
           cd app
-          pm2 restart frontendServer || pm2 start app --name frontendServer
+          pm2 restart appServer || pm2 start appServer --name appServer

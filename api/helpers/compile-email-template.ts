@@ -17,13 +17,31 @@ type Props = {
 
 export default async function compileEmailTemplate({ fileName, data }: Props): Promise<string> {
   try {
-    // Construct the path to the email template outside the dist folder
-    const mjmlPath = path.resolve(process.cwd(), 'api', 'email-templates', fileName);
-    logger.info(`Current working directory: ${process.cwd()}`);
-    logger.info(`Attempting to read MJML file from: ${mjmlPath}`);
-    
-    const mjmlContent = await fs.promises.readFile(mjmlPath, 'utf8');
-    
+    const possiblePaths = [
+      path.join(process.cwd(), 'dist', 'email-templates', fileName),
+      path.join(process.cwd(), 'api', 'email-templates', fileName),
+      path.join(__dirname, '..', 'email-templates', fileName)
+    ];
+
+    let mjmlContent: string | null = null;
+    let usedPath: string | null = null;
+
+    for (const mjmlPath of possiblePaths) {
+      try {
+        mjmlContent = await fs.promises.readFile(mjmlPath, 'utf8');
+        usedPath = mjmlPath;
+        break;
+      } catch (err) {
+        // File not found, try next path
+      }
+    }
+
+    if (!mjmlContent || !usedPath) {
+      throw new Error(`Unable to find email template: ${fileName}`);
+    }
+
+    logger.info(`Successfully read MJML file from: ${usedPath}`);
+
     const { html, errors } = mjml2html(mjmlContent, {
       keepComments: false,
       beautify: false,
