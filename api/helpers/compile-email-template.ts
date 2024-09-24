@@ -17,8 +17,9 @@ type Props = {
 
 export default async function compileEmailTemplate({ fileName, data }: Props): Promise<string> {
   try {
-    // Adjust the path to look in the original email-templates directory
-    const mjmlPath = path.join(process.cwd(), 'email-templates', fileName);
+    // Construct the path to the email template outside the dist folder
+    const mjmlPath = path.resolve(process.cwd(), 'api', 'email-templates', fileName);
+    logger.info(`Current working directory: ${process.cwd()}`);
     logger.info(`Attempting to read MJML file from: ${mjmlPath}`);
     
     const mjmlContent = await fs.promises.readFile(mjmlPath, 'utf8');
