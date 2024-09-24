@@ -983,7 +983,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 
   serverGraph.applyMiddleware({ app, cors: false });
-  init({ dsn: process.env.SENTRY_DSN });
+  // init({ dsn: process.env.SENTRY_DSN });
   app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);
   });
