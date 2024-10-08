@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import { NavLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
+import { Card, CardContent, LinearProgress } from '@mui/material';
 
 
 const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptionalDomain}: any) => {
@@ -19,6 +20,7 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
   const [billingLoading,setBillingLoading] = useState(false);
   const [activePlan,setActivePlan] = useState("");
   const [isYearly,setIsYearly] = useState(false);
+  const [planMetaData,setPlanMetaData] = useState<any>({});
 
   const [deleteSiteMutation] = useMutation(deleteSite, {
     onCompleted: (response) => {
@@ -132,6 +134,10 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
 
             response.json().then(data => {
                 // Handle the JSON data received from the backend
+                if(data.submeta)
+                {
+                  setPlanMetaData(data.submeta);
+                }
                 if (data.isCustomer == true) {
                     setActivePlan(data.plan_name);
                     if (data.interval == "yearly") {
@@ -192,7 +198,37 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
   },[])
 
   return (
-    <div className="container mx-auto px-4 sm:px-8">
+    <>
+    {activePlan && planMetaData ? (<Card sx={{borderRadius:5}} className="max-w-5xl mx-auto my-6 shadow-md hover:shadow-xl transition-shadow duration-300 bg-gradient-to-br from-background to-secondary/10 rounded-xl">
+      <CardContent className="p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-primary">Subscription Details</h2>
+            <p className="text-muted-foreground mt-1">
+              You are subscribed to the <span className="font-bold text-black uppercase">{activePlan}</span>
+            </p>
+          </div>
+        </div>
+        <div className="h-px bg-border my-4" />
+        <div>
+          <h3 className="text-lg font-medium mb-2 text-primary">Domain Usage</h3>
+          <LinearProgress value={(Number(planMetaData.usedDomains)/Number(planMetaData.maxDomains))*100} variant="determinate" className="h-2 mb-2" />
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span className="font-medium">{planMetaData.usedDomains} used</span>
+            <span>{planMetaData.maxDomains} total</span>
+          </div>
+        </div>
+        <div className="mt-4 p-4 bg-[#f5f7fb] rounded-lg hover:bg-secondary/30 transition-colors duration-300">
+          <h4 className="text-md font-semibold text-secondary-foreground mb-2">Upgrade your plan</h4>
+          <p className="text-sm text-secondary-foreground/80">
+            Need more domains? Upgrade now for additional features and increased limits.
+          </p>
+        </div>
+      </CardContent>
+    </Card>):(null)}
+    
+    
+     <div className="container mx-auto px-4 sm:px-8">
       <div className="py-8">
         <div>
           <h2 className="text-2xl font-semibold leading-tight">Added Domains</h2>
@@ -268,9 +304,9 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
                         </div>
                       ) : (
                         <div className="flex justify-end items-center space-x-2">
-                          {getDomainStatus(domain.expiredAt, domain.trial) == 'Active' || getDomainStatus(domain.expiredAt, domain.trial) == 'Expiring' ? (null) : (activePlan !== "" ? (<button disabled={billingLoading} onClick={() => { handleSubscription(domain) }} type="submit" className="py-3 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-[45%] sm:my-4 sm:w-full transition duration-300">
+                          {getDomainStatus(domain.expiredAt, domain.trial) == 'Active' || getDomainStatus(domain.expiredAt, domain.trial) == 'Expiring' ? (null) : (activePlan !== "" ? (<button disabled={billingLoading} onClick={() => { handleSubscription(domain) }} type="submit" className="py-3 px-4 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-fit sm:my-4 sm:w-full transition duration-300">
                             {billingLoading ? "Please Wait..." : "Activate"}
-                          </button>) : (<button onClick={() => { setPaymentView(true); openModal(); setOptionalDomain(domain.url) }} type="submit" className="py-3 text-white text-center rounded-xl bg-green-400 hover:bg-green-600 w-[45%] sm:my-4 sm:w-full transition duration-300">
+                          </button>) : (<button onClick={() => { setPaymentView(true); openModal(); setOptionalDomain(domain.url) }} type="submit" className="py-3 sm:px-4 md:px-0 text-white text-center rounded-xl bg-green-400 hover:bg-green-600 w-[45%] sm:my-4 sm:w-full transition duration-300">
                             Activate License
                           </button>))}
                           <button
@@ -303,6 +339,8 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
         </div>
       </div>
     </div>
+    </>
+   
   );
 };
 
