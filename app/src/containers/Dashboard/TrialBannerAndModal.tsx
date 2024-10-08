@@ -36,7 +36,7 @@ const Modal: React.FC<ModalProps> = ({ isStripeCustomer,isOpen, onClose, childre
         // Add more responsive classes as needed
     });
     return (
-        <div className={`${responsiveClass} md:w-full  absolute top-0 left-0 right-0 ${domainCount >= 10 ? 'bottom-0':''} ${paymentView ? '' : 'bottom-0'} flex items-center justify-center z-50 bg-black bg-opacity-50`}
+        <div className={`${responsiveClass} md:w-full  absolute top-0 left-0 right-0 ${domainCount >= 8 ? 'bottom-0':''} ${paymentView ? '' : 'bottom-0'} flex items-center justify-center z-50 bg-black bg-opacity-50`}
         // style={{width: window.outerWidth <= 425 ? optionalDomain ? "490px": "410px":"100%"}}
         >
             <div className="bg-white rounded-lg w-3/4 overflow-y-auto top-0">

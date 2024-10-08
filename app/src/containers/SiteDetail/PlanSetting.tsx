@@ -399,7 +399,13 @@ const PlanSetting: React.FC<{
   }
   const planChanged = validCoupon ? (appSumoPlan[0]): plans.find((item:any) => item.id === selectedPlan);
   const amountCurrent = currentPlan.amount || 0;
-  const amountNew = planChanged ? planChanged.price : 0;
+  const amountNew = planChanged
+    ? isYearly
+      ? planChanged.name == 'Enterprise'
+        ? planChanged.price + 10
+        : planChanged.price
+      : planChanged.price
+    : 0;
 
 
   return (
@@ -493,11 +499,11 @@ const PlanSetting: React.FC<{
                           {t('Profile.text.new_sub')}
                         </p>
                         <span className="font-bold text-[18px] leading-6 text-sapphire-blue" style={{textDecoration:coupon !=="" ? "line-through":"none"}}>
-                          ${isYearly ? amountNew * 9 : amountNew}
+                          ${isYearly ? amountNew * 10 : amountNew}
                         </span>
                         {coupon !== "" ? (
                         <span className="font-bold text-[18px] leading-6 pl-2 text-sapphire-blue">
-                          ${isYearly ? ((amountNew * 9) - (percentDiscount ? ((amountNew * 9)*discount):(discount) )) : (amountNew - ( percentDiscount ? (amountNew*discount):(discount)))}
+                          ${isYearly ? ((amountNew * 10) - (percentDiscount ? ((amountNew * 10)*discount):(discount) )) : (amountNew - ( percentDiscount ? (amountNew*discount):(discount)))}
                         </span>):(null)}
                       </li>
                       <li className="flex justify-between items-center list-none mb-4">
@@ -507,7 +513,7 @@ const PlanSetting: React.FC<{
                         <span className="font-bold text-[18px] leading-6 text-sapphire-blue" style={{textDecoration:coupon !=="" ? "line-through":"none"}}>
                           $
                           {Math.max(
-                            (isYearly ? amountNew * 9 : amountNew) -
+                            (isYearly ? amountNew * 10 : amountNew) -
                               amountCurrent,
                             0,
                           )}
@@ -515,7 +521,7 @@ const PlanSetting: React.FC<{
                         {coupon !== "" ? (<span className="font-bold text-[18px] leading-6 pl-2 text-sapphire-blue">
                           $
                           {Math.max(
-                            (isYearly ? ((amountNew * 9) - (percentDiscount ? (amountNew*9*discount):(discount))) : (amountNew - (percentDiscount ? (amountNew*discount):(discount)))) -
+                            (isYearly ? ((amountNew * 10) - (percentDiscount ? (amountNew*9*discount):(discount))) : (amountNew - (percentDiscount ? (amountNew*discount):(discount)))) -
                               amountCurrent,
                             0,
                           )}
