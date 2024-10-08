@@ -26,7 +26,7 @@ import Stripe from 'stripe';
 import { getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
 import { APP_SUMO_COUPON_ID } from './constants/billing.constant';
-const puppeteer = require('puppeteer');
+import axios from 'axios';
 // import run from './scripts/create-products';
 
 type ContextParams = {
@@ -703,44 +703,46 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     return url;
   }
   async function checkScriptLoaded(url:string) {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    url = ensureHttps(url);
-    await page.goto(url, { waitUntil: 'networkidle2' });
-    await page.waitForTimeout(2000);
-
-    // Output all script tags
-    const scripts = await page.evaluate(() => {
-      return Array.from(document.querySelectorAll('script')).map(script => script.src);
-    });
-
-    const ourScript = scripts.some((scriptUrl: any) => {
-      if (['https://webability'].some((keyword) => scriptUrl.includes(keyword))) {
-        console.log("Our script found")
-        console.log(scriptUrl);
-        return true; // Return true if a keyword is found
+    try {
+      // Ensure the URL starts with https
+      url = ensureHttps(url);
+      if (!url.startsWith('https://') && !url.startsWith('http://')) {
+        url = 'https://' + url;
       }
-      return false; // Return false if no keyword is found
-    });
-
-    const scriptExists = scripts.some((scriptUrl: any) => {
-      if (['access', 'accessibility', 'userway', 'accessibe'].some((keyword) => scriptUrl.includes(keyword))) {
-        return true; // Return true if a keyword is found
-      }
-      return false; // Return false if no keyword is found
-    });
-
   
-    await browser.close();
-    if(ourScript)
-    {
-      return "Web Ability";
+      // Fetch the HTML content of the page
+      const response = await axios.get(url);
+      const html = response.data;
+  
+      // Extract all script tags using a regular expression
+      const scriptRegex = /<script[^>]+src="([^">]+)"/g;
+      let match;
+      const scripts = [];
+  
+      // Loop through all matches and collect script URLs
+      while ((match = scriptRegex.exec(html)) !== null) {
+        scripts.push(match[1]);
+      }
+  
+      // Check if the desired script is present
+      const ourScript = scripts.some((scriptUrl) =>
+        ['https://webability'].some((keyword) => scriptUrl.includes(keyword))
+      );
+  
+      // Check if any accessibility-related scripts are present
+      const scriptExists = scripts.some((scriptUrl) =>
+        ['access', 'accessibility', 'userway', 'accessibe'].some((keyword) => scriptUrl.includes(keyword))
+      );
+  
+      if (ourScript) {
+        return "Web Ability";
+      } else {
+        return scriptExists;
+      }
+    } catch (error) {
+      console.error('Error fetching or processing the page:', error);
+      return false;
     }
-    else
-    {
-      return scriptExists;
-    }
-    
   }
 
   app.post('/check-script',async(req,res)=>{
@@ -810,7 +812,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   
           const prod = await stripe.products.retrieve(String(subscriptions.data[0].plan.product));
   
-          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,card:customers?.data[0]?.invoice_settings.default_payment_method});
+          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method});
           
         } catch (error) {
           res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method });
@@ -829,7 +831,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   
           const prod = await stripe.products.retrieve(String(subscriptions.data[0].plan.product));
   
-          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,card:customers?.data[0]?.invoice_settings.default_payment_method });
+          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method });
           
         } catch (error) {
           res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method});
