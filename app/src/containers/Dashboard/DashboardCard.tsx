@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Children } from 'react';
 import './DashboardCard.css'; 
 import svgs from './SvgDict';
 
@@ -13,7 +13,7 @@ const DashboardCard: React.FC<CardProps> = ({ heading, count, countType }) => (
   <div className="dashboard-card">
     <div className="card-content">
       <div className="card-header">
-        <h2 className="card-title">
+        <h2 className="card-title pr-1">
           {heading.replace(/\b\w/g, function (char) {
             return char.toUpperCase();
           })}

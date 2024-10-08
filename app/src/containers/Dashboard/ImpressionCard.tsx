@@ -21,15 +21,7 @@ const ImpressionCard: React.FC<CardProps> = ({ heading, profileCounts }) => {
       <div
         className={`dashboard-card w-full`}
         style={{
-          minHeight: dropdownOpen
-            ? String(
-                (window.innerWidth <= 768 ? 380 : 150) *
-                  Math.ceil(Object.keys(profileCounts).length / 4) +
-                  'px',
-              )
-            : window.innerWidth <= 768
-            ? '410px'
-            : '190px',
+          minHeight: "fit-content",
         }}
       >
         <div className="card-content">

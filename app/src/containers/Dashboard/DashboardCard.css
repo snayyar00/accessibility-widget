@@ -4,8 +4,8 @@
   border: 1px solid rgb(123, 111, 111);
   display: flex;
   flex-direction: column;
- 
-  height:6rem;
+  width: 300px;
+  height:7.5rem;
   overflow: hidden;
 
 }
@@ -120,7 +120,7 @@
 
 @media (min-width: 641px) and (max-width: 1007px) {
   .dashboard-card {
-    max-width: 50%; /* Adjust width for medium screens */
+    max-width: 100%; /* Adjust width for medium screens */
     /* margin: 10px; */
      /* Adjust margin for medium screens */
 
