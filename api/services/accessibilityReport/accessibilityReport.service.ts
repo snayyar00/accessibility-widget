@@ -242,7 +242,10 @@ export const fetchAccessibilityReport = async (url: string) => {
 
 export const fetchSitePreview = async (url:string) => {
     try {
-        const browser = await puppeteer.launch();
+        const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920, 
