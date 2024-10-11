@@ -38,21 +38,21 @@
 
 @media (max-width: 640px) {
   .dashboard-card {
-    width: auto; /* Full width on small screens */
+    /* width: auto; Full width on small screens */
     margin: 10px; /* Add some margin on small screens */
   }
 }
 
 @media (min-width: 641px) and (max-width: 1007px) {
   .dashboard-card {
-    width: 45%; /* Adjust width for medium screens */
+    /* width: 45%; Adjust width for medium screens */
     margin: 10px; /* Adjust margin for medium screens */
   }
 }
 
 @media (min-width: 1008px) {
   .dashboard-card {
-    width: 22.5%; /* Adjust width for large screens */
+    /* width: 22.5%; Adjust width for large screens */
     margin: 10px; /* Adjust margin for large screens */
   }
 }
