@@ -7,6 +7,8 @@ import { findImpressionsSiteId, insertImpressions, updateImpressions, findImpres
 import { findSite } from '../allowedSites/allowedSites.service';
 import { addNewVisitor } from '../uniqueVisitors/uniqueVisitor.service';
 
+import { getIpAddress } from '~/helpers/uniqueVisitor.helper';
+
 // type GetDocumentsResponse = {
 //   documents: FindDocumentsResponse;
 //   count: number;
@@ -53,13 +55,10 @@ export async function addImpressions(siteId: number, ipAddress: string): Promise
         throw error;
     }
 }
-export async function addImpressionsURL(url: string, ipAddress: string): Promise<number[]> {
-    //   const validateResult = createValidation({ name, body });
-    //   if (Array.isArray(validateResult) && validateResult.length) {
-    //     throw new ValidationError(validateResult.map((it) => it.message).join(','));
-    //   }
 
+export async function addImpressionsURL(req: any, url: string): Promise<number[]> {
     try {
+        const ipAddress = getIpAddress(req.headers['x-forwarded-for'], req.connection.remoteAddress);
         const visitor = await findVisitorByIp(ipAddress);
 
         if (visitor) {
