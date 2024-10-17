@@ -5,9 +5,10 @@ import CircularProgressWithLabel from './CircularProgressWithLabel';
 
 interface AccessibilityScoreCardProps {
   score: number;
+  otherwidget:boolean;
 }
 
-const AccessibilityScoreCard: React.FC<AccessibilityScoreCardProps> = ({ score }) => {
+const AccessibilityScoreCard: React.FC<AccessibilityScoreCardProps> = ({ score,otherwidget }) => {
   const scoreClass = score > 89 ? 'green' : 'red';
   const scoreDescription = score > 89 ? 'You are 90% + compliant with WCAG 2.1 AA!' : 'Websites with a score of 70% or lower are considered at high risk.';
 
@@ -15,7 +16,7 @@ const AccessibilityScoreCard: React.FC<AccessibilityScoreCardProps> = ({ score }
     <div className="accessibility-card">
       <div className="card-header">Accessibility Score</div>
       <div className='mb-8 mt-5'>
-        <CircularProgressWithLabel value={score} size={110} />
+        <CircularProgressWithLabel otherwidget={otherwidget} value={score} size={110} />
       </div>
       <p>{scoreDescription}</p>
     </div>

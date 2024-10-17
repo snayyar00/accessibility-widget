@@ -714,7 +714,12 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         // Access the result and respond accordingly
         if (responseData.result === "WebAbility") {
             res.status(200).json("Web Ability");
-        } else {
+
+        }
+        else if(responseData.result != "Not Found"){
+          res.status(200).json("true");
+        } 
+        else {
             res.status(200).json("false");
         }
 
