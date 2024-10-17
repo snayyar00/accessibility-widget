@@ -214,8 +214,11 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
           <h3 className="text-lg font-medium mb-2 text-primary">Domain Usage</h3>
           <LinearProgress value={(Number(planMetaData.usedDomains)/Number(planMetaData.maxDomains))*100} variant="determinate" className="h-2 mb-2" />
           <div className="flex justify-between text-sm text-muted-foreground">
-            <span className="font-medium">{planMetaData.usedDomains} used</span>
-            <span>{planMetaData.maxDomains} total</span>
+            {planMetaData.usedDomains ? (<>
+              <span className="font-medium">{planMetaData.usedDomains} used</span>
+              <span>{planMetaData.maxDomains} total</span>
+            </>):( <span className="font-medium">No Domains Added to Plan</span>)}
+            
           </div>
         </div>
         <div className="mt-4 p-4 bg-[#f5f7fb] rounded-lg hover:bg-secondary/30 transition-colors duration-300">
