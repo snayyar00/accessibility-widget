@@ -10,6 +10,7 @@ import { NavLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import { Card, CardContent, LinearProgress } from '@mui/material';
+import { APP_SUMO_BUNDLE_NAME } from '@/constants';
 
 
 const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptionalDomain}: any) => {
@@ -154,8 +155,14 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
 
   const handleSubscription = async (selectedDomain:any) => {
     setBillingLoading(true);
-    const url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
-    const bodyData = { email: userData.email, returnURL: window.location.href, planName: activePlan, billingInterval: isYearly ? "YEARLY" : "MONTHLY", domainId: selectedDomain.id, domainUrl: selectedDomain.url, userId: userData.id };
+    let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
+    const bodyData = { email: userData.email, returnURL: window.location.href, planName: activePlan, billingInterval: isYearly || activePlan == APP_SUMO_BUNDLE_NAME ? "YEARLY" : "MONTHLY", domainId: selectedDomain.id, domainUrl: selectedDomain.url, userId: userData.id };
+    console.log(activePlan);
+
+    if(activePlan.toLowerCase() == APP_SUMO_BUNDLE_NAME)
+    {
+      url = `${process.env.REACT_APP_BACKEND_URL}/create-appsumo-subscription`
+    }
 
     try {
         await fetch(url, {
