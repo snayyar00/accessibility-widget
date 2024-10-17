@@ -10,6 +10,7 @@ import PlanSetting from '../SiteDetail/PlanSetting';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import classNames from 'classnames';
+import { APP_SUMO_BUNDLE_NAME } from '@/constants';
 
 
 interface ModalProps {
@@ -156,9 +157,13 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
 
     const handleSubscription = async () => {
         setBillingLoading(true);
-        const url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
-        const bodyData = { email: userData.email, returnURL: window.location.href, planName: activePlan, billingInterval: isYearly ? "YEARLY" : "MONTHLY", domainId: addedDomain.id, domainUrl: addedDomain.url, userId: userData.id };
-
+        let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
+        const bodyData = { email: userData.email, returnURL: window.location.href, planName: activePlan, billingInterval: isYearly || activePlan.toLowerCase() == APP_SUMO_BUNDLE_NAME ? "YEARLY" : "MONTHLY", domainId: addedDomain.id, domainUrl: addedDomain.url, userId: userData.id };
+        
+        if(activePlan.toLowerCase() == APP_SUMO_BUNDLE_NAME)
+        {
+            url = `${process.env.REACT_APP_BACKEND_URL}/create-appsumo-subscription`
+        }
         try {
             await fetch(url, {
                 method: 'POST',

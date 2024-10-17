@@ -4,7 +4,6 @@ import logger from '~/utils/logger';
 import { GPTChunks } from './accessibilityIssues.service';
 import { rest } from 'lodash';
 const { GraphQLJSON } = require('graphql-type-json');
-const puppeteer = require('puppeteer');
 
 
 interface Status {
@@ -239,31 +238,33 @@ export const fetchAccessibilityReport = async (url: string) => {
   }
 };
 
-export const fetchSitePreview = async (url:string) => {
-  try {
-    const browser = await puppeteer.launch({
-      headless: true,
-      executablePath: '/snap/bin/chromium', 
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-    const page = await browser.newPage();
-    await page.setViewport({
-      width: 1920, 
-      height: 1080,
-    });
-    await page.goto(url);
-    const screenshotBuffer = await page.screenshot({ encoding: 'base64' });
-    await browser.close();
 
-    // Create Data URL from the screenshot buffer
-    const dataUrl = `data:image/png;base64,${screenshotBuffer.toString('base64')}`;
-    return dataUrl;
+export const fetchSitePreview = async (url: string) => {
+  try {
+      const apiUrl = `${process.env.SECONDARY_SERVER_URL}/screenshot/?url=${url}`;
+      
+      // Use fetch to request the screenshot
+      const response = await fetch(apiUrl);
+
+      // Check if the response is successful
+      if (!response.ok) {
+          throw new Error(`Failed to fetch screenshot. Status: ${response.status}`);
+      }
+
+      // Get the response as a buffer (binary data)
+      const buffer = await response.arrayBuffer();
+
+      // Convert the buffer to a base64 encoded string
+      const base64Image = Buffer.from(buffer).toString('base64');
+
+      // Create a Data URL from the base64 encoded string
+      const dataUrl = `data:image/png;base64,${base64Image}`;
+      return dataUrl;
   } catch (error) {
-    console.error('Error generating screenshot:', error);
-    return null;
+      console.error('Error generating screenshot:', error);
+      return null;
   }
 };
-
 
 
 // example usage:

@@ -4,9 +4,9 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 
-export default function CircularProgressWithLabel(props: CircularProgressProps & { value: number }) {
+export default function CircularProgressWithLabel(props: CircularProgressProps & { value: number,otherwidget:boolean }) {
   const theme = useTheme();
-  const { value } = props;
+  const { value,otherwidget } = props;
   const color = value >= 89 ? theme.palette.success.main : theme.palette.error.main;
 
   // Create a keyframe animation for the CircularProgress
@@ -41,8 +41,8 @@ export default function CircularProgressWithLabel(props: CircularProgressProps &
         variant="determinate"
         value={value}
         thickness={4}
-        color={value >= 89 ? 'success' : 'error'}
         sx={{
+          color: otherwidget ? 'orange' : value >= 89 ? theme.palette.success.main : theme.palette.error.main,
           animation: 'circular-rotate 0.5s linear',
           zIndex: 2,
           // Customize the animation here for the value progress bar
@@ -69,8 +69,9 @@ export default function CircularProgressWithLabel(props: CircularProgressProps &
         <Typography
           variant="h4"
           component="div"
-          color={value >= 89 ? 'green' : 'error'}
+          // color={value >= 89 ? 'green' : 'error'}
           sx={{
+            color: otherwidget ? 'orange' : value >= 89 ? 'green' : theme.palette.error.main,
             fontWeight: 'bold'
           }}
         >

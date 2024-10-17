@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import './Accessibility.css'; // Make sure your CSS file is updated with the styles for the accordion
 import { AiFillCloseCircle } from 'react-icons/ai';
 import { FaGaugeSimpleHigh } from 'react-icons/fa6';
-import { FaCheckCircle, FaCircle } from 'react-icons/fa';
+import { FaUniversalAccess, FaCheckCircle, FaCircle } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import getAccessibilityStats from '@/queries/accessibility/accessibility';
 import { useLazyQuery } from '@apollo/client';
@@ -27,9 +27,9 @@ import {
   CardMedia,
   CircularProgress,
   Input,
+  Typography, Box
 } from '@mui/material';
 import { TbReportSearch } from 'react-icons/tb';
-import { FaUniversalAccess } from 'react-icons/fa';
 
 import WebsiteScanAnimation from '@/components/Animations/WebsiteScanAnimation';
 import LeftArrowAnimation from '@/components/Animations/LeftArrowAnimation';
@@ -51,7 +51,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [issueType, setIssueType] = useState('Errors');
   const [siteImg, setSiteImg] = useState('');
   const [webabilityenabled,setwebabilityenabled] = useState(false);
+  const [otherWidgetEnabled,setOtherWidgetEnabled] = useState(false);
+  const [buttoncontrol,setbuttoncontrol] = useState(false);
   const [scriptCheckLoading,setScriptCheckLoading] = useState(false);
+  const [otherscore,setOtherScore] = useState(Math.floor(Math.random() * (88 - 80 + 1)) + 80);
   // const [accessibilityData, setAccessibilityData] = useState({});
 
   const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(
@@ -83,10 +86,19 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     if (enabled) {
       setEnabled(false);
       setScore(scoreBackup);
+      if(buttoncontrol)
+      {
+        setOtherWidgetEnabled(true);
+      }
+      
     } else {
       setEnabled(true);
       setScoreBackup(score);
       setScore(90);
+      if(buttoncontrol)
+      {
+        setOtherWidgetEnabled(false);
+      }
     }
   }
   const handleInputChange = (e: any) => {
@@ -141,6 +153,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const checkScript = async () => {
     setScriptCheckLoading(true);
     setwebabilityenabled(false);
+    setOtherWidgetEnabled(false);
+    setbuttoncontrol(false);
     try {
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/check-script`, {
         method: 'POST',
@@ -152,8 +166,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       const data = await response.json();
       if(data == 'Web Ability')
       {
-        console.log("Our script");
         setwebabilityenabled(true);
+      }
+      else if(data != 'false')
+      {
+        setOtherWidgetEnabled(true);
+        setbuttoncontrol(true);
       }
       setScriptCheckLoading(false);
       
@@ -193,7 +211,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           </button>
         </form>
       </div>
-      {(loading || scriptCheckLoading) ? (
+      {loading || scriptCheckLoading ? (
         <WebsiteScanAnimation className="mt-8" />
       ) : (
         <div className="accessibility-container">
@@ -208,24 +226,34 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     {score > 89 || webabilityenabled ? (
                       <FaCheckCircle size={90} color="green" />
                     ) : (
-                      <AiFillCloseCircle size={90} color="#ec4545" />
+                      <AiFillCloseCircle size={90} color={otherWidgetEnabled ?'orange':"#ec4545"}/>
                     )}
                   </div>
                   <div
                     className={`card-status ${
-                      score > 89 || webabilityenabled ? 'low' : 'not-compliant'
+                      score > 89 || webabilityenabled ? 'low' : otherWidgetEnabled ?'text-[#ffa500]':'not-compliant'
                     }`}
                   >
-                    {score > 89 || webabilityenabled ? 'Compliant' : 'Not Compliant'}
+                    {score > 89 || webabilityenabled || otherWidgetEnabled
+                      ? 'Compliant'
+                      : 'Not Compliant'}
                   </div>
                   <p>
                     {score > 89 || webabilityenabled
                       ? 'You achieved exceptionally high compliance status!'
-                      : "Your site doesn't comply with WCAG 2.1 AA."}
+                      : otherWidgetEnabled ? "Your Site may not comply with WCAG 2.1 AA.": "Your site doesn't comply with WCAG 2.1 AA."}
                   </p>
                 </div>
 
-                <AccessibilityScoreCard score={webabilityenabled ? ((Math.floor(Math.random() * (100 - 90 + 1)) + 90)):(score)} />
+                <AccessibilityScoreCard
+                  score={
+                    webabilityenabled
+                      ? Math.floor(Math.random() * (100 - 90 + 1)) + 90
+                      : otherWidgetEnabled ? otherscore
+                      : score
+                  }
+                  otherwidget={otherWidgetEnabled}
+                />
 
                 <div className="accessibility-card">
                   <h3 className="text-center font-bold text-sapphire-blue text-lg mb-3">
@@ -233,50 +261,93 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   </h3>
                   <div className="flex justify-center">
                     <FaGaugeSimpleHigh
-                      style={score > 89 || webabilityenabled ? { transform: 'scaleX(-1)' } : {}}
+                      style={
+                        score > 89 || webabilityenabled
+                          ? { transform: 'scaleX(-1)' }
+                          : {}
+                      }
                       size={90}
-                      color={score > 89 || webabilityenabled ? 'green' : '#ec4545'}
+                      color={
+                        score > 89 || webabilityenabled ? 'green' : otherWidgetEnabled ? 'orange': '#ec4545'
+                      }
                     />
                   </div>
-                  <div className={`card-risk ${score > 89 || webabilityenabled ? 'low' : 'high'}`}>
-                    {score > 89 || webabilityenabled ? 'Low' : 'High'}
-                  </div>
-                  {score > 89 || webabilityenabled ? (<p>
-                    Your Site is Secure from legal Action
-                  </p>) : (<p>
-                    Multiple violations may be exposing your site to legal
-                    action.
-                  </p>)}
-                  
-                </div>
-                
-                {webabilityenabled ? (null):(<div className="flex items-center justify-center mt-3">
-                  See your results with WebAbility! 🚀
-                  <button
-                    type="button"
-                    aria-pressed="false"
-                    aria-label="Toggle to see results with webability turned on."
-                    className={`${
-                      enabled ? 'bg-primary' : 'bg-dark-gray'
-                    } ml-6 relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-                    onClick={enableButton}
+                  <div
+                    className={`card-risk ${
+                      score > 89 || webabilityenabled ? 'low' : otherWidgetEnabled? 'medium': 'high'
+                    }`}
                   >
-                    <span
-                      aria-hidden="true"
+                    {score > 89 || webabilityenabled ? 'Low' : otherWidgetEnabled? 'Medium':'High'}
+                  </div>
+                  {score > 89 || webabilityenabled ? (
+                    <p>Your Site is Secure from legal Action</p>
+                  ) : (
+                    <p>
+                      Multiple violations may be exposing your site to legal
+                      action.
+                    </p>
+                  )}
+                </div>
+
+                {webabilityenabled ? (
+                  <Card sx={{ borderRadius: '10px', m: 2 }}>
+                    <CardContent>
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        mb={2}
+                      >
+                        <FaUniversalAccess color="#0133ed" fontSize={80} />
+                      </Box>
+                      <Typography
+                        className="font-extrabold"
+                        variant="h6"
+                        component="div"
+                        align="center"
+                        gutterBottom
+                      >
+                        Web Ability Widget Enabled
+                      </Typography>
+                      <Typography
+                        fontSize={'16px'}
+                        variant="body2"
+                        color="text.secondary"
+                        align="center"
+                      >
+                        This site is equipped with accessibility features to
+                        enhance your browsing experience.
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="flex items-center justify-center mt-3">
+                    See your results with WebAbility! 🚀
+                    <button
+                      type="button"
+                      aria-pressed="false"
+                      aria-label="Toggle to see results with webability turned on."
                       className={`${
-                        enabled ? 'translate-x-5' : 'translate-x-0'
-                      } bg inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`}
-                    />
-                  </button>
-                  <LeftArrowAnimation />
-                  {/* <div className="arrow-container justify-self-end ml-8">
+                        enabled ? 'bg-primary' : 'bg-dark-gray'
+                      } ml-6 relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                      onClick={enableButton}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`${
+                          enabled ? 'translate-x-5' : 'translate-x-0'
+                        } bg inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`}
+                      />
+                    </button>
+                    <LeftArrowAnimation />
+                    {/* <div className="arrow-container justify-self-end ml-8">
             <div className="arrow-animation">
               <div className="arrow-head"></div>
               <div className="arrow-body"></div>
             </div>
           </div> */}
-                </div>)}
-                
+                  </div>
+                )}
               </>
               <div>
                 <div className="text-center">

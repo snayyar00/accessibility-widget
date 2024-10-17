@@ -694,77 +694,41 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
-  function ensureHttps(url:string) {
-    // Check if the URL starts with 'http://' or 'https://'
-    if (!/^https?:\/\//i.test(url)) {
-      // If not, prepend 'https://'
-      return `https://${url}`;
-    }
-    return url;
-  }
-  async function checkScriptLoaded(url:string) {
+  app.post('/check-script', async (req, res) => {
     try {
-      // Ensure the URL starts with https
-      url = ensureHttps(url);
-      if (!url.startsWith('https://') && !url.startsWith('http://')) {
-        url = 'https://' + url;
-      }
-  
-      // Fetch the HTML content of the page
-      const response = await axios.get(url);
-      const html = response.data;
-  
-      // Extract all script tags using a regular expression
-      const scriptRegex = /<script[^>]+src="([^">]+)"/g;
-      let match;
-      const scripts = [];
-  
-      // Loop through all matches and collect script URLs
-      while ((match = scriptRegex.exec(html)) !== null) {
-        scripts.push(match[1]);
-      }
-  
-      // Check if the desired script is present
-      const ourScript = scripts.some((scriptUrl) =>
-        ['https://webability'].some((keyword) => scriptUrl.includes(keyword))
-      );
-  
-      // Check if any accessibility-related scripts are present
-      const scriptExists = scripts.some((scriptUrl) =>
-        ['access', 'accessibility', 'userway', 'accessibe'].some((keyword) => scriptUrl.includes(keyword))
-      );
-  
-      if (ourScript) {
-        return "Web Ability";
-      } else {
-        return scriptExists;
-      }
+        const { siteUrl } = req.body;
+
+        const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${siteUrl}`;
+
+        // Fetch the data from the secondary server
+        const response = await fetch(apiUrl);
+
+        // Check if the response is successful
+        if (!response.ok) {
+            throw new Error(`Failed to fetch the script check. Status: ${response.status}`);
+        }
+
+        // Parse the response as JSON
+        const responseData = await response.json();
+        
+        // Access the result and respond accordingly
+        if (responseData.result === "WebAbility") {
+            res.status(200).json("Web Ability");
+
+        }
+        else if(responseData.result != "Not Found"){
+          res.status(200).json("true");
+        } 
+        else {
+            res.status(200).json("false");
+        }
+
     } catch (error) {
-      console.error('Error fetching or processing the page:', error);
-      return false;
+        // Handle any errors that occur
+        console.error("Error checking script:", error.message);
+        res.status(500).json({ error: 'An error occurred while checking the script.' });
     }
-  }
-
-  app.post('/check-script',async(req,res)=>{
-    const {siteUrl} = req.body;
-
-    checkScriptLoaded(siteUrl)
-    .then(scriptExists => {
-      if(scriptExists == "Web Ability")
-      {
-        res.status(200).json("Web Ability");
-      }
-      else
-      {
-        console.log(scriptExists ? 'Target Site has Accessiblity Scripts' : 'Target Site does not have Accessiblity Scripts');
-        scriptExists ? (res.status(200).json("true")):(res.status(200).json("false"))
-      }
-    })
-    .catch(error => {
-      res.status(500).json("true");
-      console.error('Error:', error);
-    });
-  })
+});
 
   app.post('/check-customer',async (req,res)=>{
     const {email,userId} = req.body;
