@@ -182,6 +182,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                         setBillingLoading(false);
                         closeModal();
                         setPaymentView(false);
+                        window.location.reload();
                     });
                 })
                 .catch(error => {
