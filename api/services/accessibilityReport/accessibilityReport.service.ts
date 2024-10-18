@@ -144,11 +144,13 @@ interface htmlcsOutput {
 
 export const fetchAccessibilityReport = async (url: string) => {
   try {
-    const result = await getAccessibilityInformationPally(url);
-        
+
     if (!url.startsWith('https://') && !url.startsWith('http://')) {
       url = 'https://' + url;
     }
+    
+    const result = await getAccessibilityInformationPally(url);
+      
     const siteImg = await fetchSitePreview(url);
     if (siteImg) {
       result.siteImg = siteImg;
