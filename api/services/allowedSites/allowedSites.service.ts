@@ -31,6 +31,10 @@ export async function addSite(userId: number, url: string): Promise<string> {
         url: url
     }
     const response = await insertSite(data);
+    if(response == "You have already added this site.")
+    {
+        throw new Error("You have already added this site.");
+    }
     const site = await findSiteByURL(url)
 
     await createSitesPlan(userId,"Trial",TRIAL_PLAN_NAME,TRIAL_PLAN_INTERVAL,site.id,"")
