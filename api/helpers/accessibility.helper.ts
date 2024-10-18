@@ -1,6 +1,6 @@
 import { readAccessibilityDescriptionFromDb } from '../services/accessibilityReport/accessibilityIssues.service';
 
-const pa11y = require('pa11y');
+// const pa11y = require('pa11y');
 
 interface axeOutput {
   message: string;
@@ -114,12 +114,29 @@ export async function getAccessibilityInformationPally(domain: string) {
     totalElements: 0,
   };
 
-  const results = await pa11y(domain, {
-    includeNotices: true,
-    includeWarnings: true,
-    runners: ['axe', 'htmlcs'],
-    // screenCapture: `${__dirname}/pallycaptures/${domain}.png`
-  });
+  const apiUrl = `${process.env.PA11Y_SERVER_URL}/test`;
+  let results;
+  try {
+    // Make the POST request with the URL in the body
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ url: domain }),
+    });
+
+    // Check if the response is successful
+    if (!response.ok) {
+      throw new Error(`Failed to fetch screenshot. Status: ${response.status}`);
+    }
+
+    // Parse and return the response JSON
+    results = await response.json();
+  } catch (error) {
+    console.error('pally API Error');
+    return;
+  }
 
   results.issues.forEach((issue: any) => {
     if (issue.runner === 'axe') {
