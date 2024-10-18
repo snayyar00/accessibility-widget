@@ -20,7 +20,7 @@ export default function AddDomainModal({ setShowPopup, setReloadSites }: AddDoma
       // Assuming 'data' has a field to confirm the success of the mutation
       // You might need to adjust the field name according to your actual GraphQL response
       if (data.addSite.includes('success')) {
-        toast.success('Domain was successfully added to the database.');
+        toast.success('Domain was successfully added.');
         setReloadSites(true);
         setShowPopup(false);
       }
@@ -30,7 +30,7 @@ export default function AddDomainModal({ setShowPopup, setReloadSites }: AddDoma
       }
     },
     onError: (error) => {
-      toast.error('There was an error while adding the domain to the database.');
+      toast.error('There was an error while adding the domain.');
     }
   });
 

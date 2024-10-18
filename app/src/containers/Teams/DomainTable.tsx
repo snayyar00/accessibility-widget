@@ -27,18 +27,18 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
     onCompleted: (response) => {
       setReloadSites(true);
       if (response.deleteSite === 1){
-        toast.success('The domain was successfully deleted from the database.')
+        toast.success('The domain was successfully deleted.')
       }
     },
     onError: (error) => {
-      toast.error('There was an error while deleting the domain from the database.');
+      toast.error('There was an error while deleting the domain.');
     }
   })
   const [updateSiteMutation] = useMutation(updateSite, {
     onCompleted: (response) => {
       setReloadSites(true);
       if (response.changeURL.includes('Successfully')){
-        toast.success('The domain name was successfully updated in the database.')
+        toast.success('The domain name was successfully updated.')
       }
     },
     onError: (error) => {

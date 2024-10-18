@@ -21,7 +21,7 @@ const DropDown = ({ data, setReloadSites, selectedOption, setSelectedOption }: a
       setReloadSites(true);
     },
     onError: (error) => {
-      toast.error('There was an error while deleting the domain from the database.');
+      toast.error('There was an error while deleting the domain.');
     }
   })
 

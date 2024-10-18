@@ -82,15 +82,27 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
         }
         // const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)/, '');
         const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)?(www\.)?/, '');
-        setDomainName(sanitizedDomain);
-        await addSiteMutation({ variables: { url: sanitizedDomain } });
+        const response = await addSiteMutation({ variables: { url: sanitizedDomain } });
+        if(response.errors)
+        {
+            toast.error('The domain is already in use');
+        }
+        else{
+            toast.success('The domain was successfully added. Please Wait');
+            setDomainName(sanitizedDomain);
+            setBillingLoading(true);
+        }
     };
 
 
-    useEffect(() => {
+    useEffect( () => {
         if (addedDomain?.url !== "" && paymentView !== true) {
             if (activePlan !== "") {
-                handleSubscription();
+                let res = async ()=>{
+                    await handleSubscription();
+                    window.location.href = '/add-domain';
+                } 
+                res();
             }
             else {
                 setPaymentView(true);
@@ -207,15 +219,17 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
     const [addSiteMutation, { error: addSiteError, loading: addSiteLoading }] = useMutation(addSite, {
         onCompleted: () => {
             setReloadSites(true);
-            toast.success('The domain was successfully added to the database.Please Wait');
         },
+        onError:()=>{
+            setReloadSites(true);
+        }
     });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = async (e: FormEvent) => {
+    const handleSubmit = async (e: any) => {
         e.preventDefault();
         if (!isValidDomain(formData.domainName)) {
             toast.error('You must enter a valid domain name!');
@@ -223,8 +237,15 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
         }
         // const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)/, '');
         const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)?(www\.)?/, '');
-        await addSiteMutation({ variables: { url: sanitizedDomain } })
-        window.location.href = '/add-domain';
+        const response = await addSiteMutation({ variables: { url: sanitizedDomain } });
+        if(response.errors)
+        {
+            toast.error('The domain is already in use');
+        }
+        else{
+            toast.success('The domain was added successfully. Please Wait');
+            window.location.href = '/add-domain';
+        }
     };
     return (
         <>
@@ -266,11 +287,6 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                                         </button>
                                     </div>
                                 </form>
-                                {addSiteError ? (
-                                    toast.error('There was an error adding the domain to the database.')
-                                ) : (
-                                    <></>
-                                )}
                             </div>
                         </div>
                         <div className="sm:hidden col-span-6 px-4 flex justify-center rounded-br-lg" style={{ backgroundColor: "rgb(0 51 237)" }}>
