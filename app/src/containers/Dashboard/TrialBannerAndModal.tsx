@@ -201,6 +201,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                     // Handle error
                     toast.error('You have reached the maximum number of allowed domains for this plan');
                     console.error('There was a problem with the fetch operation:', error);
+                    setBillingLoading(false);
                     setPaymentView(false);
                     closeModal();
                 });

@@ -185,6 +185,7 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
             })
             .catch(error => {
                 // Handle error
+                setBillingLoading(false);
                 toast.error('You have reached the maximum number of allowed domains for this plan');
                 console.error('There was a problem with the fetch operation:', error);
             });
