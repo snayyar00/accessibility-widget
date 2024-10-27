@@ -27,7 +27,9 @@ import { getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_pl
 import { findPriceById } from './repository/prices.repository';
 import { APP_SUMO_COUPON_ID } from './constants/billing.constant';
 import axios from 'axios';
+import OpenAI from 'openai';
 // import run from './scripts/create-products';
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
 
 type ContextParams = {
   req: Request;
@@ -811,6 +813,43 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       res.status(500).json({ error: error.message });
     }
   });
+
+  app.post('/fix-with-ai', async (req, res) => {
+    const { heading, description, help, code } = req.body;
+  
+    const response = await openai.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: `
+            You are an expert in web accessibility, well-versed in WCAG and ADA guidelines. You understand various accessibility issues and the impact they have on users, especially those with disabilities. 
+            Your task is to analyze a provided code snippet and suggest specific corrections or enhancements based on given accessibility issues.
+            Here’s the structure of the response I want:
+  
+            {
+              correctedCode: Provide the corrected version of the code snippet based on the guidance given in heading, description, and help.
+            }
+  
+            Note: Only return the JSON object, with no additional explanation or introduction.
+          `,
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({
+            heading: heading,
+            description: description,
+            help: help,
+            code: code
+          }),
+        },
+      ],
+      model: 'gpt-4o-mini',
+    });
+  
+    const correctedResponse = response.choices[0].message.content.replace(/```json|```/g, '');
+    return res.status(200).json(JSON.parse(correctedResponse));
+  });
+  
 
 
 
