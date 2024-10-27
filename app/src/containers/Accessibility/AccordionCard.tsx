@@ -5,7 +5,7 @@ import AccordionSummary, { accordionSummaryClasses } from "@mui/joy/AccordionSum
 import React, { useState } from 'react';
 import CodeBlock from "./CodeBlock";
 
-export default function AccordionCard({ heading, noOfFails, description, selectors, help,elements }: any) {
+export default function AccordionCard({ heading, noOfFails, description, selectors, help,elements,expand }: any) {
   const [expanded, setExpanded] = useState(false);
 
 
@@ -32,7 +32,7 @@ export default function AccordionCard({ heading, noOfFails, description, selecto
         },
       }}
     >
-      <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)}>
+      <Accordion expanded={expanded || expand} onChange={() => setExpanded(!expanded)}>
         <AccordionSummary
           indicator=""
           sx={{
@@ -47,15 +47,16 @@ export default function AccordionCard({ heading, noOfFails, description, selecto
             Description
           </h4>
           <p className="m-1.5">{description}</p>
-          {elements[0] ? (
+          {elements && elements[0] ? (
             <>
-              <h4 className="text-xs font-medium text-dark-gray p-1.5 mt-0.5">
+            
+              {elements.map((element: any, index: any) => (
+                <><h4 className="text-xs font-medium text-dark-gray p-1.5 mt-0.5">
                 Code Snippet
               </h4>
-
-              {elements.map((element: any, index: any) => (
-                <CodeBlock heading={heading} description={description} help={help} key={index} element={element} index={index}/>
-              ))}
+              <CodeBlock heading={heading} description={description} help={help} key={index} element={element} index={index}/>
+              </>
+                ))}
             </>
           ) : null}
 

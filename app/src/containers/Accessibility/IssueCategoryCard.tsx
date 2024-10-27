@@ -23,7 +23,7 @@ function getObject(issueType: string, data: any) {
   return data.getAccessibilityReport.ByFunctions;
 }
 
-export default function IssueCategoryCard({ data, issueType }: any) {
+export default function IssueCategoryCard({ data, issueType,expand }: any) {
   const [functionData,setFunctionData] = useState([]); 
   useEffect(()=>{
     if(issueType === "Function")
@@ -65,7 +65,7 @@ export default function IssueCategoryCard({ data, issueType }: any) {
                     }}
                   >
                     {func['Errors'] && (
-                      <AccessibilityIssuesGroup issueObj={func['Errors']} />
+                      <AccessibilityIssuesGroup expand={expand} issueObj={func['Errors']} />
                     )}
                   </AccordionGroup>
                 </AccordionDetails>
@@ -104,6 +104,7 @@ export default function IssueCategoryCard({ data, issueType }: any) {
               >
                 {data && (
                   <AccessibilityIssuesGroup
+                    expand={expand}
                     issueObj={getObject(issueType, data)}
                   />
                 )}
