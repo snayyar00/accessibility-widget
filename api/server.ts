@@ -939,10 +939,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       const { cookies } = req;
       const bearerToken = cookies.token || null;
       const user = await getUserLogined(bearerToken, res);
-      const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
+      // const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
       return {
         user,
-        ip,
+        // ip,
         res,
       };
     },

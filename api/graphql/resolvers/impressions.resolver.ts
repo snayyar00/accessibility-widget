@@ -34,7 +34,7 @@ const resolvers = {
             (_, { siteId }, { ip }) => addImpressions(siteId, ip)
         ),
         addImpressionsURL: combineResolvers(
-            (_, { url }, { ip }) => addImpressionsURL(url, ip)
+            (_, { url, ip }) => addImpressionsURL(ip, url)
         ),
 
         registerInteraction: combineResolvers(

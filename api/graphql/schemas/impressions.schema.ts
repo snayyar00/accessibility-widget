@@ -39,7 +39,7 @@ export const ImpressionsSchema = gql`
 
 		extend type Mutation {
 				addImpression(siteId: Int!): [Int]
-				addImpressionsURL(url: String): [Int]
+				addImpressionsURL(url: String!, ip: String!): [Int]
 				registerInteraction(impressionId: Int!, interaction: String!): Int!
 		}
 		`;
