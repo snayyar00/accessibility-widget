@@ -8,7 +8,7 @@ import compileEmailTemplate from '~/helpers/compile-email-template';
 import generateRandomKey from '~/helpers/genarateRandomkey';
 import { normalizeEmail, stringToSlug } from '~/helpers/string.helper';
 import logger from '~/utils/logger';
-import sendMail from '~/libs/mail';
+import {sendMail} from '~/libs/mail';
 import { createMemberAndInviteToken, getListTeamMemberByAliasTeam } from '../../repository/team_members.repository';
 import { findUser } from '../../repository/user.repository';
 import { UserProfile } from '~/repository/user.repository';

@@ -6,7 +6,7 @@ import { createToken } from '~/repository/user_tokens.repository';
 import { generatePassword } from '~/helpers/hashing.helper';
 import compileEmailTemplate from '~/helpers/compile-email-template';
 import generateRandomKey from '~/helpers/genarateRandomkey';
-import sendMail from '~/libs/mail';
+import {sendMail} from '~/libs/mail';
 import { registerValidation } from '~/validations/authenticate.validation';
 import logger from '~/utils/logger';
 import { sign } from '~/helpers/jwt.helper';

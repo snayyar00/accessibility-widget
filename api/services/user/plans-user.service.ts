@@ -19,7 +19,7 @@ import { findUser } from '~/repository/user.repository';
 import formatDateDB from '~/utils/format-date-db';
 import { PERMISSION_PLAN } from '~/constants/billing.constant';
 import compileEmailTemplate from '~/helpers/compile-email-template';
-import sendMail from '~/libs/mail';
+import {sendMail} from '~/libs/mail';
 
 export function getUserPlan(userId: number): Promise<GetUserPlanByCustomerIdResponse> {
   return getUserPlanByUserId(userId);

@@ -41,7 +41,7 @@ This is an example email template:
 In order to send an email with Mailgun and MJML, you need to compile the email with helper function and then use Mailgun API to send email.
 
 ```jsx
-import sendMail from '~/libs/mail';
+import {sendMail} from '~/libs/mail';
 import compileEmailTemplate from '~/helpers/compile-email-template';
 
 const template = await compileEmailTemplate({

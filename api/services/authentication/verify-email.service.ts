@@ -8,7 +8,7 @@ import {
 import { activeUser, getUserbyId } from '~/repository/user.repository';
 import generateRandomKey from '~/helpers/genarateRandomkey';
 import compileEmailTemplate from '~/helpers/compile-email-template';
-import sendMail from '~/libs/mail';
+import {sendMail} from '~/libs/mail';
 import logger from '~/utils/logger';
 import { normalizeEmail } from '~/helpers/string.helper';
 import { SEND_MAIL_TYPE } from '~/constants/send-mail-type.constant';

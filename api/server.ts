@@ -17,7 +17,7 @@ import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
 import stripeHooks from './services/stripe/webhooks.servive';
 import { getIpAddress } from './helpers/uniqueVisitor.helper';
-import sendMail from './libs/mail';
+import {sendMail} from './libs/mail';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 import { fetchAccessibilityReport } from './services/accessibilityReport/accessibilityReport.service';
 import { findProductAndPriceByType, findProductById } from './repository/products.repository';

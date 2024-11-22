@@ -9,7 +9,7 @@ import { findUser } from '~/repository/user.repository';
 import formatDateDB from '~/utils/format-date-db';
 import { PERMISSION_SITE_PLAN } from '~/constants/billing.constant';
 import compileEmailTemplate from '~/helpers/compile-email-template';
-import sendMail from '~/libs/mail';
+import {sendMail} from '~/libs/mail';
 import { FindAllowedSitesProps, deleteSiteByURL, findSiteById, findSiteByUserIdAndSiteId } from '~/repository/sites_allowed.repository';
 import { SitesPlanData, deleteSitePlanById, deleteSitesPlanById, getSitePlanById, getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId, getSitesPlanByUserId, insertSitePlan, updateSitePlanById } from '~/repository/sites_plans.repository';
 import { deletePermissionBySitePlanId, insertMultiSitePermission } from '~/repository/sites_permission.repository';
@@ -112,7 +112,7 @@ export async function createSitesPlan(
     if (!site) {
       throw new ApolloError('Can not find any site');
     }
-
+    
     const product: FindProductAndPriceByTypeResponse = await findProductAndPriceByType(planName, billingType);
     if (!product) {
       throw new ApolloError('Can not find any plan');
