@@ -28,6 +28,7 @@ import { findPriceById } from './repository/prices.repository';
 import { APP_SUMO_COUPON_ID } from './constants/billing.constant';
 import axios from 'axios';
 import OpenAI from 'openai';
+import scheduleMonthlyEmails from './jobs/monthlyEmail';
 // import run from './scripts/create-products';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
 
@@ -45,6 +46,8 @@ const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerIntera
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 app.use(express.json());
+
+scheduleMonthlyEmails();
 
 function dynamicCors(req: Request, res: Response, next: NextFunction) {
   const corsOptions = {
