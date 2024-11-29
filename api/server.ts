@@ -27,6 +27,7 @@ import { getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_pl
 import { findPriceById } from './repository/prices.repository';
 import { APP_SUMO_COUPON_ID } from './constants/billing.constant';
 import axios from 'axios';
+import database from '~/config/database.config';
 // import run from './scripts/create-products';
 
 type ContextParams = {
@@ -894,6 +895,26 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
+  app.get('/health', async (req: Request, res: Response) => {
+    try {
+      await database.raw('SELECT 1');
+      
+      res.status(200).json({
+        status: 'healthy',
+        database: 'connected',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Health check failed:', error);
+      res.status(503).json({
+        status: 'unhealthy',
+        database: 'disconnected',
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   const serverGraph = new ApolloServer({
     uploads: false,
     schema: makeExecutableSchema({
@@ -1011,3 +1032,36 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     //   console.error('Error listing promotion codes:', error);
     // }
     // res.status(200).json({ error: "error.message",codes:promotionCodes });
+
+// Health check endpoint
+app.get('/health', async (req: Request, res: Response) => {
+  try {
+    // Test database connection using existing knex instance
+    await database.raw('SELECT 1');
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(503).json({
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Add connection error handler to existing database instance
+database.on('error', (error: Error) => {
+  console.error('Database connection error:', error);
+  // Attempt to reconnect
+  setTimeout(async () => {
+    try {
+      await database.raw('SELECT 1');
+      console.info('Database reconnected successfully');
+    } catch (reconnectError) {
+      console.error('Database reconnection failed:', reconnectError);
+    }
+  }, 5000); // Try to reconnect after 5 seconds
+});
