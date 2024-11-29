@@ -9,7 +9,6 @@ const resolvers = {
     ),
     validateToken: combineResolvers(
       (_, { url }) => {
-        console.log('Resolver: validateToken called with url:', url);
         return ValidateToken(url);
       },
     ),

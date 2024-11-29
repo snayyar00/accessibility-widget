@@ -56,9 +56,9 @@ export async function addImpressions(siteId: number, ipAddress: string): Promise
     }
 }
 
-export async function addImpressionsURL(req: any, url: string): Promise<number[]> {
+export async function addImpressionsURL(ipAddress: string, url: string): Promise<number[]> {
+  
     try {
-        const ipAddress = getIpAddress(req.headers['x-forwarded-for'], req.connection.remoteAddress);
         const visitor = await findVisitorByIp(ipAddress);
 
         if (visitor) {
