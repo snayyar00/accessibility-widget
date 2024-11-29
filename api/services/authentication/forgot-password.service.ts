@@ -3,7 +3,7 @@ import { findUser, getUserByIdAndJoinUserToken } from '~/repository/user.reposit
 import generateRandomKey from '~/helpers/genarateRandomkey';
 import { createToken, updateUserTokenById } from '~/repository/user_tokens.repository';
 import logger from '~/utils/logger';
-import sendMail from '~/libs/mail';
+import {sendMail} from '~/libs/mail';
 import compileEmailTemplate from '~/helpers/compile-email-template';
 import { SEND_MAIL_TYPE } from '~/constants/send-mail-type.constant';
 

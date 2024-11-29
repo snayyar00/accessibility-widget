@@ -12,6 +12,7 @@ type Props = {
     url?: string;
     teamName?: string;
     link?: string;
+    [key: string]: any;
   }
 };
 

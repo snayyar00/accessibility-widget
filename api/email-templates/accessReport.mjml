@@ -1,0 +1,93 @@
+<mjml>
+  <mj-head>
+    <mj-preview>Accessibility Report for {{url}}</mj-preview>
+    <mj-style inline="inline">
+      .card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; text-align: center; } .status-icon { font-size: 50px; margin-bottom: 10px; } .btn-primary { background-color: #007bff; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px; display: inline-block; }
+      .btn-primary:hover { background-color: #0056b3; }
+      .image-shadow {
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15); /* Add shadow */
+      border-radius: 8px; /* Optional: Add rounded corners */
+    }
+    </mj-style>
+  </mj-head>
+  <mj-body>
+    <!-- Header -->
+    <mj-section background-color="#f8f8f8" padding="20px">
+      <mj-column>
+        <mj-text font-size="20px" font-weight="bold" color="#007bff" align="center"> Accessibility Report for {{url}} </mj-text>
+        <mj-text font-size="16px" color="#666666" align="center"> Evaluate your site's compliance with WCAG 2.1 and ADA standards. </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Compliance Status -->
+    <mj-section background-color="#ffffff" padding="20px">
+      <mj-column>
+        <mj-text font-size="18px" font-weight="bold" color="#007bff" align="center"> Compliance Status </mj-text>
+        <mj-text font-size="16px" color="#333333" align="center"> {{statusDescription}} </mj-text>
+        <mj-image src="{{statusImage}}" css-class="image-shadow" alt="Status Icon" width="300px" />
+      </mj-column>
+    </mj-section>
+
+    <!-- Score Section -->
+    <mj-section background-color="#ffffff" padding="20px">
+      <mj-column>
+        <mj-text font-size="18px" font-weight="bold" color="#007bff" align="center"> Accessibility Score: {{score}}/100 </mj-text>
+        <mj-text font-size="14px" color="#666666" align="center"> This score represents your site's current accessibility compliance. </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Issues Section -->
+    <mj-section background-color="#f8f8f8" padding="20px">
+      <mj-column>
+        <mj-text font-size="18px" font-weight="bold" color="#007bff" align="center">
+          Identified Issues
+        </mj-text>
+        <mj-table>
+          <tr>
+            <th style="text-align:left;">Issue Type</th>
+            <th style="text-align:left;">Count</th>
+          </tr>
+          <tr>
+            <td>Errors</td>
+            <td>{{errorsCount}}</td>
+          </tr>
+          <tr>
+            <td>Warnings</td>
+            <td>{{warningsCount}}</td>
+          </tr>
+          <tr>
+            <td>Notices</td>
+            <td>{{noticesCount}}</td>
+          </tr>
+        </mj-table>
+      </mj-column>
+    </mj-section>
+
+    <!-- Recommendations -->
+    <mj-section background-color="#ffffff" padding="20px">
+      <mj-column>
+        <mj-text font-size="18px" font-weight="bold" color="#007bff" align="center"> Recommendations </mj-text>
+        <mj-text font-size="14px" color="#666666">
+          1. Review and fix the critical errors affecting compliance.<br />
+          2. Address warnings to improve user experience.<br />
+          3. Ensure regular audits to maintain compliance.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Call-to-Action -->
+    <mj-section background-color="#007bff" padding="20px">
+      <mj-column>
+        <mj-text font-size="18px" font-weight="bold" color="#ffffff" align="center"> Ready to improve your accessibility? </mj-text>
+        <mj-button href="{{reportLink}}" background-color="#0056b3" color="#ffffff"> View Full Report </mj-button>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f8f8f8" padding="20px" align="center">
+      <mj-column>
+        <mj-text font-size="12px" color="#666666" align="center"> © 2024 Web Ability. All Rights Reserved. </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

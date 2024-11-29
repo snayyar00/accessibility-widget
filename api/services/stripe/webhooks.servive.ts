@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import logger from '~/utils/logger';
 import { createUserPlan, invoicePaymentFailed, invoicePaymentSuccess, trialWillEnd } from '../user/plans-user.service';
 import Stripe from 'stripe';
-import sendMail from '~/libs/mail';
+import {sendMail} from '~/libs/mail';
 import { DataSubcription, createNewSubcription } from '~/services/stripe/subcription.service';
 import { createSitesPlan, deleteSitesPlan, deleteTrialPlan, updateSitesPlan } from '../allowedSites/plans-sites.service';
 import { updateAllowedSiteURL } from '~/repository/sites_allowed.repository';
@@ -351,7 +351,7 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
         let previous_plan;
         try {
           previous_plan = await getSitePlanBySiteId(Number(siteID));
-          await deleteTrialPlan(previous_plan.id);
+          await deleteTrialPlan(previous_plan?.id);
         } catch (error) {
           console.log('err = ', error);
         }

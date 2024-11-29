@@ -53,6 +53,14 @@ export function getSitesPlanByCustomerIdAndSubscriptionId(customerId: string, su
     .where(sitesPlansColumns.expiredAt, '>=', formatDateDB());
 }
 
+export function getActiveSitesPlan() {
+  return database(TABLE)
+    .select(sitesPlansColumns)
+    .whereNot({[sitesPlansColumns.subcriptionId]: "Trial"})
+    .where({ [sitesPlansColumns.isActive]: true})
+    .where(sitesPlansColumns.expiredAt, '>=', formatDateDB());
+}
+
 export function insertSitePlan(data: SitesPlanData, transaction: Knex.Transaction = null): Promise<number[]> {
   const query = database(TABLE).insert(data);
   if (!transaction) {

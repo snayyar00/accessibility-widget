@@ -35,7 +35,7 @@
 import { TransactionalEmailsApi, SendSmtpEmail, TransactionalEmailsApiApiKeys } from '@getbrevo/brevo';
 
 
-export default async function sendMail(to: string, subject: string, html: string) {
+async function sendMail(to: string, subject: string, html: string) {
   if (!to || to.trim() === '') {
     console.error('Recipient email address is missing or empty.');
     return false;
@@ -65,3 +65,40 @@ export default async function sendMail(to: string, subject: string, html: string
     return false;
   }
 }
+async function sendEmailWithRetries(
+  email: string,
+  template: string,
+  subject: string,
+  maxRetries = 3, // Default to 3 retries
+  delay = 2000 // Default to 2 seconds delay
+): Promise<void> {
+  let attempt = 0;
+
+  while (attempt < maxRetries) {
+    attempt += 1;
+
+    try {
+      console.log(`Attempt ${attempt} to send email to ${email}`);
+      await sendMail(email, subject, template); // Your sendMail function
+      console.log(`Email sent successfully to ${email}`);
+      return; // Exit the function if email is sent successfully
+    } catch (error) {
+      console.error(`Failed to send email on attempt ${attempt}:`, error);
+
+      // If max retries reached, throw the error
+      if (attempt >= maxRetries) {
+        console.error(`Failed to send email after ${maxRetries} attempts.`);
+        throw new Error(`Failed to send email to ${email} after ${maxRetries} attempts.`);
+      }
+
+      // Wait before retrying
+      const retryDelay = delay * Math.pow(2, attempt - 1); // Exponential backoff
+      console.log(`Retrying in ${retryDelay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+    }
+  }
+}
+
+
+export { sendMail, sendEmailWithRetries };
+
