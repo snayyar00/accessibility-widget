@@ -11,6 +11,8 @@ import { ReactComponent as UserIcon } from '@/assets/images/svg/user.svg';
 import {} from '@/containers/Dashboard/CustomChart';
 import Accessibility from '@/containers/Accessibility/Accessibility';
 import { ReactComponent as AccessibilityIcon} from '@/assets/images/svg/Accessibility.svg';
+import { MdBugReport } from 'react-icons/md';
+import ProblemReport from '@/containers/ProblemReport/ProblemReport';
 
 const routes = [
   // {
@@ -71,6 +73,14 @@ const routes = [
     exact:true,
     component: Accessibility,
     icon: <AccessibilityIcon />,
+    isSidebar:true,
+  },
+  {
+    path:'/problem-reports',
+    name:'Reports',
+    exact:true,
+    component: ProblemReport,
+    icon: <MdBugReport color='black' size={25}/>,
     isSidebar:true,
   },
 ];
