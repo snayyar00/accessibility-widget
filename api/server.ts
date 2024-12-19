@@ -31,7 +31,7 @@ import OpenAI from 'openai';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
 import database from '~/config/database.config';
 import { addProblemReport, getProblemReportsBySiteId, problemReportProps } from './repository/problem_reports.repository';
-import { findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
+import { FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
 
 // import run from './scripts/create-products';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
@@ -46,7 +46,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
 const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, 'https://www.webability.io'];
-const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction'];
+const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction','reportProblem'];
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 app.use(express.json());
@@ -858,10 +858,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 
   app.post('/report-problem',async(req,res)=>{
-    const { site_id, issue_type, description, reporter_email } = req.body;
-
+    const { site_url, issue_type, description, reporter_email } = req.body;
     try {
-      const problem:problemReportProps = {site_id, issue_type, description, reporter_email};
+      const site:FindAllowedSitesProps = await findSiteByURL(site_url);
+      const problem:problemReportProps = {site_id:site.id, issue_type:issue_type, description:description, reporter_email:reporter_email};
 
       await addProblemReport(problem);
 
