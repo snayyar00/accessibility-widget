@@ -16,6 +16,7 @@ export const TABLES = {
   affectedDisability: 'affected_disability',
   sitesPlans: 'sites_plans',
   sitePermissions: 'sites_permissions',
+  problemReports:'problem_reports',
 };
 
 export const DEFAULT_LIMIT = 20;

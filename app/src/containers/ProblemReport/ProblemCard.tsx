@@ -17,17 +17,17 @@ const ProblemCard: React.FC<{ problem: Problem }> = ({ problem }) => {
     >
       <div className="p-4 sm:p-5 md:p-6">
         <div className="flex items-center mb-3 sm:mb-4">
-          {problem.type === 'site bug' ? (
-            <FaBug className="text-red-500 text-xl sm:text-2xl mr-2 sm:mr-3 flex-shrink-0" />
+          {problem.issue_type === 'bug' ? (
+            <FaBug color='red' className="text-red-500 text-xl sm:text-2xl mr-2 sm:mr-3 flex-shrink-0" />
           ) : (
-            <FaUniversalAccess className="text-blue-500 text-xl sm:text-2xl mr-2 sm:mr-3 flex-shrink-0" />
+            <FaUniversalAccess color='blue' className="text-blue-500 text-xl sm:text-2xl mr-2 sm:mr-3 flex-shrink-0" />
           )}
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 capitalize">{problem.type}</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 capitalize">{problem.issue_type}</h2>
         </div>
         <div className="flex items-center text-gray-600 mb-2 sm:mb-3">
           <HiOutlineGlobeAlt className="mr-2 flex-shrink-0" />
-          <a href={problem.siteUrl} target="_blank" rel="noopener noreferrer" className="text-sm sm:text-base text-indigo-600 hover:text-indigo-800 transition-colors duration-200 truncate">
-            {problem.siteUrl}
+          <a href={`https://${problem.site_url}`} target="_blank" rel="noopener noreferrer" className="text-sm sm:text-base text-indigo-600 hover:text-indigo-800 transition-colors duration-200 truncate">
+            {problem.site_url}
           </a>
         </div>
         <p className={`text-sm sm:text-base text-gray-700 mb-3 sm:mb-4 transition-all duration-300 ease-in-out ${isExpanded ? 'line-clamp-none' : 'line-clamp-3'}`}>
@@ -35,7 +35,7 @@ const ProblemCard: React.FC<{ problem: Problem }> = ({ problem }) => {
         </p>
         <div className="flex items-center text-gray-600">
           <MdEmail className="mr-2 flex-shrink-0" />
-          <span className="text-sm sm:text-base truncate">{problem.reporterEmail}</span>
+          <span className="text-sm sm:text-base truncate">{problem.reporter_email}</span>
         </div>
       </div>
     </div>

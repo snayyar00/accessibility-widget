@@ -30,6 +30,8 @@ import axios from 'axios';
 import OpenAI from 'openai';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
 import database from '~/config/database.config';
+import { addProblemReport, getProblemReportsBySiteId, problemReportProps } from './repository/problem_reports.repository';
+import { findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
 
 // import run from './scripts/create-products';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
@@ -854,11 +856,45 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     const correctedResponse = response.choices[0].message.content.replace(/```json|```/g, '');
     return res.status(200).json(JSON.parse(correctedResponse));
   });
+
+  app.post('/report-problem',async(req,res)=>{
+    const { site_id, issue_type, description, reporter_email } = req.body;
+
+    try {
+      const problem:problemReportProps = {site_id, issue_type, description, reporter_email};
+
+      await addProblemReport(problem);
+
+      res.status(200).send('Success');
+      
+    } catch (error) {
+      res.status(500).send('Cannot Save Report');
+    }
+
+  })
+
+  app.post('/get-problem-reports', async (req, res) => {
+    const { user_id } = req.body;
+    try {
+      // Fetch sites by user ID
+      const Sites: IUserSites[] = await findSitesByUserId(user_id);
   
-
-
-
-
+      // Use Promise.all to fetch problem reports for all sites concurrently
+      const allReports = (
+        await Promise.all(
+          Sites.map(async (site: IUserSites) => {
+            const reports = await getProblemReportsBySiteId(site.id);
+            return reports; // Return reports for each site
+          })
+        )
+      ).flat(); // Flatten the array of arrays into a single array
+  
+      res.status(200).send(allReports);
+    } catch (error) {
+      console.error('Error fetching problem reports:', error);
+      res.status(500).send('Cannot fetch reports');
+    }
+  });  
 
   // app.get('/webAbilityV1.0.min.js', (req, res) => {
   //   res.sendFile(path.join(__dirname, 'webAbilityV1.0.min.js'));
