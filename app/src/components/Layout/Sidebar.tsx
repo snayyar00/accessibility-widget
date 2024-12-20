@@ -128,7 +128,7 @@ const Sidebar = ({ options, setReloadSites, selectedOption, setSelectedOption }:
                     to={route.path}
                     activeClassName="active"
                     onClick={closeSidebar}
-                    className="w-full h-full pl-[27px] border-l-2 border-solid border-transparent flex items-center [&.active]:rounded-r-[10px] [&.active]:rounded-b-[10px] [&.active]:rounded-t-[0px] [&.active]:rounded-l-[0px] [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>svg_*[fill]]:fill-primary [&.active>svg_*[stroke]]:stroke-primary"
+                    className="w-full h-full pl-[27px] border-l-2 border-solid border-transparent flex items-center [&.active]:rounded-r-[10px] [&.active]:rounded-b-[10px] [&.active]:rounded-t-[0px] [&.active]:rounded-l-[0px] [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>svg_*[stroke]]:stroke-primary"
                   >
                     {route.icon}
                     <span className="menu-text text-[18px] leading-[22px] text-white-blue ml-[10px]">
