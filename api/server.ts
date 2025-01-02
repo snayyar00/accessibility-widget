@@ -862,6 +862,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     try {
       const domain = site_url.replace(/^(https?:\/\/)?(www\.)?/, '');
       const site:FindAllowedSitesProps = await findSiteByURL(domain);
+      if(!site)
+      {
+        throw new Error("Site not found");
+      }
       const problem:problemReportProps = {site_id:site.id, issue_type:issue_type, description:description, reporter_email:reporter_email};
 
       await addProblemReport(problem);
@@ -869,6 +873,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       res.status(200).send('Success');
       
     } catch (error) {
+      console.error("Error reporting problem:", error);
       res.status(500).send("Cannot report problem");
     }
 
