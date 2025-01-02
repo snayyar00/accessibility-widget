@@ -869,7 +869,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       res.status(200).send('Success');
       
     } catch (error) {
-      res.status(500).send("Cannot Send Report");
+      res.status(500).send("Cannot report problem");
     }
 
   })
