@@ -860,7 +860,8 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.post('/report-problem',async(req,res)=>{
     const { site_url, issue_type, description, reporter_email } = req.body;
     try {
-      const site:FindAllowedSitesProps = await findSiteByURL(site_url);
+      const domain = site_url.replace(/^(https?:\/\/)?(www\.)?/, '');
+      const site:FindAllowedSitesProps = await findSiteByURL(domain);
       const problem:problemReportProps = {site_id:site.id, issue_type:issue_type, description:description, reporter_email:reporter_email};
 
       await addProblemReport(problem);
@@ -868,7 +869,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       res.status(200).send('Success');
       
     } catch (error) {
-      res.status(500).send(error);
+      res.status(500).send("Cannot Send Report");
     }
 
   })
