@@ -91,6 +91,14 @@ export async function findImpressionsSiteId(site_id: number): Promise<impression
 		.where('site_id', site_id);
 }
 
+export async function updateImpressionProfileCount(id: number, profileCounts: any): Promise<number> {
+	return database(TABLE)
+	  .where('id', id)
+	  .update({
+		profileCounts: JSON.stringify(profileCounts),
+	  });
+}  
+
 export async function updateImpressions(id: number, interaction: string): Promise<number> {
 	let field;
 	if (interaction === 'widgetClosed') {

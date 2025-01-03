@@ -3,7 +3,7 @@ import logger from '~/utils/logger';
 import { FindAllowedSitesProps } from '~/repository/sites_allowed.repository';
 
 import { findVisitorByIp } from '~/repository/visitors.repository';
-import { findImpressionsSiteId, insertImpressions, updateImpressions, findImpressionsURL, insertImpressionURL, findEngagementURLDate, findImpressionsURLDate } from '~/repository/impressions.repository';
+import { findImpressionsSiteId, insertImpressions, updateImpressions, findImpressionsURL, insertImpressionURL, findEngagementURLDate, findImpressionsURLDate, updateImpressionProfileCount } from '~/repository/impressions.repository';
 import { findSite } from '../allowedSites/allowedSites.service';
 import { addNewVisitor } from '../uniqueVisitors/uniqueVisitor.service';
 
@@ -147,6 +147,31 @@ export async function addInteraction(siteId: number, interaction: string) {
     catch (e) {
         logger.error(e);
         throw e;
+    }
+}
+
+export async function addProfileCount(impressionId: number, profileCount: any): Promise<{ success: boolean; message: string }> {
+    try {
+        const updatedRows = await updateImpressionProfileCount(impressionId, profileCount);
+
+        if (updatedRows > 0) {
+            return {
+                success: true,
+                message: 'Profile counts updated successfully',
+            };
+        } else {
+            return {
+                success: false,
+                message: 'No rows were updated. Invalid impression ID.',
+            };
+        }
+    } catch (e) {
+        console.error('Error updating profile count:', e);
+        logger.error(e);
+        return {
+            success: false,
+            message: 'An error occurred while updating profile counts.',
+        };
     }
 }
 
