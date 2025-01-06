@@ -1,15 +1,11 @@
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import fetchDashboardQuery from '@/queries/dashboard/fetchDashboardQuery';
 import { useQuery } from '@apollo/client';
-import { CircularProgress } from '@mui/material';
-import DashboardCard from './DashboardCard';
-import ExportButton from './ExportButton';
-import DropdownSelector from './DropdownSelector';
-import CustomChart from './CustomChart';
 import './Dashboard.css';
-import ImpressionCard from './ImpressionCard';
 import TrialBannerAndModal from './TrialBannerAndModal';
+import AnalyticsDashboard from './Analytics';
+import AnalyticsDashboardSkeleton from './skeletonanalytics';
 
 
 interface ChartData {
@@ -59,6 +55,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
   const [paymentView, setPaymentView] = useState(false);
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
 
   const getStartOfWeek = () => {
     const currentDate = new Date();
@@ -265,97 +262,69 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
 
   return (
     <>
-      {loading && <div className='flex items-center justify-center h-screen w-screen'><CircularProgress size={150} /></div>}
-      {domainData ? (
+      {loading ? (
+        <><div className="flex flex-col items-start justify-center w-full mb-8 pl-0 pr-3">
+        <TrialBannerAndModal
+          allDomains={allDomains}
+          setReloadSites={setReloadSites}
+          isModalOpen={isModalOpen}
+          closeModal={closeModal}
+          openModal={openModal}
+          paymentView={paymentView}
+          setPaymentView={setPaymentView}
+        />
+      </div><AnalyticsDashboardSkeleton/></>
+        
+      ):(
+      <>{domainData ? (
         <div className="flex gap-3">
-          <p className={`p-1.5 text-xs font-semibold rounded w-fit whitespace-no-wrap ${applyStatusClass(domainData.expiredAt)}`}>{getDomainStatus(domainData.expiredAt)}</p>
-          <p className="text-gray-900 whitespace-no-wrap">{domainData.expiredAt ? (new Date(parseInt(domainData.expiredAt))).toLocaleString() ?? "-" : "-"}</p>
+          <p
+            className={`p-1.5 text-xs font-semibold rounded w-fit whitespace-no-wrap ${applyStatusClass(
+              domainData.expiredAt,
+            )}`}
+          >
+            {getDomainStatus(domainData.expiredAt)}
+          </p>
+          <p className="text-gray-900 whitespace-no-wrap">
+            {domainData.expiredAt
+              ? new Date(parseInt(domainData.expiredAt)).toLocaleString() ?? '-'
+              : '-'}
+          </p>
         </div>
-      ): (
+      ) : (
         <p>-</p>
       )}
-      {!loadingAnimation &&
+      {!loadingAnimation && (
         <div className="container py-4">
           <div className="flex flex-col items-start justify-center w-full mb-8 pl-0 pr-3">
-          <TrialBannerAndModal allDomains={allDomains} setReloadSites={setReloadSites} isModalOpen={isModalOpen} closeModal={closeModal} openModal={openModal} paymentView={paymentView} setPaymentView={setPaymentView}/>
+            <TrialBannerAndModal
+              allDomains={allDomains}
+              setReloadSites={setReloadSites}
+              isModalOpen={isModalOpen}
+              closeModal={closeModal}
+              openModal={openModal}
+              paymentView={paymentView}
+              setPaymentView={setPaymentView}
+            />
           </div>
-
-          {/* Dropdown, Plus Button, and ExportButton */}
-          <div className="ml-4 flex gap-4 mb-4">
-            <button
-              type="button"
-              className="button-class mt-5"
-              onClick={() => console.log('Button clicked')}
-              aria-label="Add"
-            >
-              {/* SVG for plus button */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 4.5v15m7.5-7.5h-15"
-                />
-              </svg>
-            </button>
-
-            <ExportButton />
-            {/* <DropdownSelector granularity={granularity} setGranularity={setGranularity} /> */}
-            <DropdownSelector
-              granularity={granularity}
-              onGranularityChange={setGranularity}
+          <div>
+            <AnalyticsDashboard
+              impressionCount={impressions}
+              widgetOpenCount={widgetOpened}
+              visitorCount={uniqueVisitors}
+              chartData={chartData}
               setStartDate={setStartDate}
               weekStart={getStartOfWeek()}
               monthStart={getStartOfMonth()}
               yearStart={getStartOfYear()}
+              timeRange={timeRange}
+              setTimeRange={setTimeRange}
+              profileCounts={profileCounts}
+              loading={loading}
             />
           </div>
-
-          {/* Cards Section */}
-
-          <div className="pl-10 cards-row">
-            {/* Render first row of DashboardCards */}
-            {/* <div className="cards-row flex"> */}
-            {cards.slice(0, 4).map((card) => (
-              <DashboardCard
-                key={card.id}
-                heading={card.heading}
-                count={card.count}
-                countType={card.countType}
-              />
-            ))}
-            {/* </div> */}
-            {/* Render second row of DashboardCards */}
-            {/* <div className="cards-row flex"> */}
-            
-            {cards.slice(4, 9).map((card) => (
-              <DashboardCard
-                key={card.id}
-                heading={card.heading}
-                count={card.count}
-                countType={card.countType}
-              />
-            ))}
-            {/* </div> */}
-
-          </div>
-          {Object.keys(profileCounts).length ? ( <div className="cards-row">
-              <ImpressionCard
-                heading={"Accessiblity Profiles"}
-                profileCounts={profileCounts}
-              />
-          </div>):(null)}
-          <div>
-            <CustomChart data={chartData} />
-          </div>
         </div>
-      }
+      )}</>)} 
     </>
   );
 };
