@@ -1,6 +1,6 @@
 import { combineResolvers } from 'graphql-resolvers';
 
-import { addImpressions, addImpressionsURL, addInteraction, findImpressionsBySiteId, findImpressionsByURL, findImpressionsByURLAndDate, getEngagementRates} from '~/services/Impressions/impressions.service';
+import { addImpressions, addImpressionsURL, addInteraction, addProfileCount, findImpressionsBySiteId, findImpressionsByURL, findImpressionsByURLAndDate, getEngagementRates} from '~/services/Impressions/impressions.service';
 
 const resolvers = {
     Query: {
@@ -36,7 +36,9 @@ const resolvers = {
         addImpressionsURL: combineResolvers(
             (_, { url, ip }) => addImpressionsURL(ip, url)
         ),
-
+        updateImpressionProfileCounts:combineResolvers(
+            (_, { impressionId, profileCounts}) => addProfileCount(impressionId, profileCounts)
+        ),
         registerInteraction: combineResolvers(
             (_, { impressionId, interaction}, ) => addInteraction(impressionId, interaction)
         ),

@@ -51,6 +51,19 @@ module.exports = {
       'boxShadow': {
         'xxl': '0px 2px 4px rgba(28, 41, 90, 0.0367952)',
         'xsl': '0px 4px 8px rgba(28, 41, 90, 0.0367952)'
+      },
+      animation: {
+        pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+      keyframes: {
+        pulse: {
+          '0%, 100%': {
+            opacity: '1',
+          },
+          '50%': {
+            opacity: '.5',
+          },
+        },
       }
     },
     keyframes: {
