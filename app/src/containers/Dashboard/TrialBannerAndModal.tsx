@@ -30,17 +30,10 @@ interface DomainFormData {
 const Modal: React.FC<ModalProps> = ({ isStripeCustomer,isOpen, onClose, children, paymentView,optionalDomain,domainCount }) => {
     if (!isOpen) return null;
 
-
-    const responsiveClass = classNames({
-        'ms:w-[390px] mm:w-[440px] ml:w-[490px]': optionalDomain,
-        'ms:w-[350px] mm:w-[410px] ml:w-[430px]': !optionalDomain,
-        // Add more responsive classes as needed
-    });
     return (
-        <div className={`${responsiveClass} md:w-full  absolute top-0 left-0 right-0 ${domainCount >= 8 ? 'bottom-0':''} ${paymentView ? '' : 'bottom-0'} flex items-center justify-center z-50 bg-black bg-opacity-50`}
-        // style={{width: window.outerWidth <= 425 ? optionalDomain ? "490px": "410px":"100%"}}
+        <div className={`fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50`}
         >
-            <div className="bg-white rounded-lg w-3/4 overflow-y-auto top-0">
+            <div className="bg-white rounded-lg w-3/4 overflow-y-auto max-h-[95vh]">
                 <div className="grid grid-cols-12 justify-evenly">
                     <div className='sm:col-span-9 col-span-6 pl-4 pt-2'>
                         <LogoIcon />
@@ -296,10 +289,10 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                       onSubmit={handleSubmit}
                       className="add-domain-form"
                     >
-                      <div className="flex justify-end pb-3 pt-4 md:pt-56">
+                      <div className="sm:flex-col md:flex-row flex justify-end pb-3 pt-4">
                         <button
                           type="button"
-                          className="py-3 mr-4 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-[45%] sm:my-4 sm:w-full transition duration-300"
+                          className="py-3 mr-4 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-[45%] sm:w-full transition duration-300"
                           onClick={showPaymentModal}
                           disabled={addSiteLoading || billingLoading}
                         >
@@ -324,8 +317,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                   </div>
                 </div>
                 <div
-                  className="sm:hidden col-span-6 px-4 flex justify-center rounded-br-lg"
-                  style={{ backgroundColor: 'rgb(0 51 237)' }}
+                  className="sm:hidden col-span-6 px-4 flex justify-center rounded-br-lg bg-[#0033ED]"
                 >
                   <div className="flex flex-col justify-center items-center">
                     <img
