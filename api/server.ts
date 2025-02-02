@@ -115,13 +115,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   })
 
-  app.post('/billing-portal-session',async (req,res)=>{
-    const {email,returnURL} = req.body;
+  app.post('/billing-portal-session', async (req, res) => {
+    const { email, returnURL } = req.body;
 
     // Search for an existing customer by email
     const customers = await stripe.customers.list({
       email: email,
-      limit: 1
+      limit: 1,
     });
 
     let customer;
@@ -130,118 +130,112 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     if (customers.data.length > 0) {
       customer = customers.data[0];
       // console.log("customer exists = ",customer);
+    } else {
+      customer = await stripe.customers.create({
+        email: email,
+      });
     }
 
     const subscriptions = await stripe.subscriptions.list({
       customer: customer.id,
-      status:"active"
+      status: 'active',
     });
 
-    if(subscriptions.data.length !== 0)
-    {
-      const current_sub_domains = Number(subscriptions.data[0].metadata['usedDomains']);
+    if (subscriptions.data.length !== 0) {
 
-    const prices = await stripe.prices.list({
-      limit: 50, // Optional: limit the number of results per request
-    });
-
-    const usablePrices = prices.data.filter((price: Stripe.Price) => {
-      if (price?.transform_quantity?.divide_by) {
-        return Number(price.transform_quantity.divide_by) > current_sub_domains;
-      }
-      return false;
-    });
-
-    const productPriceArray: any = [];
-    const productMap = new Map();
-
-    usablePrices.forEach((price: Stripe.Price) => {
-      if (!productMap.has(price.product)) {
-        productMap.set(price.product, []);
-      }
-      productMap.get(price.product).push(price);
-    });
-
-    // Convert map to array of dictionaries
-    productMap.forEach((prices, productId) => {
-      productPriceArray.push({
-        product: productId,
-        prices: prices.map((price: Stripe.Price) => price.id),
+      const prices = await stripe.prices.list({
+        limit: 50, // Optional: limit the number of results per request
       });
-    });
 
-    const configurations = await stripe.billingPortal.configurations.list({
-      is_default: true,
-    });
+      let usablePrices = prices.data.map((price: Stripe.Price) => {
+        if (price?.tiers_mode && price?.tiers_mode === 'graduated' && price?.recurring.usage_type === 'licensed') {
+          return price;
+        }
+        return null; // Exclude prices without tiers
+      });
 
-    // console.log(productPriceArray);
-    if(productPriceArray.length)
-    {
-      const configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
-        features: {
-          subscription_update: {
-            enabled: true,
-            default_allowed_updates: ['price'], // Allow price updates
-            products: productPriceArray,
+      // Filter out null values
+      usablePrices = usablePrices.filter((price: Stripe.Price) => price !== null);
+
+      const productPriceArray: any = [];
+      const productMap = new Map();
+
+      usablePrices.forEach((price: Stripe.Price) => {
+        if (!productMap.has(price.product)) {
+          productMap.set(price.product, []);
+        }
+        productMap.get(price.product).push(price);
+      });
+
+      // Convert map to array of dictionaries
+      productMap.forEach((prices, productId) => {
+        productPriceArray.push({
+          product: productId,
+          prices: prices.map((price: Stripe.Price) => price.id),
+        });
+      });
+
+      const configurations = await stripe.billingPortal.configurations.list({
+        is_default: true,
+      });
+
+      // console.log(productPriceArray);
+      if (productPriceArray.length) {
+        const configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
+          features: {
+            subscription_update: {
+              enabled: true,
+              default_allowed_updates: ['price'], // Allow price updates
+              products: productPriceArray,
+            },
           },
-        },
-      });
-  
+        });
+
+        try {
+          const session = await stripe.billingPortal.sessions.create({
+            customer: customer.id,
+            return_url: returnURL,
+            configuration: configuration.id,
+          });
+          return res.status(200).json(session);
+        } catch (error) {
+          console.log(error);
+          return res.status(500);
+        }
+      } else {
+        const configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
+          features: {
+            subscription_update: {
+              enabled: false,
+            },
+          },
+        });
+
+        try {
+          const session = await stripe.billingPortal.sessions.create({
+            customer: customer.id,
+            return_url: returnURL,
+            configuration: configuration.id,
+          });
+          return res.status(200).json(session);
+        } catch (error) {
+          console.log(error);
+          return res.status(500);
+        }
+      }
+    } else {
       try {
         const session = await stripe.billingPortal.sessions.create({
           customer: customer.id,
           return_url: returnURL,
-          configuration: configuration.id,
         });
         return res.status(200).json(session);
       } catch (error) {
         console.log(error);
         return res.status(500);
       }
-
     }
-    else
-    {
-
-      const configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
-        features: {
-          subscription_update: {
-            enabled: false,
-          },
-        },
-      });
-  
-      try {
-        const session = await stripe.billingPortal.sessions.create({
-          customer: customer.id,
-          return_url: returnURL,
-          configuration: configuration.id,
-        });
-        return res.status(200).json(session);
-      } catch (error) {
-        console.log(error);
-        return res.status(500);
-      }
-
-    }
-
-    
-    }
-    else
-    { 
-      try {
-        const session = await stripe.billingPortal.sessions.create({
-          customer:customer.id,
-          return_url:returnURL,
-        });
-        return res.status(200).json(session);
-      } catch (error) {
-        console.log(error);
-        return res.status(500);
-      }
-
-    }
-  })
+  });
 
   app.post('/validate-coupon', async (req, res) => {
     const { couponCode } = req.body;
@@ -272,9 +266,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       res.status(500).json({ error: error.message });
     }
   });
+  
   app.post('/create-checkout-session',async (req,res)=>{
     const { email,planName,billingInterval,returnUrl,domainId,userId,domain} = req.body;
-     
+    
     const price = await findProductAndPriceByType(planName,billingInterval);
 
     try {
@@ -303,13 +298,15 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         await stripe.subscriptions.del(subscription.id);
       }
 
+      let price_data = await stripe.prices.retrieve(String(price.price_stripe_id),{expand:['tiers']});
+
       // Create the checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         mode: 'subscription',
         line_items: [{
           price: price.price_stripe_id,
-          quantity: 1,
+          quantity: price_data.tiers[0].up_to,
         }],
         customer: customer.id,
         allow_promotion_codes: true,
@@ -326,7 +323,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             userId:userId,
             updateMetaData:"true",
           },
-          description:`Plan for ${domain}`
+          description:`Plan for ${domain}`,
         }
       });
 
@@ -502,19 +499,19 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         no_sub=false;
       }
 
-      if(no_sub)
+      if(no_sub) // Update this shit aswell
       {   
-        let price_data = await stripe.prices.retrieve(String(price.price_stripe_id));
+        let price_data = await stripe.prices.retrieve(String(price.price_stripe_id),{expand:['tiers']});
 
         subscription = await stripe.subscriptions.create({
         customer: customer.id,
-        items: [{ price: price.price_stripe_id }],
+        items: [{ price: price.price_stripe_id,quantity:price_data.tiers[0].up_to }],
         expand: ['latest_invoice.payment_intent'],
         default_payment_method:customer.invoice_settings.default_payment_method,
         metadata: {
           domainId: domainId,
           userId:userId,
-          maxDomains:Number(price_data.transform_quantity['divide_by']),
+          maxDomains:price_data.tiers[0].up_to,
           usedDomains:1,
         },
         description:`Plan for ${domainUrl}`
@@ -541,10 +538,46 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
         if ('usedDomains' in subscription.metadata) {
           const UsedDomains = Number(subscription.metadata['usedDomains']);
+          const MaxDomains = Number(subscription.metadata['maxDomains']);
           // console.log('UD', UsedDomains);
           // console.log(subscription.metadata);
           if (UsedDomains >= Number(subscription.metadata['maxDomains'])) {
-            res.status(500).json({ error: 'Your Plan Limit has Fulfilled' });
+            // res.status(500).json({ error: 'Your Plan Limit has Fulfilled' }); // old code
+
+            let metaData: any = subscription.metadata;
+
+            metaData['usedDomains'] = Number(UsedDomains + 1);
+            metaData['updateMetaData'] = true;
+
+            const newQuant = subscription.items.data[0].quantity + 1;
+
+            await stripe.subscriptions.update(subscription.id, {
+              metadata: metaData, // Update the metadata
+              items: [
+                {
+                  id: subscription.items.data[0].id, // The subscription item ID
+                  quantity: newQuant, // Increment quantity by 5
+                },
+              ],
+            });
+
+            console.log('meta data updated');
+
+            let previous_plan;
+            try {
+              previous_plan = await getSitePlanBySiteId(Number(domainId));
+              await deleteTrialPlan(previous_plan.id);
+            } catch (error) {
+              // console.log('err = ', error);
+            }
+
+            await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
+
+
+            res.status(200).json({ success: true });
+
+
+
           } else {
             let metaData: any = subscription.metadata;
 
@@ -561,7 +594,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               previous_plan = await getSitePlanBySiteId(Number(domainId));
               await deleteTrialPlan(previous_plan.id);
             } catch (error) {
-              // console.log('err = ', error);
+              console.log('err = ', error);
             }
 
             await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
@@ -810,11 +843,12 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             status: 'active', // Retrieve all statuses to filter manually
           });
   
-          const prod = await stripe.products.retrieve(String(subscriptions.data[0].plan.product));
+          const prod = await stripe.products.retrieve(String(subscriptions.data[0]?.plan?.product));
   
           res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method});
           
         } catch (error) {
+          // console.log(error);
           res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method });
           
         }
@@ -829,7 +863,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             status: 'active', // Retrieve all statuses to filter manually
           });
   
-          const prod = await stripe.products.retrieve(String(subscriptions.data[0].plan.product));
+          const prod = await stripe.products.retrieve(String(subscriptions?.data[0]?.plan?.product));
   
           res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method });
           

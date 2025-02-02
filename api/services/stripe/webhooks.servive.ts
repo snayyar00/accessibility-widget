@@ -57,10 +57,9 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
       console.log('product to be updated = ', product);
 
       const prices = await stripe.prices.list({
-        product: product.id,
+        product: product.id
       });
 
-      // console.log('prices = ', JSON.stringify(prices));
 
       let findProduct;
       try {
@@ -75,11 +74,20 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
         console.log('product exists update it');
         try {
           const productObject = { name: product.name, type: product.name.toLowerCase(), stripe_id: product.id };
-          const pricesArray = prices.data?.map((getPrice: any) => ({
-            amount: getPrice?.unit_amount / 100,
-            type: getPrice?.recurring?.interval + 'ly',
-            stripe_id: getPrice?.id,
-          }));
+          const pricesArray = await Promise.all(
+            prices.data.map(async (getPrice) => {
+              // Fetch the detailed price object with expanded tiers
+              const price = await stripe.prices.retrieve(getPrice.id, {
+                expand: ['tiers'], // Explicitly expand the tiers
+              });
+
+              return {
+                amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0].up_to),
+                type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
+                stripe_id: getPrice?.id, // Stripe price ID
+              };
+            }),
+          );
           if (await updateProduct(findProduct?.id, productObject, pricesArray)) {
             console.log('Updated Product');
           } else {
@@ -92,11 +100,20 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
         try {
           console.log('inserting Product');
           const productObject = { name: product.name, type: product.name.toLowerCase(), stripe_id: product.id };
-          const pricesArray = prices.data?.map((getPrice: any) => ({
-            amount: getPrice?.unit_amount / 100,
-            type: getPrice?.recurring?.interval + 'ly',
-            stripe_id: getPrice?.id,
-          }));
+          const pricesArray = await Promise.all(
+            prices.data.map(async (getPrice) => {
+              // Fetch the detailed price object with expanded tiers
+              const price = await stripe.prices.retrieve(getPrice.id, {
+                expand: ['tiers'], // Explicitly expand the tiers
+              });
+
+              return {
+                amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0].up_to),
+                type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
+                stripe_id: getPrice?.id, // Stripe price ID
+              };
+            }),
+          );
           if (await insertProduct(productObject, pricesArray)) {
             console.log('inserted Product');
           } else {
@@ -159,8 +176,12 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
               const metadata = subscription.metadata;
               
               const domainCount = previous_plan.length > Number(metadata['usedDomains']) ? previous_plan.length:Number(metadata['usedDomains']); // Domain Count remains the same if site deleted, else increments
+              
+              const price = await stripe.prices.retrieve(subscription.items.data[0].price.id, {
+                expand: ['tiers'], // Explicitly expand the tiers
+              });
 
-              const updatedMetadata = { ...metadata, maxDomains: subscription.items.data[0].price.transform_quantity['divide_by'], usedDomains: Number(domainCount)};
+              const updatedMetadata = { ...metadata, maxDomains: price.tiers[0].up_to, usedDomains: Number(domainCount)};
   
               await stripe.subscriptions.update(String(subscription.id), {
                 metadata: updatedMetadata,
@@ -331,7 +352,7 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
           expand: ['line_items'],
         });
 
-        const price = await stripe.prices.retrieve(line_items.data[0].price.id);
+        const price = await stripe.prices.retrieve(line_items.data[0].price.id,{expand: ['tiers']});
         let planInterval: 'MONTHLY' | 'YEARLY' = 'MONTHLY'; // Default to 'MONTHLY'
 
         if (price.recurring && price.recurring.interval === 'year') {
@@ -342,7 +363,7 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
         const subscription = await stripe.subscriptions.retrieve(String(session.subscription));
         const currentMetadata = subscription.metadata || {};
 
-        const updatedMetadata = { ...currentMetadata,maxDomains: price.transform_quantity['divide_by'],usedDomains:1};
+        const updatedMetadata = { ...currentMetadata,maxDomains: price.tiers[0].up_to, usedDomains:1};
 
         const updatedSubscription = await stripe.subscriptions.update(String(session.subscription), {
           metadata: updatedMetadata,
