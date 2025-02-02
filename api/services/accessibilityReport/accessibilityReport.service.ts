@@ -229,7 +229,7 @@ export const fetchAccessibilityReport = async (url: string) => {
       }
     }
         
-    if (result.ByFunctions) {
+    if (result?.ByFunctions) {
       return result;
     }
         

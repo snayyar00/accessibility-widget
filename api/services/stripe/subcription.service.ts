@@ -145,7 +145,7 @@ export async function createNewSubcription(token: string, email: string, name: s
 export async function updateSubcription(subId: string, priceId: string): Promise<boolean> {
   try {
     const subscription = await stripe.subscriptions.retrieve(subId);
-    const new_price = await stripe.prices.retrieve(priceId);
+    const new_price = await stripe.prices.retrieve(priceId,{expand: ['tiers']});
     const userStripeId = subscription.customer as string;
 
     let previous_plan;
@@ -154,26 +154,25 @@ export async function updateSubcription(subId: string, priceId: string): Promise
     } catch (error) {
       console.log('err = ', error);
     }
-
-    if(new_price?.transform_quantity)
+    if(new_price?.tiers)
     {
-      if(Number(new_price.transform_quantity.divide_by) < previous_plan.length)
-      {
-        throw new ApolloError(`This plan has a domain limit of ${new_price.transform_quantity.divide_by}. please decrease your added domains to subscribe to this plan`)
+      if (Number(new_price.tiers[0].up_to) < previous_plan.length) {
+        throw new ApolloError(`This plan has a domain limit of ${new_price.tiers[0].up_to}. please decrease your added domains to subscribe to this plan`);
       }
     }
-    else
-    { 
+    else{
       const metadata = subscription.metadata;
 
-      const updatedMetadata:any = { ...metadata, maxDomains: new_price.transform_quantity['divide_by'], usedDomains: Number(previous_plan.length),updateMetaData:"true" };
+      const updatedMetadata: any = { ...metadata, maxDomains: new_price.tiers[0].up_to, usedDomains: Number(previous_plan.length), updateMetaData: 'true' };
 
       await stripe.subscriptions.update(subId, {
-        items: [{
-          id: subscription.items.data[0].id,
-          price: priceId,
-        }],
-        metadata:updatedMetadata
+        items: [
+          {
+            id: subscription.items.data[0].id,
+            price: priceId,
+          },
+        ],
+        metadata: updatedMetadata,
       });
 
       return true;

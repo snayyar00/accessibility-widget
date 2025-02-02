@@ -261,7 +261,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
             ) : (
               <div className="grid grid-cols-12">
                 <div className="sm:col-span-12 col-span-6 px-4 flex flex-col justify-between ">
-                  <div className='flex flex-col gap-3'>
+                  <div className="flex flex-col gap-3">
                     <h1 className="card-title text-2xl py-4">
                       Start a 7-day WebAbilityWidget trial!
                     </h1>
@@ -316,9 +316,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                     </form>
                   </div>
                 </div>
-                <div
-                  className="sm:hidden col-span-6 px-4 flex justify-center rounded-br-lg bg-[#0033ED]"
-                >
+                <div className="sm:hidden col-span-6 px-4 flex justify-center rounded-br-lg bg-[#0033ED]">
                   <div className="flex flex-col justify-center items-center">
                     <img
                       src={SingleBannerImage} // Replace with the actual URL of your image
@@ -481,39 +479,70 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
             )}
           </Modal>
         </div>
-        <div
-          className={`dashboard-card w-full ms:min-h-[310px] mm:min-h-[250px] md:min-h-[210px] lg:min-h-[310px] grid grid-cols-12 text-white outline outline-1`}
-          style={{
-            backgroundColor: 'rgb(0 51 237)',
-            minWidth: '100%',
-          }}
-        >
-          <div className="card-content sm:col-span-12 col-span-5">
-            <div className="card-header">
-              <h1 className="card-title text-2xl">
-                Make your website accessible with WebAbility
-              </h1>
+        <>
+          {/* Mobile View (visible on small screens only) */}
+          <div className="block lg:hidden">
+            <div className="bg-[#0133ed] text-white border border-[#7b6f6f] rounded-lg flex flex-col w-full overflow-hidden">
+              {/* Text & Button Section */}
+              <div className="flex flex-col p-4 flex-1">
+                <div className="flex justify-between items-center">
+                  <h1 className="text-lg font-semibold">
+                    Make your website accessible with WebAbility
+                  </h1>
+                </div>
+                <p className="my-2 text-sm">
+                  Navigate ADA & WCAG Compliance with WebAbility.io&apos;s
+                  Accessibility Widget
+                </p>
+                <button
+                  className="mt-auto py-2 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full transition duration-300"
+                  onClick={openModal}
+                >
+                  <span className="font-medium">Start a 7-day Trial</span>
+                </button>
+              </div>
             </div>
-            <p className="my-5">
-              Navigate ADA & WCAG Compliance with WebAbility.io's Accessibility
-              Widget
-            </p>
-            <button
-              className="mt-1 xl:mt-12 xxl:mt-24 py-3 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full sm:my-4 sm:w-full transition duration-300"
-              onClick={openModal}
-            >
-              <span className="font-medium ml-1">Start a 7-day Trial</span>
-            </button>
           </div>
 
-          <div className="sm:hidden col-span-7 flex items-start justify-center">
-            <img
-              src={BannerImage} // Replace with the actual URL of your image
-              alt="Accessibility Widget"
-              className="max-w-full max-h-[75%] pt-4"
-            />
+          {/* Desktop / Large Screen View (old design) */}
+          <div className="hidden lg:block">
+            <div
+              className={
+                'dashboard-card w-full ms:min-h-[310px] mm:min-h-[250px] md:min-h-[210px] lg:min-h-[310px] grid grid-cols-12 text-white outline outline-1'
+              }
+              style={{
+                backgroundColor: 'rgb(0 51 237)',
+                minWidth: '100%',
+              }}
+            >
+              <div className="card-content sm:col-span-12 col-span-5">
+                <div className="card-header">
+                  <h1 className="card-title text-2xl">
+                    Make your website accessible with WebAbility
+                  </h1>
+                </div>
+                <p className="my-5">
+                  Navigate ADA & WCAG Compliance with WebAbility.io's
+                  Accessibility Widget
+                </p>
+                <button
+                  className="mt-1 xl:mt-12 xxl:mt-24 py-3 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full sm:my-4 sm:w-full transition duration-300"
+                  onClick={openModal}
+                >
+                  <span className="font-medium ml-1">Start a 7-day Trial</span>
+                </button>
+              </div>
+
+              <div className="sm:hidden col-span-7 flex items-start justify-center">
+                <img
+                  src={BannerImage} // Replace with the actual URL of your image
+                  alt="Accessibility Widget"
+                  className="max-w-full max-h-[75%] pt-4"
+                />
+              </div>
+            </div>
           </div>
-        </div>
+        </>
       </>
     );
 }

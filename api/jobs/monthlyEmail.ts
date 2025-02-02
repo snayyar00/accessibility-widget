@@ -26,6 +26,7 @@ interface sitePlan {
 const sendMonthlyEmails = async () => {
   try {
     const sitePlans = await getActiveSitesPlan();
+    const year = new Date().getFullYear();
 
     // Limit concurrency to 10 tasks at a time
     const limit = pLimit(10);
@@ -59,6 +60,7 @@ const sendMonthlyEmails = async () => {
                 warningsCount: report.htmlcs.warnings.length,
                 noticesCount: report.htmlcs.notices.length,
                 reportLink: 'https://app.webability.io/accessibility-test',
+                year: year,
               },
             });
 
