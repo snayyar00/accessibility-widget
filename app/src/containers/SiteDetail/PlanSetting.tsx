@@ -37,10 +37,10 @@ interface ModalProps {
 
 const plans = [
   {
-    id: 'small bundle',
+    id: 'small tier',
     name: 'Small Business',
     price: 30,
-    desc: 'For Website under 1000 Impressions per month.',
+    desc: '',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
       'Accessbility Statement',
@@ -49,10 +49,10 @@ const plans = [
     ]
   },
   {
-    id: 'medium bundle',
+    id: 'medium tier',
     name: 'Medium Business',
-    price: 60,
-    desc: 'For Website under 10,000 Impressions per month.',
+    price: 70,
+    desc: '',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
       'Accessbility Statement',
@@ -61,10 +61,10 @@ const plans = [
     ]
   },
   {
-    id: 'large bundle',
+    id: 'large tier',
     name: 'Enterprise',
-    price: 90,
-    desc: 'For Website under 100,000 Impressions per month.',
+    price: 100,
+    desc: '',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
       'Accessbility Statement',
@@ -76,9 +76,9 @@ const plans = [
 
 const appSumoPlan = [{
   id: APP_SUMO_BUNDLE_NAME,
-  name: 'App Sumo',
+  name: 'App Sumo Bundle test',
   price: 100,
-  desc: 'For Website under 100,000 Impressions per month.',
+  desc: '',
   features: [
     'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
     'Accessbility Statement',
@@ -265,7 +265,7 @@ const PlanSetting: React.FC<{
   const handleSubscription = async () => {
     setbillingClick(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
-    const bodyData = { email:data.email,returnURL:window.location.href, planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:coupon };
+    const bodyData = { email:data.email,returnURL:window.location.href, planName:planChanged?.id,billingInterval:isYearly || planChanged?.id == APP_SUMO_BUNDLE_NAME ? "YEARLY" : "MONTHLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:coupon };
 
     if(planChanged?.id == APP_SUMO_BUNDLE_NAME)
     {
@@ -402,7 +402,7 @@ const PlanSetting: React.FC<{
   const amountNew = planChanged
     ? isYearly
       ? planChanged.name == 'Enterprise'
-        ? planChanged.price + 10
+        ? planChanged.price
         : planChanged.price
       : planChanged.price
     : 0;
