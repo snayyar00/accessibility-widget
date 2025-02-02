@@ -157,8 +157,10 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
               await Promise.all(updatePromises);
   
               const metadata = subscription.metadata;
-  
-              const updatedMetadata = { ...metadata, maxDomains: subscription.items.data[0].price.transform_quantity['divide_by'], usedDomains: Number(previous_plan.length) };
+              
+              const domainCount = previous_plan.length > Number(metadata['usedDomains']) ? previous_plan.length:Number(metadata['usedDomains']); // Domain Count remains the same if site deleted, else increments
+
+              const updatedMetadata = { ...metadata, maxDomains: subscription.items.data[0].price.transform_quantity['divide_by'], usedDomains: Number(domainCount)};
   
               await stripe.subscriptions.update(String(subscription.id), {
                 metadata: updatedMetadata,

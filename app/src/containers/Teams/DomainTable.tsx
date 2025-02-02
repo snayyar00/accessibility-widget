@@ -9,8 +9,10 @@ import { toast } from 'react-toastify';
 import { NavLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
-import { Card, CardContent, LinearProgress } from '@mui/material';
+import { Card, CardContent, CircularProgress, LinearProgress } from '@mui/material';
 import { APP_SUMO_BUNDLE_NAME } from '@/constants';
+import isValidDomain from '@/utils/verifyDomain';
+import ConfirmDeleteSiteModal from './DeleteWarningModal';
 
 
 const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptionalDomain}: any) => {
@@ -22,6 +24,10 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
   const [activePlan,setActivePlan] = useState("");
   const [isYearly,setIsYearly] = useState(false);
   const [planMetaData,setPlanMetaData] = useState<any>({});
+  const[editLoading,setEditLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [deleteSiteID,setDeleteSiteID] = useState(-1);
+  const [deleteSiteStatus,setDeleteSiteStatus] = useState('');
 
   const [deleteSiteMutation] = useMutation(deleteSite, {
     onCompleted: (response) => {
@@ -37,26 +43,76 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
   const [updateSiteMutation] = useMutation(updateSite, {
     onCompleted: (response) => {
       setReloadSites(true);
-      if (response.changeURL.includes('Successfully')){
+      if (response?.changeURL?.includes('Successfully')){
         toast.success('The domain name was successfully updated.')
       }
     },
     onError: (error) => {
-      toast.error('There was an error while editing the domain name.');
+      toast.error(`There was an error while editing the domain name.${error.message}`);
     }
   })
   const [editingId, setEditingId] = useState(null);
   const [tempDomain, setTempDomain] = useState('');
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number,status:string) => {
     // Here you would also handle the deletion on the backend
     const index = domains.findIndex(domain => domain.id === id)
     const foundUrl = domains[index].url;
-    await deleteSiteMutation({ variables: { url:foundUrl } });
+
+    if(status != 'Active')
+    {
+      toast.error("Cannot delete a trial site");
+      return;
+    }
+
+    setBillingLoading(true);
+
+    let url = `${process.env.REACT_APP_BACKEND_URL}/cancel-site-subscription`;
+    const bodyData = {
+      domainId: id,
+      domainUrl: foundUrl,
+      userId: userData.id,
+      status:status
+    };
+
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bodyData),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+
+          response.json().then((data) => {
+            toast.success('The domain was successfully removed');
+            setBillingLoading(false);
+            handleCloseModal();
+          });
+        })
+        .catch((error) => {
+          // Handle error
+          setBillingLoading(false);
+          handleCloseModal();
+          toast.error('There has been a problem');
+          console.error(
+            'There was a problem with the fetch operation:',
+            error,
+          );
+        });
+    } catch (error) {
+      console.log('error', error);
+    }
+
     setDomains(domains.filter((domain) => domain.id !== id));
   };
 
   const handleEdit = (domain: any) => {
+    toast.info("Warning: You can only edit upto 3 characters in the url",{position:"top-center"});
     setEditingId(domain.id);
     setTempDomain(domain.url);
   };
@@ -65,9 +121,70 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
     setEditingId(null);
   };
 
-  const handleSave = (id: number) => {
-    setDomains(domains.map((domain) => (domain.id === id ? { ...domain, url: tempDomain } : domain)));
-    updateSiteMutation({variables: {siteId: editingId, url: tempDomain}})
+  function getEditDistance(str1:string, str2:string) {
+
+    const len1 = str1.length;
+    const len2 = str2.length;
+    
+    if (len1 === 0) return len2;
+    if (len2 === 0) return len1;
+    
+    const matrix = Array(len2 + 1)
+      .fill(null)
+      .map(() => Array(len1 + 1).fill(null));
+  
+    for (let i = 0; i <= len2; i++) {
+      matrix[i][0] = i;
+    }
+    for (let j = 0; j <= len1; j++) {
+      matrix[0][j] = j;
+    }
+  
+    for (let i = 1; i <= len2; i++) {
+      for (let j = 1; j <= len1; j++) {
+        const cost = str1[j - 1] === str2[i - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1,     // Deletion
+          matrix[i][j - 1] + 1,     // Insertion
+          matrix[i - 1][j - 1] + cost // Substitution
+        );
+      }
+    }
+  
+    return matrix[len2][len1];
+  }
+
+  const handleSave = async (id: number) => {
+    setEditLoading(true);
+    const oldDomain = domains.find((domain)=>{return domain.id === id})?.url;
+    if (getEditDistance((oldDomain as string),tempDomain) > 3)
+    {
+      toast.error("You cannot edit more than 3 characters");
+      setEditLoading(false);
+      setEditingId(null);
+      return;
+    }
+
+    if (!isValidDomain(tempDomain)) {
+      toast.error('You must enter a valid domain name!');
+      setEditLoading(false);
+      setEditingId(null);
+      return;
+    }
+    const sanitizedDomain = tempDomain.replace(/^(https?:\/\/)?(www\.)?/, '');
+    const response = await updateSiteMutation({
+      variables: { siteId: editingId, url: sanitizedDomain },
+    });
+    if (response.errors) {
+      toast.error(response.errors[0].message);
+    } else {
+      setDomains(
+        domains.map((domain) =>
+          domain.id === id ? { ...domain, url: sanitizedDomain } : domain,
+        ),
+      );
+    }
+    setEditLoading(false);
     setEditingId(null);
   };
 
@@ -157,7 +274,6 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
     setBillingLoading(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
     const bodyData = { email: userData.email, returnURL: window.location.href, planName: activePlan, billingInterval: isYearly || activePlan == APP_SUMO_BUNDLE_NAME ? "YEARLY" : "MONTHLY", domainId: selectedDomain.id, domainUrl: selectedDomain.url, userId: userData.id };
-    console.log(activePlan);
 
     if(activePlan.toLowerCase() == APP_SUMO_BUNDLE_NAME)
     {
@@ -194,6 +310,10 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
     }
 
 }
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
 
   useEffect(() => {
     if (data) {
@@ -238,7 +358,7 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
       </CardContent>
     </Card>):(null)}
     
-    
+      <ConfirmDeleteSiteModal billingLoading={billingLoading} domainID={deleteSiteID} domainStatus={deleteSiteStatus} isOpen={showModal} onClose={handleCloseModal} onDelete={handleDelete}  />
      <div className="container mx-auto px-4 sm:px-8">
       <div className="py-8">
         <div>
@@ -303,12 +423,14 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
                           <button
                             onClick={() => handleSave(domain.id)}
                             className="p-2 text-green-600 hover:text-green-800"
+                            disabled={editLoading}
                           >
-                            <FaCheck />
+                            {editLoading ? (<CircularProgress size={20}/>):(<FaCheck />)}
                           </button>
                           <button
                             onClick={handleCancel}
                             className="p-2 text-red-600 hover:text-red-800"
+                            disabled={editLoading}
                           >
                             <FaTimes />
                           </button>
@@ -334,7 +456,11 @@ const DomainTable = ({ data, setReloadSites,setPaymentView,openModal,setOptional
                             <FaDollarSign />
                           </NavLink> */}
                           <button
-                            onClick={() => handleDelete(domain.id)}
+                            onClick={() => {
+                              setDeleteSiteID(domain.id);
+                              setDeleteSiteStatus(getDomainStatus(domain.expiredAt, domain.trial));
+                              setShowModal(true);
+                            }}
                             className="p-2 text-red-600 hover:text-red-800"
                           >
                             <FaTrash />

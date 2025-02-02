@@ -87,6 +87,16 @@ export async function deleteSiteByURL(url: string, user_id: number): Promise<num
 }
 
 export async function updateAllowedSiteURL(site_id: number, url: string, user_id: number): Promise<number> {
+	const urlExists = await database(TABLE)
+        .select(siteColumns)
+        .where({ 'allowed_sites.url': url })
+        .andWhereNot({ 'allowed_sites.id': site_id })
+        .first();
+
+    if (urlExists) {
+        throw new Error("The provided URL is already in use.");
+    }
+	
 	const exisitingSite = await database(TABLE).select(siteColumns).where({ [siteColumns.id]: site_id }).first();
 	await UpdateWebsiteURL(exisitingSite.url, url)
 	return database(TABLE).where({ 'allowed_sites.user_id': user_id, 'allowed_sites.id': site_id }).update({

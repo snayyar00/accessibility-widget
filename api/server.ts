@@ -31,7 +31,7 @@ import OpenAI from 'openai';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
 import database from '~/config/database.config';
 import { addProblemReport, getProblemReportsBySiteId, problemReportProps } from './repository/problem_reports.repository';
-import { FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
+import { deleteSiteByURL, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
 
 // import run from './scripts/create-products';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
@@ -417,6 +417,33 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     } catch (error) {
       console.log(error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/cancel-site-subscription',async (req,res)=>{
+    const { domainId,domainUrl,userId,status } = req.body;
+
+    if(status == 'Active')
+    {
+      let previous_plan;
+      try {
+        previous_plan = await getSitePlanBySiteId(Number(domainId));
+      } catch (error) {
+        console.log('err = ', error);
+      }
+      try {
+        await deleteTrialPlan(previous_plan.id);
+        await deleteSiteByURL(domainUrl,userId);
+
+        res.status(200).json({ success: true });
+      } catch (error) {
+        console.log('err = ', error);
+        res.status(500).json({ error: error });
+      }
+    }
+    else
+    {
+      res.status(500).json({ error: "Cannot delete a Trial Site" });
     }
   });
 
