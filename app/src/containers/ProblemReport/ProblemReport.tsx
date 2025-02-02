@@ -39,7 +39,6 @@ const ProblemReport: React.FC = () => {
 
         response.json().then((data) => {
           // Handle the JSON data received from the backend
-          console.log(data);
           setProblemArray(data);
           setLoader(false);
         });

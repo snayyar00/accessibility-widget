@@ -52,7 +52,7 @@ export async function addSite(userId: number, url: string): Promise<string> {
 //   if (Array.isArray(validateResult) && validateResult.length) {
 //     throw new ValidationError(validateResult.map((it) => it.message).join(','));
 //   }
-
+  const year = new Date().getFullYear();
   try {
     const data = {
         user_id: userId,
@@ -78,13 +78,14 @@ export async function addSite(userId: number, url: string): Promise<string> {
         data: {
           status: status, // For {{status}}
           url: url,
-          statusImage: report.siteImg, // For {{base64StatusImage}}
-          statusDescription: report.score > 89 ? 'You achieved exceptionally high compliance status!' : 'Your Site may not comply with WCAG 2.1 AA.', // For {{statusDescription}}
+          statusImage: report?.siteImg, // For {{base64StatusImage}}
+          statusDescription: report?.score > 89 ? 'You achieved exceptionally high compliance status!' : 'Your Site may not comply with WCAG 2.1 AA.', // For {{statusDescription}}
           score: score, // For {{score}}
-          errorsCount: report.htmlcs.errors.length, // For {{errorsCount}}
-          warningsCount: report.htmlcs.warnings.length, // For {{warningsCount}}
-          noticesCount: report.htmlcs.notices.length, // For {{noticesCount}}
+          errorsCount: report?.htmlcs?.errors?.length, // For {{errorsCount}}
+          warningsCount: report?.htmlcs?.warnings?.length, // For {{warningsCount}}
+          noticesCount: report?.htmlcs?.notices?.length, // For {{noticesCount}}
           reportLink: 'https://app.webability.io/accessibility-test', // For {{reportLink}}
+          year:year,
         },
       });
 

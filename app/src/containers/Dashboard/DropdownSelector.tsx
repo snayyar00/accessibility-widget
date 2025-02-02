@@ -20,7 +20,7 @@ const DropdownSelector: React.FC<DropdownSelectorProps> = ({
   yearStart
 }) => {
   const [timeRange, setTimeRange] = useState<string>('Week To Date');
-  console.log(monthStart, yearStart, weekStart)
+  // console.log(monthStart, yearStart, weekStart)
 
   async function changeTimePeriod(range: string) {
     if (range === 'Month To Date') {
