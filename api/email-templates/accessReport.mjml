@@ -86,7 +86,7 @@
     <!-- Footer -->
     <mj-section background-color="#f8f8f8" padding="20px" align="center">
       <mj-column>
-        <mj-text font-size="12px" color="#666666" align="center"> © 2024 Web Ability. All Rights Reserved. </mj-text>
+        <mj-text font-size="12px" color="#666666" align="center"> © {{year}} Web Ability. All Rights Reserved. </mj-text>
       </mj-column>
     </mj-section>
   </mj-body>
