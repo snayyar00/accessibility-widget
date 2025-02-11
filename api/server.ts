@@ -32,6 +32,8 @@ import scheduleMonthlyEmails from './jobs/monthlyEmail';
 import database from '~/config/database.config';
 import { addProblemReport, getProblemReportsBySiteId, problemReportProps } from './repository/problem_reports.repository';
 import { deleteSiteByURL, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
+import { getUserbyId } from './repository/user.repository';
+import { addWidgetSettings, getWidgetSettingsBySiteId } from './repository/widget_settings.repository';
 
 // import run from './scripts/create-products';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
@@ -263,6 +265,43 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         res.json({ valid: true, discount: (Number(promoCodeData.coupon.amount_off)/100),id:promoCodeData?.coupon?.id,percent:false });
       }
     } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/update-site-widget-settings', async (req, res) => {
+    const { settings, user_id, site_url } = req.body;
+    try {
+      const site = await findSiteByURL(site_url);
+      if (site.user_id != user_id) {
+        console.error( 'User does not own this site');
+        res.status(500).json({ error: 'User does not own this site' });
+      } else {
+        await addWidgetSettings({
+          site_url: site_url,
+          allowed_site_id: site.id,
+          settings: settings,
+          user_id: user_id,
+        });
+        res.status(200).json("Success");
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/get-site-widget-settings', async (req, res) => {
+    const { site_url } = req.body;
+    try {
+      const site = await findSiteByURL(site_url);
+
+      const widgetSettings = await getWidgetSettingsBySiteId(site.id);
+      let response = widgetSettings?.settings || {};
+
+      res.status(200).json({ settings: response });
+    } catch (error) {
+      console.error(error);
       res.status(500).json({ error: error.message });
     }
   });
