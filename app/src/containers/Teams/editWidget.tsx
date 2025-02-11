@@ -7,6 +7,53 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import { toast } from 'react-toastify';
 
+export interface Colors {
+  headerText: string;
+  headerBg: string;
+  footerText: string;
+  footerBg: string;
+  buttonText: string;
+  buttonBg: string;
+  menuBg: string;
+  dropdownText: string;
+  dropdownBg: string;
+  widgetInnerText: string;
+  fontSizeMenuBg: string;
+  fontSizeMenuText: string;
+  fontSizeMenuButton: string;
+  customizationMenuInnerBg: string;
+  widgetBtnColor:string;
+}
+
+export interface Toggles {
+  darkMode: boolean;
+  screenReader: boolean;
+  readingGuide: boolean;
+  stopAnimations: boolean;
+  bigCursor: boolean;
+  voiceNavigation: boolean;
+  darkContrast: boolean;
+  lightContrast: boolean;
+  highContrast: boolean;
+  highSaturation: boolean;
+  lowSaturation: boolean;
+  monochrome: boolean;
+  highlightLinks: boolean;
+  highlightTitle: boolean;
+  dyslexiaFont: boolean;
+  letterSpacing: boolean;
+  lineHeight: boolean;
+  fontWeight: boolean;
+  motorImpaired: boolean;
+  blind: boolean;
+  dyslexia: boolean;
+  visuallyImpaired: boolean;
+  cognitiveAndLearning: boolean;
+  seizureAndEpileptic: boolean;
+  colorBlind: boolean;
+  adhd: boolean;
+}
+
 const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   const [toggles, setToggles] = useState({
     darkMode: true,
@@ -39,23 +86,6 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   const { data: userData } = useSelector((state: RootState) => state.user);
   const [buttonDisable, setButtonDisable] = useState(false);
 
-  interface Colors {
-    headerText: string;
-    headerBg: string;
-    footerText: string;
-    footerBg: string;
-    buttonText: string;
-    buttonBg: string;
-    menuBg: string;
-    dropdownText: string;
-    dropdownBg: string;
-    toggle: string;
-    widgetInnerText: string;
-    fontSizeMenuBg: string;
-    fontSizeMenuText: string;
-    fontSizeMenuButton: string;
-    customizationMenuInnerBg: string;
-  }
 
   const DefaultColors: Colors = {
     headerText: '#FFFFFF',
@@ -67,12 +97,12 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     menuBg: '#eff1f5',
     dropdownText: '#000000',
     dropdownBg: '#FFFFFF',
-    toggle: '#FF0000',
     widgetInnerText: '#000000',
     fontSizeMenuBg: '#FFFFFF',
     fontSizeMenuText: '#000000',
     fontSizeMenuButton: '#eff1f5',
     customizationMenuInnerBg: '#FFFFFF',
+    widgetBtnColor:'#195AFF'
   };
   const DefaultToggles = {
     darkMode: true,
@@ -118,6 +148,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     fontSizeMenuText: DefaultColors.fontSizeMenuText,
     fontSizeMenuButton: DefaultColors.fontSizeMenuButton,
     customizationMenuInnerBg: DefaultColors.customizationMenuInnerBg,
+    widgetBtnColor:DefaultColors.widgetBtnColor
   });
 
   const fonts = [
@@ -135,51 +166,52 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     "'Comic Sans MS', cursive",
   ];
 
+  const [selectedFont, setSelectedFont] = useState("'Times New Roman', serif");
+
   const [settings, setSettings] = useState({
-    widgetFont: "'Verdana', sans-serif",
-    'footer-bg': '#140505',
-    'footer-text': '#e90707',
-    darkMode: false,
-    'header-text': '#e90707',
-    'header-bg': '#07090e',
-    'button-text': '#bf0808',
-    'bg-button': '#f40b0b',
-    'widget-background': '#1157e4',
-    'dropdown-text': '#c40303',
-    'bg-dropdown': '#f20d0d',
-    'widget-text': '#e11414',
-    'font-size-bg': '#e70d0d',
-    'font-size-buttons': '#ffffff',
-    'font-size-text': '#000000',
-    toggledarkMode: 0,
-    'togglescreen-reader': 0,
-    'togglereadable-guide': 0,
-    'togglestop-animations': 0,
-    'togglebig-cursor': 0,
-    'togglevoice-navigation': 0,
-    'toggledark-contrast': 0,
-    'togglelight-contrast': 0,
-    'togglehigh-contrast': 0,
-    'togglehigh-saturation': 0,
-    'togglelow-saturation': 0,
-    togglemonochrome: 0,
-    'togglehighlight-links': 0,
-    'togglehighlight-title': 0,
-    'togglereadable-font': 0,
-    'toggleletter-spacing': 0,
-    'toggleline-height': 0,
-    'togglefont-weight': 0,
-    'togglemotor-impaired': 0,
-    toggleblind: 0,
-    'toggledyslexia-font': 0,
-    'togglevisually-impaired': 0,
-    'togglecognitive-learning': 0,
-    'toggleseizure-epileptic': 0,
-    'togglecolor-blind': 0,
-    toggleadhd: 0,
+    'widgetFont': selectedFont,
+    'footer-bg': DefaultColors.footerBg,
+    'footer-text': DefaultColors.footerText,
+    'header-text': DefaultColors.headerText,
+    'header-bg': DefaultColors.headerBg,
+    'button-text': DefaultColors.buttonText,
+    'bg-button': DefaultColors.buttonBg,
+    'widget-background': DefaultColors.menuBg,
+    'dropdown-text': DefaultColors.dropdownText,
+    'bg-dropdown': DefaultColors.dropdownBg,
+    'widget-text': DefaultColors.widgetInnerText,
+    'font-size-bg': DefaultColors.fontSizeMenuBg,
+    'font-size-buttons': DefaultColors.fontSizeMenuButton,
+    'font-size-text': DefaultColors.fontSizeMenuText,
+    'widget-btn-color':DefaultColors.widgetBtnColor,
+    'toggledarkMode': DefaultToggles.darkMode ? 1 : 0,
+    'togglescreen-reader': DefaultToggles.screenReader ? 1 : 0,
+    'togglereadable-guide': DefaultToggles.readingGuide ? 1 : 0,
+    'togglestop-animations': DefaultToggles.stopAnimations ? 1 : 0,
+    'togglebig-cursor': DefaultToggles.bigCursor ? 1 : 0,
+    'togglevoice-navigation': DefaultToggles.voiceNavigation ? 1 : 0,
+    'toggledark-contrast': DefaultToggles.darkContrast ? 1 : 0,
+    'togglelight-contrast': DefaultToggles.lightContrast ? 1 : 0,
+    'togglehigh-contrast': DefaultToggles.highContrast ? 1 : 0,
+    'togglehigh-saturation': DefaultToggles.highSaturation ? 1 : 0,
+    'togglelow-saturation': DefaultToggles.lowSaturation ? 1 : 0,
+    'togglemonochrome': DefaultToggles.monochrome ? 1 : 0,
+    'togglehighlight-links': DefaultToggles.highlightLinks ? 1 : 0,
+    'togglehighlight-title': DefaultToggles.highlightTitle ? 1 : 0,
+    'togglereadable-font': DefaultToggles.dyslexiaFont ? 1 : 0,
+    'toggleletter-spacing': DefaultToggles.letterSpacing ? 1 : 0,
+    'toggleline-height': DefaultToggles.lineHeight ? 1 : 0,
+    'togglefont-weight': DefaultToggles.fontWeight ? 1 : 0,
+    'togglemotor-impaired': DefaultToggles.motorImpaired ? 1 : 0,
+    'toggleblind': DefaultToggles.blind ? 1 : 0,
+    'toggledyslexia-font': DefaultToggles.dyslexia ? 1 : 0,
+    'togglevisually-impaired': DefaultToggles.visuallyImpaired ? 1 : 0,
+    'togglecognitive-learning': DefaultToggles.cognitiveAndLearning ? 1 : 0,
+    'toggleseizure-epileptic': DefaultToggles.seizureAndEpileptic ? 1 : 0,
+    'togglecolor-blind': DefaultToggles.colorBlind ? 1 : 0,
+    'toggleadhd': DefaultToggles.adhd ? 1 : 0,
   });
 
-  const [selectedFont, setSelectedFont] = useState("'Times New Roman', serif");
   const [selectedSite, setSelectedSite] = useState('');
 
   useEffect(() => {
@@ -187,7 +219,6 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
       'widgetFont': selectedFont,
       'footer-bg': colors.footerBg,
       'footer-text': colors.footerText,
-      'darkMode': toggles.darkMode,
       'header-text': colors.headerText,
       'header-bg': colors.headerBg,
       'button-text': colors.buttonText,
@@ -199,6 +230,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
       'font-size-bg': colors.fontSizeMenuBg,
       'font-size-buttons': colors.fontSizeMenuButton,
       'font-size-text': colors.fontSizeMenuText,
+      'widget-btn-color':colors.widgetBtnColor,
       'toggledarkMode': toggles.darkMode ? 1 : 0,
       'togglescreen-reader': toggles.screenReader ? 1 : 0,
       'togglereadable-guide': toggles.readingGuide ? 1 : 0,
@@ -327,6 +359,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
             fetchedSettings['button-text'] || DefaultColors.buttonText,
           buttonBg: fetchedSettings['bg-button'] || DefaultColors.buttonBg,
           menuBg: fetchedSettings['widget-background'] || DefaultColors.menuBg,
+          widgetBtnColor:fetchedSettings['widget-btn-color'] || DefaultColors.widgetBtnColor,
           dropdownText:
             fetchedSettings['dropdown-text'] || DefaultColors.dropdownText,
           dropdownBg:

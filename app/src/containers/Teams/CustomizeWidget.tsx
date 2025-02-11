@@ -1,51 +1,7 @@
 import { Switch } from '@mui/material';
 import type React from 'react';
+import { Colors, Toggles } from './editWidget';
 
-export interface Colors {
-  headerText: string;
-  headerBg: string;
-  footerText: string;
-  footerBg: string;
-  buttonText: string;
-  buttonBg: string;
-  menuBg: string;
-  dropdownText: string;
-  dropdownBg: string;
-  widgetInnerText: string;
-  fontSizeMenuBg: string;
-  fontSizeMenuText: string;
-  fontSizeMenuButton: string;
-  customizationMenuInnerBg: string;
-}
-
-export interface Toggles {
-  darkMode: boolean;
-  screenReader: boolean;
-  readingGuide: boolean;
-  stopAnimations: boolean;
-  bigCursor: boolean;
-  voiceNavigation: boolean;
-  darkContrast: boolean;
-  lightContrast: boolean;
-  highContrast: boolean;
-  highSaturation: boolean;
-  lowSaturation: boolean;
-  monochrome: boolean;
-  highlightLinks: boolean;
-  highlightTitle: boolean;
-  dyslexiaFont: boolean;
-  letterSpacing: boolean;
-  lineHeight: boolean;
-  fontWeight: boolean;
-  motorImpaired: boolean;
-  blind: boolean;
-  dyslexia: boolean;
-  visuallyImpaired: boolean;
-  cognitiveAndLearning: boolean;
-  seizureAndEpileptic: boolean;
-  colorBlind: boolean;
-  adhd: boolean;
-}
 
 interface CustomizeWidgetProps {
   colors: Colors;
@@ -112,6 +68,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     { key: 'footerBg', label: 'Footer BG Color' },
     { key: 'buttonText', label: 'Button Text Color' },
     { key: 'buttonBg', label: 'Button BG Color' },
+    { key: 'widgetBtnColor', label: 'Widget Button Color' },
     { key: 'menuBg', label: 'Menu Background Color' },
     { key: 'dropdownText', label: 'Dropdown Text Color' },
     { key: 'dropdownBg', label: 'Dropdown BG Color' },
