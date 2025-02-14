@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import accessibilityBannerImage from '../../assets/images/accessibilityBannerImage.png'
 import CodeContainer from './CodeContainer';
+import useDocumentHeader from '@/hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 export default function Installation({ domain }: any) {
+  const { t } = useTranslation();
+  useDocumentHeader({ title: t('Common.title.installation') });
   function getCodeString(uniqueToken: string): string {
     return `<script src="https://widget.webability.io/widget.min.js" defer></script>`;
   }

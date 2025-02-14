@@ -6,6 +6,8 @@ import { CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import { toast } from 'react-toastify';
+import useDocumentHeader from '@/hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 export interface Colors {
   headerText: string;
@@ -55,6 +57,8 @@ export interface Toggles {
 }
 
 const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
+   const { t } = useTranslation();
+  useDocumentHeader({ title: t('Common.title.customize_widget') });
   const [toggles, setToggles] = useState({
     darkMode: true,
     screenReader: true,

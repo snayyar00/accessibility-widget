@@ -44,8 +44,12 @@ import ByWCGAGuildelinesSVG from './ByWCGAGuidlinesSVG';
 import { check } from 'prettier';
 import ReactToPrint, { useReactToPrint } from 'react-to-print';
 import Logo from '@/components/Common/Logo';
+import useDocumentHeader from '@/hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 const AccessibilityReport = ({ currentDomain }: any) => {
+  const { t } = useTranslation();
+  useDocumentHeader({ title: t('Common.title.report') });
   const [score, setScore] = useState(0);
   const [scoreBackup, setScoreBackup] = useState(0);
   const [enabled, setEnabled] = useState(false);

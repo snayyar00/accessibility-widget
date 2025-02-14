@@ -6,6 +6,7 @@ import './Dashboard.css';
 import TrialBannerAndModal from './TrialBannerAndModal';
 import AnalyticsDashboard from './Analytics';
 import AnalyticsDashboardSkeleton from './skeletonanalytics';
+import useDocumentHeader from '@/hooks/useDocumentTitle';
 
 
 interface ChartData {
@@ -38,14 +39,14 @@ export type TDomain = {
 
 
 const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites }: any) => {
-
+  const { t } = useTranslation();
+  useDocumentHeader({ title: t('Common.title.dashboard') });
   const [startDate, setStartDate] = useState<string>();
   const [endDate, setEndDate] = useState<string>();
   const [impressions, setImpressions] = useState<number>(0);
   const [widgetClosed, setWidgetClosed] = useState<number>(0);
   const [widgetOpened, setWidgetOpened] = useState<number>(0);
   const [uniqueVisitors, setUniqueVisitors] = useState<number>(0);
-  const { t } = useTranslation();
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [cards, setCards] = useState<CardData[]>([]);
   const [granularity, setGranularity] = useState<string>('Day');

@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import { FaDroplet, FaGear, FaRotateRight, FaX } from 'react-icons/fa6';
 import { FaAccessibleIcon, FaBookReader, FaChevronDown, FaFont, FaLink, FaMicrophone, FaMouse, FaPuzzlePiece, FaRegSun, FaUniversalAccess } from 'react-icons/fa';
-import { Colors, Toggles } from './CustomizeWidget';
+
 import { LuAudioWaveform } from "react-icons/lu";
 import { MdGradient, MdMonochromePhotos, MdMotionPhotosPause } from 'react-icons/md';
 import { TbBrain, TbCircleHalf2 } from 'react-icons/tb';
+import { Colors, Toggles } from './editWidget';
 
 interface AccessibilityMenuProps {
   colors: Colors;

@@ -7,11 +7,13 @@ import InformationSetting from './InformationSetting';
 import PasswordSetting from './PasswordSetting';
 import PlanSetting from './PlanSetting';
 import BillingPortalLink from './BillingPortalLink';
+import useDocumentHeader from '@/hooks/useDocumentTitle';
 
 
 const Profile: React.FC = () => {
-  const { data, loading } = useSelector((state: RootState) => state.user);
   const { t } = useTranslation();
+  useDocumentHeader({ title: t('Common.title.profile') });
+  const { data, loading } = useSelector((state: RootState) => state.user);
 
   return (
     <div>

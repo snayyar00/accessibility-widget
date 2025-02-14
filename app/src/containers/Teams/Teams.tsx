@@ -6,12 +6,16 @@ import { toast } from 'react-toastify';
 import isValidDomain from '@/utils/verifyDomain';
 import DomainTable from './DomainTable';
 import TrialBannerAndModal from '../Dashboard/TrialBannerAndModal';
+import useDocumentHeader from '@/hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 interface DomainFormData {
   domainName: string;
 }
 
 const Teams = ({ domains, setReloadSites }: any) => {
+   const { t } = useTranslation();
+  useDocumentHeader({ title: t('Common.title.add_domain') });
   const [addSiteMutation, { error, loading }] = useMutation(addSite, {
     onCompleted: () => {
       setReloadSites(true);
