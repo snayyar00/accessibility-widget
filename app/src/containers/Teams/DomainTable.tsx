@@ -222,7 +222,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
 
   const getDomainStatus = (status: string, trial: number): string => {
     if (!status) {
-      return 'Not Available';
+      return 'Trial Expired';
     }
     const currentTime = new Date().getTime();
     const timeDifference = new Date(parseInt(status)).getTime() - currentTime;
@@ -461,7 +461,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                       </span>
                     </td>
                     <td className="py-4 px-4 border-b border-gray-200">
-                      {domain.expiredAt
+                      {domain?.expiredAt
                         ? new Date(
                             Number.parseInt(domain.expiredAt),
                           ).toLocaleDateString()

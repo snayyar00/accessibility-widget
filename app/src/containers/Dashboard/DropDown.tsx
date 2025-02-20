@@ -73,13 +73,13 @@ const DropDown = ({ data, setReloadSites, selectedOption, setSelectedOption }: a
                 }}
               >
                 {site.url}
-                <button onClick={() => handleDeleteDomain(site.url)}>
+                {/* <button onClick={() => handleDeleteDomain(site.url)}>
                   <MdDelete color='#EC4545' size={16} />
-                </button>
+                </button> */}
               </div>
             ))}
 
-            <div
+            {/* <div
               key={-5}
               className="dropdown-item block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer hover:text-[#0033ED] text-[#a6a6a6] "
               role="menuitem"
@@ -96,7 +96,7 @@ const DropDown = ({ data, setReloadSites, selectedOption, setSelectedOption }: a
               }}
             >
               Add New Domain
-            </div>
+            </div> */}
 
 
           </div>

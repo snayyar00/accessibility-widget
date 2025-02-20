@@ -11,6 +11,7 @@ import { toggleSidebar } from '@/features/admin/sidebar';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import routes from '@/routes';
 import Dropdown from '@/containers/Dashboard/DropDown';
+import { FaGear } from 'react-icons/fa6';
 
 
 
@@ -104,6 +105,19 @@ const Sidebar = ({ options, setReloadSites, selectedOption, setSelectedOption }:
                 <InstallIcon />
                 <span className="menu-text text-[18px] leading-[22px] text-white-blue ml-[10px]">
                   Installation
+                </span>
+              </NavLink>
+            </li>
+            <li className="h-[60px] flex items-center">
+              <NavLink
+                to='/customize-widget'
+                activeClassName="active"
+                onClick={closeSidebar}
+                className="w-full h-full pl-[27px] border-l-2 border-solid border-transparent flex items-center [&.active]:rounded-r-[10px] [&.active]:rounded-b-[10px] [&.active]:rounded-t-[0px] [&.active]:rounded-l-[0px] [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>svg_*[fill]]:fill-primary [&.active>svg_*[stroke]]:stroke-primary"
+              >
+                <FaGear size={30}/>
+                <span className="menu-text text-[18px] leading-[22px] text-white-blue ml-[10px]">
+                  Customize Widget
                 </span>
               </NavLink>
             </li>

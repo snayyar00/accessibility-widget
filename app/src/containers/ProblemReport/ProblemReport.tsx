@@ -3,6 +3,8 @@ import ProblemCard from './ProblemCard';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import { CircularProgress } from '@mui/material';
+import useDocumentHeader from '@/hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 export interface Problem {
   id: number;
@@ -15,6 +17,8 @@ export interface Problem {
 }
 
 const ProblemReport: React.FC = () => {
+  const { t } = useTranslation();
+  useDocumentHeader({ title: t('Common.title.problem_reports') });
   const [problemArray, setProblemArray] = useState<Problem[]>([]);
   const { data, loading } = useSelector((state: RootState) => state.user);
   const [loader, setLoader] = useState(true);

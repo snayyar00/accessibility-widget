@@ -26,7 +26,7 @@ const client = createClient();
 const App: React.FC<props> = ({ options }) => {
 
   const { t } = useTranslation();
-  useDocumentHeader({ title: t('WebAbility') });
+  // useDocumentHeader({ title: t('WebAbility') });
   const { error } = useSelector((state: RootState) => state.user);
 
 
