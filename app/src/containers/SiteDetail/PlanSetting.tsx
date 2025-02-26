@@ -19,7 +19,8 @@ import Button from '@/components/Common/Button';
 import { TDomain } from '.';
 import { setSitePlan } from '@/features/site/sitePlan';
 import { toast } from 'react-toastify';
-import { APP_SUMO_BUNDLE_NAME } from '@/constants';
+import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
+import { CircularProgress } from '@mui/material';
 
 declare global {
   namespace JSX {
@@ -75,9 +76,31 @@ const plans = [
 ];
 
 const appSumoPlan = [{
-  id: APP_SUMO_BUNDLE_NAME,
-  name: 'App Sumo Bundle test',
-  price: 100,
+  id: APP_SUMO_BUNDLE_NAMES[0],
+  name: 'App Sumo Bundle Small',
+  price: 300,
+  desc: '',
+  features: [
+    'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
+    'Accessbility Statement',
+    'AI powered Screen Reader and Accessbility Profiles',
+    'Web Ability accesbility Statement',
+  ]
+},{
+  id: APP_SUMO_BUNDLE_NAMES[1],
+  name: 'App Sumo Bundle Medium',
+  price: 700,
+  desc: '',
+  features: [
+    'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
+    'Accessbility Statement',
+    'AI powered Screen Reader and Accessbility Profiles',
+    'Web Ability accesbility Statement',
+  ]
+},{
+  id: APP_SUMO_BUNDLE_NAMES[2],
+  name: 'App Sumo Bundle Large',
+  price: 1000,
   desc: '',
   features: [
     'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
@@ -116,6 +139,7 @@ const PlanSetting: React.FC<{
   const [currentActivePlan,setCurrentActivePlan] = useState("");
   const [showPlans,setShowPlans] = useState(false);
   const [validCoupon,setValidCoupon] = useState(false);
+  const [couponClicked,setCouponClicked] = useState(false);
 
   useEffect(() => {
     customerCheck();
@@ -226,11 +250,6 @@ const PlanSetting: React.FC<{
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-checkout-session`;
     const bodyData = { email:data.email,planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url,promoCode:coupon,cardTrial:cardTrial || card };
 
-    if(planChanged?.id == APP_SUMO_BUNDLE_NAME)
-    {
-      url = `${process.env.REACT_APP_BACKEND_URL}/app-sumo-checkout-session`
-    }
-
     await fetch(url, {
       method: 'POST',
       headers: {
@@ -266,12 +285,7 @@ const PlanSetting: React.FC<{
   const handleSubscription = async (card?:boolean) => {
     setbillingClick(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
-    const bodyData = { email:data.email,returnURL:window.location.href, planName:planChanged?.id,billingInterval:isYearly || planChanged?.id == APP_SUMO_BUNDLE_NAME ? "YEARLY" : "MONTHLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:coupon,cardTrial:card };
-
-    if(planChanged?.id == APP_SUMO_BUNDLE_NAME)
-    {
-      url = `${process.env.REACT_APP_BACKEND_URL}/create-appsumo-subscription`
-    }
+    const bodyData = { email:data.email,returnURL:window.location.href, planName:planChanged?.id,billingInterval:!isYearly || APP_SUMO_BUNDLE_NAMES.includes((planChanged?.id || "")) ? "MONTHLY" : "YEARLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:coupon,cardTrial:card };
 
     try {
       await fetch(url, {
@@ -310,6 +324,7 @@ const PlanSetting: React.FC<{
   }
 
   const handleCouponValidation = async () => {
+    setCouponClicked(true);
     const url = `${process.env.REACT_APP_BACKEND_URL}/validate-coupon`;
     const bodyData = { couponCode:coupon};
 
@@ -337,10 +352,12 @@ const PlanSetting: React.FC<{
           {
             toast.error(data?.error);
           }
+          setCouponClicked(false);
         });
       })
       .catch(error => {
         // Handle error
+        setCouponClicked(false);
         console.error('There was a problem with the fetch operation:', error);
       });
   }
@@ -398,7 +415,7 @@ const PlanSetting: React.FC<{
       </div>
     );
   }
-  const planChanged = validCoupon ? (appSumoPlan[0]): plans.find((item:any) => item.id === selectedPlan);
+  const planChanged = validCoupon ? (appSumoPlan.find((item:any) => item.id === selectedPlan)): plans.find((item:any) => item.id === selectedPlan);
   const amountCurrent = currentPlan.amount || 0;
   const amountNew = planChanged
     ? isYearly
@@ -600,39 +617,52 @@ const PlanSetting: React.FC<{
                       // />
                       isStripeCustomer ? (
                         <>
-                          <Button
-                            color="primary"
-                            onClick={() => {
-                              handleSubscription(true);
-                            }}
-                            className="get-start-btn"
-                          >
-                            {billingClick ? 'Please Wait...' : '30 Day Trial'}
-                          </Button>
+                          {coupon == '' ? (
+                            <Button
+                              color="primary"
+                              onClick={() => {
+                                handleSubscription(true);
+                              }}
+                              className="get-start-btn"
+                            >
+                              {billingClick ? 'Please Wait...' : '30 Day Trial'}
+                            </Button>
+                          ) : null}
+
                           <Button
                             color="primary"
                             className="get-start-btn w-full mt-4"
-                            onClick={handleSubscription}
+                            onClick={() => {
+                              handleSubscription(false);
+                            }}
                           >
                             {billingClick ? 'Please Wait...' : 'Add to Billing'}
                           </Button>
                         </>
                       ) : (
                         <>
+                          {coupon != '' ? (
+                            <Button
+                              color="primary"
+                              onClick={() => {
+                                handleCheckout(true);
+                              }}
+                              className="get-start-btn"
+                            >
+                              {billingClick ? 'Please Wait...' : '30 Day Trial'}
+                            </Button>
+                          ) : null}
+
                           <Button
                             color="primary"
+                            className="get-start-btn mt-4"
                             onClick={() => {
-                              handleCheckout(true);
+                              handleCheckout(false);
                             }}
-                            className="get-start-btn"
                           >
-                            {billingClick ? 'Please Wait...' : '30 Day Trial'}
+                            {billingClick ? 'Please Wait...' : 'Checkout'}
                           </Button>
-                          <Button color="primary" className="get-start-btn mt-4" onClick={handleCheckout}>
-                          {billingClick ? 'Please Wait...' : 'Checkout'}
-                        </Button>
                         </>
-                        
                       )
                     ) : (
                       <>
@@ -688,13 +718,16 @@ const PlanSetting: React.FC<{
                 onChange={(e) => setCoupon(e.target.value)}
                 className="p-[10px] py-[11.6px] bg-light-gray border border-solid border-white-blue rounded-[10px] text-[16px] leading-[19px] text-white-gray w-full box-border"
               />
-              <Button
+              
+              <button
+              disabled={couponClicked}
                 type="button"
                 onClick={handleCouponValidation}
-                className="mx-3"
+                className=" bg-primary flex justify-center py-[10.9px] px-3 text-white rounded-lg w-40 mx-3"
               >
-                {t('Apply Coupon')}
-              </Button>
+                {couponClicked ? (<CircularProgress sx={{color:"white"}} size={20} />):(t('Apply Coupon'))}
+                
+              </button>
             </div>
           </div>
           <Plans

@@ -10,7 +10,7 @@ import PlanSetting from '../SiteDetail/PlanSetting';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import classNames from 'classnames';
-import { APP_SUMO_BUNDLE_NAME } from '@/constants';
+import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
 import { Card, CardContent, CircularProgress, LinearProgress } from '@mui/material';
 import { FaCheckCircle } from 'react-icons/fa';
 import { handleBilling } from '../Profile/BillingPortalLink';
@@ -156,6 +156,9 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                     if (data.isCustomer == true) {
                         setIsStripeCustomer(true);
                         setActivePlan(data.plan_name);
+                        if(data.plan_name == ""){
+                          setNoPlan(true);
+                        }
 
                         if (data.interval == "yearly") {
                             setIsYearly(true);
@@ -182,12 +185,8 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
     const handleSubscription = async () => {
         setBillingLoading(true);
         let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
-        const bodyData = { email: userData.email, returnURL: window.location.href, planName: activePlan, billingInterval: isYearly || activePlan.toLowerCase() == APP_SUMO_BUNDLE_NAME ? "YEARLY" : "MONTHLY", domainId: addedDomain.id, domainUrl: addedDomain.url, userId: userData.id };
+        const bodyData = { email: userData.email, returnURL: window.location.href, planName: activePlan.toLowerCase(), billingInterval: !isYearly || APP_SUMO_BUNDLE_NAMES.includes(activePlan.toLowerCase()) ? "MONTHLY" : "YEARLY", domainId: addedDomain.id, domainUrl: addedDomain.url, userId: userData.id };
         
-        if(activePlan.toLowerCase() == APP_SUMO_BUNDLE_NAME)
-        {
-            url = `${process.env.REACT_APP_BACKEND_URL}/create-appsumo-subscription`
-        }
         try {
             await fetch(url, {
                 method: 'POST',
@@ -321,7 +320,12 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                           type="button"
                           className="py-3 mr-4 justify-center text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full sm:w-full transition duration-300"
                           onClick={() => {
-                            setCardTrial(true);
+                            if(activePlan !== '' && !trialPlan){
+                              showPaymentModal();
+                            }
+                            else{
+                              setCardTrial(true);
+                            }
                           }}
                           disabled={addSiteLoading || billingLoading}
                         >

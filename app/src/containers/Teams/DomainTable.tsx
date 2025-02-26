@@ -14,6 +14,7 @@ import deleteSite from '@/queries/sites/deleteSite';
 import updateSite from '@/queries/sites/updateSite';
 import isValidDomain from '@/utils/verifyDomain';
 import ConfirmDeleteSiteModal from './DeleteWarningModal';
+import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
 
 interface Domain {
   id: number;
@@ -282,19 +283,13 @@ const DomainTable: React.FC<DomainTableProps> = ({
     const bodyData = {
       email: userData.email,
       returnURL: window.location.href,
-      planName: activePlan,
-      billingInterval: isYearly ? 'YEARLY' : 'MONTHLY',
+      planName: activePlan.toLowerCase(),
+      billingInterval: !isYearly || APP_SUMO_BUNDLE_NAMES.includes(activePlan.toLowerCase()) ? "MONTHLY" : "YEARLY",
       domainId: selectedDomain.id,
       domainUrl: selectedDomain.url,
       userId: userData.id,
     };
 
-    if (
-      activePlan.toLowerCase() ===
-      process.env.APP_SUMO_BUNDLE_NAME?.toLowerCase()
-    ) {
-      url = `${process.env.REACT_APP_BACKEND_URL}/create-appsumo-subscription`;
-    }
 
     try {
       await fetch(url, {

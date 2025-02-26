@@ -157,16 +157,25 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         limit: 50, // Optional: limit the number of results per request
       });
 
-      let usablePrices = prices.data.map((price: Stripe.Price) => {
-        if (price?.tiers_mode && price?.tiers_mode === 'graduated' && price?.recurring.usage_type === 'licensed') {
-          return price;
-        }
-        return null; // Exclude prices without tiers
-      });
+      let usablePrices = await Promise.all(
+        prices.data.map(async (price: Stripe.Price) => {
+          if (
+            price?.tiers_mode === "graduated" &&
+            price?.recurring?.usage_type === "licensed"
+          ) {
+            const product = await stripe.products.retrieve(price.product as string);
+      
+            if (product.name.toLowerCase().includes("app sumo")) {
+              return null;
+            }
+            return price;
+          }
+          return null; // Exclude prices without tiers
+        })
+      );
 
       // Filter out null values
       usablePrices = usablePrices.filter((price: Stripe.Price) => price !== null);
-
       const productPriceArray: any = [];
       const productMap = new Map();
 
@@ -365,7 +374,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
   
   app.post('/create-checkout-session',async (req,res)=>{
-    const { email,planName,billingInterval,returnUrl,domainId,userId,domain,cardTrial} = req.body;
+    const { email,planName,billingInterval,returnUrl,domainId,userId,domain,cardTrial,promoCode} = req.body;
     
     const price = await findProductAndPriceByType(planName,billingInterval);
 
@@ -395,12 +404,59 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         await stripe.subscriptions.del(subscription.id);
       }
 
+      let promoCodeData:Stripe.PromotionCode;
+      if(promoCode)
+      {
+        const promoCodes = await stripe.promotionCodes.list({ limit: 100 });
+        promoCodeData = await promoCodes.data.find((pc:any) => pc?.code == promoCode);
+        
+        if (!promoCodeData) {
+          return res.json({ valid: false, error: 'Invalid promo code' });
+        }
+      }
+
       let price_data = await stripe.prices.retrieve(String(price.price_stripe_id),{expand:['tiers']});
 
       // Create the checkout session
       let session:any = {}
-      if(cardTrial)
+      if(promoCodeData?.coupon.valid && promoCodeData?.active && promoCodeData?.coupon.id == APP_SUMO_COUPON_ID)
       {
+        console.log("promo")
+        session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          mode: 'subscription',
+          line_items: [{
+            price: price.price_stripe_id,
+            quantity: price_data.tiers[0].up_to,
+          }],
+          customer: customer.id,
+          payment_method_collection:'if_required',
+          success_url: `${returnUrl}`,
+          cancel_url: returnUrl,
+          metadata: {
+            domainId: domainId,
+            userId:userId,
+            updateMetaData:"true",
+          },
+          subscription_data:{
+            metadata: {
+              domainId: domainId,
+              userId:userId,
+              updateMetaData:"true",
+              promoCodeID:promoCodeData.id,
+            },
+            description:`Plan for ${domain}`
+          }
+        });
+
+      }
+      else if(promoCode) // Coupon is not valid or not the app sumo promo
+      {
+        return res.json({ valid: false, error: 'Invalid promo code' });
+      }
+      else if(cardTrial)
+      {
+        console.log("trial")
         session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'subscription',
@@ -430,6 +486,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
       }
       else{
+        console.log("normal")
         session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'subscription',
@@ -577,7 +634,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 
   app.post('/create-subscription',async (req,res)=>{
-    const { email,returnURL, planName,billingInterval,domainId,domainUrl,userId,cardTrial } = req.body;
+    const { email,returnURL, planName,billingInterval,domainId,domainUrl,userId,cardTrial,promoCode } = req.body;
 
     const price = await findProductAndPriceByType(planName,billingInterval);
 
@@ -631,11 +688,47 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         no_sub=false;
       }
 
-      if(no_sub) // Update this shit aswell
+      if(no_sub)
       {   
         let price_data = await stripe.prices.retrieve(String(price.price_stripe_id),{expand:['tiers']});
+        let promoCodeData:Stripe.PromotionCode;
+        if (promoCode) {
+          const promoCodes = await stripe.promotionCodes.list({ limit: 100 });
+          promoCodeData = await promoCodes.data.find((pc: any) => pc?.code == promoCode);
 
-        if (cardTrial) {
+          if (!promoCodeData) {
+            return res.json({ valid: false, error: 'Invalid Promo Code' });
+          }
+        }
+
+        if (promoCodeData.coupon.valid && promoCodeData.active && promoCodeData.coupon.id == APP_SUMO_COUPON_ID) {
+          subscription = await stripe.subscriptions.create({
+            customer: customer.id,
+            items: [{ price: price.price_stripe_id, quantity: price_data.tiers[0].up_to }],
+            expand: ['latest_invoice.payment_intent'],
+            default_payment_method: customer.invoice_settings.default_payment_method,
+            metadata: {
+              domainId: domainId,
+              userId: userId,
+              maxDomains: price_data.tiers[0].up_to,
+              usedDomains: 1,
+              promoCodeID: promoCodeData.id,
+            },
+            description: `Plan for ${domainUrl}`,
+          });
+
+          try {
+            const updatedCoupon = await stripe.promotionCodes.update(promoCodeData.id, {
+              active: false, // This will expire the coupon
+            });
+            console.log(`Coupon Expired: ${updatedCoupon.id}`);
+          } catch (error) {
+            console.error('promo exp error', error);
+          }
+        } else if (promoCode) {
+          // Coupon is not valid or not the app sumo promo
+          return res.json({ valid: false, error: 'Invalid promo code' });
+        } else if (cardTrial) {
           subscription = await stripe.subscriptions.create({
             trial_period_days: 30,
             customer: customer.id,
