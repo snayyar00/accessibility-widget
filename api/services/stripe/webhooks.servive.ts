@@ -8,6 +8,7 @@ import { createSitesPlan, deleteSitesPlan, deleteTrialPlan, updateSitesPlan } fr
 import { updateAllowedSiteURL } from '~/repository/sites_allowed.repository';
 import { ProductData, findProductById, findProductByStripeId, insertProduct, updateProduct } from '~/repository/products.repository';
 import { getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId } from '~/repository/sites_plans.repository';
+import { Console } from 'console';
 
 // async function webhookStripe(req: Request, res: Response): Promise<void> {
 //   let event;
@@ -43,13 +44,21 @@ const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY!, {
 });
 
 export const stripeWebhook = async (req: Request, res: Response, context:any) => {
+
   let event: Stripe.Event;
+
   try {
-    event = req.body;
-  } catch (error) {
-    console.log("error = ",error);
-  }
-  try {
+    try {
+      const sig = req.headers['stripe-signature'];
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      event = stripe.webhooks.constructEvent(req.body.toString(), sig, webhookSecret);
+      
+      
+    } catch (error) {
+      console.error("Could not Construct WebHook Event:",error);
+      return res.status(400).send("Webhook signature verification failed.");
+    }
+    
     if (event.type === 'product.updated') {
       // Handles product save and update in DB when you do so from the stripe dashboard
       let product = event.data.object as Stripe.Product;

@@ -51,6 +51,7 @@ const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, '
 const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction','reportProblem','updateImpressionProfileCounts','getWidgetSettings'];
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
+app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
 app.use(express.json());
 
 scheduleMonthlyEmails();
@@ -96,7 +97,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.get('/', (req, res) => {
     res.send('Hello orld!');
   });
-  app.post('/stripe-hooks', bodyParser.raw({ type: 'application/json' }), stripeHooks);
+
   app.get('/token/:url', async (req, res) => {
     const url = req.params.url;
     const token = await GetVisitorTokenByWebsite(url);
