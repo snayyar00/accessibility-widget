@@ -1,24 +1,22 @@
-import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
-import cn from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as DashboardIcon } from '@/assets/images/svg/dashboard.svg';
-import { ReactComponent as InstallIcon } from '@/assets/images/svg/install.svg';
 import { ReactComponent as UserIcon } from '@/assets/images/svg/user.svg';
 import type { RootState } from '@/config/store';
 import { toggleSidebar } from '@/features/admin/sidebar';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import routes from '@/routes';
 import Dropdown from '@/containers/Dashboard/DropDown';
-import { FaGear } from 'react-icons/fa6';
+import { GoGear } from 'react-icons/go';
+import { GrInstallOption } from 'react-icons/gr';
 
-
-
-
-const Sidebar = ({ options, setReloadSites, selectedOption, setSelectedOption }: any) => {
-
-
+const Sidebar = ({
+  options,
+  setReloadSites,
+  selectedOption,
+  setSelectedOption,
+}: any) => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const { isOpen } = useSelector((state: RootState) => state.sidebar);
@@ -37,103 +35,105 @@ const Sidebar = ({ options, setReloadSites, selectedOption, setSelectedOption }:
         />
       )}
       <div
-        className={`w-[235px] h-screen flex flex-col sm:fixed sm:bg-white sm:transition-all sm:duration-[400ms]
-         ${isOpen ? 'sm:left-0 sm:z-[50] ' : 'sm:left-[-235px] sm:z-[50] '}`}
+        className={`h-screen flex min-w-fit flex-col sm:fixed sm:bg-white sm:transition-all sm:duration-[400ms] 
+  ${isOpen ? 'sm:left-0 sm:z-[50]' : 'sm:-left-full sm:z-[50]'}`}
       >
         <a
           href="/"
-          className="flex h-[81px] items-center pl-[5px] border-b border-r border-solid border-gray"
+          className="flex h-[81px] items-center px-4 border-b border-r border-solid border-gray"
         >
           <LogoIcon />
-
-          {/* <div className="text-primary text-[22px] leading-[27px] font-medium ml-2 [&>span:first-child]:font-extrabold">
-            <span>{t('Common.logo.saas')}</span>
-            <span>{t('Common.logo.gear')}</span>
-          </div> */}
-          {/* <div className='pr-5'>
-            <svg
-              width="198"
-              height="47"
-              viewBox="0 0 198 47"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              xmlnsXlink="http://www.w3.org/1999/xlink"
-            >
-              <rect width="198" height="47" fill="url(#pattern0)" />
-              <defs>
-                <pattern
-                  id="pattern0"
-                  patternContentUnits="objectBoundingBox"
-                  width="1"
-                  height="1"
-                >
-                  <use
-                    xlinkHref="#image0_18_1286"
-                    transform="matrix(0.000244141 0 0 0.00102851 0 -0.346976)"
-                  />
-                </pattern>
-                {/* Make sure to include the definition of #image0_18_1286 here */}
-              {/* </defs>
-            </svg> */}
-          {/* </div>  */}
         </a>
-        <div className="flex-grow">
-          <div className="mb-2 w-full pl-[27px] border-l-2 border-solid border-transparent flex items-center [&.active]:rounded-r-[10px] [&.active]:rounded-b-[10px] [&.active]:rounded-t-[0px] [&.active]:rounded-l-[0px] [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>svg_*[fill]]:fill-primary [&.active>svg_*[stroke]]:stroke-primary">
-            <Dropdown data={options} setReloadSites={setReloadSites} selectedOption={selectedOption} setSelectedOption={setSelectedOption} />
+
+        <div className="flex-grow min-w-[250px] sm:w-[20%] md:w-[18%] lg:w-[15%] transition-all duration-300">
+          <div className="mb-2 w-full pl-6 border-l-2 border-transparent flex items-center">
+            <Dropdown
+              data={options}
+              setReloadSites={setReloadSites}
+              selectedOption={selectedOption}
+              setSelectedOption={setSelectedOption}
+            />
           </div>
-          <ul className="p-0 pr-[14px]">
-            <li key='/dashboard' className="h-[60px] flex items-center">
+
+          <ul className="p-0 space-y-1">
+            <li key="/dashboard" className="h-[60px] flex items-center">
               <NavLink
-                to='/dashboard'
+                to="/dashboard"
                 activeClassName="active"
                 onClick={closeSidebar}
-                className="w-full h-full pl-[27px] border-l-2 border-solid border-transparent flex items-center [&.active]:rounded-r-[10px] [&.active]:rounded-b-[10px] [&.active]:rounded-t-[0px] [&.active]:rounded-l-[0px] [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>svg_*[fill]]:fill-primary [&.active>svg_*[stroke]]:stroke-primary"
+                className="w-full h-full flex items-center px-2 border-l-2 border-transparent 
+          [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary 
+          [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200 [&.active>.menu-icon>svg_*[fill]]:fill-primary [&.active>.menu-icon>svg_*[stroke]]:stroke-primary"
               >
-                <DashboardIcon />
-                <span className="menu-text text-[18px] leading-[22px] text-white-blue ml-[10px]">
+                <div className="menu-icon flex items-center justify-center w-12 h-6">
+                  <DashboardIcon/>
+                </div>
+                <span className="menu-text text-lg text-white-blue ml-4">
                   Dashboard
                 </span>
               </NavLink>
             </li>
-            <li key='/installation' className="h-[60px] flex items-center">
+
+            <li key="/installation" className="h-[60px] flex items-center">
               <NavLink
-                to='/installation'
+                to="/installation"
                 activeClassName="active"
                 onClick={closeSidebar}
-                className="w-full h-full pl-[27px] border-l-2 border-solid border-transparent flex items-center [&.active]:rounded-r-[10px] [&.active]:rounded-b-[10px] [&.active]:rounded-t-[0px] [&.active]:rounded-l-[0px] [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>svg_*[fill]]:fill-primary [&.active>svg_*[stroke]]:stroke-primary"
+                className="w-full h-full flex items-center px-2 border-l-2 border-transparent 
+          [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary 
+          [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200"
               >
-                <InstallIcon />
-                <span className="menu-text text-[18px] leading-[22px] text-white-blue ml-[10px]">
+                <div className="menu-icon flex items-center justify-center w-12 h-6">
+                  <GrInstallOption
+                    className="menu-icon text-white-blue transition-colors duration-200"
+                    size={25}
+                  />
+                </div>
+                <span className="menu-text text-lg text-white-blue ml-4">
                   Installation
                 </span>
               </NavLink>
             </li>
-            <li className="h-[60px] flex items-center">
+
+            <li key="/customize-widget" className="h-[60px] flex items-center">
               <NavLink
-                to='/customize-widget'
+                to="/customize-widget"
                 activeClassName="active"
                 onClick={closeSidebar}
-                className="w-full h-full pl-[27px] border-l-2 border-solid border-transparent flex items-center [&.active]:rounded-r-[10px] [&.active]:rounded-b-[10px] [&.active]:rounded-t-[0px] [&.active]:rounded-l-[0px] [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>svg_*[fill]]:fill-primary [&.active>svg_*[stroke]]:stroke-primary"
+                className="w-full h-full flex items-center px-2 border-l-2 border-transparent 
+          [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary 
+          [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200"
               >
-                <FaGear size={30}/>
-                <span className="menu-text text-[18px] leading-[22px] text-white-blue ml-[10px]">
+                <div className="menu-icon flex items-center justify-center w-12 h-6 ml-0">
+                  <GoGear
+                    className="menu-icon text-white-blue transition-colors duration-200"
+                    size={30}
+                  />
+                </div>
+                <span className="menu-text text-lg text-left text-white-blue ml-4 pr-2">
                   Customize Widget
                 </span>
               </NavLink>
             </li>
-            <li key='/add-domain' className="h-[60px] flex items-center">
+
+            <li key="/add-domain" className="h-[60px] flex items-center">
               <NavLink
-                to='/add-domain'
+                to="/add-domain"
                 activeClassName="active"
                 onClick={closeSidebar}
-                className="w-full h-full pl-[27px] border-l-2 border-solid border-transparent flex items-center [&.active]:rounded-r-[10px] [&.active]:rounded-b-[10px] [&.active]:rounded-t-[0px] [&.active]:rounded-l-[0px] [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>svg_*[fill]]:fill-primary [&.active>svg_*[stroke]]:stroke-primary"
+                className="w-full h-full flex items-center px-2 border-l-2 border-transparent 
+          [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary 
+          [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200 [&.active>.menu-icon>svg_*[fill]]:fill-primary [&.active>.menu-icon>svg_*[stroke]]:stroke-primary"
               >
-                <UserIcon />
-                <span className="menu-text text-[18px] leading-[22px] text-white-blue ml-[10px]">
+                <div className="menu-icon flex items-center justify-center w-12 h-6">
+                  <UserIcon />
+                </div>
+                <span className="menu-text text-lg text-white-blue ml-4">
                   Add Domain
                 </span>
               </NavLink>
             </li>
+
             {routes
               .filter((route) => route.isSidebar)
               .map((route) => (
@@ -142,16 +142,19 @@ const Sidebar = ({ options, setReloadSites, selectedOption, setSelectedOption }:
                     to={route.path}
                     activeClassName="active"
                     onClick={closeSidebar}
-                    className="w-full h-full pl-[27px] border-l-2 border-solid border-transparent flex items-center [&.active]:rounded-r-[10px] [&.active]:rounded-b-[10px] [&.active]:rounded-t-[0px] [&.active]:rounded-l-[0px] [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>svg_*[stroke]]:stroke-primary"
+                    className="w-full h-full flex items-center px-2 border-l-2 border-transparent 
+              [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary 
+              [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200"
                   >
-                    {route.icon}
-                    <span className="menu-text text-[18px] leading-[22px] text-white-blue ml-[10px]">
+                    <div className="menu-icon flex items-center justify-center w-12 h-6">
+                      {route.icon}
+                    </div>
+                    <span className="menu-text text-center text-lg text-white-blue ml-4">
                       {route.name}
                     </span>
                   </NavLink>
                 </li>
               ))}
-
           </ul>
         </div>
       </div>

@@ -50,6 +50,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [deleteSiteStatus, setDeleteSiteStatus] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [tempDomain, setTempDomain] = useState('');
+  const [expiryDays,setExpiryDays] = useState(-1);
 
   const [deleteSiteMutation] = useMutation(deleteSite, {
     onCompleted: (response) => {
@@ -224,6 +225,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
     if (!status) {
       return 'Trial Expired';
     }
+    if (trial) {
+      return 'Trial';
+    }
     const currentTime = new Date().getTime();
     const timeDifference = new Date(parseInt(status)).getTime() - currentTime;
     const sevendays = 7 * 24 * 60 * 60 * 1000;
@@ -261,6 +265,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
             if (data.interval === 'yearly') {
               setIsYearly(true);
             }
+          }
+          if(data.expiry){
+            setExpiryDays(data.expiry);
           }
         });
       })
@@ -337,7 +344,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
 
   return (
     <>
-      {activePlan && planMetaData ? (
+      {/* {activePlan && planMetaData ? (
         <Card
           sx={{ borderRadius: 5 }}
           className="max-w-5xl mx-auto my-6 shadow-md hover:shadow-xl transition-shadow duration-300 bg-gradient-to-br from-background to-secondary/10 rounded-xl"
@@ -351,9 +358,12 @@ const DomainTable: React.FC<DomainTableProps> = ({
                 <p className="text-muted-foreground mt-1">
                   You are subscribed to the{' '}
                   <span className="font-bold text-black uppercase">
-                    {activePlan}
+                    {activePlan}{expiryDays > 0 ? (`(Trial)`):(null)}
                   </span>
                 </p>
+                {expiryDays > 0 ? ( <h2 className="text-lg font-semibold text-primary">
+                  Days Remaining: {expiryDays} Days
+                </h2>):(null)}
               </div>
             </div>
             <div className="h-px bg-border my-4" />
@@ -394,7 +404,14 @@ const DomainTable: React.FC<DomainTableProps> = ({
             </div>
           </CardContent>
         </Card>
-      ) : null}
+      ) : <div className='flex justify-center mt-5'>
+        <CircularProgress
+          size={100}
+          sx={{ color: 'primary' }}
+          className="m-auto"
+        />
+      </div>
+      } */}
 
       <ConfirmDeleteSiteModal
         billingLoading={billingLoading}

@@ -143,8 +143,15 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       status: 'active',
     });
 
-    if (subscriptions.data.length !== 0) {
+    const trialingSubscriptions = await stripe.subscriptions.list({
+      customer: customer.id,
+      status: 'trialing',
+    });
 
+    // Merge trialing subscriptions into active subscriptions (modifying subscriptions.data)
+    subscriptions.data.push(...trialingSubscriptions.data);
+
+    if (subscriptions.data.length !== 0) {
       const prices = await stripe.prices.list({
         limit: 50, // Optional: limit the number of results per request
       });
@@ -183,15 +190,46 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
       // console.log(productPriceArray);
       if (productPriceArray.length) {
-        const configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
-          features: {
-            subscription_update: {
-              enabled: true,
-              default_allowed_updates: ['price'], // Allow price updates
-              products: productPriceArray,
+        let configuration: any = {};
+
+        if (subscriptions.data[0].status == 'trialing') {
+          configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
+            features: {
+              subscription_update: {
+                enabled: true,
+                default_allowed_updates: ['price'], // Allow price updates
+                products: productPriceArray,
+              },
+              subscription_cancel: {
+                proration_behavior: 'none',
+                enabled: true,
+                mode: 'at_period_end', // or 'immediately' based on your preference
+                cancellation_reason: {
+                  enabled: true,
+                  options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
+                },
+              },
             },
-          },
-        });
+          });
+        } else {
+          configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
+            features: {
+              subscription_update: {
+                enabled: true,
+                default_allowed_updates: ['price'], // Allow price updates
+                products: productPriceArray,
+              },
+              subscription_cancel: {
+                enabled: true,
+                mode: 'immediately', // or 'immediately' based on your preference
+                cancellation_reason: {
+                  enabled: true,
+                  options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
+                },
+              },
+            },
+          });
+        }
 
         try {
           const session = await stripe.billingPortal.sessions.create({
@@ -205,13 +243,32 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           return res.status(500);
         }
       } else {
-        const configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
-          features: {
-            subscription_update: {
-              enabled: false,
+        let configuration: any = {};
+        if (subscriptions.data[0].status == 'trialing') {
+          configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
+            features: {
+              subscription_update: {
+                enabled: false,
+              },
+              subscription_cancel: {
+                enabled: true,
+                mode: 'immediately', // or 'immediately' based on your preference
+                cancellation_reason: {
+                  enabled: true,
+                  options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
+                },
+              },
             },
-          },
-        });
+          });
+        } else {
+          configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
+            features: {
+              subscription_update: {
+                enabled: false,
+              },
+            },
+          });
+        }
 
         try {
           const session = await stripe.billingPortal.sessions.create({
@@ -278,10 +335,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         res.status(500).json({ error: 'User does not own this site' });
       } else {
         await addWidgetSettings({
-          site_url: site_url,
-          allowed_site_id: site.id,
+          site_url: '127.0.0.1',
+          allowed_site_id: 26,
           settings: settings,
-          user_id: user_id,
+          user_id: 35,
         });
         res.status(200).json("Success");
       }
@@ -294,7 +351,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.post('/get-site-widget-settings', async (req, res) => {
     const { site_url } = req.body;
     try {
-      const site = await findSiteByURL(site_url);
+      const site = await findSiteByURL('127.0.0.1');
 
       const widgetSettings = await getWidgetSettingsBySiteId(site.id);
       let response = widgetSettings?.settings || {};
@@ -307,7 +364,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
   
   app.post('/create-checkout-session',async (req,res)=>{
-    const { email,planName,billingInterval,returnUrl,domainId,userId,domain} = req.body;
+    const { email,planName,billingInterval,returnUrl,domainId,userId,domain,cardTrial} = req.body;
     
     const price = await findProductAndPriceByType(planName,billingInterval);
 
@@ -340,31 +397,66 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       let price_data = await stripe.prices.retrieve(String(price.price_stripe_id),{expand:['tiers']});
 
       // Create the checkout session
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        mode: 'subscription',
-        line_items: [{
-          price: price.price_stripe_id,
-          quantity: price_data.tiers[0].up_to,
-        }],
-        customer: customer.id,
-        allow_promotion_codes: true,
-        success_url: `${returnUrl}`,
-        cancel_url: returnUrl,
-        metadata: {
-          domainId: domainId,
-          userId:userId,
-          updateMetaData:"true",
-        },
-        subscription_data:{
+      let session:any = {}
+      if(cardTrial)
+      {
+        session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          mode: 'subscription',
+          line_items: [{
+            price: price.price_stripe_id,
+            quantity: price_data.tiers[0].up_to,
+          }],
+          customer: customer.id,
+          allow_promotion_codes: true,
+          success_url: `${returnUrl}`,
+          cancel_url: returnUrl,
           metadata: {
             domainId: domainId,
             userId:userId,
             updateMetaData:"true",
           },
-          description:`Plan for ${domain}`,
-        }
-      });
+          subscription_data:{
+            trial_period_days: 30,
+            metadata: {
+              domainId: domainId,
+              userId:userId,
+              updateMetaData:"true",
+            },
+            description:`Plan for ${domain}`,
+          }
+        });
+
+      }
+      else{
+        session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          mode: 'subscription',
+          line_items: [{
+            price: price.price_stripe_id,
+            quantity: price_data.tiers[0].up_to,
+          }],
+          customer: customer.id,
+          allow_promotion_codes: true,
+          success_url: `${returnUrl}`,
+          cancel_url: returnUrl,
+          metadata: {
+            domainId: domainId,
+            userId:userId,
+            updateMetaData:"true",
+          },
+          subscription_data:{
+            metadata: {
+              domainId: domainId,
+              userId:userId,
+              updateMetaData:"true",
+            },
+            description:`Plan for ${domain}`,
+          }
+        });
+      }
+
+      
 
       res.status(303).json({ url: session.url });
 
@@ -484,7 +576,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 
   app.post('/create-subscription',async (req,res)=>{
-    const { email,returnURL, planName,billingInterval,domainId,domainUrl,userId } = req.body;
+    const { email,returnURL, planName,billingInterval,domainId,domainUrl,userId,cardTrial } = req.body;
 
     const price = await findProductAndPriceByType(planName,billingInterval);
 
@@ -542,19 +634,36 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       {   
         let price_data = await stripe.prices.retrieve(String(price.price_stripe_id),{expand:['tiers']});
 
-        subscription = await stripe.subscriptions.create({
-        customer: customer.id,
-        items: [{ price: price.price_stripe_id,quantity:price_data.tiers[0].up_to }],
-        expand: ['latest_invoice.payment_intent'],
-        default_payment_method:customer.invoice_settings.default_payment_method,
-        metadata: {
-          domainId: domainId,
-          userId:userId,
-          maxDomains:price_data.tiers[0].up_to,
-          usedDomains:1,
-        },
-        description:`Plan for ${domainUrl}`
-        });
+        if (cardTrial) {
+          subscription = await stripe.subscriptions.create({
+            trial_period_days: 30,
+            customer: customer.id,
+            items: [{ price: price.price_stripe_id, quantity: price_data.tiers[0].up_to }],
+            expand: ['latest_invoice.payment_intent'],
+            default_payment_method: customer.invoice_settings.default_payment_method,
+            metadata: {
+              domainId: domainId,
+              userId: userId,
+              maxDomains: price_data.tiers[0].up_to,
+              usedDomains: 1,
+            },
+            description: `Plan for ${domainUrl}`,
+          });
+        } else {
+          subscription = await stripe.subscriptions.create({
+            customer: customer.id,
+            items: [{ price: price.price_stripe_id, quantity: price_data.tiers[0].up_to }],
+            expand: ['latest_invoice.payment_intent'],
+            default_payment_method: customer.invoice_settings.default_payment_method,
+            metadata: {
+              domainId: domainId,
+              userId: userId,
+              maxDomains: price_data.tiers[0].up_to,
+              usedDomains: 1,
+            },
+            description: `Plan for ${domainUrl}`,
+          });
+        }
 
         let previous_plan;
         try {
@@ -877,14 +986,34 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         customer = customers.data[0];
 
         try {
+
+          const trial_subs = await stripe.subscriptions.list({
+            customer: customer.id,
+            status: 'trialing', // Retrieve all statuses to filter manually
+          });
+          // handle trial output and show trial sub seperately
+          if(trial_subs?.data?.length){
+            const prod = await stripe.products.retrieve(String(trial_subs?.data[0]?.plan?.product));
+
+            const trialEndTimestamp = trial_subs?.data[0]?.trial_end; // Unix timestamp
+            const currentTimestamp = Math.floor(Date.now() / 1000); // Current time in seconds
+
+            const daysRemaining = Math.ceil((trialEndTimestamp - currentTimestamp) / (60 * 60 * 24));
+  
+            res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining});
+          }
+          else{
           const subscriptions = await stripe.subscriptions.list({
             customer: customer.id,
             status: 'active', // Retrieve all statuses to filter manually
           });
-  
+
           const prod = await stripe.products.retrieve(String(subscriptions.data[0]?.plan?.product));
   
           res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method});
+          
+        }
+  
           
         } catch (error) {
           // console.log(error);
@@ -897,16 +1026,37 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         customer = customers.data[0];
 
         try {
-          const subscriptions = await stripe.subscriptions.list({
+
+          const trial_subs = await stripe.subscriptions.list({
             customer: customer.id,
-            status: 'active', // Retrieve all statuses to filter manually
+            status: 'trialing', // Retrieve all statuses to filter manually
           });
+          // handle trial output and show trial sub seperately
+          if(trial_subs?.data?.length){
+            // console.log(trial_subs);
+            const prod = await stripe.products.retrieve(String(trial_subs?.data[0]?.plan?.product));
+
+            const trialEndTimestamp = trial_subs?.data[0]?.trial_end; // Unix timestamp
+            const currentTimestamp = Math.floor(Date.now() / 1000); // Current time in seconds
+
+            const daysRemaining = Math.ceil((trialEndTimestamp - currentTimestamp) / (60 * 60 * 24));
   
-          const prod = await stripe.products.retrieve(String(subscriptions?.data[0]?.plan?.product));
-  
-          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method });
+            res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining});
+          }
+          else{
+            const subscriptions = await stripe.subscriptions.list({
+              customer: customer.id,
+              status: 'active', // Retrieve all statuses to filter manually
+            });
+    
+            const prod = await stripe.products.retrieve(String(subscriptions?.data[0]?.plan?.product));
+    
+            res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method });
+            
+          }
           
         } catch (error) {
+          // Silent Fail
           res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method});
         }
       }

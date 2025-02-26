@@ -89,8 +89,9 @@ const appSumoPlan = [{
 
 const PlanSetting: React.FC<{
   domain: TDomain,
-  setReloadSites: (value: boolean) => void
-}> = ({ domain, setReloadSites }) => {
+  setReloadSites: (value: boolean) => void,
+  cardTrial?:Boolean
+}> = ({ domain, setReloadSites,cardTrial }) => {
   const [isYearly, setIsYearly] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('');
   const { data: currentPlan } = useSelector((state: RootState) => state.sitePlan);
@@ -220,10 +221,10 @@ const PlanSetting: React.FC<{
       });
   }
 
-  const handleCheckout = async ()=>{
+  const handleCheckout = async (card?:boolean)=>{
     setbillingClick(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-checkout-session`;
-    const bodyData = { email:data.email,planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url,promoCode:coupon };
+    const bodyData = { email:data.email,planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url,promoCode:coupon,cardTrial:cardTrial || card };
 
     if(planChanged?.id == APP_SUMO_BUNDLE_NAME)
     {
@@ -262,10 +263,10 @@ const PlanSetting: React.FC<{
       });
   }
 
-  const handleSubscription = async () => {
+  const handleSubscription = async (card?:boolean) => {
     setbillingClick(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
-    const bodyData = { email:data.email,returnURL:window.location.href, planName:planChanged?.id,billingInterval:isYearly || planChanged?.id == APP_SUMO_BUNDLE_NAME ? "YEARLY" : "MONTHLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:coupon };
+    const bodyData = { email:data.email,returnURL:window.location.href, planName:planChanged?.id,billingInterval:isYearly || planChanged?.id == APP_SUMO_BUNDLE_NAME ? "YEARLY" : "MONTHLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:coupon,cardTrial:card };
 
     if(planChanged?.id == APP_SUMO_BUNDLE_NAME)
     {
@@ -414,15 +415,16 @@ const PlanSetting: React.FC<{
         {t('Profile.text.plan')} for {domain.url}
       </h5>
       <div className="p-4">
-      <Modal isOpen={isModalOpen} onClose={closeModal}>
-        <h2 className="text-xl font-bold mb-4">{subFailed ? ('You have reached the maximum number of allowed domains for this plan'):('Plan Subscribed')}</h2>
-        <button
-          className="submit-btn"
-          onClick={closeModal}
-        >
-          Close
-        </button>
-      </Modal>
+        <Modal isOpen={isModalOpen} onClose={closeModal}>
+          <h2 className="text-xl font-bold mb-4">
+            {subFailed
+              ? 'You have reached the maximum number of allowed domains for this plan'
+              : 'Plan Subscribed'}
+          </h2>
+          <button className="submit-btn" onClick={closeModal}>
+            Close
+          </button>
+        </Modal>
       </div>
       <p className="text-[16px] leading-[26px] text-white-gray mb-[14px]">
         {t('Profile.text.plan_desc')}
@@ -430,9 +432,31 @@ const PlanSetting: React.FC<{
       <div className="flex justify-between sm:flex-col-reverse flex-col flex-wrap">
         <div>
           {/* No Plan No Sub */}
-          {((currentPlan.isTrial ||showPlans || ((planChanged || (Object.keys(currentPlan).length == 0)) && ((Object.keys(currentPlan).length == 0) && currentActivePlan == "")) ) && (<div className="flex justify-center mb-[25px] sm:mt-[25px] [&_label]:mx-auto [&_label]:my-0">
-            <Toggle onChange={toggle} label="Bill Yearly" />
-          </div>))}          
+          {cardTrial ? (
+            <div className="my-4 p-4 bg-[#f5f7fb] rounded-lg hover:bg-secondary/30 transition-colors duration-300">
+              <h4 className="text-md font-semibold text-secondary-foreground mb-2">
+                After your 30 day trial ends, you will be automatically charged
+                for the plan you select
+              </h4>
+              <p className="text-sm text-secondary-foreground/80">
+                Choose a plan and checkout, enter your details and your trial
+                will begin.
+              </p>
+              <p className="text-sm text-secondary-foreground/80">
+                Don't worry you won't be charged before your trial ends
+              </p>
+            </div>
+          ) : null}
+
+          {(currentPlan.isTrial ||
+            showPlans ||
+            ((planChanged || Object.keys(currentPlan).length == 0) &&
+              Object.keys(currentPlan).length == 0 &&
+              currentActivePlan == '')) && (
+            <div className="flex justify-center mb-[25px] sm:mt-[25px] [&_label]:mx-auto [&_label]:my-0">
+              <Toggle onChange={toggle} label="Bill Yearly" />
+            </div>
+          )}
           <div>
             {planChanged && (
               <div className="p-6 sm:mx-2 mx-32 lg:mx-80 screen-4k-mx-80 mb-3 border border-solid border-dark-gray rounded-[10px] flex sm:p-6 sm:flex-col-reverse flex-col flex-wrap">
@@ -462,7 +486,7 @@ const PlanSetting: React.FC<{
                         {sitePlanData?.getPlanBySiteIdAndUserId ? (
                           <div className="flex items-center mt-2 mb-2">
                             <Button
-                              color='primary'
+                              color="primary"
                               onClick={handleBilling}
                               disabled={clicked}
                             >
@@ -498,19 +522,41 @@ const PlanSetting: React.FC<{
                         <p className="text-[16px] leading-[26px] text-white-gray flex-grow">
                           {t('Profile.text.new_sub')}
                         </p>
-                        <span className="font-bold text-[18px] leading-6 text-sapphire-blue" style={{textDecoration:coupon !=="" ? "line-through":"none"}}>
+                        <span
+                          className="font-bold text-[18px] leading-6 text-sapphire-blue"
+                          style={{
+                            textDecoration:
+                              coupon !== '' ? 'line-through' : 'none',
+                          }}
+                        >
                           ${isYearly ? amountNew * 10 : amountNew}
                         </span>
-                        {coupon !== "" ? (
-                        <span className="font-bold text-[18px] leading-6 pl-2 text-sapphire-blue">
-                          ${isYearly ? ((amountNew * 10) - (percentDiscount ? ((amountNew * 10)*discount):(discount) )) : (amountNew - ( percentDiscount ? (amountNew*discount):(discount)))}
-                        </span>):(null)}
+                        {coupon !== '' ? (
+                          <span className="font-bold text-[18px] leading-6 pl-2 text-sapphire-blue">
+                            $
+                            {isYearly
+                              ? amountNew * 10 -
+                                (percentDiscount
+                                  ? amountNew * 10 * discount
+                                  : discount)
+                              : amountNew -
+                                (percentDiscount
+                                  ? amountNew * discount
+                                  : discount)}
+                          </span>
+                        ) : null}
                       </li>
                       <li className="flex justify-between items-center list-none mb-4">
                         <p className="text-[16px] leading-[26px] text-white-gray flex-grow">
                           {t('Profile.text.balance_due')}
                         </p>
-                        <span className="font-bold text-[18px] leading-6 text-sapphire-blue" style={{textDecoration:coupon !=="" ? "line-through":"none"}}>
+                        <span
+                          className="font-bold text-[18px] leading-6 text-sapphire-blue"
+                          style={{
+                            textDecoration:
+                              coupon !== '' ? 'line-through' : 'none',
+                          }}
+                        >
                           $
                           {Math.max(
                             (isYearly ? amountNew * 10 : amountNew) -
@@ -518,18 +564,28 @@ const PlanSetting: React.FC<{
                             0,
                           )}
                         </span>
-                        {coupon !== "" ? (<span className="font-bold text-[18px] leading-6 pl-2 text-sapphire-blue">
-                          $
-                          {Math.max(
-                            (isYearly ? ((amountNew * 10) - (percentDiscount ? (amountNew*9*discount):(discount))) : (amountNew - (percentDiscount ? (amountNew*discount):(discount)))) -
-                              amountCurrent,
-                            0,
-                          )}
-                        </span>):(null)}
+                        {coupon !== '' ? (
+                          <span className="font-bold text-[18px] leading-6 pl-2 text-sapphire-blue">
+                            $
+                            {Math.max(
+                              (isYearly
+                                ? amountNew * 10 -
+                                  (percentDiscount
+                                    ? amountNew * 9 * discount
+                                    : discount)
+                                : amountNew -
+                                  (percentDiscount
+                                    ? amountNew * discount
+                                    : discount)) - amountCurrent,
+                              0,
+                            )}
+                          </span>
+                        ) : null}
                       </li>
                     </ul>
                     {isEmpty(currentPlan) ||
-                    (currentPlan && currentPlan.deletedAt) || currentPlan.isTrial ? (
+                    (currentPlan && currentPlan.deletedAt) ||
+                    currentPlan.isTrial ? (
                       // <StripeContainer
                       //   onSubmitSuccess={createPaymentMethodSuccess}
                       //   apiLoading={isCreatingSitePlan}
@@ -542,42 +598,75 @@ const PlanSetting: React.FC<{
                       //   setDiscount={setDiscount}
                       //   setpercentDiscount={setpercentDiscount}
                       // />
-                      isStripeCustomer?(<button className='submit-btn' onClick={handleSubscription}>{billingClick ? ("Please Wait..."):("Add to Billing")}</button>):(<button className='submit-btn' onClick={handleCheckout}>{billingClick ? ("Please Wait..."):("Checkout")}</button>)
+                      isStripeCustomer ? (
+                        <>
+                          <Button
+                            color="primary"
+                            onClick={() => {
+                              handleSubscription(true);
+                            }}
+                            className="get-start-btn"
+                          >
+                            {billingClick ? 'Please Wait...' : '30 Day Trial'}
+                          </Button>
+                          <Button
+                            color="primary"
+                            className="get-start-btn w-full mt-4"
+                            onClick={handleSubscription}
+                          >
+                            {billingClick ? 'Please Wait...' : 'Add to Billing'}
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            color="primary"
+                            onClick={() => {
+                              handleCheckout(true);
+                            }}
+                            className="get-start-btn"
+                          >
+                            {billingClick ? 'Please Wait...' : '30 Day Trial'}
+                          </Button>
+                          <Button color="primary" className="get-start-btn mt-4" onClick={handleCheckout}>
+                          {billingClick ? 'Please Wait...' : 'Checkout'}
+                        </Button>
+                        </>
+                        
+                      )
                     ) : (
                       <>
                         <Button
-                        color="primary"
-                        onClick={handleChangeSubcription}
-                        disabled={isUpdatingSitePlan}
-                      >
-                        {isUpdatingSitePlan
-                          ? t('Common.text.please_wait')
-                          : t('Profile.text.change_sub')}
-                      </Button>
-                      {sitePlanData?.getPlanBySiteIdAndUserId ? (
-                          
-                            <Button
-                              color='primary'
-                              onClick={handleBilling}
-                              disabled={clicked}
-                              className='mt-2'
-                            >
-                              {clicked ? 'redirecting...' : 'Manage billing'}
-                            </Button>
-                          
+                          color="primary"
+                          onClick={handleChangeSubcription}
+                          disabled={isUpdatingSitePlan}
+                        >
+                          {isUpdatingSitePlan
+                            ? t('Common.text.please_wait')
+                            : t('Profile.text.change_sub')}
+                        </Button>
+                        {sitePlanData?.getPlanBySiteIdAndUserId ? (
+                          <Button
+                            color="primary"
+                            onClick={handleBilling}
+                            disabled={clicked}
+                            className="mt-2"
+                          >
+                            {clicked ? 'redirecting...' : 'Manage billing'}
+                          </Button>
                         ) : null}
                       </>
                     )}
                   </div>
                 )}
 
-              {errorCreate?.message && (
-                <ErrorText message={errorCreate.message} />
-              )}
+                {errorCreate?.message && (
+                  <ErrorText message={errorCreate.message} />
+                )}
 
-              {errorUpdate?.message && (
-                <ErrorText message={errorUpdate.message} />
-              )}
+                {errorUpdate?.message && (
+                  <ErrorText message={errorUpdate.message} />
+                )}
                 {errorDelete?.message && (
                   <ErrorText message={errorDelete.message} />
                 )}
@@ -585,29 +674,40 @@ const PlanSetting: React.FC<{
             )}
           </div>
           <div className="block w-full mb-4">
-            <label className="font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block uppercase mb-[19px]" htmlFor="coupon_code">
+            <label
+              className="font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block uppercase mb-[19px]"
+              htmlFor="coupon_code"
+            >
               App Sumo {t('Coupon Code')}
             </label>
             <div className="flex items-center">
               <input
                 type="text"
                 value={coupon}
-                placeholder='Coupon Code'
+                placeholder="Coupon Code"
                 onChange={(e) => setCoupon(e.target.value)}
                 className="p-[10px] py-[11.6px] bg-light-gray border border-solid border-white-blue rounded-[10px] text-[16px] leading-[19px] text-white-gray w-full box-border"
               />
-              <Button type="button" onClick={handleCouponValidation} className="mx-3">
+              <Button
+                type="button"
+                onClick={handleCouponValidation}
+                className="mx-3"
+              >
                 {t('Apply Coupon')}
               </Button>
             </div>
           </div>
           <Plans
             plans={
-              validCoupon ? (appSumoPlan) :
-              currentPlan.isTrial ? (plans) : 
-              (((Object.keys(currentPlan).length == 0 && currentActivePlan != "")) 
-              ? 
-              (plans.filter((plan)=>plan.id == currentActivePlan)):(plans))}
+              validCoupon
+                ? appSumoPlan
+                : currentPlan.isTrial
+                ? plans
+                : Object.keys(currentPlan).length == 0 &&
+                  currentActivePlan != ''
+                ? plans.filter((plan) => plan.id == currentActivePlan)
+                : plans
+            }
             onChange={changePlan}
             planChanged={planChanged}
             isYearly={isYearly}
@@ -616,8 +716,7 @@ const PlanSetting: React.FC<{
             showPlans={setShowPlans}
           />
         </div>
-        <div>
-        </div>
+        <div></div>
       </div>
     </div>
   );

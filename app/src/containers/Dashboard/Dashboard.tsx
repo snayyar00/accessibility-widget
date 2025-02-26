@@ -264,7 +264,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
   return (
     <>
       {loading ? (
-        <><div className="flex flex-col items-start justify-center w-full mb-8 pl-0 pr-3">
+        <><div className="flex flex-col items-center justify-center w-full mb-8 pl-0 pr-3">
         <TrialBannerAndModal
           allDomains={allDomains}
           setReloadSites={setReloadSites}
@@ -297,7 +297,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
       )}
       {!loadingAnimation && (
         <div className="container py-4">
-          <div className="flex flex-col items-start justify-center w-full mb-8 pl-0 pr-3">
+          <div className="flex flex-col items-center justify-center w-full mb-8 pl-0 pr-3">
             <TrialBannerAndModal
               allDomains={allDomains}
               setReloadSites={setReloadSites}
