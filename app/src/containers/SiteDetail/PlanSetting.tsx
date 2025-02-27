@@ -75,7 +75,7 @@ const plans = [
   },
 ];
 
-const appSumoPlan = [{
+let appSumoPlansList = [{
   id: APP_SUMO_BUNDLE_NAMES[0],
   name: 'App Sumo Bundle Small',
   price: 300,
@@ -109,6 +109,9 @@ const appSumoPlan = [{
     'Web Ability accesbility Statement',
   ]
 }];
+
+
+let appSumoPlan = appSumoPlansList;
 
 const PlanSetting: React.FC<{
   domain: TDomain,
@@ -347,6 +350,8 @@ const PlanSetting: React.FC<{
             setValidCoupon(true);
             setpercentDiscount(true);
             setDiscount(data.discount);
+              return plan.id == data.planName;
+            });            
           }
           else
           {

@@ -25,7 +25,7 @@ import { createSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-
 import Stripe from 'stripe';
 import { getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
-import { APP_SUMO_COUPON_ID } from './constants/billing.constant';
+import { APP_SUMO_COUPON_ID, APP_SUMO_COUPON_IDS } from './constants/billing.constant';
 import axios from 'axios';
 import OpenAI from 'openai';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
@@ -310,8 +310,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     const { couponCode } = req.body;
     try {
       const promoCodes = await stripe.promotionCodes.list({ limit: 100 });
-      const promoCodeData = await promoCodes.data.find((pc:any) => pc?.code == couponCode);
-      
+      const promoCodeData:Stripe.PromotionCode = await promoCodes.data.find((pc:any) => pc?.code == couponCode);
       if (!promoCodeData) {
         return res.json({ valid: false, error: 'Invalid promo code' });
       }
@@ -319,13 +318,16 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       {
         return res.json({ valid: false, error: 'Promo Expired' });
       }
-      if(promoCodeData.coupon.id != APP_SUMO_COUPON_ID)
+      if(!APP_SUMO_COUPON_IDS.includes(promoCodeData.coupon.id))
       {
         return res.json({ valid: false, error: 'Invalid promo code Not from App Sumo' });
       }
       if(promoCodeData.coupon.percent_off)
       {
-        res.json({ valid: true, discount: (Number(promoCodeData.coupon.percent_off)/100),id:promoCodeData?.coupon?.id,percent:true});
+        const coupon:Stripe.Coupon = await stripe.coupons.retrieve(promoCodeData?.coupon?.id,{expand:['applies_to']});        
+        const product:Stripe.Product = await stripe.products.retrieve(coupon.applies_to.products[0]);
+
+        res.json({ valid: true, discount: (Number(promoCodeData.coupon.percent_off)/100),id:promoCodeData?.coupon?.id,percent:true,planName:product?.name});
       }
       else
       {
@@ -701,7 +703,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           }
         }
 
-        if (promoCodeData.coupon.valid && promoCodeData.active && promoCodeData.coupon.id == APP_SUMO_COUPON_ID) {
+        if (promoCodeData.coupon.valid && promoCodeData.active && APP_SUMO_COUPON_IDS.includes(promoCodeData.coupon.id)) {
           subscription = await stripe.subscriptions.create({
             customer: customer.id,
             items: [{ price: price.price_stripe_id, quantity: price_data.tiers[0].up_to }],
