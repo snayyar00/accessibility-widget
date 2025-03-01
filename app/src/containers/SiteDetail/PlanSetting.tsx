@@ -350,8 +350,9 @@ const PlanSetting: React.FC<{
             setValidCoupon(true);
             setpercentDiscount(true);
             setDiscount(data.discount);
+            appSumoPlan = appSumoPlansList.filter((plan) => {
               return plan.id == data.planName;
-            });            
+            });          
           }
           else
           {
