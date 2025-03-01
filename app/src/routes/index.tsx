@@ -13,6 +13,7 @@ import Accessibility from '@/containers/Accessibility/Accessibility';
 import { ReactComponent as AccessibilityIcon} from '@/assets/images/svg/Accessibility.svg';
 import { MdBugReport } from 'react-icons/md';
 import ProblemReport from '@/containers/ProblemReport/ProblemReport';
+import { FaUniversalAccess } from 'react-icons/fa';
 
 const routes = [
   // {
@@ -72,7 +73,7 @@ const routes = [
     name:'Accessibility',
     exact:true,
     component: Accessibility,
-    icon: <AccessibilityIcon />,
+    icon: <FaUniversalAccess className="menu-icon text-white-blue transition-colors duration-200" size={30}/>,
     isSidebar:true,
   },
   {
@@ -80,7 +81,7 @@ const routes = [
     name:'Reports',
     exact:true,
     component: ProblemReport,
-    icon: <MdBugReport color='black' size={25}/>,
+    icon: <MdBugReport className="menu-icon text-white-blue transition-colors duration-200" size={35}/>,
     isSidebar:true,
   },
 ];

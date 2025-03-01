@@ -8,6 +8,7 @@ import { createSitesPlan, deleteSitesPlan, deleteTrialPlan, updateSitesPlan } fr
 import { updateAllowedSiteURL } from '~/repository/sites_allowed.repository';
 import { ProductData, findProductById, findProductByStripeId, insertProduct, updateProduct } from '~/repository/products.repository';
 import { getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId } from '~/repository/sites_plans.repository';
+import { Console } from 'console';
 
 // async function webhookStripe(req: Request, res: Response): Promise<void> {
 //   let event;
@@ -43,13 +44,21 @@ const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY!, {
 });
 
 export const stripeWebhook = async (req: Request, res: Response, context:any) => {
+
   let event: Stripe.Event;
+
   try {
-    event = req.body;
-  } catch (error) {
-    console.log("error = ",error);
-  }
-  try {
+    try {
+      const sig = req.headers['stripe-signature'];
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      event = stripe.webhooks.constructEvent(req.body.toString(), sig, webhookSecret);
+      
+      
+    } catch (error) {
+      console.error("Could not Construct WebHook Event:",error);
+      return res.status(400).send("Webhook signature verification failed.");
+    }
+    
     if (event.type === 'product.updated') {
       // Handles product save and update in DB when you do so from the stripe dashboard
       let product = event.data.object as Stripe.Product;
@@ -196,121 +205,6 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
         }
         
       }
-
-      // if(subscription.metadata.hasOwnProperty('newOldSub'))
-      // {
-      //   if(subscription.metadata['newOldSub'] == "true" && subscription.metadata['webhookSub'] == "false" )
-      //   {
-      //     console.log("Updating Metadata stop NewOldSub")
-      //     const metadata = subscription.metadata;
-      //     metadata['newOldSub'] = "false";
-      //     metadata['webhookSub'] = "true";
-
-      //     await stripe.subscriptions.update(String(subscription.id), {
-      //       metadata: metadata,
-      //     });
-      //   }
-      //   if(subscription.metadata['newOldSub'] == "false" && subscription.metadata['webhookSub'] == "true" )
-      //   {
-      //     console.log("Skip for New Old Sub Domain Update")
-      //   }
-      // }
-      // else if (subscription.metadata && subscription.metadata.hasOwnProperty('checkout')) {
-      //   if (subscription.metadata['checkout'] == 'true') {
-      //     console.log('checkout sub');
-      //     const currentMetadata = subscription.metadata || {};
-      //     currentMetadata['checkout'] = 'false';
-      //     const updatedMetadata = { ...currentMetadata };
-      //     const updatedSubscription = await stripe.subscriptions.update(String(subscription.id), {
-      //       metadata: updatedMetadata,
-      //     });
-      //     // console.log('Subscription Meta Data Updated', updatedSubscription.metadata);
-      //   } else {
-      //     const userStripeId = subscription.customer as string;
-      //     const productId = subscription.items.data[0].plan.product as string;
-      //     const interval = subscription.items.data[0].plan.interval == 'month' ? 'MONTHLY' : 'YEARLY';
-      //     const new_product = await stripe.products.retrieve(productId);
-      //     let previous_plan;
-      //     try {
-      //       previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(userStripeId, subscription?.id);
-      //     } catch (error) {
-      //       console.log('err = ', error);
-      //     }
-      //     if (subscription.status === 'active') {
-      //       try {
-      //         const updatePromises = previous_plan.map(async (plan) => {
-      //           try {
-      //             await updateSitesPlan(plan.id, new_product.name, interval, true);
-      //             // Retrieve the current price object to check metadata
-      //             console.log('Updated Plan for site',plan.siteId);
-      //           } catch (error) {
-      //             console.log('Error updating Plan for site:', plan.siteId);
-      //             throw error;
-      //           }
-      //         });
-
-      //         await Promise.all(updatePromises);
-
-      //         const currentMetadata = subscription.metadata || {};
-
-      //         const updatedMetadata = { ...currentMetadata, maxDomains: subscription.items.data[0].price.transform_quantity['divide_by'], usedDomains: Number(previous_plan.length) };
-
-      //         const updatedSubscription = await stripe.subscriptions.update(String(subscription.id), {
-      //           metadata: updatedMetadata,
-      //         });
-
-      //         // console.log('Subscription Meta Data Updated',updatedSubscription.metadata);
-      //         console.log('All Subscriptions updated successfully.');
-      //         // await updateSitesPlan(previous_plan[0].id,new_product.name,interval);
-      //         // console.log("Updated Subscription");
-      //       } catch (error) {
-      //         console.log('error=', error);
-      //       }
-      //     }
-      //   }
-      // } else {
-      //   const userStripeId = subscription.customer as string;
-      //   const productId = subscription.items.data[0].plan.product as string;
-      //   const interval = subscription.items.data[0].plan.interval == 'month' ? 'MONTHLY' : 'YEARLY';
-      //   const new_product = await stripe.products.retrieve(productId);
-      //   let previous_plan;
-      //   try {
-      //     previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(userStripeId, subscription?.id);
-      //   } catch (error) {
-      //     console.log('err = ', error);
-      //   }
-      //   if (subscription.status === 'active') {
-      //     try {
-      //       const updatePromises = previous_plan.map(async (plan) => {
-      //         try {
-      //           await updateSitesPlan(plan.id, new_product.name, interval, true);
-      //           // Retrieve the current price object to check metadata
-      //           console.log('Updated Plan for site', plan.siteId);
-      //         } catch (error) {
-      //           console.log('Error updating Plan for site:', plan.siteId);
-      //           throw error;
-      //         }
-      //       });
-
-      //       await Promise.all(updatePromises);
-
-      //       const currentMetadata = subscription.metadata || {};
-
-      //       const updatedMetadata = { ...currentMetadata, maxDomains: subscription.items.data[0].price.transform_quantity['divide_by'], usedDomains: Number(previous_plan.length) };
-
-      //       const updatedSubscription = await stripe.subscriptions.update(String(subscription.id), {
-      //         metadata: updatedMetadata,
-      //       });
-
-      //       // console.log('Subscription Meta Data Updated', updatedSubscription.metadata);
-      //       console.log('All Subscriptions updated successfully.');
-      //       // await updateSitesPlan(previous_plan[0].id,new_product.name,interval);
-      //       // console.log("Updated Subscription");
-      //     } catch (error) {
-      //       console.log('error=', error);
-      //     }
-      //   }
-      // }
     } else if (event.type === 'checkout.session.completed') {
       console.log('Checkout Complete subscription');
       try {
@@ -362,6 +256,18 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
         // session.subscription
         const subscription = await stripe.subscriptions.retrieve(String(session.subscription));
         const currentMetadata = subscription.metadata || {};
+
+        console.log("metadata",currentMetadata);
+        if (currentMetadata.hasOwnProperty('promoCodeID')) {
+          try {
+            const updatedCoupon = await stripe.promotionCodes.update(currentMetadata['promoCodeID'], {
+              active: false, // This will expire the coupon
+            });
+            console.log(`Coupon Expired: ${updatedCoupon.id}`);
+          } catch (error) {
+            console.error('promo exp error', error);
+          }
+        }
 
         const updatedMetadata = { ...currentMetadata,maxDomains: price.tiers[0].up_to, usedDomains:1};
 

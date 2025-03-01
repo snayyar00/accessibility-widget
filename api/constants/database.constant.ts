@@ -17,7 +17,8 @@ export const TABLES = {
   sitesPlans: 'sites_plans',
   sitePermissions: 'sites_permissions',
   problemReports:'problem_reports',
-  widgetSettings:'widget_settings'
+  widgetSettings:'widget_settings',
+  newsletterSubscribers:'newsletter_subscribers'
 };
 
 export const DEFAULT_LIMIT = 20;

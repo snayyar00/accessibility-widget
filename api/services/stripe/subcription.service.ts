@@ -105,7 +105,7 @@ export async function createNewSubcription(token: string, email: string, name: s
 
 
     if (isTrial) {
-      dataSubcription.trial_end = dayjs().add(7, 'd').unix();
+      dataSubcription.trial_end = dayjs().add(15, 'd').unix();
       dataSubcription.trial_settings = {
         end_behavior: {
           missing_payment_method: 'cancel',

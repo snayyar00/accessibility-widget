@@ -60,7 +60,7 @@ export async function getUserSitesPlan(userId: number): Promise<ResponseSitesPla
 }
 
 export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
-  console.log(`getPlanBySiteIdAndUserId called with userId: ${userId}, siteId: ${siteId}`);
+  // console.log(`getPlanBySiteIdAndUserId called with userId: ${userId}, siteId: ${siteId}`);
 
   const site = await findSiteByUserIdAndSiteId(userId, siteId);
 
@@ -69,11 +69,11 @@ export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
     throw new ApolloError('Can not find any site');
   }
 
-  console.log('Site found:', JSON.stringify(site, null, 2));
+  // console.log('Site found:', JSON.stringify(site, null, 2));
 
   const plan = await getSitePlanBySiteId(site.id);
   
-  console.log('Raw plan data:', JSON.stringify(plan, null, 2));
+  // console.log('Raw plan data:', JSON.stringify(plan, null, 2));
 
   if (!plan) {
     console.log(`No plan found for site: ${site.id}`);
@@ -142,7 +142,7 @@ export async function createSitesPlan(
         is_trial: paymentMethodToken === "Trial" ? 1 : 0,
         expired_at: formatDateDB(
           dayjs().add(
-            paymentMethodToken === "Trial" ? 7 : 1,
+            paymentMethodToken === "Trial" ? 15 : 1,
             paymentMethodToken === "Trial"
               ? 'day'
               : product.price_type === 'yearly'

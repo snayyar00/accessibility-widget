@@ -11,3 +11,6 @@ export const PERMISSION_SITE_PLAN = {
 
 export const APP_SUMO_COUPON_ID ="FeACotfd";
 // vHrO7ymd   TestMode Coupon ID
+
+export const APP_SUMO_COUPON_IDS =["rfiIwOkJ","krs2zPuQ","UEJqJMNl"];
+// export const APP_SUMO_COUPON_IDS =["P0ccmOdK","12WiyRPW","d1bpDmn3"]; TEST MODE COUPON IDs
