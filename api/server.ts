@@ -34,6 +34,7 @@ import { addProblemReport, getProblemReportsBySiteId, problemReportProps } from 
 import { deleteSiteByURL, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
 import { getUserbyId } from './repository/user.repository';
 import { addWidgetSettings, getWidgetSettingsBySiteId } from './repository/widget_settings.repository';
+import { addNewsletterSub } from './repository/newsletter_subscribers.repository';
 
 // import run from './scripts/create-products';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
@@ -1004,6 +1005,26 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     } catch (error) {
       console.log(error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/subscribe-newsletter', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      // Validate email format
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Invalid email address' });
+      }
+
+      // Attempt to add the email to the database
+      await addNewsletterSub(email);
+
+      // Return success response
+      res.status(200).json({ message: 'Subscription successful' });
+    } catch (error) {
+      console.error('Error subscribing to newsletter:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   });
 
