@@ -71,31 +71,89 @@ async function populateMissingDescriptions(matchedRecords: dbIssue[], issueHeadi
   return false;
 }
 
+// export async function readAccessibilityDescriptionFromDb(issues: any) {
+//   try {
+//     /*Sometimes the htmlcs runner returns a recommendation and that might be different for different sites so it's removed here
+//         in order to increased chances of description matches in the db and thereby reduce calls to openai api. */
+//     const errorHeadings = issues.errors.map((issue: any) => issue.message.replace(/Recommendation:.*$/, '').trim());
+//     const warningHeadings = issues.warnings.map((issue: any) => issue.message.replace(/Recommendation:.*$/, '').trim());
+//     const noticesHeadings = issues.notices.map((issue: any) => issue.message.replace(/Recommendation:.*$/, '').trim());
+//     const headings = [...errorHeadings, ...warningHeadings, ...noticesHeadings];
+//     let matchedRecords = await getAccessibilityDescription(headings);
+
+//     const results = await Promise.all([populateMissingDescriptions(matchedRecords, errorHeadings, 'error'), populateMissingDescriptions(matchedRecords, warningHeadings, 'warning'), populateMissingDescriptions(matchedRecords, noticesHeadings, 'notice')]);
+//     const added = results.some((result) => result === true);
+
+//     if (added) {
+//       matchedRecords = await getAccessibilityDescription(headings);
+//     }
+//     issues.errors = updateIssueDetails(matchedRecords, issues.errors);
+//     issues.warnings = updateIssueDetails(matchedRecords, issues.warnings);
+//     issues.notices = updateIssueDetails(matchedRecords, issues.notices);
+//     // console.log(issues.warnings);
+//     return issues;
+//   } catch (error) {
+//     console.log(error, '\nError retrieving accessibility issue description from database.');
+//   }
+// }
+
 export async function readAccessibilityDescriptionFromDb(issues: any) {
   try {
-    /*Sometimes the htmlcs runner returns a recommendation and that might be different for different sites so it's removed here
-        in order to increased chances of description matches in the db and thereby reduce calls to openai api. */
+    /* Sometimes the htmlcs runner returns a recommendation, and that might be different for different sites. 
+       It's removed here in order to increase chances of description matches in OpenAI results. */
     const errorHeadings = issues.errors.map((issue: any) => issue.message.replace(/Recommendation:.*$/, '').trim());
     const warningHeadings = issues.warnings.map((issue: any) => issue.message.replace(/Recommendation:.*$/, '').trim());
     const noticesHeadings = issues.notices.map((issue: any) => issue.message.replace(/Recommendation:.*$/, '').trim());
+
     const headings = [...errorHeadings, ...warningHeadings, ...noticesHeadings];
-    let matchedRecords = await getAccessibilityDescription(headings);
 
-    const results = await Promise.all([populateMissingDescriptions(matchedRecords, errorHeadings, 'error'), populateMissingDescriptions(matchedRecords, warningHeadings, 'warning'), populateMissingDescriptions(matchedRecords, noticesHeadings, 'notice')]);
-    const added = results.some((result) => result === true);
+    // Function to fetch a description with retries
+    async function fetchSingleDescriptionWithRetry(heading: string, retries = 3): Promise<dbIssue> {
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+          const apiResult = await getIssueDescription([heading]); // Send only one issue at a time
+          const result:any = stringToJson(apiResult.message.content);
 
-    if (added) {
-      matchedRecords = await getAccessibilityDescription(headings);
+          if (result.length > 0 && result[0].description.trim() !== '') {
+            return {
+              heading: result[0].heading,
+              description: result[0].description,
+              recommended_action: result[0].recommended_action || '',
+              affectedDisabilities: result[0].affectedDisabilities || [],
+              code: result[0].code || '',
+            };
+          }
+        } catch (error) {
+          console.warn(`Attempt ${attempt} failed for issue: ${heading}`, error);
+        }
+      }
+
+      // If all retries fail, return a default structure
+      console.error(`Failed to generate description for: ${heading} after ${retries} attempts.`);
+      return {
+        heading,
+        description: 'No description generated.',
+        recommended_action: 'No recommendation available.',
+        affectedDisabilities: [],
+        code: 'N/A',
+      };
     }
-    issues.errors = updateIssueDetails(matchedRecords, issues.errors);
-    issues.warnings = updateIssueDetails(matchedRecords, issues.warnings);
-    issues.notices = updateIssueDetails(matchedRecords, issues.notices);
-    // console.log(issues.warnings);
+
+    // **Fetch all descriptions concurrently (one by one with retry)**
+    const descriptions: dbIssue[] = await Promise.all(headings.map((heading) => fetchSingleDescriptionWithRetry(heading)));
+
+    // **Update issues object with fetched descriptions**
+    issues.errors = updateIssueDetails(descriptions, issues.errors);
+    issues.warnings = updateIssueDetails(descriptions, issues.warnings);
+    issues.notices = updateIssueDetails(descriptions, issues.notices);
+
     return issues;
   } catch (error) {
-    console.log(error, '\nError retrieving accessibility issue description from database.');
+    console.log(error, '\nError retrieving accessibility issue descriptions.');
+    return issues;
   }
 }
+
 
 interface Error {
   'Error Guideline'?: string;
