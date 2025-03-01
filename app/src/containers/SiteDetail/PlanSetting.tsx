@@ -352,7 +352,7 @@ const PlanSetting: React.FC<{
             setDiscount(data.discount);
             appSumoPlan = appSumoPlansList.filter((plan) => {
               return plan.id == data.planName;
-            });            
+            });          
           }
           else
           {
