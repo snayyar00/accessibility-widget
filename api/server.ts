@@ -328,7 +328,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         const coupon:Stripe.Coupon = await stripe.coupons.retrieve(promoCodeData?.coupon?.id,{expand:['applies_to']});        
         const product:Stripe.Product = await stripe.products.retrieve(coupon.applies_to.products[0]);
 
-        res.json({ valid: true, discount: (Number(promoCodeData.coupon.percent_off)/100),id:promoCodeData?.coupon?.id,percent:true,planName:product?.name});
+        res.json({ valid: true, discount: (Number(promoCodeData.coupon.percent_off)/100),id:promoCodeData?.coupon?.id,percent:true,planName:product?.name.toLowerCase()});
       }
       else
       {
@@ -422,7 +422,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
       // Create the checkout session
       let session:any = {}
-      if(promoCodeData?.coupon.valid && promoCodeData?.active && promoCodeData?.coupon.id == APP_SUMO_COUPON_ID)
+      if(promoCodeData?.coupon.valid && promoCodeData?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData?.coupon?.id))
       {
         console.log("promo")
         session = await stripe.checkout.sessions.create({
