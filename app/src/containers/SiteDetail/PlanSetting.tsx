@@ -78,7 +78,7 @@ const plans = [
 let appSumoPlansList = [{
   id: APP_SUMO_BUNDLE_NAMES[0],
   name: 'App Sumo Bundle Small',
-  price: 300,
+  price: 100,
   desc: '',
   features: [
     'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
@@ -89,7 +89,7 @@ let appSumoPlansList = [{
 },{
   id: APP_SUMO_BUNDLE_NAMES[1],
   name: 'App Sumo Bundle Medium',
-  price: 700,
+  price: 200,
   desc: '',
   features: [
     'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
@@ -100,7 +100,7 @@ let appSumoPlansList = [{
 },{
   id: APP_SUMO_BUNDLE_NAMES[2],
   name: 'App Sumo Bundle Large',
-  price: 1000,
+  price: 300,
   desc: '',
   features: [
     'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
@@ -111,13 +111,12 @@ let appSumoPlansList = [{
 }];
 
 
-let appSumoPlan = appSumoPlansList;
-
 const PlanSetting: React.FC<{
   domain: TDomain,
   setReloadSites: (value: boolean) => void,
   cardTrial?:Boolean
 }> = ({ domain, setReloadSites,cardTrial }) => {
+  const [appSumoPlan, setAppSumoPlan] = useState(appSumoPlansList[0]);
   const [isYearly, setIsYearly] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('');
   const { data: currentPlan } = useSelector((state: RootState) => state.sitePlan);
@@ -143,6 +142,8 @@ const PlanSetting: React.FC<{
   const [showPlans,setShowPlans] = useState(false);
   const [validCoupon,setValidCoupon] = useState(false);
   const [couponClicked,setCouponClicked] = useState(false);
+  const [couponStack,setCouponStack] = useState(0);
+  const [validatedCoupons, setValidatedCoupons] = useState<string[]>([]);
 
   useEffect(() => {
     customerCheck();
@@ -251,7 +252,7 @@ const PlanSetting: React.FC<{
   const handleCheckout = async (card?:boolean)=>{
     setbillingClick(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-checkout-session`;
-    const bodyData = { email:data.email,planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url,promoCode:coupon,cardTrial:cardTrial || card };
+    const bodyData = { email:data.email,planName:planChanged?.id,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url,promoCode:validatedCoupons,cardTrial:cardTrial || card };
 
     await fetch(url, {
       method: 'POST',
@@ -288,7 +289,7 @@ const PlanSetting: React.FC<{
   const handleSubscription = async (card?:boolean) => {
     setbillingClick(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
-    const bodyData = { email:data.email,returnURL:window.location.href, planName:planChanged?.id,billingInterval:!isYearly || APP_SUMO_BUNDLE_NAMES.includes((planChanged?.id || "")) ? "MONTHLY" : "YEARLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:coupon,cardTrial:card };
+    const bodyData = { email:data.email,returnURL:window.location.href, planName:planChanged?.id,billingInterval:!isYearly || APP_SUMO_BUNDLE_NAMES.includes((planChanged?.id || "")) ? "MONTHLY" : "YEARLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:validatedCoupons,cardTrial:card };
 
     try {
       await fetch(url, {
@@ -327,6 +328,17 @@ const PlanSetting: React.FC<{
   }
 
   const handleCouponValidation = async () => {
+
+    if (validatedCoupons.length >= 3) {
+      toast.error("You can only apply up to 3 coupons.");
+      return;
+    }
+    // Prevent duplicate coupon validation
+    if (validatedCoupons.includes(coupon)) {
+      toast.error("This coupon has already been applied.");
+      return;
+    }
+
     setCouponClicked(true);
     const url = `${process.env.REACT_APP_BACKEND_URL}/validate-coupon`;
     const bodyData = { couponCode:coupon};
@@ -347,12 +359,11 @@ const PlanSetting: React.FC<{
           // Handle the JSON data received from the backend
           if(data?.valid == true)
           {
+            setCouponStack(prevCount => prevCount + 1);
+            setValidatedCoupons(prevCoupons => [...prevCoupons, coupon]);
             setValidCoupon(true);
             setpercentDiscount(true);
             setDiscount(data.discount);
-            appSumoPlan = appSumoPlansList.filter((plan) => {
-              return plan.id == data.planName;
-            });          
           }
           else
           {
@@ -367,6 +378,15 @@ const PlanSetting: React.FC<{
         console.error('There was a problem with the fetch operation:', error);
       });
   }
+
+  useEffect(() => {
+    if (validatedCoupons.length > 0) {
+      // Subtract one from the length to account for zero-based indexing
+      setAppSumoPlan(appSumoPlansList[validatedCoupons.length - 1]);
+    } else {
+      setAppSumoPlan(appSumoPlansList[0]);
+    }
+  }, [validatedCoupons]);
 
   const customerCheck = async () => {
 
@@ -421,7 +441,11 @@ const PlanSetting: React.FC<{
       </div>
     );
   }
-  const planChanged = validCoupon ? (appSumoPlan.find((item:any) => item.id === selectedPlan)): plans.find((item:any) => item.id === selectedPlan);
+  const planChanged =
+  validCoupon && validatedCoupons.length > 0
+    ? appSumoPlansList[validatedCoupons.length - 1]
+    : plans.find((item: any) => item.id === selectedPlan);
+
   const amountCurrent = currentPlan.amount || 0;
   const amountNew = planChanged
     ? isYearly
@@ -623,7 +647,7 @@ const PlanSetting: React.FC<{
                       // />
                       isStripeCustomer ? (
                         <>
-                          {coupon == '' ? (
+                          {coupon == '' && validatedCoupons.length == 0 ? (
                             <Button
                               color="primary"
                               onClick={() => {
@@ -647,7 +671,7 @@ const PlanSetting: React.FC<{
                         </>
                       ) : (
                         <>
-                          {coupon != '' ? (
+                          {coupon != '' && validatedCoupons.length == 0 ? (
                             <Button
                               color="primary"
                               onClick={() => {
@@ -716,6 +740,18 @@ const PlanSetting: React.FC<{
             >
               App Sumo {t('Coupon Code')}
             </label>
+            {validatedCoupons.length > 0 && (
+              <div className="mb-2">
+                {validatedCoupons.map((code, index) => (
+                  <span
+                    key={index}
+                    className="inline-block bg-green-200 text-green-800 text-sm font-semibold mr-2 px-2.5 py-0.5 rounded"
+                  >
+                    {code}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="flex items-center">
               <input
                 type="text"
@@ -731,7 +767,7 @@ const PlanSetting: React.FC<{
                 onClick={handleCouponValidation}
                 className=" bg-primary flex justify-center py-[10.9px] px-3 text-white rounded-lg w-40 mx-3"
               >
-                {couponClicked ? (<CircularProgress sx={{color:"white"}} size={20} />):(t('Apply Coupon'))}
+                {couponClicked ? (<CircularProgress sx={{color:"white"}} size={20} />):validatedCoupons.length ? 'Add More' : (t('Apply Coupon'))}
                 
               </button>
             </div>
@@ -739,7 +775,7 @@ const PlanSetting: React.FC<{
           <Plans
             plans={
               validCoupon
-                ? appSumoPlan
+                ? [appSumoPlan]
                 : currentPlan.isTrial
                 ? plans
                 : Object.keys(currentPlan).length == 0 &&

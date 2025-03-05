@@ -5,6 +5,7 @@ import { ReactComponent as CheckCircleIcon } from '@/assets/images/svg/check-cir
 import Button from '../Common/Button';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../config/store';
+import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
 
 // const PlanWrapper = styled.div<{ active: boolean }>`
 //   width: 430px;
@@ -107,7 +108,7 @@ const Plans: React.FC<Props> = ({
           <p className="desc text-[12px] leading-4 text-white-blue">{currentPlan?.desc}</p>
           <div className="flex items-end mx-0 my-6">
             <span className="price font-bold text-[32px] leading-9 text-green">${isYearly ? currentPlan.name == 'Enterprise' ? (Number(currentPlan?.price) * 10) : Number(currentPlan?.price) * 10 : currentPlan?.price}</span>
-            <span className="unit text-[12px] leading-[25px] text-white-gray opacity-90">/{isYearly ? 'year' : 'month'}</span>
+            <span className="unit text-[12px] leading-[25px] text-white-gray opacity-90">/{!APP_SUMO_BUNDLE_NAMES.includes(currentPlan.id) ? isYearly ? 'year' : 'month' : 'Lifetime'}</span>
           </div>
           <ul className="feature-list pt-6 pb-8 border-t border-solid border-dark-gray flex-grow">
             {currentPlan?.features.map((feature) => (
@@ -146,7 +147,7 @@ const Plans: React.FC<Props> = ({
           <p className="desc text-[12px] leading-4 text-white-blue">{plan.desc}</p>
           <div className="flex items-end mx-0 my-6">
             <span className="price font-bold text-[32px] leading-9 text-green">${isYearly ? plan.name == 'Enterprise' ? (plan.price * 10): plan.price * 10 : plan.price}</span>
-            <span className="unit text-[12px] leading-[25px] text-white-gray opacity-90">/{isYearly ? 'year' : 'month'}</span>
+            <span className="unit text-[12px] leading-[25px] text-white-gray opacity-90">/{!APP_SUMO_BUNDLE_NAMES.includes(plan.id) ? isYearly ? 'year' : 'month' : 'Lifetime'}</span>
           </div>
           <ul className="feature-list pt-6 pb-8 border-t border-solid border-dark-gray flex-grow">
             {plan.features.map((feature) => (

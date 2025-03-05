@@ -407,24 +407,39 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         await stripe.subscriptions.del(subscription.id);
       }
 
-      let promoCodeData:Stripe.PromotionCode;
-      if(promoCode)
-      {
-        const promoCodes = await stripe.promotionCodes.list({ limit: 100 });
-        promoCodeData = await promoCodes.data.find((pc:any) => pc?.code == promoCode);
+      let promoCodeData:Stripe.PromotionCode[];
+      if (promoCode && promoCode.length > 0) {
+        const stripePromoCodes = await stripe.promotionCodes.list({ limit: 100 });
+        const validCodesData = [];
+        const invalidCodes = [];
         
-        if (!promoCodeData) {
-          return res.json({ valid: false, error: 'Invalid promo code' });
+        // Loop through each promo code sent from the client
+        for (const code of promoCode) {
+          const found = stripePromoCodes.data.find((pc: any) => pc?.code === code);
+          if (found) {
+            validCodesData.push(found); // Save valid promo code data
+          } else {
+            invalidCodes.push(code); // Collect invalid codes
+          }
         }
+        
+        // If there are any invalid codes, return an error response
+        if (invalidCodes.length > 0) {
+          return res.json({ valid: false, error: `Invalid Promo Code(s): ${invalidCodes.join(", ")}` });
+        }
+        
+        // Otherwise, use the valid promo code data
+        promoCodeData = validCodesData;
       }
 
       let price_data = await stripe.prices.retrieve(String(price.price_stripe_id),{expand:['tiers']});
 
       // Create the checkout session
       let session:any = {}
-      if(promoCodeData?.coupon.valid && promoCodeData?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData?.coupon?.id))
+      if(promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id))
       {
-        console.log("promo")
+        console.log("promo");
+        const promoCodeIds = promoCodeData.map(pc => pc.id).join(',');
         session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'subscription',
@@ -446,7 +461,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               domainId: domainId,
               userId:userId,
               updateMetaData:"true",
-              promoCodeID:promoCodeData.id,
+              promoCodeID:promoCodeIds,
             },
             description:`Plan for ${domain}`
           }
@@ -694,17 +709,33 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       if(no_sub)
       {   
         let price_data = await stripe.prices.retrieve(String(price.price_stripe_id),{expand:['tiers']});
-        let promoCodeData:Stripe.PromotionCode;
-        if (promoCode) {
-          const promoCodes = await stripe.promotionCodes.list({ limit: 100 });
-          promoCodeData = await promoCodes.data.find((pc: any) => pc?.code == promoCode);
+        let promoCodeData:Stripe.PromotionCode[];
 
-          if (!promoCodeData) {
-            return res.json({ valid: false, error: 'Invalid Promo Code' });
+        if (promoCode && promoCode.length > 0) {
+          const stripePromoCodes = await stripe.promotionCodes.list({ limit: 100 });
+          const validCodesData = [];
+          const invalidCodes = [];
+          
+          // Loop through each promo code sent from the client
+          for (const code of promoCode) {
+            const found = stripePromoCodes.data.find((pc: any) => pc?.code === code);
+            if (found) {
+              validCodesData.push(found); // Save valid promo code data
+            } else {
+              invalidCodes.push(code); // Collect invalid codes
+            }
           }
+          
+          // If there are any invalid codes, return an error response
+          if (invalidCodes.length > 0) {
+            return res.json({ valid: false, error: `Invalid Promo Code(s): ${invalidCodes.join(", ")}` });
+          }
+          
+          // Otherwise, use the valid promo code data
+          promoCodeData = validCodesData;
         }
 
-        if (promoCodeData.coupon.valid && promoCodeData.active && APP_SUMO_COUPON_IDS.includes(promoCodeData.coupon.id)) {
+        if (promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id)) {
           subscription = await stripe.subscriptions.create({
             customer: customer.id,
             items: [{ price: price.price_stripe_id, quantity: price_data.tiers[0].up_to }],
@@ -715,19 +746,22 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               userId: userId,
               maxDomains: price_data.tiers[0].up_to,
               usedDomains: 1,
-              promoCodeID: promoCodeData.id,
             },
             description: `Plan for ${domainUrl}`,
           });
 
           try {
-            const updatedCoupon = await stripe.promotionCodes.update(promoCodeData.id, {
-              active: false, // This will expire the coupon
+            const updatePromises = promoCodeData.map((promo) =>
+              stripe.promotionCodes.update(promo.id, { active: false })
+            );
+            const updatedCoupons = await Promise.all(updatePromises);
+            updatedCoupons.forEach((coupon) => {
+              console.log(`Coupon Expired: ${coupon.id}`);
             });
-            console.log(`Coupon Expired: ${updatedCoupon.id}`);
           } catch (error) {
-            console.error('promo exp error', error);
+            console.error('Error expiring promo codes:', error);
           }
+
         } else if (promoCode) {
           // Coupon is not valid or not the app sumo promo
           return res.json({ valid: false, error: 'Invalid promo code' });
