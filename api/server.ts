@@ -35,6 +35,7 @@ import { deleteSiteByURL, FindAllowedSitesProps, findSiteByURL, findSitesByUserI
 import { getUserbyId } from './repository/user.repository';
 import { addWidgetSettings, getWidgetSettingsBySiteId } from './repository/widget_settings.repository';
 import { addNewsletterSub } from './repository/newsletter_subscribers.repository';
+import findPromo from './services/stripe/findPromo';
 
 // import run from './scripts/create-products';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
@@ -310,8 +311,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.post('/validate-coupon', async (req, res) => {
     const { couponCode } = req.body;
     try {
-      const promoCodes = await stripe.promotionCodes.list({ limit: 100 });
-      const promoCodeData:Stripe.PromotionCode = await promoCodes.data.find((pc:any) => pc?.code == couponCode);
+      let promoCodeData = null;
+      promoCodeData = await findPromo(stripe,couponCode);
+
       if (!promoCodeData) {
         return res.json({ valid: false, error: 'Invalid promo code' });
       }
@@ -335,6 +337,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         res.json({ valid: true, discount: (Number(promoCodeData.coupon.amount_off)/100),id:promoCodeData?.coupon?.id,percent:false });
       }
     } catch (error) {
+      console.log("err",error);
       res.status(500).json({ error: error.message });
     }
   });
@@ -409,26 +412,27 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
       let promoCodeData:Stripe.PromotionCode[];
       if (promoCode && promoCode.length > 0) {
-        const stripePromoCodes = await stripe.promotionCodes.list({ limit: 100 });
-        const validCodesData = [];
-        const invalidCodes = [];
-        
-        // Loop through each promo code sent from the client
+        const validCodesData: Stripe.PromotionCode[] = [];
+        const invalidCodes: string[] = [];
+      
+        // Process each code sequentially (you can also use Promise.all if you prefer parallel execution)
         for (const code of promoCode) {
-          const found = stripePromoCodes.data.find((pc: any) => pc?.code === code);
+          const found = await findPromo(stripe, code);
           if (found) {
-            validCodesData.push(found); // Save valid promo code data
+            validCodesData.push(found);
           } else {
-            invalidCodes.push(code); // Collect invalid codes
+            invalidCodes.push(code);
           }
         }
-        
-        // If there are any invalid codes, return an error response
+      
         if (invalidCodes.length > 0) {
-          return res.json({ valid: false, error: `Invalid Promo Code(s): ${invalidCodes.join(", ")}` });
+          return res.json({
+            valid: false,
+            error: `Invalid Promo Code(s): ${invalidCodes.join(", ")}`
+          });
         }
-        
-        // Otherwise, use the valid promo code data
+      
+        // Now, validCodesData contains all valid promo code objects.
         promoCodeData = validCodesData;
       }
 
@@ -712,26 +716,27 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         let promoCodeData:Stripe.PromotionCode[];
 
         if (promoCode && promoCode.length > 0) {
-          const stripePromoCodes = await stripe.promotionCodes.list({ limit: 100 });
-          const validCodesData = [];
-          const invalidCodes = [];
-          
-          // Loop through each promo code sent from the client
+          const validCodesData: Stripe.PromotionCode[] = [];
+          const invalidCodes: string[] = [];
+        
+          // Process each code sequentially (you can also use Promise.all if you prefer parallel execution)
           for (const code of promoCode) {
-            const found = stripePromoCodes.data.find((pc: any) => pc?.code === code);
+            const found = await findPromo(stripe, code);
             if (found) {
-              validCodesData.push(found); // Save valid promo code data
+              validCodesData.push(found);
             } else {
-              invalidCodes.push(code); // Collect invalid codes
+              invalidCodes.push(code);
             }
           }
-          
-          // If there are any invalid codes, return an error response
+        
           if (invalidCodes.length > 0) {
-            return res.json({ valid: false, error: `Invalid Promo Code(s): ${invalidCodes.join(", ")}` });
+            return res.json({
+              valid: false,
+              error: `Invalid Promo Code(s): ${invalidCodes.join(", ")}`
+            });
           }
-          
-          // Otherwise, use the valid promo code data
+        
+          // Now, validCodesData contains all valid promo code objects.
           promoCodeData = validCodesData;
         }
 
