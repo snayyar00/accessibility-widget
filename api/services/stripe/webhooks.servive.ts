@@ -259,11 +259,14 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
 
         console.log("metadata",currentMetadata);
         if (currentMetadata.hasOwnProperty('promoCodeID')) {
+          const promoIds = currentMetadata['promoCodeID'].split(',').map((id) => id.trim());
+
           try {
-            const updatedCoupon = await stripe.promotionCodes.update(currentMetadata['promoCodeID'], {
-              active: false, // This will expire the coupon
+            // Parallel update
+            const updatedCoupons = await Promise.all(promoIds.map((id) => stripe.promotionCodes.update(id, { active: false })));
+            updatedCoupons.forEach((coupon) => {
+              console.log(`Coupon Expired: ${coupon.id}`);
             });
-            console.log(`Coupon Expired: ${updatedCoupon.id}`);
           } catch (error) {
             console.error('promo exp error', error);
           }
