@@ -76,6 +76,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
     const [expiryDays,setExpiryDays] = useState(-1);
     const [noPlan,setNoPlan] = useState(false);
     const [portalClick,setPortalClick] = useState(false);
+    const [promoCode,setPromoCode] = useState('');
 
     const showPaymentModal = async () => {
         if (!isValidDomain(formData.domainName)) {
@@ -222,6 +223,49 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
 
     }
 
+    const upgradeAppSumo = async () => {
+      if(promoCode.length <=2){
+        toast.error("Invalid promo");
+        return;
+      }
+      setPortalClick(true);
+      let url = `${process.env.REACT_APP_BACKEND_URL}/upgrade-appsumo-subscription`;
+      const bodyData = { email: userData.email, planName: activePlan.toLowerCase(), userId: userData.id,promoCode:promoCode };
+      try {
+          await fetch(url, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(bodyData)
+          })
+              .then(response => {
+                  if (!response.ok) {
+                      
+                      throw new Error(`Network response was not ok `);
+                  }
+
+                  response.json().then(data => {
+                      toast.success('Your Plan has been updated');
+                      setTimeout(()=>{
+                        setPortalClick(false);
+                        window.location.reload();
+                      },2000);
+                  });
+              })
+              .catch(error => {
+                  // Handle error
+                  toast.error('There was an error updating your plan, please try again later');
+                  console.error('There was a problem with the fetch operation:', error);
+                  setPortalClick(false);
+              })
+      } catch (error) {
+          console.log("error", error);
+          setPortalClick(false);
+      }
+
+  }
+
     useEffect(()=>{
     customerCheck();
     },[])
@@ -320,10 +364,9 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                           type="button"
                           className="py-3 mr-4 justify-center text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full sm:w-full transition duration-300"
                           onClick={() => {
-                            if(activePlan !== '' && !trialPlan){
+                            if (activePlan !== '' && !trialPlan) {
                               showPaymentModal();
-                            }
-                            else{
+                            } else {
                               setCardTrial(true);
                             }
                           }}
@@ -573,43 +616,53 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                       Accessibility Widget
                     </p>
                     <ul className="hidden md:block space-y-2 mb-6 xxl:text-xl">
-  <li>
-    <div className="flex items-center">
-      <FaCheckCircle className="mr-2 text-white" />
-      <strong>ADA & WCAG Compliance</strong>
-    </div>
-    <ul className="ml-10 list-disc">
-      <li className="text-white">Ensure your website meets global accessibility standards.</li>
-    </ul>
-  </li>
-  <li>
-    <div className="flex items-center">
-      <FaCheckCircle className="mr-2 text-white" />
-      <strong>One-Click Installation</strong>
-    </div>
-    <ul className="ml-10 list-disc">
-      <li className="text-white">Plug and play in minutes, 24/7 customer care.</li>
-    </ul>
-  </li>
-  <li>
-    <div className="flex items-center">
-      <FaCheckCircle className="mr-2 text-white" />
-      <strong>AI-Powered Adjustments</strong>
-    </div>
-    <ul className="ml-10 list-disc">
-      <li className="text-white">Automatic text resizing, contrast adjustments, and more.</li>
-    </ul>
-  </li>
-  <li>
-    <div className="flex items-center">
-      <FaCheckCircle className="mr-2 text-white" />
-      <strong>Customizable Interface</strong>
-    </div>
-    <ul className="ml-10 list-disc">
-      <li className="text-white">Match the widget’s look to your brand.</li>
-    </ul>
-  </li>
-</ul>
+                      <li>
+                        <div className="flex items-center">
+                          <FaCheckCircle className="mr-2 text-white" />
+                          <strong>ADA & WCAG Compliance</strong>
+                        </div>
+                        <ul className="ml-10 list-disc">
+                          <li className="text-white">
+                            Ensure your website meets global accessibility
+                            standards.
+                          </li>
+                        </ul>
+                      </li>
+                      <li>
+                        <div className="flex items-center">
+                          <FaCheckCircle className="mr-2 text-white" />
+                          <strong>One-Click Installation</strong>
+                        </div>
+                        <ul className="ml-10 list-disc">
+                          <li className="text-white">
+                            Plug and play in minutes, 24/7 customer care.
+                          </li>
+                        </ul>
+                      </li>
+                      <li>
+                        <div className="flex items-center">
+                          <FaCheckCircle className="mr-2 text-white" />
+                          <strong>AI-Powered Adjustments</strong>
+                        </div>
+                        <ul className="ml-10 list-disc">
+                          <li className="text-white">
+                            Automatic text resizing, contrast adjustments, and
+                            more.
+                          </li>
+                        </ul>
+                      </li>
+                      <li>
+                        <div className="flex items-center">
+                          <FaCheckCircle className="mr-2 text-white" />
+                          <strong>Customizable Interface</strong>
+                        </div>
+                        <ul className="ml-10 list-disc">
+                          <li className="text-white">
+                            Match the widget’s look to your brand.
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
                   </div>
 
                   {/* Right Column (Image) */}
@@ -691,17 +744,33 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                                 {expiryDays > 0 ? ` (Trial)` : null}
                               </span>
                             </p>
-                            
+
                             {expiryDays > 0 && (
                               <h2 className="text-lg font-semibold text-primary">
                                 Days Remaining: {expiryDays} Days
                               </h2>
                             )}
-                            
-                            <button disabled={portalClick} onClick={()=>{handleBilling(setPortalClick,userData?.email)}} className='my-2 rounded-lg px-5 py-[10.5px] outline-none font-medium text-[16px] leading-[19px] text-center border border-solid cursor-pointer border-light-primary bg-primary text-white' >{portalClick ? (<CircularProgress sx={{ color: 'white'}} size={20} className="m-auto" />):('Handle Billing')}</button>
+
+                            <button
+                              disabled={portalClick}
+                              onClick={() => {
+                                handleBilling(setPortalClick, userData?.email);
+                              }}
+                              className="my-2 rounded-lg px-5 py-[10.5px] outline-none font-medium text-[16px] leading-[19px] text-center border border-solid cursor-pointer border-light-primary bg-primary text-white"
+                            >
+                              {portalClick ? (
+                                <CircularProgress
+                                  sx={{ color: 'white' }}
+                                  size={20}
+                                  className="m-auto"
+                                />
+                              ) : (
+                                'Handle Billing'
+                              )}
+                            </button>
                           </div>
                         </div>
-                        
+
                         <div>
                           <h3 className="text-lg font-medium mb-2 text-primary">
                             Domain Usage
@@ -730,13 +799,38 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                             )}
                           </div>
                         </div>
+                        {APP_SUMO_BUNDLE_NAMES.slice(0, -1).includes(
+                          activePlan.toLowerCase(),
+                        ) ? (
+                          <div className="flex my-4 items-center">
+                            <input
+                              type="text"
+                              value={promoCode}
+                              placeholder="Coupon Code"
+                              onChange={(e) => setPromoCode(e.target.value)}
+                              className="p-[10px] py-[11.6px] bg-light-gray border border-solid border-white-blue rounded-[10px] text-[16px] leading-[19px] text-white-gray w-full box-border"
+                            />
+
+                            <button
+                              disabled={portalClick}
+                              type="button"
+                              onClick={upgradeAppSumo}
+                              className=" bg-primary flex justify-center py-[10.9px] px-3 text-white rounded-lg w-40 mx-3"
+                            >
+                              {portalClick ? (<CircularProgress sx={{color:"white"}} size={20} />) : ('Apply')}
+                            </button>
+                          </div>
+                        ) : null}
                         <div className="mt-auto p-4 bg-[#f5f7fb] rounded-lg hover:bg-secondary/30 transition-colors duration-300">
                           <h4 className="text-md font-semibold text-secondary-foreground mb-2">
                             Upgrade your plan
                           </h4>
                           <p className="text-sm text-secondary-foreground/80">
-                            Need more domains? Upgrade now for additional
-                            features and increased limits.
+                            {APP_SUMO_BUNDLE_NAMES.slice(0, -1).includes(
+                              activePlan.toLowerCase(),
+                            )
+                              ? 'If you redeemed additional codes from App Sumo Enter the received promocodes above to upgrade your plan.'
+                              : 'Need more domains? Upgrade now for additional features and increased limits.'}
                           </p>
                         </div>
                       </CardContent>
