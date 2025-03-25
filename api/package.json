@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "ts-node -r tsconfig-paths/register server.ts",
-    "dev": "nodemon server",
+    "dev": "nodemon --exec ts-node -r tsconfig-paths/register server.ts",
     "build": "tsc && npm run copy-email-templates",
     "db:create-products": "tsc && node --experimental-modules --es-module-specifier-resolution=node dist/scripts/create-products.js",
     "db:migrate": "knex migrate:latest --knexfile config/knexfile.ts",
