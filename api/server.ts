@@ -55,6 +55,7 @@ app.use(express.json());
 scheduleMonthlyEmails();
 
 function dynamicCors(req: Request, res: Response, next: NextFunction) {
+  console.log("CORS check for operation:", req.body?.operationName);
   const corsOptions = {
     optionsSuccessStatus: 200,
     credentials: true,
@@ -1410,7 +1411,14 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }),
     plugins: [
       {
-        requestDidStart() {
+        requestDidStart(requestContext) {
+          console.log(`Operation requested: ${requestContext.request.operationName}`);
+      
+      // Specific check for getAccessibilityReport
+      if (requestContext.request.operationName === 'getAccessibilityReport') {
+        console.log('getAccessibilityReport operation called with variables:', 
+                   JSON.stringify(requestContext.request.variables));
+      }
           return {
             didEncounterErrors(ctx: any) {
               if (!ctx.operation) return;
