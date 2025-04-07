@@ -437,7 +437,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
       // Create the checkout session
       let session:any = {}
-      if(promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id))
+      if(promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id))
       {
         console.log("promo");
         const promoCodeIds = promoCodeData.map(pc => pc.id).join(',');
@@ -469,7 +469,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         });
 
       }
-      else if(promoCode) // Coupon is not valid or not the app sumo promo
+      else if(promoCode && promoCode.length > 0) // Coupon is not valid or not the app sumo promo
       {
         return res.json({ valid: false, error: 'Invalid promo code' });
       }
@@ -481,7 +481,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           mode: 'subscription',
           line_items: [{
             price: price.price_stripe_id,
-            quantity: price_data.tiers[0].up_to,
+            quantity: 1,
           }],
           customer: customer.id,
           allow_promotion_codes: true,
@@ -511,7 +511,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           mode: 'subscription',
           line_items: [{
             price: price.price_stripe_id,
-            quantity: price_data.tiers[0].up_to,
+            quantity: 1,
           }],
           customer: customer.id,
           allow_promotion_codes: true,
@@ -672,7 +672,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     else
     {
       try {
-        subscription = await stripe.subscriptions.retrieve(sub_id) as Stripe.Subscription;
+        subscription = await stripe.subscriptions.retrieve(sub_id,{active:true}) as Stripe.Subscription;
       } catch (error) {
         // console.log("error",error);
         no_sub = true;
@@ -707,9 +707,15 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         no_sub=false;
       }
 
+      let price_data:Stripe.Price = await stripe.prices.retrieve(String(price.price_stripe_id),{expand:['tiers']});
+
+      if(!price_data?.tiers || price_data?.tiers?.length == 0){
+        no_sub = true
+        console.log("no tiers");
+      }
+
       if(no_sub)
       {   
-        let price_data = await stripe.prices.retrieve(String(price.price_stripe_id),{expand:['tiers']});
         let promoCodeData:Stripe.PromotionCode[];
 
         if (promoCode && promoCode.length > 0) {
@@ -737,47 +743,118 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           promoCodeData = validCodesData;
         }
 
-        if (promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id)) {
+        if (promoCodeData && promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id)) {
+          let promoCount=0;
+          let singlePromoCount = 0;
+          let doublePromoCount = 0;
+          let triplePromoCount = 0;
+
+          if (subscriptions.data.length > 0) {
+            subscriptions.data.forEach((subscription:any) => {
+              const match = subscription.description.match(/\(([^)]+)\)/);
+              if (match) {
+                // Split the extracted string on commas and trim any extra whitespace.
+                const codesInDesc = match[1].split(',').map((code:string) => code.trim());
+                // Check if any of the codes in the description match one of your promo codes.
+                const allPromoCodesPresent = promoCode.every((code:string) => codesInDesc.includes(code));
+                if (allPromoCodesPresent) {
+                  console.log(`Subscription ${subscription.id} contains all promo codes.`);
+                  promoCount++;
+                }
+                if (codesInDesc.length === 1) {
+                  singlePromoCount++;
+                } else if (codesInDesc.length === 2) {
+                  doublePromoCount++;
+                } else if (codesInDesc.length === 3) {
+                  triplePromoCount++;
+                }
+              }
+            });
+          }
+
+          if(singlePromoCount == 3 && promoCode.length == 1){
+            throw Error("You have used all Starter PromoCodes");
+          }
+          else if(doublePromoCount == 7 && promoCode.length == 2){
+            throw Error("You have used all Medium PromoCodes");
+          }
+          else if(triplePromoCount == 10 && promoCode.length == 3){
+            throw Error("You have used all Enterprise PromoCodes");
+          }
+          
           subscription = await stripe.subscriptions.create({
             customer: customer.id,
-            items: [{ price: price.price_stripe_id, quantity: price_data.tiers[0].up_to }],
+            items: [{ price: price.price_stripe_id, quantity: 1 }],
             expand: ['latest_invoice.payment_intent'],
             default_payment_method: customer.invoice_settings.default_payment_method,
             metadata: {
               domainId: domainId,
               userId: userId,
-              maxDomains: price_data.tiers[0].up_to,
+              maxDomains: 1,
               usedDomains: 1,
             },
-            description: `Plan for ${domainUrl}`,
+            description: `Plan for ${domainUrl}(${promoCode})`,
           });
 
-          try {
-            const updatePromises = promoCodeData.map((promo) =>
-              stripe.promotionCodes.update(promo.id, { active: false })
-            );
-            const updatedCoupons = await Promise.all(updatePromises);
-            updatedCoupons.forEach((coupon) => {
-              console.log(`Coupon Expired: ${coupon.id}`);
-            });
-          } catch (error) {
-            console.error('Error expiring promo codes:', error);
+          if(promoCode.length == 1 && promoCount == 2) // First promo 3 sites have been added
+          {
+            try {
+              const updatePromises = promoCodeData.map((promo) =>
+                stripe.promotionCodes.update(promo.id, { active: false })
+              );
+              const updatedCoupons = await Promise.all(updatePromises);
+              updatedCoupons.forEach((coupon) => {
+                console.log(`Coupon Expired: ${coupon.id}`);
+              });
+            } catch (error) {
+              console.error('Error expiring promo codes:', error);
+            }
           }
 
-        } else if (promoCode) {
+          if(promoCode.length == 2 && promoCount == 6) // Second promo 7 sites have been added
+          {
+            try {
+              const updatePromises = promoCodeData.map((promo) =>
+                stripe.promotionCodes.update(promo.id, { active: false })
+              );
+              const updatedCoupons = await Promise.all(updatePromises);
+              updatedCoupons.forEach((coupon) => {
+                console.log(`Coupon Expired: ${coupon.id}`);
+              });
+            } catch (error) {
+              console.error('Error expiring promo codes:', error);
+            }
+          }
+
+          if(promoCode.length == 3 && promoCount == 9) // Third promo 10 sites have been added
+          {
+            try {
+              const updatePromises = promoCodeData.map((promo) =>
+                stripe.promotionCodes.update(promo.id, { active: false })
+              );
+              const updatedCoupons = await Promise.all(updatePromises);
+              updatedCoupons.forEach((coupon) => {
+                console.log(`Coupon Expired: ${coupon.id}`);
+              });
+            } catch (error) {
+              console.error('Error expiring promo codes:', error);
+            }
+          }
+
+        } else if (promoCode && promoCode.length > 0) {
           // Coupon is not valid or not the app sumo promo
           return res.json({ valid: false, error: 'Invalid promo code' });
         } else if (cardTrial) {
           subscription = await stripe.subscriptions.create({
             trial_period_days: 30,
             customer: customer.id,
-            items: [{ price: price.price_stripe_id, quantity: price_data.tiers[0].up_to }],
+            items: [{ price: price.price_stripe_id, quantity: 1 }],
             expand: ['latest_invoice.payment_intent'],
             default_payment_method: customer.invoice_settings.default_payment_method,
             metadata: {
               domainId: domainId,
               userId: userId,
-              maxDomains: price_data.tiers[0].up_to,
+              maxDomains: 1,
               usedDomains: 1,
             },
             description: `Plan for ${domainUrl}`,
@@ -785,13 +862,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         } else {
           subscription = await stripe.subscriptions.create({
             customer: customer.id,
-            items: [{ price: price.price_stripe_id, quantity: price_data.tiers[0].up_to }],
+            items: [{ price: price.price_stripe_id, quantity: 1 }],
             expand: ['latest_invoice.payment_intent'],
             default_payment_method: customer.invoice_settings.default_payment_method,
             metadata: {
               domainId: domainId,
               userId: userId,
-              maxDomains: price_data.tiers[0].up_to,
+              maxDomains: 1,
               usedDomains: 1,
             },
             description: `Plan for ${domainUrl}`,
@@ -1135,86 +1212,149 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       
 
       // Check if customer exists
-      if (customers.data.length > 0 && customers?.data[0]?.invoice_settings.default_payment_method) {
+      if (customers.data.length > 0) {
         customer = customers.data[0];
-
         try {
 
           const trial_subs = await stripe.subscriptions.list({
             customer: customer.id,
             status: 'trialing', // Retrieve all statuses to filter manually
           });
-          // handle trial output and show trial sub seperately
-          if(trial_subs?.data?.length){
-            const prod = await stripe.products.retrieve(String(trial_subs?.data[0]?.plan?.product));
 
-            const trialEndTimestamp = trial_subs?.data[0]?.trial_end; // Unix timestamp
-            const currentTimestamp = Math.floor(Date.now() / 1000); // Current time in seconds
-
-            const daysRemaining = Math.ceil((trialEndTimestamp - currentTimestamp) / (60 * 60 * 24));
-  
-            res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining});
-          }
-          else{
           const subscriptions = await stripe.subscriptions.list({
             customer: customer.id,
             status: 'active', // Retrieve all statuses to filter manually
           });
 
-          const prod = await stripe.products.retrieve(String(subscriptions.data[0]?.plan?.product));
-  
-          res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method});
-          
-        }
-  
-          
-        } catch (error) {
-          // console.log(error);
-          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method });
-          
-        }
-        
-      }
-      else if(customers.data.length > 0){
-        customer = customers.data[0];
+          let price_id;
+          let price:Stripe.Price;
 
-        try {
+          if(subscriptions.data.length > 0){
+             price_id = (subscriptions.data[0] as Stripe.Subscription).items.data[0].price
 
-          const trial_subs = await stripe.subscriptions.list({
-            customer: customer.id,
-            status: 'trialing', // Retrieve all statuses to filter manually
-          });
+            price = await stripe.prices.retrieve(price_id.id, {
+              expand: ['tiers'], // Explicitly expand the tiers
+            });
+          }
+          
+
           // handle trial output and show trial sub seperately
           if(trial_subs?.data?.length){
-            // console.log(trial_subs);
             const prod = await stripe.products.retrieve(String(trial_subs?.data[0]?.plan?.product));
 
             const trialEndTimestamp = trial_subs?.data[0]?.trial_end; // Unix timestamp
             const currentTimestamp = Math.floor(Date.now() / 1000); // Current time in seconds
 
             const daysRemaining = Math.ceil((trialEndTimestamp - currentTimestamp) / (60 * 60 * 24));
+
+            if(!price || price?.tiers?.length > 0 ){
+              
+              res.status(200).json({ tierPlan:true,isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining});
+            }
+            else{
+              
+              const monthlyTrialSubs: Array<{ id: string; description: any; trial_end: number | null }> = [];
+              const yearlyTrialSubs: Array<{ id: string; description: any; trial_end: number | null }> = [];
+
+              const monthlySubs: Array<{ id: string; description: any;}> = [];
+              const yearlySubs: Array<{ id: string; description: any;}> = [];
+
+              trial_subs.data.forEach((subscription:any) => {
+                // Retrieve the recurring interval from the first subscription item
+                const recurringInterval = subscription.items.data[0]?.price?.recurring?.interval;
+              
+                // Build an object that includes the subscription's description along with other properties
+                const outputObj = {
+                  id: subscription.id,
+                  description: subscription.description, //subscription.metadata.description
+                  trial_end: subscription.trial_end,
+                };
+              
+                // Categorize into monthly or yearly based on the recurring interval
+                if (recurringInterval === 'month') {
+                  monthlyTrialSubs.push(outputObj);
+                } else if (recurringInterval === 'year') {
+                  yearlyTrialSubs.push(outputObj);
+                }
+              });
+
+              subscriptions.data.forEach((subscription:any) => {
+                // Retrieve the recurring interval from the first subscription item
+                const recurringInterval = subscription.items.data[0]?.price?.recurring?.interval;
+
+                // Create an output object with the desired properties
+                const outputObj = {
+                  id: subscription.id,
+                  description: subscription?.description,
+                };
+
+                // Push the subscription into the appropriate array based on the interval
+                if (recurringInterval === 'month') {
+                  monthlySubs.push(outputObj);
+                } else if (recurringInterval === 'year') {
+                  yearlySubs.push(outputObj);
+                }
+              });
+
+              const trial_sub_data = {'monthly':monthlyTrialSubs,'yearly':yearlyTrialSubs}
+              const regular_sub_data = {'monthly':monthlySubs,'yearly':yearlySubs}
+
+              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining});
+
+            }
   
-            res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining});
           }
           else{
-            const subscriptions = await stripe.subscriptions.list({
-              customer: customer.id,
-              status: 'active', // Retrieve all statuses to filter manually
-            });
-    
-            const prod = await stripe.products.retrieve(String(subscriptions?.data[0]?.plan?.product));
-    
-            res.status(200).json({ isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method });
+
+          const prod = await stripe.products.retrieve(String(subscriptions.data[0]?.plan?.product));
+
+          if(!price || price?.tiers?.length > 0 ){
             
+            res.status(200).json({ tierPlan:true,isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method});
           }
+          else{
+            // New Pricing, return all subs
+            
+            const monthlySubs: Array<{ id: string; description: any;}> = [];
+            const yearlySubs: Array<{ id: string; description: any;}> = [];
+
+            subscriptions.data.forEach((subscription:any) => {
+              // Retrieve the recurring interval from the first subscription item
+              const recurringInterval = subscription.items.data[0]?.price?.recurring?.interval;
+
+              // Create an output object with the desired properties
+              const outputObj = {
+                id: subscription.id,
+                description: subscription?.description,
+              };
+
+              // Push the subscription into the appropriate array based on the interval
+              if (recurringInterval === 'month') {
+                monthlySubs.push(outputObj);
+              } else if (recurringInterval === 'year') {
+                yearlySubs.push(outputObj);
+              }
+            });
+            const regular_sub_data = {'monthly':monthlySubs,'yearly':yearlySubs}
+
+            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method});
+
+          }
+  
+          
+        }
+  
           
         } catch (error) {
-          // Silent Fail
-          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method});
+          console.log(error);
+          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method });
+          
         }
+        
       }
       else
       {
+
         res.status(200).json({ isCustomer: false,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method });
       }
 

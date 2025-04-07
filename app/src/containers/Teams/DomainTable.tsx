@@ -242,6 +242,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
     return 'Expired';
   };
 
+  const [tierPlan,setTierPlan] = useState(false);
   const customerCheck = async () => {
     const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
     const bodyData = { email: userData.email, userId: userData.id };
@@ -260,6 +261,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
         response.json().then((data) => {
           if (data.submeta) {
             setPlanMetaData(data.submeta);
+          }
+          if(data.tierPlan && data.tierPlan==true){
+            setTierPlan(true);
           }
           if (data.isCustomer === true) {
             setActivePlan(data.plan_name);
@@ -507,7 +511,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           {domainStatus !== 'Active' &&
                             domainStatus !== 'Expiring' && (
                               <>
-                                {activePlan !== '' ? (
+                                {activePlan !== '' && tierPlan ?(
                                   <button
                                     disabled={billingLoading}
                                     onClick={() => handleSubscription(domain)}
@@ -530,7 +534,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                     // className="p-2 text-white text-center rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] transition duration-300 w-fit"
                                     className="p-2 bg-green text-white rounded-md text-sm flex items-center justify-center hover:bg-green-600 transition-colors duration-200"
                                   >
-                                    Buy Plan
+                                    Buy License
                                   </button>
                                 )}
                               </>
@@ -654,7 +658,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     </div>
                     {domainStatus !== 'Active' && domainStatus !== 'Expiring' && (
                       <div className="p-4 bg-gray-100">
-                        {activePlan !== '' ? (
+                        {activePlan !== '' && tierPlan ? (
                           <button
                             disabled={billingLoading}
                             onClick={() => handleSubscription(domain)}

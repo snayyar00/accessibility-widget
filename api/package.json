@@ -48,7 +48,7 @@
     "mailgun-js": "^0.22.0",
     "mjml": "^4.7.1",
     "module-alias": "^2.2.3",
-    "mongoose": "^8.0.3",
+    "mongoose": "^8.13.2",
     "morgan": "^1.10.0",
     "mysql2": "^2.2.5",
     "node-cron": "^3.0.3",
@@ -102,6 +102,6 @@
     "hooks": {}
   },
   "_moduleAliases": {
-    "~": "./dist"
+    "~": "./"
   }
 }
