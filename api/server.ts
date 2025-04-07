@@ -16,9 +16,7 @@ import RootSchema from './graphql/root.schema';
 import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
 import stripeHooks from './services/stripe/webhooks.servive';
-import { getIpAddress } from './helpers/uniqueVisitor.helper';
 import {sendMail} from './libs/mail';
-import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 import { fetchAccessibilityReport } from './services/accessibilityReport/accessibilityReport.service';
 import { findProductAndPriceByType, findProductById } from './repository/products.repository';
 import { createSitesPlan, deleteTrialPlan, updateSitesPlan } from './services/allowedSites/plans-sites.service';
@@ -32,11 +30,9 @@ import scheduleMonthlyEmails from './jobs/monthlyEmail';
 import database from '~/config/database.config';
 import { addProblemReport, getProblemReportsBySiteId, problemReportProps } from './repository/problem_reports.repository';
 import { deleteSiteByURL, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
-import { getUserbyId } from './repository/user.repository';
 import { addWidgetSettings, getWidgetSettingsBySiteId } from './repository/widget_settings.repository';
 import { addNewsletterSub } from './repository/newsletter_subscribers.repository';
 import findPromo from './services/stripe/findPromo';
-
 // import run from './scripts/create-products';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
 
@@ -50,7 +46,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
 const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, 'https://www.webability.io'];
-const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction','reportProblem','updateImpressionProfileCounts','getWidgetSettings'];
+const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction','reportProblem','updateImpressionProfileCounts','getWidgetSettings','getAccessibilityReport','getAccessibilityStats','getMachineFixableIssues'];
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
@@ -100,11 +96,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     res.send('Hello orld!');
   });
 
-  app.get('/token/:url', async (req, res) => {
-    const url = req.params.url;
-    const token = await GetVisitorTokenByWebsite(url);
-    res.send(token);
-  });
 
   app.post('/create-customer-portal-session',async (req,res)=>{
     const {id,returnURL} = req.body;
@@ -1483,7 +1474,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           content: `
             You are an expert in web accessibility, well-versed in WCAG and ADA guidelines. You understand various accessibility issues and the impact they have on users, especially those with disabilities. 
             Your task is to analyze a provided code snippet and suggest specific corrections or enhancements based on given accessibility issues.
-            Here’s the structure of the response I want:
+            Here's the structure of the response I want:
   
             {
               correctedCode: Provide the corrected version of the code snippet based on the guidance given in heading, description, and help.
@@ -1574,64 +1565,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
 });
 
-  app.post('/form', async (req, res) => {
-    console.log('Received POST request for /form:', req.body);
-    const uniqueToken = await AddTokenToDB(req.body.businessName, req.body.email, req.body.website);
-    if (uniqueToken !== '') {
-      res.send('Received POST request for /form');
-    } else {
-      res.status(500).send('Internal Server Error');
-      return;
-    }
-
-    try {
-      sendMail(
-        req.body.email,
-        'Welcome to Webability',
-        `
-            <html>
-            <head>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 20px;
-                    color: #333333;
-                }
-                .script-box {
-                    background-color: #f4f4f4;
-                    border: 1px solid #dddddd;
-                    padding: 15px;
-                    overflow: auto;
-                    font-family: monospace;
-                    margin-top: 20px;
-                    white-space: pre-wrap;
-                }
-                .instructions {
-                    margin-bottom: 10px;
-                }
-            </style>
-        </head>
-        <body>
-            <h1>Welcome to Webability!</h1>
-            <p class="instructions">To get started with Webability on your website, please follow these steps:</p>
-            <ol>
-                <li>Copy the script code provided below.</li>
-                <li>Paste it into the HTML of your website, preferably near the closing &lt;/body&gt; tag.</li>
-            </ol>
-            <div class="script-box">
-                &lt;script src="https://webability.ca/webAbility.min.js" token="${uniqueToken}"&gt;&lt;/script&gt;
-            </div>
-            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
-            <p>Thank you for choosing Webability!</p>
-        </body>
-            </html>
-        `,
-      );
-    } catch (error) {
-      console.error('Error sending email:', error);
-    }
-  });
-
   app.get('/health', async (req: Request, res: Response) => {
     try {
       await database.raw('SELECT 1');
@@ -1660,7 +1593,20 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }),
     plugins: [
       {
-        requestDidStart() {
+        requestDidStart(requestContext) {
+          console.log(`Operation requested: ${requestContext.request.operationName}`);
+      
+      // Specific check for getAccessibilityReport
+      if (requestContext.request.operationName === 'getAccessibilityReport') {
+        console.log('getAccessibilityReport operation called with variables:', 
+                   JSON.stringify(requestContext.request.variables));
+      }
+
+      // Add this right after
+      if (requestContext.request.operationName === 'getMachineFixableIssues') {
+        console.log('getMachineFixableIssues operation called with variables:', 
+                   JSON.stringify(requestContext.request.variables));
+      }
           return {
             didEncounterErrors(ctx: any) {
               if (!ctx.operation) return;
