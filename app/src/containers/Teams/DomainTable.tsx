@@ -202,7 +202,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
     setEditingId(null);
   };
 
-  const applyStatusClass = (status: string, trial: number): string => {
+  const applyStatusClass = (domainUrl:string,status: string, trial: number): string => {
+    if(appSumoDomains.includes(domainUrl)){
+      return 'bg-green-200 text-green-600';
+    }
     if (!status) {
       return 'bg-yellow-200 text-yellow-800';
     }
@@ -222,7 +225,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
     return 'bg-yellow-200 text-yellow-800';
   };
 
-  const getDomainStatus = (status: string, trial: number): string => {
+  const getDomainStatus = (domainUrl:string,status: string, trial: number): string => {
+    if(appSumoDomains.includes(domainUrl)){
+      return 'Life Time';
+    }
     if (!status) {
       return 'Trial Expired';
     }
@@ -243,6 +249,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
   };
 
   const [tierPlan,setTierPlan] = useState(false);
+  const [appSumoDomains,setAppSumoDomain] = useState<string[]>([]);
   const customerCheck = async () => {
     const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
     const bodyData = { email: userData.email, userId: userData.id };
@@ -264,6 +271,27 @@ const DomainTable: React.FC<DomainTableProps> = ({
           }
           if(data.tierPlan && data.tierPlan==true){
             setTierPlan(true);
+          }
+          if(data.subscriptions){
+            const appSumoDomains:any = [];
+            let subs = JSON.parse(data.subscriptions);
+            // console.log("subs = ",subs);
+            ['monthly', 'yearly'].forEach((subscriptionType) => {
+                // Loop over each subscription in the current type (monthly or yearly)
+                subs[subscriptionType].forEach((subscription:any) => {
+                    const description = subscription.description;
+        
+                    // Regex to extract domain name before '(' and promo codes
+                    const match = description.match(/Plan for ([^(\s]+)\(/);
+        
+                    if (match) {
+                        const domain = match[1];  // Extract domain name
+                        appSumoDomains.push(domain); // Save the domain name in the list
+                    }
+                });
+            });
+            setAppSumoDomain(appSumoDomains);
+            // setSubCount(subs.length);
           }
           if (data.isCustomer === true) {
             setActivePlan(data.plan_name);
@@ -446,6 +474,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
               {domains.map((domain) => {
                 const isEditing = editingId === domain.id;
                 const domainStatus = getDomainStatus(
+                  domain.url,
                   domain.expiredAt,
                   domain.trial,
                 );
@@ -469,6 +498,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     <td className="py-4 px-4 border-b border-gray-200">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-semibold ${applyStatusClass(
+                          domain.url,
                           domain.expiredAt,
                           domain.trial,
                         )}`}
@@ -569,6 +599,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
           {domains.map((domain) => {
             const isEditing = editingId === domain.id;
             const domainStatus = getDomainStatus(
+              domain.url,
               domain.expiredAt,
               domain.trial,
             );
@@ -598,6 +629,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     <div className="mt-2 md:mt-0">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-semibold ${applyStatusClass(
+                          domain.url,
                           domain.expiredAt,
                           domain.trial,
                         )}`}
