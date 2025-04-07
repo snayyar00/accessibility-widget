@@ -11,9 +11,12 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import classNames from 'classnames';
 import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
-import { Card, CardContent, CircularProgress, LinearProgress } from '@mui/material';
-import { FaCheckCircle } from 'react-icons/fa';
+import { Card, CardContent, CardHeader, Chip, CircularProgress, LinearProgress, Tab, Tabs } from '@mui/material';
+import { FaCheckCircle, FaClock, FaCreditCard, FaUsers } from 'react-icons/fa';
 import { handleBilling } from '../Profile/BillingPortalLink';
+import { BarChart } from 'recharts';
+import { MdBarChart } from 'react-icons/md';
+import { FaCalendarDays } from 'react-icons/fa6';
 
 
 interface ModalProps {
@@ -100,7 +103,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
 
     useEffect( () => {
         if (addedDomain?.url !== "" && paymentView !== true) {
-            if (activePlan !== "") {
+            if (activePlan !== "" && tierPlan) {
                 let res = async ()=>{
                     await handleSubscription();
                     window.location.href = '/add-domain';
@@ -135,6 +138,16 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
         }
     }, [optionalDomain])
 
+
+    const [subMonthlyCount,setSubMonthlyCount] = useState(0);
+    const [subYearlyCount,setSubYearlyCount] = useState(0);
+
+    const [trialMonthlyCount,setTrialMonthlyCount] = useState(0);
+    const [trialYearlyCount,setTrialYearlyCount] = useState(0);
+
+    const [tierPlan,setTierPlan] = useState(false);
+
+
     const customerCheck = async () => {
 
         const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
@@ -155,6 +168,25 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                 response.json().then(data => {
                     // Handle the JSON data received from the backend
                     if (data.isCustomer == true) {
+                        // console.log(data);
+                        if(data.tierPlan && data.tierPlan == true){
+                          setTierPlan(true);
+                        }
+                        if(data.subscriptions){
+                          let subs = JSON.parse(data.subscriptions)
+                          // console.log("subs = ",subs);
+                          setSubMonthlyCount(subs.monthly.length);
+                          setSubYearlyCount(subs.yearly.length);
+                          // setSubCount(subs.length);
+                        }
+                        if(data.trial_subs){
+                          let trials = JSON.parse(data.trial_subs)
+                          // console.log("trials =",trials);
+                          setTrialMonthlyCount(trials.monthly.length);
+                          setTrialYearlyCount(trials.yearly.length);
+                          // setTrialsCount(trials.length);
+                        }
+
                         setIsStripeCustomer(true);
                         setActivePlan(data.plan_name);
                         if(data.plan_name == ""){
@@ -307,9 +339,34 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
         }
         else{
             toast.success('The domain was added successfully. Please Wait');
-            window.location.href = '/add-domain';
+            console.log("yahan ata");
+            // window.location.href = '/add-domain';
         }
     };
+
+    const [tabValue, setTabValue] = useState("monthly")
+
+  // Sample data - replace with your actual data
+  const subscriptionData = {
+    monthly: {
+      active: subMonthlyCount,
+      trial: trialMonthlyCount,
+    },
+    yearly: {
+      active: subYearlyCount,
+      trial: trialYearlyCount,
+    },
+  }
+
+  const totalActive =
+    subscriptionData.monthly.active +
+    subscriptionData.yearly.active +
+    subscriptionData.monthly.trial +
+    subscriptionData.yearly.trial
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
+    setTabValue(newValue)
+  }
     return (
       <>
         <div>
@@ -364,20 +421,12 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                           type="button"
                           className="py-3 mr-4 justify-center text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full sm:w-full transition duration-300"
                           onClick={() => {
-                            if (activePlan !== '' && !trialPlan) {
-                              showPaymentModal();
-                            } else {
-                              setCardTrial(true);
-                            }
+                            setCardTrial(true);
                           }}
                           disabled={addSiteLoading || billingLoading}
                         >
                           {addSiteLoading || billingLoading
                             ? 'Please Wait...'
-                            : activePlan !== ''
-                            ? trialPlan
-                              ? 'Add to trial plan'
-                              : 'Skip trial & add to plan'
                             : '30 Day trial (Card)'}
                         </button>
 
@@ -400,13 +449,12 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                         >
                           {addSiteLoading || billingLoading
                             ? 'Please Wait...'
-                            : activePlan !== ''
-                            ? trialPlan
-                              ? 'Add to trial plan'
-                              : 'Skip trial & add to plan'
+                            : activePlan !== '' && tierPlan
+                            ? 'Skip trial & add to plan'
                             : 'Skip trial & buy'}
                         </button>
                       </div>
+                      
                     </form>
                   </div>
                 </div>
@@ -727,7 +775,322 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                   </div>
                 </div>
 
-                {/* Right Side (Subscription Card) */}
+                {!tierPlan ? (<div className="w-full lg:w-1/2 flex">
+                  {activePlan && planMetaData ? (
+                    <Card className="w-full shadow-md hover:shadow-xl transition-shadow duration-300 bg-gradient-to-br from-white to-gray-100 !rounded-xl overflow-hidden">
+                    <CardHeader
+                      title={
+                        <div className="flex justify-between items-center">
+                          <div className="text-2xl font-semibold text-primary flex items-center gap-2">
+                            <MdBarChart className="text-primary h-6 w-6" />
+                            Subscription Details
+                          </div>
+                          <button
+                              disabled={portalClick}
+                              onClick={() => {
+                                handleBilling(setPortalClick, userData?.email);
+                              }}
+                              className="my-2 rounded-lg px-5 py-[10.5px] outline-none font-medium text-[16px] leading-[19px] text-center border border-solid cursor-pointer border-light-primary bg-primary text-white"
+                            >
+                              {portalClick ? (
+                                <CircularProgress
+                                  sx={{ color: 'white' }}
+                                  size={20}
+                                  className="m-auto"
+                                />
+                              ) : (
+                                'Handle Billing'
+                              )}
+                            </button>
+                        </div>
+                      }
+                      className="pb-2 px-6 pt-6"
+                    />
+              
+                    <CardContent className="p-6">
+                      <Card className="flex items-center justify-between mb-6  p-4 bg-white rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-blue-50 p-3 rounded-full">
+                            <FaUsers className="h-6 w-6 text-sapphire-blue" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-sapphire-blue">Total Active Sites</p>
+                            <p className="text-2xl font-bold text-sapphire-blue">{totalActive}</p>
+                          </div>
+                        </div>
+                      </Card>
+              
+                      <div className="w-full">
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            variant="fullWidth"
+            className="mb-4"
+            TabIndicatorProps={{
+              style: { display: "none" },
+            }}
+            sx={{
+              "& .MuiTabs-flexContainer": {
+                borderRadius: "0.5rem",
+                backgroundColor: "rgb(243 244 246)",
+                padding: "0.25rem",
+              },
+              "& .Mui-selected": {
+                backgroundColor: "white",
+                borderRadius: "0.375rem",
+                boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+                color:"#242f57",
+              },
+              "& .MuiTab-root": {
+                textTransform: "none",
+                minHeight: "2.5rem",
+                fontWeight: "500",
+                fontSize: "0.875rem",
+              },
+            }}
+          >
+            <Tab
+              value="monthly"
+              label={
+                <div className="flex items-center gap-1">
+                  <FaCalendarDays className="h-4 w-4" />
+                  <span>Monthly Billing</span>
+                </div>
+              }
+            />
+            <Tab
+              value="yearly"
+              label={
+                <div className="flex items-center gap-1">
+                  <FaCalendarDays className="h-4 w-4" />
+                  <span>Yearly Billing</span>
+                </div>
+              }
+            />
+          </Tabs>
+
+          <div className={tabValue === "monthly" ? "block" : "hidden"}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Fixed height cards */}
+              <Card className="bg-white rounded-lg h-[120px] flex flex-col">
+                <CardContent className="p-4 flex-grow flex flex-col justify-between">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-medium flex items-center gap-1 text-sapphire-blue">
+                      <FaCreditCard className="h-4 w-4 text-sapphire-blue" />
+                      Active Sites
+                    </h3>
+                    <Chip 
+                      label={subscriptionData.monthly.active} 
+                      size="small" 
+                      className="bg-blue-100 text-blue-800 min-w-[32px] h-[24px]" 
+                    />
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2 mt-auto mb-2">
+                    <div
+                      className="bg-primary h-2 rounded-full"
+                      style={{ width: `${(subscriptionData.monthly.active / totalActive) * 100}%` }}
+                    ></div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white rounded-lg h-[120px] flex flex-col">
+                <CardContent className="p-4 flex-grow flex flex-col justify-between">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-medium flex items-center gap-1 text-sapphire-blue">
+                      <FaClock className="h-4 w-4 text-amber-500" />
+                      Trial Sites
+                    </h3>
+                    <Chip
+                      label={subscriptionData.monthly.trial}
+                      size="small"
+                      variant="outlined"
+                      className="bg-light-primary text-amber-700 border-amber-200 min-w-[32px] h-[24px]"
+                    />
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2 mt-auto mb-2">
+                    <div
+                      className="bg-primary h-2 rounded-full"
+                      style={{ width: `${(subscriptionData.monthly.trial / totalActive) * 100}%` }}
+                    ></div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          <div className={tabValue === "yearly" ? "block" : "hidden"}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Fixed height cards */}
+              <Card className="bg-white rounded-lg h-[120px] flex flex-col">
+                <CardContent className="p-4 flex-grow flex flex-col justify-between">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-medium flex items-center gap-1 text-sapphire-blue">
+                      <FaCreditCard className="h-4 w-4 text-sapphire-blue" />
+                      Active Sites
+                    </h3>
+                    <Chip 
+                      label={subscriptionData.yearly.active} 
+                      size="small" 
+                      className="bg-blue-100 text-blue-800 min-w-[32px] h-[24px]" 
+                    />
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2 mt-auto mb-2">
+                    <div
+                      className="bg-primary h-2 rounded-full"
+                      style={{ width: `${(subscriptionData.yearly.active / totalActive) * 100}%` }}
+                    ></div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white rounded-lg h-[120px] flex flex-col">
+                <CardContent className="p-4 flex-grow flex flex-col justify-between">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-medium flex items-center gap-1 text-sapphire-blue">
+                      <FaClock className="h-4 w-4 text-amber-500" />
+                      Trial Sites
+                    </h3>
+                    <Chip
+                      label={subscriptionData.yearly.trial}
+                      size="small"
+                      variant="outlined"
+                      className="bg-light-primary text-amber-700 border-amber-200 min-w-[32px] h-[24px]"
+                    />
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2 mt-auto mb-2">
+                    <div
+                      className="bg-primary h-2 rounded-full"
+                      style={{ width: `${(subscriptionData.yearly.trial / totalActive) * 100}%` }}
+                    ></div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+                    </CardContent>
+                  </Card>
+                  ) : (
+                    <div className="flex justify-center items-center w-full rounded-xl bg-background">
+                      <CircularProgress size={100} className="m-auto" />
+                    </div>
+                  )}
+                </div>):(
+                  <div className="w-full lg:w-1/2 flex">
+                  {activePlan && planMetaData ? (
+                    <Card className="w-full shadow-md hover:shadow-xl transition-shadow duration-300 bg-gradient-to-br from-background to-secondary/10 !rounded-xl flex flex-col overflow-hidden">
+                      <CardContent className="p-6 flex flex-col flex-grow">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                          <div>
+                            <h2 className="text-2xl font-semibold text-primary">
+                              Subscription Details
+                            </h2>
+                            <p className="text-muted-foreground mt-1">
+                              You are subscribed to the{' '}
+                              <span className="font-bold text-black uppercase">
+                                {activePlan}
+                                {expiryDays > 0 ? ` (Trial)` : null}
+                              </span>
+                            </p>
+
+                            {expiryDays > 0 && (
+                              <h2 className="text-lg font-semibold text-primary">
+                                Days Remaining: {expiryDays} Days
+                              </h2>
+                            )}
+
+                            <button
+                              disabled={portalClick}
+                              onClick={() => {
+                                handleBilling(setPortalClick, userData?.email);
+                              }}
+                              className="my-2 rounded-lg px-5 py-[10.5px] outline-none font-medium text-[16px] leading-[19px] text-center border border-solid cursor-pointer border-light-primary bg-primary text-white"
+                            >
+                              {portalClick ? (
+                                <CircularProgress
+                                  sx={{ color: 'white' }}
+                                  size={20}
+                                  className="m-auto"
+                                />
+                              ) : (
+                                'Handle Billing'
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="text-lg font-medium mb-2 text-primary">
+                            Domain Usage
+                          </h3>
+                          <LinearProgress
+                            value={
+                              (Number(planMetaData.usedDomains) /
+                                Number(planMetaData.maxDomains)) *
+                              100
+                            }
+                            variant="determinate"
+                            className="h-2 mb-2"
+                          />
+                          <div className="flex justify-between text-sm text-muted-foreground">
+                            {planMetaData.usedDomains ? (
+                              <>
+                                <span className="font-medium">
+                                  {planMetaData.usedDomains} used
+                                </span>
+                                <span>{planMetaData.maxDomains} total</span>
+                              </>
+                            ) : (
+                              <span className="font-medium">
+                                No Domains Added to Plan
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {APP_SUMO_BUNDLE_NAMES.slice(0, -1).includes(
+                          activePlan.toLowerCase(),
+                        ) ? (
+                          <div className="flex my-4 items-center">
+                            <input
+                              type="text"
+                              value={promoCode}
+                              placeholder="Coupon Code"
+                              onChange={(e) => setPromoCode(e.target.value)}
+                              className="p-[10px] py-[11.6px] bg-light-gray border border-solid border-white-blue rounded-[10px] text-[16px] leading-[19px] text-white-gray w-full box-border"
+                            />
+
+                            <button
+                              disabled={portalClick}
+                              type="button"
+                              onClick={upgradeAppSumo}
+                              className=" bg-primary flex justify-center py-[10.9px] px-3 text-white rounded-lg w-40 mx-3"
+                            >
+                              {portalClick ? (<CircularProgress sx={{color:"white"}} size={20} />) : ('Apply')}
+                            </button>
+                          </div>
+                        ) : null}
+                        <div className="mt-auto p-4 bg-[#f5f7fb] rounded-lg hover:bg-secondary/30 transition-colors duration-300">
+                          <h4 className="text-md font-semibold text-secondary-foreground mb-2">
+                            Upgrade your plan
+                          </h4>
+                          <p className="text-sm text-secondary-foreground/80">
+                            {APP_SUMO_BUNDLE_NAMES.slice(0, -1).includes(
+                              activePlan.toLowerCase(),
+                            )
+                              ? 'If you redeemed additional codes from App Sumo Enter the received promocodes above to upgrade your plan.'
+                              : 'Need more domains? Upgrade now for additional features and increased limits.'}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="flex justify-center items-center w-full rounded-xl bg-background">
+                      <CircularProgress size={100} className="m-auto" />
+                    </div>
+                  )}
+                </div>)}
+                {/* Right Side (Subscription Card)
                 <div className="w-full lg:w-1/2 flex">
                   {activePlan && planMetaData ? (
                     <Card className="w-full shadow-md hover:shadow-xl transition-shadow duration-300 bg-gradient-to-br from-background to-secondary/10 !rounded-xl flex flex-col overflow-hidden">
@@ -840,7 +1203,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                       <CircularProgress size={100} className="m-auto" />
                     </div>
                   )}
-                </div>
+                </div> */}
               </>
             )}
           </div>
