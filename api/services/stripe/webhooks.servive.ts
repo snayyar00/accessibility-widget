@@ -89,12 +89,23 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
               const price = await stripe.prices.retrieve(getPrice.id, {
                 expand: ['tiers'], // Explicitly expand the tiers
               });
+              if (price.tiers.length > 0){
+                return {
+                  amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0].up_to),
+                  type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
+                  stripe_id: getPrice?.id, // Stripe price ID
+                };
 
-              return {
-                amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0].up_to),
-                type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
-                stripe_id: getPrice?.id, // Stripe price ID
-              };
+              }
+              else{
+                return {
+                  amount:price.unit_amount/100,
+                  type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
+                  stripe_id: getPrice?.id, // Stripe price ID
+                };
+
+              }
+              
             }),
           );
           if (await updateProduct(findProduct?.id, productObject, pricesArray)) {
@@ -115,12 +126,21 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
               const price = await stripe.prices.retrieve(getPrice.id, {
                 expand: ['tiers'], // Explicitly expand the tiers
               });
+              if (price.tiers.length > 0){
+                return {
+                  amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0].up_to),
+                  type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
+                  stripe_id: getPrice?.id, // Stripe price ID
+                };
 
-              return {
-                amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0].up_to),
-                type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
-                stripe_id: getPrice?.id, // Stripe price ID
-              };
+              }
+              else{
+                return {
+                  amount:price.unit_amount/100,
+                  type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
+                  stripe_id: getPrice?.id, // Stripe price ID
+                };
+              }
             }),
           );
           if (await insertProduct(productObject, pricesArray)) {
@@ -189,8 +209,12 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
               const price = await stripe.prices.retrieve(subscription.items.data[0].price.id, {
                 expand: ['tiers'], // Explicitly expand the tiers
               });
+              
+              let updatedMetadata  = { ...metadata, maxDomains: 1, usedDomains: Number(domainCount)};
 
-              const updatedMetadata = { ...metadata, maxDomains: price.tiers[0].up_to, usedDomains: Number(domainCount)};
+              if (price.tiers.length > 0){
+                updatedMetadata = { ...metadata, maxDomains: price.tiers[0].up_to, usedDomains: Number(domainCount)};
+              }
   
               await stripe.subscriptions.update(String(subscription.id), {
                 metadata: updatedMetadata,
@@ -272,7 +296,12 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
           }
         }
 
-        const updatedMetadata = { ...currentMetadata,maxDomains: price.tiers[0].up_to, usedDomains:1};
+
+        let updatedMetadata = { ...currentMetadata,maxDomains: 1, usedDomains:1};
+
+        if (price.tiers.length > 0){
+          updatedMetadata = { ...currentMetadata,maxDomains: price.tiers[0].up_to, usedDomains:1};
+        }
 
         const updatedSubscription = await stripe.subscriptions.update(String(session.subscription), {
           metadata: updatedMetadata,
