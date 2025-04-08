@@ -23,7 +23,7 @@ import { createSitesPlan, deleteTrialPlan, updateSitesPlan } from './services/al
 import Stripe from 'stripe';
 import { getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
-import { APP_SUMO_BUNDLE_NAMES, APP_SUMO_COUPON_ID, APP_SUMO_COUPON_IDS } from './constants/billing.constant';
+import { APP_SUMO_COUPON_ID, APP_SUMO_COUPON_IDS } from './constants/billing.constant';
 import axios from 'axios';
 import OpenAI from 'openai';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
@@ -959,112 +959,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           res.status(500).json({ error: 'Meta Data Not Configured' });
         }
       }
-
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post('/upgrade-appsumo-subscription',async (req,res)=>{
-    const { email, planName,userId,promoCode } = req.body;
-
-    const sites = await getSitesPlanByUserId(Number(userId));
-
-    const sub_id = sites[0]?.subcriptionId;
-    
-    let subscription:Stripe.Subscription;
-
-
-    let promoCodeData = null;
-    promoCodeData = await findPromo(stripe,promoCode);
-
-    if (!promoCodeData) {
-      console.error('Invalid promo code')
-      return res.status(404).json({ valid: false, error: 'Invalid promo code' });
-    }
-    if(!promoCodeData.active)
-    {
-      console.error('Promo Expired')
-      return res.status(404).json({ valid: false, error: 'Promo Expired' });
-    }
-    if(!APP_SUMO_COUPON_IDS.includes(promoCodeData.coupon.id))
-    {
-      console.error('Invalid promo code Not from App Sumo')
-      return res.status(404).json({ valid: false, error: 'Invalid promo code Not from App Sumo' });
-    }
-
-  
-    try {
-      subscription = await stripe.subscriptions.retrieve(sub_id) as Stripe.Subscription;
-    } catch (error) {
-      console.log("error",error);
-      return res.status(404);
-    }
-    
-
-    try {
-      // Search for an existing customer by email
-      const customers = await stripe.customers.list({
-        email: email,
-        limit: 1
-      });
-
-      let customer;
-      
-      // Check if customer exists
-      if (customers.data.length > 0) {
-        customer = customers.data[0];
-      }
-      else
-      {
-        console.log("customer not found");
-        return res.status(404);
-      }
-
-      const subscriptions = await stripe.subscriptions.list({
-          customer: customer.id
-      });
-
-      if (subscriptions.data.length > 0) {
-        subscription = subscriptions.data[0];
-      }
-      else{
-        console.log("Sub not found")
-        return res.status(404).json("No Sub Found");
-      }
-
-        const newPlanIndex = APP_SUMO_BUNDLE_NAMES.indexOf(planName.toLowerCase());
-
-        const new_price = await findProductAndPriceByType(APP_SUMO_BUNDLE_NAMES[newPlanIndex+1].toLowerCase(),'MONTHLY');
-        let price_data = await stripe.prices.retrieve(String(new_price.price_stripe_id),{expand:['tiers']});
-
-        if (APP_SUMO_BUNDLE_NAMES.includes(planName.toLowerCase()) && new_price) {
-          //update sub
-
-          (stripe as Stripe).subscriptions.update(subscription.id,{
-            items: [{
-              id: subscription.items.data[0].id,
-              price: new_price.price_stripe_id, // Replace with your new price ID
-              quantity:price_data.tiers[0].up_to,
-            }]
-          })
-
-          try {
-            await stripe.promotionCodes.update(promoCodeData.id, { active: false })
-          } catch (error) {
-            console.error('Error expiring promo codes:', error);
-          }
-
-        } else {
-          // Coupon is not valid or not the app sumo promo
-          console.log("Coupon not valid");
-          return res.status(404).json({ valid: false, error: 'Not App Sumo Plan' });
-        }
-
-        console.log('App Sumo Plan Update Started from server side');
-
-        res.status(200).json({ success: true });
 
     } catch (error) {
       console.log(error);
