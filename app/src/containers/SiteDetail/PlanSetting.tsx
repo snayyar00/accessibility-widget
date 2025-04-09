@@ -446,8 +446,8 @@ const PlanSetting: React.FC<{
             {
               // setIsYearly(true);
             }
-            setCustomerCheckLoading(false);
           }
+          setCustomerCheckLoading(false);
         });
       })
       .catch(error => {
