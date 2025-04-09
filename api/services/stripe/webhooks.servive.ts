@@ -89,9 +89,9 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
               const price = await stripe.prices.retrieve(getPrice.id, {
                 expand: ['tiers'], // Explicitly expand the tiers
               });
-              if (price.tiers.length > 0){
+              if (price?.tiers?.length > 0){
                 return {
-                  amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0].up_to),
+                  amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0]?.up_to),
                   type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
                   stripe_id: getPrice?.id, // Stripe price ID
                 };
@@ -126,9 +126,9 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
               const price = await stripe.prices.retrieve(getPrice.id, {
                 expand: ['tiers'], // Explicitly expand the tiers
               });
-              if (price.tiers.length > 0){
+              if (price?.tiers?.length > 0){
                 return {
-                  amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0].up_to),
+                  amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0]?.up_to),
                   type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
                   stripe_id: getPrice?.id, // Stripe price ID
                 };
@@ -212,8 +212,8 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
               
               let updatedMetadata  = { ...metadata, maxDomains: 1, usedDomains: Number(domainCount)};
 
-              if (price.tiers.length > 0){
-                updatedMetadata = { ...metadata, maxDomains: price.tiers[0].up_to, usedDomains: Number(domainCount)};
+              if (price?.tiers?.length > 0){
+                updatedMetadata = { ...metadata, maxDomains: price?.tiers[0]?.up_to, usedDomains: Number(domainCount)};
               }
   
               await stripe.subscriptions.update(String(subscription.id), {
@@ -299,8 +299,8 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
 
         let updatedMetadata = { ...currentMetadata,maxDomains: 1, usedDomains:1};
 
-        if (price.tiers.length > 0){
-          updatedMetadata = { ...currentMetadata,maxDomains: price.tiers[0].up_to, usedDomains:1};
+        if (price?.tiers?.length > 0){
+          updatedMetadata = { ...currentMetadata,maxDomains: price?.tiers[0]?.up_to, usedDomains:1};
         }
 
         const updatedSubscription = await stripe.subscriptions.update(String(session.subscription), {
