@@ -538,7 +538,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                       ) : (
                         // Desktop action buttons (all in one row)
                         <div className="flex justify-end items-center space-x-2">
-                          {domainStatus !== 'Active' &&
+                          {domainStatus !== 'Active' && domainStatus !== 'Life Time' &&
                             domainStatus !== 'Expiring' && (
                               <>
                                 {activePlan !== '' && tierPlan ?(

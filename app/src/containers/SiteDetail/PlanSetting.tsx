@@ -303,7 +303,12 @@ const PlanSetting: React.FC<{
           }
           else
           {
-            window.location.href = data.url;
+            if(data.url){
+              window.location.href = data.url;
+            }
+            else{
+              window.location.reload();
+            }
           }
         });
       })
@@ -705,7 +710,7 @@ const PlanSetting: React.FC<{
                         </>
                       ) : (
                         <>
-                          {coupon != '' && validatedCoupons.length == 0 ? (
+                          {coupon == '' && validatedCoupons.length == 0 ? (
                             <Button
                               color="primary"
                               onClick={() => {

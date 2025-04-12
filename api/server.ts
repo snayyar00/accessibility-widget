@@ -24,7 +24,7 @@ import { createSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-
 import Stripe from 'stripe';
 import { getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
-import { APP_SUMO_COUPON_ID, APP_SUMO_COUPON_IDS } from './constants/billing.constant';
+import { APP_SUMO_COUPON_ID, APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from './constants/billing.constant';
 import axios from 'axios';
 import OpenAI from 'openai';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
@@ -34,6 +34,8 @@ import { deleteSiteByURL, FindAllowedSitesProps, findSiteByURL, findSitesByUserI
 import { addWidgetSettings, getWidgetSettingsBySiteId } from './repository/widget_settings.repository';
 import { addNewsletterSub } from './repository/newsletter_subscribers.repository';
 import findPromo from './services/stripe/findPromo';
+import { appSumoPromoCount } from './utils/appSumoPromoCount';
+import { expireUsedPromo } from './utils/expireUsedPromo';
 // import run from './scripts/create-products';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
 
@@ -349,7 +351,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         res.status(500).json({ error: 'User does not own this site' });
       } else {
         await addWidgetSettings({
-          site_url: '127.0.0.1',
+          site_url: site_url,
           allowed_site_id: 26,
           settings: settings,
           user_id: 35,
@@ -365,7 +367,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.post('/get-site-widget-settings', async (req, res) => {
     const { site_url } = req.body;
     try {
-      const site = await findSiteByURL('127.0.0.1');
+      const site = await findSiteByURL(site_url);
 
       const widgetSettings = await getWidgetSettingsBySiteId(site.id);
       let response = widgetSettings?.settings || {};
@@ -404,11 +406,12 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       }
 
       const subscriptions = await stripe.subscriptions.list({ customer: customer.id });
-      for (const subscription of subscriptions.data) {
-        await stripe.subscriptions.del(subscription.id);
-      }
+      // for (const subscription of subscriptions.data) {
+      //   await stripe.subscriptions.del(subscription.id);
+      // }
 
       let promoCodeData:Stripe.PromotionCode[];
+
       if (promoCode && promoCode.length > 0) {
         const validCodesData: Stripe.PromotionCode[] = [];
         const invalidCodes: string[] = [];
@@ -440,34 +443,44 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       let session:any = {}
       if(promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id))
       {
+        const { promoCount } = appSumoPromoCount(subscriptions,promoCode);
+
         console.log("promo");
-        const promoCodeIds = promoCodeData.map(pc => pc.id).join(',');
-        session = await stripe.checkout.sessions.create({
-          payment_method_types: ['card'],
-          mode: 'subscription',
-          line_items: [{
-            price: price.price_stripe_id,
-            quantity: price_data.tiers[0].up_to,
-          }],
+
+        // This will work on for AppSumo coupons, we allow use of coupons that should only work for the app sumo tier plans and we manually apply the discount according to new plan (single)
+
+        const subscription =  await stripe.subscriptions.create({
           customer: customer.id,
-          payment_method_collection:'if_required',
-          success_url: `${returnUrl}`,
-          cancel_url: returnUrl,
+          items: [{ price: price.price_stripe_id, quantity: 1 }],
+          expand: ['latest_invoice.payment_intent'],
+          coupon:APP_SUMO_DISCOUNT_COUPON,
           metadata: {
             domainId: domainId,
-            userId:userId,
-            updateMetaData:"true",
+            userId: userId,
+            maxDomains: 1,
+            usedDomains: 1,
           },
-          subscription_data:{
-            metadata: {
-              domainId: domainId,
-              userId:userId,
-              updateMetaData:"true",
-              promoCodeID:promoCodeIds,
-            },
-            description:`Plan for ${domain}`
-          }
+          description: `Plan for ${domain}(${promoCode})`,
         });
+
+        await expireUsedPromo(promoCount,promoCodeData,promoCode,stripe);
+
+        let previous_plan;
+        try {
+          previous_plan = await getSitePlanBySiteId(Number(domainId));
+          console.log(previous_plan);
+          await deleteTrialPlan(previous_plan.id);
+        } catch (error) {
+          console.log('err = ', error);
+        }
+
+        await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
+
+        console.log('New Sub created');
+
+        res.status(200).json({ success: true });
+
+        return;
 
       }
       else if(promoCode && promoCode.length > 0) // Coupon is not valid or not the app sumo promo
@@ -745,48 +758,14 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         }
 
         if (promoCodeData && promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id)) {
-          let promoCount=0;
-          let singlePromoCount = 0;
-          let doublePromoCount = 0;
-          let triplePromoCount = 0;
-
-          if (subscriptions.data.length > 0) {
-            subscriptions.data.forEach((subscription:any) => {
-              const match = subscription.description.match(/\(([^)]+)\)/);
-              if (match) {
-                // Split the extracted string on commas and trim any extra whitespace.
-                const codesInDesc = match[1].split(',').map((code:string) => code.trim());
-                // Check if any of the codes in the description match one of your promo codes.
-                const allPromoCodesPresent = promoCode.every((code:string) => codesInDesc.includes(code));
-                if (allPromoCodesPresent) {
-                  console.log(`Subscription ${subscription.id} contains all promo codes.`);
-                  promoCount++;
-                }
-                if (codesInDesc.length === 1) {
-                  singlePromoCount++;
-                } else if (codesInDesc.length === 2) {
-                  doublePromoCount++;
-                } else if (codesInDesc.length === 3) {
-                  triplePromoCount++;
-                }
-              }
-            });
-          }
-
-          if(singlePromoCount == 3 && promoCode.length == 1){
-            throw Error("You have used all Starter PromoCodes");
-          }
-          else if(doublePromoCount == 7 && promoCode.length == 2){
-            throw Error("You have used all Medium PromoCodes");
-          }
-          else if(triplePromoCount == 10 && promoCode.length == 3){
-            throw Error("You have used all Enterprise PromoCodes");
-          }
+          
+          const { promoCount } = appSumoPromoCount(subscriptions,promoCode);
           
           subscription = await stripe.subscriptions.create({
             customer: customer.id,
             items: [{ price: price.price_stripe_id, quantity: 1 }],
             expand: ['latest_invoice.payment_intent'],
+            coupon:APP_SUMO_DISCOUNT_COUPON,
             default_payment_method: customer.invoice_settings.default_payment_method,
             metadata: {
               domainId: domainId,
@@ -796,51 +775,8 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             },
             description: `Plan for ${domainUrl}(${promoCode})`,
           });
-
-          if(promoCode.length == 1 && promoCount == 2) // First promo 3 sites have been added
-          {
-            try {
-              const updatePromises = promoCodeData.map((promo) =>
-                stripe.promotionCodes.update(promo.id, { active: false })
-              );
-              const updatedCoupons = await Promise.all(updatePromises);
-              updatedCoupons.forEach((coupon) => {
-                console.log(`Coupon Expired: ${coupon.id}`);
-              });
-            } catch (error) {
-              console.error('Error expiring promo codes:', error);
-            }
-          }
-
-          if(promoCode.length == 2 && promoCount == 6) // Second promo 7 sites have been added
-          {
-            try {
-              const updatePromises = promoCodeData.map((promo) =>
-                stripe.promotionCodes.update(promo.id, { active: false })
-              );
-              const updatedCoupons = await Promise.all(updatePromises);
-              updatedCoupons.forEach((coupon) => {
-                console.log(`Coupon Expired: ${coupon.id}`);
-              });
-            } catch (error) {
-              console.error('Error expiring promo codes:', error);
-            }
-          }
-
-          if(promoCode.length == 3 && promoCount == 9) // Third promo 10 sites have been added
-          {
-            try {
-              const updatePromises = promoCodeData.map((promo) =>
-                stripe.promotionCodes.update(promo.id, { active: false })
-              );
-              const updatedCoupons = await Promise.all(updatePromises);
-              updatedCoupons.forEach((coupon) => {
-                console.log(`Coupon Expired: ${coupon.id}`);
-              });
-            } catch (error) {
-              console.error('Error expiring promo codes:', error);
-            }
-          }
+          
+          await expireUsedPromo(promoCount,promoCodeData,promoCode,stripe);
 
         } else if (promoCode && promoCode.length > 0) {
           // Coupon is not valid or not the app sumo promo
