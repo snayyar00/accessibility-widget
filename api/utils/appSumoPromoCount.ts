@@ -28,11 +28,11 @@ export function appSumoPromoCount(subscriptions: any, promoCode: any): any {
   }
 
   if (singlePromoCount == 2 && promoCode.length == 1) {
-    throw Error('You have used all Starter PromoCodes');
+    throw Error('You have used all starter promocodes, you must stack now');
   } else if (doublePromoCount == 4 && promoCode.length == 2) {
-    throw Error('You have used all Medium PromoCodes');
+    throw Error('You have used all medium promocodes, you must stack twice now');
   } else if (triplePromoCount == 6 && promoCode.length == 3) {
-    throw Error('You have used all Enterprise PromoCodes');
+    throw Error('You have used all enterprise promocodes');
   }
 
   return { promoCount };

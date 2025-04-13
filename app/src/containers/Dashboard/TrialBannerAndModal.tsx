@@ -39,7 +39,7 @@ const Modal: React.FC<ModalProps> = ({ isStripeCustomer,isOpen, onClose, childre
     return (
         <div className={`fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50`}
         >
-            <div className="bg-white rounded-lg w-3/4 overflow-y-auto max-h-[95vh]">
+            <div className="bg-white rounded-lg sm:w-full md:w-3/4 overflow-y-auto max-h-[95vh]">
                 <div className="grid grid-cols-12 justify-evenly">
                     <div className='sm:col-span-9 col-span-6 pl-4 pt-2'>
                         <LogoIcon />

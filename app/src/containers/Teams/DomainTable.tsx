@@ -688,7 +688,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                         <FaTrash className="mr-2" /> Delete
                       </button>
                     </div>
-                    {domainStatus !== 'Active' && domainStatus !== 'Expiring' && (
+                    {domainStatus !== 'Active' && domainStatus != 'Life Time' && domainStatus !== 'Expiring' && (
                       <div className="p-4 bg-gray-100">
                         {activePlan !== '' && tierPlan ? (
                           <button

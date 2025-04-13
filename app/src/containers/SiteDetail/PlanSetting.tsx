@@ -21,6 +21,7 @@ import { setSitePlan } from '@/features/site/sitePlan';
 import { toast } from 'react-toastify';
 import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
 import { CircularProgress } from '@mui/material';
+import AppSumoInfo from '@/components/Plans/AppSumoInfo';
 
 declare global {
   namespace JSX {
@@ -297,7 +298,7 @@ const PlanSetting: React.FC<{
           setbillingClick(false);
           if(data.error)
           {
-            toast.error("An Error Occured");
+            toast.error(`An Error Occured: ${data.error}`);
             console.log(data);
             // setTimeout(()=>{window.location.reload()},2000);
           }
@@ -423,6 +424,8 @@ const PlanSetting: React.FC<{
     }
   }, [validatedCoupons]);
 
+  const[appSumoCount,setAppSumoCount] = useState(-1);
+
   const customerCheck = async () => {
     setCustomerCheckLoading(true);
     const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
@@ -441,6 +444,7 @@ const PlanSetting: React.FC<{
         }
 
         response.json().then(data => {
+          console.log(data);
           // Handle the JSON data received from the backend
           if(data.isCustomer == true && data.card)
           {
@@ -451,6 +455,9 @@ const PlanSetting: React.FC<{
             {
               // setIsYearly(true);
             }
+          }
+          if(data.appSumoCount){
+            setAppSumoCount(data.appSumoCount);
           }
           setCustomerCheckLoading(false);
         });
@@ -538,9 +545,15 @@ const PlanSetting: React.FC<{
               <Toggle onChange={toggle} label="Bill Yearly" />
             </div>
           )} */}
-          <div>
+          <div className='flex sm:flex-col md:flex-row justify-center'>
+            {validatedCoupons.length > 0 && (
+              <div className="mb-2 flex">
+                <AppSumoInfo activeSites={appSumoCount} validatedCoupons={validatedCoupons}/>
+              </div>
+            )}
             {planChanged && (
-              <div className="p-6 sm:mx-2 mx-32 lg:mx-80 screen-4k-mx-80 mb-3 border border-solid border-dark-gray rounded-[10px] flex sm:p-6 sm:flex-col-reverse flex-col flex-wrap">
+              <div className="p-6 sm:mx-2 mx-10 mb-3 border border-solid border-dark-gray rounded-[10px] flex sm:p-6 sm:flex-col-reverse flex-col flex-wrap">
+                
                 {checkIsCurrentPlan(planChanged.id) ? (
                   <div className="min-w-[300px] [&_button]:w-full">
                     {currentPlan.deletedAt ? (
@@ -773,7 +786,7 @@ const PlanSetting: React.FC<{
             )}
           </div>
           <div className="block w-full mb-4">
-            <label
+            {/* <label
               className="font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block uppercase mb-[19px]"
               htmlFor="coupon_code"
             >
@@ -781,16 +794,9 @@ const PlanSetting: React.FC<{
             </label>
             {validatedCoupons.length > 0 && (
               <div className="mb-2">
-                {validatedCoupons.map((code, index) => (
-                  <span
-                    key={index}
-                    className="inline-block bg-green-200 text-green-800 text-sm font-semibold mr-2 px-2.5 py-0.5 rounded"
-                  >
-                    {code}
-                  </span>
-                ))}
+                <AppSumoInfo validatedCoupons={validatedCoupons}/>
               </div>
-            )}
+            )} */}
             <div className="flex items-center">
               <input
                 type="text"

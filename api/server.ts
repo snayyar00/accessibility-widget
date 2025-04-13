@@ -1236,7 +1236,18 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               const trial_sub_data = {'monthly':monthlyTrialSubs,'yearly':yearlyTrialSubs}
               const regular_sub_data = {'monthly':monthlySubs,'yearly':yearlySubs}
 
-              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining});
+              let appSumoCount = 0;
+
+              for (const subs of Object.values(regular_sub_data)) {
+                for (const sub of subs) {
+                  const match = sub.description?.match(/\(([^)]+)\)$/); // get the part inside parentheses
+                  if (match) {
+                    appSumoCount++;
+                  }
+                }
+              }
+
+              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining,appSumoCount:appSumoCount});
 
             }
   
@@ -1274,7 +1285,18 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             });
             const regular_sub_data = {'monthly':monthlySubs,'yearly':yearlySubs}
 
-            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method});
+            let appSumoCount = 0;
+
+            for (const subs of Object.values(regular_sub_data)) {
+              for (const sub of subs) {
+                const match = sub.description?.match(/\(([^)]+)\)$/); // get the part inside parentheses
+                if (match) {
+                  appSumoCount++;
+                }
+              }
+            }
+
+            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount});
 
           }
   
