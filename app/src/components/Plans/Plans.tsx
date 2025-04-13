@@ -78,6 +78,7 @@ type Props = {
   checkIsCurrentPlan: (id: string) => boolean;
   planChanged?: Plans;
   isYearly: boolean;
+  setisYearly:(isyearly: boolean) => void;
   handleBilling:()=>void;
   showPlans:Dispatch<SetStateAction<boolean>>;
 }
@@ -87,6 +88,7 @@ const Plans: React.FC<Props> = ({
   onChange,
   planChanged,
   isYearly,
+  setisYearly,
   checkIsCurrentPlan,
   handleBilling,
   showPlans,
@@ -124,7 +126,7 @@ const Plans: React.FC<Props> = ({
           <Button className="get-start-btn w-full mt-2" onClick={() => {onChange(String(currentPlan?.id));showPlans(true)}} >Update/Cancel Plan</Button>
         </div>):(null)}
       
-      {(planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.isTrial) && (plans.map((plan) =>{ 
+      {(planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.isTrial) && ([plans[0]].map((plan) =>{ 
       // {(planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.productType != subPlan ) && (plans.map((plan) =>{ 
         if(checkIsCurrentPlan(plan.id))
         {
@@ -136,7 +138,7 @@ const Plans: React.FC<Props> = ({
         // }
         return(
         <div
-          onClick={() => onChange(plan.id)}
+          onClick={() => {onChange(plan.id);setisYearly(false);}}
           key={plan.id}
           role="presentation"
           className={classNames("flex flex-col w-[400px] border border-solid border-dark-gray rounded-[10px] p-6 cursor-pointer m-2 sm:w-full sm:max-w-full sm:mr-0 sm:mb-[15px]", {
@@ -146,8 +148,50 @@ const Plans: React.FC<Props> = ({
           <h5 className="font-medium text-[14px] leading-[17px] text-sapphire-blue mb-[6px] name">{plan.name}</h5>
           <p className="desc text-[12px] leading-4 text-white-blue">{plan.desc}</p>
           <div className="flex items-end mx-0 my-6">
-            <span className="price font-bold text-[32px] leading-9 text-green">${isYearly ? plan.name == 'Enterprise' ? (plan.price * 10): plan.price * 10 : plan.price}</span>
-            <span className="unit text-[12px] leading-[25px] text-white-gray opacity-90">/{!APP_SUMO_BUNDLE_NAMES.includes(plan.id) ? isYearly ? 'year' : 'month' : 'Lifetime'}</span>
+            <span className="price font-bold text-[32px] leading-9 text-green">${plan.price}</span>
+            <span className="unit text-[12px] leading-[25px] text-white-gray opacity-90">/{'month'}</span>
+          </div>
+          <ul className="feature-list pt-6 pb-8 border-t border-solid border-dark-gray flex-grow">
+            {plan.features.map((feature) => (
+              <li key={feature} className="feature-item list-none flex items-center [&+&]:mt-2">
+                <span className="w-4 h-4">
+                  <CheckCircleIcon />
+                </span>
+                <span className="feature-text text-[14px] leading-6 text-white-gray ml-3">{feature}</span>
+              </li>
+            ))}
+          </ul>
+          {checkIsCurrentPlan(plan.id) ? (
+            <Button className="get-start-btn w-full">{t('Profile.text.current_plan')}</Button>
+          ) : (
+            <Button color="primary" className="get-start-btn w-full">{t('Profile.text.get_started')}</Button>
+          )}
+        </div>
+      )}))}
+      {(planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.isTrial) && ([plans[1]].map((plan) =>{ 
+      // {(planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.productType != subPlan ) && (plans.map((plan) =>{ 
+        if(checkIsCurrentPlan(plan.id))
+        {
+          return null;
+        }
+        // if(currentPlan == undefined && subPlan !== undefined && plan?.id !== subPlan?.id )
+        // {
+        //   return null
+        // }
+        return(
+        <div
+          onClick={() => {onChange(plan.id);setisYearly(true); }}
+          key={plan.id}
+          role="presentation"
+          className={classNames("flex flex-col w-[400px] border border-solid border-dark-gray rounded-[10px] p-6 cursor-pointer m-2 sm:w-full sm:max-w-full sm:mr-0 sm:mb-[15px]", {
+            "plan-wrapper": planChanged ? plan.id === planChanged.id : false
+          })}
+        >
+          <h5 className="font-medium text-[14px] leading-[17px] text-sapphire-blue mb-[6px] name">{plan.name}</h5>
+          <p className="desc text-[12px] leading-4 text-white-blue">{plan.desc}</p>
+          <div className="flex items-end mx-0 my-6">
+            <span className="price font-bold text-[32px] leading-9 text-green">${plan.price*10}</span>
+            <span className="unit text-[12px] leading-[25px] text-white-gray opacity-90">/{'year'}</span>
           </div>
           <ul className="feature-list pt-6 pb-8 border-t border-solid border-dark-gray flex-grow">
             {plan.features.map((feature) => (

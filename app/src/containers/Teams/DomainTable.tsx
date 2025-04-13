@@ -202,7 +202,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
     setEditingId(null);
   };
 
-  const applyStatusClass = (status: string, trial: number): string => {
+  const applyStatusClass = (domainUrl:string,status: string, trial: number): string => {
+    if(appSumoDomains.includes(domainUrl)){
+      return 'bg-green-200 text-green-600';
+    }
     if (!status) {
       return 'bg-yellow-200 text-yellow-800';
     }
@@ -222,7 +225,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
     return 'bg-yellow-200 text-yellow-800';
   };
 
-  const getDomainStatus = (status: string, trial: number): string => {
+  const getDomainStatus = (domainUrl:string,status: string, trial: number): string => {
+    if(appSumoDomains.includes(domainUrl)){
+      return 'Life Time';
+    }
     if (!status) {
       return 'Trial Expired';
     }
@@ -242,6 +248,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
     return 'Expired';
   };
 
+  const [tierPlan,setTierPlan] = useState(false);
+  const [appSumoDomains,setAppSumoDomain] = useState<string[]>([]);
   const customerCheck = async () => {
     const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
     const bodyData = { email: userData.email, userId: userData.id };
@@ -260,6 +268,30 @@ const DomainTable: React.FC<DomainTableProps> = ({
         response.json().then((data) => {
           if (data.submeta) {
             setPlanMetaData(data.submeta);
+          }
+          if(data.tierPlan && data.tierPlan==true){
+            setTierPlan(true);
+          }
+          if(data.subscriptions){
+            const appSumoDomains:any = [];
+            let subs = JSON.parse(data.subscriptions);
+            // console.log("subs = ",subs);
+            ['monthly', 'yearly'].forEach((subscriptionType) => {
+                // Loop over each subscription in the current type (monthly or yearly)
+                subs[subscriptionType].forEach((subscription:any) => {
+                    const description = subscription.description;
+        
+                    // Regex to extract domain name before '(' and promo codes
+                    const match = description.match(/Plan for ([^(\s]+)\(/);
+        
+                    if (match) {
+                        const domain = match[1];  // Extract domain name
+                        appSumoDomains.push(domain); // Save the domain name in the list
+                    }
+                });
+            });
+            setAppSumoDomain(appSumoDomains);
+            // setSubCount(subs.length);
           }
           if (data.isCustomer === true) {
             setActivePlan(data.plan_name);
@@ -442,6 +474,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
               {domains.map((domain) => {
                 const isEditing = editingId === domain.id;
                 const domainStatus = getDomainStatus(
+                  domain.url,
                   domain.expiredAt,
                   domain.trial,
                 );
@@ -465,6 +498,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     <td className="py-4 px-4 border-b border-gray-200">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-semibold ${applyStatusClass(
+                          domain.url,
                           domain.expiredAt,
                           domain.trial,
                         )}`}
@@ -504,10 +538,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                       ) : (
                         // Desktop action buttons (all in one row)
                         <div className="flex justify-end items-center space-x-2">
-                          {domainStatus !== 'Active' &&
+                          {domainStatus !== 'Active' && domainStatus !== 'Life Time' &&
                             domainStatus !== 'Expiring' && (
                               <>
-                                {activePlan !== '' ? (
+                                {activePlan !== '' && tierPlan ?(
                                   <button
                                     disabled={billingLoading}
                                     onClick={() => handleSubscription(domain)}
@@ -530,7 +564,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                     // className="p-2 text-white text-center rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] transition duration-300 w-fit"
                                     className="p-2 bg-green text-white rounded-md text-sm flex items-center justify-center hover:bg-green-600 transition-colors duration-200"
                                   >
-                                    Buy Plan
+                                    Buy License
                                   </button>
                                 )}
                               </>
@@ -565,6 +599,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
           {domains.map((domain) => {
             const isEditing = editingId === domain.id;
             const domainStatus = getDomainStatus(
+              domain.url,
               domain.expiredAt,
               domain.trial,
             );
@@ -594,6 +629,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     <div className="mt-2 md:mt-0">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-semibold ${applyStatusClass(
+                          domain.url,
                           domain.expiredAt,
                           domain.trial,
                         )}`}
@@ -652,9 +688,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
                         <FaTrash className="mr-2" /> Delete
                       </button>
                     </div>
-                    {domainStatus !== 'Active' && domainStatus !== 'Expiring' && (
+                    {domainStatus !== 'Active' && domainStatus != 'Life Time' && domainStatus !== 'Expiring' && (
                       <div className="p-4 bg-gray-100">
-                        {activePlan !== '' ? (
+                        {activePlan !== '' && tierPlan ? (
                           <button
                             disabled={billingLoading}
                             onClick={() => handleSubscription(domain)}
