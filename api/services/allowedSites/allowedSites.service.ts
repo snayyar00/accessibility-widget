@@ -2,7 +2,7 @@ import { ApolloError, ValidationError } from 'apollo-server-express';
 
 import logger from '~/utils/logger';
 import { insertDocument, findDocumentById, findDocuments, updateDocumentById, deleteDocumentById, FindDocumentsResponse, FindDocumentById } from '~/repository/documents.repository';
-import { FindAllowedSitesProps, IUserSites, deleteSiteByURL, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL} from '~/repository/sites_allowed.repository';
+import { FindAllowedSitesProps, IUserSites, findSiteByURL, findSitesByUserId, updateAllowedSiteURL} from '~/repository/sites_allowed.repository';
 import { createValidation } from '~/validations/document.validation';
 import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
 import { createSitesPlan } from './plans-sites.service';
@@ -58,11 +58,11 @@ export async function addSite(userId: number, url: string): Promise<string> {
         user_id: userId,
         url: url
     }
-    const response = await insertSite(data);
-    if(response == "You have already added this site.")
-    {
-        throw new Error("You have already added this site.");
-    }
+    //const response = await insertSite(data);
+    // if(response == "You have already added this site.")
+    // {
+    //     throw new Error("You have already added this site.");
+    // }
     const site = await findSiteByURL(url)
 
     await createSitesPlan(userId,"Trial",TRIAL_PLAN_NAME,TRIAL_PLAN_INTERVAL,site.id,"");
@@ -100,7 +100,7 @@ export async function addSite(userId: number, url: string): Promise<string> {
       });
     });
 
-    return response
+    return url; // Return the URL to satisfy the Promise<string> return type
     
     // const data = await insertDocument({ name, body, user_id: userId });
     // const newDocumentId = data.shift();
@@ -154,8 +154,8 @@ export async function findSite(url: string){
 
 export async function deleteSite(userId:number, url:string) {
     try{
-        const deletedRecs = await deleteSiteByURL(url, userId);
-        return deletedRecs;
+        //const deletedRecs = await deleteSiteByURL(url, userId);
+        //return deletedRecs;
     }
     catch (e){
         logger.error(e);

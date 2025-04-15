@@ -10,7 +10,7 @@ import formatDateDB from '~/utils/format-date-db';
 import { PERMISSION_SITE_PLAN } from '~/constants/billing.constant';
 import compileEmailTemplate from '~/helpers/compile-email-template';
 import {sendMail} from '~/libs/mail';
-import { FindAllowedSitesProps, deleteSiteByURL, findSiteById, findSiteByUserIdAndSiteId } from '~/repository/sites_allowed.repository';
+import { FindAllowedSitesProps, findSiteByUserIdAndSiteId } from '~/repository/sites_allowed.repository';
 import { SitesPlanData, deleteSitePlanById, deleteSitesPlanById, getSitePlanById, getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId, getSitesPlanByUserId, insertSitePlan, updateSitePlanById } from '~/repository/sites_plans.repository';
 import { deletePermissionBySitePlanId, insertMultiSitePermission } from '~/repository/sites_permission.repository';
 import { Token } from '../authentication/login.service';
@@ -60,23 +60,17 @@ export async function getUserSitesPlan(userId: number): Promise<ResponseSitesPla
 }
 
 export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
-  // console.log(`getPlanBySiteIdAndUserId called with userId: ${userId}, siteId: ${siteId}`);
-
   const site = await findSiteByUserIdAndSiteId(userId, siteId);
 
   if (!site) {
-    console.log(`Site not found for userId: ${userId}, siteId: ${siteId}`);
+    console.error(`Site not found for userId: ${userId}, siteId: ${siteId}`);
     throw new ApolloError('Can not find any site');
   }
 
-  // console.log('Site found:', JSON.stringify(site, null, 2));
-
   const plan = await getSitePlanBySiteId(site.id);
   
-  // console.log('Raw plan data:', JSON.stringify(plan, null, 2));
-
   if (!plan) {
-    console.log(`No plan found for site: ${site.id}`);
+    console.error(`No plan found for site: ${site.id}`);
     return null;
   }
 
@@ -86,7 +80,6 @@ export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
     isTrial: Boolean(plan.isTrial || plan.is_trial)
   };
 
-  console.log('Processed plan data:', JSON.stringify(result, null, 2));
   return result;
 }
 

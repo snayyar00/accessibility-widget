@@ -17,7 +17,7 @@ import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
 import stripeHooks from './services/stripe/webhooks.servive';
 import {sendMail} from './libs/mail';
-import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
+//import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 import { fetchAccessibilityReport } from './services/accessibilityReport/accessibilityReport.service';
 import { findProductAndPriceByType, findProductById } from './repository/products.repository';
 import { createSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-sites.service';
@@ -29,12 +29,33 @@ import OpenAI from 'openai';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
 import database from '~/config/database.config';
 import { addProblemReport, getProblemReportsBySiteId, problemReportProps } from './repository/problem_reports.repository';
-import { deleteSiteByURL, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
+import { FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites, findSiteById } from './repository/sites_allowed.repository';
 import { addWidgetSettings, getWidgetSettingsBySiteId } from './repository/widget_settings.repository';
 import { addNewsletterSub } from './repository/newsletter_subscribers.repository';
 import findPromo from './services/stripe/findPromo';
+import { z } from 'zod'
+import rateLimit from 'express-rate-limit'
+import slowDown from 'express-slow-down'
+import session from 'express-session'
+
+
 // import run from './scripts/create-products';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
+
+// --- Augment Express Request Type ---
+declare global {
+  namespace Express {
+    interface User { // Define the structure of your user object
+      id: number; // Or string, depending on your user ID type
+      email: string;
+      // Add other relevant user properties
+    }
+    interface Request {
+      user?: User; // Make it optional as not all requests might be authenticated
+    }
+  }
+}
+// --- End Augmentation ---
 
 type ContextParams = {
   req: Request;
@@ -45,32 +66,158 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
-const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, 'https://www.webability.io'];
+const allowedOrigins = [process.env.FRONTEND_URL, 'https://www.webability.io'];
 const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction','reportProblem','updateImpressionProfileCounts','getWidgetSettings','getAccessibilityReport','getAccessibilityStats'];
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
+const urlSchema = z.string().url()
+const problemReportSchema = z.object({
+  site_url: z.string().url({ message: "Invalid site URL format" }),
+  issue_type: z.string().min(1, { message: "Issue type cannot be empty" }), 
+  description: z.string().min(1, { message: "Description cannot be empty" }),
+  reporter_email: z.string().email({ message: "Invalid reporter email format" })
+})
+
+// Add security middleware before other middleware
+app.use((req, res, next) => {
+  // Prevent clickjacking
+  res.setHeader('X-Frame-Options', 'DENY')
+  // Additional security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('X-XSS-Protection', '1; mode=block')
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+  // Only allow your app to be loaded in a browser
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
+  next()
+})
+
 app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
+
+// Apply body parsing and cookie middleware FIRST
 app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 scheduleMonthlyEmails();
 
+// Remove the static CORS middleware that was here
+// app.use(cors({ ... }))
+
+// Apply rate limiting, speed limiting, session middleware next
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later'
+})
+
+// Speed limiting
+const speedLimiter = slowDown({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  delayAfter: 100, // allow 100 requests per 15 minutes, then...
+  delayMs: () => 500, // begin adding 500ms of delay per request
+  validate: { delayMs: false } // disable warning
+})
+
+app.use(limiter)
+app.use(speedLimiter)
+
+
+
+// Apply CSRF generation middleware AFTER session
+app.use((req, res, next) => {
+  if (req.method === 'GET') {
+    res.locals.csrfToken = req.session.csrfToken = Math.random().toString(36).substring(2)
+  }
+  next()
+})
+
+// CSRF validation function (used later in specific routes)
+const validateCsrf = (req: Request, res: Response, next: NextFunction) => {
+  const csrfToken = req.headers['x-csrf-token'] || req.body.csrfToken
+  if (!csrfToken || csrfToken !== req.session.csrfToken) {
+    return res.status(403).json({ error: 'Invalid CSRF token' })
+  }
+  next()
+}
+
+// Add session type declaration
+declare module 'express-session' {
+  interface SessionData {
+    csrfToken?: string
+  }
+}
+
+// Define the dynamic CORS function
 function dynamicCors(req: Request, res: Response, next: NextFunction) {
-  console.log("CORS check for operation:", req.body?.operationName);
+  // Remove detailed debug logging in production
+  if (process.env.NODE_ENV !== 'production') {
+    console.log("CORS check details:", {
+      origin: req.headers.origin,
+      method: req.method,
+      body: req.body,
+      headers: req.headers
+    });
+  }
+
   const corsOptions = {
     optionsSuccessStatus: 200,
     credentials: true,
-    origin: (origin: any, callback: any) => {
-      if (req.body && allowedOperations.includes(req.body.operationName)) {
-        // Allow any origin for 'validateToken'
-        callback(null, true);
-      } else if (allowedOrigins.includes(origin) || req.method === 'OPTIONS') {
-        // Allow your specific frontend origin
-        callback(null, true);
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // Remove detailed debug logging in production
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("CORS origin check:", {
+          origin,
+          allowedOrigins,
+          operationName: req.body?.operationName,
+          query: req.body?.query,
+          allowedOperations
+        });
       }
-      // else {
-      //   // Disallow other origins
-      //   callback(new Error('Not allowed by CORS'));
-      // }
+
+      // Allow OPTIONS requests
+      if (req.method === 'OPTIONS') {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Allowing OPTIONS request");
+        }
+        return callback(null, true);
+      }
+
+      // Check if the request is for an allowed operation
+      const operationName = req.body?.operationName || 
+                          (req.body?.query && req.body.query.split('{')[0]?.trim());
+      
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Operation name check:", {
+          operationName,
+          isAllowed: operationName && allowedOperations.includes(operationName)
+        });
+      }
+
+      if (operationName && allowedOperations.includes(operationName)) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Allowing request for operation:", operationName);
+        }
+        return callback(null, true);
+      }
+
+      // Check if origin is in allowed origins
+      if (origin && allowedOrigins.includes(origin)) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Allowing request from allowed origin:", origin);
+        }
+        return callback(null, true);
+      }
+
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("CORS check failed:", {
+          origin,
+          operationName,
+          allowedOrigins,
+          allowedOperations
+        });
+      }
+
+      callback(new Error('Not allowed by CORS'));
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   };
@@ -78,30 +225,36 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   cors(corsOptions)(req, res, next);
 }
 
+// Apply the dynamic CORS middleware
+app.use(dynamicCors);
+
+// Apply static file serving AFTER CORS checks if needed, or before routes
+app.use(express.static(join(resolve(), 'public', 'uploads')));
+
+// Add Zod schema for input validation (as part of Step 1 refinement)
+const cancelSubSchema = z.object({
+  domainId: z.number().int().positive(), // Or z.string() depending on actual type
+  domainUrl: z.string().url(),
+  // userId: z.number().int().positive(), // Ideally, REMOVE userId from body, use req.user.id
+  status: z.enum(['Active', 'Trial']), // Example: Be more specific with status
+});
+
+
+
+// --- Start Server IIFE ---
 (function startServer() {
   app.use(morgan('combined', { stream: accessLogStream }));
 
-  // app.use(cors({
-  //   origin: 'https://www.webability.io',
-  //   methods: 'GET,POST',
-  //   credentials: true
-  // }));
-  app.use(dynamicCors);
-
-  app.use(express.static(join(resolve(), 'public', 'uploads')));
-  app.use(cookieParser());
-
-  app.use(bodyParser.urlencoded({ extended: true }));
-
+  // Routes are defined after all general middleware
   app.get('/', (req, res) => {
     res.send('Hello orld!');
   });
 
-  app.get('/token/:url', async (req, res) => {
-    const url = req.params.url;
-    const token = await GetVisitorTokenByWebsite(url);
-    res.send(token);
-  });
+  // app.get('/token/:url', async (req, res) => {
+  //   const url = req.params.url;
+  //   const token = await GetVisitorTokenByWebsite(url);
+  //   res.send(token);
+  // });
 
   app.post('/create-customer-portal-session',async (req,res)=>{
     const {id,returnURL} = req.body;
@@ -439,7 +592,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       let session:any = {}
       if(promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id))
       {
-        console.log("promo");
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("promo");
+        }
         const promoCodeIds = promoCodeData.map(pc => pc.id).join(',');
         session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
@@ -475,7 +630,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       }
       else if(cardTrial)
       {
-        console.log("trial")
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("trial")
+        }
         session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'subscription',
@@ -505,7 +662,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
       }
       else{
-        console.log("normal")
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("normal")
+        }
         session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'subscription',
@@ -625,30 +784,46 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
-  app.post('/cancel-site-subscription',async (req,res)=>{
-    const { domainId,domainUrl,userId,status } = req.body;
-
-    if(status == 'Active')
-    {
-      let previous_plan;
-      try {
-        previous_plan = await getSitePlanBySiteId(Number(domainId));
-      } catch (error) {
-        console.log('err = ', error);
-      }
-      try {
-        await deleteTrialPlan(previous_plan.id);
-        await deleteSiteByURL(domainUrl,userId);
-
-        res.status(200).json({ success: true });
-      } catch (error) {
-        console.log('err = ', error);
-        res.status(500).json({ error: error });
-      }
+  app.post('/cancel-site-subscription', validateCsrf, async (req: Request, res: Response) => {
+    // Input Validation First
+    const validationResult = cancelSubSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      const errors = validationResult.error.flatten().fieldErrors;
+      return res.status(400).send(`Invalid input: ${Object.values(errors).flat().join(', ')}`);
     }
-    else
-    {
-      res.status(500).json({ error: "Cannot delete a Trial Site" });
+
+    const { domainId, domainUrl, status } = validationResult.data;
+    const authenticatedUserId = req.user?.id;
+
+    // Check if user is authenticated by middleware
+    if (!authenticatedUserId) {
+       return res.status(401).send("Unauthorized: Authentication required.");
+    }
+
+    try {
+      // Authorization Check - But handle the fact that findSiteById returns an array
+      const sites = await findSiteById(domainId);
+      
+      // Handle case where no sites are found
+      if (!sites || sites.length === 0) {
+        return res.status(404).send("Site not found.");
+      }
+      
+      // Get the first site from the array
+      const site = sites[0]; // Get the first site if it's an array
+      
+      // Now check user_id on the single site object
+      if (site.user_id !== authenticatedUserId) {
+        console.warn(`AuthZ Failure: User ${authenticatedUserId} attempted action on site ${domainId} owned by ${site.user_id}.`);
+        return res.status(403).send("Forbidden: You do not have permission to modify this site.");
+      }
+      // End Authorization Check
+      
+      // ... rest of the route logic ...
+      
+    } catch (error: any) {
+      console.error("Error in /cancel-site-subscription handler:", error);
+      res.status(500).send(process.env.NODE_ENV === 'production' ? "An unexpected error occurred." : `Server Error: ${error.message}`);
     }
   });
 
@@ -757,9 +932,11 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               stripe.promotionCodes.update(promo.id, { active: false })
             );
             const updatedCoupons = await Promise.all(updatePromises);
-            updatedCoupons.forEach((coupon) => {
-              console.log(`Coupon Expired: ${coupon.id}`);
-            });
+            if (process.env.NODE_ENV !== 'production') {
+              updatedCoupons.forEach((coupon) => {
+                console.log(`Coupon Expired: ${coupon.id}`);
+              });
+            }
           } catch (error) {
             console.error('Error expiring promo codes:', error);
           }
@@ -808,7 +985,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
         await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
 
-        console.log('New Sub created');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('New Sub created');
+        }
 
         res.status(200).json({ success: true });
 
@@ -842,7 +1021,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               ],
             });
 
-            console.log('meta data updated');
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('meta data updated');
+            }
 
             let previous_plan;
             try {
@@ -869,7 +1050,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               metadata: metaData,
             });
 
-            console.log('meta data updated');
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('meta data updated');
+            }
             let previous_plan;
             try {
               previous_plan = await getSitePlanBySiteId(Number(domainId));
@@ -880,7 +1063,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
             await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
 
-            console.log('Old Sub created');
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('Old Sub created');
+            }
 
             res.status(200).json({ success: true });
           }
@@ -990,7 +1175,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
           await createSitesPlan(Number(userId), String(subscription.id), planName, appSumoInterval, Number(domainId), '');
 
-          console.log('New Sub created');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('New Sub created');
+          }
 
           res.status(200).json({ success: true });
         } else {
@@ -1018,7 +1205,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               metadata: metaData,
             });
 
-            console.log('meta data updated');
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('meta data updated');
+            }
             let previous_plan;
             try {
               previous_plan = await getSitePlanBySiteId(Number(domainId));
@@ -1029,7 +1218,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
             await createSitesPlan(Number(userId), String(subscription.id), planName, appSumoInterval, Number(domainId), '');
 
-            console.log('Old Sub created');
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('Old Sub created');
+            }
 
             res.status(200).json({ success: true });
           }
@@ -1234,7 +1425,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           content: `
             You are an expert in web accessibility, well-versed in WCAG and ADA guidelines. You understand various accessibility issues and the impact they have on users, especially those with disabilities. 
             Your task is to analyze a provided code snippet and suggest specific corrections or enhancements based on given accessibility issues.
-            Here’s the structure of the response I want:
+            Here's the structure of the response I want:
   
             {
               correctedCode: Provide the corrected version of the code snippet based on the guidance given in heading, description, and help.
@@ -1260,27 +1451,54 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     return res.status(200).json(JSON.parse(correctedResponse));
   });
 
-  app.post('/report-problem',async(req,res)=>{
-    const { site_url, issue_type, description, reporter_email } = req.body;
+  app.post('/report-problem', validateCsrf, async (req: Request, res: Response) => {
     try {
-      const domain = site_url.replace(/^(https?:\/\/)?(www\.)?/, '');
-      const site:FindAllowedSitesProps = await findSiteByURL(domain);
-      if(!site)
-      {
-        throw new Error("Site not found");
+      // Validate the request body using the Zod schema
+      const validationResult = problemReportSchema.safeParse(req.body);
+
+      if (!validationResult.success) {
+        // If validation fails, return a 400 Bad Request with error details
+        // Extract Zod errors for a more user-friendly message
+        const errors = validationResult.error.flatten().fieldErrors;
+        console.error("Validation Error:", errors); 
+        // Combine error messages (optional, adjust formatting as needed)
+        const errorMessages = Object.values(errors).flat().join(', ');
+        return res.status(400).send(`Invalid input: ${errorMessages}`);
       }
-      const problem:problemReportProps = {site_id:site.id, issue_type:issue_type, description:description, reporter_email:reporter_email};
+
+      // Use the validated data from now on
+      const { site_url, issue_type, description, reporter_email } = validationResult.data;
+
+      const domain = site_url.replace(/^(https?:\/\/)?(www\.)?/, '');
+      const site: FindAllowedSitesProps = await findSiteByURL(domain);
+      if (!site) {
+        // Use a more specific status code like 404 Not Found
+        return res.status(404).send("Site not found"); 
+      }
+
+      // Ensure the logged-in user owns this site (Authorization Check - Placeholder)
+      // This requires access to the authenticated user from the request context (e.g., req.user)
+      // if (site.user_id !== req.user.id) { // Assuming req.user exists and has an id
+      //   return res.status(403).send("Forbidden: You do not own this site.");
+      // }
+
+      const problem: problemReportProps = {
+        site_id: site.id,
+        issue_type: issue_type as "bug" | "accessibility", // Consider stricter type validation if possible
+        description: description,
+        reporter_email: reporter_email
+      };
 
       await addProblemReport(problem);
 
       res.status(200).send('Success');
-      
-    } catch (error) {
-      console.error("Error reporting problem:", error);
-      res.status(500).send("Cannot report problem");
-    }
 
-  })
+    } catch (error: any) { // Catch specific errors if possible
+      console.error("Error reporting problem:", error);
+      // Avoid sending detailed internal errors in production
+      res.status(500).send(process.env.NODE_ENV === 'production' ? "Cannot report problem due to a server error" : `Cannot report problem: ${error.message}`);
+    }
+  });
 
   app.post('/get-problem-reports', async (req, res) => {
     const { user_id } = req.body;
@@ -1316,72 +1534,75 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   // });
   app.post('/getScreenshortUrl', async (req: Request, res: Response) => {
     try {
-        const url = req.body.url; // Extract URL from request body
-        const dataUrl = await fetchAccessibilityReport(url); // Call fetchSitePreview function
-        res.send(dataUrl); // Send the generated Data URL as response
+      const { url } = req.body
+      // Validate URL
+      urlSchema.parse(url)
+      const sanitizedUrl = encodeURI(url.trim())
+      const dataUrl = await fetchAccessibilityReport(sanitizedUrl)
+      res.send(dataUrl)
     } catch (error) {
-        console.error('Error generating screenshot:', error);
-        res.status(500).send('Error generating screenshot');
-    }
-});
-
-  app.post('/form', async (req, res) => {
-    console.log('Received POST request for /form:', req.body);
-    const uniqueToken = await AddTokenToDB(req.body.businessName, req.body.email, req.body.website);
-    if (uniqueToken !== '') {
-      res.send('Received POST request for /form');
-    } else {
-      res.status(500).send('Internal Server Error');
-      return;
-    }
-
-    try {
-      sendMail(
-        req.body.email,
-        'Welcome to Webability',
-        `
-            <html>
-            <head>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 20px;
-                    color: #333333;
-                }
-                .script-box {
-                    background-color: #f4f4f4;
-                    border: 1px solid #dddddd;
-                    padding: 15px;
-                    overflow: auto;
-                    font-family: monospace;
-                    margin-top: 20px;
-                    white-space: pre-wrap;
-                }
-                .instructions {
-                    margin-bottom: 10px;
-                }
-            </style>
-        </head>
-        <body>
-            <h1>Welcome to Webability!</h1>
-            <p class="instructions">To get started with Webability on your website, please follow these steps:</p>
-            <ol>
-                <li>Copy the script code provided below.</li>
-                <li>Paste it into the HTML of your website, preferably near the closing &lt;/body&gt; tag.</li>
-            </ol>
-            <div class="script-box">
-                &lt;script src="https://webability.ca/webAbility.min.js" token="${uniqueToken}"&gt;&lt;/script&gt;
-            </div>
-            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
-            <p>Thank you for choosing Webability!</p>
-        </body>
-            </html>
-        `,
-      );
-    } catch (error) {
-      console.error('Error sending email:', error);
+      console.error('Error:', error)
+      res.status(400).send('Invalid URL provided')
     }
   });
+
+  // app.post('/form', async (req, res) => {
+  //   console.log('Received POST request for /form:', req.body);
+  //   //const uniqueToken = await AddTokenToDB(req.body.businessName, req.body.email, req.body.website);
+  //   if (uniqueToken !== '') {
+  //     res.send('Received POST request for /form');
+  //   } else {
+  //     res.status(500).send('Internal Server Error');
+  //     return;
+  //   }
+
+  //   try {
+  //     sendMail(
+  //       req.body.email,
+  //       'Welcome to Webability',
+  //       `
+  //           <html>
+  //           <head>
+  //           <style>
+  //               body {
+  //                   font-family: Arial, sans-serif;
+  //                   margin: 20px;
+  //                   color: #333333;
+  //               }
+  //               .script-box {
+  //                   background-color: #f4f4f4;
+  //                   border: 1px solid #dddddd;
+  //                   padding: 15px;
+  //                   overflow: auto;
+  //                   font-family: monospace;
+  //                   margin-top: 20px;
+  //                   white-space: pre-wrap;
+  //               }
+  //               .instructions {
+  //                   margin-bottom: 10px;
+  //               }
+  //           </style>
+  //       </head>
+  //       <body>
+  //           <h1>Welcome to Webability!</h1>
+  //           <p class="instructions">To get started with Webability on your website, please follow these steps:</p>
+  //           <ol>
+  //               <li>Copy the script code provided below.</li>
+  //               <li>Paste it into the HTML of your website, preferably near the closing &lt;/body&gt; tag.</li>
+  //           </ol>
+  //           <div class="script-box">
+  //               &lt;script src="https://webability.ca/webAbility.min.js" token="${uniqueToken}"&gt;&lt;/script&gt;
+  //           </div>
+  //           <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+  //           <p>Thank you for choosing Webability!</p>
+  //       </body>
+  //           </html>
+  //       `,
+  //     );
+  //   } catch (error) {
+  //     console.error('Error sending email:', error);
+  //   }
+  // });
 
   app.get('/health', async (req: Request, res: Response) => {
     try {
@@ -1403,6 +1624,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
+  // Define Apollo Server INSIDE the function
   const serverGraph = new ApolloServer({
     uploads: false,
     schema: makeExecutableSchema({
@@ -1412,13 +1634,16 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     plugins: [
       {
         requestDidStart(requestContext) {
-          console.log(`Operation requested: ${requestContext.request.operationName}`);
-      
-      // Specific check for getAccessibilityReport
-      if (requestContext.request.operationName === 'getAccessibilityReport') {
-        console.log('getAccessibilityReport operation called with variables:', 
-                   JSON.stringify(requestContext.request.variables));
-      }
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`Operation requested: ${requestContext.request.operationName}`);
+          
+            // Specific check for getAccessibilityReport
+            if (requestContext.request.operationName === 'getAccessibilityReport') {
+              console.log('getAccessibilityReport operation called with variables:', 
+                         JSON.stringify(requestContext.request.variables));
+            }
+          }
+          
           return {
             didEncounterErrors(ctx: any) {
               if (!ctx.operation) return;
@@ -1464,8 +1689,21 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     },
   });
 
+  // Apply Apollo middleware INSIDE the IIFE
   serverGraph.applyMiddleware({ app, cors: false });
-  // init({ dsn: process.env.SENTRY_DSN });
+  
+  // Global error handler inside the function
+  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    console.error("Global Error Handler:", err.stack);
+    const statusCode = (err as any).statusCode || (err as any).status || 500;
+    res.status(statusCode).json({
+      error: process.env.NODE_ENV === 'production'
+        ? 'An unexpected error occurred'
+        : err.message
+    });
+  });
+  
+  // Listen inside the function
   app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);
   });

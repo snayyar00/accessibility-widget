@@ -1,7 +1,7 @@
 import database from '~/config/database.config';
 import { TABLES } from '~/constants/database.constant';
 import { findUser } from './user.repository';
-import { AddTokenToDB, RemoveTokenFromDB, UpdateWebsiteURL } from '~/services/webToken/mongoVisitors';
+//import { AddTokenToDB, RemoveTokenFromDB, UpdateWebsiteURL } from '~/services/webToken/mongoVisitors';
 import { sitesPlansColumns } from './sites_plans.repository';
 
 const TABLE = TABLES.allowed_sites;
@@ -59,32 +59,32 @@ export async function findSiteByUserIdAndSiteId(user_id: number, site_id: number
 		.first();
 }
 
-export async function insertSite(data: allowedSites): Promise<string> {
+// export async function insertSite(data: allowedSites): Promise<string> {
 
-	const exisitingSites = await database(TABLE).select(siteColumns).where({ [siteColumns.url]: data.url }).first();
-	if (exisitingSites !== undefined) return 'You have already added this site.';
+// 	const exisitingSites = await database(TABLE).select(siteColumns).where({ [siteColumns.url]: data.url }).first();
+// 	if (exisitingSites !== undefined) return 'You have already added this site.';
 
-	else {
-		const user = await findUser({ id: data.user_id });
-		return database(TABLE).insert(data).onConflict('url').ignore()
-			.then(async (result) => {
-				if (result.length === 0) {
-					return 'You have already added this site.';
-				} else {
-					await AddTokenToDB(user.company ? user.company : '', user.email, data.url);
-					return 'The site was successfully added.';
-				}
-			})
-			.catch((error) => {
-				return `insert failed: ${error.message}`;
-			});
-	}
-}
+// 	else {
+// 		const user = await findUser({ id: data.user_id });
+// 		return database(TABLE).insert(data).onConflict('url').ignore()
+// 			.then(async (result) => {
+// 				if (result.length === 0) {
+// 					return 'You have already added this site.';
+// 				} else {
+// 					await AddTokenToDB(user.company ? user.company : '', user.email, data.url);
+// 					return 'The site was successfully added.';
+// 				}
+// 			})
+// 			.catch((error) => {
+// 				return `insert failed: ${error.message}`;
+// 			});
+// 	}
+// }
 
-export async function deleteSiteByURL(url: string, user_id: number): Promise<number> {
-	await RemoveTokenFromDB(url);
-	return database(TABLE).where({ 'user_id': user_id, 'url': url }).del()
-}
+//export async function deleteSiteByURL(url: string, user_id: number): Promise<number> {
+// 	await RemoveTokenFromDB(url);
+// 	return database(TABLE).where({ 'user_id': user_id, 'url': url }).del()
+// }
 
 export async function updateAllowedSiteURL(site_id: number, url: string, user_id: number): Promise<number> {
 	const urlExists = await database(TABLE)
@@ -98,7 +98,7 @@ export async function updateAllowedSiteURL(site_id: number, url: string, user_id
     }
 	
 	const exisitingSite = await database(TABLE).select(siteColumns).where({ [siteColumns.id]: site_id }).first();
-	await UpdateWebsiteURL(exisitingSite.url, url)
+	//await UpdateWebsiteURL(exisitingSite.url, url)
 	return database(TABLE).where({ 'allowed_sites.user_id': user_id, 'allowed_sites.id': site_id }).update({
 		'url': url
 	});

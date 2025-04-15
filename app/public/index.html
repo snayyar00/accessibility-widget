@@ -31,6 +31,12 @@
         margin: 0 auto;
       }
     </style>
+    <script>
+      // Prevent clickjacking
+      if (top !== window) {
+        top.location = window.location;
+      }
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
