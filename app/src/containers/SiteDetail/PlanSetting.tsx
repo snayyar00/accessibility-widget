@@ -20,8 +20,9 @@ import { TDomain } from '.';
 import { setSitePlan } from '@/features/site/sitePlan';
 import { toast } from 'react-toastify';
 import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
-import { CircularProgress } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import AppSumoInfo from '@/components/Plans/AppSumoInfo';
+import { MdLocalOffer } from 'react-icons/md';
 
 declare global {
   namespace JSX {
@@ -40,21 +41,9 @@ interface ModalProps {
 const plans = [
   {
     id: 'single',
-    name: 'License for 1 Site',
+    name: 'WebAbility Pro',
     price: 12,
-    desc: '',
-    features: [
-      'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
-      'Accessbility Statement',
-      'AI powered Screen Reader and Accessbility Profiles',
-      'Web Ability accesbility Statement',
-    ]
-  },
-  {
-    id: 'single1',
-    name: 'License for 1 Site',
-    price: 12,
-    desc: '',
+    desc: 'Ideal for all your accessibility needs for a single site',
     features: [
       'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
       'Accessbility Statement',
@@ -139,8 +128,9 @@ let appSumoPlansList = [{
 const PlanSetting: React.FC<{
   domain: TDomain,
   setReloadSites: (value: boolean) => void,
-  cardTrial?:Boolean
-}> = ({ domain, setReloadSites,cardTrial }) => {
+  cardTrial?:Boolean,
+  customerData?:any
+}> = ({ domain, setReloadSites,cardTrial,customerData }) => {
   const [appSumoPlan, setAppSumoPlan] = useState(appSumoPlansList[0]);
   const [isYearly, setIsYearly] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('');
@@ -172,7 +162,6 @@ const PlanSetting: React.FC<{
   const [customerCheckLoading,setCustomerCheckLoading] = useState(false);
 
   useEffect(() => {
-    customerCheck();
     dispatch(setSitePlan({ data: {} }));
     fetchSitePlan({
       variables: { siteId }
@@ -281,7 +270,7 @@ const PlanSetting: React.FC<{
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-checkout-session`;
     const result = planChanged?.id.replace(/\d+/g, "");
 
-    const bodyData = { email:data.email,planName:result,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url,promoCode:validatedCoupons,cardTrial:cardTrial || card };
+    const bodyData = { email:data.email,planName:result,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url,promoCode:![0,2,4,6].includes(appSumoCount) ? Array(Math.ceil(appSumoCount / 2)).fill((Math.ceil(appSumoCount / 2))):validatedCoupons,cardTrial:cardTrial || card };
 
     await fetch(url, {
       method: 'POST',
@@ -325,7 +314,7 @@ const PlanSetting: React.FC<{
     setbillingClick(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
     const result = planChanged?.id.replace(/\d+/g, "");
-    const bodyData = { email:data.email,returnURL:window.location.href, planName:result,billingInterval:!isYearly || APP_SUMO_BUNDLE_NAMES.includes((planChanged?.id || "")) ? "MONTHLY" : "YEARLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:validatedCoupons,cardTrial:card };
+    const bodyData = { email:data.email,returnURL:window.location.href, planName:result,billingInterval:!isYearly || APP_SUMO_BUNDLE_NAMES.includes((planChanged?.id || "")) ? "MONTHLY" : "YEARLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:![0,2,4,6].includes(appSumoCount) ? Array((Math.ceil(appSumoCount / 2))).fill((Math.ceil(appSumoCount / 2))):validatedCoupons,cardTrial:card };
 
     try {
       await fetch(url, {
@@ -336,18 +325,25 @@ const PlanSetting: React.FC<{
         body: JSON.stringify(bodyData)
       })
         .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
+          // if (!response.ok) {
+          //   throw new Error('Network response was not ok');
+          // }
   
           response.json().then(data => {
             // Handle the JSON data received from the backend
             setbillingClick(false);
-            openModal();
-            setReloadSites(true);
-            fetchSitePlan({
-              variables: { siteId }
-            });
+            if(data.error){
+              toast.error(`An Error Occured: ${data.error}`);
+              console.log(data);
+            }
+            else{
+              openModal();
+              setReloadSites(true);
+              fetchSitePlan({
+                variables: { siteId }
+              });
+            }
+            
           });
         })
         .catch(error => {
@@ -424,50 +420,20 @@ const PlanSetting: React.FC<{
     }
   }, [validatedCoupons]);
 
-  const[appSumoCount,setAppSumoCount] = useState(-1);
+  const[appSumoCount,setAppSumoCount] = useState(0);
 
-  const customerCheck = async () => {
-    setCustomerCheckLoading(true);
-    const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
-    const bodyData = { email:data.email,userId:data.id};
-
-    await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(bodyData)
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
+  useEffect(()=>{
+    if(customerData){
+      if(customerData.isCustomer == true && customerData.card)
+        {
+          setisStripeCustomer(true);
+          setCurrentActivePlan(customerData.plan_name);
         }
-
-        response.json().then(data => {
-          console.log(data);
-          // Handle the JSON data received from the backend
-          if(data.isCustomer == true && data.card)
-          {
-            setisStripeCustomer(true);
-            setCurrentActivePlan(data.plan_name);
-
-            if(data.interval == "year")
-            {
-              // setIsYearly(true);
-            }
-          }
-          if(data.appSumoCount){
-            setAppSumoCount(data.appSumoCount);
-          }
-          setCustomerCheckLoading(false);
-        });
-      })
-      .catch(error => {
-        // Handle error
-        setCustomerCheckLoading(false);
-        console.error('There was a problem with the fetch operation:', error);
-      });
-  }
+        if(customerData.appSumoCount){
+          setAppSumoCount(customerData.appSumoCount);
+        }
+    }
+  },[customerData])
   
   const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
     if (!isOpen) return null;
@@ -545,286 +511,69 @@ const PlanSetting: React.FC<{
               <Toggle onChange={toggle} label="Bill Yearly" />
             </div>
           )} */}
-          <div className='flex sm:flex-col md:flex-row justify-center'>
-            {validatedCoupons.length > 0 && (
-              <div className="mb-2 flex">
-                <AppSumoInfo activeSites={appSumoCount} validatedCoupons={validatedCoupons}/>
-              </div>
-            )}
-            {planChanged && (
-              <div className="p-6 sm:mx-2 mx-10 mb-3 border border-solid border-dark-gray rounded-[10px] flex sm:p-6 sm:flex-col-reverse flex-col flex-wrap">
-                
-                {checkIsCurrentPlan(planChanged.id) ? (
-                  <div className="min-w-[300px] [&_button]:w-full">
-                    {currentPlan.deletedAt ? (
-                      <p>
-                        Plan will expire on{' '}
-                        <b>
-                          {dayjs(currentPlan.expiredAt).format(
-                            'YYYY-MM-DD HH:mm',
-                          )}
-                        </b>
-                        <Trans
-                          components={[<b></b>]}
-                          values={{
-                            data: dayjs(currentPlan.expiredAt).format(
-                              'YYYY-MM-DD HH:mm',
-                            ),
-                          }}
-                        >
-                          {t('Profile.text.expire')}
-                        </Trans>
-                      </p>
-                    ) : (
-                      <>
-                        {sitePlanData?.getPlanBySiteIdAndUserId ? (
-                          <div className="flex items-center mt-2 mb-2">
-                            <Button
-                              color="primary"
-                              onClick={handleBilling}
-                              disabled={clicked}
-                            >
-                              {clicked ? 'redirecting...' : 'Manage billing'}
-                            </Button>
-                          </div>
-                        ) : null}
-                        <Button
-                          color="primary"
-                          disabled={isDeletingSitePlan}
-                          onClick={handleCancelSubscription}
-                        >
-                          {t('Profile.text.cancel_sub')}
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex flex-col min-w-[300px]">
-                    <div className="font-bold text-[22px] leading-[30px] text-sapphire-blue mb-6">
-                      {t('Profile.text.order_sumary')}
-                    </div>
-                    <ul className="flex-grow">
-                      <li className="flex justify-between items-center list-none mb-4">
-                        <p className="text-[16px] leading-[26px] text-white-gray flex-grow">
-                          {t('Profile.text.curreny_sub')}
-                        </p>
-                        <span className="font-bold text-[18px] leading-6 text-sapphire-blue">
-                          ${amountCurrent}
-                        </span>
-                      </li>
-                      <li className="flex justify-between items-center list-none mb-4">
-                        <p className="text-[16px] leading-[26px] text-white-gray flex-grow">
-                          {t('Profile.text.new_sub')}
-                        </p>
-                        <span
-                          className="font-bold text-[18px] leading-6 text-sapphire-blue"
-                          style={{
-                            textDecoration:
-                              coupon !== '' ? 'line-through' : 'none',
-                          }}
-                        >
-                          ${isYearly ? amountNew * 10 : amountNew}
-                        </span>
-                        {coupon !== '' ? (
-                          <span className="font-bold text-[18px] leading-6 pl-2 text-sapphire-blue">
-                            $
-                            {isYearly
-                              ? amountNew * 10 -
-                                (percentDiscount
-                                  ? amountNew * 10 * discount
-                                  : discount)
-                              : amountNew -
-                                (percentDiscount
-                                  ? amountNew * discount
-                                  : discount)}
+          {[0, 2, 4].includes(appSumoCount) && (
+            <>
+              <div className="flex sm:flex-col md:flex-row">
+                {validatedCoupons.length > 0 &&
+                  [0, 2, 4].includes(appSumoCount) && (
+                    <div className="mb-2 flex flex-col justify-start">
+                      {/* <AppSumoInfo activeSites={appSumoCount} validatedCoupons={validatedCoupons}/> */}
+                      <Box className="flex items-center gap-2 mb-3">
+                        <MdLocalOffer className="text-primary" size={16} />
+                        <Typography className="text-sm font-medium text-gray-700">
+                          Valid Coupons
+                        </Typography>
+                      </Box>
+                      <div className="mb-2">
+                        {validatedCoupons.map((code, index) => (
+                          <span
+                            key={index}
+                            className="inline-block bg-green-200 text-green-800 text-sm font-semibold mr-2 px-2.5 py-0.5 rounded"
+                          >
+                            {code}
                           </span>
-                        ) : null}
-                      </li>
-                      <li className="flex justify-between items-center list-none mb-4">
-                        <p className="text-[16px] leading-[26px] text-white-gray flex-grow">
-                          {t('Profile.text.balance_due')}
-                        </p>
-                        <span
-                          className="font-bold text-[18px] leading-6 text-sapphire-blue"
-                          style={{
-                            textDecoration:
-                              coupon !== '' ? 'line-through' : 'none',
-                          }}
-                        >
-                          $
-                          {Math.max(
-                            (isYearly ? amountNew * 10 : amountNew) -
-                              amountCurrent,
-                            0,
-                          )}
-                        </span>
-                        {coupon !== '' ? (
-                          <span className="font-bold text-[18px] leading-6 pl-2 text-sapphire-blue">
-                            $
-                            {Math.max(
-                              (isYearly
-                                ? amountNew * 10 -
-                                  (percentDiscount
-                                    ? amountNew * 9 * discount
-                                    : discount)
-                                : amountNew -
-                                  (percentDiscount
-                                    ? amountNew * discount
-                                    : discount)) - amountCurrent,
-                              0,
-                            )}
-                          </span>
-                        ) : null}
-                      </li>
-                    </ul>
-                    {isEmpty(currentPlan) ||
-                    (currentPlan && currentPlan.deletedAt) ||
-                    currentPlan.isTrial ? (
-                      // <StripeContainer
-                      //   onSubmitSuccess={createPaymentMethodSuccess}
-                      //   apiLoading={isCreatingSitePlan}
-                      //   submitText={
-                      //     currentPlan &&
-                      //     currentPlan.deletedAt &&
-                      //     (t('Profile.text.change_plan') as string)
-                      //   }
-                      //   setCoupon={setCoupon}
-                      //   setDiscount={setDiscount}
-                      //   setpercentDiscount={setpercentDiscount}
-                      // />
-                      customerCheckLoading ? 
-                      <div className='flex justify-center'>
-                        <CircularProgress size={40}/>
+                        ))}
                       </div>
-                       :
-                      isStripeCustomer ? (
-                        <>
-                          {coupon == '' && validatedCoupons.length == 0 ? (
-                            <Button
-                              color="primary"
-                              onClick={() => {
-                                handleSubscription(true);
-                              }}
-                              className="get-start-btn"
-                            >
-                              {billingClick ? 'Please Wait...' : '30 Day Trial'}
-                            </Button>
-                          ) : null}
+                    </div>
+                  )}
+              </div>
+              <div className="block w-full mb-4">
+                <div className="flex items-center">
+                  <input
+                    type="text"
+                    value={coupon}
+                    placeholder="Coupon Code"
+                    onChange={(e) => setCoupon(e.target.value)}
+                    className="p-[10px] py-[11.6px] bg-light-gray border border-solid border-white-blue rounded-[10px] text-[16px] leading-[19px] text-white-gray w-full box-border"
+                  />
 
-                          <Button
-                            color="primary"
-                            className="get-start-btn w-full mt-4"
-                            onClick={() => {
-                              handleSubscription(false);
-                            }}
-                          >
-                            {billingClick ? 'Please Wait...' : 'Add to Billing'}
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          {coupon == '' && validatedCoupons.length == 0 ? (
-                            <Button
-                              color="primary"
-                              onClick={() => {
-                                handleCheckout(true);
-                              }}
-                              className="get-start-btn"
-                            >
-                              {billingClick ? 'Please Wait...' : '30 Day Trial'}
-                            </Button>
-                          ) : null}
-
-                          <Button
-                            color="primary"
-                            className="get-start-btn mt-4"
-                            onClick={() => {
-                              handleCheckout(false);
-                            }}
-                          >
-                            {billingClick ? 'Please Wait...' : 'Checkout'}
-                          </Button>
-                        </>
-                      )
+                  <button
+                    disabled={couponClicked}
+                    type="button"
+                    onClick={handleCouponValidation}
+                    className=" bg-primary flex justify-center py-[10.9px] px-3 text-white rounded-lg w-40 mx-3"
+                  >
+                    {couponClicked ? (
+                      <CircularProgress sx={{ color: 'white' }} size={20} />
+                    ) : validatedCoupons.length ? (
+                      'Add More'
                     ) : (
-                      <>
-                        <Button
-                          color="primary"
-                          onClick={handleChangeSubcription}
-                          disabled={isUpdatingSitePlan}
-                        >
-                          {isUpdatingSitePlan
-                            ? t('Common.text.please_wait')
-                            : t('Profile.text.change_sub')}
-                        </Button>
-                        {sitePlanData?.getPlanBySiteIdAndUserId ? (
-                          <Button
-                            color="primary"
-                            onClick={handleBilling}
-                            disabled={clicked}
-                            className="mt-2"
-                          >
-                            {clicked ? 'redirecting...' : 'Manage billing'}
-                          </Button>
-                        ) : null}
-                      </>
+                      t('Apply Coupon')
                     )}
-                  </div>
-                )}
-
-                {errorCreate?.message && (
-                  <ErrorText message={errorCreate.message} />
-                )}
-
-                {errorUpdate?.message && (
-                  <ErrorText message={errorUpdate.message} />
-                )}
-                {errorDelete?.message && (
-                  <ErrorText message={errorDelete.message} />
-                )}
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
-          <div className="block w-full mb-4">
-            {/* <label
-              className="font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block uppercase mb-[19px]"
-              htmlFor="coupon_code"
-            >
-              App Sumo {t('Coupon Code')}
-            </label>
-            {validatedCoupons.length > 0 && (
-              <div className="mb-2">
-                <AppSumoInfo validatedCoupons={validatedCoupons}/>
-              </div>
-            )} */}
-            <div className="flex items-center">
-              <input
-                type="text"
-                value={coupon}
-                placeholder="Coupon Code"
-                onChange={(e) => setCoupon(e.target.value)}
-                className="p-[10px] py-[11.6px] bg-light-gray border border-solid border-white-blue rounded-[10px] text-[16px] leading-[19px] text-white-gray w-full box-border"
-              />
-              
-              <button
-              disabled={couponClicked}
-                type="button"
-                onClick={handleCouponValidation}
-                className=" bg-primary flex justify-center py-[10.9px] px-3 text-white rounded-lg w-40 mx-3"
-              >
-                {couponClicked ? (<CircularProgress sx={{color:"white"}} size={20} />):validatedCoupons.length ? 'Add More' : (t('Apply Coupon'))}
-                
-              </button>
-            </div>
-          </div>
+            </>
+          )}
+
           <Plans
             plans={
               currentPlan.isTrial
                 ? plans
                 : Object.keys(currentPlan).length == 0 &&
                   currentActivePlan != ''
-                // ? plans.filter((plan) => plan.id == currentActivePlan)
-                ? plans
+                ? // ? plans.filter((plan) => plan.id == currentActivePlan)
+                  plans
                 : plans
             }
             onChange={changePlan}
@@ -834,8 +583,89 @@ const PlanSetting: React.FC<{
             checkIsCurrentPlan={checkIsCurrentPlan}
             handleBilling={handleBilling}
             showPlans={setShowPlans}
+            activeSites={appSumoCount}
+            validatedCoupons={validatedCoupons}
+            appSumoCount={appSumoCount}
+            billingButtons={
+              <>
+                {isEmpty(currentPlan) ||
+                (currentPlan && currentPlan.deletedAt) ||
+                currentPlan.isTrial ? (
+                  isStripeCustomer ? (
+                    <>
+                      {((coupon == '' && validatedCoupons.length == 0) && [0,2,4,6].includes(appSumoCount))  ? (
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            handleSubscription(true);
+                          }}
+                          className="get-start-btn"
+                        >
+                          {billingClick ? 'Please Wait...' : '30 Day Trial'}
+                        </Button>
+                      ) : null}
+
+                      <Button
+                        color="primary"
+                        className="get-start-btn w-full mt-4"
+                        onClick={() => {
+                          handleSubscription(false);
+                        }}
+                      >
+                        {billingClick ? 'Please Wait...' : 'Add to Billing'}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      {((coupon == '' && validatedCoupons.length == 0) && [0,2,4,6].includes(appSumoCount)) ? (
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            handleCheckout(true);
+                          }}
+                          className="get-start-btn"
+                        >
+                          {billingClick ? 'Please Wait...' : '30 Day Trial'}
+                        </Button>
+                      ) : null}
+
+                      <Button
+                        color="primary"
+                        className="get-start-btn mt-4"
+                        onClick={() => {
+                          handleCheckout(false);
+                        }}
+                      >
+                        {billingClick ? 'Please Wait...' : 'Checkout'}
+                      </Button>
+                    </>
+                  )
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={handleChangeSubcription}
+                      disabled={isUpdatingSitePlan}
+                    >
+                      {isUpdatingSitePlan
+                        ? t('Common.text.please_wait')
+                        : t('Profile.text.change_sub')}
+                    </Button>
+                    {sitePlanData?.getPlanBySiteIdAndUserId ? (
+                      <Button
+                        color="primary"
+                        onClick={handleBilling}
+                        disabled={clicked}
+                        className="mt-2"
+                      >
+                        {clicked ? 'redirecting...' : 'Manage billing'}
+                      </Button>
+                    ) : null}
+                  </>
+                )}
+              </>
+            }
           />
-          
         </div>
         <div></div>
       </div>
