@@ -13,7 +13,7 @@ interface DomainFormData {
   domainName: string;
 }
 
-const Teams = ({ domains, setReloadSites }: any) => {
+const Teams = ({ domains, setReloadSites,customerData }: any) => {
    const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.add_domain') });
   const [addSiteMutation, { error, loading }] = useMutation(addSite, {
@@ -76,8 +76,8 @@ const Teams = ({ domains, setReloadSites }: any) => {
             <></>
           )}
         </div> */}
-        <TrialBannerAndModal allDomains={domains} setReloadSites={setReloadSites} isModalOpen={isModalOpen} closeModal={closeModal} openModal={openModal} paymentView={paymentView} setPaymentView={setPaymentView} optionalDomain={optionalDomain}/>
-        <DomainTable data={domains} setReloadSites={setReloadSites} setPaymentView={setPaymentView} openModal={openModal} setOptionalDomain={setOptionalDomain}/>
+        <TrialBannerAndModal allDomains={domains} setReloadSites={setReloadSites} customerData={customerData} isModalOpen={isModalOpen} closeModal={closeModal} openModal={openModal} paymentView={paymentView} setPaymentView={setPaymentView} optionalDomain={optionalDomain}/>
+        <DomainTable data={domains} setReloadSites={setReloadSites} customerData={customerData} setPaymentView={setPaymentView} openModal={openModal} setOptionalDomain={setOptionalDomain}/>
       </div>
     </>
   );

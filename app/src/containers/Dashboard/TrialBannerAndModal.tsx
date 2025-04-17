@@ -63,7 +63,7 @@ export type TDomain = {
     trial?: number;
 }
 
-const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOpen,closeModal,openModal,paymentView,setPaymentView,optionalDomain}:any) => {
+const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOpen,closeModal,openModal,paymentView,setPaymentView,optionalDomain,customerData}:any) => {
 
     const { data: userData, loading: userLoading } = useSelector((state: RootState) => state.user);
     const [isStripeCustomer, setIsStripeCustomer] = useState(false);
@@ -125,6 +125,14 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                     setAddedDomain(newdomain);
                 }
             }
+            let trialSites = 0;
+            for (let site of allDomains?.getUserSites) {
+              if (site?.trial == 1) {
+                trialSites++;
+              }
+            } 
+
+            setTrialMonthlyCount(prevCount => prevCount + trialSites);
         }
     }, [allDomains])
 
@@ -148,72 +156,52 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
     const [tierPlan,setTierPlan] = useState(false);
 
 
-    const customerCheck = async () => {
+    useEffect(()=>{
+      if(customerData){
+        if (customerData.isCustomer == true) {
+          // console.log(customerData);
+          if(customerData.tierPlan && customerData.tierPlan == true){
+            setTierPlan(true);
+          }
+          if(customerData.subscriptions){
+            const subs = JSON.parse(customerData.subscriptions)
+            // console.log("subs = ",subs);
+            setSubMonthlyCount(subs.monthly.length);
+            setSubYearlyCount(subs.yearly.length);
+            // setSubCount(subs.length);
+          }
+          
+          if(customerData.trial_subs){
+            const trials = JSON.parse(customerData.trial_subs)
+            // console.log("trials =",trials);
+            setTrialMonthlyCount(prevCount => prevCount + trials.monthly.length);
+            setTrialYearlyCount(trials.yearly.length);
+            // setTrialsCount(trials.length);
+          }
 
-        const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
-        const bodyData = { email: userData.email, userId: userData.id };
+          setIsStripeCustomer(true);
+          setActivePlan(customerData.plan_name);
+          if(customerData.plan_name == ""){
+            setNoPlan(true);
+          }
 
-        await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(bodyData)
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
+          if (customerData.interval == "yearly") {
+              setIsYearly(true);
+          }
+          if(customerData.expiry){
+            setTrialPlan(true);
+            setExpiryDays(customerData.expiry);
+          }
+          if (customerData.submeta) {
+            setPlanMetaData(customerData.submeta);
+          }
+      }
+      else{
+        setNoPlan(true);
+      }
+      }
 
-                response.json().then(data => {
-                    // Handle the JSON data received from the backend
-                    if (data.isCustomer == true) {
-                        // console.log(data);
-                        if(data.tierPlan && data.tierPlan == true){
-                          setTierPlan(true);
-                        }
-                        if(data.subscriptions){
-                          let subs = JSON.parse(data.subscriptions)
-                          // console.log("subs = ",subs);
-                          setSubMonthlyCount(subs.monthly.length);
-                          setSubYearlyCount(subs.yearly.length);
-                          // setSubCount(subs.length);
-                        }
-                        if(data.trial_subs){
-                          let trials = JSON.parse(data.trial_subs)
-                          // console.log("trials =",trials);
-                          setTrialMonthlyCount(trials.monthly.length);
-                          setTrialYearlyCount(trials.yearly.length);
-                          // setTrialsCount(trials.length);
-                        }
-
-                        setIsStripeCustomer(true);
-                        setActivePlan(data.plan_name);
-                        if(data.plan_name == ""){
-                          setNoPlan(true);
-                        }
-
-                        if (data.interval == "yearly") {
-                            setIsYearly(true);
-                        }
-                        if(data.expiry){
-                          setTrialPlan(true);
-                          setExpiryDays(data.expiry);
-                        }
-                        if (data.submeta) {
-                          setPlanMetaData(data.submeta);
-                        }
-                    }
-                    else{
-                      setNoPlan(true);
-                    }
-                });
-            })
-            .catch(error => {
-                // Handle error
-                console.error('There was a problem with the fetch operation:', error);
-            });
-    }
+    },[customerData])
 
     const handleSubscription = async () => {
         setBillingLoading(true);
@@ -298,9 +286,6 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
 
   }
 
-    useEffect(()=>{
-    customerCheck();
-    },[])
 
     useEffect(()=>{
       if(cardTrial == true)
@@ -384,6 +369,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                 domain={addedDomain}
                 setReloadSites={setReloadSites}
                 cardTrial={cardTrial}
+                customerData={customerData}
               />
             ) : (
               <div className="grid grid-cols-12">

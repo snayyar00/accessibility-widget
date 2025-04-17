@@ -14,6 +14,8 @@ import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import SiteDetail from '@/containers/SiteDetail';
 import AccessibilityWidgetPage from '@/containers/Teams/editWidget';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/config/store';
 
 type Props = {
   signout: () => void;
@@ -29,7 +31,60 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
   const [reloadSites, setReloadSites] = useState(false);
   const [selectedOption, setSelectedOption] = useState('Select a Domain');
   const [domainData, setDomainData] = useState(null);
-  const { data, refetch } = useQuery(getSites);
+  const { data, refetch,startPolling,stopPolling } = useQuery(getSites);
+  const { data:userData, loading } = useSelector((state: RootState) => state.user);
+  const [customerData,setCustomerData] = useState(null);
+
+
+  const customerCheck = async () => {
+    const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
+    const bodyData = { email:userData?.email,userId:userData?.id};
+
+    await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(bodyData)
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        response.json().then(data => {
+          if(data){
+            setCustomerData(data);
+          }
+        });
+      })
+      .catch(error => {
+        // Handle error
+        console.error('There was a problem with the fetch operation:', error);
+      });
+  }
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+
+    // If our page is the returnUrl and has a session_id param...
+    if (url.searchParams.has('session_id')) {
+      console.log("polling");
+      startPolling(2000);              // :contentReference[oaicite:0]{index=0}
+    }
+
+    // Clean up on unmount: stop polling
+    return () => {
+      stopPolling();                  // :contentReference[oaicite:1]{index=1}
+    };
+  }, []);
+
+  useEffect(()=>{
+    if(userData){
+      customerCheck();
+    }
+
+  },[])
 
 
   useEffect(() => {
@@ -38,6 +93,20 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
       setReloadSites(false);
     }
   }, [reloadSites]);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('session_id')) {
+      
+      startPolling(2000);
+    }
+    return () => {
+      
+      stopPolling();
+    };
+  }, [startPolling, stopPolling]);
+
+  
 
   useEffect(() => {
 
@@ -110,8 +179,8 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
                 exact={route.exact}
               />
             ))}
-            <Route path='/dashboard' render={() => <Dashboard domain={selectedOption} domainData={domainData} allDomains={data} setReloadSites={setReloadSites} />} key='/dashboard' exact={false} />
-            <Route path='/add-domain' render={() => <Teams domains={data} setReloadSites={setReloadSites} /> } key='/Add-Domain' exact={false} />
+            <Route path='/dashboard' render={() => <Dashboard domain={selectedOption} customerData={customerData} domainData={domainData} allDomains={data} setReloadSites={setReloadSites} />} key='/dashboard' exact={false} />
+            <Route path='/add-domain' render={() => <Teams domains={data} customerData={customerData} setReloadSites={setReloadSites} /> } key='/Add-Domain' exact={false} />
             <Route path='/domain-plans/:id' render={() => <SiteDetail domains={data} setReloadSites={setReloadSites} /> } key='/Domain-Plans' exact={false} />
             <Route path='/installation' render={() => <Installation domain={selectedOption} />} key='/installation' exact={false} />
             <Route path='/customize-widget' render={() => <AccessibilityWidgetPage allDomains={data} />} key='/customize-widget' exact={false} />
