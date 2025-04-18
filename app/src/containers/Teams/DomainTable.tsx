@@ -488,7 +488,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                       </span>
                     </td>
                     <td className="py-4 px-4 border-b border-gray-200">
-                      {domain?.expiredAt
+                      {domainStatus == 'Life Time' ? null : domain?.expiredAt
                         ? new Date(
                             Number.parseInt(domain.expiredAt),
                           ).toLocaleDateString()
