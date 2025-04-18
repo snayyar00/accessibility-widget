@@ -412,7 +412,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
       let promoCodeData:Stripe.PromotionCode[];
 
-      if (promoCode && promoCode.length > 0) {
+      if (promoCode && promoCode.length > 0 && typeof(promoCode[0]) != 'number') {
         const validCodesData: Stripe.PromotionCode[] = [];
         const invalidCodes: string[] = [];
       
@@ -441,9 +441,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
       // Create the checkout session
       let session:any = {}
-      if(promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id))
+      if(typeof(promoCode[0]) == 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id)))
       {
-        const { promoCount } = appSumoPromoCount(subscriptions,promoCode);
+        const { promoCount,codes } = appSumoPromoCount(subscriptions,promoCode);
 
         console.log("promo");
 
@@ -460,10 +460,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             maxDomains: 1,
             usedDomains: 1,
           },
-          description: `Plan for ${domain}(${promoCode})`,
+          description: `Plan for ${domain}(${ typeof(promoCode[0]) == 'number' ? codes:promoCode})`,
         });
 
-        await expireUsedPromo(promoCount,promoCodeData,promoCode,stripe);
+        await expireUsedPromo(promoCount,codes,promoCodeData,promoCode,stripe);
 
         let previous_plan;
         try {
@@ -474,7 +474,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           console.log('err = ', error);
         }
 
-        await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
+        await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), 'appsumo');
 
         console.log('New Sub created');
 
@@ -520,31 +520,53 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       }
       else{
         console.log("normal")
-        session = await stripe.checkout.sessions.create({
-          payment_method_types: ['card'],
-          mode: 'subscription',
-          line_items: [{
-            price: price.price_stripe_id,
-            quantity: 1,
-          }],
-          customer: customer.id,
-          allow_promotion_codes: true,
-          success_url: `${returnUrl}`,
-          cancel_url: returnUrl,
-          metadata: {
-            domainId: domainId,
-            userId:userId,
-            updateMetaData:"true",
-          },
-          subscription_data:{
+        
+        if (subscriptions.data.length > 0) {
+          console.log("setup intent only");
+          session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'setup',
+            customer: customer.id,
+            success_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`, // you can include the session id to later verify the setup
+            cancel_url: returnUrl,
+            metadata: {
+              price_id: price.price_stripe_id,
+              domainId: domainId,
+              domain: domain,
+              userId: userId,
+              updateMetaData: 'true',
+            },
+          });
+        } else {
+          console.log("checkout intent");
+          session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'subscription',
+            line_items: [
+              {
+                price: price.price_stripe_id,
+                quantity: 1,
+              },
+            ],
+            customer: customer.id,
+            allow_promotion_codes: true,
+            success_url: `${returnUrl}`,
+            cancel_url: returnUrl,
             metadata: {
               domainId: domainId,
-              userId:userId,
-              updateMetaData:"true",
+              userId: userId,
+              updateMetaData: 'true',
             },
-            description:`Plan for ${domain}`,
-          }
-        });
+            subscription_data: {
+              metadata: {
+                domainId: domainId,
+                userId: userId,
+                updateMetaData: 'true',
+              },
+              description: `Plan for ${domain}`,
+            },
+          });
+        }
       }
 
       
@@ -732,7 +754,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       {   
         let promoCodeData:Stripe.PromotionCode[];
 
-        if (promoCode && promoCode.length > 0) {
+        if (promoCode && promoCode.length > 0 && (typeof(promoCode[0]) != 'number') ) {
           const validCodesData: Stripe.PromotionCode[] = [];
           const invalidCodes: string[] = [];
         
@@ -757,9 +779,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           promoCodeData = validCodesData;
         }
 
-        if (promoCodeData && promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id)) {
+        if (typeof(promoCode[0]) == 'number' || (promoCodeData && promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id))) {
           
-          const { promoCount } = appSumoPromoCount(subscriptions,promoCode);
+          const { promoCount,codes }  = appSumoPromoCount(subscriptions,promoCode);
           
           subscription = await stripe.subscriptions.create({
             customer: customer.id,
@@ -773,10 +795,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               maxDomains: 1,
               usedDomains: 1,
             },
-            description: `Plan for ${domainUrl}(${promoCode})`,
+            description: `Plan for ${domainUrl}(${ typeof(promoCode[0]) == 'number' ? codes:promoCode})`,
           });
           
-          await expireUsedPromo(promoCount,promoCodeData,promoCode,stripe);
+          await expireUsedPromo(promoCount,codes,promoCodeData,promoCode,stripe);
 
         } else if (promoCode && promoCode.length > 0) {
           // Coupon is not valid or not the app sumo promo
@@ -817,10 +839,15 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           previous_plan = await getSitePlanBySiteId(Number(domainId));
           await deleteTrialPlan(previous_plan.id);
         } catch (error) {
-          console.log('err = ', error);
+          // console.log('err = ', error);
         }
-
-        await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
+        
+        if(promoCode.length > 0){
+          await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), 'appsumo');
+        }
+        else{
+          await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
+        }
 
         console.log('New Sub created');
 
@@ -904,7 +931,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       }
 
     } catch (error) {
-      console.log(error);
+      console.log("erroring",error);
       res.status(500).json({ error: error.message });
     }
   });

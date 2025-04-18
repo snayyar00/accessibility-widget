@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import fetchDashboardQuery from '@/queries/dashboard/fetchDashboardQuery';
-import { useQuery } from '@apollo/client';
+import { useLazyQuery, useQuery } from '@apollo/client';
 import './Dashboard.css';
 import TrialBannerAndModal from './TrialBannerAndModal';
 import AnalyticsDashboard from './Analytics';
@@ -38,11 +38,11 @@ export type TDomain = {
 }
 
 
-const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites }: any) => {
+const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites,customerData }: any) => {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.dashboard') });
-  const [startDate, setStartDate] = useState<string>();
-  const [endDate, setEndDate] = useState<string>();
+  // const [startDate, setStartDate] = useState<string>();
+  // const [endDate, setEndDate] = useState<string>();
   const [impressions, setImpressions] = useState<number>(0);
   const [widgetClosed, setWidgetClosed] = useState<number>(0);
   const [widgetOpened, setWidgetOpened] = useState<number>(0);
@@ -111,18 +111,35 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
     }
   }
 
-  useEffect(() => {
-    const today = new Date();
-    today.setDate(today.getDate() + 2);
-    const eD = today.toISOString().split('T')[0];
-    setEndDate(eD);
-    setStartDate(getStartOfWeek());
-  }, []);
+  const today       = new Date();
+  const defaultEnd  = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate() + 2
+  ).toISOString().slice(0, 10);
 
-  const { data, refetch, loading, error } = useQuery(fetchDashboardQuery, {
-    variables: { url: domain, startDate, endDate },
-    onCompleted: () => setLoadingAnimation(false)
+  const defaultStart = (() => {
+    const d = new Date();
+    const firstDay = d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1);
+    return new Date(d.getFullYear(), d.getMonth(), firstDay)
+      .toISOString()
+      .slice(0,10);
+  })();
+
+  const [startDate, setStartDate] = useState<string>(defaultStart);
+  const [endDate, setEndDate]     = useState<string>(defaultEnd);
+
+  const [loadDashboard, { data, loading, error }] = useLazyQuery(fetchDashboardQuery, {
+    fetchPolicy: 'cache-first',
+    onCompleted: () => setLoadingAnimation(false),
   });
+  
+  useEffect(() => {
+    setLoadingAnimation(true);
+    loadDashboard({
+      variables: { url: domain, startDate, endDate },
+    });
+  }, [domain, startDate, endDate, loadDashboard]);
 
   useEffect(() => {
     if (data) {
@@ -198,15 +215,6 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
 
   }, [widgetClosed, widgetOpened, impressions, uniqueVisitors]);
 
-  useEffect(() => {
-    setLoadingAnimation(true);
-    refetch();
-  }, [domain]);
-
-  useEffect(() => {
-    refetch()
-  }, [startDate])
-
 
   useEffect(() => {
     setCards((currentCards) =>
@@ -263,19 +271,9 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
 
   return (
     <>
-      {loading ? (
+      {loadingAnimation ? (
         <><div className="flex flex-col items-center justify-center w-full mb-8 pl-0 pr-3">
-        <TrialBannerAndModal
-          allDomains={allDomains}
-          setReloadSites={setReloadSites}
-          isModalOpen={isModalOpen}
-          closeModal={closeModal}
-          openModal={openModal}
-          paymentView={paymentView}
-          setPaymentView={setPaymentView}
-        />
-      </div><AnalyticsDashboardSkeleton/></>
-        
+        </div><AnalyticsDashboardSkeleton/></>
       ):(
       <>{domainData ? (
         <div className="flex gap-3">
@@ -295,7 +293,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
       ) : (
         <p>-</p>
       )}
-      {!loadingAnimation && (
+     
         <div className="container py-4">
           <div className="flex flex-col items-center justify-center w-full mb-8 pl-0 pr-3">
             <TrialBannerAndModal
@@ -306,6 +304,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
               openModal={openModal}
               paymentView={paymentView}
               setPaymentView={setPaymentView}
+              customerData={customerData}
             />
           </div>
           <div>
@@ -325,7 +324,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
             />
           </div>
         </div>
-      )}</>)} 
+      </>)} 
     </>
   );
 };

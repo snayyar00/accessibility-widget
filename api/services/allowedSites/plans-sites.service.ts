@@ -133,6 +133,22 @@ export async function createSitesPlan(
       coupon
     );
     if (subcription_id && customer_id) {
+      const INFINITE_TIMESTAMP = '9999-12-31 23:59:59';
+      let expiry = formatDateDB(
+        dayjs().add(
+          paymentMethodToken === "Trial" ? 15 : 1,
+          paymentMethodToken === "Trial"
+            ? 'day'
+            : product.price_type === 'yearly'
+            ? 'y'
+            : 'M'
+        )
+      );
+      
+      if (couponCode !== '') {
+        // never expires
+        expiry = INFINITE_TIMESTAMP;
+      }
       const dataUserPlan = {
         allowed_site_id: siteId,
         product_id: product.id,
@@ -140,16 +156,7 @@ export async function createSitesPlan(
         customer_id,
         subcription_id,
         is_trial: paymentMethodToken === "Trial" ? 1 : 0,
-        expired_at: formatDateDB(
-          dayjs().add(
-            paymentMethodToken === "Trial" ? 15 : 1,
-            paymentMethodToken === "Trial"
-              ? 'day'
-              : product.price_type === 'yearly'
-              ? 'y'
-              : 'M'
-          )
-        ),
+        expired_at: expiry,
       };
       const sitePlanId = await insertSitePlan(dataUserPlan as any);
       let sitePermissionData;

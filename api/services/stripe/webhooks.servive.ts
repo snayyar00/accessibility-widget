@@ -137,7 +137,7 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
               else{
                 return {
                   amount:price.unit_amount/100,
-                  type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
+                  type: ['monthly','yearly'].includes(getPrice?.recurring?.interval + 'ly') ? getPrice?.recurring?.interval + 'ly' : 'monthly',  // e.g., 'monthly' or 'yearly'
                   stripe_id: getPrice?.id, // Stripe price ID
                 };
               }
@@ -233,6 +233,62 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
       console.log('Checkout Complete subscription');
       try {
         const session = event.data.object as Stripe.Checkout.Session;
+
+        if (session.mode === 'setup' && session.setup_intent) {
+          const setupIntentId = session.setup_intent;
+          // You could fetch the SetupIntent here to get the payment method:
+          const setupIntent = await stripe.setupIntents.retrieve((setupIntentId as string));
+          const paymentMethod = (setupIntent.payment_method as string);
+          const customerId = (setupIntent.customer as string);
+  
+          // Now update the customer's default payment method:
+          await stripe.customers.update(customerId as string, {
+            invoice_settings: {
+              default_payment_method: paymentMethod,
+            },
+          });
+
+          console.log("Credit card updated");
+
+          const price = await stripe.prices.retrieve(session.metadata['price_id'],{expand: ['tiers', 'product']});
+          // console.log("pricing =",price);
+          // throw new Error("Check karlo");
+          let planInterval: 'MONTHLY' | 'YEARLY' = 'MONTHLY'; // Default to 'MONTHLY'
+
+          if (price.recurring && price.recurring.interval === 'year') {
+            planInterval = 'YEARLY';
+          }
+
+          const subscription = await (stripe.subscriptions as any).create({
+            customer: customerId,
+            items: [{ price: price.id, quantity: 1 }],
+            expand: ['latest_invoice.payment_intent'],
+            default_payment_method: paymentMethod,
+            metadata: {
+              domainId: session.metadata['domainId'],
+              userId: session.metadata['userId'],
+              maxDomains: 1,
+              usedDomains: 1,
+            },
+            description: `Plan for ${session.metadata['domain']}`,
+          });
+          let previous_plan;
+          try {
+            previous_plan = await getSitePlanBySiteId(Number(session.metadata['domainId']));
+            await deleteTrialPlan(previous_plan.id);
+          } catch (error) {
+            console.log('err = ', error);
+          }
+
+          await createSitesPlan(Number(session.metadata['userId']), String(subscription.id), ((price.product as any).name).toLowerCase(), planInterval, Number(session.metadata['domainId']), '');
+
+          console.log('New Sub created');
+
+          res.json({ received: true });
+          return;
+        }
+
+        
         // console.log("session = ",session)
         const userID = session?.metadata['userId'];
         const siteID = session?.metadata['domainId'];
@@ -240,14 +296,15 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
         let paymentInvoiceID = '';
         let invoice_intent;
 
-        if ((session as any).invoice !== undefined) {
+        if ((session as any).invoice) {
           paymentInvoiceID = (session as any).invoice;
+          console.log("payment id",paymentInvoiceID);
 
           const invoice = await stripe.invoices.retrieve(paymentInvoiceID);
           invoice_intent = invoice.payment_intent;
         }
         // console.log("invoice intent = ",invoice_intent);
-        if ((session as any) !== undefined) {
+        if ((session as any)) {
           // Get the payment method ID
           try {
             const paymentIntent = await stripe.paymentIntents.retrieve(String(invoice_intent));
@@ -316,6 +373,8 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
         } catch (error) {
           console.log('err = ', error);
         }
+
+        
         await createSitesPlan(Number(userID), updatedSubscription.id, line_items.data[0].description, planInterval, Number(siteID), '');
         console.log('Created');
 

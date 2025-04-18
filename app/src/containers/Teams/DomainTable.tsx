@@ -30,6 +30,7 @@ interface DomainTableProps {
   setPaymentView: (view: boolean) => void;
   openModal: () => void;
   setOptionalDomain: (domain: string) => void;
+  customerData:any;
 }
 
 const DomainTable: React.FC<DomainTableProps> = ({
@@ -38,6 +39,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
   setPaymentView,
   openModal,
   setOptionalDomain,
+  customerData,
 }) => {
   const [domains, setDomains] = useState<Domain[]>([]);
   const { data: userData } = useSelector((state: RootState) => state.user);
@@ -250,64 +252,6 @@ const DomainTable: React.FC<DomainTableProps> = ({
 
   const [tierPlan,setTierPlan] = useState(false);
   const [appSumoDomains,setAppSumoDomain] = useState<string[]>([]);
-  const customerCheck = async () => {
-    const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
-    const bodyData = { email: userData.email, userId: userData.id };
-
-    await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(bodyData),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        response.json().then((data) => {
-          if (data.submeta) {
-            setPlanMetaData(data.submeta);
-          }
-          if(data.tierPlan && data.tierPlan==true){
-            setTierPlan(true);
-          }
-          if(data.subscriptions){
-            const appSumoDomains:any = [];
-            let subs = JSON.parse(data.subscriptions);
-            // console.log("subs = ",subs);
-            ['monthly', 'yearly'].forEach((subscriptionType) => {
-                // Loop over each subscription in the current type (monthly or yearly)
-                subs[subscriptionType].forEach((subscription:any) => {
-                    const description = subscription.description;
-        
-                    // Regex to extract domain name before '(' and promo codes
-                    const match = description.match(/Plan for ([^(\s]+)\(/);
-        
-                    if (match) {
-                        const domain = match[1];  // Extract domain name
-                        appSumoDomains.push(domain); // Save the domain name in the list
-                    }
-                });
-            });
-            setAppSumoDomain(appSumoDomains);
-            // setSubCount(subs.length);
-          }
-          if (data.isCustomer === true) {
-            setActivePlan(data.plan_name);
-            if (data.interval === 'yearly') {
-              setIsYearly(true);
-            }
-          }
-          if(data.expiry){
-            setExpiryDays(data.expiry);
-          }
-        });
-      })
-      .catch((error) => {
-        console.error('There was a problem with the fetch operation:', error);
-      });
-  };
 
   const handleSubscription = async (selectedDomain: Domain) => {
     setBillingLoading(true);
@@ -365,9 +309,46 @@ const DomainTable: React.FC<DomainTableProps> = ({
     }
   }, [data]);
 
-  useEffect(() => {
-    customerCheck();
-  }, []);
+  useEffect(()=>{
+    if(customerData){
+      if (customerData.submeta) {
+        setPlanMetaData(customerData.submeta);
+      }
+      if(customerData.tierPlan && customerData.tierPlan==true){
+        setTierPlan(true);
+      }
+      if(customerData.subscriptions){
+        const appSumoDomains:any = [];
+        let subs = JSON.parse(customerData.subscriptions);
+        // console.log("subs = ",subs);
+        ['monthly', 'yearly'].forEach((subscriptionType) => {
+            // Loop over each subscription in the current type (monthly or yearly)
+            subs[subscriptionType].forEach((subscription:any) => {
+                const description = subscription.description;
+    
+                // Regex to extract domain name before '(' and promo codes
+                const match = description.match(/Plan for ([^(\s]+)\(/);
+    
+                if (match) {
+                    const domain = match[1];  // Extract domain name
+                    appSumoDomains.push(domain); // Save the domain name in the list
+                }
+            });
+        });
+        setAppSumoDomain(appSumoDomains);
+        // setSubCount(subs.length);
+      }
+      if (customerData.isCustomer === true) {
+        setActivePlan(customerData.plan_name);
+        if (customerData.interval === 'yearly') {
+          setIsYearly(true);
+        }
+      }
+      if(customerData.expiry){
+        setExpiryDays(customerData.expiry);
+      }
+    }
+  },[customerData])
 
   return (
     <>
@@ -507,7 +488,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                       </span>
                     </td>
                     <td className="py-4 px-4 border-b border-gray-200">
-                      {domain?.expiredAt
+                      {domainStatus == 'Life Time' ? null : domain?.expiredAt
                         ? new Date(
                             Number.parseInt(domain.expiredAt),
                           ).toLocaleDateString()
