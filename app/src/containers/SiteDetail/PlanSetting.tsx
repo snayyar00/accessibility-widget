@@ -160,6 +160,7 @@ const PlanSetting: React.FC<{
   const [couponStack,setCouponStack] = useState(0);
   const [validatedCoupons, setValidatedCoupons] = useState<string[]>([]);
   const [customerCheckLoading,setCustomerCheckLoading] = useState(false);
+  const [codeCount,setCodeCount] = useState(0);
 
   useEffect(() => {
     dispatch(setSitePlan({ data: {} }));
@@ -270,7 +271,7 @@ const PlanSetting: React.FC<{
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-checkout-session`;
     const result = planChanged?.id.replace(/\d+/g, "");
 
-    const bodyData = { email:data.email,planName:result,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url,promoCode:![0,2,4,6].includes(appSumoCount) ? Array(Math.ceil(appSumoCount / 2)).fill((Math.ceil(appSumoCount / 2))):validatedCoupons,cardTrial:cardTrial || card };
+    const bodyData = { email:data.email,planName:result,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url,promoCode:validatedCoupons.length ? validatedCoupons : appSumoCount >= (codeCount*2) ? validatedCoupons:[appSumoCount],cardTrial:cardTrial || card };
 
     await fetch(url, {
       method: 'POST',
@@ -314,7 +315,7 @@ const PlanSetting: React.FC<{
     setbillingClick(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
     const result = planChanged?.id.replace(/\d+/g, "");
-    const bodyData = { email:data.email,returnURL:window.location.href, planName:result,billingInterval:!isYearly || APP_SUMO_BUNDLE_NAMES.includes((planChanged?.id || "")) ? "MONTHLY" : "YEARLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:![0,2,4,6].includes(appSumoCount) ? Array((Math.ceil(appSumoCount / 2))).fill((Math.ceil(appSumoCount / 2))):validatedCoupons,cardTrial:card };
+    const bodyData = { email:data.email,returnURL:window.location.href, planName:result,billingInterval:!isYearly || APP_SUMO_BUNDLE_NAMES.includes((planChanged?.id || "")) ? "MONTHLY" : "YEARLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:validatedCoupons.length ? validatedCoupons : appSumoCount >= (codeCount*2) ? validatedCoupons:[appSumoCount],cardTrial:card };
 
     try {
       await fetch(url, {
@@ -429,9 +430,13 @@ const PlanSetting: React.FC<{
           setisStripeCustomer(true);
           setCurrentActivePlan(customerData.plan_name);
         }
-        if(customerData.appSumoCount){
-          setAppSumoCount(customerData.appSumoCount);
-        }
+      if(customerData.appSumoCount){
+        setAppSumoCount(customerData.appSumoCount);
+      }
+      if(customerData.codeCount){
+        setCodeCount(customerData.codeCount);
+      }
+      
     }
   },[customerData])
   
@@ -511,60 +516,59 @@ const PlanSetting: React.FC<{
               <Toggle onChange={toggle} label="Bill Yearly" />
             </div>
           )} */}
-          {[0, 2, 4].includes(appSumoCount) && (
-            <>
-              <div className="flex sm:flex-col md:flex-row">
-                {validatedCoupons.length > 0 &&
-                  [0, 2, 4].includes(appSumoCount) && (
-                    <div className="mb-2 flex flex-col justify-start">
-                      {/* <AppSumoInfo activeSites={appSumoCount} validatedCoupons={validatedCoupons}/> */}
-                      <Box className="flex items-center gap-2 mb-3">
-                        <MdLocalOffer className="text-primary" size={16} />
-                        <Typography className="text-sm font-medium text-gray-700">
-                          Valid Coupons
-                        </Typography>
-                      </Box>
-                      <div className="mb-2">
-                        {validatedCoupons.map((code, index) => (
-                          <span
-                            key={index}
-                            className="inline-block bg-green-200 text-green-800 text-sm font-semibold mr-2 px-2.5 py-0.5 rounded"
-                          >
-                            {code}
-                          </span>
-                        ))}
-                      </div>
+          <>
+            <div className="flex sm:flex-col md:flex-row">
+              {validatedCoupons.length > 0 &&
+                (
+                  <div className="mb-2 flex flex-col justify-start">
+                    {/* <AppSumoInfo activeSites={appSumoCount} validatedCoupons={validatedCoupons}/> */}
+                    <Box className="flex items-center gap-2 mb-3">
+                      <MdLocalOffer className="text-primary" size={16} />
+                      <Typography className="text-sm font-medium text-gray-700">
+                        Valid Coupons
+                      </Typography>
+                    </Box>
+                    <div className="mb-2">
+                      {validatedCoupons.map((code, index) => (
+                        <span
+                          key={index}
+                          className="inline-block bg-green-200 text-green-800 text-sm font-semibold mr-2 px-2.5 py-0.5 rounded"
+                        >
+                          {code}
+                        </span>
+                      ))}
                     </div>
-                  )}
-              </div>
-              <div className="block w-full mb-4">
-                <div className="flex items-center">
-                  <input
-                    type="text"
-                    value={coupon}
-                    placeholder="Coupon Code"
-                    onChange={(e) => setCoupon(e.target.value)}
-                    className="p-[10px] py-[11.6px] bg-light-gray border border-solid border-white-blue rounded-[10px] text-[16px] leading-[19px] text-white-gray w-full box-border"
-                  />
+                  </div>
+                )}
+            </div>
+            <div className="block w-full mb-4">
+              <div className="flex items-center">
+                <input
+                  type="text"
+                  value={coupon}
+                  placeholder="Coupon Code"
+                  onChange={(e) => setCoupon(e.target.value)}
+                  className="p-[10px] py-[11.6px] bg-light-gray border border-solid border-white-blue rounded-[10px] text-[16px] leading-[19px] text-white-gray w-full box-border"
+                />
 
-                  <button
-                    disabled={couponClicked}
-                    type="button"
-                    onClick={handleCouponValidation}
-                    className=" bg-primary flex justify-center py-[10.9px] px-3 text-white rounded-lg w-40 mx-3"
-                  >
-                    {couponClicked ? (
-                      <CircularProgress sx={{ color: 'white' }} size={20} />
-                    ) : validatedCoupons.length ? (
-                      'Add More'
-                    ) : (
-                      t('Apply Coupon')
-                    )}
-                  </button>
-                </div>
+                <button
+                  disabled={couponClicked}
+                  type="button"
+                  onClick={handleCouponValidation}
+                  className=" bg-primary flex justify-center py-[10.9px] px-3 text-white rounded-lg w-40 mx-3"
+                >
+                  {couponClicked ? (
+                    <CircularProgress sx={{ color: 'white' }} size={20} />
+                  ) : validatedCoupons.length ? (
+                    'Add More'
+                  ) : (
+                    t('Apply Coupon')
+                  )}
+                </button>
               </div>
-            </>
-          )}
+            </div>
+          </>
+          
 
           <Plans
             plans={
@@ -585,7 +589,7 @@ const PlanSetting: React.FC<{
             showPlans={setShowPlans}
             activeSites={appSumoCount}
             validatedCoupons={validatedCoupons}
-            appSumoCount={appSumoCount}
+            appSumoCount={codeCount}
             billingButtons={
               <>
                 {isEmpty(currentPlan) ||
@@ -593,7 +597,7 @@ const PlanSetting: React.FC<{
                 currentPlan.isTrial ? (
                   isStripeCustomer ? (
                     <>
-                      {((coupon == '' && validatedCoupons.length == 0) && [0,2,4,6].includes(appSumoCount))  ? (
+                      {((coupon == '' && validatedCoupons.length == 0) && appSumoCount >= (codeCount * 2))  ? (
                         <Button
                           variant="outline"
                           onClick={() => {
@@ -617,7 +621,7 @@ const PlanSetting: React.FC<{
                     </>
                   ) : (
                     <>
-                      {((coupon == '' && validatedCoupons.length == 0) && [0,2,4,6].includes(appSumoCount)) ? (
+                      {((coupon == '' && validatedCoupons.length == 0) && appSumoCount >= (codeCount * 2)) ? (
                         <Button
                           variant="outline"
                           onClick={() => {

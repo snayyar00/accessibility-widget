@@ -443,7 +443,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       let session:any = {}
       if(typeof(promoCode[0]) == 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id)))
       {
-        const { promoCount,codes } = appSumoPromoCount(subscriptions,promoCode);
+        const {orderedCodes,numPromoSites } = appSumoPromoCount(subscriptions,promoCode);
 
         console.log("promo");
 
@@ -460,18 +460,17 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             maxDomains: 1,
             usedDomains: 1,
           },
-          description: `Plan for ${domain}(${ typeof(promoCode[0]) == 'number' ? codes:promoCode})`,
+          description: `Plan for ${domain}(${orderedCodes})`,
         });
-
-        await expireUsedPromo(promoCount,codes,promoCodeData,promoCode,stripe);
+        
+        await expireUsedPromo(numPromoSites,stripe,orderedCodes);        
 
         let previous_plan;
         try {
           previous_plan = await getSitePlanBySiteId(Number(domainId));
-          console.log(previous_plan);
           await deleteTrialPlan(previous_plan.id);
         } catch (error) {
-          console.log('err = ', error);
+          // console.log('err = ', error);
         }
 
         await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), 'appsumo');
@@ -781,7 +780,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
         if (typeof(promoCode[0]) == 'number' || (promoCodeData && promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id))) {
           
-          const { promoCount,codes }  = appSumoPromoCount(subscriptions,promoCode);
+          const {orderedCodes,numPromoSites } = appSumoPromoCount(subscriptions,promoCode);
           
           subscription = await stripe.subscriptions.create({
             customer: customer.id,
@@ -795,10 +794,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               maxDomains: 1,
               usedDomains: 1,
             },
-            description: `Plan for ${domainUrl}(${ typeof(promoCode[0]) == 'number' ? codes:promoCode})`,
+            description: `Plan for ${domainUrl}(${orderedCodes})`,
           });
           
-          await expireUsedPromo(promoCount,codes,promoCodeData,promoCode,stripe);
+          await expireUsedPromo(numPromoSites,stripe,orderedCodes);
 
         } else if (promoCode && promoCode.length > 0) {
           // Coupon is not valid or not the app sumo promo
@@ -1264,17 +1263,26 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               const regular_sub_data = {'monthly':monthlySubs,'yearly':yearlySubs}
 
               let appSumoCount = 0;
+              const uniquePromoCodes = new Set<string>();
 
               for (const subs of Object.values(regular_sub_data)) {
                 for (const sub of subs) {
-                  const match = sub.description?.match(/\(([^)]+)\)$/); // get the part inside parentheses
+                  const match = sub.description?.match(/\(([^)]*)\)$/);
                   if (match) {
                     appSumoCount++;
+
+                    // split in case there are multiple codes in the ()
+                    const codesInDesc = match[1]
+                      .split(',')
+                      .map((c: string) => c.trim())
+                      .filter((c:any) => c.length > 0);
+
+                    codesInDesc.forEach((code:any) => uniquePromoCodes.add(code));
                   }
                 }
               }
 
-              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining,appSumoCount:appSumoCount});
+              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining,appSumoCount:appSumoCount,codeCount:uniquePromoCodes.size});
 
             }
   
@@ -1313,17 +1321,26 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             const regular_sub_data = {'monthly':monthlySubs,'yearly':yearlySubs}
 
             let appSumoCount = 0;
+            const uniquePromoCodes = new Set<string>();
 
             for (const subs of Object.values(regular_sub_data)) {
               for (const sub of subs) {
-                const match = sub.description?.match(/\(([^)]+)\)$/); // get the part inside parentheses
+                const match = sub.description?.match(/\(([^)]*)\)$/);
                 if (match) {
                   appSumoCount++;
+
+                  // split in case there are multiple codes in the ()
+                  const codesInDesc = match[1]
+                    .split(',')
+                    .map((c: string) => c.trim())
+                    .filter((c:any) => c.length > 0);
+
+                  codesInDesc.forEach((code:any) => uniquePromoCodes.add(code));
                 }
               }
             }
 
-            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount});
+            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount,codeCount:uniquePromoCodes.size});
 
           }
   

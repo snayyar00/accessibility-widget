@@ -1,63 +1,55 @@
 export function appSumoPromoCount(subscriptions: any, promoCode: any): any {
-  let promoCount = 0;
-  let singlePromoCount = 0;
-  let doublePromoCount = 0;
-  let triplePromoCount = 0;
-  let codes:[] = [];
+  let promoSiteCount = 0;
+
+  const seenCodes = new Set<string>();
+  const orderedCodes: string[] = [];
+
+  
+
   if (subscriptions.data.length > 0) {
-    subscriptions.data.forEach((subscription: any) => {
-      const match = subscription.description.match(/\(([^)]+)\)/);
+    const sortedSubs = [...subscriptions.data].sort(
+      (a, b) => a.created - b.created
+    );
+
+    sortedSubs.forEach((subscription: any) => {
+      const match = subscription.description.match(/\(([^)]*)\)$/);
       if (match) {
         // Split the extracted string on commas and trim any extra whitespace.
         const codesInDesc = match[1].split(',').map((code: string) => code.trim());
-        // Check if any of the codes in the description match one of your promo codes.
-        if((typeof(promoCode[0]) == 'number') && (promoCode.length == codesInDesc.length)){
-          console.log(`Subscription ${subscription.id} contains all promo codes.`);
-          promoCount++;
-          codes = codesInDesc;
-        }
-        else{
-          const allPromoCodesPresent = promoCode.every((code: string) => codesInDesc.includes(code));
-          if (allPromoCodesPresent) {
-            console.log(`Subscription ${subscription.id} contains all promo codes.`);
-            promoCount++;
+        codesInDesc.forEach((c:any) => {
+          if(String(c).length == 1){
           }
-        }
-        
-        if (codesInDesc.length === 1) {
-          singlePromoCount++;
-        } else if (codesInDesc.length === 2) {
-          doublePromoCount++;
-        } else if (codesInDesc.length === 3) {
-          triplePromoCount++;
-        }
+          else if (!seenCodes.has(c)) {
+            seenCodes.add(c);
+            orderedCodes.push(c);
+          }
+        });
+
+        promoSiteCount++;
       }
     });
   }
 
-  if (promoCode.length == 1) {
-    if(triplePromoCount == 2){
-      throw Error(`You have used all enterprise promocodes'`);
-    }
-    else if(doublePromoCount == 2){
-      throw Error(`You have used all medium promocodes, you must stack now'`);
-    }
-    else if(singlePromoCount == 2){
-      throw Error(`You have used all starter promocodes, you must stack now'`);
-    }
+  const numPromoSites  = promoSiteCount;
 
-  } else if (promoCode.length == 2) {
-    if(triplePromoCount == 2){
-      throw Error(`You have used all enterprise promocodes'`);
-    }
-    else if(doublePromoCount == 2){
-      throw Error(`You have used all medium promocodes, you must stack now'`);
-    }
-  } else if (promoCode.length == 3) {
-    if(triplePromoCount == 2){
-      throw Error(`You have used all enterprise promocodes'`);
-    }
+  const alreadyUsed = promoCode.filter((code:any) => orderedCodes.includes(code));
+
+  if (alreadyUsed.length > 0) {
+    const plural = alreadyUsed.length > 1 ? 's' : '';
+    throw new Error(
+      `You have already used the following promo code${plural}: ${alreadyUsed.join(', ')}`
+    );
   }
 
-  return { promoCount,codes };
+  // Push the new codes aswell, which will be used incase sub succeeds
+  promoCode.forEach((c:any)=>{
+    if(String(c).length == 1){
+    }
+    else if (!seenCodes.has(c)) {
+      seenCodes.add(c);
+      orderedCodes.push(c);
+    }
+  })
+
+  return { orderedCodes,numPromoSites };
 }
