@@ -407,7 +407,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         // return;
       }
 
-      const subscriptions = await stripe.subscriptions.list({ customer: customer.id });
+      const subscriptions = await stripe.subscriptions.list({ customer: customer.id,limit:100 });
       // for (const subscription of subscriptions.data) {
       //   await stripe.subscriptions.del(subscription.id);
       // }
@@ -1345,7 +1345,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 }
               }
             }
-            // console.log("yehi",subscriptions);
+            
             res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount,codeCount:uniquePromoCodes.size});
 
           }
