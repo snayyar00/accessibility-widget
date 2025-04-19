@@ -144,11 +144,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     const subscriptions = await stripe.subscriptions.list({
       customer: customer.id,
       status: 'active',
+      limit:100
     });
 
     const trialingSubscriptions = await stripe.subscriptions.list({
       customer: customer.id,
       status: 'trialing',
+      limit:100
     });
 
     // Merge trialing subscriptions into active subscriptions (modifying subscriptions.data)
@@ -610,7 +612,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       }
       if(promoCodeData.coupon.valid && promoCodeData.active && promoCodeData.coupon.id == APP_SUMO_COUPON_ID)
       {
-        const subscriptions = await stripe.subscriptions.list({ customer: customer.id });
+        const subscriptions = await stripe.subscriptions.list({ customer: customer.id,limit:100 });
 
         for (const subscription of subscriptions.data) {
           await stripe.subscriptions.del(subscription.id);
@@ -734,7 +736,8 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       }
 
       const subscriptions = await stripe.subscriptions.list({
-          customer: customer.id
+          customer: customer.id,
+          limit:100
       });
 
       if (subscriptions.data.length > 0) {
@@ -983,7 +986,8 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       }
 
       const subscriptions = await stripe.subscriptions.list({
-          customer: customer.id
+          customer: customer.id,
+          limit:100
       });
 
       if (subscriptions.data.length > 0) {
@@ -1182,11 +1186,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           const trial_subs = await stripe.subscriptions.list({
             customer: customer.id,
             status: 'trialing', // Retrieve all statuses to filter manually
+            limit:100
           });
 
           const subscriptions = await stripe.subscriptions.list({
             customer: customer.id,
             status: 'active', // Retrieve all statuses to filter manually
+            limit:100
           });
 
           let price_id;
@@ -1339,7 +1345,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 }
               }
             }
-
+            // console.log("yehi",subscriptions);
             res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount,codeCount:uniquePromoCodes.size});
 
           }

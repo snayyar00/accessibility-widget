@@ -51,5 +51,13 @@ export function appSumoPromoCount(subscriptions: any, promoCode: any): any {
     }
   })
 
+  let max_sites = orderedCodes.length;
+
+  if(numPromoSites == max_sites){
+    throw new Error(
+      `You have reached max limit of sites for your app sumo plan`
+    );
+  }
+
   return { orderedCodes,numPromoSites };
 }
