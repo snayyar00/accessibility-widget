@@ -1,46 +1,39 @@
 import Stripe from 'stripe';
-import findPromo from '~/services/stripe/findPromo';
+import findAllPromos from '~/services/stripe/findAllPromos';
 
-export async function expireUsedPromo(promoCount: any,codes:[], promoCodeData: any, promoCode: any, stripe: any): Promise<any> {
-    // PromoCount must be less than limit always
+export async function expireUsedPromo(
+  numPromoSites:number,
+  stripe: Stripe,
+  orderedCodes: string[]
+): Promise<void> {
+  // 1) account for the new site
+  const effectiveSites      = numPromoSites + 1;
 
-    let promos = []
-    if (codes && codes.length > 0) {
-      const validCodesData: Stripe.PromotionCode[] = [];
-      const invalidCodes: string[] = [];
-      console.log("finding = ",codes);
-      // Process each code sequentially (you can also use Promise.all if you prefer parallel execution)
-      for (const code of codes) {
-        const found = await findPromo(stripe, code);
-        if (found) {
-          validCodesData.push(found);
-        } else {
-          invalidCodes.push(code);
-        }
-      }
-      console.log(invalidCodes);
-    
-      if (invalidCodes.length > 0) {
-        throw Error("No PromoCodes match")
-      }
-    
-      // Now, validCodesData contains all valid promo code objects.
-      promos = validCodesData;
-    }
-    else{
-      promos = promoCodeData;
-    }
-    
-    if ([1,2,3].includes(promoCode.length) && promoCount == 1) {
-    // First promo 2 sites have been added
-    try {
-      const updatePromises = promos.map((promo: Stripe.PromotionCode) => stripe.promotionCodes.update(promo.id, { active: false }));
-      const updatedCoupons = await Promise.all(updatePromises);
-      updatedCoupons.forEach((coupon) => {
-        console.log(`Coupon Expired: ${coupon.id}`);
-      });
-    } catch (error) {
-      console.error('Error expiring promo codes:', error);
-    }
+  const desiredExpiredCount = Math.floor(effectiveSites / 2);
+  if (desiredExpiredCount < 1) return;
+
+  // 2) load *all* codes (active + inactive) in order
+  const allPromos: Stripe.PromotionCode[] = [];
+  for (const code of orderedCodes) {
+    // you’ll need a helper that fetches regardless of active status
+    const promo = await findAllPromos(stripe, code);
+    if (promo) allPromos.push(promo);
   }
+
+  // 3) count how many are already inactive
+  const alreadyExpiredCount = allPromos.filter(p => !p.active).length;
+
+  // 4) how many *new* ones we should deactivate
+  const toExpireCount = desiredExpiredCount - alreadyExpiredCount;
+
+  if (toExpireCount <= 0) return; 
+
+  // 5) pick the first `toExpireCount` still‑active promos
+  const activePromos = allPromos.filter(p => p.active);
+  const toExpire     = activePromos.slice(0, toExpireCount);
+
+  // 6) expire them
+  await Promise.all(
+    toExpire.map(p => stripe.promotionCodes.update(p.id, { active: false }))
+  );
 }
