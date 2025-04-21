@@ -111,19 +111,16 @@ const Plans: React.FC<Props> = ({
       setisYearly(newValue);
     }
 
-    let maxSites = activeSites;
+    let maxSites = appSumoCount * 2 || 2;
     let appSumoPlan = 'Professional';
 
-    if(activeSites <= 2){
-      maxSites = 2;
+    if(appSumoCount <= 1){
       appSumoPlan = 'Starter';
     }
-    else if(activeSites <= 4){
-      maxSites = 4;
+    else if(appSumoCount <= 3){
       appSumoPlan = 'Medium';
     }
     else{
-      maxSites = 6;
       appSumoPlan = 'Enterprise';
     }
   return (
@@ -155,7 +152,7 @@ const Plans: React.FC<Props> = ({
           <Button className="get-start-btn w-full mt-2" onClick={handleBilling}>Manage Billing</Button>
           <Button className="get-start-btn w-full mt-2" onClick={() => {onChange(String(currentPlan?.id));showPlans(true)}} >Update/Cancel Plan</Button>
         </div>):(null)}
-      {((validatedCoupons.length > 0) || (![0,2,4,6].includes(activeSites)))? ( (planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.isTrial) && ([plans[0]].map((plan) =>{ 
+      {((validatedCoupons.length > 0) || (maxSites > activeSites))? ( (planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.isTrial) && ([plans[0]].map((plan) =>{ 
               // {(planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.productType != subPlan ) && (plans.map((plan) =>{ 
                 if(checkIsCurrentPlan(plan.id))
                 {
