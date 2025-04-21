@@ -51,7 +51,7 @@ export function appSumoPromoCount(subscriptions: any, promoCode: any): any {
     }
   })
 
-  let max_sites = orderedCodes.length;
+  let max_sites = (orderedCodes.length * 2);
 
   if(numPromoSites == max_sites){
     throw new Error(
