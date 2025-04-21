@@ -94,7 +94,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
             toast.error('The domain is already in use');
         }
         else{
-            toast.success(`The domain was successfully added. Please Wait ${sanitizedDomain}`);
+            toast.success(`The domain was successfully added. Please Wait`);
 
             // Quick Fix not permanent
             if(window.location.pathname == '/dashboard'){
