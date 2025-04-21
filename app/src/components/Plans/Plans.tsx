@@ -152,7 +152,7 @@ const Plans: React.FC<Props> = ({
           <Button className="get-start-btn w-full mt-2" onClick={handleBilling}>Manage Billing</Button>
           <Button className="get-start-btn w-full mt-2" onClick={() => {onChange(String(currentPlan?.id));showPlans(true)}} >Update/Cancel Plan</Button>
         </div>):(null)}
-      {((validatedCoupons.length > 0) || (maxSites > activeSites))? ( (planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.isTrial) && ([plans[0]].map((plan) =>{ 
+      {((validatedCoupons.length > 0) || ((appSumoCount !== 0) && (maxSites > activeSites)))? ( (planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.isTrial) && ([plans[0]].map((plan) =>{ 
               // {(planChanged || (Object.keys(subscribedPlan).length == 0) || subscribedPlan.productType != subPlan ) && (plans.map((plan) =>{ 
                 if(checkIsCurrentPlan(plan.id))
                 {

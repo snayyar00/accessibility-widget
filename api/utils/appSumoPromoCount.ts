@@ -17,7 +17,7 @@ export function appSumoPromoCount(subscriptions: any, promoCode: any): any {
         // Split the extracted string on commas and trim any extra whitespace.
         const codesInDesc = match[1].split(',').map((code: string) => code.trim());
         codesInDesc.forEach((c:any) => {
-          if(String(c).length == 1){
+          if (/^\d+$/.test(c)) {
           }
           else if (!seenCodes.has(c)) {
             seenCodes.add(c);
@@ -43,7 +43,7 @@ export function appSumoPromoCount(subscriptions: any, promoCode: any): any {
 
   // Push the new codes aswell, which will be used incase sub succeeds
   promoCode.forEach((c:any)=>{
-    if(String(c).length == 1){
+    if (/^\d+$/.test(c)) {
     }
     else if (!seenCodes.has(c)) {
       seenCodes.add(c);
@@ -51,7 +51,7 @@ export function appSumoPromoCount(subscriptions: any, promoCode: any): any {
     }
   })
 
-  let max_sites = orderedCodes.length;
+  let max_sites = (orderedCodes.length * 2);
 
   if(numPromoSites == max_sites){
     throw new Error(
