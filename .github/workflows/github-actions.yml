@@ -3,7 +3,7 @@ name: API and App Deploy
 on:
   push:
     branches:
-      - main
+      - main #Testing to trigger workflow
 
 jobs:
   API:
