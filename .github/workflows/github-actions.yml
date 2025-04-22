@@ -47,7 +47,7 @@ jobs:
 
             # Check if build was successful, then start the server
             if [ $? -eq 0 ]; then
-              pm2 restart apiServer || pm2 start apiServer --name apiServer
+              pm2 restart backend || pm2 start server.ts --name backend --watch
             else
               echo "Build failed, not starting the server."
               exit 1
@@ -93,13 +93,6 @@ jobs:
             # Build the App
             CI=false npm run build
 
-            # Check if build was successful, then start the server
-            if [ $? -eq 0 ]; then
-              pm2 restart appServer || pm2 start appServer --name appServer
-            else
-              echo "Build failed, not starting the server."
-              exit 1
-            fi
           EOF
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
