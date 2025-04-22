@@ -17,6 +17,7 @@ import { handleBilling } from '../Profile/BillingPortalLink';
 import { BarChart } from 'recharts';
 import { MdBarChart } from 'react-icons/md';
 import { FaCalendarDays } from 'react-icons/fa6';
+import { useLocation } from 'react-router-dom';
 
 
 interface ModalProps {
@@ -80,6 +81,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
     const [noPlan,setNoPlan] = useState(false);
     const [portalClick,setPortalClick] = useState(false);
     const [promoCode,setPromoCode] = useState('');
+    const { search } = useLocation();
 
     const showPaymentModal = async () => {
         if (!isValidDomain(formData.domainName)) {
@@ -105,6 +107,12 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
         }
     };
 
+    useEffect(() => {
+      const params = new URLSearchParams(search);
+      if (params.get('open-modal') === 'true') {
+        openModal();
+      }
+    }, [search]);
 
     useEffect( () => {
         if (addedDomain?.url !== "" && paymentView !== true) {

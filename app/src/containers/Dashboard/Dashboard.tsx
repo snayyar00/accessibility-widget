@@ -7,6 +7,8 @@ import TrialBannerAndModal from './TrialBannerAndModal';
 import AnalyticsDashboard from './Analytics';
 import AnalyticsDashboardSkeleton from './skeletonanalytics';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
+import { FaCheckCircle } from 'react-icons/fa';
+import { useHistory } from 'react-router-dom';
 
 
 interface ChartData {
@@ -57,6 +59,12 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
   const closeModal = () => setIsModalOpen(false);
   const [paymentView, setPaymentView] = useState(false);
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
+  const history = useHistory();
+
+
+  const handleRedirect = () => {
+    history.push('/add-domain?open-modal=true');
+  }
 
   const getStartOfWeek = () => {
     const currentDate = new Date();
@@ -295,18 +303,83 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
       )}
      
         <div className="container py-4">
-          <div className="flex flex-col items-center justify-center w-full mb-8 pl-0 pr-3">
-            <TrialBannerAndModal
-              allDomains={allDomains}
-              setReloadSites={setReloadSites}
-              isModalOpen={isModalOpen}
-              closeModal={closeModal}
-              openModal={openModal}
-              paymentView={paymentView}
-              setPaymentView={setPaymentView}
-              customerData={customerData}
-            />
-          </div>
+        <div className="flex flex-col items-center justify-center w-full mb-8 pl-0 pr-3">
+  <div className="w-full mb-6 flex">
+    <div
+      className="w-full grid grid-cols-1 lg:grid-cols-12 text-white rounded-xl overflow-hidden shadow-2xl transform hover:scale-[1.01] transition-transform duration-300"
+      style={{ backgroundColor: 'rgb(0 51 237)' }}
+    >
+      {/* Left Column */}
+      <div className="col-span-full xl:col-span-7 px-6 py-6 flex flex-col justify-center space-y-4">
+        <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight">
+          Empower Every Visitor with Inclusive Design
+        </h1>
+        <p className="text-base lg:text-lg">
+          Achieve seamless ADA & WCAG compliance effortlessly with WebAbility’s
+          AI-driven accessibility toolkit.
+        </p>
+
+        {/* Features Card */}
+        <div className="bg-white/10 p-4 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-3">
+          {[
+            {
+              title: 'Comprehensive Standards',
+              desc: 'Fully aligned with ADA, WCAG, and international guidelines.',
+            },
+            {
+              title: 'Instant One‑Click Setup',
+              desc: 'Get up and running in minutes, backed by 24/7 expert support.',
+            },
+            {
+              title: 'Adaptive AI Enhancements',
+              desc: 'Auto‑adjust text size, contrast, and navigation for all users.',
+            },
+            {
+              title: 'Brand‑Friendly Customization',
+              desc: 'Style the widget to perfectly match your site’s look and feel.',
+            },
+          ].map((item) => (
+            <div key={item.title} className="flex items-start space-x-2">
+              <div className="flex-shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                <FaCheckCircle className="text-white w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-medium text-sm">{item.title}</h3>
+                <p className="text-xs">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right Column (Image) */}
+      <div className="hidden xl:flex xl:col-span-5 items-center justify-center p-6">
+        <img
+          src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsection_1_right.bf6223d4.png&w=750&q=75"
+          alt="Graphic showing increase in accessibility score"
+          className="max-w-full max-h-full object-contain"
+        />
+      </div>
+      {/* Call‑to‑Action Buttons */}
+      <div className="col-span-full bg-white/5 py-4 flex flex-row sm:flex-col gap-8 justify-center px-6">
+        <button
+          className="flex-1 py-4 text-white font-bold text-xl rounded-xl bg-primary hover:bg-sapphire-blue transition-colors duration-300"
+          onClick={handleRedirect}
+        >
+          Get Compliant
+        </button>
+        
+          <button
+            className="flex-1 py-4 text-black font-bold text-xl rounded-xl bg-[#ffbc00] hover:bg-yellow-600 transition-colors duration-300"
+            onClick={handleRedirect}
+          >
+            Redeem App Sumo
+          </button>
+      </div>
+    </div>
+  </div>
+</div>
+
           <div>
             <AnalyticsDashboard
               impressionCount={impressions}
