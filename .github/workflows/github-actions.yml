@@ -98,7 +98,7 @@ jobs:
             npm install
 
             # Build the App
-            CI=false npm run build
+            npm run build --verbose
 
           EOF
         env:
