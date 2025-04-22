@@ -7,10 +7,7 @@ on:
 
 jobs:
   API:
-    runs-on: self-hosted
-    strategy:
-      matrix:
-        node-version: [20.x]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
