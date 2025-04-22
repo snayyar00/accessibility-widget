@@ -73,6 +73,13 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      # Test SSH connection to Hetzner VPS (successful connection will proceed)
+      - name: Test SSH Connection to Hetzner VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no root@178.156.135.15 "echo 'SSH connection successful'"
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
       # Deploy App to Hetzner VPS and run build commands
       - name: Deploy and Build App on Hetzner VPS
         run: |
