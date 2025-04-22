@@ -84,10 +84,10 @@ jobs:
       - name: Deploy and Build App on Hetzner VPS
         run: |
           # Copy files to Hetzner VPS (excluding .git and node_modules)
-          rsync -avz --exclude '.git*' --exclude 'node_modules' ./app/ root@178.156.135.15:/var/www/test-folder/app
+          rsync -avz --timeout=300 --exclude '.git*' --exclude 'node_modules' ./app/ root@178.156.135.15:/var/www/test-folder/app
 
           # SSH into Hetzner and run commands to set up the App
-          ssh root@178.156.135.15 << 'EOF'
+          ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=3 root@178.156.135.15 << 'EOF'
             # Navigate to the App folder
             cd /var/www/test-folder/app
 
