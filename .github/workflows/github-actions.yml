@@ -19,82 +19,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Preserve existing API .env file
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # Test SSH connection to Hetzner VPS
+      - name: Test SSH Connection to Hetzner VPS
         run: |
-          if [ -f api/.env ]; then
-            cp api/.env api/.env.backup
-          fi
-
-      - name: Create dist directory
-        run: |
-          cd api
-          mkdir -p dist
-
-      - name: Install dependencies in API
-        run: |
-          cd api
-          npm install
-
-      - name: Build API
-        run: |
-          cd api
-          npm run build
-
-      - name: Restore API .env file
-        run: |
-          if [ -f api/.env.backup ]; then
-            mv api/.env.backup api/.env
-          fi
-
-      - name: Start API
-        run: |
-          cd api
-          pm2 restart apiServer || pm2 start apiServer --name apiServer
-
-      - name: Copy email templates
-        run: |
-          mkdir -p ./api/dist/email-templates
-          cp -R ./api/email-templates ./api/dist/
-
-  APP:
-    needs: API
-    runs-on: self-hosted
-    strategy:
-      matrix:
-        node-version: [20.x]
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Preserve existing App .env file
-        run: |
-          if [ -f app/.env ]; then
-            cp app/.env app/.env.backup
-          fi
-
-      - name: Create dist directory for App
-        run: |
-          cd app
-          mkdir -p dist
-
-      - name: Install dependencies in App
-        run: |
-          cd app
-          npm install
-
-      - name: Build App
-        run: |
-          cd app
-          CI=false npm run build
-
-      - name: Restore App .env file
-        run: |
-          if [ -f app/.env.backup ]; then
-            mv app/.env.backup app/.env
-          fi
-
-      - name: Start App
-        run: |
-          cd app
-          pm2 restart appServer || pm2 start appServer --name appServer
+          ssh -o StrictHostKeyChecking=no root@5.78.114.87 "echo 'SSH connection successful'"
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
