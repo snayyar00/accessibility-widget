@@ -3,11 +3,11 @@ name: API and App Deploy
 on:
   push:
     branches:
-      - main #Testing to trigger workflow
+      - main  # Trigger workflow on push to the main branch
 
 jobs:
   API:
-    runs-on: ubuntu-latest #testing
+    runs-on: ubuntu-latest  # Running the job on an Ubuntu runner
 
     steps:
       - name: Checkout Repository
@@ -18,9 +18,64 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # Test SSH connection to Hetzner VPS
+      # Test SSH connection to Hetzner VPS (successful connection will proceed)
       - name: Test SSH Connection to Hetzner VPS
         run: |
           ssh -o StrictHostKeyChecking=no root@178.156.135.15 "echo 'SSH connection successful'"
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # Install dependencies for API
+      - name: Install dependencies in API
+        run: |
+          cd api
+          npm install
+
+      # Build the API
+      - name: Build API
+        run: |
+          cd api
+          npm run build
+        continue-on-error: false  # This stops the pipeline if the build fails
+
+      # Deploy API to Hetzner VPS
+      - name: Deploy API to Hetzner VPS
+        run: |
+          rsync -avz --exclude '.git*' --exclude 'node_modules' ./api/ root@178.156.135.15:/var/www/test-folder/api
+          ssh root@178.156.135.15 "cd /var/www/test-folder/api && npm install && pm2 restart apiServer || pm2 start apiServer --name apiServer"
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+  APP:
+    needs: API  # This job depends on the success of the API job
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # Install dependencies for App
+      - name: Install dependencies in App
+        run: |
+          cd app
+          npm install
+
+      # Build the App
+      - name: Build App
+        run: |
+          cd app
+          CI=false npm run build
+        continue-on-error: false  # This stops the pipeline if the build fails
+
+      # Deploy App to Hetzner VPS
+      - name: Deploy App to Hetzner VPS
+        run: |
+          rsync -avz --exclude '.git*' --exclude 'node_modules' ./app/ root@178.156.135.15:/var/www/test-folder/app
+          ssh root@178.156.135.15 "cd /var/www/test-folder/app && npm install && pm2 restart appServer || pm2 start appServer --name appServer"
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
