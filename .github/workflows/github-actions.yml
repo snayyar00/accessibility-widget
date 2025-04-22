@@ -29,6 +29,7 @@ jobs:
       - name: Install dependencies in API
         run: |
           cd api
+          mkdir -p ./dist
           npm install
 
       # Build the API
