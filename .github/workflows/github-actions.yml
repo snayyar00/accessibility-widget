@@ -52,6 +52,10 @@ jobs:
               echo "Build failed, not starting the server."
               exit 1
             fi
+
+            # Copy email templates to dist folder
+            mkdir -p dist/email-templates
+            cp -R ./email-templates dist/email-templates
           EOF
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
