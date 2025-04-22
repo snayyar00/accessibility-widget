@@ -45,6 +45,12 @@ jobs:
             mkdir -p ./api/dist
           fi
 
+      # Run the postinstall step after the dist folder is created
+      - name: Run postinstall (link-module-alias)
+        run: |
+          cd api
+          link-module-alias && npx npm-force-resolutions
+
       # Deploy API to Hetzner VPS
       - name: Deploy API to Hetzner VPS
         run: |
