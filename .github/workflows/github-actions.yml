@@ -25,38 +25,34 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # Install dependencies for API
-      - name: Install dependencies in API
+      # Deploy API to Hetzner VPS and run build commands
+      - name: Deploy and Build API on Hetzner VPS
         run: |
-          cd api
-          mkdir -p ./dist
-          npm install
-
-      # Build the API
-      - name: Build API
-        run: |
-          cd api
-          npm run build
-        continue-on-error: false  # This stops the pipeline if the build fails
-
-      # Ensure the dist folder exists (create it if missing)
-      - name: Create dist directory if missing
-        run: |
-          if [ ! -d "./api/dist" ]; then
-            mkdir -p ./api/dist
-          fi
-
-      # Run the postinstall step after the dist folder is created
-      - name: Run postinstall (link-module-alias)
-        run: |
-          cd api
-          link-module-alias && npx npm-force-resolutions
-
-      # Deploy API to Hetzner VPS
-      - name: Deploy API to Hetzner VPS
-        run: |
+          # Copy files to Hetzner VPS (excluding .git and node_modules)
           rsync -avz --exclude '.git*' --exclude 'node_modules' ./api/ root@178.156.135.15:/var/www/test-folder/api
-          ssh root@178.156.135.15 "cd /var/www/test-folder/api && npm install && pm2 restart apiServer || pm2 start apiServer --name apiServer"
+
+          # SSH into Hetzner and run commands to set up the API
+          ssh root@178.156.135.15 << 'EOF'
+            # Navigate to the API folder
+            cd /var/www/test-folder/api
+
+            # Create the dist directory
+            mkdir -p dist
+
+            # Install dependencies
+            npm install
+
+            # Build the API
+            npm run build
+
+            # Check if build was successful, then start the server
+            if [ $? -eq 0 ]; then
+              pm2 restart apiServer || pm2 start apiServer --name apiServer
+            else
+              echo "Build failed, not starting the server."
+              exit 1
+            fi
+          EOF
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
@@ -73,23 +69,33 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # Install dependencies for App
-      - name: Install dependencies in App
+      # Deploy App to Hetzner VPS and run build commands
+      - name: Deploy and Build App on Hetzner VPS
         run: |
-          cd app
-          npm install
-
-      # Build the App
-      - name: Build App
-        run: |
-          cd app
-          CI=false npm run build
-        continue-on-error: false  # This stops the pipeline if the build fails
-
-      # Deploy App to Hetzner VPS
-      - name: Deploy App to Hetzner VPS
-        run: |
+          # Copy files to Hetzner VPS (excluding .git and node_modules)
           rsync -avz --exclude '.git*' --exclude 'node_modules' ./app/ root@178.156.135.15:/var/www/test-folder/app
-          ssh root@178.156.135.15 "cd /var/www/test-folder/app && npm install && pm2 restart appServer || pm2 start appServer --name appServer"
+
+          # SSH into Hetzner and run commands to set up the App
+          ssh root@178.156.135.15 << 'EOF'
+            # Navigate to the App folder
+            cd /var/www/test-folder/app
+
+            # Create the dist directory
+            mkdir -p dist
+
+            # Install dependencies
+            npm install
+
+            # Build the App
+            CI=false npm run build
+
+            # Check if build was successful, then start the server
+            if [ $? -eq 0 ]; then
+              pm2 restart appServer || pm2 start appServer --name appServer
+            else
+              echo "Build failed, not starting the server."
+              exit 1
+            fi
+          EOF
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
