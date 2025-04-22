@@ -38,6 +38,13 @@ jobs:
           npm run build
         continue-on-error: false  # This stops the pipeline if the build fails
 
+      # Ensure the dist folder exists (create it if missing)
+      - name: Create dist directory if missing
+        run: |
+          if [ ! -d "./api/dist" ]; then
+            mkdir -p ./api/dist
+          fi
+
       # Deploy API to Hetzner VPS
       - name: Deploy API to Hetzner VPS
         run: |
