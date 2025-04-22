@@ -69,7 +69,7 @@ const Topbar: React.FC<Props> = ({ signout }) => {
         </div>
       </div>
       {isShowMenu && (
-        <div className="absolute top-[calc(100%_+_17px)] right-[10px] w-[200px] sm:top-full">
+        <div className="absolute top-[calc(100%_+_17px)] right-[10px] w-[200px] sm:top-full z-50">
           <ul className="relative p-0 border border-solid border-dark-grey rounded-[5px] shadow-xsl bg-white before:content-[''] before:block before:absolute before:left-1/2 before:bottom-full before:translate-x-[-1/2] before:translate-y-0 before:w-0 before:h-0 before:border-[12px] before:border-solid before:border-transparent before:border-b-dark-grey sm:before:left-[unset] sm:before:right-1 after:content-[''] after:block after:absolute after:left-1/2 after:bottom-full after:translate-x-[-1/2] after:translate-y-0 after:w-0 after:h-0 after:border-[10px] after:border-solid after:border-transparent after:border-b-white sm:after:left-[unset] sm:after:right-2">
             <li className="list-none h-9">
               <NavLink
