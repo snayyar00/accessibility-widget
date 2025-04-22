@@ -21,6 +21,6 @@ jobs:
       # Test SSH connection to Hetzner VPS
       - name: Test SSH Connection to Hetzner VPS
         run: |
-          ssh -o StrictHostKeyChecking=no root@5.78.114.87 "echo 'SSH connection successful'"
+          ssh -o StrictHostKeyChecking=no root@178.156.135.15 "echo 'SSH connection successful'"
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
