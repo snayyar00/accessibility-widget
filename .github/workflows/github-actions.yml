@@ -7,43 +7,57 @@ on:
 
 jobs:
   API:
-    runs-on: ubuntu-latest  # Running the job on an Ubuntu runner
+    # Change from ubuntu-latest to ubuntu-latest-16-core for faster performance
+    runs-on: ubuntu-latest-16-core
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1  # Shallow clone for faster checkout
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './api/package-lock.json'
 
       - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.5.3
+        uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # Test SSH connection to Hetzner VPS (successful connection will proceed)
-      - name: Test SSH Connection to Hetzner VPS
+      - name: Add SSH known hosts
         run: |
-          ssh -o StrictHostKeyChecking=no root@178.156.135.15 "echo 'SSH connection successful'"
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          mkdir -p ~/.ssh
+          ssh-keyscan -t rsa 178.156.135.15 >> ~/.ssh/known_hosts
 
-      # Deploy API to Hetzner VPS and run build commands
+      # Deploy API to Hetzner VPS with optimized rsync
       - name: Deploy and Build API on Hetzner VPS
         run: |
-          # Copy files to Hetzner VPS (excluding .git and node_modules)
-          rsync -avz --exclude '.git*' --exclude 'node_modules' ./api/ root@178.156.135.15:/var/www/test-folder/api
+          # Use compression and faster algorithms for rsync
+          rsync -az --compress-level=9 --exclude '.git*' --exclude 'node_modules' ./api/ root@178.156.135.15:/var/www/test-folder/api
 
-          # SSH into Hetzner and run commands to set up the API
-          ssh root@178.156.135.15 << 'EOF'
+          # SSH into Hetzner with optimized connection settings
+          ssh -o BatchMode=yes -o ConnectTimeout=10 root@178.156.135.15 << 'EOF'
             # Navigate to the API folder
             cd /var/www/test-folder/api
 
-            # Create the dist directory
+            # Create the dist directory if it doesn't exist
             mkdir -p dist
 
-            # Install dependencies
-            npm install
+            # Check if node_modules exists and only install if needed
+            if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ] || [ "package-lock.json" -nt "node_modules/.package-lock.json" ]; then
+              echo "Installing dependencies..."
+              npm ci --prefer-offline --no-audit
+              touch node_modules/.package-lock.json
+            else
+              echo "Dependencies are up to date, skipping installation"
+            fi
 
-            # Build the API
-            npm run build
+            # Build the API with optimized settings
+            NODE_ENV=production npm run build
 
             # Check if build was successful, then start the server
             if [ $? -eq 0 ]; then
@@ -61,44 +75,59 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
   APP:
-    needs: API  # This job depends on the success of the API job
-    runs-on: ubuntu-latest
+    # Change from ubuntu-latest to ubuntu-latest-16-core for faster performance
+    runs-on: ubuntu-latest-16-core
+    # Run in parallel with API job instead of waiting for it
+    # needs: API  # Removed dependency for parallel execution
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1  # Shallow clone for faster checkout
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './app/package-lock.json'
 
       - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.5.3
+        uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # Test SSH connection to Hetzner VPS (successful connection will proceed)
-      - name: Test SSH Connection to Hetzner VPS
+      - name: Add SSH known hosts
         run: |
-          ssh -o StrictHostKeyChecking=no root@178.156.135.15 "echo 'SSH connection successful'"
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          mkdir -p ~/.ssh
+          ssh-keyscan -t rsa 178.156.135.15 >> ~/.ssh/known_hosts
 
-      # Deploy App to Hetzner VPS and run build commands
+      # Deploy App to Hetzner VPS with optimized rsync
       - name: Deploy and Build App on Hetzner VPS
         run: |
-          # Copy files to Hetzner VPS (excluding .git and node_modules)
-          rsync -avz --timeout=300 --exclude '.git*' --exclude 'node_modules' ./app/ root@178.156.135.15:/var/www/test-folder/app
+          # Use compression and faster algorithms for rsync
+          rsync -az --compress-level=9 --exclude '.git*' --exclude 'node_modules' ./app/ root@178.156.135.15:/var/www/test-folder/app
 
-          # SSH into Hetzner and run commands to set up the App
-          ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=3 root@178.156.135.15 << 'EOF'
+          # SSH into Hetzner with optimized connection settings
+          ssh -o BatchMode=yes -o ConnectTimeout=10 root@178.156.135.15 << 'EOF'
             # Navigate to the App folder
             cd /var/www/test-folder/app
 
-            # Create the dist directory
+            # Create the dist directory if it doesn't exist
             mkdir -p dist
 
-            # Install dependencies
-            npm install
+            # Check if node_modules exists and only install if needed
+            if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ] || [ "package-lock.json" -nt "node_modules/.package-lock.json" ]; then
+              echo "Installing dependencies..."
+              npm ci --prefer-offline --no-audit
+              touch node_modules/.package-lock.json
+            else
+              echo "Dependencies are up to date, skipping installation"
+            fi
 
-            # Build the App
-            npm run build --verbose
+            # Build the App with production settings
+            NODE_ENV=production npm run build --no-audit
 
           EOF
         env:
