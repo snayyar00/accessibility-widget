@@ -5,10 +5,15 @@ on:
     branches:
       - main  # Trigger workflow on push to the main branch
 
+# Add concurrency control to cancel any in-progress workflows on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   API:
     # Change from ubuntu-latest to ubuntu-latest-16-core for faster performance
-    runs-on: ubuntu-latest-16-core
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
@@ -76,7 +81,7 @@ jobs:
 
   APP:
     # Change from ubuntu-latest to ubuntu-latest-16-core for faster performance
-    runs-on: ubuntu-latest-16-core
+    runs-on: ubuntu-latest
     # Run in parallel with API job instead of waiting for it
     # needs: API  # Removed dependency for parallel execution
 
