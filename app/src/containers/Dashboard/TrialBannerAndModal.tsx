@@ -420,6 +420,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                       onSubmit={handleSubmit}
                       className="add-domain-form"
                     >
+                      
                       <div className="sm:flex-col md:flex-row flex justify-end pb-3 pt-4">
                         <button
                           type="button"
@@ -457,6 +458,24 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                             ? 'Skip trial & add to plan'
                             : 'Skip trial & buy'}
                         </button>
+                      </div>
+                      
+                      {/* AppSumo User Notice */}
+                      <div className="mt-6 p-5 bg-[rgb(255,188,0)] border-2 border-amber-500 rounded-xl shadow-lg relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 bg-amber-500 rounded-full opacity-20"></div>
+                        <div className="absolute top-0 right-0 w-16 h-16 -mr-4 -mt-4 bg-amber-400 rounded-full opacity-30"></div>
+                        <div className="flex items-center">
+                          <svg className="w-10 h-10 mr-4 text-amber-800" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path>
+                          </svg>
+                          <div className="flex-1 z-10">
+                            <h3 className="text-lg font-bold text-black mb-1">AppSumo Customers</h3>
+                            <p className="text-black text-base">
+                              Click <span className="font-bold underline">Skip trial & buy</span> above, and you'll be able to enter your coupon code in the next step.
+                            </p>
+                          </div>
+                        </div>
+                        
                       </div>
                       
                     </form>
