@@ -8,7 +8,9 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import 'module-alias/register';
 import { ApolloServer, ApolloError } from 'apollo-server-express';
-import { withScope, Severity, captureException, init } from '@sentry/node';
+import { withScope, Severity, captureException, init, Handlers } from '@sentry/node';
+import * as Sentry from '@sentry/node';
+import * as Tracing from '@sentry/tracing';
 import { IResolvers } from '@graphql-tools/utils';
 import { makeExecutableSchema } from 'graphql-tools';
 import accessLogStream from './middlewares/logger.middleware';
@@ -58,7 +60,6 @@ app.use(express.json());
 scheduleMonthlyEmails();
 
 function dynamicCors(req: Request, res: Response, next: NextFunction) {
-  console.log("CORS check for operation:", req.body?.operationName);
   const corsOptions = {
     optionsSuccessStatus: 200,
     credentials: true,
@@ -1383,7 +1384,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           content: `
             You are an expert in web accessibility, well-versed in WCAG and ADA guidelines. You understand various accessibility issues and the impact they have on users, especially those with disabilities. 
             Your task is to analyze a provided code snippet and suggest specific corrections or enhancements based on given accessibility issues.
-            Here’s the structure of the response I want:
+            Here's the structure of the response I want:
   
             {
               correctedCode: Provide the corrected version of the code snippet based on the guidance given in heading, description, and help.
@@ -1552,34 +1553,57 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
+
   const serverGraph = new ApolloServer({
-    uploads: false,
     schema: makeExecutableSchema({
       typeDefs: RootSchema,
       resolvers: RootResolver as IResolvers[],
     }),
+    uploads: {
+      maxFileSize: 10000000,
+      maxFiles: 20,
+    },
+    formatError: (err) => {
+      if (err.message.includes('Not authenticated')) {
+        return new Error('Please login to make this action');
+      }
+
+      if (process.env.NODE_ENV === 'production') {
+        const result = err.message.match(/ValidationError: (.*)/);
+        if (result && result[1]) {
+          return new Error(result[1]);
+        }
+      }
+
+      return err;
+    },
     plugins: [
       {
+        // Add Sentry tracing for GraphQL operations
         requestDidStart(requestContext) {
-          console.log(`Operation requested: ${requestContext.request.operationName}`);
-      
-      // Specific check for getAccessibilityReport
-      if (requestContext.request.operationName === 'getAccessibilityReport') {
-        console.log('getAccessibilityReport operation called with variables:', 
-                   JSON.stringify(requestContext.request.variables));
-      }
+          const transaction = Sentry.startTransaction({
+            op: 'graphql.request',
+            name: requestContext.request.operationName || 'GraphQL Query',
+          });
+          
+          // Store the transaction on the request context
+          requestContext.context.sentryTransaction = transaction;
+          
           return {
-            didEncounterErrors(ctx: any) {
+            didEncounterErrors(ctx) {
+              // Capture any errors that occur during operation execution
               if (!ctx.operation) return;
+              
               for (const err of ctx.errors) {
                 if (err instanceof ApolloError) {
                   continue;
                 }
+                
                 withScope((scope) => {
                   scope.setTag('kind', ctx.operation.operation);
                   scope.setExtra('query', ctx.request.query);
                   scope.setExtra('variables', ctx.request.variables);
-
+                  
                   if (err.path) {
                     scope.addBreadcrumb({
                       category: 'query-path',
@@ -1587,13 +1611,25 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                       level: Severity.Debug,
                     });
                   }
-
+                  
+                  // Set the transaction on the scope
+                  scope.setSpan(ctx.context.sentryTransaction);
+                  
                   const transactionId = ctx.request.http.headers.get('x-transaction-id');
                   if (transactionId) {
                     scope.setTransactionName(transactionId);
                   }
+                  
                   captureException(err);
                 });
+              }
+            },
+            
+            // Finish the transaction when the request is complete
+            willSendResponse(ctx) {
+              const transaction = ctx.context.sentryTransaction;
+              if (transaction) {
+                transaction.finish();
               }
             },
           };
@@ -1614,7 +1650,18 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 
   serverGraph.applyMiddleware({ app, cors: false });
-  // init({ dsn: process.env.SENTRY_DSN });
+  
+  // Initialize Sentry with tracing for GraphQL
+  init({ 
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 1.0,
+    integrations: [
+      // Enable HTTP calls tracing
+      new Sentry.Integrations.Http({ tracing: true })
+    ],
+    attachStacktrace: true,
+  });
+  
   app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);
   });
