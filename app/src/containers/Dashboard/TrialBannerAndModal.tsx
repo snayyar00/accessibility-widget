@@ -27,7 +27,7 @@ interface ModalProps {
     children: React.ReactNode;
     optionalDomain:any;
     isStripeCustomer:boolean;
-    domainCount:number;
+    domainCount:number; 
 }
 
 interface DomainFormData {
@@ -394,7 +394,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                 <div className="sm:col-span-12 col-span-6 px-4 flex flex-col justify-between ">
                   <div className="flex flex-col gap-3">
                     <h1 className="card-title text-2xl py-4">
-                      Start a 7-day WebAbilityWidget trial!
+                      Make your business accessible today!
                     </h1>
                     <p>
                       Streamline web accessibility with WebAbilityWidget, the #1
@@ -644,7 +644,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                   className="mt-auto py-2 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full transition duration-300"
                   onClick={openModal}
                 >
-                  <span className="font-medium">Start a 15-day Trial</span>
+                  <span className="font-medium">Get Compliant Now</span>
                 </button>
               </div>
             </div>
@@ -710,7 +710,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                         </div>
                         <ul className="ml-10 list-disc">
                           <li className="text-white">
-                            Match the widget’s look to your brand.
+                            Match the widget's look to your brand.
                           </li>
                         </ul>
                       </li>
@@ -732,7 +732,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                       className="py-3 px-2 lg:py-0 h-14 mx-4 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full transition duration-300"
                       onClick={openModal}
                     >
-                      <span className="font-medium">Start a 15-day Trial</span>
+                      <span className="font-medium">Get Compliant Now</span>
                     </button>
                   </div>
                 </div>
@@ -772,7 +772,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                         onClick={openModal}
                       >
                         <span className="font-medium">
-                          Start a 15-day Trial
+                        Get Compliant Now
                         </span>
                       </button>
                     </div>
