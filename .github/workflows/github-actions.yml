@@ -42,12 +42,12 @@ jobs:
       - name: Deploy and Build API on Hetzner VPS
         run: |
           # Use compression and faster algorithms for rsync
-          rsync -az --compress-level=9 --exclude '.git*' --exclude 'node_modules' ./api/ root@178.156.135.15:/var/www/test-folder/api
+          rsync -az --compress-level=9 --exclude '.git*' --exclude 'node_modules' ./api/ root@178.156.135.15:/var/www/accessibility-widget/api
 
           # SSH into Hetzner with optimized connection settings
           ssh -o BatchMode=yes -o ConnectTimeout=10 root@178.156.135.15 << 'EOF'
             # Navigate to the API folder
-            cd /var/www/test-folder/api
+            cd /var/www/accessibility-widget/api
 
             # Create the dist directory if it doesn't exist
             mkdir -p dist
@@ -112,12 +112,12 @@ jobs:
       - name: Deploy and Build App on Hetzner VPS
         run: |
           # Use compression and faster algorithms for rsync
-          rsync -az --compress-level=9 --exclude '.git*' --exclude 'node_modules' ./app/ root@178.156.135.15:/var/www/test-folder/app
+          rsync -az --compress-level=9 --exclude '.git*' --exclude 'node_modules' ./app/ root@178.156.135.15:/var/www/accessibility-widget/app
 
           # SSH into Hetzner with optimized connection settings
           ssh -o BatchMode=yes -o ConnectTimeout=10 root@178.156.135.15 << 'EOF'
             # Navigate to the App folder
-            cd /var/www/test-folder/app
+            cd /var/www/accessibility-widget/app
 
             # Create the dist directory if it doesn't exist
             mkdir -p dist
