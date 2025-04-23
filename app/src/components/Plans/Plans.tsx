@@ -191,7 +191,7 @@ const Plans: React.FC<Props> = ({
                     </p>
                     <div className="flex justify-between mx-0 my-6 px-4">
                       <span className="price font-bold text-[32px] leading-9 text-sapphire-blue">
-                        {activeSites} / {maxSites}
+                        {activeSites} / {maxSites + ((appSumoCount == 0 ? validatedCoupons.length -1:validatedCoupons.length)*2)}
                       </span>
                       <div className="flex justify-end items-end">
                         <span className="price font-bold text-[32px] leading-9 text-sapphire-blue">
