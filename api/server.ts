@@ -6,7 +6,7 @@ import morgan from 'morgan';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
-// module-alias is now handled by the module-aliases.js file
+import 'module-alias/register';
 import { ApolloServer, ApolloError } from 'apollo-server-express';
 import { withScope, Severity, captureException, init, Handlers } from '@sentry/node';
 import * as Sentry from '@sentry/node';
