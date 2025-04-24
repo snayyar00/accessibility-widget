@@ -4,18 +4,16 @@
   "main": "server.ts",
   "license": "MIT",
   "scripts": {
-    "start": "NODE_ENV=production node -r ./module-aliases.js -r ts-node/register -r tsconfig-paths/register server.ts",
-    "dev": "NODE_ENV=development nodemon --exec 'node -r ./module-aliases.js -r ts-node/register -r tsconfig-paths/register server.ts'",
-    "build": "NODE_ENV=production tsc && npm run copy-email-templates",
-    "start:dev": "NODE_ENV=development node -r ./module-aliases.js -r ts-node/register -r tsconfig-paths/register server.ts",
-    "start:prod": "NODE_ENV=production node -r ./module-aliases.js -r ts-node/register -r tsconfig-paths/register server.ts",
-    "db:create-products": "NODE_ENV=development tsc && node -r ./module-aliases.js --experimental-modules --es-module-specifier-resolution=node dist/scripts/create-products.js",
+    "start": "ts-node -r tsconfig-paths/register server.ts",
+    "dev": "nodemon --exec ts-node -r tsconfig-paths/register server.ts",
+    "build": "tsc && npm run copy-email-templates",
+    "db:create-products": "tsc && node --experimental-modules --es-module-specifier-resolution=node dist/scripts/create-products.js",
     "db:migrate": "knex migrate:latest --knexfile config/knexfile.ts",
     "db:rollback": "knex migrate:rollback --knexfile config/knexfile.ts",
     "db:create": "knex migrate:make --knexfile config/knexfile.ts",
     "db:down": "knex migrate:down --knexfile config/knexfile.ts",
     "db:seed": "knex seed:run --knexfile config/knexfile.ts",
-    "postinstall": "npx npm-force-resolutions",
+    "postinstall": "link-module-alias && npx npm-force-resolutions",
     "lint": "eslint --ext .ts .",
     "lint:fix": "eslint --ext .ts . --fix",
     "copy-email-templates": "mkdir -p ./dist/email-templates && cp -R ./email-templates ./dist/"
@@ -102,5 +100,8 @@
   },
   "husky": {
     "hooks": {}
+  },
+  "_moduleAliases": {
+    "~": "./dist"
   }
 }
