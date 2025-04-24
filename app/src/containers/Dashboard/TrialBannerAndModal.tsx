@@ -172,6 +172,8 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
     const [trialYearlyCount,setTrialYearlyCount] = useState(0);
 
     const [tierPlan,setTierPlan] = useState(false);
+    const [appSumoCount,setAppSumoCount] = useState(0);
+    const [appSumoActive,setAppSumoActive] = useState(0);
 
 
     useEffect(()=>{
@@ -212,6 +214,12 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
           }
           if (customerData.submeta) {
             setPlanMetaData(customerData.submeta);
+          }
+          if(customerData.appSumoCount){
+            setAppSumoActive(customerData.appSumoCount);
+          }
+          if(customerData.codeCount){
+            setAppSumoCount((customerData.codeCount * 2));
           }
       }
       else{
@@ -832,17 +840,33 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
               
                     <CardContent className="p-6">
                       <Card className="flex items-center justify-between mb-6  p-4 bg-white rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-blue-50 p-3 rounded-full">
-                            <FaUsers className="h-6 w-6 text-sapphire-blue" />
-                          </div>
-                          <div>
-                            <p className="text-sm text-sapphire-blue">Total Active Sites</p>
-                            <p className="text-2xl font-bold text-sapphire-blue">{totalActive}</p>
-                          </div>
+                      <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-3 w-full text-left px-5">
+                      {/* card 1 */}
+                      <div className="w-full md:w-auto text-center md:text-left">
+                        <div className="bg-blue-50 p-3 rounded-full flex justify-center">
+                          <FaUsers className="h-6 w-6 text-sapphire-blue" />
                         </div>
+                        <div>
+                          <p className="text-sm text-sapphire-blue">Total Active Sites</p>
+                          <p className="text-2xl font-bold text-sapphire-blue">{totalActive}</p>
+                        </div>
+                      </div>
+
+                      {/* card 2 */}
+                      {appSumoCount > 0 && (<div className="w-full md:w-auto text-center md:text-left">
+                        <div className="bg-blue-50 p-3 rounded-full flex justify-center">
+                          <FaUsers className="h-6 w-6 text-[#ffbc00]" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-[#ffbc00]">App Sumo Sites</p>
+                          <p className="text-2xl font-bold text-[#ffbc00]">
+                            {appSumoActive}/{appSumoCount}
+                          </p>
+                        </div>
+                      </div>)}
+                    </div>
+
                       </Card>
-              
                       <div className="w-full">
           <Tabs
             value={tabValue}
