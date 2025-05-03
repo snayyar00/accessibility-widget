@@ -210,10 +210,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         if (subscriptions.data[0].status == 'trialing') {
           configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
             features: {
+              // subscription_update: {
+              //   enabled: true,
+              //   default_allowed_updates: ['price'], // Allow price updates
+              //   products: productPriceArray,
+              // },
               subscription_update: {
-                enabled: true,
-                default_allowed_updates: ['price'], // Allow price updates
-                products: productPriceArray,
+                enabled: false,
               },
               subscription_cancel: {
                 proration_behavior: 'none',
@@ -229,10 +232,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         } else {
           configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
             features: {
+              // subscription_update: {
+              //   enabled: true,
+              //   default_allowed_updates: ['price'], // Allow price updates
+              //   products: productPriceArray,
+              // },
               subscription_update: {
-                enabled: true,
-                default_allowed_updates: ['price'], // Allow price updates
-                products: productPriceArray,
+                enabled: false,
               },
               subscription_cancel: {
                 enabled: true,
