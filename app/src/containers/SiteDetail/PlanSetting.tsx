@@ -288,7 +288,7 @@ const PlanSetting: React.FC<{
           setbillingClick(false);
           if(data.error)
           {
-            toast.error(`An Error Occured: ${data.error}`);
+            toast.error(`An error occured: ${data.error}`);
             console.log(data);
             // setTimeout(()=>{window.location.reload()},2000);
           }

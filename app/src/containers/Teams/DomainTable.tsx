@@ -85,7 +85,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
     const index = domains.findIndex((domain) => domain.id === id);
     const foundUrl = domains[index].url;
 
-    if (status !== 'Active') {
+    if (status == 'Trial' || status == 'Trial Expired') {
       toast.error('Cannot delete a trial site');
       return;
     }
@@ -325,10 +325,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
             // Loop over each subscription in the current type (monthly or yearly)
             subs[subscriptionType].forEach((subscription:any) => {
                 const description = subscription.description;
-    
+                
                 // Regex to extract domain name before '(' and promo codes
-                const match = description.match(/Plan for ([^(\s]+)\(/);
-    
+                const match = description?.match(/Plan for ([^(\s]+)\(/);
+
                 if (match) {
                     const domain = match[1];  // Extract domain name
                     appSumoDomains.push(domain); // Save the domain name in the list

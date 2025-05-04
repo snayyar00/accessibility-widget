@@ -1,9 +1,26 @@
-export function appSumoPromoCount(subscriptions: any, promoCode: any): any {
+import { findUsersByToken, getUserTokens } from "~/repository/user_plan_tokens.repository";
+
+export async function appSumoPromoCount(subscriptions: any, promoCode: any,userId:number): Promise<any> {
   let promoSiteCount = 0;
 
   const seenCodes = new Set<string>();
   const orderedCodes: string[] = [];
 
+  await Promise.all(
+    promoCode.map(async (c: any) => {
+      const users = await findUsersByToken(c);
+      
+      // Filter out the current user
+      const otherUsers = users.filter((userID: number) => userID !== userId);
+  
+      if (otherUsers.length > 0) {
+        console.log('otherUsers',otherUsers);
+        throw new Error(
+          `The promo code ${c} is already redeemed`
+        );
+      }
+    })
+  );
   
 
   if (subscriptions.data.length > 0) {
@@ -51,7 +68,11 @@ export function appSumoPromoCount(subscriptions: any, promoCode: any): any {
     }
   })
 
-  let max_sites = (orderedCodes.length * 2);
+  const usedTokens = await getUserTokens(userId);
+  let max_sites = orderedCodes.length * 2;
+  if(usedTokens.length > 0){
+    max_sites = ((usedTokens.length + promoCode.length) * 2);
+  }
 
   if(numPromoSites == max_sites){
     throw new Error(
