@@ -355,9 +355,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       } else {
         await addWidgetSettings({
           site_url: site_url,
-          allowed_site_id: 26,
+          allowed_site_id: site?.id,
           settings: settings,
-          user_id: 35,
+          user_id: site.user_id,
         });
         res.status(200).json("Success");
       }
