@@ -22,7 +22,7 @@ import {sendMail} from './libs/mail';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 import { fetchAccessibilityReport } from './services/accessibilityReport/accessibilityReport.service';
 import { findProductAndPriceByType, findProductById } from './repository/products.repository';
-import { createSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-sites.service';
+import { createSitesPlan, deleteSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-sites.service';
 import Stripe from 'stripe';
 import { getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
@@ -38,6 +38,7 @@ import { addNewsletterSub } from './repository/newsletter_subscribers.repository
 import findPromo from './services/stripe/findPromo';
 import { appSumoPromoCount } from './utils/appSumoPromoCount';
 import { expireUsedPromo } from './utils/expireUsedPromo';
+import { findUsersByToken, getUserTokens } from './repository/user_plan_tokens.repository';
 // import run from './scripts/create-products';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
 
@@ -210,10 +211,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         if (subscriptions.data[0].status == 'trialing') {
           configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
             features: {
+              // subscription_update: {
+              //   enabled: true,
+              //   default_allowed_updates: ['price'], // Allow price updates
+              //   products: productPriceArray,
+              // },
               subscription_update: {
-                enabled: true,
-                default_allowed_updates: ['price'], // Allow price updates
-                products: productPriceArray,
+                enabled: false,
               },
               subscription_cancel: {
                 proration_behavior: 'none',
@@ -229,10 +233,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         } else {
           configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
             features: {
+              // subscription_update: {
+              //   enabled: true,
+              //   default_allowed_updates: ['price'], // Allow price updates
+              //   products: productPriceArray,
+              // },
               subscription_update: {
-                enabled: true,
-                default_allowed_updates: ['price'], // Allow price updates
-                products: productPriceArray,
+                enabled: false,
               },
               subscription_cancel: {
                 enabled: true,
@@ -446,10 +453,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       let session:any = {}
       if(typeof(promoCode[0]) == 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id)))
       {
-        const {orderedCodes,numPromoSites } = appSumoPromoCount(subscriptions,promoCode);
+        const {orderedCodes,numPromoSites } = await appSumoPromoCount(subscriptions,promoCode,userId);
 
         console.log("promo");
-
+        const tokenUsed = await getUserTokens(userId);
         // This will work on for AppSumo coupons, we allow use of coupons that should only work for the app sumo tier plans and we manually apply the discount according to new plan (single)
 
         const subscription =  await stripe.subscriptions.create({
@@ -463,10 +470,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             maxDomains: 1,
             usedDomains: 1,
           },
-          description: `Plan for ${domain}(${orderedCodes})`,
+          description: `Plan for ${domain}(${tokenUsed.length ? tokenUsed : orderedCodes})`,
         });
         
-        await expireUsedPromo(numPromoSites,stripe,orderedCodes);        
+        await expireUsedPromo(numPromoSites,stripe,orderedCodes,userId,email);        
 
         let previous_plan;
         try {
@@ -666,16 +673,18 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.post('/cancel-site-subscription',async (req,res)=>{
     const { domainId,domainUrl,userId,status } = req.body;
 
-    if(status == 'Active')
+    if(status == 'Active' || status == 'Life Time')
     {
       let previous_plan;
       try {
         previous_plan = await getSitePlanBySiteId(Number(domainId));
+        console.log(domainId,previous_plan);
       } catch (error) {
         console.log('err = ', error);
       }
       try {
-        await deleteTrialPlan(previous_plan.id);
+        // await deleteTrialPlan(previous_plan.id);
+        await deleteSitesPlan(previous_plan.id);
         await deleteSiteByURL(domainUrl,userId);
 
         res.status(200).json({ success: true });
@@ -784,7 +793,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
         if (typeof(promoCode[0]) == 'number' || (promoCodeData && promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id))) {
           
-          const {orderedCodes,numPromoSites } = appSumoPromoCount(subscriptions,promoCode);
+          
+          const {orderedCodes,numPromoSites } = await appSumoPromoCount(subscriptions,promoCode,userId);
+          
+          const tokenUsed = await getUserTokens(userId);
           
           subscription = await stripe.subscriptions.create({
             customer: customer.id,
@@ -798,10 +810,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               maxDomains: 1,
               usedDomains: 1,
             },
-            description: `Plan for ${domainUrl}(${orderedCodes})`,
+            description: `Plan for ${domainUrl}(${tokenUsed.length ? tokenUsed : orderedCodes})`,
           });
           
-          await expireUsedPromo(numPromoSites,stripe,orderedCodes);
+          await expireUsedPromo(numPromoSites,stripe,orderedCodes,userId,email);
 
         } else if (promoCode && promoCode.length > 0) {
           // Coupon is not valid or not the app sumo promo
@@ -1182,6 +1194,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       // Check if customer exists
       if (customers.data.length > 0) {
         customer = customers.data[0];
+
+        const userAppSumoTokens = await getUserTokens(userId);
+
         try {
 
           const trial_subs = await stripe.subscriptions.list({
@@ -1289,7 +1304,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 }
               }
 
-              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining,appSumoCount:appSumoCount,codeCount:uniquePromoCodes.size});
+              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining,appSumoCount:appSumoCount,codeCount:userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size});
 
             }
   
@@ -1347,7 +1362,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               }
             }
             
-            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount,codeCount:uniquePromoCodes.size});
+            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount,codeCount:userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size});
 
           }
   
@@ -1357,7 +1372,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           
         } catch (error) {
           console.log(error);
-          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method });
+          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,codeCount:userAppSumoTokens.length});
           
         }
         

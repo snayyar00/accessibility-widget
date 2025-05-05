@@ -18,10 +18,11 @@ export const TABLES = {
   sitePermissions: 'sites_permissions',
   problemReports:'problem_reports',
   widgetSettings:'widget_settings',
-  newsletterSubscribers:'newsletter_subscribers'
+  newsletterSubscribers:'newsletter_subscribers',
+  userPlanTokens:'user_plan_tokens',
 };
 
-export const DEFAULT_LIMIT = 20;
+export const DEFAULT_LIMIT = 25;
 
 export const TRIAL_PLAN_NAME = "free_test";
 export const TRIAL_PLAN_INTERVAL = "MONTHLY"
