@@ -130,9 +130,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
   };
 
   const handleEdit = (domain: Domain) => {
-    toast.info('Warning: You can only edit up to 3 characters in the URL.', {
-      position: 'top-center',
-    });
+    // toast.info('Warning: You can only edit up to 3 characters in the URL.', {
+    //   position: 'top-center',
+    // });
     setEditingId(domain.id);
     setTempDomain(domain.url);
   };
@@ -142,53 +142,66 @@ const DomainTable: React.FC<DomainTableProps> = ({
     setTempDomain('');
   };
 
-  function getEditDistance(str1: string, str2: string) {
-    const len1 = str1.length;
-    const len2 = str2.length;
-    if (len1 === 0) return len2;
-    if (len2 === 0) return len1;
+  // function getEditDistance(str1: string, str2: string) {
+  //   const len1 = str1.length;
+  //   const len2 = str2.length;
+  //   if (len1 === 0) return len2;
+  //   if (len2 === 0) return len1;
 
-    const matrix = Array(len2 + 1)
-      .fill(null)
-      .map(() => Array(len1 + 1).fill(null));
+  //   const matrix = Array(len2 + 1)
+  //     .fill(null)
+  //     .map(() => Array(len1 + 1).fill(null));
 
-    for (let i = 0; i <= len2; i++) {
-      matrix[i][0] = i;
-    }
-    for (let j = 0; j <= len1; j++) {
-      matrix[0][j] = j;
-    }
+  //   for (let i = 0; i <= len2; i++) {
+  //     matrix[i][0] = i;
+  //   }
+  //   for (let j = 0; j <= len1; j++) {
+  //     matrix[0][j] = j;
+  //   }
 
-    for (let i = 1; i <= len2; i++) {
-      for (let j = 1; j <= len1; j++) {
-        const cost = str1[j - 1] === str2[i - 1] ? 0 : 1;
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j] + 1,
-          matrix[i][j - 1] + 1,
-          matrix[i - 1][j - 1] + cost,
-        );
-      }
-    }
+  //   for (let i = 1; i <= len2; i++) {
+  //     for (let j = 1; j <= len1; j++) {
+  //       const cost = str1[j - 1] === str2[i - 1] ? 0 : 1;
+  //       matrix[i][j] = Math.min(
+  //         matrix[i - 1][j] + 1,
+  //         matrix[i][j - 1] + 1,
+  //         matrix[i - 1][j - 1] + cost,
+  //       );
+  //     }
+  //   }
 
-    return matrix[len2][len1];
-  }
+  //   return matrix[len2][len1];
+  // }
 
   const handleSave = async (id: number) => {
     setEditLoading(true);
-    const oldDomain = domains.find((domain) => domain.id === id)?.url || '';
-    if (getEditDistance(oldDomain, tempDomain) > 3) {
-      toast.error('You cannot edit more than 3 characters');
+
+    if (!tempDomain) {
+      toast.error('Domain name cannot be empty');
       setEditLoading(false);
       setEditingId(null);
       return;
     }
-    if (!isValidDomain(tempDomain)) {
-      toast.error('You must enter a valid domain name!');
-      setEditLoading(false);
-      setEditingId(null);
-      return;
-    }
+
     const sanitizedDomain = tempDomain.replace(/^(https?:\/\/)?(www\.)?/, '');
+
+    if (!isValidDomain(sanitizedDomain)) {
+      toast.error('Please enter a valid domain name');
+      setEditLoading(false);
+      setEditingId(null);
+      return;
+    }
+
+    // Duplicate check
+    const isDuplicate = domains.some(
+      d => d.url.replace(/^(https?:\/\/)?(www\.)?/, '') === sanitizedDomain && d.id !== id
+    );
+    if (isDuplicate) {
+      toast.error('This domain already exists');
+      setEditLoading(false);
+      setEditingId(null);
+      return;
+    }
 
     const response = await updateSiteMutation({
       variables: { siteId: editingId, url: sanitizedDomain },
@@ -196,9 +209,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
     if (response.errors) {
       toast.error(response.errors[0].message);
     } else {
-      setDomains(
-        domains.map((d) => (d.id === id ? { ...d, url: sanitizedDomain } : d)),
-      );
+      setReloadSites(true);
     }
     setEditLoading(false);
     setEditingId(null);

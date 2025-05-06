@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import "./DropDown.css";
 import { useMutation, useQuery } from '@apollo/client';
 import deleteSite from '@/queries/sites/deleteSite';
@@ -24,6 +24,17 @@ const DropDown = ({ data, setReloadSites, selectedOption, setSelectedOption }: a
       toast.error('There was an error while deleting the domain.');
     }
   })
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen])
 
   const handleOptionClick = (option: string) => {
     setSelectedOption(option);
@@ -36,7 +47,7 @@ const DropDown = ({ data, setReloadSites, selectedOption, setSelectedOption }: a
 
 
   return (
-    <div className="dropdown-container relative w-full text-left mt-5">
+    <div ref={dropdownRef} className="dropdown-container relative w-full text-left mt-5">
       <button
         type="button"
         className="dropdown-btn mr-5 inline-flex justify-between w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm focus:outline-none focus:border-blue-500"
@@ -52,7 +63,13 @@ const DropDown = ({ data, setReloadSites, selectedOption, setSelectedOption }: a
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          {isOpen ? (
+            // Up arrow
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+          ) : (
+            // Down arrow
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          )}
         </svg>
       </button>
 
