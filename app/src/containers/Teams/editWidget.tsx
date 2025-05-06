@@ -25,6 +25,8 @@ export interface Colors {
   fontSizeMenuButton: string;
   customizationMenuInnerBg: string;
   widgetBtnColor:string;
+  logoImage: string;
+  accessibilityStatementLinkUrl: string;
 }
 
 export interface Toggles {
@@ -106,7 +108,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     fontSizeMenuText: '#000000',
     fontSizeMenuButton: '#eff1f5',
     customizationMenuInnerBg: '#FFFFFF',
-    widgetBtnColor:'#195AFF'
+    widgetBtnColor:'#195AFF',
+    logoImage: "",
+    accessibilityStatementLinkUrl:"https://www.webability.io/statement",
   };
   const DefaultToggles = {
     darkMode: true,
@@ -152,7 +156,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     fontSizeMenuText: DefaultColors.fontSizeMenuText,
     fontSizeMenuButton: DefaultColors.fontSizeMenuButton,
     customizationMenuInnerBg: DefaultColors.customizationMenuInnerBg,
-    widgetBtnColor:DefaultColors.widgetBtnColor
+    widgetBtnColor:DefaultColors.widgetBtnColor,
+    logoImage: DefaultColors.logoImage,
+    accessibilityStatementLinkUrl: DefaultColors.accessibilityStatementLinkUrl,
   });
 
   const fonts = [
@@ -188,6 +194,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     'font-size-buttons': DefaultColors.fontSizeMenuButton,
     'font-size-text': DefaultColors.fontSizeMenuText,
     'widget-btn-color':DefaultColors.widgetBtnColor,
+    'logoImage': DefaultColors.logoImage,
+    'accessibilityStatementLinkUrl': DefaultColors.accessibilityStatementLinkUrl,
     'toggledarkMode': DefaultToggles.darkMode ? 1 : 0,
     'togglescreen-reader': DefaultToggles.screenReader ? 1 : 0,
     'togglereadable-guide': DefaultToggles.readingGuide ? 1 : 0,
@@ -235,6 +243,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
       'font-size-buttons': colors.fontSizeMenuButton,
       'font-size-text': colors.fontSizeMenuText,
       'widget-btn-color':colors.widgetBtnColor,
+      'logoImage': colors.logoImage,
+      'accessibilityStatementLinkUrl': colors.accessibilityStatementLinkUrl,
       'toggledarkMode': toggles.darkMode ? 1 : 0,
       'togglescreen-reader': toggles.screenReader ? 1 : 0,
       'togglereadable-guide': toggles.readingGuide ? 1 : 0,
@@ -378,6 +388,10 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
           fontSizeMenuText:
             fetchedSettings['font-size-text'] || DefaultColors.fontSizeMenuText,
           customizationMenuInnerBg: DefaultColors.customizationMenuInnerBg,
+          logoImage:
+            fetchedSettings['logoImage'].length ? fetchedSettings['logoImage'] : DefaultColors.logoImage,
+          accessibilityStatementLinkUrl:
+            fetchedSettings['accessibilityStatementLinkUrl'] || DefaultColors.accessibilityStatementLinkUrl,
         });
 
         // Update toggles.
