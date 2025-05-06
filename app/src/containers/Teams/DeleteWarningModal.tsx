@@ -37,22 +37,22 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-2xl font-bold mb-6 text-gray-800">Confirm Site Deletion</h2>
-        
+{/* 
         <div className="bg-red-600 text-white p-4 rounded-md mb-6">
           <div className="flex items-center mb-2">
             <GoAlertFill className="w-6 h-6 mr-2" />
             <span className="font-semibold">Warning: Irreversible Action</span>
           </div>
           <p className="text-sm">
-  Deleting this site is irreversible and cannot be undone.
-  <br /><br />
-  <strong>Important:</strong> Deleted sites will continue to count toward your subscription usage.
-</p>
+            Deleting this site is irreversible and cannot be undone.
+            <br /><br />
+            <strong>Important:</strong> Deleted sites will continue to count toward your subscription usage.
+          </p>
 
-        </div>
+        </div> */}
 
         <p className="text-gray-700 mb-4">
-        Click <strong>Cancel</strong> to return without making any changes.
+          Click <strong>Cancel</strong> to return without making any changes.
         </p>
 
         <div className="flex justify-end space-x-4">

@@ -98,7 +98,7 @@ export async function updateAllowedSiteURL(site_id: number, url: string, user_id
     }
 	
 	const exisitingSite = await database(TABLE).select(siteColumns).where({ [siteColumns.id]: site_id }).first();
-	await UpdateWebsiteURL(exisitingSite.url, url)
+	//await UpdateWebsiteURL(exisitingSite.url, url)
 	return database(TABLE).where({ 'allowed_sites.user_id': user_id, 'allowed_sites.id': site_id }).update({
 		'url': url
 	});
