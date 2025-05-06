@@ -389,7 +389,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
             fetchedSettings['font-size-text'] || DefaultColors.fontSizeMenuText,
           customizationMenuInnerBg: DefaultColors.customizationMenuInnerBg,
           logoImage:
-            fetchedSettings['logoImage'].length ? fetchedSettings['logoImage'] : DefaultColors.logoImage,
+            fetchedSettings['logoImage'] && fetchedSettings['logoImage'].length
+              ? fetchedSettings['logoImage']
+              : DefaultColors.logoImage,
           accessibilityStatementLinkUrl:
             fetchedSettings['accessibilityStatementLinkUrl'] || DefaultColors.accessibilityStatementLinkUrl,
         });
