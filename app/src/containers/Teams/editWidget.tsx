@@ -225,6 +225,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   });
 
   const [selectedSite, setSelectedSite] = useState('');
+  const [hasUserMadeChanges, setHasUserMadeChanges] = useState(false);
+
 
   useEffect(() => {
     setSettings({
@@ -307,6 +309,11 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
         response.json().then((data) => {
           setButtonDisable(false);
           toast.success(`Widget Settings Saved for ${selectedSite}`);
+          setHasUserMadeChanges(false);
+          setTimeout(() => {
+            setHasUserMadeChanges(true);
+          }
+          , 100);
         });
       })
       .catch((error) => {
@@ -315,6 +322,20 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
         console.error('There was a problem with the fetch operation:', error);
       });
   };
+
+  useEffect(() => {
+    // Don't trigger saves before initial settings fetch or if no site is selected
+    if (!hasUserMadeChanges || !selectedSite || selectedSite === 'Choose your Domain') {
+      return;
+    }
+    
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 1000);
+  
+    // Cleanup timeout on each settings change
+    return () => clearTimeout(timer);
+  }, [settings]); // Include all dependencies
 
   const getSettings = async () => {
     setButtonDisable(true);
@@ -427,6 +448,13 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
           colorBlind: fetchedSettings['togglecolor-blind'] === 1,
           adhd: fetchedSettings.toggleadhd === 1,
         });
+        // Set hasUserMadeChanges to false after initial fetch
+        setHasUserMadeChanges(false);
+        
+        // Then after a small delay, enable changes tracking
+        setTimeout(() => {
+          setHasUserMadeChanges(true);
+        }, 100);
       })
       .catch((error) => {
         setButtonDisable(false);
