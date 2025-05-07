@@ -331,7 +331,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     
     const timer = setTimeout(() => {
       handleSave();
-    }, 500);
+    }, 1000);
   
     // Cleanup timeout on each settings change
     return () => clearTimeout(timer);
