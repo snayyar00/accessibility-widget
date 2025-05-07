@@ -2,7 +2,7 @@ import { Switch } from '@mui/material';
 import type React from 'react';
 import { Colors, Toggles } from './editWidget';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
 
@@ -105,8 +105,11 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   const [isFileInput, setIsFileInput] = useState(true);
   const [isUrlInput, setIsUrlInput] = useState(true);
   const [logoInput, setLogoInput] = useState("");
-  const[accessibilityStatementLinkUrl, setAccessibilityStatementLinkUrl] = useState(DefaultColors.accessibilityStatementLinkUrl);
+  const[accessibilityStatementLinkUrl, setAccessibilityStatementLinkUrl] = useState(colors.accessibilityStatementLinkUrl);
 
+  useEffect(()=>{
+    setAccessibilityStatementLinkUrl(colors.accessibilityStatementLinkUrl);
+  },[colors.accessibilityStatementLinkUrl])
   const isBase64 = (str:any) => {
     const regex = /^data:image\/(png|jpg|jpeg|gif|bmp);base64,/;
     return regex.test(str);
