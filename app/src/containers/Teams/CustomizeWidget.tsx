@@ -131,8 +131,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       }
   
       // Validate file size (should not exceed 10 KB)
-      if (file.size > 10240) {
-        toast.error("File size should not exceed 10 KB.");
+      if (file.size > 76800) {
+        toast.error("File size should not exceed 75 KB.");
         e.target.value = ""; // Reset the input field to remove the file name
         return; // Prevent the file from being processed if the size is too large
       }
