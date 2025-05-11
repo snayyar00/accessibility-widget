@@ -456,7 +456,14 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         const {orderedCodes,numPromoSites } = await appSumoPromoCount(subscriptions,promoCode,userId);
 
         console.log("promo");
-        const tokenUsed = await getUserTokens(userId);
+        const tokenUsed = await getUserTokens(userId) || [];
+        const maxNum = tokenUsed.reduce((max, code) => {
+          const m = code.match(/^custom(\d+)$/);
+          return m ? Math.max(max, Number(m[1])) : max;
+        }, 0);
+        
+        const lastCustomCode = maxNum > 0 ? `custom${maxNum}` : null;
+        const nonCustomCodes = tokenUsed.filter(code => !/^custom\d+$/.test(code));
         // This will work on for AppSumo coupons, we allow use of coupons that should only work for the app sumo tier plans and we manually apply the discount according to new plan (single)
 
         const subscription =  await stripe.subscriptions.create({
@@ -470,7 +477,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             maxDomains: 1,
             usedDomains: 1,
           },
-          description: `Plan for ${domain}(${tokenUsed.length ? tokenUsed : orderedCodes})`,
+          description: `Plan for ${domain}(${lastCustomCode ? [lastCustomCode,...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
         });
         
         await expireUsedPromo(numPromoSites,stripe,orderedCodes,userId,email);        
@@ -796,8 +803,16 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           
           const {orderedCodes,numPromoSites } = await appSumoPromoCount(subscriptions,promoCode,userId);
           
-          const tokenUsed = await getUserTokens(userId);
+          const tokenUsed = await getUserTokens(userId) || [];
+
+          const maxNum = tokenUsed.reduce((max, code) => {
+            const m = code.match(/^custom(\d+)$/);
+            return m ? Math.max(max, Number(m[1])) : max;
+          }, 0);
           
+          const lastCustomCode = maxNum > 0 ? `custom${maxNum}` : null;
+          const nonCustomCodes = tokenUsed.filter(code => !/^custom\d+$/.test(code));
+
           subscription = await stripe.subscriptions.create({
             customer: customer.id,
             items: [{ price: price.price_stripe_id, quantity: 1 }],
@@ -810,7 +825,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               maxDomains: 1,
               usedDomains: 1,
             },
-            description: `Plan for ${domainUrl}(${tokenUsed.length ? tokenUsed : orderedCodes})`,
+            description: `Plan for ${domainUrl}(${lastCustomCode ? [lastCustomCode,...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
           });
           
           await expireUsedPromo(numPromoSites,stripe,orderedCodes,userId,email);
