@@ -456,7 +456,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         const {orderedCodes,numPromoSites } = await appSumoPromoCount(subscriptions,promoCode,userId);
 
         console.log("promo");
-        const tokenUsed = await getUserTokens(userId);
+        const tokenUsed = await getUserTokens(userId) || [];
         const maxNum = tokenUsed.reduce((max, code) => {
           const m = code.match(/^custom(\d+)$/);
           return m ? Math.max(max, Number(m[1])) : max;
@@ -803,7 +803,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           
           const {orderedCodes,numPromoSites } = await appSumoPromoCount(subscriptions,promoCode,userId);
           
-          const tokenUsed = await getUserTokens(userId);
+          const tokenUsed = await getUserTokens(userId) || [];
 
           const maxNum = tokenUsed.reduce((max, code) => {
             const m = code.match(/^custom(\d+)$/);
