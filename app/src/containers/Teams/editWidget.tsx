@@ -27,6 +27,7 @@ export interface Colors {
   widgetBtnColor:string;
   logoImage: string;
   accessibilityStatementLinkUrl: string;
+  logoUrl:string;
 }
 
 export interface Toggles {
@@ -111,6 +112,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     widgetBtnColor:'#195AFF',
     logoImage: "",
     accessibilityStatementLinkUrl:"https://www.webability.io/statement",
+    logoUrl:"https://webability.io"
   };
   const DefaultToggles = {
     darkMode: true,
@@ -159,6 +161,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     widgetBtnColor:DefaultColors.widgetBtnColor,
     logoImage: DefaultColors.logoImage,
     accessibilityStatementLinkUrl: DefaultColors.accessibilityStatementLinkUrl,
+    logoUrl:DefaultColors.logoUrl
   });
 
   const fonts = [
@@ -196,6 +199,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     'widget-btn-color':DefaultColors.widgetBtnColor,
     'logoImage': DefaultColors.logoImage,
     'accessibilityStatementLinkUrl': DefaultColors.accessibilityStatementLinkUrl,
+    'logoUrl':DefaultColors.logoUrl,
     'toggledarkMode': DefaultToggles.darkMode ? 1 : 0,
     'togglescreen-reader': DefaultToggles.screenReader ? 1 : 0,
     'togglereadable-guide': DefaultToggles.readingGuide ? 1 : 0,
@@ -247,6 +251,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
       'widget-btn-color':colors.widgetBtnColor,
       'logoImage': colors.logoImage,
       'accessibilityStatementLinkUrl': colors.accessibilityStatementLinkUrl,
+      'logoUrl':colors.logoUrl,
       'toggledarkMode': toggles.darkMode ? 1 : 0,
       'togglescreen-reader': toggles.screenReader ? 1 : 0,
       'togglereadable-guide': toggles.readingGuide ? 1 : 0,
@@ -415,6 +420,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
               : DefaultColors.logoImage,
           accessibilityStatementLinkUrl:
             fetchedSettings['accessibilityStatementLinkUrl'] || DefaultColors.accessibilityStatementLinkUrl,
+          logoUrl:
+            fetchedSettings['logoUrl'] || DefaultColors.logoUrl
         });
 
         // Update toggles.

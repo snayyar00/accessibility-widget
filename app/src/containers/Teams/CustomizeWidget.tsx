@@ -106,10 +106,12 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   const [isUrlInput, setIsUrlInput] = useState(true);
   const [logoInput, setLogoInput] = useState("");
   const[accessibilityStatementLinkUrl, setAccessibilityStatementLinkUrl] = useState(colors.accessibilityStatementLinkUrl);
+  const[logoUrl, setLogoUrl] = useState(colors.logoUrl);
 
   useEffect(()=>{
     setAccessibilityStatementLinkUrl(colors.accessibilityStatementLinkUrl);
-  },[colors.accessibilityStatementLinkUrl])
+    setLogoUrl(colors.logoUrl)
+  },[colors.accessibilityStatementLinkUrl,colors.logoUrl])
   const isBase64 = (str:any) => {
     const regex = /^data:image\/(png|jpg|jpeg|gif|bmp);base64,/;
     return regex.test(str);
@@ -293,6 +295,46 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
           <div className="bg-white p-3 sm:p-4 rounded-xl">
           <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+            Set Logo Link Url
+          </h2>
+          {/* URL input */}
+          <div className="flex items-center mb-3 sm:mb-4">
+            <input
+              type="text"
+              placeholder="Enter Logo Link URL"
+              className="w-full p-2 border rounded text-sm sm:text-base"
+              value={logoUrl}
+              onChange={(e) => {
+                const url = e.target.value.trim();
+                if (url) {
+                  // Validate if it's a proper URL (you can use a more complex regex for URL validation if needed)
+                  setColors((prev) => ({
+                    ...prev,
+                    logoUrl: url,
+                  }));
+                }
+                setLogoUrl(url);
+              }}
+            />
+          </div>
+
+         
+            <button
+              onClick={()=>{
+                setColors((prev) => ({
+                  ...prev,
+                  logoUrl: DefaultColors.logoUrl,
+                }));
+                setLogoUrl(DefaultColors.logoUrl);
+              }}
+              className="px-3 py-2 mt-4 sm:px-4 sm:py-2 bg-[#0948c9] text-white rounded text-sm sm:text-base"
+            >
+              Reset
+            </button>
+          </div>
+
+          <div className="bg-white p-3 sm:p-4 rounded-xl">
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
             Set Accesibility Statement Link Url
           </h2>
           {/* URL input */}
@@ -316,7 +358,6 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
             />
           </div>
 
-          {/* Displaying the logo */}
             <button
               onClick={()=>{
                 setColors((prev) => ({
