@@ -362,10 +362,6 @@ const PlanSetting: React.FC<{
 
   const handleCouponValidation = async () => {
 
-    if (validatedCoupons.length >= 3) {
-      toast.error("You can only apply up to 3 coupons.");
-      return;
-    }
     // Prevent duplicate coupon validation
     if (validatedCoupons.includes(coupon)) {
       toast.error("This coupon has already been applied.");
