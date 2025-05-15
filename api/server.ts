@@ -1205,12 +1205,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
       let customer;
       
+      const userAppSumoTokens = await getUserTokens(userId);
+
+      const hasCustomInfinityToken = userAppSumoTokens.includes("customInfinity");
 
       // Check if customer exists
       if (customers.data.length > 0) {
         customer = customers.data[0];
-
-        const userAppSumoTokens = await getUserTokens(userId);
 
         try {
 
@@ -1319,7 +1320,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 }
               }
 
-              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining,appSumoCount:appSumoCount,codeCount:userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size});
+              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining,appSumoCount:appSumoCount,codeCount:userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size,infinityToken:hasCustomInfinityToken});
 
             }
   
@@ -1377,7 +1378,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               }
             }
             
-            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount,codeCount:userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size});
+            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount,codeCount:userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size,infinityToken:hasCustomInfinityToken});
 
           }
   
@@ -1387,15 +1388,15 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           
         } catch (error) {
           console.log(error);
-          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,codeCount:userAppSumoTokens.length});
+          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,codeCount:userAppSumoTokens.length,infinityToken:hasCustomInfinityToken});
           
         }
         
       }
       else
       {
-
-        res.status(200).json({ isCustomer: false,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method });
+        console.log("no customer");
+        res.status(200).json({ isCustomer: false,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,infinityToken:hasCustomInfinityToken,codeCount:userAppSumoTokens.length });
       }
 
     } catch (error) {

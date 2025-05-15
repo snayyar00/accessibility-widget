@@ -221,6 +221,10 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
           if(customerData.codeCount){
             setAppSumoCount((customerData.codeCount * 2));
           }
+
+          if(customerData.infinityToken){
+            setAppSumoCount(Infinity);
+          }
       }
       else{
         setNoPlan(true);
@@ -228,6 +232,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
       }
 
     },[customerData])
+
 
     const handleSubscription = async () => {
         setBillingLoading(true);
@@ -848,7 +853,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                         </div>
                         <div>
                           <p className="text-sm text-sapphire-blue">Total Active Sites</p>
-                          <p className="text-2xl font-bold text-sapphire-blue">{totalActive}</p>
+                          <p className="text-2xl font-bold text-sapphire-blue text-center">{totalActive}</p>
                         </div>
                       </div>
 
@@ -858,9 +863,9 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                           <FaUsers className="h-6 w-6 text-[#ffbc00]" />
                         </div>
                         <div>
-                          <p className="text-sm text-[#ffbc00]">App Sumo Sites</p>
-                          <p className="text-2xl font-bold text-[#ffbc00]">
-                            {appSumoActive}/{appSumoCount}
+                          <p className="text-sm text-[#ffbc00]">{appSumoCount == Infinity ? "Infinite Sites" : "App Sumo Sites"}</p>
+                          <p className="text-2xl font-bold text-[#ffbc00] text-center">
+                            {appSumoActive}/{appSumoCount == Infinity ? "∞" : appSumoCount}
                           </p>
                         </div>
                       </div>)}

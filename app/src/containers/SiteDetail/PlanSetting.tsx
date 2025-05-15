@@ -161,7 +161,7 @@ const PlanSetting: React.FC<{
   const [validatedCoupons, setValidatedCoupons] = useState<string[]>([]);
   const [customerCheckLoading,setCustomerCheckLoading] = useState(false);
   const [codeCount,setCodeCount] = useState(0);
-
+  const [infinityToken,setInfinityToken] = useState(false);
   useEffect(() => {
     dispatch(setSitePlan({ data: {} }));
     fetchSitePlan({
@@ -432,7 +432,10 @@ const PlanSetting: React.FC<{
       if(customerData.codeCount){
         setCodeCount(customerData.codeCount);
       }
-      
+      if(customerData.infinityToken){
+        setInfinityToken(customerData.infinityToken);
+        setCodeCount(Infinity);
+      }
     }
   },[customerData])
   
@@ -586,6 +589,7 @@ const PlanSetting: React.FC<{
             activeSites={appSumoCount}
             validatedCoupons={validatedCoupons}
             appSumoCount={codeCount}
+            infinityToken={infinityToken}
             billingButtons={
               <>
                 {isEmpty(currentPlan) ||
