@@ -87,6 +87,7 @@ type Props = {
   activeSites:any;
   validatedCoupons:any;
   appSumoCount:any;
+  infinityToken:any;
 }
 
 const Plans: React.FC<Props> = ({
@@ -101,7 +102,8 @@ const Plans: React.FC<Props> = ({
   billingButtons,
   activeSites,
   validatedCoupons,
-  appSumoCount
+  appSumoCount,
+  infinityToken
 }) => {
   const { t } = useTranslation();
   const currentPlan = plans.find((plan) => checkIsCurrentPlan(plan.id));
@@ -180,7 +182,7 @@ const Plans: React.FC<Props> = ({
                     )}
                   >
                     <h5 className="font-bold text-xl text-center leading-[17px] text-sapphire-blue mb-4 name">
-                      App Sumo {appSumoPlan}
+                      {infinityToken ? 'Infinite Sites Plan' : `App Sumo ${appSumoPlan}`}
                     </h5>
                     <p className="desc text-center text-[12px] mb-3 leading-4 text-white-blue">
                       Ideal for all your accessibility needs 
@@ -191,7 +193,7 @@ const Plans: React.FC<Props> = ({
                     </p>
                     <div className="flex justify-between mx-0 my-6 px-4">
                       <span className="price font-bold text-[32px] leading-9 text-sapphire-blue">
-                        {activeSites} / {maxSites + ((appSumoCount == 0 ? validatedCoupons.length -1:validatedCoupons.length)*2)}
+                        {activeSites} / {infinityToken ? "∞" : maxSites + ((appSumoCount == 0 ? validatedCoupons.length -1:validatedCoupons.length)*2)}
                       </span>
                       <div className="flex justify-end items-end">
                         <span className="price font-bold text-[32px] leading-9 text-sapphire-blue">
