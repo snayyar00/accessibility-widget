@@ -1,4 +1,6 @@
 export default function isValidDomain(domain: string): boolean {
-  const pattern = /^(https?:\/\/)?(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})*(\.[A-Za-z]{2,6})$/;
+  // Regex for a domain that has already been processed to be a root domain (no protocol, no www initially expected)
+  // Checks for valid characters, label lengths, hyphen placement, and a TLD of at least 2 chars.
+  const pattern = /^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?:\.(?!-)[a-zA-Z0-9-]{2,})$/i;
   return pattern.test(domain);
 }
