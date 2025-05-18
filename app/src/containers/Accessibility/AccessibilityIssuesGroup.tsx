@@ -35,7 +35,7 @@ export default function AccessibilityIssuesGroup({ issueObj, expand }: Accessibi
 
   return (
     <>
-      {Object.entries(issueObj).map(([key, issues]) => {
+      {issueObj && Object.entries(issueObj).map(([key, issues]) => {
         const errorDetails: ErrorDetail[] = Array.isArray(issues) ? issues : [issues];
 
         if (errorDetails.length === 0) {

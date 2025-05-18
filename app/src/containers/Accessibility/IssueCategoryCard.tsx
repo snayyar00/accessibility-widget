@@ -11,16 +11,16 @@ import AccessibilityIssuesGroup from './AccessibilityIssuesGroup';
 
 function getObject(issueType: string, data: any) {
   if (issueType === 'Errors') {
-    return data.getAccessibilityReport.htmlcs.errors;
+    return data.getAccessibilityReport?.htmlcs?.errors;
   }
   if (issueType === 'Warnings') {
-    return data.getAccessibilityReport.htmlcs.warnings;
+    return data.getAccessibilityReport?.htmlcs?.warnings;
   }
   if(issueType === 'Notices')
   {
-    return data.getAccessibilityReport.htmlcs.notices;
+    return data.getAccessibilityReport?.htmlcs?.notices;
   }
-  return data.getAccessibilityReport.ByFunctions;
+  return data.getAccessibilityReport?.ByFunctions;
 }
 
 export default function IssueCategoryCard({ data, issueType,expand }: any) {

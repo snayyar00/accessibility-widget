@@ -152,7 +152,7 @@ export const fetchAccessibilityReport = async (url: string) => {
     const result = await getAccessibilityInformationPally(url);
       
     const siteImg = await fetchSitePreview(url);
-    if (siteImg) {
+    if (result && siteImg) {
       result.siteImg = siteImg;
     }
 
@@ -241,30 +241,23 @@ export const fetchAccessibilityReport = async (url: string) => {
 };
 
 
-export const fetchSitePreview = async (url: string) => {
+export const fetchSitePreview = async (url: string): Promise<string | null> => {
   try {
-      const apiUrl = `${process.env.SECONDARY_SERVER_URL}/screenshot/?url=${url}`;
-      
-      // Use fetch to request the screenshot
-      const response = await fetch(apiUrl);
+    const apiUrl = `${process.env.SECONDARY_SERVER_URL}/screenshot/?url=${url}`;
 
-      // Check if the response is successful
-      if (!response.ok) {
-          throw new Error(`Failed to fetch screenshot. Status: ${response.status}`);
-      }
+    const response = await fetch(apiUrl);
 
-      // Get the response as a buffer (binary data)
-      const buffer = await response.arrayBuffer();
-
-      // Convert the buffer to a base64 encoded string
-      const base64Image = Buffer.from(buffer).toString('base64');
-
-      // Create a Data URL from the base64 encoded string
-      const dataUrl = `data:image/png;base64,${base64Image}`;
-      return dataUrl;
-  } catch (error) {
-      console.error('Error generating screenshot:', error);
+    if (!response.ok) {
+      console.error(`Failed to fetch screenshot for ${url}. Status: ${response.status}`);
       return null;
+    }
+
+    const buffer = await response.arrayBuffer();
+    const base64Image = Buffer.from(buffer).toString('base64');
+    return `data:image/png;base64,${base64Image}`;
+  } catch (error) {
+    console.error(`Error generating screenshot for ${url}:`, error);
+    return null;
   }
 };
 

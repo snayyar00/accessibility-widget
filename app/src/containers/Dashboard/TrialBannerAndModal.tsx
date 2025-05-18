@@ -1,11 +1,12 @@
 import React, { FormEvent, useEffect, useState } from 'react'
+import { parse } from 'tldts';
 import BannerImage from "@/assets/images/WebAbility Hero3.png"
 import SingleBannerImage from "@/assets/images/WebAbilityBanner.png"
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import { useMutation } from '@apollo/client';
 import addSite from '@/queries/sites/addSite';
 import { toast } from 'react-toastify';
-import isValidDomain from '@/utils/verifyDomain';
+import { getRootDomain, isValidRootDomainFormat, isIpAddress } from '@/utils/domainUtils';
 import PlanSetting from '../SiteDetail/PlanSetting';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
@@ -84,16 +85,22 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
     const { search } = useLocation();
 
     const showPaymentModal = async () => {
-        if (!isValidDomain(formData.domainName)) {
+        const sanitizedDomain = getRootDomain(formData.domainName);
+        if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {
             toast.error('You must enter a valid domain name!');
             return;
         }
-        // const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)/, '');
-        const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)?(www\.)?/, '');
         const response = await addSiteMutation({ variables: { url: sanitizedDomain } });
         if(response.errors)
         {
-            toast.error('The domain is already in use');
+            const originalInputDetails = parse(formData.domainName);
+            if (originalInputDetails.domain === sanitizedDomain && originalInputDetails.subdomain && originalInputDetails.subdomain.toLowerCase() !== 'www') {
+                toast.error(`The root domain '${sanitizedDomain}' is already registered. This covers subdomains like '${formData.domainName}'. You don't need to add it separately.`);
+            } else if (originalInputDetails.domain === sanitizedDomain && originalInputDetails.subdomain && originalInputDetails.subdomain.toLowerCase() === 'www') {
+                toast.error(`The domain '${sanitizedDomain}' (derived from your input '${formData.domainName}') is already registered.`);
+            } else {
+                toast.error(`The domain '${sanitizedDomain}' is already in use.`);
+            }
         }
         else{
             toast.success(`The domain was successfully added. Please Wait`);
@@ -342,16 +349,22 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
 
     const handleSubmit = async (e: any) => {
         e.preventDefault();
-        if (!isValidDomain(formData.domainName)) {
+        const sanitizedDomain = getRootDomain(formData.domainName);
+        if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {
             toast.error('You must enter a valid domain name!');
             return;
         }
-        // const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)/, '');
-        const sanitizedDomain = formData.domainName.replace(/^(https?:\/\/)?(www\.)?/, '');
         const response = await addSiteMutation({ variables: { url: sanitizedDomain } });
         if(response.errors)
         {
-            toast.error('The domain is already in use');
+            const originalInputDetails = parse(formData.domainName);
+            if (originalInputDetails.domain === sanitizedDomain && originalInputDetails.subdomain && originalInputDetails.subdomain.toLowerCase() !== 'www') {
+                toast.error(`The root domain '${sanitizedDomain}' is already registered. This covers subdomains like '${formData.domainName}'. You don't need to add it separately.`);
+            } else if (originalInputDetails.domain === sanitizedDomain && originalInputDetails.subdomain && originalInputDetails.subdomain.toLowerCase() === 'www') {
+                toast.error(`The domain '${sanitizedDomain}' (derived from your input '${formData.domainName}') is already registered.`);
+            } else {
+                toast.error(`The domain '${sanitizedDomain}' is already in use.`);
+            }
         }
         else{
             toast.success('The domain was added successfully. Please Wait');
@@ -1142,120 +1155,6 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                     </div>
                   )}
                 </div>)}
-                {/* Right Side (Subscription Card)
-                <div className="w-full lg:w-1/2 flex">
-                  {activePlan && planMetaData ? (
-                    <Card className="w-full shadow-md hover:shadow-xl transition-shadow duration-300 bg-gradient-to-br from-background to-secondary/10 !rounded-xl flex flex-col overflow-hidden">
-                      <CardContent className="p-6 flex flex-col flex-grow">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                          <div>
-                            <h2 className="text-2xl font-semibold text-primary">
-                              Subscription Details
-                            </h2>
-                            <p className="text-muted-foreground mt-1">
-                              You are subscribed to the{' '}
-                              <span className="font-bold text-black uppercase">
-                                {activePlan}
-                                {expiryDays > 0 ? ` (Trial)` : null}
-                              </span>
-                            </p>
-
-                            {expiryDays > 0 && (
-                              <h2 className="text-lg font-semibold text-primary">
-                                Days Remaining: {expiryDays} Days
-                              </h2>
-                            )}
-
-                            <button
-                              disabled={portalClick}
-                              onClick={() => {
-                                handleBilling(setPortalClick, userData?.email);
-                              }}
-                              className="my-2 rounded-lg px-5 py-[10.5px] outline-none font-medium text-[16px] leading-[19px] text-center border border-solid cursor-pointer border-light-primary bg-primary text-white"
-                            >
-                              {portalClick ? (
-                                <CircularProgress
-                                  sx={{ color: 'white' }}
-                                  size={20}
-                                  className="m-auto"
-                                />
-                              ) : (
-                                'Handle Billing'
-                              )}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <h3 className="text-lg font-medium mb-2 text-primary">
-                            Domain Usage
-                          </h3>
-                          <LinearProgress
-                            value={
-                              (Number(planMetaData.usedDomains) /
-                                Number(planMetaData.maxDomains)) *
-                              100
-                            }
-                            variant="determinate"
-                            className="h-2 mb-2"
-                          />
-                          <div className="flex justify-between text-sm text-muted-foreground">
-                            {planMetaData.usedDomains ? (
-                              <>
-                                <span className="font-medium">
-                                  {planMetaData.usedDomains} used
-                                </span>
-                                <span>{planMetaData.maxDomains} total</span>
-                              </>
-                            ) : (
-                              <span className="font-medium">
-                                No Domains Added to Plan
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {APP_SUMO_BUNDLE_NAMES.slice(0, -1).includes(
-                          activePlan.toLowerCase(),
-                        ) ? (
-                          <div className="flex my-4 items-center">
-                            <input
-                              type="text"
-                              value={promoCode}
-                              placeholder="Coupon Code"
-                              onChange={(e) => setPromoCode(e.target.value)}
-                              className="p-[10px] py-[11.6px] bg-light-gray border border-solid border-white-blue rounded-[10px] text-[16px] leading-[19px] text-white-gray w-full box-border"
-                            />
-
-                            <button
-                              disabled={portalClick}
-                              type="button"
-                              onClick={upgradeAppSumo}
-                              className=" bg-primary flex justify-center py-[10.9px] px-3 text-white rounded-lg w-40 mx-3"
-                            >
-                              {portalClick ? (<CircularProgress sx={{color:"white"}} size={20} />) : ('Apply')}
-                            </button>
-                          </div>
-                        ) : null}
-                        <div className="mt-auto p-4 bg-[#f5f7fb] rounded-lg hover:bg-secondary/30 transition-colors duration-300">
-                          <h4 className="text-md font-semibold text-secondary-foreground mb-2">
-                            Upgrade your plan
-                          </h4>
-                          <p className="text-sm text-secondary-foreground/80">
-                            {APP_SUMO_BUNDLE_NAMES.slice(0, -1).includes(
-                              activePlan.toLowerCase(),
-                            )
-                              ? 'If you redeemed additional codes from App Sumo Enter the received promocodes above to upgrade your plan.'
-                              : 'Need more domains? Upgrade now for additional features and increased limits.'}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <div className="flex justify-center items-center w-full rounded-xl bg-background">
-                      <CircularProgress size={100} className="m-auto" />
-                    </div>
-                  )}
-                </div> */}
               </>
             )}
           </div>
