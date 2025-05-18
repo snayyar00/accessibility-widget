@@ -7,16 +7,34 @@ import verifyEmailQuery from '@/queries/auth/verifyEmail';
 import GoBack from '@/components/Common/GoBack';
 import Logo from '@/components/Common/Logo';
 import Badge from '@/components/Common/Badge';
+import RESEND_VERIFICATION from '@/queries/auth/resendVerification';
+import { toast } from 'react-toastify';
+import { CircularProgress } from '@mui/material';
 
 const VerifyEmail: React.FC = () => {
   const query = getQueryParam();
   const { t } = useTranslation();
   const token = query.get('token');
   const history = useHistory();
-  const [verifyEmailMutation, { error }] = useMutation(
+  const [verifyEmailMutation, { error, loading }] = useMutation(
     verifyEmailQuery,
   );
   const [verifyResult, setVerifyResult] = useState(null);
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+
+  // Set up the resend verification mutation
+  const [resendVerification] = useMutation(RESEND_VERIFICATION, {
+    onCompleted: () => {
+      setIsResending(false);
+      setResendSuccess(true);
+      toast.success('Verification email sent successfully!');
+    },
+    onError: (error) => {
+      setIsResending(false);
+      toast.error(error.message || 'Failed to send verification email. Please try again.');
+    }
+  });
 
   useEffect(() => {
     if (!token) {
@@ -32,6 +50,11 @@ const VerifyEmail: React.FC = () => {
     if (data) setVerifyResult(data);
   }
 
+  const handleResend = async () => {
+    setIsResending(true);
+    await resendVerification();
+  };
+
   return (
     <div className="h-screen overflow-hidden flex w-full min-h-screen items-center justify-center relative">
       <div className="absolute w-full h-full bg-primary z-[-2]" />
@@ -46,9 +69,46 @@ const VerifyEmail: React.FC = () => {
         <p className="text-[14px] leading-6 text-sapphire-blue max-w-[567px] mx-auto mt-6 mb-10">
           {t('Verify_email.description')}
         </p>
-        <Badge type={verifyResult !== null ? 'success' : 'error'}>
-          {verifyResult !== null ? t('Verify_email.success') : error?.message}
-        </Badge>
+        
+        {loading ? (
+          <div className="flex flex-col justify-center items-center py-6">
+            <CircularProgress 
+              size={60}
+              sx={{ color: '#0033ed' }}
+              className="mx-auto"
+            />
+            <p className="mt-2 text-sapphire-blue">Verifying your email...</p>
+          </div>
+        ) : (
+          <>
+          <Badge type={verifyResult !== null ? 'success' : 'error'}>
+            {verifyResult !== null ? t('Verify_email.success') : error?.message}
+          </Badge>
+          {error && (
+          <div className="mt-6">
+            {resendSuccess ? (
+              <p className="text-green-600 font-medium">
+                A new verification email has been sent to your inbox.
+              </p>
+            ) : (
+              <div>
+                <p className="text-gray-600 mb-2">
+                  If you need a new verification link, click below:
+                </p>
+                <button
+                  onClick={handleResend}
+                  disabled={isResending}
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  {isResending ? 'Sending...' : 'Resend verification email'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+          </>
+          
+        )}
         <div className="absolute w-[495px] h-[480px] left-[-400px] top-[-175px] z-[-1]">
           <svg
             width="496"

@@ -14,6 +14,7 @@ import { ReactComponent as MenuIcon } from '@/assets/images/svg/menu.svg';
 import Input from '@/components/Common/Input';
 import { handleBilling } from '@/containers/Profile/BillingPortalLink';
 import { CircularProgress } from '@mui/material';
+import EmailVerificationBanner from '../Auth/EmailVerificationBanner';
 
 type Props = {
   signout: () => void;
@@ -23,8 +24,13 @@ const Topbar: React.FC<Props> = ({ signout }) => {
   const dispath = useDispatch();
   const { t } = useTranslation();
   const {
-    data: { avatarUrl, name,email },
+    data: { avatarUrl, name,email,isActive },
   } = useSelector((state: RootState) => state.user);
+
+  const {
+    data,
+  } = useSelector((state: RootState) => state.user);
+
   const [isShowMenu, setIsShowMenu] = useState(false);
   const profileRef = useRef<HTMLElement>(null) as React.MutableRefObject<HTMLDivElement>;
 
@@ -41,7 +47,13 @@ const Topbar: React.FC<Props> = ({ signout }) => {
   }, []);
 
   return (
-    <div className="h-[80px] flex items-center justify-between pl-[25px] pr-[32px] relative sm:py-0 sm:px-[15px] sm:h-16">
+    <div>
+      {!isActive && (
+        <EmailVerificationBanner
+          email={(email as string)}
+        />
+      )}
+      <div className="h-[80px] flex items-center justify-between pl-[25px] pr-[32px] relative sm:py-0 sm:px-[15px] sm:h-16">
       <div className="relative sm:w-full sm:mr-[15px] [&>input]:sm:h-[38px] [&>input]:sm:pl-[30px]">
         <div
           onClick={() => dispath(toggleSidebar(true))}
@@ -124,6 +136,8 @@ const Topbar: React.FC<Props> = ({ signout }) => {
         </div>
       )}
     </div>
+    </div>
+    
   );
 };
 
