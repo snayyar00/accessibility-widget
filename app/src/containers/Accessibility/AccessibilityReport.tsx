@@ -78,11 +78,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
   useEffect(() => {
     if (data) {
-      const { htmlcs } = data.getAccessibilityReport;
-      setSiteImg(data.getAccessibilityReport?.siteImg);
-      setScoreBackup(data.getAccessibilityReport.score);
-      setScore(data.getAccessibilityReport.score);
-      groupByCode(htmlcs);
+      const result = data.getAccessibilityReport;
+      if(result){
+        const { htmlcs } = result;
+        groupByCode(htmlcs);
+      }
+      setSiteImg(result?.siteImg);
+      setScoreBackup(result?.score);
+      setScore(result?.score);
       // setAccessibilityData(htmlcs);
     }
   }, [data]);
@@ -229,7 +232,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           </button>
         </div>
       </div>
-      {(loading || scriptCheckLoading) ? (
+      {loading || scriptCheckLoading ? (
         <WebsiteScanAnimation className="mt-8" />
       ) : (
         <>
@@ -417,103 +420,120 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           </div> */}
                     </div>
                   )}
-
-                  <div>
-                    <div className="text-center">
-                      <h3 className="text-3xl font-semibold text-sapphire-blue mb-2">
-                        Accessibility Issues
-                      </h3>
-                    </div>
-                    <div className="flex justify-center justify-self-center">
-                      <div>
-                        <Card
-                          sx={{ maxWidth: 400, borderRadius: 'md', marginY: 4 }}
-                        >
-                          <SitePreviewSVG text={domain} />
-                          <CardMedia
-                            component="img"
-                            height="250"
-                            image={siteImg}
-                            alt="Site Preview Image"
-                          />
-                        </Card>
-                      </div>
-                    </div>
-
+                  {data?.getAccessibilityReport != undefined ? (
                     <div>
+                      <div className="text-center">
+                        <h3 className="text-3xl font-semibold text-sapphire-blue mb-2">
+                          Accessibility Issues
+                        </h3>
+                      </div>
+                      <div className="flex justify-center justify-self-center">
+                        <div>
+                          <Card
+                            sx={{
+                              maxWidth: 400,
+                              borderRadius: 'md',
+                              marginY: 4,
+                            }}
+                          >
+                            <SitePreviewSVG text={domain} />
+                            <CardMedia
+                              component="img"
+                              height="250"
+                              image={siteImg}
+                              alt="Site Preview Image"
+                            />
+                          </Card>
+                        </div>
+                      </div>
+
                       <div>
-                        <div className="flex flex-col justify-center items-center -mx-4 overflow-x-auto overflow-y-hidden sm:justify-center flex-nowrap dark:text-white-800">
-                          <div className="flex">
-                            <a
-                              className={`flex items-center flex-shrink-0 px-5 py-3 space-x-2 dark:text-white-600 cursor-pointer ${
-                                activeTab === 'By Function'
-                                  ? 'border border-b-0 rounded-t-lg'
-                                  : ''
-                              }`}
-                              onClick={toggleTab}
-                              style={
-                                activeTab === 'By Function'
-                                  ? {
-                                      backgroundColor: '#007bff',
-                                      color: 'white',
-                                    }
-                                  : { color: 'black' }
-                              }
-                            >
-                              <ByFunctionSVG text={activeTab} />
-                              <span>by Function</span>
-                            </a>
-                            <a
-                              className={`flex items-center flex-shrink-0 px-5 py-3 space-x-2 dark:text-white-600 cursor-pointer ${
-                                activeTab === 'By WCGA Guidelines'
-                                  ? 'border border-b-0 rounded-t-lg'
-                                  : ''
-                              }`}
-                              style={
-                                activeTab === 'By WCGA Guidelines'
-                                  ? {
-                                      backgroundColor: '#007bff',
-                                      color: 'white',
-                                    }
-                                  : { color: 'black' }
-                              }
-                              onClick={toggleTab}
-                            >
-                              <ByWCGAGuildelinesSVG text={activeTab} />
-                              <span>by WCGA Guidelines</span>
-                            </a>
+                        <div>
+                          <div className="flex flex-col justify-center items-center -mx-4 overflow-x-auto overflow-y-hidden sm:justify-center flex-nowrap dark:text-white-800">
+                            <div className="flex">
+                              <a
+                                className={`flex items-center flex-shrink-0 px-5 py-3 space-x-2 dark:text-white-600 cursor-pointer ${
+                                  activeTab === 'By Function'
+                                    ? 'border border-b-0 rounded-t-lg'
+                                    : ''
+                                }`}
+                                onClick={toggleTab}
+                                style={
+                                  activeTab === 'By Function'
+                                    ? {
+                                        backgroundColor: '#007bff',
+                                        color: 'white',
+                                      }
+                                    : { color: 'black' }
+                                }
+                              >
+                                <ByFunctionSVG text={activeTab} />
+                                <span>by Function</span>
+                              </a>
+                              <a
+                                className={`flex items-center flex-shrink-0 px-5 py-3 space-x-2 dark:text-white-600 cursor-pointer ${
+                                  activeTab === 'By WCGA Guidelines'
+                                    ? 'border border-b-0 rounded-t-lg'
+                                    : ''
+                                }`}
+                                style={
+                                  activeTab === 'By WCGA Guidelines'
+                                    ? {
+                                        backgroundColor: '#007bff',
+                                        color: 'white',
+                                      }
+                                    : { color: 'black' }
+                                }
+                                onClick={toggleTab}
+                              >
+                                <ByWCGAGuildelinesSVG text={activeTab} />
+                                <span>by WCGA Guidelines</span>
+                              </a>
+                            </div>
+                            {activeTab === 'By WCGA Guidelines' ? (
+                              <>
+                                <IssueCategoryCard
+                                  expand={expand}
+                                  data={data}
+                                  issueType="Errors"
+                                />
+                                <IssueCategoryCard
+                                  expand={expand}
+                                  data={data}
+                                  issueType="Warnings"
+                                />
+                                <IssueCategoryCard
+                                  expand={expand}
+                                  data={data}
+                                  issueType="Notices"
+                                />
+                              </>
+                            ) : (
+                              <>
+                                <IssueCategoryCard
+                                  expand={expand}
+                                  data={data}
+                                  issueType="Function"
+                                />
+                              </>
+                            )}
                           </div>
-                          {activeTab === 'By WCGA Guidelines' ? (
-                            <>
-                              <IssueCategoryCard
-                                expand={expand}
-                                data={data}
-                                issueType="Errors"
-                              />
-                              <IssueCategoryCard
-                                expand={expand}
-                                data={data}
-                                issueType="Warnings"
-                              />
-                              <IssueCategoryCard
-                                expand={expand}
-                                data={data}
-                                issueType="Notices"
-                              />
-                            </>
-                          ) : (
-                            <>
-                              <IssueCategoryCard
-                                expand={expand}
-                                data={data}
-                                issueType="Function"
-                              />
-                            </>
-                          )}
                         </div>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="w-full flex justify-center">
+                      <header className="text-center mb-8 w-full">
+                        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                          We Could Not Scan Your Website
+                        </h1>
+                        <p className="text-xl text-gray-600">
+                          Please try again with a valid domain name or Contact
+                          Support.
+                        </p>
+                      </header>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="mt-12 grid md:grid-cols-3 gap-6 text-center">

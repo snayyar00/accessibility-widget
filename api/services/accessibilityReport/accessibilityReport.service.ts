@@ -152,7 +152,7 @@ export const fetchAccessibilityReport = async (url: string) => {
     const result = await getAccessibilityInformationPally(url);
       
     const siteImg = await fetchSitePreview(url);
-    if (siteImg) {
+    if (result && siteImg) {
       result.siteImg = siteImg;
     }
 
