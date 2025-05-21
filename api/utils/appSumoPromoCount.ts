@@ -71,7 +71,22 @@ export async function appSumoPromoCount(subscriptions: any, promoCode: any,userI
   const usedTokens = await getUserTokens(userId);
   let max_sites = orderedCodes.length * 2;
   if(usedTokens.length > 0){
-    max_sites = ((usedTokens.length + promoCode.length) * 2);
+    let maxNum:number = usedTokens.reduce((max, code) => {
+      const m = code.match(/^custom(\d+)$/);
+      return m ? Math.max(max, Number(m[1])) : max;
+    }, 0);
+
+    const hasInfinityToken = usedTokens.includes("customInfinity");
+
+    if(hasInfinityToken){ // Infinity token
+      max_sites = Infinity;
+    }else if(maxNum > 0){
+      maxNum += promoCode.length; // Add the new promo codes to custom tokens
+      max_sites = Math.max(max_sites, maxNum * 2);
+    }
+    else{ // No custom token
+      max_sites = ((usedTokens.length + promoCode.length) * 2);
+    }
   }
 
   if(numPromoSites == max_sites){
