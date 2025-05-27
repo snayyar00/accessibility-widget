@@ -51,12 +51,12 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
-const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, 'https://www.webability.io'];
+const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, 'https://www.webability.io','http://localhost:3001','http://localhost:3000'];
 const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction','reportProblem','updateImpressionProfileCounts','getWidgetSettings','getAccessibilityReport','getAccessibilityStats'];
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
-app.use(express.json());
+app.use(express.json({ limit: '20mb' }));
 
 scheduleMonthlyEmails();
 
@@ -96,7 +96,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.use(express.static(join(resolve(), 'public', 'uploads')));
   app.use(cookieParser());
 
-  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(bodyParser.urlencoded({ limit:'20mb', extended: true }));
 
   app.get('/', (req, res) => {
     res.send('Hello orld!');
