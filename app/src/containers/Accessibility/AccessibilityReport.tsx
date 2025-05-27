@@ -5,7 +5,9 @@ import { FaGaugeSimpleHigh } from 'react-icons/fa6';
 import { FaUniversalAccess, FaCheckCircle, FaCircle } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import getAccessibilityStats from '@/queries/accessibility/accessibility';
-import { useLazyQuery } from '@apollo/client';
+import SAVE_ACCESSIBILITY_REPORT from '@/queries/accessibility/saveAccessibilityReport'
+import GET_USER_SITES from '@/queries/sites/getSites';
+import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
 import { toast } from 'react-toastify';
 import isValidDomain from '@/utils/verifyDomain';
 import Button from '@mui/joy/Button';
@@ -65,6 +67,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [correctDomain, setcorrectDomain] = useState(currentDomain);
   const [webAbilityScore,setWebAbilityScore] = useState(Math.floor(Math.random() * (100 - 90 + 1)) + 90);
   // const [accessibilityData, setAccessibilityData] = useState({});
+  const { data: sitesData } = useQuery(GET_USER_SITES);
+  const [saveAccessibilityReport] = useMutation(SAVE_ACCESSIBILITY_REPORT);
 
   const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(
     getAccessibilityStats,
@@ -80,6 +84,22 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     if (data) {
       const result = data.getAccessibilityReport;
       if(result){
+        let allowed_sites_id = null;
+        const normalizeDomain = (url: string) =>
+          url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+        if (sitesData && sitesData.getUserSites) {
+          const matchedSite = sitesData.getUserSites.find(
+            (site: any) => normalizeDomain(site.url) == normalizeDomain(correctDomain)
+          );
+          allowed_sites_id = matchedSite ? matchedSite.id : null;
+        }
+        saveAccessibilityReport({
+          variables: {
+            report: result,
+            url: normalizeDomain(correctDomain),
+            allowed_sites_id,
+          },
+        });
         const { htmlcs } = result;
         groupByCode(htmlcs);
       }
