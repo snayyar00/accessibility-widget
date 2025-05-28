@@ -36,6 +36,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   };
 
   const toggleFeatures = [
+    { key: 'language', label: 'Toggle Language' },
     { key: 'darkMode', label: 'Toggle Dark Mode' },
     { key: 'screenReader', label: 'Toggle Screen Reader' },
     { key: 'readingGuide', label: 'Toggle Reading Guide' },
@@ -67,6 +68,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   const colorPickers = [
     { key: 'headerText', label: 'Header Text Color' },
     { key: 'headerBg', label: 'Header BG Color' },
+    { key: 'headerControlsColor', label: 'Header Controls Color' },
     { key: 'footerText', label: 'Footer Text Color' },
     { key: 'footerBg', label: 'Footer BG Color' },
     { key: 'buttonText', label: 'Button Text Color' },
@@ -79,6 +81,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     { key: 'fontSizeMenuBg', label: 'Font Size Menu BG Color' },
     { key: 'fontSizeMenuText', label: 'Font Size Menu Text Color' },
     { key: 'fontSizeMenuButton', label: 'Font Size Menu Button Color' },
+    { key: 'reportButtonsBgColor', label: 'Report Buttons BG Color' },
+    { key: 'reportButtonsTextColor', label: 'Report Buttons Text Color' },
   ];
 
   const fileInputRef = useRef(null); // Create a ref for the file input
