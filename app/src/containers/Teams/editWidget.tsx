@@ -8,10 +8,12 @@ import { RootState } from '@/config/store';
 import { toast } from 'react-toastify';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import { head } from 'lodash';
 
 export interface Colors {
   headerText: string;
   headerBg: string;
+  headerControlsColor:string
   footerText: string;
   footerBg: string;
   buttonText: string;
@@ -28,9 +30,12 @@ export interface Colors {
   logoImage: string;
   accessibilityStatementLinkUrl: string;
   logoUrl:string;
+  reportButtonsBgColor: string;
+  reportButtonsTextColor: string;
 }
 
 export interface Toggles {
+  language: boolean;
   darkMode: boolean;
   screenReader: boolean;
   readingGuide: boolean;
@@ -63,6 +68,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
    const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.customize_widget') });
   const [toggles, setToggles] = useState({
+    language: true,
     darkMode: true,
     screenReader: true,
     readingGuide: true,
@@ -97,6 +103,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   const DefaultColors: Colors = {
     headerText: '#FFFFFF',
     headerBg: '#0848ca',
+    headerControlsColor: '#0848ca',
     footerText: '#000000',
     footerBg: '#FFFFFF',
     buttonText: '#000000',
@@ -112,9 +119,12 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     widgetBtnColor:'#195AFF',
     logoImage: "",
     accessibilityStatementLinkUrl:"https://www.webability.io/statement",
-    logoUrl:"https://webability.io"
+    logoUrl:"https://webability.io",
+    reportButtonsBgColor: '#0948c9',
+    reportButtonsTextColor: '#FFFFFF',
   };
   const DefaultToggles = {
+    language: true,
     darkMode: true,
     screenReader: true,
     readingGuide: true,
@@ -146,6 +156,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   const [colors, setColors] = useState({
     headerText: DefaultColors.headerText,
     headerBg: DefaultColors.headerBg,
+    headerControlsColor: DefaultColors.headerControlsColor,
     footerText: DefaultColors.footerText,
     footerBg: DefaultColors.footerBg,
     buttonText: DefaultColors.buttonText,
@@ -161,7 +172,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     widgetBtnColor:DefaultColors.widgetBtnColor,
     logoImage: DefaultColors.logoImage,
     accessibilityStatementLinkUrl: DefaultColors.accessibilityStatementLinkUrl,
-    logoUrl:DefaultColors.logoUrl
+    logoUrl:DefaultColors.logoUrl,
+    reportButtonsBgColor: DefaultColors.reportButtonsBgColor,
+    reportButtonsTextColor: DefaultColors.reportButtonsTextColor,
   });
 
   const fonts = [
@@ -187,6 +200,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     'footer-text': DefaultColors.footerText,
     'header-text': DefaultColors.headerText,
     'header-bg': DefaultColors.headerBg,
+    'header-controls-color': DefaultColors.headerControlsColor,
     'button-text': DefaultColors.buttonText,
     'bg-button': DefaultColors.buttonBg,
     'widget-background': DefaultColors.menuBg,
@@ -200,6 +214,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     'logoImage': DefaultColors.logoImage,
     'accessibilityStatementLinkUrl': DefaultColors.accessibilityStatementLinkUrl,
     'logoUrl':DefaultColors.logoUrl,
+    'reportButtonsBgColor': DefaultColors.reportButtonsBgColor,
+    'reportButtonsTextColor': DefaultColors.reportButtonsTextColor,
+    'toggleLanguage': DefaultToggles.language ? 1 : 0,
     'toggledarkMode': DefaultToggles.darkMode ? 1 : 0,
     'togglescreen-reader': DefaultToggles.screenReader ? 1 : 0,
     'togglereadable-guide': DefaultToggles.readingGuide ? 1 : 0,
@@ -239,6 +256,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
       'footer-text': colors.footerText,
       'header-text': colors.headerText,
       'header-bg': colors.headerBg,
+      "header-controls-color": colors.headerControlsColor,
       'button-text': colors.buttonText,
       'bg-button': colors.buttonBg,
       'widget-background': colors.menuBg,
@@ -252,6 +270,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
       'logoImage': colors.logoImage,
       'accessibilityStatementLinkUrl': colors.accessibilityStatementLinkUrl,
       'logoUrl':colors.logoUrl,
+      'reportButtonsBgColor': colors.reportButtonsBgColor,
+      'reportButtonsTextColor': colors.reportButtonsTextColor,
+      'toggleLanguage': toggles.language ? 1 : 0,
       'toggledarkMode': toggles.darkMode ? 1 : 0,
       'togglescreen-reader': toggles.screenReader ? 1 : 0,
       'togglereadable-guide': toggles.readingGuide ? 1 : 0,
@@ -294,12 +315,14 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
       return;
     }
     setButtonDisable(true);
+
     const url = `${process.env.REACT_APP_BACKEND_URL}/update-site-widget-settings`;
     const bodyData = {
       site_url: selectedSite,
       settings: JSON.stringify(settings),
       user_id: userData?.id,
     };
+
     await fetch(url, {
       method: 'POST',
       headers: {
@@ -392,6 +415,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
           headerText:
             fetchedSettings['header-text'] || DefaultColors.headerText,
           headerBg: fetchedSettings['header-bg'] || DefaultColors.headerBg,
+          headerControlsColor: fetchedSettings['header-controls-color'] || DefaultColors.headerControlsColor,
           footerText:
             fetchedSettings['footer-text'] || DefaultColors.footerText,
           footerBg: fetchedSettings['footer-bg'] || DefaultColors.footerBg,
@@ -421,12 +445,17 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
           accessibilityStatementLinkUrl:
             fetchedSettings['accessibilityStatementLinkUrl'] || DefaultColors.accessibilityStatementLinkUrl,
           logoUrl:
-            fetchedSettings['logoUrl'] || DefaultColors.logoUrl
+            fetchedSettings['logoUrl'] || DefaultColors.logoUrl,
+          reportButtonsBgColor:
+          fetchedSettings['reportButtonsBgColor'] || DefaultColors.reportButtonsBgColor,
+          reportButtonsTextColor:
+          fetchedSettings['reportButtonsTextColor'] || DefaultColors.reportButtonsTextColor,
         });
 
         // Update toggles.
         // Note: The toggle values are stored as numbers (0 or 1); we convert them to booleans.
         setToggles({
+          language: fetchedSettings.toggleLanguage === 1,
           darkMode: fetchedSettings.toggledarkMode === 1,
           screenReader: fetchedSettings['togglescreen-reader'] === 1,
           readingGuide: fetchedSettings['togglereadable-guide'] === 1,

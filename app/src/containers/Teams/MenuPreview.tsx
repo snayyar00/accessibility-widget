@@ -270,52 +270,60 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
           Accessibility Menu
         </h1>
         <div style={fontStyle} className="flex gap-4">
-          <button
+          {/* <button
             style={fontStyle}
             className="p-2 bg-white rounded-full"
             aria-label="Widget settings"
           >
             <FaGear className="w-6 h-6 text-[#0848ca]" />
-          </button>
+          </button> */}
           <button
-            style={fontStyle}
+            style={{
+              ...fontStyle,
+              color: colors['headerControlsColor'],
+            }}
             className="p-2 bg-white rounded-full"
             aria-label="Reset accessibility settings"
           >
-            <FaRotateRight className="w-6 h-6 text-[#0848ca]" />
+            <FaRotateRight className="w-6 h-6" />
           </button>
           <button
-            style={fontStyle}
+            style={{
+              ...fontStyle,
+              color: colors['headerControlsColor'],
+            }}
             className="p-2 bg-white rounded-full"
             aria-label="Close accessibility menu"
           >
-            <FaX className="w-6 h-6 text-[#0848ca]" />
+            <FaX className="w-6 h-6" />
           </button>
         </div>
       </header>
 
       <div style={fontStyle} className="flex-grow overflow-y-auto">
         <div style={fontStyle} className="p-4 space-y-4">
-          <button
-            style={{
-              ...fontStyle,
-              backgroundColor: colors['dropdownBg'],
-              color: colors['dropdownText'],
-            }}
-            className="w-full flex items-center justify-between p-4 bg-white rounded-xl"
-          >
-            <div style={fontStyle} className="flex items-center gap-3">
-              <span
-                style={fontStyle}
-                className="w-8 h-8 bg-[#0848ca] text-white rounded-full flex items-center justify-center"
-              >
-                US
-              </span>
-              <span style={fontStyle}>English (USA)</span>
-            </div>
-            <FaChevronDown className="w-5 h-5" style={fontStyle} />
-          </button>
-
+          {toggles['language'] && (
+            <button
+              style={{
+                ...fontStyle,
+                backgroundColor: colors['dropdownBg'],
+                color: colors['dropdownText'],
+              }}
+              className="w-full flex items-center justify-between p-4 bg-white rounded-xl"
+            >
+              <div style={fontStyle} className="flex items-center gap-3">
+                <span
+                  style={fontStyle}
+                  className="w-8 h-8 bg-[#0848ca] text-white rounded-full flex items-center justify-center"
+                >
+                  US
+                </span>
+                <span style={fontStyle}>English (USA)</span>
+              </div>
+              <FaChevronDown className="w-5 h-5" style={fontStyle} />
+            </button>
+          )}
+          
           <div style={fontStyle} className="relative">
             <button
               style={{
