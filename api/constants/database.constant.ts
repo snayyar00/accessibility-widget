@@ -1,5 +1,3 @@
-import { access } from "fs";
-
 export const TABLES = {
   users: 'users',
   userTokens: 'user_tokens',
