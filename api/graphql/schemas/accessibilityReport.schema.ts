@@ -67,7 +67,8 @@ export const AccessibilitySchema = gql`
     url: String!
     created_at: String
     updated_at: String
-  ): [Report]!
+  ): [String!]!
+    fetchReportByR2Key(r2_key: String!): Report
   }
 
   extend type Mutation {
@@ -77,5 +78,6 @@ export const AccessibilitySchema = gql`
       allowed_sites_id: Int
       key: String
     ): SaveReportResponse!
+    deleteAccessibilityReport(r2_key: String!): Boolean!    
   }
 `;

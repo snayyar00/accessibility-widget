@@ -1,8 +1,7 @@
 import { combineResolvers } from 'graphql-resolvers';
 import { fetchAccessibilityReport } from '~/services/accessibilityReport/accessibilityReport.service';
-import { insertAccessibilityReport } from '~/repository/accessibilityReports.repository';
-import { getR2KeysByParams } from '~/repository/accessibilityReports.repository';
-import { saveReportToR2, fetchReportFromR2 } from '~/utils/r2Storage';
+import { insertAccessibilityReport, deleteAccessibilityReportByR2Key, getR2KeysByParams } from '~/repository/accessibilityReports.repository';
+import { saveReportToR2, fetchReportFromR2, deleteReportFromR2 } from '~/utils/r2Storage';
 
 const resolvers = {
   Mutation: {
@@ -26,24 +25,20 @@ const resolvers = {
 
       return { success: true, key: reportKey, report: meta };
     },
+    deleteAccessibilityReport: async (_: any, { r2_key }: any) => {
+      // Delete from R2 storage
+      await deleteReportFromR2(r2_key);
+      // Delete from SQL database
+      return await deleteAccessibilityReportByR2Key(r2_key);
+    },
   },
   Query: {
     getAccessibilityReport: combineResolvers((_, { url }) => fetchAccessibilityReport(url)),
     fetchAccessibilityReportFromR2: async (_: any, { url, created_at, updated_at }: any) => {
-      const keys = await getR2KeysByParams({ url, created_at, updated_at });
-      if (!keys.length) return [];
-      // Fetch all matching reports from R2
-      const reports = await Promise.all(
-        keys.map(async (row: any) => {
-          try {
-            return await fetchReportFromR2(row.r2_key);
-          } catch (e) {
-            return null;
-          }
-        })
-      );
-      // Filter out any failed fetches
-      return reports.filter(Boolean);
+      return await getR2KeysByParams({ url, created_at, updated_at });
+    },
+    fetchReportByR2Key: async (_: any, { r2_key }: any) => {
+      return await fetchReportFromR2(r2_key);
     },
   },
 };

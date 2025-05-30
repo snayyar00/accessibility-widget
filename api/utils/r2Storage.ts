@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
 
 const s3 = new S3Client({
@@ -32,4 +32,12 @@ export async function fetchReportFromR2(key: string) {
     chunks.push(chunk as Buffer);
   }
   return JSON.parse(Buffer.concat(chunks).toString('utf-8'));
+}
+
+export async function deleteReportFromR2(key: string) {
+  const command = new DeleteObjectCommand({
+    Bucket: process.env.R2_BUCKET!,
+    Key: key,
+  });
+  await s3.send(command);
 }

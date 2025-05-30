@@ -1680,7 +1680,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     },
   });
 
-  app.use('/graphql', express.json({ limit: '20mb' }));
+  app.use('/graphql', express.json({ limit: '2mb' }));
   serverGraph.applyMiddleware({ app, cors: false });
   
   // Initialize Sentry with tracing for GraphQL

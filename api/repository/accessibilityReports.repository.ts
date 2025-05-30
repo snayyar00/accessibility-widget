@@ -48,5 +48,13 @@ export async function getR2KeysByParams({
     query = query.orderBy('created_at', 'desc').limit(1);
   }
 
-  return query.select('r2_key');
+  const rows = await query.select('r2_key');
+  return rows.map(row => row.r2_key);
+}
+
+export async function deleteAccessibilityReportByR2Key(r2_key: string) {
+  const deleted = await database(TABLES.accessibilityReports)
+    .where({ r2_key })
+    .del();
+  return !!deleted;
 }
