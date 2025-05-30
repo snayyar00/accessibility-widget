@@ -40,7 +40,14 @@ import { appSumoPromoCount } from './utils/appSumoPromoCount';
 import { expireUsedPromo } from './utils/expireUsedPromo';
 import { findUsersByToken, getUserTokens } from './repository/user_plan_tokens.repository';
 // import run from './scripts/create-products';
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
+const openai = new OpenAI({
+  baseURL: "https://openrouter.ai/api/v1",
+  apiKey: process.env.OPENROUTER_API_KEY,
+  defaultHeaders: {
+    "HTTP-Referer": "Webability.io",
+    "X-Title": "Webability.io - Accesbility Compliance Solution",
+  },
+});
 
 type ContextParams = {
   req: Request;
@@ -1434,7 +1441,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           }),
         },
       ],
-      model: 'gpt-4o-mini',
+       model: "google/gemini-2.5-flash-preview-05-20",
     });
   
     const correctedResponse = response.choices[0].message.content.replace(/```json|```/g, '');
