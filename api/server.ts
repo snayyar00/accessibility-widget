@@ -14,6 +14,7 @@ import * as Tracing from '@sentry/tracing';
 import { IResolvers } from '@graphql-tools/utils';
 import { makeExecutableSchema } from 'graphql-tools';
 import accessLogStream from './middlewares/logger.middleware';
+import logger from './utils/logger';
 import RootSchema from './graphql/root.schema';
 import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';

@@ -70,7 +70,7 @@ export function resetPreprocessingConfig(): void {
 export const ENVIRONMENT_CONFIGS = {
   development: {
     enabled: true,
-    debugMode: true,
+    debugMode: false,
     maxConcurrency: 3,
     fallbackOnError: true
   },
