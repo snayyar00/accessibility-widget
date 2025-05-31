@@ -86,7 +86,7 @@ interface WebAIMResponse {
 }
 
 interface Error {
-  'Error Guideline'?: string;
+  'ErrorGuideline'?: string;
   code?: string;
   description?: string | string[];
   message?: string | string[];
@@ -119,9 +119,7 @@ function calculateAccessibilityScore(data: any) {
     if (data.categories.hasOwnProperty(category)) {
       const categoryData = data.categories[category];
       const weight = weights[category as keyof typeof weights] || defaultWeight;
-      console.log(`${data.categories[category]}, ${categoryData.count}`);
       issueSum += categoryData.count * weight;
-      console.log('issueSum: ', issueSum);
       totalIssues += categoryData.count;
     }
   }
@@ -142,6 +140,21 @@ interface htmlcsOutput {
   recommended_action?:string;
 }
 
+interface ResultWithOriginal {
+  axe?: any;
+  htmlcs?: any;
+  score?: number;
+  totalElements?: number;
+  siteImg?: string;
+  ByFunctions?: any[];
+  processing_stats?: any;
+  _originalHtmlcs?: {
+    errors: htmlcsOutput[];
+    notices: htmlcsOutput[];
+    warnings: htmlcsOutput[];
+  };
+}
+
 export const fetchAccessibilityReport = async (url: string) => {
   try {
 
@@ -149,7 +162,7 @@ export const fetchAccessibilityReport = async (url: string) => {
       url = 'https://' + url;
     }
     
-    const result = await getAccessibilityInformationPally(url);
+    const result: ResultWithOriginal = await getAccessibilityInformationPally(url);
       
     const siteImg = await fetchSitePreview(url);
     if (result && siteImg) {
@@ -157,11 +170,19 @@ export const fetchAccessibilityReport = async (url: string) => {
     }
 
     if (result) {
+      // Skip old ByFunctions processing if enhanced processing already provided ByFunctions
+      if (result.ByFunctions && Array.isArray(result.ByFunctions) && result.ByFunctions.length > 0) {
+        return result; // Return with enhanced ByFunctions
+      }
+      
+      // Legacy ByFunctions processing (only if enhanced processing didn't provide ByFunctions)
+      // Use original htmlcs data for ByFunctions processing if available (from enhanced processing)
+      // This preserves the original error codes that GPTChunks expects
       const guideErrors: {
         errors: htmlcsOutput[];
         notices: htmlcsOutput[];
         warnings: htmlcsOutput[];
-      } = result?.htmlcs;
+      } = result?._originalHtmlcs || result?.htmlcs;
       
       const errorCodes: string[] = [];
       const errorCodeWithDescriptions: { [key: string]: { [key: string]: string | string[] } } = {};
@@ -207,20 +228,49 @@ export const fetchAccessibilityReport = async (url: string) => {
           (functionality: HumanFunctionality) => {
             // Iterate over each error in the functionality
             functionality.Errors.forEach((error: Error) => {
-              // Add error description based on error guideline
-              error.code = error['Error Guideline'];
-              delete error['Error Guideline'];
+              // Handle the field name change from 'Error Guideline' to 'ErrorGuideline'
+              let errorCode = error['ErrorGuideline'] || (error as any)['Error Guideline'] || (error as any)['code'] || (error as any)['Error Code'] || (error as any)['guideline'];
+              
+              // If still null, try to find any field that looks like an error code
+              if (!errorCode) {
+                const possibleCode = Object.values(error).find((value: any) => 
+                  typeof value === 'string' && value.includes('WCAG')
+                );
+                errorCode = possibleCode;
+              }
+              
+              error.code = errorCode;
+              delete error['ErrorGuideline'];
+              delete (error as any)['Error Guideline']; // Clean up legacy field name
 
-              error.description =
-                      errorCodeWithDescriptions[error.code]?.description;
-              error.context =
-                    errorCodeWithDescriptions[error.code]?.context;
-              error.message =
-                    errorCodeWithDescriptions[error.code]?.message;
-              error.recommended_action =
-                    errorCodeWithDescriptions[error.code]?.recommended_action;
-              error.selectors =
-                    errorCodeWithDescriptions[error.code]?.selectors;
+              // Only try to map if we have a valid error code
+              if (errorCode && errorCodeWithDescriptions[errorCode]) {
+                error.description = errorCodeWithDescriptions[errorCode]?.description;
+                error.context = errorCodeWithDescriptions[errorCode]?.context;
+                error.message = errorCodeWithDescriptions[errorCode]?.message;
+                error.recommended_action = errorCodeWithDescriptions[errorCode]?.recommended_action;
+                error.selectors = errorCodeWithDescriptions[errorCode]?.selectors;
+              } else {
+                // Try to find enhanced descriptions from result.htmlcs for this error code
+                let enhancedDescription = null;
+                if (result?.htmlcs?.errors) {
+                  const enhancedError = result.htmlcs.errors.find((e: any) => e.code === errorCode);
+                  if (enhancedError) {
+                    enhancedDescription = enhancedError.description;
+                    error.message = enhancedError.message;
+                    error.recommended_action = enhancedError.recommended_action;
+                    error.context = enhancedError.context || [];
+                    error.selectors = enhancedError.selectors || [];
+                  }
+                }
+                
+                // Provide meaningful fallback values
+                error.description = enhancedDescription || "Accessibility issue detected. Please review this element for compliance.";
+                error.message = error.message || "Accessibility compliance issue";
+                error.recommended_action = error.recommended_action || "Review and fix this accessibility issue according to WCAG guidelines.";
+                error.context = error.context || [];
+                error.selectors = error.selectors || [];
+              }
             });
           },
         );
@@ -229,10 +279,8 @@ export const fetchAccessibilityReport = async (url: string) => {
       }
     }
         
-    if (result?.ByFunctions) {
-      return result;
-    }
-        
+    // Always return result - enhanced processing populates axe/htmlcs directly
+    return result;
 
   } catch (error) {
     console.error(error);

@@ -1,4 +1,6 @@
 import { readAccessibilityDescriptionFromDb } from '../services/accessibilityReport/accessibilityIssues.service';
+import { processAccessibilityIssuesWithFallback } from '../services/accessibilityReport/enhancedProcessing.service';
+import { getPreprocessingConfig } from '../config/preprocessing.config';
 
 // const pa11y = require('pa11y');
 
@@ -33,6 +35,12 @@ interface finalOutput {
   totalElements: number;
   siteImg?:string;
   ByFunctions?: HumanFunctionality[];
+  processing_stats?: any;
+  _originalHtmlcs?: {
+    errors: htmlcsOutput[];
+    notices: htmlcsOutput[];
+    warnings: htmlcsOutput[];
+  };
 }
 
 interface Error {
@@ -202,6 +210,58 @@ export async function getAccessibilityInformationPally(domain: string) {
       }
     }
   });
+  
+  // Get preprocessing configuration
+  const config = getPreprocessingConfig();
+  
+  if (config.enabled) {
+    // Use enhanced processing pipeline
+    console.log('🚀 Using enhanced preprocessing pipeline');
+    try {
+      const enhancedResult = await processAccessibilityIssuesWithFallback(output);
+      
+      // Debug: Check what we got from enhanced processing
+      console.log('🔍 Enhanced processing result debug:')
+      console.log('   enhancedResult.ByFunctions exists:', !!enhancedResult.ByFunctions)
+      console.log('   enhancedResult.ByFunctions length:', enhancedResult.ByFunctions?.length || 0)
+      if (enhancedResult.ByFunctions?.[0]) {
+        console.log('   First group:', enhancedResult.ByFunctions[0].FunctionalityName)
+        console.log('   First group errors:', enhancedResult.ByFunctions[0].Errors?.length || 0)
+        if (enhancedResult.ByFunctions[0].Errors?.[0]) {
+          console.log('   First error description:', enhancedResult.ByFunctions[0].Errors[0].description?.substring(0, 50))
+        }
+      }
+      
+      // Preserve original error codes for ByFunctions processing
+      // Store the original format before enhancement
+      const originalOutput = JSON.parse(JSON.stringify(output)); // Deep clone
+      
+      // Merge enhanced results back to original format
+      const finalOutput: finalOutput = {
+        axe: enhancedResult.axe,
+        htmlcs: enhancedResult.htmlcs,
+        ByFunctions: enhancedResult.ByFunctions, // Preserve enhanced ByFunctions
+        score: enhancedResult.score || calculateAccessibilityScore(output.axe),
+        totalElements: output.totalElements,
+        processing_stats: enhancedResult.processing_stats,
+        // Preserve original htmlcs for ByFunctions processing
+        _originalHtmlcs: originalOutput.htmlcs
+      };
+      
+      console.log('📦 Final output debug:')
+      console.log('   finalOutput.ByFunctions exists:', !!finalOutput.ByFunctions)
+      console.log('   finalOutput.ByFunctions length:', finalOutput.ByFunctions?.length || 0)
+      
+      return finalOutput;
+      
+    } catch (error) {
+      console.error('❌ Enhanced processing failed, falling back to legacy:', error);
+      // Continue with legacy processing below
+    }
+  }
+  
+  // Legacy processing path (fallback)
+  console.log('⚙️ Using legacy processing pipeline');
   output.score = calculateAccessibilityScore(output.axe);
   const result = await readAccessibilityDescriptionFromDb(output.htmlcs);
   output.htmlcs = result;

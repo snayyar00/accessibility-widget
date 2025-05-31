@@ -3,7 +3,14 @@ import OpenAI from 'openai';
 import { stringToJson } from '../../helpers/stringToJSON.helper';
 import dotenv from 'dotenv';
 dotenv.config();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
+const openai = new OpenAI({
+  baseURL: "https://openrouter.ai/api/v1",
+  apiKey: process.env.OPENROUTER_API_KEY,
+  defaultHeaders: {
+    "HTTP-Referer": "Webability.io",
+    "X-Title": "Webability.io - Accesbility Compliance Solution",
+  },
+});
 
 interface dbIssue {
   heading: string;
@@ -38,7 +45,7 @@ async function getIssueDescription(issues: any) {
       },
       { role: 'user', content: JSON.stringify(issues) },
     ],
-    model: 'gpt-4-turbo-preview',
+    model: "google/gemini-2.5-flash-preview-05-20",
   });
   return res.choices[0];
 }
@@ -156,7 +163,7 @@ export async function readAccessibilityDescriptionFromDb(issues: any) {
 
 
 interface Error {
-  'Error Guideline'?: string;
+  'ErrorGuideline'?: string;
   code?: string;
   description?: string | string[];
   message?: string | string[];
@@ -220,12 +227,12 @@ export const GPTChunks = async (errorCodes: string[]) => {
                         items: {
                           type: "object",
                           properties: {
-                            "Error Guideline": {
+                            "ErrorGuideline": {
                               type: "string",
                               description: "WCGA Error Codes",
                             },
                           },
-                          required: ["Error Guideline"], // Ensure these properties are required
+                          required: ["ErrorGuideline"], // Ensure these properties are required
                         },
                         description: "Errors related to this functionality",
                       },
@@ -238,7 +245,7 @@ export const GPTChunks = async (errorCodes: string[]) => {
           },
         },
       ],
-      model: "gpt-3.5-turbo",
+      model: "google/gemini-2.5-flash-preview-05-20",
     });
     return completion.choices[0].message.tool_calls?.[0].function.arguments;
   });
@@ -287,6 +294,8 @@ export const GPTChunks = async (errorCodes: string[]) => {
 
       mergedObject = final;
     }
+
+    const result = JSON.parse(aggregatedResult[0]);
 
     return mergedObject;
   } catch (error) {
