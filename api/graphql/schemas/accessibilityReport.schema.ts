@@ -127,6 +127,21 @@ export const AccessibilitySchema = gql`
     preprocessing_stats: PreprocessingStats
   }
 
+  type AccessibilityReportMeta {
+    id: Int!
+    url: String!
+    allowed_sites_id: Int
+    r2_key: String!
+    created_at: String!
+    updated_at: String!
+  }
+
+  type SaveReportResponse {
+    success: Boolean!
+    key: String!
+    report: AccessibilityReportMeta
+  }
+
   extend type Query {
     getAccessibilityReport(url: String!): Report
     getProcessingDashboard(url: String!): ProcessingDashboard
@@ -164,5 +179,22 @@ export const AccessibilitySchema = gql`
     batch_efficiency: Float
     template_savings: Int
     estimated_monthly_savings: String
+    getAccessibilityReportMeta(id: Int!): AccessibilityReportMeta
+    fetchAccessibilityReportFromR2(
+    url: String!
+    created_at: String
+    updated_at: String
+  ): [String!]!
+    fetchReportByR2Key(r2_key: String!): Report
+  }
+
+  extend type Mutation {
+    saveAccessibilityReport(
+      report: JSON!
+      url: String!
+      allowed_sites_id: Int
+      key: String
+    ): SaveReportResponse!
+    deleteAccessibilityReport(r2_key: String!): Boolean!    
   }
 `;

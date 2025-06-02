@@ -20,6 +20,7 @@ export const TABLES = {
   widgetSettings:'widget_settings',
   newsletterSubscribers:'newsletter_subscribers',
   userPlanTokens:'user_plan_tokens',
+  accessibilityReports: 'accessibility_reports',
 };
 
 export const DEFAULT_LIMIT = 25;
