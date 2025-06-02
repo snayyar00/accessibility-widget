@@ -145,6 +145,13 @@ export const AccessibilitySchema = gql`
   extend type Query {
     getAccessibilityReport(url: String!): Report
     getProcessingDashboard(url: String!): ProcessingDashboard
+    getAccessibilityReportMeta(id: Int!): AccessibilityReportMeta
+    fetchAccessibilityReportFromR2(
+    url: String!
+    created_at: String
+    updated_at: String
+  ): [String!]!
+    fetchReportByR2Key(r2_key: String!): Report
   }
 
   type ProcessingDashboard {
@@ -179,13 +186,6 @@ export const AccessibilitySchema = gql`
     batch_efficiency: Float
     template_savings: Int
     estimated_monthly_savings: String
-    getAccessibilityReportMeta(id: Int!): AccessibilityReportMeta
-    fetchAccessibilityReportFromR2(
-    url: String!
-    created_at: String
-    updated_at: String
-  ): [String!]!
-    fetchReportByR2Key(r2_key: String!): Report
   }
 
   extend type Mutation {
