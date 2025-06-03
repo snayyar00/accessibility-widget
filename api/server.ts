@@ -64,7 +64,7 @@ const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerIntera
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
-app.use(express.json());
+app.use(express.json({ limit: '2mb'}));
 
 scheduleMonthlyEmails();
 
@@ -104,7 +104,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.use(express.static(join(resolve(), 'public', 'uploads')));
   app.use(cookieParser());
 
-  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(bodyParser.urlencoded({ extended: true, limit: '2mb' }));
 
   app.get('/', (req, res) => {
     res.send('Hello orld!');

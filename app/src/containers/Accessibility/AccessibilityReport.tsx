@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import getAccessibilityStats from '@/queries/accessibility/accessibility';
 import SAVE_ACCESSIBILITY_REPORT from '@/queries/accessibility/saveAccessibilityReport'
 import GET_USER_SITES from '@/queries/sites/getSites';
+import FETCH_ACCESSIBILITY_REPORT_KEYS from '@/queries/accessibility/fetchAccessibilityReport';
 import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
 import { toast } from 'react-toastify';
 import isValidDomain from '@/utils/verifyDomain';
@@ -48,6 +49,7 @@ import ReactToPrint, { useReactToPrint } from 'react-to-print';
 import Logo from '@/components/Common/Logo';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import { report } from 'process';
 
 const AccessibilityReport = ({ currentDomain }: any) => {
   const { t } = useTranslation();
@@ -69,6 +71,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   // const [accessibilityData, setAccessibilityData] = useState({});
   const { data: sitesData } = useQuery(GET_USER_SITES);
   const [saveAccessibilityReport] = useMutation(SAVE_ACCESSIBILITY_REPORT);
+  const [selectedSite, setSelectedSite] = useState('');
+  const  [reportGenerated, setReportGenerated] = useState(false);
+
+  const [fetchReportKeys, { data: reportKeysData, loading: loadingReportKeys }] = useLazyQuery(FETCH_ACCESSIBILITY_REPORT_KEYS);
 
   const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(
     getAccessibilityStats,
@@ -84,6 +90,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     if (data) {
       const result = data.getAccessibilityReport;
       if(result){
+        console.log('Accessibility Report Data:', result);
         let allowed_sites_id = null;
         const normalizeDomain = (url: string) =>
           url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
@@ -93,12 +100,15 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           );
           allowed_sites_id = matchedSite ? matchedSite.id : null;
         }
+        console.log('Payload size:', JSON.stringify(result).length / 1024, 'KB'); // Log size in KB
         saveAccessibilityReport({
           variables: {
             report: result,
             url: normalizeDomain(correctDomain),
             allowed_sites_id,
           },
+        }).then(() => {
+          setReportGenerated((prev) => !prev);
         });
         const { htmlcs } = result;
         groupByCode(htmlcs);
@@ -116,6 +126,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       setExpand(false);
     }
   }, [expand]);
+
+  // When a domain is selected, fetch all report keys for that domain
+  useEffect(() => {
+    if (selectedSite) {
+      fetchReportKeys({ variables: { url: selectedSite } });
+    }
+  }, [selectedSite, reportGenerated]);
 
   const enableButton = () => {
     if (enabled) {
@@ -215,6 +232,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   };
 
+  const getComplianceStatus = (score: number) => {
+    if (score >= 90) {
+      return 'Accessible';
+    } else if (score >= 70) {
+      return 'Semi Compliant';
+    } else {
+      return 'Not Compliant';
+    }
+  };
+
   return (
     <div className="accessibility-wrapper">
       <header className="text-center mb-8">
@@ -222,34 +249,76 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           Web Accessibility Scanner
         </h1>
         <p className="text-xl text-gray-600">
-          Evaluate your website's accessibility in seconds
+          Evaluate your website's accessibility in seconds. View a history of all accessibility scans. Download your reports below.
         </p>
       </header>
-      <div className="w-full border-none shadow-none flex justify-center">
-        {/* Replaced <form> with a <div> */}
-        <div className="search-bar-container">
-          <input
-            type="text"
-            placeholder="Enter a domain"
-            className="search-input"
-            value={domain}
-            onChange={handleInputChange} // Correctly updates the input value
-            onKeyDown={handleKeyPress}
-          />
-          <button
-            type="button" // Changed type from "submit" to "button"
-            className="search-button bg-primary"
-            onClick={handleSubmit} // Added onClick handler
-          >
-            Free Scan
-            {(loading || scriptCheckLoading) && ( // Included scriptCheckLoading in the loading state
-              <CircularProgress
-                size={14}
-                sx={{ color: 'white' }}
-                className="ml-2 my-auto"
-              />
-            )}
-          </button>
+      <div className="w-full border-none shadow-none flex flex-col justify-center items-center">
+        <div className="bg-white my-6 p-3 sm:p-4 rounded-xl w-full">
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+            Enter or Select a Domain
+          </h2>
+          <div className="flex flex-col gap-4">
+            {/* Hybrid input field */}
+            <div className="flex items-center gap-4">
+              <select
+                className="w-full p-2 border rounded text-sm sm:text-base"
+                value={selectedSite || 'new'}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === 'new') {
+                    setSelectedSite('');
+                    setDomain('');
+                  } else {
+                    setSelectedSite(value);
+                    setDomain('');
+                  }
+                }}
+              >
+                <option value="new">Enter a new domain</option>
+                {sitesData?.getUserSites?.map((domain: any) => (
+                  <option key={domain.id} value={domain.url}>
+                    {domain.url}
+                  </option>
+                ))}
+              </select>
+
+              {/* Conditional rendering of text input */}
+              {selectedSite === '' && (
+                <input
+                  type="text"
+                  placeholder="Enter a domain"
+                  className="w-full p-2 border rounded text-sm sm:text-base"
+                  value={domain}
+                  onChange={(e) => setDomain(e.target.value)}
+                  onKeyDown={handleKeyPress} // Triggers submit on Enter key
+                />
+              )}
+            </div>
+
+            {/* Submit button */}
+            <button
+              type="button"
+              className="bg-primary text-white px-4 py-2 rounded"
+              onClick={() => {
+                if (selectedSite) {
+                  setcorrectDomain(selectedSite);
+                  checkScript();
+                  getAccessibilityStatsQuery({ variables: { url: selectedSite } });
+                } else if (domain) {
+                  handleSubmit();
+                }
+              }}
+            >
+              Generate Report
+              {(loading || scriptCheckLoading) && (
+                <CircularProgress
+                  size={14}
+                  sx={{ color: 'white' }}
+                  className="ml-2 my-auto"
+                />
+              )}
+            </button>
+          </div>
         </div>
       </div>
       {loading || scriptCheckLoading ? (
@@ -602,6 +671,79 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 </div>
               )}
             </div>
+              {selectedSite && reportKeysData && (
+                <div className="bg-white rounded-xl p-6 mt-8 shadow mr-6 ml-6">
+                  <h3 className="text-xl font-semibold mb-6">Your audit history</h3>
+                  <table className="min-w-full text-left border-separate border-spacing-y-2">
+                    <thead>
+                      <tr className="text-gray-500 text-sm uppercase">
+                        <th className="py-2 px-4">Webpage</th>
+                        <th className="py-2 px-4">Date</th>
+                        <th className="py-2 px-4">Time</th>
+                        <th className="py-2 px-4">Compliance Status</th>
+                        <th className="py-2 px-4">Accessibility Score</th>
+                        <th className="py-2 px-4">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reportKeysData.fetchAccessibilityReportFromR2.map((row: any, idx: number) => {
+                        //console.log('Row Data:', row);
+                        //console.log('Row created_at:', row.created_at);
+                        const dateObj = new Date(Number(row.created_at));
+                        //console.log(dateObj)
+                        const date = dateObj.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                        const time = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                        const complianceStatus = getComplianceStatus(row.score);
+                        return (
+                          <tr
+                            key={row.r2_key}
+                            className={`bg-${idx % 2 === 0 ? 'white' : 'gray-50'} hover:bg-blue-50 transition`}
+                            style={{ borderRadius: 8 }}
+                          >
+                            <td className="py-3 px-4 font-medium text-gray-900">{row.url}</td>
+                            <td className="py-3 px-4">{date}</td>
+                            <td className="py-3 px-4">{time}</td>
+                            <td className="py-3 px-4">
+                              {complianceStatus === 'Accessible' ? (
+                                <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Accessible</span>
+                              ) : complianceStatus === 'Semi Compliant' ? (
+                                <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">Semi Compliant</span>
+                              ) : (
+                                <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">{complianceStatus}</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">{row.score ?? '-'}</span>
+                            </td>
+                            <td className="py-3 px-4 flex gap-2">
+                              <button
+                                className="text-blue-600 underline font-medium"
+                                onClick={() => {
+                                  //const sanitizedKey = row.r2_key.replace('.json', '');
+                                  const newTab = window.open(`/${row.r2_key}`, '_blank');
+                                  if (newTab) {
+                                    newTab.focus(); 
+                                  }
+                                  // Fetch and show the report here, or navigate to a report view page
+                                }}
+                              >
+                                View
+                              </button>
+                              <a
+                                href={`${process.env.REACT_APP_R2_PUBLIC_URL}/${row.r2_key}`}
+                                download
+                                className="text-blue-600 underline font-medium"
+                              >
+                                Download
+                              </a>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
           </div>
         </>
       )}

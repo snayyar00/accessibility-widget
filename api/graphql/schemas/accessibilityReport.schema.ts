@@ -142,6 +142,13 @@ export const AccessibilitySchema = gql`
     report: AccessibilityReportMeta
   }
 
+  type AccessibilityReportTableRow {
+    url: String!
+    r2_key: String!
+    created_at: String!
+    score: JSON
+  } 
+
   extend type Query {
     getAccessibilityReport(url: String!): Report
     getProcessingDashboard(url: String!): ProcessingDashboard
@@ -150,7 +157,7 @@ export const AccessibilitySchema = gql`
     url: String!
     created_at: String
     updated_at: String
-  ): [String!]!
+  ): [AccessibilityReportTableRow!]!
     fetchReportByR2Key(r2_key: String!): Report
   }
 

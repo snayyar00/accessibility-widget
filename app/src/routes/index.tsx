@@ -14,6 +14,7 @@ import { ReactComponent as AccessibilityIcon} from '@/assets/images/svg/Accessib
 import { MdBugReport } from 'react-icons/md';
 import ProblemReport from '@/containers/ProblemReport/ProblemReport';
 import { FaUniversalAccess } from 'react-icons/fa';
+import ReportView from '@/containers/Accessibility/ReportView';
 
 const routes = [
   // {
@@ -84,6 +85,13 @@ const routes = [
     icon: <MdBugReport className="menu-icon text-white-blue transition-colors duration-200" size={35}/>,
     isSidebar:true,
   },
+  {
+    path: '/reports/:r2_key',
+    name: 'Report View',
+    exact: true,
+    component: ReportView, // Use the new ReportView component
+    isSidebar: false,
+  }
 ];
 
 export default routes;

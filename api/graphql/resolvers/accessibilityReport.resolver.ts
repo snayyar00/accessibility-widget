@@ -35,7 +35,8 @@ const resolvers = {
   Query: {
     getAccessibilityReport: combineResolvers((_, { url }) => fetchAccessibilityReport(url)),
     fetchAccessibilityReportFromR2: async (_: any, { url, created_at, updated_at }: any) => {
-      return await getR2KeysByParams({ url, created_at, updated_at });
+      const rows = await getR2KeysByParams({ url, created_at, updated_at });
+      return rows;
     },
     fetchReportByR2Key: async (_: any, { r2_key }: any) => {
       return await fetchReportFromR2(r2_key);

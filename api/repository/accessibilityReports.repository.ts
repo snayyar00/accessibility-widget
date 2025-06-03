@@ -43,13 +43,10 @@ export async function getR2KeysByParams({
     query = query.andWhere('updated_at', '<=', updated_at);
   }
 
-  // If no optional params, order by created_at desc and limit 1 (latest)
-  if (!created_at && !updated_at) {
-    query = query.orderBy('created_at', 'desc').limit(1);
-  }
+  query = query.orderBy('created_at', 'desc');
 
-  const rows = await query.select('r2_key');
-  return rows.map(row => row.r2_key);
+  const rows = await query.select('url','r2_key', 'created_at', 'score');
+  return rows;
 }
 
 export async function deleteAccessibilityReportByR2Key(r2_key: string) {
