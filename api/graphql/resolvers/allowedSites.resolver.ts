@@ -1,6 +1,6 @@
 import { combineResolvers } from 'graphql-resolvers';
 import { isAuthenticated } from './authorization.resolver';
-import { addSite, changeURL, deleteSite, findSite, findUserSites } from '~/services/allowedSites/allowedSites.service';
+import { addSite, changeURL, deleteSite, findSite, findUserSites, isDomainAlreadyAdded } from '~/services/allowedSites/allowedSites.service';
 
 const resolvers = {
   Query: {
@@ -11,6 +11,10 @@ const resolvers = {
     
     getSiteByURL: combineResolvers(
       (_, {url},  { user }) => findSite( url)
+    ),
+    
+    isDomainAlreadyAdded: combineResolvers(
+      (_, { url }) => isDomainAlreadyAdded(url)
     ),
   },
   Mutation: {

@@ -48,6 +48,7 @@ export const UserSchema = gql`
   extend type Query {
     profileUser: User!
     loginBySocial(provider: SocialProviderType!, code: String!): ResponseUserSocial!
+    isEmailAlreadyRegistered(email: String!): Boolean!
   }
 
   extend type Mutation {
