@@ -4,15 +4,17 @@ import { useTranslation } from 'react-i18next';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useMutation } from '@apollo/client';
+import { toast } from 'react-toastify';
 import { useHistory } from 'react-router-dom';
 
 import SignUpForm from '@/components/Auth/SignUpForm';
 import AuthAdsArea from '@/components/Auth/AuthAds';
 import registerQuery from '@/queries/auth/register';
 import getQueryParam from '@/utils/getQueryParam';
-import StripeContainer from '@/containers/Stripe';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import zxcvbn from 'zxcvbn';
+import { getRootDomain, isIpAddress, isValidRootDomainFormat } from '@/utils/domainUtils';
+import addSite from '@/queries/allowedSites/addSite.js';
 
 const SignUpSchema = yup.object().shape({
   name: yup.string().required('Common.validation.require_name'),
@@ -21,6 +23,24 @@ const SignUpSchema = yup.object().shape({
     .required('Common.validation.require_email')
     .email('Common.validation.valid_email')
     .test('no-plus-sign', 'Common.validation.no_plus_in_email', (value:string|null|undefined) => !value?.includes('+')), // Custom test to disallow "+" sign in email
+  websiteUrl: yup
+    .string()
+    .transform((value) => (value ? value : undefined)) // Convert empty string to undefined
+    .nullable()
+    .notRequired() // Make it optional
+    .test('valid-domain', 'Common.validation.valid_url', (value) => {
+      // Skip validation if field is empty or undefined
+      if (!value) return true;
+      
+      try {
+        const sanitizedDomain = getRootDomain(value);
+        return sanitizedDomain === 'localhost' || 
+               isIpAddress(sanitizedDomain) || 
+               isValidRootDomainFormat(sanitizedDomain);
+      } catch (e) {
+        return false;
+      }
+    }),
   password: yup
     .string()
     .required('Common.validation.require_password')
@@ -39,6 +59,7 @@ type SignUpPayload = {
   email?: string;
   password?: string;
   name?: string;
+  websiteUrl?: string;
   paymentMethodToken: string | null;
   planName: string | null;
   billingType: 'MONTHLY' | 'YEARLY';
@@ -47,9 +68,11 @@ type SignUpPayload = {
 const SignUp: React.FC = () => {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.sign_up') });
-  const { register, handleSubmit, errors: formErrors } = useForm({
+  const { register, handleSubmit, errors: formErrors, trigger } = useForm({
     resolver: yupResolver(SignUpSchema),
     shouldUnregister: false,
+    mode: 'onBlur',  // Validate fields on blur
+    criteriaMode: 'all', // Show all validation errors
   });
   const [registerMutation, { error, loading }] = useMutation(registerQuery);
   const [showStripeForm, setShowStripeForm] = useState(false);
@@ -58,10 +81,60 @@ const SignUp: React.FC = () => {
   const query = getQueryParam();
   const planName = query.get('plan');
 
+  const [addSiteMutation, { error: addSiteError, loading: addSiteLoading }] = useMutation(addSite, {
+    onCompleted: () => {
+        // setReloadSites(true);
+        toast.success("Domain added successfully!")
+    },
+    onError:()=>{
+        // setReloadSites(true);
+        toast.error("Could not add domain. Please try again later.")
+    }
+});
+
   async function signup(params: SignUpPayload) {
-    const { data } = await registerMutation({ variables: params });
-    if (data?.register) {
+    try {
+      const { data } = await registerMutation({ variables: params });
+      if (data?.register) {
+        toast.success('Account created successfully!');
+        // Return true if registration was successful
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error during registration:', error);
+      toast.error('Failed to create account. Please try again.');
+      return false;
+    }
+  }
+
+  async function addSiteAfterSignup(websiteUrl: string) {
+    try {
+      // Process the URL to get the root domain
+      const sanitizedDomain = getRootDomain(websiteUrl);
+      
+      // Add the sanitized domain to the user's account
+      const response = await addSiteMutation({ 
+        variables: { 
+          url: sanitizedDomain 
+        } 
+      });
+      
+      if (!response.errors) {
+        toast.success('Domain added successfully!');
+        // Redirect to add-domain page after successful site addition
+        history.push('/add-domain');
+        return true;
+      } else {
+        toast.error('There was an issue adding your domain. Redirecting to dashboard...');
+        history.push('/');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error adding site:', error);
+      toast.error('There was an issue adding your domain. Redirecting to dashboard...');
       history.push('/');
+      return false;
     }
   }
 
@@ -70,7 +143,24 @@ const SignUp: React.FC = () => {
       setShowStripeForm(true);
       setFormData(params);
     } else {
-      signup(params);
+      try {
+        // First, wait for registration to complete
+        const registrationSuccess = await signup(params);
+        
+        // Only proceed with site addition if registration was successful
+        if (registrationSuccess) {
+          // If websiteUrl exists, add the site
+          if (params.websiteUrl && params.websiteUrl.trim() !== '') {
+            await addSiteAfterSignup(params.websiteUrl);
+          } else {
+            // If no website URL, just redirect to dashboard
+            history.push('/');
+          }
+        }
+      } catch (error) {
+        console.error('Error in signup process:', error);
+        toast.error('An unexpected error occurred. Please try again.');
+      }
     }
   }
 
@@ -89,8 +179,8 @@ const SignUp: React.FC = () => {
   }
 
   return (
-    <div className="flex justify-center min-h-screen sm:flex-col sm:pt-10">
-      <div className="w-[45%] flex justify-center items-center sm:w-full">
+    <div className="flex justify-center min-h-screen sm:flex-col">
+      <div className="w-[80%] flex justify-center items-start mb-10 align-middle sm:w-full overflow-scroll">
         {/* {showStripeForm ? (
           <StripeContainer
             onSubmitSuccess={createPaymentMethodSuccess}
@@ -103,13 +193,15 @@ const SignUp: React.FC = () => {
             onSubmit={handleSubmit(onSubmit)}
             register={register}
             formErrors={formErrors}
+            trigger={trigger}
             apiError={error?.graphQLErrors?.[0]?.extensions?.code}
             isSubmitting={loading}
-            submitText={String(planName ? t('Sign_up.text.next') : t('Sign_up.text.button_text'))}
+            siteAdding={addSiteLoading}
+            submitText={String(planName ? t('Sign_up.text.next') : 'Finish Sign Up')}
           />
         {/* )} */}
       </div>
-      <div className="w-[55%] bg-primary overflow-hidden sm:hidden">
+      <div className="w-[20%] bg-primary overflow-hidden sm:hidden">
         <AuthAdsArea />
       </div>
     </div>
