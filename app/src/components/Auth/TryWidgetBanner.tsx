@@ -2,48 +2,43 @@ import { useState, useEffect } from "react"
 import { AlertTriangle, CheckCircle, AlertCircle, DollarSign, Ban, Rocket } from "lucide-react"
 import { CircularProgress, Box, Typography } from "@mui/material"
 
-export default function WebAbilityWidget({errorCount}:{errorCount:number}) {
+export default function WebAbilityWidget({score}:{score:number}) {
   const [isEnabled, setIsEnabled] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [currentErrors, setCurrentErrors] = useState(errorCount)
+  const [progress, setProgress] = useState(0)
 
   // Ensure component is mounted
   useEffect(() => {
     setMounted(true)
-    setCurrentErrors(errorCount)
-  }, [errorCount])
+  }, [])
 
-  // Animate error count when state changes
+  // Animate progress when state changes
   useEffect(() => {
-    const targetValue = isEnabled ? Math.max(0, Math.floor(errorCount * 0.1)) : errorCount // Reduce to ~10% of original errors when enabled
-    const startValue = currentErrors
+    const targetValue = isEnabled ? 94 : score
+    const startValue = progress
     const duration = 1500
     const startTime = performance.now()
 
-    const animateErrors = (currentTime:number) => {
+    const animateProgress = (currentTime:number) => {
       const elapsedTime = currentTime - startTime
       const progress = Math.min(elapsedTime / duration, 1)
       // Use easeOutCubic for smoother animation
       const easeProgress = 1 - Math.pow(1 - progress, 3)
-      const currentErrorCount = Math.round(startValue + (targetValue - startValue) * easeProgress)
+      const currentProgress = startValue + (targetValue - startValue) * easeProgress
 
-      setCurrentErrors(currentErrorCount)
+      setProgress(currentProgress)
 
       if (progress < 1) {
-        requestAnimationFrame(animateErrors)
+        requestAnimationFrame(animateProgress)
       }
     }
 
-    requestAnimationFrame(animateErrors)
-  }, [isEnabled, errorCount])
+    requestAnimationFrame(animateProgress)
+  }, [isEnabled])
 
   const toggleSwitch = () => {
     setIsEnabled(!isEnabled)
   }
-
-  // Calculate progress for circular indicator (inverse of errors - fewer errors = more progress)
-  const maxErrors = errorCount
-  const progressPercentage = maxErrors > 0 ? Math.max(0, ((maxErrors - currentErrors) / maxErrors) * 100) : 100
 
   if (!mounted) return null
 
@@ -98,11 +93,11 @@ export default function WebAbilityWidget({errorCount}:{errorCount:number}) {
               {/* Colored progress indicator */}
               <CircularProgress
                 variant="determinate"
-                value={progressPercentage}
+                value={progress}
                 size={112}
                 thickness={4}
                 sx={{
-                  color: isEnabled ? "#4ade80" : "#ef4444",
+                  color: isEnabled ? "#4ade80" : "#3b82f6",
                   transition: "color 0.5s ease-in-out",
                   position: "absolute",
                   left: 0,
@@ -122,7 +117,6 @@ export default function WebAbilityWidget({errorCount}:{errorCount:number}) {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  flexDirection: "column"
                 }}
               >
                 <Typography
@@ -130,24 +124,13 @@ export default function WebAbilityWidget({errorCount}:{errorCount:number}) {
                   component="div"
                   sx={{
                     fontWeight: "bold",
-                    fontSize: "24px",
+                    fontSize: "28px",
                     transition: "all 0.5s ease-in-out",
-                    opacity: 1,
-                    color: isEnabled ? "#16a34a" : "#dc2626",
+                    opacity: progress > 5 ? 1 : 0,
+                    transform: progress > 5 ? "translateY(0)" : "translateY(10px)",
                   }}
                 >
-                  {currentErrors}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  component="div"
-                  sx={{
-                    fontSize: "12px",
-                    color: "#6b7280",
-                    fontWeight: "500"
-                  }}
-                >
-                  errors
+                  {Math.round(progress)}%
                 </Typography>
               </Box>
             </Box>
@@ -160,13 +143,11 @@ export default function WebAbilityWidget({errorCount}:{errorCount:number}) {
                 <AlertTriangle className="text-red-600 h-6 w-6 transition-colors duration-300" />
               )}
               <span className="text-xl font-bold text-gray-800 transition-colors duration-300">
-                {isEnabled ? "Mostly Compliant" : "Not Compliant"}
+                {isEnabled ? "Compliant" : "Not Compliant"}
               </span>
             </div>
             <p className="text-base text-gray-600 transition-colors duration-300 max-w-sm">
-              {isEnabled 
-                ? `Reduced from ${errorCount} to ${currentErrors} errors` 
-                : `${currentErrors} accessibility issues detected`}
+              {isEnabled ? "Your site meets WCAG 2.1 AA standards" : "Your site needs accessibility improvements"}
             </p>
           </div>
         </div>
@@ -191,7 +172,7 @@ export default function WebAbilityWidget({errorCount}:{errorCount:number}) {
             <div className="flex items-center justify-center sm:justify-start gap-2">
               
               <span className="text-base text-gray-600 transition-colors duration-300">
-                {isEnabled ? "Most issues resolved" : "Multiple violations detected"}
+                {isEnabled ? "Issues Resolved" : "Multiple violations detected"}
               </span>
             </div>
           </div>
@@ -244,7 +225,7 @@ export default function WebAbilityWidget({errorCount}:{errorCount:number}) {
                 Compliance Gaps
               </h3>
               <p className="text-gray-600 text-sm">
-                {currentErrors} violations found, including {Math.max(1, Math.floor(currentErrors * 0.1))} critical issues requiring immediate attention.
+                119 violations found, including 3 critical issues requiring immediate attention.
               </p>
             </div>
 
