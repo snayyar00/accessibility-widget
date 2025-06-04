@@ -833,9 +833,11 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                         <div className="flex justify-between items-center">
                           <div className="text-2xl font-semibold text-primary flex items-center gap-2">
                             <MdBarChart className="text-primary h-6 w-6" />
-                            Subscription Details
+                            {appSumoCount == Infinity ? "Agency Unlimited Plan" : appSumoCount >= 50 ? "Agency Starter Plan" : appSumoCount >= 100 ? "Agency Growth Plan" : "Subscription Details"}
+                            {/* Subscription Details */}
                           </div>
-                          <button
+
+                          {appSumoCount ? null:(<button
                               disabled={portalClick}
                               onClick={() => {
                                 handleBilling(setPortalClick, userData?.email);
@@ -851,7 +853,8 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                               ) : (
                                 'Handle Billing'
                               )}
-                            </button>
+                          </button>)}
+                          
                         </div>
                       }
                       className="pb-2 px-6 pt-6"
