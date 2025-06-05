@@ -1,8 +1,11 @@
+import compileEmailTemplate from "~/helpers/compile-email-template";
+import { sendMail } from "~/libs/mail";
 import { addProblemReport, problemReportProps } from "~/repository/problem_reports.repository";
 import { FindAllowedSitesProps, findSiteByURL } from "~/repository/sites_allowed.repository";
 
 export async function handleReportProblem(site_url: string, issue_type: string, description: string, reporter_email: string): Promise<string> {
     try {
+        const year = new Date().getFullYear();
         const domain = site_url.replace(/^(https?:\/\/)?(www\.)?/, '');
         const site:FindAllowedSitesProps = await findSiteByURL(domain);
 
@@ -12,8 +15,20 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
 
         const problem:problemReportProps = {site_id:site.id, issue_type:(issue_type as "bug" | "accessibility"), description:description, reporter_email:reporter_email};
     
-
         await addProblemReport(problem);
+
+        const template = await compileEmailTemplate({
+            fileName: 'reportProblem.mjml',
+            data: {
+                issue_type: problem.issue_type,
+                description: problem.description,
+                year: year,
+            },
+        });
+
+        sendMail(problem.reporter_email, 'Report a problem', template)
+        .then(() => console.log('Mail sent successfully'))
+        .catch((mailError) => console.error('Error sending mail:', mailError));
 
         return "Problem reported successfully";
     } catch (error) {
