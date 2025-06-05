@@ -12,6 +12,7 @@ import { loginSocial } from '~/services/authentication/social-login.service';
 import { registerAccountBySocial } from '~/services/authentication/register-social.service';
 import { deleteUser } from '~/services/user/delete-user.service';
 import { updateProfile, changeUserAvatar } from '~/services/user/update-user.service';
+import { isEmailAlreadyRegistered } from '~/services/user/user.service';
 import { normalizeEmail } from '~/helpers/string.helper';
 import { clearCookie, COOKIE_NAME, setAuthenticationCookie } from '~/utils/cookie';
 
@@ -75,6 +76,9 @@ const resolvers = {
         return true;
       }
       return result;
+    },
+    isEmailAlreadyRegistered: async (_: unknown, { email }: { email: string }) => {
+      return isEmailAlreadyRegistered(normalizeEmail(email));
     },
   },
   Mutation: {

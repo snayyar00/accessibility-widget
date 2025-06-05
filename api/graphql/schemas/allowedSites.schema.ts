@@ -25,6 +25,7 @@ export const AllowedSitesSchema = gql`
 		extend type Query {
 				getUserSites: [Site]
 				getSiteByURL(url: String!): Site
+				isDomainAlreadyAdded(url: String!): Boolean!
 		}
 
 		extend type Mutation {

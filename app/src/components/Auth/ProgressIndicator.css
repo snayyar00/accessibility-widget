@@ -1,0 +1,78 @@
+/* Progress Indicator animations */
+@keyframes fadeScale {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-fadeScale {
+  animation: fadeScale 0.5s ease-out forwards;
+}
+
+/* Progress Indicator styling */
+.progress-indicator .step-circle {
+  transition: all 0.5s ease-out;
+  position: relative;
+}
+
+.progress-indicator .step-circle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  z-index: -1;
+  transition: all 0.3s ease-in-out;
+}
+
+.progress-indicator .step-circle.active {
+  background-color: var(--primary-color, #007bff);
+  color: white;
+  transform: scale(1.05);
+}
+
+.progress-indicator .step-circle.active::after {
+  box-shadow: 0 0 0 12px rgba(0, 123, 255, 0.1), 0 0 20px rgba(0, 123, 255, 0.2);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 12px rgba(0, 123, 255, 0.1), 0 0 20px rgba(0, 123, 255, 0.2); }
+  50% { box-shadow: 0 0 0 14px rgba(0, 123, 255, 0.1), 0 0 25px rgba(0, 123, 255, 0.3); }
+  100% { box-shadow: 0 0 0 12px rgba(0, 123, 255, 0.1), 0 0 20px rgba(0, 123, 255, 0.2); }
+}
+
+.progress-indicator .step-circle.completed {
+  background-color: var(--primary-color, #007bff);
+  color: white;
+}
+
+.progress-indicator .step-circle.completed::after {
+  box-shadow: 0 0 0 8px rgba(0, 123, 255, 0.1);
+}
+
+.progress-indicator .step-text {
+  transition: all 0.5s ease-in-out;
+}
+
+.progress-indicator .step-text.active {
+  color: var(--primary-color, #007bff);
+  font-weight: 500;
+  transform: scale(1.1);
+}
+
+.progress-indicator .progress-bar {
+  height: 3px;
+  transition: width 0.7s ease-in-out;
+}
+
+.progress-indicator .arrow-indicator {
+  transition: all 0.5s ease-in-out;
+}
+
+/* Mobile specific styles */
+.progress-indicator .mobile-progress-line {
+  width: 2px;
+  transition: height 0.7s ease-in-out;
+} 
