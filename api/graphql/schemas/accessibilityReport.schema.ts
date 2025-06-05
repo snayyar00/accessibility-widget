@@ -132,6 +132,7 @@ export const AccessibilitySchema = gql`
     url: String!
     allowed_sites_id: Int
     r2_key: String!
+    score: JSON
     created_at: String!
     updated_at: String!
   }
@@ -201,6 +202,7 @@ export const AccessibilitySchema = gql`
       url: String!
       allowed_sites_id: Int
       key: String
+      score: JSON
     ): SaveReportResponse!
     deleteAccessibilityReport(r2_key: String!): Boolean!    
   }

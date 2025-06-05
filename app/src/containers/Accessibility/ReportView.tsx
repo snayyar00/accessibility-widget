@@ -1,28 +1,23 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useParams, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useLazyQuery } from '@apollo/client';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
 import {
   AlertTriangle,
   AlertCircle,
   Info,
-  ActivitySquare,
   FileText,
-  Navigation,
   FormInput,
   ImageIcon,
   Code,
   Sparkles,
   CheckCircle,
-  Gauge,
   Layers,
-  Wand2,
   Eye,
   Navigation as NavigationIcon,
   LayoutGrid,
   Brain,
-  Braces,
   MessageSquare,
   HelpCircle,
   Droplet,
@@ -33,6 +28,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { ReactI18NextChild } from 'react-i18next';
 import { toast } from 'sonner';
+import TechStack from './TechStack';
 
 // Add this array near the top of the file
 const accessibilityFacts = [
@@ -118,16 +114,26 @@ function calculateEnhancedScore(baseScore: number) {
   return Math.min(enhancedScore, MAX_TOTAL_SCORE);
 }
 
+const queryParams = new URLSearchParams(location.search);
+const fullUrl = queryParams.get('domain') || '';
+
+const cleanUrl = fullUrl.trim().replace(/^(https?:\/\/)?(www\.)?/, '');
+const urlParam = `https://${cleanUrl}`;
 
 const ReportView: React.FC = () => {
   const { r2_key } = useParams<ReportParams>();
+  const location = useLocation();
   const adjustedKey = `reports/${r2_key}`;
   const [fetchReport, { data, loading, error }] = useLazyQuery(FETCH_REPORT_BY_R2_KEY);
+
+
 
   const [activeTab, setActiveTab] = useState('all');
   const [organization, setOrganization] = useState('structure');
   const [issueFilter, setIssueFilter] = useState(ISSUE_FILTERS.ALL);
   const [widgetInfo, setWidgetInfo] = useState<WidgetInfo | null>(null);
+  const [webabilityenabled, setwebabilityenabled] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Processing state management
   const [isProcessing, setIsProcessing] = useState(true);
@@ -138,11 +144,44 @@ const ReportView: React.FC = () => {
   useEffect(() => {
     if (r2_key) {
       fetchReport({ variables: { r2_key: adjustedKey } });
+      checkScript();
     }
   }, [r2_key]);
 
+  useEffect(() => {
+    if (data) {
+      const htmlCsResult = data.fetchReportByR2Key?.htmlCsResult || {};
+    }
+  }, [data]);
+
+
+  const checkScript = async () => {
+    setwebabilityenabled(false);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/check-script`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ siteUrl: urlParam }),
+      });
+      const data = await response.json();
+      if (data === 'Web Ability') {
+        setwebabilityenabled(true);
+        setRefreshKey((prev) => prev + 1); // Trigger re-render
+      } else if (data !== 'false') {
+        //setOtherWidgetEnabled(true);
+        //setbuttoncontrol(true);
+      }
+    } catch (error) {
+      console.log("catch error=", error);
+      //setScriptCheckLoading(false); // It's good to stop loading even on error
+    } finally {
+      setIsProcessing(false); // Stop processing once the check is done
+    }
+  };
+
   const report = data?.fetchReportByR2Key || {};
-  console.log('Report Data:', report);
 
   const extractedIssues = useMemo(() => {
     if (!report) return [];
@@ -153,10 +192,7 @@ const ReportView: React.FC = () => {
     const calculatedStats = countIssuesBySeverity(extractedIssues);
     let finalScore = report?.score || 0;
 
-    console.log(report?.widgetInfo, 'Widget Info:', report?.widgetInfo);
-
-    if (report?.widgetInfo?.result === 'WebAbility') {
-      console.log('WebAbility widget detected, applying score bonus', report.widgetInfo);
+    if (webabilityenabled) {
       finalScore = Math.min(100, finalScore + WEBABILITY_SCORE_BONUS);
     }
 
@@ -167,9 +203,9 @@ const ReportView: React.FC = () => {
       warnings: calculatedStats.warnings,
       moderateIssues: calculatedStats.moderateIssues,
       totalElements: report?.totalElements || 0,
-      hasWebAbility: report?.widgetInfo?.result === 'WebAbility',
+      hasWebAbility: webabilityenabled,
     };
-  }, [extractedIssues, report]);
+  }, [extractedIssues, report, webabilityenabled, refreshKey]);
 
   // Group issues by functionality - UPDATED to normalize category names
   const issuesByFunction = useMemo(() => {
@@ -258,35 +294,53 @@ const ReportView: React.FC = () => {
     setActiveTab("all");
   }, [organization]);
 
-  // Update widget info silently
   useEffect(() => {
-    if (data?.widgetInfo) {
-      setWidgetInfo(data.widgetInfo);
-    }
-  }, [report?.widgetInfo]);
+    const interval = setInterval(() => {
+      setFactIndex((prevIndex) => (prevIndex + 1) % accessibilityFacts.length);
+    }, 6000); // Change fact every 5 seconds
+
+    return () => clearInterval(interval); // Cleanup the interval on component unmount
+  }, []);
 
   // Conditional rendering in the return statement
-  if (loading) {
+  if (loading || isProcessing) {
     return (
-      <div className="bg-background text-foreground min-h-screen p-10">
-        <div className="space-y-8">
-          <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-gray-900">
-            <div className="absolute inset-0 bg-gradient-to-b from-blue-900/50 to-blue-950/50">
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center px-4">
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex flex-col items-center"
-                  >
-                    <h3 className="text-xl font-semibold text-white mb-4">
-                      Scanning website...
-                    </h3>
-                    <motion.div
-                      className="w-12 h-12 animate-spin mx-auto mb-6 text-blue-400"
-                    />
-                  </motion.div>
-                </div>
+      <div className="min-h-screen w-full bg-gray-900 flex items-center justify-center">
+        <div className="relative w-full h-full aspect-video overflow-hidden bg-gray-900">
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-900/50 to-blue-950/50">
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center px-4">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex flex-col items-center"
+                >
+                  {/* Status text ABOVE the loader */}
+                  <h3 className="text-xl font-semibold text-white mb-4">
+                    {loading ? "Scanning website..." : "Processing results..."}
+                  </h3>
+
+                  {/* Loader in the middle */}
+                  <Loader2 className="w-12 h-12 animate-spin mx-auto mb-6 text-blue-400" />
+
+                  {/* Facts below */}
+                  <AnimatePresence>
+                    {isProcessing && (
+                      <motion.div
+                        key={factIndex} // Use factIndex as the key to trigger re-render
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.5 }}
+                        className="text-center"
+                      >
+                        <p className="text-xl text-blue-100 max-w-2xl">
+                          {accessibilityFacts[factIndex]}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               </div>
             </div>
           </div>
@@ -305,12 +359,21 @@ const ReportView: React.FC = () => {
 
   return (
     <div className="bg-report-blue text-foreground min-h-screen pt-20 pr-28 pb-20 pl-28">
+      <header className="text-center relative z-10 mb-16">
+        <h1 className="mb-2">
+          <span className="block text-xl sm:text-5xl lg:text-4xl font-medium text-white leading-tight tracking-tight break-words">
+            <br />
+            Scan results for <span className="bg-gradient-to-r from-blue-300 to-blue-100 font-medium text-transparent bg-clip-text">{fullUrl}</span>
+            <br />
+          </span>
+        </h1>
+      </header>
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8">
             <ScanningPreview siteImg={report.siteImg} />
             <ComplianceStatus score={totalStats.score} results={report} />
-            {/*<TechStack techStack={results?.techStack} />*/}
+            <TechStack url={urlParam} />
           </div>
           <div className="lg:col-span-4 grid grid-cols-1 gap-4">
             <StatCard
@@ -459,7 +522,7 @@ const ReportView: React.FC = () => {
                     {issue.context && issue.context.length > 0 && (
                       <div>
                         <h3 className="text-sm font-semibold mb-2">Affected Element</h3>
-                        <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto border">
+                        <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto border border-gray-element">
                           {issue.context[0]}
                         </pre>
                       </div>
@@ -468,7 +531,7 @@ const ReportView: React.FC = () => {
                     {issue.selectors && issue.selectors.length > 0 && (
                       <div>
                         <h3 className="text-sm font-semibold mb-2">CSS Selector</h3>
-                        <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto border">
+                        <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto border border-gray-element">
                           {issue.selectors[0]}
                         </pre>
                       </div>
@@ -509,7 +572,7 @@ const ReportView: React.FC = () => {
         )}
 
         {/* Update the widget info display to emphasize the score bonus */}
-        {widgetInfo?.result === 'WebAbility' && (
+        {webabilityenabled && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -818,6 +881,32 @@ const StatCard: React.FC<StatCardProps> = ({
         )}
         <div className="text-gray-500">{description}</div>
       </div>
+      {title === "Accessibility Score" && (
+        <div className="mt-3">
+          <div className="bg-blue-100 rounded-full h-2.5 overflow-hidden">
+            {hasScoreBonus ? (
+              <div className="relative w-full h-full">
+                <div
+                  className="absolute left-0 top-0 bg-blue-600 h-full transition-all duration-1000"
+                  style={{ width: `${originalScore}%` }}
+                />
+                <div
+                  className="absolute h-full bg-green-500 transition-all duration-1000"
+                  style={{
+                    left: `${originalScore}%`,
+                    width: `${Math.min(WEBABILITY_SCORE_BONUS, 100 - (originalScore ?? 0))}%`
+                  }}
+                />
+              </div>
+            ) : (
+              <div
+                className="bg-blue-600 h-full transition-all duration-1000"
+                style={{ width: `${value}%` }}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -832,7 +921,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     status = "Compliant";
     message = "Your website meets the basic requirements for accessibility.";
     icon = <CheckCircle className="w-8 h-8 text-green-600" />;
-    bgColor = "bg-green-50";
+    bgColor = "bg-green-compliant";
     textColor = "text-green-800";
   } else if (score >= 50) {
     status = "Partially Compliant";
@@ -844,7 +933,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     status = "Non-compliant";
     message = "Your website needs significant accessibility improvements.";
     icon = <AlertTriangle className="w-8 h-8 text-red-600" />;
-    bgColor = "bg-red-50";
+    bgColor = "bg-red-not-compliant";
     textColor = "text-red-800";
   }
 
@@ -941,7 +1030,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     const seriousCount = issues.filter(i => i.impact === 'serious').length;
     const moderateCount = issues.filter(i => i.impact === 'moderate').length;
     const baseScore = reportData.score || 0;
-    const hasWebAbility = reportData?.widgetInfo?.result === 'WebAbility';
+    const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility';
     const enhancedScore = hasWebAbility
       ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
       : baseScore;
@@ -1102,8 +1191,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
                 onClick={handleEmailSubmit}
                 disabled={!isValidEmail(email)}
                 className={`px-4 py-2 rounded-lg text-white ${!isValidEmail(email)
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700'
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700'
                   }`}
               >
                 Download Report
