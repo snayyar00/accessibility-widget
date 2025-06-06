@@ -62,6 +62,7 @@ const SignUpForm: React.FC<CustomProps> = ({
   const [scoreBackup, setScoreBackup] = useState<number>(0);
   const [accessibilityIssues, setAccessibilityIssues] = useState<any[]>([]);
   const [groupedIssues, setGroupedIssues] = useState<Record<string, any[]>>({});
+  const [totalErrorCount, setTotalErrorCount] = useState<number>(0);
 
   // State for domain and email check
   const [checkingDomain, setCheckingDomain] = useState(false);
@@ -139,11 +140,25 @@ const SignUpForm: React.FC<CustomProps> = ({
 
   const groupByCode = (issues: any) => {
     console.log('group code called');
-    if (issues && typeof issues === 'object') {
-      issues.errors = groupByCodeUtil(issues.errors);
-      issues.warnings = groupByCodeUtil(issues.warnings);
-      issues.notices = groupByCodeUtil(issues.notices);
+    try {
+      if (issues && typeof issues === 'object') {
+        issues.errors = groupByCodeUtil(issues.errors);
+        issues.warnings = groupByCodeUtil(issues.warnings);
+        issues.notices = groupByCodeUtil(issues.notices);
+        
+        // Count total issues
+        const errorCount = Array.isArray(issues.errors) ? issues.errors.length : Object.keys(issues.errors || {}).length;
+        const warningCount = Array.isArray(issues.warnings) ? issues.warnings.length : Object.keys(issues.warnings || {}).length;
+        const noticeCount = Array.isArray(issues.notices) ? issues.notices.length : Object.keys(issues.notices || {}).length;
+        
+        const totalCount = errorCount + warningCount + noticeCount;
+        setTotalErrorCount(totalCount);
+      }
+      
+    } catch (error) {
+      setTotalErrorCount(119);
     }
+    
   };
 
   const [
@@ -159,19 +174,23 @@ const SignUpForm: React.FC<CustomProps> = ({
 
       if(result){
         setScore(result?.score);
+        groupByCode(result?.htmlcs);
       }
       // setSiteImg(data.getAccessibilityReport?.siteImg);
       // setScoreBackup(data.getAccessibilityReport.score);
-      // groupByCode(htmlcs);
+      
     }
   }, [data]);
 
   // UseEffect for step 2 analysis
   useEffect(() => {
-    if (currentStep === 2) {
+    if (currentStep === 2 && formData.websiteUrl) {
       // Execute accessibility analysis when entering step 2
       getAccessibilityStatsQuery();
       // Don't automatically advance - we'll wait for the query to complete
+    }else if(currentStep === 2){
+      // If website URL is not provided, skip step 2
+      setCurrentStep((prev) => prev + 1);
     }
   }, [currentStep]);
 
@@ -418,13 +437,13 @@ const SignUpForm: React.FC<CustomProps> = ({
 
   // Step 3: Results and Account Creation
   const renderStep3 = () => {
-    // Use a default score if the analysis didn't return results
-    const displayScore = score || 41;
+    // Use totalErrorCount if available, otherwise use a default
+    const errorCount = totalErrorCount > 0 ? totalErrorCount : 119;
 
     return (
       <div>
         <div className="mb-6">
-          <WebAbilityWidget score={displayScore} />
+          {formData?.websiteUrl && <WebAbilityWidget errorCount={errorCount} />}
 
           <AccessibilitySteps />
         </div>
