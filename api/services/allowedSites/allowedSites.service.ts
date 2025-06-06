@@ -175,3 +175,19 @@ export async function changeURL(siteId: number, userId: number ,url: string) {
     }
 }
 
+export async function isDomainAlreadyAdded(url: string): Promise<boolean> {
+  try {
+    const site = await findSiteByURL(url);
+    // If site is found, it means the domain is already added
+    return !!site;
+  } catch (error) {
+    // If error is "Site not found" type, return false
+    if (error.message && error.message.includes("not found")) {
+      return false;
+    }
+    // For other errors, re-throw
+    logger.error(error);
+    throw error;
+  }
+}
+

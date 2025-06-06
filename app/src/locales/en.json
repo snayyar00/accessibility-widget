@@ -31,7 +31,8 @@
       "your_email": "Your Email",
       "name": "Name",
       "body": "Body",
-      "edit_profile": "Edit Profile"
+      "edit_profile": "Edit Profile",
+      "website_url": "Website URL"
     },
     "text": {
       "hi": "Hi",
@@ -49,7 +50,8 @@
       "view": "View",
       "admin": "admin",
       "member": "member",
-      "avatar": "Avatar"
+      "avatar": "Avatar",
+      "continue": "Continue"
     },
     "validation": {
       "require_name": "Name is required",

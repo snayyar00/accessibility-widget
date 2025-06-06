@@ -45,6 +45,7 @@ import findPromo from './services/stripe/findPromo';
 import { appSumoPromoCount } from './utils/appSumoPromoCount';
 import { expireUsedPromo } from './utils/expireUsedPromo';
 import { findUsersByToken, getUserTokens } from './repository/user_plan_tokens.repository';
+import { customTokenCount } from './utils/customTokenCount';
 // import run from './scripts/create-products';
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -470,13 +471,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
         console.log("promo");
         const tokenUsed = await getUserTokens(userId) || [];
-        const maxNum = tokenUsed.reduce((max, code) => {
-          const m = code.match(/^custom(\d+)$/);
-          return m ? Math.max(max, Number(m[1])) : max;
-        }, 0);
         
-        const lastCustomCode = maxNum > 0 ? `custom${maxNum}` : null;
-        const nonCustomCodes = tokenUsed.filter(code => !/^custom\d+$/.test(code));
+        const {lastCustomCode,nonCustomCodes} = await customTokenCount(userId,tokenUsed);
+
         // This will work on for AppSumo coupons, we allow use of coupons that should only work for the app sumo tier plans and we manually apply the discount according to new plan (single)
 
         const subscription =  await stripe.subscriptions.create({
@@ -818,13 +815,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           
           const tokenUsed = await getUserTokens(userId) || [];
 
-          const maxNum = tokenUsed.reduce((max, code) => {
-            const m = code.match(/^custom(\d+)$/);
-            return m ? Math.max(max, Number(m[1])) : max;
-          }, 0);
-          
-          const lastCustomCode = maxNum > 0 ? `custom${maxNum}` : null;
-          const nonCustomCodes = tokenUsed.filter(code => !/^custom\d+$/.test(code));
+          const {lastCustomCode,nonCustomCodes} = await customTokenCount(userId,tokenUsed);
 
           subscription = await stripe.subscriptions.create({
             customer: customer.id,
@@ -1222,6 +1213,19 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
       const hasCustomInfinityToken = userAppSumoTokens.includes("customInfinity");
 
+      let maxSites = 0
+
+      if(!hasCustomInfinityToken){
+        const {lastCustomCode,nonCustomCodes} = await customTokenCount(userId,userAppSumoTokens);
+
+        if(lastCustomCode){
+          const customCode = lastCustomCode.match(/^custom(\d+)$/);
+          maxSites = Number(customCode[1]) + nonCustomCodes.length;
+        }
+        else{
+          maxSites = nonCustomCodes.length;
+        }
+      }
       // Check if customer exists
       if (customers.data.length > 0) {
         customer = customers.data[0];
@@ -1333,7 +1337,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 }
               }
 
-              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining,appSumoCount:appSumoCount,codeCount:userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size,infinityToken:hasCustomInfinityToken});
+              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining,appSumoCount:appSumoCount,codeCount:maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size,infinityToken:hasCustomInfinityToken});
 
             }
   
@@ -1390,8 +1394,8 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 }
               }
             }
-            
-            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount,codeCount:userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size,infinityToken:hasCustomInfinityToken});
+
+            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount,codeCount:maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size,infinityToken:hasCustomInfinityToken});
 
           }
   
@@ -1401,7 +1405,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           
         } catch (error) {
           console.log(error);
-          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,codeCount:userAppSumoTokens.length,infinityToken:hasCustomInfinityToken});
+          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,codeCount:maxSites > 0 ? maxSites : userAppSumoTokens.length,infinityToken:hasCustomInfinityToken});
           
         }
         
@@ -1409,7 +1413,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       else
       {
         console.log("no customer");
-        res.status(200).json({ isCustomer: false,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,infinityToken:hasCustomInfinityToken,codeCount:userAppSumoTokens.length });
+        res.status(200).json({ isCustomer: false,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,infinityToken:hasCustomInfinityToken,codeCount:maxSites > 0 ? maxSites : userAppSumoTokens.length});
       }
 
     } catch (error) {
