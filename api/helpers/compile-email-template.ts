@@ -4,6 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import logger from '~/utils/logger';
 
+handlebars.registerHelper('eq', (a, b) => a === b);
+
 type Props = {
   fileName: string;
   data: {
