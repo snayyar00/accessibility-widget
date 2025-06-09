@@ -125,9 +125,6 @@ const ReportView: React.FC = () => {
   const location = useLocation();
   const adjustedKey = `reports/${r2_key}`;
   const [fetchReport, { data, loading, error }] = useLazyQuery(FETCH_REPORT_BY_R2_KEY);
-
-
-
   const [activeTab, setActiveTab] = useState('all');
   const [organization, setOrganization] = useState('structure');
   const [issueFilter, setIssueFilter] = useState(ISSUE_FILTERS.ALL);
@@ -147,13 +144,6 @@ const ReportView: React.FC = () => {
       checkScript();
     }
   }, [r2_key]);
-
-  useEffect(() => {
-    if (data) {
-      const htmlCsResult = data.fetchReportByR2Key?.htmlCsResult || {};
-    }
-  }, [data]);
-
 
   const checkScript = async () => {
     setwebabilityenabled(false);

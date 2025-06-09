@@ -246,7 +246,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   };
 
-  const generatePDF = (reportData: { score: number; widgetInfo: { result: string; }; url: string; }, enhancedScore: number) => {
+  const generatePDF = (reportData: { score: number; widgetInfo: { result: string; }; }, enhancedScore: number, url: string) => {
     const doc = new jsPDF();
     const logoUrl = '/images/logo.png';
 
@@ -286,7 +286,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setFontSize(16);
     doc.setFont('Helvetica', 'normal');
     const scanResultsText = 'Scan Results for';
-    const urlText = reportData.url || '';
+    const urlText = url || '';
     doc.text(scanResultsText, 8, y);
     doc.setFont('Helvetica', 'bold');
     doc.text(urlText, 7 + doc.getTextWidth(scanResultsText), y);
@@ -480,6 +480,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   if (value === 'new') {
                     setSelectedSite('');
                     setDomain(''); // Reset domain when "Enter a new domain" is selected
+                    setProcessedReportKeys([]); // Clear the table data
+                    setEnhancedScoresCalculated(false); // Hide the table
                   } else {
                     setSelectedSite(value);
                     setDomain(value); // Set domain to the selected site
@@ -625,8 +627,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             // Fetch the report for the clicked row
                             await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
 
-                            if (reportData) {
-                              const pdfBlob = generatePDF(reportData.fetchReportByR2Key, row.enhancedScore);
+                            if (reportData && reportData.fetchReportByR2Key) {
+                              const pdfBlob = generatePDF(reportData.fetchReportByR2Key, row.enhancedScore, row.url);
                               const url = window.URL.createObjectURL(pdfBlob);
                               const link = document.createElement('a');
                               link.href = url;
