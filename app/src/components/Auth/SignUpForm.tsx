@@ -322,7 +322,7 @@ const SignUpForm: React.FC<CustomProps> = ({
           <FormControl>
             <Input
               type="url"
-              placeholder="https://example.com"
+              placeholder="example.com"
               name="websiteUrl"
               ref={register}
               value={formData.websiteUrl}
