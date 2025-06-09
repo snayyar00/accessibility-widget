@@ -259,7 +259,7 @@ const SignUpForm: React.FC<CustomProps> = ({
   // Step 1: Basic Information
   const renderStep1 = () => {
     return (
-      <div className='px-16'>
+      <div className='sm:px-6 md:px-16'>
         <div className="mb-4 w-full block">
           <label className="text-left font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block mb-[19px] uppercase">
             {t('Common.label.your_name')}
@@ -493,7 +493,7 @@ const SignUpForm: React.FC<CustomProps> = ({
 
       {currentStep === 1 && (
         <>
-          <div className="text-[14px] leading-6 text-sapphire-blue">
+          <div className="sm:px-6 mt-4 md:px-0 text-[14px] leading-6 text-sapphire-blue">
             <Trans
               components={[
                 <Link to="##" key="terms"></Link>,

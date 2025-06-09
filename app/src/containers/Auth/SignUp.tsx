@@ -15,6 +15,7 @@ import useDocumentHeader from '@/hooks/useDocumentTitle';
 import zxcvbn from 'zxcvbn';
 import { getRootDomain, isIpAddress, isValidRootDomainFormat } from '@/utils/domainUtils';
 import addSite from '@/queries/allowedSites/addSite.js';
+import isValidDomain from '@/utils/verifyDomain';
 
 const SignUpSchema = yup.object().shape({
   name: yup.string().required('Common.validation.require_name'),
@@ -32,13 +33,11 @@ const SignUpSchema = yup.object().shape({
       // Skip validation if field is empty or undefined
       if (!value) return true;
       
-      try {
-        const sanitizedDomain = getRootDomain(value);
-        return sanitizedDomain === 'localhost' || 
-               isIpAddress(sanitizedDomain) || 
-               isValidRootDomainFormat(sanitizedDomain);
-      } catch (e) {
+      if (!isValidDomain(value)) {
         return false;
+      }
+      else{
+        return true;
       }
     }),
   password: yup
