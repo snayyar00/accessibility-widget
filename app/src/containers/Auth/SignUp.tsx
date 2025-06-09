@@ -32,9 +32,12 @@ const SignUpSchema = yup.object().shape({
     .test('valid-domain', 'Common.validation.valid_url', (value) => {
       // Skip validation if field is empty or undefined
       if (!value) return true;
-      
+      const sanitizedDomain = getRootDomain(value);
       if (!isValidDomain(value)) {
         return false;
+      }
+      else if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {
+        return false
       }
       else{
         return true;
@@ -120,7 +123,6 @@ const SignUp: React.FC = () => {
       });
       
       if (!response.errors) {
-        toast.success('Domain added successfully!');
         // Redirect to add-domain page after successful site addition
         history.push('/add-domain');
         return true;

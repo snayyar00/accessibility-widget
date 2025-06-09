@@ -20,6 +20,8 @@ import WebAbilityWidget from './TryWidgetBanner';
 import PlanSetting from '@/containers/SiteDetail/PlanSetting';
 import { toast } from 'react-toastify';
 import AccessibilitySteps from './AccessibilitySteps';
+import { parse } from 'tldts';
+import { getRootDomain, isIpAddress, isValidRootDomainFormat } from '@/utils/domainUtils';
 
 type CustomProps = ReactHookFormType & {
   isSubmitting: boolean;
@@ -72,9 +74,16 @@ const SignUpForm: React.FC<CustomProps> = ({
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
       if (data?.isDomainAlreadyAdded) {
-        toast.error(
-          'This domain has already been added. Please use a different domain.',
-        );
+        const sanitizedDomain = getRootDomain(formData.websiteUrl);
+        const originalInputDetails = parse(formData.websiteUrl);
+        
+        if (originalInputDetails.domain === sanitizedDomain && originalInputDetails.subdomain && originalInputDetails.subdomain.toLowerCase() !== 'www') {
+          toast.error(`The root domain '${sanitizedDomain}' is already registered. This covers subdomains like '${formData.websiteUrl}'. You don't need to add it separately.`);
+        } else if (originalInputDetails.domain === sanitizedDomain && originalInputDetails.subdomain && originalInputDetails.subdomain.toLowerCase() === 'www') {
+          toast.error(`The domain '${sanitizedDomain}' (derived from your input '${formData.websiteUrl}') is already registered.`);
+        } else {
+          toast.error(`The domain '${sanitizedDomain}' is already in use.`);
+        }
         setCheckingDomain(false);
       } else {
         // Domain is available, proceed to check email
@@ -83,6 +92,8 @@ const SignUpForm: React.FC<CustomProps> = ({
     },
     onError: (error) => {
       console.error('Error checking domain:', error);
+      toast.error('There was an issue validating your domain. Please try again.');
+      setCheckingDomain(false);
       // If there's an error checking the domain, still proceed to check email
       checkEmailAvailability();
     },
@@ -233,9 +244,17 @@ const SignUpForm: React.FC<CustomProps> = ({
 
           // If website URL is provided, check domain first, then email
           if (formData.websiteUrl) {
+            // Validate domain format first
+            const sanitizedDomain = getRootDomain(formData.websiteUrl);
+            if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {
+              toast.error('You must enter a valid domain name!');
+              setCheckingDomain(false);
+              return;
+            }
+
             checkDomainExists({
               variables: {
-                url: formData.websiteUrl,
+                url: sanitizedDomain,
               },
             });
           } else {
