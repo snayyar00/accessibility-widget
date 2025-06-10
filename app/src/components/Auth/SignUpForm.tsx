@@ -152,7 +152,6 @@ const SignUpForm: React.FC<CustomProps> = ({
   };
 
   const groupByCode = (issues: any) => {
-    console.log('group code called');
     try {
       if (issues && typeof issues === 'object') {
         issues.errors = groupByCodeUtil(issues.errors);
@@ -232,7 +231,6 @@ const SignUpForm: React.FC<CustomProps> = ({
         setScriptCheckResult(scriptResult);
         // Set error count immediately based on script check result
         setErrorCountBasedOnResults(scriptResult, false);
-        console.log('scriptResult', scriptResult);
       }).catch(error => {
         console.error('Script check failed:', error);
         setScriptCheckResult('false');
@@ -241,7 +239,6 @@ const SignUpForm: React.FC<CustomProps> = ({
       
       // Set a timeout (2 minutes) for the analysis
       const timeout = setTimeout(() => {
-        console.log('timeout');
         // Script check has already completed by now, just skip to step 3
         setCurrentStep(3);
       }, 120000);
