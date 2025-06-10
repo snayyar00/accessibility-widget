@@ -26,18 +26,25 @@ const SignUpSchema = yup.object().shape({
     .test('no-plus-sign', 'Common.validation.no_plus_in_email', (value:string|null|undefined) => !value?.includes('+')), // Custom test to disallow "+" sign in email
   websiteUrl: yup
     .string()
-    .transform((value) => (value ? value : undefined)) // Convert empty string to undefined
+    .transform((value) => {
+      if (!value) return undefined;
+      return value
+        .replace(/^https?:\/\//, '') // Remove http:// or https://
+        .replace(/\/+$/, ''); // Remove trailing slashes
+    })
     .nullable()
     .notRequired() // Make it optional
     .test('valid-domain', 'Common.validation.valid_url', (value) => {
       // Skip validation if field is empty or undefined
       if (!value) return true;
-      const sanitizedDomain = getRootDomain(value);
+
       if (!isValidDomain(value)) {
         return false;
       }
-      else if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {
-        return false
+      
+      const sanitizedDomain = getRootDomain(value);
+      if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {
+        return false;
       }
       else{
         return true;

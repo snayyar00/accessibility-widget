@@ -57,6 +57,7 @@ module.exports = {
         scan: 'scan 2s linear infinite',
         progress: 'loading 2.5s ease-out forwards',
         breathe: 'breathe 3s ease-in-out infinite',
+        fadeIn: 'fadeIn 0.8s ease-in-out forwards',
       },
       keyframes: {
         pulse: {
@@ -84,6 +85,16 @@ module.exports = {
         loading: {
           '0%': { width: '0%' },
           '100%': { width: '100%' },
+        },
+        fadeIn: {
+          '0%': { 
+            opacity: '0',
+            transform: 'translateY(20px)'
+          },
+          '100%': { 
+            opacity: '1',
+            transform: 'translateY(0)'
+          },
         },
       }
     },
