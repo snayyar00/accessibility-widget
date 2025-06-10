@@ -71,18 +71,22 @@ const AccessibilityFacts: React.FC<AccessibilityFactsProps> = ({ isVisible }) =>
   const currentFact = accessibilityFacts[currentFactIndex]
 
   useEffect(() => {
-    if (isVisible && !isPaused) {
+    if (isVisible) {
       const factsInterval = setInterval(() => {
         setFactTransitioning(true)
         setTimeout(() => {
           setCurrentFactIndex((prev) => (prev + 1) % accessibilityFacts.length)
           setFactTransitioning(false)
-        }, 300)
+        }, 500)
       }, 5000)
 
       return () => clearInterval(factsInterval)
+    } else {
+      setCurrentFactIndex(0)
+      setFactTransitioning(false)
+      return
     }
-  }, [isVisible, isPaused, accessibilityFacts.length])
+  }, [isVisible, accessibilityFacts.length])
 
   const goToFact = (index: number) => {
     if (index !== currentFactIndex) {

@@ -362,6 +362,7 @@ const SignUpForm: React.FC<CustomProps> = ({
       // Reset when leaving step 2
       setShowFacts(false);
       setShowLogoAnimation(true);
+      return; // Explicit return for consistency
     }
   }, [currentStep]);
 
