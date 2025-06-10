@@ -65,7 +65,8 @@
       "require_current_password": "Current password is required",
       "require_new_password": "New password is required",
       "no_plus_in_email":"Email Cannot contain a + sign",
-      "weak_password":"Your Password is weak, please use a mix of upper and lower case characters with symbols"
+      "weak_password":"Your Password is weak, please use a mix of upper and lower case characters with symbols",
+      "valid_url":"Please enter a valid URL without http or https and any trailing slashes"
     },
     "placeholder": {
       "email": "yourname@yourbusiness.com",
