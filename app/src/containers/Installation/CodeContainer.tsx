@@ -32,7 +32,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
   return (
     <div className="w-[80vw] sm:w-[90vw] mx-auto my-8 p-6 bg-white shadow-md rounded-lg flex flex-col border-2 border-dark-gray border-opacity-50">
       <h2 className="text-lg font-semibold mb-4">Quick installation</h2>
-      <div className="flex mb-4 space-x-4">
+      <div className="widget-customization-options flex mb-4 space-x-4">
         <div>
           <label htmlFor="position" className="block text-sm font-medium text-gray-700">Position:</label>
           <select
@@ -60,24 +60,24 @@ export default function CodeContainer({ codeString }: CodeProps) {
           </select>
         </div>
       </div>
-      <p className="text-sm mb-4">
+      <p className="installation-instructions text-sm mb-4">
         For best results, paste the installation code right before the ending of the body tag on your website.
       </p>
-      <div className={`bg-sapphire-blue text-white rounded p-4 mb-4 ${isExpanded ? 'overflow-visible' : 'overflow-x-auto'}`}>
+      <div className={`installation-code-block bg-sapphire-blue text-white rounded p-4 mb-4 ${isExpanded ? 'overflow-visible' : 'overflow-x-auto'}`}>
         <pre className={isExpanded ? 'whitespace-pre-wrap' : 'whitespace-nowrap'}>
           <code>{formattedCodeString}</code>
         </pre>
       </div>
       <div className='flex flex-row justify-between sm:flex-col-reverse'>
         <button
-          className="py-3 text-white text-center rounded bg-primary hover:bg-sapphire-blue w-[20%] sm:my-4 sm:w-full transition duration-300"
+          className="copy-code-button py-3 text-white text-center rounded bg-primary hover:bg-sapphire-blue w-[20%] sm:my-4 sm:w-full transition duration-300"
           onClick={copyToClipboard}
         >
           <FaRegCopy className='inline-block' size={20} />
           <span className='font-medium ml-1'> {copySuccess ? 'Copied!' : 'Copy to Clipboard'} </span>
         </button>
         <button
-          className="px-1 py-1.5 text-sapphire-blue text-center rounded hover:bg-gray w-[10%] sm:w-[40%] sm:my-1 sm:self-end transition duration-300"
+          className="expand-code-button px-1 py-1.5 text-sapphire-blue text-center rounded hover:bg-gray w-[10%] sm:w-[40%] sm:my-1 sm:self-end transition duration-300"
           onClick={toggleExpand}
         >
           {isExpanded ? <GrContract className='inline-block mr-1.5' /> : <FaExpand className='inline-block mr-1' />}

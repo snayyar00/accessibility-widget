@@ -13,7 +13,7 @@ const AccessibilityScoreCard: React.FC<AccessibilityScoreCardProps> = ({ score,o
   const scoreDescription = score > 89 ? 'You are 90% + compliant with WCAG 2.1 AA!' : 'Websites with a score of 70% or lower are considered at high risk.';
 
   return (
-    <div className="accessibility-card">
+    <div className="accessibility-card accessibility-score-card">
       <div className="card-header">Accessibility Score</div>
       <div className='mb-8 mt-5'>
         <CircularProgressWithLabel otherwidget={otherwidget} value={score} size={110} />

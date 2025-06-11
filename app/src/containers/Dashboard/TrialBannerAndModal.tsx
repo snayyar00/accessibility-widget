@@ -435,7 +435,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                         placeholder="Add a new domain name"
                         value={formData.domainName}
                         onChange={handleInputChange}
-                        className="form-control"
+                        className="domain-input-field form-control"
                         form="bannerForm"
                       />
                     </div>
@@ -448,7 +448,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                       className="add-domain-form"
                     >
                       
-                      <div className="sm:flex-col md:flex-row flex justify-end pb-3 pt-4">
+                      <div className="trial-buttons-section sm:flex-col md:flex-row flex justify-end pb-3 pt-4">
                         <button
                           type="button"
                           className="py-3 mr-4 justify-center text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full sm:w-full transition duration-300"
@@ -475,7 +475,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                       <div className="sm:flex-col md:flex-row flex justify-end">
                         <button
                           type="button"
-                          className="py-3 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full sm:w-full transition duration-300"
+                          className="skip-trial-button py-3 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full sm:w-full transition duration-300"
                           onClick={showPaymentModal}
                           disabled={addSiteLoading || billingLoading}
                         >
@@ -488,7 +488,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                       </div>
                       
                       {/* AppSumo User Notice */}
-                      <div className="mt-6 p-5 bg-[rgb(255,188,0)] border-2 border-amber-500 rounded-xl shadow-lg relative overflow-hidden">
+                      <div className="appsumo-notice mt-6 p-5 bg-[rgb(255,188,0)] border-2 border-amber-500 rounded-xl shadow-lg relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 bg-amber-500 rounded-full opacity-20"></div>
                         <div className="absolute top-0 right-0 w-16 h-16 -mr-4 -mt-4 bg-amber-400 rounded-full opacity-30"></div>
                         <div className="flex items-center">
@@ -701,7 +701,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
             {noPlan ? (
               <div className="w-full mb-6 flex">
                 <div
-                  className="w-full grid grid-cols-1 lg:grid-cols-12 text-white outline outline-1 rounded-xl overflow-hidden"
+                  className="add-domain-banner w-full grid grid-cols-1 lg:grid-cols-12 text-white outline outline-1 rounded-xl overflow-hidden"
                   style={{ backgroundColor: 'rgb(0 51 237)' }}
                 >
                   {/* Left Column (Text) */}
