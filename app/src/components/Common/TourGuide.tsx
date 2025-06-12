@@ -248,6 +248,7 @@ const TourGuide: React.FC<TourGuideProps> = ({
       
       return () => clearTimeout(timer);
     }
+    return () => {};
   }, [autoStart, isNewUser, isLoading, steps.length, startDelay]);
 
   // Don't render if no steps provided or steps is empty
