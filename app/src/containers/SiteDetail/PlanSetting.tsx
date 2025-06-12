@@ -40,7 +40,7 @@ interface ModalProps {
 
 const plans = [
   {
-    id: 'single',
+    id: 'single test',
     name: 'WebAbility Pro',
     price: 12,
     desc: 'Ideal for all your accessibility needs for a single site',
@@ -540,7 +540,7 @@ const PlanSetting: React.FC<{
                   </div>
                 )}
             </div>
-            <div className="block w-full mb-4">
+            <div className="coupon-input-section block w-full mb-4">
               <div className="flex items-center">
                 <input
                   type="text"
@@ -611,7 +611,7 @@ const PlanSetting: React.FC<{
 
                       <Button
                         color="primary"
-                        className="get-start-btn w-full mt-4"
+                        className="checkout-button get-start-btn w-full mt-4"
                         onClick={() => {
                           handleSubscription(false);
                         }}
@@ -635,7 +635,7 @@ const PlanSetting: React.FC<{
 
                       <Button
                         color="primary"
-                        className="get-start-btn mt-4"
+                        className="checkout-button get-start-btn mt-4"
                         onClick={() => {
                           handleCheckout(false);
                         }}
