@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useHistory } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useLazyQuery } from '@apollo/client';
+import { useLazyQuery, useQuery } from '@apollo/client';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
 import {
   AlertTriangle,
@@ -29,6 +29,8 @@ import autoTable from 'jspdf-autotable';
 import { ReactI18NextChild } from 'react-i18next';
 import { toast } from 'sonner';
 import TechStack from './TechStack';
+import { CircularProgress } from '@mui/material';
+import getProfileQuery from '@/queries/auth/getProfile';
 
 // Add this array near the top of the file
 const accessibilityFacts = [
@@ -117,12 +119,13 @@ function calculateEnhancedScore(baseScore: number) {
 const queryParams = new URLSearchParams(location.search);
 const fullUrl = queryParams.get('domain') || '';
 
-const cleanUrl = fullUrl.trim().replace(/^(https?:\/\/)?(www\.)?/, '');
-const urlParam = `https://${cleanUrl}`;
+// const cleanUrl = fullUrl.trim().replace(/^(https?:\/\/)?(www\.)?/, '');
+// const urlParam = `https://${cleanUrl}`;
 
 const ReportView: React.FC = () => {
   const { r2_key } = useParams<ReportParams>();
   const location = useLocation();
+  const history = useHistory();
   const adjustedKey = `reports/${r2_key}`;
   const [fetchReport, { data, loading, error }] = useLazyQuery(FETCH_REPORT_BY_R2_KEY);
   const [activeTab, setActiveTab] = useState('all');
@@ -130,7 +133,11 @@ const ReportView: React.FC = () => {
   const [issueFilter, setIssueFilter] = useState(ISSUE_FILTERS.ALL);
   const [widgetInfo, setWidgetInfo] = useState<WidgetInfo | null>(null);
   const [webabilityenabled, setwebabilityenabled] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const {
+    data: userInfo,
+    error: getProfileError,
+    loading: getProfileLoading,
+  } = useQuery(getProfileQuery);
 
   // Processing state management
   const [isProcessing, setIsProcessing] = useState(true);
@@ -140,113 +147,72 @@ const ReportView: React.FC = () => {
   // Always call hooks at the top
   useEffect(() => {
     if (r2_key) {
-      fetchReport({ variables: { r2_key: adjustedKey } });
-      checkScript();
+      fetchReport({ variables: { r2_key: adjustedKey } }).then(({ data }) => {
+        const report = data.fetchReportByR2Key;
+        if (report) {
+          // Check the scriptCheckResult and update webabilityenabled
+          if (report.scriptCheckResult === 'Web Ability') {
+            setwebabilityenabled(true);
+            // setRefreshKey((prev) => prev + 1); // Trigger re-render
+          } else {
+            setwebabilityenabled(false);
+          }
+
+          // Handle other widget detection if needed
+          if (report.scriptCheckResult !== 'false') {
+            // setOtherWidgetEnabled(true);
+            // setbuttoncontrol(true);
+          }
+        } else {
+          console.warn("No report data found.");
+        }
+      })
+        .catch((error) => {
+          console.error("Error fetching report:", error);
+        })
+        .finally(() => {
+          setIsProcessing(false); // Stop processing once the check is done
+        });
     }
   }, [r2_key]);
 
-  const checkScript = async () => {
-    setwebabilityenabled(false);
-    try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/check-script`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ siteUrl: urlParam }),
-      });
-      const data = await response.json();
-      if (data === 'Web Ability') {
-        setwebabilityenabled(true);
-        setRefreshKey((prev) => prev + 1); // Trigger re-render
-      } else if (data !== 'false') {
-        //setOtherWidgetEnabled(true);
-        //setbuttoncontrol(true);
+  // Redirect unauthenticated users
+  useEffect(() => {
+    if (!getProfileLoading) {
+      if (getProfileError || !userInfo?.profileUser) {
+        history.push('/auth/signin'); // Redirect to sign-in page
       }
-    } catch (error) {
-      console.log("catch error=", error);
-      //setScriptCheckLoading(false); // It's good to stop loading even on error
-    } finally {
-      setIsProcessing(false); // Stop processing once the check is done
     }
+  }, [getProfileLoading, getProfileError, userInfo, history]);
+
+  const handleBackToDashboard = () => {
+    history.push('/dashboard'); // Navigate to the dashboard route
   };
 
   const report = data?.fetchReportByR2Key || {};
 
-  const extractedIssues = useMemo(() => {
-    if (!report) return [];
-    return extractIssuesFromReport(report);
-  }, [report]);
-
-  const totalStats = useMemo(() => {
-    const calculatedStats = countIssuesBySeverity(extractedIssues);
-    let finalScore = report?.score || 0;
-
-    if (webabilityenabled) {
-      finalScore = Math.min(100, finalScore + WEBABILITY_SCORE_BONUS);
-    }
-
-    return {
-      score: finalScore,
-      originalScore: report?.score || 0,
-      criticalIssues: calculatedStats.criticalIssues,
-      warnings: calculatedStats.warnings,
-      moderateIssues: calculatedStats.moderateIssues,
-      totalElements: report?.totalElements || 0,
-      hasWebAbility: webabilityenabled,
-    };
-  }, [extractedIssues, report, webabilityenabled, refreshKey]);
-
-  // Group issues by functionality - UPDATED to normalize category names
-  const issuesByFunction = useMemo(() => {
-    const groupedIssues: any = {}
-
-    extractedIssues.forEach(issue => {
-      if (issue.functionality) {
-        // Normalize functionality name to prevent duplicates like "Low Vision" and "Low vision"
-        const normalizedName = issue.functionality.split(' ')
-          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-          .join(' ');
-
-        if (!groupedIssues[normalizedName]) {
-          groupedIssues[normalizedName] = []
-        }
-
-        // Store the issue with the normalized functionality name
-        const normalizedIssue = {
-          ...issue,
-          functionality: normalizedName
-        }
-
-        groupedIssues[normalizedName].push(normalizedIssue)
-      }
-    })
-
-    return groupedIssues
-  }, [extractedIssues]);
-
-  // Get functionality names for tabs
-  const functionalityNames = useMemo(() => {
-    return Object.keys(issuesByFunction).sort();
-  }, [issuesByFunction]);
+  const issues = report.issues || [];
+  const totalStats = report.totalStats || {};
+  const issuesByFunction = report.issuesByFunction || {};
+  const functionalityNames = report.functionalityNames || [];
 
   // Update the filtered issues logic to include severity filtering
   const filteredIssues = useMemo(() => {
-    if (!extractedIssues.length) return [];
+    if (!issues.length) return [];
 
     let filtered = [];
 
     // First filter by organization/tab
     if (organization === "function") {
       filtered = activeTab === "all"
-        ? extractedIssues
+        ? issues
         : (issuesByFunction[activeTab] || []);
     } else {
       // Filter by structure (content, navigation, forms)
       if (activeTab === "all") {
-        filtered = extractedIssues;
+        filtered = issues;
       } else {
-        filtered = extractedIssues.filter(issue => {
+        filtered = issues.filter((issue: { selectors: string[]; }) => {
           const selector = issue.selectors?.[0]?.toLowerCase() || '';
 
           if (activeTab === "content") {
@@ -277,7 +243,7 @@ const ReportView: React.FC = () => {
     }
 
     return filtered;
-  }, [extractedIssues, activeTab, organization, issuesByFunction, issueFilter]);
+  }, [issues, activeTab, organization, issuesByFunction, issueFilter]);
 
   // Reset activeTab when changing organization
   useEffect(() => {
@@ -293,7 +259,7 @@ const ReportView: React.FC = () => {
   }, []);
 
   // Conditional rendering in the return statement
-  if (loading || isProcessing) {
+  if (loading || isProcessing || getProfileLoading) {
     return (
       <div className="min-h-screen w-full bg-gray-900 flex items-center justify-center">
         <div className="relative w-full h-full aspect-video overflow-hidden bg-gray-900">
@@ -311,7 +277,7 @@ const ReportView: React.FC = () => {
                   </h3>
 
                   {/* Loader in the middle */}
-                  <Loader2 className="w-12 h-12 animate-spin mx-auto mb-6 text-blue-400" />
+                  <CircularProgress size={36} sx={{ color: 'blue-400' }} className="mb-6 mx-auto my-auto" />
 
                   {/* Facts below */}
                   <AnimatePresence>
@@ -349,6 +315,15 @@ const ReportView: React.FC = () => {
 
   return (
     <div className="bg-report-blue text-foreground min-h-screen pt-20 pr-28 pb-20 pl-28">
+      <div className="absolute top-4 right-24">
+        <button
+          onClick={handleBackToDashboard}
+          className="bg-blue-800 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+        >
+          Back to Dashboard
+        </button>
+      </div>
+
       <header className="text-center relative z-10 mb-16">
         <h1 className="mb-2">
           <span className="block text-xl sm:text-5xl lg:text-4xl font-medium text-white leading-tight tracking-tight break-words">
@@ -363,7 +338,7 @@ const ReportView: React.FC = () => {
           <div className="lg:col-span-8">
             <ScanningPreview siteImg={report.siteImg} />
             <ComplianceStatus score={totalStats.score} results={report} />
-            <TechStack url={urlParam} />
+            <TechStack techStack={report.techStack} />
           </div>
           <div className="lg:col-span-4 grid grid-cols-1 gap-4">
             <StatCard
@@ -431,7 +406,7 @@ const ReportView: React.FC = () => {
           ) : (
             <>
               <IssuesSummary
-                filteredIssues={extractedIssues} // Pass all issues for accurate counts
+                filteredIssues={filteredIssues} // Pass all issues for accurate counts
                 activeTab={activeTab}
                 organization={organization}
                 onFilterChange={setIssueFilter}

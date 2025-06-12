@@ -20,6 +20,7 @@ module.exports = {
       'blue-500': '#3c82f6',
       'blue-600': '#2463eb',
       'blue-700': '#1c4ed9',
+      'blue-800': '#031239',
       'blue-900': '#1e398a',
       'report-blue': '#1c3ca6',
       'white-blue': '#97A0C3',

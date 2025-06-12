@@ -9,6 +9,5 @@ import accessibilityResolves from './resolvers/accessibilityReport.resolver';
 import uniqueTokenResolves from './resolvers/uniqueToken.resolver';
 import sitePlanResolves from './resolvers/site-plan.resolver';
 import problemReportResolves from './resolvers/reportProblem.resolver';
-import techStackResolver from './resolvers/techStack.resolver';
 
-export default [userResolves, userPlanResolves, teamResolves, documentResolves, allowedSitesResolves, uniqueVisitorResolves, impressionResolves, accessibilityResolves, uniqueTokenResolves, sitePlanResolves,problemReportResolves, techStackResolver];
+export default [userResolves, userPlanResolves, teamResolves, documentResolves, allowedSitesResolves, uniqueVisitorResolves, impressionResolves, accessibilityResolves, uniqueTokenResolves, sitePlanResolves, problemReportResolves];

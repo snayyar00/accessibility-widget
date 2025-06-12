@@ -125,7 +125,53 @@ export const AccessibilitySchema = gql`
     processing_stats: ProcessingStats
     template_analysis: TemplateAnalysis
     preprocessing_stats: PreprocessingStats
+    scriptCheckResult: String
   }
+
+  type CategorizedTechnology {
+    category: String!
+    technologies: [String!]!
+  }
+
+  type AccessibilityContext {
+    platform: String
+    platform_type: String
+    has_cms: Boolean
+    has_ecommerce: Boolean
+    has_framework: Boolean
+    is_spa: Boolean
+  }
+
+  type TechStack {
+    technologies: [String!]!
+    categorizedTechnologies: [CategorizedTechnology!]!
+    confidence: String
+    accessibilityContext: AccessibilityContext
+    analyzedUrl: String!
+    analyzedAt: String!
+    source: String
+  }
+
+  extend type Report {
+    techStack: TechStack
+  }
+
+  extend type Report {
+  issues: [Issue!]
+  issuesByFunction: JSON
+  functionalityNames: [String!]
+  totalStats: JSON
+}
+
+type Issue {
+  functionality: String
+  impact: String
+  message: String
+  context: [String]
+  selectors: [String]
+  description: String
+  recommended_action: String
+}
 
   type AccessibilityReportMeta {
     id: Int!

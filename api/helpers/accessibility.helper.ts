@@ -142,7 +142,7 @@ export async function getAccessibilityInformationPally(domain: string) {
     // Parse and return the response JSON
     results = await response.json();
   } catch (error) {
-    console.error('pally API Error');
+    console.error('pally API Error', error);
     return;
   }
 

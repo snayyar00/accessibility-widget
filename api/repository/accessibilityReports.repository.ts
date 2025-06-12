@@ -9,7 +9,7 @@ export async function insertAccessibilityReport({
   score,
 }: {
   url: string;
-  allowed_sites_id?: number;
+  allowed_sites_id?: number | null;
   r2_key: string;
   score?: Json
 }) {

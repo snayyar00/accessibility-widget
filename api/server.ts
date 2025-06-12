@@ -1144,42 +1144,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
-  app.post('/check-script', async (req, res) => {
-    try {
-        const { siteUrl } = req.body;
-
-        const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${siteUrl}`;
-
-        // Fetch the data from the secondary server
-        const response = await fetch(apiUrl);
-
-        // Check if the response is successful
-        if (!response.ok) {
-            throw new Error(`Failed to fetch the script check. Status: ${response.status}`);
-        }
-
-        // Parse the response as JSON
-        const responseData = await response.json();
-        
-        // Access the result and respond accordingly
-        if (responseData.result === "WebAbility") {
-            res.status(200).json("Web Ability");
-
-        }
-        else if(responseData.result != "Not Found"){
-          res.status(200).json("true");
-        } 
-        else {
-            res.status(200).json("false");
-        }
-
-    } catch (error) {
-        // Handle any errors that occur
-        console.error("Error checking script:", error.message);
-        res.status(500).json({ error: 'An error occurred while checking the script.' });
-    }
-});
-
   app.post('/check-customer',async (req,res)=>{
     const {email,userId} = req.body;
     let plan_name;

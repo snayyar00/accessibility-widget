@@ -1,6 +1,5 @@
 import fetch from 'node-fetch';
 
-const EXTERNAL_API_BASE = 'https://h8ogg4wsgkc0kscwscwwgwks.server.techywebsolutions.com';
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 const cache = new Map();
 
@@ -16,7 +15,7 @@ export async function fetchTechStackFromAPI(url: string) {
   }
 
   try {
-    const apiUrl = `${EXTERNAL_API_BASE}/techstack/?url=${encodeURIComponent(url)}`;
+    const apiUrl = `${process.env.SECONDARY_SERVER_URL}/techstack/?url=${encodeURIComponent(url)}`;
     const apiRes = await fetch(apiUrl, {
       headers: {
         'User-Agent': 'webAbilityFrontend',

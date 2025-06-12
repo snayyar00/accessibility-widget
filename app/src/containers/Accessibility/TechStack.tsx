@@ -1,52 +1,43 @@
 import React from 'react';
-import { useQuery } from '@apollo/client';
-import FETCH_TECH_STACK from '@/queries/accessibility/fetchTechStack';
 import { motion } from 'framer-motion';
 import { Laptop, Server, Code, BarChart, AlertCircle, Layers, ShoppingCart, TrendingUp } from 'lucide-react';
-import { ReactI18NextChild } from 'react-i18next';
 
 type TechStackProps = {
-  url: string; // Pass the URL dynamically to fetch the tech stack
+  techStack: {
+    technologies: string[];
+    categorizedTechnologies: { category: string; technologies: string[] }[];
+    confidence: string;
+    accessibilityContext: {
+      platform: string;
+      platform_type: string;
+      has_cms: boolean;
+      has_ecommerce: boolean;
+      has_framework: boolean;
+      is_spa: boolean;
+    };
+    analyzedUrl: string;
+    analyzedAt: string;
+    source: string;
+  };
 };
 
-const TechStack: React.FC<TechStackProps> = ({ url }) => {
-  const { data, loading, error } = useQuery(FETCH_TECH_STACK, {
-    variables: { url },
-  });
-
-  if (loading) {
+const TechStack: React.FC<TechStackProps> = ({ techStack }) => {
+  if (!techStack) {
     return (
       <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
         <div className="flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-gray-400" />
           <div>
             <h3 className="text-md font-medium text-gray-700">Technology Stack</h3>
-            <p className="text-sm text-gray-500">Analyzing website technologies...</p>
+            <p className="text-sm text-gray-500">No technology stack data available.</p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <div className="flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-gray-400" />
-          <div>
-            <h3 className="text-md font-medium text-gray-700">Technology Stack</h3>
-            <p className="text-sm text-gray-500">
-              Unable to analyze website technologies: {error.message}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const techStack = data.fetchTechStack;
   const categorizedTech = techStack.categorizedTechnologies || [];
-  const allTechs = techStack.technologies || techStack.detectedTechnologies || [];
+  const allTechs = techStack.technologies || [];
   type ConfidenceLevel = 'high' | 'medium' | 'low';
   const confidenceColorMap: Record<ConfidenceLevel, string> = {
     high: 'text-green-600',
@@ -54,11 +45,14 @@ const TechStack: React.FC<TechStackProps> = ({ url }) => {
     low: 'text-gray-600',
   };
   const confidenceLevel: ConfidenceLevel =
-    (techStack.confidence as ConfidenceLevel) || 'low';
+    parseFloat(techStack.confidence) > 80
+      ? 'high'
+      : parseFloat(techStack.confidence) > 50
+        ? 'medium'
+        : 'low';
   const confidenceColor = confidenceColorMap[confidenceLevel];
 
   const accessibilityContext = techStack.accessibilityContext;
-  const confidence = techStack.confidenceScores?.overall;
 
   return (
     <motion.div
@@ -70,10 +64,8 @@ const TechStack: React.FC<TechStackProps> = ({ url }) => {
         <Laptop className="w-5 h-5 text-blue-500" />
         <h3 className="text-md font-medium text-gray-800">Technology Stack</h3>
         <span className={`text-xs ${confidenceColor} ml-auto`}>
-          {confidence
-            ? `${Math.round(confidence)}% confident`
-            : techStack.confidence
-            ? `${techStack.confidence.charAt(0).toUpperCase()}${techStack.confidence.slice(1)} confidence`
+          {techStack.confidence
+            ? `${Math.round(parseFloat(techStack.confidence))}% confident`
             : 'Low confidence'}
         </span>
       </div>
@@ -96,14 +88,10 @@ const TechStack: React.FC<TechStackProps> = ({ url }) => {
 
       <div className="space-y-3">
         {categorizedTech.length > 0 ? (
-          categorizedTech.map((category: { category: {} | null | undefined; technologies: any[]; }, index: React.Key | null | undefined) => (
+          categorizedTech.map((category, index) => (
             <div key={index} className="border-t pt-2 first:border-t-0 first:pt-0">
               <div className="flex items-center gap-1.5 mb-1.5">
-                {getCategoryIcon(
-                  typeof category.category === 'string'
-                    ? category.category
-                    : undefined
-                )}
+                {getCategoryIcon(category.category)}
                 <span className="text-sm font-medium text-gray-700">{category.category}</span>
                 <span className="text-xs text-gray-500 ml-1">({category.technologies.length})</span>
               </div>
@@ -127,7 +115,7 @@ const TechStack: React.FC<TechStackProps> = ({ url }) => {
               <span className="text-xs text-gray-500 ml-1">({allTechs.length})</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {allTechs.map((tech: boolean | React.ReactChild | React.ReactFragment | React.ReactPortal | Iterable<ReactI18NextChild> | null | undefined, index: React.Key | null | undefined) => (
+              {allTechs.map((tech, index) => (
                 <span
                   key={index}
                   className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-md"

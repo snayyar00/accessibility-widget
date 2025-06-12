@@ -54,7 +54,8 @@ import { report } from 'process';
 import { json } from 'stream/consumers';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
+import Select from 'react-select/creatable';
+import { set } from 'lodash';
 
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
@@ -65,23 +66,18 @@ function calculateEnhancedScore(baseScore: number) {
   return Math.min(enhancedScore, MAX_TOTAL_SCORE);
 }
 
+const normalizeDomain = (url: string) =>
+  url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+
 const AccessibilityReport = ({ currentDomain }: any) => {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.report') });
   const [score, setScore] = useState(0);
   const [scoreBackup, setScoreBackup] = useState(0);
-  const [enabled, setEnabled] = useState(false);
   const [domain, setDomain] = useState(currentDomain);
-  const [issueType, setIssueType] = useState('Errors');
   const [siteImg, setSiteImg] = useState('');
-  const [webabilityenabled, setwebabilityenabled] = useState(false);
-  const [otherWidgetEnabled, setOtherWidgetEnabled] = useState(false);
-  const [buttoncontrol, setbuttoncontrol] = useState(false);
-  const [scriptCheckLoading, setScriptCheckLoading] = useState(false);
-  const [otherscore, setOtherScore] = useState(Math.floor(Math.random() * (88 - 80 + 1)) + 80);
   const [expand, setExpand] = useState(false);
   const [correctDomain, setcorrectDomain] = useState(currentDomain);
-  const [webAbilityScore, setWebAbilityScore] = useState(Math.floor(Math.random() * (100 - 90 + 1)) + 90);
   // const [accessibilityData, setAccessibilityData] = useState({});
   const { data: sitesData } = useQuery(GET_USER_SITES);
   const [saveAccessibilityReport] = useMutation(SAVE_ACCESSIBILITY_REPORT);
@@ -97,9 +93,20 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     },
   );
   const [fetchReportByR2Key, { loading: loadingReport, data: reportData }] = useLazyQuery(FETCH_REPORT_BY_R2_KEY);
-
+  type OptionType = { value: string; label: string };
+  const [selectedOption, setSelectedOption] = useState<OptionType | null>(null)
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef: contentRef });
+
+  // Combine options for existing sites and a custom "Enter a new domain" option
+  const siteOptions = sitesData?.getUserSites?.map((domain: any) => ({
+    value: domain.url,
+    label: domain.url,
+  })) || [];
+  const options = [
+    ...siteOptions,
+    { value: 'new', label: 'Enter a new domain' },
+  ];
 
   useEffect(() => {
     if (data) {
@@ -107,8 +114,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       if (result) {
         let score = result.score;
         let allowed_sites_id = null;
-        const normalizeDomain = (url: string) =>
-          url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+        
         if (sitesData && sitesData.getUserSites) {
           const matchedSite = sitesData.getUserSites.find(
             (site: any) => normalizeDomain(site.url) == normalizeDomain(correctDomain)
@@ -122,9 +128,20 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             allowed_sites_id,
             score: typeof score === 'object' ? score : { value: score },
           },
-        }).then(() => {
+        }).then(({ data }) => {
           setReportGenerated((prev) => !prev);
-          toast.success('Report successfully generated! You can view/download it below.');
+          const isNewDomain = !siteOptions.some((option: any) => normalizeDomain(option.value) === normalizeDomain(correctDomain));
+
+          if (isNewDomain && data && data.saveAccessibilityReport) {
+            const savedReport = data.saveAccessibilityReport; // Access the returned report
+            const r2Key = savedReport.key;
+            const savedUrl = savedReport.report.url;
+            // Open the ReportView for the new domain in a new tab
+            const newTab = window.open(`/${r2Key}?domain=${encodeURIComponent(savedUrl)}`, '_blank');
+            if (newTab) newTab.focus();
+          } else {
+          toast.success('Report successfully generated! You can view or download it below.');
+          }
         });
         const { htmlcs } = result;
         groupByCode(htmlcs);
@@ -175,7 +192,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       return;
     }
     setcorrectDomain(domain);
-    checkScript();
+    //checkScript();
     try {
       await getAccessibilityStatsQuery(); // Manually trigger the query
     } catch (error) {
@@ -204,35 +221,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       issues.errors = groupByCodeUtil(issues.errors);
       issues.warnings = groupByCodeUtil(issues.warnings);
       issues.notices = groupByCodeUtil(issues.notices);
-    }
-  };
-
-  const [activeTab, setActiveTab] = useState('By WCGA Guidelines');
-
-  const checkScript = async () => {
-    setScriptCheckLoading(true);
-    setwebabilityenabled(false);
-    setOtherWidgetEnabled(false);
-    setbuttoncontrol(false);
-    try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/check-script`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ siteUrl: domain }),
-      });
-      const data = await response.json();
-      if (data === 'Web Ability') {
-        setwebabilityenabled(true);
-      } else if (data !== 'false') {
-        setOtherWidgetEnabled(true);
-        setbuttoncontrol(true);
-      }
-      setScriptCheckLoading(false);
-    } catch (error) {
-      console.log("catch error=", error);
-      setScriptCheckLoading(false); // It's good to stop loading even on error
     }
   };
 
@@ -469,55 +457,37 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
       <div className="w-full pl-6 pr-6 border-none shadow-none flex flex-col justify-center items-center">
         <div className="bg-white my-6 p-3 sm:p-4 rounded-xl w-full">
-          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Enter or Select a Domain</h2>
           <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-4">
-              <select
-                className="w-full p-2 border rounded text-sm sm:text-base"
-                value={selectedSite || 'new'}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === 'new') {
-                    setSelectedSite('');
-                    setDomain(''); // Reset domain when "Enter a new domain" is selected
-                    setProcessedReportKeys([]); // Clear the table data
-                    setEnhancedScoresCalculated(false); // Hide the table
-                  } else {
-                    setSelectedSite(value);
-                    setDomain(value); // Set domain to the selected site
-                  }
-                }}
-              >
-                <option value="new">Enter a new domain</option>
-                {sitesData?.getUserSites?.map((domain: any) => (
-                  <option key={domain.id} value={domain.url}>
-                    {domain.url}
-                  </option>
-                ))}
-              </select>
-
-              {selectedSite === '' && (
-                <input
-                  type="text"
-                  placeholder="Enter a domain"
-                  className="w-full p-2 border rounded text-sm sm:text-base"
-                  value={domain}
-                  onChange={(e) => setDomain(e.target.value)}
-                />
-              )}
-            </div>
+            <Select
+              options={siteOptions}
+              value={selectedOption}
+              onChange={(selected: OptionType | null) => {
+                setSelectedOption(selected);
+                setSelectedSite(selected?.value ?? ''); // Update the selectedSite state
+                setDomain(selected?.value ?? ''); // Update the domain state
+              }}
+              onCreateOption={(inputValue: any) => {
+                // Handle new domain creation
+                const newOption = { value: inputValue, label: inputValue };
+                setSelectedOption(newOption);
+                setSelectedSite(inputValue); // Update the selectedSite state
+                setDomain(inputValue); // Update the domain state
+              }}
+              placeholder="Select or enter a domain"
+              isSearchable
+              isClearable
+              formatCreateLabel={(inputValue: any) => `Enter a new domain: "${inputValue}"`}
+            />
 
             <button
               type="button"
               className="bg-primary text-white px-4 py-2 rounded"
               onClick={() => {
-                if (selectedSite) {
-                  setDomain(selectedSite);
-                  checkScript();
+                if (domain) {
+                  //checkScript();
                   handleSubmit();
-                } else if (domain) {
-                  checkScript();
-                  handleSubmit();
+                } else {
+                  toast.error('Please enter or select a domain!');
                 }
               }}
             >
@@ -526,136 +496,137 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             </button>
           </div>
         </div>
-      </div>
 
-      <div className="mt-6 pl-6 pr-6 grid md:grid-cols-3 gap-6 text-center">
-        <Card>
-          <CardContent className="my-8">
-            <h2 className="text-xl font-semibold mb-2 text-gray-800">Comprehensive Analysis</h2>
-            <p className="text-gray-600 mb-4">
-              Our scanner checks for WCAG 2.1 compliance across your entire site.
-            </p>
-            <div className="flex justify-center w-full">
-              <FaCheckCircle size={90} color="green" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="my-8">
-            <h2 className="text-xl font-semibold mb-2 text-gray-800">Detailed Reports</h2>
-            <p className="text-gray-600 mb-4">
-              Receive a full breakdown of accessibility issues and how to fix them.
-            </p>
-            <div className="flex justify-center w-full">
-              <TbReportSearch size={95} color="green" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="my-8">
-            <h2 className="text-xl font-semibold mb-2 text-gray-800">Improve User Experience</h2>
-            <p className="text-gray-600 mb-4">
-              Make your website accessible to all users, regardless of abilities.
-            </p>
-            <div className="flex justify-center w-full">
-              <FaUniversalAccess size={95} color="blue" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <div className="mt-6 pl-6 pr-6 grid md:grid-cols-3 gap-6 text-center">
+          <Card>
+            <CardContent className="my-8">
+              <h2 className="text-xl font-semibold mb-2 text-gray-800">Comprehensive Analysis</h2>
+              <p className="text-gray-600 mb-4">
+                Our scanner checks for WCAG 2.1 compliance across your entire site.
+              </p>
+              <div className="flex justify-center w-full">
+                <FaCheckCircle size={90} color="green" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="my-8">
+              <h2 className="text-xl font-semibold mb-2 text-gray-800">Detailed Reports</h2>
+              <p className="text-gray-600 mb-4">
+                Receive a full breakdown of accessibility issues and how to fix them.
+              </p>
+              <div className="flex justify-center w-full">
+                <TbReportSearch size={95} color="green" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="my-8">
+              <h2 className="text-xl font-semibold mb-2 text-gray-800">Improve User Experience</h2>
+              <p className="text-gray-600 mb-4">
+                Make your website accessible to all users, regardless of abilities.
+              </p>
+              <div className="flex justify-center w-full">
+                <FaUniversalAccess size={95} color="blue" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      {enhancedScoresCalculated && processedReportKeys.length > 0 && (
-        <div className="bg-white rounded-xl p-6 mt-12 shadow mr-6 ml-6">
-          <h3 className="text-2xl font-medium text-gray-800 mb-6 border-b-2 border-gray-300 pb-2">
-            Your audit history
-          </h3>
-          <table className="w-full text-left border-separate border-spacing-y-2">
-            <thead>
-              <tr className="text-gray-500 text-sm uppercase">
-                <th className="py-2 px-4">Webpage</th>
-                <th className="py-2 px-4">Date</th>
-                <th className="py-2 px-4">Time</th>
-                <th className="py-2 px-4">Compliance Status</th>
-                <th className="py-2 px-4">Accessibility Score</th>
-                <th className="py-2 px-4">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {processedReportKeys.map((row: any, idx: number) => {
-                const dateObj = new Date(Number(row.created_at));
-                const date = dateObj.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-                const time = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-                const complianceStatus = getComplianceStatus(row.enhancedScore);
+        
+        {siteOptions.some((option: any) => normalizeDomain(option.value) === normalizeDomain(selectedOption?.value ?? '')) && enhancedScoresCalculated && processedReportKeys.length > 0 &&  (
+          <div className="bg-white rounded-xl p-6 mt-12 shadow mr-6 ml-6">
+            <h3 className="text-2xl font-medium text-gray-800 mb-6 border-b-2 border-gray-300 pb-2">
+              Your audit history
+            </h3>
+            <table className="w-full text-left border-separate border-spacing-y-2">
+              <thead>
+                <tr className="text-gray-500 text-sm uppercase">
+                  <th className="py-2 px-4">Webpage</th>
+                  <th className="py-2 px-4">Date</th>
+                  <th className="py-2 px-4">Time</th>
+                  <th className="py-2 px-4">Compliance Status</th>
+                  <th className="py-2 px-4">Accessibility Score</th>
+                  <th className="py-2 px-4">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {processedReportKeys.map((row: any, idx: number) => {
+                  const dateObj = new Date(Number(row.created_at));
+                  const date = dateObj.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                  const time = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                  const complianceStatus = getComplianceStatus(row.enhancedScore);
 
-                return (
-                  <tr
-                    key={row.r2_key}
-                    className={`bg-${idx % 2 === 0 ? 'white' : 'gray-50'} hover:bg-blue-50 transition`}
-                    style={{ borderRadius: 8 }}
-                  >
-                    <td className="py-3 px-4 font-medium text-gray-900">{row.url}</td>
-                    <td className="py-3 px-4">{date}</td>
-                    <td className="py-3 px-4">{time}</td>
-                    <td className="py-3 px-4">
-                      {complianceStatus === 'Compliant' ? (
-                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Compliant</span>
-                      ) : complianceStatus === 'Partially Compliant' ? (
-                        <span className="bg-yellow-50 text-yellow-800 px-2 py-1 rounded text-xs">Partially Compliant</span>
-                      ) : (
-                        <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">{complianceStatus}</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-                        {row.enhancedScore}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 flex gap-2">
-                      <button
-                        className="text-blue-600 underline font-medium"
-                        onClick={() => {
-                          const newTab = window.open(`/${row.r2_key}?domain=${encodeURIComponent(row.url)}`, '_blank');
-                          if (newTab) newTab.focus();
-                        }}
-                      >
-                        View
-                      </button>
-                      <button
-                        className="text-blue-600 underline font-medium"
-                        onClick={async () => {
-                          try {
-                            // Fetch the report for the clicked row
-                            await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
+                  return (
+                    <tr
+                      key={row.r2_key}
+                      className={`bg-${idx % 2 === 0 ? 'white' : 'gray-50'} hover:bg-blue-50 transition`}
+                      style={{ borderRadius: 8 }}
+                    >
+                      <td className="py-3 px-4 font-medium text-gray-900">{row.url}</td>
+                      <td className="py-3 px-4">{date}</td>
+                      <td className="py-3 px-4">{time}</td>
+                      <td className="py-3 px-4">
+                        {complianceStatus === 'Compliant' ? (
+                          <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Compliant</span>
+                        ) : complianceStatus === 'Partially Compliant' ? (
+                          <span className="bg-yellow-50 text-yellow-800 px-2 py-1 rounded text-xs">Partially Compliant</span>
+                        ) : (
+                          <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">{complianceStatus}</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+                          {row.enhancedScore}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 flex gap-2">
+                        <button
+                          className="text-blue-600 underline font-medium"
+                          onClick={() => {
+                            const newTab = window.open(`/${row.r2_key}?domain=${encodeURIComponent(row.url)}`, '_blank');
+                            if (newTab) newTab.focus();
+                          }}
+                        >
+                          View
+                        </button>
+                        <button
+                          className="text-blue-600 underline font-medium"
+                          onClick={async () => {
+                            try {
+                              // Fetch the report for the clicked row
+                              await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
 
-                            if (reportData && reportData.fetchReportByR2Key) {
-                              const pdfBlob = generatePDF(reportData.fetchReportByR2Key, row.enhancedScore, row.url);
-                              const url = window.URL.createObjectURL(pdfBlob);
-                              const link = document.createElement('a');
-                              link.href = url;
-                              link.download = 'accessibility-report.pdf';
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                              window.URL.revokeObjectURL(url);
-                            } else {
+                              if (reportData && reportData.fetchReportByR2Key) {
+                                const pdfBlob = generatePDF(reportData.fetchReportByR2Key, row.enhancedScore, row.url);
+                                const url = window.URL.createObjectURL(pdfBlob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = 'accessibility-report.pdf';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(url);
+                              } else {
+                                toast.error('Failed to generate PDF. Please try again.');
+                              }
+                            } catch (error) {
+                              console.error('Error fetching report:', error);
                               toast.error('Failed to generate PDF. Please try again.');
                             }
-                          } catch (error) {
-                            console.error('Error fetching report:', error);
-                            toast.error('Failed to generate PDF. Please try again.');
-                          }
-                        }}
-                      >
-                        Download
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                          }}
+                        >
+                          Download
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

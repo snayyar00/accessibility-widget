@@ -1,4 +1,5 @@
 import { combineResolvers } from 'graphql-resolvers';
+import { fetchTechStackFromAPI } from '~/repository/techStack.repository';
 import { fetchAccessibilityReport } from '~/services/accessibilityReport/accessibilityReport.service';
 import { insertAccessibilityReport, deleteAccessibilityReportByR2Key, getR2KeysByParams } from '~/repository/accessibilityReports.repository';
 import { saveReportToR2, fetchReportFromR2, deleteReportFromR2 } from '~/utils/r2Storage';
@@ -34,7 +35,24 @@ const resolvers = {
     },
   },
   Query: {
-    getAccessibilityReport: combineResolvers((_, { url }) => fetchAccessibilityReport(url)),
+    //getAccessibilityReport: combineResolvers((_, { url }) => fetchAccessibilityReport(url)),
+    getAccessibilityReport: async (_: any, { url }: { url: string }) => {
+      try {
+        // Fetch the accessibility report
+        const accessibilityReport = await fetchAccessibilityReport(url);
+
+        // Fetch the tech stack data
+        const techStack = await fetchTechStackFromAPI(url);
+
+        // Combine the accessibility report and tech stack data
+        return {
+          ...accessibilityReport,
+          techStack,
+        };
+      } catch (error) {
+        throw new Error(`Failed to fetch accessibility report: ${error.message}`);
+      }
+    },
     fetchAccessibilityReportFromR2: async (_: any, { url, created_at, updated_at }: any) => {
       const rows = await getR2KeysByParams({ url, created_at, updated_at });
       // Ensure score is properly formatted
