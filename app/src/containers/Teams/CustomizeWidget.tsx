@@ -174,7 +174,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
       <div className="flex-grow overflow-y-auto">
         <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
-          <div className="bg-white p-3 sm:p-4 rounded-xl">
+          <div className="color-adjustments-section bg-white p-3 sm:p-4 rounded-xl">
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
               Widget Color Adjustments
             </h2>
@@ -218,7 +218,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
             </div>
           </div>
 
-          <div className="bg-white p-3 sm:p-4 rounded-xl">
+          <div className="logo-upload-section bg-white p-3 sm:p-4 rounded-xl">
           <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
             Upload Widget Logo
           </h2>
@@ -376,7 +376,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
             </button>
           </div>
 
-          <div className="bg-white p-3 sm:p-4 rounded-xl">
+          <div className="font-selection-section bg-white p-3 sm:p-4 rounded-xl">
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
               Select Widget Font
             </h2>
@@ -404,7 +404,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
             </button>
           </div>
 
-          <div className="bg-white p-3 sm:p-4 rounded-xl">
+          <div className="toggle-features-section bg-white p-3 sm:p-4 rounded-xl">
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
               Toggle Features
             </h2>

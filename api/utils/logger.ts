@@ -34,41 +34,64 @@ const logger = bunyan.createLogger({
 
 // Environment-based logging control
 const isDevelopment = process.env.NODE_ENV === 'development';
-const isDebugEnabled = process.env.PREPROCESSING_DEBUG_MODE === 'true';
+
+// Store original console methods
+const originalConsole = {
+  log: console.log,
+  info: console.info,
+  warn: console.warn,
+  error: console.error,
+  debug: console.debug,
+  trace: console.trace
+};
 
 // Create a wrapper for console methods
 const consoleWrapper = {
   log: (...args: unknown[]) => {
-    if (isDevelopment && isDebugEnabled) {
+    if (isDevelopment) {
+      originalConsole.log(...args);
+    } else {
       logger.info({ msg: args.join(' ') });
     }
   },
   info: (...args: unknown[]) => {
-    if (isDevelopment && isDebugEnabled) {
+    if (isDevelopment) {
+      originalConsole.info(...args);
+    } else {
       logger.info({ msg: args.join(' ') });
     }
   },
   warn: (...args: unknown[]) => {
-    logger.warn({ msg: args.join(' ') });
+    if (isDevelopment) {
+      originalConsole.warn(...args);
+    } else {
+      logger.warn({ msg: args.join(' ') });
+    }
   },
   error: (...args: unknown[]) => {
-    logger.error({ msg: args.join(' ') });
+    if (isDevelopment) {
+      originalConsole.error(...args);
+    } else {
+      logger.error({ msg: args.join(' ') });
+    }
   },
   debug: (...args: unknown[]) => {
-    if (isDevelopment && isDebugEnabled) {
+    if (isDevelopment) {
+      originalConsole.debug(...args);
+    } else {
       logger.debug({ msg: args.join(' ') });
     }
   },
   trace: (...args: unknown[]) => {
-    if (isDevelopment && isDebugEnabled) {
+    if (isDevelopment) {
+      originalConsole.trace(...args);
+    } else {
       logger.trace({ msg: args.join(' ') });
     }
   }
 };
 
 // Override global console
-if (process.env.NODE_ENV !== 'production') {
-  global.console = consoleWrapper as any;
-}
+global.console = consoleWrapper as any;
 
 export default logger;

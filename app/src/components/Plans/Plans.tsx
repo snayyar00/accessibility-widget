@@ -126,7 +126,7 @@ const Plans: React.FC<Props> = ({
       appSumoPlan = 'Enterprise';
     }
   return (
-    <div className="flex flex-wrap sm:flex-col justify-center">
+    <div className="plan-selection-area flex flex-wrap sm:flex-col justify-center">
       {currentPlan ? (<div
           // onClick={() => onChange(String(currentPlan?.id))}
           key={currentPlan?.id}

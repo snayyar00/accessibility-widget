@@ -9,6 +9,9 @@ import AnalyticsDashboardSkeleton from './skeletonanalytics';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { FaCheckCircle } from 'react-icons/fa';
 import { useHistory } from 'react-router-dom';
+import TourGuide from '@/components/Common/TourGuide';
+import { Step } from 'react-joyride';
+import { defaultTourStyles } from '@/config/tourStyles';
 
 
 interface ChartData {
@@ -118,6 +121,61 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
       );
     }
   }
+
+  // Tour steps configuration
+  const dashboardTourSteps: Step[] = [
+    {
+      target: '.dashboard-welcome-banner',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Welcome to WebAbility Dashboard! 🎉</h3>
+          <p>This is your central hub for managing accessibility compliance. Let's take a quick tour to get you started!</p>
+        </div>
+      ),
+      placement: 'bottom',
+      disableBeacon: true,
+    },
+    {
+      target: '.get-compliant-button',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Get Compliant 🚀</h3>
+          <p>Click here to add new domains and start making your websites accessible. This is where you'll manage all your sites.</p>
+        </div>
+      ),
+      placement: 'top',
+    },
+    {
+      target: '.app-sumo-button',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Get Started with your App Sumo Sites 🚀</h3>
+          <p>Click here to add new domains and redeem your App Sumo sites.</p>
+        </div>
+      ),
+      placement: 'top',
+    },
+    {
+      target: '.analytics-cards',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Analytics Overview 📊</h3>
+          <p>Here you can see key metrics including impressions, unique visitors, and widget interactions. These help you understand your accessibility widget's impact.</p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+    {
+      target: '.analytics-dashboard',
+      content: (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Detailed Analytics 📈</h3>
+          <p>Dive deeper into your accessibility data with detailed charts and insights. Track your progress over time and see how your accessibility improvements are performing.</p>
+        </div>
+      ),
+      placement: 'top',
+    },
+  ];
 
   const today       = new Date();
   const defaultEnd  = new Date(
@@ -277,8 +335,21 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
     }
   };
 
+  // Handle tour completion
+  const handleTourComplete = () => {
+    console.log('Dashboard tour completed!');
+  };
+
   return (
     <>
+      <TourGuide
+        steps={dashboardTourSteps}
+        tourKey="dashboard_tour"
+        autoStart={true}
+        onTourComplete={handleTourComplete}
+        customStyles={defaultTourStyles}
+      />
+
       {loadingAnimation ? (
         <><div className="flex flex-col items-center justify-center w-full mb-8 pl-0 pr-3">
         </div><AnalyticsDashboardSkeleton/></>
@@ -306,7 +377,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
         <div className="flex flex-col items-center justify-center w-full mb-8 pl-0 pr-3">
   <div className="w-full mb-6 flex">
     <div
-      className="w-full grid grid-cols-1 lg:grid-cols-12 text-white rounded-xl overflow-hidden shadow-2xl transform hover:scale-[1.01] transition-transform duration-300"
+      className="dashboard-welcome-banner w-full grid grid-cols-1 lg:grid-cols-12 text-white rounded-xl overflow-hidden shadow-2xl transform hover:scale-[1.01] transition-transform duration-300"
       style={{ backgroundColor: 'rgb(0 51 237)' }}
     >
       {/* Left Column */}
@@ -315,7 +386,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
           Empower Every Visitor with Inclusive Design
         </h1>
         <p className="text-base lg:text-lg">
-          Achieve seamless ADA & WCAG compliance effortlessly with WebAbility’s
+          Achieve seamless ADA & WCAG compliance effortlessly with WebAbility's
           AI-driven accessibility toolkit.
         </p>
 
@@ -327,16 +398,16 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
               desc: 'Fully aligned with ADA, WCAG, and international guidelines.',
             },
             {
-              title: 'Instant One‑Click Setup',
+              title: 'Instant One-Click Setup',
               desc: 'Get up and running in minutes, backed by 24/7 expert support.',
             },
             {
               title: 'Adaptive AI Enhancements',
-              desc: 'Auto‑adjust text size, contrast, and navigation for all users.',
+              desc: 'Auto-adjust text size, contrast, and navigation for all users.',
             },
             {
-              title: 'Brand‑Friendly Customization',
-              desc: 'Style the widget to perfectly match your site’s look and feel.',
+              title: 'Brand-Friendly Customization',
+              desc: 'Style the widget to perfectly match your site\'s look and feel.',
             },
           ].map((item) => (
             <div key={item.title} className="flex items-start space-x-2">
@@ -363,14 +434,14 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
       {/* Call‑to‑Action Buttons */}
       <div className="col-span-full bg-white/5 py-4 flex flex-row sm:flex-col gap-8 justify-center px-6">
         <button
-          className="flex-1 py-4 text-white font-bold text-xl rounded-xl bg-primary hover:bg-sapphire-blue transition-colors duration-300"
+          className="get-compliant-button flex-1 py-4 text-white font-bold text-xl rounded-xl bg-primary hover:bg-sapphire-blue transition-colors duration-300"
           onClick={handleRedirect}
         >
           Get Compliant
         </button>
         
           <button
-            className="flex-1 py-4 text-black font-bold text-xl rounded-xl bg-[#ffbc00] hover:bg-yellow-600 transition-colors duration-300"
+            className="app-sumo-button flex-1 py-4 text-black font-bold text-xl rounded-xl bg-[#ffbc00] hover:bg-yellow-600 transition-colors duration-300"
             onClick={handleRedirect}
           >
             Redeem App Sumo
@@ -380,7 +451,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
   </div>
 </div>
 
-          <div>
+          <div className="analytics-dashboard">
             <AnalyticsDashboard
               impressionCount={impressions}
               widgetOpenCount={widgetOpened}
