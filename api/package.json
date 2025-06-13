@@ -4,9 +4,9 @@
   "main": "server.ts",
   "license": "MIT",
   "scripts": {
-    "start": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register server.ts",
+    "start": "cross-env NODE_ENV=production node dist/server.js",
     "dev": "cross-env NODE_ENV=development nodemon --exec ts-node -r tsconfig-paths/register server.ts",
-    "build": "tsc && npm run copy-email-templates",
+    "build": "cross-env NODE_ENV=production tsc && npm run copy-email-templates",
     "db:create-products": "tsc && node --experimental-modules --es-module-specifier-resolution=node dist/scripts/create-products.js",
     "db:migrate": "knex migrate:latest --knexfile config/knexfile.ts",
     "db:rollback": "knex migrate:rollback --knexfile config/knexfile.ts",
@@ -16,7 +16,7 @@
     "postinstall": "link-module-alias && npx npm-force-resolutions",
     "lint": "eslint --ext .ts .",
     "lint:fix": "eslint --ext .ts . --fix",
-    "copy-email-templates": "mkdir -p ./dist/email-templates && cp -R ./email-templates ./dist/"
+    "copy-email-templates": "cpx \"email-templates/**/*\" dist/email-templates"
   },
   "resolutions": {
     "**/**/fs-capacitor": "^6.2.0",
@@ -88,11 +88,13 @@
     "@typescript-eslint/parser": "^4.31.2",
     "axios": "^1.6.8",
     "babel-eslint": "^10.1.0",
+    "cpx": "^1.5.0",
     "cross-env": "^7.0.3",
     "eslint": "^7.13.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-config-airbnb-typescript": "^14.0.0",
     "eslint-config-prettier": "^6.15.0",
+    "eslint-loader": "^4.0.2",
     "eslint-plugin-import": "^2.24.2",
     "eslint-plugin-prettier": "^3.1.4",
     "graphql-tools": "^9.0.1",

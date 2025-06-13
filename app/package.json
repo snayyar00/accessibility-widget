@@ -67,7 +67,7 @@
     "lint:staged": "lint-staged",
     "lint:prod": "cross-env NODE_ENV=production npm run lint",
     "start": "craco start",
-    "build": "craco build",
+    "build": "cross-env NODE_ENV=production craco build --no-audit",
     "eject": "craco eject"
   },
   "eslintConfig": {
@@ -130,12 +130,14 @@
     "autoprefixer": "^10.4.13",
     "axe-core": "^4.10.3",
     "babel-eslint": "^10.1.0",
+    "cross-env": "^7.0.3",
     "disable-react-error-overlay": "^0.0.1",
     "eslint": "^7.12.1",
     "eslint-config-airbnb": "^18.2.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-config-prettier": "^6.15.0",
     "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-loader": "^4.0.2",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-lodash": "^7.1.0",
