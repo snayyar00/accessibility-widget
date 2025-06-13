@@ -28,9 +28,9 @@ import {sendMail} from './libs/mail';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 import { fetchAccessibilityReport } from './services/accessibilityReport/accessibilityReport.service';
 import { findProductAndPriceByType, findProductById } from './repository/products.repository';
-import { createSitesPlan, deleteSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-sites.service';
+import { createSitesPlan, deleteExpiredSitesPlan, deleteSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-sites.service';
 import Stripe from 'stripe';
-import { getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
+import { getAnySitePlanBySiteId, getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
 import { APP_SUMO_COUPON_ID, APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from './constants/billing.constant';
 import axios from 'axios';
@@ -38,7 +38,7 @@ import OpenAI from 'openai';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
 import database from '~/config/database.config';
 import { addProblemReport, getProblemReportsBySiteId, problemReportProps } from './repository/problem_reports.repository';
-import { deleteSiteByURL, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
+import { deleteSiteByURL, deleteSiteWithRelatedRecords, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
 import { addWidgetSettings, getWidgetSettingsBySiteId } from './repository/widget_settings.repository';
 import { addNewsletterSub } from './repository/newsletter_subscribers.repository';
 import findPromo from './services/stripe/findPromo';
@@ -689,28 +689,68 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
   app.post('/cancel-site-subscription',async (req,res)=>{
     const { domainId,domainUrl,userId,status } = req.body;
-
-    let previous_plan;
+    let previous_plan:any[];
     try {
-      previous_plan = await getSitePlanBySiteId(Number(domainId));
+      previous_plan = await getAnySitePlanBySiteId(Number(domainId));
     } catch (error) {
       console.log('err = ', error);
     }
 
     if(status != 'Active' && status != 'Life Time'){
       try {
-        await deleteTrialPlan(previous_plan.id);
-        await deleteSiteByURL(domainUrl,userId);
+        if(previous_plan && previous_plan.length > 0) {
+          for(const plan of previous_plan) {
+            
+            if(plan.subscriptionId == 'Trial'){
+              await deleteTrialPlan(plan.id);
+            }
+            else{
+              let errorCount = 0;
+              try {
+                await deleteExpiredSitesPlan(plan.id);
+              } catch (error) {
+                
+                errorCount++;
+                
+              }
+
+              if(errorCount == 0){
+              try {
+                await deleteExpiredSitesPlan(plan.id,true);
+              } catch (error) {
+
+                errorCount++;
+              }}
+
+              if(errorCount == 2){
+                return res.status(500).json({ error: "Error deleting expired sites plan" });
+              }
+            }
+          }
+        }
+        console.log("deleting site by url");
+        await deleteSiteWithRelatedRecords(domainUrl,userId);
   
         return res.status(200).json({ success: true });
       } catch (error) {
+        console.log("error deleting site by url",error);
         return res.status(500).json({ error: error.message });
       }
     }
     else{
       try {
-        await deleteSitesPlan(previous_plan.id);
-        await deleteSiteByURL(domainUrl,userId);
+        // Iterate through each plan in previous_plan array
+        if(previous_plan && previous_plan.length > 0){
+          for(const plan of previous_plan) {
+            if(plan.subscriptionId == 'Trial'){
+              await deleteTrialPlan(plan.id);
+            }
+            else{
+              await deleteSitesPlan(plan.id);
+            }
+          }
+        }
+        await deleteSiteWithRelatedRecords(domainUrl,userId);
   
         res.status(200).json({ success: true });
       } catch (error) {
@@ -1409,7 +1449,8 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   
           
         } catch (error) {
-          console.log(error);
+          // console.log(error);
+          // silent fail
           res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,codeCount:maxSites > 0 ? maxSites : userAppSumoTokens.length,infinityToken:hasCustomInfinityToken});
           
         }
