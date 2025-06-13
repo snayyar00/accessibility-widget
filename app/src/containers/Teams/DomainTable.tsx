@@ -85,11 +85,6 @@ const DomainTable: React.FC<DomainTableProps> = ({
     const index = domains.findIndex((domain) => domain.id === id);
     const foundUrl = domains[index].url;
 
-    if (status == 'Trial' || status == 'Trial Expired') {
-      toast.error('Cannot delete a trial site');
-      return;
-    }
-
     setBillingLoading(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/cancel-site-subscription`;
     const bodyData = {
@@ -115,6 +110,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
             toast.success('The domain was successfully removed');
             setBillingLoading(false);
             handleCloseModal();
+            window.location.reload();
           });
         })
         .catch((error) => {
