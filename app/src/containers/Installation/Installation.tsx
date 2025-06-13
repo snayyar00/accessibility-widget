@@ -4,8 +4,8 @@ import CodeContainer from './CodeContainer';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import TourGuide from '@/components/Common/TourGuide';
-import { Step, Placement } from 'react-joyride';
 import { defaultTourStyles } from '@/config/tourStyles';
+import { installationTourSteps, tourKeys } from '@/constants/toursteps';
 
 export default function Installation({ domain }: any) {
   const { t } = useTranslation();
@@ -16,80 +16,7 @@ export default function Installation({ domain }: any) {
 
   const [codeString] = useState(getCodeString(''));
 
-  // Installation tour steps
-  const installationTourSteps: Step[] = [
-    {
-      target: '.installation-welcome-banner',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Welcome to Widget Installation! 🎉</h3>
-          <p>This page will help you install the WebAbility widget on your website. Let's walk through the process step by step!</p>
-        </div>
-      ),
-      placement: 'bottom' as Placement,
-      disableBeacon: true,
-    },
-    {
-      target: '.installation-guide-link',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Installation Guide 📖</h3>
-          <p>Click here to access our comprehensive installation guide with platform-specific instructions for WordPress, Shopify, and more!</p>
-        </div>
-      ),
-      placement: 'bottom' as Placement,
-    },
-    {
-      target: '.widget-customization-options',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Customize Your Widget ⚙️</h3>
-          <p>Choose where the accessibility widget appears on your site and select the language. These settings will be reflected in your installation code.</p>
-        </div>
-      ),
-      placement: 'bottom' as Placement,
-    },
-    {
-      target: '.installation-instructions',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Installation Instructions 📋</h3>
-          <p>For best results, paste the installation code right before the closing &lt;/body&gt; tag on your website. This ensures optimal performance.</p>
-        </div>
-      ),
-      placement: 'top' as Placement,
-    },
-    {
-      target: '.installation-code-block',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Your Installation Code 💻</h3>
-          <p>This is your personalized installation code. It includes your selected position and language settings. Copy this code to install on your website.</p>
-        </div>
-      ),
-      placement: 'top' as Placement,
-    },
-    {
-      target: '.copy-code-button',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Copy to Clipboard 📋</h3>
-          <p>Click this button to copy the installation code to your clipboard. Then paste it into your website's HTML before the closing &lt;/body&gt; tag.</p>
-        </div>
-      ),
-      placement: 'top' as Placement,
-    },
-    {
-      target: '.expand-code-button',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Expand Code View 🔍</h3>
-          <p>Use this button to expand or compress the code view for better readability when working with longer code snippets.</p>
-        </div>
-      ),
-      placement: 'top' as Placement,
-    },
-  ];
+
 
   // Handle tour completion
   const handleTourComplete = () => {
@@ -100,7 +27,7 @@ export default function Installation({ domain }: any) {
     <>
       <TourGuide
         steps={installationTourSteps}
-        tourKey="installation_tour"
+        tourKey={tourKeys.installation}
         autoStart={true}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}
