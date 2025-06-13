@@ -40,7 +40,7 @@ interface ModalProps {
 
 const plans = [
   {
-    id: 'single test',
+    id: process.env.REACT_APP_PLAN_NAME || 'single',
     name: 'WebAbility Pro',
     price: 12,
     desc: 'Ideal for all your accessibility needs for a single site',
