@@ -20,4 +20,4 @@ RUN npm run postinstall || true
 EXPOSE 3001
 
 # Start the Node.js server
-CMD ["node", "dist/server.js"]
+CMD ["npm", "start"]
