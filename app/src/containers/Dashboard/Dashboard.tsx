@@ -10,8 +10,8 @@ import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { FaCheckCircle } from 'react-icons/fa';
 import { useHistory } from 'react-router-dom';
 import TourGuide from '@/components/Common/TourGuide';
-import { Step } from 'react-joyride';
 import { defaultTourStyles } from '@/config/tourStyles';
+import { dashboardTourSteps, tourKeys } from '@/constants/toursteps';
 
 
 interface ChartData {
@@ -122,60 +122,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
     }
   }
 
-  // Tour steps configuration
-  const dashboardTourSteps: Step[] = [
-    {
-      target: '.dashboard-welcome-banner',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Welcome to WebAbility Dashboard! 🎉</h3>
-          <p>This is your central hub for managing accessibility compliance. Let's take a quick tour to get you started!</p>
-        </div>
-      ),
-      placement: 'bottom',
-      disableBeacon: true,
-    },
-    {
-      target: '.get-compliant-button',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Get Compliant 🚀</h3>
-          <p>Click here to add new domains and start making your websites accessible. This is where you'll manage all your sites.</p>
-        </div>
-      ),
-      placement: 'top',
-    },
-    {
-      target: '.app-sumo-button',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Get Started with your App Sumo Sites 🚀</h3>
-          <p>Click here to add new domains and redeem your App Sumo sites.</p>
-        </div>
-      ),
-      placement: 'top',
-    },
-    {
-      target: '.analytics-cards',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Analytics Overview 📊</h3>
-          <p>Here you can see key metrics including impressions, unique visitors, and widget interactions. These help you understand your accessibility widget's impact.</p>
-        </div>
-      ),
-      placement: 'bottom',
-    },
-    {
-      target: '.analytics-dashboard',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Detailed Analytics 📈</h3>
-          <p>Dive deeper into your accessibility data with detailed charts and insights. Track your progress over time and see how your accessibility improvements are performing.</p>
-        </div>
-      ),
-      placement: 'top',
-    },
-  ];
+
 
   const today       = new Date();
   const defaultEnd  = new Date(
@@ -344,7 +291,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
     <>
       <TourGuide
         steps={dashboardTourSteps}
-        tourKey="dashboard_tour"
+        tourKey={tourKeys.dashboard}
         autoStart={true}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}

@@ -10,8 +10,8 @@ import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { head } from 'lodash';
 import TourGuide from '@/components/Common/TourGuide';
-import { Step, Placement } from 'react-joyride';
 import { defaultTourStyles } from '@/config/tourStyles';
+import { customizeWidgetTourSteps, tourKeys } from '@/constants/toursteps';
 
 export interface Colors {
   headerText: string;
@@ -251,76 +251,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   const [selectedSite, setSelectedSite] = useState('');
   const [hasUserMadeChanges, setHasUserMadeChanges] = useState(false);
 
-  // Customize widget tour steps
-  const customizeWidgetTourSteps: Step[] = [
-    {
-      target: '.customize-widget-header',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Welcome to Widget Customization! 🎨</h3>
-          <p>This powerful interface lets you fully customize your accessibility widget's appearance and features. Let's explore all the customization options available!</p>
-        </div>
-      ),
-      placement: 'bottom' as Placement,
-      disableBeacon: true,
-    },
-    {
-      target: '.domain-selection-section',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Select Your Domain 🌐</h3>
-          <p>First, choose which website you want to customize the widget for. Each domain can have its own unique widget settings and appearance.</p>
-        </div>
-      ),
-      placement: 'bottom' as Placement,
-    },
-    {
-      target: '.widget-preview-section',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Live Widget Preview 👀</h3>
-          <p className="mb-3">Watch your changes come to life in real-time! This preview shows exactly how your accessibility widget will look and function on your website. Here's what you can see:</p>
-          <ul className="text-sm space-y-2">
-            <li><strong>🎨 Header Section:</strong> Widget title with customizable background, text colors, and control buttons</li>
-            <li><strong>🔧 Accessibility Features:</strong> All enabled accessibility tools like screen reader, contrast options, and font adjustments</li>
-            <li><strong>🎯 Interactive Elements:</strong> Buttons, dropdowns, and toggles that respond to your customization changes</li>
-            <li><strong>📱 Real-time Updates:</strong> Colors, fonts, and features update instantly as you make changes</li>
-            <li><strong>🖼️ Logo Display:</strong> Your custom logo appears exactly as it will on your website</li>
-          </ul>
-          <p className="mt-3 text-sm text-gray-600">Try making changes in the customization panel to see them reflected here!</p>
-        </div>
-      ),
-      placement: 'right' as Placement,
-    },
-    {
-      target: '.widget-customization-section',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Customization Controls ⚙️</h3>
-          <p className="mb-3">This panel contains all the tools you need to personalize your widget. Here's what you can customize:</p>
-          <ul className="text-sm space-y-2">
-            <li><strong>🎨 Color Customization:</strong> Match your brand colors by customizing header, footer, button, and menu colors</li>
-            <li><strong>📸 Logo Upload:</strong> Add your company logo via file upload or URL to maintain brand consistency</li>
-            <li><strong>🔗 Logo & Statement Links:</strong> Set custom URLs for your logo and accessibility statement links</li>
-            <li><strong>📝 Typography:</strong> Choose from web-safe fonts to match your site's typography</li>
-            <li><strong>🔧 Feature Toggles:</strong> Enable/disable specific accessibility features based on your needs</li>
-          </ul>
-          <p className="mt-3 text-sm text-gray-600">Scroll through this panel to explore all customization options!</p>
-        </div>
-      ),
-      placement: 'right' as Placement,
-    },
-    {
-      target: '.save-reset-buttons',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Save Your Changes 💾</h3>
-          <p>Your Changes get saved automatically. However you can manually save your customizations as well! You can also reset everything back to default settings if you want to start over.</p>
-        </div>
-      ),
-      placement: 'top' as Placement,
-    },
-  ];
+
 
   // Handle tour completion
   const handleTourComplete = () => {
@@ -587,7 +518,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     <>
       <TourGuide
         steps={customizeWidgetTourSteps}
-        tourKey="customize_widget_tour"
+        tourKey={tourKeys.customizeWidget}
         autoStart={true}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}

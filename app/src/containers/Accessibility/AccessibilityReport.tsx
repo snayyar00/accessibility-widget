@@ -49,8 +49,8 @@ import Logo from '@/components/Common/Logo';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import TourGuide from '@/components/Common/TourGuide';
-import { Step, Placement } from 'react-joyride';
 import { defaultTourStyles } from '@/config/tourStyles';
+import { accessibilityTourSteps, tourKeys } from '@/constants/toursteps';
 
 const AccessibilityReport = ({ currentDomain }: any) => {
   const { t } = useTranslation();
@@ -68,7 +68,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [otherscore, setOtherScore] = useState(Math.floor(Math.random() * (88 - 80 + 1)) + 80);
   const [expand, setExpand] = useState(false);
   const [correctDomain, setcorrectDomain] = useState(currentDomain);
-  const [webAbilityScore,setWebAbilityScore] = useState(Math.floor(Math.random() * (100 - 90 + 1)) + 90);
+  const [webAbilityScore,setWebAbilityScore] = useState(Math.floor(Math.random() * (95 - 90 + 1)) + 90);
   // const [accessibilityData, setAccessibilityData] = useState({});
   const { data: sitesData } = useQuery(GET_USER_SITES);
   const [saveAccessibilityReport] = useMutation(SAVE_ACCESSIBILITY_REPORT);
@@ -83,100 +83,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef: contentRef });
 
-  // Accessibility tour steps
-  const accessibilityTourSteps: Step[] = [
-    {
-      target: '.accessibility-page-header',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Welcome to Accessibility Scanner! 🎉</h3>
-          <p>This powerful tool helps you evaluate your website's accessibility compliance in seconds. Let's explore how to use it!</p>
-        </div>
-      ),
-      placement: 'bottom' as Placement,
-      disableBeacon: true,
-    },
-    {
-      target: '.search-bar-container',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Enter Your Domain 🌐</h3>
-          <p>Type any website domain here to scan for accessibility issues. You can test your own site or any other website for WCAG compliance.</p>
-        </div>
-      ),
-      placement: 'bottom' as Placement,
-    },
-    {
-      target: '.search-button',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Start Free Scan 🚀</h3>
-          <p>Click this button to begin the accessibility analysis. Our AI-powered scanner will check for WCAG 2.1 compliance issues across the website.</p>
-        </div>
-      ),
-      placement: 'bottom' as Placement,
-    },
-    {
-      target: '.accessibility-card:first-child',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Compliance Status 📊</h3>
-          <p>This card shows whether the website meets accessibility standards. Green indicates compliance, while red shows non-compliance with WCAG guidelines.</p>
-        </div>
-      ),
-      placement: 'top' as Placement,
-    },
-    {
-      target: '.accessibility-score-card',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Accessibility Score 📈</h3>
-          <p>The accessibility score shows the percentage of compliance with WCAG 2.1 AA standards. Higher scores indicate better accessibility.</p>
-        </div>
-      ),
-      placement: 'top' as Placement,
-    },
-    {
-      target: '.lawsuit-risk-card',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Lawsuit Risk Assessment ⚖️</h3>
-          <p>This gauge shows the legal risk level based on accessibility violations. Low risk means better protection from accessibility lawsuits.</p>
-        </div>
-      ),
-      placement: 'top' as Placement,
-    },
-    {
-      target: '.webability-toggle-section',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">See WebAbility Results 🔄</h3>
-          <p>Toggle this switch to see how your accessibility score would improve with WebAbility widget installed on your website.</p>
-        </div>
-      ),
-      placement: 'top' as Placement,
-    },
-    {
-      target: '.accessibility-issues-section',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Detailed Issue Analysis 🔍</h3>
-          <p>This section provides a comprehensive breakdown of accessibility issues found, categorized by type and severity level.</p>
-        </div>
-      ),
-      placement: 'top' as Placement,
-    },
-    {
-      target: '.print-report-button',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Generate Report 📄</h3>
-          <p>Click here to generate a printable accessibility report that you can share with your team or use for compliance documentation.</p>
-        </div>
-      ),
-      placement: 'bottom' as Placement,
-    },
-  ];
+
 
   // Handle tour completion
   const handleTourComplete = () => {
@@ -207,8 +114,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         groupByCode(htmlcs);
       }
       setSiteImg(result?.siteImg);
-      setScoreBackup(result?.score);
-      setScore(result?.score);
+      setScoreBackup(Math.min(result?.score || 0, 95));
+      setScore(Math.min(result?.score || 0, 95));
       // setAccessibilityData(htmlcs);
     }
   }, [data]);
@@ -243,12 +150,20 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   };
 
   const handleSubmit = async () => {
-    if (!isValidDomain(domain)) {
+    // Transform domain similar to SignUp form
+    const transformedDomain = domain
+      .replace(/^https?:\/\//, '') // Remove http:// or https://
+      .replace(/\/+$/, ''); // Remove trailing slashes
+    
+    if (!isValidDomain(transformedDomain)) {
       setDomain(currentDomain);
       toast.error('You must enter a valid domain name!');
       return;
     }
-    setcorrectDomain(domain);
+    
+    // Update the domain state with the transformed value
+    setDomain(transformedDomain);
+    setcorrectDomain(transformedDomain);
     checkScript();
     getAccessibilityStatsQuery(); // Manually trigger the query
   };
@@ -322,7 +237,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     <>
       <TourGuide
         steps={accessibilityTourSteps}
-        tourKey="accessibility_tour"
+        tourKey={tourKeys.accessibility}
         autoStart={true}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}
