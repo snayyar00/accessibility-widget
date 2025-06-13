@@ -68,7 +68,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [otherscore, setOtherScore] = useState(Math.floor(Math.random() * (88 - 80 + 1)) + 80);
   const [expand, setExpand] = useState(false);
   const [correctDomain, setcorrectDomain] = useState(currentDomain);
-  const [webAbilityScore,setWebAbilityScore] = useState(Math.floor(Math.random() * (100 - 90 + 1)) + 90);
+  const [webAbilityScore,setWebAbilityScore] = useState(Math.floor(Math.random() * (95 - 90 + 1)) + 90);
   // const [accessibilityData, setAccessibilityData] = useState({});
   const { data: sitesData } = useQuery(GET_USER_SITES);
   const [saveAccessibilityReport] = useMutation(SAVE_ACCESSIBILITY_REPORT);
@@ -114,8 +114,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         groupByCode(htmlcs);
       }
       setSiteImg(result?.siteImg);
-      setScoreBackup(result?.score);
-      setScore(result?.score);
+      setScoreBackup(Math.min(result?.score || 0, 95));
+      setScore(Math.min(result?.score || 0, 95));
       // setAccessibilityData(htmlcs);
     }
   }, [data]);
@@ -150,12 +150,20 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   };
 
   const handleSubmit = async () => {
-    if (!isValidDomain(domain)) {
+    // Transform domain similar to SignUp form
+    const transformedDomain = domain
+      .replace(/^https?:\/\//, '') // Remove http:// or https://
+      .replace(/\/+$/, ''); // Remove trailing slashes
+    
+    if (!isValidDomain(transformedDomain)) {
       setDomain(currentDomain);
       toast.error('You must enter a valid domain name!');
       return;
     }
-    setcorrectDomain(domain);
+    
+    // Update the domain state with the transformed value
+    setDomain(transformedDomain);
+    setcorrectDomain(transformedDomain);
     checkScript();
     getAccessibilityStatsQuery(); // Manually trigger the query
   };
