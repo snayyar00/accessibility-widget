@@ -76,6 +76,12 @@ export function getSitePlanById(id: number): Promise<SitesPlanData> {
     .first();
 }
 
+export function getAnySitePlanById(id: number): Promise<SitesPlanData> {
+  return database(TABLE)
+    .where({ id })
+    .first();
+}
+
 export function updateSitePlanById(id: number, data: SitesPlanData): Promise<number> {
   return database(TABLE).where({ id }).update(data);
 }
@@ -97,6 +103,23 @@ export function getSitePlanBySiteId(siteId: number) {
     .where({ [sitesPlansColumns.siteId]: siteId, [sitesPlansColumns.isActive]: true })
     .where(sitesPlansColumns.expiredAt, '>=', formatDateDB())
     .first();
+}
+
+export function getAnySitePlanBySiteId(siteId: number) {
+  return database(TABLE)
+    .leftJoin(TABLES.allowed_sites, sitesPlansColumns.siteId, siteColumns.id)
+    .leftJoin(TABLES.products, sitesPlansColumns.productId, productColumns.id)
+    .leftJoin(TABLES.prices, sitesPlansColumns.priceId, priceColumns.id)
+    .select(
+      sitesPlansColumns,
+      `${siteColumns.url} as siteName`,
+      productColumns.name,
+      `${productColumns.type} as productType`,
+      priceColumns.amount,
+      `${priceColumns.type} as priceType`,
+      `${sitesPlansColumns.isActive} as is_active`,  // Change this line
+    )
+    .where({ [sitesPlansColumns.siteId]: siteId })
 }
 
 export function deleteSitesPlanById(id: number): Promise<number> {
