@@ -396,9 +396,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
 
     const url = `${process.env.REACT_APP_BACKEND_URL}/update-site-widget-settings`;
     const bodyData = {
-      site_url: '127.0.0.1',
+      site_url: selectedSite,
       settings: JSON.stringify(settings),
-      user_id: 35
+      user_id: userData?.id
     };
 
     await fetch(url, {
@@ -446,7 +446,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   const getSettings = async () => {
     setButtonDisable(true);
     const url = `${process.env.REACT_APP_BACKEND_URL}/get-site-widget-settings`;
-    const bodyData = { site_url: '127.0.0.1' };
+    const bodyData = { site_url: selectedSite };
 
     await fetch(url, {
       method: 'POST',
