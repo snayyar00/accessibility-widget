@@ -40,7 +40,7 @@ interface ModalProps {
 
 const plans = [
   {
-    id: 'single test',
+    id: 'single',
     name: 'WebAbility Pro',
     price: 12,
     desc: 'Ideal for all your accessibility needs for a single site',
