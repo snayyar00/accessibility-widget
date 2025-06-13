@@ -690,30 +690,35 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.post('/cancel-site-subscription',async (req,res)=>{
     const { domainId,domainUrl,userId,status } = req.body;
 
-    if(status == 'Active' || status == 'Life Time')
-    {
-      let previous_plan;
+    let previous_plan;
+    try {
+      previous_plan = await getSitePlanBySiteId(Number(domainId));
+    } catch (error) {
+      console.log('err = ', error);
+    }
+
+    if(status != 'Active' && status != 'Life Time'){
       try {
-        previous_plan = await getSitePlanBySiteId(Number(domainId));
-        console.log(domainId,previous_plan);
+        await deleteTrialPlan(previous_plan.id);
+        await deleteSiteByURL(domainUrl,userId);
+  
+        return res.status(200).json({ success: true });
       } catch (error) {
-        console.log('err = ', error);
+        return res.status(500).json({ error: error.message });
       }
+    }
+    else{
       try {
-        // await deleteTrialPlan(previous_plan.id);
         await deleteSitesPlan(previous_plan.id);
         await deleteSiteByURL(domainUrl,userId);
-
+  
         res.status(200).json({ success: true });
       } catch (error) {
         console.log('err = ', error);
         res.status(500).json({ error: error });
       }
     }
-    else
-    {
-      res.status(500).json({ error: "Cannot delete a Trial Site" });
-    }
+
   });
 
   app.post('/create-subscription',async (req,res)=>{
