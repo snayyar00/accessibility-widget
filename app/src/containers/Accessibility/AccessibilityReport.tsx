@@ -68,9 +68,6 @@ function calculateEnhancedScore(baseScore: number) {
 
 const normalizeDomain = (url: string) =>
   url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
-import TourGuide from '@/components/Common/TourGuide';
-import { defaultTourStyles } from '@/config/tourStyles';
-import { accessibilityTourSteps, tourKeys } from '@/constants/toursteps';
 
 const AccessibilityReport = ({ currentDomain }: any) => {
   const { t } = useTranslation();
@@ -81,7 +78,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [siteImg, setSiteImg] = useState('');
   const [expand, setExpand] = useState(false);
   const [correctDomain, setcorrectDomain] = useState(currentDomain);
-  const [webAbilityScore,setWebAbilityScore] = useState(Math.floor(Math.random() * (95 - 90 + 1)) + 90);
   // const [accessibilityData, setAccessibilityData] = useState({});
   const { data: sitesData } = useQuery(GET_USER_SITES);
   const [saveAccessibilityReport] = useMutation(SAVE_ACCESSIBILITY_REPORT);
@@ -111,13 +107,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     ...siteOptions,
     { value: 'new', label: 'Enter a new domain' },
   ];
-
-
-
-  // Handle tour completion
-  const handleTourComplete = () => {
-    console.log('Accessibility tour completed!');
-  };
 
   useEffect(() => {
     if (data) {
@@ -164,29 +153,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   }, [data]);
 
-    const groupByCodeUtil = (issues: any) => {
-    const groupedByCode: any = {};
-    if (Array.isArray(issues)) {
-      issues.forEach((warning) => {
-        const { code } = warning;
-        if (!groupedByCode[code]) {
-          groupedByCode[code] = [];
-        }
-        groupedByCode[code].push(warning);
-      });
-    }
-    return groupedByCode;
-  };
-
-  const groupByCode = (issues: any) => {
-    console.log('group code called');
-    if (issues && typeof issues === 'object') {
-      issues.errors = groupByCodeUtil(issues.errors);
-      issues.warnings = groupByCodeUtil(issues.warnings);
-      issues.notices = groupByCodeUtil(issues.notices);
-    }
-  };
-
   useEffect(() => {
     if (selectedSite) {
       fetchReportKeys({ variables: { url: selectedSite } });
@@ -221,12 +187,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const handleSubmit = async () => {
     if (!isValidDomain(domain)) {
       console.log('Invalid domain:', domain);
-    // Transform domain similar to SignUp form
-    const transformedDomain = domain
-      .replace(/^https?:\/\//, '') // Remove http:// or https://
-      .replace(/\/+$/, ''); // Remove trailing slashes
-    
-    if (!isValidDomain(transformedDomain)) {
       setDomain(currentDomain);
       toast.error('You must enter a valid domain name!');
       return;
@@ -238,6 +198,29 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     } catch (error) {
       console.error('Error generating report:', error);
       toast.error('Failed to generate report. Please try again.');
+    }
+  };
+
+  const groupByCodeUtil = (issues: any) => {
+    const groupedByCode: any = {};
+    if (Array.isArray(issues)) {
+      issues.forEach((warning) => {
+        const { code } = warning;
+        if (!groupedByCode[code]) {
+          groupedByCode[code] = [];
+        }
+        groupedByCode[code].push(warning);
+      });
+    }
+    return groupedByCode;
+  };
+
+  const groupByCode = (issues: any) => {
+    console.log('group code called');
+    if (issues && typeof issues === 'object') {
+      issues.errors = groupByCodeUtil(issues.errors);
+      issues.warnings = groupByCodeUtil(issues.warnings);
+      issues.notices = groupByCodeUtil(issues.notices);
     }
   };
 
@@ -645,7 +628,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         )}
       </div>
     </div>
-  );}
+  );
 };
 
 export default AccessibilityReport;
