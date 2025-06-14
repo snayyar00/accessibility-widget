@@ -6,8 +6,8 @@ import { CircularProgress } from '@mui/material';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import TourGuide from '@/components/Common/TourGuide';
-import { Step, Placement } from 'react-joyride';
 import { defaultTourStyles } from '@/config/tourStyles';
+import { reportsTourSteps, tourKeys } from '@/constants/toursteps';
 
 export interface Problem {
   id: number;
@@ -27,40 +27,7 @@ const ProblemReport: React.FC = () => {
   const [loader, setLoader] = useState(true);
   const [filter, setFilter] = useState<'all' | 'bug' | 'accessibility'>('all');
 
-  // Reports tour steps
-  const reportsTourSteps: Step[] = [
-    {
-      target: '.reports-page-header',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Welcome to Problem Reports! 🎉</h3>
-          <p>This page helps you manage and track issues reported across all your websites. Let's explore the features available!</p>
-        </div>
-      ),
-      placement: 'bottom' as Placement,
-      disableBeacon: true,
-    },
-    {
-      target: '.reports-filter-section',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Filter Reports 🔍</h3>
-          <p>Use this filter to view specific types of problems. You can filter by all problems, site bugs, or accessibility issues to focus on what needs attention.</p>
-        </div>
-      ),
-      placement: 'bottom' as Placement,
-    },
-    {
-      target: '.reports-search-section',
-      content: (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Search by Site URL 🌐</h3>
-          <p>Enter a website URL here to find all problems reported for that specific site. This helps you quickly locate issues for particular domains.</p>
-        </div>
-      ),
-      placement: 'bottom' as Placement,
-    },
-  ];
+
 
   // Handle tour completion
   const handleTourComplete = () => {
@@ -114,7 +81,7 @@ const ProblemReport: React.FC = () => {
     <>
       <TourGuide
         steps={reportsTourSteps}
-        tourKey="reports_tour"
+        tourKey={tourKeys.reports}
         autoStart={true}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}

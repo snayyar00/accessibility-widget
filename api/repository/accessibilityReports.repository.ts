@@ -1,3 +1,4 @@
+import { Json } from 'aws-sdk/clients/robomaker';
 import database from '../config/database.config';
 import { TABLES } from '../constants/database.constant';
 
@@ -5,15 +6,18 @@ export async function insertAccessibilityReport({
   url,
   allowed_sites_id,
   r2_key,
+  score,
 }: {
   url: string;
-  allowed_sites_id?: number;
+  allowed_sites_id?: number | null;
   r2_key: string;
+  score?: Json
 }) {
   const [id] = await database(TABLES.accessibilityReports).insert({
     url,
     allowed_sites_id,
     r2_key,
+    score: score ? JSON.stringify(score) : null,
     created_at: new Date(),
     updated_at: new Date(),
   });
@@ -43,13 +47,14 @@ export async function getR2KeysByParams({
     query = query.andWhere('updated_at', '<=', updated_at);
   }
 
-  // If no optional params, order by created_at desc and limit 1 (latest)
-  if (!created_at && !updated_at) {
-    query = query.orderBy('created_at', 'desc').limit(1);
-  }
+  query = query.orderBy('created_at', 'desc');
 
-  const rows = await query.select('r2_key');
-  return rows.map(row => row.r2_key);
+  const rows = await query.select('url','r2_key', 'created_at', 'score');
+    // Ensure score is properly formatted
+  return rows.map((row: any) => ({
+    ...row,
+    score: typeof row.score === 'object' && row.score!=null ? row.score.value : row.score ?? 0, // Extract value if score is an object
+  }));
 }
 
 export async function deleteAccessibilityReportByR2Key(r2_key: string) {
