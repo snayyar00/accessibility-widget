@@ -1,8 +1,8 @@
-import axios from 'axios';
+
 import { getAccessibilityInformationPally } from '~/helpers/accessibility.helper';
 import logger from '~/utils/logger';
 import { GPTChunks } from './accessibilityIssues.service';
-import { rest } from 'lodash';
+
 const { GraphQLJSON } = require('graphql-type-json');
 
 
@@ -153,21 +153,59 @@ interface ResultWithOriginal {
     notices: htmlcsOutput[];
     warnings: htmlcsOutput[];
   };
+  scriptCheckResult?: string;
+  issues?: any[]; // Array of extracted issues
+  issuesByFunction?: { [key: string]: any[] }; // Grouped issues by functionality
+  functionalityNames?: string[]; // List of functionality names
+  totalStats?: {
+    score: number;
+    originalScore: number;
+    criticalIssues: number;
+    warnings: number;
+    moderateIssues: number;
+    totalElements: number;
+    hasWebAbility: boolean;
+  }; // Aggregated statistics
 }
 
 export const fetchAccessibilityReport = async (url: string) => {
   try {
+    if (!url || typeof url !== 'string' || url.trim() === '') {
+      console.error('Invalid URL passed to fetchAccessibilityReport:', url);
+      throw new Error('Invalid URL provided to fetchAccessibilityReport');
+    }
 
     if (!url.startsWith('https://') && !url.startsWith('http://')) {
       url = 'https://' + url;
     }
-    
+
     const result: ResultWithOriginal = await getAccessibilityInformationPally(url);
-      
+    console.log('result from getAccessibilityInformationPally:', result.score, result.totalElements, result.ByFunctions);
     const siteImg = await fetchSitePreview(url);
     if (result && siteImg) {
       result.siteImg = siteImg;
     }
+
+    const scriptCheckResult = await checkScript(url);
+    if (result && scriptCheckResult) {
+      result.scriptCheckResult = scriptCheckResult;
+    }
+
+    // Perform calculations after the block
+      const issues = extractIssuesFromReport(result);
+      console.log(`Extracted ${issues.length} issues from report.`);
+
+      const issuesByFunction = groupIssuesByFunctionality(issues);
+      const functionalityNames = getFunctionalityNames(issuesByFunction);
+
+      const webabilityEnabled = scriptCheckResult === 'Web Ability';
+      const totalStats = calculateTotalStats(result, issues, webabilityEnabled);
+
+      // Add calculated fields to the result
+      result.issues = issues;
+      result.issuesByFunction = issuesByFunction;
+      result.functionalityNames = functionalityNames;
+      result.totalStats = totalStats;
 
     if (result) {
       // Skip old ByFunctions processing if enhanced processing already provided ByFunctions
@@ -278,13 +316,11 @@ export const fetchAccessibilityReport = async (url: string) => {
         result.ByFunctions = completion.HumanFunctionalities;
       }
     }
-        
-    // Always return result - enhanced processing populates axe/htmlcs directly
-    return result;
 
+    return result; // Return the final result with all fields
   } catch (error) {
     console.error(error);
-    throw new Error(`${error} Error fetching data from WebAIM API `);
+    throw new Error(`${error} Error fetching data from WebAIM API`);
   }
 };
 
@@ -292,7 +328,7 @@ export const fetchAccessibilityReport = async (url: string) => {
 export const fetchSitePreview = async (url: string): Promise<string | null> => {
   try {
     const apiUrl = `${process.env.SECONDARY_SERVER_URL}/screenshot/?url=${url}`;
-
+    console.log(`Fetching screenshot from: ${apiUrl}`);
     const response = await fetch(apiUrl);
 
     if (!response.ok) {
@@ -309,6 +345,210 @@ export const fetchSitePreview = async (url: string): Promise<string | null> => {
   }
 };
 
+const checkScript = async (url: string): Promise<string> => {
+  try {
+    //console.log(`Checking script for URL: ${url}`);
+    // Construct the API URL for the secondary server
+    const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${url}`;
+
+    // Fetch the data from the secondary server
+    const response = await fetch(apiUrl);
+
+    // Check if the response is successful
+    if (!response.ok) {
+      throw new Error(`Failed to fetch the script check. Status: ${response.status}`);
+    }
+
+    // Parse the response as JSON
+    const responseData = await response.json();
+
+    // Access the result and return accordingly
+    if (responseData.result === "WebAbility") {
+      return "Web Ability";
+    } else if (responseData.result !== "Not Found") {
+      return "true";
+    } else {
+      return "false";
+    }
+  } catch (error) {
+    // Handle any errors that occur
+    console.error("Error in checkScript:", error.message);
+    return "Error";
+  }
+};
+
+// Extract issues from report structure
+function extractIssuesFromReport(report: ResultWithOriginal) {
+  const issues: any[] = []
+  
+  // Check if we have the new data structure with top-level ByFunctions
+  if (report?.ByFunctions && Array.isArray(report.ByFunctions)) {
+    report.ByFunctions.forEach(funcGroup => {
+      if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
+        funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; }) => {
+          const impact = mapIssueToImpact(error.message, error.code)
+          
+          issues.push({
+            ...error,
+            impact,
+            source: error.__typename === 'htmlCsOutput' ? 'HTML_CS' : 'AXE Core',
+            functionality: funcGroup.FunctionalityName
+          })
+        })
+      }
+    })
+  }
+  
+  // Try the axe structure
+  if (report?.axe?.ByFunction && Array.isArray(report.axe.ByFunction)) {
+    report.axe.ByFunction.forEach((funcGroup: { FunctionalityName: any; Errors: any[]; }) => {
+      if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
+        funcGroup.Errors.forEach(error => {
+          const impact = mapIssueToImpact(error.message, error.code)
+          
+          issues.push({
+            ...error,
+            impact,
+            source: 'AXE Core',
+            functionality: funcGroup.FunctionalityName
+          })
+        })
+      }
+    })
+  }
+  
+  // Try the htmlcs structure
+  if (report?.htmlcs?.ByFunction && Array.isArray(report.htmlcs.ByFunction)) {
+    report.htmlcs.ByFunction.forEach((funcGroup: { FunctionalityName: any; Errors: any[]; }) => {
+      if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
+        funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; }) => {
+          const impact = mapIssueToImpact(error.message, error.code)
+          
+          issues.push({
+            ...error,
+            impact,
+            source: 'HTML_CS',
+            functionality: funcGroup.FunctionalityName
+          })
+        })
+      }
+    })
+  }
+  console.log(`Total issues extracted: ${issues.length}`);
+  console.log(`Issues: `, issues);
+  return issues
+}
+
+
+function mapIssueToImpact(message: string, code: any) {
+  if (!message && !code) return 'moderate'
+  
+  const lowerMsg = (message || '').toLowerCase()
+  const lowerCode = (code || '').toLowerCase()
+  
+  // Critical issues
+  if (
+    lowerMsg.includes('color contrast') || 
+    lowerMsg.includes('minimum contrast') ||
+    lowerCode.includes('1.4.3') ||
+    (lowerMsg.includes('aria hidden') && lowerMsg.includes('focusable')) ||
+    lowerMsg.includes('links must be distinguishable')
+  ) {
+    return 'critical'
+  }
+  
+  // Serious issues
+  if (
+    lowerMsg.includes('aria attributes') ||
+    lowerMsg.includes('permitted aria') ||
+    lowerMsg.includes('labels or instructions') ||
+    lowerMsg.includes('error identification')
+  ) {
+    return 'serious'
+  }
+  
+  return 'moderate'
+}
+
+// Count issues by severity
+function countIssuesBySeverity(issues: any[]) {
+  // Count issues by impact
+  const counts = {
+    criticalIssues: 0,
+    warnings: 0,
+    moderateIssues: 0,
+    totalIssues: issues.length
+  }
+  
+  // Count each issue by its impact
+  issues.forEach(issue => {
+    if (issue.impact === 'critical') {
+      counts.criticalIssues++
+    } else if (issue.impact === 'serious') {
+      counts.warnings++
+    } else {
+      counts.moderateIssues++
+    }
+  })
+  
+  return counts
+}
+
+function groupIssuesByFunctionality(issues: any[]): { [key: string]: any[] } {
+  const groupedIssues: { [key: string]: any[] } = {};
+
+  issues.forEach((issue: { functionality: string }) => {
+    if (issue.functionality) {
+      // Normalize functionality name to prevent duplicates like "Low Vision" and "Low vision"
+      const normalizedName = issue.functionality.split(' ')
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+
+      if (!groupedIssues[normalizedName]) {
+        groupedIssues[normalizedName] = [];
+      }
+
+      // Store the issue with the normalized functionality name
+      const normalizedIssue = {
+        ...issue,
+        functionality: normalizedName
+      };
+      
+      groupedIssues[normalizedName].push(normalizedIssue);
+    }
+  });
+  
+  return groupedIssues;
+}
+
+function getFunctionalityNames(issuesByFunction: { [key: string]: any[] }): string[] {
+  return Object.keys(issuesByFunction).sort();
+}
+
+function calculateTotalStats(report: any, issues: any[], webabilityEnabled: boolean): {
+  score: number;
+  originalScore: number;
+  criticalIssues: number;
+  warnings: number;
+  moderateIssues: number;
+  totalElements: number;
+  hasWebAbility: boolean;
+} {
+  const severityCounts = countIssuesBySeverity(issues);
+  const baseScore = report?.score || 0;
+  console.log(`Base score: ${baseScore}, Critical: ${severityCounts.criticalIssues}, Warnings: ${severityCounts.warnings}, Moderate: ${severityCounts.moderateIssues}`);
+  const enhancedScore = webabilityEnabled ? Math.min(95, baseScore + 45) : baseScore;
+
+  return {
+    score: enhancedScore,
+    originalScore: baseScore,
+    criticalIssues: severityCounts.criticalIssues,
+    warnings: severityCounts.warnings,
+    moderateIssues: severityCounts.moderateIssues,
+    totalElements: report?.totalElements || 0,
+    hasWebAbility: webabilityEnabled,
+  };
+}
 
 // example usage:
 
