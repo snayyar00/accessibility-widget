@@ -22,7 +22,9 @@ import {
   HelpCircle,
   Droplet,
   Keyboard,
-  Loader2
+  Loader2,
+  Check,
+  Shield
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -190,6 +192,7 @@ const ReportView: React.FC = () => {
   };
 
   const report = data?.fetchReportByR2Key || {};
+  console.log("Report data:", report);
 
   const issues = report.issues || [];
   const totalStats = report.totalStats || {};
@@ -197,53 +200,53 @@ const ReportView: React.FC = () => {
   const functionalityNames = report.functionalityNames || [];
 
   // Update the filtered issues logic to include severity filtering
-  const filteredIssues = useMemo(() => {
-    if (!issues.length) return [];
+const filteredIssues = useMemo(() => {
+  if (!issues.length) return [];
 
-    let filtered = [];
+  let filtered = [];
 
-    // First filter by organization/tab
-    if (organization === "function") {
-      filtered = activeTab === "all"
-        ? issues
-        : (issuesByFunction[activeTab] || []);
+  // First filter by organization/tab
+  if (organization === "function") {
+    filtered = activeTab === "all"
+      ? issues
+      : (issuesByFunction[activeTab] || []);
+  } else {
+    // Filter by structure (content, navigation, forms)
+    if (activeTab === "all") {
+      filtered = issues;
     } else {
-      // Filter by structure (content, navigation, forms)
-      if (activeTab === "all") {
-        filtered = issues;
-      } else {
-        filtered = issues.filter((issue: { selectors: string[]; }) => {
-          const selector = issue.selectors?.[0]?.toLowerCase() || '';
+      filtered = issues.filter((issue: { selectors: string[] }) => {
+        const selector = issue.selectors?.[0]?.toLowerCase() || '';
 
-          if (activeTab === "content") {
-            return selector.includes("p") ||
-              selector.includes("h") ||
-              selector.includes("img") ||
-              selector.includes("span");
-          }
-          if (activeTab === "navigation") {
-            return selector.includes("a") ||
-              selector.includes("nav") ||
-              selector.includes("button");
-          }
-          if (activeTab === "forms") {
-            return selector.includes("form") ||
-              selector.includes("input") ||
-              selector.includes("select") ||
-              selector.includes("textarea");
-          }
-          return false;
-        });
-      }
+        if (activeTab === "content") {
+          return selector.includes("p") ||
+            selector.includes("h") ||
+            selector.includes("img") ||
+            selector.includes("span");
+        }
+        if (activeTab === "navigation") {
+          return selector.includes("a") ||
+            selector.includes("nav") ||
+            selector.includes("button");
+        }
+        if (activeTab === "forms") {
+          return selector.includes("form") ||
+            selector.includes("input") ||
+            selector.includes("select") ||
+            selector.includes("textarea");
+        }
+        return false;
+      });
     }
+  }
 
-    // Then filter by severity if not showing all
-    if (issueFilter !== ISSUE_FILTERS.ALL) {
-      filtered = filtered.filter((issue: { impact: string; }) => issue.impact === issueFilter);
-    }
+  // Then filter by severity if not showing all
+  if (issueFilter !== ISSUE_FILTERS.ALL) {
+    filtered = filtered.filter((issue: { impact: string }) => issue.impact === issueFilter);
+  }
 
-    return filtered;
-  }, [issues, activeTab, organization, issuesByFunction, issueFilter]);
+  return filtered;
+}, [issues, activeTab, organization, issuesByFunction, issueFilter]);
 
   // Reset activeTab when changing organization
   useEffect(() => {
@@ -315,7 +318,7 @@ const ReportView: React.FC = () => {
 
   return (
     <div className="bg-report-blue text-foreground min-h-screen pt-20 pr-28 pb-20 pl-28">
-      <div className="absolute top-4 right-24">
+      <div className="absolute top-4 left-10">
         <button
           onClick={handleBackToDashboard}
           className="bg-blue-800 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
@@ -325,6 +328,39 @@ const ReportView: React.FC = () => {
       </div>
 
       <header className="text-center relative z-10 mb-16">
+        <h1 className="mb-4">
+          <span className="block text-3xl sm:text-5xl lg:text-7xl font-extrabold text-white leading-tight tracking-tight break-words">
+            Free
+            <br />
+            Website <span className="bg-gradient-to-r from-blue-300 to-blue-100 text-transparent bg-clip-text">Accessibility</span>
+            <br />
+            Checker
+          </span>
+          <span className="text-xl sm:text-2xl font-medium text-blue-300/90 tracking-wide block mt-2">
+            WCAG, AODA & ADA Compliance Tool
+          </span>
+        </h1>
+
+        <p className="text-lg sm:text-xl text-blue-100/80 max-w-2xl mx-auto mb-10 leading-relaxed">
+          Instantly analyze your website for accessibility compliance.
+          <span className="hidden sm:inline"><br /></span>
+          Get a detailed report on WCAG 2.1 violations and actionable steps to protect your business.
+        </p>
+        {/* Trust indicators */}
+        <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
+          <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-4 py-2 rounded-full">
+            <Check className="w-5 h-5 text-green-400" />
+            <span className="text-sm font-medium text-blue-100">WCAG 2.1 AA Compliant</span>
+          </div>
+          <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-4 py-2 rounded-full">
+            <Shield className="w-5 h-5 text-green-400" />
+            <span className="text-sm font-medium text-blue-100">ADA & Section 508</span>
+          </div>
+          <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-4 py-2 rounded-full">
+            <FileText className="w-5 h-5 text-green-400" />
+            <span className="text-sm font-medium text-blue-100">Detailed Reports</span>
+          </div>
+        </div>
         <h1 className="mb-2">
           <span className="block text-xl sm:text-5xl lg:text-4xl font-medium text-white leading-tight tracking-tight break-words">
             <br />

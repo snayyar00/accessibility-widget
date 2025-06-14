@@ -114,7 +114,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       if (result) {
         let score = result.score;
         let allowed_sites_id = null;
-        
+        console.log('Accessibility report data:', result);
         if (sitesData && sitesData.getUserSites) {
           const matchedSite = sitesData.getUserSites.find(
             (site: any) => normalizeDomain(site.url) == normalizeDomain(correctDomain)
@@ -577,7 +577,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       </td>
                       <td className="py-3 px-4">
                         <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-                          {row.enhancedScore}
+                          {row.score}
                         </span>
                       </td>
                       <td className="py-3 px-4 flex gap-2">

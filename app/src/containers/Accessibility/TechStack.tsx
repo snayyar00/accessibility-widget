@@ -4,20 +4,23 @@ import { Laptop, Server, Code, BarChart, AlertCircle, Layers, ShoppingCart, Tren
 
 type TechStackProps = {
   techStack: {
-    technologies: string[];
-    categorizedTechnologies: { category: string; technologies: string[] }[];
-    confidence: string;
-    accessibilityContext: {
-      platform: string;
-      platform_type: string;
-      has_cms: boolean;
-      has_ecommerce: boolean;
-      has_framework: boolean;
-      is_spa: boolean;
+    technologies?: string[];
+    detectedTechnologies?: string[];
+    categorizedTechnologies?: { category: string; technologies: string[] }[];
+    confidence?: string;
+    confidenceScores?: { overall?: number };
+    accessibilityContext?: {
+      platform?: string;
+      platform_type?: string;
+      has_cms?: boolean;
+      has_ecommerce?: boolean;
+      has_framework?: boolean;
+      is_spa?: boolean;
     };
-    analyzedUrl: string;
-    analyzedAt: string;
-    source: string;
+    analyzedUrl?: string;
+    analyzedAt?: string;
+    source?: string;
+    error?: string;
   };
 };
 
@@ -29,7 +32,23 @@ const TechStack: React.FC<TechStackProps> = ({ techStack }) => {
           <AlertCircle className="w-5 h-5 text-gray-400" />
           <div>
             <h3 className="text-md font-medium text-gray-700">Technology Stack</h3>
-            <p className="text-sm text-gray-500">No technology stack data available.</p>
+            <p className="text-sm text-gray-500">Analyzing website technologies...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (techStack.error) {
+    return (
+      <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-gray-400" />
+          <div>
+            <h3 className="text-md font-medium text-gray-700">Technology Stack</h3>
+            <p className="text-sm text-gray-500">
+              Unable to analyze website technologies: {techStack.error}
+            </p>
           </div>
         </div>
       </div>
@@ -37,19 +56,14 @@ const TechStack: React.FC<TechStackProps> = ({ techStack }) => {
   }
 
   const categorizedTech = techStack.categorizedTechnologies || [];
-  const allTechs = techStack.technologies || [];
-  type ConfidenceLevel = 'high' | 'medium' | 'low';
-  const confidenceColorMap: Record<ConfidenceLevel, string> = {
+  const allTechs = techStack.technologies || techStack.detectedTechnologies || [];
+  const confidence = techStack.confidenceScores?.overall || parseFloat(techStack.confidence || '0');
+  const confidenceLevel = confidence > 70 ? 'high' : confidence > 40 ? 'medium' : 'low';
+  const confidenceColorMap: Record<'high' | 'medium' | 'low', string> = {
     high: 'text-green-600',
     medium: 'text-yellow-600',
     low: 'text-gray-600',
   };
-  const confidenceLevel: ConfidenceLevel =
-    parseFloat(techStack.confidence) > 80
-      ? 'high'
-      : parseFloat(techStack.confidence) > 50
-        ? 'medium'
-        : 'low';
   const confidenceColor = confidenceColorMap[confidenceLevel];
 
   const accessibilityContext = techStack.accessibilityContext;
@@ -64,9 +78,7 @@ const TechStack: React.FC<TechStackProps> = ({ techStack }) => {
         <Laptop className="w-5 h-5 text-blue-500" />
         <h3 className="text-md font-medium text-gray-800">Technology Stack</h3>
         <span className={`text-xs ${confidenceColor} ml-auto`}>
-          {techStack.confidence
-            ? `${Math.round(parseFloat(techStack.confidence))}% confident`
-            : 'Low confidence'}
+          {confidence ? `${Math.round(confidence)}% confident` : 'Low confidence'}
         </span>
       </div>
 
@@ -74,7 +86,7 @@ const TechStack: React.FC<TechStackProps> = ({ techStack }) => {
         <div className="mb-3 p-2 bg-blue-50 rounded-md">
           <div className="text-xs text-blue-600 font-medium">Platform:</div>
           <div className="text-sm text-blue-800">
-            {accessibilityContext.platform}
+            {accessibilityContext.platform || 'Unknown'}
             {accessibilityContext.platform_type && ` (${accessibilityContext.platform_type})`}
           </div>
           <div className="text-xs text-blue-600 mt-1">
