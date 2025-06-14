@@ -164,6 +164,29 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   }, [data]);
 
+    const groupByCodeUtil = (issues: any) => {
+    const groupedByCode: any = {};
+    if (Array.isArray(issues)) {
+      issues.forEach((warning) => {
+        const { code } = warning;
+        if (!groupedByCode[code]) {
+          groupedByCode[code] = [];
+        }
+        groupedByCode[code].push(warning);
+      });
+    }
+    return groupedByCode;
+  };
+
+  const groupByCode = (issues: any) => {
+    console.log('group code called');
+    if (issues && typeof issues === 'object') {
+      issues.errors = groupByCodeUtil(issues.errors);
+      issues.warnings = groupByCodeUtil(issues.warnings);
+      issues.notices = groupByCodeUtil(issues.notices);
+    }
+  };
+
   useEffect(() => {
     if (selectedSite) {
       fetchReportKeys({ variables: { url: selectedSite } });
@@ -215,29 +238,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     } catch (error) {
       console.error('Error generating report:', error);
       toast.error('Failed to generate report. Please try again.');
-    }
-  };
-
-  const groupByCodeUtil = (issues: any) => {
-    const groupedByCode: any = {};
-    if (Array.isArray(issues)) {
-      issues.forEach((warning) => {
-        const { code } = warning;
-        if (!groupedByCode[code]) {
-          groupedByCode[code] = [];
-        }
-        groupedByCode[code].push(warning);
-      });
-    }
-    return groupedByCode;
-  };
-
-  const groupByCode = (issues: any) => {
-    console.log('group code called');
-    if (issues && typeof issues === 'object') {
-      issues.errors = groupByCodeUtil(issues.errors);
-      issues.warnings = groupByCodeUtil(issues.warnings);
-      issues.notices = groupByCodeUtil(issues.notices);
     }
   };
 
@@ -645,7 +645,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         )}
       </div>
     </div>
-  );
+  );}
 };
 
 export default AccessibilityReport;
