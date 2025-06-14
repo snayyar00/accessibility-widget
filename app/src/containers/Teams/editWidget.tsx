@@ -9,6 +9,9 @@ import { toast } from 'react-toastify';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { head } from 'lodash';
+import TourGuide from '@/components/Common/TourGuide';
+import { defaultTourStyles } from '@/config/tourStyles';
+import { customizeWidgetTourSteps, tourKeys } from '@/constants/toursteps';
 
 export interface Colors {
   headerText: string;
@@ -249,6 +252,12 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   const [hasUserMadeChanges, setHasUserMadeChanges] = useState(false);
 
 
+
+  // Handle tour completion
+  const handleTourComplete = () => {
+    console.log('Customize widget tour completed!');
+  };
+
   useEffect(() => {
     setSettings({
       'widgetFont': selectedFont,
@@ -320,7 +329,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     const bodyData = {
       site_url: selectedSite,
       settings: JSON.stringify(settings),
-      user_id: userData?.id,
+      user_id: userData?.id
     };
 
     await fetch(url, {
@@ -506,88 +515,101 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   }, [selectedSite]);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl">
-        <h1 className="mb-6 text-3xl font-bold text-gray-900 sm:text-4xl">
-          Accessibility Widget Customization
-        </h1>
-        {allDomains?.getUserSites ? (
-          <div className="bg-white my-6 p-3 sm:p-4 rounded-xl">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
-              Select Domain
-            </h2>
-            <select
-              className="w-full p-2 border rounded mb-3 sm:mb-4 text-sm sm:text-base"
-              value={selectedSite}
-              onChange={(e) => setSelectedSite(e.target.value)}
-            >
-              <option value={''}>Choose your domain</option>
-              {allDomains?.getUserSites.map((domain: any) => (
-                <option key={domain.id} value={domain.url}>
-                  {domain.url}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : (
-          <div className="flex justify-center mb-8">
-            <CircularProgress
-              size={44}
-              sx={{ color: 'primary' }}
-              className="ml-2 my-auto"
-            />
-          </div>
-        )}
+    <>
+      <TourGuide
+        steps={customizeWidgetTourSteps}
+        tourKey={tourKeys.customizeWidget}
+        autoStart={true}
+        onTourComplete={handleTourComplete}
+        customStyles={defaultTourStyles}
+      />
+      
+      <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl">
+          <header className="customize-widget-header mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+              Accessibility Widget Customization
+            </h1>
+          </header>
+          
+          {allDomains?.getUserSites ? (
+            <div className="domain-selection-section bg-white my-6 p-3 sm:p-4 rounded-xl">
+              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+                Select Domain
+              </h2>
+              <select
+                className="w-full p-2 border rounded mb-3 sm:mb-4 text-sm sm:text-base"
+                value={selectedSite}
+                onChange={(e) => setSelectedSite(e.target.value)}
+              >
+                <option value={''}>Choose your domain</option>
+                {allDomains?.getUserSites.map((domain: any) => (
+                  <option key={domain.id} value={domain.url}>
+                    {domain.url}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="flex justify-center mb-8">
+              <CircularProgress
+                size={44}
+                sx={{ color: 'primary' }}
+                className="ml-2 my-auto"
+              />
+            </div>
+          )}
 
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="rounded-lg bg-white p-6 shadow-md">
-            <h2 className="mb-4 text-xl font-semibold text-gray-800">
-              Widget Preview
-            </h2>
-            <div className="border border-gray-100 p-4 rounded-md">
-              <AccessibilityMenu
-                selectedFont={selectedFont}
-                colors={colors}
-                toggles={toggles}
-              />
+          <div className="grid gap-8 lg:grid-cols-2">
+            <div className="widget-preview-section rounded-lg bg-white p-6 shadow-md">
+              <h2 className="mb-4 text-xl font-semibold text-gray-800">
+                Widget Preview
+              </h2>
+              <div className="border border-gray-100 p-4 rounded-md">
+                <AccessibilityMenu
+                  selectedFont={selectedFont}
+                  colors={colors}
+                  toggles={toggles}
+                />
+              </div>
+            </div>
+            <div className="widget-customization-section rounded-lg bg-white p-6 shadow-md">
+              <h2 className="mb-4 text-xl font-semibold text-gray-800">
+                Choose your settings
+              </h2>
+              <div className="border border-gray-100 p-4 rounded-md">
+                <CustomizeWidget
+                  toggles={toggles}
+                  setToggles={setToggles}
+                  colors={colors}
+                  setColors={setColors}
+                  font={fonts}
+                  selectedFont={selectedFont}
+                  setSelectedFont={setSelectedFont}
+                  DefaultColors={DefaultColors}
+                />
+              </div>
             </div>
           </div>
-          <div className="rounded-lg bg-white p-6 shadow-md">
-            <h2 className="mb-4 text-xl font-semibold text-gray-800">
-              Choose your settings
-            </h2>
-            <div className="border border-gray-100 p-4 rounded-md">
-              <CustomizeWidget
-                toggles={toggles}
-                setToggles={setToggles}
-                colors={colors}
-                setColors={setColors}
-                font={fonts}
-                selectedFont={selectedFont}
-                setSelectedFont={setSelectedFont}
-                DefaultColors={DefaultColors}
-              />
-            </div>
+          <div className="save-reset-buttons mt-8 flex flex-col justify-center w-full space-y-4">
+            <button
+              onClick={handleSave}
+              disabled={buttonDisable}
+              className="w-full px-4 py-2 border border-transparent rounded-md text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Save
+            </button>
+            <button
+              disabled={buttonDisable}
+              onClick={resetAll}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Reset
+            </button>
           </div>
-        </div>
-        <div className="mt-8 flex flex-col justify-center w-full space-y-4">
-          <button
-            onClick={handleSave}
-            disabled={buttonDisable}
-            className="w-full px-4 py-2 border border-transparent rounded-md text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Save
-          </button>
-          <button
-            disabled={buttonDisable}
-            onClick={resetAll}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Reset
-          </button>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

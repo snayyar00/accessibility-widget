@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Compass } from 'lucide-react';
 
 // Actions
 import { toggleSidebar } from '@/features/admin/sidebar';
@@ -15,6 +16,7 @@ import Input from '@/components/Common/Input';
 import { handleBilling } from '@/containers/Profile/BillingPortalLink';
 import { CircularProgress } from '@mui/material';
 import EmailVerificationBanner from '../Auth/EmailVerificationBanner';
+import { useTourGuidance } from '@/hooks/useTourGuidance';
 
 type Props = {
   signout: () => void;
@@ -41,6 +43,9 @@ const Topbar: React.FC<Props> = ({ signout }) => {
   }
   const [clicked,setClicked] = useState(false);
 
+  // Tour guidance hook
+  const { resetAndStartTour, hasCurrentPageTour } = useTourGuidance();
+
   useEffect(() => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
@@ -64,7 +69,51 @@ const Topbar: React.FC<Props> = ({ signout }) => {
         </div>
         {/* <Input placeholder="Search..." className="w-[468px] border-[#d2d5e1] sm:w-full" /> */}
       </div>
-      <div>
+      <div className="flex items-center gap-4">
+        {/* Tour Guidance Button */}
+        {hasCurrentPageTour() && (
+          <button
+            onClick={resetAndStartTour}
+            className="relative flex items-center justify-center gap-2 px-4 py-2 rounded-lg 
+                       bg-gradient-to-br from-primary to-light-primary 
+                       hover:from-light-primary hover:to-primary 
+                       active:from-sapphire-blue active:to-primary
+                       shadow-lg hover:shadow-xl active:shadow-md
+                       transform hover:scale-105 active:scale-95
+                       transition-all duration-200 ease-in-out
+                       group overflow-hidden
+                       before:absolute before:inset-0 before:rounded-lg 
+                       before:bg-white before:opacity-0 hover:before:opacity-10 
+                       before:transition-opacity before:duration-200"
+            title="Start Interactive Tour Guide"
+          >
+            {/* Animated ring effect */}
+            <div className="absolute inset-0 rounded-lg border-2 border-white/20 
+                           animate-pulse group-hover:border-white/40 
+                           transition-colors duration-200"></div>
+            
+            {/* Icon with subtle animation */}
+            <Compass 
+              size={20} 
+              className="text-white drop-shadow-sm 
+                        group-hover:rotate-12 group-active:rotate-6
+                        transition-all duration-200 ease-in-out
+                        relative z-10" 
+            />
+            
+            {/* Button Text */}
+            <span className="text-white font-medium text-sm drop-shadow-sm relative z-10">
+              Start Tour
+            </span>
+            
+            {/* Subtle glow effect */}
+            <div className="absolute inset-0 rounded-lg bg-primary/20 
+                           blur-md scale-110 opacity-0 group-hover:opacity-100 
+                           transition-opacity duration-300"></div>
+          </button>
+        )}
+        
+        {/* Profile Section */}
         <div
           onClick={() => setIsShowMenu(!isShowMenu)}
           ref={profileRef}

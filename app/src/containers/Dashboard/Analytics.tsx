@@ -214,7 +214,7 @@ export default function AnalyticsDashboard({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="analytics-cards grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {mainMetrics.map((metric, index) => (
           <MetricCard key={index} {...metric} />
         ))}

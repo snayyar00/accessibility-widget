@@ -5,6 +5,7 @@ export interface ReactHookFormType {
   register: (instance: HTMLInputElement | null) => void;
   errors?: DeepMap<Record<string, unknown>, FieldError>;
   formErrors?: DeepMap<Record<string, unknown>, FieldError>;
+  trigger?: (name?: string | string[]) => Promise<boolean>;
 }
 
 // isSubmitted?: boolean;

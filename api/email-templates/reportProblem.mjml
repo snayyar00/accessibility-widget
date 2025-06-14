@@ -1,0 +1,44 @@
+<mjml>
+  <mj-head>
+    <mj-preview>Thank you for your feedback!</mj-preview>
+    <mj-style inline="inline"> .card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; text-align: center; } .image-shadow { box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15); border-radius: 8px; } </mj-style>
+  </mj-head>
+  <mj-body>
+    <!-- Header -->
+    <mj-section background-color="#f8f8f8" padding="20px">
+      <mj-column>
+        <mj-text font-size="22px" font-weight="bold" color="#007bff" align="center"> Thank you for reporting a problem! </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Main message -->
+    <mj-section background-color="#ffffff" padding="20px">
+      <mj-column>
+        <mj-text font-size="16px" color="#333333" align="center">
+          We have received your&nbsp;
+          <b> {{#if (eq issue_type "bug")}}bug report{{/if}} {{#if (eq issue_type "accessibility")}}accessibility issue report{{/if}} </b>.
+        </mj-text>
+        <mj-text font-size="16px" color="#333333" align="center">
+          <b>Description:</b><br />
+          {{description}}
+        </mj-text>
+        <mj-text font-size="16px" color="#333333" align="center">
+          Your feedback is very important to us. Our team will start working on resolving this issue soon.<br />
+          Thank you for helping us become better!
+        </mj-text>
+        <mj-divider border-color="#007bff" width="80px"></mj-divider>
+        <mj-text font-size="15px" color="#666666" align="center">
+          Best regards,<br />
+          The Web Ability Team
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f8f8f8" padding="20px">
+      <mj-column>
+        <mj-text font-size="12px" color="#666666" align="center"> © {{year}} Web Ability. All Rights Reserved. </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

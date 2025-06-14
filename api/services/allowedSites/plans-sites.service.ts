@@ -11,7 +11,7 @@ import { PERMISSION_SITE_PLAN } from '~/constants/billing.constant';
 import compileEmailTemplate from '~/helpers/compile-email-template';
 import {sendMail} from '~/libs/mail';
 import { FindAllowedSitesProps, deleteSiteByURL, findSiteById, findSiteByUserIdAndSiteId } from '~/repository/sites_allowed.repository';
-import { SitesPlanData, deleteSitePlanById, deleteSitesPlanById, getSitePlanById, getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId, getSitesPlanByUserId, insertSitePlan, updateSitePlanById } from '~/repository/sites_plans.repository';
+import { SitesPlanData, deleteSitePlanById, deleteSitesPlanById, getAnySitePlanById, getSitePlanById, getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId, getSitesPlanByUserId, insertSitePlan, updateSitePlanById } from '~/repository/sites_plans.repository';
 import { deletePermissionBySitePlanId, insertMultiSitePermission } from '~/repository/sites_permission.repository';
 import { Token } from '../authentication/login.service';
 import database from '~/config/database.config';
@@ -231,7 +231,7 @@ export async function deleteTrialPlan(id: number): Promise<true> {
     const sitePlan = await getSitePlanById(id);
 
     if (!sitePlan) {
-      throw new ApolloError('Can not find any user plan');
+      throw new ApolloError('Can not find any trial user plan');
     }
     await deleteSitePlanById(sitePlan.id);
     // await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)]);
@@ -255,6 +255,51 @@ export async function deleteSitesPlan(id: number, hook = false): Promise<true> {
     const customer = await getSubcriptionCustomerIDBySubId(sitePlan.subcription_id);
 
     if (hook === false) {
+      await cancelSubcriptionBySubId(sitePlan.subcription_id);
+    }
+
+    let previous_plan;
+    try {
+      previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(customer, sitePlan.subcription_id);
+    } catch (error) {
+      console.log('err = ', error);
+    }
+
+    const updatePromises = previous_plan.map(async (plan) => {
+      try {
+        // await deleteSitesPlan(plan.id, true);
+        await Promise.all([deleteSitePlanById(plan.id), deletePermissionBySitePlanId(plan.id)]);
+        console.log('Deleted Plan for site', plan.siteId);
+      } catch (error) {
+        console.log('Error Deleting Plan for site:', plan.siteId);
+        throw error;
+      }
+    });
+
+    await Promise.all(updatePromises);
+    // await deleteSitesPlanById(sitePlan.id);
+    // await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)]);
+
+    return true;
+  } catch (error) {
+    console.log("This is error", error);
+    logger.error(error);
+    throw new ApolloError('Something went wrong!');
+  }
+}
+
+export async function deleteExpiredSitesPlan(id: number, hook = false): Promise<true> {
+  try {
+    const sitePlan = await getAnySitePlanById(id);
+
+    if (!sitePlan) {
+      throw new ApolloError('Can not find any user plan');
+    }
+
+    const customer = await getSubcriptionCustomerIDBySubId(sitePlan.subcription_id);
+
+    if (hook === false) {
+      console.log("hook is not false")
       await cancelSubcriptionBySubId(sitePlan.subcription_id);
     }
 

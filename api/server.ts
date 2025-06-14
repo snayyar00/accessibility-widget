@@ -1,12 +1,17 @@
 /* eslint-disable wrap-iife */
 import dotenv from 'dotenv';
+
+if (process.env.NODE_ENV === 'production') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require('module-alias/register');
+}
+
 import { resolve, join } from 'path';
 import express, { NextFunction, Request, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
-import 'module-alias/register';
 import { ApolloServer, ApolloError } from 'apollo-server-express';
 import { withScope, Severity, captureException, init, Handlers } from '@sentry/node';
 import * as Sentry from '@sentry/node';
@@ -23,9 +28,9 @@ import {sendMail} from './libs/mail';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 import { fetchAccessibilityReport } from './services/accessibilityReport/accessibilityReport.service';
 import { findProductAndPriceByType, findProductById } from './repository/products.repository';
-import { createSitesPlan, deleteSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-sites.service';
+import { createSitesPlan, deleteExpiredSitesPlan, deleteSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-sites.service';
 import Stripe from 'stripe';
-import { getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
+import { getAnySitePlanBySiteId, getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
 import { APP_SUMO_COUPON_ID, APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from './constants/billing.constant';
 import axios from 'axios';
@@ -33,13 +38,14 @@ import OpenAI from 'openai';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
 import database from '~/config/database.config';
 import { addProblemReport, getProblemReportsBySiteId, problemReportProps } from './repository/problem_reports.repository';
-import { deleteSiteByURL, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
+import { deleteSiteByURL, deleteSiteWithRelatedRecords, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
 import { addWidgetSettings, getWidgetSettingsBySiteId } from './repository/widget_settings.repository';
 import { addNewsletterSub } from './repository/newsletter_subscribers.repository';
 import findPromo from './services/stripe/findPromo';
 import { appSumoPromoCount } from './utils/appSumoPromoCount';
 import { expireUsedPromo } from './utils/expireUsedPromo';
 import { findUsersByToken, getUserTokens } from './repository/user_plan_tokens.repository';
+import { customTokenCount } from './utils/customTokenCount';
 // import run from './scripts/create-products';
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -465,13 +471,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
         console.log("promo");
         const tokenUsed = await getUserTokens(userId) || [];
-        const maxNum = tokenUsed.reduce((max, code) => {
-          const m = code.match(/^custom(\d+)$/);
-          return m ? Math.max(max, Number(m[1])) : max;
-        }, 0);
         
-        const lastCustomCode = maxNum > 0 ? `custom${maxNum}` : null;
-        const nonCustomCodes = tokenUsed.filter(code => !/^custom\d+$/.test(code));
+        const {lastCustomCode,nonCustomCodes} = await customTokenCount(userId,tokenUsed);
+
         // This will work on for AppSumo coupons, we allow use of coupons that should only work for the app sumo tier plans and we manually apply the discount according to new plan (single)
 
         const subscription =  await stripe.subscriptions.create({
@@ -687,31 +689,76 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
   app.post('/cancel-site-subscription',async (req,res)=>{
     const { domainId,domainUrl,userId,status } = req.body;
+    let previous_plan:any[];
+    try {
+      previous_plan = await getAnySitePlanBySiteId(Number(domainId));
+    } catch (error) {
+      console.log('err = ', error);
+    }
 
-    if(status == 'Active' || status == 'Life Time')
-    {
-      let previous_plan;
+    if(status != 'Active' && status != 'Life Time'){
       try {
-        previous_plan = await getSitePlanBySiteId(Number(domainId));
-        console.log(domainId,previous_plan);
+        if(previous_plan && previous_plan.length > 0) {
+          for(const plan of previous_plan) {
+            
+            if(plan.subscriptionId == 'Trial'){
+              await deleteTrialPlan(plan.id);
+            }
+            else{
+              let errorCount = 0;
+              try {
+                await deleteExpiredSitesPlan(plan.id);
+              } catch (error) {
+                
+                errorCount++;
+                
+              }
+
+              if(errorCount == 0){
+              try {
+                await deleteExpiredSitesPlan(plan.id,true);
+              } catch (error) {
+
+                errorCount++;
+              }}
+
+              if(errorCount == 2){
+                return res.status(500).json({ error: "Error deleting expired sites plan" });
+              }
+            }
+          }
+        }
+        console.log("deleting site by url");
+        await deleteSiteWithRelatedRecords(domainUrl,userId);
+  
+        return res.status(200).json({ success: true });
       } catch (error) {
-        console.log('err = ', error);
+        console.log("error deleting site by url",error);
+        return res.status(500).json({ error: error.message });
       }
+    }
+    else{
       try {
-        // await deleteTrialPlan(previous_plan.id);
-        await deleteSitesPlan(previous_plan.id);
-        await deleteSiteByURL(domainUrl,userId);
-
+        // Iterate through each plan in previous_plan array
+        if(previous_plan && previous_plan.length > 0){
+          for(const plan of previous_plan) {
+            if(plan.subscriptionId == 'Trial'){
+              await deleteTrialPlan(plan.id);
+            }
+            else{
+              await deleteSitesPlan(plan.id);
+            }
+          }
+        }
+        await deleteSiteWithRelatedRecords(domainUrl,userId);
+  
         res.status(200).json({ success: true });
       } catch (error) {
         console.log('err = ', error);
         res.status(500).json({ error: error });
       }
     }
-    else
-    {
-      res.status(500).json({ error: "Cannot delete a Trial Site" });
-    }
+
   });
 
   app.post('/create-subscription',async (req,res)=>{
@@ -813,13 +860,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           
           const tokenUsed = await getUserTokens(userId) || [];
 
-          const maxNum = tokenUsed.reduce((max, code) => {
-            const m = code.match(/^custom(\d+)$/);
-            return m ? Math.max(max, Number(m[1])) : max;
-          }, 0);
-          
-          const lastCustomCode = maxNum > 0 ? `custom${maxNum}` : null;
-          const nonCustomCodes = tokenUsed.filter(code => !/^custom\d+$/.test(code));
+          const {lastCustomCode,nonCustomCodes} = await customTokenCount(userId,tokenUsed);
 
           subscription = await stripe.subscriptions.create({
             customer: customer.id,
@@ -1181,6 +1222,19 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
       const hasCustomInfinityToken = userAppSumoTokens.includes("customInfinity");
 
+      let maxSites = 0
+
+      if(!hasCustomInfinityToken){
+        const {lastCustomCode,nonCustomCodes} = await customTokenCount(userId,userAppSumoTokens);
+
+        if(lastCustomCode){
+          const customCode = lastCustomCode.match(/^custom(\d+)$/);
+          maxSites = Number(customCode[1]) + nonCustomCodes.length;
+        }
+        else{
+          maxSites = nonCustomCodes.length;
+        }
+      }
       // Check if customer exists
       if (customers.data.length > 0) {
         customer = customers.data[0];
@@ -1292,7 +1346,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 }
               }
 
-              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining,appSumoCount:appSumoCount,codeCount:userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size,infinityToken:hasCustomInfinityToken});
+              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining,appSumoCount:appSumoCount,codeCount:maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size,infinityToken:hasCustomInfinityToken});
 
             }
   
@@ -1349,8 +1403,8 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 }
               }
             }
-            
-            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount,codeCount:userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size,infinityToken:hasCustomInfinityToken});
+
+            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount,codeCount:maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size,infinityToken:hasCustomInfinityToken});
 
           }
   
@@ -1359,8 +1413,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   
           
         } catch (error) {
-          console.log(error);
-          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,codeCount:userAppSumoTokens.length,infinityToken:hasCustomInfinityToken});
+          // console.log(error);
+          // silent fail
+          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,codeCount:maxSites > 0 ? maxSites : userAppSumoTokens.length,infinityToken:hasCustomInfinityToken});
           
         }
         
@@ -1368,7 +1423,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       else
       {
         console.log("no customer");
-        res.status(200).json({ isCustomer: false,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,infinityToken:hasCustomInfinityToken,codeCount:userAppSumoTokens.length });
+        res.status(200).json({ isCustomer: false,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,infinityToken:hasCustomInfinityToken,codeCount:maxSites > 0 ? maxSites : userAppSumoTokens.length});
       }
 
     } catch (error) {

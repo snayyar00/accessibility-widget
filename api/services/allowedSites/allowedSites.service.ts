@@ -2,7 +2,7 @@ import { ApolloError, ValidationError } from 'apollo-server-express';
 
 import logger from '~/utils/logger';
 import { insertDocument, findDocumentById, findDocuments, updateDocumentById, deleteDocumentById, FindDocumentsResponse, FindDocumentById } from '~/repository/documents.repository';
-import { FindAllowedSitesProps, IUserSites, deleteSiteByURL, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL} from '~/repository/sites_allowed.repository';
+import { FindAllowedSitesProps, IUserSites, deleteSiteByURL, deleteSiteWithRelatedRecords, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL} from '~/repository/sites_allowed.repository';
 import { createValidation } from '~/validations/document.validation';
 import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
 import { createSitesPlan } from './plans-sites.service';
@@ -154,7 +154,7 @@ export async function findSite(url: string){
 
 export async function deleteSite(userId:number, url:string) {
     try{
-        const deletedRecs = await deleteSiteByURL(url, userId);
+        const deletedRecs = await deleteSiteWithRelatedRecords(url, userId);
         return deletedRecs;
     }
     catch (e){
@@ -173,5 +173,21 @@ export async function changeURL(siteId: number, userId: number ,url: string) {
         logger.error(e);
         throw e;
     }
+}
+
+export async function isDomainAlreadyAdded(url: string): Promise<boolean> {
+  try {
+    const site = await findSiteByURL(url);
+    // If site is found, it means the domain is already added
+    return !!site;
+  } catch (error) {
+    // If error is "Site not found" type, return false
+    if (error.message && error.message.includes("not found")) {
+      return false;
+    }
+    // For other errors, re-throw
+    logger.error(error);
+    throw error;
+  }
 }
 

@@ -85,6 +85,10 @@ module.exports = {
       },
       animation: {
         pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        scan: 'scan 2s linear infinite',
+        progress: 'loading 2.5s ease-out forwards',
+        breathe: 'breathe 3s ease-in-out infinite',
+        fadeIn: 'fadeIn 0.8s ease-in-out forwards',
       },
       keyframes: {
         pulse: {
@@ -93,6 +97,34 @@ module.exports = {
           },
           '50%': {
             opacity: '.5',
+          },
+        },
+        breathe: {
+          '0%, 100%': {
+            transform: 'scale(1)',
+            opacity: '0.3',
+          },
+          '50%': {
+            transform: 'scale(1.1)',
+            opacity: '0.7',
+          },
+        },
+        scan: {
+          '0%': { transform: 'translateY(-100%)' },
+          '100%': { transform: 'translateY(1000%)' },
+        },
+        loading: {
+          '0%': { width: '0%' },
+          '100%': { width: '100%' },
+        },
+        fadeIn: {
+          '0%': { 
+            opacity: '0',
+            transform: 'translateY(20px)'
+          },
+          '100%': { 
+            opacity: '1',
+            transform: 'translateY(0)'
           },
         },
       }

@@ -31,7 +31,8 @@
       "your_email": "Your Email",
       "name": "Name",
       "body": "Body",
-      "edit_profile": "Edit Profile"
+      "edit_profile": "Edit Profile",
+      "website_url": "Website URL"
     },
     "text": {
       "hi": "Hi",
@@ -49,7 +50,8 @@
       "view": "View",
       "admin": "admin",
       "member": "member",
-      "avatar": "Avatar"
+      "avatar": "Avatar",
+      "continue": "Continue"
     },
     "validation": {
       "require_name": "Name is required",
@@ -63,7 +65,8 @@
       "require_current_password": "Current password is required",
       "require_new_password": "New password is required",
       "no_plus_in_email":"Email Cannot contain a + sign",
-      "weak_password":"Your Password is weak, please use a mix of upper and lower case characters with symbols"
+      "weak_password":"Your Password is weak, please use a mix of upper and lower case characters with symbols",
+      "valid_url":"Please enter a valid URL without http or https and any trailing slashes"
     },
     "placeholder": {
       "email": "yourname@yourbusiness.com",

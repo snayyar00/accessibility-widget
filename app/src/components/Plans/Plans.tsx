@@ -126,7 +126,7 @@ const Plans: React.FC<Props> = ({
       appSumoPlan = 'Enterprise';
     }
   return (
-    <div className="flex flex-wrap sm:flex-col justify-center">
+    <div className="plan-selection-area flex flex-wrap sm:flex-col justify-center">
       {currentPlan ? (<div
           // onClick={() => onChange(String(currentPlan?.id))}
           key={currentPlan?.id}
@@ -182,7 +182,7 @@ const Plans: React.FC<Props> = ({
                     )}
                   >
                     <h5 className="font-bold text-xl text-center leading-[17px] text-sapphire-blue mb-4 name">
-                      {infinityToken ? 'Infinite Sites Plan' : `App Sumo ${appSumoPlan}`}
+                      {infinityToken ? 'Agency Unlimited Plan' : maxSites >=100 ? "Agency Growth Plan" : maxSites >=50 ? "Agency Starter Plan" : `App Sumo ${appSumoPlan}`}
                     </h5>
                     <p className="desc text-center text-[12px] mb-3 leading-4 text-white-blue">
                       Ideal for all your accessibility needs 
