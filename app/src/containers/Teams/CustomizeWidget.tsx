@@ -219,9 +219,12 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           </div>
 
           <div className="logo-upload-section bg-white p-3 sm:p-4 rounded-xl">
-          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+          <h2 className="text-lg sm:text-xl font-semibold mb-2">
             Upload Widget Logo
           </h2>
+          <p className="text-sm text-gray-600 mb-3 sm:mb-4">
+            <strong>Optimal dimensions:</strong> 200 × 50 pixels for best display quality
+          </p>
 
           {/* File upload */}
           <input
