@@ -13,92 +13,93 @@ import TourGuide from '@/components/Common/TourGuide';
 import { defaultTourStyles } from '@/config/tourStyles';
 import { customizeWidgetTourSteps, tourKeys } from '@/constants/toursteps';
 import { Settings } from 'lucide-react';
+import CopyCustomizationModal from './copyCustomizationModal';
 
 export interface Colors {
-  headerText: string;
-  headerBg: string;
-  headerControlsColor: string;
-  footerText: string;
-  footerBg: string;
-  buttonText: string;
-  buttonBg: string;
-  menuBg: string;
-  dropdownText: string;
-  dropdownBg: string;
-  widgetInnerText: string;
-  fontSizeMenuBg: string;
-  fontSizeMenuText: string;
-  fontSizeMenuButton: string;
-  customizationMenuInnerBg: string;
-  widgetBtnColor: string;
-  logoImage: string;
-  accessibilityStatementLinkUrl: string;
-  logoUrl: string;
-  reportButtonsBgColor: string;
-  reportButtonsTextColor: string;
+  'headerText': string;
+  'headerBg': string;
+  'headerControlsColor': string;
+  'footerText': string;
+  'footerBg': string;
+  'buttonText': string;
+  'buttonBg': string;
+  'menuBg': string;
+  'dropdownText': string;
+  'dropdownBg': string;
+  'widgetInnerText': string;
+  'fontSizeMenuBg': string;
+  'fontSizeMenuText': string;
+  'fontSizeMenuButton': string;
+  'customizationMenuInnerBg': string;
+  'widgetBtnColor': string;
+  'logoImage': string;
+  'accessibilityStatementLinkUrl': string;
+  'logoUrl': string;
+  'reportButtonsBgColor': string;
+  'reportButtonsTextColor': string;
 }
 
 export interface Toggles {
-  language: boolean;
-  darkMode: boolean;
-  screenReader: boolean;
-  readingGuide: boolean;
-  stopAnimations: boolean;
-  bigCursor: boolean;
-  voiceNavigation: boolean;
-  darkContrast: boolean;
-  lightContrast: boolean;
-  highContrast: boolean;
-  highSaturation: boolean;
-  lowSaturation: boolean;
-  monochrome: boolean;
-  highlightLinks: boolean;
-  highlightTitle: boolean;
-  dyslexiaFont: boolean;
-  letterSpacing: boolean;
-  lineHeight: boolean;
-  fontWeight: boolean;
-  motorImpaired: boolean;
-  blind: boolean;
-  dyslexia: boolean;
-  visuallyImpaired: boolean;
-  cognitiveAndLearning: boolean;
-  seizureAndEpileptic: boolean;
-  colorBlind: boolean;
-  adhd: boolean;
+  'language': boolean;
+  'darkMode': boolean;
+  'screenReader': boolean;
+  'readingGuide': boolean;
+  'stopAnimations': boolean;
+  'bigCursor': boolean;
+  'voiceNavigation': boolean;
+  'darkContrast': boolean;
+  'lightContrast': boolean;
+  'highContrast': boolean;
+  'highSaturation': boolean;
+  'lowSaturation': boolean;
+  'monochrome': boolean;
+  'highlightLinks': boolean;
+  'highlightTitle': boolean;
+  'dyslexiaFont': boolean;
+  'letterSpacing': boolean;
+  'lineHeight': boolean;
+  'fontWeight': boolean;
+  'motorImpaired': boolean;
+  'blind': boolean;
+  'dyslexia': boolean;
+  'visuallyImpaired': boolean;
+  'cognitiveAndLearning': boolean;
+  'seizureAndEpileptic': boolean;
+  'colorBlind': boolean;
+  'adhd': boolean;
 }
 
 const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.customize_widget') });
   const [toggles, setToggles] = useState({
-    language: true,
-    darkMode: true,
-    screenReader: true,
-    readingGuide: true,
-    stopAnimations: true,
-    bigCursor: true,
-    voiceNavigation: true,
-    darkContrast: true,
-    lightContrast: true,
-    highContrast: true,
-    highSaturation: true,
-    lowSaturation: true,
-    monochrome: true,
-    highlightLinks: true,
-    highlightTitle: true,
-    dyslexiaFont: true,
-    letterSpacing: true,
-    lineHeight: true,
-    fontWeight: true,
-    motorImpaired: true,
-    blind: true,
-    dyslexia: true,
-    visuallyImpaired: true,
-    cognitiveAndLearning: true,
-    seizureAndEpileptic: true,
-    colorBlind: true,
-    adhd: true,
+    'language': true,
+    'darkMode': true,
+    'screenReader': true,
+    'readingGuide': true,
+    'stopAnimations': true,
+    'bigCursor': true,
+    'voiceNavigation': true,
+    'darkContrast': true,
+    'lightContrast': true,
+    'highContrast': true,
+    'highSaturation': true,
+    'lowSaturation': true,
+    'monochrome': true,
+    'highlightLinks': true,
+    'highlightTitle': true,
+    'dyslexiaFont': true,
+    'letterSpacing': true,
+    'lineHeight': true,
+    'fontWeight': true,
+    'motorImpaired': true,
+    'blind': true,
+    'dyslexia': true,
+    'visuallyImpaired': true,
+    'cognitiveAndLearning': true,
+    'seizureAndEpileptic': true,
+    'colorBlind': true,
+    'adhd': true,
   });
   const { data: userData } = useSelector((state: RootState) => state.user);
   const [buttonDisable, setButtonDisable] = useState(false);
@@ -111,80 +112,80 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   const [copyComplete, setCopyComplete] = useState(false);
 
   const DefaultColors: Colors = {
-    headerText: '#FFFFFF',
-    headerBg: '#0848ca',
-    headerControlsColor: '#0848ca',
-    footerText: '#000000',
-    footerBg: '#FFFFFF',
-    buttonText: '#000000',
-    buttonBg: '#FFFFFF',
-    menuBg: '#eff1f5',
-    dropdownText: '#000000',
-    dropdownBg: '#FFFFFF',
-    widgetInnerText: '#000000',
-    fontSizeMenuBg: '#FFFFFF',
-    fontSizeMenuText: '#000000',
-    fontSizeMenuButton: '#eff1f5',
-    customizationMenuInnerBg: '#FFFFFF',
-    widgetBtnColor: '#195AFF',
-    logoImage: '',
-    accessibilityStatementLinkUrl: 'https://www.webability.io/statement',
-    logoUrl: 'https://webability.io',
-    reportButtonsBgColor: '#0948c9',
-    reportButtonsTextColor: '#FFFFFF',
+    'headerText': '#FFFFFF',
+    'headerBg': '#0848ca',
+    'headerControlsColor': '#0848ca',
+    'footerText': '#000000',
+    'footerBg': '#FFFFFF',
+    'buttonText': '#000000',
+    'buttonBg': '#FFFFFF',
+    'menuBg': '#eff1f5',
+    'dropdownText': '#000000',
+    'dropdownBg': '#FFFFFF',
+    'widgetInnerText': '#000000',
+    'fontSizeMenuBg': '#FFFFFF',
+    'fontSizeMenuText': '#000000',
+    'fontSizeMenuButton': '#eff1f5',
+    'customizationMenuInnerBg': '#FFFFFF',
+    'widgetBtnColor': '#195AFF',
+    'logoImage': '',
+    'accessibilityStatementLinkUrl': 'https://www.webability.io/statement',
+    'logoUrl': 'https://webability.io',
+    'reportButtonsBgColor': '#0948c9',
+    'reportButtonsTextColor': '#FFFFFF',
   };
   const DefaultToggles = {
-    language: true,
-    darkMode: true,
-    screenReader: true,
-    readingGuide: true,
-    stopAnimations: true,
-    bigCursor: true,
-    voiceNavigation: true,
-    darkContrast: true,
-    lightContrast: true,
-    highContrast: true,
-    highSaturation: true,
-    lowSaturation: true,
-    monochrome: true,
-    highlightLinks: true,
-    highlightTitle: true,
-    dyslexiaFont: true,
-    letterSpacing: true,
-    lineHeight: true,
-    fontWeight: true,
-    motorImpaired: true,
-    blind: true,
-    dyslexia: true,
-    visuallyImpaired: true,
-    cognitiveAndLearning: true,
-    seizureAndEpileptic: true,
-    colorBlind: true,
-    adhd: true,
+    'language': true,
+    'darkMode': true,
+    'screenReader': true,
+    'readingGuide': true,
+    'stopAnimations': true,
+    'bigCursor': true,
+    'voiceNavigation': true,
+    'darkContrast': true,
+    'lightContrast': true,
+    'highContrast': true,
+    'highSaturation': true,
+    'lowSaturation': true,
+    'monochrome': true,
+    'highlightLinks': true,
+    'highlightTitle': true,
+    'dyslexiaFont': true,
+    'letterSpacing': true,
+    'lineHeight': true,
+    'fontWeight': true,
+    'motorImpaired': true,
+    'blind': true,
+    'dyslexia': true,
+    'visuallyImpaired': true,
+    'cognitiveAndLearning': true,
+    'seizureAndEpileptic': true,
+    'colorBlind': true,
+    'adhd': true,
   };
 
   const [colors, setColors] = useState({
-    headerText: DefaultColors.headerText,
-    headerBg: DefaultColors.headerBg,
-    headerControlsColor: DefaultColors.headerControlsColor,
-    footerText: DefaultColors.footerText,
-    footerBg: DefaultColors.footerBg,
-    buttonText: DefaultColors.buttonText,
-    buttonBg: DefaultColors.buttonBg,
-    menuBg: DefaultColors.menuBg,
-    dropdownText: DefaultColors.dropdownText,
-    dropdownBg: DefaultColors.dropdownBg,
-    widgetInnerText: DefaultColors.widgetInnerText,
-    fontSizeMenuBg: DefaultColors.fontSizeMenuBg,
-    fontSizeMenuText: DefaultColors.fontSizeMenuText,
-    fontSizeMenuButton: DefaultColors.fontSizeMenuButton,
-    customizationMenuInnerBg: DefaultColors.customizationMenuInnerBg,
-    widgetBtnColor: DefaultColors.widgetBtnColor,
-    logoImage: DefaultColors.logoImage,
-    accessibilityStatementLinkUrl: DefaultColors.accessibilityStatementLinkUrl,
-    logoUrl: DefaultColors.logoUrl,
-    reportButtonsBgColor: DefaultColors.reportButtonsBgColor,
-    reportButtonsTextColor: DefaultColors.reportButtonsTextColor,
+    'headerText': DefaultColors.headerText,
+    'headerBg': DefaultColors.headerBg,
+    'headerControlsColor': DefaultColors.headerControlsColor,
+    'footerText': DefaultColors.footerText,
+    'footerBg': DefaultColors.footerBg,
+    'buttonText': DefaultColors.buttonText,
+    'buttonBg': DefaultColors.buttonBg,
+    'menuBg': DefaultColors.menuBg,
+    'dropdownText': DefaultColors.dropdownText,
+    'dropdownBg': DefaultColors.dropdownBg,
+    'widgetInnerText': DefaultColors.widgetInnerText,
+    'fontSizeMenuBg': DefaultColors.fontSizeMenuBg,
+    'fontSizeMenuText': DefaultColors.fontSizeMenuText,
+    'fontSizeMenuButton': DefaultColors.fontSizeMenuButton,
+    'customizationMenuInnerBg': DefaultColors.customizationMenuInnerBg,
+    'widgetBtnColor': DefaultColors.widgetBtnColor,
+    'logoImage': DefaultColors.logoImage,
+    'accessibilityStatementLinkUrl': DefaultColors.accessibilityStatementLinkUrl,
+    'logoUrl': DefaultColors.logoUrl,
+    'reportButtonsBgColor': DefaultColors.reportButtonsBgColor,
+    'reportButtonsTextColor': DefaultColors.reportButtonsTextColor,
   });
 
   const fonts = [
@@ -203,7 +204,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   ];
 
   const [settings, setSettings] = useState({
-    widgetFont: selectedFont,
+    'widgetFont': selectedFont,
     'footer-bg': DefaultColors.footerBg,
     'footer-text': DefaultColors.footerText,
     'header-text': DefaultColors.headerText,
@@ -219,13 +220,13 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     'font-size-buttons': DefaultColors.fontSizeMenuButton,
     'font-size-text': DefaultColors.fontSizeMenuText,
     'widget-btn-color': DefaultColors.widgetBtnColor,
-    logoImage: DefaultColors.logoImage,
-    accessibilityStatementLinkUrl: DefaultColors.accessibilityStatementLinkUrl,
-    logoUrl: DefaultColors.logoUrl,
-    reportButtonsBgColor: DefaultColors.reportButtonsBgColor,
-    reportButtonsTextColor: DefaultColors.reportButtonsTextColor,
-    toggleLanguage: DefaultToggles.language ? 1 : 0,
-    toggledarkMode: DefaultToggles.darkMode ? 1 : 0,
+    'logoImage': DefaultColors.logoImage,
+    'accessibilityStatementLinkUrl': DefaultColors.accessibilityStatementLinkUrl,
+    'logoUrl': DefaultColors.logoUrl,
+    'reportButtonsBgColor': DefaultColors.reportButtonsBgColor,
+    'reportButtonsTextColor': DefaultColors.reportButtonsTextColor,
+    'toggleLanguage': DefaultToggles.language ? 1 : 0,
+    'toggledarkMode': DefaultToggles.darkMode ? 1 : 0,
     'togglescreen-reader': DefaultToggles.screenReader ? 1 : 0,
     'togglereadable-guide': DefaultToggles.readingGuide ? 1 : 0,
     'togglestop-animations': DefaultToggles.stopAnimations ? 1 : 0,
@@ -236,7 +237,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     'togglehigh-contrast': DefaultToggles.highContrast ? 1 : 0,
     'togglehigh-saturation': DefaultToggles.highSaturation ? 1 : 0,
     'togglelow-saturation': DefaultToggles.lowSaturation ? 1 : 0,
-    togglemonochrome: DefaultToggles.monochrome ? 1 : 0,
+    'togglemonochrome': DefaultToggles.monochrome ? 1 : 0,
     'togglehighlight-links': DefaultToggles.highlightLinks ? 1 : 0,
     'togglehighlight-title': DefaultToggles.highlightTitle ? 1 : 0,
     'togglereadable-font': DefaultToggles.dyslexiaFont ? 1 : 0,
@@ -244,13 +245,13 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
     'toggleline-height': DefaultToggles.lineHeight ? 1 : 0,
     'togglefont-weight': DefaultToggles.fontWeight ? 1 : 0,
     'togglemotor-impaired': DefaultToggles.motorImpaired ? 1 : 0,
-    toggleblind: DefaultToggles.blind ? 1 : 0,
+    'toggleblind': DefaultToggles.blind ? 1 : 0,
     'toggledyslexia-font': DefaultToggles.dyslexia ? 1 : 0,
     'togglevisually-impaired': DefaultToggles.visuallyImpaired ? 1 : 0,
     'togglecognitive-learning': DefaultToggles.cognitiveAndLearning ? 1 : 0,
     'toggleseizure-epileptic': DefaultToggles.seizureAndEpileptic ? 1 : 0,
     'togglecolor-blind': DefaultToggles.colorBlind ? 1 : 0,
-    toggleadhd: DefaultToggles.adhd ? 1 : 0,
+    'toggleadhd': DefaultToggles.adhd ? 1 : 0,
   });
 
   // Handle tour completion
@@ -260,7 +261,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
 
   useEffect(() => {
     setSettings({
-      widgetFont: selectedFont,
+      'widgetFont': selectedFont,
       'footer-bg': colors.footerBg,
       'footer-text': colors.footerText,
       'header-text': colors.headerText,
@@ -276,13 +277,13 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
       'font-size-buttons': colors.fontSizeMenuButton,
       'font-size-text': colors.fontSizeMenuText,
       'widget-btn-color': colors.widgetBtnColor,
-      logoImage: colors.logoImage,
-      accessibilityStatementLinkUrl: colors.accessibilityStatementLinkUrl,
-      logoUrl: colors.logoUrl,
-      reportButtonsBgColor: colors.reportButtonsBgColor,
-      reportButtonsTextColor: colors.reportButtonsTextColor,
-      toggleLanguage: toggles.language ? 1 : 0,
-      toggledarkMode: toggles.darkMode ? 1 : 0,
+      'logoImage': colors.logoImage,
+      'accessibilityStatementLinkUrl': colors.accessibilityStatementLinkUrl,
+      'logoUrl': colors.logoUrl,
+      'reportButtonsBgColor': colors.reportButtonsBgColor,
+      'reportButtonsTextColor': colors.reportButtonsTextColor,
+      'toggleLanguage': toggles.language ? 1 : 0,
+      'toggledarkMode': toggles.darkMode ? 1 : 0,
       'togglescreen-reader': toggles.screenReader ? 1 : 0,
       'togglereadable-guide': toggles.readingGuide ? 1 : 0,
       'togglestop-animations': toggles.stopAnimations ? 1 : 0,
@@ -293,7 +294,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
       'togglehigh-contrast': toggles.highContrast ? 1 : 0,
       'togglehigh-saturation': toggles.highSaturation ? 1 : 0,
       'togglelow-saturation': toggles.lowSaturation ? 1 : 0,
-      togglemonochrome: toggles.monochrome ? 1 : 0,
+      'togglemonochrome': toggles.monochrome ? 1 : 0,
       'togglehighlight-links': toggles.highlightLinks ? 1 : 0,
       'togglehighlight-title': toggles.highlightTitle ? 1 : 0,
       'togglereadable-font': toggles.dyslexiaFont ? 1 : 0,
@@ -301,13 +302,13 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
       'toggleline-height': toggles.lineHeight ? 1 : 0,
       'togglefont-weight': toggles.fontWeight ? 1 : 0,
       'togglemotor-impaired': toggles.motorImpaired ? 1 : 0,
-      toggleblind: toggles.blind ? 1 : 0,
+      'toggleblind': toggles.blind ? 1 : 0,
       'toggledyslexia-font': toggles.dyslexia ? 1 : 0,
       'togglevisually-impaired': toggles.visuallyImpaired ? 1 : 0,
       'togglecognitive-learning': toggles.cognitiveAndLearning ? 1 : 0,
       'toggleseizure-epileptic': toggles.seizureAndEpileptic ? 1 : 0,
       'togglecolor-blind': toggles.colorBlind ? 1 : 0,
-      toggleadhd: toggles.adhd ? 1 : 0,
+      'toggleadhd': toggles.adhd ? 1 : 0,
     });
   }, [toggles, colors, selectedFont]);
 
@@ -326,9 +327,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
 
     const url = `${process.env.REACT_APP_BACKEND_URL}/update-site-widget-settings`;
     const bodyData = {
-      site_url: selectedSite,
-      settings: JSON.stringify(settings),
-      user_id: userData?.id,
+      'site_url': selectedSite,
+      'settings': JSON.stringify(settings),
+      'user_id': userData?.id,
     };
 
     await fetch(url, {
@@ -379,7 +380,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   const getSettings = async () => {
     setButtonDisable(true);
     const url = `${process.env.REACT_APP_BACKEND_URL}/get-site-widget-settings`;
-    const bodyData = { site_url: selectedSite };
+    const bodyData = { 'site_url': selectedSite };
 
     await fetch(url, {
       method: 'POST',
@@ -471,34 +472,34 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
         // Update toggles.
         // Note: The toggle values are stored as numbers (0 or 1); we convert them to booleans.
         setToggles({
-          language: fetchedSettings.toggleLanguage === 1,
-          darkMode: fetchedSettings.toggledarkMode === 1,
-          screenReader: fetchedSettings['togglescreen-reader'] === 1,
-          readingGuide: fetchedSettings['togglereadable-guide'] === 1,
-          stopAnimations: fetchedSettings['togglestop-animations'] === 1,
-          bigCursor: fetchedSettings['togglebig-cursor'] === 1,
-          voiceNavigation: fetchedSettings['togglevoice-navigation'] === 1,
-          darkContrast: fetchedSettings['toggledark-contrast'] === 1,
-          lightContrast: fetchedSettings['togglelight-contrast'] === 1,
-          highContrast: fetchedSettings['togglehigh-contrast'] === 1,
-          highSaturation: fetchedSettings['togglehigh-saturation'] === 1,
-          lowSaturation: fetchedSettings['togglelow-saturation'] === 1,
-          monochrome: fetchedSettings.togglemonochrome === 1,
-          highlightLinks: fetchedSettings['togglehighlight-links'] === 1,
-          highlightTitle: fetchedSettings['togglehighlight-title'] === 1,
-          dyslexiaFont: fetchedSettings['togglereadable-font'] === 1,
-          letterSpacing: fetchedSettings['toggleletter-spacing'] === 1,
-          lineHeight: fetchedSettings['toggleline-height'] === 1,
-          fontWeight: fetchedSettings['togglefont-weight'] === 1,
-          motorImpaired: fetchedSettings['togglemotor-impaired'] === 1,
-          blind: fetchedSettings.toggleblind === 1,
-          dyslexia: fetchedSettings['toggledyslexia-font'] === 1,
-          visuallyImpaired: fetchedSettings['togglevisually-impaired'] === 1,
-          cognitiveAndLearning:
+          'language': fetchedSettings['toggleLanguage'] === 1,
+          'darkMode': fetchedSettings['toggledarkMode'] === 1,
+          'screenReader': fetchedSettings['togglescreen-reader'] === 1,
+          'readingGuide': fetchedSettings['togglereadable-guide'] === 1,
+          'stopAnimations': fetchedSettings['togglestop-animations'] === 1,
+          'bigCursor': fetchedSettings['togglebig-cursor'] === 1,
+          'voiceNavigation': fetchedSettings['togglevoice-navigation'] === 1,
+          'darkContrast': fetchedSettings['toggledark-contrast'] === 1,
+          'lightContrast': fetchedSettings['togglelight-contrast'] === 1,
+          'highContrast': fetchedSettings['togglehigh-contrast'] === 1,
+          'highSaturation': fetchedSettings['togglehigh-saturation'] === 1,
+          'lowSaturation': fetchedSettings['togglelow-saturation'] === 1,
+          'monochrome': fetchedSettings['togglemonochrome'] === 1,
+          'highlightLinks': fetchedSettings['togglehighlight-links'] === 1,
+          'highlightTitle': fetchedSettings['togglehighlight-title'] === 1,
+          'dyslexiaFont': fetchedSettings['togglereadable-font'] === 1,
+          'letterSpacing': fetchedSettings['toggleletter-spacing'] === 1,
+          'lineHeight': fetchedSettings['toggleline-height'] === 1,
+          'fontWeight': fetchedSettings['togglefont-weight'] === 1,
+          'motorImpaired': fetchedSettings['togglemotor-impaired'] === 1,
+          'blind': fetchedSettings['toggleblind'] === 1,
+          'dyslexia': fetchedSettings['toggledyslexia-font'] === 1,
+          'visuallyImpaired': fetchedSettings['togglevisually-impaired'] === 1,
+          'cognitiveAndLearning':
             fetchedSettings['togglecognitive-learning'] === 1,
-          seizureAndEpileptic: fetchedSettings['toggleseizure-epileptic'] === 1,
-          colorBlind: fetchedSettings['togglecolor-blind'] === 1,
-          adhd: fetchedSettings.toggleadhd === 1,
+          'seizureAndEpileptic': fetchedSettings['toggleseizure-epileptic'] === 1,
+          'colorBlind': fetchedSettings['togglecolor-blind'] === 1,
+          'adhd': fetchedSettings['toggleadhd'] === 1,
         });
         // Set hasUserMadeChanges to false after initial fetch
         setHasUserMadeChanges(false);
@@ -529,7 +530,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
 
     // First, get settings from the copyDomain
     const url = `${process.env.REACT_APP_BACKEND_URL}/get-site-widget-settings`;
-    const bodyData = { site_url: copyDomain };
+    const bodyData = { 'site_url': copyDomain };
 
     await fetch(url, {
       method: 'POST',
@@ -572,55 +573,55 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
 
         // Update colors using the corresponding keys.
         setColors({
-          headerText:
+          'headerText':
             fetchedSettings['header-text'] || DefaultColors.headerText,
-          headerBg: fetchedSettings['header-bg'] || DefaultColors.headerBg,
-          headerControlsColor:
+          'headerBg': fetchedSettings['header-bg'] || DefaultColors.headerBg,
+          'headerControlsColor':
             fetchedSettings['header-controls-color'] ||
             DefaultColors.headerControlsColor,
-          footerText:
+          'footerText':
             fetchedSettings['footer-text'] || DefaultColors.footerText,
-          footerBg: fetchedSettings['footer-bg'] || DefaultColors.footerBg,
-          buttonText:
+          'footerBg': fetchedSettings['footer-bg'] || DefaultColors.footerBg,
+          'buttonText':
             fetchedSettings['button-text'] || DefaultColors.buttonText,
-          buttonBg: fetchedSettings['bg-button'] || DefaultColors.buttonBg,
-          menuBg: fetchedSettings['widget-background'] || DefaultColors.menuBg,
-          widgetBtnColor:
+          'buttonBg': fetchedSettings['bg-button'] || DefaultColors.buttonBg,
+          'menuBg': fetchedSettings['widget-background'] || DefaultColors.menuBg,
+          'widgetBtnColor':
             fetchedSettings['widget-btn-color'] || DefaultColors.widgetBtnColor,
-          dropdownText:
+          'dropdownText':
             fetchedSettings['dropdown-text'] || DefaultColors.dropdownText,
-          dropdownBg:
+          'dropdownBg':
             fetchedSettings['bg-dropdown'] || DefaultColors.dropdownBg,
-          widgetInnerText:
+          'widgetInnerText':
             fetchedSettings['widget-text'] || DefaultColors.widgetInnerText,
-          fontSizeMenuBg:
+          'fontSizeMenuBg':
             fetchedSettings['font-size-bg'] || DefaultColors.fontSizeMenuBg,
-          fontSizeMenuButton:
+          'fontSizeMenuButton':
             fetchedSettings['font-size-buttons'] ||
             DefaultColors.fontSizeMenuButton,
-          fontSizeMenuText:
+          'fontSizeMenuText':
             fetchedSettings['font-size-text'] || DefaultColors.fontSizeMenuText,
-          customizationMenuInnerBg: DefaultColors.customizationMenuInnerBg,
-          logoImage:
+          'customizationMenuInnerBg': DefaultColors.customizationMenuInnerBg,
+          'logoImage':
             fetchedSettings['logoImage'] && fetchedSettings['logoImage'].length
               ? fetchedSettings['logoImage']
               : DefaultColors.logoImage,
-          accessibilityStatementLinkUrl:
+          'accessibilityStatementLinkUrl':
             fetchedSettings['accessibilityStatementLinkUrl'] ||
             DefaultColors.accessibilityStatementLinkUrl,
-          logoUrl: fetchedSettings['logoUrl'] || DefaultColors.logoUrl,
-          reportButtonsBgColor:
+          'logoUrl': fetchedSettings['logoUrl'] || DefaultColors.logoUrl,
+          'reportButtonsBgColor':
             fetchedSettings['reportButtonsBgColor'] ||
             DefaultColors.reportButtonsBgColor,
-          reportButtonsTextColor:
+          'reportButtonsTextColor':
             fetchedSettings['reportButtonsTextColor'] ||
             DefaultColors.reportButtonsTextColor,
         });
 
         // Update toggles.
         setToggles({
-          language: fetchedSettings.toggleLanguage === 1,
-          darkMode: fetchedSettings.toggledarkMode === 1,
+          language: fetchedSettings['toggleLanguage'] === 1,
+          darkMode: fetchedSettings['toggledarkMode'] === 1,
           screenReader: fetchedSettings['togglescreen-reader'] === 1,
           readingGuide: fetchedSettings['togglereadable-guide'] === 1,
           stopAnimations: fetchedSettings['togglestop-animations'] === 1,
@@ -631,7 +632,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
           highContrast: fetchedSettings['togglehigh-contrast'] === 1,
           highSaturation: fetchedSettings['togglehigh-saturation'] === 1,
           lowSaturation: fetchedSettings['togglelow-saturation'] === 1,
-          monochrome: fetchedSettings.togglemonochrome === 1,
+          monochrome: fetchedSettings['togglemonochrome'] === 1,
           highlightLinks: fetchedSettings['togglehighlight-links'] === 1,
           highlightTitle: fetchedSettings['togglehighlight-title'] === 1,
           dyslexiaFont: fetchedSettings['togglereadable-font'] === 1,
@@ -639,14 +640,14 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
           lineHeight: fetchedSettings['toggleline-height'] === 1,
           fontWeight: fetchedSettings['togglefont-weight'] === 1,
           motorImpaired: fetchedSettings['togglemotor-impaired'] === 1,
-          blind: fetchedSettings.toggleblind === 1,
+          blind: fetchedSettings['toggleblind'] === 1,
           dyslexia: fetchedSettings['toggledyslexia-font'] === 1,
           visuallyImpaired: fetchedSettings['togglevisually-impaired'] === 1,
           cognitiveAndLearning:
             fetchedSettings['togglecognitive-learning'] === 1,
           seizureAndEpileptic: fetchedSettings['toggleseizure-epileptic'] === 1,
           colorBlind: fetchedSettings['togglecolor-blind'] === 1,
-          adhd: fetchedSettings.toggleadhd === 1,
+          adhd: fetchedSettings['toggleadhd'] === 1,
         });
 
         // Disable change tracking temporarily
@@ -794,87 +795,16 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
         </div>
       </div>
 
-      {/* Copy Settings Modal */}
-      {isCopyModalOpen && (
-        <div className="fixed m-auto inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 m-auto p-5 border w-[50rem] shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium mb-4">
-                Copy Customization from Another Domain
-              </h3>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">
-                  Select source domain:
-                </label>
-                <select
-                  className="w-full p-2 border rounded-md"
-                  value={copyDomain}
-                  onChange={(e) => setCopyDomain(e.target.value)}
-                >
-                  <option value={''}>Choose a domain to copy from</option>
-                  {allDomains?.getUserSites
-                    ?.filter((domain: any) => domain.url !== selectedSite)
-                    .map((domain: any) => (
-                      <option key={domain.id} value={domain.url}>
-                        {domain.url}
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              <div className="mb-6">
-                <div className="bg-yellow-200 border-l-4 border-yellow-400 p-3">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="h-5 w-5 text-yellow-600"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm">
-                        This will overwrite your current unsaved changes for{' '}
-                        <strong>{selectedSite}</strong>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => {
-                    setIsCopyModalOpen(false);
-                    setCopyDomain('');
-                  }}
-                  className="px-4 py-2 border rounded-md transition-all duration-300 bg-white hover:bg-gray-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    handleCopySettings();
-                    setIsCopyModalOpen(false);
-                    setCopyDomain('');
-                  }}
-                  disabled={!copyDomain || buttonDisable}
-                  className="px-4 py-2 border border-transparent rounded-md text-white bg-primary transition-all duration-300 hover:bg-sapphire-blue disabled:bg-gray-600 disabled:cursor-not-allowed"
-                >
-                  Copy Settings
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            <CopyCustomizationModal
+        isOpen={isCopyModalOpen}
+        onClose={() => setIsCopyModalOpen(false)}
+        copyDomain={copyDomain}
+        setCopyDomain={setCopyDomain}
+        selectedSite={selectedSite}
+        allDomains={allDomains}
+        buttonDisable={buttonDisable}
+        onCopySettings={handleCopySettings}
+      />
     </>
   );
 };
