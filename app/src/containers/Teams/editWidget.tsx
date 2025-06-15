@@ -69,7 +69,7 @@ export interface Toggles {
   'adhd': boolean;
 }
 
-const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
+const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: any) => {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.customize_widget') });
   const [toggles, setToggles] = useState({
@@ -104,7 +104,6 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   const { data: userData } = useSelector((state: RootState) => state.user);
   const [buttonDisable, setButtonDisable] = useState(false);
 
-  const [selectedSite, setSelectedSite] = useState('');
   const [hasUserMadeChanges, setHasUserMadeChanges] = useState(false);
   const [selectedFont, setSelectedFont] = useState("'Times New Roman', serif");
   const [copyDomain, setCopyDomain] = useState('');
@@ -378,6 +377,10 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   }, [settings]); // Include all dependencies
 
   const getSettings = async () => {
+    if (selectedSite == '' || selectedSite == 'Choose your Domain') {
+      toast.error('Please Select a Site from the Side Bar');
+      return;
+    }
     setButtonDisable(true);
     const url = `${process.env.REACT_APP_BACKEND_URL}/get-site-widget-settings`;
     const bodyData = { 'site_url': selectedSite };
@@ -679,7 +682,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
   }, [copyComplete]); // Only depend on copyComplete
 
   useEffect(() => {
-    if (selectedSite != '') {
+    if (selectedSite != '' && selectedSite != 'Choose your Domain') {
       getSettings();
     }
   }, [selectedSite]);
@@ -698,39 +701,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
         <div className="mx-auto max-w-7xl">
           <header className="customize-widget-header mb-6">
             <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-              Accessibility Widget Customization
+              {selectedSite != 'Choose your Domain' ? selectedSite + "'s Widget Customization" : 'Select a Domain to Customize from the Side Bar'}
             </h1>
           </header>
-
-          {allDomains?.getUserSites ? (
-            <div className="domain-selection-section bg-white my-6 p-3 sm:p-4 rounded-xl">
-              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
-                Select Domain
-              </h2>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <select
-                  className="flex-1 p-2 border rounded text-sm sm:text-base"
-                  value={selectedSite}
-                  onChange={(e) => setSelectedSite(e.target.value)}
-                >
-                  <option value={''}>Choose your domain</option>
-                  {allDomains?.getUserSites.map((domain: any) => (
-                    <option key={domain.id} value={domain.url}>
-                      {domain.url}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          ) : (
-            <div className="flex justify-center mb-8">
-              <CircularProgress
-                size={44}
-                sx={{ color: 'primary' }}
-                className="ml-2 my-auto"
-              />
-            </div>
-          )}
 
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="widget-preview-section rounded-lg bg-white p-6 shadow-md">
@@ -750,7 +723,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains }: any) => {
                 <h2 className="text-xl font-semibold text-gray-800">
                   Choose your settings
                 </h2>
-                {selectedSite != '' && (
+                {selectedSite != '' && selectedSite != 'Choose your Domain' && (
                   <button
                     onClick={() => setIsCopyModalOpen(true)}
                     disabled={buttonDisable}
