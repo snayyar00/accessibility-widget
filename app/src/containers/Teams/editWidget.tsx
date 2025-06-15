@@ -682,7 +682,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
   }, [copyComplete]); // Only depend on copyComplete
 
   useEffect(() => {
-    if (selectedSite != '' || selectedSite != 'Choose your Domain') {
+    if (selectedSite != '' && selectedSite != 'Choose your Domain') {
       getSettings();
     }
   }, [selectedSite]);
