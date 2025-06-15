@@ -723,7 +723,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
                 <h2 className="text-xl font-semibold text-gray-800">
                   Choose your settings
                 </h2>
-                {selectedSite != '' && (
+                {selectedSite != '' && selectedSite != 'Choose your Domain' && (
                   <button
                     onClick={() => setIsCopyModalOpen(true)}
                     disabled={buttonDisable}

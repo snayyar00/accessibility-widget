@@ -132,9 +132,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   
     if (file) {
       // Validate file type
-      const validTypes = ['image/png', 'image/svg+xml'];
+      const validTypes = ['image/png', 'image/svg+xml', 'image/webp'];
       if (!validTypes.includes(file.type)) {
-        toast.error("Only PNG or SVG images are allowed.");
+                  toast.error("Only PNG, SVG, or WebP images are allowed.");
         e.target.value = ""; // Reset the input field to remove the file name
         return; // Prevent the file from being processed if the type is invalid
       }
