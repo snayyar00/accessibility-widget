@@ -22,32 +22,78 @@ interface dbIssue {
 }
 
 async function getIssueDescription(issues: any) {
-  const res = await openai.chat.completions.create({
-    messages: [
-      {
-        role: 'system',
-        content: `You a writer that is well versed in accessibility issues, wcag and ada guidelines. 
-        You can provide details on which disability users will be impacted by the issue the most.
-        Now you will be provided with a list of issues that were found on a website and you will return to me with details about the issue.
-        these are the details I want and in this format:
+  try {
+    const res = await openai.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: `You are a writer that is well versed in accessibility issues, WCAG and ADA guidelines. 
+          You can provide details on which disability users will be impacted by the issue the most.
+          Now you will be provided with a list of issues that were found on a website and you must return valid JSON with details about each issue.
+          The response must be a valid JSON array with this exact structure:
 
-        [{
-            heading: fill this with the value of the message in the provided json, make sure to include the entire message here. You may extra spaces if you want to, but don't trim the content!
-            description: string that you will generate. a couple of sentence detailing what the issue is and what impact it has on the users. Maybe add an example of alleviating the issue, but make the example general purpose,
-            recommended_action: How can one fix this issue. General purpose recommendation,
-            affectedDisabilities: [people with which disabilities will be impacted by this e.g blind,deaf],
-            code: The WCAG code number and it's description based on the WCAG code provided to you e.g 1.4.3 Contrast (Minimum)
-            
-        }]
-        Try to return in ascending order of code.
-        remember to just return a json with this information only. No introduction or conclusion paragraphs are required, just the json. Remember to cover all the issues.
-        `,
-      },
-      { role: 'user', content: JSON.stringify(issues) },
-    ],
-    model: "google/gemini-2.5-flash-preview-05-20",
-  });
-  return res.choices[0];
+          [{
+              "heading": "The exact message from the provided issue",
+              "description": "A couple of sentences detailing what the issue is and its impact on users",
+              "recommended_action": "How to fix this issue - general purpose recommendation",
+              "affectedDisabilities": ["list", "of", "affected", "disabilities"],
+              "code": "WCAG code number and description e.g 1.4.3 Contrast (Minimum)"
+          }]
+
+          Important: The response must be a valid JSON array that can be parsed. Do not include any additional text.
+          Ensure proper JSON formatting with quotes around all string values.`,
+        },
+        { role: 'user', content: JSON.stringify(issues) },
+      ],
+      model: "google/gemini-2.5-flash-preview-05-20",
+    });
+
+    // Validate that we have a response
+    if (!res?.choices?.[0]?.message?.content) {
+      throw new Error('Invalid or empty response from AI model');
+    }
+
+    const content = res.choices[0].message.content.trim();
+    
+    // Try to parse the JSON response
+    try {
+      const parsed = JSON.parse(content);
+      
+      // Validate the structure of the parsed response
+      if (!Array.isArray(parsed)) {
+        throw new Error('Response is not an array');
+      }
+
+      // Validate each item in the array has required fields
+      parsed.forEach((item, index) => {
+        const requiredFields = ['heading', 'description', 'recommended_action', 'affectedDisabilities', 'code'];
+        const missingFields = requiredFields.filter(field => !item[field]);
+        if (missingFields.length > 0) {
+          throw new Error(`Item ${index} is missing required fields: ${missingFields.join(', ')}`);
+        }
+      });
+
+      return res.choices[0];
+    } catch (parseError) {
+      console.error('Failed to parse AI response:', parseError);
+      console.error('Raw response:', content);
+      throw new Error(`Invalid JSON in AI response: ${parseError.message}`);
+    }
+  } catch (error) {
+    console.error('Error getting issue description:', error);
+    // Return a fallback response
+    return {
+      message: {
+        content: JSON.stringify([{
+          heading: issues[0],
+          description: "An accessibility issue was detected that requires attention.",
+          recommended_action: "Review the element for WCAG compliance and make necessary adjustments.",
+          affectedDisabilities: ["multiple"],
+          code: "WCAG General"
+        }])
+      }
+    };
+  }
 }
 
 async function addAccessibilityIssuesToDB(issue: dbIssue) {

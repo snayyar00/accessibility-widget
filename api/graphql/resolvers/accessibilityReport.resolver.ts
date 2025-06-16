@@ -1,4 +1,5 @@
 import { combineResolvers } from 'graphql-resolvers';
+import { fetchTechStackFromAPI } from '~/repository/techStack.repository';
 import { fetchAccessibilityReport } from '~/services/accessibilityReport/accessibilityReport.service';
 import { insertAccessibilityReport, deleteAccessibilityReportByR2Key, getR2KeysByParams } from '~/repository/accessibilityReports.repository';
 import { saveReportToR2, fetchReportFromR2, deleteReportFromR2 } from '~/utils/r2Storage';
@@ -7,7 +8,7 @@ const resolvers = {
   Mutation: {
     saveAccessibilityReport: async (
       _: any,
-      { report, url, allowed_sites_id, key }: any
+      { report, url, allowed_sites_id, key, score }: any
     ) => {
       const reportKey =
         key ||
@@ -21,6 +22,7 @@ const resolvers = {
         url,
         allowed_sites_id,
         r2_key: reportKey,
+        score:  typeof score === 'object' ? score : { value: score },
       });
 
       return { success: true, key: reportKey, report: meta };
@@ -33,9 +35,36 @@ const resolvers = {
     },
   },
   Query: {
-    getAccessibilityReport: combineResolvers((_, { url }) => fetchAccessibilityReport(url)),
+    //getAccessibilityReport: combineResolvers((_, { url }) => fetchAccessibilityReport(url)),
+    getAccessibilityReport: async (_: any, { url }: { url: string }) => {
+      try {
+        // Fetch the accessibility report
+        const accessibilityReport = await fetchAccessibilityReport(url);
+
+        // Fetch the tech stack data
+        const techStack = await fetchTechStackFromAPI(url);
+
+        // Combine the accessibility report and tech stack data
+        return {
+          ...accessibilityReport,
+          techStack,
+        };
+      } catch (error) {
+        throw new Error(`Failed to fetch accessibility report: ${error.message}`);
+      }
+    },
     fetchAccessibilityReportFromR2: async (_: any, { url, created_at, updated_at }: any) => {
-      return await getR2KeysByParams({ url, created_at, updated_at });
+      const rows = await getR2KeysByParams({ url, created_at, updated_at });
+      // Ensure score is properly formatted
+      const formattedRows = rows.map((row: any) => {
+        console.log(typeof row.score, row.score);
+        return {
+          ...row,
+          score: row.score!=null && typeof row.score === 'object' ? row.score.value : row.score ?? 0, // Extract value if score is an object
+        };
+      });
+
+      return formattedRows;
     },
     fetchReportByR2Key: async (_: any, { r2_key }: any) => {
       return await fetchReportFromR2(r2_key);
