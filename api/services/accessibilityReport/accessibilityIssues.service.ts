@@ -40,8 +40,7 @@ async function getIssueDescription(issues: any) {
               "code": "WCAG code number and description e.g 1.4.3 Contrast (Minimum)"
           }]
 
-          Important: The response must be a valid JSON array that can be parsed. Do not include any additional text.
-          Ensure proper JSON formatting with quotes around all string values.`,
+          Important: Return ONLY the JSON array. Do not include any additional text, markdown formatting, or code block markers.`,
         },
         { role: 'user', content: JSON.stringify(issues) },
       ],
@@ -53,8 +52,13 @@ async function getIssueDescription(issues: any) {
       throw new Error('Invalid or empty response from AI model');
     }
 
-    const content = res.choices[0].message.content.trim();
+    let content = res.choices[0].message.content.trim();
     
+    // Clean up the response by removing any markdown or code block markers
+    content = content.replace(/^```[\w]*\n?/, ''); // Remove opening code block
+    content = content.replace(/\n```$/, '');       // Remove closing code block
+    content = content.trim();
+
     // Try to parse the JSON response
     try {
       const parsed = JSON.parse(content);
@@ -73,7 +77,11 @@ async function getIssueDescription(issues: any) {
         }
       });
 
-      return res.choices[0];
+      return {
+        message: {
+          content: content // Return the cleaned content
+        }
+      };
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
       console.error('Raw response:', content);
@@ -81,11 +89,11 @@ async function getIssueDescription(issues: any) {
     }
   } catch (error) {
     console.error('Error getting issue description:', error);
-    // Return a fallback response
+    // Return a fallback response that's properly formatted
     return {
       message: {
         content: JSON.stringify([{
-          heading: issues[0],
+          heading: Array.isArray(issues) ? issues[0] : issues,
           description: "An accessibility issue was detected that requires attention.",
           recommended_action: "Review the element for WCAG compliance and make necessary adjustments.",
           affectedDisabilities: ["multiple"],
