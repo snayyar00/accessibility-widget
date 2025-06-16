@@ -53,7 +53,12 @@ async function getIssueDescription(issues: any) {
       throw new Error('Invalid or empty response from AI model');
     }
 
-    const content = res.choices[0].message.content.trim();
+    let content = res.choices[0].message.content.trim();
+    
+    // Clean up response by removing markdown code block formatting
+    content = content.replace(/^```[\w]*\n?/, ''); // Remove opening code block
+    content = content.replace(/\n```$/, '');       // Remove closing code block
+    content = content.trim();
     
     // Try to parse the JSON response
     try {
