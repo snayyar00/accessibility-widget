@@ -107,6 +107,6 @@
     "hooks": {}
   },
   "_moduleAliases": {
-    "~": "./"
+    "~": "./dist"
   }
 }
