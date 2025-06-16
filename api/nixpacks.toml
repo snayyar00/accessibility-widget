@@ -2,13 +2,16 @@
 CI = 'false'
 
 [phases.setup]
-nixPkgs = ["nodejs_18", "curl", "wget"]
+nixPkgs = ["nodejs_18", "curl", "wget", "nano"]
+commands = [
+  "mkdir -p dist"
+]
 
 [phases.install]
 cmds = ["npm install --legacy-peer-deps --ignore-scripts"]
 
 [phases.build]
-cmds = ["npm run build", "npm run postinstall || true"]
+cmds = ["npm run postinstall"]
 
 [start]
 cmd = 'npm start'

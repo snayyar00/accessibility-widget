@@ -1,11 +1,6 @@
 /* eslint-disable wrap-iife */
 import dotenv from 'dotenv';
 
-if (process.env.NODE_ENV === 'production') {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  require('module-alias/register');
-}
-
 import { resolve, join } from 'path';
 import express, { NextFunction, Request, Response } from 'express';
 import morgan from 'morgan';
@@ -1749,6 +1744,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   // Initialize Sentry with tracing for GraphQL
   init({ 
     dsn: process.env.SENTRY_DSN,
+    serverName: process.env.COOLIFY_URL || `http://localhost:${port}`,
     tracesSampleRate: 1.0,
     integrations: [
       // Enable HTTP calls tracing
