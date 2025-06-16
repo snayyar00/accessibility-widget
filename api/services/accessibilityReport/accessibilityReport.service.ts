@@ -178,6 +178,7 @@ export const fetchAccessibilityReport = async (url: string) => {
     try {
       // Format URL with www prefix for initial scan
       const formattedUrl = formatUrlForScan(url);
+      console.log('Formatted URL for scan:', formattedUrl);
       let result: ResultWithOriginal = await getAccessibilityInformationPally(formattedUrl);
       
       // If initial attempt fails, try variations
@@ -487,7 +488,6 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
     })
   }
   console.log(`Total issues extracted: ${issues.length}`);
-  console.log(`Issues: `, issues);
   return issues
 }
 
