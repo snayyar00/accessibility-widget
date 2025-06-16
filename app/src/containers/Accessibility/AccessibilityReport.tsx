@@ -89,7 +89,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(
     getAccessibilityStats,
     {
-      variables: { url: correctDomain },
+      variables: { url: encodeURIComponent(correctDomain) },
     },
   );
   const [fetchReportByR2Key, { loading: loadingReport, data: reportData }] = useLazyQuery(FETCH_REPORT_BY_R2_KEY);
