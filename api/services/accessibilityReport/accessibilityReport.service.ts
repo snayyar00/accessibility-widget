@@ -1,7 +1,7 @@
-
 import { getAccessibilityInformationPally } from '~/helpers/accessibility.helper';
 import logger from '~/utils/logger';
 import { GPTChunks } from './accessibilityIssues.service';
+import { formatUrlForScan, getRetryUrls } from '~/utils/domain.utils';
 
 const { GraphQLJSON } = require('graphql-type-json');
 
@@ -175,23 +175,42 @@ export const fetchAccessibilityReport = async (url: string) => {
       throw new Error('Invalid URL provided to fetchAccessibilityReport');
     }
 
-    if (!url.startsWith('https://') && !url.startsWith('http://')) {
-      url = 'https://' + url;
-    }
+    try {
+      // Format URL with www prefix for initial scan
+      const formattedUrl = formatUrlForScan(url);
+      console.log('Formatted URL for scan:', formattedUrl);
+      let result: ResultWithOriginal = await getAccessibilityInformationPally(formattedUrl);
+      
+      // If initial attempt fails, try variations
+      if (!result) {
+        const retryUrls = getRetryUrls(url);
+        for (const retryUrl of retryUrls) {
+          try {
+            result = await getAccessibilityInformationPally(retryUrl);
+            if (result) break;
+          } catch (retryError) {
+            console.error(`Error with retry URL ${retryUrl}:`, retryError.message);
+          }
+        }
+      }
 
-    const result: ResultWithOriginal = await getAccessibilityInformationPally(url);
-    console.log('result from getAccessibilityInformationPally:', result.score, result.totalElements, result.ByFunctions);
-    const siteImg = await fetchSitePreview(url);
-    if (result && siteImg) {
-      result.siteImg = siteImg;
-    }
+      // If all attempts fail, throw error
+      if (!result) {
+        throw new Error('Failed to fetch accessibility report for all URL variations');
+      }
 
-    const scriptCheckResult = await checkScript(url);
-    if (result && scriptCheckResult) {
-      result.scriptCheckResult = scriptCheckResult;
-    }
+      console.log('result from getAccessibilityInformationPally:', result.score, result.totalElements, result.ByFunctions);
+      const siteImg = await fetchSitePreview(formattedUrl);
+      if (result && siteImg) {
+        result.siteImg = siteImg;
+      }
 
-    // Perform calculations after the block
+      const scriptCheckResult = await checkScript(url);
+      if (result && scriptCheckResult) {
+        result.scriptCheckResult = scriptCheckResult;
+      }
+
+      // Perform calculations after the block
       const issues = extractIssuesFromReport(result);
       console.log(`Extracted ${issues.length} issues from report.`);
 
@@ -207,117 +226,124 @@ export const fetchAccessibilityReport = async (url: string) => {
       result.functionalityNames = functionalityNames;
       result.totalStats = totalStats;
 
-    if (result) {
-      // Skip old ByFunctions processing if enhanced processing already provided ByFunctions
-      if (result.ByFunctions && Array.isArray(result.ByFunctions) && result.ByFunctions.length > 0) {
-        return result; // Return with enhanced ByFunctions
-      }
-      
-      // Legacy ByFunctions processing (only if enhanced processing didn't provide ByFunctions)
-      // Use original htmlcs data for ByFunctions processing if available (from enhanced processing)
-      // This preserves the original error codes that GPTChunks expects
-      const guideErrors: {
-        errors: htmlcsOutput[];
-        notices: htmlcsOutput[];
-        warnings: htmlcsOutput[];
-      } = result?._originalHtmlcs || result?.htmlcs;
-      
-      const errorCodes: string[] = [];
-      const errorCodeWithDescriptions: { [key: string]: { [key: string]: string | string[] } } = {};
-      
-      guideErrors.errors.forEach((errorcode: htmlcsOutput) => {
-        errorCodes.push(errorcode?.code);
-        if (!errorCodeWithDescriptions[errorcode?.code]) {
-          errorCodeWithDescriptions[errorcode?.code] = {}; // Initialize if not exist
+      if (result) {
+        if (result.ByFunctions && Array.isArray(result.ByFunctions) && result.ByFunctions.length > 0) {
+          return result;
         }
-        errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
-        errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
-        errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
-        errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
-        errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
-      });
-      guideErrors.notices.forEach((errorcode: htmlcsOutput) => {
-        errorCodes.push(errorcode?.code);
-        if (!errorCodeWithDescriptions[errorcode?.code]) {
-          errorCodeWithDescriptions[errorcode?.code] = {}; // Initialize if not exist
-        }
-        errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
-        errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
-        errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
-        errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
-        errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
-      });
-      guideErrors.warnings.forEach((errorcode: htmlcsOutput) => {
-        errorCodes.push(errorcode?.code);
-        if (!errorCodeWithDescriptions[errorcode?.code]) {
-          errorCodeWithDescriptions[errorcode?.code] = {}; // Initialize if not exist
-        }
-        errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
-        errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
-        errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
-        errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
-        errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
-      });
-      
-      const completion: GPTData = await GPTChunks(errorCodes);
-      
-      if (completion) {
-        completion.HumanFunctionalities.forEach(
-          (functionality: HumanFunctionality) => {
-            // Iterate over each error in the functionality
-            functionality.Errors.forEach((error: Error) => {
-              // Handle the field name change from 'Error Guideline' to 'ErrorGuideline'
-              let errorCode = error['ErrorGuideline'] || (error as any)['Error Guideline'] || (error as any)['code'] || (error as any)['Error Code'] || (error as any)['guideline'];
-              
-              // If still null, try to find any field that looks like an error code
-              if (!errorCode) {
-                const possibleCode = Object.values(error).find((value: any) => 
-                  typeof value === 'string' && value.includes('WCAG')
-                );
-                errorCode = possibleCode;
-              }
-              
-              error.code = errorCode;
-              delete error['ErrorGuideline'];
-              delete (error as any)['Error Guideline']; // Clean up legacy field name
 
-              // Only try to map if we have a valid error code
-              if (errorCode && errorCodeWithDescriptions[errorCode]) {
-                error.description = errorCodeWithDescriptions[errorCode]?.description;
-                error.context = errorCodeWithDescriptions[errorCode]?.context;
-                error.message = errorCodeWithDescriptions[errorCode]?.message;
-                error.recommended_action = errorCodeWithDescriptions[errorCode]?.recommended_action;
-                error.selectors = errorCodeWithDescriptions[errorCode]?.selectors;
-              } else {
-                // Try to find enhanced descriptions from result.htmlcs for this error code
-                let enhancedDescription = null;
-                if (result?.htmlcs?.errors) {
-                  const enhancedError = result.htmlcs.errors.find((e: any) => e.code === errorCode);
-                  if (enhancedError) {
-                    enhancedDescription = enhancedError.description;
-                    error.message = enhancedError.message;
-                    error.recommended_action = enhancedError.recommended_action;
-                    error.context = enhancedError.context || [];
-                    error.selectors = enhancedError.selectors || [];
-                  }
+        const guideErrors: {
+          errors: htmlcsOutput[];
+          notices: htmlcsOutput[];
+          warnings: htmlcsOutput[];
+        } = result?._originalHtmlcs || result?.htmlcs;
+
+        const errorCodes: string[] = [];
+        const errorCodeWithDescriptions: { [key: string]: { [key: string]: string | string[] } } = {};
+
+        guideErrors.errors.forEach((errorcode: htmlcsOutput) => {
+          errorCodes.push(errorcode?.code);
+          if (!errorCodeWithDescriptions[errorcode?.code]) {
+            errorCodeWithDescriptions[errorcode?.code] = {};
+          }
+          errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
+          errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
+          errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
+          errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
+          errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
+        });
+
+        guideErrors.notices.forEach((errorcode: htmlcsOutput) => {
+          errorCodes.push(errorcode?.code);
+          if (!errorCodeWithDescriptions[errorcode?.code]) {
+            errorCodeWithDescriptions[errorcode?.code] = {};
+          }
+          errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
+          errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
+          errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
+          errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
+          errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
+        });
+
+        guideErrors.warnings.forEach((errorcode: htmlcsOutput) => {
+          errorCodes.push(errorcode?.code);
+          if (!errorCodeWithDescriptions[errorcode?.code]) {
+            errorCodeWithDescriptions[errorcode?.code] = {};
+          }
+          errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
+          errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
+          errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
+          errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
+          errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
+        });
+
+        const completion: GPTData = await GPTChunks(errorCodes);
+
+        if (completion) {
+          completion.HumanFunctionalities.forEach(
+            (functionality: HumanFunctionality) => {
+              functionality.Errors.forEach((error: Error) => {
+                let errorCode = error['ErrorGuideline'] || (error as any)['Error Guideline'] || (error as any)['code'] || (error as any)['Error Code'] || (error as any)['guideline'];
+
+                if (!errorCode) {
+                  const possibleCode = Object.values(error).find((value: any) => 
+                    typeof value === 'string' && value.includes('WCAG')
+                  );
+                  errorCode = possibleCode;
                 }
-                
-                // Provide meaningful fallback values
-                error.description = enhancedDescription || "Accessibility issue detected. Please review this element for compliance.";
-                error.message = error.message || "Accessibility compliance issue";
-                error.recommended_action = error.recommended_action || "Review and fix this accessibility issue according to WCAG guidelines.";
-                error.context = error.context || [];
-                error.selectors = error.selectors || [];
-              }
-            });
-          },
-        );
-              
-        result.ByFunctions = completion.HumanFunctionalities;
+
+                error.code = errorCode;
+                delete error['ErrorGuideline'];
+                delete (error as any)['Error Guideline'];
+
+                if (errorCode && errorCodeWithDescriptions[errorCode]) {
+                  error.description = errorCodeWithDescriptions[errorCode]?.description;
+                  error.context = errorCodeWithDescriptions[errorCode]?.context;
+                  error.message = errorCodeWithDescriptions[errorCode]?.message;
+                  error.recommended_action = errorCodeWithDescriptions[errorCode]?.recommended_action;
+                  error.selectors = errorCodeWithDescriptions[errorCode]?.selectors;
+                } else {
+                  let enhancedDescription = null;
+                  if (result?.htmlcs?.errors) {
+                    const enhancedError = result.htmlcs.errors.find((e: any) => e.code === errorCode);
+                    if (enhancedError) {
+                      enhancedDescription = enhancedError.description;
+                      error.message = enhancedError.message;
+                      error.recommended_action = enhancedError.recommended_action;
+                      error.context = enhancedError.context || [];
+                      error.selectors = enhancedError.selectors || [];
+                    }
+                  }
+
+                  error.description = enhancedDescription || "Accessibility issue detected. Please review this element for compliance.";
+                  error.message = error.message || "Accessibility compliance issue";
+                  error.recommended_action = error.recommended_action || "Review and fix this accessibility issue according to WCAG guidelines.";
+                  error.context = error.context || [];
+                  error.selectors = error.selectors || [];
+                }
+              });
+            },
+          );
+
+          result.ByFunctions = completion.HumanFunctionalities;
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.error(`Error with https://www.: ${error.message}`);
+      try {
+        if (!url.startsWith('https://') && !url.startsWith('http://')) {
+          url = 'https://' + url.replace('https://www.', '').replace('http://www.', '');
+        }
+
+        const result: ResultWithOriginal = await getAccessibilityInformationPally(url);
+        console.log('result from retrying with https://:', result.score, result.totalElements, result.ByFunctions);
+        return result;
+      } catch (retryError) {
+        console.error(`Error with https:// retry: ${retryError.message}`);
+        throw new Error(`Both attempts failed: ${retryError.message}`);
       }
     }
-
-    return result; // Return the final result with all fields
   } catch (error) {
     console.error(error);
     throw new Error(`${error} Error fetching data from WebAIM API`);
@@ -325,56 +351,83 @@ export const fetchAccessibilityReport = async (url: string) => {
 };
 
 
-export const fetchSitePreview = async (url: string): Promise<string | null> => {
-  try {
-    const apiUrl = `${process.env.SECONDARY_SERVER_URL}/screenshot/?url=${url}`;
-    console.log(`Fetching screenshot from: ${apiUrl}`);
-    const response = await fetch(apiUrl);
+export const fetchSitePreview = async (url: string, retries = 3): Promise<string | null> => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const apiUrl = `${process.env.SECONDARY_SERVER_URL}/screenshot/?url=${url}`;
+      console.log(`Attempt ${attempt}: Fetching screenshot from: ${apiUrl}`);
+      
+      // Set up timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    if (!response.ok) {
-      console.error(`Failed to fetch screenshot for ${url}. Status: ${response.status}`);
-      return null;
+      const response = await fetch(apiUrl, {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.error(`Failed to fetch screenshot for ${url}. Status: ${response.status}`);
+        if (attempt === retries) return null;
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        continue;
+      }
+
+      const buffer = await response.arrayBuffer();
+      const base64Image = Buffer.from(buffer).toString('base64');
+      return `data:image/png;base64,${base64Image}`;
+    } catch (error) {
+      console.error(`Error generating screenshot for ${url} (attempt ${attempt}):`, error);
+      if (attempt === retries) return null;
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, attempt * 1000));
     }
-
-    const buffer = await response.arrayBuffer();
-    const base64Image = Buffer.from(buffer).toString('base64');
-    return `data:image/png;base64,${base64Image}`;
-  } catch (error) {
-    console.error(`Error generating screenshot for ${url}:`, error);
-    return null;
   }
+  return null;
 };
 
-const checkScript = async (url: string): Promise<string> => {
-  try {
-    //console.log(`Checking script for URL: ${url}`);
-    // Construct the API URL for the secondary server
-    const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${url}`;
+const checkScript = async (url: string, retries = 3): Promise<string> => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${url}`;
 
-    // Fetch the data from the secondary server
-    const response = await fetch(apiUrl);
+      // Set up timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    // Check if the response is successful
-    if (!response.ok) {
-      throw new Error(`Failed to fetch the script check. Status: ${response.status}`);
+      const response = await fetch(apiUrl, {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.error(`Failed to fetch script check on attempt ${attempt}. Status: ${response.status}`);
+        if (attempt === retries) throw new Error(`Failed to fetch the script check. Status: ${response.status}`);
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        continue;
+      }
+
+      const responseData = await response.json();
+
+      if (responseData.result === "WebAbility") {
+        return "Web Ability";
+      } else if (responseData.result !== "Not Found") {
+        return "true";
+      } else {
+        return "false";
+      }
+    } catch (error) {
+      console.error(`Error in checkScript attempt ${attempt}:`, error.message);
+      if (attempt === retries) return "Error";
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, attempt * 1000));
     }
-
-    // Parse the response as JSON
-    const responseData = await response.json();
-
-    // Access the result and return accordingly
-    if (responseData.result === "WebAbility") {
-      return "Web Ability";
-    } else if (responseData.result !== "Not Found") {
-      return "true";
-    } else {
-      return "false";
-    }
-  } catch (error) {
-    // Handle any errors that occur
-    console.error("Error in checkScript:", error.message);
-    return "Error";
   }
+  return "Error";
 };
 
 // Extract issues from report structure
@@ -435,7 +488,6 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
     })
   }
   console.log(`Total issues extracted: ${issues.length}`);
-  console.log(`Issues: `, issues);
   return issues
 }
 

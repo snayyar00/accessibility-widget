@@ -21,33 +21,183 @@ interface dbIssue {
   code: string;
 }
 
-async function getIssueDescription(issues: any) {
-  const res = await openai.chat.completions.create({
-    messages: [
-      {
-        role: 'system',
-        content: `You a writer that is well versed in accessibility issues, wcag and ada guidelines. 
-        You can provide details on which disability users will be impacted by the issue the most.
-        Now you will be provided with a list of issues that were found on a website and you will return to me with details about the issue.
-        these are the details I want and in this format:
+// Robust JSON sanitization function to fix common AI response issues
+function sanitizeJsonResponse(content: string): string {
+  // Remove markdown code block formatting
+  content = content.replace(/^```[\w]*\n?/, ''); // Remove opening code block
+  content = content.replace(/\n```$/, '');       // Remove closing code block
+  content = content.trim();
+  
+  // Fix line breaks within string arrays that break JSON formatting
+  // Pattern: "Dyslexia"\n", "Mobility Impairment" -> "Dyslexia", "Mobility Impairment"
+  content = content.replace(/"([^"]*)"[\s\n]*",[\s\n]*"([^"]*)/g, '"$1", "$2');
+  
+  // Fix multiple quotes patterns - handle various quote malformations
+  content = content.replace(/"([^"]*)""+/g, '"$1"');  // Remove extra trailing quotes
+  content = content.replace(/"+([^"]*)""/g, '"$1"');  // Remove extra leading quotes
+  content = content.replace(/"",\s*"/g, '", "');      // Fix empty string artifacts
+  
+  // Fix specific pattern: "text"\n", "other" -> "text", "other"
+  content = content.replace(/"([^"]*)"[\s\n]*",[\s\n]*"([^"]*)/g, '"$1", "$2');
+  
+  // Handle newlines breaking array formatting
+  content = content.replace(/"\s*\n\s*,\s*"/g, '", "');
+  content = content.replace(/",\s*\n\s*"/g, '", "');
+  
+  // Fix malformed array elements with extra quotes
+  // Pattern: "item"", "next" -> "item", "next"
+  content = content.replace(/("([^"]*)")"\s*,\s*"/g, '$1, "');
+  
+  // Fix trailing commas in arrays and objects
+  content = content.replace(/,\s*]/g, ']');
+  content = content.replace(/,\s*}/g, '}');
+  
+  // Fix missing commas between array elements (space separated strings)
+  content = content.replace(/"\s+"([^"\s])/g, '", "$1');
+  
+  // Clean up whitespace around JSON structural elements
+  content = content.replace(/\s*:\s*/g, ': ');
+  content = content.replace(/\s*,\s*/g, ', ');
+  
+  // Fix escaped quotes that shouldn't be escaped in JSON strings
+  content = content.replace(/\\"/g, '"');
+  
+  // Remove any remaining line breaks within JSON structures
+  content = content.replace(/\n(?=[^"]*"[^"]*:)/g, ' ');
+  content = content.replace(/\n(?=[^"]*"[^"]*,)/g, ' ');
+  
+  return content;
+}
 
-        [{
-            heading: fill this with the value of the message in the provided json, make sure to include the entire message here. You may extra spaces if you want to, but don't trim the content!
-            description: string that you will generate. a couple of sentence detailing what the issue is and what impact it has on the users. Maybe add an example of alleviating the issue, but make the example general purpose,
-            recommended_action: How can one fix this issue. General purpose recommendation,
-            affectedDisabilities: [people with which disabilities will be impacted by this e.g blind,deaf],
-            code: The WCAG code number and it's description based on the WCAG code provided to you e.g 1.4.3 Contrast (Minimum)
-            
-        }]
-        Try to return in ascending order of code.
-        remember to just return a json with this information only. No introduction or conclusion paragraphs are required, just the json. Remember to cover all the issues.
-        `,
-      },
-      { role: 'user', content: JSON.stringify(issues) },
-    ],
-    model: "google/gemini-2.5-flash-preview-05-20",
-  });
-  return res.choices[0];
+async function getIssueDescription(issues: any) {
+  try {
+    const res = await openai.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: `You are a writer that is well versed in accessibility issues, WCAG and ADA guidelines. 
+          You can provide details on which disability users will be impacted by the issue the most.
+          Now you will be provided with a list of issues that were found on a website and you must return valid JSON with details about each issue.
+          The response must be a valid JSON array with this exact structure:
+
+          [{
+              "heading": "The exact message from the provided issue",
+              "description": "A couple of sentences detailing what the issue is and its impact on users",
+              "recommended_action": "How to fix this issue - general purpose recommendation",
+              "affectedDisabilities": ["list", "of", "affected", "disabilities"],
+              "code": "WCAG code number and description e.g 1.4.3 Contrast (Minimum)"
+          }]
+
+          Important: The response must be a valid JSON array that can be parsed. Do not include any additional text.
+          Ensure proper JSON formatting with quotes around all string values.
+          Make sure all array elements are properly separated by commas without extra quotes.`,
+        },
+        { role: 'user', content: JSON.stringify(issues) },
+      ],
+      model: "google/gemini-2.5-flash-preview-05-20",
+    });
+
+    // Validate that we have a response
+    if (!res?.choices?.[0]?.message?.content) {
+      throw new Error('Invalid or empty response from AI model');
+    }
+
+    let content = res.choices[0].message.content.trim();
+    
+    // Sanitize the JSON response to fix common formatting issues
+    content = sanitizeJsonResponse(content);
+    
+    // Try to parse the JSON response with multiple fallback strategies
+    let parsed;
+    try {
+      parsed = JSON.parse(content);
+    } catch (parseError) {
+      console.warn('Initial JSON parse failed, attempting to fix common issues...');
+      console.warn('Parse error:', parseError.message);
+      console.warn('Content:', content);
+      
+      // Try additional sanitization for specific patterns
+      let fixedContent = content;
+      
+      // Fix specific pattern from the error: "Dyslexia"\n", "Mobility Impairment"
+      // Handle various combinations of quotes, line breaks, and commas
+      fixedContent = fixedContent.replace(/"([^"]*)"[\s\n]*"[\s\n]*,[\s\n]*"([^"]*)/g, '"$1", "$2');
+      fixedContent = fixedContent.replace(/"([^"]*)"[\s\n]*",[\s\n]*"([^"]*)"/g, '"$1", "$2"');
+      fixedContent = fixedContent.replace(/"([^"]*)""\s*,\s*"([^"]*)"/g, '"$1", "$2"');
+      
+      // Fix cases where there might be malformed quotes in arrays
+      fixedContent = fixedContent.replace(/("[\w\s&-]+)""\s*,/g, '"$1",');
+      fixedContent = fixedContent.replace(/""([\w\s&-]+)"/g, '"$1"');
+      
+      // Fix line breaks and spacing issues within arrays
+      fixedContent = fixedContent.replace(/"\s*\n\s*"/g, '", "');
+      fixedContent = fixedContent.replace(/",\s*\n\s*"/g, '", "');
+      fixedContent = fixedContent.replace(/"\s*\n\s*,/g, '",');
+      
+      // Fix missing quotes around values
+      fixedContent = fixedContent.replace(/:\s*([^"\[\{,\s][^,\]\}]*[^",\]\}\s])/g, ': "$1"');
+      
+      // Normalize whitespace
+      fixedContent = fixedContent.replace(/\s+/g, ' ').trim();
+      
+      try {
+        parsed = JSON.parse(fixedContent);
+        console.log('Successfully parsed after sanitization');
+      } catch (secondError) {
+        console.error('Second parse attempt failed:', secondError.message);
+        
+        // Final fallback: try to extract JSON using regex if it's wrapped in other text
+        const jsonMatch = fixedContent.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          try {
+            parsed = JSON.parse(jsonMatch[0]);
+            console.log('Successfully extracted and parsed JSON from response');
+          } catch (thirdError) {
+            console.error('Failed to parse extracted JSON:', thirdError.message);
+            throw new Error(`Unable to parse AI response after multiple attempts: ${thirdError.message}`);
+          }
+        } else {
+          throw new Error(`No valid JSON array found in response: ${secondError.message}`);
+        }
+      }
+    }
+    
+    // Validate the structure of the parsed response
+    if (!Array.isArray(parsed)) {
+      throw new Error('Response is not an array');
+    }
+
+    // Validate each item in the array has required fields
+    parsed.forEach((item, index) => {
+      const requiredFields = ['heading', 'description', 'recommended_action', 'affectedDisabilities', 'code'];
+      const missingFields = requiredFields.filter(field => !item[field]);
+      if (missingFields.length > 0) {
+        console.warn(`Item ${index} is missing required fields: ${missingFields.join(', ')}, using defaults`);
+        // Fill in missing fields with defaults
+        if (!item.heading) item.heading = issues[index] || 'Unknown issue';
+        if (!item.description) item.description = 'An accessibility issue was detected';
+        if (!item.recommended_action) item.recommended_action = 'Review for WCAG compliance';
+        if (!item.affectedDisabilities) item.affectedDisabilities = ['multiple'];
+        if (!item.code) item.code = 'WCAG General';
+      }
+    });
+
+    return res.choices[0];
+  } catch (error) {
+    console.error('Error getting issue description:', error);
+    // Return a fallback response
+    return {
+      message: {
+        content: JSON.stringify([{
+          heading: issues[0],
+          description: "An accessibility issue was detected that requires attention.",
+          recommended_action: "Review the element for WCAG compliance and make necessary adjustments.",
+          affectedDisabilities: ["multiple"],
+          code: "WCAG General"
+        }])
+      }
+    };
+  }
 }
 
 async function addAccessibilityIssuesToDB(issue: dbIssue) {
@@ -78,32 +228,6 @@ async function populateMissingDescriptions(matchedRecords: dbIssue[], issueHeadi
   return false;
 }
 
-// export async function readAccessibilityDescriptionFromDb(issues: any) {
-//   try {
-//     /*Sometimes the htmlcs runner returns a recommendation and that might be different for different sites so it's removed here
-//         in order to increased chances of description matches in the db and thereby reduce calls to openai api. */
-//     const errorHeadings = issues.errors.map((issue: any) => issue.message.replace(/Recommendation:.*$/, '').trim());
-//     const warningHeadings = issues.warnings.map((issue: any) => issue.message.replace(/Recommendation:.*$/, '').trim());
-//     const noticesHeadings = issues.notices.map((issue: any) => issue.message.replace(/Recommendation:.*$/, '').trim());
-//     const headings = [...errorHeadings, ...warningHeadings, ...noticesHeadings];
-//     let matchedRecords = await getAccessibilityDescription(headings);
-
-//     const results = await Promise.all([populateMissingDescriptions(matchedRecords, errorHeadings, 'error'), populateMissingDescriptions(matchedRecords, warningHeadings, 'warning'), populateMissingDescriptions(matchedRecords, noticesHeadings, 'notice')]);
-//     const added = results.some((result) => result === true);
-
-//     if (added) {
-//       matchedRecords = await getAccessibilityDescription(headings);
-//     }
-//     issues.errors = updateIssueDetails(matchedRecords, issues.errors);
-//     issues.warnings = updateIssueDetails(matchedRecords, issues.warnings);
-//     issues.notices = updateIssueDetails(matchedRecords, issues.notices);
-//     // console.log(issues.warnings);
-//     return issues;
-//   } catch (error) {
-//     console.log(error, '\nError retrieving accessibility issue description from database.');
-//   }
-// }
-
 export async function readAccessibilityDescriptionFromDb(issues: any) {
   try {
     /* Sometimes the htmlcs runner returns a recommendation, and that might be different for different sites. 
@@ -122,48 +246,68 @@ export async function readAccessibilityDescriptionFromDb(issues: any) {
           const result:any = stringToJson(apiResult.message.content);
 
           if (result.length > 0 && result[0].description.trim() !== '') {
-            return {
-              heading: result[0].heading,
-              description: result[0].description,
-              recommended_action: result[0].recommended_action || '',
-              affectedDisabilities: result[0].affectedDisabilities || [],
-              code: result[0].code || '',
-            };
+            // Add the single issue to the database
+            await addAccessibilityIssuesToDB(result[0]);
+            return result[0];
+          } else {
+            throw new Error('Empty description received');
           }
         } catch (error) {
-          console.warn(`Attempt ${attempt} failed for issue: ${heading}`, error);
+          console.error(`Attempt ${attempt} failed for heading: ${heading}`, error.message);
+          if (attempt === retries) {
+            // After all retries failed, create a default entry
+            const defaultIssue: dbIssue = {
+              heading: heading,
+              description: 'An accessibility issue was detected. Please review for WCAG compliance.',
+              recommended_action: 'Review the element and ensure it meets accessibility standards.',
+              code: 'WCAG General'
+            };
+            await addAccessibilityIssuesToDB(defaultIssue);
+            return defaultIssue;
+          }
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+      }
+    }
+
+    let matchedRecords = await getAccessibilityDescription(headings);
+    
+    // Find missing descriptions and fetch them one by one with retry logic
+    const missingHeadings = headings.filter((heading) => 
+      !matchedRecords.some((record) => record.heading === heading)
+    );
+
+    if (missingHeadings.length > 0) {
+      console.log(`Processing ${missingHeadings.length} missing descriptions individually...`);
+      
+      for (const heading of missingHeadings) {
+        try {
+          await fetchSingleDescriptionWithRetry(heading);
+        } catch (error) {
+          console.error(`Failed to process heading after all retries: ${heading}`, error);
         }
       }
 
-      // If all retries fail, return a default structure
-      console.error(`Failed to generate description for: ${heading} after ${retries} attempts.`);
-      return {
-        heading,
-        description: 'No description generated.',
-        recommended_action: 'No recommendation available.',
-        affectedDisabilities: [],
-        code: 'N/A',
-      };
+      // Fetch updated records from the database
+      matchedRecords = await getAccessibilityDescription(headings);
     }
 
-    // **Fetch all descriptions concurrently (one by one with retry)**
-    const descriptions: dbIssue[] = await Promise.all(headings.map((heading) => fetchSingleDescriptionWithRetry(heading)));
-
-    // **Update issues object with fetched descriptions**
-    issues.errors = updateIssueDetails(descriptions, issues.errors);
-    issues.warnings = updateIssueDetails(descriptions, issues.warnings);
-    issues.notices = updateIssueDetails(descriptions, issues.notices);
-
+    // Update issue details with matched records
+    issues.errors = updateIssueDetails(matchedRecords, issues.errors);
+    issues.warnings = updateIssueDetails(matchedRecords, issues.warnings);
+    issues.notices = updateIssueDetails(matchedRecords, issues.notices);
+    
     return issues;
   } catch (error) {
-    console.log(error, '\nError retrieving accessibility issue descriptions.');
-    return issues;
+    console.error('Error retrieving accessibility issue description from database:', error);
+    return issues; // Return original issues if processing fails
   }
 }
 
-
+// Interface definitions for GPT functionality grouping
 interface Error {
-  'ErrorGuideline'?: string;
+  'Error Guideline'?: string;
   code?: string;
   description?: string | string[];
   message?: string | string[];
@@ -259,47 +403,24 @@ export const GPTChunks = async (errorCodes: string[]) => {
     let mergedObject: GPTData = {
       "HumanFunctionalities": [],
     };
-
-    if (aggregatedResult[0] && aggregatedResult[1] && aggregatedResult[2]) {
-      const jsonObject1 = JSON.parse(aggregatedResult[0]);
-      const jsonObject2 = JSON.parse(aggregatedResult[1]);
-      const jsonObject3 = JSON.parse(aggregatedResult[2]);
-
-      mergedObject = {
-        "HumanFunctionalities": [
-          ...jsonObject1["HumanFunctionalities"],
-          ...jsonObject2["HumanFunctionalities"],
-          ...jsonObject3["HumanFunctionalities"],
-        ],
-      };
-
-      const mergedData = mergedObject["HumanFunctionalities"].reduce(
-        (acc: HumanFunctionality[], curr: HumanFunctionality) => {
-          const existingItem = acc.find(
-            (item) => item["FunctionalityName"] === curr["FunctionalityName"]
-          );
-          if (existingItem) {
-            existingItem.Errors.push(...curr.Errors);
-          } else {
-            acc.push(curr);
-          }
-          return acc;
-        },
-        []
-      );
-
-      const final = {
-        "HumanFunctionalities": mergedData,
-      };
-
-      mergedObject = final;
-    }
-
-    const result = JSON.parse(aggregatedResult[0]);
+    
+    aggregatedResult.forEach((result) => {
+      try {
+        const parsedObject = JSON.parse(result);
+        if (parsedObject && parsedObject.HumanFunctionalities) {
+          mergedObject.HumanFunctionalities.push(...parsedObject.HumanFunctionalities);
+        }
+      } catch (parseError) {
+        console.error('Error parsing GPT chunk result:', parseError);
+      }
+    });
 
     return mergedObject;
   } catch (error) {
-    console.error("Error occurred while querying:", error);
-    throw error;
+    console.error('Error in GPTChunks:', error);
+    // Return a default structure if all fails
+    return {
+      "HumanFunctionalities": []
+    };
   }
 };
