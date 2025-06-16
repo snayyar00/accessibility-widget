@@ -1,4 +1,4 @@
-import { addAccessibilityDescription } from '../../repository/accessibility.repository';
+import { addAccessibilityDescription, getAccessibilityDescription } from '../../repository/accessibility.repository';
 import OpenAI from 'openai';
 import { stringToJson } from '../../helpers/stringToJSON.helper';
 import dotenv from 'dotenv';
