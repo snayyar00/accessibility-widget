@@ -23,6 +23,11 @@ export function cleanDomain(input: string): string {
   // Remove any remaining special characters
   domain = domain.replace(/[^a-z0-9.-]/g, '');
 
+  // Check if www. is needed
+  if (!domain.startsWith('www.')) {
+    domain = 'www.' + domain;
+  }
+
   // Add https:// prefix
   return `https://${domain}`;
 }
@@ -53,18 +58,27 @@ export function formatUrlForScan(url: string): string {
  * @returns Array of URLs to try in order
  */
 export function getRetryUrls(url: string): string[] {
-  const cleanUrl = cleanDomain(url);
-  const variations: string[] = [];
-
-  // First try with www
-  if (!cleanUrl.includes('//www.')) {
-    variations.push(cleanUrl.replace('https://', 'https://www.'));
+  if (!url) {
+    return [];
   }
 
-  // Then try without www
-  variations.push(cleanUrl.replace('//www.', '//'));
+  let domain = url.trim().toLowerCase();
+  
+  // Remove protocols if they exist
+  domain = domain.replace(/^(https?:\/\/)?(www\.)?/i, '');
 
-  return variations;
+  // Remove any paths, query params, or hashes
+  domain = domain.split('/')[0];
+
+  // Remove any remaining special characters
+  domain = domain.replace(/[^a-z0-9.-]/g, '');
+
+  return [
+    `https://www.${domain}`,  // Try with www first
+    `https://${domain}`,      // Then without www
+    `http://www.${domain}`,   // Then try http with www
+    `http://${domain}`        // Finally http without www
+  ];
 }
 
 /**
