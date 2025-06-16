@@ -1,7 +1,7 @@
-
 import { getAccessibilityInformationPally } from '~/helpers/accessibility.helper';
 import logger from '~/utils/logger';
 import { GPTChunks } from './accessibilityIssues.service';
+import { formatUrlForScan, getRetryUrls } from '~/utils/domain.utils';
 
 const { GraphQLJSON } = require('graphql-type-json');
 
@@ -175,8 +175,173 @@ export const fetchAccessibilityReport = async (url: string) => {
       throw new Error('Invalid URL provided to fetchAccessibilityReport');
     }
 
-    if (!url.startsWith('https://') && !url.startsWith('http://')) {
-      url = 'https://' + url;
+    try {
+      // Format URL with www prefix for initial scan
+      const formattedUrl = formatUrlForScan(url);
+      let result: ResultWithOriginal = await getAccessibilityInformationPally(formattedUrl);
+      
+      // If initial attempt fails, try variations
+      if (!result) {
+        const retryUrls = getRetryUrls(url);
+        for (const retryUrl of retryUrls) {
+          try {
+            result = await getAccessibilityInformationPally(retryUrl);
+            if (result) break;
+          } catch (retryError) {
+            console.error(`Error with retry URL ${retryUrl}:`, retryError.message);
+          }
+        }
+      }
+
+      // If all attempts fail, throw error
+      if (!result) {
+        throw new Error('Failed to fetch accessibility report for all URL variations');
+      }
+
+      console.log('result from getAccessibilityInformationPally:', result.score, result.totalElements, result.ByFunctions);
+      const siteImg = await fetchSitePreview(formattedUrl);
+      if (result && siteImg) {
+        result.siteImg = siteImg;
+      }
+
+      const scriptCheckResult = await checkScript(url);
+      if (result && scriptCheckResult) {
+        result.scriptCheckResult = scriptCheckResult;
+      }
+
+      // Perform calculations after the block
+      const issues = extractIssuesFromReport(result);
+      console.log(`Extracted ${issues.length} issues from report.`);
+
+      const issuesByFunction = groupIssuesByFunctionality(issues);
+      const functionalityNames = getFunctionalityNames(issuesByFunction);
+
+      const webabilityEnabled = scriptCheckResult === 'Web Ability';
+      const totalStats = calculateTotalStats(result, issues, webabilityEnabled);
+
+      // Add calculated fields to the result
+      result.issues = issues;
+      result.issuesByFunction = issuesByFunction;
+      result.functionalityNames = functionalityNames;
+      result.totalStats = totalStats;
+
+      if (result) {
+        if (result.ByFunctions && Array.isArray(result.ByFunctions) && result.ByFunctions.length > 0) {
+          return result;
+        }
+
+        const guideErrors: {
+          errors: htmlcsOutput[];
+          notices: htmlcsOutput[];
+          warnings: htmlcsOutput[];
+        } = result?._originalHtmlcs || result?.htmlcs;
+
+        const errorCodes: string[] = [];
+        const errorCodeWithDescriptions: { [key: string]: { [key: string]: string | string[] } } = {};
+
+        guideErrors.errors.forEach((errorcode: htmlcsOutput) => {
+          errorCodes.push(errorcode?.code);
+          if (!errorCodeWithDescriptions[errorcode?.code]) {
+            errorCodeWithDescriptions[errorcode?.code] = {};
+          }
+          errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
+          errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
+          errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
+          errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
+          errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
+        });
+
+        guideErrors.notices.forEach((errorcode: htmlcsOutput) => {
+          errorCodes.push(errorcode?.code);
+          if (!errorCodeWithDescriptions[errorcode?.code]) {
+            errorCodeWithDescriptions[errorcode?.code] = {};
+          }
+          errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
+          errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
+          errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
+          errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
+          errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
+        });
+
+        guideErrors.warnings.forEach((errorcode: htmlcsOutput) => {
+          errorCodes.push(errorcode?.code);
+          if (!errorCodeWithDescriptions[errorcode?.code]) {
+            errorCodeWithDescriptions[errorcode?.code] = {};
+          }
+          errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
+          errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
+          errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
+          errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
+          errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
+        });
+
+        const completion: GPTData = await GPTChunks(errorCodes);
+
+        if (completion) {
+          completion.HumanFunctionalities.forEach(
+            (functionality: HumanFunctionality) => {
+              functionality.Errors.forEach((error: Error) => {
+                let errorCode = error['ErrorGuideline'] || (error as any)['Error Guideline'] || (error as any)['code'] || (error as any)['Error Code'] || (error as any)['guideline'];
+
+                if (!errorCode) {
+                  const possibleCode = Object.values(error).find((value: any) => 
+                    typeof value === 'string' && value.includes('WCAG')
+                  );
+                  errorCode = possibleCode;
+                }
+
+                error.code = errorCode;
+                delete error['ErrorGuideline'];
+                delete (error as any)['Error Guideline'];
+
+                if (errorCode && errorCodeWithDescriptions[errorCode]) {
+                  error.description = errorCodeWithDescriptions[errorCode]?.description;
+                  error.context = errorCodeWithDescriptions[errorCode]?.context;
+                  error.message = errorCodeWithDescriptions[errorCode]?.message;
+                  error.recommended_action = errorCodeWithDescriptions[errorCode]?.recommended_action;
+                  error.selectors = errorCodeWithDescriptions[errorCode]?.selectors;
+                } else {
+                  let enhancedDescription = null;
+                  if (result?.htmlcs?.errors) {
+                    const enhancedError = result.htmlcs.errors.find((e: any) => e.code === errorCode);
+                    if (enhancedError) {
+                      enhancedDescription = enhancedError.description;
+                      error.message = enhancedError.message;
+                      error.recommended_action = enhancedError.recommended_action;
+                      error.context = enhancedError.context || [];
+                      error.selectors = enhancedError.selectors || [];
+                    }
+                  }
+
+                  error.description = enhancedDescription || "Accessibility issue detected. Please review this element for compliance.";
+                  error.message = error.message || "Accessibility compliance issue";
+                  error.recommended_action = error.recommended_action || "Review and fix this accessibility issue according to WCAG guidelines.";
+                  error.context = error.context || [];
+                  error.selectors = error.selectors || [];
+                }
+              });
+            },
+          );
+
+          result.ByFunctions = completion.HumanFunctionalities;
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.error(`Error with https://www.: ${error.message}`);
+      try {
+        if (!url.startsWith('https://') && !url.startsWith('http://')) {
+          url = 'https://' + url.replace('https://www.', '').replace('http://www.', '');
+        }
+
+        const result: ResultWithOriginal = await getAccessibilityInformationPally(url);
+        console.log('result from retrying with https://:', result.score, result.totalElements, result.ByFunctions);
+        return result;
+      } catch (retryError) {
+        console.error(`Error with https:// retry: ${retryError.message}`);
+        throw new Error(`Both attempts failed: ${retryError.message}`);
+      }
     }
 
     const result: ResultWithOriginal = await getAccessibilityInformationPally(url);
