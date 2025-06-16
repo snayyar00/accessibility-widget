@@ -183,7 +183,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
             <Route path='/add-domain' render={() => <Teams domains={data} customerData={customerData} setReloadSites={setReloadSites} /> } key='/Add-Domain' exact={false} />
             <Route path='/domain-plans/:id' render={() => <SiteDetail domains={data} setReloadSites={setReloadSites} /> } key='/Domain-Plans' exact={false} />
             <Route path='/installation' render={() => <Installation domain={selectedOption} />} key='/installation' exact={false} />
-            <Route path='/customize-widget' render={() => <AccessibilityWidgetPage allDomains={data} />} key='/customize-widget' exact={false} />
+            <Route path='/customize-widget' render={() => <AccessibilityWidgetPage selectedSite={selectedOption} allDomains={data} />} key='/customize-widget' exact={false} />
             <Redirect from="*" to="/dashboard" />
           </Switch>
         </div>
