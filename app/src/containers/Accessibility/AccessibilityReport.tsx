@@ -69,6 +69,8 @@ function calculateEnhancedScore(baseScore: number) {
 const normalizeDomain = (url: string) =>
   url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
 
+
+
 const AccessibilityReport = ({ currentDomain }: any) => {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.report') });
@@ -78,6 +80,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [siteImg, setSiteImg] = useState('');
   const [expand, setExpand] = useState(false);
   const [correctDomain, setcorrectDomain] = useState(currentDomain);
+  console.log('Current domain:', correctDomain);
   // const [accessibilityData, setAccessibilityData] = useState({});
   const { data: sitesData } = useQuery(GET_USER_SITES);
   const [saveAccessibilityReport] = useMutation(SAVE_ACCESSIBILITY_REPORT);
