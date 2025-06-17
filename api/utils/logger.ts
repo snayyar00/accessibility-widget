@@ -1,8 +1,18 @@
 import bunyan from 'bunyan';
 import fs from 'fs';
 
-// Environment-based logging control
+// Environment-based logging control - FIXED
 const isDevelopment = process.env.NODE_ENV === 'development';
+
+// Store original console methods
+const originalConsole = {
+  log: console.log,
+  info: console.info,
+  warn: console.warn,
+  error: console.error,
+  debug: console.debug,
+  trace: console.trace
+};
 
 let logger: bunyan | null = null;
 
@@ -39,16 +49,6 @@ if (!isDevelopment) {
     ],
   });
 }
-
-// Store original console methods
-const originalConsole = {
-  log: console.log,
-  info: console.info,
-  warn: console.warn,
-  error: console.error,
-  debug: console.debug,
-  trace: console.trace
-};
 
 // Create a wrapper for console methods
 const consoleWrapper = {

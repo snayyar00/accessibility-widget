@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-// Environment-based logging control
+// Environment-based logging control - FIXED
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 let accessLogStream: fs.WriteStream | null;
