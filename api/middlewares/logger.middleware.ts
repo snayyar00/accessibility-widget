@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
-// Hard-coded to development mode - disable file logging
-const isDevelopment = true;
+// Environment-based logging control - FIXED
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 let accessLogStream: fs.WriteStream | null;
 

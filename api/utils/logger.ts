@@ -1,8 +1,8 @@
 import bunyan from 'bunyan';
 import fs from 'fs';
 
-// Environment-based logging control - HARD-CODED TO DEVELOPMENT
-const isDevelopment = true; // Hard-coded to always use development mode
+// Environment-based logging control - FIXED
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 // Store original console methods
 const originalConsole = {
