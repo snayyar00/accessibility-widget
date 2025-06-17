@@ -93,7 +93,8 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 }
 
 (function startServer() {
-  app.use(morgan('combined', { stream: accessLogStream }));
+  // Use accessLogStream if available (production), otherwise Morgan will default to console
+  app.use(morgan('combined', accessLogStream ? { stream: accessLogStream } : {}));
 
   // app.use(cors({
   //   origin: 'https://www.webability.io',

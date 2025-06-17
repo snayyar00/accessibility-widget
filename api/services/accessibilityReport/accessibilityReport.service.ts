@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { getAccessibilityInformationPally } from '~/helpers/accessibility.helper';
 import logger from '~/utils/logger';
 import { GPTChunks } from './accessibilityIssues.service';

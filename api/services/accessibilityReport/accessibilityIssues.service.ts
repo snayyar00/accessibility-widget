@@ -122,13 +122,16 @@ export async function readAccessibilityDescriptionFromDb(issues: any) {
           const result:any = stringToJson(apiResult.message.content);
 
           if (result.length > 0 && result[0].description.trim() !== '') {
-            return {
+            // Add the successful result to the database
+            const dbIssue = {
               heading: result[0].heading,
               description: result[0].description,
               recommended_action: result[0].recommended_action || '',
               affectedDisabilities: result[0].affectedDisabilities || [],
               code: result[0].code || '',
             };
+            await addAccessibilityIssuesToDB(dbIssue);
+            return dbIssue;
           }
         } catch (error) {
           console.warn(`Attempt ${attempt} failed for issue: ${heading}`, error);
@@ -146,7 +149,7 @@ export async function readAccessibilityDescriptionFromDb(issues: any) {
       };
     }
 
-    // **Fetch all descriptions concurrently (one by one with retry)**
+    // **Fetch all descriptions with individual retry logic for failed attempts**
     const descriptions: dbIssue[] = await Promise.all(headings.map((heading) => fetchSingleDescriptionWithRetry(heading)));
 
     // **Update issues object with fetched descriptions**
@@ -260,42 +263,39 @@ export const GPTChunks = async (errorCodes: string[]) => {
       "HumanFunctionalities": [],
     };
 
-    if (aggregatedResult[0] && aggregatedResult[1] && aggregatedResult[2]) {
-      const jsonObject1 = JSON.parse(aggregatedResult[0]);
-      const jsonObject2 = JSON.parse(aggregatedResult[1]);
-      const jsonObject3 = JSON.parse(aggregatedResult[2]);
+    // Process all available results instead of assuming exactly 3
+    aggregatedResult.forEach((result) => {
+      try {
+        const parsedObject = JSON.parse(result);
+        if (parsedObject && parsedObject.HumanFunctionalities) {
+          mergedObject.HumanFunctionalities.push(...parsedObject.HumanFunctionalities);
+        }
+      } catch (parseError) {
+        console.error('Error parsing GPT chunk result:', parseError);
+      }
+    });
 
-      mergedObject = {
-        "HumanFunctionalities": [
-          ...jsonObject1["HumanFunctionalities"],
-          ...jsonObject2["HumanFunctionalities"],
-          ...jsonObject3["HumanFunctionalities"],
-        ],
-      };
+    // Merge functionalities with the same name
+    const mergedData = mergedObject["HumanFunctionalities"].reduce(
+      (acc: HumanFunctionality[], curr: HumanFunctionality) => {
+        const existingItem = acc.find(
+          (item) => item["FunctionalityName"] === curr["FunctionalityName"]
+        );
+        if (existingItem) {
+          existingItem.Errors.push(...curr.Errors);
+        } else {
+          acc.push(curr);
+        }
+        return acc;
+      },
+      []
+    );
 
-      const mergedData = mergedObject["HumanFunctionalities"].reduce(
-        (acc: HumanFunctionality[], curr: HumanFunctionality) => {
-          const existingItem = acc.find(
-            (item) => item["FunctionalityName"] === curr["FunctionalityName"]
-          );
-          if (existingItem) {
-            existingItem.Errors.push(...curr.Errors);
-          } else {
-            acc.push(curr);
-          }
-          return acc;
-        },
-        []
-      );
+    const final = {
+      "HumanFunctionalities": mergedData,
+    };
 
-      const final = {
-        "HumanFunctionalities": mergedData,
-      };
-
-      mergedObject = final;
-    }
-
-    const result = JSON.parse(aggregatedResult[0]);
+    mergedObject = final;
 
     return mergedObject;
   } catch (error) {
