@@ -257,8 +257,8 @@ export const accessibilityTourSteps: Step[] = [
     target: '.search-bar-container',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Enter Your Domain 🌐</h3>
-        <p>Type any website domain here to scan for accessibility issues. You can test your own site or any other website for WCAG compliance.</p>
+        <h3 className="text-lg font-semibold mb-2">Select Or Enter Your Domain 🌐</h3>
+        <p>Type any website domain here to scan for accessibility issues. You can test your own website by selecting it from the dropdown or any other website for WCAG compliance.</p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -274,51 +274,11 @@ export const accessibilityTourSteps: Step[] = [
     placement: 'bottom' as Placement,
   },
   {
-    target: '.accessibility-card:first-child',
-    content: (
-      <div>
-        <h3 className="text-lg font-semibold mb-2">Compliance Status 📊</h3>
-        <p>This card shows whether the website meets accessibility standards. Green indicates compliance, while red shows non-compliance with WCAG guidelines.</p>
-      </div>
-    ),
-    placement: 'top' as Placement,
-  },
-  {
-    target: '.accessibility-score-card',
-    content: (
-      <div>
-        <h3 className="text-lg font-semibold mb-2">Accessibility Score 📈</h3>
-        <p>The accessibility score shows the percentage of compliance with WCAG 2.1 AA standards. Higher scores indicate better accessibility.</p>
-      </div>
-    ),
-    placement: 'top' as Placement,
-  },
-  {
-    target: '.lawsuit-risk-card',
-    content: (
-      <div>
-        <h3 className="text-lg font-semibold mb-2">Lawsuit Risk Assessment ⚖️</h3>
-        <p>This gauge shows the legal risk level based on accessibility violations. Low risk means better protection from accessibility lawsuits.</p>
-      </div>
-    ),
-    placement: 'top' as Placement,
-  },
-  {
-    target: '.webability-toggle-section',
-    content: (
-      <div>
-        <h3 className="text-lg font-semibold mb-2">See WebAbility Results 🔄</h3>
-        <p>Toggle this switch to see how your accessibility score would improve with WebAbility widget installed on your website.</p>
-      </div>
-    ),
-    placement: 'top' as Placement,
-  },
-  {
     target: '.accessibility-issues-section',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Detailed Issue Analysis 🔍</h3>
-        <p>This section provides a comprehensive breakdown of accessibility issues found, categorized by type and severity level.</p>
+        <h3 className="text-lg font-semibold mb-2">Audit History Table 🔍</h3>
+        <p>This section provides a table of audit reports for the selected domain, organized by the date and time of the scan. It includes information on the compliance status and accessibility score for each report, allowing for easy tracking and review of the domain’s accessibility performance over time.</p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -327,8 +287,8 @@ export const accessibilityTourSteps: Step[] = [
     target: '.print-report-button',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Generate Report 📄</h3>
-        <p>Click here to generate a printable accessibility report that you can share with your team or use for compliance documentation.</p>
+        <h3 className="text-lg font-semibold mb-2">View or Download Report 📄</h3>
+        <p>Click the View button for the respective row to open the report in a new tab. Click the Download button to save the accessibility report as a PDF, which you can then share with your team or use for compliance documentation.</p>
       </div>
     ),
     placement: 'bottom' as Placement,

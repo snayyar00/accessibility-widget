@@ -30,11 +30,9 @@ import {
   CardHeader,
   CardMedia,
   CircularProgress,
-  Input,
-  Typography, Box
+  Input, Typography, Box
 } from '@mui/material';
 import { TbReportSearch } from 'react-icons/tb';
-
 import WebsiteScanAnimation from '@/components/Animations/WebsiteScanAnimation';
 import LeftArrowAnimation from '@/components/Animations/LeftArrowAnimation';
 import AccessibilityScoreCard from './AccessibiltyScoreCard';
@@ -50,6 +48,9 @@ import ReactToPrint, { useReactToPrint } from 'react-to-print';
 import Logo from '@/components/Common/Logo';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import TourGuide from '@/components/Common/TourGuide';
+import { defaultTourStyles } from '@/config/tourStyles';
+import { accessibilityTourSteps, tourKeys } from '@/constants/toursteps';
 import { report } from 'process';
 import { json } from 'stream/consumers';
 import jsPDF from 'jspdf';
@@ -90,10 +91,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [fetchReportKeys, { data: reportKeysData, loading: loadingReportKeys }] = useLazyQuery(FETCH_ACCESSIBILITY_REPORT_KEYS);
   const [processedReportKeys, setProcessedReportKeys] = useState<any[]>([]);
   const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(
-    getAccessibilityStats,
-    {
-      variables: { url: encodeURIComponent(correctDomain) },
-    },
+    getAccessibilityStats
   );
   const [fetchReportByR2Key, { loading: loadingReport, data: reportData }] = useLazyQuery(FETCH_REPORT_BY_R2_KEY);
   type OptionType = { value: string; label: string };
@@ -110,6 +108,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     ...siteOptions,
     { value: 'new', label: 'Enter a new domain' },
   ];
+
+   // Handle tour completion
+  const handleTourComplete = () => {
+    console.log('Accessibility tour completed!');
+  };
 
   useEffect(() => {
     if (data) {
@@ -194,10 +197,21 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       toast.error('You must enter a valid domain name!');
       return;
     }
-    setcorrectDomain(domain);
-    //checkScript();
+    
+    // Ensure we have a valid domain before setting correctDomain and making the query
+    const validDomain = domain.trim();
+    if (!validDomain) {
+      toast.error('Please enter a valid domain!');
+      return;
+    }
+    
+    setcorrectDomain(validDomain);
+    
     try {
-      await getAccessibilityStatsQuery(); // Manually trigger the query
+      // Pass the domain directly to the query to avoid using empty correctDomain
+      await getAccessibilityStatsQuery({ 
+        variables: { url: encodeURIComponent(validDomain) } 
+      });
     } catch (error) {
       console.error('Error generating report:', error);
       toast.error('Failed to generate report. Please try again.');
@@ -450,16 +464,24 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   }
 
   return (
+    <>
+    <TourGuide
+        steps={accessibilityTourSteps}
+        tourKey={tourKeys.accessibility}
+        autoStart={true}
+        onTourComplete={handleTourComplete}
+        customStyles={defaultTourStyles}
+      />
     <div className="accessibility-wrapper">
-      <header className="text-center mb-8">
+      <header className="accessibility-page-header text-center mb-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-2">Web Accessibility Scanner</h1>
         <p className="text-xl text-gray-600">
-          Evaluate your website's accessibility in seconds. View a history of all accessibility scans. Download your reports below.
+          Evaluate your website's accessibility in seconds. View a history of all accessibility scans. Download your reports.
         </p>
       </header>
 
       <div className="w-full pl-6 pr-6 border-none shadow-none flex flex-col justify-center items-center">
-        <div className="bg-white my-6 p-3 sm:p-4 rounded-xl w-full">
+        <div className="search-bar-container bg-white my-6 p-3 sm:p-4 rounded-xl w-full">
           <div className="flex flex-col gap-4">
             <Select
               options={siteOptions}
@@ -484,7 +506,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
             <button
               type="button"
-              className="bg-primary text-white px-4 py-2 rounded"
+              className="search-button bg-primary text-white px-4 py-2 rounded"
               onClick={() => {
                 if (domain) {
                   //checkScript();
@@ -494,7 +516,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 }
               }}
             >
-              Generate Report
+              Free Scan
               {loading && <CircularProgress size={14} sx={{ color: 'white' }} className="ml-2 my-auto" />}
             </button>
           </div>
@@ -538,7 +560,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
         
         {siteOptions.some((option: any) => normalizeDomain(option.value) === normalizeDomain(selectedOption?.value ?? '')) && enhancedScoresCalculated && processedReportKeys.length > 0 &&  (
-          <div className="bg-white rounded-xl p-6 mt-12 shadow mr-6 ml-6">
+          <div className="accessibility-issues-section bg-white rounded-xl p-6 mt-12 shadow mr-6 ml-6">
             <h3 className="text-2xl font-medium text-gray-800 mb-6 border-b-2 border-gray-300 pb-2">
               Your audit history
             </h3>
@@ -550,7 +572,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   <th className="py-2 px-4">Time</th>
                   <th className="py-2 px-4">Compliance Status</th>
                   <th className="py-2 px-4">Accessibility Score</th>
-                  <th className="py-2 px-4">Action</th>
+                  <th className="print-report-button py-2 px-4">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -597,11 +619,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                           className="text-blue-600 underline font-medium"
                           onClick={async () => {
                             try {
-                              // Fetch the report for the clicked row
-                              await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
+                              // Fetch the report for the clicked row and wait for the response
+                              const { data: fetchedReportData } = await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
 
-                              if (reportData && reportData.fetchReportByR2Key) {
-                                const pdfBlob = generatePDF(reportData.fetchReportByR2Key, row.enhancedScore, row.url);
+                              if (fetchedReportData && fetchedReportData.fetchReportByR2Key) {
+                                const pdfBlob = generatePDF(fetchedReportData.fetchReportByR2Key, row.enhancedScore, row.url);
                                 const url = window.URL.createObjectURL(pdfBlob);
                                 const link = document.createElement('a');
                                 link.href = url;
@@ -631,6 +653,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         )}
       </div>
     </div>
+    </>
   );
 };
 
