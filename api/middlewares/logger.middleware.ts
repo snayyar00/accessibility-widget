@@ -1,12 +1,28 @@
 import fs from 'fs';
 import path from 'path';
 
-const env =
-  process.env.NODE_ENV === 'production' ? 'production' : 'development';
+// Hard-coded to development mode - disable file logging
+const isDevelopment = true;
 
-const accessLogStream = fs.createWriteStream(
-  path.join(process.cwd(), 'logs', `${env}.log`),
-  { flags: 'a' },
-);
+let accessLogStream: fs.WriteStream | null;
+
+if (!isDevelopment) {
+  // Only create file stream in production
+  const env = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+  
+  // Ensure logs directory exists
+  const logsDir = path.join(process.cwd(), 'logs');
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+  
+  accessLogStream = fs.createWriteStream(
+    path.join(logsDir, `${env}.log`),
+    { flags: 'a' },
+  );
+} else {
+  // In development, don't create file stream (Morgan will use console)
+  accessLogStream = null;
+}
 
 export default accessLogStream;
