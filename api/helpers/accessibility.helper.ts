@@ -143,7 +143,28 @@ export async function getAccessibilityInformationPally(domain: string) {
     results = await response.json();
   } catch (error) {
     console.error('pally API Error', error);
-    return;
+    // Return proper default structure instead of undefined
+    return {
+      axe: {
+        errors: [],
+        notices: [],
+        warnings: [],
+      },
+      htmlcs: {
+        errors: [],
+        notices: [],
+        warnings: [],
+      },
+      score: 0,
+      totalElements: 0,
+      ByFunctions: [],
+      processing_stats: {
+        total_batches: 0,
+        successful_batches: 0,
+        failed_batches: 1,
+        total_issues: 0
+      }
+    };
   }
 
   results.issues.forEach((issue: any) => {
