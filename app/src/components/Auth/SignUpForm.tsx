@@ -23,6 +23,7 @@ import AccessibilitySteps from './AccessibilitySteps';
 import { parse } from 'tldts';
 import { getRootDomain, isIpAddress, isValidRootDomainFormat } from '@/utils/domainUtils';
 import AccessibilityFacts from './AccessibilityFacts';
+import * as yup from 'yup';
 
 type CustomProps = ReactHookFormType & {
   isSubmitting: boolean;
@@ -57,6 +58,7 @@ const SignUpForm: React.FC<CustomProps> = ({
     websiteUrl: '',
     password: '',
     passwordConfirmation: '',
+    organizationName: '',
   });
 
   // Accessibility analysis states
@@ -387,6 +389,24 @@ const SignUpForm: React.FC<CustomProps> = ({
         </div>
         <div className="mb-4 w-full block">
           <label className="text-left font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block mb-[19px] uppercase">
+            {t('Common.label.your_organization')} (Optional)
+          </label>
+          <FormControl>
+            <Input
+              type="text"
+              placeholder={t('Common.placeholder.your_organization')}
+              name="organizationName"
+              ref={register}
+              value={formData.organizationName}
+              onChange={handleInputChange}
+            />
+            {formErrors?.organizationName?.message && (
+              <ErrorText message={String(t(formErrors.organizationName.message))} />
+            )}
+          </FormControl>
+        </div>
+        <div className="mb-4 w-full block">
+          <label className="text-left font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block mb-[19px] uppercase">
             {t('Common.label.email')}
           </label>
           <FormControl>
@@ -475,6 +495,7 @@ const SignUpForm: React.FC<CustomProps> = ({
             )}
           </FormControl>
         </div>
+        
         <Button
           color="primary"
           type="button"

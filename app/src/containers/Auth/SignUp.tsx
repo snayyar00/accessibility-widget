@@ -62,6 +62,7 @@ const SignUpSchema = yup.object().shape({
     .string()
     .required('Common.validation.require_password_confirm')
     .oneOf([yup.ref('password'), ""], 'Common.validation.password_match'),
+  organizationName: yup.string().notRequired().max(50, 'Common.validation.organization_max_length_50'),
 });
 
 type SignUpPayload = {
