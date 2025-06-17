@@ -458,28 +458,6 @@ const filteredIssues = useMemo(() => {
                         {issue.message || issue.help || 'Accessibility Issue'}
                       </h2>
                     </div>
-
-                    <div className="flex-shrink-0">
-                      <button
-                        onClick={() => {
-                          const issueDetails = `I need help fixing this accessibility issue:
-
-                            Issue: ${issue.message || issue.help || 'Accessibility Issue'}
-                            Element: ${Array.isArray(issue.context) ? issue.context[0] : issue.context || 'Unknown element'}
-                            WCAG: ${issue.code || 'N/A'}`
-
-                          // if (typeof window.submitAccessibilityIssue === 'function') {
-                          //   window.submitAccessibilityIssue(issueDetails)
-                          // } else {
-                          //   toast.error("AI assistant is initializing. Please try again.")
-                          // }
-                        }}
-                        className="fix-with-ai-button"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        Fix with AI
-                      </button>
-                    </div>
                   </div>
 
                   <div className="flex flex-wrap gap-2 mb-4">
