@@ -1,15 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 
-// Hard-coded to development mode - disable file logging
-const isDevelopment = true;
+// Environment-based logging control
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 let accessLogStream: fs.WriteStream | null;
 
 if (!isDevelopment) {
   // Only create file stream in production
-  const env = process.env.NODE_ENV === 'production' ? 'production' : 'development';
-  
   // Ensure logs directory exists
   const logsDir = path.join(process.cwd(), 'logs');
   if (!fs.existsSync(logsDir)) {
@@ -17,7 +15,7 @@ if (!isDevelopment) {
   }
   
   accessLogStream = fs.createWriteStream(
-    path.join(logsDir, `${env}.log`),
+    path.join(logsDir, 'production.log'),
     { flags: 'a' },
   );
 } else {

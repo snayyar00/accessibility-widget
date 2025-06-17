@@ -65,7 +65,7 @@ const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerIntera
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
-app.use(express.json({ limit: '2mb'}));
+app.use(express.json());
 
 scheduleMonthlyEmails();
 
@@ -93,12 +93,8 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 }
 
 (function startServer() {
-  // Configure Morgan with conditional stream (null = console, stream = file)
-  if (accessLogStream) {
-    app.use(morgan('combined', { stream: accessLogStream }));
-  } else {
-    app.use(morgan('combined')); // Will use console
-  }
+  // Use accessLogStream if available (production), otherwise Morgan will default to console
+  app.use(morgan('combined', accessLogStream ? { stream: accessLogStream } : {}));
 
   // app.use(cors({
   //   origin: 'https://www.webability.io',
@@ -110,7 +106,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.use(express.static(join(resolve(), 'public', 'uploads')));
   app.use(cookieParser());
 
-  app.use(bodyParser.urlencoded({ extended: true, limit: '2mb' }));
+  app.use(bodyParser.urlencoded({ extended: true }));
 
   app.get('/', (req, res) => {
     res.send('Hello orld!');
@@ -1184,6 +1180,42 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       res.status(500).json({ error: 'Internal Server Error' });
     }
   });
+
+  app.post('/check-script', async (req, res) => {
+    try {
+        const { siteUrl } = req.body;
+
+        const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${siteUrl}`;
+
+        // Fetch the data from the secondary server
+        const response = await fetch(apiUrl);
+
+        // Check if the response is successful
+        if (!response.ok) {
+            throw new Error(`Failed to fetch the script check. Status: ${response.status}`);
+        }
+
+        // Parse the response as JSON
+        const responseData = await response.json();
+        
+        // Access the result and respond accordingly
+        if (responseData.result === "WebAbility") {
+            res.status(200).json("Web Ability");
+
+        }
+        else if(responseData.result != "Not Found"){
+          res.status(200).json("true");
+        } 
+        else {
+            res.status(200).json("false");
+        }
+
+    } catch (error) {
+        // Handle any errors that occur
+        console.error("Error checking script:", error.message);
+        res.status(500).json({ error: 'An error occurred while checking the script.' });
+    }
+});
 
   app.post('/check-customer',async (req,res)=>{
     const {email,userId} = req.body;
