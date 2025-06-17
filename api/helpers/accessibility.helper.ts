@@ -143,7 +143,7 @@ export async function getAccessibilityInformationPally(domain: string) {
     results = await response.json();
   } catch (error) {
     console.error('pally API Error', error);
-    // Return a default structure instead of undefined
+    // Return proper default structure instead of undefined
     return {
       axe: {
         errors: [],
@@ -155,8 +155,15 @@ export async function getAccessibilityInformationPally(domain: string) {
         notices: [],
         warnings: [],
       },
-      score: 100, // Default good score when API fails
+      score: 0,
       totalElements: 0,
+      ByFunctions: [],
+      processing_stats: {
+        total_batches: 0,
+        successful_batches: 0,
+        failed_batches: 1,
+        total_issues: 0
+      }
     };
   }
 
@@ -233,7 +240,7 @@ export async function getAccessibilityInformationPally(domain: string) {
     console.log('🚀 Using enhanced preprocessing pipeline');
     try {
       const enhancedResult = await processAccessibilityIssuesWithFallback(output);
-      
+  
       // Debug: Check what we got from enhanced processing
       console.log('🔍 Enhanced processing result debug:')
       console.log('   enhancedResult.ByFunctions exists:', !!enhancedResult.ByFunctions)
@@ -255,7 +262,7 @@ export async function getAccessibilityInformationPally(domain: string) {
         axe: enhancedResult.axe,
         htmlcs: enhancedResult.htmlcs,
         ByFunctions: enhancedResult.ByFunctions, // Preserve enhanced ByFunctions
-        score: enhancedResult.score || calculateAccessibilityScore(output.axe),
+        score: calculateAccessibilityScore(output.axe), //enhancedResult.score || 
         totalElements: output.totalElements,
         processing_stats: enhancedResult.processing_stats,
         // Preserve original htmlcs for ByFunctions processing
