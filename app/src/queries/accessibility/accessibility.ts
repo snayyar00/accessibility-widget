@@ -70,38 +70,6 @@ export default gql`
               recommended_action
             } 
       }
-      scriptCheckResult
-      techStack {
-        technologies
-        categorizedTechnologies {
-          category
-          technologies
-        }
-        confidence
-        accessibilityContext {
-          platform
-          platform_type
-          has_cms
-          has_ecommerce
-          has_framework
-          is_spa
-        }
-        analyzedUrl
-        analyzedAt
-        source
-      }
-      issues {
-        functionality
-        impact
-        message
-        context
-        selectors
-        description
-        recommended_action
-      }
-      issuesByFunction
-      functionalityNames
-      totalStats
     }
   }
 `;

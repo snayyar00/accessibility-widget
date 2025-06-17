@@ -17,7 +17,6 @@ import GlobalLoading from '@/components/Layout/GlobalLoading';
 import 'react-toastify/dist/ReactToastify.css';
 import useDocumentHeader from './hooks/useDocumentTitle';
 import { RootState } from './config/store';
-import ReportView from './containers/Accessibility/ReportView';
 
 type props = {
   options: string[];
@@ -51,7 +50,6 @@ const App: React.FC<props> = ({ options }) => {
             component={AcceptInvitation}
           />
           <PublicRoute path="/auth" component={Auth} />
-          <Route path="/reports/:r2_key" component={ReportView} exact />
           <PrivateRoute render={() => <AdminLayout options={options} />} />
           <Redirect from="*" to="/" />
         </Switch>

@@ -6,14 +6,12 @@ const SAVE_ACCESSIBILITY_REPORT = gql`
     $url: String!
     $allowed_sites_id: Int
     $key: String
-    $score: JSON
   ) {
     saveAccessibilityReport(
       report: $report
       url: $url
       allowed_sites_id: $allowed_sites_id
       key: $key
-      score: $score
     ) {
       success
       key
@@ -22,7 +20,6 @@ const SAVE_ACCESSIBILITY_REPORT = gql`
         url
         allowed_sites_id
         r2_key
-        score
         created_at
         updated_at
       }

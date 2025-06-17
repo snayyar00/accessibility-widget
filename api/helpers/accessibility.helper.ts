@@ -142,7 +142,7 @@ export async function getAccessibilityInformationPally(domain: string) {
     // Parse and return the response JSON
     results = await response.json();
   } catch (error) {
-    console.error('pally API Error', error);
+    console.error('pally API Error');
     return;
   }
 
@@ -219,7 +219,7 @@ export async function getAccessibilityInformationPally(domain: string) {
     console.log('🚀 Using enhanced preprocessing pipeline');
     try {
       const enhancedResult = await processAccessibilityIssuesWithFallback(output);
-  
+      
       // Debug: Check what we got from enhanced processing
       console.log('🔍 Enhanced processing result debug:')
       console.log('   enhancedResult.ByFunctions exists:', !!enhancedResult.ByFunctions)
@@ -241,7 +241,7 @@ export async function getAccessibilityInformationPally(domain: string) {
         axe: enhancedResult.axe,
         htmlcs: enhancedResult.htmlcs,
         ByFunctions: enhancedResult.ByFunctions, // Preserve enhanced ByFunctions
-        score: calculateAccessibilityScore(output.axe), //enhancedResult.score || 
+        score: enhancedResult.score || calculateAccessibilityScore(output.axe),
         totalElements: output.totalElements,
         processing_stats: enhancedResult.processing_stats,
         // Preserve original htmlcs for ByFunctions processing

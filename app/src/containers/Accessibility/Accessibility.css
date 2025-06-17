@@ -53,9 +53,11 @@
 }
 
 .search-bar-container {
+  display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
+  max-width: 800px;
 }
 
 .search-input {
