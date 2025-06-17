@@ -165,7 +165,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     setDomain(transformedDomain);
     setcorrectDomain(transformedDomain);
     checkScript();
-    getAccessibilityStatsQuery(); // Manually trigger the query
+    getAccessibilityStatsQuery({ variables: { url: transformedDomain } }); // Pass transformedDomain directly to avoid race condition
   };
 
   const groupByCodeUtil = (issues: any) => {
