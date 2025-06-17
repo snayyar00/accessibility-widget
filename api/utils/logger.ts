@@ -1,18 +1,8 @@
 import bunyan from 'bunyan';
 import fs from 'fs';
 
-// Environment-based logging control - HARD-CODED TO DEVELOPMENT
-const isDevelopment = true; // Hard-coded to always use development mode
-
-// Store original console methods
-const originalConsole = {
-  log: console.log,
-  info: console.info,
-  warn: console.warn,
-  error: console.error,
-  debug: console.debug,
-  trace: console.trace
-};
+// Environment-based logging control
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 let logger: bunyan | null = null;
 
@@ -49,6 +39,16 @@ if (!isDevelopment) {
     ],
   });
 }
+
+// Store original console methods
+const originalConsole = {
+  log: console.log,
+  info: console.info,
+  warn: console.warn,
+  error: console.error,
+  debug: console.debug,
+  trace: console.trace
+};
 
 // Create a wrapper for console methods
 const consoleWrapper = {

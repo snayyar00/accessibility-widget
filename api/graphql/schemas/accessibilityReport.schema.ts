@@ -125,60 +125,13 @@ export const AccessibilitySchema = gql`
     processing_stats: ProcessingStats
     template_analysis: TemplateAnalysis
     preprocessing_stats: PreprocessingStats
-    scriptCheckResult: String
   }
-
-  type CategorizedTechnology {
-    category: String!
-    technologies: [String!]!
-  }
-
-  type AccessibilityContext {
-    platform: String
-    platform_type: String
-    has_cms: Boolean
-    has_ecommerce: Boolean
-    has_framework: Boolean
-    is_spa: Boolean
-  }
-
-  type TechStack {
-    technologies: [String!]!
-    categorizedTechnologies: [CategorizedTechnology!]!
-    confidence: String
-    accessibilityContext: AccessibilityContext
-    analyzedUrl: String!
-    analyzedAt: String!
-    source: String
-  }
-
-  extend type Report {
-    techStack: TechStack
-  }
-
-  extend type Report {
-  issues: [Issue!]
-  issuesByFunction: JSON
-  functionalityNames: [String!]
-  totalStats: JSON
-}
-
-type Issue {
-  functionality: String
-  impact: String
-  message: String
-  context: [String]
-  selectors: [String]
-  description: String
-  recommended_action: String
-}
 
   type AccessibilityReportMeta {
     id: Int!
     url: String!
     allowed_sites_id: Int
     r2_key: String!
-    score: JSON
     created_at: String!
     updated_at: String!
   }
@@ -189,13 +142,6 @@ type Issue {
     report: AccessibilityReportMeta
   }
 
-  type AccessibilityReportTableRow {
-    url: String!
-    r2_key: String!
-    created_at: String!
-    score: JSON
-  } 
-
   extend type Query {
     getAccessibilityReport(url: String!): Report
     getProcessingDashboard(url: String!): ProcessingDashboard
@@ -204,7 +150,7 @@ type Issue {
     url: String!
     created_at: String
     updated_at: String
-  ): [AccessibilityReportTableRow!]!
+  ): [String!]!
     fetchReportByR2Key(r2_key: String!): Report
   }
 
@@ -248,7 +194,6 @@ type Issue {
       url: String!
       allowed_sites_id: Int
       key: String
-      score: JSON
     ): SaveReportResponse!
     deleteAccessibilityReport(r2_key: String!): Boolean!    
   }
