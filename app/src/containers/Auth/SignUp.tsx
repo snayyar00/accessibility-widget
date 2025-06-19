@@ -103,19 +103,20 @@ const SignUp: React.FC = () => {
 });
 
   async function signup(params: SignUpPayload) {
-    try {
-      const { data } = await registerMutation({ variables: params });
-      if (data?.register) {
-        toast.success('Account created successfully!');
-        // Return true if registration was successful
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Error during registration:', error);
-      toast.error('Failed to create account. Please try again.');
-      return false;
-    }
+    console.log(params)
+    // try {
+    //   const { data } = await registerMutation({ variables: params });
+    //   if (data?.register) {
+    //     toast.success('Account created successfully!');
+    //     // Return true if registration was successful
+    //     return true;
+    //   }
+    //   return false;
+    // } catch (error) {
+    //   console.error('Error during registration:', error);
+    //   toast.error('Failed to create account. Please try again.');
+    //   return false;
+    // }
   }
 
   async function addSiteAfterSignup(websiteUrl: string) {

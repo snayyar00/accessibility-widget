@@ -1701,7 +1701,12 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     ],
     context: async ({ req, res }: ContextParams) => {
       const { cookies } = req;
-      const bearerToken = cookies.token || null;
+      let bearerToken = cookies.token || null;
+
+      if (IS_LOCAL_DEV && !bearerToken && req.headers.authorization) {
+        bearerToken = req.headers.authorization;
+      }
+
       const user = await getUserLogined(bearerToken, res);
       // const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
       return {

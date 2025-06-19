@@ -8,7 +8,7 @@ export type Organization = {
   name: string;
   subdomain: string;
   logo_url?: string;
-  settings?: object;
+  settings?: string | object;
   created_at?: string;
   updated_at?: string;
 };
@@ -33,10 +33,6 @@ export async function getOrganizationById(id: number): Promise<Organization | un
   return database(TABLE).where({ id }).first();
 }
 
-export async function findOrganizationBySubdomain(subdomain: string): Promise<Organization | undefined> {
-  return database(TABLE).where({ subdomain }).first();
-}
-
-export async function findOrganizationBySubdomainExcludeId(subdomain: string, id: number): Promise<Organization | undefined> {
+export async function getOrganizationBySubdomainExcludeId(subdomain: string, id: number): Promise<Organization | undefined> {
   return database(TABLE).where({ subdomain }).andWhereNot({ id }).first();
 }

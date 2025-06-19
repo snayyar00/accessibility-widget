@@ -61,6 +61,7 @@ type RegisterSocialAccount = Provider & {
   name: string;
   avatarUrl: string;
   providerId: string;
+  organizationName?: string;
 };
 
 const resolvers = {
@@ -113,7 +114,7 @@ const resolvers = {
       isAuthenticated,
       (_, { type }, { user }) => resendEmailAction(user, <'verify_email' | 'forgot_password'>normalizeEmail(type)),
     ),
-    registerSocialAccount: async (_: unknown, { provider, email, name, avatarUrl, providerId }: RegisterSocialAccount, { res }: Res) => {
+    registerSocialAccount: async (_: unknown, { provider, email, name, avatarUrl, providerId, organizationName }: RegisterSocialAccount, { res }: Res) => {
       const result = await registerAccountBySocial(provider, normalizeEmail(email), name, avatarUrl, providerId);
       if (result && result.token) {
         setAuthenticationCookie(res, result.token);

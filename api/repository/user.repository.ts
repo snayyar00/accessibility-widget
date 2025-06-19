@@ -21,6 +21,7 @@ export const usersColumns = {
   provider: 'users.provider',
   providerId: 'users.provider_id',
   deletedAt: 'users.deleted_at',
+  organization_ids: 'users.organization_ids',
 };
 
 type FindUserProps = {
@@ -45,6 +46,7 @@ export type UserProfile = {
   created_at?: string;
   updated_at?: string;
   deleted_at?: string;
+  organization_ids?: number[];
 };
 
 type GetUserByIdAndJoinUserTokenResponse = UserProfile & UserToken;
@@ -93,7 +95,11 @@ export async function createUser(userData: UserProfile, userPlanData: UserPlanDa
   }
 }
 
-export async function updateUser(id: number, data: UserProfile): Promise<number> {
+export async function updateUser(id: number, data: Partial<UserProfile>): Promise<number> {
+  if ('organization_ids' in data && Array.isArray(data.organization_ids)) {
+    (data as any).organization_ids = JSON.stringify(data.organization_ids);
+  }
+  
   return database(TABLE).where({ id }).update(data);
 }
 

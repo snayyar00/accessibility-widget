@@ -24,6 +24,7 @@ import { parse } from 'tldts';
 import { getRootDomain, isIpAddress, isValidRootDomainFormat } from '@/utils/domainUtils';
 import AccessibilityFacts from './AccessibilityFacts';
 import * as yup from 'yup';
+import { ORGANIZATION_EXISTS } from '@/queries/organization/organizationExists';
 
 type CustomProps = ReactHookFormType & {
   isSubmitting: boolean;
@@ -125,6 +126,21 @@ const SignUpForm: React.FC<CustomProps> = ({
       setCurrentStep((prev) => prev + 1);
       setCheckingEmail(false);
       setCheckingDomain(false);
+    },
+  });
+
+  const [checkOrganizationExists, { loading: loadingCheckOrganizationExists }] = useLazyQuery(ORGANIZATION_EXISTS, {
+    fetchPolicy: 'network-only',
+
+    onCompleted: (data) => {
+      if (data?.organizationExists) {
+        toast.error(t('Sign_up.error.organization_exists'));
+      }
+    },
+
+    onError: (error) => {
+      console.error('Error checking organization name:', error);
+      toast.error(t('Sign_up.error.organization_check'));
     },
   });
 
@@ -306,6 +322,12 @@ const SignUpForm: React.FC<CustomProps> = ({
 
       // Only proceed if validation passes
       if (isValid) {
+        if (formData.organizationName) {
+          const {data: { organizationExists }} = await checkOrganizationExists({ variables: { name: formData.organizationName } });
+
+          if (organizationExists) return;
+        }
+
         // Always check email first
         if (formData.email) {
           setCheckingDomain(true);
@@ -501,9 +523,9 @@ const SignUpForm: React.FC<CustomProps> = ({
           type="button"
           className="w-full uppercase mt-[34px]"
           onClick={handleNextStep}
-          disabled={checkingDomain || checkingEmail}
+          disabled={checkingDomain || checkingEmail || loadingCheckOrganizationExists}
         >
-          {checkingDomain || checkingEmail ? (
+          {checkingDomain || checkingEmail || loadingCheckOrganizationExists ? (
             <span className="flex items-center justify-center">
               <CircularProgress size={30} color={'inherit'} className="mr-2 " />
               Please Wait

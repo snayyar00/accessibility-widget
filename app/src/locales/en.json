@@ -119,7 +119,9 @@
       "INTERNAL_SERVER_ERROR": "Email address has been used",
       "incomplete_number": "Your card number is incomplete.",
       "incomplete_expiry": "Your card's expiration date is incomplete.",
-      "incomplete_cvc": "Your card's security code is incomplete."
+      "incomplete_cvc": "Your card's security code is incomplete.",
+      "organization_exists": "Organization with this name already exists.",
+      "organization_check": "Error checking organization name"
     }
   },
   "Forgot_password": {
