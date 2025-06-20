@@ -59,26 +59,48 @@ export async function findSiteByUserIdAndSiteId(user_id: number, site_id: number
 		.first();
 }
 
-export async function insertSite(data: allowedSites): Promise<string> {
+export async function insertSite(data: allowedSites): Promise<FindAllowedSitesProps | string> {
+	const startTime = Date.now();
+	
+	return database.transaction(async (trx) => {
+		try {
+			const result = await trx(TABLE)
+				.insert(data)
+				.onConflict('url')
+				.ignore();
 
-	const exisitingSites = await database(TABLE).select(siteColumns).where({ [siteColumns.url]: data.url }).first();
-	if (exisitingSites !== undefined) return 'You have already added this site.';
+			if (result.length === 0) {
+				console.log(`insertSite (duplicate) took: ${Date.now() - startTime}ms`);
+				return 'You have already added this site.';
+			}
 
-	else {
-		const user = await findUser({ id: data.user_id });
-		return database(TABLE).insert(data).onConflict('url').ignore()
-			.then(async (result) => {
-				if (result.length === 0) {
-					return 'You have already added this site.';
-				} else {
-					await AddTokenToDB(user.company ? user.company : '', user.email, data.url);
-					return 'The site was successfully added.';
+			const insertedSite = await trx(TABLE)
+				.select(siteColumns)
+				.where({ [siteColumns.url]: data.url })
+				.first();
+
+			if (!insertedSite) {
+				throw new Error('Failed to retrieve inserted site');
+			}
+
+			setImmediate(async () => {
+				try {
+					const user = await findUser({ id: data.user_id });
+					if (user) {
+						await AddTokenToDB(user.company ? user.company : '', user.email, data.url);
+					}
+				} catch (error) {
+					console.error('Background AddTokenToDB failed:', error);
 				}
-			})
-			.catch((error) => {
-				return `insert failed: ${error.message}`;
 			});
-	}
+
+			return insertedSite;
+
+		} catch (error) {
+			console.error('insertSite transaction error:', error);
+			return `insert failed: ${error.message}`;
+		}
+	});
 }
 
 export async function deleteSiteByURL(url: string, user_id: number): Promise<number> {
