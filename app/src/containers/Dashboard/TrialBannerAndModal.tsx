@@ -370,7 +370,6 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
         }
         else{
             toast.success('The domain was added successfully. Please Wait');
-            console.log("yahan ata");
             if (trialReload.current == true) {
               window.location.reload();
             } 
