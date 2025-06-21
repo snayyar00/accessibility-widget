@@ -99,29 +99,30 @@ export async function createSitesPlan(
   couponCode: string
 ): Promise<true> {
   try {
-    const user = await findUser({ id: userId });
-    let coupon = "";
-    if (couponCode) {
-      coupon = couponCode;
-    }
+    const [user, site, product, sitePlan] = await Promise.all([
+      findUser({ id: userId }),
+      findSiteByUserIdAndSiteId(userId, siteId),
+      findProductAndPriceByType(planName, billingType),
+      getSitePlanBySiteId(siteId).catch((): null => null)
+    ]);
+
+    const coupon = couponCode || "";
+
     if (!user) {
       throw new ApolloError('Can not find any user');
     }
-
-    const site = await findSiteByUserIdAndSiteId(userId, siteId);
     if (!site) {
       throw new ApolloError('Can not find any site');
     }
-    
-    const product: FindProductAndPriceByTypeResponse = await findProductAndPriceByType(planName, billingType);
     if (!product) {
       throw new ApolloError('Can not find any plan');
     }
 
-    const sitePlan = await getSitePlanBySiteId(siteId);
     if (sitePlan) {
-      await updateSitePlanById(sitePlan.id, { is_active: false });
-      await deletePermissionBySitePlanId(sitePlan.id);
+      await Promise.all([
+        updateSitePlanById(sitePlan.id, { is_active: false }),
+        deletePermissionBySitePlanId(sitePlan.id)
+      ]);
     }
 
     const { subcription_id, customer_id } = await createNewSubcription(
