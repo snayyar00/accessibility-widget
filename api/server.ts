@@ -234,14 +234,17 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 enabled: false,
               },
               subscription_cancel: {
-                proration_behavior: 'none',
-                enabled: true,
-                mode: 'at_period_end', // or 'immediately' based on your preference
-                cancellation_reason: {
-                  enabled: true,
-                  options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
-                },
+                enabled: false,
               },
+              // subscription_cancel: {
+              //   proration_behavior: 'none',
+              //   enabled: true,
+              //   mode: 'at_period_end', // or 'immediately' based on your preference
+              //   cancellation_reason: {
+              //     enabled: true,
+              //     options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
+              //   },
+              // },
             },
           });
         } else {
@@ -256,13 +259,16 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 enabled: false,
               },
               subscription_cancel: {
-                enabled: true,
-                mode: 'immediately', // or 'immediately' based on your preference
-                cancellation_reason: {
-                  enabled: true,
-                  options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
-                },
+                enabled: false,
               },
+              // subscription_cancel: {
+              //   enabled: true,
+              //   mode: 'immediately', // or 'immediately' based on your preference
+              //   cancellation_reason: {
+              //     enabled: true,
+              //     options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
+              //   },
+              // },
             },
           });
         }
@@ -287,19 +293,25 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 enabled: false,
               },
               subscription_cancel: {
-                enabled: true,
-                mode: 'immediately', // or 'immediately' based on your preference
-                cancellation_reason: {
-                  enabled: true,
-                  options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
-                },
+                enabled: false,
               },
+              // subscription_cancel: {
+              //   enabled: true,
+              //   mode: 'immediately', // or 'immediately' based on your preference
+              //   cancellation_reason: {
+              //     enabled: true,
+              //     options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
+              //   },
+              // },
             },
           });
         } else {
           configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
             features: {
               subscription_update: {
+                enabled: false,
+              },
+              subscription_cancel: {
                 enabled: false,
               },
             },
