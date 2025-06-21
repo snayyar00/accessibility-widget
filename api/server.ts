@@ -737,7 +737,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             }
           }
         }
-        console.log("deleting site by url");
       } catch (error) {
         console.log("error deleting site by url",error);
         return res.status(500).json({ error: error.message });
@@ -758,7 +757,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         }
       } catch (error) {
         console.log('err = ', error);
-        res.status(500).json({ error: error });
+        return res.status(500).json({ error: error });
       }
     }
 
@@ -787,7 +786,8 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         }
         
       } catch (error) {
-        res.status(500).json({ error: error });
+        console.error('cannot delete site:', error);
+        return res.status(500).json({ error: error });
       }
       
     }
