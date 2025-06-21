@@ -12,6 +12,7 @@ interface ConfirmDeleteSiteModalProps {
   domainID: number;
   domainStatus: string;
   billingLoading: boolean;
+  appSumoCount?: number;
 }
 
 const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
@@ -21,6 +22,7 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
   domainID,
   domainStatus,
   billingLoading,
+  appSumoCount = 0,
 }) => {
   const [selectedReason, setSelectedReason] = useState<string>("");
   const [otherReason, setOtherReason] = useState<string>("");
@@ -54,11 +56,16 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
 
   const handleReasonChange = (reason: string) => {
     setSelectedReason(reason);
-    if (reason === "too_expensive") {
+    if (reason === "too_expensive" && domainStatus !== "Life Time" && (appSumoCount || 0) <= 1) {
       setShowDiscountOffer(true);
     } else {
       setShowDiscountOffer(false);
     }
+  };
+
+  const handleDelete = () => {
+    const selectedReasonLabel = reasons.find(reason => reason.id === selectedReason)?.label || selectedReason;
+    onDelete(domainID, domainStatus, selectedReasonLabel, otherReason);
   };
 
 
@@ -261,7 +268,7 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
             Cancel
           </button>
           <button
-            onClick={() => onDelete(domainID, domainStatus, selectedReason, otherReason)}
+            onClick={handleDelete}
             className={`px-6 py-2 rounded-md text-white transition-colors duration-200 flex items-center ${
               isFormValid && !billingLoading 
                 ? 'bg-red-600 hover:bg-red-700' 
