@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 interface ConfirmDeleteSiteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onDelete: (id: number, status: string) => void;
+  onDelete: (id: number, status: string, cancelReason?: string, otherReason?: string) => void;
   domainID: number;
   domainStatus: string;
   billingLoading: boolean;
@@ -261,7 +261,7 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
             Cancel
           </button>
           <button
-            onClick={() => onDelete(domainID, domainStatus)}
+            onClick={() => onDelete(domainID, domainStatus, selectedReason, otherReason)}
             className={`px-6 py-2 rounded-md text-white transition-colors duration-200 flex items-center ${
               isFormValid && !billingLoading 
                 ? 'bg-red-600 hover:bg-red-700' 

@@ -41,6 +41,7 @@ import { appSumoPromoCount } from './utils/appSumoPromoCount';
 import { expireUsedPromo } from './utils/expireUsedPromo';
 import { findUsersByToken, getUserTokens } from './repository/user_plan_tokens.repository';
 import { customTokenCount } from './utils/customTokenCount';
+import { addCancelFeedback, CancelFeedbackProps } from './repository/cancel_feedback.repository';
 // import run from './scripts/create-products';
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -688,10 +689,17 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 
   app.post('/cancel-site-subscription',async (req,res)=>{
-    const { domainId,domainUrl,userId,status } = req.body;
+    const { domainId,domainUrl,userId,status,cancelReason,otherReason } = req.body;
     let previous_plan:any[];
+    let stripeCustomerId: string | null = null;
+    
     try {
       previous_plan = await getAnySitePlanBySiteId(Number(domainId));
+      
+      // Get stripe customer ID for feedback recording
+      if (previous_plan && previous_plan.length > 0) {
+        stripeCustomerId = previous_plan[0].customerId;
+      }
     } catch (error) {
       console.log('err = ', error);
     }
@@ -730,6 +738,26 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         }
         console.log("deleting site by url");
         await deleteSiteWithRelatedRecords(domainUrl,userId);
+        
+        // Record cancel feedback if provided
+        if (cancelReason) {
+          try {
+            const feedbackData: CancelFeedbackProps = {
+              user_id: Number(userId),
+              user_feedback: cancelReason === 'other' ? otherReason : cancelReason,
+              site_url: domainUrl,
+              stripe_customer_id: stripeCustomerId,
+              site_status_on_cancel: status,
+              deleted_at: new Date()
+            };
+            
+            await addCancelFeedback(feedbackData);
+            console.log('Cancel feedback recorded successfully');
+          } catch (feedbackError) {
+            console.error('Error recording cancel feedback:', feedbackError);
+            // Don't fail the entire operation if feedback recording fails
+          }
+        }
   
         return res.status(200).json({ success: true });
       } catch (error) {
@@ -751,6 +779,26 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           }
         }
         await deleteSiteWithRelatedRecords(domainUrl,userId);
+        
+        // Record cancel feedback if provided
+        if (cancelReason) {
+          try {
+            const feedbackData: CancelFeedbackProps = {
+              user_id: Number(userId),
+              user_feedback: cancelReason === 'other' ? otherReason : cancelReason,
+              site_url: domainUrl,
+              stripe_customer_id: stripeCustomerId,
+              site_status_on_cancel: status,
+              deleted_at: new Date()
+            };
+            
+            await addCancelFeedback(feedbackData);
+            console.log('Cancel feedback recorded successfully');
+          } catch (feedbackError) {
+            console.error('Error recording cancel feedback:', feedbackError);
+            // Don't fail the entire operation if feedback recording fails
+          }
+        }
   
         res.status(200).json({ success: true });
       } catch (error) {
