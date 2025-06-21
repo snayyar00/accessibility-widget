@@ -27,7 +27,7 @@ import { createSitesPlan, deleteExpiredSitesPlan, deleteSitesPlan, deleteTrialPl
 import Stripe from 'stripe';
 import { getAnySitePlanBySiteId, getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
-import { APP_SUMO_COUPON_ID, APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from './constants/billing.constant';
+import { APP_SUMO_COUPON_ID, APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, RETENTION_COUPON_ID } from './constants/billing.constant';
 import axios from 'axios';
 import OpenAI from 'openai';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
@@ -41,6 +41,7 @@ import { appSumoPromoCount } from './utils/appSumoPromoCount';
 import { expireUsedPromo } from './utils/expireUsedPromo';
 import { findUsersByToken, getUserTokens } from './repository/user_plan_tokens.repository';
 import { customTokenCount } from './utils/customTokenCount';
+import { addCancelFeedback, CancelFeedbackProps } from './repository/cancel_feedback.repository';
 // import run from './scripts/create-products';
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -694,10 +695,17 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 
   app.post('/cancel-site-subscription',async (req,res)=>{
-    const { domainId,domainUrl,userId,status } = req.body;
+    const { domainId,domainUrl,userId,status,cancelReason,otherReason } = req.body;
     let previous_plan:any[];
+    let stripeCustomerId: string | null = null;
+    
     try {
       previous_plan = await getAnySitePlanBySiteId(Number(domainId));
+      
+      // Get stripe customer ID for feedback recording
+      if (previous_plan && previous_plan.length > 0) {
+        stripeCustomerId = previous_plan[0].customerId;
+      }
     } catch (error) {
       console.log('err = ', error);
     }
@@ -736,6 +744,26 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         }
         console.log("deleting site by url");
         await deleteSiteWithRelatedRecords(domainUrl,userId);
+        
+        // Record cancel feedback if provided
+        if (cancelReason) {
+          try {
+            const feedbackData: CancelFeedbackProps = {
+              user_id: Number(userId),
+              user_feedback: cancelReason === 'other' ? otherReason : cancelReason,
+              site_url: domainUrl,
+              stripe_customer_id: stripeCustomerId,
+              site_status_on_cancel: status,
+              deleted_at: new Date()
+            };
+            
+            await addCancelFeedback(feedbackData);
+            console.log('Cancel feedback recorded successfully');
+          } catch (feedbackError) {
+            console.error('Error recording cancel feedback:', feedbackError);
+            // Don't fail the entire operation if feedback recording fails
+          }
+        }
   
         return res.status(200).json({ success: true });
       } catch (error) {
@@ -757,6 +785,26 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           }
         }
         await deleteSiteWithRelatedRecords(domainUrl,userId);
+        
+        // Record cancel feedback if provided
+        if (cancelReason) {
+          try {
+            const feedbackData: CancelFeedbackProps = {
+              user_id: Number(userId),
+              user_feedback: cancelReason === 'other' ? otherReason : cancelReason,
+              site_url: domainUrl,
+              stripe_customer_id: stripeCustomerId,
+              site_status_on_cancel: status,
+              deleted_at: new Date()
+            };
+            
+            await addCancelFeedback(feedbackData);
+            console.log('Cancel feedback recorded successfully');
+          } catch (feedbackError) {
+            console.error('Error recording cancel feedback:', feedbackError);
+            // Don't fail the entire operation if feedback recording fails
+          }
+        }
   
         res.status(200).json({ success: true });
       } catch (error) {
@@ -1188,6 +1236,70 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     } catch (error) {
       console.error('Error subscribing to newsletter:', error);
       res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
+  app.post('/apply-retention-discount', async (req, res) => {
+    const { domainId, email, status } = req.body;
+
+    try {
+      const sitePlan = await getSitePlanBySiteId(Number(domainId));
+
+      if (!sitePlan && status != 'Trial' && status != 'Trial Expired') {
+        return res.status(404).json({ error: 'Site plan not found' });
+      }
+
+      if (sitePlan?.subscription_id == 'Trial' || status == 'Trial' || status == 'Trial Expired') {
+        let customerId = sitePlan?.customerId;
+
+        if (status == 'Trial' || status == 'Trial Expired') {
+          const customers = await stripe.customers.list({
+            email: email,
+            limit: 1,
+          });
+
+          if (customers.data.length > 0) {
+            customerId = customers.data[0].id;
+          } else {
+            return res.status(400).json({ error: 'Customer not found' });
+          }
+        }
+
+        const promoCode = await stripe.promotionCodes.create({
+          coupon: RETENTION_COUPON_ID,
+          max_redemptions: 1,
+          active: true,
+          customer: customerId,
+        });
+
+        return res.status(200).json({
+          couponCode: promoCode.code,
+          message: 'Coupon code created successfully',
+        });
+      } else {
+        // Apply existing coupon to active subscription
+        try {
+          const subscription = await stripe.subscriptions.retrieve(sitePlan.subcriptionId);
+
+          if (!subscription || subscription.status !== 'active') {
+            return res.status(400).json({ error: 'Active subscription not found' });
+          }
+
+          await stripe.subscriptions.update(subscription.id, {
+            coupon: RETENTION_COUPON_ID,
+          });
+
+          return res.status(200).json({
+            message: '5% discount applied to subscription successfully',
+          });
+        } catch (subscriptionError) {
+          console.error('Error applying discount to subscription:', subscriptionError);
+          return res.status(500).json({ error: 'Failed to apply discount to subscription' });
+        }
+      }
+    } catch (error) {
+      console.error('Error applying retention discount:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
