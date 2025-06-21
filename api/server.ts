@@ -42,6 +42,7 @@ import { expireUsedPromo } from './utils/expireUsedPromo';
 import { findUsersByToken, getUserTokens } from './repository/user_plan_tokens.repository';
 import { customTokenCount } from './utils/customTokenCount';
 import { addCancelFeedback, CancelFeedbackProps } from './repository/cancel_feedback.repository';
+import { deleteRelatedRecordsBySiteId } from './services/deletion/cascade-delete.service';
 // import run from './scripts/create-products';
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -742,30 +743,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             }
           }
         }
-        console.log("deleting site by url");
-        await deleteSiteWithRelatedRecords(domainUrl,userId);
-        
-        // Record cancel feedback if provided
-        if (cancelReason) {
-          try {
-            const feedbackData: CancelFeedbackProps = {
-              user_id: Number(userId),
-              user_feedback: cancelReason === 'other' ? otherReason : cancelReason,
-              site_url: domainUrl,
-              stripe_customer_id: stripeCustomerId,
-              site_status_on_cancel: status,
-              deleted_at: new Date()
-            };
-            
-            await addCancelFeedback(feedbackData);
-            console.log('Cancel feedback recorded successfully');
-          } catch (feedbackError) {
-            console.error('Error recording cancel feedback:', feedbackError);
-            // Don't fail the entire operation if feedback recording fails
-          }
-        }
-  
-        return res.status(200).json({ success: true });
       } catch (error) {
         console.log("error deleting site by url",error);
         return res.status(500).json({ error: error.message });
@@ -784,34 +761,63 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             }
           }
         }
-        await deleteSiteWithRelatedRecords(domainUrl,userId);
-        
-        // Record cancel feedback if provided
-        if (cancelReason) {
-          try {
-            const feedbackData: CancelFeedbackProps = {
-              user_id: Number(userId),
-              user_feedback: cancelReason === 'other' ? otherReason : cancelReason,
-              site_url: domainUrl,
-              stripe_customer_id: stripeCustomerId,
-              site_status_on_cancel: status,
-              deleted_at: new Date()
-            };
-            
-            await addCancelFeedback(feedbackData);
-            console.log('Cancel feedback recorded successfully');
-          } catch (feedbackError) {
-            console.error('Error recording cancel feedback:', feedbackError);
-            // Don't fail the entire operation if feedback recording fails
-          }
-        }
-  
-        res.status(200).json({ success: true });
       } catch (error) {
         console.log('err = ', error);
-        res.status(500).json({ error: error });
+        return res.status(500).json({ error: error });
       }
     }
+
+    try {
+      await deleteSiteWithRelatedRecords(domainUrl, userId);
+    } catch (deleteError: any) {
+      try {
+        if (deleteError.code === 'ER_ROW_IS_REFERENCED_2' || deleteError.code === '23503' || deleteError.errno === 1451 || deleteError.message?.includes('foreign key constraint')) {
+          console.log('Foreign key constraint detected, attempting cascade deletion...');
+  
+          try {
+            // Get the site ID first
+            const site = await findSiteByURL(domainUrl);
+            if (site) {
+              // Delete related records in specific order
+              await deleteRelatedRecordsBySiteId(site.id);
+              // Now try deleting the site again
+              await deleteSiteWithRelatedRecords(domainUrl, userId);
+            }
+          } catch (cascadeError) {
+            console.error('Cascade deletion also failed:', cascadeError);
+            throw cascadeError;
+          }
+        } else {
+          throw deleteError;
+        }
+        
+      } catch (error) {
+        console.error('cannot delete site:', error);
+        return res.status(500).json({ error: error });
+      }
+      
+    }
+
+    // Record cancel feedback if provided
+    if (cancelReason) {
+      try {
+        const feedbackData: CancelFeedbackProps = {
+          user_id: Number(userId),
+          user_feedback: cancelReason === 'other' ? otherReason : cancelReason,
+          site_url: domainUrl,
+          stripe_customer_id: stripeCustomerId,
+          site_status_on_cancel: status,
+          deleted_at: new Date(),
+        };
+
+        await addCancelFeedback(feedbackData);
+        console.log('Cancel feedback recorded successfully');
+      } catch (feedbackError) {
+        console.error('Error recording cancel feedback:', feedbackError);
+      }
+    }
+
+    return res.status(200).json({ success: true });
 
   });
 
