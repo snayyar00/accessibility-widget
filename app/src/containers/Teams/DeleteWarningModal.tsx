@@ -64,8 +64,11 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
   };
 
   const handleDelete = () => {
-    const selectedReasonLabel = reasons.find(reason => reason.id === selectedReason)?.label || selectedReason;
-    onDelete(domainID, domainStatus, selectedReasonLabel, otherReason);
+    const feedbackText = selectedReason === "other" 
+      ? otherReason 
+      : reasons.find(reason => reason.id === selectedReason)?.label || selectedReason;
+    
+    onDelete(domainID, domainStatus, feedbackText, otherReason);
   };
 
 
