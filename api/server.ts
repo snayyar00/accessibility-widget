@@ -58,6 +58,8 @@ type ContextParams = {
 
 dotenv.config();
 
+const IS_LOCAL_DEV = !process.env.COOLIFY_URL && process.env.NODE_ENV !== 'production';
+
 const app = express();
 const port = process.env.PORT || 3001;
 const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, 'https://www.webability.io'];
@@ -73,7 +75,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     optionsSuccessStatus: 200,
     credentials: true,
     origin: (origin: any, callback: any) => {
-      if (req.body && allowedOperations.includes(req.body.operationName)) {
+      if (IS_LOCAL_DEV) {
+        callback(null, true);
+      } else if (req.body && allowedOperations.includes(req.body.operationName)) {
         // Allow any origin for 'validateToken'
         callback(null, true);
       } else if (allowedOrigins.includes(origin) || req.method === 'OPTIONS') {
@@ -1619,6 +1623,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       typeDefs: RootSchema,
       resolvers: RootResolver as IResolvers[],
     }),
+    playground: IS_LOCAL_DEV,
     uploads: {
       maxFileSize: 10000000,
       maxFiles: 20,

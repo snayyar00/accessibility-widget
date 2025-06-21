@@ -192,7 +192,7 @@ const ReportView: React.FC = () => {
   };
 
   const report = data?.fetchReportByR2Key || {};
-  console.log("Report data:", report);
+  //console.log("Report data:", report);
 
   const issues = report.issues || [];
   const totalStats = report.totalStats || {};
