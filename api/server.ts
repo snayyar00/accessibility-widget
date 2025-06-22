@@ -42,7 +42,7 @@ import { expireUsedPromo } from './utils/expireUsedPromo';
 import { findUsersByToken, getUserTokens } from './repository/user_plan_tokens.repository';
 import { customTokenCount } from './utils/customTokenCount';
 import { addCancelFeedback, CancelFeedbackProps } from './repository/cancel_feedback.repository';
-import { deleteRelatedRecordsBySiteId } from './services/deletion/cascade-delete.service';
+
 // import run from './scripts/create-products';
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -769,33 +769,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
     try {
       await deleteSiteWithRelatedRecords(domainUrl, userId);
-    } catch (deleteError: any) {
-      try {
-        if (deleteError.code === 'ER_ROW_IS_REFERENCED_2' || deleteError.code === '23503' || deleteError.errno === 1451 || deleteError.message?.includes('foreign key constraint')) {
-          console.log('Foreign key constraint detected, attempting cascade deletion...');
-  
-          try {
-            // Get the site ID first
-            const site = await findSiteByURL(domainUrl);
-            if (site) {
-              // Delete related records in specific order
-              await deleteRelatedRecordsBySiteId(site.id);
-              // Now try deleting the site again
-              await deleteSiteWithRelatedRecords(domainUrl, userId);
-            }
-          } catch (cascadeError) {
-            console.error('Cascade deletion also failed:', cascadeError);
-            throw cascadeError;
-          }
-        } else {
-          throw deleteError;
-        }
-        
-      } catch (error) {
-        console.error('cannot delete site:', error);
-        return res.status(500).json({ error: error });
-      }
-      
+    } catch (error) {
+      console.error('Error deleting site:', error);
+      return res.status(500).json({ error: 'Failed to delete site' });
     }
 
     // Record cancel feedback if provided

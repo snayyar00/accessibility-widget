@@ -3,7 +3,7 @@ import { TABLES } from '~/constants/database.constant';
 import { findUser } from './user.repository';
 import { AddTokenToDB, RemoveTokenFromDB, UpdateWebsiteURL } from '~/services/webToken/mongoVisitors';
 import { sitesPlansColumns } from './sites_plans.repository';
-import { deleteRelatedRecordsBySiteId } from '~/services/deletion/cascade-delete.service';
+
 
 const TABLE = TABLES.allowed_sites;
 
@@ -89,33 +89,60 @@ export async function deleteSiteByURL(url: string, user_id: number): Promise<num
 
 /**
  * Safely deletes a site and all its related records to avoid foreign key constraint violations
- * Uses the optimized cascade deletion service with FK constraints disabled for maximum performance
+ * Uses a transaction to ensure atomicity - either all records are deleted or none are
  */
 export async function deleteSiteWithRelatedRecords(url: string, user_id: number): Promise<number> {
-	try {
-		const site = await database(TABLE)
-			.select(siteColumns)
-			.where({ [siteColumns.url]: url, [siteColumns.user_id]: user_id })
-			.first();
+	return database.transaction(async (trx) => {
+		try {
+			// Find the site within the transaction
+			const site = await trx(TABLE)
+				.select(siteColumns)
+				.where({ [siteColumns.url]: url, [siteColumns.user_id]: user_id })
+				.first();
 
-		if (!site) {
-			throw new Error(`Site not found: ${url} for user ${user_id}`);
+			if (!site) {
+				throw new Error(`Site not found: ${url} for user ${user_id}`);
+			}
+
+			const siteId = site.id;
+
+			// Delete all related records within the same transaction
+			await trx.raw('SET FOREIGN_KEY_CHECKS = 0');
+			
+			await Promise.all([
+				trx('impressions').where('site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} impressions`)),
+				trx('problem_reports').where('site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} problem_reports`)),
+				trx('unique_visitors').where('site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} unique_visitors`)),
+				trx('accessibility_reports').where('allowed_sites_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} accessibility_reports`)),
+				trx('accessibility_scans').where('site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} accessibility_scans`)),
+				trx('widget_settings').where('allowed_site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} widget_settings`)),
+				trx('sites_plans').where('allowed_site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} sites_plans`)),
+				trx('site_permissions').where('allowed_site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} site_permissions`)),
+			]);
+
+			await trx.raw('SET FOREIGN_KEY_CHECKS = 1');
+
+			// Delete the main site record within the same transaction
+			const deletedCount = await trx(TABLE)
+				.where({ 'user_id': user_id, 'url': url })
+				.del();
+
+			console.log(`Deleted site: ${url} (${deletedCount} records)`);
+			return deletedCount;
+			
+		} catch (error) {
+			console.error(`Error in deleteSiteWithRelatedRecords for ${url}:`, error);
+			throw error;
 		}
-
-		const siteId = site.id;
-
-		await deleteRelatedRecordsBySiteId(siteId);
-
-		const deletedCount = await database(TABLE)
-			.where({ 'user_id': user_id, 'url': url })
-			.del();
-
-		return deletedCount;
-		
-	} catch (error) {
-		console.error(`❌ Error in deleteSiteWithRelatedRecords for ${url}:`, error);
-		throw error;
-	}
+	});
 }
 
 export async function updateAllowedSiteURL(site_id: number, url: string, user_id: number): Promise<number> {
