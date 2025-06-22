@@ -311,10 +311,6 @@ export async function deleteExpiredSitesPlan(id: number, hook = false): Promise<
   try {
     let sitePlan = await getAnySitePlanById(id);
 
-    if(!sitePlan){
-      sitePlan = await getAnySitePlanById(id);
-    }
-
     if (!sitePlan) {
       throw new ApolloError('Can not find any user plan');
     }
