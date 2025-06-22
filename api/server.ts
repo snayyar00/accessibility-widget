@@ -60,6 +60,8 @@ type ContextParams = {
 
 dotenv.config();
 
+const IS_LOCAL_DEV = !process.env.COOLIFY_URL && process.env.NODE_ENV !== 'production';
+
 const app = express();
 const port = process.env.PORT || 3001;
 const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, 'https://www.webability.io'];
@@ -67,7 +69,6 @@ const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerIntera
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
-app.use(express.json({ limit: '2mb'}));
 
 scheduleMonthlyEmails();
 
@@ -76,7 +77,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     optionsSuccessStatus: 200,
     credentials: true,
     origin: (origin: any, callback: any) => {
-      if (req.body && allowedOperations.includes(req.body.operationName)) {
+      if (IS_LOCAL_DEV) {
+        callback(null, true);
+      } else if (req.body && allowedOperations.includes(req.body.operationName)) {
         // Allow any origin for 'validateToken'
         callback(null, true);
       } else if (allowedOrigins.includes(origin) || req.method === 'OPTIONS') {
@@ -111,8 +114,11 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
   app.use(express.static(join(resolve(), 'public', 'uploads')));
   app.use(cookieParser());
+  
+  // Apply JSON parsing middleware after Stripe webhook to avoid interfering with raw body processing
+  app.use(express.json({ limit: '5mb'}));
 
-  app.use(bodyParser.urlencoded({ extended: true, limit: '2mb' }));
+  app.use(bodyParser.urlencoded({ extended: true, limit: '5mb' }));
 
   app.get('/', (req, res) => {
     res.send('Hello orld!');
@@ -1735,6 +1741,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       typeDefs: RootSchema,
       resolvers: RootResolver as IResolvers[],
     }),
+    playground: IS_LOCAL_DEV,
     uploads: {
       maxFileSize: 10000000,
       maxFiles: 20,
@@ -1825,7 +1832,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     },
   });
 
-  app.use('/graphql', express.json({ limit: '2mb' }));
   serverGraph.applyMiddleware({ app, cors: false });
   
   // Initialize Sentry with tracing for GraphQL
