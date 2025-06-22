@@ -4,6 +4,7 @@ import { findUser } from './user.repository';
 import { AddTokenToDB, RemoveTokenFromDB, UpdateWebsiteURL } from '~/services/webToken/mongoVisitors';
 import { sitesPlansColumns } from './sites_plans.repository';
 
+
 const TABLE = TABLES.allowed_sites;
 
 export const siteColumns = {
@@ -88,48 +89,57 @@ export async function deleteSiteByURL(url: string, user_id: number): Promise<num
 
 /**
  * Safely deletes a site and all its related records to avoid foreign key constraint violations
- * This function deletes in the correct order: sites_permission -> sites_plans -> allowed_sites
+ * Uses a transaction to ensure atomicity - either all records are deleted or none are
  */
 export async function deleteSiteWithRelatedRecords(url: string, user_id: number): Promise<number> {
 	return database.transaction(async (trx) => {
 		try {
-			// First, find the site to get its ID
+			// Find the site within the transaction
 			const site = await trx(TABLE)
 				.select(siteColumns)
 				.where({ [siteColumns.url]: url, [siteColumns.user_id]: user_id })
 				.first();
 
 			if (!site) {
-				throw new Error('Site not found');
+				throw new Error(`Site not found: ${url} for user ${user_id}`);
 			}
 
 			const siteId = site.id;
 
-			// Delete from sites_permission table first (if it references sites_plans)
-			await trx(TABLES.sitePermissions)
-				.where('sites_plan_id', 'IN', 
-					trx(TABLES.sitesPlans)
-						.select('id')
-						.where({ 'allowed_site_id': siteId })
-				)
-				.del();
+			// Delete all related records within the same transaction
+			await trx.raw('SET FOREIGN_KEY_CHECKS = 0');
+			
+			await Promise.all([
+				trx('impressions').where('site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} impressions`)),
+				trx('problem_reports').where('site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} problem_reports`)),
+				trx('unique_visitors').where('site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} unique_visitors`)),
+				trx('accessibility_reports').where('allowed_sites_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} accessibility_reports`)),
+				trx('accessibility_scans').where('site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} accessibility_scans`)),
+				trx('widget_settings').where('allowed_site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} widget_settings`)),
+				trx('sites_plans').where('allowed_site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} sites_plans`)),
+				trx('site_permissions').where('allowed_site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} site_permissions`)),
+			]);
 
-			// Delete from sites_plans table (references allowed_sites)
-			await trx(TABLES.sitesPlans)
-				.where({ 'allowed_site_id': siteId })
-				.del();
+			await trx.raw('SET FOREIGN_KEY_CHECKS = 1');
 
-			// Finally, delete from allowed_sites table
+			// Delete the main site record within the same transaction
 			const deletedCount = await trx(TABLE)
 				.where({ 'user_id': user_id, 'url': url })
 				.del();
 
-			// Remove token from MongoDB
-			// await RemoveTokenFromDB(url);
-
+			console.log(`Deleted site: ${url} (${deletedCount} records)`);
 			return deletedCount;
+			
 		} catch (error) {
-			console.error('Error in deleteSiteWithRelatedRecords:', error);
+			console.error(`Error in deleteSiteWithRelatedRecords for ${url}:`, error);
 			throw error;
 		}
 	});
