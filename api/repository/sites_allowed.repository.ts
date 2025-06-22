@@ -3,6 +3,7 @@ import { TABLES } from '~/constants/database.constant';
 import { findUser } from './user.repository';
 import { AddTokenToDB, RemoveTokenFromDB, UpdateWebsiteURL } from '~/services/webToken/mongoVisitors';
 import { sitesPlansColumns } from './sites_plans.repository';
+import { deleteRelatedRecordsBySiteId } from '~/services/deletion/cascade-delete.service';
 
 const TABLE = TABLES.allowed_sites;
 
@@ -88,51 +89,33 @@ export async function deleteSiteByURL(url: string, user_id: number): Promise<num
 
 /**
  * Safely deletes a site and all its related records to avoid foreign key constraint violations
- * This function deletes in the correct order: sites_permission -> sites_plans -> allowed_sites
+ * Uses the optimized cascade deletion service with FK constraints disabled for maximum performance
  */
 export async function deleteSiteWithRelatedRecords(url: string, user_id: number): Promise<number> {
-	return database.transaction(async (trx) => {
-		try {
-			// First, find the site to get its ID
-			const site = await trx(TABLE)
-				.select(siteColumns)
-				.where({ [siteColumns.url]: url, [siteColumns.user_id]: user_id })
-				.first();
+	try {
+		const site = await database(TABLE)
+			.select(siteColumns)
+			.where({ [siteColumns.url]: url, [siteColumns.user_id]: user_id })
+			.first();
 
-			if (!site) {
-				throw new Error('Site not found');
-			}
-
-			const siteId = site.id;
-
-			// Delete from sites_permission table first (if it references sites_plans)
-			await trx(TABLES.sitePermissions)
-				.where('sites_plan_id', 'IN', 
-					trx(TABLES.sitesPlans)
-						.select('id')
-						.where({ 'allowed_site_id': siteId })
-				)
-				.del();
-
-			// Delete from sites_plans table (references allowed_sites)
-			await trx(TABLES.sitesPlans)
-				.where({ 'allowed_site_id': siteId })
-				.del();
-
-			// Finally, delete from allowed_sites table
-			const deletedCount = await trx(TABLE)
-				.where({ 'user_id': user_id, 'url': url })
-				.del();
-
-			// Remove token from MongoDB
-			// await RemoveTokenFromDB(url);
-
-			return deletedCount;
-		} catch (error) {
-			console.error('Error in deleteSiteWithRelatedRecords:', error);
-			throw error;
+		if (!site) {
+			throw new Error(`Site not found: ${url} for user ${user_id}`);
 		}
-	});
+
+		const siteId = site.id;
+
+		await deleteRelatedRecordsBySiteId(siteId);
+
+		const deletedCount = await database(TABLE)
+			.where({ 'user_id': user_id, 'url': url })
+			.del();
+
+		return deletedCount;
+		
+	} catch (error) {
+		console.error(`❌ Error in deleteSiteWithRelatedRecords for ${url}:`, error);
+		throw error;
+	}
 }
 
 export async function updateAllowedSiteURL(site_id: number, url: string, user_id: number): Promise<number> {
