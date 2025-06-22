@@ -111,21 +111,29 @@ export async function deleteSiteWithRelatedRecords(url: string, user_id: number)
 			
 			await Promise.all([
 				trx('impressions').where('site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} impressions`)),
+					.then(count => console.log(`Deleted ${count} impressions`))
+					.catch(err => console.log(`Impressions deletion skipped: ${err.message}`)),
 				trx('problem_reports').where('site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} problem_reports`)),
+					.then(count => console.log(`Deleted ${count} problem_reports`))
+					.catch(err => console.log(`Problem reports deletion skipped: ${err.message}`)),
 				trx('unique_visitors').where('site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} unique_visitors`)),
+					.then(count => console.log(`Deleted ${count} unique_visitors`))
+					.catch(err => console.log(`Unique visitors deletion skipped: ${err.message}`)),
 				trx('accessibility_reports').where('allowed_sites_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} accessibility_reports`)),
+					.then(count => console.log(`Deleted ${count} accessibility_reports`))
+					.catch(err => console.log(`Accessibility reports deletion skipped: ${err.message}`)),
 				trx('accessibility_scans').where('site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} accessibility_scans`)),
+					.then(count => console.log(`Deleted ${count} accessibility_scans`))
+					.catch(err => console.log(`Accessibility scans deletion skipped: ${err.message}`)),
 				trx('widget_settings').where('allowed_site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} widget_settings`)),
+					.then(count => console.log(`Deleted ${count} widget_settings`))
+					.catch(err => console.log(`Widget settings deletion skipped: ${err.message}`)),
 				trx('sites_plans').where('allowed_site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} sites_plans`)),
+					.then(count => console.log(`Deleted ${count} sites_plans`))
+					.catch(err => console.log(`Sites plans deletion skipped: ${err.message}`)),
 				trx('site_permissions').where('allowed_site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} site_permissions`)),
+					.then(count => console.log(`Deleted ${count} site_permissions`))
+					.catch(err => console.log(`Site permissions deletion skipped: ${err.message}`)),
 			]);
 
 			await trx.raw('SET FOREIGN_KEY_CHECKS = 1');
