@@ -83,7 +83,7 @@ export const ENVIRONMENT_CONFIGS = {
   },
   
   production: {
-    enabled: false, // Start disabled in production
+    enabled: true, // Enable enhanced processing in production
     debugMode: false,
     maxConcurrency: 15,
     fallbackOnError: true
