@@ -240,14 +240,17 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 enabled: false,
               },
               subscription_cancel: {
-                proration_behavior: 'none',
-                enabled: true,
-                mode: 'at_period_end', // or 'immediately' based on your preference
-                cancellation_reason: {
-                  enabled: true,
-                  options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
-                },
+                enabled: false,
               },
+              // subscription_cancel: {
+              //   proration_behavior: 'none',
+              //   enabled: true,
+              //   mode: 'at_period_end', // or 'immediately' based on your preference
+              //   cancellation_reason: {
+              //     enabled: true,
+              //     options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
+              //   },
+              // },
             },
           });
         } else {
@@ -262,13 +265,16 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 enabled: false,
               },
               subscription_cancel: {
-                enabled: true,
-                mode: 'immediately', // or 'immediately' based on your preference
-                cancellation_reason: {
-                  enabled: true,
-                  options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
-                },
+                enabled: false,
               },
+              // subscription_cancel: {
+              //   enabled: true,
+              //   mode: 'immediately', // or 'immediately' based on your preference
+              //   cancellation_reason: {
+              //     enabled: true,
+              //     options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
+              //   },
+              // },
             },
           });
         }
@@ -293,19 +299,25 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 enabled: false,
               },
               subscription_cancel: {
-                enabled: true,
-                mode: 'immediately', // or 'immediately' based on your preference
-                cancellation_reason: {
-                  enabled: true,
-                  options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
-                },
+                enabled: false,
               },
+              // subscription_cancel: {
+              //   enabled: true,
+              //   mode: 'immediately', // or 'immediately' based on your preference
+              //   cancellation_reason: {
+              //     enabled: true,
+              //     options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
+              //   },
+              // },
             },
           });
         } else {
           configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
             features: {
               subscription_update: {
+                enabled: false,
+              },
+              subscription_cancel: {
                 enabled: false,
               },
             },
@@ -412,33 +424,30 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.post('/create-checkout-session',async (req,res)=>{
     const { email,planName,billingInterval,returnUrl,domainId,userId,domain,cardTrial,promoCode} = req.body;
     
-    const price = await findProductAndPriceByType(planName,billingInterval);
-
     try {
-      // Search for an existing customer by email
-      const customers = await stripe.customers.list({
-        email: email,
-        limit: 1
-      });
+      const [price, customers] = await Promise.all([
+        findProductAndPriceByType(planName, billingInterval),
+        stripe.customers.list({
+          email: email,
+          limit: 1
+        })
+      ]);
 
       let customer;
+      let subscriptions;
 
-      // Check if customer exists
       if (customers.data.length > 0) {
         customer = customers.data[0];
-        // console.log("customer exists = ",customer);
+        subscriptions = await stripe.subscriptions.list({ 
+          customer: customer.id, 
+          limit: 100 
+        });
       } else {
-        // Create a new customer if not found
         customer = await stripe.customers.create({
           email: email,
         });
-        // return;
       }
 
-      const subscriptions = await stripe.subscriptions.list({ customer: customer.id,limit:100 });
-      // for (const subscription of subscriptions.data) {
-      //   await stripe.subscriptions.del(subscription.id);
-      // }
 
       let promoCodeData:Stripe.PromotionCode[];
 
@@ -446,7 +455,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         const validCodesData: Stripe.PromotionCode[] = [];
         const invalidCodes: string[] = [];
       
-        // Process each code sequentially (you can also use Promise.all if you prefer parallel execution)
         for (const code of promoCode) {
           const found = await findPromo(stripe, code);
           if (found) {
@@ -463,22 +471,22 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           });
         }
       
-        // Now, validCodesData contains all valid promo code objects.
         promoCodeData = validCodesData;
       }
 
-      let price_data = await stripe.prices.retrieve(String(price.price_stripe_id),{expand:['tiers']});
-
-      // Create the checkout session
       let session:any = {}
       if(typeof(promoCode[0]) == 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id)))
       {
-        const {orderedCodes,numPromoSites } = await appSumoPromoCount(subscriptions,promoCode,userId);
+        const [
+          { orderedCodes, numPromoSites },
+          tokenUsed
+        ] = await Promise.all([
+          appSumoPromoCount(subscriptions, promoCode, userId),
+          getUserTokens(userId)
+        ]);
 
         console.log("promo");
-        const tokenUsed = await getUserTokens(userId) || [];
-        
-        const {lastCustomCode,nonCustomCodes} = await customTokenCount(userId,tokenUsed);
+        const { lastCustomCode, nonCustomCodes } = await customTokenCount(userId, tokenUsed || []);
 
         // This will work on for AppSumo coupons, we allow use of coupons that should only work for the app sumo tier plans and we manually apply the discount according to new plan (single)
 
@@ -496,16 +504,21 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           description: `Plan for ${domain}(${lastCustomCode ? [lastCustomCode,...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
         });
         
-        await expireUsedPromo(numPromoSites,stripe,orderedCodes,userId,email);        
+        const cleanupPromises = [
+          expireUsedPromo(numPromoSites, stripe, orderedCodes, userId, email)
+        ];
 
-        let previous_plan;
         try {
-          previous_plan = await getSitePlanBySiteId(Number(domainId));
-          await deleteTrialPlan(previous_plan.id);
+          const previous_plan = await getSitePlanBySiteId(Number(domainId));
+          cleanupPromises.push(deleteTrialPlan(previous_plan.id).then(() => {}));
         } catch (error) {
-          // console.log('err = ', error);
+          
         }
 
+        
+        await Promise.all(cleanupPromises);
+
+       
         await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), 'appsumo');
 
         console.log('New Sub created');
@@ -798,12 +811,18 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.post('/create-subscription',async (req,res)=>{
     const { email,returnURL, planName,billingInterval,domainId,domainUrl,userId,cardTrial,promoCode } = req.body;
 
-    const price = await findProductAndPriceByType(planName,billingInterval);
 
-    const sites = await getSitesPlanByUserId(Number(userId));
+    const [price, sites, customers] = await Promise.all([
+      findProductAndPriceByType(planName, billingInterval),
+      getSitesPlanByUserId(Number(userId)),
+      stripe.customers.list({
+        email: email,
+        limit: 1
+      })
+    ]);
 
-    const sub_id = sites[0]?.subcriptionId;
-    
+      const sub_id = sites[0]?.subcriptionId;
+      
 
     let no_sub = false;
     let subscription;
@@ -823,12 +842,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
 
     try {
-      // Search for an existing customer by email
-      const customers = await stripe.customers.list({
-        email: email,
-        limit: 1
-      });
-
       let customer;
       
       // Check if customer exists
@@ -841,23 +854,24 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         res.status(404);
       }
 
-      const subscriptions = await stripe.subscriptions.list({
+      const [subscriptions, price_data] = await Promise.all([
+        stripe.subscriptions.list({
           customer: customer.id,
-          limit:100
-      });
+          limit: 100
+        }),
+        stripe.prices.retrieve(String(price.price_stripe_id), {expand: ['tiers']})
+      ]);
 
       if (subscriptions.data.length > 0) {
         subscription = subscriptions.data[0];
-        no_sub=false;
+        no_sub = false;
       }
-
-      let price_data:Stripe.Price = await stripe.prices.retrieve(String(price.price_stripe_id),{expand:['tiers']});
 
       if(!price_data?.tiers || price_data?.tiers?.length == 0){
         no_sub = true
         console.log("no tiers");
       }
-
+      let cleanupPromises: Promise<void>[] = [];
       if(no_sub)
       {   
         let promoCodeData:Stripe.PromotionCode[];
@@ -889,10 +903,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
         if (typeof(promoCode[0]) == 'number' || (promoCodeData && promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id))) {
           
-          
-          const {orderedCodes,numPromoSites } = await appSumoPromoCount(subscriptions,promoCode,userId);
-          
-          const tokenUsed = await getUserTokens(userId) || [];
+          const [
+            { orderedCodes, numPromoSites },
+            tokenUsed
+          ] = await Promise.all([
+            appSumoPromoCount(subscriptions, promoCode, userId),
+            getUserTokens(userId)
+          ]);
 
           const {lastCustomCode,nonCustomCodes} = await customTokenCount(userId,tokenUsed);
 
@@ -911,7 +928,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             description: `Plan for ${domainUrl}(${lastCustomCode ? [lastCustomCode,...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
           });
           
-          await expireUsedPromo(numPromoSites,stripe,orderedCodes,userId,email);
+          // Parallel execution for cleanup operations
+          cleanupPromises = [
+            expireUsedPromo(numPromoSites, stripe, orderedCodes, userId, email)
+          ];
 
         } else if (promoCode && promoCode.length > 0) {
           // Coupon is not valid or not the app sumo promo
@@ -947,13 +967,14 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           });
         }
 
-        let previous_plan;
         try {
-          previous_plan = await getSitePlanBySiteId(Number(domainId));
-          await deleteTrialPlan(previous_plan.id);
+          const previous_plan = await getSitePlanBySiteId(Number(domainId));
+          cleanupPromises.push(deleteTrialPlan(previous_plan.id).then(() => {}));
         } catch (error) {
-          // console.log('err = ', error);
+          // Previous plan doesn't exist, continue
         }
+
+        await Promise.all(cleanupPromises);
         
         if(promoCode.length > 0){
           await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), 'appsumo');
@@ -998,15 +1019,21 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
             console.log('meta data updated');
 
-            let previous_plan;
+            // Parallel execution for cleanup and site plan creation
+            const cleanupPromises = [];
+            
+            // Handle previous plan deletion
             try {
-              previous_plan = await getSitePlanBySiteId(Number(domainId));
-              await deleteTrialPlan(previous_plan.id);
+              const previous_plan = await getSitePlanBySiteId(Number(domainId));
+              cleanupPromises.push(deleteTrialPlan(previous_plan.id).then(() => {}));
             } catch (error) {
-              // console.log('err = ', error);
+              // Previous plan doesn't exist, continue
             }
 
-            await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
+            // Add site plan creation
+            cleanupPromises.push(createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), ''));
+
+            await Promise.all(cleanupPromises);
 
 
             res.status(200).json({ success: true });
@@ -1024,15 +1051,22 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             });
 
             console.log('meta data updated');
-            let previous_plan;
+            
+            // Parallel execution for cleanup and site plan creation
+            const cleanupPromises = [];
+            
+            // Handle previous plan deletion
             try {
-              previous_plan = await getSitePlanBySiteId(Number(domainId));
-              await deleteTrialPlan(previous_plan.id);
+              const previous_plan = await getSitePlanBySiteId(Number(domainId));
+              cleanupPromises.push(deleteTrialPlan(previous_plan.id).then(() => {}));
             } catch (error) {
-              console.log('err = ', error);
+              // Previous plan doesn't exist, continue
             }
 
-            await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
+            // Add site plan creation
+            cleanupPromises.push(createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), ''));
+
+            await Promise.all(cleanupPromises);
 
             console.log('Old Sub created');
 

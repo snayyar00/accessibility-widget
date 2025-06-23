@@ -59,15 +59,15 @@ export async function addSite(userId: number, url: string): Promise<string> {
         url: url
     }
     const response = await insertSite(data);
-    if(response == "You have already added this site.")
-    {
-        throw new Error("You have already added this site.");
-    }
-    const site = await findSiteByURL(url)
 
-    await createSitesPlan(userId,"Trial",TRIAL_PLAN_NAME,TRIAL_PLAN_INTERVAL,site.id,"");
+    if (typeof response === 'string') {
+      throw new Error(response);
+    }
+
+    const site = response;
 
     setImmediate(async () => {
+      await createSitesPlan(userId, 'Trial', TRIAL_PLAN_NAME, TRIAL_PLAN_INTERVAL, site.id, '');
       const report = await fetchAccessibilityReport(url);
       const user = await getUserbyId(userId);
       const widgetStatus = await checkScript(url);
@@ -100,8 +100,8 @@ export async function addSite(userId: number, url: string): Promise<string> {
       });
     });
 
-    return response
-    
+    return 'The site was successfully added.';
+
     // const data = await insertDocument({ name, body, user_id: userId });
     // const newDocumentId = data.shift();
     // const document = await findDocumentById(newDocumentId);
