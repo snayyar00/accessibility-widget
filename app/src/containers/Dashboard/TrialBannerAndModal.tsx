@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useState } from 'react'
+import React, { FormEvent, useEffect, useRef, useState } from 'react'
 import { parse } from 'tldts';
 import BannerImage from "@/assets/images/WebAbility Hero3.png"
 import SingleBannerImage from "@/assets/images/WebAbilityBanner.png"
@@ -83,6 +83,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
     const [portalClick,setPortalClick] = useState(false);
     const [promoCode,setPromoCode] = useState('');
     const { search } = useLocation();
+    const trialReload = useRef(false);
 
     const showPaymentModal = async () => {
         const sanitizedDomain = getRootDomain(formData.domainName);
@@ -369,7 +370,9 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
         }
         else{
             toast.success('The domain was added successfully. Please Wait');
-            console.log("yahan ata");
+            if (trialReload.current == true) {
+              window.location.reload();
+            } 
             // window.location.href = '/add-domain';
         }
     };
@@ -465,6 +468,9 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                         <button
                           disabled={addSiteLoading || billingLoading}
                           type="submit"
+                          onClick={()=>{
+                            trialReload.current = true;
+                          }}
                           className="py-3 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full sm:mt-2 sm:w-full transition duration-300"
                         >
                           {addSiteLoading || billingLoading
