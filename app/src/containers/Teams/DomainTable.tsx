@@ -81,7 +81,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
     },
   });
 
-  const handleDelete = async (id: number, status: string) => {
+  const handleDelete = async (id: number, status: string, cancelReason?: string, otherReason?: string) => {
     const index = domains.findIndex((domain) => domain.id === id);
     const foundUrl = domains[index].url;
 
@@ -92,6 +92,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
       domainUrl: foundUrl,
       userId: userData.id,
       status: status,
+      cancelReason: cancelReason,
+      otherReason: otherReason,
     };
 
     try {
@@ -435,6 +437,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
         isOpen={showModal}
         onClose={handleCloseModal}
         onDelete={handleDelete}
+        appSumoCount={customerData?.appSumoCount || 0}
       />
 
       <div className="container mx-auto px-4 py-8">
