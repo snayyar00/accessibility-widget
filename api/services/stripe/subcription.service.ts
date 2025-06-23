@@ -210,9 +210,9 @@ export async function cancelSubcriptionBySubId(subId: string): Promise<boolean> 
 
     return true;
   } catch (error) {
-    console.log("Sub del func error",error);
     logger.error(error);
-    throw new ApolloError('Something went wrong!');
+    throw error;
+    // throw new ApolloError('Something went wrong!');
   }
 }
 

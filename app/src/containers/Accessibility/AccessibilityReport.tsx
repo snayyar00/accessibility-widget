@@ -81,7 +81,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [siteImg, setSiteImg] = useState('');
   const [expand, setExpand] = useState(false);
   const [correctDomain, setcorrectDomain] = useState(currentDomain);
-  
+  //console.log('Current domain:', correctDomain);
   // const [accessibilityData, setAccessibilityData] = useState({});
   const { data: sitesData } = useQuery(GET_USER_SITES);
   const [saveAccessibilityReport] = useMutation(SAVE_ACCESSIBILITY_REPORT);
