@@ -14,6 +14,7 @@ type UserLoginedResponse = {
   avatarUrl: string;
   invitationToken: string | null;
   organization_ids: number[];
+  current_organization_id: number | null;
 };
 
 export default async function getUserLogined(bearerToken: string | null, res: Response): Promise<UserLoginedResponse> {
@@ -38,6 +39,7 @@ export default async function getUserLogined(bearerToken: string | null, res: Re
           avatarUrl: userInfo.avatar_url,
           invitationToken: invitationToken ? invitationToken.token : null,
           organization_ids: userInfo.organization_ids || [],
+          current_organization_id: userInfo.current_organization_id || null,
         };
       }
     } catch (error) {

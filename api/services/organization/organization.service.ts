@@ -6,10 +6,12 @@ import {
   getOrganizationBySubdomainExcludeId,
   getOrganizationBySubdomain,
   getOrganizationById as getOrganizationByIdRepo,
+  getOrganizationsByIds as getOrganizationByIdsRepo,
   Organization
 } from '~/repository/organization.repository';
 import { updateUser, UserProfile } from '~/repository/user.repository';
 import { stringToSlug, objectToString } from '~/helpers/string.helper';
+import database from '~/config/database.config';
 
 export interface CreateOrganizationInput {
   name: string;
@@ -26,6 +28,8 @@ function checkOrganizationAccess(user: UserProfile, id: number | string, errorMe
 }
 
 export async function addOrganization(data: CreateOrganizationInput, user: UserProfile): Promise<number[]> {
+  const trx = await database.transaction();
+
   try {
     const subdomain = stringToSlug(data.name).toLowerCase();
     const exists = await getOrganizationBySubdomain(subdomain);
@@ -42,17 +46,22 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
       orgToCreate.settings = objectToString(data.settings);
     }
 
-    const ids = await createOrganization(orgToCreate);
+    const ids = await createOrganization(orgToCreate, trx);
     const newOrgId = Number(ids[0]);
-    
     const updatedIds = Array.isArray(user.organization_ids)
       ? [...user.organization_ids.map(Number), newOrgId]
       : [newOrgId];
 
-    await updateUser(Number(user.id), { organization_ids: updatedIds });
+    await updateUser(Number(user.id), {
+      organization_ids: updatedIds,
+      current_organization_id: newOrgId
+    }, trx);
+
+    await trx.commit();
 
     return ids;
   } catch (error) {
+    await trx.rollback();
     logger.error('Error creating organization:', error);
     throw error;
   }
@@ -60,6 +69,7 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
 
 export async function editOrganization(data: Partial<Organization>, user: UserProfile, organizationId: number | string): Promise<number> {
   checkOrganizationAccess(user, organizationId, 'You can only edit your own organizations');
+  const trx = await database.transaction();
 
   try {
     let updateData = { ...data };
@@ -79,8 +89,13 @@ export async function editOrganization(data: Partial<Organization>, user: UserPr
       updateData.settings = objectToString(updateData.settings);
     }
 
-    return await updateOrganization(Number(organizationId), updateData);
+    const result = await updateOrganization(Number(organizationId), updateData, trx);
+
+    await trx.commit();
+
+    return result;
   } catch (error) {
+    await trx.rollback();
     logger.error('Error updating organization:', error);
     throw error;
   }
@@ -88,19 +103,50 @@ export async function editOrganization(data: Partial<Organization>, user: UserPr
 
 export async function removeOrganization(user: UserProfile, organizationId: number | string): Promise<number> {
   checkOrganizationAccess(user, organizationId, 'You can only remove your own organizations');
+  const trx = await database.transaction();
 
   try {
-    const deleted = await deleteOrganization(Number(organizationId));
+    const deleted = await deleteOrganization(Number(organizationId), trx);
 
     if (deleted && Array.isArray(user.organization_ids)) {
       const updatedIds = user.organization_ids.map(Number).filter(id => id !== Number(organizationId));
-      
-      await updateUser(Number(user.id), { organization_ids: updatedIds });
+      let updateData: Partial<UserProfile> = { organization_ids: updatedIds };
+
+      if (Number(user.current_organization_id) === Number(organizationId)) {
+        updateData.current_organization_id = updatedIds.length > 0 ? updatedIds[0] : null;
+      }
+
+      await updateUser(Number(user.id), updateData, trx);
     }
+
+    await trx.commit();
 
     return deleted;
   } catch (error) {
+    await trx.rollback();
     logger.error('Error deleting organization:', error);
+    throw error;
+  }
+}
+
+export async function getOrganizations(user: UserProfile): Promise<Organization[]> {
+  if (!user.organization_ids || user.organization_ids.length === 0) return []
+
+  try {
+    return await getOrganizationByIdsRepo(user.organization_ids);
+  } catch (error) {
+    logger.error('Error fetching organizations by ids:', error);
+    throw error;
+  }
+}
+
+export async function getCurrentOrganization(user: UserProfile): Promise<Organization | undefined> {
+  if (!user.current_organization_id) return null;
+
+  try {
+    return await getOrganizationByIdRepo(Number(user.current_organization_id));
+  } catch (error) {
+    logger.error('Error fetching organization by id:', error);
     throw error;
   }
 }

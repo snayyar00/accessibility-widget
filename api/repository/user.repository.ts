@@ -5,6 +5,7 @@ import { TABLES } from '~/constants/database.constant';
 import { insertUserPlan, UserPlanData } from './user_plans.repository';
 import { insertMultiPermission } from './user_permission.repository';
 import { PERMISSION_PLAN } from '~/constants/billing.constant';
+import Knex from 'knex';
 
 const TABLE = TABLES.users;
 
@@ -22,6 +23,7 @@ export const usersColumns = {
   providerId: 'users.provider_id',
   deletedAt: 'users.deleted_at',
   organization_ids: 'users.organization_ids',
+  current_organization_id: 'users.current_organization_id',
 };
 
 type FindUserProps = {
@@ -47,6 +49,7 @@ export type UserProfile = {
   updated_at?: string;
   deleted_at?: string;
   organization_ids?: number[];
+  current_organization_id?: number | null;
 };
 
 type GetUserByIdAndJoinUserTokenResponse = UserProfile & UserToken;
@@ -95,12 +98,14 @@ export async function createUser(userData: UserProfile, userPlanData: UserPlanDa
   }
 }
 
-export async function updateUser(id: number, data: Partial<UserProfile>): Promise<number> {
+export async function updateUser(id: number, data: Partial<UserProfile>, trx?: Knex.Transaction): Promise<number> {
   if ('organization_ids' in data && Array.isArray(data.organization_ids)) {
     (data as any).organization_ids = JSON.stringify(data.organization_ids);
   }
+
+  const query = database(TABLE).where({ id }).update(data);
   
-  return database(TABLE).where({ id }).update(data);
+  return trx ? query.transacting(trx) : query;
 }
 
 export async function getUserbyId(id: number): Promise<UserProfile> {

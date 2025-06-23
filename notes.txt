@@ -9,3 +9,10 @@ CREATE TABLE organizations (
 );
 
 ALTER TABLE users ADD COLUMN organization_ids JSON NOT NULL DEFAULT ('[]');
+
+ALTER TABLE users ADD COLUMN current_organization_id INT NULL;
+
+ALTER TABLE users
+ADD CONSTRAINT fk_users_current_org
+  FOREIGN KEY (current_organization_id) REFERENCES organizations(id)
+  ON DELETE SET NULL;

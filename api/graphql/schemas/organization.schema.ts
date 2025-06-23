@@ -12,7 +12,7 @@ export const OrganizationSchema = gql`
   }
 
   extend type Query {
-    getOrganization(id: ID!): Organization
+    getUserOrganizations: [Organization!]!
     organizationExists(name: String!): Boolean
   }
 
