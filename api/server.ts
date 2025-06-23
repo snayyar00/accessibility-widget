@@ -67,6 +67,7 @@ const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerIntera
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
+app.use(express.json({ limit: '5mb'}));
 
 scheduleMonthlyEmails();
 
@@ -112,9 +113,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
   app.use(express.static(join(resolve(), 'public', 'uploads')));
   app.use(cookieParser());
-  
-  // Apply JSON parsing middleware after Stripe webhook to avoid interfering with raw body processing
-  app.use(express.json({ limit: '5mb'}));
 
   app.use(bodyParser.urlencoded({ extended: true, limit: '5mb' }));
 
@@ -1714,6 +1712,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     },
   });
 
+  app.use('/graphql', express.json({ limit: '5mb' }));
   serverGraph.applyMiddleware({ app, cors: false });
   
   // Initialize Sentry with tracing for GraphQL
