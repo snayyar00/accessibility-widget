@@ -361,11 +361,17 @@ const StatementGenerator: React.FC = () => {
 
     // Prevent duplicate requests within 1 second (faster model)
     const now = Date.now();
+    const formDataKey = `${formData.companyName}_${formData.websiteUrl}_${formData.contactEmail}_${formData.language}_${formData.industry}`;
     if (lastTranslationRef.current && 
-        lastTranslationRef.current.langCode === formData.language && 
+        lastTranslationRef.current.formDataKey === formDataKey && 
         (now - lastTranslationRef.current.timestamp) < 1000) {
       return;
     }
+
+    lastTranslationRef.current = {
+      formDataKey,
+      timestamp: now
+    };
     
     lastTranslationRef.current = {
       langCode: formData.language,
