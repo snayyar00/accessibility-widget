@@ -434,7 +434,7 @@ export const getTourKeyByRoute = (pathname: string): keyof typeof tourKeys | nul
     return 'addDomain';
   } else if (pathname.includes('/installation')) {
     return 'installation';
-  } else if (pathname === '/accessibility-test') {
+  } else if (pathname === '/scanner') {
     return 'accessibility';
   } else if (pathname === '/problem-reports') {
     return 'reports';

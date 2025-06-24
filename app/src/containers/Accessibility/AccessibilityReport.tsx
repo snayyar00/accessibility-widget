@@ -474,7 +474,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       />
     <div className="accessibility-wrapper">
       <header className="accessibility-page-header text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Web Accessibility Scanner</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">Scanner</h1>
         <p className="text-xl text-gray-600">
           Evaluate your website's accessibility in seconds. View a history of all accessibility scans. Download your reports.
         </p>
