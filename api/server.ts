@@ -1840,6 +1840,11 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     },
   });
 
+  app.use('/graphql', (req, res, next) => {
+    req.setTimeout(70000);
+    res.setTimeout(70000);
+    next();
+  });
   app.use('/graphql', express.json({ limit: '5mb' }));
   serverGraph.applyMiddleware({ app, cors: false });
   

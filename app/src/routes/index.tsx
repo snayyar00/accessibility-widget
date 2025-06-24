@@ -14,6 +14,7 @@ import { ReactComponent as AccessibilityIcon} from '@/assets/images/svg/Accessib
 import { MdBugReport } from 'react-icons/md';
 import ProblemReport from '@/containers/ProblemReport/ProblemReport';
 import { FaUniversalAccess } from 'react-icons/fa';
+import { TbReportSearch } from 'react-icons/tb';
 import ReportView from '@/containers/Accessibility/ReportView';
 
 const routes = [
@@ -70,19 +71,19 @@ const routes = [
     isSidebar: false,
   },
   {
-    path:'/accessibility-test',
-    name:'Accessibility',
+    path:'/scanner',
+    name:'Scanner',
     exact:true,
     component: Accessibility,
-    icon: <FaUniversalAccess className="menu-icon text-white-blue transition-colors duration-200" size={30}/>,
+    icon: <TbReportSearch className="menu-icon text-white-blue transition-colors duration-200" size={30} aria-label="Scanner navigation icon"/>,
     isSidebar:true,
   },
   {
     path:'/problem-reports',
-    name:'Reports',
+    name:'Issues',
     exact:true,
     component: ProblemReport,
-    icon: <MdBugReport className="menu-icon text-white-blue transition-colors duration-200" size={35}/>,
+    icon: <MdBugReport className="menu-icon text-white-blue transition-colors duration-200" size={35} aria-label="Issues navigation icon"/>,
     isSidebar:true,
   },
   {
