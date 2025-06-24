@@ -3,23 +3,6 @@ import { Organization } from '~/repository/organization.repository';
 import { combineResolvers } from 'graphql-resolvers';
 import { isAuthenticated } from './authorization.resolver';
 
-interface AddOrganizationArgs {
-  name: string;
-  logo_url?: string;
-  settings?: any;
-}
-
-interface EditOrganizationArgs {
-  id: number;
-  name?: string;
-  logo_url?: string;
-  settings?: any;
-}
-
-interface RemoveOrganizationArgs {
-  id: number;
-}
-
 const organizationResolver = {
   Query: {
      getUserOrganizations: combineResolvers(
@@ -38,7 +21,7 @@ const organizationResolver = {
   Mutation: {
     addOrganization: combineResolvers(
       isAuthenticated,
-      async (_: unknown, args: AddOrganizationArgs, { user }): Promise<Organization | null> => {
+      async (_: unknown, args: CreateOrganizationInput, { user }): Promise<Organization | null> => {
         const id = await addOrganization(args, user);
 
         if (id) {
@@ -58,7 +41,7 @@ const organizationResolver = {
 
     editOrganization: combineResolvers(
       isAuthenticated,
-      async (_: unknown, args: EditOrganizationArgs, { user }): Promise<Organization | null> => {
+      async (_: unknown, args: Partial<Organization>, { user }): Promise<Organization | null> => {
         const { id, ...editData } = args;
         const updated = await editOrganization(editData, user, id);
 
@@ -73,7 +56,7 @@ const organizationResolver = {
 
     removeOrganization: combineResolvers(
       isAuthenticated,
-      async (_: unknown, args: RemoveOrganizationArgs, { user }): Promise<boolean> => {
+      async (_: unknown, args: { id: number }, { user }): Promise<boolean> => {
         const deleted = await removeOrganization(user, args.id);
 
         return !!deleted;

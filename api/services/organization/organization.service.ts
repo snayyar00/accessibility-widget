@@ -21,13 +21,28 @@ export interface CreateOrganizationInput {
 
 function checkOrganizationAccess(user: UserProfile, id: number | string, errorMessage: string) {
   const numId = Number(id);
-  
+
   if (!user.organization_ids || !user.organization_ids.map(Number).includes(numId)) {
-    throw new Error(errorMessage);
+    const error = new Error(errorMessage);
+    (error as any).code = 'ORG_ACCESS_DENIED';
+    throw error;
   }
 }
 
 export async function addOrganization(data: CreateOrganizationInput, user: UserProfile): Promise<number> {
+  const maxOrgs = user.is_active ? 3 : 1;
+  const currentOrgs = Array.isArray(user.organization_ids) ? user.organization_ids.length : 0;
+
+  if (currentOrgs >= maxOrgs) {
+    const error = new Error(
+      user.is_active
+        ? 'You have reached the limit of organizations you can create (3 for verified users).'
+        : 'Please verify your email to create more than one organization.'
+    );
+    (error as any).code = user.is_active ? 'ORG_LIMIT_VERIFIED' : 'ORG_LIMIT_UNVERIFIED';
+    throw error;
+  }
+
   const trx = await database.transaction();
 
   try {
@@ -63,11 +78,16 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
   } catch (error) {
     await trx.rollback();
     logger.error('Error creating organization:', error);
+    if (!(error as any).code) (error as any).code = 'ORG_CREATE_ERROR';
     throw error;
   }
 }
 
-export async function editOrganization(data: Partial<Organization>, user: UserProfile, organizationId: number | string): Promise<number> {
+export async function editOrganization(
+  data: Partial<Organization>,
+  user: UserProfile,
+  organizationId: number | string
+): Promise<number> {
   checkOrganizationAccess(user, organizationId, 'You can only edit your own organizations');
   const trx = await database.transaction();
 
@@ -97,11 +117,15 @@ export async function editOrganization(data: Partial<Organization>, user: UserPr
   } catch (error) {
     await trx.rollback();
     logger.error('Error updating organization:', error);
+    if (!(error as any).code) (error as any).code = 'ORG_UPDATE_ERROR';
     throw error;
   }
 }
 
-export async function removeOrganization(user: UserProfile, organizationId: number | string): Promise<number> {
+export async function removeOrganization(
+  user: UserProfile,
+  organizationId: number | string
+): Promise<number> {
   checkOrganizationAccess(user, organizationId, 'You can only remove your own organizations');
   const trx = await database.transaction();
 
@@ -125,28 +149,34 @@ export async function removeOrganization(user: UserProfile, organizationId: numb
   } catch (error) {
     await trx.rollback();
     logger.error('Error deleting organization:', error);
+    if (!(error as any).code) (error as any).code = 'ORG_DELETE_ERROR';
     throw error;
   }
 }
 
 export async function getOrganizations(user: UserProfile): Promise<Organization[]> {
-  if (!user.organization_ids || user.organization_ids.length === 0) return []
+  if (!user.organization_ids || user.organization_ids.length === 0) return [];
 
   try {
     return await getOrganizationByIdsRepo(user.organization_ids);
   } catch (error) {
     logger.error('Error fetching organizations by ids:', error);
+    (error as any).code = 'ORG_FETCH_ERROR';
     throw error;
   }
 }
 
-export async function getOrganizationById(id: number | string, user: UserProfile): Promise<Organization | undefined> {
+export async function getOrganizationById(
+  id: number | string,
+  user: UserProfile
+): Promise<Organization | undefined> {
   checkOrganizationAccess(user, id, 'You can only access your own organizations');
-  
+
   try {
     return await getOrganizationByIdRepo(Number(id));
   } catch (error) {
     logger.error('Error fetching organization by id:', error);
+    (error as any).code = 'ORG_FETCH_ERROR';
     throw error;
   }
 }
@@ -159,6 +189,7 @@ export async function organizationExistsByName(name: string): Promise<boolean> {
     return !!org;
   } catch (error) {
     logger.error('Error checking organization existence by name:', error);
+    (error as any).code = 'ORG_EXISTS_CHECK_ERROR';
     throw error;
   }
 }

@@ -10,11 +10,9 @@ import cookieParser from 'cookie-parser';
 import { ApolloServer, ApolloError } from 'apollo-server-express';
 import { withScope, Severity, captureException, init, Handlers } from '@sentry/node';
 import * as Sentry from '@sentry/node';
-import * as Tracing from '@sentry/tracing';
 import { IResolvers } from '@graphql-tools/utils';
 import { makeExecutableSchema } from 'graphql-tools';
 import accessLogStream from './middlewares/logger.middleware';
-import logger from './utils/logger';
 import RootSchema from './graphql/root.schema';
 import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
@@ -28,20 +26,20 @@ import Stripe from 'stripe';
 import { getAnySitePlanBySiteId, getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
 import { APP_SUMO_COUPON_ID, APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from './constants/billing.constant';
-import axios from 'axios';
 import OpenAI from 'openai';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
 import database from '~/config/database.config';
 import { addProblemReport, getProblemReportsBySiteId, problemReportProps } from './repository/problem_reports.repository';
-import { deleteSiteByURL, deleteSiteWithRelatedRecords, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
+import { deleteSiteWithRelatedRecords, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
 import { addWidgetSettings, getWidgetSettingsBySiteId } from './repository/widget_settings.repository';
 import { addNewsletterSub } from './repository/newsletter_subscribers.repository';
 import findPromo from './services/stripe/findPromo';
 import { appSumoPromoCount } from './utils/appSumoPromoCount';
 import { expireUsedPromo } from './utils/expireUsedPromo';
-import { findUsersByToken, getUserTokens } from './repository/user_plan_tokens.repository';
+import { getUserTokens } from './repository/user_plan_tokens.repository';
 import { customTokenCount } from './utils/customTokenCount';
-// import run from './scripts/create-products';
+import url from 'url';
+
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -60,9 +58,15 @@ dotenv.config();
 
 const IS_LOCAL_DEV = !process.env.COOLIFY_URL && process.env.NODE_ENV !== 'production';
 
+const BACKEND_URL = process.env.BACKEND_URL || 'http://api.127.0.0.1.sslip.io:3001';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://app.127.0.0.1.sslip.io:3000';
+const FRONTEND_ROOT = process.env.FRONTEND_ROOT || '.127.0.0.1.sslip.io'
+
+const parsedUrl = url.parse(BACKEND_URL);
+const port = parsedUrl.port ? Number(parsedUrl.port) : 3001;
+
 const app = express();
-const port = process.env.PORT || 3001;
-const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, 'https://www.webability.io'];
+const allowedOrigins = [FRONTEND_URL, undefined, BACKEND_URL, 'https://www.webability.io'];
 const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction','reportProblem','updateImpressionProfileCounts','getWidgetSettings','getAccessibilityReport','getAccessibilityStats'];
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
@@ -76,19 +80,36 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     optionsSuccessStatus: 200,
     credentials: true,
     origin: (origin: any, callback: any) => {
+      // 1. Allow everything in local development
       if (IS_LOCAL_DEV) {
-        callback(null, true);
-      } else if (req.body && allowedOperations.includes(req.body.operationName)) {
-        // Allow any origin for 'validateToken'
-        callback(null, true);
-      } else if (allowedOrigins.includes(origin) || req.method === 'OPTIONS') {
-        // Allow your specific frontend origin
-        callback(null, true);
+        return callback(null, true);
       }
-      // else {
-      //   // Disallow other origins
-      //   callback(new Error('Not allowed by CORS'));
-      // }
+
+      // 2. Allow any origin for specific allowed operations
+      if (req.body && allowedOperations.includes(req.body.operationName)) {
+        return callback(null, true);
+      }
+
+      // 3. Allow explicitly listed origins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // 4. Allow preflight requests
+      if (req.method === 'OPTIONS') {
+        return callback(null, true);
+      }
+
+      // 5. Allow root domain and all its subdomains
+      if (
+        typeof origin === 'string' &&
+        (origin.endsWith(FRONTEND_ROOT) || origin === FRONTEND_ROOT.replace(/^\./, ''))
+      ) {
+        return callback(null, true);
+      }
+
+      // 6. All other requests are not allowed by CORS (uncomment for explicit rejection)
+      // callback(new Error('Not allowed by CORS'));
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   };
@@ -1723,7 +1744,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   // Initialize Sentry with tracing for GraphQL
   init({ 
     dsn: process.env.SENTRY_DSN,
-    serverName: process.env.COOLIFY_URL || `http://localhost:${port}`,
+    serverName: process.env.COOLIFY_URL || BACKEND_URL,
     tracesSampleRate: 1.0,
     integrations: [
       // Enable HTTP calls tracing
@@ -1733,7 +1754,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
   
   app.listen(port, () => {
-    console.log(`App listening at http://localhost:${port}`);
+    console.log(`App listening at ${BACKEND_URL}`);
   });
 })();
 

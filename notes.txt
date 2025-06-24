@@ -16,3 +16,14 @@ ALTER TABLE users
 ADD CONSTRAINT fk_users_current_org
   FOREIGN KEY (current_organization_id) REFERENCES organizations(id)
   ON DELETE SET NULL;
+
+
+Change Env
+
+Remove 
+PORT=3001
+
+Add
+FRONTEND_ROOT=.127.0.0.1.sslip.io
+FRONTEND_URL=http://app.127.0.0.1.sslip.io:3000
+BACKEND_URL=http://api.127.0.0.1.sslip.io:3001

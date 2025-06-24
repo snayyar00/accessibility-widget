@@ -16,6 +16,8 @@ module.exports = {
     alias: resolvedAliases,
   },
   devServer: {
+    host: process.env.HOST,
+    port: process.env.PORT,
     client: {
       overlay: false,
     }
