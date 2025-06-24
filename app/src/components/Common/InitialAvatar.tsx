@@ -48,7 +48,7 @@ const InitialAvatar: React.FC<InitialAvatarProps> = ({
     // Create a simple hash from the name
     let hash = 0;
     for (let i = 0; i < fullName.length; i++) {
-      hash = fullName.charCodeAt(i) + ((hash << 5) - hash);
+      hash = ((hash << 5) - hash + fullName.charCodeAt(i)) & 0xffffffff;
     }
     
     // Use absolute value and modulo to get a consistent index
