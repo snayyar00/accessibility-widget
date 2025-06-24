@@ -15,15 +15,19 @@ import { createNewSubcription } from '~/services/stripe/subcription.service';
 import { SEND_MAIL_TYPE } from '~/constants/send-mail-type.constant';
 import formatDateDB from '~/utils/format-date-db';
 import { Token } from './login.service';
+import { addOrganization, organizationExistsByName } from '~/services/organization/organization.service';
+import { getOrganizationById, Organization } from '~/repository/organization.repository';
 
-async function registerUser(email: string, password: string, name: string, paymentMethodToken: string, planName: string, billingType: 'MONTHLY' | 'YEARLY'): Promise<ApolloError | Token> {
+async function registerUser(email: string, password: string, name: string, paymentMethodToken: string, planName: string, billingType: 'MONTHLY' | 'YEARLY', organizationName: string): Promise<ApolloError | Token> {
   const validateResult = registerValidation({ email, password, name });
+
   if (Array.isArray(validateResult) && validateResult.length) {
     throw new ValidationError(validateResult.map((it) => it.message).join(','));
   }
 
   try {
     const user = await findUser({ email });
+
     if (user) {
       return new ApolloError('Email address has been used');
     }
@@ -32,16 +36,27 @@ async function registerUser(email: string, password: string, name: string, payme
       return new ApolloError('Your account is not yet verify');
     }
 
+    if (organizationName) {
+      const hasOranization = await organizationExistsByName(organizationName)
+
+      if (hasOranization) {
+        return new ApolloError('Organization with this name already exists');
+      }
+    }
+
     const passwordHashed = await generatePassword(password);
     const userData = {
       email,
       password: passwordHashed,
       name,
     };
+
     let newUserId = null;
+    let newOrganization: Organization | null = null
 
     if (planName) {
       const product = await findProductAndPriceByType(planName, billingType);
+      
       if (!product) {
         return new ApolloError('Can not find any plan');
       }
@@ -63,6 +78,7 @@ async function registerUser(email: string, password: string, name: string, payme
       }
     } else {
       console.log('no plan');
+
       newUserId = await createUser(userData);
     }
 
@@ -76,12 +92,20 @@ async function registerUser(email: string, password: string, name: string, payme
     });
 
     if (typeof newUserId === 'number') {
+      if (organizationName) {
+        const id = await addOrganization({ name: organizationName }, { id: newUserId });
+
+        if (id) {
+          newOrganization = await getOrganizationById(id);
+        }
+      }
+      
       await Promise.all([sendMail(email, 'Confirm your email address', template), createToken(newUserId, tokenVerifyEmail, SEND_MAIL_TYPE.VERIFY_EMAIL)]);
     }
 
     const token = sign({ email, name });
 
-    return { token };
+    return { token, subdomain: newOrganization?.subdomain || null };
   } catch (error) {
     logger.error(error);
     throw error;

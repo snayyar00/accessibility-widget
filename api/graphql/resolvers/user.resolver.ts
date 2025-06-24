@@ -8,8 +8,6 @@ import { verifyEmail, resendEmailAction } from '~/services/authentication/verify
 import { forgotPasswordUser } from '~/services/authentication/forgot-password.service';
 import { resetPasswordUser } from '~/services/authentication/reset-password.service';
 import { changePasswordUser } from '~/services/authentication/change-password.service';
-import { loginSocial } from '~/services/authentication/social-login.service';
-import { registerAccountBySocial } from '~/services/authentication/register-social.service';
 import { deleteUser } from '~/services/user/delete-user.service';
 import { updateProfile, changeUserAvatar } from '~/services/user/update-user.service';
 import { isEmailAlreadyRegistered } from '~/services/user/user.service';
@@ -22,14 +20,6 @@ type Res = {
   res: Response;
 };
 
-type Provider = {
-  provider: 'GITHUB' | 'FACEBOOK' | 'GOOGLE';
-};
-
-type LoginBySocial = Provider & {
-  code: string;
-};
-
 type Register = {
   email: string;
   password: string;
@@ -37,6 +27,7 @@ type Register = {
   paymentMethodToken: string;
   planName: string;
   billingType: 'MONTHLY' | 'YEARLY';
+  organizationName: string
 };
 
 type Login = {
@@ -58,28 +49,13 @@ type Verify = {
   token: string;
 };
 
-type RegisterSocialAccount = Provider & {
-  email: string;
-  name: string;
-  avatarUrl: string;
-  providerId: string;
-  organizationName?: string;
-};
-
 const resolvers = {
   Query: {
     profileUser: combineResolvers(
       isAuthenticated,
       (_, args, { user }) => user,
     ),
-    loginBySocial: async (_: unknown, { provider, code }: LoginBySocial, { res }: Res) => {
-      const result = await loginSocial(provider, code);
-      if (result && result.token) {
-        setAuthenticationCookie(res, result.token);
-        return true;
-      }
-      return result;
-    },
+    
     isEmailAlreadyRegistered: async (_: unknown, { email }: { email: string }) => {
       return isEmailAlreadyRegistered(normalizeEmail(email));
     },
@@ -94,14 +70,17 @@ const resolvers = {
     },
   },
   Mutation: {
-    register: async (_: unknown, { email, password, name, paymentMethodToken, planName, billingType } : Register, { res }: Res) => {
-      const result = await registerUser(normalizeEmail(email), password, name, paymentMethodToken, planName, billingType);
+    register: async (_: unknown, { email, password, name, paymentMethodToken, planName, billingType, organizationName } : Register, { res }: Res) => {
+      const result = await registerUser(normalizeEmail(email), password, name, paymentMethodToken, planName, billingType, organizationName);
+
       if (result && result.token) {
         setAuthenticationCookie(res, result.token);
         return true;
       }
+
       return result;
     },
+
     login: async (_: unknown, { email, password }: Login, { res }: Res) => {
       const result = await loginUser(normalizeEmail(email), password, res);
       if (result && result.token) {
@@ -110,10 +89,12 @@ const resolvers = {
       }
       return result;
     },
+
     logout: (_: unknown, __: unknown, { res }: Res) => {
       clearCookie(res, COOKIE_NAME.TOKEN);
       return true;
     },
+    
     forgotPassword: async (_: unknown, { email }: ForgotPassword) => forgotPasswordUser(normalizeEmail(email)),
     changePassword: combineResolvers(
       isAuthenticated,
@@ -125,14 +106,7 @@ const resolvers = {
       isAuthenticated,
       (_, { type }, { user }) => resendEmailAction(user, <'verify_email' | 'forgot_password'>normalizeEmail(type)),
     ),
-    registerSocialAccount: async (_: unknown, { provider, email, name, avatarUrl, providerId, organizationName }: RegisterSocialAccount, { res }: Res) => {
-      const result = await registerAccountBySocial(provider, normalizeEmail(email), name, avatarUrl, providerId);
-      if (result && result.token) {
-        setAuthenticationCookie(res, result.token);
-        return true;
-      }
-      return result;
-    },
+   
     deleteAccount: combineResolvers(
       isAuthenticated,
       async (_, __, { user, res }) => {
@@ -153,7 +127,5 @@ const resolvers = {
     ),
   },
 };
-
-export type { LoginBySocial };
 
 export default resolvers;

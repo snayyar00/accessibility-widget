@@ -8,6 +8,7 @@ export default gql`
     $paymentMethodToken: String,
     $planName: String
     $billingType: BillingType
+    $organizationName: String
   ) {
     register(
       email: $email
@@ -16,6 +17,7 @@ export default gql`
       paymentMethodToken: $paymentMethodToken
       planName: $planName
       billingType: $billingType
+      organizationName: $organizationName
     )
   }
 `;

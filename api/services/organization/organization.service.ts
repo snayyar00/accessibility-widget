@@ -27,7 +27,7 @@ function checkOrganizationAccess(user: UserProfile, id: number | string, errorMe
   }
 }
 
-export async function addOrganization(data: CreateOrganizationInput, user: UserProfile): Promise<number[]> {
+export async function addOrganization(data: CreateOrganizationInput, user: UserProfile): Promise<number> {
   const trx = await database.transaction();
 
   try {
@@ -59,7 +59,7 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
 
     await trx.commit();
 
-    return ids;
+    return ids && ids.length > 0 ? ids[0] : null;
   } catch (error) {
     await trx.rollback();
     logger.error('Error creating organization:', error);
@@ -136,17 +136,6 @@ export async function getOrganizations(user: UserProfile): Promise<Organization[
     return await getOrganizationByIdsRepo(user.organization_ids);
   } catch (error) {
     logger.error('Error fetching organizations by ids:', error);
-    throw error;
-  }
-}
-
-export async function getCurrentOrganization(user: UserProfile): Promise<Organization | undefined> {
-  if (!user.current_organization_id) return null;
-
-  try {
-    return await getOrganizationByIdRepo(Number(user.current_organization_id));
-  } catch (error) {
-    logger.error('Error fetching organization by id:', error);
     throw error;
   }
 }

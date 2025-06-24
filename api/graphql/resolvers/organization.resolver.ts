@@ -1,8 +1,7 @@
-import { addOrganization, editOrganization, removeOrganization, CreateOrganizationInput, organizationExistsByName, getOrganizationById, getCurrentOrganization, getOrganizations } from '~/services/organization/organization.service';
+import { addOrganization, editOrganization, removeOrganization, CreateOrganizationInput, organizationExistsByName, getOrganizationById, getOrganizations } from '~/services/organization/organization.service';
 import { Organization } from '~/repository/organization.repository';
 import { combineResolvers } from 'graphql-resolvers';
 import { isAuthenticated } from './authorization.resolver';
-import { UserProfile } from '~/repository/user.repository';
 
 interface AddOrganizationArgs {
   name: string;
@@ -40,16 +39,15 @@ const organizationResolver = {
     addOrganization: combineResolvers(
       isAuthenticated,
       async (_: unknown, args: AddOrganizationArgs, { user }): Promise<Organization | null> => {
-        const ids = await addOrganization(args as CreateOrganizationInput, user);
+        const id = await addOrganization(args, user);
 
-        if (ids && ids.length > 0) {
-          const orgId = ids[0];
+        if (id) {
           const newUser = {
             ...user,
-            organization_ids: [...(user.organization_ids ?? []), orgId],
+            organization_ids: [...(user.organization_ids ?? []), id],
           };
           
-          const org = await getOrganizationById(orgId, newUser);
+          const org = await getOrganizationById(id, newUser);
 
           return org || null;
         }

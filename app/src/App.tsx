@@ -10,7 +10,6 @@ import PrivateRoute from '@/routes/PrivateRoute';
 import PublicRoute from '@/routes/PublicRoute';
 import AdminLayout from '@/containers/Layout/Admin';
 import VerifyEmail from '@/containers/VerifyEmail';
-import Social from '@/containers/Social';
 import AcceptInvitation from '@/containers/Teams/AcceptInvitation';
 import { createClient } from '@/config/apollo';
 import GlobalLoading from '@/components/Layout/GlobalLoading';
@@ -45,7 +44,6 @@ const App: React.FC<props> = ({ options }) => {
         <ToastContainer />
         <Switch>
           <Route path="/verify-email" component={VerifyEmail} />
-          <Route path="/social/:provider/callback" component={Social} />
           <Route
             path="/teams/invitation/:invitationToken"
             component={AcceptInvitation}

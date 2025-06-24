@@ -85,8 +85,6 @@ const SignUp: React.FC = () => {
     criteriaMode: 'all', // Show all validation errors
   });
   const [registerMutation, { error, loading }] = useMutation(registerQuery);
-  const [showStripeForm, setShowStripeForm] = useState(false);
-  const [formData, setFormData] = useState({});
   const history = useHistory();
   const query = getQueryParam();
   const planName = query.get('plan');
@@ -103,20 +101,19 @@ const SignUp: React.FC = () => {
 });
 
   async function signup(params: SignUpPayload) {
-    console.log(params)
-    // try {
-    //   const { data } = await registerMutation({ variables: params });
-    //   if (data?.register) {
-    //     toast.success('Account created successfully!');
-    //     // Return true if registration was successful
-    //     return true;
-    //   }
-    //   return false;
-    // } catch (error) {
-    //   console.error('Error during registration:', error);
-    //   toast.error('Failed to create account. Please try again.');
-    //   return false;
-    // }
+    try {
+      const { data } = await registerMutation({ variables: params });
+      if (data?.register) {
+        toast.success('Account created successfully!');
+        
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error during registration:', error);
+      toast.error('Failed to create account. Please try again.');
+      return false;
+    }
   }
 
   async function addSiteAfterSignup(websiteUrl: string) {
@@ -149,57 +146,30 @@ const SignUp: React.FC = () => {
   }
 
   async function onSubmit(params: SignUpPayload) {
-    if (planName) {
-      setShowStripeForm(true);
-      setFormData(params);
-    } else {
-      try {
-        // First, wait for registration to complete
-        const registrationSuccess = await signup(params);
-        
-        // Only proceed with site addition if registration was successful
-        if (registrationSuccess) {
-          // If websiteUrl exists, add the site
-          if (params.websiteUrl && params.websiteUrl.trim() !== '') {
-            await addSiteAfterSignup(params.websiteUrl);
-          } else {
-            // If no website URL, just redirect to dashboard
-            history.push('/');
-          }
+    try {
+      // First, wait for registration to complete
+      const registrationSuccess = await signup(params);
+      
+      // Only proceed with site addition if registration was successful
+      if (registrationSuccess) {
+        // If websiteUrl exists, add the site
+        if (params.websiteUrl && params.websiteUrl.trim() !== '') {
+          await addSiteAfterSignup(params.websiteUrl);
+        } else {
+          // If no website URL, just redirect to dashboard
+          history.push('/');
         }
-      } catch (error) {
-        console.error('Error in signup process:', error);
-        toast.error('An unexpected error occurred. Please try again.');
       }
+    } catch (error) {
+      console.error('Error in signup process:', error);
+      toast.error('An unexpected error occurred. Please try again.');
     }
-  }
-
-  function createPaymentMethodSuccess(token: string) {
-    const data: SignUpPayload = {
-      ...formData,
-      paymentMethodToken: token,
-      planName,
-      billingType: query.get('isYearly') === '1' ? 'YEARLY' : 'MONTHLY',
-    };
-    signup(data);
-  }
-
-  function handleGoBack() {
-    setShowStripeForm(false);
   }
 
   return (
     <div className="flex justify-center min-h-screen sm:flex-col">
       <div className="w-[80%] flex justify-center items-start mb-10 align-middle sm:w-full overflow-scroll">
-        {/* {showStripeForm ? (
-          <StripeContainer
-            onSubmitSuccess={createPaymentMethodSuccess}
-            onGoBack={handleGoBack}
-            apiLoading={loading}
-            apiError={error?.graphQLErrors?.[0]?.extensions?.code}
-          />
-        ) : ( */}
-          <SignUpForm
+        <SignUpForm
             onSubmit={handleSubmit(onSubmit)}
             register={register}
             formErrors={formErrors}
@@ -209,7 +179,6 @@ const SignUp: React.FC = () => {
             siteAdding={addSiteLoading}
             submitText={String(planName ? t('Sign_up.text.next') : 'Finish Sign Up')}
           />
-        {/* )} */}
       </div>
       <div className="w-[20%] bg-primary overflow-hidden sm:hidden">
         <AuthAdsArea />
