@@ -122,8 +122,9 @@ export async function getAccessibilityInformationPally(domain: string) {
     totalElements: 0,
   };
 
-  const apiUrl = `${process.env.PA11Y_SERVER_URL}/test`;
-  let results;
+  //const apiUrl = `${process.env.PA11Y_SERVER_URL}/test`;
+  const apiUrl = `${process.env.SCANNER_SERVER_URL}/scan`;
+  let results: any;
   try {
     // Make the POST request with the URL in the body
     const response = await fetch(apiUrl, {
@@ -141,6 +142,23 @@ export async function getAccessibilityInformationPally(domain: string) {
 
     // Parse and return the response JSON
     results = await response.json();
+    console.log('pally API results:', results);
+    
+    // Debug runnerExtras structure
+    if (results.issues && results.issues.length > 0) {
+      console.log('🔍 First issue runnerExtras keys:', Object.keys(results.issues[0].runnerExtras || {}));
+      console.log('🔍 First issue runnerExtras:', JSON.stringify(results.issues[0].runnerExtras, null, 2));
+      console.log(`📊 Total issues from Scanner API: ${results.issues.length}`);
+      
+      // Show breakdown by type and runner
+      const breakdown = results.issues.reduce((acc: any, issue: any) => {
+        const key = `${issue.runner}-${issue.type}`;
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+      console.log('📈 Issue breakdown:', breakdown);
+    }
+    
   } catch (error) {
     console.error('pally API Error', error);
     // Return proper default structure instead of undefined
@@ -167,70 +185,125 @@ export async function getAccessibilityInformationPally(domain: string) {
     };
   }
 
-  results.issues.forEach((issue: any) => {
+  console.log(`📊 Processing ${results.issues.length} issues from SCANNER_SERVER_URL`);
+  console.log('🔍 First few issues:', results.issues.slice(0, 3).map((issue: any) => ({ runner: issue.runner, type: issue.type, message: issue.message?.substring(0, 50) })));
+  
+  // Process each issue individually to preserve uniqueness
+  results.issues.forEach((issue: any, index: number) => {
+    console.log(`Processing issue ${index + 1}/${results.issues.length}: ${issue.runner}-${issue.type}-${issue.code}`);
+    
     if (issue.runner === 'axe') {
+      // Clean message for consistent grouping
       const message = issue.message.replace(/\s*\(.*$/, '');
+      
+      // Create unique key based on code + selector to avoid over-grouping
+      const uniqueKey = `${issue.code || 'unknown'}-${issue.selector}`;
+      
+      const obj: axeOutput = {
+        message: message,
+        context: [issue.context],
+        selectors: [issue.selector],
+        impact: issue.runnerExtras?.impact || issue.impact || 'minor',
+        description: issue.runnerExtras?.description || issue.description || message,
+        help: issue.runnerExtras?.help || issue.help || '',
+      };
+      
       if (issue.type === 'error') {
-        const errorIndex = output.axe.errors.findIndex((error) => error.message === message);
-        if (errorIndex === -1) {
-          const obj: axeOutput = createAxeArrayObj(message, issue);
+        // Check if we already have this exact issue (same code + selector)
+        const existingIndex = output.axe.errors.findIndex((error) => 
+          error.message === message && error.selectors.includes(issue.selector)
+        );
+        if (existingIndex === -1) {
           output.axe.errors.push(obj);
         } else {
-          output.axe.errors[errorIndex].context.push(issue.context);
-          output.axe.errors[errorIndex].selectors.push(issue.selector);
+          // Only add context if it's different
+          if (!output.axe.errors[existingIndex].context.includes(issue.context)) {
+            output.axe.errors[existingIndex].context.push(issue.context);
+          }
         }
       } else if (issue.type === 'notice') {
-        const noticeIndex = output.axe.notices.findIndex((notice) => notice.message === message);
-        if (noticeIndex === -1) {
-          const obj: axeOutput = createAxeArrayObj(message, issue);
+        const existingIndex = output.axe.notices.findIndex((notice) => 
+          notice.message === message && notice.selectors.includes(issue.selector)
+        );
+        if (existingIndex === -1) {
           output.axe.notices.push(obj);
         } else {
-          output.axe.notices[noticeIndex].context.push(issue.context);
-          output.axe.notices[noticeIndex].selectors.push(issue.selector);
+          if (!output.axe.notices[existingIndex].context.includes(issue.context)) {
+            output.axe.notices[existingIndex].context.push(issue.context);
+          }
         }
       } else if (issue.type === 'warning') {
-        const warningIndex = output.axe.warnings.findIndex((warning) => warning.message === message);
-        if (warningIndex === -1) {
-          const obj: axeOutput = createAxeArrayObj(message, issue);
+        const existingIndex = output.axe.warnings.findIndex((warning) => 
+          warning.message === message && warning.selectors.includes(issue.selector)
+        );
+        if (existingIndex === -1) {
           output.axe.warnings.push(obj);
         } else {
-          output.axe.warnings[warningIndex].context.push(issue.context);
-          output.axe.warnings[warningIndex].selectors.push(issue.selector);
+          if (!output.axe.warnings[existingIndex].context.includes(issue.context)) {
+            output.axe.warnings[existingIndex].context.push(issue.context);
+          }
         }
       }
       output.totalElements += 1;
     } else if (issue.runner === 'htmlcs') {
+      const obj: htmlcsOutput = {
+        code: issue.code || issue.message || 'unknown',
+        message: issue.message,
+        context: [issue.context],
+        selectors: [issue.selector],
+      };
+      
       if (issue.type === 'error') {
-        const message = issue.message;
-        const errorIndex = output.htmlcs.errors.findIndex((error) => error.message === message);
-        if (errorIndex === -1) {
-          const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
+        const existingIndex = output.htmlcs.errors.findIndex((error) => 
+          error.message === issue.message && error.selectors.includes(issue.selector)
+        );
+        if (existingIndex === -1) {
           output.htmlcs.errors.push(obj);
         } else {
-          output.htmlcs.errors[errorIndex].context.push(issue.context);
-          output.htmlcs.errors[errorIndex].selectors.push(issue.selector);
+          if (!output.htmlcs.errors[existingIndex].context.includes(issue.context)) {
+            output.htmlcs.errors[existingIndex].context.push(issue.context);
+          }
         }
       } else if (issue.type === 'notice') {
-        const noticeIndex = output.htmlcs.notices.findIndex((notice) => notice.message === issue.message);
-        if (noticeIndex === -1) {
-          const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
+        const existingIndex = output.htmlcs.notices.findIndex((notice) => 
+          notice.message === issue.message && notice.selectors.includes(issue.selector)
+        );
+        if (existingIndex === -1) {
           output.htmlcs.notices.push(obj);
         } else {
-          output.htmlcs.notices[noticeIndex].context.push(issue.context);
-          output.htmlcs.notices[noticeIndex].selectors.push(issue.selector);
+          if (!output.htmlcs.notices[existingIndex].context.includes(issue.context)) {
+            output.htmlcs.notices[existingIndex].context.push(issue.context);
+          }
         }
       } else if (issue.type === 'warning') {
-        const warningIndex = output.htmlcs.warnings.findIndex((warning) => warning.message === issue.message);
-        if (warningIndex === -1) {
-          const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
+        const existingIndex = output.htmlcs.warnings.findIndex((warning) => 
+          warning.message === issue.message && warning.selectors.includes(issue.selector)
+        );
+        if (existingIndex === -1) {
           output.htmlcs.warnings.push(obj);
         } else {
-          output.htmlcs.warnings[warningIndex].context.push(issue.context);
-          output.htmlcs.warnings[warningIndex].selectors.push(issue.selector);
+          if (!output.htmlcs.warnings[existingIndex].context.includes(issue.context)) {
+            output.htmlcs.warnings[existingIndex].context.push(issue.context);
+          }
         }
       }
     }
   });
+  
+  console.log(`📈 Final processed counts:`);
+  console.log(`   AXE: ${output.axe.errors.length} errors, ${output.axe.warnings.length} warnings, ${output.axe.notices.length} notices`);
+  console.log(`   HTMLCS: ${output.htmlcs.errors.length} errors, ${output.htmlcs.warnings.length} warnings, ${output.htmlcs.notices.length} notices`);
+  console.log(`   Total processed: ${output.axe.errors.length + output.axe.warnings.length + output.axe.notices.length + output.htmlcs.errors.length + output.htmlcs.warnings.length + output.htmlcs.notices.length}`);
+  console.log(`   Original total: ${results.issues.length}`);
+  
+  // Add screenshot data to output if available  
+  if (results.siteImg) {
+    output.siteImg = results.siteImg;
+    console.log(`📸 Added site screenshot to output`);
+  } else if (results.screenshots && Array.isArray(results.screenshots) && results.screenshots.length > 0) {
+    output.siteImg = results.screenshots[0]; // Use first screenshot
+    console.log(`📸 Added screenshot to output (${Math.round((results.screenshots[0].length * 3/4) / 1024)}KB)`);
+  }
   
   // Get preprocessing configuration
   const config = getPreprocessingConfig();
@@ -286,5 +359,84 @@ export async function getAccessibilityInformationPally(domain: string) {
   output.score = calculateAccessibilityScore(output.axe);
   const result = await readAccessibilityDescriptionFromDb(output.htmlcs);
   output.htmlcs = result;
+  
+  // Create basic ByFunctions data for legacy processing
+  output.ByFunctions = createBasicByFunctions(output);
   return output;
+}
+
+function createBasicByFunctions(output: finalOutput): HumanFunctionality[] {
+  const byFunctions: HumanFunctionality[] = [];
+  
+  // Combine all issues from both runners
+  const allIssues: any[] = [];
+  
+  // Add issues from axe results
+  allIssues.push(...(output.axe.errors || []).map(issue => ({ ...issue, type: 'error', runner: 'axe' })));
+  allIssues.push(...(output.axe.warnings || []).map(issue => ({ ...issue, type: 'warning', runner: 'axe' })));
+  allIssues.push(...(output.axe.notices || []).map(issue => ({ ...issue, type: 'notice', runner: 'axe' })));
+  
+  // Add issues from htmlcs results
+  allIssues.push(...(output.htmlcs.errors || []).map(issue => ({ ...issue, type: 'error', runner: 'htmlcs' })));
+  allIssues.push(...(output.htmlcs.warnings || []).map(issue => ({ ...issue, type: 'warning', runner: 'htmlcs' })));
+  allIssues.push(...(output.htmlcs.notices || []).map(issue => ({ ...issue, type: 'notice', runner: 'htmlcs' })));
+  
+  // Group issues by functionality
+  const functionalityGroups: { [key: string]: any[] } = {
+    'Blind': [],
+    'Low Vision': [],
+    'Mobility': [],
+    'Cognitive': [],
+    'Deaf/Hard of Hearing': []
+  };
+  
+  allIssues.forEach(issue => {
+    const code = issue.code || issue.message || '';
+    const message = issue.message || '';
+    const description = issue.description || '';
+    
+    // Simple categorization based on keywords
+    if (code.includes('alt') || code.includes('image') || code.includes('aria-label') || 
+        message.includes('screen reader') || message.includes('alternative text')) {
+      functionalityGroups['Blind'].push(issue);
+    } 
+    else if (code.includes('contrast') || code.includes('color') || code.includes('focus') ||
+             message.includes('contrast') || message.includes('color')) {
+      functionalityGroups['Low Vision'].push(issue);
+    }
+    else if (code.includes('keyboard') || code.includes('tab') || message.includes('keyboard')) {
+      functionalityGroups['Mobility'].push(issue);
+    }
+    else if (code.includes('heading') || code.includes('landmark') || code.includes('structure') ||
+             message.includes('heading') || message.includes('structure') || code.includes('region')) {
+      functionalityGroups['Cognitive'].push(issue);
+    }
+    else if (code.includes('audio') || code.includes('video') || code.includes('media') ||
+             message.includes('audio') || message.includes('captions')) {
+      functionalityGroups['Deaf/Hard of Hearing'].push(issue);
+    }
+    else {
+      // Default to Cognitive for general accessibility issues
+      functionalityGroups['Cognitive'].push(issue);
+    }
+  });
+  
+  // Convert to ByFunctions format
+  Object.entries(functionalityGroups)
+    .filter(([, issues]) => issues.length > 0)
+    .forEach(([functionalityName, issues]) => {
+      byFunctions.push({
+        FunctionalityName: functionalityName,
+        Errors: issues.map(issue => ({
+          code: issue.code || 'N/A',
+          description: issue.description || issue.message || 'Accessibility issue detected',
+          message: issue.message || '',
+          context: issue.context || [],
+          recommended_action: 'Review and fix this accessibility issue',
+          selectors: issue.selectors || [],
+        }))
+      });
+    });
+  
+  return byFunctions;
 }

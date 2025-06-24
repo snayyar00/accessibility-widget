@@ -2,6 +2,7 @@ import { getAccessibilityInformationPally } from '~/helpers/accessibility.helper
 import logger from '~/utils/logger';
 import { GPTChunks } from './accessibilityIssues.service';
 import { formatUrlForScan, getRetryUrls } from '~/utils/domain.utils';
+import e from 'express';
 
 const { GraphQLJSON } = require('graphql-type-json');
 
@@ -180,7 +181,7 @@ export const fetchAccessibilityReport = async (url: string) => {
       const formattedUrl = formatUrlForScan(url);
       console.log('Formatted URL for scan:', formattedUrl);
       let result: ResultWithOriginal = await getAccessibilityInformationPally(formattedUrl);
-      
+      console.log('Initial result from getAccessibilityInformationPally:', result);
       // If initial attempt fails, try variations
       if (!result) {
         const retryUrls = getRetryUrls(url);
@@ -199,7 +200,7 @@ export const fetchAccessibilityReport = async (url: string) => {
         throw new Error('Failed to fetch accessibility report for all URL variations');
       }
 
-      console.log('result from getAccessibilityInformationPally:', result.score, result.totalElements, result.ByFunctions);
+      //console.log('result from getAccessibilityInformationPally:', result.score, result.totalElements, result.ByFunctions);
       const siteImg = await fetchSitePreview(formattedUrl);
       if (result && siteImg) {
         result.siteImg = siteImg;
@@ -213,6 +214,7 @@ export const fetchAccessibilityReport = async (url: string) => {
       // Perform calculations after the block
       const issues = extractIssuesFromReport(result);
       console.log(`Extracted ${issues.length} issues from report.`);
+      console.log('Issues:', issues);
 
       const issuesByFunction = groupIssuesByFunctionality(issues);
       const functionalityNames = getFunctionalityNames(issuesByFunction);
@@ -445,7 +447,7 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
             ...error,
             impact,
             source: error.__typename === 'htmlCsOutput' ? 'HTML_CS' : 'AXE Core',
-            functionality: funcGroup.FunctionalityName
+            functionality: funcGroup.FunctionalityName,
           })
         })
       }
@@ -463,7 +465,7 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
             ...error,
             impact,
             source: 'AXE Core',
-            functionality: funcGroup.FunctionalityName
+            functionality: funcGroup.FunctionalityName,
           })
         })
       }

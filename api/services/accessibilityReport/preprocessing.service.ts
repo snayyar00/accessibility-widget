@@ -607,8 +607,8 @@ function calculateRunnerBreakdown(issues: ProcessedIssue[]): Record<string, numb
 }
 
 /**
- * Convert current pa11y format to our RawIssue format
- * The input comes from accessibility.helper.ts which already groups issues by runner and type
+ * Convert pa11y format to our RawIssue format
+ * Handles both grouped format (axe.errors, htmlcs.warnings) and raw flat array format (issues[])
  */
 export function convertPa11yToRawIssues(pa11yOutput: any): RawIssue[] {
   const rawIssues: RawIssue[] = []
@@ -617,50 +617,77 @@ export function convertPa11yToRawIssues(pa11yOutput: any): RawIssue[] {
   const debugMode = process.env.PREPROCESSING_DEBUG_MODE === 'true'
   if (debugMode) {
     console.log('🔍 PA11Y input format check:')
+    console.log('   Raw issues array:', pa11yOutput.issues?.length || 0)
     console.log('   axe errors:', pa11yOutput.axe?.errors?.length || 0)
-    console.log('   axe warnings:', pa11yOutput.axe?.warnings?.length || 0)  
+    console.log('   axe warnings:', pa11yOutput.axe?.warnings?.length || 0)
     console.log('   axe notices:', pa11yOutput.axe?.notices?.length || 0)
     console.log('   htmlcs errors:', pa11yOutput.htmlcs?.errors?.length || 0)
     console.log('   htmlcs warnings:', pa11yOutput.htmlcs?.warnings?.length || 0)
     console.log('   htmlcs notices:', pa11yOutput.htmlcs?.notices?.length || 0)
   }
   
-  // Process axe issues - these come already grouped
-  if (pa11yOutput.axe) {
-    ['errors', 'warnings', 'notices'].forEach(type => {
-      if (pa11yOutput.axe[type] && Array.isArray(pa11yOutput.axe[type])) {
-        pa11yOutput.axe[type].forEach((issue: any) => {
-          rawIssues.push({
-            code: issue.message || '',
-            message: issue.message || '',
-            context: Array.isArray(issue.context) ? issue.context : [issue.context].filter(Boolean),
-            selectors: Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors].filter(Boolean),
-            type: type.slice(0, -1) as 'error' | 'warning' | 'notice', // Remove 's'
-            runner: 'axe',
-            impact: issue.impact,
-            help: issue.help
-          })
-        })
-      }
+  // Handle raw flat array format (direct from pa11y API)
+  if (pa11yOutput.issues && Array.isArray(pa11yOutput.issues)) {
+    if (debugMode) {
+      console.log('📋 Processing raw issues array format')
+    }
+    
+    pa11yOutput.issues.forEach((issue: any) => {
+      rawIssues.push({
+        code: issue.code || issue.message || '',
+        message: issue.message || '',
+        context: issue.context ? [issue.context] : [],
+        selectors: issue.selector ? [issue.selector] : [],
+        type: issue.type as 'error' | 'warning' | 'notice',
+        runner: issue.runner,
+        impact: issue.impact,
+        help: issue.help
+      })
     })
   }
-  
-  // Process htmlcs issues - these come already grouped  
-  if (pa11yOutput.htmlcs) {
-    ['errors', 'warnings', 'notices'].forEach(type => {
-      if (pa11yOutput.htmlcs[type] && Array.isArray(pa11yOutput.htmlcs[type])) {
-        pa11yOutput.htmlcs[type].forEach((issue: any) => {
-          rawIssues.push({
-            code: issue.code || issue.message || '',
-            message: issue.message || '',
-            context: Array.isArray(issue.context) ? issue.context : [issue.context].filter(Boolean),
-            selectors: Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors].filter(Boolean),
-            type: type.slice(0, -1) as 'error' | 'warning' | 'notice', // Remove 's'
-            runner: 'htmlcs'
+  // Handle grouped format (processed by accessibility helper)
+  else {
+    if (debugMode) {
+      console.log('📊 Processing grouped format')
+    }
+    
+    // Process axe issues - these come already grouped
+    if (pa11yOutput.axe) {
+      ['errors', 'warnings', 'notices'].forEach(type => {
+        if (pa11yOutput.axe[type] && Array.isArray(pa11yOutput.axe[type])) {
+          pa11yOutput.axe[type].forEach((issue: any) => {
+            rawIssues.push({
+              code: issue.message || '',
+              message: issue.message || '',
+              context: Array.isArray(issue.context) ? issue.context : [issue.context].filter(Boolean),
+              selectors: Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors].filter(Boolean),
+              type: type.slice(0, -1) as 'error' | 'warning' | 'notice', // Remove 's'
+              runner: 'axe',
+              impact: issue.impact,
+              help: issue.help
+            })
           })
-        })
-      }
-    })
+        }
+      })
+    }
+    
+    // Process htmlcs issues - these come already grouped  
+    if (pa11yOutput.htmlcs) {
+      ['errors', 'warnings', 'notices'].forEach(type => {
+        if (pa11yOutput.htmlcs[type] && Array.isArray(pa11yOutput.htmlcs[type])) {
+          pa11yOutput.htmlcs[type].forEach((issue: any) => {
+            rawIssues.push({
+              code: issue.code || issue.message || '',
+              message: issue.message || '',
+              context: Array.isArray(issue.context) ? issue.context : [issue.context].filter(Boolean),
+              selectors: Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors].filter(Boolean),
+              type: type.slice(0, -1) as 'error' | 'warning' | 'notice', // Remove 's'
+              runner: 'htmlcs'
+            })
+          })
+        }
+      })
+    }
   }
   
   if (debugMode) {

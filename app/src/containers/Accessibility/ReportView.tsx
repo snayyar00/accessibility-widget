@@ -24,7 +24,10 @@ import {
   Keyboard,
   Loader2,
   Check,
-  Shield
+  Shield,
+  X,
+  Copy,
+  Download
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -135,6 +138,8 @@ const ReportView: React.FC = () => {
   const [issueFilter, setIssueFilter] = useState(ISSUE_FILTERS.ALL);
   const [widgetInfo, setWidgetInfo] = useState<WidgetInfo | null>(null);
   const [webabilityenabled, setwebabilityenabled] = useState(false);
+  const [elementModalOpen, setElementModalOpen] = useState(false);
+  const [selectedElement, setSelectedElement] = useState<any>(null);
   const {
     data: userInfo,
     error: getProfileError,
@@ -500,7 +505,19 @@ const filteredIssues = useMemo(() => {
 
                     {issue.context && issue.context.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-semibold mb-2">Affected Element</h3>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-sm font-semibold">Affected Element</h3>
+                          <button
+                            onClick={() => {
+                              setSelectedElement(issue);
+                              setElementModalOpen(true);
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                          >
+                            <Eye className="w-3 h-3" />
+                            View Element
+                          </button>
+                        </div>
                         <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto border border-gray-element">
                           {issue.context[0]}
                         </pre>
@@ -581,6 +598,14 @@ const filteredIssues = useMemo(() => {
           </motion.div>
         )}
       </div>
+      
+      {/* Element Modal */}
+      <ElementModal
+        isOpen={elementModalOpen}
+        onClose={() => setElementModalOpen(false)}
+        element={selectedElement}
+        siteImg={report.siteImg}
+      />
     </div>
   );
 };
@@ -677,6 +702,159 @@ const IssuesSummary: React.FC<IssuesSummaryProps> = ({ filteredIssues, activeTab
     </div>
   )
 }
+
+// Element Modal Component
+const ElementModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  element: any;
+  siteImg: string;
+}> = ({ isOpen, onClose, element, siteImg }) => {
+  if (!isOpen || !element) return null;
+
+  const handleCopyElement = () => {
+    navigator.clipboard.writeText(element.context[0]).then(() => {
+      toast.success("Element code copied to clipboard!");
+    }).catch(() => {
+      toast.error("Failed to copy element code");
+    });
+  };
+
+  const handleDownloadImage = () => {
+    if (siteImg) {
+      const link = document.createElement('a');
+      link.href = siteImg;
+      link.download = `element-screenshot-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Screenshot downloaded!");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <Eye className="w-5 h-5 text-blue-600" />
+            <h2 className="text-lg font-semibold text-gray-900">View Element</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+        
+        {/* Modal Content */}
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Screenshot Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-gray-900">Element Screenshot</h3>
+                {siteImg && (
+                  <button
+                    onClick={handleDownloadImage}
+                    className="flex items-center gap-1 px-3 py-1 text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                  >
+                    <Download className="w-3 h-3" />
+                    Download
+                  </button>
+                )}
+              </div>
+              
+              {siteImg ? (
+                <div className="relative border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                  <img
+                    src={siteImg}
+                    alt="Website screenshot highlighting the element"
+                    className="w-full h-auto"
+                  />
+                  {/* Overlay to highlight the problematic area */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 to-red-500/5 pointer-events-none" />
+                </div>
+              ) : (
+                <div className="border border-gray-200 rounded-lg p-8 text-center bg-gray-50">
+                  <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No screenshot available</p>
+                </div>
+              )}
+            </div>
+
+            {/* Element Details Section */}
+            <div className="space-y-4">
+              <h3 className="font-medium text-gray-900">Element Details</h3>
+              
+              {/* Issue Information */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h4 className="font-medium text-sm text-gray-700 mb-2">Issue</h4>
+                <p className="text-sm text-gray-600">
+                  {element.message || element.help || 'Accessibility Issue'}
+                </p>
+              </div>
+
+              {/* Element Code */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-sm text-gray-700">Element Code</h4>
+                  <button
+                    onClick={handleCopyElement}
+                    className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-50 text-gray-600 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
+                  >
+                    <Copy className="w-3 h-3" />
+                    Copy
+                  </button>
+                </div>
+                <pre className="bg-gray-900 text-green-400 p-3 rounded text-xs overflow-x-auto border border-gray-700 max-h-32">
+                  {element.context[0]}
+                </pre>
+              </div>
+
+              {/* CSS Selector */}
+              {element.selectors && element.selectors.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm text-gray-700">CSS Selector</h4>
+                  <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto border border-gray-200">
+                    {element.selectors[0]}
+                  </pre>
+                </div>
+              )}
+
+              {/* Impact Level */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Impact:</span>
+                <span className={`text-xs font-medium px-2 py-1 rounded-md ${
+                  element.impact === 'critical'
+                    ? 'bg-red-100 text-red-700'
+                    : element.impact === 'serious'
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {element.impact === 'critical' ? 'Critical' :
+                    element.impact === 'serious' ? 'Serious' : 'Moderate'}
+                </span>
+              </div>
+
+              {/* Recommended Action */}
+              {element.recommended_action && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-sm text-blue-800 mb-2">Recommended Fix</h4>
+                  <p className="text-sm text-blue-700">
+                    {element.recommended_action}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ScanningPreview: React.FC<{ siteImg: string }> = ({ siteImg }) => {
   return (
