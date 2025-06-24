@@ -15,7 +15,10 @@ import { MdBugReport } from 'react-icons/md';
 import ProblemReport from '@/containers/ProblemReport/ProblemReport';
 import { FaUniversalAccess } from 'react-icons/fa';
 import { TbReportSearch } from 'react-icons/tb';
+import { HiOutlineDocumentText } from 'react-icons/hi';
+import { MdOutlineGavel } from 'react-icons/md';
 import ReportView from '@/containers/Accessibility/ReportView';
+import StatementGenerator from '@/containers/StatementGenerator/StatementGenerator';
 
 const routes = [
   // {
@@ -84,6 +87,14 @@ const routes = [
     exact:true,
     component: ProblemReport,
     icon: <MdBugReport className="menu-icon text-white-blue transition-colors duration-200" size={35} aria-label="Issues navigation icon"/>,
+    isSidebar:true,
+  },
+  {
+    path:'/statement-generator',
+    name:'AI Statement',
+    exact:true,
+    component: StatementGenerator,
+    icon: <MdOutlineGavel className="menu-icon text-white-blue transition-colors duration-200" size={30} aria-label="AI Statement Generator navigation icon"/>,
     isSidebar:true,
   },
   {
