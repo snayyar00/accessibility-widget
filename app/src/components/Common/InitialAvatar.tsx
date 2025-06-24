@@ -14,8 +14,9 @@ const InitialAvatar: React.FC<InitialAvatarProps> = ({
   // Function to get initials from name
   const getInitials = (fullName: string): string => {
     if (!fullName) return 'U'; // Default to 'U' for User if no name
-    
-    const names = fullName.trim().split(' ');
+  
+    const names = fullName.trim().split(' ').filter(name => name.length > 0);
+    if (names.length === 0) return 'U';
     if (names.length === 1) {
       return names[0].charAt(0).toUpperCase();
     }
