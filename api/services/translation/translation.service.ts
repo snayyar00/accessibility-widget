@@ -227,8 +227,11 @@ Respond with only the translated JSON object:`;
     
     // Send to monitoring service if available
     if (process.env.SENTRY_DSN) {
-      // Sentry error tracking (already configured in the project)
-      console.error('Sentry error tracking:', errorDetails);
+      // Import Sentry at the top of the file: import * as Sentry from '@sentry/node';
+      Sentry.captureException(error, {
+        tags: { service: 'translation' },
+        extra: errorDetails
+      });
     }
     
     // Return user-friendly error
