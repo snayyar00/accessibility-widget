@@ -5,20 +5,20 @@
       "gear": "gear"
     },
     "title": {
-      "saasgear": "WebAbility.io",
-      "profile": "Profile",
-      "Billing": "Handle Billing",
-      "sign_in": "Sign In",
+      "saasgear": "WebAbility.io - Complete ADA & WCAG Compliance Solutions",
+      "profile": "Account Profile - WebAbility.io Accessibility Dashboard",
+      "Billing": "Billing & Subscription Plans - WebAbility.io ADA Compliance",
+      "sign_in": "Sign In - WebAbility.io ADA & WCAG Compliance Platform",
       "sign_out": "Sign Out",
-      "sign_up": "Sign Up",
-      "customize_widget":"Customize Widget",
-      "add_domain":"Domain Management",
-      "problem_reports":"Problem Reports",
-      "report":"Web Accessibility Scanner",
-      "dashboard":"Dashboard",
-      "installation":"Installation",
-      "forgot_password": "Forgot Password",
-      "reset_password": "Reset password",
+      "sign_up": "Get Started Free - WebAbility.io ADA Compliance Widget",
+      "customize_widget":"Customize Accessibility Widget - WebAbility.io ADA Tools",
+      "add_domain":"Add Website Domain - WebAbility.io ADA Compliance Setup",
+      "problem_reports":"Website Accessibility Issues - WebAbility.io Support",
+      "report":"Free Accessibility Scanner - WCAG & ADA Compliance Checker",
+      "dashboard":"Accessibility Dashboard - WebAbility.io ADA WCAG Analytics",
+      "installation":"Install ADA Compliance Widget - WebAbility.io Setup Guide",
+      "forgot_password": "Reset Password - WebAbility.io Account Recovery",
+      "reset_password": "Create New Password - WebAbility.io Security",
       "new_document": "New Document",
       "teams": "Teams"
     },
@@ -32,7 +32,9 @@
       "name": "Name",
       "body": "Body",
       "edit_profile": "Edit Profile",
-      "website_url": "Website URL"
+      "website_url": "Website URL",
+      "profile": "Profile",
+      "billing": "Billing & Plans"
     },
     "text": {
       "hi": "Hi",
@@ -50,7 +52,7 @@
       "view": "View",
       "admin": "admin",
       "member": "member",
-      "avatar": "Avatar",
+      "avatar": "Profile Picture",
       "continue": "Continue"
     },
     "validation": {
@@ -78,13 +80,13 @@
     },
     "status": {
       "update_success": "Update profile successfully!",
-      "channge_avatar_success": "Change avatar successfully",
-      "change_avatar_failed": "Can not update your avatar",
+      "channge_avatar_success": "Change profile picture successfully",
+      "change_avatar_failed": "Can not update your profile picture",
       "error_big_size": "File is too big",
       "change_password_success": "Change password successfully!"
     },
     "alt": {
-      "avatar": "avatar"
+      "avatar": "profile picture"
     },
     "error": {
       "INTERNAL_SERVER_ERROR": "Internal server error."

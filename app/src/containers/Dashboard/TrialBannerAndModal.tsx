@@ -739,7 +739,7 @@ const TrialBannerAndModal: React.FC<any> = ({allDomains,setReloadSites,isModalOp
                         </div>
                         <ul className="ml-10 list-disc">
                           <li className="text-white">
-                            Plug and play in minutes, 24/7 customer care.
+                            Plug and play in minutes, fast customer support.
                           </li>
                         </ul>
                       </li>

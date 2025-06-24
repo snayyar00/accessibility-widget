@@ -8,7 +8,7 @@ const getTourKeyFromRoute = (pathname: string): string | null => {
     return 'add_domain_unified_tour';
   } else if (pathname.includes('/installation')) {
     return 'installation_tour';
-  } else if (pathname === '/accessibility-test') {
+  } else if (pathname === '/scanner') {
     return 'accessibility_tour';
   } else if (pathname === '/problem-reports') {
     return 'reports_tour';
