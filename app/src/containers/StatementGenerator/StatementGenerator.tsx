@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@apollo/client';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
@@ -345,6 +345,15 @@ const StatementGenerator: React.FC = () => {
   const selectedLanguage = languages.find(lang => lang.code === formData.language);
   const displayLanguage = selectedLanguage ? `${selectedLanguage.name} (${selectedLanguage.englishName})` : 'Select Language';
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (translationTimeoutRef.current) {
+        clearTimeout(translationTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Debounced statement generation to prevent rapid API calls
   const generateStatementDebounced = useCallback(() => {
     // Clear existing timeout
@@ -353,46 +362,44 @@ const StatementGenerator: React.FC = () => {
     }
     
     // Set new timeout for debouncing
-    translationTimeoutRef.current = setTimeout(() => {
-      handleGenerateStatement();
+    translationTimeoutRef.current = setTimeout(async () => {
+      // Inline handleGenerateStatement to avoid stale closure
+      if (!formData.companyName || !formData.websiteUrl || !formData.contactEmail) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      // Prevent duplicate requests within 1 second (faster model)
+      const now = Date.now();
+      const formDataKey = `${formData.companyName}_${formData.websiteUrl}_${formData.contactEmail}_${formData.language}_${formData.industry}`;
+      if (lastTranslationRef.current && 
+          lastTranslationRef.current.formDataKey === formDataKey && 
+          (now - lastTranslationRef.current.timestamp) < 1000) {
+        toast.info('Please wait, statement is being generated...');
+        return;
+      }
+
+      lastTranslationRef.current = {
+        formDataKey,
+        timestamp: now
+      };
+
+      setIsGenerating(true);
+      
+      try {
+        // Generate statement with AI translations
+        const statement = await generateStatement(formData);
+        setGeneratedStatement(statement);
+        toast.success('Accessibility statement generated successfully!');
+      } catch (error) {
+        console.error('Statement generation error:', error);
+        toast.error('Failed to generate statement. Please try again.');
+      } finally {
+        setIsGenerating(false);
+      }
     }, 200); // 200ms debounce for faster UX
-  }, [formData]);
+  }, [formData, setIsGenerating, setGeneratedStatement]);
   
-  const handleGenerateStatement = async () => {
-    if (!formData.companyName || !formData.websiteUrl || !formData.contactEmail) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
-    // Prevent duplicate requests within 1 second (faster model)
-    const now = Date.now();
-    const formDataKey = `${formData.companyName}_${formData.websiteUrl}_${formData.contactEmail}_${formData.language}_${formData.industry}`;
-    if (lastTranslationRef.current && 
-        lastTranslationRef.current.formDataKey === formDataKey && 
-        (now - lastTranslationRef.current.timestamp) < 1000) {
-      toast.info('Please wait, statement is being generated...');
-      return;
-    }
-
-    lastTranslationRef.current = {
-      formDataKey,
-      timestamp: now
-    };
-
-    setIsGenerating(true);
-    
-    try {
-      // Generate statement with AI translations
-      const statement = await generateStatement(formData);
-      setGeneratedStatement(statement);
-      toast.success('Accessibility statement generated successfully!');
-    } catch (error) {
-      console.error('Statement generation error:', error);
-      toast.error('Failed to generate statement. Please try again.');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   // Extract as utility function outside the component
   const getLocalizedDate = (lang: string): string => {
