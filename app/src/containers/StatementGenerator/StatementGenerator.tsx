@@ -393,25 +393,27 @@ const StatementGenerator: React.FC = () => {
     }
   };
 
+  // Extract as utility function outside the component
+  const getLocalizedDate = (lang: string): string => {
+    const localeMap: { [key: string]: string } = {
+      'en': 'en-US', 'es': 'es-ES', 'fr': 'fr-FR', 'de': 'de-DE', 'it': 'it-IT',
+      'pt': 'pt-PT', 'pt-br': 'pt-BR', 'nl': 'nl-NL', 'pl': 'pl-PL', 'ru': 'ru-RU',
+      'zh': 'zh-CN', 'zh-tw': 'zh-TW', 'ja': 'ja-JP', 'ko': 'ko-KR', 'ar': 'ar-SA',
+      'hi': 'hi-IN', 'th': 'th-TH', 'vi': 'vi-VN', 'tr': 'tr-TR', 'he': 'he-IL',
+      'sv': 'sv-SE', 'no': 'nb-NO', 'da': 'da-DK', 'fi': 'fi-FI', 'cs': 'cs-CZ',
+      'sk': 'sk-SK', 'hu': 'hu-HU', 'ro': 'ro-RO', 'bg': 'bg-BG', 'hr': 'hr-HR',
+      'sr': 'sr-RS', 'sl': 'sl-SI', 'et': 'et-EE', 'lv': 'lv-LV', 'lt': 'lt-LT',
+      'el': 'el-GR', 'uk': 'uk-UA', 'ms': 'ms-MY', 'id': 'id-ID', 'bn': 'bn-BD',
+      'ur': 'ur-PK', 'ca': 'ca-ES'
+    };
+    return localeMap[lang] || 'en-US';
+  };
+
   const generateStatement = async (data: StatementFormData, enhancement?: string): Promise<string> => {
     const selectedLanguage = languages.find(lang => lang.code === data.language);
     const languageName = selectedLanguage ? selectedLanguage.name : 'English';
-    
-    // Get locale-appropriate date formatting
-    const getLocalizedDate = (lang: string) => {
-      const localeMap: { [key: string]: string } = {
-        'en': 'en-US', 'es': 'es-ES', 'fr': 'fr-FR', 'de': 'de-DE', 'it': 'it-IT',
-        'pt': 'pt-PT', 'pt-br': 'pt-BR', 'nl': 'nl-NL', 'pl': 'pl-PL', 'ru': 'ru-RU',
-        'zh': 'zh-CN', 'zh-tw': 'zh-TW', 'ja': 'ja-JP', 'ko': 'ko-KR', 'ar': 'ar-SA',
-        'hi': 'hi-IN', 'th': 'th-TH', 'vi': 'vi-VN', 'tr': 'tr-TR', 'he': 'he-IL',
-        'sv': 'sv-SE', 'no': 'nb-NO', 'da': 'da-DK', 'fi': 'fi-FI', 'cs': 'cs-CZ',
-        'sk': 'sk-SK', 'hu': 'hu-HU', 'ro': 'ro-RO', 'bg': 'bg-BG', 'hr': 'hr-HR',
-        'sr': 'sr-RS', 'sl': 'sl-SI', 'et': 'et-EE', 'lv': 'lv-LV', 'lt': 'lt-LT',
-        'el': 'el-GR', 'uk': 'uk-UA', 'ms': 'ms-MY', 'id': 'id-ID', 'bn': 'bn-BD',
-        'ur': 'ur-PK', 'ca': 'ca-ES'
-      };
-      return localeMap[lang] || 'en-US';
-    };
+  
+    const locale = getLocalizedDate(data.language);
     
     const locale = getLocalizedDate(data.language);
     const currentDate = new Date().toLocaleDateString(locale, { 
