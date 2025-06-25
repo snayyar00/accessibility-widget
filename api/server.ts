@@ -83,33 +83,35 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     optionsSuccessStatus: 200,
     credentials: true,
     origin: (origin: any, callback: any) => {
+      return callback(null, true);
+      
       // 1. Allow everything in local development
-      if (IS_LOCAL_DEV) {
-        return callback(null, true);
-      }
+      // if (IS_LOCAL_DEV) {
+      //   return callback(null, true);
+      // }
 
-      // 2. Allow any origin for specific allowed operations
-      if (req.body && allowedOperations.includes(req.body.operationName)) {
-        return callback(null, true);
-      }
+      // // 2. Allow any origin for specific allowed operations
+      // if (req.body && allowedOperations.includes(req.body.operationName)) {
+      //   return callback(null, true);
+      // }
 
-      // 3. Allow explicitly listed origins
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+      // // 3. Allow explicitly listed origins
+      // if (allowedOrigins.includes(origin)) {
+      //   return callback(null, true);
+      // }
 
-      // 4. Allow preflight requests
-      if (req.method === 'OPTIONS') {
-        return callback(null, true);
-      }
+      // // 4. Allow preflight requests
+      // if (req.method === 'OPTIONS') {
+      //   return callback(null, true);
+      // }
 
-      // 5. Allow root domain and all its subdomains
-      if (
-        typeof origin === 'string' &&
-        (origin.endsWith(FRONTEND_ROOT) || origin === FRONTEND_ROOT.replace(/^\./, ''))
-      ) {
-        return callback(null, true);
-      }
+      // // 5. Allow root domain and all its subdomains
+      // if (
+      //   typeof origin === 'string' &&
+      //   (origin.endsWith(FRONTEND_ROOT) || origin === FRONTEND_ROOT.replace(/^\./, ''))
+      // ) {
+      //   return callback(null, true);
+      // }
 
       // 6. All other requests are not allowed by CORS (uncomment for explicit rejection)
       // callback(new Error('Not allowed by CORS'));
