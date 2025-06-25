@@ -2,7 +2,7 @@
 CI = 'false'
 
 [phases.setup]
-nixPkgs = ["nodejs_18", "curl", "wget", "nano"]
+nixPkgs = ["nodejs_22", "curl", "wget", "nano"]
 
 [phases.install]
 cmds = ["npm install --legacy-peer-deps --ignore-scripts"]
