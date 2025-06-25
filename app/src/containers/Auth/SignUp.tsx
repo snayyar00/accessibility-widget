@@ -120,31 +120,37 @@ const SignUp: React.FC = () => {
     }
   }
 
-  async function addSiteAfterSignup(websiteUrl: string) {
+  async function addSiteAfterSignup(websiteUrl: string, baseUrl: string) {
     try {
-      // Process the URL to get the root domain
       const sanitizedDomain = getRootDomain(websiteUrl);
-      
-      // Add the sanitized domain to the user's account
       const response = await addSiteMutation({ 
         variables: { 
           url: sanitizedDomain 
         } 
       });
-      
+
+      let redirectPath = '/add-domain';
+
       if (!response.errors) {
-        // Redirect to add-domain page after successful site addition
-        history.push('/add-domain');
+        const fullUrl = baseUrl.replace(/\/$/, '') + redirectPath;
+        window.location.href = fullUrl;
+
         return true;
       } else {
         toast.error('There was an issue adding your domain. Redirecting to dashboard...');
-        history.push('/');
+
+        const fullUrl = baseUrl.replace(/\/$/, '') + '/';
+        window.location.href = fullUrl;
+
         return false;
       }
     } catch (error) {
       console.error('Error adding site:', error);
       toast.error('There was an issue adding your domain. Redirecting to dashboard...');
-      history.push('/');
+
+      const fullUrl = baseUrl.replace(/\/$/, '') + '/';
+      window.location.href = fullUrl;
+      
       return false;
     }
   }
@@ -154,25 +160,21 @@ const SignUp: React.FC = () => {
       const registerResult = await signup(params);
 
       if (registerResult && registerResult.url) {
-        let redirectPath = '/';
-
         if (params.websiteUrl && params.websiteUrl.trim() !== '') {
-          redirectPath = '/add-domain';
+          await addSiteAfterSignup(params.websiteUrl, registerResult.url);
+        } else {
+          const fullUrl = registerResult.url.replace(/\/$/, '') + '/';
+          window.location.href = fullUrl;
         }
-        
-        const fullUrl = registerResult.url.replace(/\/$/, '') + redirectPath;
-        window.location.href = fullUrl;
 
         return;
       }
-      
-      
+
       if (params.websiteUrl && params.websiteUrl.trim() !== '') {
-        await addSiteAfterSignup(params.websiteUrl);
+        await addSiteAfterSignup(params.websiteUrl, '/');
       } else {
         history.push('/');
       }
-      
     } catch (error) {
       console.error('Error in signup process:', error);
       toast.error('An unexpected error occurred. Please try again.');

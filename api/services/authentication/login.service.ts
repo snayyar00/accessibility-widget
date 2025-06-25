@@ -38,12 +38,19 @@ export async function loginUser(email: string, password: string, res: Response):
   }
   
   let subdomain: string | undefined = undefined;
-  const orgLinks = await getOrganizationsOfUser(user.id);
+  let org;
 
-  if (orgLinks && orgLinks.length > 0) {
-    const org = await getOrganizationById(orgLinks[0].organization_id);
-    subdomain = org?.subdomain;
+  if (user.current_organization_id) {
+    org = await getOrganizationById(user.current_organization_id);
+  } else {
+    const orgLinks = await getOrganizationsOfUser(user.id);
+    
+    if (orgLinks && orgLinks.length > 0) {
+      org = await getOrganizationById(orgLinks[0].organization_id);
+    }
   }
+
+  subdomain = org?.subdomain;
 
   return {
     token: sign({

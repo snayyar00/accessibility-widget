@@ -23,6 +23,12 @@ CREATE TABLE organization_users (
   UNIQUE KEY uq_org_user (user_id, organization_id)
 );
 
+ALTER TABLE users
+ADD COLUMN current_organization_id INT NULL,
+ADD CONSTRAINT fk_current_organization
+  FOREIGN KEY (current_organization_id) REFERENCES organizations(id)
+  ON DELETE SET NULL;
+
 Change Env
 
 Remove 

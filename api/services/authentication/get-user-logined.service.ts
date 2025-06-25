@@ -13,6 +13,7 @@ type UserLoginedResponse = {
   company: string;
   avatarUrl: string;
   invitationToken: string | null;
+  current_organization_id: number | null;
 };
 
 export default async function getUserLogined(bearerToken: string | null, res: Response): Promise<UserLoginedResponse> {
@@ -27,6 +28,7 @@ export default async function getUserLogined(bearerToken: string | null, res: Re
         const { user } = verifyToken;
         const userInfo = await findUser({ email: user.email });
         const [invitationToken] = await getTeamInvitation({ email: user.email, status: 'active' });
+        
         return {
           id: userInfo.id,
           email: userInfo.email,
@@ -36,6 +38,7 @@ export default async function getUserLogined(bearerToken: string | null, res: Re
           company: userInfo.company,
           avatarUrl: userInfo.avatar_url,
           invitationToken: invitationToken ? invitationToken.token : null,
+          current_organization_id: userInfo.current_organization_id || null,
         };
       }
     } catch (error) {

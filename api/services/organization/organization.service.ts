@@ -22,6 +22,7 @@ import {
   ORGANIZATION_USER_ROLE_OWNER,
   ORGANIZATION_USER_STATUS_ACTIVE
 } from '~/constants/database.constant';
+import { updateUser } from '~/repository/user.repository';
 
 export interface CreateOrganizationInput {
   name: string;
@@ -67,6 +68,8 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
     const newOrgId = Number(ids[0]);
     
     await addUserToOrganization(user.id, newOrgId, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE, undefined, trx);
+    await updateUser(user.id, { current_organization_id: newOrgId }, trx);
+    
     await trx.commit();
 
     return ids && ids.length > 0 ? ids[0] : null;

@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useLazyQuery } from '@apollo/client';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, RouteProps, useHistory } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { RootState } from '@/config/store';
 
 // Queries
@@ -11,6 +10,7 @@ import getProfileQuery from '@/queries/auth/getProfile';
 // Actions
 import { setProfileUser } from '@/features/auth/user';
 import { CircularProgress } from '@mui/material';
+import { redirectToOrganization } from '@/helpers/redirectToOrganization';
 
 type Props = {
   render: RouteProps['render'];
@@ -34,8 +34,35 @@ const PrivateRoute: React.FC<Props> = ({ render }) => {
     if (userProfile && userProfile.profileUser) {
       if (userProfile?.profileUser?.invitationToken) {
         history.push(`/teams/invitation/${userProfile.profileUser.invitationToken}`);
+      } else {
+        const org = userProfile.profileUser.currentOrganization;
+
+        if (org) {
+          const baseDomain = process.env.REACT_APP_DOMAIN || window.location.origin;
+
+          const redirected = redirectToOrganization(
+            org,
+            baseDomain,
+            window.location.pathname,
+            window.location.search
+          );
+
+          if (redirected) return;
+        } else {
+          const baseDomain = process.env.REACT_APP_DOMAIN || window.location.origin;
+          
+          const redirected = redirectToOrganization(
+            null,
+            baseDomain,
+            window.location.pathname,
+            window.location.search
+          );
+
+          if (redirected) return;
+        }
+        
+        dispatch(setProfileUser({ data: userProfile.profileUser, loading: loadingUserProfile }));
       }
-      dispatch(setProfileUser({ data: userProfile.profileUser, loading: loadingUserProfile }));
     }
   }, [userProfile]);
 

@@ -22,6 +22,7 @@ export const usersColumns = {
   provider: 'users.provider',
   providerId: 'users.provider_id',
   deletedAt: 'users.deleted_at',
+  current_organization_id: 'users.current_organization_id',
 };
 
 type FindUserProps = {
@@ -46,6 +47,7 @@ export type UserProfile = {
   created_at?: string;
   updated_at?: string;
   deleted_at?: string;
+  current_organization_id?: number;
 };
 
 type GetUserByIdAndJoinUserTokenResponse = UserProfile & UserToken;

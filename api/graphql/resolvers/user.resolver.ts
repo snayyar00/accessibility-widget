@@ -13,6 +13,7 @@ import { updateProfile, changeUserAvatar } from '~/services/user/update-user.ser
 import { isEmailAlreadyRegistered } from '~/services/user/user.service';
 import { normalizeEmail } from '~/helpers/string.helper';
 import { clearCookie, COOKIE_NAME, setAuthenticationCookie } from '~/utils/cookie';
+import { getOrganizationById } from '~/repository/organization.repository';
 
 type Res = {
   res: Response;
@@ -56,6 +57,15 @@ const resolvers = {
     
     isEmailAlreadyRegistered: async (_: unknown, { email }: { email: string }) => {
       return isEmailAlreadyRegistered(normalizeEmail(email));
+    },
+  },
+  User: {
+    currentOrganization: async (parent: { current_organization_id?: number }) => {
+      if (!parent.current_organization_id) return null;
+
+      const org = await getOrganizationById(parent.current_organization_id);
+      
+      return org || null;
     },
   },
   Mutation: {

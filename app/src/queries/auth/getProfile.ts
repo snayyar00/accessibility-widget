@@ -11,6 +11,9 @@ export default gql`
       position
       avatarUrl
       invitationToken
+      currentOrganization {
+        subdomain
+      }
     }
   }
 `;

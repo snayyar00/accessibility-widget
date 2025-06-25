@@ -26,6 +26,8 @@ export const UserSchema = gql`
     company: String
     avatarUrl: String
     invitationToken: String
+    current_organization_id: Int
+    currentOrganization: Organization
   }
 
   type UserSocial {

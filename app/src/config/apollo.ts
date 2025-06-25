@@ -50,6 +50,7 @@ export function createClient(): ApolloClient<NormalizedCacheObject> {
             )
           );
           const errors = graphQLErrors[0];
+
           switch (errors.extensions?.code) {
             case 'UNAUTHENTICATED':
               if (!window.location.pathname.startsWith('/auth')) {
@@ -61,6 +62,7 @@ export function createClient(): ApolloClient<NormalizedCacheObject> {
             default: 
           }
         }
+        
         if (networkError) {
           console.log(`[Network error]: ${networkError}`);
         }
