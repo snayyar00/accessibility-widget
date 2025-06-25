@@ -25,13 +25,7 @@ const organizationResolver = {
         const id = await addOrganization(args, user);
 
         if (id) {
-          const newUser = {
-            ...user,
-            organization_ids: [...(user.organization_ids ?? []), id],
-          };
-          
-          const org = await getOrganizationById(id, newUser);
-
+          const org = await getOrganizationById(id, user);
           return org || null;
         }
 

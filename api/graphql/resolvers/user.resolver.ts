@@ -13,8 +13,6 @@ import { updateProfile, changeUserAvatar } from '~/services/user/update-user.ser
 import { isEmailAlreadyRegistered } from '~/services/user/user.service';
 import { normalizeEmail } from '~/helpers/string.helper';
 import { clearCookie, COOKIE_NAME, setAuthenticationCookie } from '~/utils/cookie';
-import { UserProfile } from '~/repository/user.repository';
-import { getOrganizationById } from '~/services/organization/organization.service';
 
 type Res = {
   res: Response;
@@ -60,15 +58,6 @@ const resolvers = {
       return isEmailAlreadyRegistered(normalizeEmail(email));
     },
   },
-  User: {
-    currentOrganization: async (parent: UserProfile) => {
-      if (!parent.current_organization_id) return null;
-
-      const org = await getOrganizationById(parent.current_organization_id, parent);
-      
-      return org || null;
-    },
-  },
   Mutation: {
     register: async (_: unknown, { email, password, name, paymentMethodToken, planName, billingType, organizationName } : Register, { res }: Res) => {
       const result = await registerUser(normalizeEmail(email), password, name, paymentMethodToken, planName, billingType, organizationName);
@@ -83,6 +72,7 @@ const resolvers = {
 
     login: async (_: unknown, { email, password }: Login, { res }: Res) => {
       const result = await loginUser(normalizeEmail(email), password, res);
+
       if (result && result.token) {
         setAuthenticationCookie(res, result.token);
         return true;
@@ -111,6 +101,7 @@ const resolvers = {
       isAuthenticated,
       async (_, __, { user, res }) => {
         const result = await deleteUser(user);
+
         if (result === true) {
           clearCookie(res, COOKIE_NAME.TOKEN);
         }

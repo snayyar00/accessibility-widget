@@ -8,15 +8,20 @@ CREATE TABLE organizations (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-ALTER TABLE users ADD COLUMN organization_ids JSON NOT NULL DEFAULT ('[]');
-
-ALTER TABLE users ADD COLUMN current_organization_id INT NULL;
-
-ALTER TABLE users
-ADD CONSTRAINT fk_users_current_org
-  FOREIGN KEY (current_organization_id) REFERENCES organizations(id)
-  ON DELETE SET NULL;
-
+CREATE TABLE organization_users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  organization_id INT NOT NULL,
+  role VARCHAR(32) NOT NULL DEFAULT 'member',
+  status VARCHAR(32) NOT NULL DEFAULT 'active',
+  invited_by INT UNSIGNED NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_org_user_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_org_user_org FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT fk_org_user_invited_by FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL,
+  UNIQUE KEY uq_org_user (user_id, organization_id)
+);
 
 Change Env
 

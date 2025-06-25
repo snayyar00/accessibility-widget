@@ -33,6 +33,7 @@ const SignIn: React.FC = () => {
   async function onSubmit(params: Payload) {
     try {
       const { data } = await loginMutation({ variables: params });
+      console.log(data)
       if (data?.login) {
         history.push('/');
       }
