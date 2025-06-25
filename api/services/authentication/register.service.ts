@@ -14,11 +14,12 @@ import { findProductAndPriceByType } from '~/repository/products.repository';
 import { createNewSubcription } from '~/services/stripe/subcription.service';
 import { SEND_MAIL_TYPE } from '~/constants/send-mail-type.constant';
 import formatDateDB from '~/utils/format-date-db';
-import { Token } from './login.service';
 import { addOrganization, organizationExistsByName } from '~/services/organization/organization.service';
 import { getOrganizationById, Organization } from '~/repository/organization.repository';
+import { buildFrontendAppUrl } from '~/utils/buildUrl';
+import { AuthResponse } from '~/services/authentication/login.service';
 
-async function registerUser(email: string, password: string, name: string, paymentMethodToken: string, planName: string, billingType: 'MONTHLY' | 'YEARLY', organizationName: string): Promise<ApolloError | Token> {
+async function registerUser(email: string, password: string, name: string, paymentMethodToken: string, planName: string, billingType: 'MONTHLY' | 'YEARLY', organizationName: string):Promise<AuthResponse | ApolloError | ValidationError> {
   const validateResult = registerValidation({ email, password, name });
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -95,17 +96,19 @@ async function registerUser(email: string, password: string, name: string, payme
       if (organizationName) {
         const id = await addOrganization({ name: organizationName }, { id: newUserId });
 
-        if (id) {
-          newOrganization = await getOrganizationById(id);
-        }
+        if (id) newOrganization = await getOrganizationById(id);
       }
-      
-      await Promise.all([sendMail(email, 'Confirm your email address', template), createToken(newUserId, tokenVerifyEmail, SEND_MAIL_TYPE.VERIFY_EMAIL)]);
+
+      await Promise.all([
+        sendMail(email, 'Confirm your email address', template),
+        createToken(newUserId, tokenVerifyEmail, SEND_MAIL_TYPE.VERIFY_EMAIL)
+      ]);
     }
 
     const token = sign({ email, name });
+    const frontendUrl = buildFrontendAppUrl(newOrganization?.subdomain);
 
-    return { token, subdomain: newOrganization?.subdomain || null };
+    return { token, url: frontendUrl };
   } catch (error) {
     logger.error(error);
     throw error;

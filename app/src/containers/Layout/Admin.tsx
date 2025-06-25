@@ -31,8 +31,15 @@ const AdminLayoutContainer: React.FC<props> = ({options}) => {
 
   async function signout() {
     dispatch(logoutUser());
-    await logout();
-    history.push('/auth/signin');
+
+    const { data } = await logout();
+
+    if (data?.logout?.url) {
+      const baseUrl = data.logout.url.replace(/\/$/, '');
+      window.location.href = baseUrl + '/auth/signin';
+    } else {
+      history.push('/auth/signin');
+    }
   }
 
   return <AdminLayout signout={signout} options={options}/>;

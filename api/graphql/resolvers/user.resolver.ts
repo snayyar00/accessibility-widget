@@ -64,7 +64,8 @@ const resolvers = {
 
       if (result && result.token) {
         setAuthenticationCookie(res, result.token);
-        return true;
+        
+        return result;
       }
 
       return result;
@@ -75,23 +76,31 @@ const resolvers = {
 
       if (result && result.token) {
         setAuthenticationCookie(res, result.token);
-        return true;
+        return result;
       }
+      
       return result;
     },
 
     logout: (_: unknown, __: unknown, { res }: Res) => {
       clearCookie(res, COOKIE_NAME.TOKEN);
-      return true;
+      
+      const url = process.env.FRONTEND_URL || 'http://app.127.0.0.1.sslip.io:3000'
+
+      return { url };
     },
     
     forgotPassword: async (_: unknown, { email }: ForgotPassword) => forgotPasswordUser(normalizeEmail(email)),
+
     changePassword: combineResolvers(
       isAuthenticated,
       (_, { currentPassword, newPassword }, { user }) => changePasswordUser(user.id, currentPassword, newPassword),
     ),
+
     resetPassword: async (_: unknown, { token, password, confirmPassword }: ResetPassword) => resetPasswordUser(token, password, confirmPassword),
+    
     verify: (_: unknown, { token }: Verify) => verifyEmail(token),
+
     resendEmail: combineResolvers(
       isAuthenticated,
       (_, { type }, { user }) => resendEmailAction(user, <'verify_email' | 'forgot_password'>normalizeEmail(type)),
@@ -108,10 +117,12 @@ const resolvers = {
         return result;
       },
     ),
+
     updateProfile: combineResolvers(
       isAuthenticated,
       (_, { name, company, position }, { user }) => updateProfile(user.id, name, company, position),
     ),
+
     updateProfileAvatar: combineResolvers(
       isAuthenticated,
       (_, { file }, { user }) => changeUserAvatar(file, user),

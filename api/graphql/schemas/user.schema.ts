@@ -45,15 +45,29 @@ export const UserSchema = gql`
     url: String
   }
 
+  type RegisterResponse {
+    token: String!
+    url: String!
+  }
+
+  type LogoutResponse {
+    url: String!
+  }
+
+  type LoginResponse {
+    token: String!
+    url: String!
+  }
+
   extend type Query {
     profileUser: User!
     isEmailAlreadyRegistered(email: String!): Boolean!
   }
 
   extend type Mutation {
-    register(email: String!, password: String!, name: String!, paymentMethodToken: String, planName: String, billingType: BillingType, organizationName: String): Boolean!
+    register(email: String!, password: String!, name: String!, paymentMethodToken: String, planName: String, billingType: BillingType, organizationName: String): RegisterResponse!
 
-    login(email: String!, password: String!): Boolean!
+    login(email: String!, password: String!): LoginResponse!
 
     forgotPassword(email: String!): Boolean!
 
@@ -71,6 +85,6 @@ export const UserSchema = gql`
 
     updateProfileAvatar(file: Upload!): ChangeAvatarResponse!
 
-    logout: Boolean!
+    logout: LogoutResponse!
   }
 `;

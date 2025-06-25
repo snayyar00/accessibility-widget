@@ -19,7 +19,6 @@ type Props = {
 const PrivateRoute: React.FC<Props> = ({ render }) => {
   const history = useHistory();
   const dispatch = useDispatch();
-  const { t } = useTranslation();
   const [getProfile, { data: userProfile, loading: loadingUserProfile }] = useLazyQuery(
     getProfileQuery,
   );

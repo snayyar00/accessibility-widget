@@ -78,6 +78,7 @@ type SignUpPayload = {
 const SignUp: React.FC = () => {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.sign_up') });
+
   const { register, handleSubmit, errors: formErrors, trigger } = useForm({
     resolver: yupResolver(SignUpSchema),
     shouldUnregister: false,
@@ -85,6 +86,7 @@ const SignUp: React.FC = () => {
     criteriaMode: 'all', // Show all validation errors
   });
   const [registerMutation, { error, loading }] = useMutation(registerQuery);
+
   const history = useHistory();
   const query = getQueryParam();
   const planName = query.get('plan');
@@ -103,16 +105,18 @@ const SignUp: React.FC = () => {
   async function signup(params: SignUpPayload) {
     try {
       const { data } = await registerMutation({ variables: params });
+
       if (data?.register) {
         toast.success('Account created successfully!');
-        
-        return true;
+        return data.register;
       }
-      return false;
+
+      return null;
     } catch (error) {
       console.error('Error during registration:', error);
       toast.error('Failed to create account. Please try again.');
-      return false;
+
+      return null;
     }
   }
 
@@ -147,19 +151,28 @@ const SignUp: React.FC = () => {
 
   async function onSubmit(params: SignUpPayload) {
     try {
-      // First, wait for registration to complete
-      const registrationSuccess = await signup(params);
-      
-      // Only proceed with site addition if registration was successful
-      if (registrationSuccess) {
-        // If websiteUrl exists, add the site
+      const registerResult = await signup(params);
+
+      if (registerResult && registerResult.url) {
+        let redirectPath = '/';
+
         if (params.websiteUrl && params.websiteUrl.trim() !== '') {
-          await addSiteAfterSignup(params.websiteUrl);
-        } else {
-          // If no website URL, just redirect to dashboard
-          history.push('/');
+          redirectPath = '/add-domain';
         }
+        
+        const fullUrl = registerResult.url.replace(/\/$/, '') + redirectPath;
+        window.location.href = fullUrl;
+
+        return;
       }
+      
+      
+      if (params.websiteUrl && params.websiteUrl.trim() !== '') {
+        await addSiteAfterSignup(params.websiteUrl);
+      } else {
+        history.push('/');
+      }
+      
     } catch (error) {
       console.error('Error in signup process:', error);
       toast.error('An unexpected error occurred. Please try again.');

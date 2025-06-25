@@ -18,6 +18,9 @@ export default gql`
       planName: $planName
       billingType: $billingType
       organizationName: $organizationName
-    )
+    ) {
+      token
+      url
+    }
   }
 `;

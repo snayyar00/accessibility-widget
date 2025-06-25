@@ -2,18 +2,14 @@ import { ApolloError } from 'apollo-server-express';
 import dayjs from 'dayjs';
 
 import logger from '~/utils/logger';
-import { cancelSubcription, createNewSubcription, updateSubcription, DataSubcription, cancelSubcriptionBySubId, getSubcriptionCustomerIDBySubId } from '~/services/stripe/subcription.service';
+import { createNewSubcription, updateSubcription, DataSubcription, cancelSubcriptionBySubId, getSubcriptionCustomerIDBySubId } from '~/services/stripe/subcription.service';
 import { findProductAndPriceByType, FindProductAndPriceByTypeResponse } from '~/repository/products.repository';
-import { deletePermissionByUserPlanId, insertMultiPermission } from '~/repository/user_permission.repository';
 import { findUser } from '~/repository/user.repository';
 import formatDateDB from '~/utils/format-date-db';
 import { PERMISSION_SITE_PLAN } from '~/constants/billing.constant';
-import compileEmailTemplate from '~/helpers/compile-email-template';
-import {sendMail} from '~/libs/mail';
-import { FindAllowedSitesProps, deleteSiteByURL, findSiteById, findSiteByUserIdAndSiteId } from '~/repository/sites_allowed.repository';
+import { findSiteByUserIdAndSiteId } from '~/repository/sites_allowed.repository';
 import { SitesPlanData, deleteSitePlanById, deleteSitesPlanById, getAnySitePlanById, getSitePlanById, getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId, getSitesPlanByUserId, insertSitePlan, updateSitePlanById } from '~/repository/sites_plans.repository';
 import { deletePermissionBySitePlanId, insertMultiSitePermission } from '~/repository/sites_permission.repository';
-import { Token } from '../authentication/login.service';
 import database from '~/config/database.config';
 import { TABLES } from '~/constants/database.constant';
 

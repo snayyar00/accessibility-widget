@@ -5,34 +5,52 @@ import { sign } from '~/helpers/jwt.helper';
 import { findUser } from '~/repository/user.repository';
 import { loginValidation } from '~/validations/authenticate.validation';
 import { clearCookie, COOKIE_NAME } from '~/utils/cookie';
+import { buildFrontendAppUrl } from '~/utils/buildUrl';
+import { getOrganizationsOfUser } from '~/services/organization/organization_users.service';
+import { getOrganizationById } from '~/repository/organization.repository';
 
-export type Token = {
+export type AuthResponse = {
   token: string;
+  url: string;
 };
 
-export async function loginUser(email: string, password: string, res: Response): Promise<ValidationError | AuthenticationError | Token> {
+export async function loginUser(email: string, password: string, res: Response): Promise<ValidationError | AuthenticationError | AuthResponse> {
   const validateResult = loginValidation({ email, password });
+
   if (Array.isArray(validateResult) && validateResult.length) {
     return new ValidationError(
       validateResult.map((it) => it.message).join(','),
     );
   }
+
   const user = await findUser({ email });
+
   if (!user) {
     clearCookie(res, COOKIE_NAME.TOKEN);
     return new AuthenticationError('Invalid email or password');
   }
 
   const matchPassword = await comparePassword(password, user.password);
+
   if (!matchPassword) {
     clearCookie(res, COOKIE_NAME.TOKEN);
     return new AuthenticationError('Invalid email or password');
   }
+  
+  let subdomain: string | undefined = undefined;
+  const orgLinks = await getOrganizationsOfUser(user.id);
+
+  if (orgLinks && orgLinks.length > 0) {
+    const org = await getOrganizationById(orgLinks[0].organization_id);
+    subdomain = org?.subdomain;
+  }
+
   return {
     token: sign({
       email: user.email,
       name: user.name,
       createdAt: user.created_at,
     }),
+    url: buildFrontendAppUrl(subdomain),
   };
 }

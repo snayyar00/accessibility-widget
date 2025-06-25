@@ -24,23 +24,31 @@ type Payload = {
 const SignIn: React.FC = () => {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.sign_in') });
+
   const { register, handleSubmit, errors: formErrors } = useForm({
     resolver: yupResolver(SignInSchema),
   });
+  
   const [loginMutation, { error, loading }] = useMutation(loginQuery);
   const history = useHistory();
 
   async function onSubmit(params: Payload) {
     try {
       const { data } = await loginMutation({ variables: params });
-      console.log(data)
+
+      if (data?.login?.url) {
+        const fullUrl = data.login.url.replace(/\/$/, '') + '/';
+        window.location.href = fullUrl;
+        
+        return;
+      }
+
       if (data?.login) {
         history.push('/');
       }
     } catch (e) {
       console.log(e);
     }
-
     return false;
   }
 
