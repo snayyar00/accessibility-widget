@@ -415,8 +415,6 @@ const StatementGenerator: React.FC = () => {
     const languageName = selectedLanguage ? selectedLanguage.name : 'English';
   
     const locale = getLocalizedDate(data.language);
-    
-    const locale = getLocalizedDate(data.language);
     const currentDate = new Date().toLocaleDateString(locale, { 
       year: 'numeric', 
       month: 'long', 
