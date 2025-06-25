@@ -427,35 +427,6 @@ const StatementGenerator: React.FC = () => {
       day: 'numeric' 
     });
     
-    // AI translation function using backend API
-    const generateAITranslations = async (targetLang: string) => {
-      const languageNames: { [key: string]: string } = {
-        'ar': 'Arabic', 'bg': 'Bulgarian', 'bn': 'Bengali', 'cs': 'Czech', 'de': 'German',
-        'el': 'Greek', 'es': 'Spanish', 'fi': 'Finnish', 'fr': 'French', 'he': 'Hebrew',
-        'hi': 'Hindi', 'hr': 'Croatian', 'hu': 'Hungarian', 'id': 'Indonesian', 'it': 'Italian',
-        'ja': 'Japanese', 'ko': 'Korean', 'lt': 'Lithuanian', 'lv': 'Latvian', 'ms': 'Malay',
-        'nl': 'Dutch', 'no': 'Norwegian', 'pl': 'Polish', 'pt': 'Portuguese', 'pt-br': 'Portuguese (Brazil)',
-        'ro': 'Romanian', 'ru': 'Russian', 'sk': 'Slovak', 'sl': 'Slovenian', 'sr': 'Serbian',
-        'sv': 'Swedish', 'th': 'Thai', 'tr': 'Turkish', 'uk': 'Ukrainian', 'ur': 'Urdu',
-        'vi': 'Vietnamese', 'zh': 'Chinese (Simplified)', 'zh-tw': 'Chinese (Traditional)',
-        'da': 'Danish', 'et': 'Estonian', 'ca': 'Catalan'
-      };
-
-      const englishTemplate = getEnglishTranslations(enhancement);
-      const targetLanguageName = languageNames[targetLang] || 'English';
-      
-      try {
-        // In a real implementation, this would call OpenRouter API
-        // For now, we'll use a comprehensive pre-translated version
-        const translations = await callOpenRouterTranslation(englishTemplate, targetLanguageName, targetLang, enhancement);
-        return translations;
-      } catch (error) {
-        console.warn(`Failed to translate to ${targetLanguageName}, falling back to English`);
-        return englishTemplate;
-      }
-    };
-
-
 
     // Main translation function (async for API calls)
     const getTranslations = async (lang: string) => {
@@ -465,7 +436,7 @@ const StatementGenerator: React.FC = () => {
       
       // For non-English languages, try AI translation first
       try {
-        const englishTemplate = getEnglishTranslations();
+        const englishTemplate = getEnglishTranslations(enhancement);
         const languageNames: { [key: string]: string } = {
           'ar': 'Arabic', 'bg': 'Bulgarian', 'bn': 'Bengali', 'cs': 'Czech', 'de': 'German',
           'el': 'Greek', 'es': 'Spanish', 'fi': 'Finnish', 'fr': 'French', 'he': 'Hebrew',
@@ -1101,7 +1072,7 @@ This Accessibility Statement is approved by:
                   </div>
 
                   {/* AI Enhancement Section */}
-                  <div className="border-t border-gray-200 pt-6 mt-6">
+                  <div className="border-t border-gray-200 pt-6 mt-6 ai-helper-section">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center">
                         <div className="bg-blue-100 p-2 rounded-lg mr-3">
