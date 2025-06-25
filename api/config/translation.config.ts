@@ -6,7 +6,7 @@ export const TRANSLATION_CONFIG = {
     fallback: 'google/gemini-pro-1.5', // High-quality fallback
     temperature: 0.1, // Slight randomness for natural translations
     maxTokens: 4096, // Increased for comprehensive statements with no limits
-    timeout: 15000, // 15 second timeout for larger responses
+    timeout: 45000, // 45 second timeout for larger responses and complex languages
   },
   
   // Caching Configuration
@@ -39,15 +39,26 @@ export const TRANSLATION_CONFIG = {
   // Production Optimizations
   optimizations: {
     compressPrompts: false, // Use full prompts for quality with fast model
-    batchRequests: false, // Disabled for simplicity
+    batchRequests: true, // Enable batching for speed
+    batchSize: 3, // Split content into chunks of 3 fields each
+    maxParallelBatches: 2, // Process 2 batches in parallel
     preWarmCache: process.env.NODE_ENV === 'production',
     useStreamingIfAvailable: true, // Enable streaming for faster perceived response
+  },
+  
+  // Batching Configuration
+  batching: {
+    enabled: true,
+    maxBatchSize: 3, // Split into chunks of 3 content fields
+    parallelBatches: 2, // Process up to 2 batches simultaneously
+    batchTimeout: 20000, // 20 seconds per batch
+    retryFailedBatches: true,
   }
 };
 
 // Environment-specific overrides
 if (process.env.NODE_ENV === 'development') {
-  TRANSLATION_CONFIG.model.timeout = 15000; // Longer timeout in dev
+  TRANSLATION_CONFIG.model.timeout = 60000; // Extra long timeout in dev for debugging
   TRANSLATION_CONFIG.monitoring.logSuccessfulTranslations = true;
 }
 

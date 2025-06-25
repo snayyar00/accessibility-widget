@@ -57,6 +57,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Select from 'react-select/creatable';
 import { set } from 'lodash';
+import Modal from '@/components/Common/Modal';
 
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
@@ -98,6 +99,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [selectedOption, setSelectedOption] = useState<OptionType | null>(null)
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef: contentRef });
+  
+  // Modal state for success message with report link
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [reportUrl, setReportUrl] = useState<string>('');
 
   // Combine options for existing sites and a custom "Enter a new domain" option
   const siteOptions = sitesData?.getUserSites?.map((domain: any) => ({
@@ -139,12 +144,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           const isNewDomain = !siteOptions.some((option: any) => normalizeDomain(option.value) === normalizeDomain(correctDomain));
 
           if (isNewDomain && data && data.saveAccessibilityReport) {
-            const savedReport = data.saveAccessibilityReport; // Access the returned report
+            const savedReport = data.saveAccessibilityReport;
             const r2Key = savedReport.key;
             const savedUrl = savedReport.report.url;
-            // Open the ReportView for the new domain in a new tab
-            const newTab = window.open(`/${r2Key}?domain=${encodeURIComponent(savedUrl)}`, '_blank');
-            if (newTab) newTab.focus();
+            // Show success modal with link to open report
+            setReportUrl(`/${r2Key}?domain=${encodeURIComponent(savedUrl)}`);
+            setIsSuccessModalOpen(true);
           } else {
           toast.success('Report successfully generated! You can view or download it below.');
           }
@@ -609,8 +614,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         <button
                           className="text-blue-600 underline font-medium"
                           onClick={() => {
-                            const newTab = window.open(`/${row.r2_key}?domain=${encodeURIComponent(row.url)}`, '_blank');
-                            if (newTab) newTab.focus();
+                            setReportUrl(`/${row.r2_key}?domain=${encodeURIComponent(row.url)}`);
+                            setIsSuccessModalOpen(true);
                           }}
                         >
                           View
@@ -652,6 +657,45 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           </div>
         )}
       </div>
+      
+      {/* Success Modal with link to open report */}
+      <Modal isOpen={isSuccessModalOpen}>
+        <div className="p-8 text-center relative">
+          <button
+            onClick={() => setIsSuccessModalOpen(false)}
+            className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
+          >
+            <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div className="mb-6">
+            <FaCheckCircle size={64} color="green" className="mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Report Generated Successfully!</h2>
+            <p className="text-gray-600">
+              Your accessibility report is ready to view.
+            </p>
+          </div>
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => {
+                const newTab = window.open(reportUrl, '_blank');
+                if (newTab) newTab.focus();
+                setIsSuccessModalOpen(false);
+              }}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Open Report
+            </button>
+            <button
+              onClick={() => setIsSuccessModalOpen(false)}
+              className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
     </>
   );
