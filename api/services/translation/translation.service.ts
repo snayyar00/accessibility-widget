@@ -354,10 +354,14 @@ Respond with only the translated JSON object:`;
     
     // Send to monitoring service if available
     if (process.env.SENTRY_DSN) {
-      Sentry.captureException(error, {
-        tags: { service: 'translation' },
-        extra: errorDetails
-      });
+      try {
+        Sentry.captureException(error, {
+          tags: { service: 'translation' },
+          extra: errorDetails
+        });
+      } catch (sentryError) {
+        console.error('Failed to report error to Sentry:', sentryError);
+      }
     }
     
     // Return user-friendly error
