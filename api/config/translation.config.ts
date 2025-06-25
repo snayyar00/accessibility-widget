@@ -5,7 +5,7 @@ export const TRANSLATION_CONFIG = {
     name: 'google/gemini-flash-1.5', // Fastest model with excellent quality
     fallback: 'google/gemini-pro-1.5', // High-quality fallback
     temperature: 0.1, // Slight randomness for natural translations
-    maxTokens: 4096, // Increased for comprehensive statements with no limits
+    maxTokens: 8192, // Increased for comprehensive statements with no limits
     timeout: 45000, // 45 second timeout for larger responses and complex languages
   },
   
@@ -48,10 +48,10 @@ export const TRANSLATION_CONFIG = {
   
   // Batching Configuration
   batching: {
-    enabled: true,
-    maxBatchSize: 3, // Split into chunks of 3 content fields
-    parallelBatches: 2, // Process up to 2 batches simultaneously
-    batchTimeout: 20000, // 20 seconds per batch
+    enabled: false, // Disable batching for more reliable translations
+    maxBatchSize: 5, // Larger batch size when enabled
+    parallelBatches: 1, // Process sequentially for better reliability
+    batchTimeout: 30000, // 30 seconds per batch
     retryFailedBatches: true,
   }
 };

@@ -107,7 +107,7 @@ export const TranslationSchema = gql`
 
   type TranslationResponse {
     success: Boolean!
-    translatedContent: TranslationContent
+    translatedContent: String
     error: String
     languageCode: String!
     cached: Boolean!
@@ -115,9 +115,10 @@ export const TranslationSchema = gql`
 
   extend type Mutation {
     translateStatement(
-      content: TranslationContentInput!
+      content: String!
       targetLanguage: String!
       languageCode: String!
+      context: String
     ): TranslationResponse!
   }
 `;

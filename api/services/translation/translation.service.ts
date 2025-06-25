@@ -19,14 +19,15 @@ interface TranslationContent {
 }
 
 interface TranslationRequest {
-  content: TranslationContent;
+  content: TranslationContent | string;
   targetLanguage: string;
   languageCode: string;
+  context?: string; // JSON string with contextual information
 }
 
 interface TranslationResult {
   success: boolean;
-  translatedContent?: TranslationContent;
+  translatedContent?: any; // Can be string or object
   error?: string;
   languageCode: string;
   cached: boolean;
@@ -115,33 +116,85 @@ const splitContentIntoBatches = (content: TranslationContent, batchSize: number)
   return batches;
 };
 
+// Enhanced prompt builder with contextual information
+const buildEnhancedTranslationPrompt = (content: TranslationContent | string, targetLanguage: string, context?: any): string => {
+  const contextInfo = context ? JSON.parse(context) : {};
+  const {
+    domain = 'accessibility-legal',
+    documentType = 'compliance-statement',
+    industry = 'business',
+    enhancement = '',
+    preserveTerms = ['WCAG', 'ADA', 'Section 508', 'ARIA', 'NVDA', 'JAWS', 'VoiceOver', 'TalkBack']
+  } = contextInfo;
+
+  // Build specialized system prompt based on context
+  const systemPrompt = `You are a professional translator specializing in ${domain} documents for the ${industry} industry.
+
+TARGET LANGUAGE: ${targetLanguage}
+DOCUMENT TYPE: ${documentType}
+DOMAIN: ${domain}
+
+CRITICAL REQUIREMENTS:
+1. Use formal, professional legal language appropriate for ${targetLanguage}
+2. Preserve these technical terms exactly: ${preserveTerms.join(', ')}
+3. Keep URLs, email addresses, and brand names unchanged
+4. Maintain document structure and formatting (markdown, JSON structure)
+5. Use official accessibility terminology in ${targetLanguage}
+6. Sound natural to native ${targetLanguage} speakers
+7. Maintain legal/compliance tone appropriate for ${documentType}
+
+ACCESSIBILITY TERMINOLOGY GUIDELINES:
+- "screen reader" → use correct official ${targetLanguage} term
+- "assistive technology" → use formal ${targetLanguage} translation
+- "accessibility statement" → use legal ${targetLanguage} equivalent
+- "keyboard navigation" → use technical ${targetLanguage} term
+- "compliance" → use legal ${targetLanguage} term
+
+UNIVERSAL TRANSLATION RULES:
+- NEVER mix languages except for preserved technical terms and URLs
+- Use consistent terminology throughout the entire document
+- Maintain formal, professional register appropriate for legal documents
+- Format dates, numbers, and currency according to target locale conventions
+- Preserve technical acronyms (WCAG, ADA, etc.) but translate their descriptions
+- Keep company names in original language but translate surrounding context
+- Use culturally appropriate honorifics and formal address forms
+- Maintain document structure and JSON formatting exactly
+
+${enhancement ? `SPECIAL FOCUS: ${getEnhancementContext(enhancement)}` : ''}
+
+INDUSTRY CONTEXT: ${industry} - ensure terminology is appropriate for this sector.
+
+Return the translation in the exact same format as the input (JSON structure if JSON input, plain text if text input).`;
+
+  const contentToTranslate = typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
+
+  return `${systemPrompt}
+
+CONTENT TO TRANSLATE:
+${contentToTranslate}
+
+Return ONLY the translated content:`;
+};
+
+// Get enhancement context descriptions
+const getEnhancementContext = (enhancement: string): string => {
+  const descriptions = {
+    'add-testing': 'Include detailed technical testing procedures and automated tools',
+    'add-timeline': 'Emphasize response timelines and support processes',
+    'add-training': 'Highlight staff training and certification programs',
+    'add-standards': 'Focus on multiple compliance standards and regulations'
+  };
+  return descriptions[enhancement as keyof typeof descriptions] || '';
+};
+
 // Helper function to translate a single batch
 const translateBatch = async (
   batch: TranslationContent, 
   targetLanguage: string, 
-  batchIndex: number
+  batchIndex: number,
+  context?: any
 ): Promise<TranslationContent> => {
-  const translationPrompt = `You are a professional translator specializing in accessibility and legal documents.
-
-Translate the following accessibility statement content from English to ${targetLanguage}.
-
-IMPORTANT REQUIREMENTS:
-1. Maintain all technical terms exactly (WCAG, HTML5, WAI-ARIA, etc.)
-2. Keep all URLs and links unchanged
-3. Preserve all markdown formatting (**bold**, [links](urls), - lists)
-4. Use formal, professional language appropriate for legal/accessibility documents
-5. Ensure cultural appropriateness for the target language
-6. Maintain the exact same JSON structure
-7. Keep placeholder text like [Your phone number] unchanged
-8. Translate technical accessibility terms appropriately for the target language
-9. Use proper formal titles and expressions for the target culture
-
-Return ONLY a valid JSON object with the same structure as the input, with all values professionally translated to ${targetLanguage}.
-
-Input JSON:
-${JSON.stringify(batch, null, 2)}
-
-Respond with only the translated JSON object:`;
+  const translationPrompt = buildEnhancedTranslationPrompt(batch, targetLanguage, context);
 
   const response = await Promise.race([
     openai.chat.completions.create({
@@ -187,7 +240,8 @@ Respond with only the translated JSON object:`;
 export const translateStatement = async ({
   content,
   targetLanguage,
-  languageCode
+  languageCode,
+  context
 }: TranslationRequest): Promise<TranslationResult> => {
   const startTime = Date.now();
   
@@ -197,9 +251,10 @@ export const translateStatement = async ({
     const cached = getFromCache(cacheKey);
     
     if (cached) {
+      const serializedCached = typeof cached === 'object' ? JSON.stringify(cached) : cached;
       return {
         success: true,
-        translatedContent: cached,
+        translatedContent: serializedCached,
         languageCode,
         cached: true
       };
@@ -207,83 +262,48 @@ export const translateStatement = async ({
 
     // If English, return original content
     if (languageCode === 'en') {
+      const serializedContent = typeof content === 'object' ? JSON.stringify(content) : content;
       return {
         success: true,
-        translatedContent: content,
+        translatedContent: serializedContent,
         languageCode,
         cached: false
       };
     }
 
-    // Check if batching is enabled and content is large enough to benefit
-    const contentSize = Object.keys(content).length;
-    let translatedContent: TranslationContent;
+    // Handle content (should be a prompt string from frontend)
+    let translatedContent: any;
     
-    if (TRANSLATION_CONFIG.batching.enabled && contentSize > TRANSLATION_CONFIG.batching.maxBatchSize) {
-      console.log(`Using batching for ${languageCode}: ${contentSize} fields, splitting into batches of ${TRANSLATION_CONFIG.batching.maxBatchSize}`);
+    // Check content size and disable batching for direct prompts
+    const contentSize = typeof content === 'string' ? content.length : JSON.stringify(content).length;
+    const shouldUseBatching = TRANSLATION_CONFIG.batching.enabled && 
+                              typeof content === 'object' && 
+                              Object.keys(content).length > TRANSLATION_CONFIG.batching.maxBatchSize;
+    
+    if (shouldUseBatching) {
+      // Use batching for large object content
+      const batches = splitContentIntoBatches(content as TranslationContent, TRANSLATION_CONFIG.batching.maxBatchSize);
+      const batchPromises = batches.map((batch, index) => 
+        translateBatch(batch, targetLanguage, index, context)
+      );
       
-      // Split content into batches
-      const batches = splitContentIntoBatches(content, TRANSLATION_CONFIG.batching.maxBatchSize);
-      console.log(`Created ${batches.length} batches for translation`);
-      
-      // Process batches with controlled parallelism
-      const translatedBatches: TranslationContent[] = [];
-      const batchPromises: Promise<TranslationContent>[] = [];
-      
-      for (let i = 0; i < batches.length; i += TRANSLATION_CONFIG.batching.parallelBatches) {
-        // Process a group of batches in parallel
-        const currentBatchGroup = batches.slice(i, i + TRANSLATION_CONFIG.batching.parallelBatches);
-        const groupPromises = currentBatchGroup.map((batch, index) => 
-          translateBatch(batch, targetLanguage, i + index)
-        );
-        
-        // Wait for current group to complete before starting next group
-        const groupResults = await Promise.all(groupPromises);
-        translatedBatches.push(...groupResults);
-        
-        console.log(`Completed batch group ${Math.floor(i / TRANSLATION_CONFIG.batching.parallelBatches) + 1}/${Math.ceil(batches.length / TRANSLATION_CONFIG.batching.parallelBatches)}`);
-      }
-      
-      // Merge all translated batches back into a single object
-      translatedContent = translatedBatches.reduce((merged, batch) => ({ ...merged, ...batch }), {});
-      
+      const batchResults = await Promise.all(batchPromises);
+      translatedContent = batchResults.reduce((acc, batch) => ({ ...acc, ...batch }), {});
     } else {
-      // Use single request for smaller content or when batching is disabled
-      console.log(`Using single request for ${languageCode}: ${contentSize} fields`);
-      
-      const translationPrompt = `You are a professional translator specializing in accessibility and legal documents.
-
-Translate the following accessibility statement content from English to ${targetLanguage}.
-
-IMPORTANT REQUIREMENTS:
-1. Maintain all technical terms exactly (WCAG, HTML5, WAI-ARIA, etc.)
-2. Keep all URLs and links unchanged
-3. Preserve all markdown formatting (**bold**, [links](urls), - lists)
-4. Use formal, professional language appropriate for legal/accessibility documents
-5. Ensure cultural appropriateness for the target language
-6. Maintain the exact same JSON structure
-7. Keep placeholder text like [Your phone number] unchanged
-8. Translate technical accessibility terms appropriately for the target language
-9. Use proper formal titles and expressions for the target culture
-
-Return ONLY a valid JSON object with the same structure as the input, with all values professionally translated to ${targetLanguage}.
-
-Input JSON:
-${JSON.stringify(content, null, 2)}
-
-Respond with only the translated JSON object:`;
-
-      const response = await Promise.race([
-        openai.chat.completions.create({
-          model: TRANSLATION_CONFIG.model.name,
+      // Direct translation for string content or small objects
+      let response;
+      try {
+        response = await Promise.race([
+          openai.chat.completions.create({
+            model: TRANSLATION_CONFIG.model.name,
           messages: [
             {
               role: 'system',
-              content: 'You are a professional translator specializing in accessibility and legal documents. Always respond with valid JSON only. Ensure high-quality, culturally appropriate translations.'
+              content: 'You are a professional translator specializing in accessibility and legal documents. Always respond with valid JSON only. Follow the instructions in the user prompt exactly.'
             },
             {
               role: 'user',
-              content: translationPrompt
+              content: String(content) // Ensure it's a string
             }
           ],
           temperature: TRANSLATION_CONFIG.model.temperature,
@@ -296,39 +316,102 @@ Respond with only the translated JSON object:`;
           setTimeout(() => reject(new Error('Translation timeout')), TRANSLATION_CONFIG.model.timeout)
         )
       ]) as any;
-
+      } catch (primaryError) {
+        console.warn(`Primary model ${TRANSLATION_CONFIG.model.name} failed, trying fallback:`, primaryError);
+        
+        // Fallback to alternative model
+        response = await Promise.race([
+          openai.chat.completions.create({
+            model: TRANSLATION_CONFIG.model.fallback,
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a professional translator specializing in accessibility and legal documents. Always respond with valid JSON only. Follow the instructions in the user prompt exactly.'
+              },
+              {
+                role: 'user',
+                content: String(content)
+              }
+            ],
+            temperature: TRANSLATION_CONFIG.model.temperature,
+            max_tokens: TRANSLATION_CONFIG.model.maxTokens,
+            stream: false,
+            top_p: 0.9,
+            presence_penalty: 0.1
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Fallback translation timeout')), TRANSLATION_CONFIG.model.timeout)
+          )
+        ]) as any;
+      }
+      
       const translatedText = response.choices[0]?.message?.content;
       
       if (!translatedText) {
+        console.error('No translation content received:', {
+          response: response,
+          choices: response.choices,
+          model: TRANSLATION_CONFIG.model.name,
+          contentLength: String(content).length
+        });
         throw new Error('No translation content received from OpenRouter');
       }
 
       // Parse JSON response
       try {
-        translatedContent = JSON.parse(translatedText);
+        // First try to remove markdown code blocks if present
+        let cleanedText = translatedText;
+        if (translatedText.includes('```json')) {
+          cleanedText = translatedText.replace(/^```json\s*/m, '').replace(/\s*```$/m, '');
+        }
+        
+        translatedContent = JSON.parse(cleanedText);
       } catch (firstError) {
+        // Try to extract JSON from response if direct parsing fails
         const jsonMatch = translatedText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('No JSON found in response');
-        translatedContent = JSON.parse(jsonMatch[0]);
+        if (!jsonMatch) {
+          throw new Error('Invalid translation response format');
+        }
+        
+        try {
+          translatedContent = JSON.parse(jsonMatch[0]);
+        } catch (secondError) {
+          console.error('JSON parsing failed for translation:', {
+            originalResponse: translatedText,
+            jsonMatch: jsonMatch[0],
+            error: secondError
+          });
+          throw new Error('Translation service error');
+        }
       }
     }
 
     // Cache the translation
     setCache(cacheKey, translatedContent);
     
-    // Log successful translation for monitoring
+    // Track usage metrics for monitoring
     const duration = Date.now() - startTime;
-    const batchingUsed = TRANSLATION_CONFIG.batching.enabled && contentSize > TRANSLATION_CONFIG.batching.maxBatchSize;
-    console.log(`Translation completed: ${languageCode} in ${duration}ms${batchingUsed ? ' (batched)' : ' (single)'}`);
+    const metricsContentSize = typeof content === 'object' ? Object.keys(content).length : content.length;
     
-    // Track usage metrics if needed
+    // Log metrics only in production for monitoring
     if (process.env.NODE_ENV === 'production') {
-      console.log(`Translation metrics: ${languageCode}, duration: ${duration}ms, cached: false, batched: ${batchingUsed}, fields: ${contentSize}`);
+      console.info('Translation completed', {
+        language: languageCode,
+        duration,
+        contentSize: metricsContentSize,
+        cached: false,
+        timestamp: new Date().toISOString()
+      });
     }
+
+    // Serialize the response for GraphQL
+    const serializedContent = typeof translatedContent === 'object' 
+      ? JSON.stringify(translatedContent) 
+      : translatedContent;
 
     return {
       success: true,
-      translatedContent,
+      translatedContent: serializedContent,
       languageCode,
       cached: false
     };
@@ -336,15 +419,15 @@ Respond with only the translated JSON object:`;
   } catch (error) {
     // Enhanced error logging for production monitoring
     const errorMessage = error instanceof Error ? error.message : 'Unknown translation error';
-    const contentSize = Object.keys(content).length;
-    const batchingUsed = TRANSLATION_CONFIG.batching.enabled && contentSize > TRANSLATION_CONFIG.batching.maxBatchSize;
+    const errorContentSize = typeof content === 'object' ? Object.keys(content).length : 0;
+    const batchingUsed = TRANSLATION_CONFIG.batching.enabled && errorContentSize > TRANSLATION_CONFIG.batching.maxBatchSize;
     const errorDetails = {
       targetLanguage,
       languageCode,
       error: errorMessage,
       timestamp: new Date().toISOString(),
       contentLength: JSON.stringify(content).length,
-      contentFields: contentSize,
+      contentFields: errorContentSize,
       batchingEnabled: TRANSLATION_CONFIG.batching.enabled,
       batchingUsed,
       model: TRANSLATION_CONFIG.model.name

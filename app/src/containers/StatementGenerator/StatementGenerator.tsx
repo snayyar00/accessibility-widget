@@ -27,6 +27,12 @@ interface StatementFormData {
   contactEmail: string;
   language: string;
   industry: string;
+  widgetBrandName?: string;
+  widgetBrandUrl?: string;
+  phoneNumber?: string;
+  visitorAddress?: string;
+  postalAddress?: string;
+  onlineFormUrl?: string;
 }
 
 const StatementGenerator: React.FC = () => {
@@ -38,7 +44,13 @@ const StatementGenerator: React.FC = () => {
     websiteUrl: '',
     contactEmail: '',
     language: 'en',
-    industry: ''
+    industry: '',
+    widgetBrandName: 'WebAbility.io',
+    widgetBrandUrl: 'https://webability.io',
+    phoneNumber: '',
+    visitorAddress: '',
+    postalAddress: '',
+    onlineFormUrl: ''
   });
   
   const [generatedStatement, setGeneratedStatement] = useState<string>('');
@@ -48,62 +60,147 @@ const StatementGenerator: React.FC = () => {
   const [showEnhanceOptions, setShowEnhanceOptions] = useState<boolean>(false);
   const [languageSearch, setLanguageSearch] = useState<string>('');
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState<boolean>(false);
+  const [showOptionalFields, setShowOptionalFields] = useState<boolean>(false);
   
   const [translateStatement, { loading: isTranslating }] = useMutation(translateStatementMutation);
+  
+  // Clear translation cache function
+  const clearTranslationCache = () => {
+    const keys = Object.keys(localStorage);
+    const translationKeys = keys.filter(key => key.startsWith('translation_'));
+    translationKeys.forEach(key => localStorage.removeItem(key));
+    toast.success(`Cleared ${translationKeys.length} cached translations`);
+  };
   
   // Debouncing and batching refs
   const translationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTranslationRef = useRef<{ formDataKey: string; timestamp: number } | null>(null);
   
-  // Debounced GraphQL mutation call for AI translation
+  // Enhanced contextual translation with OpenRouter
   const callOpenRouterTranslation = useCallback(async (englishContent: any, targetLanguageName: string, langCode: string, enhancement?: string) => {
     try {
-      // Check if we have cached translation first (include enhancement in cache key)
-      const enhancementSuffix = enhancement ? `_${enhancement}` : '';
-      const cacheKey = `translation_${langCode}${enhancementSuffix}`;
-      const cachedTranslation = localStorage.getItem(cacheKey);
-      if (cachedTranslation) {
+      // Enhanced cache key with content hash for better cache invalidation
+      const contentHash = JSON.stringify(englishContent).slice(0, 50);
+      const cacheKey = `translation_v4_${langCode}_${enhancement || 'default'}_${contentHash}`;
+      
+      // Check cache with improved error handling
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
         try {
-          const cached = JSON.parse(cachedTranslation);
-          // Check if cache is still valid (24 hours)
-          if (cached.timestamp && (Date.now() - cached.timestamp) < 24 * 60 * 60 * 1000) {
-            return cached.translation;
+          const parsedCache = JSON.parse(cached);
+          const cacheAge = Date.now() - parsedCache.timestamp;
+          const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days for production
+          
+          if (cacheAge < maxAge && parsedCache.translation) {
+            return parsedCache.translation;
           }
-        } catch (parseError) {
-          console.warn('Invalid cached translation data, removing:', parseError);
+        } catch {
           localStorage.removeItem(cacheKey);
         }
       }
 
-      // Make GraphQL mutation call to backend translation endpoint with enhancement context
-      const enhancementContext = enhancement ? getEnhancementContext(enhancement) : '';
-      const { data } = await translateStatement({
+      // Build enhanced prompt with context
+      const enhancedPrompt = `You are a professional translator specializing in accessibility and legal documents for the ${formData.industry || 'business'} industry.
+
+Translate the following accessibility statement content from English to ${targetLanguageName}.
+
+CRITICAL REQUIREMENTS:
+1. Use formal, professional legal language appropriate for ${targetLanguageName}
+2. Preserve these technical terms exactly: WCAG, ADA, Section 508, ARIA, NVDA, JAWS, VoiceOver, TalkBack
+3. Keep URLs, email addresses, and brand names unchanged
+4. Maintain the exact same JSON structure
+5. Use official accessibility terminology in ${targetLanguageName}
+6. Sound natural to native ${targetLanguageName} speakers
+7. Maintain legal/compliance tone appropriate for accessibility statements
+8. ABSOLUTELY FORBIDDEN: Never mix languages - translate ALL text to ${targetLanguageName}
+9. FORBIDDEN PHRASES: Never use "At [company]", "using", "and", "This statement", "Last updated" - translate everything
+10. REPLACE PATTERNS: "At dsad," → translate to proper ${targetLanguageName} equivalent like "dsad-এ" for Bengali
+11. CHECK FOR: Any English words like "At", "using", "and manual", "This statement" - must be translated
+12. Use consistent terminology throughout the document
+13. Format dates appropriately for the target culture
+14. CHECK EVERY SENTENCE: Ensure no English words remain except technical terms and URLs
+
+${enhancement ? `SPECIAL FOCUS: ${enhancement.replace('add-', 'Emphasize ')}` : ''}
+
+LANGUAGE-SPECIFIC GUIDELINES:
+- For Arabic: Use formal Arabic (فصحى), maintain right-to-left text flow, use appropriate date formatting
+- For Spanish: Use formal register, proper regional variations, maintain professional tone
+- For French: Use formal French (tutoiement), proper accents, maintain legal terminology
+- For German: Use formal Sie form, compound words appropriately, maintain technical precision
+- For Chinese: Use simplified/traditional as appropriate, formal register, proper measure words
+- For Japanese: Use formal keigo when appropriate, maintain respectful tone
+- For Korean: Use formal speech levels, maintain honorific system
+- For Portuguese: Use formal register, distinguish Brazil/Portugal variants if needed
+- For Russian: Use formal register, proper cases, maintain official terminology
+- For Italian: Use formal register, proper conjugations, maintain professional tone
+- For Dutch: Use formal register, proper compound words, maintain technical accuracy
+- For technical terms: Keep English terms like "WCAG 2.1 AA" but translate explanatory text
+- For company names: Keep original name but translate context around it
+- For dates: Use culturally appropriate date formats for each language/region
+- For currency/numbers: Use appropriate formatting conventions for target locale
+
+CONTENT TO TRANSLATE:
+${JSON.stringify(englishContent, null, 2)}
+
+Return ONLY a valid JSON object with the same structure, with all values professionally translated to ${targetLanguageName}:`;
+
+
+      // Call translation service with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Translation request timed out. Please try again.')), 45000)
+      );
+      
+      const translationPromise = translateStatement({
         variables: {
-          content: englishContent,
-          targetLanguage: targetLanguageName + enhancementContext,
-          languageCode: langCode
+          content: enhancedPrompt,
+          targetLanguage: targetLanguageName,
+          languageCode: langCode,
+          context: JSON.stringify({
+            domain: 'accessibility-legal',
+            documentType: 'compliance-statement',
+            industry: formData.industry,
+            enhancement: enhancement
+          })
         }
       });
+      
+      const { data } = await Promise.race([translationPromise, timeoutPromise]) as any;
 
       if (!data?.translateStatement?.success) {
         throw new Error(data?.translateStatement?.error || 'Translation failed');
       }
 
       const translatedContent = data.translateStatement.translatedContent;
-
+      
       if (!translatedContent) {
         throw new Error('No translation content received');
       }
+      
+      // Parse the JSON response back to object
+      let parsedContent;
+      try {
+        // Clean up markdown code blocks if present
+        let cleanedContent = translatedContent;
+        if (typeof translatedContent === 'string') {
+          // Remove markdown code block wrapper if present
+          cleanedContent = translatedContent
+            .replace(/^```json\s*/m, '')
+            .replace(/\s*```$/m, '')
+            .trim();
+        }
+        
+        parsedContent = JSON.parse(cleanedContent);
+      } catch (error) {
+        throw new Error('Translation service temporarily unavailable. Please try again.');
+      }
+      
+      // Cache the result
+      localStorage.setItem(cacheKey, JSON.stringify({
+        translation: parsedContent,
+        timestamp: Date.now()
+      }));
 
-      // Cache the translation for future use (expires in 24 hours)
-      const cacheData = {
-        translation: translatedContent,
-        timestamp: Date.now(),
-        expiresIn: 24 * 60 * 60 * 1000 // 24 hours
-      };
-      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-
-      return translatedContent;
+      return parsedContent;
 
     } catch (error) {
       console.error(`Translation failed for ${targetLanguageName}:`, error);
@@ -118,21 +215,14 @@ const StatementGenerator: React.FC = () => {
       toast.error(`Translation to ${targetLanguageName} failed, using English`);
       return englishContent;
     }
-  }, [translateStatement]);
+  }, [translateStatement, formData.industry]);
 
-  // Get enhancement context for AI translation
-  const getEnhancementContext = (enhancement: string) => {
-    const enhancementContexts = {
-      'add-testing': ' (with enhanced testing procedures including automated tools like axe-core, WAVE, Lighthouse)',
-      'add-timeline': ' (with detailed response timelines and priority issue handling)',
-      'add-training': ' (with comprehensive staff training programs and certification details)',
-      'add-standards': ' (with additional compliance standards including ISO/IEC 40500:2012, BITV 2.0, RGAA 4.1)'
-    };
-    return enhancementContexts[enhancement as keyof typeof enhancementContexts] || '';
-  };
+
 
   // Get comprehensive English translations as the base template
-  const getEnglishTranslations = (enhancement?: string) => {
+  const getEnglishTranslations = (enhancement?: string, brandName?: string, brandUrl?: string) => {
+    const widgetBrand = brandName || 'WebAbility.io';
+    const widgetUrl = brandUrl || 'https://webability.io';
     const baseTemplate = {
       title: 'Accessibility Statement for',
       general: 'General',
@@ -140,7 +230,7 @@ const StatementGenerator: React.FC = () => {
       conformance: 'Conformance status',
       technical: 'Technical specifications',
       assessment: 'Assessment approach',
-      widget: 'WebAbility.io Accessibility Widget',
+      widget: `${widgetBrand} Accessibility Widget`,
       profiles: 'Accessibility profiles for people with disabilities',
       features: 'Additional accessibility features',
       feedback: 'Feedback',
@@ -148,13 +238,12 @@ const StatementGenerator: React.FC = () => {
       limitations: 'Known limitations and alternatives',
       compliance: 'Assessment of current compliance',
       approval: 'Formal approval of this accessibility statement',
-      generated: 'This accessibility statement was generated using WebAbility.io\'s AI Statement Generator on',
+      generated: `This accessibility statement was generated using ${widgetBrand}'s AI Statement Generator on`,
       commitment: 'is committed to ensuring digital accessibility for people with disabilities. We are continually improving the user experience for everyone, and applying the relevant accessibility standards to create an inclusive digital environment.',
       belief: 'we believe that digital accessibility is not just a legal requirement but a fundamental human right. We strive to ensure that our website',
       accessible: 'is accessible to all users, regardless of their abilities or the assistive technologies they use.',
       orgMeasures: 'Organizational Measures',
       techMeasures: 'Technical Measures',
-      aboutStatement: 'About This Statement',
       takesComprehensive: 'takes the following comprehensive measures to ensure accessibility of',
       orgMeasuresList: `- Include accessibility as part of our mission statement and core values
 - Include accessibility throughout our internal policies and procedures
@@ -176,7 +265,7 @@ const StatementGenerator: React.FC = () => {
       assessmentIntro: 'assessed the accessibility of',
       assessmentBy: 'by the following approaches:',
       automatedTesting: 'Automated Testing',
-      automatedList: `- Regular automated accessibility scanning using [WebAbility.io's accessibility testing platform](https://webability.io)
+      automatedList: `- Regular automated accessibility scanning using [${widgetBrand}'s accessibility testing platform](${widgetUrl})
 - Integration with development workflow for continuous accessibility monitoring
 - Monthly comprehensive accessibility audits`,
       manualTesting: 'Manual Testing',
@@ -188,7 +277,7 @@ const StatementGenerator: React.FC = () => {
       userList: `- Usability testing with people with disabilities
 - Feedback collection from users of assistive technologies
 - Regular accessibility user experience studies`,
-      widgetIntro: 'This website is equipped with [WebAbility.io\'s accessibility widget](https://webability.io) to provide additional assistive features that go beyond standard web accessibility requirements:',
+      widgetIntro: `This website is equipped with [${widgetBrand}'s accessibility widget](${widgetUrl}) to provide additional assistive features that go beyond standard web accessibility requirements:`,
       profilesIntro: 'Our accessibility widget includes specialized profiles designed for different types of disabilities:',
       profilesList: `- **Seizure Safe Profile:** Eliminates flashes and reduces color that could trigger seizures
 - **Vision Impaired Profile:** Enhances the website\'s visuals for users with visual impairments
@@ -206,13 +295,56 @@ const StatementGenerator: React.FC = () => {
       feedbackIntro: 'We welcome your feedback on the accessibility of',
       feedbackNote: 'Please let us know if you encounter accessibility barriers on our website:',
       contactInfo: 'Accessibility Contact Information:',
-      contactList: `- **Phone:** [Your phone number]
+      contactList: `- **Phone:** {phone}
 - **E-mail:** {email}
-- **Online Form:** [Link to accessibility feedback form]
-- **Visitor Address:** [Your visitor address]
-- **Postal Address:** [Your postal address]`,
+- **Online Form:** {onlineForm}
+- **Visitor Address:** {visitorAddress}
+- **Postal Address:** {postalAddress}`,
       responseTime: 'We try to respond to accessibility feedback within 2-3 business days and resolve reported issues within 5-10 business days, depending on complexity.',
       compatibilityIntro: 'is designed to be compatible with the following assistive technologies:',
+      compatibilityIntroText: 'is designed to be compatible with the following assistive technologies:',
+      screenReaders: 'Screen Readers',
+      screenReadersList: `- **NVDA** (Windows) - Fully supported with regular testing
+- **JAWS** (Windows) - Comprehensive compatibility and optimization
+- **VoiceOver** (macOS/iOS) - Native Apple screen reader support
+- **TalkBack** (Android) - Mobile accessibility optimization
+- **Dragon NaturallySpeaking** - Voice recognition software compatibility`,
+      browsers: 'Browsers',
+      browsersList: `- Recent versions of major browsers including Chrome, Firefox, Safari, and Edge
+- Mobile browsers on iOS Safari and Android Chrome
+- Browser zoom up to 200% without horizontal scrolling
+- High contrast mode support across all browsers`,
+      otherAssistive: 'Other Assistive Technology',
+      otherAssistiveList: `- Voice recognition software (Dragon, Windows Speech Recognition)
+- Switch navigation devices and software
+- Eye-tracking systems and head mouse devices
+- Alternative keyboards and input devices
+- Magnification software (ZoomText, MAGic)`,
+      limitationsIntro: 'Despite our best efforts to ensure accessibility of',
+      limitationsText: 'there may be some limitations. Below is a description of known limitations, and potential solutions. Please contact us if you observe an issue not listed below.',
+      knownLimitations: 'Known limitations for',
+      limitation1: '**Third-party Content:** Some embedded content from third-party providers (social media widgets, videos, maps) may not be fully accessible. We work with vendors to ensure accessibility compliance.',
+      limitation2: '**Legacy PDF Documents:** Some older PDF documents may not be fully accessible. We are systematically reviewing and updating these documents to meet accessibility standards.',
+      limitation3: '**Live Content:** Real-time content such as live chat or dynamic updates may have accessibility limitations. We provide alternative methods to access this information.',
+      whatWereDoing: 'What we\'re doing:',
+      whatWeDoList: `- Continuous accessibility improvements and updates
+- Regular third-party vendor accessibility reviews
+- Proactive identification and resolution of accessibility barriers
+- User feedback integration into our development process`,
+      additionalResources: 'Additional Accessibility Resources',
+      resourcesIntro: 'For more information about web accessibility, please visit:',
+      aboutStatement: 'About This Statement',
+      statementGenerated: 'This statement was created on',
+      aiGenerator: 'AI-powered accessibility statement generator',
+      lastReviewed: 'The website was last reviewed for accessibility compliance on',
+      complianceStatus: 'Accessibility Standards Compliance:',
+      approvedBy: 'This Accessibility Statement is approved by:',
+      accessibilityOfficer: 'Accessibility Officer',
+      statementDetails: 'Statement Details:',
+      complianceLevel: 'Compliance Level:',
+      nextReviewDate: 'Next Review Date:',
+      poweredBy: 'Powered by',
+      makingWebAccessible: 'Making the web accessible for everyone.',
       wcagDescription: 'The [Web Content Accessibility Guidelines (WCAG)](https://www.w3.org/WAI/WCAG21/Understanding/) defines requirements for designers and developers to improve accessibility for people with disabilities. It defines three levels of conformance: Level A, Level AA, and Level AAA.',
       fullyConformant: 'is fully conformant with [WCAG 2.1 level AA](https://www.w3.org/WAI/WCAG21/quickref/?currentsidebar=%23col_overview&levels=aaa&technologies=smil%2Cpdf%2Cflash%2Csl). Fully conformant means that the content fully meets the accessibility standard without any exceptions.',
       complianceList: `This website also complies with:
@@ -223,7 +355,7 @@ const StatementGenerator: React.FC = () => {
 
     // Apply enhancements to the template
     if (enhancement === 'add-testing') {
-      baseTemplate.automatedList = `- Regular automated accessibility scanning using [WebAbility.io's accessibility testing platform](https://webability.io)
+      baseTemplate.automatedList = `- Regular automated accessibility scanning using [${widgetBrand}'s accessibility testing platform](${widgetUrl})
 - Integration with development workflow for continuous accessibility monitoring
 - Monthly comprehensive accessibility audits
 - **Enhanced Testing:** Use of industry-standard tools including axe-core, WAVE, Lighthouse, and Pa11y
@@ -261,7 +393,7 @@ const StatementGenerator: React.FC = () => {
   };
 
   // Pre-translated content for key languages (fallback)
-  const getPreTranslatedContent = (langCode: string) => {
+  const getPreTranslatedContent = (_langCode: string) => {
     // Return null for now - will fall back to English
     // In a full implementation, this would contain pre-translated templates
     return null;
@@ -334,6 +466,17 @@ const StatementGenerator: React.FC = () => {
       ...prev,
       [field]: event.target.value as string
     }));
+    
+    // Clear translation cache when key settings change
+    if (field === 'widgetBrandName' || field === 'widgetBrandUrl' || field === 'language') {
+      try {
+        // Clear relevant translation caches efficiently
+        const keys = Object.keys(localStorage).filter(key => key.startsWith('translation_'));
+        keys.forEach(key => localStorage.removeItem(key));
+      } catch (error) {
+        // Handle localStorage quota/access errors gracefully
+      }
+    }
   };
 
   const filteredLanguages = languages.filter(lang => 
@@ -364,18 +507,29 @@ const StatementGenerator: React.FC = () => {
     // Set new timeout for debouncing
     translationTimeoutRef.current = setTimeout(async () => {
       // Inline handleGenerateStatement to avoid stale closure
-      if (!formData.companyName || !formData.websiteUrl || !formData.contactEmail) {
+      if (!formData.companyName || !formData.websiteUrl || !formData.contactEmail || !formData.industry) {
         toast.error('Please fill in all required fields');
         return;
       }
 
-      // Prevent duplicate requests within 1 second (faster model)
+      // Rate limiting: prevent duplicate requests within 5 seconds
       const now = Date.now();
       const formDataKey = `${formData.companyName}_${formData.websiteUrl}_${formData.contactEmail}_${formData.language}_${formData.industry}`;
       if (lastTranslationRef.current && 
           lastTranslationRef.current.formDataKey === formDataKey && 
-          (now - lastTranslationRef.current.timestamp) < 1000) {
-        toast.info('Please wait, statement is being generated...');
+          (now - lastTranslationRef.current.timestamp) < 5000) {
+        toast.info('Please wait, statement is still being generated...');
+        return;
+      }
+      
+      // Input validation
+      if (formData.websiteUrl && !formData.websiteUrl.match(/^https?:\/\/.+/)) {
+        toast.error('Please enter a valid website URL starting with http:// or https://');
+        return;
+      }
+      
+      if (formData.contactEmail && !formData.contactEmail.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        toast.error('Please enter a valid email address');
         return;
       }
 
@@ -392,8 +546,18 @@ const StatementGenerator: React.FC = () => {
         setGeneratedStatement(statement);
         toast.success('Accessibility statement generated successfully!');
       } catch (error) {
-        console.error('Statement generation error:', error);
-        toast.error('Failed to generate statement. Please try again.');
+        const errorMessage = error instanceof Error ? error.message : 'Failed to generate statement. Please try again.';
+        toast.error(errorMessage);
+        
+        // Report errors in production for monitoring
+        if (process.env.NODE_ENV === 'production' && error instanceof Error) {
+          // Log to error monitoring service (e.g., Sentry)
+          console.error('Translation error:', {
+            message: error.message,
+            language: formData.language,
+            timestamp: new Date().toISOString()
+          });
+        }
       } finally {
         setIsGenerating(false);
       }
@@ -438,12 +602,12 @@ const StatementGenerator: React.FC = () => {
     // Main translation function (async for API calls)
     const getTranslations = async (lang: string) => {
       if (lang === 'en') {
-        return getEnglishTranslations();
+        return getEnglishTranslations(enhancement, data.widgetBrandName, data.widgetBrandUrl);
       }
       
       // For non-English languages, try AI translation first
       try {
-        const englishTemplate = getEnglishTranslations(enhancement);
+        const englishTemplate = getEnglishTranslations(enhancement, data.widgetBrandName, data.widgetBrandUrl);
         const languageNames: { [key: string]: string } = {
           'ar': 'Arabic', 'bg': 'Bulgarian', 'bn': 'Bengali', 'cs': 'Czech', 'de': 'German',
           'el': 'Greek', 'es': 'Spanish', 'fi': 'Finnish', 'fr': 'French', 'he': 'Hebrew',
@@ -458,12 +622,28 @@ const StatementGenerator: React.FC = () => {
         
         const targetLanguageName = languageNames[lang] || 'English';
         const aiTranslations = await callOpenRouterTranslation(englishTemplate, targetLanguageName, lang);
+        
+        // Ensure we return an object, not a string
+        if (typeof aiTranslations === 'string') {
+          try {
+            // Clean markdown wrapper if present
+            let cleanedTranslations = aiTranslations
+              .replace(/^```json\s*/m, '')
+              .replace(/\s*```$/m, '')
+              .trim();
+            
+            return JSON.parse(cleanedTranslations);
+          } catch (error) {
+            // Fallback to English if translation parsing fails
+            return getEnglishTranslations(enhancement, data.widgetBrandName, data.widgetBrandUrl);
+          }
+        }
+        
         return aiTranslations;
       } catch (error) {
-        console.error('AI translation failed, using fallback:', error);
-        // Fallback to pre-translated content if available
+        // Fallback to pre-translated content if available, then English
         const preTranslatedContent = getPreTranslatedContent(lang);
-        return preTranslatedContent || getEnglishTranslations();
+        return preTranslatedContent || getEnglishTranslations(enhancement, data.widgetBrandName, data.widgetBrandUrl);
       }
     };
 
@@ -531,88 +711,82 @@ ${t.featuresList}
 ${t.feedbackIntro} ${data.websiteUrl}. ${t.feedbackNote}
 
 **${t.contactInfo}**
-${t.contactList.replace('{email}', data.contactEmail)}
+${(() => {
+  const contactItems = [];
+  if (data.phoneNumber) contactItems.push(`- **Phone:** ${data.phoneNumber}`);
+  contactItems.push(`- **E-mail:** ${data.contactEmail}`);
+  if (data.onlineFormUrl) contactItems.push(`- **Online Form:** [Link to accessibility feedback form](${data.onlineFormUrl})`);
+  if (data.visitorAddress) contactItems.push(`- **Visitor Address:** ${data.visitorAddress}`);
+  if (data.postalAddress) contactItems.push(`- **Postal Address:** ${data.postalAddress}`);
+  return contactItems.join('\n');
+})()}
 
 **Response Time:** ${t.responseTime}
 
 ## ${t.compatibility}
-${data.websiteUrl} is designed to be compatible with the following assistive technologies:
+${data.websiteUrl} ${t.compatibilityIntro}
 
-### Screen Readers
-- **NVDA** (Windows) - Fully supported with regular testing
-- **JAWS** (Windows) - Comprehensive compatibility and optimization
-- **VoiceOver** (macOS/iOS) - Native Apple screen reader support
-- **TalkBack** (Android) - Mobile accessibility optimization
-- **Dragon NaturallySpeaking** - Voice recognition software compatibility
+### ${t.screenReaders}
+${t.screenReadersList}
 
-### Browsers
-- Recent versions of major browsers including Chrome, Firefox, Safari, and Edge
-- Mobile browsers on iOS Safari and Android Chrome
-- Browser zoom up to 200% without horizontal scrolling
-- High contrast mode support across all browsers
+### ${t.browsers}
+${t.browsersList}
 
-### Other Assistive Technology
-- Voice recognition software (Dragon, Windows Speech Recognition)
-- Switch navigation devices and software
-- Eye-tracking systems and head mouse devices
-- Alternative keyboards and input devices
-- Magnification software (ZoomText, MAGic)
+### ${t.otherAssistive}
+${t.otherAssistiveList}
 
 ## ${t.limitations}
-Despite our best efforts to ensure accessibility of ${data.websiteUrl}, there may be some limitations. Below is a description of known limitations, and potential solutions. Please contact us if you observe an issue not listed below.
+${t.limitationsIntro} ${data.websiteUrl}, ${t.limitationsText}
 
-**Known limitations for ${data.websiteUrl}:**
+**${t.knownLimitations} ${data.websiteUrl}:**
 
-1. **Third-party Content:** Some embedded content from third-party providers (social media widgets, videos, maps) may not be fully accessible. We work with vendors to ensure accessibility compliance.
+1. ${t.limitation1}
 
-2. **Legacy PDF Documents:** Some older PDF documents may not be fully accessible. We are systematically reviewing and updating these documents to meet accessibility standards.
+2. ${t.limitation2}
 
-3. **Live Content:** Real-time content such as live chat or dynamic updates may have accessibility limitations. We provide alternative methods to access this information.
+3. ${t.limitation3}
 
-**What we're doing:**
-- Continuous accessibility improvements and updates
-- Regular third-party vendor accessibility reviews
-- Proactive identification and resolution of accessibility barriers
-- User feedback integration into our development process
+**${t.whatWereDoing}**
+${t.whatWeDoList}
 
-## Additional Accessibility Resources
+## ${t.additionalResources}
 
-For more information about web accessibility, please visit:
-- [WebAbility.io Accessibility Resources](https://webability.io/resources)
+${t.resourcesIntro}
+- [${data.widgetBrandName || 'WebAbility.io'} Accessibility Resources](${data.widgetBrandUrl || 'https://webability.io'}/resources)
 - [Web Accessibility Initiative (WAI)](https://www.w3.org/WAI/)
 - [WebAIM (Web Accessibility In Mind)](https://webaim.org/)
 - [Deque University](https://dequeuniversity.com/)
 
 ## ${t.compliance}
-This statement was created on ${currentDate} using [WebAbility.io's AI-powered accessibility statement generator](https://webability.io/statement-generator) and manual accessibility assessment tools. The website was last reviewed for accessibility compliance on ${lastReviewDate}.
+${t.statementGenerated} ${currentDate} using [${data.widgetBrandName || 'WebAbility.io'}'s ${t.aiGenerator}](${data.widgetBrandUrl || 'https://webability.io'}/statement-generator) and manual accessibility assessment tools. ${t.lastReviewed} ${lastReviewDate}.
 
-**Accessibility Standards Compliance:**
+**${t.complianceStatus}**
 - WCAG 2.1 AA: ✅ Fully Compliant
 - Section 508: ✅ Compliant
 - ADA Title III: ✅ Compliant
 - EN 301 549: ✅ Compliant
 
 ## ${t.approval}
-This Accessibility Statement is approved by:
+${t.approvedBy}
 
 **${data.companyName}**  
-**Accessibility Officer**  
+**${t.accessibilityOfficer}**  
 **Email:** ${data.contactEmail}  
 **Date:** ${currentDate}
 
 ---
 
-### About This Statement
+### ${t.aboutStatement}
 
-*This accessibility statement was generated using [WebAbility.io's Professional AI Statement Generator](https://webability.io/statement-generator) on ${currentDate}. This statement reflects our current accessibility features and our ongoing commitment to digital inclusion.*
+*${t.statementGenerated} [${data.widgetBrandName || 'WebAbility.io'}'s Professional ${t.aiGenerator}](${data.widgetBrandUrl || 'https://webability.io'}/statement-generator) ${currentDate}. This statement reflects our current accessibility features and our ongoing commitment to digital inclusion.*
 
-**Statement Details:**
+**${t.statementDetails}**
 - **Language:** ${languageName} (${data.language.toUpperCase()})
 - **Industry:** ${data.industry || 'General Business'}
-- **Compliance Level:** WCAG 2.1 AA
-- **Next Review Date:** ${new Date(Date.now() + 365*24*60*60*1000).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}
+- **${t.complianceLevel}** WCAG 2.1 AA
+- **${t.nextReviewDate}** ${new Date(Date.now() + 365*24*60*60*1000).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}
 
-**Powered by [WebAbility.io](https://webability.io) - Making the web accessible for everyone.**`;
+**${t.poweredBy} [${data.widgetBrandName || 'WebAbility.io'}](${data.widgetBrandUrl || 'https://webability.io'}) - ${t.makingWebAccessible}**`;
   };
 
   const convertToFormat = (content: string, format: 'markdown' | 'html' | 'text'): string => {
@@ -807,6 +981,12 @@ This Accessibility Statement is approved by:
                   onChange={handleInputChange('companyName')}
                   placeholder="Enter your company name"
                   variant="outlined"
+                  inputProps={{
+                    onPaste: (e) => {
+                      // Explicitly allow paste
+                      e.stopPropagation();
+                    }
+                  }}
                 />
                 
                 <TextField
@@ -816,6 +996,12 @@ This Accessibility Statement is approved by:
                   onChange={handleInputChange('websiteUrl')}
                   placeholder="https://example.com"
                   variant="outlined"
+                  inputProps={{
+                    onPaste: (e) => {
+                      // Explicitly allow paste
+                      e.stopPropagation();
+                    }
+                  }}
                 />
                 
                 <TextField
@@ -825,14 +1011,20 @@ This Accessibility Statement is approved by:
                   onChange={handleInputChange('contactEmail')}
                   placeholder="accessibility@example.com"
                   variant="outlined"
+                  inputProps={{
+                    onPaste: (e) => {
+                      // Explicitly allow paste
+                      e.stopPropagation();
+                    }
+                  }}
                 />
                 
                 <FormControl fullWidth>
-                  <InputLabel>Industry</InputLabel>
+                  <InputLabel>Industry *</InputLabel>
                   <Select
                     value={formData.industry}
                     onChange={handleInputChange('industry')}
-                    label="Industry"
+                    label="Industry *"
                   >
                     {industries.map(industry => (
                       <MenuItem key={industry} value={industry}>
@@ -905,6 +1097,103 @@ This Accessibility Statement is approved by:
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Divider for optional fields */}
+                <div className="my-6 border-t border-gray-200 pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Optional Information</h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowOptionalFields(!showOptionalFields)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                        showOptionalFields ? 'bg-blue-600' : 'bg-gray-300'
+                      }`}
+                      aria-label="Toggle optional fields"
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                          showOptionalFields ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  
+                  {showOptionalFields && (
+                    <>
+                      {/* Brand Customization */}
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-600 mb-3">
+                          Customize widget branding (leave empty to use WebAbility.io)
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <TextField
+                            fullWidth
+                            label="Widget Brand Name"
+                            value={formData.widgetBrandName}
+                            onChange={handleInputChange('widgetBrandName')}
+                            placeholder="WebAbility.io"
+                            variant="outlined"
+                            size="small"
+                          />
+                          <TextField
+                            fullWidth
+                            label="Widget Brand URL"
+                            value={formData.widgetBrandUrl}
+                            onChange={handleInputChange('widgetBrandUrl')}
+                            placeholder="https://webability.io"
+                            variant="outlined"
+                            size="small"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Contact Information */}
+                      <div>
+                        <p className="text-sm text-gray-600 mb-3">
+                          Additional contact information (fields left empty will not appear in the statement)
+                        </p>
+                        <div className="space-y-4">
+                          <TextField
+                            fullWidth
+                            label="Phone Number"
+                            value={formData.phoneNumber}
+                            onChange={handleInputChange('phoneNumber')}
+                            placeholder="+1 (555) 123-4567"
+                            variant="outlined"
+                            size="small"
+                          />
+                          <TextField
+                            fullWidth
+                            label="Online Form URL"
+                            value={formData.onlineFormUrl}
+                            onChange={handleInputChange('onlineFormUrl')}
+                            placeholder="https://example.com/accessibility-feedback"
+                            variant="outlined"
+                            size="small"
+                          />
+                          <TextField
+                            fullWidth
+                            label="Visitor Address"
+                            value={formData.visitorAddress}
+                            onChange={handleInputChange('visitorAddress')}
+                            placeholder="123 Main St, Suite 100, City, State 12345"
+                            variant="outlined"
+                            size="small"
+                          />
+                          <TextField
+                            fullWidth
+                            label="Postal Address"
+                            value={formData.postalAddress}
+                            onChange={handleInputChange('postalAddress')}
+                            placeholder="P.O. Box 123, City, State 12345"
+                            variant="outlined"
+                            size="small"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
