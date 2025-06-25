@@ -49,8 +49,8 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
   const trx = await database.transaction();
 
   try {
-    const subdomain = stringToSlug(data.name).toLowerCase();
-    const exists = await getOrganizationBySubdomain(subdomain);
+    const subdomain = await stringToSlug(data.name);
+    const exists = await getOrganizationBySubdomain(subdomain.toLowerCase());
 
     if (exists) {
       const error = new Error('Organization name already exists, please choose another one');
@@ -107,10 +107,10 @@ export async function editOrganization(
     let updateData = { ...data };
 
     if (data.name) {
-      updateData.subdomain = stringToSlug(data.name).toLowerCase();
+      updateData.subdomain = await stringToSlug(data.name);
 
       const exists = await getOrganizationBySubdomainExcludeId(
-        updateData.subdomain,
+        updateData.subdomain.toLowerCase(),
         Number(organizationId)
       );
 
@@ -213,8 +213,8 @@ export async function getOrganizationById(
 
 export async function organizationExistsByName(name: string): Promise<boolean> {
   try {
-    const subdomain = stringToSlug(name).toLowerCase();
-    const org = await getOrganizationBySubdomain(subdomain);
+    const subdomain = await stringToSlug(name);
+    const org = await getOrganizationBySubdomain(subdomain.toLowerCase());
 
     return !!org;
   } catch (error) {

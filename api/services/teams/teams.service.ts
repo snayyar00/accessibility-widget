@@ -64,7 +64,7 @@ export async function findTeamByAlias(alias: string): Promise<FindTeamByAliasRes
  * @param string teamAlias Alias of new team
  */
 export async function createTeam(user: UserProfile, teamName: string, teamAlias: string): Promise<CreateTeamResponse> {
-  const alias = stringToSlug(teamAlias);
+  const alias = await stringToSlug(teamAlias);
 
   const team = await getTeam({ alias });
   if (team) {

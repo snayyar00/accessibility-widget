@@ -1,10 +1,10 @@
-import slug from 'slug'
 
 export function normalizeEmail(text: string): string {
   return text.toLowerCase().trim();
 }
 
-export function stringToSlug(str: string): string {
+export async function stringToSlug(str: string): Promise<string> {
+  const { default: slug } = await import('slug');
   return slug(str);
 }
 
