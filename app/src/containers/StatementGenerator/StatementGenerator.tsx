@@ -370,6 +370,7 @@ const StatementGenerator: React.FC = () => {
     if (lastTranslationRef.current && 
         lastTranslationRef.current.formDataKey === formDataKey && 
         (now - lastTranslationRef.current.timestamp) < 1000) {
+      toast.info('Please wait, statement is being generated...');
       return;
     }
 
