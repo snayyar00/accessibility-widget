@@ -42,15 +42,19 @@ const App: React.FC<props> = ({ options }) => {
       <BrowserRouter>
         <GlobalLoading />
         <ToastContainer />
+        
         <Switch>
           <Route path="/verify-email" component={VerifyEmail} />
           <Route
             path="/teams/invitation/:invitationToken"
             component={AcceptInvitation}
           />
+
           <PublicRoute path="/auth" component={Auth} />
+
           <Route path="/reports/:r2_key" component={ReportView} exact />
           <PrivateRoute render={() => <AdminLayout options={options} />} />
+
           <Redirect from="*" to="/" />
         </Switch>
       </BrowserRouter>
