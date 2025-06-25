@@ -5,22 +5,24 @@ interface TranslationContentInput {
 }
 
 interface TranslateStatementArgs {
-  content: TranslationContentInput;
+  content: TranslationContentInput | string;
   targetLanguage: string;
   languageCode: string;
+  context?: string;
 }
 
 const resolvers = {
   Mutation: {
     translateStatement: async (
       _: unknown,
-      { content, targetLanguage, languageCode }: TranslateStatementArgs
+      { content, targetLanguage, languageCode, context }: TranslateStatementArgs
     ) => {
       try {
         const result = await translateStatement({
           content,
           targetLanguage,
-          languageCode
+          languageCode,
+          context
         });
 
         return result;
