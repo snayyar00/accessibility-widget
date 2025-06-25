@@ -63,8 +63,19 @@ const cleanCache = () => {
   console.log(`Cache cleaned: ${translationCache.size} entries remaining`);
 };
 
-// Clean cache every hour
-setInterval(cleanCache, 60 * 60 * 1000);
+// Clean cache every hour - store reference for cleanup
+const cacheCleanupInterval = setInterval(cleanCache, 60 * 60 * 1000);
+
+// Allow graceful shutdown
+process.on('SIGTERM', () => {
+  clearInterval(cacheCleanupInterval);
+  console.log('Translation service cache cleanup interval cleared');
+});
+
+process.on('SIGINT', () => {
+  clearInterval(cacheCleanupInterval);
+  console.log('Translation service cache cleanup interval cleared');
+});
 
 // Fast cache helper functions
 const getFromCache = (key: string): TranslationContent | null => {

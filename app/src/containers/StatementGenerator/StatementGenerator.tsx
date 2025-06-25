@@ -53,7 +53,7 @@ const StatementGenerator: React.FC = () => {
   
   // Debouncing and batching refs
   const translationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastTranslationRef = useRef<{ langCode: string; timestamp: number } | null>(null);
+  const lastTranslationRef = useRef<{ formDataKey: string; timestamp: number } | null>(null);
   
   // Debounced GraphQL mutation call for AI translation
   const callOpenRouterTranslation = useCallback(async (englishContent: any, targetLanguageName: string, langCode: string, enhancement?: string) => {
@@ -63,10 +63,15 @@ const StatementGenerator: React.FC = () => {
       const cacheKey = `translation_${langCode}${enhancementSuffix}`;
       const cachedTranslation = localStorage.getItem(cacheKey);
       if (cachedTranslation) {
-        const cached = JSON.parse(cachedTranslation);
-        // Check if cache is still valid (24 hours)
-        if (cached.timestamp && (Date.now() - cached.timestamp) < 24 * 60 * 60 * 1000) {
-          return cached.translation;
+        try {
+          const cached = JSON.parse(cachedTranslation);
+          // Check if cache is still valid (24 hours)
+          if (cached.timestamp && (Date.now() - cached.timestamp) < 24 * 60 * 60 * 1000) {
+            return cached.translation;
+          }
+        } catch (parseError) {
+          console.warn('Invalid cached translation data, removing:', parseError);
+          localStorage.removeItem(cacheKey);
         }
       }
 
@@ -370,11 +375,6 @@ const StatementGenerator: React.FC = () => {
 
     lastTranslationRef.current = {
       formDataKey,
-      timestamp: now
-    };
-    
-    lastTranslationRef.current = {
-      langCode: formData.language,
       timestamp: now
     };
 
@@ -883,7 +883,7 @@ This Accessibility Statement is approved by:
           .replace(/\n\n/g, '</p><p style="margin: 1rem 0; line-height: 1.6; color: #374151;">')
           .replace(/^([^<\n].*$)/gm, '<p style="margin: 1rem 0; line-height: 1.6; color: #374151;">$1</p>')
           .replace(/<p[^>]*><\/p>/g, '')
-          .replace(/(<li[^>]*>.*<\/li>)/gs, match => {
+          .replace(/(<li[^>]*>[\s\S]*?<\/li>)/g, match => {
             const listItems = match;
             return `<ul style="margin: 1rem 0; padding-left: 1.5rem;">${listItems}</ul>`;
           })
