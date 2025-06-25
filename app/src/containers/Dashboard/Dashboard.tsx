@@ -346,7 +346,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
             },
             {
               title: 'Instant One-Click Setup',
-              desc: 'Get up and running in minutes, backed by 24/7 expert support.',
+              desc: 'Get up and running in minutes, backed by fast expert support.',
             },
             {
               title: 'Adaptive AI Enhancements',

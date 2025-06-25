@@ -8,12 +8,14 @@ const getTourKeyFromRoute = (pathname: string): string | null => {
     return 'add_domain_unified_tour';
   } else if (pathname.includes('/installation')) {
     return 'installation_tour';
-  } else if (pathname === '/accessibility-test') {
+  } else if (pathname === '/scanner') {
     return 'accessibility_tour';
   } else if (pathname === '/problem-reports') {
     return 'reports_tour';
   } else if (pathname === '/customize-widget') {
     return 'customize_widget_tour';
+  } else if (pathname === '/statement-generator') {
+    return 'statement_generator_tour';
   }
   return null;
 };
@@ -25,7 +27,8 @@ const ALL_TOUR_KEYS = [
   'installation_tour_completed',
   'accessibility_tour_completed',
   'reports_tour_completed',
-  'customize_widget_tour_completed'
+  'customize_widget_tour_completed',
+  'statement_generator_tour_completed'
 ];
 
 export const useTourGuidance = () => {

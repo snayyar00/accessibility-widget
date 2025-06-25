@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as DashboardIcon } from '@/assets/images/svg/dashboard.svg';
 import { ReactComponent as UserIcon } from '@/assets/images/svg/user.svg';
+import { HiOutlineGlobeAlt } from 'react-icons/hi';
 import type { RootState } from '@/config/store';
 import { toggleSidebar } from '@/features/admin/sidebar';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
@@ -66,7 +67,7 @@ const Sidebar = ({
           [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200 [&.active>.menu-icon>svg_*[fill]]:fill-primary [&.active>.menu-icon>svg_*[stroke]]:stroke-primary"
               >
                 <div className="menu-icon flex items-center justify-center w-12 h-6">
-                  <DashboardIcon/>
+                  <DashboardIcon aria-label="Dashboard navigation icon"/>
                 </div>
                 <span className="menu-text text-lg text-white-blue ml-4">
                   Dashboard
@@ -87,6 +88,7 @@ const Sidebar = ({
                   <GrInstallOption
                     className="menu-icon text-white-blue transition-colors duration-200"
                     size={25}
+                    aria-label="Installation guide icon"
                   />
                 </div>
                 <span className="menu-text text-lg text-white-blue ml-4">
@@ -108,10 +110,11 @@ const Sidebar = ({
                   <GoGear
                     className="menu-icon text-white-blue transition-colors duration-200"
                     size={30}
+                    aria-label="Customization settings icon"
                   />
                 </div>
                 <span className="menu-text text-lg text-left text-white-blue ml-4 pr-2">
-                  Customize Widget
+                  Customization
                 </span>
               </NavLink>
             </li>
@@ -126,7 +129,11 @@ const Sidebar = ({
           [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200 [&.active>.menu-icon>svg_*[fill]]:fill-primary [&.active>.menu-icon>svg_*[stroke]]:stroke-primary"
               >
                 <div className="menu-icon flex items-center justify-center w-12 h-6">
-                  <UserIcon />
+                  <HiOutlineGlobeAlt 
+                    className="menu-icon text-white-blue transition-colors duration-200" 
+                    size={25} 
+                    aria-label="Add domain navigation icon" 
+                  />
                 </div>
                 <span className="menu-text text-lg text-white-blue ml-4">
                   Add Domain

@@ -10,6 +10,7 @@ import { AccessibilitySchema } from './schemas/accessibilityReport.schema';
 import { uniqueTokenSchema } from './schemas/uniqueToken.schema';
 import { SitesPlanSchema } from './schemas/sitesPlan.schema';
 import { reportProblemSchema } from './schemas/reportProblem.schema';
+import { TranslationSchema } from './schemas/translation.schema';
 import { OrganizationSchema } from './schemas/organization.schema';
 
 const rootSchema = gql`
@@ -30,4 +31,4 @@ const rootSchema = gql`
   }
 `;
 
-export default [rootSchema, UserSchema, UserPlanSchema, TeamSchema, DocumentSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, uniqueTokenSchema, SitesPlanSchema, reportProblemSchema, OrganizationSchema];
+export default [rootSchema, UserSchema, UserPlanSchema, TeamSchema, DocumentSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, uniqueTokenSchema, SitesPlanSchema, reportProblemSchema, OrganizationSchema, TranslationSchema];

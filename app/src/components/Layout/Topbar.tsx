@@ -10,6 +10,7 @@ import { toggleSidebar } from '@/features/admin/sidebar';
 import type { RootState } from '@/config/store';
 import { resolveAvatarPath } from '@/helpers/avatar.helper';
 import Avatar from '@/assets/images/avatar.jpg';
+import InitialAvatar from '@/components/Common/InitialAvatar';
 import { ReactComponent as ArrowDownIcon } from '@/assets/images/svg/arrow-down-18.svg';
 import { ReactComponent as MenuIcon } from '@/assets/images/svg/menu.svg';
 import Input from '@/components/Common/Input';
@@ -121,7 +122,7 @@ const Topbar: React.FC<Props> = ({ signout }) => {
           className="flex items-center cursor-pointer [&>svg]:sm:hidden"
         >
           <div className="w-[50px] h-[50px] flex justify-center items-center topbar_avatar">
-            <img src={resolveAvatarPath(avatarUrl, Avatar)} alt="avatar" />
+            <InitialAvatar name={name || 'User'} size={50} />
           </div>
           <span className="font-medium text-[18px] leading-[22px] text-sapphire-blue mx-2 my-0 sm:hidden">
             {name}
@@ -144,7 +145,7 @@ const Topbar: React.FC<Props> = ({ signout }) => {
                 }}
                 className="text-[14px] text-sapphire-blue pl-6 overflow-hidden flex items-center w-full h-full active:bg-regular-primary"
               >
-                {t('Common.title.profile')}
+                {t('Common.label.profile')}
               </NavLink>
             </li>
             <li className="list-none h-9">
@@ -161,7 +162,7 @@ const Topbar: React.FC<Props> = ({ signout }) => {
                 className="text-[14px] text-sapphire-blue pl-6 overflow-hidden flex items-center w-full h-full active:bg-regular-primary"
               >
                 {!clicked ? (
-                  t('Common.title.Billing')
+                  t('Common.label.billing')
                 ) : (
                   <CircularProgress
                     size={20}

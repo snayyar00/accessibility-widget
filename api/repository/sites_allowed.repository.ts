@@ -4,6 +4,7 @@ import { findUser } from './user.repository';
 import { AddTokenToDB, RemoveTokenFromDB, UpdateWebsiteURL } from '~/services/webToken/mongoVisitors';
 import { sitesPlansColumns } from './sites_plans.repository';
 
+
 const TABLE = TABLES.allowed_sites;
 
 export const siteColumns = {
@@ -59,26 +60,48 @@ export async function findSiteByUserIdAndSiteId(user_id: number, site_id: number
 		.first();
 }
 
-export async function insertSite(data: allowedSites): Promise<string> {
+export async function insertSite(data: allowedSites): Promise<FindAllowedSitesProps | string> {
+	const startTime = Date.now();
+	
+	return database.transaction(async (trx) => {
+		try {
+			const result = await trx(TABLE)
+				.insert(data)
+				.onConflict('url')
+				.ignore();
 
-	const exisitingSites = await database(TABLE).select(siteColumns).where({ [siteColumns.url]: data.url }).first();
-	if (exisitingSites !== undefined) return 'You have already added this site.';
+			if (result.length === 0) {
+				console.log(`insertSite (duplicate) took: ${Date.now() - startTime}ms`);
+				return 'You have already added this site.';
+			}
 
-	else {
-		const user = await findUser({ id: data.user_id });
-		return database(TABLE).insert(data).onConflict('url').ignore()
-			.then(async (result) => {
-				if (result.length === 0) {
-					return 'You have already added this site.';
-				} else {
-					await AddTokenToDB(user.company ? user.company : '', user.email, data.url);
-					return 'The site was successfully added.';
+			const insertedSite = await trx(TABLE)
+				.select(siteColumns)
+				.where({ [siteColumns.url]: data.url })
+				.first();
+
+			if (!insertedSite) {
+				throw new Error('Failed to retrieve inserted site');
+			}
+
+			setImmediate(async () => {
+				try {
+					const user = await findUser({ id: data.user_id });
+					if (user) {
+						await AddTokenToDB(user.company ? user.company : '', user.email, data.url);
+					}
+				} catch (error) {
+					console.error('Background AddTokenToDB failed:', error);
 				}
-			})
-			.catch((error) => {
-				return `insert failed: ${error.message}`;
 			});
-	}
+
+			return insertedSite;
+
+		} catch (error) {
+			console.error('insertSite transaction error:', error);
+			return `insert failed: ${error.message}`;
+		}
+	});
 }
 
 export async function deleteSiteByURL(url: string, user_id: number): Promise<number> {
@@ -88,48 +111,65 @@ export async function deleteSiteByURL(url: string, user_id: number): Promise<num
 
 /**
  * Safely deletes a site and all its related records to avoid foreign key constraint violations
- * This function deletes in the correct order: sites_permission -> sites_plans -> allowed_sites
+ * Uses a transaction to ensure atomicity - either all records are deleted or none are
  */
 export async function deleteSiteWithRelatedRecords(url: string, user_id: number): Promise<number> {
 	return database.transaction(async (trx) => {
 		try {
-			// First, find the site to get its ID
+			// Find the site within the transaction
 			const site = await trx(TABLE)
 				.select(siteColumns)
 				.where({ [siteColumns.url]: url, [siteColumns.user_id]: user_id })
 				.first();
 
 			if (!site) {
-				throw new Error('Site not found');
+				throw new Error(`Site not found: ${url} for user ${user_id}`);
 			}
 
 			const siteId = site.id;
 
-			// Delete from sites_permission table first (if it references sites_plans)
-			await trx(TABLES.sitePermissions)
-				.where('sites_plan_id', 'IN', 
-					trx(TABLES.sitesPlans)
-						.select('id')
-						.where({ 'allowed_site_id': siteId })
-				)
-				.del();
+			// Delete all related records within the same transaction
+			await trx.raw('SET FOREIGN_KEY_CHECKS = 0');
+			
+			await Promise.all([
+				trx('impressions').where('site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} impressions`))
+					.catch(err => console.log(`Impressions deletion skipped: ${err.message}`)),
+				trx('problem_reports').where('site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} problem_reports`))
+					.catch(err => console.log(`Problem reports deletion skipped: ${err.message}`)),
+				trx('unique_visitors').where('site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} unique_visitors`))
+					.catch(err => console.log(`Unique visitors deletion skipped: ${err.message}`)),
+				trx('accessibility_reports').where('allowed_sites_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} accessibility_reports`))
+					.catch(err => console.log(`Accessibility reports deletion skipped: ${err.message}`)),
+				trx('accessibility_scans').where('site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} accessibility_scans`))
+					.catch(err => console.log(`Accessibility scans deletion skipped: ${err.message}`)),
+				trx('widget_settings').where('allowed_site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} widget_settings`))
+					.catch(err => console.log(`Widget settings deletion skipped: ${err.message}`)),
+				trx('sites_plans').where('allowed_site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} sites_plans`))
+					.catch(err => console.log(`Sites plans deletion skipped: ${err.message}`)),
+				trx('site_permissions').where('allowed_site_id', siteId).del()
+					.then(count => console.log(`Deleted ${count} site_permissions`))
+					.catch(err => console.log(`Site permissions deletion skipped: ${err.message}`)),
+			]);
 
-			// Delete from sites_plans table (references allowed_sites)
-			await trx(TABLES.sitesPlans)
-				.where({ 'allowed_site_id': siteId })
-				.del();
+			await trx.raw('SET FOREIGN_KEY_CHECKS = 1');
 
-			// Finally, delete from allowed_sites table
+			// Delete the main site record within the same transaction
 			const deletedCount = await trx(TABLE)
 				.where({ 'user_id': user_id, 'url': url })
 				.del();
 
-			// Remove token from MongoDB
-			// await RemoveTokenFromDB(url);
-
+			console.log(`Deleted site: ${url} (${deletedCount} records)`);
 			return deletedCount;
+			
 		} catch (error) {
-			console.error('Error in deleteSiteWithRelatedRecords:', error);
+			console.error(`Error in deleteSiteWithRelatedRecords for ${url}:`, error);
 			throw error;
 		}
 	});

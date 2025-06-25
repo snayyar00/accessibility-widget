@@ -95,29 +95,30 @@ export async function createSitesPlan(
   couponCode: string
 ): Promise<true> {
   try {
-    const user = await findUser({ id: userId });
-    let coupon = "";
-    if (couponCode) {
-      coupon = couponCode;
-    }
+    const [user, site, product, sitePlan] = await Promise.all([
+      findUser({ id: userId }),
+      findSiteByUserIdAndSiteId(userId, siteId),
+      findProductAndPriceByType(planName, billingType),
+      getSitePlanBySiteId(siteId).catch((): null => null)
+    ]);
+
+    const coupon = couponCode || "";
+
     if (!user) {
       throw new ApolloError('Can not find any user');
     }
-
-    const site = await findSiteByUserIdAndSiteId(userId, siteId);
     if (!site) {
       throw new ApolloError('Can not find any site');
     }
-    
-    const product: FindProductAndPriceByTypeResponse = await findProductAndPriceByType(planName, billingType);
     if (!product) {
       throw new ApolloError('Can not find any plan');
     }
 
-    const sitePlan = await getSitePlanBySiteId(siteId);
     if (sitePlan) {
-      await updateSitePlanById(sitePlan.id, { is_active: false });
-      await deletePermissionBySitePlanId(sitePlan.id);
+      await Promise.all([
+        updateSitePlanById(sitePlan.id, { is_active: false }),
+        deletePermissionBySitePlanId(sitePlan.id)
+      ]);
     }
 
     const { subcription_id, customer_id } = await createNewSubcription(
@@ -242,37 +243,56 @@ export async function deleteTrialPlan(id: number): Promise<true> {
 
 export async function deleteSitesPlan(id: number, hook = false): Promise<true> {
   try {
-    const sitePlan = await getSitePlanById(id);
+    let sitePlan = await getSitePlanById(id);
+
+    if(!sitePlan){
+      sitePlan = await getAnySitePlanById(id);
+    }
 
     if (!sitePlan) {
       throw new ApolloError('Can not find any user plan');
     }
 
-    const customer = await getSubcriptionCustomerIDBySubId(sitePlan.subcription_id);
-
     if (hook === false) {
-      await cancelSubcriptionBySubId(sitePlan.subcription_id);
-    }
-
-    let previous_plan;
-    try {
-      previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(customer, sitePlan.subcription_id);
-    } catch (error) {
-      console.log('err = ', error);
-    }
-
-    const updatePromises = previous_plan.map(async (plan) => {
       try {
-        // await deleteSitesPlan(plan.id, true);
-        await Promise.all([deleteSitePlanById(plan.id), deletePermissionBySitePlanId(plan.id)]);
-        console.log('Deleted Plan for site', plan.siteId);
-      } catch (error) {
-        console.log('Error Deleting Plan for site:', plan.siteId);
-        throw error;
+        await cancelSubcriptionBySubId(sitePlan.subcription_id);
+      } catch (error: any) {
+        if (error.message && error.message.includes('No such subscription')) {
+          console.log(`Subscription ${sitePlan.subcription_id} not found, skipping cancellation`);
+        } else {
+          console.log("Subscription cancel error = ",error);
+          throw error;
+        }
       }
-    });
+    }
 
-    await Promise.all(updatePromises);
+    try {
+      // await deleteSitesPlan(plan.id, true);
+      await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)]);
+    } catch (error) {
+      console.log('Error Deleting Plan for site:', sitePlan.allowed_site_id);
+      throw error;
+    }
+
+    // let previous_plan;
+    // try {
+    //   previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(customer, sitePlan.subcription_id);
+    // } catch (error) {
+    //   console.log('err = ', error);
+    // }
+
+    // const updatePromises = previous_plan.map(async (plan) => {
+    //   try {
+    //     // await deleteSitesPlan(plan.id, true);
+    //     await Promise.all([deleteSitePlanById(plan.id), deletePermissionBySitePlanId(plan.id)]);
+    //     console.log('Deleted Plan for site', plan.siteId);
+    //   } catch (error) {
+    //     console.log('Error Deleting Plan for site:', plan.siteId);
+    //     throw error;
+    //   }
+    // });
+
+    // await Promise.all(updatePromises);
     // await deleteSitesPlanById(sitePlan.id);
     // await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)]);
 
@@ -286,38 +306,55 @@ export async function deleteSitesPlan(id: number, hook = false): Promise<true> {
 
 export async function deleteExpiredSitesPlan(id: number, hook = false): Promise<true> {
   try {
-    const sitePlan = await getAnySitePlanById(id);
+    let sitePlan = await getAnySitePlanById(id);
 
     if (!sitePlan) {
       throw new ApolloError('Can not find any user plan');
     }
 
-    const customer = await getSubcriptionCustomerIDBySubId(sitePlan.subcription_id);
 
     if (hook === false) {
-      console.log("hook is not false")
-      await cancelSubcriptionBySubId(sitePlan.subcription_id);
-    }
-
-    let previous_plan;
-    try {
-      previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(customer, sitePlan.subcription_id);
-    } catch (error) {
-      console.log('err = ', error);
-    }
-
-    const updatePromises = previous_plan.map(async (plan) => {
       try {
-        // await deleteSitesPlan(plan.id, true);
-        await Promise.all([deleteSitePlanById(plan.id), deletePermissionBySitePlanId(plan.id)]);
-        console.log('Deleted Plan for site', plan.siteId);
-      } catch (error) {
-        console.log('Error Deleting Plan for site:', plan.siteId);
-        throw error;
+        await cancelSubcriptionBySubId(sitePlan.subcription_id);
+      } catch (error: any) {
+        if (error.message && error.message.includes('No such subscription')) {
+          console.log(`Subscription ${sitePlan.subcription_id} not found, skipping cancellation`);
+        } else {
+          console.log("Subscription cancel error = ",error);
+          throw error;
+        }
       }
-    });
+    }
 
-    await Promise.all(updatePromises);
+    try {
+      // await deleteSitesPlan(plan.id, true);
+      await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)]);
+    } catch (error) {
+      console.log('Error Deleting Plan for site:', sitePlan.allowed_site_id);
+      throw error;
+    }
+
+
+
+    // let previous_plan;
+    // try {
+    //   previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(customer, sitePlan.subcription_id);
+    // } catch (error) {
+    //   console.log('err = ', error);
+    // }
+
+    // const updatePromises = previous_plan.map(async (plan) => {
+    //   try {
+    //     // await deleteSitesPlan(plan.id, true);
+    //     await Promise.all([deleteSitePlanById(plan.id), deletePermissionBySitePlanId(plan.id)]);
+    //     console.log('Deleted Plan for site', plan.siteId);
+    //   } catch (error) {
+    //     console.log('Error Deleting Plan for site:', plan.siteId);
+    //     throw error;
+    //   }
+    // });
+
+    // await Promise.all(updatePromises);
     // await deleteSitesPlanById(sitePlan.id);
     // await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)]);
 
