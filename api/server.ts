@@ -25,7 +25,6 @@ import { createSitesPlan, deleteExpiredSitesPlan, deleteSitesPlan, deleteTrialPl
 import Stripe from 'stripe';
 import { getAnySitePlanBySiteId, getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
-import axios from 'axios';
 import { APP_SUMO_COUPON_ID, APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, RETENTION_COUPON_ID } from './constants/billing.constant';
 import OpenAI from 'openai';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
