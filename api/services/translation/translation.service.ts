@@ -274,57 +274,115 @@ export const translateStatement = async ({
     // Handle content (should be a prompt string from frontend)
     let translatedContent: any;
     
+    // Check content size and disable batching for direct prompts
+    const contentSize = typeof content === 'string' ? content.length : JSON.stringify(content).length;
+    const shouldUseBatching = TRANSLATION_CONFIG.batching.enabled && 
+                              typeof content === 'object' && 
+                              Object.keys(content).length > TRANSLATION_CONFIG.batching.maxBatchSize;
     
-    const response = await Promise.race([
-      openai.chat.completions.create({
-        model: TRANSLATION_CONFIG.model.name,
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a professional translator specializing in accessibility and legal documents. Always respond with valid JSON only. Follow the instructions in the user prompt exactly.'
-          },
-          {
-            role: 'user',
-            content: String(content) // Ensure it's a string
-          }
-        ],
-        temperature: TRANSLATION_CONFIG.model.temperature,
-        max_tokens: TRANSLATION_CONFIG.model.maxTokens,
-        stream: false,
-        top_p: 0.9,
-        presence_penalty: 0.1
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Translation timeout')), TRANSLATION_CONFIG.model.timeout)
-      )
-    ]) as any;
-
-    const translatedText = response.choices[0]?.message?.content;
-    
-    if (!translatedText) {
-      throw new Error('No translation content received from OpenRouter');
-    }
-
-    // Parse JSON response
-    try {
-      // First try to remove markdown code blocks if present
-      let cleanedText = translatedText;
-      if (translatedText.includes('```json')) {
-        cleanedText = translatedText.replace(/^```json\s*/m, '').replace(/\s*```$/m, '');
-      }
+    if (shouldUseBatching) {
+      // Use batching for large object content
+      const batches = splitContentIntoBatches(content as TranslationContent, TRANSLATION_CONFIG.batching.maxBatchSize);
+      const batchPromises = batches.map((batch, index) => 
+        translateBatch(batch, targetLanguage, index, context)
+      );
       
-      translatedContent = JSON.parse(cleanedText);
-    } catch (firstError) {
-      // Try to extract JSON from response if direct parsing fails
-      const jsonMatch = translatedText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('Invalid translation response format');
-      }
-      
+      const batchResults = await Promise.all(batchPromises);
+      translatedContent = batchResults.reduce((acc, batch) => ({ ...acc, ...batch }), {});
+    } else {
+      // Direct translation for string content or small objects
+      let response;
       try {
-        translatedContent = JSON.parse(jsonMatch[0]);
-      } catch (secondError) {
-        throw new Error('Translation service error');
+        response = await Promise.race([
+          openai.chat.completions.create({
+            model: TRANSLATION_CONFIG.model.name,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a professional translator specializing in accessibility and legal documents. Always respond with valid JSON only. Follow the instructions in the user prompt exactly.'
+            },
+            {
+              role: 'user',
+              content: String(content) // Ensure it's a string
+            }
+          ],
+          temperature: TRANSLATION_CONFIG.model.temperature,
+          max_tokens: TRANSLATION_CONFIG.model.maxTokens,
+          stream: false,
+          top_p: 0.9,
+          presence_penalty: 0.1
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Translation timeout')), TRANSLATION_CONFIG.model.timeout)
+        )
+      ]) as any;
+      } catch (primaryError) {
+        console.warn(`Primary model ${TRANSLATION_CONFIG.model.name} failed, trying fallback:`, primaryError);
+        
+        // Fallback to alternative model
+        response = await Promise.race([
+          openai.chat.completions.create({
+            model: TRANSLATION_CONFIG.model.fallback,
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a professional translator specializing in accessibility and legal documents. Always respond with valid JSON only. Follow the instructions in the user prompt exactly.'
+              },
+              {
+                role: 'user',
+                content: String(content)
+              }
+            ],
+            temperature: TRANSLATION_CONFIG.model.temperature,
+            max_tokens: TRANSLATION_CONFIG.model.maxTokens,
+            stream: false,
+            top_p: 0.9,
+            presence_penalty: 0.1
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Fallback translation timeout')), TRANSLATION_CONFIG.model.timeout)
+          )
+        ]) as any;
+      }
+      
+      const translatedText = response.choices[0]?.message?.content;
+      
+      if (!translatedText) {
+        console.error('No translation content received:', {
+          response: response,
+          choices: response.choices,
+          model: TRANSLATION_CONFIG.model.name,
+          contentLength: String(content).length
+        });
+        throw new Error('No translation content received from OpenRouter');
+      }
+
+      // Parse JSON response
+      try {
+        // First try to remove markdown code blocks if present
+        let cleanedText = translatedText;
+        if (translatedText.includes('```json')) {
+          cleanedText = translatedText.replace(/^```json\s*/m, '').replace(/\s*```$/m, '');
+        }
+        
+        translatedContent = JSON.parse(cleanedText);
+      } catch (firstError) {
+        // Try to extract JSON from response if direct parsing fails
+        const jsonMatch = translatedText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error('Invalid translation response format');
+        }
+        
+        try {
+          translatedContent = JSON.parse(jsonMatch[0]);
+        } catch (secondError) {
+          console.error('JSON parsing failed for translation:', {
+            originalResponse: translatedText,
+            jsonMatch: jsonMatch[0],
+            error: secondError
+          });
+          throw new Error('Translation service error');
+        }
       }
     }
 
@@ -333,14 +391,14 @@ export const translateStatement = async ({
     
     // Track usage metrics for monitoring
     const duration = Date.now() - startTime;
-    const contentSize = typeof content === 'object' ? Object.keys(content).length : content.length;
+    const metricsContentSize = typeof content === 'object' ? Object.keys(content).length : content.length;
     
     // Log metrics only in production for monitoring
     if (process.env.NODE_ENV === 'production') {
       console.info('Translation completed', {
         language: languageCode,
         duration,
-        contentSize,
+        contentSize: metricsContentSize,
         cached: false,
         timestamp: new Date().toISOString()
       });
@@ -361,15 +419,15 @@ export const translateStatement = async ({
   } catch (error) {
     // Enhanced error logging for production monitoring
     const errorMessage = error instanceof Error ? error.message : 'Unknown translation error';
-    const contentSize = Object.keys(content).length;
-    const batchingUsed = TRANSLATION_CONFIG.batching.enabled && contentSize > TRANSLATION_CONFIG.batching.maxBatchSize;
+    const errorContentSize = typeof content === 'object' ? Object.keys(content).length : 0;
+    const batchingUsed = TRANSLATION_CONFIG.batching.enabled && errorContentSize > TRANSLATION_CONFIG.batching.maxBatchSize;
     const errorDetails = {
       targetLanguage,
       languageCode,
       error: errorMessage,
       timestamp: new Date().toISOString(),
       contentLength: JSON.stringify(content).length,
-      contentFields: contentSize,
+      contentFields: errorContentSize,
       batchingEnabled: TRANSLATION_CONFIG.batching.enabled,
       batchingUsed,
       model: TRANSLATION_CONFIG.model.name

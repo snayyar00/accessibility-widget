@@ -81,7 +81,7 @@ const StatementGenerator: React.FC = () => {
     try {
       // Enhanced cache key with content hash for better cache invalidation
       const contentHash = JSON.stringify(englishContent).slice(0, 50);
-      const cacheKey = `translation_v2_${langCode}_${enhancement || 'default'}_${contentHash}`;
+      const cacheKey = `translation_v4_${langCode}_${enhancement || 'default'}_${contentHash}`;
       
       // Check cache with improved error handling
       const cached = localStorage.getItem(cacheKey);
@@ -113,10 +113,12 @@ CRITICAL REQUIREMENTS:
 6. Sound natural to native ${targetLanguageName} speakers
 7. Maintain legal/compliance tone appropriate for accessibility statements
 8. ABSOLUTELY FORBIDDEN: Never mix languages - translate ALL text to ${targetLanguageName}
-9. FORBIDDEN PHRASES: Never use "At [company]", "using", "and", "This statement" - translate everything
-10. Use consistent terminology throughout the document
-11. Format dates appropriately for the target culture
-12. CHECK EVERY SENTENCE: Ensure no English words remain except technical terms and URLs
+9. FORBIDDEN PHRASES: Never use "At [company]", "using", "and", "This statement", "Last updated" - translate everything
+10. REPLACE PATTERNS: "At dsad," → translate to proper ${targetLanguageName} equivalent like "dsad-এ" for Bengali
+11. CHECK FOR: Any English words like "At", "using", "and manual", "This statement" - must be translated
+12. Use consistent terminology throughout the document
+13. Format dates appropriately for the target culture
+14. CHECK EVERY SENTENCE: Ensure no English words remain except technical terms and URLs
 
 ${enhancement ? `SPECIAL FOCUS: ${enhancement.replace('add-', 'Emphasize ')}` : ''}
 
@@ -979,6 +981,12 @@ ${t.approvedBy}
                   onChange={handleInputChange('companyName')}
                   placeholder="Enter your company name"
                   variant="outlined"
+                  inputProps={{
+                    onPaste: (e) => {
+                      // Explicitly allow paste
+                      e.stopPropagation();
+                    }
+                  }}
                 />
                 
                 <TextField
@@ -988,6 +996,12 @@ ${t.approvedBy}
                   onChange={handleInputChange('websiteUrl')}
                   placeholder="https://example.com"
                   variant="outlined"
+                  inputProps={{
+                    onPaste: (e) => {
+                      // Explicitly allow paste
+                      e.stopPropagation();
+                    }
+                  }}
                 />
                 
                 <TextField
@@ -997,6 +1011,12 @@ ${t.approvedBy}
                   onChange={handleInputChange('contactEmail')}
                   placeholder="accessibility@example.com"
                   variant="outlined"
+                  inputProps={{
+                    onPaste: (e) => {
+                      // Explicitly allow paste
+                      e.stopPropagation();
+                    }
+                  }}
                 />
                 
                 <FormControl fullWidth>
