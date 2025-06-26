@@ -5,7 +5,10 @@ export function normalizeEmail(text: string): string {
 }
 
 export function stringToSlug(str: string): string {
-  return slugify(str);
+  return slugify(str, {
+    lower: true,
+    strict: true, 
+  });
 }
 
 
