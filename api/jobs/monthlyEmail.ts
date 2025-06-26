@@ -66,11 +66,18 @@ const sendMonthlyEmails = async () => {
             });
 
             // Generate PDF attachment
-            const pdfBuffer = generateAccessibilityReportPDF(report, site?.url, widgetStatus);
-            const attachments: EmailAttachment[] = [{
-              content: pdfBuffer,
-              name: `accessibility-report-${site?.url.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`
-            }];
+            let attachments: EmailAttachment[] = [];
+            try {
+              const pdfBuffer = generateAccessibilityReportPDF(report, site?.url, widgetStatus);
+              attachments = [
+                {
+                  content: pdfBuffer,
+                  name: `accessibility-report-${site?.url.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`,
+                },
+              ];
+            } catch (pdfError) {
+              console.error(`Failed to generate PDF for site ${site?.url}:`, pdfError);
+            }
 
             await sendEmailWithRetries(user.email, template, `Monthly Accessibility Report for ${site?.url}`, 2, 2000, attachments);
             console.log(`Email with PDF attachment successfully sent to ${user.email} for site ${site?.url}`);

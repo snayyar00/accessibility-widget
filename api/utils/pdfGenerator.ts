@@ -136,8 +136,7 @@ export function generateAccessibilityReportPDF(
   try {
     const logoPath = path.join(process.cwd(), 'email-templates', 'logo.png');
     if (fs.existsSync(logoPath)) {
-      const logoData = fs.readFileSync(logoPath);
-      const logoBase64 = logoData.toString('base64');
+      const logoBase64 = fs.readFileSync(logoPath, { encoding: 'base64' });
       doc.addImage(logoBase64, 'PNG', 8, 6, 50, 18, undefined, 'FAST');
     } else {
       console.warn('Logo not found at:', logoPath);
