@@ -107,10 +107,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       if (typeof origin === 'string') {
         try {
           const { hostname } = url.parse(origin);
-          
+          const frontendRootNoDot = FRONTEND_ROOT.replace(/^\./, '');
           if (
             hostname &&
-            (hostname.endsWith(FRONTEND_ROOT.replace(/^\./, '')) || hostname === FRONTEND_ROOT.replace(/^\./, ''))
+            (hostname === frontendRootNoDot || hostname.endsWith('.' + frontendRootNoDot))
           ) {
             return callback(null, true);
           }
