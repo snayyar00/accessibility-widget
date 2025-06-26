@@ -1,11 +1,11 @@
+let slugify = require('slugify')
 
 export function normalizeEmail(text: string): string {
   return text.toLowerCase().trim();
 }
 
-export async function stringToSlug(str: string): Promise<string> {
-  const { default: slug } = await import('slug');
-  return slug(str);
+export function stringToSlug(str: string): string {
+  return slugify(str);
 }
 
 
