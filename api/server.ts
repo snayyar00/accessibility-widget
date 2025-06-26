@@ -83,11 +83,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     optionsSuccessStatus: 200,
     credentials: true,
     origin: (origin: any, callback: any) => {
-      return callback(null, true);
-      
       // 1. Allow everything in local development
       if (IS_LOCAL_DEV) {
-        
+        return callback(null, true);
       }
 
       // 2. Allow any origin for specific allowed operations
@@ -106,11 +104,19 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       }
 
       // 5. Allow root domain and all its subdomains
-      if (
-        typeof origin === 'string' &&
-        (origin.endsWith(FRONTEND_ROOT) || origin === FRONTEND_ROOT.replace(/^\./, ''))
-      ) {
-        return callback(null, true);
+      if (typeof origin === 'string') {
+        try {
+          const { hostname } = url.parse(origin);
+          
+          if (
+            hostname &&
+            (hostname.endsWith(FRONTEND_ROOT.replace(/^\./, '')) || hostname === FRONTEND_ROOT.replace(/^\./, ''))
+          ) {
+            return callback(null, true);
+          }
+        } catch (e) {
+          // ignore parse errors
+        } 
       }
 
       // 6. All other requests are not allowed by CORS (uncomment for explicit rejection)
