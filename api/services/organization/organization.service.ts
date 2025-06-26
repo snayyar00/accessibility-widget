@@ -14,15 +14,15 @@ import { stringToSlug, objectToString } from '~/helpers/string.helper';
 import database from '~/config/database.config';
 import {
   addUserToOrganization,
-  getOrganizationsOfUser,
-  getUserOrganization,
-  isUserOwner
+  getOrganizationsByUserId,
+  getUserOrganization
 } from './organization_users.service';
 import {
   ORGANIZATION_USER_ROLE_OWNER,
   ORGANIZATION_USER_STATUS_ACTIVE
 } from '~/constants/database.constant';
 import { updateUser } from '~/repository/user.repository';
+import { ORGANIZATION_MANAGEMENT_ROLES } from '~/constants/organization.constant';
 
 export interface CreateOrganizationInput {
   name: string;
@@ -31,7 +31,7 @@ export interface CreateOrganizationInput {
 }
 
 export async function addOrganization(data: CreateOrganizationInput, user: UserProfile & { isActive?: number }): Promise<number> {
-  const orgLinks = await getOrganizationsOfUser(user.id);
+  const orgLinks = await getOrganizationsByUserId(user.id);
   const maxOrgs = user.isActive ? 3 : 1;
 
   if (orgLinks.length >= maxOrgs) {
@@ -93,11 +93,13 @@ export async function editOrganization(
     'You can only edit your own organizations'
   );
 
-  const isOwner = await isUserOwner(user.id, Number(organizationId));
+  const orgUser = await getUserOrganization(user.id, Number(organizationId));
+  const isAllowed = orgUser && ORGANIZATION_MANAGEMENT_ROLES.includes(orgUser.role as typeof ORGANIZATION_MANAGEMENT_ROLES[number]);
 
-  if (!isOwner) {
-    const error = new Error('Only owner can edit the organization');
-    (error as any).code = 'ORG_EDIT_OWNER_ONLY';
+  if (!isAllowed) {
+    const error = new Error('Only owner or admin can edit the organization');
+    (error as any).code = 'ORG_EDIT_OWNER_OR_ADMIN_ONLY';
+
     throw error;
   }
 
@@ -146,18 +148,19 @@ export async function removeOrganization(
   user: UserProfile,
   organizationId: number | string
 ): Promise<number> {
-  console.log(user, organizationId)
   await checkOrganizationAccess(
     user,
     organizationId,
     'You can only remove your own organizations'
   );
 
-  const isOwner = await isUserOwner(user.id, Number(organizationId));
+  const orgUser = await getUserOrganization(user.id, Number(organizationId));
+  const isAllowed = orgUser && ORGANIZATION_MANAGEMENT_ROLES.includes(orgUser.role as typeof ORGANIZATION_MANAGEMENT_ROLES[number]);
 
-  if (!isOwner) {
-    const error = new Error('Only owner can remove the organization');
-    (error as any).code = 'ORG_REMOVE_OWNER_ONLY';
+  if (!isAllowed) {
+    const error = new Error('Only owner or admin can remove the organization');
+    (error as any).code = 'ORG_REMOVE_OWNER_OR_ADMIN_ONLY';
+    
     throw error;
   }
 
@@ -181,7 +184,7 @@ export async function removeOrganization(
 
 export async function getOrganizations(user: UserProfile): Promise<Organization[]> {
   try {
-    const orgLinks = await getOrganizationsOfUser(user.id);
+    const orgLinks = await getOrganizationsByUserId(user.id);
     const orgIds = orgLinks.map(link => link.organization_id);
 
     if (!orgIds.length) return [];

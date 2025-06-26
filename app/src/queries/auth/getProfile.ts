@@ -11,8 +11,27 @@ export default gql`
       position
       avatarUrl
       invitationToken
+      hasOrganization
+      
       currentOrganization {
+        id
+        name
         subdomain
+        logo_url
+        settings
+        created_at
+        updated_at
+      }
+
+      currentOrganizationUser {
+        id
+        user_id
+        organization_id
+        role
+        status
+        invited_by
+        created_at
+        updated_at
       }
     }
   }

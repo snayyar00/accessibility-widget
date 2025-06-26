@@ -12,6 +12,7 @@ import { SitesPlanSchema } from './schemas/sitesPlan.schema';
 import { reportProblemSchema } from './schemas/reportProblem.schema';
 import { TranslationSchema } from './schemas/translation.schema';
 import { OrganizationSchema } from './schemas/organization.schema';
+import { OrganizationUserSchema } from './schemas/organizationUser.schema';
 
 const rootSchema = gql`
   scalar Date
@@ -31,4 +32,4 @@ const rootSchema = gql`
   }
 `;
 
-export default [rootSchema, UserSchema, UserPlanSchema, TeamSchema, DocumentSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, uniqueTokenSchema, SitesPlanSchema, reportProblemSchema, OrganizationSchema, TranslationSchema];
+export default [rootSchema, UserSchema, UserPlanSchema, TeamSchema, DocumentSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, uniqueTokenSchema, SitesPlanSchema, reportProblemSchema, OrganizationSchema, TranslationSchema, OrganizationUserSchema];

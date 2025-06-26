@@ -28,6 +28,8 @@ export const UserSchema = gql`
     invitationToken: String
     current_organization_id: Int
     currentOrganization: Organization
+    currentOrganizationUser: OrganizationUser
+    hasOrganization: Boolean!
   }
 
   type UserSocial {

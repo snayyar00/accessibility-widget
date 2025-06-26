@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as DashboardIcon } from '@/assets/images/svg/dashboard.svg';
 import { ReactComponent as UserIcon } from '@/assets/images/svg/user.svg';
 import { HiOutlineGlobeAlt } from 'react-icons/hi';
+import { HiOutlineOfficeBuilding } from 'react-icons/hi';
+import { FaBuilding } from 'react-icons/fa';
 import type { RootState } from '@/config/store';
 import { toggleSidebar } from '@/features/admin/sidebar';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
@@ -11,6 +13,7 @@ import routes from '@/routes';
 import Dropdown from '@/containers/Dashboard/DropDown';
 import { GoGear } from 'react-icons/go';
 import { GrInstallOption } from 'react-icons/gr';
+import { isAdminOrOwner } from '@/helpers/organizationRole';
 
 const Sidebar = ({
   options,
@@ -21,10 +24,12 @@ const Sidebar = ({
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const { isOpen } = useSelector((state: RootState) => state.sidebar);
+  const { data: userData } = useSelector((state: RootState) => state.user);
 
   function closeSidebar() {
     dispatch(toggleSidebar(false));
   }
+
 
   return (
     <>
@@ -74,6 +79,42 @@ const Sidebar = ({
                 </span>
               </NavLink>
             </li>
+
+            {isAdminOrOwner(userData.currentOrganizationUser) && (
+              <>
+                <li key="/organizations" className="h-[60px] flex items-center">
+                  <NavLink
+                    to="/organizations"
+                    activeClassName="active"
+                    onClick={closeSidebar}
+                    className="w-full h-full flex items-center px-2 border-l-2 border-transparent [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200 [&.active>.menu-icon>svg_*[fill]]:fill-primary [&.active>.menu-icon>svg_*[stroke]]:stroke-primary"
+                  >
+                    <div className="menu-icon flex items-center justify-center w-12 h-6">
+                      <HiOutlineOfficeBuilding size={24} aria-label="Organizations navigation icon"/>
+                    </div>
+                    <span className="menu-text text-lg text-white-blue ml-4">
+                      Organizations
+                    </span>
+                  </NavLink>
+                </li>
+                <li key="/users" className="h-[60px] flex items-center">
+                  <NavLink
+                    to="/users"
+                    activeClassName="active"
+                    onClick={closeSidebar}
+                    className="w-full h-full flex items-center px-2 border-l-2 border-transparent [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200 [&.active>.menu-icon>svg_*[fill]]:fill-primary [&.active>.menu-icon>svg_*[stroke]]:stroke-primary"
+                  >
+                    <div className="menu-icon flex items-center justify-center w-12 h-6">
+                      <UserIcon aria-label="User navigation icon"/>
+                    </div>
+                    <span className="menu-text text-lg text-white-blue ml-4">
+                      Users
+                    </span>
+                  </NavLink>
+                </li>
+                
+              </>
+            )}
 
             <li key="/installation" className="h-[60px] flex items-center">
               <NavLink

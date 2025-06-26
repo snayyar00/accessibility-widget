@@ -32,7 +32,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
   const [selectedOption, setSelectedOption] = useState('Select a Domain');
   const [domainData, setDomainData] = useState(null);
   const { data, refetch,startPolling,stopPolling } = useQuery(getSites);
-  const { data:userData, loading } = useSelector((state: RootState) => state.user);
+  const { data: userData, loading } = useSelector((state: RootState) => state.user);
   const [customerData,setCustomerData] = useState(null);
 
 

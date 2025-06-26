@@ -1,4 +1,5 @@
 import { addOrganization, editOrganization, removeOrganization, CreateOrganizationInput, organizationExistsByName, getOrganizationById, getOrganizations } from '~/services/organization/organization.service';
+import { getOrganizationUsersWithAccess } from '~/services/organization/organization_users.service';
 import { Organization } from '~/repository/organization.repository';
 import { combineResolvers } from 'graphql-resolvers';
 import { isAuthenticated } from './authorization.resolver';
@@ -17,6 +18,13 @@ const organizationResolver = {
     async organizationExists(_: unknown, { name }: { name: string }): Promise<boolean> {
       return await organizationExistsByName(name);
     },
+
+    getOrganizationUsers: combineResolvers(
+      isAuthenticated,
+      async (_: unknown, __: unknown, { user }) => {
+        return getOrganizationUsersWithAccess(user);
+      }
+    ),
   },
   Mutation: {
     addOrganization: combineResolvers(

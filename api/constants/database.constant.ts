@@ -28,7 +28,7 @@ export const TABLES = {
 export const DEFAULT_LIMIT = 25;
 
 export const TRIAL_PLAN_NAME = "free_test";
-export const TRIAL_PLAN_INTERVAL = "MONTHLY"
+export const TRIAL_PLAN_INTERVAL = "MONTHLY";
 
 export const ORGANIZATION_USER_ROLE_OWNER = 'owner';
 export const ORGANIZATION_USER_ROLE_MEMBER = 'member';

@@ -1,5 +1,26 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+type Organization = {
+  id: string;
+  name: string;
+  subdomain: string;
+  logo_url?: string | null;
+  settings?: Record<string, any>;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type OrganizationUser = {
+  id: string;
+  user_id: number;
+  organization_id: number;
+  role: string;
+  status: string;
+  invited_by?: number | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
 type Profile = {
   id?: number;
   avatarUrl?: string;
@@ -9,6 +30,9 @@ type Profile = {
   company?: string;
   name?: string;
   invitationToken?: string;
+  hasOrganization?: boolean;
+  currentOrganization?: Organization | null;
+  currentOrganizationUser?: OrganizationUser | null;
 }
 
 type Error = {

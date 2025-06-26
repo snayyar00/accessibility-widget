@@ -11,9 +11,18 @@ export const OrganizationSchema = gql`
     updated_at: Date
   }
 
+  type OrganizationUser {
+    id: ID!
+    name: String!
+    email: String!
+    role: String!
+    organization: Organization!
+  }
+
   extend type Query {
     getUserOrganizations: [Organization!]!
     organizationExists(name: String!): Boolean
+    getOrganizationUsers: [OrganizationUser!]!
   }
 
   extend type Mutation {

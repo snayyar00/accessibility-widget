@@ -8,32 +8,24 @@ import { TbReportSearch } from 'react-icons/tb';
 import { MdOutlineGavel } from 'react-icons/md';
 import ReportView from '@/containers/Accessibility/ReportView';
 import StatementGenerator from '@/containers/StatementGenerator/StatementGenerator';
+import UsersPage from '@/containers/UsersPage';
+import OrganizationsPage from '@/containers/OrganizationsPage';
 
 const routes = [
-  // {
-  //   path: '/dashboard',
-  //   name: 'Dashboard',
-  //   exact: false,
-  //   component:Dashboard,
-  //   icon: <DashboardIcon />,
-  //   isSidebar: true,
-  // },
-  // {
-  //   path: '/document',
-  //   name: 'Document',
-  //   exact: true,
-  //   component: Document,
-  //   icon: <DocumentIcon />,
-  //   isSidebar: true,
-  // },
-  // {
-  //   path: '/add-domain',
-  //   name: 'Add Domain',
-  //   exact: false,
-  //   component: Teams,
-  //   icon: <UserIcon />,
-  //   isSidebar: true,
-  // },
+  {
+    path: '/users',
+    name: 'Users',
+    exact: true,
+    component: UsersPage,
+    isSidebar: false,
+  },
+  {
+    path: '/organizations',
+    name: 'Organizations',
+    exact: true,
+    component: OrganizationsPage,
+    isSidebar: false,
+  },
   {
     path: '/document/create',
     name: 'Create Document',
@@ -71,8 +63,8 @@ const routes = [
     isSidebar:true,
   },
   {
-    path:'/problem-reports',
-    name:'Issues',
+    path:'/problems',
+    name:'Problems',
     exact:true,
     component: ProblemReport,
     icon: <MdBugReport className="menu-icon text-white-blue transition-colors duration-200" size={35} aria-label="Issues navigation icon"/>,
@@ -92,7 +84,7 @@ const routes = [
     exact: true,
     component: ReportView, // Use the new ReportView component
     isSidebar: false,
-  }
+  },
 ];
 
 export default routes;

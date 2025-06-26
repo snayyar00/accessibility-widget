@@ -6,7 +6,6 @@ import { findUser } from '~/repository/user.repository';
 import { loginValidation } from '~/validations/authenticate.validation';
 import { clearCookie, COOKIE_NAME } from '~/utils/cookie';
 import { buildFrontendAppUrl } from '~/utils/buildUrl';
-import { getOrganizationsOfUser } from '~/services/organization/organization_users.service';
 import { getOrganizationById } from '~/repository/organization.repository';
 
 export type AuthResponse = {
@@ -42,12 +41,6 @@ export async function loginUser(email: string, password: string, res: Response):
 
   if (user.current_organization_id) {
     org = await getOrganizationById(user.current_organization_id);
-  } else {
-    const orgLinks = await getOrganizationsOfUser(user.id);
-    
-    if (orgLinks && orgLinks.length > 0) {
-      org = await getOrganizationById(orgLinks[0].organization_id);
-    }
   }
 
   subdomain = org?.subdomain;

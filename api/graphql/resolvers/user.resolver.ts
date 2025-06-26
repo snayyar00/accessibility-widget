@@ -13,7 +13,8 @@ import { updateProfile, changeUserAvatar } from '~/services/user/update-user.ser
 import { isEmailAlreadyRegistered } from '~/services/user/user.service';
 import { normalizeEmail } from '~/helpers/string.helper';
 import { clearCookie, COOKIE_NAME, setAuthenticationCookie } from '~/utils/cookie';
-import { getOrganizationById } from '~/repository/organization.repository';
+import { getOrganizationById } from '~/services/organization/organization.service';
+import { getUserOrganization } from '~/services/organization/organization_users.service';
 
 type Res = {
   res: Response;
@@ -60,12 +61,24 @@ const resolvers = {
     },
   },
   User: {
-    currentOrganization: async (parent: { current_organization_id?: number }) => {
-      if (!parent.current_organization_id) return null;
+    currentOrganization: async (parent: { current_organization_id?: number, id?: number }) => {
+      if (!parent.current_organization_id || !parent.id) return null;
 
-      const org = await getOrganizationById(parent.current_organization_id);
-      
+      const org = await getOrganizationById(parent.current_organization_id, parent);
+
       return org || null;
+    },
+
+    currentOrganizationUser: async (parent: { id?: number, current_organization_id?: number }) => {
+      if (!parent.id || !parent.current_organization_id) return null;
+
+      const orgUser = await getUserOrganization(parent.id, parent.current_organization_id);
+      
+      return orgUser || null;
+    },
+
+    hasOrganization: (parent: { current_organization_id?: number }) => {
+      return Boolean(parent.current_organization_id);
     },
   },
   Mutation: {
