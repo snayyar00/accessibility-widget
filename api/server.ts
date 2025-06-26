@@ -83,9 +83,11 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     optionsSuccessStatus: 200,
     credentials: true,
     origin: (origin: any, callback: any) => {
+      return callback(null, true);
+      
       // 1. Allow everything in local development
       if (IS_LOCAL_DEV) {
-        return callback(null, true);
+        
       }
 
       // 2. Allow any origin for specific allowed operations
