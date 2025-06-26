@@ -1,12 +1,13 @@
 import cron from 'node-cron';
 import compileEmailTemplate from '~/helpers/compile-email-template';
-import { sendEmailWithRetries } from '~/libs/mail';
+import { sendEmailWithRetries, EmailAttachment } from '~/libs/mail';
 import { findSiteById } from '~/repository/sites_allowed.repository';
 import { getUserbyId } from '~/repository/user.repository';
 import { fetchAccessibilityReport } from '~/services/accessibilityReport/accessibilityReport.service';
 import { checkScript } from '~/services/allowedSites/allowedSites.service';
 import pLimit from 'p-limit';
 import { getActiveSitesPlan } from '~/repository/sites_plans.repository';
+import { generateAccessibilityReportPDF } from '~/utils/pdfGenerator';
 
 interface sitePlan {
   id: any;
@@ -64,8 +65,15 @@ const sendMonthlyEmails = async () => {
               },
             });
 
-            await sendEmailWithRetries(user.email, template, `Monthly Accessibility Report for ${site?.url}`, 2, 2000);
-            console.log(`Email successfully sent to ${user.email} for site ${site?.url}`);
+            // Generate PDF attachment
+            const pdfBuffer = generateAccessibilityReportPDF(report, site?.url, widgetStatus);
+            const attachments: EmailAttachment[] = [{
+              content: pdfBuffer,
+              name: `accessibility-report-${site?.url.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`
+            }];
+
+            await sendEmailWithRetries(user.email, template, `Monthly Accessibility Report for ${site?.url}`, 2, 2000, attachments);
+            console.log(`Email with PDF attachment successfully sent to ${user.email} for site ${site?.url}`);
           } catch (error) {
             console.error(`Error processing sitePlan ${sitePlan.siteId}:`, error);
           }
