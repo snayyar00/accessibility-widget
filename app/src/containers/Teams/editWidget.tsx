@@ -14,6 +14,7 @@ import { defaultTourStyles } from '@/config/tourStyles';
 import { customizeWidgetTourSteps, tourKeys } from '@/constants/toursteps';
 import { Settings } from 'lucide-react';
 import CopyCustomizationModal from './copyCustomizationModal';
+import { SITE_SELECTOR_TEXT } from '@/constants';
 
 export interface Colors {
   'headerText': string;
@@ -318,7 +319,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
   };
 
   const handleSave = async () => {
-    if (selectedSite == '' || selectedSite == 'Select a Domain') {
+    if (selectedSite == '' || selectedSite == SITE_SELECTOR_TEXT) {
       toast.error('Please Select a Site from the Dropdown');
       return;
     }
@@ -363,7 +364,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
     if (
       !hasUserMadeChanges ||
       !selectedSite ||
-      selectedSite === 'Select a Domain'
+      selectedSite === SITE_SELECTOR_TEXT
     ) {
       return;
     }
@@ -377,7 +378,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
   }, [settings]); // Include all dependencies
 
   const getSettings = async () => {
-    if (selectedSite == '' || selectedSite == 'Select a Domain') {
+    if (selectedSite == '' || selectedSite == SITE_SELECTOR_TEXT) {
       toast.error('Please Select a Site from the Side Bar');
       return;
     }
@@ -520,11 +521,11 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
   };
 
   const handleCopySettings = async () => {
-    if (copyDomain == '' || copyDomain == 'Select a Domain') {
+    if (copyDomain == '' || copyDomain == SITE_SELECTOR_TEXT) {
       toast.error('Please Select a Domain to Copy Settings From');
       return;
     }
-    if (selectedSite == '' || selectedSite == 'Select a Domain') {
+    if (selectedSite == '' || selectedSite == SITE_SELECTOR_TEXT) {
       toast.error('Please Select a Target Site');
       return;
     }
@@ -682,7 +683,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
   }, [copyComplete]); // Only depend on copyComplete
 
   useEffect(() => {
-    if (selectedSite != '' && selectedSite != 'Select a Domain') {
+    if (selectedSite != '' && selectedSite != SITE_SELECTOR_TEXT) {
       getSettings();
     }
   }, [selectedSite]);
@@ -701,7 +702,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
         <div className="mx-auto max-w-7xl">
           <header className="customize-widget-header mb-6">
             <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-              {selectedSite != 'Select a Domain' ? selectedSite + "'s Widget Customization" : 'Select a Domain to Customize from the Side Bar'}
+              {selectedSite != SITE_SELECTOR_TEXT ? selectedSite + "'s Widget Customization" : 'Select a Domain to Customize from the Side Bar'}
             </h1>
           </header>
 
@@ -723,7 +724,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
                 <h2 className="text-xl font-semibold text-gray-800">
                   Choose your settings
                 </h2>
-                {selectedSite != '' && selectedSite != 'Select a Domain' && (
+                {selectedSite != '' && selectedSite != SITE_SELECTOR_TEXT && (
                   <button
                     onClick={() => setIsCopyModalOpen(true)}
                     disabled={buttonDisable}
