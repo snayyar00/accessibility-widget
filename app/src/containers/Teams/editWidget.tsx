@@ -318,7 +318,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
   };
 
   const handleSave = async () => {
-    if (selectedSite == '' || selectedSite == 'Choose your Domain') {
+    if (selectedSite == '' || selectedSite == 'Select a Domain') {
       toast.error('Please Select a Site from the Dropdown');
       return;
     }
@@ -363,7 +363,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
     if (
       !hasUserMadeChanges ||
       !selectedSite ||
-      selectedSite === 'Choose your Domain'
+      selectedSite === 'Select a Domain'
     ) {
       return;
     }
@@ -377,7 +377,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
   }, [settings]); // Include all dependencies
 
   const getSettings = async () => {
-    if (selectedSite == '' || selectedSite == 'Choose your Domain') {
+    if (selectedSite == '' || selectedSite == 'Select a Domain') {
       toast.error('Please Select a Site from the Side Bar');
       return;
     }
@@ -520,11 +520,11 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
   };
 
   const handleCopySettings = async () => {
-    if (copyDomain == '' || copyDomain == 'Choose your Domain') {
+    if (copyDomain == '' || copyDomain == 'Select a Domain') {
       toast.error('Please Select a Domain to Copy Settings From');
       return;
     }
-    if (selectedSite == '' || selectedSite == 'Choose your Domain') {
+    if (selectedSite == '' || selectedSite == 'Select a Domain') {
       toast.error('Please Select a Target Site');
       return;
     }
@@ -682,7 +682,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
   }, [copyComplete]); // Only depend on copyComplete
 
   useEffect(() => {
-    if (selectedSite != '' && selectedSite != 'Choose your Domain') {
+    if (selectedSite != '' && selectedSite != 'Select a Domain') {
       getSettings();
     }
   }, [selectedSite]);
@@ -701,7 +701,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
         <div className="mx-auto max-w-7xl">
           <header className="customize-widget-header mb-6">
             <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-              {selectedSite != 'Choose your Domain' ? selectedSite + "'s Widget Customization" : 'Select a Domain to Customize from the Side Bar'}
+              {selectedSite != 'Select a Domain' ? selectedSite + "'s Widget Customization" : 'Select a Domain to Customize from the Side Bar'}
             </h1>
           </header>
 
@@ -723,7 +723,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
                 <h2 className="text-xl font-semibold text-gray-800">
                   Choose your settings
                 </h2>
-                {selectedSite != '' && selectedSite != 'Choose your Domain' && (
+                {selectedSite != '' && selectedSite != 'Select a Domain' && (
                   <button
                     onClick={() => setIsCopyModalOpen(true)}
                     disabled={buttonDisable}
