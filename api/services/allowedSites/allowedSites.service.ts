@@ -7,10 +7,11 @@ import { createValidation } from '~/validations/document.validation';
 import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
 import { createSitesPlan } from './plans-sites.service';
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '~/constants/database.constant';
-import {sendEmailWithRetries, sendMail} from '~/libs/mail';
+import {sendEmailWithRetries, sendMail, EmailAttachment} from '~/libs/mail';
 import { getUserbyId } from '~/repository/user.repository';
 import compileEmailTemplate from '~/helpers/compile-email-template';
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service';
+import { generateAccessibilityReportPDF } from '~/utils/pdfGenerator';
 
 // type GetDocumentsResponse = {
 //   documents: FindDocumentsResponse;
@@ -89,12 +90,20 @@ export async function addSite(userId: number, url: string): Promise<string> {
         },
       });
 
+      // Generate PDF attachment
+      const pdfBuffer = generateAccessibilityReportPDF(report, url, widgetStatus);
+      const attachments: EmailAttachment[] = [{
+        content: pdfBuffer,
+        name: `accessibility-report-${url.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`
+      }];
+
       await sendEmailWithRetries(
         user.email,
         template,
         `Accessibility Report for ${url}`,
         5, // maxRetries: Retry up to 5 times
         2000, // delay: Start with a 3-second delay
+        attachments // PDF attachment
       ).catch((error) => {
         console.error(`Failed to send email after retries:`, error);
       });

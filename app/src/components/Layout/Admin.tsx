@@ -16,6 +16,7 @@ import SiteDetail from '@/containers/SiteDetail';
 import AccessibilityWidgetPage from '@/containers/Teams/editWidget';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
+import { SITE_SELECTOR_TEXT } from '@/constants';
 
 type Props = {
   signout: () => void;
@@ -29,7 +30,7 @@ interface siteDetails {
 
 const AdminLayout: React.FC<Props> = ({ signout, options }) => {
   const [reloadSites, setReloadSites] = useState(false);
-  const [selectedOption, setSelectedOption] = useState('Select a Domain');
+  const [selectedOption, setSelectedOption] = useState(SITE_SELECTOR_TEXT);
   const [domainData, setDomainData] = useState(null);
   const { data, refetch,startPolling,stopPolling } = useQuery(getSites);
   const { data: userData, loading } = useSelector((state: RootState) => state.user);

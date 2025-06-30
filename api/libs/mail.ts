@@ -34,8 +34,12 @@
 
 import { TransactionalEmailsApi, SendSmtpEmail, TransactionalEmailsApiApiKeys } from '@getbrevo/brevo';
 
+interface EmailAttachment {
+  content: Buffer;
+  name: string;
+}
 
-async function sendMail(to: string, subject: string, html: string) {
+async function sendMail(to: string, subject: string, html: string, attachments?: EmailAttachment[]) {
   if (!to || to.trim() === '') {
     console.error('Recipient email address is missing or empty.');
     return false;
@@ -55,6 +59,14 @@ async function sendMail(to: string, subject: string, html: string) {
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = html;
 
+    // Add attachments if provided
+    if (attachments && attachments.length > 0) {
+      sendSmtpEmail.attachment = attachments.map(att => ({
+        content: att.content.toString('base64'),
+        name: att.name
+      }));
+    }
+
     // Send the email via Brevo's API
     const response = await brevoClient.sendTransacEmail(sendSmtpEmail);
 
@@ -70,7 +82,8 @@ async function sendEmailWithRetries(
   template: string,
   subject: string,
   maxRetries = 3, // Default to 3 retries
-  delay = 2000 // Default to 2 seconds delay
+  delay = 2000, // Default to 2 seconds delay
+  attachments?: EmailAttachment[]
 ): Promise<void> {
   let attempt = 0;
 
@@ -79,7 +92,7 @@ async function sendEmailWithRetries(
 
     try {
       console.log(`Attempt ${attempt} to send email to ${email}`);
-      await sendMail(email, subject, template); // Your sendMail function
+      await sendMail(email, subject, template, attachments); 
       console.log(`Email sent successfully to ${email}`);
       return; // Exit the function if email is sent successfully
     } catch (error) {
@@ -100,5 +113,5 @@ async function sendEmailWithRetries(
 }
 
 
-export { sendMail, sendEmailWithRetries };
+export { sendMail, sendEmailWithRetries, EmailAttachment };
 
