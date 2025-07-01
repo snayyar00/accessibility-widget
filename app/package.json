@@ -117,6 +117,7 @@
     "@types/draftjs-to-html": "^0.8.1",
     "@types/eslint": "^7.28.0",
     "@types/html-to-draftjs": "^1.4.0",
+    "@types/linkify-it": "^5.0.0",
     "@types/lodash": "^4.14.172",
     "@types/node": "^16.7.11",
     "@types/prop-types": "^15.7.4",
