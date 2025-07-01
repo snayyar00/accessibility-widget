@@ -67,6 +67,7 @@
       "password_match": "Password must match",
       "require_current_password": "Current password is required",
       "require_new_password": "New password is required",
+      "name_contains_links": "Name cannot contain links",
       "no_plus_in_email":"Email Cannot contain a + sign",
       "weak_password":"Your Password is weak, please use a mix of upper and lower case characters with symbols",
       "valid_url":"Please enter a valid URL without http or https and any trailing slashes"
@@ -104,6 +105,10 @@
     "error": {
       "UNAUTHENTICATED": "Invalid email or password",
       "GRAPHQL_VALIDATION_FAILED": "The 'password' field length must be greater than or equal to 6 characters long.",
+      "EMAIL_CONTAINS_PLUS": "Email addresses with + symbol are not allowed",
+      "NAME_CONTAINS_LINKS": "Name cannot contain links or URLs",
+      "NAME_CONTAINS_MALICIOUS_CONTENT": "Name contains invalid characters",
+      "EMAIL_AND_NAME_INVALID": "Please check your email and name for invalid characters",
       "INTERNAL_SERVER_ERROR": "Internal server error."
     }
   },
@@ -119,7 +124,12 @@
       "INTERNAL_SERVER_ERROR": "Email address has been used",
       "incomplete_number": "Your card number is incomplete.",
       "incomplete_expiry": "Your card's expiration date is incomplete.",
-      "incomplete_cvc": "Your card's security code is incomplete."
+      "incomplete_cvc": "Your card's security code is incomplete.",
+      "GRAPHQL_VALIDATION_FAILED": "Invalid input please try again later",
+      "EMAIL_CONTAINS_PLUS": "Email addresses with + symbol are not allowed",
+      "NAME_CONTAINS_LINKS": "Name cannot contain links or URLs",
+      "NAME_CONTAINS_MALICIOUS_CONTENT": "Name contains invalid characters",
+      "EMAIL_AND_NAME_INVALID": "Please check your email and name for invalid characters"
     }
   },
   "Forgot_password": {

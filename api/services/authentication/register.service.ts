@@ -9,6 +9,7 @@ import generateRandomKey from '~/helpers/genarateRandomkey';
 import {sendMail} from '~/libs/mail';
 import { registerValidation } from '~/validations/authenticate.validation';
 import { sanitizeUserInput } from '~/utils/sanitization.helper';
+import { getValidationErrorCode, createValidationError, createMultipleValidationErrors } from '~/utils/validation-errors.helper';
 import logger from '~/utils/logger';
 import { sign } from '~/helpers/jwt.helper';
 import { findProductAndPriceByType } from '~/repository/products.repository';
@@ -24,7 +25,14 @@ async function registerUser(email: string, password: string, name: string, payme
 
   const validateResult = registerValidation({ email, password, name });
   if (Array.isArray(validateResult) && validateResult.length) {
-    throw new ValidationError(validateResult.map((it) => it.message).join(','));
+    const errorMessages = validateResult.map((it) => it.message);
+    
+    if (errorMessages.length > 1) {
+      throw createMultipleValidationErrors(errorMessages);
+    } else {
+      const errorCode = getValidationErrorCode(errorMessages);
+      throw createValidationError(errorCode, errorMessages[0]);
+    }
   }
 
   try {

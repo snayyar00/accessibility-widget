@@ -5,6 +5,7 @@ import { FileUpload } from 'graphql-upload';
 import { findUser, updateUser, UserProfile } from '~/repository/user.repository';
 import { profileUpdateValidation } from '~/validations/authenticate.validation';
 import { sanitizeUserInput } from '~/utils/sanitization.helper';
+import { getValidationErrorCode, createValidationError, createMultipleValidationErrors } from '~/utils/validation-errors.helper';
 import logger from '~/utils/logger';
 import { FOLDER_PATHS } from '~/utils/folder-path';
 
@@ -21,7 +22,14 @@ export async function updateProfile(id: number, name: string, company: string, p
 
     const validateResult = profileUpdateValidation({ name, company, position });
     if (Array.isArray(validateResult) && validateResult.length) {
-      throw new ValidationError(validateResult.map((it) => it.message).join(','));
+      const errorMessages = validateResult.map((it) => it.message);
+      
+      if (errorMessages.length > 1) {
+        throw createMultipleValidationErrors(errorMessages);
+      } else {
+        const errorCode = getValidationErrorCode(errorMessages);
+        throw createValidationError(errorCode, errorMessages[0]);
+      }
     }
     
     const user = await findUser({ id });

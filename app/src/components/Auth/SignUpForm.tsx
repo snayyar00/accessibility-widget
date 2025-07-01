@@ -2,6 +2,7 @@ import type React from 'react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
+import { ApolloError } from '@apollo/client';
 import FormControl from '@/components/Common/FormControl';
 import Input from '@/components/Common/Input/Input';
 import ErrorText from '@/components/Common/ErrorText';
@@ -23,11 +24,12 @@ import AccessibilitySteps from './AccessibilitySteps';
 import { parse } from 'tldts';
 import { getRootDomain, isIpAddress, isValidRootDomainFormat } from '@/utils/domainUtils';
 import AccessibilityFacts from './AccessibilityFacts';
+import { extractValidationErrors, getLocalizedErrors } from '@/utils/errorHandler';
 
 type CustomProps = ReactHookFormType & {
   isSubmitting: boolean;
   siteAdding: boolean;
-  apiError?: string;
+  apiError?: ApolloError;
   submitText?: string;
 };
 
@@ -659,10 +661,20 @@ const SignUpForm: React.FC<CustomProps> = ({
       )}
 
       {apiError && (
+        <div className="mt-4">
+          {(() => {
+            const validationErrors = extractValidationErrors(apiError);
+            const localizedErrors = getLocalizedErrors(validationErrors, t, 'Sign_up');
+            
+            return localizedErrors.map((errorMessage, index) => (
         <ErrorText
-          message={String(t(`Sign_up.error.${apiError}`))}
+                key={index}
+                message={errorMessage}
           position="center"
         />
+            ));
+          })()}
+        </div>
       )}
 
       {currentStep === 1 && (

@@ -24,19 +24,19 @@ const linkify = new LinkifyIt();
 const SignUpSchema = yup.object().shape({
   name: yup.string()
     .required('Common.validation.require_name')
-    .transform((value) => DOMPurify.sanitize(value || '', { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }))
-    .test('no-links', 'Common.validation.name_contains_links', (value) => {
-      if (!value) return true;
+    .transform((value) => DOMPurify.sanitize(value || '', { ALLOWED_TAGS: [], ALLOWED_ATTR: [] })),
+    // .test('no-links', 'Common.validation.name_contains_links', (value) => {
+    //   if (!value) return true;
       
-      const matches = linkify.match(value);
-      return !matches || matches.length === 0;
-    }),
+    //   const matches = linkify.match(value);
+    //   return !matches || matches.length === 0;
+    // }),
   email: yup
     .string()
     .required('Common.validation.require_email')
     .transform((value) => DOMPurify.sanitize(value || '', { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }))
-    .email('Common.validation.valid_email')
-    .test('no-plus-sign', 'Common.validation.no_plus_in_email', (value:string|null|undefined) => !value?.includes('+')), // Custom test to disallow "+" sign in email
+    .email('Common.validation.valid_email'),
+    // .test('no-plus-sign', 'Common.validation.no_plus_in_email', (value:string|null|undefined) => !value?.includes('+')), // Custom test to disallow "+" sign in email
   websiteUrl: yup
     .string()
     .transform((value) => {
@@ -216,7 +216,7 @@ const SignUp: React.FC = () => {
             register={register}
             formErrors={formErrors}
             trigger={trigger}
-            apiError={error?.graphQLErrors?.[0]?.extensions?.code}
+            apiError={error}
             isSubmitting={loading}
             siteAdding={addSiteLoading}
             submitText={String(planName ? t('Sign_up.text.next') : 'Finish Sign Up')}
