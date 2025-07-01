@@ -602,6 +602,7 @@ const SignUpForm: React.FC<CustomProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ siteUrl: url }),
+        credentials: 'include',
       });
       const data = await response.json();
       return data;

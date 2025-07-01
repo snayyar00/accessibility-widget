@@ -30,6 +30,7 @@ export default function CodeBlock({
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(bodyData),
+      credentials: 'include'
     })
       .then((response) => {
         if (!response.ok) {

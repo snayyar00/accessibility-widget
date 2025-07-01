@@ -55,10 +55,28 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
       logger.warn('MJML compilation warnings:', errors);
     }
 
+
+    // Escape all string values in data using entities
+
+    const escapedData: typeof data = {};
+
+    for (const key in data) {
+      if (typeof data[key] === 'string') {
+        escapedData[key] = escapeHandlebarsExpressions(data[key]);
+      } else {
+        escapedData[key] = data[key];
+      }
+    }
+
     const template = handlebars.compile(html);
-    return template(data);
+
+    return template(escapedData);
   } catch (error) {
     logger.error('Error compiling email template:', error);
     throw error;
   }
+}
+
+function escapeHandlebarsExpressions(str: string): string {
+  return str.replace(/{{/g, '&#123;&#123;').replace(/}}/g, '&#125;&#125;');
 }

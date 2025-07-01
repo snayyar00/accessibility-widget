@@ -950,7 +950,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
           html,
           pdfBase64,
           pdfFileName: "accessibility-report.pdf"
-        })
+        }),
+        credentials: 'include'
       });
 
       if (!response.ok) {

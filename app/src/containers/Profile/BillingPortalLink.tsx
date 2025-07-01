@@ -15,7 +15,8 @@ export const handleBilling = async (btnClick?:Dispatch<SetStateAction<boolean>>,
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(bodyData)
+    body: JSON.stringify(bodyData),
+    credentials: 'include'
   })
     .then(response => {
       if (!response.ok) {

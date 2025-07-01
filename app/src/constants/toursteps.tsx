@@ -401,6 +401,81 @@ export const customizeWidgetTourSteps: Step[] = [
   },
 ];
 
+// Statement Generator Tour Steps
+export const statementGeneratorTourSteps: Step[] = [
+  {
+    target: '.statement-generator-wrapper',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Welcome to AI Statement Generator! 🎉</h3>
+        <p>Create professional, WCAG 2.1 AA compliant accessibility statements in 42+ languages using our advanced AI engine. Let's walk through the process!</p>
+      </div>
+    ),
+    placement: 'center' as Placement,
+    disableBeacon: true,
+  },
+  {
+    target: '.company-form-section',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Company Information Form 📝</h3>
+        <p>Fill in your company details here. All fields marked with * are required to generate a comprehensive accessibility statement customized for your organization.</p>
+      </div>
+    ),
+    placement: 'right' as Placement,
+  },
+  {
+    target: '.language-dropdown-section',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Choose Your Language 🌐</h3>
+        <p>Select from 42+ available languages! Use the search feature to quickly find your language. Each language shows both native and English names for easy identification.</p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+  {
+    target: '.generate-button-section',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Generate AI Statement 🚀</h3>
+        <p>Click this button to create your professional accessibility statement. Our AI will generate industry-standard, legally compliant content based on your information.</p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+  {
+    target: '.statement-preview-section',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Statement Preview & Export 📄</h3>
+        <p>Your generated statement appears here with format options (Markdown, HTML, Plain Text). You can copy to clipboard or download in your preferred format.</p>
+      </div>
+    ),
+    placement: 'left' as Placement,
+  },
+  {
+    target: '.ai-helper-section',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">AI Assistant 🤖</h3>
+        <p>Use the AI Assistant to analyze your statement and get suggestions for improvements. It provides feedback on completeness, compliance, and best practices.</p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+  {
+    target: '.features-section',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Statement Features ✨</h3>
+        <p>Every generated statement includes WCAG 2.1 AA compliance, multi-language support, industry-standard content, and strategic backlinks for SEO optimization.</p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+];
+
 // Export all tour steps as a combined object for easy access
 export const allTourSteps = {
   dashboard: dashboardTourSteps,
@@ -409,6 +484,7 @@ export const allTourSteps = {
   accessibility: accessibilityTourSteps,
   reports: reportsTourSteps,
   customizeWidget: customizeWidgetTourSteps,
+  statementGenerator: statementGeneratorTourSteps,
 };
 
 // Tour keys mapping for localStorage management
@@ -419,6 +495,7 @@ export const tourKeys = {
   accessibility: 'accessibility_tour',
   reports: 'reports_tour',
   customizeWidget: 'customize_widget_tour',
+  statementGenerator: 'statement_generator_tour',
 } as const;
 
 // Helper function to get tour steps by key
@@ -440,6 +517,8 @@ export const getTourKeyByRoute = (pathname: string): keyof typeof tourKeys | nul
     return 'reports';
   } else if (pathname === '/customize-widget') {
     return 'customizeWidget';
+  } else if (pathname === '/statement-generator') {
+    return 'statementGenerator';
   }
   return null;
 };
