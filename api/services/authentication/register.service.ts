@@ -8,6 +8,8 @@ import compileEmailTemplate from '~/helpers/compile-email-template';
 import generateRandomKey from '~/helpers/genarateRandomkey';
 import {sendMail} from '~/libs/mail';
 import { registerValidation } from '~/validations/authenticate.validation';
+import { sanitizeUserInput } from '~/utils/sanitization.helper';
+import { getValidationErrorCode, createValidationError, createMultipleValidationErrors } from '~/utils/validation-errors.helper';
 import logger from '~/utils/logger';
 import { sign } from '~/helpers/jwt.helper';
 import { findProductAndPriceByType } from '~/repository/products.repository';
@@ -17,9 +19,20 @@ import formatDateDB from '~/utils/format-date-db';
 import { Token } from './login.service';
 
 async function registerUser(email: string, password: string, name: string, paymentMethodToken: string, planName: string, billingType: 'MONTHLY' | 'YEARLY'): Promise<ApolloError | Token> {
+  const sanitizedInput = sanitizeUserInput({ email, name });
+  email = sanitizedInput.email;
+  name = sanitizedInput.name;
+
   const validateResult = registerValidation({ email, password, name });
   if (Array.isArray(validateResult) && validateResult.length) {
-    throw new ValidationError(validateResult.map((it) => it.message).join(','));
+    const errorMessages = validateResult.map((it) => it.message);
+    
+    if (errorMessages.length > 1) {
+      throw createMultipleValidationErrors(errorMessages);
+    } else {
+      const errorCode = getValidationErrorCode(errorMessages);
+      throw createValidationError(errorCode, errorMessages[0]);
+    }
   }
 
   try {

@@ -15,9 +15,22 @@ import { ReactComponent as SettingIcon } from '@/assets/images/svg/setting.svg';
 import { ReactComponent as ArrowDown24Icon } from '@/assets/images/svg/arrow-down-24.svg';
 import InitialAvatar from '@/components/Common/InitialAvatar';
 import DeleteAccount from './DeleteAccount';
+import DOMPurify from 'dompurify';
+import LinkifyIt from 'linkify-it';
+
+const linkify = new LinkifyIt();
 
 const AccountSchema = yup.object().shape({
-  name: yup.string().required('Common.validation.require_name'),
+  name: yup.string()
+    .required('Common.validation.require_name')
+    .transform((value) => DOMPurify.sanitize(value || '', { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }))
+    .test('no-links', 'Common.validation.name_contains_links', (value) => {
+      if (!value) return true;
+      
+      // Check if the name contains any URLs using linkify-it
+      const matches = linkify.match(value);
+      return !matches || matches.length === 0;
+    }),
 });
 
 type Payload = {
@@ -49,9 +62,9 @@ const InformationSetting: React.FC<Props> = ({ user }) => {
   async function onSubmit(dataForm: Payload) {
     const { name, company, position } = dataForm;
     const params = {
-      name,
-      company,
-      position,
+      name: DOMPurify.sanitize(name || '', { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }),
+      company: DOMPurify.sanitize(company || '', { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }),
+      position: DOMPurify.sanitize(position || '', { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }),
     };
 
     try {
