@@ -57,9 +57,9 @@ export function validateNoMaliciousPatterns(text: string): boolean {
     /<script[^>]*>/gi,
     /on\w+\s*=/gi, // onload, onclick, etc.
     /\b(select|insert|update|delete|drop|create|alter|exec|execute)\b/gi,
-    /(union(\s|\/\*.*?\*\/|--.*)*select)/gi,
-    /(\bor\b|\band\b)(\s|\/\*.*?\*\/)*\d+(\s|\/\*.*?\*\/)*=(\s|\/\*.*?\*\/)*\d+/gi,
-    /(;(\s|\/\*.*?\*\/)*--)|(--(\s|\/\*.*?\*\/)*$)/g,
+    /\bunion\b[\s\S]*?\bselect\b/gi,
+    /\bor\s+\d+\s*=\s*\d+/gi,
+    /--|\/\*|\*\//g,
   ];
 
   // Check for malicious patterns
