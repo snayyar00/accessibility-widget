@@ -1,8 +1,10 @@
 import { createWriteStream } from 'fs';
 import { join } from 'path';
-import { ApolloError } from 'apollo-server-express';
+import { ApolloError, ValidationError } from 'apollo-server-express';
 import { FileUpload } from 'graphql-upload';
 import { findUser, updateUser, UserProfile } from '~/repository/user.repository';
+import { profileUpdateValidation } from '~/validations/authenticate.validation';
+import { sanitizeUserInput } from '~/utils/sanitization.helper';
 import logger from '~/utils/logger';
 import { FOLDER_PATHS } from '~/utils/folder-path';
 
@@ -12,6 +14,16 @@ type ChangeUserAvatarResponse = {
 
 export async function updateProfile(id: number, name: string, company: string, position: string): Promise<true | ApolloError> {
   try {
+    const sanitizedInput = sanitizeUserInput({ name, company, position });
+    name = sanitizedInput.name;
+    company = sanitizedInput.company;
+    position = sanitizedInput.position;
+
+    const validateResult = profileUpdateValidation({ name, company, position });
+    if (Array.isArray(validateResult) && validateResult.length) {
+      throw new ValidationError(validateResult.map((it) => it.message).join(','));
+    }
+    
     const user = await findUser({ id });
     if (!user) {
       return new ApolloError('Can not find any user');

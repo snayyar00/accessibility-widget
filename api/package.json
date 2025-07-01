@@ -25,6 +25,7 @@
     "@getbrevo/brevo": "^2.0.0-beta.4",
     "@sentry/node": "^5.30.0",
     "@types/jspdf": "^1.3.3",
+    "@types/linkify-it": "^5.0.0",
     "apollo-server-express": "^2.19.0",
     "aws-sdk": "^2.1692.0",
     "bcryptjs": "^2.4.3",
@@ -47,6 +48,7 @@
     "jspdf-autotable": "^5.0.2",
     "knex": "^0.21.12",
     "link-module-alias": "^1.2.0",
+    "linkify-it": "^5.0.0",
     "lodash": "^4.17.20",
     "mailgun-js": "^0.22.0",
     "mjml": "^4.7.1",
@@ -65,6 +67,7 @@
     "typescript": "^4.4.3",
     "uuid": "^8.3.1",
     "wkhtmltoimage": "^0.1.5",
+    "xss": "^1.0.15",
     "yarn": "^1.22.21"
   },
   "devDependencies": {

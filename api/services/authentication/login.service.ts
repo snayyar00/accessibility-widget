@@ -4,6 +4,7 @@ import { comparePassword } from '~/helpers/hashing.helper';
 import { sign } from '~/helpers/jwt.helper';
 import { findUser } from '~/repository/user.repository';
 import { loginValidation } from '~/validations/authenticate.validation';
+import { sanitizeUserInput } from '~/utils/sanitization.helper';
 import { clearCookie, COOKIE_NAME } from '~/utils/cookie';
 
 export type Token = {
@@ -11,6 +12,9 @@ export type Token = {
 };
 
 export async function loginUser(email: string, password: string, res: Response): Promise<ValidationError | AuthenticationError | Token> {
+  const sanitizedInput = sanitizeUserInput({ email });
+  email = sanitizedInput.email;
+
   const validateResult = loginValidation({ email, password });
   if (Array.isArray(validateResult) && validateResult.length) {
     return new ValidationError(
