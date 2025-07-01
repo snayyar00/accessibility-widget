@@ -86,6 +86,7 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
           email: userData?.email,
           status: domainStatus,
         }),
+        credentials: 'include',
       });
 
       const data = await response.json();

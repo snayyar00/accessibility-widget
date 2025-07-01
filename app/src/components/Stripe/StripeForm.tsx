@@ -59,6 +59,7 @@ const StripeForm: React.FC<Props> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ couponCode }),
+        credentials: 'include'
       });
       const data = await response.json();
       if (data.valid) {
