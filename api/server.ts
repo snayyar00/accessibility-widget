@@ -385,21 +385,28 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 
   app.post('/update-site-widget-settings', async (req, res) => {
-    const { settings, user_id, site_url } = req.body;
+    const { cookies } = req;
+    const { settings, site_url } = req.body;
+
+    const bearerToken = cookies.token || null;
+
     try {
+      const user = await getUserLogined(bearerToken, res);
       const site = await findSiteByURL(site_url);
-      if (site.user_id != user_id) {
-        console.error( 'User does not own this site');
-        res.status(500).json({ error: 'User does not own this site' });
-      } else {
-        await addWidgetSettings({
-          site_url: site_url,
-          allowed_site_id: site?.id,
-          settings: settings,
-          user_id: site.user_id,
-        });
-        res.status(200).json("Success");
+
+      if (site.user_id !== user.id) {
+        console.log('site.user_id:', site.user_id, 'user.id:', user.id, 'equal:', site.user_id === user.id);
+        return res.status(403).json({ error: 'User does not own this site' });
       }
+
+      await addWidgetSettings({
+        site_url: site_url,
+        allowed_site_id: site?.id,
+        settings: settings,
+        user_id: site.user_id,
+      });
+
+      res.status(200).json("Success");
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
@@ -407,9 +414,19 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 
   app.post('/get-site-widget-settings', async (req, res) => {
+    const { cookies } = req;
     const { site_url } = req.body;
+
+    const bearerToken = cookies.token || null;
+
     try {
+      const user = await getUserLogined(bearerToken, res);
       const site = await findSiteByURL(site_url);
+
+      if (site.user_id !== user.id) {
+        console.log('site.user_id:', site.user_id, 'user.id:', user.id, 'equal:', site.user_id === user.id);
+        return res.status(403).json({ error: 'User does not own this site' });
+      }
 
       const widgetSettings = await getWidgetSettingsBySiteId(site.id);
       let response = widgetSettings?.settings || {};

@@ -103,6 +103,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(bodyData),
+        credentials: 'include',
       })
         .then((response) => {
           if (!response.ok) {
@@ -283,6 +284,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(bodyData),
+        credentials: 'include',
       })
         .then((response) => {
           if (!response.ok) {

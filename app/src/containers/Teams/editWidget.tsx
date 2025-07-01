@@ -338,6 +338,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(bodyData),
+      credentials: 'include',
     })
       .then((response) => {
         if (!response.ok) {
@@ -392,6 +393,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(bodyData),
+      credentials: 'include',
     })
       .then((response) => {
         if (!response.ok) {
@@ -542,6 +544,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(bodyData),
+      credentials: 'include',
     })
       .then((response) => {
         if (!response.ok) {
