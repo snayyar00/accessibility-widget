@@ -3,6 +3,8 @@ import { ApolloError, ValidationError } from 'apollo-server-express';
 import logger from '~/utils/logger';
 import { getCityAndCountry } from '~/helpers/uniqueVisitor.helper';
 import {  VisitorInfo, deleteVisitorId, deleteVisitorIp, findVisitorByIp, findVisitorBySiteId, findVisitorByURL, findVisitorByURLDate, insertVisitor, updateVisitorByIp } from '~/repository/visitors.repository';
+import { UserProfile } from '~/repository/user.repository';
+import { findUserSites } from '~/services/allowedSites/allowedSites.service';
 
 
 /**
@@ -38,10 +40,18 @@ export async function addNewVisitor(ipAddress: string, siteId: number): Promise<
  *
  */
 
-export async function getSiteVisitors(siteId:number){
+export async function getSiteVisitors(siteId:number, user: UserProfile){
     try{
+        const userSites = await findUserSites(user.id);
+        const userSiteIds = userSites.map(site => site.id);
+
+        if (!userSiteIds.includes(siteId)) {
+            throw new ApolloError('User does not own this site', 'FORBIDDEN');
+        }
+        
         const visitors = await findVisitorBySiteId(siteId);
-        return {visitors: visitors, count: visitors.length}
+
+        return { visitors: visitors, count: visitors.length }
     }
     catch(e){
         logger.error(e)
@@ -49,10 +59,15 @@ export async function getSiteVisitors(siteId:number){
     }
 }
 
-export async function getSiteVisitorsByURL(url: string){
-    try{
+export async function getSiteVisitorsByURL(url: string, user: UserProfile){
+    try {
+        const userSites = await findUserSites(user.id);
+        const userSiteIds = userSites.map(site => site.id);
+
         const visitors = await findVisitorByURL(url);
-        return {visitors: visitors, count: visitors.length}
+        const filteredVisitors = visitors.filter(v => userSiteIds.includes(v.siteId));
+
+        return { visitors: filteredVisitors, count: filteredVisitors.length }
     }
     catch(e){
         logger.error(e);
@@ -60,10 +75,15 @@ export async function getSiteVisitorsByURL(url: string){
     }
 }
 
-export async function getSiteVisitorsByURLAndDate(url: string, startDate: Date, endDate: Date){
+export async function getSiteVisitorsByURLAndDate(url: string, startDate: Date, endDate: Date, user: UserProfile){
     try{
+        const userSites = await findUserSites(user.id);
+        const userSiteIds = userSites.map(site => site.id);
+
         const visitors = await findVisitorByURLDate(url, startDate, endDate);
-        return { visitors: visitors, count: visitors.length }
+        const filteredVisitors = visitors.filter(v => userSiteIds.includes(v.siteId));
+
+        return { visitors: filteredVisitors, count: filteredVisitors.length }
     }
     catch(e){
         logger.error(e);
@@ -72,9 +92,17 @@ export async function getSiteVisitorsByURLAndDate(url: string, startDate: Date, 
 }
 
 
-export async function getVisitorByIp(ipAddress: string){
+export async function getVisitorByIp(ipAddress: string, user: UserProfile) {
     try{
+        const userSites = await findUserSites(user.id);
+        const userSiteIds = userSites.map(site => site.id);
+
         const visitor = await findVisitorByIp(ipAddress);
+
+        if (!visitor || !userSiteIds.includes(visitor.siteId)) {
+            throw new ApolloError('User does not own this site', 'FORBIDDEN');
+        }
+        
         return visitor;
     }
     catch(e){

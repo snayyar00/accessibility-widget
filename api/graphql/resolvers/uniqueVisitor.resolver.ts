@@ -1,23 +1,24 @@
 import { combineResolvers } from 'graphql-resolvers';
+import { isAuthenticated } from '~/graphql/resolvers/authorization.resolver';
 import { addNewVisitor, deleteVisitorById, deleteVisitorByIp, getSiteVisitors, getSiteVisitorsByURL, getSiteVisitorsByURLAndDate, getVisitorByIp, updateVisitorDetails } from '~/services/uniqueVisitors/uniqueVisitor.service';
 
 const resolvers = {
     Query: {
         getSiteVisitors: combineResolvers(
-            // isAuthenticated,
-            (_, { siteId }) => getSiteVisitors(siteId)
+            isAuthenticated,
+            (_, { siteId }, { user }) => getSiteVisitors(siteId, user)
         ),
         getSiteVisitorsByURL: combineResolvers(
-            // isAuthenticated,
-            (_, { url }) => getSiteVisitorsByURL(url)
+            isAuthenticated,
+            (_, { url }, { user }) => getSiteVisitorsByURL(url, user)
         ),
         getSiteVisitorsByIp: combineResolvers(
-            // isAuthenticated,
-            (_, { ipAddress }) => getVisitorByIp(ipAddress)
+            isAuthenticated,
+            (_, { ipAddress }, { user }) => getVisitorByIp(ipAddress, user)
         ),
         getSiteVisitorsByURLAndDate: combineResolvers(
-            // isAuthenticated,
-            (_, { url, startDate, endDate }, {user}) => getSiteVisitorsByURLAndDate(url, new Date(startDate), new Date(endDate))
+            isAuthenticated,
+            (_, { url, startDate, endDate }, { user }) => getSiteVisitorsByURLAndDate(url, new Date(startDate), new Date(endDate), user)
         ),
 
     },
