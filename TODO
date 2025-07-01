@@ -8,7 +8,6 @@ prevent addition of empty or duplicate domains ---------------------------------
 audit page connetion -----------------------------------------------------------  DONE
 connect dashboard to backend ---------------------------------------------------  DONE
 
-
 use less red color on accessibility page ---------------------------------------- DONE
 remove https while saving domain to db ------------------------------------------ DONE
 add url check in token verification --------------------------------------------- DONE
