@@ -309,7 +309,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
             )}`}
           >
             {getDomainStatus(
-              domainData.domain,
+              domainData.url,
               domainData.expiredAt,
               domainData.trial,
               appSumoDomains 
