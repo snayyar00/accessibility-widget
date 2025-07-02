@@ -315,11 +315,18 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
               appSumoDomains 
             )}
           </p>
-          <p className="text-gray-900 whitespace-no-wrap">
-            {domainData.expiredAt
-              ? new Date(parseInt(domainData.expiredAt)).toLocaleString() ?? '-'
-              : '-'}
-          </p>
+          {getDomainStatus(
+              domainData.url,
+              domainData.expiredAt,
+              domainData.trial,
+              appSumoDomains 
+            ) != 'Life Time' && (
+              <p className="text-gray-900 whitespace-no-wrap">
+                {domainData.expiredAt
+                  ? new Date(parseInt(domainData.expiredAt)).toLocaleString() ?? '-'
+                  : '-'}
+              </p>
+            )} 
         </div>
       ) : (
         <p>-</p>
