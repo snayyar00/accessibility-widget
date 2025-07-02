@@ -254,8 +254,8 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
               // Regex to extract domain name before '(' and promo codes
               const match = description?.match(/Plan for ([^(\s]+)\(/);
 
-              if (match) {
-                  const domain = match[1];  // Extract domain name
+              if (match && match[1] && match[1].trim()) {
+                  const domain = match[1].trim();
                   appSumoDomains.push(domain); // Save the domain name in the list
               }
           });
