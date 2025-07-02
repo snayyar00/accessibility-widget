@@ -33,6 +33,7 @@ import { toast } from 'sonner';
 import TechStack from './TechStack';
 import { CircularProgress } from '@mui/material';
 import getProfileQuery from '@/queries/auth/getProfile';
+import getLogoUrlOnly from '@/utils/getLogoUrlOnly'
 
 // Add this array near the top of the file
 const accessibilityFacts = [
@@ -928,7 +929,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
       const pdfBlob = generatePDF(results);
 
       // Create download link for immediate download
-      const url = window.URL.createObjectURL(pdfBlob);
+      const url = window.URL.createObjectURL(await pdfBlob);
       const link = document.createElement('a');
       link.href = url;
       link.download = 'accessibility-report.pdf';
@@ -960,47 +961,93 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     });
   }
 
-  // PDF generation function (same as ScannerHero)
-  const generatePDF = (reportData: { score: number; widgetInfo: { result: string; }; url: string; }) => {
+ 
+  const generatePDF = async (
+    reportData: { score: number; widgetInfo: { result: string }; url: string }
+  ): Promise<Blob> => {
+    // Update the URL from query params
+    // Ensure reportData.url is set from queryParams if not already provided
+    if (!reportData.url) {
+      reportData.url = queryParams.get('domain') || '';
+      console.log("Report data is", reportData);
+    }
     const WEBABILITY_SCORE_BONUS = 45;
     const MAX_TOTAL_SCORE = 95;
-
     const doc = new jsPDF();
-    const logoUrl = '/images/logo.png';
-    if (typeof window !== 'undefined' && window.Image) {
-      doc.addImage(logoUrl, 'PNG', 8, 6, 50, 18, undefined, 'FAST');
+  
+    // 🟢 Await logo before continuing
+    const logoUrl = await getLogoUrlOnly(reportData.url);
+    if (typeof window !== 'undefined' && window.Image && logoUrl !== ' ') {
+      // Use natural logo dimensions, but constrain max width/height to fit header area
+      // We'll load the image to get its real size, then scale to fit max 50x18 (preserving aspect ratio)
+      if (logoUrl) {
+        const img = new window.Image();
+        img.src = logoUrl;
+        await new Promise<void>((resolve) => {
+          img.onload = () => {
+            // Get natural size
+            const { width: naturalWidth, height: naturalHeight } = img;
+            // Set max dimensions
+            const maxWidth = 50;  // Wider logo
+            const maxHeight = 30;  // Taller logo
+            
+            let drawWidth = naturalWidth;
+            let drawHeight = naturalHeight;
+            // Scale down if needed
+            if (drawWidth > maxWidth || drawHeight > maxHeight) {
+              const widthRatio = maxWidth / drawWidth;
+              const heightRatio = maxHeight / drawHeight;
+              const scale = Math.min(widthRatio, heightRatio);
+              drawWidth = drawWidth * scale;
+              drawHeight = drawHeight * scale;
+            }
+                // Dynamically position logo vertically centered in header area (maxHeight = 30)
+                const y = 4 + (30 - drawHeight) / 2;
+          
+            doc.addImage(logoUrl, 'PNG', 8, y, drawWidth, drawHeight, undefined, 'FAST');
+          
+            resolve();
+          };
+          img.onerror = () => {
+            
+            doc.addImage(logoUrl, 'PNG', 8, 6, 50, 18, undefined, 'FAST');
+            resolve();
+          };
+        });
+      }
     }
-
+  
     // Extract issues for PDF
+    
     const issues = extractIssuesFromReport(reportData);
     const criticalCount = issues.filter(i => i.impact === 'critical').length;
     const seriousCount = issues.filter(i => i.impact === 'serious').length;
     const moderateCount = issues.filter(i => i.impact === 'moderate').length;
+  
     const baseScore = reportData.score || 0;
     const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility';
     const enhancedScore = hasWebAbility
       ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
       : baseScore;
-
-    // Compliance logic based on enhanced score
-    let status, message, statusColor: [number, number, number];
+  
+    // Compliance status logic
+    let status: string, message: string, statusColor: [number, number, number];
     if (enhancedScore >= 80) {
       status = "Compliant";
       message = "Your website meets the basic requirements for accessibility.";
-      statusColor = [43, 168, 74]; // green
+      statusColor = [43, 168, 74];
     } else if (enhancedScore >= 50) {
       status = "Partially Compliant";
       message = "Your website meets some accessibility requirements but needs improvement.";
-      statusColor = [243, 182, 31]; // yellow
+      statusColor = [243, 182, 31];
     } else {
       status = "Non-compliant";
       message = "Your website needs significant accessibility improvements.";
-      statusColor = [255, 27, 28]; // red
+      statusColor = [255, 27, 28];
     }
-
+  
     // Overview Section
-    let y = 32;
-
+    let y = 36;
     doc.setFontSize(16);
     doc.setFont('Helvetica', 'normal');
     const scanResultsText = 'Scan Results for';
@@ -1008,8 +1055,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     doc.text(scanResultsText, 8, y);
     doc.setFont('Helvetica', 'bold');
     doc.text(urlText, 7 + doc.getTextWidth(scanResultsText), y);
-
-    // Compliance status and message
+  
+    // Compliance status
     y += 10;
     doc.setFontSize(12);
     doc.setFont('Helvetica', 'bold');
@@ -1019,8 +1066,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     doc.setFont('Helvetica', 'normal');
     doc.setTextColor(60, 60, 60);
     doc.text(message, 11 + doc.getTextWidth(statusLabel), y);
-
-    // Accessibility Score
+  
+    // Score section
     y += 10;
     doc.setFontSize(12);
     doc.setFont('Helvetica', 'bold');
@@ -1031,7 +1078,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     doc.setTextColor(0, 0, 0);
     const scoreText = `${enhancedScore}%`;
     doc.text(scoreText, 12 + doc.getTextWidth(scoreLabel), y);
-
+  
     if (hasWebAbility) {
       doc.setFontSize(12);
       doc.setFont('Helvetica', 'normal');
@@ -1039,17 +1086,17 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
       const bonusText = `(Base: ${baseScore}% + ${WEBABILITY_SCORE_BONUS}% WebAbility Bonus)`;
       doc.text(bonusText, 14 + doc.getTextWidth(scoreLabel + scoreText), y);
     }
-
+  
     // Issue counts
     y += 12;
     doc.setFontSize(13);
     doc.setTextColor(60, 60, 60);
     doc.setFont('Helvetica', 'normal');
     doc.text(`Total Issues: ${issues.length}`, 8, y);
-
+  
     y += 8;
-
-    // Table of Issues
+  
+    // Table
     if (issues.length > 0) {
       autoTable(doc, {
         startY: y,
@@ -1081,7 +1128,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
         }
       });
     }
-
+  
     return doc.output("blob");
   };
 

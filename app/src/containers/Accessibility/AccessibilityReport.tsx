@@ -59,6 +59,7 @@ import Select from 'react-select/creatable';
 import { set } from 'lodash';
 import Modal from '@/components/Common/Modal';
 
+import getLogoUrlOnly from '@/utils/getLogoUrlOnly'
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
 
@@ -256,52 +257,103 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   };
 
-  const generatePDF = (reportData: { score: number; widgetInfo: { result: string; }; }, enhancedScore: number, url: string) => {
-    const doc = new jsPDF();
-    const logoUrl = '/images/logo.png';
 
-    try {
-      if (typeof window !== 'undefined' && window.Image) {
-        doc.addImage(logoUrl, 'PNG', 8, 6, 50, 18, undefined, 'FAST');
-      }
-    } catch (error) {
-      console.error('Error loading logo image:', error);
+  
+  const generatePDF = async (
+    reportData: { score: number; widgetInfo: { result: string }; url: string }
+  ): Promise<Blob> => {
+    console.log("asdas reportData",reportData.url);
+    
+    if (!reportData.url) {
+      reportData.url = processedReportKeys?.[0]?.url || "";
+      console.log("Report data is", processedReportKeys);
     }
-
+    const WEBABILITY_SCORE_BONUS = 45;
+    const MAX_TOTAL_SCORE = 95;
+    const doc = new jsPDF();
+  
+    // 🟢 Await logo before continuing
+    const logoUrl = await getLogoUrlOnly(reportData.url);
+    if (typeof window !== 'undefined' && window.Image && logoUrl !== ' ') {
+      // Use natural logo dimensions, but constrain max width/height to fit header area
+      // We'll load the image to get its real size, then scale to fit max 50x18 (preserving aspect ratio)
+      if (logoUrl) {
+        const img = new window.Image();
+        img.src = logoUrl;
+        await new Promise<void>((resolve) => {
+          img.onload = () => {
+            // Get natural size
+            const { width: naturalWidth, height: naturalHeight } = img;
+            // Set max dimensions
+            const maxWidth = 50;  // Wider logo
+            const maxHeight = 30;  // Taller logo
+            
+            let drawWidth = naturalWidth;
+            let drawHeight = naturalHeight;
+            // Scale down if needed
+            if (drawWidth > maxWidth || drawHeight > maxHeight) {
+              const widthRatio = maxWidth / drawWidth;
+              const heightRatio = maxHeight / drawHeight;
+              const scale = Math.min(widthRatio, heightRatio);
+              drawWidth = drawWidth * scale;
+              drawHeight = drawHeight * scale;
+            }
+                // Dynamically position logo vertically centered in header area (maxHeight = 30)
+                const y = 4 + (30 - drawHeight) / 2;
+          
+            doc.addImage(logoUrl, 'PNG', 8, y, drawWidth, drawHeight, undefined, 'FAST');
+          
+            resolve();
+          };
+          img.onerror = () => {
+            
+            doc.addImage(logoUrl, 'PNG', 8, 6, 50, 18, undefined, 'FAST');
+            resolve();
+          };
+        });
+      }
+    }
+  
     // Extract issues for PDF
+    
     const issues = extractIssuesFromReport(reportData);
     const criticalCount = issues.filter(i => i.impact === 'critical').length;
     const seriousCount = issues.filter(i => i.impact === 'serious').length;
     const moderateCount = issues.filter(i => i.impact === 'moderate').length;
-
-    // Compliance logic based on enhanced score
-    let status, message, statusColor: [number, number, number];
+  
+    const baseScore = reportData.score || 0;
+    const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility';
+    const enhancedScore = hasWebAbility
+      ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
+      : baseScore;
+  
+    // Compliance status logic
+    let status: string, message: string, statusColor: [number, number, number];
     if (enhancedScore >= 80) {
       status = "Compliant";
       message = "Your website meets the basic requirements for accessibility.";
-      statusColor = [43, 168, 74]; // green
+      statusColor = [43, 168, 74];
     } else if (enhancedScore >= 50) {
       status = "Partially Compliant";
       message = "Your website meets some accessibility requirements but needs improvement.";
-      statusColor = [243, 182, 31]; // yellow
+      statusColor = [243, 182, 31];
     } else {
       status = "Non-compliant";
       message = "Your website needs significant accessibility improvements.";
-      statusColor = [255, 27, 28]; // red
+      statusColor = [255, 27, 28];
     }
-
+  
     // Overview Section
-    let y = 32;
-
+    let y = 36;
     doc.setFontSize(16);
     doc.setFont('Helvetica', 'normal');
     const scanResultsText = 'Scan Results for';
-    const urlText = url || '';
+    const urlText = reportData.url || '';
     doc.text(scanResultsText, 8, y);
     doc.setFont('Helvetica', 'bold');
     doc.text(urlText, 7 + doc.getTextWidth(scanResultsText), y);
-
-    // Compliance status and message
+  
+    // Compliance status
     y += 10;
     doc.setFontSize(12);
     doc.setFont('Helvetica', 'bold');
@@ -311,8 +363,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setFont('Helvetica', 'normal');
     doc.setTextColor(60, 60, 60);
     doc.text(message, 11 + doc.getTextWidth(statusLabel), y);
-
-    // Accessibility Score
+  
+    // Score section
     y += 10;
     doc.setFontSize(12);
     doc.setFont('Helvetica', 'bold');
@@ -323,25 +375,25 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setTextColor(0, 0, 0);
     const scoreText = `${enhancedScore}%`;
     doc.text(scoreText, 12 + doc.getTextWidth(scoreLabel), y);
-
-    if (reportData.widgetInfo?.result === 'WebAbility') {
+  
+    if (hasWebAbility) {
       doc.setFontSize(12);
       doc.setFont('Helvetica', 'normal');
       doc.setTextColor(43, 168, 74);
-      const bonusText = `(Base: ${reportData.score}% + ${WEBABILITY_SCORE_BONUS}% WebAbility Bonus)`;
+      const bonusText = `(Base: ${baseScore}% + ${WEBABILITY_SCORE_BONUS}% WebAbility Bonus)`;
       doc.text(bonusText, 14 + doc.getTextWidth(scoreLabel + scoreText), y);
     }
-
+  
     // Issue counts
     y += 12;
     doc.setFontSize(13);
     doc.setTextColor(60, 60, 60);
     doc.setFont('Helvetica', 'normal');
     doc.text(`Total Issues: ${issues.length}`, 8, y);
-
+  
     y += 8;
-
-    // Table of Issues
+  
+    // Table
     if (issues.length > 0) {
       autoTable(doc, {
         startY: y,
@@ -373,10 +425,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         }
       });
     }
-
+  
     return doc.output("blob");
   };
-
+  
   // Extract issues from report structure
   function extractIssuesFromReport(report: any) {
     const issues: any[] = []
@@ -626,9 +678,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             try {
                               // Fetch the report for the clicked row and wait for the response
                               const { data: fetchedReportData } = await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
-
+                              console.log("data",data)
                               if (fetchedReportData && fetchedReportData.fetchReportByR2Key) {
-                                const pdfBlob = generatePDF(fetchedReportData.fetchReportByR2Key, row.enhancedScore, row.url);
+                                fetchedReportData.fetchReportByR2Key.url = row.url;
+                                const pdfBlob = await generatePDF(fetchedReportData.fetchReportByR2Key);
                                 const url = window.URL.createObjectURL(pdfBlob);
                                 const link = document.createElement('a');
                                 link.href = url;
