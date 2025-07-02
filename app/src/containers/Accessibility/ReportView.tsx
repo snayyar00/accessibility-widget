@@ -921,42 +921,11 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 
-  // Handle email submit and PDF generation
-  const handleEmailSubmit = async () => {
-    if (!isValidEmail(email)) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-
-    setIsModalOpen(false);
-
+  // Handle PDF generation and download only
+  const handleDownloadSubmit = async () => {
     try {
       // Generate PDF using the same logic as ScannerHero
       const pdfBlob = generatePDF(results);
-
-      // Convert PDF blob to base64 for email attachment
-      const pdfBase64 = await blobToBase64(pdfBlob);
-
-      // Prepare email HTML
-      const html = `<p>Your accessibility report for <b>${results.url}</b> is attached as a PDF.</p>`;
-
-      // Send email via Brevo API route
-      const response = await fetch("/api/brevo", {
-        method: "POST",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          subject: `Accessibility Report for ${results.url}`,
-          html,
-          pdfBase64,
-          pdfFileName: "accessibility-report.pdf"
-        }),
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to send the report via email.");
-      }
 
       // Create download link for immediate download
       const url = window.URL.createObjectURL(pdfBlob);
@@ -968,11 +937,9 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.success("Report sent to your email and downloaded!");
-      setEmail('');
-
+      toast.success("Report downloaded!");
     } catch (error) {
-      toast.error("Failed to generate or send the report. Please try again.");
+      toast.error("Failed to generate the report. Please try again.");
       console.error('PDF generation error:', error);
     }
   };
@@ -1133,7 +1100,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
 
         <div className="relative mr-4">
           <button
-            onClick={() => setIsModalOpen(true)}
+             onClick={handleDownloadSubmit}
             className="whitespace-nowrap px-6 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 transition-colors"
           >
             Get Free Report
@@ -1141,7 +1108,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
         </div>
       </div>
 
-      {/* Email Modal */}
+      {/* Email Modal
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -1168,7 +1135,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
                 Cancel
               </button>
               <button
-                onClick={handleEmailSubmit}
+                onClick={handleDownloadSubmit}
                 disabled={!isValidEmail(email)}
                 className={`px-4 py-2 rounded-lg text-white ${!isValidEmail(email)
                   ? 'bg-gray-400 cursor-not-allowed'
@@ -1180,7 +1147,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </>
   );
 };
