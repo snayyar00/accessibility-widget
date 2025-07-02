@@ -15,7 +15,7 @@ import circleSmall from '@/assets/images/svg/circle-small.svg';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 
 const ForgotPasswordSchema = yup.object().shape({
-  email: yup.string().required('Common.validation.require_email').email('Common.validation.valid_email'),
+  email: yup.string().required('Common.validation.require_email').email('Common.validation.valid_email').max(254, 'Common.validation.max_email_length'),
 });
 
 const ForgotPassword: React.FC = () => {
