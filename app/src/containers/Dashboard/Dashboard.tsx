@@ -284,6 +284,13 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
     console.log('Dashboard tour completed!');
   };
 
+  const domainStatus = getDomainStatus(
+    domainData.domain,
+    domainData.expiredAt,
+    domainData.trial,
+    appSumoDomains 
+  )
+
   return (
     <>
       <TourGuide
@@ -308,19 +315,9 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
               appSumoDomains,
             )}`}
           >
-            {getDomainStatus(
-              domainData.url,
-              domainData.expiredAt,
-              domainData.trial,
-              appSumoDomains 
-            )}
+            {domainStatus}
           </p>
-          {getDomainStatus(
-              domainData.url,
-              domainData.expiredAt,
-              domainData.trial,
-              appSumoDomains 
-            ) != 'Life Time' && (
+          {domainStatus != 'Life Time' && (
               <p className="text-gray-900 whitespace-no-wrap">
                 {domainData.expiredAt
                   ? new Date(parseInt(domainData.expiredAt)).toLocaleString() ?? '-'
