@@ -1004,6 +1004,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     
     
     
+    let logoBottomY = 0; // Track where the logo ends vertically
+
     if (logoImage) {
       const img = new Image();
       img.src = logoImage;
@@ -1041,20 +1043,24 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
             });
           }
 
+          // Calculate the bottom Y of the logo+container to position the next section
+          logoBottomY = Math.max(logoY + drawHeight, containerY + containerH);
           resolve();
         };
-        img.onerror = () => resolve();
+        img.onerror = () => {
+          // If image fails to load, just use default offset
+          logoBottomY = 0;
+          resolve();
+        };
       });
     }
-
-    
-    // Move the hero section down, add a white rounded container behind it, and add some space after
 
     // Define container dimensions and position
     const containerWidth = 170;
     const containerHeight = 60;
     const containerX = 105 - containerWidth / 2;
-    const containerY = 50; // moved further down from top
+    // Place the container after the logo image (with some vertical gap)
+    const containerY = (logoBottomY || 0) + 10; // 10 units gap after logo
 
     // Draw white rounded rectangle container with black outline
     doc.setFillColor(255, 255, 255); // white fill
@@ -1108,7 +1114,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     // Draw two circles farther down below the hero section, farther apart and centered horizontally
     // Circle 1: Total Errors
     // Circle 2: Percentage (Score)
-    const circleY = 120; // moved circles further down (was 72)
+    // Dynamically position the circles below the container, with extra spacing
+    const circleY = containerY + containerHeight + 25; // 25 units gap after the container
     const circleRadius = 15;
     // Move the circles farther apart, centered horizontally
     const centerX = 105;
@@ -1158,7 +1165,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     // --- END CIRCLES ---
 
     // SEVERITY SUMMARY BOXES
-    const yStart = 150;
+    // Place the summary boxes just below the circles, with a 30 unit gap
+    const yStart = circleY + circleRadius + 30;
     const total = issues.length;
     const counts = {
       critical: issues.filter(i => i.impact === 'critical').length,
