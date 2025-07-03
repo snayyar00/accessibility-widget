@@ -1208,15 +1208,15 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     // Build the rows
     let tableBody: any[] = [];
 
-    issues.forEach((issue) => {
+    issues.forEach((issue, issueIdx) => {
       // Add header row for each issue
       tableBody.push([
         {
           content: 'Issue',
           colSpan: 2,
           styles: {
-            fillColor: [21, 101, 192],
-            textColor: [255,255,255],
+            fillColor: [255, 255, 255], // white background
+            textColor: [0, 0, 0], // black text
             fontStyle: 'bold',
             fontSize: 13,
             halign: 'center',
@@ -1228,8 +1228,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
           content: 'Message',
           colSpan: 2,
           styles: {
-            fillColor: [33, 150, 243],
-            textColor: [255,255,255],
+            fillColor: [255, 255, 255], // white background
+            textColor: [0, 0, 0], // black text
             fontStyle: 'bold',
             fontSize: 13,
             halign: 'center',
@@ -1239,110 +1239,147 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
         }
       ]);
 
-      // Row 1: Issue + Message (2 columns, each spans 2 columns)
+      // Row 1: Issue + Message (2 columns, each spans 2 columns), in a code block with numbering
       tableBody.push([
         {
-          content: issue.code ? `${issue.code} (${issue.impact})` : '',
+          content: `1. \`\`\`\n${issue.code ? `${issue.code} (${issue.impact})` : ''}\n\`\`\``,
           colSpan: 2,
           styles: {
             fontStyle: 'bold',
-            fontSize: 12,
-            textColor:
-              issue.impact === 'critical'
-                ? [21, 101, 192]
-                : issue.impact === 'serious'
-                ? [33, 150, 243]
-                : [2, 136, 209],
-            halign: 'center',
+            fontSize: 11,
+            textColor: [33, 33, 33], // dark text
+            halign: 'left',
             cellPadding: 6,
-            fillColor:
-              issue.impact === 'critical'
-                ? [187, 222, 251]
-                : issue.impact === 'serious'
-                ? [144, 202, 249]
-                : [232, 245, 253],
-            lineWidth: 0
+            fillColor: [245, 245, 245], // light gray for code block
+            lineWidth: 0,
+            font: 'courier'
           }
         },
         {
-          content: issue.message || '',
+          content: `1. \`\`\`\n${issue.message || ''}\n\`\`\``,
           colSpan: 2,
           styles: {
             fontStyle: 'normal',
-            fontSize: 12,
-            textColor: [33, 33, 33],
+            fontSize: 11,
+            textColor: [33, 33, 33], // dark text
             halign: 'left',
             cellPadding: 6,
-            fillColor: [255,255,255],
-            lineWidth: 0
+            fillColor: [245, 245, 245], // light gray for code block
+            lineWidth: 0,
+            font: 'courier'
           }
         }
       ]);
 
-      // Row 2: Context(s) (each context in its own cell, spanning all 4 columns)
+      // Row 2: Context(s) - display heading first, then each context in its own black box with spacing
       const contexts = toArray(issue.context);
       if (contexts.length > 0) {
+        // Heading row for Context
         tableBody.push([
           {
             content: 'Context:',
-            colSpan: 1,
+            colSpan: 4,
             styles: {
               fontStyle: 'bolditalic',
               fontSize: 11,
-              textColor: [21, 101, 192],
-              halign: 'right',
-              cellPadding: 5,
-              fillColor: [232, 245, 253],
-              lineWidth: 0
-            }
-          },
-          {
-            content: contexts.map((ctx, idx) => ctx ? `${ctx}` : '').filter(Boolean).join('\n\n'),
-            colSpan: 3,
-            styles: {
-              fontStyle: 'italic',
-              fontSize: 11,
-              textColor: [21, 101, 192],
+              textColor: [0, 0, 0], // black text
               halign: 'left',
               cellPadding: 5,
-              fillColor: [232, 245, 253],
-              lineWidth: 0
-            }
-          },
-        ]);
-      }
-
-      // Row 3: Fix(es) (each fix in its own cell, spanning all 4 columns)
-      const fixes = toArray(issue.recommended_action);
-      if (fixes.length > 0 && fixes.some(f => !!f)) {
-        tableBody.push([
-          {
-            content: 'Fix:',
-            colSpan: 1,
-            styles: {
-              fontStyle: 'bolditalic',
-              fontSize: 11,
-              textColor: [2, 136, 209],
-              halign: 'right',
-              cellPadding: 5,
-              fillColor: [232, 245, 253],
-              lineWidth: 0
-            }
-          },
-          {
-            content: fixes.map((fix, idx) => fix ? `${fix}` : '').filter(Boolean).join('\n\n'),
-            colSpan: 3,
-            styles: {
-              fontStyle: 'normal',
-              fontSize: 11,
-              textColor: [33, 150, 243],
-              halign: 'left',
-              cellPadding: 5,
-              fillColor: [232, 245, 253],
+              fillColor: [255, 255, 255], // white background
               lineWidth: 0
             }
           }
         ]);
+        // Each context in its own row/container, as a black box with spacing
+        const filteredContexts = contexts.filter(Boolean);
+        filteredContexts.forEach((ctx, ctxIdx) => {
+          tableBody.push([
+            {
+              content: `${ctxIdx + 1}. \`\`\`\n${ctx}\n\`\`\``,
+              colSpan: 4,
+              styles: {
+                fontStyle: 'normal',
+                fontSize: 11,
+                textColor: [255, 255, 255], // white text for black box
+                halign: 'left',
+                cellPadding: { top: 10, right: 8, bottom: 10, left: 8 }, // more vertical space for separation
+                fillColor: [0, 0, 0], // black background for context box
+                lineWidth: 0,
+                font: 'courier'
+              }
+            }
+          ]);
+          // Add a spacer row after each context except the last
+          if (ctxIdx < filteredContexts.length - 1) {
+            tableBody.push([
+              {
+                content: '',
+                colSpan: 4,
+                styles: {
+                  cellPadding: 0,
+                  fillColor: [255, 255, 255],
+                  lineWidth: 0,
+                  minCellHeight: 6 // vertical space between containers
+                }
+              }
+            ]);
+          }
+        });
+      }
+
+      // Row 3: Fix(es) - display heading first, then each fix in its own white back container with spacing
+      const fixes = toArray(issue.recommended_action);
+      if (fixes.length > 0 && fixes.some(f => !!f)) {
+        // Heading row for Fix
+        tableBody.push([
+          {
+            content: 'Fix:',
+            colSpan: 4,
+            styles: {
+              fontStyle: 'bolditalic',
+              fontSize: 11,
+              textColor: [0, 0, 0], // black text
+              halign: 'left',
+              cellPadding: 5,
+              fillColor: [255, 255, 255], // white background
+              lineWidth: 0
+            }
+          }
+        ]);
+        // Each fix in its own row/container, with white background and spacing
+        const filteredFixes = fixes.filter(Boolean);
+        filteredFixes.forEach((fix, fixIdx) => {
+          tableBody.push([
+            {
+              content: `${fixIdx + 1}. ${fix}`,
+              colSpan: 4,
+              styles: {
+                fontStyle: 'normal',
+                fontSize: 11,
+                textColor: [0, 0, 0], // black text
+                halign: 'left',
+                cellPadding: { top: 10, right: 8, bottom: 10, left: 8 }, // more vertical space for separation
+                fillColor: [255, 255, 255], // white background for back container
+                lineWidth: 0
+              }
+            }
+          ]);
+          // Add a spacer row after each fix except the last
+          if (fixIdx < filteredFixes.length - 1) {
+            tableBody.push([
+              {
+                content: '',
+                colSpan: 4,
+                styles: {
+                  cellPadding: 0,
+                  fillColor: [255, 255, 255],
+                  lineWidth: 0,
+                  minCellHeight: 6 // vertical space between containers
+                }
+              }
+            ]);
+          }
+        });
       }
     });
 
@@ -1365,7 +1402,9 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
         valign: 'middle',
         lineWidth: 0,
         overflow: 'linebreak',
-        font: 'helvetica'
+        font: 'helvetica',
+        textColor: [0, 0, 0], // black text
+        fillColor: [255, 255, 255] // white background
       },
       didParseCell(data) {
         // No-op: styles are set per cell above
@@ -1374,9 +1413,10 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
         }
       },
       didDrawPage: function (data) {
-        // Add a subtle shadow under the table
+        // Optionally, you can remove the shadow and rounded corners for a cleaner white look,
+        // or keep them if you want. Here, we keep the rounded corners but use a light gray for subtlety.
         const pageWidth = doc.internal.pageSize.getWidth();
-        doc.setDrawColor(187, 222, 251); // light blue
+        doc.setDrawColor(220, 220, 220); // subtle light gray
         doc.setLineWidth(0.5);
         if (data.cursor && typeof data.cursor.y === 'number') {
           doc.line(15, data.cursor.y + 2, pageWidth - 15, data.cursor.y + 2);
@@ -1396,7 +1436,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
             (data.table.settings?.margin?.left ?? 15) -
             (data.table.settings?.margin?.right ?? 15);
           const height = (data.table.finalY ?? y) - y;
-          doc.setDrawColor(144, 202, 249); // lighter blue
+          doc.setDrawColor(220, 220, 220); // subtle light gray
           doc.setLineWidth(0.8);
           doc.roundedRect(x, y, width, height, 4, 4, 'S');
         }
@@ -1408,6 +1448,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
         }
       }
     });
+
+    
     // --- END CUSTOM TABLE LAYOUT ---
     if (accessibilityStatementLinkUrl) {
       const totalPages = (doc as any).internal.getNumberOfPages();
