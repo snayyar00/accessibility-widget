@@ -1000,7 +1000,10 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     }
 
     doc.setFillColor(21, 101, 192); // dark blue background
-    doc.rect(0, 0, doc.internal.pageSize.getWidth(), 70, 'F');
+    doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F'); // increased height from 70 to 100
+    
+    
+    
     if (logoImage) {
       const img = new Image();
       img.src = logoImage;
@@ -1014,13 +1017,13 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
 
           // Logo position
           const logoX = 0;   // further left (was 5)
-          const logoY = 6;   // move the logo a little above (was 0 or undefined)
+          const logoY = 3;   // move the logo a little above (was 0 or undefined)
 
           // Draw a white rounded rectangle container behind the logo, but keep it as before
-          const padding = 12; // a little more padding for bigger logo
+          const padding = 14; // a little more padding for bigger logo
           const containerX = logoX - padding;
           // Keep the container as before, do not move it up
-          const containerYOffset = 6;
+          const containerYOffset = 10;
           const containerY = logoY - padding - containerYOffset;
           const containerW = drawWidth + 2 * padding-10;
           const containerH = drawHeight + 2 * padding;
@@ -1044,36 +1047,68 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
       });
     }
 
-    doc.setFontSize(18);
-    doc.setTextColor(255, 255, 255); // white
-    doc.setFont("helvetica", "bold");
-    doc.text("Accessibility audit report for", 105, 20, { align: "center" });
-    doc.setFontSize(16);
-    doc.setTextColor(255, 255, 255); // white
-    doc.text(reportData.url, 105, 30, { align: "center" });
+    
+    // Move the hero section down, add a white rounded container behind it, and add some space after
 
-    // --- REPLACEMENT BLOCK ---
-    // Only write the status, message, and date ONCE in the hero section, not again below
-    doc.setFontSize(16);
-    doc.setTextColor(...statusColor); // white
-    doc.setFont("helvetica", "bold");
-    doc.text(status, 105, 45, { align: "center" });
+    // Define container dimensions and position
+    const containerWidth = 170;
+    const containerHeight = 60;
+    const containerX = 105 - containerWidth / 2;
+    const containerY = 50; // moved further down from top
 
-    doc.setFontSize(12);
-    doc.setTextColor(255, 255, 255); // white
+    // Draw white rounded rectangle container with black outline
+    doc.setFillColor(255, 255, 255); // white fill
+    doc.setDrawColor(220, 220, 220); // light grey outline
+    doc.setLineWidth(0.2); // default line width
+    doc.roundedRect(containerX, containerY, containerWidth, containerHeight, 10, 10, 'FD');
+
+    // Now draw the text inside the container, moved down accordingly
+    let textY = containerY + 13; // first line, some padding from top
+
+    doc.setFontSize(15);
+    doc.setTextColor(0,0,0); 
+    // Compose the full string and measure widths
+    const label = "Scan results for ";
+    const url = `${reportData.url}`;
+    const labelWidth = doc.getTextWidth(label);
+    const urlWidth = doc.getTextWidth(url);
+    const totalWidth = labelWidth + urlWidth;
+    // Calculate starting X so the whole line is centered
+    const startX = 105 - totalWidth / 2;
+    // Draw the label
     doc.setFont("helvetica", "normal");
-    doc.text(message, 105, 53, { align: "center" });
+    doc.setTextColor(51, 65, 85); // slate-800 for message
+    doc.text(label, startX, textY, { align: "left" });
+    // Draw the URL in bold, immediately after the label, no overlap
+    doc.setFont("helvetica", "bold");
+    doc.text(url, startX + labelWidth, textY, { align: "left" });
+    doc.setFont("helvetica", "normal");
 
+    textY += 12;
+    doc.setFontSize(20);
+    doc.setTextColor(...statusColor);
+    doc.setFont("helvetica", "bold");
+    doc.text(status, 105, textY, { align: "center" });
+
+    textY += 9;
+    doc.setFontSize(12);
+    doc.setTextColor(51, 65, 85); // slate-800 for message
+    doc.setFont("helvetica", "normal");
+    doc.text(message, 105, textY, { align: "center" });
+
+    textY += 9;
     doc.setFontSize(10);
-    doc.setTextColor(255, 255, 255); // white
-    doc.text(`${new Date().toDateString()}`, 105, 60, { align: "center" });
+    doc.setTextColor(51, 65, 85); // slate-800 for message
+    doc.text(`${new Date().toDateString()}`, 105, textY, { align: "center" });
+
+    // Add extra space after the container before the next section
     // --- END REPLACEMENT BLOCK ---
 
     // --- ADD CIRCLES FOR TOTAL ERRORS AND PERCENTAGE ---
     // Draw two circles farther down below the hero section, farther apart and centered horizontally
     // Circle 1: Total Errors
     // Circle 2: Percentage (Score)
-    const circleY = 88; // moved circles further down (was 72)
+    const circleY = 120; // moved circles further down (was 72)
     const circleRadius = 15;
     // Move the circles farther apart, centered horizontally
     const centerX = 105;
@@ -1123,7 +1158,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     // --- END CIRCLES ---
 
     // SEVERITY SUMMARY BOXES
-    const yStart = 120;
+    const yStart = 150;
     const total = issues.length;
     const counts = {
       critical: issues.filter(i => i.impact === 'critical').length,
