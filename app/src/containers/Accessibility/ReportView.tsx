@@ -1198,101 +1198,167 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     // TABLE
     const yTable = yStart + 40;
 
-    // --- BEAUTIFUL TABLE START ---
-    // Reserve space for the footer so the table never overlaps it
+    // --- CUSTOM TABLE LAYOUT: Issue/Message row, then Contexts, then Fixes ---
     const pageHeight = doc.internal.pageSize.getHeight();
     const footerHeight = 15; // Height reserved for the footer (in jsPDF units)
-    autoTable(doc, {
-      startY: yTable,
-      // Set explicit margins for more usable width
-      margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
-      // Set explicit column widths for better table layout
-      columnStyles: {
-        0: { cellWidth: 38 }, // Issue
-        1: { cellWidth: 70 }, // Message
-        2: { cellWidth: 45 }, // Context
-        3: { cellWidth: 38 }, // Fix
-      },
-      head: [
-        [
-          { content: 'Issue', styles: { fillColor: [21, 101, 192], textColor: [255,255,255], fontStyle: 'bold', fontSize: 13, halign: 'center', cellPadding: 6, lineWidth: 0 } }, // dark blue
-          { content: 'Message', styles: { fillColor: [33, 150, 243], textColor: [255,255,255], fontStyle: 'bold', fontSize: 13, halign: 'center', cellPadding: 6, lineWidth: 0 } }, // normal blue
-          { content: 'Context', styles: { fillColor: [144, 202, 249], textColor: [33,33,33], fontStyle: 'bold', fontSize: 13, halign: 'center', cellPadding: 6, lineWidth: 0 } }, // light blue
-          { content: 'Fix', styles: { fillColor: [2, 136, 209], textColor: [255,255,255], fontStyle: 'bold', fontSize: 13, halign: 'center', cellPadding: 6, lineWidth: 0 } } // blue
-        ]
-      ],
-      body: issues.map(issue => [
+
+    // Helper to ensure array
+    const toArray = (val: any) => Array.isArray(val) ? val : (val ? [val] : []);
+
+    // Build the rows
+    let tableBody: any[] = [];
+
+    issues.forEach((issue) => {
+      // Add header row for each issue
+      tableBody.push([
+        {
+          content: 'Issue',
+          colSpan: 2,
+          styles: {
+            fillColor: [21, 101, 192],
+            textColor: [255,255,255],
+            fontStyle: 'bold',
+            fontSize: 13,
+            halign: 'center',
+            cellPadding: 6,
+            lineWidth: 0
+          }
+        },
+        {
+          content: 'Message',
+          colSpan: 2,
+          styles: {
+            fillColor: [33, 150, 243],
+            textColor: [255,255,255],
+            fontStyle: 'bold',
+            fontSize: 13,
+            halign: 'center',
+            cellPadding: 6,
+            lineWidth: 0
+          }
+        }
+      ]);
+
+      // Row 1: Issue + Message (2 columns, each spans 2 columns)
+      tableBody.push([
         {
           content: issue.code ? `${issue.code} (${issue.impact})` : '',
+          colSpan: 2,
           styles: {
             fontStyle: 'bold',
-            fontSize: 11,
+            fontSize: 12,
             textColor:
               issue.impact === 'critical'
-                ? [21, 101, 192] // dark blue
+                ? [21, 101, 192]
                 : issue.impact === 'serious'
-                ? [33, 150, 243] // normal blue
-                : [2, 136, 209], // blue
+                ? [33, 150, 243]
+                : [2, 136, 209],
             halign: 'center',
-            cellPadding: 5,
+            cellPadding: 6,
+            fillColor:
+              issue.impact === 'critical'
+                ? [187, 222, 251]
+                : issue.impact === 'serious'
+                ? [144, 202, 249]
+                : [232, 245, 253],
             lineWidth: 0
           }
         },
         {
           content: issue.message || '',
+          colSpan: 2,
           styles: {
             fontStyle: 'normal',
-            fontSize: 11,
+            fontSize: 12,
             textColor: [33, 33, 33],
             halign: 'left',
-            cellPadding: 5,
-            lineWidth: 0
-          }
-        },
-        {
-          content: Array.isArray(issue.context) ? issue.context[0] : issue.context || '',
-          styles: {
-            fontStyle: 'italic',
-            fontSize: 11,
-            textColor: [21, 101, 192], // dark blue
-            halign: 'left',
-            cellPadding: 5,
-            lineWidth: 0
-          }
-        },
-        {
-          content: issue.recommended_action || '',
-          styles: {
-            fontStyle: 'normal',
-            fontSize: 11,
-            textColor: [33, 150, 243], // normal blue
-            halign: 'left',
-            cellPadding: 5,
+            cellPadding: 6,
+            fillColor: [255,255,255],
             lineWidth: 0
           }
         }
-      ]),
+      ]);
+
+      // Row 2: Context(s) (each context in its own cell, spanning all 4 columns)
+      const contexts = toArray(issue.context);
+      if (contexts.length > 0) {
+        tableBody.push([
+          {
+            content: 'Context:',
+            colSpan: 1,
+            styles: {
+              fontStyle: 'bolditalic',
+              fontSize: 11,
+              textColor: [21, 101, 192],
+              halign: 'right',
+              cellPadding: 5,
+              fillColor: [232, 245, 253],
+              lineWidth: 0
+            }
+          },
+          {
+            content: contexts.map((ctx, idx) => ctx ? `${ctx}` : '').filter(Boolean).join('\n\n'),
+            colSpan: 3,
+            styles: {
+              fontStyle: 'italic',
+              fontSize: 11,
+              textColor: [21, 101, 192],
+              halign: 'left',
+              cellPadding: 5,
+              fillColor: [232, 245, 253],
+              lineWidth: 0
+            }
+          },
+        ]);
+      }
+
+      // Row 3: Fix(es) (each fix in its own cell, spanning all 4 columns)
+      const fixes = toArray(issue.recommended_action);
+      if (fixes.length > 0 && fixes.some(f => !!f)) {
+        tableBody.push([
+          {
+            content: 'Fix:',
+            colSpan: 1,
+            styles: {
+              fontStyle: 'bolditalic',
+              fontSize: 11,
+              textColor: [2, 136, 209],
+              halign: 'right',
+              cellPadding: 5,
+              fillColor: [232, 245, 253],
+              lineWidth: 0
+            }
+          },
+          {
+            content: fixes.map((fix, idx) => fix ? `${fix}` : '').filter(Boolean).join('\n\n'),
+            colSpan: 3,
+            styles: {
+              fontStyle: 'normal',
+              fontSize: 11,
+              textColor: [33, 150, 243],
+              halign: 'left',
+              cellPadding: 5,
+              fillColor: [232, 245, 253],
+              lineWidth: 0
+            }
+          }
+        ]);
+      }
+    });
+
+    // No global table header, since each issue has its own header row
+    autoTable(doc, {
+      startY: yTable,
+      margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
+      head: [],
+      body: tableBody,
       theme: 'grid',
-      headStyles: {
-        fontStyle: 'bold',
-        fontSize: 13,
-        halign: 'center',
-        lineWidth: 0,
-        cellPadding: 6,
-        textColor: [255,255,255],
-        fillColor: [21, 101, 192], // dark blue
-        font: 'helvetica'
+      columnStyles: {
+        0: { cellWidth: 38 },
+        1: { cellWidth: 38 },
+        2: { cellWidth: 70 },
+        3: { cellWidth: 45 }
       },
-      bodyStyles: {
-        font: 'helvetica',
-        fontSize: 11,
-        cellPadding: 5,
-        valign: 'middle',
-        lineWidth: 0,
-        textColor: [33, 33, 33],
-        minCellHeight: 12
-      },
-      alternateRowStyles: { fillColor: [232, 245, 253] }, // very light blue
       styles: {
         cellPadding: 5,
         fontSize: 11,
@@ -1302,23 +1368,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
         font: 'helvetica'
       },
       didParseCell(data) {
-        const issue = issues[data.row.index];
-        if (data.section === 'body' && issue) {
-          if (issue.impact === 'critical') {
-            data.cell.styles.fillColor = [187, 222, 251]; // light blue
-            data.cell.styles.textColor = [21, 101, 192]; // dark blue
-            data.cell.styles.fontStyle = 'bold';
-            data.cell.styles.lineWidth = 0;
-          } else if (issue.impact === 'serious') {
-            data.cell.styles.fillColor = [144, 202, 249]; // lighter blue
-            data.cell.styles.textColor = [33, 150, 243]; // normal blue
-            data.cell.styles.lineWidth = 0;
-          } else {
-            data.cell.styles.fillColor = [232, 245, 253]; // very light blue
-            data.cell.styles.textColor = [2, 136, 209]; // blue
-            data.cell.styles.lineWidth = 0;
-          }
-        }
+        // No-op: styles are set per cell above
         if (data.section === 'head') {
           data.cell.styles.lineWidth = 0;
         }
@@ -1339,9 +1389,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
           data.table.hasOwnProperty('startY') &&
           data.table.hasOwnProperty('finalY')
         ) {
-          // Calculate x, y, width, height based on table position and size
           const x = data.table.settings?.margin?.left ?? 15;
-          // Fallback: try data.table.startY, else data.table.cursor?.y, else 15
           const y = (data.table as any).startY ?? (data.table as any).cursor?.y ?? 15;
           const width =
             doc.internal.pageSize.getWidth() -
@@ -1353,17 +1401,14 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
           doc.roundedRect(x, y, width, height, 4, 4, 'S');
         }
       },
-      // Prevent table from printing into the reserved footer area
       willDrawCell: function (data) {
-        // If the cell would be drawn below the allowed area, force a page break
         const cellBottom = data.cell.y + data.cell.height;
         if (cellBottom > pageHeight - footerHeight) {
           doc.addPage();
         }
       }
     });
-    // --- BEAUTIFUL TABLE END ---
-    // FOOTER
+    // --- END CUSTOM TABLE LAYOUT ---
     if (accessibilityStatementLinkUrl) {
       const totalPages = (doc as any).internal.getNumberOfPages();
       const footerY = doc.internal.pageSize.getHeight() - 10;
