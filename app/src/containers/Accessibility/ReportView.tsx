@@ -33,7 +33,7 @@ import { toast } from 'sonner';
 import TechStack from './TechStack';
 import { CircularProgress } from '@mui/material';
 import getProfileQuery from '@/queries/auth/getProfile';
-import getLogoUrlOnly from '@/utils/getLogoUrlOnly'
+import getLogoUrlOnly from '@/utils/getWidgetSettings'
 
 // Add this array near the top of the file
 const accessibilityFacts = [
@@ -974,15 +974,16 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     const WEBABILITY_SCORE_BONUS = 45;
     const MAX_TOTAL_SCORE = 95;
     const doc = new jsPDF();
-  
     // 🟢 Await logo before continuing
-    const logoUrl = await getLogoUrlOnly(reportData.url);
-    if (typeof window !== 'undefined' && window.Image && logoUrl !== ' ') {
+    console.log("before",reportData.url);
+    const { logoImage, logoUrl, accessibilityStatementLinkUrl } = await getLogoUrlOnly(reportData.url);
+
+    if (typeof window !== 'undefined' && window.Image && logoImage !== ' ') {
       // Use natural logo dimensions, but constrain max width/height to fit header area
       // We'll load the image to get its real size, then scale to fit max 50x18 (preserving aspect ratio)
-      if (logoUrl) {
+      if (logoImage) {
         const img = new window.Image();
-        img.src = logoUrl;
+        img.src = logoImage;
         await new Promise<void>((resolve) => {
           img.onload = () => {
             // Get natural size
@@ -1004,21 +1005,29 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
                 // Dynamically position logo vertically centered in header area (maxHeight = 30)
                 const y = 4 + (30 - drawHeight) / 2;
           
-            doc.addImage(logoUrl, 'PNG', 8, y, drawWidth, drawHeight, undefined, 'FAST');
-          
+            doc.addImage(logoImage, 'PNG', 8, y, drawWidth, drawHeight, undefined, 'FAST');
+            doc.link(8, y, drawWidth, drawHeight, { url: logoUrl, target: '_blank' });          
             resolve();
           };
           img.onerror = () => {
             
-            doc.addImage(logoUrl, 'PNG', 8, 6, 50, 18, undefined, 'FAST');
+            doc.addImage(logoImage, 'PNG', 8, 6, 50, 18, undefined, 'FAST');
             resolve();
           };
         });
       }
     }
-  
     // Extract issues for PDF
-    
+    // Add accessibility statement link
+    if (accessibilityStatementLinkUrl) {
+      let y = 34; // Initialize y variable
+      doc.setFontSize(10);
+      doc.setFont('Helvetica', 'normal');
+      doc.setTextColor(0, 0, 0); // Black color for link
+      const linkText = 'Accessibility Statement';
+      doc.text(linkText, 8, y);
+      doc.link(8, y - 3, doc.getTextWidth(linkText), 4, { url: accessibilityStatementLinkUrl, target: '_blank' });
+    }
     const issues = extractIssuesFromReport(reportData);
     const criticalCount = issues.filter(i => i.impact === 'critical').length;
     const seriousCount = issues.filter(i => i.impact === 'serious').length;
@@ -1047,7 +1056,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     }
   
     // Overview Section
-    let y = 36;
+    let y = 45;
     doc.setFontSize(16);
     doc.setFont('Helvetica', 'normal');
     const scanResultsText = 'Scan Results for';
