@@ -3,6 +3,7 @@ import { useParams, useLocation, useHistory } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
+
 import {
   AlertTriangle,
   AlertCircle,
@@ -961,189 +962,381 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     });
   }
 
- 
   const generatePDF = async (
     reportData: { score: number; widgetInfo: { result: string }; url: string }
   ): Promise<Blob> => {
-    // Update the URL from query params
-    // Ensure reportData.url is set from queryParams if not already provided
+    const { jsPDF } = await import("jspdf");
+    const autoTable = (await import("jspdf-autotable")).default;
+    const doc = new jsPDF();
+
     if (!reportData.url) {
-      reportData.url = queryParams.get('domain') || '';
-      console.log("Report data is", reportData);
+      reportData.url = queryParams.get("domain") || "";
     }
+
+    const { logoImage, logoUrl, accessibilityStatementLinkUrl } = await getLogoUrlOnly(reportData.url);
     const WEBABILITY_SCORE_BONUS = 45;
     const MAX_TOTAL_SCORE = 95;
-    const doc = new jsPDF();
-    // 🟢 Await logo before continuing
-    console.log("before",reportData.url);
-    const { logoImage, logoUrl, accessibilityStatementLinkUrl } = await getLogoUrlOnly(reportData.url);
-
-    if (typeof window !== 'undefined' && window.Image && logoImage !== ' ') {
-      // Use natural logo dimensions, but constrain max width/height to fit header area
-      // We'll load the image to get its real size, then scale to fit max 50x18 (preserving aspect ratio)
-      if (logoImage) {
-        const img = new window.Image();
-        img.src = logoImage;
-        await new Promise<void>((resolve) => {
-          img.onload = () => {
-            // Get natural size
-            const { width: naturalWidth, height: naturalHeight } = img;
-            // Set max dimensions
-            const maxWidth = 50;  // Wider logo
-            const maxHeight = 30;  // Taller logo
-            
-            let drawWidth = naturalWidth;
-            let drawHeight = naturalHeight;
-            // Scale down if needed
-            if (drawWidth > maxWidth || drawHeight > maxHeight) {
-              const widthRatio = maxWidth / drawWidth;
-              const heightRatio = maxHeight / drawHeight;
-              const scale = Math.min(widthRatio, heightRatio);
-              drawWidth = drawWidth * scale;
-              drawHeight = drawHeight * scale;
-            }
-                const y = 4 + (30 - drawHeight) / 2;
-          
-            doc.addImage(logoImage, 'PNG', 8, y, drawWidth, drawHeight, undefined, 'FAST');
-            doc.link(8, y, drawWidth, drawHeight, { url: logoUrl, target: '_blank' });          
-            resolve();
-          };
-          img.onerror = () => {
-            
-            doc.addImage(logoImage, 'PNG', 8, 6, 50, 18, undefined, 'FAST');
-            resolve();
-          };
-        });
-      }
-    }
-  
-
-    
     const issues = extractIssuesFromReport(reportData);
-    const criticalCount = issues.filter(i => i.impact === 'critical').length;
-    const seriousCount = issues.filter(i => i.impact === 'serious').length;
-    const moderateCount = issues.filter(i => i.impact === 'moderate').length;
-  
+
     const baseScore = reportData.score || 0;
-    const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility';
-    const enhancedScore = hasWebAbility
-      ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
-      : baseScore;
-  
+    const hasWebAbility = reportData.widgetInfo?.result === "WebAbility";
+    const enhancedScore = hasWebAbility ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE) : baseScore;
+
+    // Use the same logic as the UI status/message/color block above
+    // Use the same colors and messages as in the UI
     let status: string, message: string, statusColor: [number, number, number];
     if (enhancedScore >= 80) {
       status = "Compliant";
-      message = "Your website meets the basic requirements for accessibility.";
-      statusColor = [43, 168, 74];
+      message = "Your website is highly accessible. Great job!";
+      statusColor = [22, 163, 74]; // green-600
     } else if (enhancedScore >= 50) {
       status = "Partially Compliant";
-      message = "Your website meets some accessibility requirements but needs improvement.";
-      statusColor = [243, 182, 31];
+      message = "Your website is partially accessible. Some improvements are needed.";
+      statusColor = [202, 138, 4]; // yellow-600
     } else {
-      status = "Non-compliant";
+      status = "Not Compliant";
       message = "Your website needs significant accessibility improvements.";
-      statusColor = [255, 27, 28];
+      statusColor = [220, 38, 38]; // red-600
     }
-  
-    // Overview Section
-    let y = 45;
-    doc.setFontSize(16);
-    doc.setFont('Helvetica', 'normal');
-    const scanResultsText = 'Scan Results for';
-    const urlText = reportData.url || '';
-    doc.text(scanResultsText, 8, y);
-    doc.setFont('Helvetica', 'bold');
-    doc.text(urlText, 7 + doc.getTextWidth(scanResultsText), y);
-  
-    // Compliance status
-    y += 10;
-    doc.setFontSize(12);
-    doc.setFont('Helvetica', 'bold');
-    doc.setTextColor(...statusColor);
-    const statusLabel = `${status}: `;
-    doc.text(statusLabel, 8, y);
-    doc.setFont('Helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
-    doc.text(message, 11 + doc.getTextWidth(statusLabel), y);
-  
-    // Score section
-    y += 10;
-    doc.setFontSize(12);
-    doc.setFont('Helvetica', 'bold');
-    doc.setTextColor(41, 128, 185);
-    const scoreLabel = 'Accessibility Score: ';
-    doc.text(scoreLabel, 8, y);
-    doc.setFont('Helvetica', 'normal');
-    doc.setTextColor(0, 0, 0);
-    const scoreText = `${enhancedScore}%`;
-    doc.text(scoreText, 12 + doc.getTextWidth(scoreLabel), y);
-  
-    if (hasWebAbility) {
-      doc.setFontSize(12);
-      doc.setFont('Helvetica', 'normal');
-      doc.setTextColor(43, 168, 74);
-      const bonusText = `(Base: ${baseScore}% + ${WEBABILITY_SCORE_BONUS}% WebAbility Bonus)`;
-      doc.text(bonusText, 14 + doc.getTextWidth(scoreLabel + scoreText), y);
-    }
-  
-    // Issue counts
-    y += 12;
-    doc.setFontSize(13);
-    doc.setTextColor(60, 60, 60);
-    doc.setFont('Helvetica', 'normal');
-    doc.text(`Total Issues: ${issues.length}`, 8, y);
-  
-    y += 8;
-  
-    // Table
-    if (issues.length > 0) {
-      autoTable(doc, {
-        startY: y,
-        margin: { left: 8, right: 8 },
-        head: [['Code', 'Message', 'Context', 'Suggested Fix']],
-        body: issues.map(issue => [
-          (issue.code ? `${issue.code} (${issue.impact})` : ''),
-          issue.message || '',
-          (Array.isArray(issue.context) ? issue.context[0] : issue.context) || '',
-          issue.recommended_action || ''
-        ]),
-        didParseCell: function (data) {
-          if (data.section === 'body') {
-            const issue = issues[data.row.index];
-            if (issue) {
-              if (issue.impact === 'critical') data.cell.styles.fillColor = [255, 204, 204];
-              else if (issue.impact === 'serious') data.cell.styles.fillColor = [255, 236, 179];
-              else data.cell.styles.fillColor = [204, 229, 255];
-              data.cell.styles.textColor = [0, 0, 0];
-            }
+
+    doc.setFillColor(21, 101, 192); // dark blue background
+    doc.rect(0, 0, doc.internal.pageSize.getWidth(), 70, 'F');
+    if (logoImage) {
+      const img = new Image();
+      img.src = logoImage;
+      await new Promise<void>((resolve) => {
+        img.onload = () => {
+          // Make the logo and container bigger
+          const maxWidth = 48, maxHeight = 36; // increased size for a bigger logo
+          let drawWidth = img.width, drawHeight = img.height;
+          const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight);
+          drawWidth *= scale; drawHeight *= scale;
+
+          // Logo position
+          const logoX = 0;   // further left (was 5)
+          const logoY = 6;   // move the logo a little above (was 0 or undefined)
+
+          // Draw a white rounded rectangle container behind the logo, but keep it as before
+          const padding = 12; // a little more padding for bigger logo
+          const containerX = logoX - padding;
+          // Keep the container as before, do not move it up
+          const containerYOffset = 6;
+          const containerY = logoY - padding - containerYOffset;
+          const containerW = drawWidth + 2 * padding-10;
+          const containerH = drawHeight + 2 * padding;
+          doc.setFillColor(255, 255, 255); // white
+          doc.roundedRect(containerX, containerY, containerW, containerH, 8, 8, 'F'); // slightly larger radius
+
+          // Draw the logo image on top of the white container, moved a little above
+          doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
+
+          // Add a link to logoUrl if available
+          if (logoUrl) {
+            doc.link(logoX, logoY, drawWidth, drawHeight, {
+              url: logoUrl,
+              target: '_blank'
+            });
           }
-        },
-        headStyles: { fillColor: [41, 128, 185] },
-        columnStyles: {
-          0: { cellWidth: 30 },
-          1: { cellWidth: 60 },
-          2: { cellWidth: 50 },
-          3: { cellWidth: 50 }
-        }
+
+          resolve();
+        };
+        img.onerror = () => resolve();
       });
     }
+
+    doc.setFontSize(18);
+    doc.setTextColor(255, 255, 255); // white
+    doc.setFont("helvetica", "bold");
+    doc.text("Accessibility audit report for", 105, 20, { align: "center" });
+    doc.setFontSize(16);
+    doc.setTextColor(255, 255, 255); // white
+    doc.text(reportData.url, 105, 30, { align: "center" });
+
+    // --- REPLACEMENT BLOCK ---
+    // Only write the status, message, and date ONCE in the hero section, not again below
+    doc.setFontSize(16);
+    doc.setTextColor(...statusColor); // white
+    doc.setFont("helvetica", "bold");
+    doc.text(status, 105, 45, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.setTextColor(255, 255, 255); // white
+    doc.setFont("helvetica", "normal");
+    doc.text(message, 105, 53, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255); // white
+    doc.text(`${new Date().toDateString()}`, 105, 60, { align: "center" });
+    // --- END REPLACEMENT BLOCK ---
+
+    // --- ADD CIRCLES FOR TOTAL ERRORS AND PERCENTAGE ---
+    // Draw two circles farther down below the hero section, farther apart and centered horizontally
+    // Circle 1: Total Errors
+    // Circle 2: Percentage (Score)
+    const circleY = 88; // moved circles further down (was 72)
+    const circleRadius = 15;
+    // Move the circles farther apart, centered horizontally
+    const centerX = 105;
+    const gap = 40; // increased gap for more distance between circles
+    const circle1X = centerX - circleRadius - gap / 2;
+    const circle2X = centerX + circleRadius + gap / 2;
+
+    // Circle 1: Total Errors (filled dark blue)
+    doc.setDrawColor(21, 101, 192); // dark blue border
+    doc.setLineWidth(1.5);
+    doc.setFillColor(21, 101, 192); // dark blue fill
+    doc.circle(circle1X, circleY, circleRadius, 'FD');
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(19); // Increased font size for better visibility
+    doc.setTextColor(255, 255, 255); // White text
+
+    // Center the number vertically and horizontally in the circle
+    doc.text(`${issues.length}`, circle1X, circleY, { align: "center", baseline: "middle" });
+    // The label "Total Errors" is not visible because the text color is white on a dark blue background,
+    // but the label is placed below the circle, which is on a white/light background.
+    // Change the text color to a dark blue for visibility.
+    doc.setFontSize(10); // Slightly larger label
+    doc.setTextColor(21, 101, 192); // dark blue for visibility on white background
+    doc.setFont("helvetica", "normal");
+    doc.text("Total Errors", circle1X, circleY + circleRadius + 9, { align: "center"  });
+
+    // Circle 2: Percentage (Score) (filled normal blue)
+    doc.setDrawColor(33, 150, 243); // normal blue border
+    doc.setLineWidth(1.5);
+    doc.setFillColor(33, 150, 243); // normal blue fill
+    doc.circle(circle2X, circleY, circleRadius, 'FD');
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(19); // Increased font size for better visibility
+    doc.setTextColor(255, 255, 255); // White text
+    const scoreText = `${Math.round(enhancedScore)}%`;
+    const scoreFontSize = 19;
+    doc.setFontSize(scoreFontSize);
+    // Estimate text height: jsPDF uses approx 0.35 * fontSize for text height
+    const textHeight = scoreFontSize * 0.35;
+    // Center vertically: circleY + (textHeight / 2) is a good approximation
+    doc.text(scoreText, circle2X, circleY , { align: "center", baseline: "middle" });
+
+    doc.setFontSize(10); // Slightly larger label
+    doc.setTextColor(21, 101, 192); // dark blue for visibility on white background
+    doc.setFont("helvetica", "normal");
+    doc.text("Score", circle2X, circleY + circleRadius + 9, { align: "center" });
+    // --- END CIRCLES ---
+
+    // SEVERITY SUMMARY BOXES
+    const yStart = 120;
+    const total = issues.length;
+    const counts = {
+      critical: issues.filter(i => i.impact === 'critical').length,
+      serious: issues.filter(i => i.impact === 'serious').length,
+      moderate: issues.filter(i => i.impact === 'moderate').length
+    };
+    // Use blue shades for all summary boxes
+    const summaryBoxes = [
+      { label: "Severe", count: counts.critical + counts.serious, color: [21, 101, 192] }, // dark blue
+      { label: "Moderate", count: counts.moderate, color: [33, 150, 243] }, // normal blue
+      { label: "Mild", count: total - (counts.critical + counts.serious + counts.moderate), color: [187, 222, 251] } // light blue
+    ];
+
+    let x = 20;
+    for (const box of summaryBoxes) {
+      doc.setFillColor(box.color[0], box.color[1], box.color[2]);
+      doc.roundedRect(x, yStart, 55, 20, 3, 3, 'F');
+      doc.setTextColor(box.label === "Mild" ? 33 : 255, box.label === "Mild" ? 33 : 255, box.label === "Mild" ? 33 : 255); // dark text for light blue, white for others
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${box.count}`, x + 4, yStart + 8);
+      doc.setFontSize(10);
+      doc.text(box.label, x + 4, yStart + 16);
+      x += 60;
+    }
+
+    // SCAN RESULT BLOCK
+    // Do NOT write status, message, and date again here (already in hero section)
+    // TABLE
+    const yTable = yStart + 40;
+
+    // --- BEAUTIFUL TABLE START ---
+    // Reserve space for the footer so the table never overlaps it
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const footerHeight = 15; // Height reserved for the footer (in jsPDF units)
+    autoTable(doc, {
+      startY: yTable,
+      // Set explicit margins for more usable width
+      margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
+      // Set explicit column widths for better table layout
+      columnStyles: {
+        0: { cellWidth: 38 }, // Issue
+        1: { cellWidth: 70 }, // Message
+        2: { cellWidth: 45 }, // Context
+        3: { cellWidth: 38 }, // Fix
+      },
+      head: [
+        [
+          { content: 'Issue', styles: { fillColor: [21, 101, 192], textColor: [255,255,255], fontStyle: 'bold', fontSize: 13, halign: 'center', cellPadding: 6, lineWidth: 0 } }, // dark blue
+          { content: 'Message', styles: { fillColor: [33, 150, 243], textColor: [255,255,255], fontStyle: 'bold', fontSize: 13, halign: 'center', cellPadding: 6, lineWidth: 0 } }, // normal blue
+          { content: 'Context', styles: { fillColor: [144, 202, 249], textColor: [33,33,33], fontStyle: 'bold', fontSize: 13, halign: 'center', cellPadding: 6, lineWidth: 0 } }, // light blue
+          { content: 'Fix', styles: { fillColor: [2, 136, 209], textColor: [255,255,255], fontStyle: 'bold', fontSize: 13, halign: 'center', cellPadding: 6, lineWidth: 0 } } // blue
+        ]
+      ],
+      body: issues.map(issue => [
+        {
+          content: issue.code ? `${issue.code} (${issue.impact})` : '',
+          styles: {
+            fontStyle: 'bold',
+            fontSize: 11,
+            textColor:
+              issue.impact === 'critical'
+                ? [21, 101, 192] // dark blue
+                : issue.impact === 'serious'
+                ? [33, 150, 243] // normal blue
+                : [2, 136, 209], // blue
+            halign: 'center',
+            cellPadding: 5,
+            lineWidth: 0
+          }
+        },
+        {
+          content: issue.message || '',
+          styles: {
+            fontStyle: 'normal',
+            fontSize: 11,
+            textColor: [33, 33, 33],
+            halign: 'left',
+            cellPadding: 5,
+            lineWidth: 0
+          }
+        },
+        {
+          content: Array.isArray(issue.context) ? issue.context[0] : issue.context || '',
+          styles: {
+            fontStyle: 'italic',
+            fontSize: 11,
+            textColor: [21, 101, 192], // dark blue
+            halign: 'left',
+            cellPadding: 5,
+            lineWidth: 0
+          }
+        },
+        {
+          content: issue.recommended_action || '',
+          styles: {
+            fontStyle: 'normal',
+            fontSize: 11,
+            textColor: [33, 150, 243], // normal blue
+            halign: 'left',
+            cellPadding: 5,
+            lineWidth: 0
+          }
+        }
+      ]),
+      theme: 'grid',
+      headStyles: {
+        fontStyle: 'bold',
+        fontSize: 13,
+        halign: 'center',
+        lineWidth: 0,
+        cellPadding: 6,
+        textColor: [255,255,255],
+        fillColor: [21, 101, 192], // dark blue
+        font: 'helvetica'
+      },
+      bodyStyles: {
+        font: 'helvetica',
+        fontSize: 11,
+        cellPadding: 5,
+        valign: 'middle',
+        lineWidth: 0,
+        textColor: [33, 33, 33],
+        minCellHeight: 12
+      },
+      alternateRowStyles: { fillColor: [232, 245, 253] }, // very light blue
+      styles: {
+        cellPadding: 5,
+        fontSize: 11,
+        valign: 'middle',
+        lineWidth: 0,
+        overflow: 'linebreak',
+        font: 'helvetica'
+      },
+      didParseCell(data) {
+        const issue = issues[data.row.index];
+        if (data.section === 'body' && issue) {
+          if (issue.impact === 'critical') {
+            data.cell.styles.fillColor = [187, 222, 251]; // light blue
+            data.cell.styles.textColor = [21, 101, 192]; // dark blue
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.lineWidth = 0;
+          } else if (issue.impact === 'serious') {
+            data.cell.styles.fillColor = [144, 202, 249]; // lighter blue
+            data.cell.styles.textColor = [33, 150, 243]; // normal blue
+            data.cell.styles.lineWidth = 0;
+          } else {
+            data.cell.styles.fillColor = [232, 245, 253]; // very light blue
+            data.cell.styles.textColor = [2, 136, 209]; // blue
+            data.cell.styles.lineWidth = 0;
+          }
+        }
+        if (data.section === 'head') {
+          data.cell.styles.lineWidth = 0;
+        }
+      },
+      didDrawPage: function (data) {
+        // Add a subtle shadow under the table
+        const pageWidth = doc.internal.pageSize.getWidth();
+        doc.setDrawColor(187, 222, 251); // light blue
+        doc.setLineWidth(0.5);
+        if (data.cursor && typeof data.cursor.y === 'number') {
+          doc.line(15, data.cursor.y + 2, pageWidth - 15, data.cursor.y + 2);
+        }
+        // Add rounded corners to the table
+        if (
+          data.table &&
+          data.table.body &&
+          data.table.body.length > 0 &&
+          data.table.hasOwnProperty('startY') &&
+          data.table.hasOwnProperty('finalY')
+        ) {
+          // Calculate x, y, width, height based on table position and size
+          const x = data.table.settings?.margin?.left ?? 15;
+          // Fallback: try data.table.startY, else data.table.cursor?.y, else 15
+          const y = (data.table as any).startY ?? (data.table as any).cursor?.y ?? 15;
+          const width =
+            doc.internal.pageSize.getWidth() -
+            (data.table.settings?.margin?.left ?? 15) -
+            (data.table.settings?.margin?.right ?? 15);
+          const height = (data.table.finalY ?? y) - y;
+          doc.setDrawColor(144, 202, 249); // lighter blue
+          doc.setLineWidth(0.8);
+          doc.roundedRect(x, y, width, height, 4, 4, 'S');
+        }
+      },
+      // Prevent table from printing into the reserved footer area
+      willDrawCell: function (data) {
+        // If the cell would be drawn below the allowed area, force a page break
+        const cellBottom = data.cell.y + data.cell.height;
+        if (cellBottom > pageHeight - footerHeight) {
+          doc.addPage();
+        }
+      }
+    });
+    // --- BEAUTIFUL TABLE END ---
+    // FOOTER
     if (accessibilityStatementLinkUrl) {
-      const totalPages = (doc as any).internal.getNumberOfPages(); 
-      const footerY = doc.internal.pageSize.getHeight() - 5;
-      const linkText = 'Accessibility Statement';
-    
+      const totalPages = (doc as any).internal.getNumberOfPages();
+      const footerY = doc.internal.pageSize.getHeight() - 10;
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
-        doc.setFontSize(10);
-        doc.setFont('Helvetica', 'normal');
-        doc.setTextColor(0, 0, 0);
-        doc.text(linkText, 8, footerY);
-        doc.link(8, footerY - 3, doc.getTextWidth(linkText), 4, {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(33, 150, 243); // normal blue
+        doc.text('Accessibility Statement', 15, footerY);
+        doc.link(15, footerY - 3, doc.getTextWidth('Accessibility Statement'), 4, {
           url: accessibilityStatementLinkUrl,
-          target: '_blank',
+          target: '_blank'
         });
       }
     }
+
     return doc.output("blob");
   };
 
