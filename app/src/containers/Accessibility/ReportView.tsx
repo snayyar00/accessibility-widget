@@ -1002,7 +1002,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
               drawWidth = drawWidth * scale;
               drawHeight = drawHeight * scale;
             }
-                // Dynamically position logo vertically centered in header area (maxHeight = 30)
                 const y = 4 + (30 - drawHeight) / 2;
           
             doc.addImage(logoImage, 'PNG', 8, y, drawWidth, drawHeight, undefined, 'FAST');
@@ -1017,17 +1016,9 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
         });
       }
     }
-    // Extract issues for PDF
-    // Add accessibility statement link
-    if (accessibilityStatementLinkUrl) {
-      let y = 34; // Initialize y variable
-      doc.setFontSize(10);
-      doc.setFont('Helvetica', 'normal');
-      doc.setTextColor(0, 0, 0); // Black color for link
-      const linkText = 'Accessibility Statement';
-      doc.text(linkText, 8, y);
-      doc.link(8, y - 3, doc.getTextWidth(linkText), 4, { url: accessibilityStatementLinkUrl, target: '_blank' });
-    }
+  
+
+    
     const issues = extractIssuesFromReport(reportData);
     const criticalCount = issues.filter(i => i.impact === 'critical').length;
     const seriousCount = issues.filter(i => i.impact === 'serious').length;
@@ -1039,7 +1030,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
       ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
       : baseScore;
   
-    // Compliance status logic
     let status: string, message: string, statusColor: [number, number, number];
     if (enhancedScore >= 80) {
       status = "Compliant";
@@ -1137,7 +1127,23 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
         }
       });
     }
-  
+    if (accessibilityStatementLinkUrl) {
+      const totalPages = (doc as any).internal.getNumberOfPages(); 
+      const footerY = doc.internal.pageSize.getHeight() - 5;
+      const linkText = 'Accessibility Statement';
+    
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.setFont('Helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        doc.text(linkText, 8, footerY);
+        doc.link(8, footerY - 3, doc.getTextWidth(linkText), 4, {
+          url: accessibilityStatementLinkUrl,
+          target: '_blank',
+        });
+      }
+    }
     return doc.output("blob");
   };
 

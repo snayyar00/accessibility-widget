@@ -318,15 +318,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   
     // Extract issues for PDF
     
-    if (accessibilityStatementLinkUrl) {
-      let y = 34; // Initialize y variable
-      doc.setFontSize(10);
-      doc.setFont('Helvetica', 'normal');
-      doc.setTextColor(0, 0, 0); // Black color for link
-      const linkText = 'Accessibility Statement';
-      doc.text(linkText, 8, y);
-      doc.link(8, y - 3, doc.getTextWidth(linkText), 4, { url: accessibilityStatementLinkUrl, target: '_blank' });
-    }
+
     const issues = extractIssuesFromReport(reportData);
     const criticalCount = issues.filter(i => i.impact === 'critical').length;
     const seriousCount = issues.filter(i => i.impact === 'serious').length;
@@ -435,6 +427,24 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           3: { cellWidth: 50 }
         }
       });
+    }
+
+    if (accessibilityStatementLinkUrl) {
+      const totalPages = (doc as any).internal.getNumberOfPages(); 
+      const footerY = doc.internal.pageSize.getHeight() - 5;
+      const linkText = 'Accessibility Statement';
+    
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.setFont('Helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        doc.text(linkText, 8, footerY);
+        doc.link(8, footerY - 3, doc.getTextWidth(linkText), 4, {
+          url: accessibilityStatementLinkUrl,
+          target: '_blank',
+        });
+      }
     }
   
     return doc.output("blob");
