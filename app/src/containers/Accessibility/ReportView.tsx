@@ -1271,61 +1271,81 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
         }
       ]);
 
-      // Row 2: Context(s) - display heading first, then each context in its own black box with spacing
-      const contexts = toArray(issue.context);
-      if (contexts.length > 0) {
-        // Heading row for Context
-        tableBody.push([
-          {
-            content: 'Context:',
-            colSpan: 4,
-            styles: {
-              fontStyle: 'bolditalic',
-              fontSize: 11,
-              textColor: [0, 0, 0], // black text
-              halign: 'left',
-              cellPadding: 5,
-              fillColor: [255, 255, 255], // white background
-              lineWidth: 0
-            }
-          }
-        ]);
-        // Each context in its own row/container, as a black box with spacing
-        const filteredContexts = contexts.filter(Boolean);
-        filteredContexts.forEach((ctx, ctxIdx) => {
-          tableBody.push([
-            {
-              content: `${ctxIdx + 1}. \`\`\`\n${ctx}\n\`\`\``,
-              colSpan: 4,
-              styles: {
-                fontStyle: 'normal',
-                fontSize: 11,
-                textColor: [255, 255, 255], // white text for black box
-                halign: 'left',
-                cellPadding: { top: 10, right: 8, bottom: 10, left: 8 }, // more vertical space for separation
-                fillColor: [0, 0, 0], // black background for context box
-                lineWidth: 0,
-                font: 'courier'
-              }
-            }
-          ]);
-          // Add a spacer row after each context except the last
-          if (ctxIdx < filteredContexts.length - 1) {
-            tableBody.push([
-              {
-                content: '',
-                colSpan: 4,
-                styles: {
-                  cellPadding: 0,
-                  fillColor: [255, 255, 255],
-                  lineWidth: 0,
-                  minCellHeight: 6 // vertical space between containers
-                }
-              }
-            ]);
-          }
-        });
+// Contexts block (styled like code snapshots with numbers and black rounded boxes)
+const contexts = toArray(issue.context).filter(Boolean);
+
+if (contexts.length > 0) {
+  // Heading: "Context:"
+  tableBody.push([
+    {
+      content: 'Context:',
+      colSpan: 4,
+      styles: {
+        fontStyle: 'bolditalic',
+        fontSize: 11,
+        textColor: [0, 0, 0],
+        halign: 'left',
+        cellPadding: 5,
+        fillColor: [255, 255, 255],
+        lineWidth: 0
       }
+    }
+  ]);
+
+  contexts.forEach((ctx, index) => {
+    // Row: number label + code block
+    tableBody.push([
+      {
+        content: `${index + 1}`,
+        styles: {
+          fontStyle: 'bold',
+          fontSize: 11,
+          textColor: [255, 255, 255],
+          fillColor: [30, 41, 59], // dark navy
+          halign: 'center',
+          valign: 'middle',
+          cellPadding: 6,
+          lineWidth: 0,
+          minCellHeight: 25
+        }
+      },
+      {
+        content: ctx,
+        colSpan: 3,
+        styles: {
+          font: 'courier',
+          fontSize: 10,
+          textColor: [255, 255, 255],
+          fillColor: [15, 23, 42], // deeper navy background
+          halign: 'left',
+          valign: 'middle',
+          cellPadding: 10,
+          lineWidth: 0,
+          minCellHeight: 25
+        },
+        _isCodeBlock: true
+      }
+    ]);
+
+    // Spacer row after each block (except the last)
+    if (index < contexts.length - 1) {
+      tableBody.push([
+        {
+          content: '',
+          colSpan: 4,
+          styles: {
+            fillColor: [255, 255, 255],
+            cellPadding: 0,
+            lineWidth: 0,
+            minCellHeight: 8
+          }
+        }
+      ]);
+    }
+  });
+}
+
+
 
       // Row 3: Fix(es) - display heading first, then each fix in its own white back container with spacing
       const fixes = toArray(issue.recommended_action);
@@ -1411,7 +1431,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
         if (data.section === 'head') {
           data.cell.styles.lineWidth = 0;
         }
-      },
+      }
+      ,
       didDrawPage: function (data) {
         // Optionally, you can remove the shadow and rounded corners for a cleaner white look,
         // or keep them if you want. Here, we keep the rounded corners but use a light gray for subtlety.
@@ -1445,6 +1466,23 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
         const cellBottom = data.cell.y + data.cell.height;
         if (cellBottom > pageHeight - footerHeight) {
           doc.addPage();
+        }
+        // Draw round black boxes for context rows
+        // We use a custom property '_isRoundBlackBox' to identify these cells
+        if (
+          data.cell.raw &&
+          typeof data.cell.raw === 'object' &&
+          (data.cell.raw as any)._isRoundBlackBox
+        ) {
+          const x = data.cell.x;
+          const y = data.cell.y;
+          const w = data.cell.width;
+          const h = data.cell.height;
+          const radius = 8;
+          doc.setDrawColor(0, 0, 0);
+          doc.setLineWidth(0.5);
+          doc.setFillColor(0, 0, 0);
+          doc.roundedRect(x, y, w, h, radius, radius, 'F');
         }
       }
     });
