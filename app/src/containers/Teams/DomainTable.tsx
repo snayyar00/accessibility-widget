@@ -402,7 +402,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
         billingLoading={billingLoading}
         setBillingLoading={setBillingLoading}
         domain={selectedDomain.current}
-        promoCode={appSumoCount <= (codeCount*2) ? [appSumoCount]:[]}
+        promoCode={appSumoCount <= codeCount ? [appSumoCount]:[]}
         setReloadSites={setReloadSites}
         isOpen={showActivateModal}
         onClose={handleCloseActivateModal}
