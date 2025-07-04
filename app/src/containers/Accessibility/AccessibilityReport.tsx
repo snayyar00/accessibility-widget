@@ -270,7 +270,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     if (!reportData.url) {
       reportData.url = processedReportKeys?.[0]?.url || "";
-      console.log("Report data is", processedReportKeys);
     }
 
     const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
@@ -308,85 +307,98 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     if (logoImage) {
       const img = new Image();
+      let imageLoadError = false;
       img.src = logoImage;
-      await new Promise<void>((resolve) => {
-        let settled = false;
-        const TIMEOUT_MS = 5000; // 5 seconds
 
-        const cleanup = () => {
-          img.onload = null;
-          img.onerror = null;
-        };
+      try {
+        await new Promise<void>((resolve, reject) => {
+          let settled = false;
+          const TIMEOUT_MS = 5000; // 5 seconds
 
-        const timeoutId = setTimeout(() => {
-          if (!settled) {
+          const cleanup = () => {
+            img.onload = null;
+            img.onerror = null;
+          };
+
+          const timeoutId = setTimeout(() => {
+            if (!settled) {
+              settled = true;
+              cleanup();
+              imageLoadError = true;
+              reject(new Error('Logo image load timed out'));
+            }
+          }, TIMEOUT_MS);
+
+          img.onload = () => {
+            if (settled) return;
             settled = true;
+            clearTimeout(timeoutId);
             cleanup();
-            // If image fails to load in time, just use default offset
-            logoBottomY = 0;
             resolve();
-          }
-        }, TIMEOUT_MS);
+          };
+          img.onerror = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
+            cleanup();
+            imageLoadError = true;
+            reject(new Error('Logo image failed to load'));
+          };
+        });
+      } catch (err) {
+        // Log the error for debugging, but continue PDF generation
+        // eslint-disable-next-line no-console
+        console.warn('Logo image could not be loaded for PDF:', err);
+        logoBottomY = 0;
+        imageLoadError = true;
+      }
 
-        img.onload = () => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timeoutId);
-          cleanup();
-          // Make the logo and container bigger
-          const maxWidth = 48,
-            maxHeight = 36; // increased size for a bigger logo
-          let drawWidth = img.width,
-            drawHeight = img.height;
-          const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight);
-          drawWidth *= scale;
-          drawHeight *= scale;
+      if (!imageLoadError) {
+        // Make the logo and container bigger
+        const maxWidth = 48,
+          maxHeight = 36; // increased size for a bigger logo
+        let drawWidth = img.width,
+          drawHeight = img.height;
+        const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight);
+        drawWidth *= scale;
+        drawHeight *= scale;
 
-          // Logo position
-          const logoX = 0; 
-          const logoY = 3; 
+        // Logo position
+        const logoX = 0;
+        const logoY = 3;
 
-          const padding = 14; 
-          const containerX = logoX - padding;
-          // Keep the container as before, do not move it up
-          const containerYOffset = 10;
-          const containerY = logoY - padding - containerYOffset;
-          const containerW = drawWidth + 2 * padding - 10;
-          const containerH = drawHeight + 2 * padding;
-          doc.setFillColor(255, 255, 255); // white
-          doc.roundedRect(
-            containerX,
-            containerY,
-            containerW,
-            containerH,
-            4,
-            4,
-            'F',
-          ); 
+        const padding = 14;
+        const containerX = logoX - padding;
+        // Keep the container as before, do not move it up
+        const containerYOffset = 10;
+        const containerY = logoY - padding - containerYOffset;
+        const containerW = drawWidth + 2 * padding - 10;
+        const containerH = drawHeight + 2 * padding;
+        doc.setFillColor(255, 255, 255); // white
+        doc.roundedRect(
+          containerX,
+          containerY,
+          containerW,
+          containerH,
+          4,
+          4,
+          'F',
+        );
 
-          doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
+        doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
 
-          // Add a link to logoUrl if available
-          if (logoUrl) {
-            doc.link(logoX, logoY, drawWidth, drawHeight, {
-              url: logoUrl,
-              target: '_blank',
-            });
-          }
+        // Add a link to logoUrl if available
+        if (logoUrl) {
+          doc.link(logoX, logoY, drawWidth, drawHeight, {
+            url: logoUrl,
+            target: '_blank',
+          });
+        }
 
-          logoBottomY = Math.max(logoY + drawHeight, containerY + containerH);
-          resolve();
-        };
-        img.onerror = () => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timeoutId);
-          cleanup();
-          logoBottomY = 0;
-          resolve();
-        };
-      });
+        logoBottomY = Math.max(logoY + drawHeight, containerY + containerH);
+      }
     }
+
 
     const containerWidth = 170;
     const containerHeight = 60;
@@ -579,7 +591,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         },
       ]);
 
-      console.log("................",issue);
       // Row 1: Issue + Message with elegant code block styling
       tableBody.push([
         {
@@ -1172,7 +1183,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             try {
                               // Fetch the report for the clicked row and wait for the response
                               const { data: fetchedReportData } = await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
-                              console.log("data",data)
                               if (fetchedReportData && fetchedReportData.fetchReportByR2Key) {
                                 fetchedReportData.fetchReportByR2Key.url = row.url;
                                 const pdfBlob = await generatePDF(fetchedReportData.fetchReportByR2Key);

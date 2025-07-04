@@ -23,7 +23,6 @@ const getLogoUrlOnly = async (
 
     const data = await response.json();
     const settings = typeof data.settings === 'string' ? JSON.parse(data.settings) : data.settings;
-    console.log(settings)
     const logoImage = settings?.logoImage || fallbackLogoUrl;
     const logoUrl = settings?.logoUrl || '';
     const accessibilityStatementLinkUrl = settings?.accessibilityStatementLinkUrl || '';
