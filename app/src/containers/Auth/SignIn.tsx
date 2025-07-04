@@ -48,6 +48,58 @@ const SignIn: React.FC = () => {
     return false;
   }
 
+  const getErrorCode = () => {
+    if (!error?.graphQLErrors?.[0]) return undefined;
+    
+    const graphQLError = error.graphQLErrors[0];
+    const message = graphQLError.message;
+    
+    if (message && (message.includes('ACCOUNT_LOCKED') || message.includes('ATTEMPTS_WARNING'))) {
+      return message;
+    }
+    
+    if (message && (message.includes('Too many') || message.includes('please try again'))) {
+      return message;
+    }
+    
+    return graphQLError.extensions?.code;
+  };
+
+  const getErrorMessage = (errorCode: string | undefined) => {
+    if (!errorCode) return undefined;
+    
+    if (errorCode === 'ACCOUNT_LOCKED') {
+      return t('Common.validation.account_locked');
+    }
+    if (errorCode === 'ACCOUNT_LOCKED_AFTER_ATTEMPTS') {
+      return t('Common.validation.account_locked_after_attempts');
+    }
+    if (errorCode?.startsWith('ATTEMPTS_WARNING:')) {
+      const remainingAttempts = errorCode.split(':')[1];
+      return t('Common.validation.attempts_warning', { attempts: remainingAttempts });
+    }
+    
+    // Handle rate limit messages - return the raw message
+    if (errorCode?.includes('Too many') || errorCode?.includes('please try again')) {
+      return errorCode;
+    }
+    
+    return undefined;
+  };
+
+  const isAccountLocked = (errorCode: string | undefined) => {
+    if (!errorCode) return false;
+    return errorCode === 'ACCOUNT_LOCKED' || errorCode === 'ACCOUNT_LOCKED_AFTER_ATTEMPTS';
+  };
+
+  const currentErrorCode = getErrorCode();
+  
+  // Debug logging
+  if (error?.graphQLErrors?.[0]) {
+    console.log('GraphQL Error Message:', error.graphQLErrors[0].message);
+    console.log('Extracted Error Code:', currentErrorCode);
+    console.log('Custom Error Message:', getErrorMessage(currentErrorCode));
+  }
   return (
     <div className="flex justify-center min-h-screen sm:flex-col sm:pt-[40px]">
       <div className="w-[45%] flex justify-center items-center sm:w-full">
@@ -55,8 +107,10 @@ const SignIn: React.FC = () => {
           onSubmit={handleSubmit(onSubmit)}
           register={register}
           formErrors={formErrors}
-          apiError={error?.graphQLErrors?.[0]?.extensions?.code}
+          apiError={currentErrorCode}
           isSubmitting={loading}
+          customErrorMessage={getErrorMessage(currentErrorCode)}
+          showForgotPasswordLink={isAccountLocked(currentErrorCode)}
         />
       </div>
       <div className="w-[55%] bg-primary overflow-hidden sm:hidden">
