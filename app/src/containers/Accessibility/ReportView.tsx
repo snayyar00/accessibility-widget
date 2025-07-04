@@ -1122,10 +1122,10 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
   const handleDownloadSubmit = async () => {
     try {
       // Generate PDF using the same logic as ScannerHero
-      const pdfBlob = generatePDF(results);
+       const pdfBlob = await generatePDF(results);
 
       // Create download link for immediate download
-      const url = window.URL.createObjectURL(await pdfBlob);
+      const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = url;
       link.download = 'accessibility-report.pdf';
@@ -1207,7 +1207,29 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       const img = new Image();
       img.src = logoImage;
       await new Promise<void>((resolve) => {
+        let settled = false;
+        const TIMEOUT_MS = 5000; // 5 seconds
+
+        const cleanup = () => {
+          img.onload = null;
+          img.onerror = null;
+        };
+
+        const timeoutId = setTimeout(() => {
+          if (!settled) {
+            settled = true;
+            cleanup();
+            // If image fails to load in time, just use default offset
+            logoBottomY = 0;
+            resolve();
+          }
+        }, TIMEOUT_MS);
+
         img.onload = () => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeoutId);
+          cleanup();
           // Make the logo and container bigger
           const maxWidth = 48,
             maxHeight = 36; // increased size for a bigger logo
@@ -1253,6 +1275,10 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           resolve();
         };
         img.onerror = () => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeoutId);
+          cleanup();
           // If image fails to load, just use default offset
           logoBottomY = 0;
           resolve();

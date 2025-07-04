@@ -310,7 +310,29 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       const img = new Image();
       img.src = logoImage;
       await new Promise<void>((resolve) => {
+        let settled = false;
+        const TIMEOUT_MS = 5000; // 5 seconds
+
+        const cleanup = () => {
+          img.onload = null;
+          img.onerror = null;
+        };
+
+        const timeoutId = setTimeout(() => {
+          if (!settled) {
+            settled = true;
+            cleanup();
+            // If image fails to load in time, just use default offset
+            logoBottomY = 0;
+            resolve();
+          }
+        }, TIMEOUT_MS);
+
         img.onload = () => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeoutId);
+          cleanup();
           // Make the logo and container bigger
           const maxWidth = 48,
             maxHeight = 36; // increased size for a bigger logo
@@ -356,7 +378,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           resolve();
         };
         img.onerror = () => {
-          // If image fails to load, just use default offset
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeoutId);
+          cleanup();
           logoBottomY = 0;
           resolve();
         };
