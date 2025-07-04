@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const subscriptionKey ='3pjm769AhqdF7XJKthww8mhhZDamPWpX1emM1yDkFKXJA4qDD7qSJQQJ99BGACi5YpzXJ3w3AAAbACOGG2Nw';
+const subscriptionKey = process.env.REACT_APP_AZURE_API_KEY;
 const endpoint = 'https://api.cognitive.microsofttranslator.com/';
 const region = 'northeurope'; // e.g., 'eastus'
 interface Issue {
@@ -27,7 +27,6 @@ export const translateText = async (issues: Issue[], toLang: string = 'en'): Pro
   });
 
   
-  console.log(".................",getBrowserLanguage());
 
   try {
     const response = await axios.post(

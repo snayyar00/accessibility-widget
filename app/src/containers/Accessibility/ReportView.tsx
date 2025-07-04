@@ -1349,7 +1349,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setFont('helvetica', 'bold');
     doc.text(status, 105, textY, { align: 'center' });
 
-    message = await translateSingleText(label, currentLanguage);
+    message = await translateSingleText(message, currentLanguage);
     textY += 9;
     doc.setFontSize(12);
     doc.setTextColor(51, 65, 85); 
@@ -1466,7 +1466,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     // Build the rows
     let tableBody: any[] = [];
     const translatedIssues = await translateText(issues, currentLanguage);
-    console.log("translateText", translatedIssues);
 
     const translatedIssue = await translateSingleText('Issue', currentLanguage);
     const translatedMessage = await translateSingleText('Message', currentLanguage);
