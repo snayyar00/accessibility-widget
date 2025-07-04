@@ -29,7 +29,7 @@ const getLogoUrlOnly = async (
     const accessibilityStatementLinkUrl = settings?.accessibilityStatementLinkUrl || '';
 
     return {
-      logoImage :logoImage||fallbackLogoUrl,
+      logoImage,
       logoUrl,
       accessibilityStatementLinkUrl
     };
