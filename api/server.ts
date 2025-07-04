@@ -44,7 +44,7 @@ import { expireUsedPromo } from './utils/expireUsedPromo';
 import { findUsersByToken, getUserTokens } from './repository/user_plan_tokens.repository';
 import { customTokenCount } from './utils/customTokenCount';
 import { addCancelFeedback, CancelFeedbackProps } from './repository/cancel_feedback.repository';
-import { getIpAddress } from './helpers/uniqueVisitor.helper';
+import  getIpAddress  from "./utils/getIpAddress"
 
 // import run from './scripts/create-products';
 const openai = new OpenAI({
