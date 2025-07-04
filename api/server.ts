@@ -13,6 +13,7 @@ import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
 import { IResolvers } from '@graphql-tools/utils';
 import { makeExecutableSchema } from 'graphql-tools';
+import { rateLimitDirective } from 'graphql-rate-limit-directive';
 import accessLogStream from './middlewares/logger.middleware';
 import logger from './utils/logger';
 import RootSchema from './graphql/root.schema';
@@ -42,6 +43,7 @@ import { expireUsedPromo } from './utils/expireUsedPromo';
 import { findUsersByToken, getUserTokens } from './repository/user_plan_tokens.repository';
 import { customTokenCount } from './utils/customTokenCount';
 import { addCancelFeedback, CancelFeedbackProps } from './repository/cancel_feedback.repository';
+import { getIpAddress } from './helpers/uniqueVisitor.helper';
 
 // import run from './scripts/create-products';
 const openai = new OpenAI({
@@ -1760,12 +1762,25 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
+  const { rateLimitDirectiveTransformer } = rateLimitDirective({
+    keyGenerator: (source: any, args: any, context: any, info: any): string => {
+      return String(context.ip || 'unknown');
+    },
+    onLimit: (response: any, directiveArgs: any, source: any, args: any, context: any, info: any): Error => {
+      const customMessage = directiveArgs.message || 'Too many requests, please try again later.';
+      return new Error(customMessage);
+    },
+  });
+
+  let schema = makeExecutableSchema({
+    typeDefs: RootSchema,
+    resolvers: RootResolver as IResolvers[],
+  });
+
+  schema = rateLimitDirectiveTransformer(schema);
 
   const serverGraph = new ApolloServer({
-    schema: makeExecutableSchema({
-      typeDefs: RootSchema,
-      resolvers: RootResolver as IResolvers[],
-    }),
+    schema,
     playground: IS_LOCAL_DEV,
     uploads: {
       maxFileSize: 10000000,
@@ -1848,11 +1863,12 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       const { cookies } = req;
       const bearerToken = cookies.token || null;
       const user = await getUserLogined(bearerToken, res);
-      // const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
+      const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
       return {
-        user,
-        // ip,
+        req,
         res,
+        ip,
+        user,
       };
     },
   });
