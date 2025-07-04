@@ -1278,61 +1278,78 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
       ]);
 
 // Contexts block (styled like code snapshots with numbers and black rounded boxes)
-// Contexts block (styled with sequential numbers and hidden text elements)
 const contexts = toArray(issue.context).filter(Boolean);
 
 if (contexts.length > 0) {
-  // Section heading
+  // Heading: "Context:"
   tableBody.push([
     {
-      content: 'Context',
+      content: 'Context:',
       colSpan: 4,
       styles: {
-        fontStyle: 'bold',
-        fontSize: 12,
+        fontStyle: 'bolditalic',
+        fontSize: 11,
         textColor: [0, 0, 0],
         halign: 'left',
-        cellPadding: 6,
+        cellPadding: 5,
         fillColor: [255, 255, 255],
         lineWidth: 0
       }
     }
   ]);
 
-  // Each code block row
   contexts.forEach((ctx, index) => {
+    // Row: number label + code block
     tableBody.push([
-      // Move the block number cell to the right (after the code block content cell)
       {
-        // Empty cell to maintain table structure (left of code block)
-        content: '',
-        colSpan: 1,
+        content: `${index + 1}`,
+        pageBreak:"avoid",
         styles: {
-          fillColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 11,
+          textColor: [255, 255, 255],
+          fillColor: [30, 41, 59], // dark navy
+          halign: 'center',
+          valign: 'middle',
+          cellPadding: 6,
           lineWidth: 0,
-          minCellHeight: 32,
-          minCellWidth: 8
-        }
+          minCellHeight: 25
+        },
       },
       {
-        // Code block content cell
-        content: `Block ${index + 1} of ${contexts.length}:\n${ctx}`,
-        colSpan: 2,
-        _isCodeBlock: true,
+        content: ctx,
+        colSpan: 3,
+        pageBreak:"avoid",
         styles: {
           font: 'courier',
           fontSize: 10,
-          textColor: [255, 255, 255], // overridden
-          fillColor: [255, 255, 255], // overridden
+          textColor: [255, 255, 255],
+          fillColor: [15, 23, 42], // deeper navy background
           halign: 'left',
-          valign: 'top',
+          valign: 'middle',
           cellPadding: 10,
           lineWidth: 0,
-          overflow: 'linebreak',
-          minCellHeight: 20
-        }
+          minCellHeight: 25
+        },
+        _isCodeBlock: true,
       }
     ]);
+
+    // Spacer row after each block (except the last)
+    if (index < contexts.length - 1) {
+      tableBody.push([
+        {
+          content: '',
+          colSpan: 4,
+          styles: {
+            fillColor: [255, 255, 255],
+            cellPadding: 0,
+            lineWidth: 0,
+            minCellHeight: 8
+          }
+        }
+      ]);
+    }
   });
 }
 
@@ -1394,114 +1411,21 @@ if (contexts.length > 0) {
       }
     });
 
+    // No global table header, since each issue has its own header row
     autoTable(doc, {
       startY: yTable,
       margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
       head: [],
       body: tableBody,
-      theme: 'plain',
+      theme: 'grid',
       columnStyles: {
         0: { cellWidth: 38 },
         1: { cellWidth: 38 },
         2: { cellWidth: 50 },
         3: { cellWidth: 45 }
       },
-      didDrawCell: function (data: any) {
-        const { cell, doc, table } = data;
-        if (!cell || !cell.raw) return;
-
-        // Only handle code block cells
-        if (cell.raw._isCodeBlock) {
-          let { x, y, width, height } = cell;
-          // Defensive: ensure coordinates are valid
-          if (
-            typeof x !== 'number' || isNaN(x) ||
-            typeof y !== 'number' || isNaN(y) ||
-            typeof width !== 'number' || isNaN(width) || width <= 0 ||
-            typeof height !== 'number' || isNaN(height) || height <= 0
-          ) {
-            return;
-          }
-
-          // Prevent code block from crossing the footer
-          const pageHeight = doc.internal.pageSize.getHeight();
-          const footerHeight = table.settings.margin.bottom || 0;
-          const cellBottomY = y + height;
-          const maxAllowedBottomY = pageHeight - footerHeight;
-
-          // If the cell would cross the footer, shrink its height
-          if (cellBottomY > maxAllowedBottomY) {
-            height = Math.max(0, maxAllowedBottomY - y);
-            if (height === 0) return; // Don't draw if not visible
-          }
-
-          // Prevent overlap with previous cell (if any)
-          if (cell.section === 'body' && cell.row && cell.row.index > 0) {
-            const prevRow = table.body[cell.row.index - 1];
-            if (prevRow && prevRow.cells && prevRow.cells[cell.column.index]) {
-              const prevCell = prevRow.cells[cell.column.index];
-              if (prevCell && typeof prevCell.y === 'number' && typeof prevCell.height === 'number') {
-                const prevCellBottom = prevCell.y + prevCell.height;
-                if (y < prevCellBottom) {
-                  // Move this cell down so it doesn't overlap
-                  y = prevCellBottom;
-                  // If moving down would cross the footer, shrink height
-                  if (y + height > maxAllowedBottomY) {
-                    height = Math.max(0, maxAllowedBottomY - y);
-                    if (height === 0) return;
-                  }
-                }
-              }
-            }
-          }
-
-          const padding = 2;
-          const text = String(cell.raw.content ?? '');
-          const maxTextWidth = width - 2 * padding;
-
-          doc.setFont('courier', 'normal');
-          doc.setFontSize(10);
-          const lines = doc.splitTextToSize(text, maxTextWidth);
-
-          const lineHeight = 4.5;
-          const radius = 6;
-
-          // Draw the code block background (fit to cell height, not text height)
-          doc.setFillColor(30, 41, 59);
-          doc.roundedRect(x, y, width, height, radius, radius, 'F');
-
-          // Set text color
-          doc.setTextColor(255, 255, 255);
-
-          // Calculate how many lines fit in the cell
-          const maxLines = Math.floor((height - 2 * padding) / lineHeight);
-          let visibleLines: string[] = [];
-          let textY: number;
-
-          if (maxLines > 0) {
-            visibleLines = lines.slice(0, maxLines);
-
-            // If the text is taller than the cell, start at top+padding
-            if (lines.length > maxLines) {
-              textY = y + padding + lineHeight - 1;
-            } else {
-              // Center vertically
-              const textBlockHeight = visibleLines.length * lineHeight;
-              textY = y + (height - textBlockHeight) / 2 + lineHeight - 1;
-            }
-
-            // Center horizontally for each line
-            visibleLines.forEach((line: string, i: number) => {
-              const lineWidth = doc.getTextWidth(line);
-              const textX = x + (width - lineWidth) / 2;
-              doc.text(line, textX, textY + i * lineHeight);
-            });
-          }
-        }
-      }
-      
     });
-    
+
     
     // --- END CUSTOM TABLE LAYOUT ---
     if (accessibilityStatementLinkUrl) {
