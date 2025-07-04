@@ -14,11 +14,11 @@ import useDocumentHeader from '@/hooks/useDocumentTitle';
 const SignInSchema = yup.object().shape({
   email: yup.string()
     .required('Common.validation.require_email')
-    .max(254, 'Common.validation.max_email')
+    .max(100, 'Common.validation.max_email')
     .email('Common.validation.valid_email'),
   password: yup.string()
     .required('Common.validation.require_password')
-    .max(128, 'Common.validation.max_password'),
+    .max(50, 'Common.validation.max_password'),
 });
 
 type Payload = {
