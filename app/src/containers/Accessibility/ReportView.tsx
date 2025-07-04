@@ -1209,7 +1209,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
     let tableBody: any[] = [];
 
     issues.forEach((issue, issueIdx) => {
-      // Add header row for each issue
+      // Add header row for each issue with beautiful styling
       tableBody.push([
         {
           content: 'Issue',
@@ -1218,55 +1218,61 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({ score, results }) =
             fillColor: [255, 255, 255], // white background
             textColor: [0, 0, 0], // black text
             fontStyle: 'bold',
-            fontSize: 13,
+            fontSize: 14,
             halign: 'center',
-            cellPadding: 6,
-            lineWidth: 0
+            cellPadding: 8,
+            lineWidth: 1,
+            lineColor: [226, 232, 240], // subtle border
           }
         },
         {
           content: 'Message',
           colSpan: 2,
           styles: {
-            fillColor: [255, 255, 255], // white background
+            fillColor: [255, 255, 255], // matching white background
             textColor: [0, 0, 0], // black text
             fontStyle: 'bold',
-            fontSize: 13,
+            fontSize: 14,
             halign: 'center',
-            cellPadding: 6,
-            lineWidth: 0
+            cellPadding: 8,
+            lineWidth: 1,
+            lineColor: [226, 232, 240], // subtle border
           }
         }
       ]);
 
-      // Row 1: Issue + Message (2 columns, each spans 2 columns), in a code block with numbering
+      // Row 1: Issue + Message with elegant code block styling
       tableBody.push([
         {
-          content: `1. \`\`\`\n${issue.code ? `${issue.code} (${issue.impact})` : ''}\n\`\`\``,
+          content: `${issue.code ? `${issue.code} (${issue.impact})` : ''}`,
           colSpan: 2,
           styles: {
             fontStyle: 'bold',
-            fontSize: 11,
-            textColor: [33, 33, 33], // dark text
+            fontSize: 12,
+            textColor: [30, 41, 59], // dark navy text
             halign: 'left',
-            cellPadding: 6,
-            fillColor: [245, 245, 245], // light gray for code block
-            lineWidth: 0,
-            font: 'courier'
+            cellPadding: 10,
+            fillColor: [248, 250, 252], // elegant light gray
+            lineWidth: 1,
+            lineColor: [226, 232, 240], // subtle border
+            font: 'courier',
+            minCellHeight: 30
           }
         },
         {
-          content: `1. \`\`\`\n${issue.message || ''}\n\`\`\``,
+          content: `${issue.message || ''}`,
           colSpan: 2,
           styles: {
             fontStyle: 'normal',
-            fontSize: 11,
-            textColor: [33, 33, 33], // dark text
+            fontSize: 12,
+            textColor: [30, 41, 59], // dark navy text
             halign: 'left',
-            cellPadding: 6,
-            fillColor: [245, 245, 245], // light gray for code block
-            lineWidth: 0,
-            font: 'courier'
+            cellPadding: 10,
+            fillColor: [248, 250, 252], // elegant light gray
+            lineWidth: 1,
+            lineColor: [226, 232, 240], // subtle border
+            font: 'courier',
+            minCellHeight: 30
           }
         }
       ]);
@@ -1297,6 +1303,7 @@ if (contexts.length > 0) {
     tableBody.push([
       {
         content: `${index + 1}`,
+        pageBreak:"avoid",
         styles: {
           fontStyle: 'bold',
           fontSize: 11,
@@ -1307,11 +1314,12 @@ if (contexts.length > 0) {
           cellPadding: 6,
           lineWidth: 0,
           minCellHeight: 25
-        }
+        },
       },
       {
         content: ctx,
         colSpan: 3,
+        pageBreak:"avoid",
         styles: {
           font: 'courier',
           fontSize: 10,
@@ -1323,7 +1331,7 @@ if (contexts.length > 0) {
           lineWidth: 0,
           minCellHeight: 25
         },
-        _isCodeBlock: true
+        _isCodeBlock: true,
       }
     ]);
 
@@ -1413,78 +1421,9 @@ if (contexts.length > 0) {
       columnStyles: {
         0: { cellWidth: 38 },
         1: { cellWidth: 38 },
-        2: { cellWidth: 70 },
+        2: { cellWidth: 50 },
         3: { cellWidth: 45 }
       },
-      styles: {
-        cellPadding: 5,
-        fontSize: 11,
-        valign: 'middle',
-        lineWidth: 0,
-        overflow: 'linebreak',
-        font: 'helvetica',
-        textColor: [0, 0, 0], // black text
-        fillColor: [255, 255, 255] // white background
-      },
-      didParseCell(data) {
-        // No-op: styles are set per cell above
-        if (data.section === 'head') {
-          data.cell.styles.lineWidth = 0;
-        }
-      }
-      ,
-      didDrawPage: function (data) {
-        // Optionally, you can remove the shadow and rounded corners for a cleaner white look,
-        // or keep them if you want. Here, we keep the rounded corners but use a light gray for subtlety.
-        const pageWidth = doc.internal.pageSize.getWidth();
-        doc.setDrawColor(220, 220, 220); // subtle light gray
-        doc.setLineWidth(0.5);
-        if (data.cursor && typeof data.cursor.y === 'number') {
-          doc.line(15, data.cursor.y + 2, pageWidth - 15, data.cursor.y + 2);
-        }
-        // Add rounded corners to the table
-        if (
-          data.table &&
-          data.table.body &&
-          data.table.body.length > 0 &&
-          data.table.hasOwnProperty('startY') &&
-          data.table.hasOwnProperty('finalY')
-        ) {
-          const x = data.table.settings?.margin?.left ?? 15;
-          const y = (data.table as any).startY ?? (data.table as any).cursor?.y ?? 15;
-          const width =
-            doc.internal.pageSize.getWidth() -
-            (data.table.settings?.margin?.left ?? 15) -
-            (data.table.settings?.margin?.right ?? 15);
-          const height = (data.table.finalY ?? y) - y;
-          doc.setDrawColor(220, 220, 220); // subtle light gray
-          doc.setLineWidth(0.8);
-          doc.roundedRect(x, y, width, height, 4, 4, 'S');
-        }
-      },
-      willDrawCell: function (data) {
-        const cellBottom = data.cell.y + data.cell.height;
-        if (cellBottom > pageHeight - footerHeight) {
-          doc.addPage();
-        }
-        // Draw round black boxes for context rows
-        // We use a custom property '_isRoundBlackBox' to identify these cells
-        if (
-          data.cell.raw &&
-          typeof data.cell.raw === 'object' &&
-          (data.cell.raw as any)._isRoundBlackBox
-        ) {
-          const x = data.cell.x;
-          const y = data.cell.y;
-          const w = data.cell.width;
-          const h = data.cell.height;
-          const radius = 8;
-          doc.setDrawColor(0, 0, 0);
-          doc.setLineWidth(0.5);
-          doc.setFillColor(0, 0, 0);
-          doc.roundedRect(x, y, w, h, radius, radius, 'F');
-        }
-      }
     });
 
     
