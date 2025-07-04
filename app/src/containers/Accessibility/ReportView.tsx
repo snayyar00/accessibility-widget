@@ -1182,8 +1182,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
       : baseScore;
 
-    // Use the same logic as the UI status/message/color block above
-    // Use the same colors and messages as in the UI
     let status: string, message: string, statusColor: [number, number, number];
     if (enhancedScore >= 80) {
       status = 'Compliant';
@@ -1201,9 +1199,9 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     }
 
     doc.setFillColor(21, 101, 192); // dark blue background
-    doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F'); // increased height from 70 to 100
+    doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F'); 
 
-    let logoBottomY = 0; // Track where the logo ends vertically
+    let logoBottomY = 0;
 
     if (logoImage) {
       const img = new Image();
@@ -1220,11 +1218,10 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           drawHeight *= scale;
 
           // Logo position
-          const logoX = 0; // further left (was 5)
-          const logoY = 3; // move the logo a little above (was 0 or undefined)
+          const logoX = 0; 
+          const logoY = 3; 
 
-          // Draw a white rounded rectangle container behind the logo, but keep it as before
-          const padding = 14; // a little more padding for bigger logo
+          const padding = 14; 
           const containerX = logoX - padding;
           // Keep the container as before, do not move it up
           const containerYOffset = 10;
@@ -1237,12 +1234,11 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             containerY,
             containerW,
             containerH,
-            8,
-            8,
+            4,
+            4,
             'F',
-          ); // slightly larger radius
+          ); 
 
-          // Draw the logo image on top of the white container, moved a little above
           doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
 
           // Add a link to logoUrl if available
@@ -1253,7 +1249,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             });
           }
 
-          // Calculate the bottom Y of the logo+container to position the next section
           logoBottomY = Math.max(logoY + drawHeight, containerY + containerH);
           resolve();
         };
@@ -1265,29 +1260,26 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       });
     }
 
-    // Define container dimensions and position
     const containerWidth = 170;
     const containerHeight = 60;
     const containerX = 105 - containerWidth / 2;
-    // Place the container after the logo image (with some vertical gap)
     const containerY = (logoBottomY || 0) + 10; // 10 units gap after logo
 
-    // Draw white rounded rectangle container with black outline
-    doc.setFillColor(255, 255, 255); // white fill
-    doc.setDrawColor(220, 220, 220); // light grey outline
-    doc.setLineWidth(0.2); // default line width
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(220, 220, 220); 
+    doc.setLineWidth(0.2); 
     doc.roundedRect(
       containerX,
       containerY,
       containerWidth,
       containerHeight,
-      10,
-      10,
+      4,
+      4,
       'FD',
     );
 
     // Now draw the text inside the container, moved down accordingly
-    let textY = containerY + 13; // first line, some padding from top
+    let textY = containerY + 13; 
 
     doc.setFontSize(15);
     doc.setTextColor(0, 0, 0);
@@ -1316,7 +1308,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     textY += 9;
     doc.setFontSize(12);
-    doc.setTextColor(51, 65, 85); // slate-800 for message
+    doc.setTextColor(51, 65, 85); 
     doc.setFont('helvetica', 'normal');
     doc.text(message, 105, textY, { align: 'center' });
 
@@ -1325,67 +1317,55 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setTextColor(51, 65, 85); // slate-800 for message
     doc.text(`${new Date().toDateString()}`, 105, textY, { align: 'center' });
 
-    // Add extra space after the container before the next section
     // --- END REPLACEMENT BLOCK ---
 
     // --- ADD CIRCLES FOR TOTAL ERRORS AND PERCENTAGE ---
-    // Draw two circles farther down below the hero section, farther apart and centered horizontally
-    // Circle 1: Total Errors
-    // Circle 2: Percentage (Score)
-    // Dynamically position the circles below the container, with extra spacing
-    const circleY = containerY + containerHeight + 25; // 25 units gap after the container
+    const circleY = containerY + containerHeight + 25; 
     const circleRadius = 15;
-    // Move the circles farther apart, centered horizontally
     const centerX = 105;
-    const gap = 40; // increased gap for more distance between circles
+    const gap = 40; 
     const circle1X = centerX - circleRadius - gap / 2;
     const circle2X = centerX + circleRadius + gap / 2;
 
     // Circle 1: Total Errors (filled dark blue)
-    doc.setDrawColor(21, 101, 192); // dark blue border
+    doc.setDrawColor(21, 101, 192); 
     doc.setLineWidth(1.5);
-    doc.setFillColor(21, 101, 192); // dark blue fill
+    doc.setFillColor(21, 101, 192); 
     doc.circle(circle1X, circleY, circleRadius, 'FD');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(19); // Increased font size for better visibility
-    doc.setTextColor(255, 255, 255); // White text
+    doc.setFontSize(19); 
+    doc.setTextColor(255, 255, 255); 
 
-    // Center the number vertically and horizontally in the circle
     doc.text(`${issues.length}`, circle1X, circleY, {
       align: 'center',
       baseline: 'middle',
     });
-    // The label "Total Errors" is not visible because the text color is white on a dark blue background,
-    // but the label is placed below the circle, which is on a white/light background.
-    // Change the text color to a dark blue for visibility.
-    doc.setFontSize(10); // Slightly larger label
-    doc.setTextColor(21, 101, 192); // dark blue for visibility on white background
+
+    doc.setFontSize(10); 
+    doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
     doc.text('Total Errors', circle1X, circleY + circleRadius + 9, {
       align: 'center',
     });
 
-    // Circle 2: Percentage (Score) (filled normal blue)
-    doc.setDrawColor(33, 150, 243); // normal blue border
+    doc.setDrawColor(33, 150, 243); 
     doc.setLineWidth(1.5);
-    doc.setFillColor(33, 150, 243); // normal blue fill
+    doc.setFillColor(33, 150, 243); 
     doc.circle(circle2X, circleY, circleRadius, 'FD');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(19); // Increased font size for better visibility
-    doc.setTextColor(255, 255, 255); // White text
+    doc.setFontSize(19); 
+    doc.setTextColor(255, 255, 255); 
     const scoreText = `${Math.round(enhancedScore)}%`;
     const scoreFontSize = 19;
     doc.setFontSize(scoreFontSize);
-    // Estimate text height: jsPDF uses approx 0.35 * fontSize for text height
     const textHeight = scoreFontSize * 0.35;
-    // Center vertically: circleY + (textHeight / 2) is a good approximation
     doc.text(scoreText, circle2X, circleY, {
       align: 'center',
       baseline: 'middle',
     });
 
-    doc.setFontSize(10); // Slightly larger label
-    doc.setTextColor(21, 101, 192); // dark blue for visibility on white background
+    doc.setFontSize(10); 
+    doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
     doc.text('Score', circle2X, circleY + circleRadius + 9, {
       align: 'center',
@@ -1393,7 +1373,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     // --- END CIRCLES ---
 
     // SEVERITY SUMMARY BOXES
-    // Place the summary boxes just below the circles, with a 30 unit gap
+   
     const yStart = circleY + circleRadius + 30;
     const total = issues.length;
     const counts = {
@@ -1406,25 +1386,21 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       {
         label: 'Severe',
         count: counts.critical + counts.serious,
-        color: [21, 101, 192],
-      }, // dark blue
-      { label: 'Moderate', count: counts.moderate, color: [33, 150, 243] }, // normal blue
+        color: [255, 204, 204],
+      },
+      { label: 'Moderate', count: counts.moderate, color: [187, 222, 251] },
       {
         label: 'Mild',
         count: total - (counts.critical + counts.serious + counts.moderate),
-        color: [187, 222, 251],
-      }, // light blue
+        color: [225, 245, 254],
+      }, 
     ];
 
     let x = 20;
     for (const box of summaryBoxes) {
       doc.setFillColor(box.color[0], box.color[1], box.color[2]);
       doc.roundedRect(x, yStart, 55, 20, 3, 3, 'F');
-      doc.setTextColor(
-        box.label === 'Mild' ? 33 : 255,
-        box.label === 'Mild' ? 33 : 255,
-        box.label === 'Mild' ? 33 : 255,
-      ); // dark text for light blue, white for others
+      doc.setTextColor(0, 0, 0); 
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.text(`${box.count}`, x + 4, yStart + 8);
@@ -1433,14 +1409,11 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       x += 60;
     }
 
-    // SCAN RESULT BLOCK
-    // Do NOT write status, message, and date again here (already in hero section)
-    // TABLE
+  
     const yTable = yStart + 40;
 
-    // --- CUSTOM TABLE LAYOUT: Issue/Message row, then Contexts, then Fixes ---
     const pageHeight = doc.internal.pageSize.getHeight();
-    const footerHeight = 15; // Height reserved for the footer (in jsPDF units)
+    const footerHeight = 15; 
 
     // Helper to ensure array
     const toArray = (val: any) => (Array.isArray(val) ? val : val ? [val] : []);
@@ -1478,6 +1451,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         },
       ]);
 
+      console.log("................",issue);
       // Row 1: Issue + Message with elegant code block styling
       tableBody.push([
         {
@@ -1489,11 +1463,18 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             textColor: [30, 41, 59], // dark navy text
             halign: 'left',
             cellPadding: 10,
-            fillColor: [248, 250, 252], // elegant light gray
+            fillColor: issue.impact === 'critical'
+              ? [255, 204, 204] 
+              : issue.impact === 'Mild'
+                ? [225, 245, 254] 
+                : issue.impact === 'moderate'
+                  ? [187, 222, 251] 
+                  : [248, 250, 252], 
             font: 'courier',
             minCellHeight: 30,
           },
         },
+        
         {
           content: `${issue.message || ''}`,
           colSpan: 2,
@@ -1503,8 +1484,13 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             textColor: [30, 41, 59], // dark navy text
             halign: 'left',
             cellPadding: 10,
-            fillColor: [248, 250, 252], // elegant light gray
-
+            fillColor: issue.impact === 'critical'
+            ? [255, 204, 204] 
+            : issue.impact === 'Mild'
+              ? [225, 245, 254] 
+              : issue.impact === 'moderate'
+                ? [187, 222, 251] 
+                : [248, 250, 252], 
             font: 'courier',
             minCellHeight: 30,
           },
