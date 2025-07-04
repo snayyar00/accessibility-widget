@@ -34,7 +34,7 @@ import { toast } from 'sonner';
 import TechStack from './TechStack';
 import { CircularProgress } from '@mui/material';
 import getProfileQuery from '@/queries/auth/getProfile';
-import getLogoUrlOnly from '@/utils/getWidgetSettings';
+import getWidgetSettings from '@/utils/getWidgetSettings';
 
 // Add this array near the top of the file
 const accessibilityFacts = [
@@ -1171,7 +1171,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     }
 
     const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
-      await getLogoUrlOnly(reportData.url);
+      await getWidgetSettings(reportData.url);
     const WEBABILITY_SCORE_BONUS = 45;
     const MAX_TOTAL_SCORE = 95;
     const issues = extractIssuesFromReport(reportData);

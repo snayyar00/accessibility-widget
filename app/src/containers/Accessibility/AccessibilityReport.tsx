@@ -59,7 +59,7 @@ import Select from 'react-select/creatable';
 import { set } from 'lodash';
 import Modal from '@/components/Common/Modal';
 
-import getLogoUrlOnly from '@/utils/getWidgetSettings'
+import getWidgetSettings from '@/utils/getWidgetSettings'
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
 
@@ -273,7 +273,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
 
     const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
-      await getLogoUrlOnly(reportData.url);
+      await getWidgetSettings(reportData.url);
     const WEBABILITY_SCORE_BONUS = 45;
     const MAX_TOTAL_SCORE = 95;
     const issues = extractIssuesFromReport(reportData);

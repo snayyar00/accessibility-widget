@@ -4,7 +4,7 @@ type LogoSettings = {
   accessibilityStatementLinkUrl: string;
 };
 
-const getLogoUrlOnly = async (
+const getWidgetSettings = async (
   siteUrl: string
 ): Promise<LogoSettings> => {
   const fallbackLogoUrl = '/images/logo.png';
@@ -42,4 +42,4 @@ const getLogoUrlOnly = async (
   }
 };
 
-export default getLogoUrlOnly;
+export default getWidgetSettings;
