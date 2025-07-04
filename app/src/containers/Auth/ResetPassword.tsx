@@ -20,10 +20,14 @@ import circleSmall from '@/assets/images/svg/circle-small.svg';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 
 const ResetPasswordSchema = yup.object().shape({
-  password: yup.string().required('Common.validation.require_password'),
+  password: yup.string()
+    .required('Common.validation.require_password')
+    .min(6, 'Common.validation.min_password')
+    .max(128, 'Common.validation.max_password'),
   passwordConfirmation: yup
     .string()
     .required('Common.validation.require_password_confirm')
+    .max(128, 'Common.validation.max_password')
     .oneOf([yup.ref('password'), ""], 'Common.validation.password_match'),
 });
 

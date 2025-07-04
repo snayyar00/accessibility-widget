@@ -25,8 +25,8 @@ type ProfileUpdateInfo = {
 function loginValidation(data: LoginInfo): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator();
   const schema = {
-    email: { type: 'email' },
-    password: { type: 'string', min: 6 },
+    email: { type: 'email', max: 254 },
+    password: { type: 'string', min: 6, max: 128 },
   };
   return validator.validate(data, schema);
 }
@@ -36,6 +36,7 @@ function registerValidation(data: RegisterInfo): true | ValidationError[] | Prom
   const schema = {
     email: { 
       type: 'email',
+      max: 254,
       custom: (value: string) => {
         if (!validateEmailNotAlias(value)) {
           return [{ type: 'custom', message: 'Email addresses with + symbol are not allowed' }];
@@ -43,10 +44,11 @@ function registerValidation(data: RegisterInfo): true | ValidationError[] | Prom
         return true;
       }
     },
-    password: { type: 'string', min: 6 },
+    password: { type: 'string', min: 6, max: 128 },
     name: { 
       type: 'string', 
       empty: false,
+      max: 100,
       custom: (value: string) => {
         if (!validateNameField(value)) {
           return [{ type: 'custom', message: 'Name contains invalid characters or links' }];
