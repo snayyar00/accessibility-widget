@@ -15,43 +15,49 @@ export interface FailedLoginAttempt {
  * Increment failed login attempts for a user
  */
 export async function incrementFailedAttempts(userId: number): Promise<FailedLoginAttempt> {
-  const existingRecord = await database('failed_login_attempts')
-    .where('user_id', userId)
-    .first();
+  return await database.transaction(async (trx) => {
+    // Try to get existing record with row lock
+    const existingRecord = await trx('failed_login_attempts')
+      .where('user_id', userId)
+      .forUpdate()
+      .first();
 
-  if (existingRecord) {
-    // Update existing record
-    await database('failed_login_attempts')
-      .where('user_id', userId)
-      .update({
-        failed_count: existingRecord.failed_count + 1,
-        last_failed_at: database.raw('CURRENT_TIMESTAMP'),
-        updated_at: database.raw('CURRENT_TIMESTAMP')
-      });
-    
-    // Get the updated record
-    const updatedRecord = await database('failed_login_attempts')
-      .where('user_id', userId)
-      .first();
-    
-    return updatedRecord;
-  } else {
-    // Create new record
-    await database('failed_login_attempts')
-      .insert({
-        user_id: userId,
-        failed_count: 1,
-        first_failed_at: database.raw('CURRENT_TIMESTAMP'),
-        last_failed_at: database.raw('CURRENT_TIMESTAMP')
-      });
-    
-    // Get the newly created record
-    const newRecord = await database('failed_login_attempts')
-      .where('user_id', userId)
-      .first();
-    
-    return newRecord;
-  }
+    if (existingRecord) {
+      // Update existing record
+      await trx('failed_login_attempts')
+        .where('user_id', userId)
+        .update({
+          failed_count: existingRecord.failed_count + 1,
+          last_failed_at: trx.fn.now(),
+          updated_at: trx.fn.now()
+        });
+      
+      // Get the updated record
+      const updatedRecord = await trx('failed_login_attempts')
+        .where('user_id', userId)
+        .first();
+      
+      return updatedRecord;
+    } else {
+      // Create new record
+      await trx('failed_login_attempts')
+        .insert({
+          user_id: userId,
+          failed_count: 1,
+          first_failed_at: trx.fn.now(),
+          last_failed_at: trx.fn.now(),
+          created_at: trx.fn.now(),
+          updated_at: trx.fn.now()
+        });
+      
+      // Get the newly created record
+      const newRecord = await trx('failed_login_attempts')
+        .where('user_id', userId)
+        .first();
+      
+      return newRecord;
+    }
+  });
 }
 
 /**
@@ -70,12 +76,35 @@ export async function isAccountLocked(userId: number): Promise<boolean> {
  * Lock account by setting locked_at timestamp
  */
 export async function lockAccount(userId: number): Promise<void> {
-  await database('failed_login_attempts')
-    .where('user_id', userId)
-    .update({
-      locked_at: database.raw('CURRENT_TIMESTAMP'),
-      updated_at: database.raw('CURRENT_TIMESTAMP')
-    });
+  await database.transaction(async (trx) => {
+    // Try to get existing record with row lock
+    const existingRecord = await trx('failed_login_attempts')
+      .where('user_id', userId)
+      .forUpdate()
+      .first();
+
+    if (existingRecord) {
+      // Update existing record to lock it
+      await trx('failed_login_attempts')
+        .where('user_id', userId)
+        .update({
+          locked_at: trx.fn.now(),
+          updated_at: trx.fn.now()
+        });
+    } else {
+      // Create new record and lock it immediately
+      await trx('failed_login_attempts')
+        .insert({
+          user_id: userId,
+          failed_count: 5, // Set to max attempts since we're locking
+          first_failed_at: trx.fn.now(),
+          last_failed_at: trx.fn.now(),
+          locked_at: trx.fn.now(),
+          created_at: trx.fn.now(),
+          updated_at: trx.fn.now()
+        });
+    }
+  });
 }
 
 /**
@@ -117,8 +146,11 @@ export async function resetFailedAttempts(userId: number): Promise<void> {
  * Cleanup old records (for maintenance)
  */
 export async function cleanupOldRecords(daysOld: number = 30): Promise<number> {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+  
   const deletedCount = await database('failed_login_attempts')
-    .where('created_at', '<', database.raw(`DATE_SUB(NOW(), INTERVAL ${daysOld} DAY)`))
+    .where('created_at', '<', cutoffDate)
     .del();
 
   return deletedCount;
