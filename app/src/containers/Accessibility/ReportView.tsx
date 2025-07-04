@@ -3,6 +3,7 @@ import { useParams, useLocation, useHistory } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
+import { translateText,translateSingleText } from '@/utils/translator';
 
 import {
   AlertTriangle,
@@ -145,6 +146,7 @@ const ReportView: React.FC = () => {
     loading: getProfileLoading,
   } = useQuery(getProfileQuery);
 
+  
   // Processing state management
   const [isProcessing, setIsProcessing] = useState(true);
   // Fact rotation state
@@ -1182,6 +1184,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
       : baseScore;
 
+      
     let status: string, message: string, statusColor: [number, number, number];
     if (enhancedScore >= 80) {
       status = 'Compliant';
@@ -1198,6 +1201,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       statusColor = [220, 38, 38]; // red-600
     }
 
+    status = await translateSingleText(status, currentLanguage);
     doc.setFillColor(21, 101, 192); // dark blue background
     doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F'); 
 
@@ -1321,7 +1325,9 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setFontSize(15);
     doc.setTextColor(0, 0, 0);
     // Compose the full string and measure widths
-    const label = 'Scan results for ';
+    let  label = 'Scan results for ';
+    label = await translateSingleText(label, currentLanguage);
+
     const url = `${reportData.url}`;
     const labelWidth = doc.getTextWidth(label);
     const urlWidth = doc.getTextWidth(url);
@@ -1343,11 +1349,13 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setFont('helvetica', 'bold');
     doc.text(status, 105, textY, { align: 'center' });
 
+    message = await translateSingleText(message, currentLanguage);
     textY += 9;
     doc.setFontSize(12);
     doc.setTextColor(51, 65, 85); 
     doc.setFont('helvetica', 'normal');
     doc.text(message, 105, textY, { align: 'center' });
+    
 
     textY += 9;
     doc.setFontSize(10);
@@ -1381,7 +1389,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
-    doc.text('Total Errors', circle1X, circleY + circleRadius + 9, {
+    doc.text(await translateSingleText('Total Errors', currentLanguage), circle1X, circleY + circleRadius + 9, {
       align: 'center',
     });
 
@@ -1404,7 +1412,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
-    doc.text('Score', circle2X, circleY + circleRadius + 9, {
+    doc.text(await translateSingleText('Score', currentLanguage), circle2X, circleY + circleRadius + 9, {
       align: 'center',
     });
     // --- END CIRCLES ---
@@ -1421,13 +1429,13 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     // Use blue shades for all summary boxes
     const summaryBoxes = [
       {
-        label: 'Severe',
+        label: await translateSingleText('Severe', currentLanguage),
         count: counts.critical + counts.serious,
         color: [255, 204, 204],
       },
-      { label: 'Moderate', count: counts.moderate, color: [187, 222, 251] },
+      { label: await translateSingleText('Moderate', currentLanguage), count: counts.moderate, color: [187, 222, 251] },
       {
-        label: 'Mild',
+        label: await translateSingleText('Mild', currentLanguage),
         count: total - (counts.critical + counts.serious + counts.moderate),
         color: [225, 245, 254],
       }, 
@@ -1457,12 +1465,19 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     // Build the rows
     let tableBody: any[] = [];
+    const translatedIssues = await translateText(issues, currentLanguage);
 
-    issues.forEach((issue, issueIdx) => {
+    const translatedIssue = await translateSingleText('Issue', currentLanguage);
+    const translatedMessage = await translateSingleText('Message', currentLanguage);
+    const translatedContext = await translateSingleText('Context', currentLanguage);
+    const translatedFix = await translateSingleText('Fix', currentLanguage);
+
+
+    translatedIssues.forEach((issue, issueIdx) => {
       // Add header row for each issue with beautiful styling
       tableBody.push([
         {
-          content: 'Issue',
+          content: translatedIssue,
           colSpan: 2,
           styles: {
             fillColor: [255, 255, 255], // white background
@@ -1475,7 +1490,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           },
         },
         {
-          content: 'Message',
+          content: translatedMessage,
           colSpan: 2,
           styles: {
             fillColor: [255, 255, 255], // matching white background
@@ -1540,7 +1555,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         // Heading: "Context:"
         tableBody.push([
           {
-            content: 'Context:',
+            content: translatedContext,
             colSpan: 4,
             styles: {
               fontStyle: 'bolditalic',
@@ -1607,7 +1622,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         // Heading row for Fix
         tableBody.push([
           {
-            content: 'Fix:',
+            content: translatedFix,
             colSpan: 4,
             styles: {
               fontStyle: 'bolditalic',
@@ -1832,6 +1847,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     return doc.output('blob');
   };
 
+  const [currentLanguage, setCurrentLanguage] = useState<string>(' ');
+
   return (
     <>
       <div
@@ -1844,14 +1861,49 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             <p className={`${textColor}/80`}>{message}</p>
           </div>
         </div>
-
-        <div className="relative mr-4">
+        <div className="relative mr-4 flex items-center gap-4">
+      
           <button
             onClick={handleDownloadSubmit}
             className="whitespace-nowrap px-6 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 transition-colors"
           >
             Get Free Report
           </button>
+          <div className="relative">
+            <select
+              value={currentLanguage}
+              onChange={(e) => setCurrentLanguage(e.target.value)}
+              className="appearance-none bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
+            >
+              <option value="">Select Language</option>
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+              <option value="it">Italiano</option>
+              <option value="pt">Português</option>
+              <option value="nl">Nederlands</option>
+              <option value="ru">Русский</option>
+              <option value="ja">日本語</option>
+              <option value="ko">한국어</option>
+              <option value="zh">中文</option>
+              <option value="ar">العربية</option>
+              <option value="hi">हिन्दी</option>
+              <option value="th">ไทย</option>
+              <option value="vi">Tiếng Việt</option>
+              <option value="tr">Türkçe</option>
+              <option value="pl">Polski</option>
+              <option value="sv">Svenska</option>
+              <option value="no">Norsk</option>
+              <option value="da">Dansk</option>
+              <option value="fi">Suomi</option>
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
     </>
