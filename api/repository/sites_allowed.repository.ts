@@ -75,6 +75,10 @@ export async function insertSite(data: allowedSites): Promise<FindAllowedSitesPr
 				return 'You have already added this site.';
 			}
 			const site_id = await trx(TABLE).insert(data);
+			
+			if (!site_id || site_id.length === 0) {
+				throw new Error('Failed to insert site - no ID returned');
+			}
 
 			const insertedSite:FindAllowedSitesProps = {
 				id: site_id[0],
