@@ -74,7 +74,8 @@
       "name_contains_links": "Name cannot contain links",
       "no_plus_in_email":"Email Cannot contain a + sign",
       "weak_password":"Your Password is weak, please use a mix of upper and lower case characters with symbols",
-      "valid_url":"Please enter a valid URL without http or https and any trailing slashes"
+      "valid_url":"Please enter a valid URL without http or https and any trailing slashes",
+      "max_email_length": "Email must not exceed 254 characters"
     },
     "placeholder": {
       "email": "yourname@yourbusiness.com",

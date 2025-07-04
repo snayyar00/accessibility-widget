@@ -21,6 +21,7 @@ import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
 import stripeHooks from './services/stripe/webhooks.servive';
 import {sendMail} from './libs/mail';
+import { emailValidation } from './validations/email.validation';
 import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
 import { fetchAccessibilityReport } from './services/accessibilityReport/accessibilityReport.service';
 import { findProductAndPriceByType, findProductById } from './repository/products.repository';
@@ -147,6 +148,12 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.post('/billing-portal-session', async (req, res) => {
     const { email, returnURL } = req.body;
 
+    const validateResult = emailValidation(email);
+
+    if (Array.isArray(validateResult) && validateResult.length) {
+      return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
+    }
+    
     // Search for an existing customer by email
     const customers = await stripe.customers.list({
       email: email,
@@ -442,7 +449,12 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   
   app.post('/create-checkout-session',async (req,res)=>{
     const { email,planName,billingInterval,returnUrl,domainId,userId,domain,cardTrial,promoCode} = req.body;
-    
+
+    const validateResult = emailValidation(email);
+    if (Array.isArray(validateResult) && validateResult.length) {
+      return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
+    }
+
     try {
       const [price, customers] = await Promise.all([
         findProductAndPriceByType(planName, billingInterval),
@@ -645,9 +657,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
   app.post('/app-sumo-checkout-session',async (req,res)=>{
     const { email,planName,promoCode,returnUrl,domainId,userId,domain} = req.body;
-     
-    const price = await findProductAndPriceByType(planName,"YEARLY");
 
+    const validateResult = emailValidation(email);
+    if (Array.isArray(validateResult) && validateResult.length) {
+      return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
+    }
+
+    const price = await findProductAndPriceByType(planName,"YEARLY");
     try {
       // Search for an existing customer by email
       const customers = await stripe.customers.list({
@@ -830,7 +846,11 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.post('/create-subscription',async (req,res)=>{
     const { email,returnURL, planName,billingInterval,domainId,domainUrl,userId,cardTrial,promoCode } = req.body;
 
-
+    const validateResult = emailValidation(email);
+    if (Array.isArray(validateResult) && validateResult.length) {
+      return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
+    }
+    
     const [price, sites, customers] = await Promise.all([
       findProductAndPriceByType(planName, billingInterval),
       getSitesPlanByUserId(Number(userId)),
@@ -1105,18 +1125,17 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.post('/create-appsumo-subscription',async (req,res)=>{
     const { email,returnURL, planName,domainId,domainUrl,userId,promoCode } = req.body;
 
+    const validateResult = emailValidation(email);
+    if (Array.isArray(validateResult) && validateResult.length) {
+      return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
+    }
+
     const appSumoInterval = 'YEARLY';
-
     const price = await findProductAndPriceByType(planName,appSumoInterval);
-
     const sites = await getSitesPlanByUserId(Number(userId));
-
     const sub_id = sites[0]?.subcriptionId;
-    
-
     let no_sub = false;
     let subscription;
-
     if(sub_id == undefined)
     {
       no_sub = true;
@@ -1130,7 +1149,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         no_sub = true;
       }
     }
-
     try {
       // Search for an existing customer by email
       const customers = await stripe.customers.list({
@@ -1255,16 +1273,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.post('/subscribe-newsletter', async (req, res) => {
     try {
       const { email } = req.body;
-      
-      // Validate email format
-      if (!email || !email.includes('@')) {
-        return res.status(400).json({ error: 'Invalid email address' });
+      const validateResult = emailValidation(email);
+
+      if (Array.isArray(validateResult) && validateResult.length) {
+        return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
       }
 
-      // Attempt to add the email to the database
       await addNewsletterSub(email);
-
-      // Return success response
       res.status(200).json({ message: 'Subscription successful' });
     } catch (error) {
       console.error('Error subscribing to newsletter:', error);
@@ -1274,6 +1289,11 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
   app.post('/apply-retention-discount', async (req, res) => {
     const { domainId, email, status } = req.body;
+    const validateResult = emailValidation(email);
+
+    if (Array.isArray(validateResult) && validateResult.length) {
+      return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
+    }
 
     try {
       const sitePlan = await getSitePlanBySiteId(Number(domainId));
@@ -1340,6 +1360,11 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     const {email,userId} = req.body;
     let plan_name;
     let interval;
+    const validateResult = emailValidation(email);
+
+    if (Array.isArray(validateResult) && validateResult.length) {
+      return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
+    }
     
     try {
       const plans = await getSitesPlanByUserId(userId);
@@ -1621,6 +1646,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
   app.post('/report-problem',async(req,res)=>{
     const { site_url, issue_type, description, reporter_email } = req.body;
+
+    const validateResult = emailValidation(reporter_email);
+
+    if (Array.isArray(validateResult) && validateResult.length) {
+      return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
+    }
+
     try {
       const domain = site_url.replace(/^(https?:\/\/)?(www\.)?/, '');
       const site:FindAllowedSitesProps = await findSiteByURL(domain);
@@ -1629,16 +1661,12 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         throw new Error("Site not found");
       }
       const problem:problemReportProps = {site_id:site.id, issue_type:issue_type, description:description, reporter_email:reporter_email};
-
       await addProblemReport(problem);
-
       res.status(200).send('Success');
-      
     } catch (error) {
       console.error("Error reporting problem:", error);
       res.status(500).send("Cannot report problem");
     }
-
   })
 
   app.post('/get-problem-reports', async (req, res) => {
@@ -1686,6 +1714,12 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
   app.post('/form', async (req, res) => {
     console.log('Received POST request for /form:', req.body);
+
+    const validateResult = emailValidation(req.body.email);
+    if (Array.isArray(validateResult) && validateResult.length) {
+      return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
+    }
+
     const uniqueToken = await AddTokenToDB(req.body.businessName, req.body.email, req.body.website);
     if (uniqueToken !== '') {
       res.send('Received POST request for /form');
@@ -1693,7 +1727,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       res.status(500).send('Internal Server Error');
       return;
     }
-
     try {
       sendMail(
         req.body.email,
