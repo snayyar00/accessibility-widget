@@ -65,38 +65,31 @@ export async function insertSite(data: allowedSites): Promise<FindAllowedSitesPr
 	
 	return database.transaction(async (trx) => {
 		try {
-			const result = await trx(TABLE)
-				.insert(data)
-				.onConflict('url')
-				.ignore();
+			const existing = await trx(TABLE)
+                .select('id')
+                .where({ url: data.url })
+                .forUpdate()
+                .first();
 
-			if (result.length === 0) {
+			if (existing) {
 				console.log(`insertSite (duplicate) took: ${Date.now() - startTime}ms`);
 				return 'You have already added this site.';
 			}
-
-			const insertedSite = await trx(TABLE)
-				.select(siteColumns)
-				.where({ [siteColumns.url]: data.url })
-				.first();
-
-			if (!insertedSite) {
-				throw new Error('Failed to retrieve inserted site');
+			const site_id = await trx(TABLE).insert(data);
+			
+			if (!site_id || site_id.length === 0) {
+				throw new Error('Failed to insert site - no ID returned');
 			}
 
-			setImmediate(async () => {
-				try {
-					const user = await findUser({ id: data.user_id });
-					if (user) {
-						await AddTokenToDB(user.company ? user.company : '', user.email, data.url);
-					}
-				} catch (error) {
-					console.error('Background AddTokenToDB failed:', error);
-				}
-			});
+			const insertedSite:FindAllowedSitesProps = {
+				id: site_id[0],
+				user_id: data.user_id,
+				url: data.url,
+				createAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString()
+			};
 
 			return insertedSite;
-
 		} catch (error) {
 			console.error('insertSite transaction error:', error);
 			return `insert failed: ${error.message}`;

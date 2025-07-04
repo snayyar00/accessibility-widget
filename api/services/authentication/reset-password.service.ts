@@ -4,6 +4,7 @@ import { generatePassword } from '~/helpers/hashing.helper';
 import { findToken, removeUserToken } from '~/repository/user_tokens.repository';
 import logger from '~/utils/logger';
 import { changePasswordValidation } from '~/validations/authenticate.validation';
+import { unlockAccount } from '~/repository/failed_login_attempts.repository';
 
 export async function resetPasswordUser(token: string, password: string, confirmPassword: string): Promise<true | ApolloError> {
   try {
@@ -54,6 +55,9 @@ export async function resetPasswordUser(token: string, password: string, confirm
 
     const [newPassword] = await Promise.all([generatePassword(password), removeUserToken(session.id)]);
     await updateUser(session.user_id, { password: newPassword });
+
+    await unlockAccount(session.user_id);
+    
     return true;
   } catch (error) {
     console.error(error);

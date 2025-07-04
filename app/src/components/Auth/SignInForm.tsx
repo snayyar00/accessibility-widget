@@ -14,6 +14,8 @@ import { ReactHookFormType } from "@/typeReactHookForm";
 type Props = ReactHookFormType & {
   isSubmitting: boolean;
   apiError?: string;
+  customErrorMessage?: string;
+  showForgotPasswordLink?: boolean;
 }
 
 const SignInForm: React.FC<Props> = ({
@@ -22,6 +24,8 @@ const SignInForm: React.FC<Props> = ({
   formErrors,
   apiError,
   isSubmitting,
+  customErrorMessage,
+  showForgotPasswordLink,
 }) => {
   const { t } = useTranslation();
 
@@ -72,15 +76,33 @@ const SignInForm: React.FC<Props> = ({
           <Button color="primary" type="submit" disabled={isSubmitting} className="w-full uppercase mt-8">
             {isSubmitting ? t('Common.text.please_wait') : t('Sign_in.text.button_text')}
           </Button>
-          <div>
-            <Link to="/auth/forgot-password" className="text-[14px] leading-[24px] text-light-primary text-center block mt-6">
-              {t('Sign_in.text.forgot_password')}
-            </Link>
-          </div>
+          {showForgotPasswordLink && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-center">
+              <Link 
+                to="/auth/forgot-password" 
+                className="text-[14px] leading-[24px] text-red-600 font-medium hover:text-red-800 underline"
+              >
+                {t('Sign_in.text.reset_password_to_unlock')}
+              </Link>
+            </div>
+          )}
+          
+          {/* Regular forgot password link */}
+          {!showForgotPasswordLink && (
+            <div>
+              <Link to="/auth/forgot-password" className="text-[14px] leading-[24px] text-light-primary text-center block mt-6">
+                {t('Sign_in.text.forgot_password')}
+              </Link>
+            </div>
+          )}
+          
           <SocialAuth />
         </div>
       </form>
-      {apiError && <ErrorText message={String(t(`Sign_in.error.${apiError}`))} position="center" />}
+      
+      {/* Show custom error message if provided, otherwise show default API error */}
+      {customErrorMessage && <ErrorText message={customErrorMessage} position="center" />}
+      {!customErrorMessage && apiError && <ErrorText message={String(t(`Sign_in.error.${apiError}`))} position="center" />}
       <div className="mt-[60px] text-center text-[14px] leading-[24px] text-sapphire-blue">
         <Trans components={[<Link to="/auth/signup"></Link>]}>
           {t('Sign_in.text.not_have_account')}

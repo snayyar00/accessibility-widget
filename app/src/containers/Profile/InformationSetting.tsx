@@ -23,6 +23,7 @@ const linkify = new LinkifyIt();
 const AccountSchema = yup.object().shape({
   name: yup.string()
     .required('Common.validation.require_name')
+    .max(100, 'Common.validation.max_name')
     .transform((value) => DOMPurify.sanitize(value || '', { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }))
     .test('no-links', 'Common.validation.name_contains_links', (value) => {
       if (!value) return true;
