@@ -1,9 +1,17 @@
+import { ValidationError } from "apollo-server-express";
 import compileEmailTemplate from "~/helpers/compile-email-template";
 import { sendMail } from "~/libs/mail";
 import { addProblemReport, problemReportProps } from "~/repository/problem_reports.repository";
 import { FindAllowedSitesProps, findSiteByURL } from "~/repository/sites_allowed.repository";
+import { emailValidation } from '~/validations/email.validation';
 
 export async function handleReportProblem(site_url: string, issue_type: string, description: string, reporter_email: string): Promise<string> {
+    const validateResult = emailValidation(reporter_email);
+
+    if (Array.isArray(validateResult) && validateResult.length) {
+        throw new ValidationError(validateResult.map((it) => it.message).join(','));
+    }
+
     try {
         const year = new Date().getFullYear();
         const domain = site_url.replace(/^(https?:\/\/)?(www\.)?/, '');

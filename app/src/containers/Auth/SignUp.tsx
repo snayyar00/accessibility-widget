@@ -36,6 +36,7 @@ const SignUpSchema = yup.object().shape({
     .required('Common.validation.require_email')
     .transform((value) => DOMPurify.sanitize(value || '', { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }))
     .email('Common.validation.valid_email')
+    .max(254, 'Common.validation.max_email_length')
     .test('no-plus-sign', 'Common.validation.no_plus_in_email', (value:string|null|undefined) => !value?.includes('+')),
   websiteUrl: yup
     .string()

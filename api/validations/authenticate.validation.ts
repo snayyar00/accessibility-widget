@@ -25,7 +25,7 @@ type ProfileUpdateInfo = {
 function loginValidation(data: LoginInfo): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator();
   const schema = {
-    email: { type: 'email' },
+    email: { type: 'email', max: 254 },
     password: { type: 'string', min: 6 },
   };
   return validator.validate(data, schema);
@@ -36,6 +36,7 @@ function registerValidation(data: RegisterInfo): true | ValidationError[] | Prom
   const schema = {
     email: { 
       type: 'email',
+      max: 254,
       custom: (value: string) => {
         if (!validateEmailNotAlias(value)) {
           return [{ type: 'custom', message: 'Email addresses with + symbol are not allowed' }];
