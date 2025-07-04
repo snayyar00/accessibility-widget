@@ -66,9 +66,10 @@ export async function insertSite(data: allowedSites): Promise<FindAllowedSitesPr
 	return database.transaction(async (trx) => {
 		try {
 			const existing = await trx(TABLE)
-            .select('id')
-            .where({ url: data.url })
-            .first();
+                .select('id')
+                .where({ url: data.url })
+                .forUpdate()
+                .first();
 
 			if (existing) {
 				console.log(`insertSite (duplicate) took: ${Date.now() - startTime}ms`);
