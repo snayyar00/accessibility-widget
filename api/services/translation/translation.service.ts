@@ -30,77 +30,9 @@ interface TranslationResult {
   translatedContent?: any; // Can be string or object
   error?: string;
   languageCode: string;
-  cached: boolean;
 }
 
-// Fast in-memory cache configuration
-const CACHE_DURATION = TRANSLATION_CONFIG.cache.duration * 1000; // Convert to milliseconds
-const MAX_CACHE_SIZE = 1000; // Hardcoded cache limit
-const translationCache = new Map<string, { content: TranslationContent; timestamp: number }>();
-
-// Clean old cache entries and enforce size limits
-const cleanCache = () => {
-  const now = Date.now();
-  const entries = Array.from(translationCache.entries());
-  
-  // Remove expired entries
-  entries.forEach(([key, value]) => {
-    if ((now - value.timestamp) > CACHE_DURATION) {
-      translationCache.delete(key);
-    }
-  });
-  
-  // Enforce size limit by removing oldest entries
-  if (translationCache.size > MAX_CACHE_SIZE) {
-    const sortedEntries = Array.from(translationCache.entries())
-      .sort(([,a], [,b]) => a.timestamp - b.timestamp);
-    
-    const toRemove = translationCache.size - MAX_CACHE_SIZE;
-    for (let i = 0; i < toRemove; i++) {
-      translationCache.delete(sortedEntries[i][0]);
-    }
-  }
-  
-  console.log(`Cache cleaned: ${translationCache.size} entries remaining`);
-};
-
-// Clean cache every hour - store reference for cleanup
-const cacheCleanupInterval = setInterval(cleanCache, 60 * 60 * 1000);
-
-// Allow graceful shutdown
-process.on('SIGTERM', () => {
-  clearInterval(cacheCleanupInterval);
-  console.log('Translation service cache cleanup interval cleared');
-});
-
-process.on('SIGINT', () => {
-  clearInterval(cacheCleanupInterval);
-  console.log('Translation service cache cleanup interval cleared');
-});
-
-// Fast cache helper functions
-const getFromCache = (key: string): TranslationContent | null => {
-  const cached = translationCache.get(key);
-  if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
-    return cached.content;
-  }
-  return null;
-};
-
-const setCache = (key: string, content: TranslationContent): void => {
-  // Check cache size before adding
-  if (translationCache.size >= MAX_CACHE_SIZE) {
-    // Remove oldest entry to make space
-    const oldestKey = Array.from(translationCache.entries())
-      .sort(([,a], [,b]) => a.timestamp - b.timestamp)[0][0];
-    translationCache.delete(oldestKey);
-  }
-  
-  translationCache.set(key, {
-    content,
-    timestamp: Date.now()
-  });
-};
+// Cache functionality removed - was used for development testing only
 
 // Helper function to split content into batches
 const splitContentIntoBatches = (content: TranslationContent, batchSize: number): TranslationContent[] => {
@@ -246,19 +178,7 @@ export const translateStatement = async ({
   const startTime = Date.now();
   
   try {
-    // Check cache first
-    const cacheKey = `${TRANSLATION_CONFIG.cache.keyPrefix}${languageCode}`;
-    const cached = getFromCache(cacheKey);
-    
-    if (cached) {
-      const serializedCached = typeof cached === 'object' ? JSON.stringify(cached) : cached;
-      return {
-        success: true,
-        translatedContent: serializedCached,
-        languageCode,
-        cached: true
-      };
-    }
+    // Cache removed - was used for development only
 
     // If English, return original content
     if (languageCode === 'en') {
@@ -266,8 +186,7 @@ export const translateStatement = async ({
       return {
         success: true,
         translatedContent: serializedContent,
-        languageCode,
-        cached: false
+        languageCode
       };
     }
 
@@ -386,8 +305,7 @@ export const translateStatement = async ({
       }
     }
 
-    // Cache the translation
-    setCache(cacheKey, translatedContent);
+    // Translation caching removed
     
     // Track usage metrics for monitoring
     const duration = Date.now() - startTime;
@@ -399,7 +317,6 @@ export const translateStatement = async ({
         language: languageCode,
         duration,
         contentSize: metricsContentSize,
-        cached: false,
         timestamp: new Date().toISOString()
       });
     }
@@ -412,8 +329,7 @@ export const translateStatement = async ({
     return {
       success: true,
       translatedContent: serializedContent,
-      languageCode,
-      cached: false
+      languageCode
     };
 
   } catch (error) {
@@ -451,8 +367,7 @@ export const translateStatement = async ({
     return {
       success: false,
       error: `Translation to ${targetLanguage} is temporarily unavailable`,
-      languageCode,
-      cached: false
+      languageCode
     };
   }
 };
