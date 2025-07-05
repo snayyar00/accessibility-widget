@@ -338,9 +338,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
   // Remove individual filter
   const removeFilter = (filterToRemove: string) => {
-    if (filterToRemove.startsWith('Search:')) {
-      handleFilterChange('search', '');
-    } else if (['Compliant', 'Partially Compliant', 'Non-Compliant'].includes(filterToRemove)) {
+    if (['Compliant', 'Partially Compliant', 'Non-Compliant'].includes(filterToRemove)) {
       handleFilterChange('status', '');
     } else if (filterToRemove.startsWith('Score:')) {
       handleFilterChange('scoreRange', '');
@@ -1317,7 +1315,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
              </button>
              <button
                onClick={() => setIsSuccessModalOpen(false)}
-               className="flex items-center justify-center gap-3 flex-1 bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white font-extrabold py-5 px-8 rounded-2xl transition-all duration-200 shadow-2xl hover:shadow-gray-500/50 border-2 border-gray-700 hover:border-gray-800 hover:scale-[1.02] active:scale-[0.98]"
+               className="flex items-center justify-center gap-3 flex-1 bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white font-extrabold py-5 px-8 rounded-2xl transition-all duration-200 shadow-2xl hover:shadow-slate-500/50 border-2 border-slate-800 hover:border-slate-900 hover:scale-[1.02] active:scale-[0.98]"
              >
                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
