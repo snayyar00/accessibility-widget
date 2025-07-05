@@ -635,77 +635,118 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     </div>
                   </div>
                   <Select
-                    options={siteOptions}
+                    options={siteOptions || []}
                     value={selectedOption}
                     onChange={(selected: OptionType | null) => {
-                      setSelectedOption(selected);
-                      setSelectedSite(selected?.value ?? '');
-                      setDomain(selected?.value ?? '');
+                      try {
+                        setSelectedOption(selected);
+                        setSelectedSite(selected?.value ?? '');
+                        setDomain(selected?.value ?? '');
+                      } catch (error) {
+                        console.error('Error handling select change:', error);
+                      }
                     }}
                     onCreateOption={(inputValue: any) => {
-                      const newOption = { value: inputValue, label: inputValue };
-                      setSelectedOption(newOption);
-                      setSelectedSite(inputValue);
-                      setDomain(inputValue);
+                      try {
+                        // Add validation for input value
+                        const cleanedValue = String(inputValue || '').trim();
+                        if (!cleanedValue) {
+                          return; // Don't create option for empty values
+                        }
+                        
+                        const newOption = { value: cleanedValue, label: cleanedValue };
+                        setSelectedOption(newOption);
+                        setSelectedSite(cleanedValue);
+                        setDomain(cleanedValue);
+                      } catch (error) {
+                        console.error('Error creating option:', error);
+                      }
                     }}
                     placeholder="Enter your enterprise domain (e.g., your-company.com)"
                     isSearchable
                     isClearable
-                    formatCreateLabel={(inputValue: any) => (
-                      <div className="flex items-center gap-2 py-1">
-                        <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs">+</span>
+                    formatCreateLabel={(inputValue: any) => {
+                      const safeValue = String(inputValue || '').trim() || 'domain';
+                      return (
+                        <div className="flex items-center gap-2 py-1">
+                          <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs">+</span>
+                          </div>
+                          <span>Audit <strong>"{safeValue}"</strong></span>
                         </div>
-                        <span>Audit <strong>"{inputValue}"</strong></span>
-                      </div>
-                    )}
+                      );
+                    }}
                     components={{
-                      Option: ({ innerRef, innerProps, data, isSelected, isFocused }: any) => (
-                        <div
-                          ref={innerRef}
-                          {...innerProps}
-                          className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 ${
-                            isSelected 
-                              ? 'bg-blue-600 text-white' 
-                              : isFocused 
-                                ? 'bg-blue-50 text-gray-900' 
-                                : 'text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-semibold text-sm ${
-                            isSelected 
-                              ? 'bg-white/20 text-white' 
-                              : 'bg-blue-600 text-white'
-                          }`}>
-                            {data.label.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-medium">{data.label}</div>
-                            <div className={`text-xs ${
-                              isSelected ? 'text-white/80' : 'text-gray-500'
+                      Option: ({ innerRef, innerProps, data, isSelected, isFocused }: any) => {
+                        // Add error handling for undefined or invalid data
+                        if (!data) {
+                          return null;
+                        }
+                        
+                        // Handle both regular options and created options
+                        const displayValue = data.label || data.value || '';
+                        const safeLabel = String(displayValue);
+                        const firstChar = safeLabel.charAt(0).toUpperCase() || '?';
+                        
+                        return (
+                          <div
+                            ref={innerRef}
+                            {...innerProps}
+                            className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 ${
+                              isSelected 
+                                ? 'bg-blue-600 text-white' 
+                                : isFocused 
+                                  ? 'bg-blue-50 text-gray-900' 
+                                  : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-semibold text-sm ${
+                              isSelected 
+                                ? 'bg-white/20 text-white' 
+                                : 'bg-blue-600 text-white'
                             }`}>
-                              Enterprise compliant
+                              {firstChar}
                             </div>
-                          </div>
-                          {isSelected && (
-                            <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
-                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
+                            <div className="flex-1">
+                              <div className="font-medium">{safeLabel}</div>
+                              <div className={`text-xs ${
+                                isSelected ? 'text-white/80' : 'text-gray-500'
+                              }`}>
+                                Enterprise compliant
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      ),
-                      SingleValue: ({ data }: any) => (
-                        <div className="absolute inset-0 flex items-center justify-center gap-3">
-                          <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white text-xs font-semibold">
-                              {data.label.charAt(0).toUpperCase()}
-                            </span>
+                            {isSelected && (
+                              <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
                           </div>
-                          <span className="text-gray-900 font-medium">{data.label}</span>
-                        </div>
-                      ),
+                        );
+                      },
+                      SingleValue: ({ data }: any) => {
+                        // Add error handling for undefined or invalid data
+                        if (!data) {
+                          return null;
+                        }
+                        
+                        // Handle both regular options and created options
+                        const displayValue = data.label || data.value || '';
+                        const safeLabel = String(displayValue);
+                        const firstChar = safeLabel.charAt(0).toUpperCase() || '?';
+                        
+                        return (
+                          <div className="absolute inset-0 flex items-center justify-center gap-3">
+                            <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
+                              <span className="text-white text-xs font-semibold">
+                                {firstChar}
+                              </span>
+                            </div>
+                            <span className="text-gray-900 font-medium">{safeLabel}</span>
+                          </div>
+                        );
+                      },
                       DropdownIndicator: () => (
                         <div className="px-3">
                           <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
