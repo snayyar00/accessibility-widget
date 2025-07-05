@@ -195,7 +195,15 @@ const ReportView: React.FC = () => {
   //console.log("Report data:", report);
 
   const issues = report.issues || [];
-  const totalStats = report.totalStats || {};
+  const totalStats = report.totalStats || {
+    score: report.score || 0,
+    originalScore: report.score || 0,
+    criticalIssues: 0,
+    warnings: 0,
+    moderateIssues: 0,
+    totalElements: report.totalElements || 0,
+    hasWebAbility: false
+  };
   const issuesByFunction = report.issuesByFunction || {};
   const functionalityNames = report.functionalityNames || [];
 

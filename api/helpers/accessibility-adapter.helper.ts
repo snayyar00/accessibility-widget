@@ -6,10 +6,12 @@ import { getAccessibilityInformationWebAbility } from './webability.helper';
  * Always tries Pally first, then automatically falls back to WebAbility if Pally fails
  */
 export async function getAccessibilityInformation(domain: string) {
-  console.log(`🔍 Scanning ${domain} with Pally scanner`);
+  console.log(`🔍 Starting accessibility scan for ${domain}`);
+  console.log(`⚡ Primary scanner: Pally | Fallback: WebAbility`);
 
   try {
     // Always try Pally first
+    console.log(`🔵 Attempting Pally scan...`);
     const result = await getAccessibilityInformationPally(domain);
     
     // Check if Pally returned a compatibility issue

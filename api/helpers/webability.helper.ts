@@ -1,6 +1,4 @@
 import { readAccessibilityDescriptionFromDb } from '../services/accessibilityReport/accessibilityIssues.service';
-import { processAccessibilityIssuesWithFallback } from '../services/accessibilityReport/enhancedProcessing.service';
-import { getPreprocessingConfig } from '../config/preprocessing.config';
 
 interface WebAbilityIssue {
   code: string;
@@ -205,8 +203,12 @@ function adaptWebAbilityToPallyFormat(webAbilityResponse: WebAbilityResponse): f
     siteImg: webAbilityResponse.siteImg,
   };
 
-  // Convert WebAbility issues to legacy format
-  webAbilityResponse.issues.forEach((issue: WebAbilityIssue) => {
+  // Convert ALL WebAbility issues to legacy format (don't limit - users need to see everything)
+  console.log('🔄 Converting WebAbility issues to legacy format. Total:', webAbilityResponse.issues.length);
+  
+  webAbilityResponse.issues.forEach((issue: WebAbilityIssue, index: number) => {
+    // Process each issue for conversion
+    
     if (issue.runner === 'axe') {
       const axeIssue: axeOutput = {
         message: issue.message.replace(/\s*\(.*$/, ''),
@@ -221,36 +223,69 @@ function adaptWebAbilityToPallyFormat(webAbilityResponse: WebAbilityResponse): f
         runner: issue.runner,
         wcagLevel: extractWCAGLevel(issue.code, issue.runnerExtras.helpUrl),
       };
+      
+      // Created axe issue for processing
 
-      // Map issue types to legacy categories
+      // Map issue types to legacy categories with smart grouping
       if (issue.type === 'error' || issue.runnerExtras.impact === 'critical' || issue.runnerExtras.impact === 'serious') {
-        // Check for duplicates
-        const existingIndex = output.axe.errors.findIndex((existing: any) => existing.message === axeIssue.message);
+        // Group by message + impact for better deduplication
+        const groupKey = `${axeIssue.message}_${axeIssue.impact}`;
+        const existingIndex = output.axe.errors.findIndex((existing: any) => 
+          `${existing.message}_${existing.impact}` === groupKey
+        );
         if (existingIndex === -1) {
+          // First occurrence - add the issue
           output.axe.errors.push(axeIssue);
+          console.log(`📸 New axe error with screenshot:`, !!axeIssue.screenshotUrl);
         } else {
-          output.axe.errors[existingIndex].context.push(issue.context);
-          output.axe.errors[existingIndex].selectors.push(issue.selector);
+          // Group similar issues together - preserve all selectors, context, and screenshots
+          output.axe.errors[existingIndex].context.push(...(Array.isArray(issue.context) ? issue.context : [issue.context]));
+          output.axe.errors[existingIndex].selectors.push(...(Array.isArray(issue.selector) ? issue.selector : [issue.selector]));
+          // Preserve screenshot URL if this grouped issue has one
+          if (issue.screenshotUrl && !output.axe.errors[existingIndex].screenshotUrl) {
+            output.axe.errors[existingIndex].screenshotUrl = issue.screenshotUrl;
+            console.log(`📸 Added screenshot to grouped axe error:`, issue.screenshotUrl);
+          }
+          console.log(`🔗 Grouped axe error: existing screenshot:`, !!output.axe.errors[existingIndex].screenshotUrl, 'new screenshot:', !!issue.screenshotUrl);
         }
       } else if (issue.type === 'warning' || issue.runnerExtras.impact === 'moderate') {
-        const existingIndex = output.axe.warnings.findIndex((existing: any) => existing.message === axeIssue.message);
+        const groupKey = `${axeIssue.message}_${axeIssue.impact}`;
+        const existingIndex = output.axe.warnings.findIndex((existing: any) => 
+          `${existing.message}_${existing.impact}` === groupKey
+        );
         if (existingIndex === -1) {
           output.axe.warnings.push(axeIssue);
+          // Added new axe warning
         } else {
-          output.axe.warnings[existingIndex].context.push(issue.context);
-          output.axe.warnings[existingIndex].selectors.push(issue.selector);
+          output.axe.warnings[existingIndex].context.push(...(Array.isArray(issue.context) ? issue.context : [issue.context]));
+          output.axe.warnings[existingIndex].selectors.push(...(Array.isArray(issue.selector) ? issue.selector : [issue.selector]));
+          // Preserve screenshot URL if this grouped issue has one
+          if (issue.screenshotUrl && !output.axe.warnings[existingIndex].screenshotUrl) {
+            output.axe.warnings[existingIndex].screenshotUrl = issue.screenshotUrl;
+          }
+          // Grouped similar axe warning
         }
       } else {
-        const existingIndex = output.axe.notices.findIndex((existing: any) => existing.message === axeIssue.message);
+        const groupKey = `${axeIssue.message}_${axeIssue.impact}`;
+        const existingIndex = output.axe.notices.findIndex((existing: any) => 
+          `${existing.message}_${existing.impact}` === groupKey
+        );
         if (existingIndex === -1) {
           output.axe.notices.push(axeIssue);
+          // Added new axe notice
         } else {
-          output.axe.notices[existingIndex].context.push(issue.context);
-          output.axe.notices[existingIndex].selectors.push(issue.selector);
+          output.axe.notices[existingIndex].context.push(...(Array.isArray(issue.context) ? issue.context : [issue.context]));
+          output.axe.notices[existingIndex].selectors.push(...(Array.isArray(issue.selector) ? issue.selector : [issue.selector]));
+          // Preserve screenshot URL if this grouped issue has one
+          if (issue.screenshotUrl && !output.axe.notices[existingIndex].screenshotUrl) {
+            output.axe.notices[existingIndex].screenshotUrl = issue.screenshotUrl;
+          }
+          // Grouped similar axe notice
         }
       }
     } else {
       // Treat non-axe issues as htmlcs for compatibility
+      console.log(`📝 Converting ${issue.runner} issue to htmlcs format`);
       const htmlcsIssue: htmlcsOutput = {
         code: issue.code,
         message: issue.message,
@@ -258,11 +293,13 @@ function adaptWebAbilityToPallyFormat(webAbilityResponse: WebAbilityResponse): f
         selectors: [issue.selector],
         // Enhanced WebAbility fields
         screenshotUrl: issue.screenshotUrl,
-        helpUrl: issue.runnerExtras.helpUrl,
+        helpUrl: issue.runnerExtras?.helpUrl,
         runner: issue.runner,
-        impact: issue.runnerExtras.impact,
-        wcagLevel: extractWCAGLevel(issue.code, issue.runnerExtras.helpUrl),
+        impact: issue.runnerExtras?.impact,
+        wcagLevel: extractWCAGLevel(issue.code, issue.runnerExtras?.helpUrl),
       };
+      
+      // Created htmlcs issue for processing
 
       if (issue.type === 'error' || issue.runnerExtras.impact === 'critical' || issue.runnerExtras.impact === 'serious') {
         const existingIndex = output.htmlcs.errors.findIndex((existing: any) => existing.message === htmlcsIssue.message);
@@ -271,6 +308,10 @@ function adaptWebAbilityToPallyFormat(webAbilityResponse: WebAbilityResponse): f
         } else {
           output.htmlcs.errors[existingIndex].context.push(issue.context);
           output.htmlcs.errors[existingIndex].selectors.push(issue.selector);
+          // Preserve screenshot URL if this grouped issue has one
+          if (issue.screenshotUrl && !output.htmlcs.errors[existingIndex].screenshotUrl) {
+            output.htmlcs.errors[existingIndex].screenshotUrl = issue.screenshotUrl;
+          }
         }
       } else if (issue.type === 'warning' || issue.runnerExtras.impact === 'moderate') {
         const existingIndex = output.htmlcs.warnings.findIndex((existing: any) => existing.message === htmlcsIssue.message);
@@ -279,6 +320,10 @@ function adaptWebAbilityToPallyFormat(webAbilityResponse: WebAbilityResponse): f
         } else {
           output.htmlcs.warnings[existingIndex].context.push(issue.context);
           output.htmlcs.warnings[existingIndex].selectors.push(issue.selector);
+          // Preserve screenshot URL if this grouped issue has one
+          if (issue.screenshotUrl && !output.htmlcs.warnings[existingIndex].screenshotUrl) {
+            output.htmlcs.warnings[existingIndex].screenshotUrl = issue.screenshotUrl;
+          }
         }
       } else {
         const existingIndex = output.htmlcs.notices.findIndex((existing: any) => existing.message === htmlcsIssue.message);
@@ -287,10 +332,46 @@ function adaptWebAbilityToPallyFormat(webAbilityResponse: WebAbilityResponse): f
         } else {
           output.htmlcs.notices[existingIndex].context.push(issue.context);
           output.htmlcs.notices[existingIndex].selectors.push(issue.selector);
+          // Preserve screenshot URL if this grouped issue has one
+          if (issue.screenshotUrl && !output.htmlcs.notices[existingIndex].screenshotUrl) {
+            output.htmlcs.notices[existingIndex].screenshotUrl = issue.screenshotUrl;
+          }
         }
       }
     }
   });
+
+  // Log conversion results with screenshot tracking
+  const convertedCounts = {
+    axeErrors: output.axe.errors.length,
+    axeWarnings: output.axe.warnings.length,
+    axeNotices: output.axe.notices.length,
+    htmlcsErrors: output.htmlcs.errors.length,
+    htmlcsWarnings: output.htmlcs.warnings.length,
+    htmlcsNotices: output.htmlcs.notices.length,
+    total: output.axe.errors.length + output.axe.warnings.length + output.axe.notices.length + 
+           output.htmlcs.errors.length + output.htmlcs.warnings.length + output.htmlcs.notices.length
+  };
+
+  // Count how many issues have screenshots
+  const screenshotCounts = {
+    axeErrorsWithScreenshots: output.axe.errors.filter(e => e.screenshotUrl).length,
+    axeWarningsWithScreenshots: output.axe.warnings.filter(w => w.screenshotUrl).length,
+    axeNoticesWithScreenshots: output.axe.notices.filter(n => n.screenshotUrl).length,
+    htmlcsErrorsWithScreenshots: output.htmlcs.errors.filter(e => e.screenshotUrl).length,
+    htmlcsWarningsWithScreenshots: output.htmlcs.warnings.filter(w => w.screenshotUrl).length,
+    htmlcsNoticesWithScreenshots: output.htmlcs.notices.filter(n => n.screenshotUrl).length,
+  };
+  
+  const totalWithScreenshots = Object.values(screenshotCounts).reduce((sum, count) => sum + count, 0);
+  
+  console.log('📊 Conversion summary:', convertedCounts);
+  console.log('📸 Screenshot preservation:', screenshotCounts);
+  console.log(`🔢 Original issues: ${webAbilityResponse.issues.length}, Converted issues: ${convertedCounts.total}, With screenshots: ${totalWithScreenshots}`);
+  
+  if (convertedCounts.total !== webAbilityResponse.issues.length) {
+    console.warn(`⚠️ Issue count mismatch! Expected ${webAbilityResponse.issues.length}, got ${convertedCounts.total}`);
+  }
 
   // Calculate a more sensible score based on critical issues only
   const criticalIssues = webAbilityResponse.issues.filter(issue => 
@@ -332,7 +413,7 @@ function adaptWebAbilityToPallyFormat(webAbilityResponse: WebAbilityResponse): f
   // Store original htmlcs for ByFunctions processing
   output._originalHtmlcs = JSON.parse(JSON.stringify(output.htmlcs));
 
-  // Add rich WebAbility metadata
+  // Add essential WebAbility metadata for frontend display
   output.webability_metadata = {
     job_id: webAbilityResponse.job_id,
     scan_duration: webAbilityResponse.scan_duration,
@@ -341,14 +422,21 @@ function adaptWebAbilityToPallyFormat(webAbilityResponse: WebAbilityResponse): f
     accessibility_standards: webAbilityResponse.accessibility_standards,
     issue_breakdown: webAbilityResponse.issue_breakdown,
     screenshots: webAbilityResponse.screenshots,
-    violation_screenshots: webAbilityResponse.violation_screenshots,
+    violation_screenshots: webAbilityResponse.violation_screenshots
   };
+
+  console.log('📊 WebAbility integration completed:', {
+    wcag_version: webAbilityResponse.accessibility_standards.wcag_version,
+    total_issues: webAbilityResponse.issues.length,
+    converted_issues: convertedCounts.total,
+    has_screenshots: webAbilityResponse.screenshots.length > 0
+  });
 
   return output;
 }
 
 /**
- * Call WebAbility scanner API
+ * Call WebAbility scanner API with progress tracking
  */
 async function callWebAbilityAPI(domain: string, options: any = {}): Promise<WebAbilityResponse> {
   const apiUrl = `https://scanner.webability.io/scan`;
@@ -363,36 +451,71 @@ async function callWebAbilityAPI(domain: string, options: any = {}): Promise<Web
     accessibility_level: options.accessibility_level || 'AA'
   };
 
-  console.log('WebAbility API request:', { url: domain, ...requestBody });
-
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-    // Add timeout for the fetch request itself
-    // signal: AbortSignal.timeout(60000) // 60 second timeout - commented out for now
+  console.log('🔍 Starting WebAbility scan for:', domain);
+  console.log('⚙️  Scan configuration:', { 
+    timeout: requestBody.timeout + 's',
+    runners: requestBody.runners.join(', '),
+    screenshots: requestBody.screenshots,
+    level: requestBody.accessibility_level 
   });
 
-  const results = await response.json();
+  // Create abort controller for timeout handling
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    console.log('⏰ WebAbility scan timeout - cancelling request');
+    controller.abort();
+  }, (requestBody.timeout + 30) * 1000); // Add 30 seconds buffer to API timeout
 
-  // Handle 422 and other error responses that still contain data
-  if (!response.ok && response.status !== 422) {
-    console.error('WebAbility API error response:', results);
-    throw new Error(`WebAbility API request failed. Status: ${response.status}`);
+  console.log(`⏳ Scan may take up to ${requestBody.timeout} seconds...`);
+  
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+    console.log(`📡 WebAbility API responded with status: ${response.status}`);
+
+    const results = await response.json();
+
+    // Handle 422 and other error responses that still contain data
+    if (!response.ok && response.status !== 422) {
+      console.error('❌ WebAbility API error response:', results);
+      throw new Error(`WebAbility API request failed. Status: ${response.status}`);
+    }
+    
+    // Log the response for debugging
+    if (response.status === 422) {
+      console.log('⚠️  WebAbility API returned 422 (validation/timeout error)');
+      if (results.detail) {
+        console.log('📋 Error details:', results.detail);
+        if (typeof results.detail === 'string' && results.detail.includes('timeout')) {
+          throw new Error(`Website scan timed out after ${requestBody.timeout} seconds. This website may be too complex or slow to scan.`);
+        }
+      }
+    }
+    
+    console.log(`✅ WebAbility scan completed in ${response.headers.get('x-scan-duration') || 'unknown'} seconds`);
+    console.log('📊 Response structure:', Object.keys(results));
+    
+    if (!results.issues || !Array.isArray(results.issues)) {
+      console.error('❌ Invalid WebAbility API response structure:', JSON.stringify(results).substring(0, 500));
+      throw new Error('WebAbility API returned invalid response structure');
+    }
+    
+    return results;
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error(`WebAbility scan was cancelled due to timeout (${requestBody.timeout + 30}s). This website may be too complex or slow to scan.`);
+    }
+    throw error;
   }
-  
-  // Log the response for debugging
-  console.log('WebAbility API response status:', response.status);
-  console.log('WebAbility API response keys:', Object.keys(results));
-  
-  if (!results.issues || !Array.isArray(results.issues)) {
-    console.error('WebAbility API response structure:', JSON.stringify(results).substring(0, 500));
-    throw new Error('WebAbility API returned invalid response structure');
-  }
-  
-  return results;
 }
 
 /**
@@ -429,50 +552,8 @@ export async function getAccessibilityInformationWebAbility(domain: string): Pro
       totalElements: legacyFormat.totalElements
     });
     
-    // Get preprocessing configuration
-    const config = getPreprocessingConfig();
-    
-    console.log('🔧 Preprocessing config enabled:', config.enabled);
-    if (config.enabled) {
-      // Use enhanced processing pipeline
-      console.log('🚀 Using enhanced preprocessing pipeline');
-      try {
-        const enhancedResult = await processAccessibilityIssuesWithFallback(legacyFormat);
-        
-        // Merge enhanced results back to original format
-        const finalOutput: finalOutput = {
-          axe: enhancedResult.axe,
-          htmlcs: enhancedResult.htmlcs,
-          ByFunctions: enhancedResult.ByFunctions,
-          score: legacyFormat.score, // Keep WebAbility's score
-          totalElements: legacyFormat.totalElements,
-          siteImg: legacyFormat.siteImg,
-          processing_stats: {
-            ...legacyFormat.processing_stats,
-            ...enhancedResult.processing_stats,
-            scanner_type: 'webability'
-          },
-          _originalHtmlcs: legacyFormat._originalHtmlcs
-        };
-        
-        console.log('📦 Enhanced processing completed successfully');
-        console.log('📊 Final output summary:', {
-          score: finalOutput.score,
-          totalElements: finalOutput.totalElements,
-          hasByFunctions: !!finalOutput.ByFunctions,
-          byFunctionsLength: finalOutput.ByFunctions?.length || 0,
-          hasWebAbilityMetadata: !!finalOutput.webability_metadata
-        });
-        return finalOutput;
-        
-      } catch (error) {
-        console.error('❌ Enhanced processing failed, using WebAbility data directly:', error);
-        // Fall back to direct WebAbility data
-      }
-    }
-    
-    // Legacy processing path (fallback)
-    console.log('⚙️ Using legacy processing pipeline with WebAbility data');
+    // Use standard processing pipeline for production
+    console.log('⚙️ Using standard processing pipeline with WebAbility data');
     legacyFormat.processing_stats.scanner_type = 'webability';
     const result = await readAccessibilityDescriptionFromDb(legacyFormat.htmlcs);
     legacyFormat.htmlcs = result;

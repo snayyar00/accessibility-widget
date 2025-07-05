@@ -139,6 +139,7 @@ interface htmlcsOutput {
   selectors?: string[];
   description?:string;
   recommended_action?:string;
+  screenshotUrl?: string;
 }
 
 interface ResultWithOriginal {
@@ -240,175 +241,331 @@ export const fetchAccessibilityReport = async (url: string) => {
         result.scriptCheckResult = scriptCheckResult;
       }
 
-      // Perform calculations after the block
-      const issues = extractIssuesFromReport(result);
-      console.log(`Extracted ${issues.length} issues from report.`);
-
-      const issuesByFunction = groupIssuesByFunctionality(issues);
-      const functionalityNames = getFunctionalityNames(issuesByFunction);
-
-      const webabilityEnabled = scriptCheckResult === 'Web Ability';
-      const totalStats = calculateTotalStats(result, issues, webabilityEnabled);
-
-      // Add calculated fields to the result
-      result.issues = issues;
-      result.issuesByFunction = issuesByFunction;
-      result.functionalityNames = functionalityNames;
-      result.totalStats = totalStats;
-
       if (result) {
+        // Perform calculations for all results (regardless of ByFunctions presence)
+        const issues = extractIssuesFromReport(result);
+        console.log(`Extracted ${issues.length} issues from report.`);
+
+        const issuesByFunction = groupIssuesByFunctionality(issues);
+        const functionalityNames = getFunctionalityNames(issuesByFunction);
+
+        const webabilityEnabled = scriptCheckResult === 'Web Ability';
+        const totalStats = calculateTotalStats(result, issues, webabilityEnabled);
+
+        // Add calculated fields to the result
+        result.issues = issues;
+        result.issuesByFunction = issuesByFunction;
+        result.functionalityNames = functionalityNames;
+        result.totalStats = totalStats;
+
+        console.log('📊 Added calculated fields:', {
+          issuesLength: issues.length,
+          functionalityNamesLength: functionalityNames.length,
+          totalStatsKeys: Object.keys(totalStats)
+        });
+
         if (result.ByFunctions && Array.isArray(result.ByFunctions) && result.ByFunctions.length > 0) {
           // Check if this is a scan error with helpful messaging
           if (result.processing_stats?.scan_error) {
             console.log('🔧 Returning scan error information:', result.processing_stats.scan_error);
             return result;
           }
-          console.log('✅ ByFunctions data found, returning early with length:', result.ByFunctions.length);
-          return result;
+          
+          // Check if this is a WebAbility result that needs GPT processing for consistency
+          if (result.processing_stats?.scanner_type === 'webability') {
+            console.log('🔄 WebAbility result detected, forcing through GPT processing for format consistency');
+            // Continue to GPT processing below instead of returning early
+          } else {
+            console.log('✅ Pally ByFunctions data found, returning with calculated fields. Length:', result.ByFunctions.length);
+            return result;
+          }
         }
         
-        console.log('⚠️  ByFunctions is missing or empty, processing with GPT...');
+        // Determine if we need GPT processing
+        const needsGptProcessing = !result.ByFunctions || 
+                                   !Array.isArray(result.ByFunctions) || 
+                                   result.ByFunctions.length === 0 ||
+                                   result.processing_stats?.scanner_type === 'webability';
 
-        const guideErrors: {
-          errors: htmlcsOutput[];
-          notices: htmlcsOutput[];
-          warnings: htmlcsOutput[];
-        } = result?._originalHtmlcs || result?.htmlcs || {
-          errors: [],
-          notices: [],
-          warnings: []
-        };
-
-        const errorCodes: string[] = [];
-        const errorCodeWithDescriptions: { [key: string]: { [key: string]: string | string[] } } = {};
-
-        // Ensure arrays exist before iterating
-        if (guideErrors.errors && Array.isArray(guideErrors.errors)) {
-          guideErrors.errors.forEach((errorcode: htmlcsOutput) => {
-            errorCodes.push(errorcode?.code);
-            if (!errorCodeWithDescriptions[errorcode?.code]) {
-              errorCodeWithDescriptions[errorcode?.code] = {};
-            }
-            errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
-            errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
-            errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
-            errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
-            errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
+        if (needsGptProcessing) {
+          console.log('🤖 Processing with GPT for consistent format...', {
+            hasExistingByFunctions: !!(result.ByFunctions && result.ByFunctions.length > 0),
+            scannerType: result.processing_stats?.scanner_type,
+            reason: result.processing_stats?.scanner_type === 'webability' ? 'WebAbility format standardization' : 'Missing ByFunctions'
           });
-        }
 
-        if (guideErrors.notices && Array.isArray(guideErrors.notices)) {
-          guideErrors.notices.forEach((errorcode: htmlcsOutput) => {
-            errorCodes.push(errorcode?.code);
-            if (!errorCodeWithDescriptions[errorcode?.code]) {
-              errorCodeWithDescriptions[errorcode?.code] = {};
-            }
-            errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
-            errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
-            errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
-            errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
-            errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
-          });
-        }
+          // For WebAbility, use both axe and htmlcs data for comprehensive GPT processing
+          const guideErrors: {
+            errors: htmlcsOutput[];
+            notices: htmlcsOutput[];
+            warnings: htmlcsOutput[];
+          } = result?._originalHtmlcs || result?.htmlcs || {
+            errors: [],
+            notices: [],
+            warnings: []
+          };
 
-        if (guideErrors.warnings && Array.isArray(guideErrors.warnings)) {
-          guideErrors.warnings.forEach((errorcode: htmlcsOutput) => {
-            errorCodes.push(errorcode?.code);
-            if (!errorCodeWithDescriptions[errorcode?.code]) {
-              errorCodeWithDescriptions[errorcode?.code] = {};
-            }
-            errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
-            errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
-            errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
-            errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
-            errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
-          });
-        }
-
-        console.log('🤖 Calling GPT with', errorCodes.length, 'error codes');
-        const completion: GPTData = await GPTChunks(errorCodes);
-
-        if (completion) {
-          console.log('✅ GPT returned completion with', completion.HumanFunctionalities?.length || 0, 'functionalities');
-          completion.HumanFunctionalities.forEach(
-            (functionality: HumanFunctionality) => {
-              console.log('📋 Processing functionality:', functionality.FunctionalityName, 'with', functionality.Errors?.length || 0, 'errors');
-              functionality.Errors.forEach((error: Error) => {
-                let errorCode = error['ErrorGuideline'] || (error as any)['Error Guideline'] || (error as any)['code'] || (error as any)['Error Code'] || (error as any)['guideline'];
-
-                if (!errorCode) {
-                  const possibleCode = Object.values(error).find((value: any) => 
-                    typeof value === 'string' && value.includes('WCAG')
-                  );
-                  errorCode = possibleCode;
-                }
-
-                error.code = errorCode;
-                delete error['ErrorGuideline'];
-                delete (error as any)['Error Guideline'];
-
-                if (errorCode && errorCodeWithDescriptions[errorCode]) {
-                  error.description = errorCodeWithDescriptions[errorCode]?.description;
-                  error.context = errorCodeWithDescriptions[errorCode]?.context;
-                  error.message = errorCodeWithDescriptions[errorCode]?.message;
-                  error.recommended_action = errorCodeWithDescriptions[errorCode]?.recommended_action;
-                  error.selectors = errorCodeWithDescriptions[errorCode]?.selectors;
-                } else {
-                  let enhancedDescription = null;
-                  if (result?.htmlcs?.errors) {
-                    const enhancedError = result.htmlcs.errors.find((e: any) => e.code === errorCode);
-                    if (enhancedError) {
-                      enhancedDescription = enhancedError.description;
-                      error.message = enhancedError.message;
-                      error.recommended_action = enhancedError.recommended_action;
-                      error.context = enhancedError.context || [];
-                      error.selectors = enhancedError.selectors || [];
-                    }
-                  }
-
-                  error.description = enhancedDescription || "Accessibility issue detected. Please review this element for compliance.";
-                  error.message = error.message || "Accessibility compliance issue";
-                  error.recommended_action = error.recommended_action || "Review and fix this accessibility issue according to WCAG guidelines.";
-                  error.context = error.context || [];
-                  error.selectors = error.selectors || [];
-                }
+          // Add axe errors to GPT processing for WebAbility results
+          if (result.processing_stats?.scanner_type === 'webability' && result.axe) {
+            console.log('🔄 Adding axe data to GPT processing for WebAbility');
+            
+            // Convert axe errors to htmlcs format for GPT processing
+            if (result.axe.errors) {
+              result.axe.errors.forEach((axeError: any) => {
+                guideErrors.errors.push({
+                  code: axeError.code || 'AXE_ERROR',
+                  message: axeError.message,
+                  context: axeError.context || [],
+                  selectors: axeError.selectors || [],
+                  description: axeError.description,
+                  recommended_action: axeError.help || 'Please review this accessibility issue',
+                  // Preserve screenshot URL from WebAbility for this specific issue
+                  screenshotUrl: axeError.screenshotUrl
+                });
               });
-            },
-          );
+            }
+            
+            if (result.axe.warnings) {
+              result.axe.warnings.forEach((axeWarning: any) => {
+                guideErrors.warnings.push({
+                  code: axeWarning.code || 'AXE_WARNING',
+                  message: axeWarning.message,
+                  context: axeWarning.context || [],
+                  selectors: axeWarning.selectors || [],
+                  description: axeWarning.description,
+                  recommended_action: axeWarning.help || 'Please review this accessibility issue',
+                  screenshotUrl: axeWarning.screenshotUrl
+                });
+              });
+            }
+            
+            if (result.axe.notices) {
+              result.axe.notices.forEach((axeNotice: any) => {
+                guideErrors.notices.push({
+                  code: axeNotice.code || 'AXE_NOTICE',
+                  message: axeNotice.message,
+                  context: axeNotice.context || [],
+                  selectors: axeNotice.selectors || [],
+                  description: axeNotice.description,
+                  recommended_action: axeNotice.help || 'Please review this accessibility issue',
+                  screenshotUrl: axeNotice.screenshotUrl
+                });
+              });
+            }
+          }
 
-          result.ByFunctions = completion.HumanFunctionalities;
-          console.log('✅ Final ByFunctions assigned with', result.ByFunctions.length, 'functionalities');
-          
-          // Ensure all array fields are properly initialized for GraphQL
-          if (!result.axe) result.axe = { errors: [], notices: [], warnings: [] };
-          if (!result.axe.errors) result.axe.errors = [];
-          if (!result.axe.notices) result.axe.notices = [];
-          if (!result.axe.warnings) result.axe.warnings = [];
-          
-          if (!result.htmlcs) result.htmlcs = { errors: [], notices: [], warnings: [] };
-          if (!result.htmlcs.errors) result.htmlcs.errors = [];
-          if (!result.htmlcs.notices) result.htmlcs.notices = [];
-          if (!result.htmlcs.warnings) result.htmlcs.warnings = [];
-          
-          if (!result.ByFunctions) result.ByFunctions = [];
-          // Debug: Log first functionality structure to verify data integrity
-          if (result.ByFunctions.length > 0) {
-            const firstFunc = result.ByFunctions[0];
-            console.log('🔍 First functionality structure:', {
-              name: firstFunc.FunctionalityName,
-              errorCount: firstFunc.Errors?.length || 0,
-              hasErrors: Array.isArray(firstFunc.Errors),
-              firstError: firstFunc.Errors?.[0] ? {
-                hasCode: !!firstFunc.Errors[0].code,
-                hasMessage: !!firstFunc.Errors[0].message,
-                hasDescription: !!firstFunc.Errors[0].description
-              } : null
+          const errorCodes: string[] = [];
+          const errorCodeWithDescriptions: { [key: string]: { [key: string]: string | string[] } } = {};
+
+          // Ensure arrays exist before iterating
+          if (guideErrors.errors && Array.isArray(guideErrors.errors)) {
+            guideErrors.errors.forEach((errorcode: htmlcsOutput) => {
+              errorCodes.push(errorcode?.code);
+              if (!errorCodeWithDescriptions[errorcode?.code]) {
+                errorCodeWithDescriptions[errorcode?.code] = {};
+              }
+              errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
+              errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
+              errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
+              errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
+              errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
+              // Preserve WebAbility screenshot URLs for frontend display
+              if ((errorcode as any)?.screenshotUrl) {
+                errorCodeWithDescriptions[errorcode?.code].screenshotUrl = (errorcode as any).screenshotUrl;
+                console.log('📸 Preserved screenshot URL for error:', errorcode?.code, 'URL:', (errorcode as any).screenshotUrl.substring(0, 50) + '...');
+              }
             });
           }
+
+          if (guideErrors.notices && Array.isArray(guideErrors.notices)) {
+            guideErrors.notices.forEach((errorcode: htmlcsOutput) => {
+              errorCodes.push(errorcode?.code);
+              if (!errorCodeWithDescriptions[errorcode?.code]) {
+                errorCodeWithDescriptions[errorcode?.code] = {};
+              }
+              errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
+              errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
+              errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
+              errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
+              errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
+            });
+          }
+
+          if (guideErrors.warnings && Array.isArray(guideErrors.warnings)) {
+            guideErrors.warnings.forEach((errorcode: htmlcsOutput) => {
+              errorCodes.push(errorcode?.code);
+              if (!errorCodeWithDescriptions[errorcode?.code]) {
+                errorCodeWithDescriptions[errorcode?.code] = {};
+              }
+              errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
+              errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
+              errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
+              errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
+              errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
+            });
+          }
+
+          console.log('🤖 Calling GPT with', errorCodes.length, 'error codes');
+          const completion: GPTData = await GPTChunks(errorCodes);
+
+          if (completion) {
+            console.log('✅ GPT returned completion with', completion.HumanFunctionalities?.length || 0, 'functionalities');
+            completion.HumanFunctionalities.forEach(
+              (functionality: HumanFunctionality) => {
+                console.log('📋 Processing functionality:', functionality.FunctionalityName, 'with', functionality.Errors?.length || 0, 'errors');
+                functionality.Errors.forEach((error: Error) => {
+                  let errorCode = error['ErrorGuideline'] || (error as any)['Error Guideline'] || (error as any)['code'] || (error as any)['Error Code'] || (error as any)['guideline'];
+
+                  if (!errorCode) {
+                    const possibleCode = Object.values(error).find((value: any) => 
+                      typeof value === 'string' && value.includes('WCAG')
+                    );
+                    errorCode = possibleCode;
+                  }
+
+                  error.code = errorCode;
+                  delete error['ErrorGuideline'];
+                  delete (error as any)['Error Guideline'];
+
+                  if (errorCode && errorCodeWithDescriptions[errorCode]) {
+                    error.description = errorCodeWithDescriptions[errorCode]?.description;
+                    error.context = errorCodeWithDescriptions[errorCode]?.context;
+                    error.message = errorCodeWithDescriptions[errorCode]?.message;
+                    error.recommended_action = errorCodeWithDescriptions[errorCode]?.recommended_action;
+                    error.selectors = errorCodeWithDescriptions[errorCode]?.selectors;
+                    // Add screenshot URL for frontend display
+                    if (errorCodeWithDescriptions[errorCode]?.screenshotUrl) {
+                      (error as any).screenshotUrl = errorCodeWithDescriptions[errorCode].screenshotUrl;
+                      console.log('📸 Added screenshot URL to GPT result for:', errorCode, 'URL:', errorCodeWithDescriptions[errorCode].screenshotUrl);
+                    }
+                    // Add all other WebAbility fields
+                    if (errorCodeWithDescriptions[errorCode]?.helpUrl) {
+                      (error as any).helpUrl = errorCodeWithDescriptions[errorCode].helpUrl;
+                    }
+                    if (errorCodeWithDescriptions[errorCode]?.runner) {
+                      (error as any).runner = errorCodeWithDescriptions[errorCode].runner;
+                    }
+                    if (errorCodeWithDescriptions[errorCode]?.impact) {
+                      (error as any).impact = errorCodeWithDescriptions[errorCode].impact;
+                    }
+                    if (errorCodeWithDescriptions[errorCode]?.wcagLevel) {
+                      (error as any).wcagLevel = errorCodeWithDescriptions[errorCode].wcagLevel;
+                    }
+                    console.log('🔗 Final error data for', errorCode, {
+                      hasSelectors: !!(error.selectors && error.selectors.length > 0),
+                      hasContext: !!(error.context && error.context.length > 0),
+                      hasScreenshot: !!(error as any).screenshotUrl,
+                      selectorsCount: error.selectors?.length || 0,
+                      contextCount: error.context?.length || 0
+                    });
+                  } else {
+                    let enhancedDescription = null;
+                    if (result?.htmlcs?.errors) {
+                      const enhancedError = result.htmlcs.errors.find((e: any) => e.code === errorCode);
+                      if (enhancedError) {
+                        enhancedDescription = enhancedError.description;
+                        error.message = enhancedError.message;
+                        error.recommended_action = enhancedError.recommended_action;
+                        error.context = enhancedError.context || [];
+                        error.selectors = enhancedError.selectors || [];
+                        // Preserve WebAbility metadata even when not in errorCodeWithDescriptions
+                        if (enhancedError.screenshotUrl) {
+                          (error as any).screenshotUrl = enhancedError.screenshotUrl;
+                          console.log('📸 Added screenshot URL from htmlcs enhanced error for:', errorCode);
+                        }
+                        if (enhancedError.helpUrl) {
+                          (error as any).helpUrl = enhancedError.helpUrl;
+                        }
+                        if (enhancedError.runner) {
+                          (error as any).runner = enhancedError.runner;
+                        }
+                        if (enhancedError.impact) {
+                          (error as any).impact = enhancedError.impact;
+                        }
+                        if (enhancedError.wcagLevel) {
+                          (error as any).wcagLevel = enhancedError.wcagLevel;
+                        }
+                      }
+                    }
+
+                    error.description = enhancedDescription || "Accessibility issue detected. Please review this element for compliance.";
+                    error.message = error.message || "Accessibility compliance issue";
+                    error.recommended_action = error.recommended_action || "Review and fix this accessibility issue according to WCAG guidelines.";
+                    error.context = error.context || [];
+                    error.selectors = error.selectors || [];
+                    
+                    console.log('🔗 Final fallback error data for', errorCode, {
+                      hasSelectors: !!(error.selectors && error.selectors.length > 0),
+                      hasContext: !!(error.context && error.context.length > 0),
+                      hasScreenshot: !!(error as any).screenshotUrl,
+                      selectorsCount: error.selectors?.length || 0,
+                      contextCount: error.context?.length || 0
+                    });
+                  }
+                });
+              },
+            );
+
+            result.ByFunctions = completion.HumanFunctionalities;
+            console.log('✅ Final ByFunctions assigned with', result.ByFunctions.length, 'functionalities');
+            
+            // Count screenshots in final ByFunctions
+            let totalScreenshotsInByFunctions = 0;
+            result.ByFunctions.forEach((func: any, funcIndex: number) => {
+              let screenshotsInFunc = 0;
+              func.Errors.forEach((error: any, errorIndex: number) => {
+                if ((error as any).screenshotUrl) {
+                  screenshotsInFunc++;
+                  totalScreenshotsInByFunctions++;
+                }
+              });
+              if (screenshotsInFunc > 0) {
+                console.log(`📸 Function "${func.FunctionalityName}" has ${screenshotsInFunc} errors with screenshots`);
+              }
+            });
+            console.log(`📸 Total screenshots in final ByFunctions: ${totalScreenshotsInByFunctions}`);
+            
+            // Preserve WebAbility metadata if available
+            if (result.processing_stats?.scanner_type === 'webability') {
+              console.log('📊 Preserving WebAbility metadata in final result');
+              // The webability_metadata should already be in the result from the adapter
+            }
+            
+            // Ensure all array fields are properly initialized for GraphQL
+            if (!result.axe) result.axe = { errors: [], notices: [], warnings: [] };
+            if (!result.axe.errors) result.axe.errors = [];
+            if (!result.axe.notices) result.axe.notices = [];
+            if (!result.axe.warnings) result.axe.warnings = [];
+            
+            if (!result.htmlcs) result.htmlcs = { errors: [], notices: [], warnings: [] };
+            if (!result.htmlcs.errors) result.htmlcs.errors = [];
+            if (!result.htmlcs.notices) result.htmlcs.notices = [];
+            if (!result.htmlcs.warnings) result.htmlcs.warnings = [];
+            
+            if (!result.ByFunctions) result.ByFunctions = [];
+            // Debug: Log first functionality structure to verify data integrity
+            if (result.ByFunctions.length > 0) {
+              const firstFunc = result.ByFunctions[0];
+              console.log('🔍 First functionality structure:', {
+                name: firstFunc.FunctionalityName,
+                errorCount: firstFunc.Errors?.length || 0,
+                hasErrors: Array.isArray(firstFunc.Errors),
+                firstError: firstFunc.Errors?.[0] ? {
+                  hasCode: !!firstFunc.Errors[0].code,
+                  hasMessage: !!firstFunc.Errors[0].message,
+                  hasDescription: !!firstFunc.Errors[0].description
+                } : null
+              });
+            }
+          } else {
+            console.log('❌ GPT returned no completion');
+          }
         } else {
-          console.log('❌ GPT returned no completion');
+          console.log('✅ Pally ByFunctions data found, returning with calculated fields. Length:', result.ByFunctions.length);
+          return result;
         }
-      }
+
+        }
 
       // Final safety check: Ensure all required array fields are initialized before returning
       if (!result.axe) result.axe = { errors: [], notices: [], warnings: [] };

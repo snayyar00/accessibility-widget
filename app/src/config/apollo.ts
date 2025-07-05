@@ -29,6 +29,10 @@ export function createClient(): ApolloClient<NormalizedCacheObject> {
   const httpLink = new HttpLink({
     credentials: 'include',
     uri: process.env.REACT_APP_GRAPHQL_URL,
+    // Add timeout for long-running accessibility scans
+    fetchOptions: {
+      timeout: 120000, // 2 minutes timeout for accessibility scans
+    },
   });
 
   // Return a new Apollo Client back, with the cache we've just created,

@@ -73,6 +73,10 @@ export const AccessibilitySchema = gql`
     confidence_score: Float
     template_info: TemplateInfo
     processing_metadata: ProcessingMetadata
+    screenshotUrl: String
+    helpUrl: String
+    runner: String
+    wcagLevel: String
   }
 
   type htmlCsOutput {
@@ -85,6 +89,11 @@ export const AccessibilitySchema = gql`
     confidence_score: Float
     template_info: TemplateInfo
     processing_metadata: ProcessingMetadata
+    screenshotUrl: String
+    helpUrl: String
+    runner: String
+    impact: String
+    wcagLevel: String
   }
 
   type axeResult {
@@ -156,12 +165,70 @@ export const AccessibilitySchema = gql`
     techStack: TechStack
   }
 
+  type WebAbilityBrowserInfo {
+    userAgent: String!
+    viewport: [Int!]!
+    orientation: String!
+  }
+
+  type WebAbilityAccessibilityStandards {
+    wcag_version: String!
+    compliance_level: String!
+    tested_rules: Int!
+    passed_rules: Int!
+    failed_rules: Int!
+    incomplete_rules: Int!
+    inapplicable_rules: Int!
+  }
+
+  type WebAbilityIssueTypeBreakdown {
+    errors: Int!
+    warnings: Int!
+    notices: Int!
+    total: Int!
+  }
+
+  type WebAbilityIssueSeverityBreakdown {
+    critical: Int!
+    serious: Int!
+    moderate: Int!
+    minor: Int!
+    unknown: Int!
+  }
+
+  type WebAbilityIssueCategoryBreakdown {
+    perceivable: Int!
+    operable: Int!
+    understandable: Int!
+    robust: Int!
+    best_practice: Int!
+    other: Int!
+  }
+
+  type WebAbilityIssueBreakdown {
+    by_type: WebAbilityIssueTypeBreakdown!
+    by_severity: WebAbilityIssueSeverityBreakdown!
+    by_category: WebAbilityIssueCategoryBreakdown!
+  }
+
+  type WebAbilityMetadata {
+    job_id: String!
+    scan_duration: Int!
+    scan_timestamp: String!
+    browser_info: WebAbilityBrowserInfo!
+    accessibility_standards: WebAbilityAccessibilityStandards!
+    issue_breakdown: WebAbilityIssueBreakdown!
+    screenshots: [String!]!
+    violation_screenshots: Int!
+  }
+
   extend type Report {
-  issues: [Issue!]
-  issuesByFunction: JSON
-  functionalityNames: [String!]
-  totalStats: JSON
-}
+    issues: [Issue!]
+    issuesByFunction: JSON
+    functionalityNames: [String!]
+    totalStats: JSON
+    webability_metadata: WebAbilityMetadata
+  }
 
 type Issue {
   functionality: String

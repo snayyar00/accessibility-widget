@@ -5,7 +5,7 @@ import AccordionSummary, { accordionSummaryClasses } from "@mui/joy/AccordionSum
 import React, { useState } from 'react';
 import CodeBlock from "./CodeBlock";
 
-export default function AccordionCard({ heading, noOfFails, description, selectors, help,elements,expand }: any) {
+export default function AccordionCard({ heading, noOfFails, description, selectors, help, elements, expand, screenshotUrl }: any) {
   const [expanded, setExpanded] = useState(false);
 
 
@@ -59,6 +59,42 @@ export default function AccordionCard({ heading, noOfFails, description, selecto
                 ))}
             </>
           ) : null}
+
+          {selectors && selectors.length > 0 && (
+            <>
+              <h4 className="text-xs font-medium text-dark-gray p-1.5 mt-0.5">
+                CSS Selector
+              </h4>
+              <div className="m-1.5">
+                {selectors.map((selector: string, index: number) => (
+                  <code key={index} className="block bg-gray-100 p-2 rounded text-sm font-mono mb-1">
+                    {selector}
+                  </code>
+                ))}
+              </div>
+            </>
+          )}
+
+          {screenshotUrl && (
+            <>
+              <h4 className="text-xs font-medium text-dark-gray p-1.5 mt-0.5">
+                Screenshot
+              </h4>
+              <div className="m-1.5">
+                <img 
+                  src={screenshotUrl} 
+                  alt="Accessibility issue screenshot" 
+                  className="max-w-full h-auto rounded border"
+                  style={{ maxHeight: '300px' }}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  <a href={screenshotUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                    View full screenshot
+                  </a>
+                </p>
+              </div>
+            </>
+          )}
 
           <h4 className="text-xs font-medium text-dark-gray p-1.5 mt-0.5">
             Recommended Action

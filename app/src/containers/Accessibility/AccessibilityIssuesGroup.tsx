@@ -64,6 +64,8 @@ export default function AccessibilityIssuesGroup({ issueObj, expand }: Accessibi
                   description={issue.description}
                   help={issue.recommended_action}
                   elements={issue.context}
+                  selectors={issue.selectors}
+                  screenshotUrl={(issue as any).screenshotUrl}
                 />
               </AccordionDetails>
             ))}

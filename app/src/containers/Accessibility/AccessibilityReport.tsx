@@ -783,7 +783,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
                       <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
                         <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 919-9" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 0 1 9-9" />
                         </svg>
                       </div>
                     </div>
@@ -857,10 +857,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                              return null;
                            }
                            
-                           // Debug logging to understand data structure
-                           if (process.env.NODE_ENV === 'development') {
-                             console.log('Option data:', data);
-                           }
+                           // Debug logging removed to reduce console noise
                            
                            // Handle both regular options and created options with proper type checking
                            let displayValue = '';
@@ -922,10 +919,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                              return null;
                            }
                            
-                           // Debug logging to understand data structure  
-                           if (process.env.NODE_ENV === 'development') {
-                             console.log('SingleValue data:', data);
-                           }
+                           // Debug logging removed to reduce console noise
                            
                            // Handle both regular options and created options with proper type checking
                            let displayValue = '';
@@ -1046,10 +1040,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
                   <button
                     type="button"
-                    className={`search-button w-full relative overflow-hidden font-bold py-6 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 border group ${
+                    className={`search-button w-full relative font-bold rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl border group ${
                       loading 
-                        ? 'bg-blue-600 border-blue-600 cursor-not-allowed' 
-                        : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 border-blue-600 hover:border-blue-700 active:scale-[0.98]'
+                        ? 'bg-blue-600 border-blue-600 cursor-not-allowed min-h-[160px] sm:min-h-[200px] lg:min-h-[220px]' 
+                        : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 border-blue-600 hover:border-blue-700 active:scale-[0.98] py-6 px-8'
                     }`}
                     disabled={loading}
                     onClick={() => {
@@ -1063,129 +1057,128 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     {/* Enhanced Loading State */}
                     {loading ? (
                       <div 
-                        className="absolute inset-0 bg-blue-600 rounded-2xl flex flex-col items-center justify-center gap-4 z-10 px-6 py-4 animate-in fade-in duration-300"
+                        className="p-4 sm:p-6 lg:p-8 flex flex-col items-center justify-center gap-4 sm:gap-6 animate-in fade-in duration-300 h-full"
                         role="status" 
                         aria-live="polite" 
                         aria-label={`Scanning website for accessibility issues: ${scanProgress.step}`}
                       >
-                        {/* Header with enhanced spinner */}
-                        <div className="flex items-center gap-4">
+                        {/* Header with spinner */}
+                        <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-center">
                           <div className="relative" aria-hidden="true">
-                            {/* Multi-layer spinner animation */}
-                            <div className="w-8 h-8 relative">
-                              {/* Outer ring */}
-                              <div className="absolute inset-0 border-3 border-white/20 rounded-full"></div>
-                              {/* Spinning ring */}
-                              <div className="absolute inset-0 border-3 border-transparent border-t-white rounded-full animate-spin"></div>
-                              {/* Inner pulse */}
-                              <div className="absolute inset-2 bg-white/30 rounded-full animate-pulse"></div>
+                            {/* Enhanced spinner */}
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 relative">
+                              <div className="absolute inset-0 border-2 sm:border-3 border-white/20 rounded-full"></div>
+                              <div className="absolute inset-0 border-2 sm:border-3 border-transparent border-t-white rounded-full animate-spin"></div>
+                              <div className="absolute inset-1 sm:inset-2 bg-white/20 rounded-full animate-pulse"></div>
                             </div>
                           </div>
-                          <span className="text-lg font-semibold text-white" id="scan-status">
+                          <span className="text-lg sm:text-xl lg:text-2xl font-semibold text-white text-center" id="scan-status">
                             Analyzing Enterprise Assets
                           </span>
                         </div>
                         
-                        {/* Progress Details */}
+                        {/* Progress Step with more space */}
                         {scanProgress.step && (
-                          <div className="w-full max-w-md space-y-3">
-                            {/* Current Step */}
-                            <div className="text-center">
-                              <div className="text-sm text-blue-100 font-medium mb-2" aria-describedby="scan-status">
-                                {scanProgress.step}
-                              </div>
-                              
-                              {/* Progress Bar */}
-                              <div className="w-full bg-blue-800/50 rounded-full h-2 mb-3">
-                                <div 
-                                  className={`h-2 rounded-full transition-all duration-1000 ease-out ${
-                                    scanProgress.phase === 'initializing' ? 'bg-yellow-400 w-1/4' :
-                                    scanProgress.phase === 'analyzing' ? 'bg-blue-400 w-1/2' :
-                                    scanProgress.phase === 'processing' ? 'bg-orange-400 w-3/4' :
-                                    'bg-green-400 w-5/6'
-                                  }`}
-                                ></div>
-                              </div>
+                          <div className="w-full max-w-md text-center space-y-3 sm:space-y-4">
+                            <div className="text-sm sm:text-base text-blue-100 font-medium" aria-describedby="scan-status">
+                              {scanProgress.step}
                             </div>
                             
-                            {/* Timing Information */}
-                            <div className="flex items-center justify-center gap-4 text-xs text-blue-200">
-                              {/* Elapsed Time */}
-                              <span className="inline-flex items-center gap-1.5">
-                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                                </svg>
-                                {scanProgress.elapsed > 0 && (
-                                  <span className="font-medium">{scanProgress.elapsed}s elapsed</span>
-                                )}
-                              </span>
-                              
-                              {/* Estimated Time with Confidence */}
-                              <span className="inline-flex items-center gap-1.5">
-                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                                </svg>
-                                <span className="font-medium">
-                                  ~{scanProgress.estimatedTime}s remaining
-                                  {scanProgress.confidence === 'low' && (
-                                    <span className="text-blue-300 ml-1">*</span>
-                                  )}
-                                </span>
-                              </span>
+                            {/* More prominent progress bar */}
+                            <div className="w-full bg-blue-800/40 rounded-full h-2 sm:h-3 shadow-inner">
+                              <div 
+                                className={`h-full rounded-full transition-all duration-1000 ease-out shadow-sm ${
+                                  scanProgress.phase === 'initializing' ? 'bg-yellow-400 w-1/4' :
+                                  scanProgress.phase === 'analyzing' ? 'bg-blue-300 w-1/2' :
+                                  scanProgress.phase === 'processing' ? 'bg-orange-400 w-3/4' :
+                                  'bg-green-400 w-5/6'
+                                }`}
+                              ></div>
                             </div>
                             
-                            {/* Extended Time Notice */}
-                            {(scanProgress.elapsed > 45 || scanProgress.confidence === 'low') && (
-                              <div className="mt-3 p-3 bg-blue-800/40 rounded-lg border border-blue-400/30 animate-in slide-in-from-bottom duration-500">
-                                <div className="flex items-start gap-2 text-xs text-blue-100">
-                                  <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                  </svg>
-                                  <div>
-                                    <div className="font-medium">Complex site detected</div>
-                                    <div className="text-blue-200 mt-1">
-                                      Large sites with dynamic content may take longer to analyze thoroughly. 
-                                      We're ensuring comprehensive coverage of all accessibility aspects.
-                                    </div>
-                                  </div>
-                                </div>
+                            {/* Phase indicator */}
+                            <div className="text-xs sm:text-sm text-blue-200 font-medium capitalize">
+                              {scanProgress.phase} Phase
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Timing information with better spacing */}
+                        <div className="flex items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm text-blue-200 flex-wrap">
+                          {scanProgress.elapsed > 0 && (
+                            <div className="flex items-center gap-1.5 bg-blue-800/30 px-3 py-1.5 rounded-full">
+                              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                              </svg>
+                              <span className="font-medium">{scanProgress.elapsed}s elapsed</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center gap-1.5 bg-blue-800/30 px-3 py-1.5 rounded-full">
+                            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                            </svg>
+                            <span className="font-medium">
+                              ~{scanProgress.estimatedTime}s remaining
+                              {scanProgress.confidence === 'low' && (
+                                <span className="text-blue-300 ml-1">*</span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Conditional Extended Info - Better positioned */}
+                        {scanProgress.elapsed > 30 && (
+                          <div className="mt-2 p-3 bg-blue-800/40 rounded-lg border border-blue-400/20 max-w-md w-full">
+                            <div className="text-xs sm:text-sm text-blue-100 text-center">
+                              <div className="flex items-center justify-center gap-2 mb-1">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                </svg>
+                                <span className="font-medium">Complex Site Detected</span>
                               </div>
-                            )}
-                            
-                            {/* Timeout Warning */}
-                            {scanProgress.elapsed > 90 && (
-                              <div className="mt-2 p-3 bg-yellow-600/20 rounded-lg border border-yellow-400/30 animate-in slide-in-from-bottom duration-500">
-                                <div className="flex items-center gap-2 text-xs text-yellow-100">
-                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                  </svg>
-                                  <span className="font-medium">
-                                    Taking longer than expected. You can refresh the page to try again if needed.
-                                  </span>
-                                </div>
+                              <div className="text-blue-200">
+                                Performing comprehensive accessibility analysis
                               </div>
-                            )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Timeout Warning - Better visibility */}
+                        {scanProgress.elapsed > 90 && (
+                          <div className="mt-2 p-3 bg-yellow-600/20 rounded-lg border border-yellow-400/30 max-w-md w-full">
+                            <div className="text-xs sm:text-sm text-yellow-100 text-center">
+                              <div className="flex items-center justify-center gap-2 mb-1">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                <span className="font-medium">Extended Analysis</span>
+                              </div>
+                              <div className="text-yellow-200">
+                                Taking longer than usual - you can refresh if needed
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
                     ) : (
-                      /* Normal State with Enhanced Animation */
-                      <div className="flex items-center justify-center gap-4 py-2 transition-all duration-300 group-hover:gap-5">
+                      /* Normal State - Clean and Responsive */
+                      <div className="flex items-center justify-center gap-3 sm:gap-4 py-4 sm:py-5 transition-all duration-300 group-hover:gap-4 sm:group-hover:gap-5">
                         {/* Left Icon */}
-                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-white/30 group-hover:scale-110">
-                          <svg className="w-5 h-5 text-white transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white/20 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-white/30 group-hover:scale-110">
+                          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
                         
-                        {/* Text */}
-                        <span className="text-xl font-bold tracking-wide text-white transition-all duration-300 group-hover:tracking-wider">
+                        {/* Text - Enhanced sizing */}
+                        <span className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-wide text-white transition-all duration-300 group-hover:tracking-wider text-center">
                           Start Compliance Scan
                         </span>
                         
                         {/* Right Arrow */}
-                        <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-white/30 group-hover:translate-x-1">
-                          <svg className="w-4 h-4 text-white transition-transform duration-300 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white/20 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-white/30 group-hover:translate-x-1">
+                          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white transition-transform duration-300 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                           </svg>
                         </div>
@@ -1249,7 +1242,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             <div className="mb-6 flex-shrink-0">
               <div className="w-16 h-16 bg-gray-600 rounded-2xl flex items-center justify-center shadow-lg">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 919-9" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 0 1 9-9" />
                 </svg>
               </div>
             </div>
