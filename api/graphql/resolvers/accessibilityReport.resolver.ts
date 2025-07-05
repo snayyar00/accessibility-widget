@@ -44,6 +44,23 @@ const resolvers = {
         // Fetch the tech stack data
         const techStack = await fetchTechStackFromAPI(url);
 
+        // Ensure arrays are properly initialized to prevent GraphQL errors
+        if (accessibilityReport) {
+          // Handle htmlcs results
+          if (accessibilityReport.htmlcs) {
+            accessibilityReport.htmlcs.errors = accessibilityReport.htmlcs.errors || [];
+            accessibilityReport.htmlcs.notices = accessibilityReport.htmlcs.notices || [];
+            accessibilityReport.htmlcs.warnings = accessibilityReport.htmlcs.warnings || [];
+          }
+          
+          // Handle axe results
+          if (accessibilityReport.axe) {
+            accessibilityReport.axe.errors = accessibilityReport.axe.errors || [];
+            accessibilityReport.axe.notices = accessibilityReport.axe.notices || [];
+            accessibilityReport.axe.warnings = accessibilityReport.axe.warnings || [];
+          }
+        }
+
         // Combine the accessibility report and tech stack data
         return {
           ...accessibilityReport,
@@ -67,7 +84,26 @@ const resolvers = {
       return formattedRows;
     },
     fetchReportByR2Key: async (_: any, { r2_key }: any) => {
-      return await fetchReportFromR2(r2_key);
+      const report = await fetchReportFromR2(r2_key);
+      
+      // Ensure arrays are properly initialized to prevent GraphQL errors
+      if (report) {
+        // Handle htmlcs results
+        if (report.htmlcs) {
+          report.htmlcs.errors = report.htmlcs.errors || [];
+          report.htmlcs.notices = report.htmlcs.notices || [];
+          report.htmlcs.warnings = report.htmlcs.warnings || [];
+        }
+        
+        // Handle axe results
+        if (report.axe) {
+          report.axe.errors = report.axe.errors || [];
+          report.axe.notices = report.axe.notices || [];
+          report.axe.warnings = report.axe.warnings || [];
+        }
+      }
+      
+      return report;
     },
   },
 };

@@ -646,47 +646,85 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         console.error('Error handling select change:', error);
                       }
                     }}
-                    onCreateOption={(inputValue: any) => {
-                      try {
-                        // Add validation for input value
-                        const cleanedValue = String(inputValue || '').trim();
-                        if (!cleanedValue) {
-                          return; // Don't create option for empty values
-                        }
-                        
-                        const newOption = { value: cleanedValue, label: cleanedValue };
-                        setSelectedOption(newOption);
-                        setSelectedSite(cleanedValue);
-                        setDomain(cleanedValue);
-                      } catch (error) {
-                        console.error('Error creating option:', error);
-                      }
-                    }}
+                                         onCreateOption={(inputValue: any) => {
+                       try {
+                         // Enhanced validation for input value with type checking
+                         let cleanedValue = '';
+                         if (typeof inputValue === 'string' && inputValue.trim()) {
+                           cleanedValue = inputValue.trim();
+                         } else if (inputValue && typeof inputValue.toString === 'function') {
+                           cleanedValue = inputValue.toString().trim();
+                         }
+                         
+                         if (!cleanedValue) {
+                           console.warn('Empty or invalid input value for domain creation:', inputValue);
+                           return; // Don't create option for empty values
+                         }
+                         
+                         // Ensure proper option structure
+                         const newOption = { 
+                           value: cleanedValue, 
+                           label: cleanedValue,
+                           __isNew__: true 
+                         };
+                         
+                         console.log('Creating new option:', newOption);
+                         setSelectedOption(newOption);
+                         setSelectedSite(cleanedValue);
+                         setDomain(cleanedValue);
+                       } catch (error) {
+                         console.error('Error creating option:', error);
+                       }
+                     }}
                     placeholder="Enter your enterprise domain (e.g., your-company.com)"
                     isSearchable
                     isClearable
-                    formatCreateLabel={(inputValue: any) => {
-                      const safeValue = String(inputValue || '').trim() || 'domain';
-                      return (
-                        <div className="flex items-center gap-2 py-1">
-                          <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs">+</span>
-                          </div>
-                          <span>Audit <strong>"{safeValue}"</strong></span>
-                        </div>
-                      );
-                    }}
+                                         formatCreateLabel={(inputValue: any) => {
+                       // Proper type checking for inputValue
+                       let safeValue = 'domain';
+                       if (typeof inputValue === 'string' && inputValue.trim()) {
+                         safeValue = inputValue.trim();
+                       } else if (inputValue && typeof inputValue.toString === 'function') {
+                         safeValue = inputValue.toString().trim() || 'domain';
+                       }
+                       
+                       return (
+                         <div className="flex items-center gap-2 py-1">
+                           <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                             <span className="text-white text-xs">+</span>
+                           </div>
+                           <span>Audit <strong>"{safeValue}"</strong></span>
+                         </div>
+                       );
+                     }}
                     components={{
-                      Option: ({ innerRef, innerProps, data, isSelected, isFocused }: any) => {
-                        // Add error handling for undefined or invalid data
-                        if (!data) {
-                          return null;
-                        }
-                        
-                        // Handle both regular options and created options
-                        const displayValue = data.label || data.value || '';
-                        const safeLabel = String(displayValue);
-                        const firstChar = safeLabel.charAt(0).toUpperCase() || '?';
+                                             Option: ({ innerRef, innerProps, data, isSelected, isFocused }: any) => {
+                         // Add error handling for undefined or invalid data
+                         if (!data) {
+                           return null;
+                         }
+                         
+                         // Debug logging to understand data structure
+                         if (process.env.NODE_ENV === 'development') {
+                           console.log('Option data:', data);
+                         }
+                         
+                         // Handle both regular options and created options with proper type checking
+                         let displayValue = '';
+                         if (typeof data.label === 'string' && data.label.trim()) {
+                           displayValue = data.label.trim();
+                         } else if (typeof data.value === 'string' && data.value.trim()) {
+                           displayValue = data.value.trim();
+                         } else if (data.__isNew__ && typeof data.inputValue === 'string') {
+                           displayValue = data.inputValue.trim();
+                         } else {
+                           // Last resort: try to extract any string value
+                           console.warn('Unexpected data structure in Option:', data);
+                           displayValue = 'Unknown domain';
+                         }
+                         
+                         const safeLabel = displayValue;
+                         const firstChar = safeLabel.charAt(0).toUpperCase() || '?';
                         
                         return (
                           <div
@@ -725,16 +763,33 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                           </div>
                         );
                       },
-                      SingleValue: ({ data }: any) => {
-                        // Add error handling for undefined or invalid data
-                        if (!data) {
-                          return null;
-                        }
-                        
-                        // Handle both regular options and created options
-                        const displayValue = data.label || data.value || '';
-                        const safeLabel = String(displayValue);
-                        const firstChar = safeLabel.charAt(0).toUpperCase() || '?';
+                                             SingleValue: ({ data }: any) => {
+                         // Add error handling for undefined or invalid data
+                         if (!data) {
+                           return null;
+                         }
+                         
+                         // Debug logging to understand data structure  
+                         if (process.env.NODE_ENV === 'development') {
+                           console.log('SingleValue data:', data);
+                         }
+                         
+                         // Handle both regular options and created options with proper type checking
+                         let displayValue = '';
+                         if (typeof data.label === 'string' && data.label.trim()) {
+                           displayValue = data.label.trim();
+                         } else if (typeof data.value === 'string' && data.value.trim()) {
+                           displayValue = data.value.trim();
+                         } else if (data.__isNew__ && typeof data.inputValue === 'string') {
+                           displayValue = data.inputValue.trim();
+                         } else {
+                           // Last resort: try to extract any string value
+                           console.warn('Unexpected data structure in SingleValue:', data);
+                           displayValue = 'Unknown domain';
+                         }
+                         
+                         const safeLabel = displayValue;
+                         const firstChar = safeLabel.charAt(0).toUpperCase() || '?';
                         
                         return (
                           <div className="absolute inset-0 flex items-center justify-center gap-3">
@@ -849,17 +904,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   }}
                 >
                   {/* Content */}
-                  <div className="relative flex items-center gap-3">
+                  <div className="relative flex items-center justify-center gap-3 min-h-[3rem]">
                     {loading ? (
-                      <>
+                      <div className="absolute inset-0 bg-blue-600 rounded-2xl flex items-center justify-center gap-3 z-10">
                         <div className="relative">
-                          <CircularProgress size={24} sx={{ color: '#ffffff' }} />
-                          <div className="absolute inset-0 rounded-full border-2 border-white/40 animate-ping"></div>
+                          <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                         </div>
                         <span className="text-lg font-bold text-white">
                           Analyzing Enterprise Assets...
                         </span>
-                      </>
+                      </div>
                     ) : (
                       <>
                         <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
