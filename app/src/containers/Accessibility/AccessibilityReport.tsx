@@ -103,6 +103,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   // Modal state for success message with report link
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [reportUrl, setReportUrl] = useState<string>('');
+  
+  // Filter states
+  const [filters, setFilters] = useState({
+    status: '',
+    scoreRange: '',
+    sortBy: 'date-desc'
+  });
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   // Combine options for existing sites and a custom "Enter a new domain" option
   const siteOptions = sitesData?.getUserSites?.map((domain: any) => ({
@@ -253,6 +261,89 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       return 'Partially Compliant';
     } else {
       return 'Non-Compliant';
+    }
+  };
+
+  // Filter and sort audit history
+  const filteredReportKeys = processedReportKeys
+    .filter((row: any) => {
+      // Status filter
+      if (filters.status) {
+        const status = getComplianceStatus(row.enhancedScore);
+        if (filters.status === 'compliant' && status !== 'Compliant') return false;
+        if (filters.status === 'partial' && status !== 'Partially Compliant') return false;
+        if (filters.status === 'non-compliant' && status !== 'Non-Compliant') return false;
+      }
+      
+      // Score range filter
+      if (filters.scoreRange) {
+        const score = row.score;
+        if (filters.scoreRange === '90-100' && (score < 90 || score > 100)) return false;
+        if (filters.scoreRange === '70-89' && (score < 70 || score >= 90)) return false;
+        if (filters.scoreRange === '50-69' && (score < 50 || score >= 70)) return false;
+        if (filters.scoreRange === '0-49' && (score < 0 || score >= 50)) return false;
+      }
+      
+      return true;
+    })
+    .sort((a: any, b: any) => {
+      switch (filters.sortBy) {
+        case 'date-desc':
+          return Number(b.created_at) - Number(a.created_at);
+        case 'date-asc':
+          return Number(a.created_at) - Number(b.created_at);
+        case 'score-desc':
+          return b.score - a.score;
+        case 'score-asc':
+          return a.score - b.score;
+        case 'domain-asc':
+          return a.url.localeCompare(b.url);
+        case 'domain-desc':
+          return b.url.localeCompare(a.url);
+        default:
+          return Number(b.created_at) - Number(a.created_at);
+      }
+    });
+
+  // Update active filters for display
+  const updateActiveFilters = () => {
+    const active: string[] = [];
+    if (filters.status) {
+      const statusLabel = filters.status === 'compliant' ? 'Compliant' : 
+                         filters.status === 'partial' ? 'Partially Compliant' : 'Non-Compliant';
+      active.push(statusLabel);
+    }
+    if (filters.scoreRange) active.push(`Score: ${filters.scoreRange}%`);
+    setActiveFilters(active);
+  };
+
+  // Update active filters when filters change
+  useEffect(() => {
+    updateActiveFilters();
+  }, [filters]);
+
+  // Handle filter changes
+  const handleFilterChange = (filterType: string, value: string) => {
+    setFilters(prev => ({ ...prev, [filterType]: value }));
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setFilters({
+      status: '',
+      scoreRange: '',
+      sortBy: 'date-desc'
+    });
+  };
+
+  // Remove individual filter
+  const removeFilter = (filterToRemove: string) => {
+    if (filterToRemove.startsWith('Search:')) {
+      handleFilterChange('search', '');
+    } else if (['Compliant', 'Partially Compliant', 'Non-Compliant'].includes(filterToRemove)) {
+      handleFilterChange('status', '');
+    } else if (filterToRemove.startsWith('Score:')) {
+      handleFilterChange('scoreRange', '');
     }
   };
 
@@ -477,156 +568,680 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}
       />
-    <div className="accessibility-wrapper">
-      <header className="accessibility-page-header text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Scanner</h1>
-        <p className="text-xl text-gray-600">
-          Evaluate your website's accessibility in seconds. View a history of all accessibility scans. Download your reports.
-        </p>
-      </header>
+          <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <div className="relative bg-blue-600">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+          <div className="text-center accessibility-page-header">
+            <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-6">
+              <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+              Enterprise Trusted • AI-Powered
+            </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+              Enterprise Accessibility<br />Intelligence Platform
+            </h1>
+            <p className="text-xl sm:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+              Protect your brand with AI-powered compliance monitoring. Eliminate ADA lawsuit risk and unlock the $13 trillion disability market with enterprise-grade technology.
+            </p>
+            
+            {/* Search Bar */}
+            <div className="search-bar-container max-w-2xl mx-auto bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-2xl relative">
+                              <div className="flex flex-col gap-4">
+                  <div className="relative z-10">
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                    <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 919-9" />
+                      </svg>
+                    </div>
+                  </div>
+                  <Select
+                    options={siteOptions}
+                    value={selectedOption}
+                    onChange={(selected: OptionType | null) => {
+                      setSelectedOption(selected);
+                      setSelectedSite(selected?.value ?? '');
+                      setDomain(selected?.value ?? '');
+                    }}
+                    onCreateOption={(inputValue: any) => {
+                      const newOption = { value: inputValue, label: inputValue };
+                      setSelectedOption(newOption);
+                      setSelectedSite(inputValue);
+                      setDomain(inputValue);
+                    }}
+                    placeholder="Enter your enterprise domain (e.g., your-company.com)"
+                    isSearchable
+                    isClearable
+                    formatCreateLabel={(inputValue: any) => (
+                      <div className="flex items-center gap-2 py-1">
+                        <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs">+</span>
+                        </div>
+                        <span>Audit <strong>"{inputValue}"</strong></span>
+                      </div>
+                    )}
+                    components={{
+                      Option: ({ innerRef, innerProps, data, isSelected, isFocused }: any) => (
+                        <div
+                          ref={innerRef}
+                          {...innerProps}
+                          className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 ${
+                            isSelected 
+                              ? 'bg-blue-600 text-white' 
+                              : isFocused 
+                                ? 'bg-blue-50 text-gray-900' 
+                                : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-semibold text-sm ${
+                            isSelected 
+                              ? 'bg-white/20 text-white' 
+                              : 'bg-blue-600 text-white'
+                          }`}>
+                            {data.label.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium">{data.label}</div>
+                            <div className={`text-xs ${
+                              isSelected ? 'text-white/80' : 'text-gray-500'
+                            }`}>
+                              Enterprise compliant
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      ),
+                      SingleValue: ({ data }: any) => (
+                        <div className="absolute inset-0 flex items-center justify-center gap-3">
+                          <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <span className="text-white text-xs font-semibold">
+                              {data.label.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <span className="text-gray-900 font-medium">{data.label}</span>
+                        </div>
+                      ),
+                      DropdownIndicator: () => (
+                        <div className="px-3">
+                          <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                      ),
+                      ClearIndicator: ({ innerProps }: any) => (
+                        <div {...innerProps} className="px-2" title="Clear selection">
+                          <div className="w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md">
+                            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </div>
+                        </div>
+                      ),
+                    }}
+                    styles={{
+                      control: (provided: any, state: any) => ({
+                        ...provided,
+                        minHeight: '64px',
+                        borderRadius: '16px',
+                        border: `2px solid ${state.isFocused ? '#3b82f6' : '#e5e7eb'}`,
+                        boxShadow: state.isFocused ? '0 0 0 4px rgba(59, 130, 246, 0.1)' : 'none',
+                        backgroundColor: 'white',
+                        transition: 'all 0.2s ease',
+                        position: 'relative',
+                        '&:hover': {
+                          borderColor: '#3b82f6',
+                          boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.05)',
+                        },
+                      }),
+                      placeholder: (provided: any) => ({
+                        ...provided,
+                        color: '#6b7280',
+                        fontSize: '16px',
+                        fontWeight: '400',
+                        paddingLeft: '40px',
+                      }),
+                      input: (provided: any) => ({
+                        ...provided,
+                        paddingLeft: '40px',
+                        fontSize: '16px',
+                        color: '#111827',
+                      }),
+                      menu: (provided: any) => ({
+                        ...provided,
+                        borderRadius: '16px',
+                        border: '1px solid #e5e7eb',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                        overflow: 'visible',
+                        marginTop: '8px',
+                        zIndex: 99999,
+                        position: 'absolute',
+                        width: '100%',
+                        minWidth: '300px',
+                      }),
+                      menuPortal: (provided: any) => ({
+                        ...provided,
+                        zIndex: 99999,
+                      }),
+                      menuList: (provided: any) => ({
+                        ...provided,
+                        padding: '4px',
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                        borderRadius: '16px',
+                      }),
+                      option: () => ({
+                        // Custom option styling handled by component
+                      }),
+                      singleValue: () => ({
+                        // Custom single value styling handled by component
+                      }),
+                      indicatorSeparator: () => ({
+                        display: 'none',
+                      }),
+                      loadingIndicator: (provided: any) => ({
+                        ...provided,
+                        color: '#3b82f6',
+                      }),
+                    }}
+                    menuPortalTarget={document.body}
+                    menuPosition="fixed"
+                  />
+                </div>
 
-      <div className="w-full pl-6 pr-6 border-none shadow-none flex flex-col justify-center items-center">
-        <div className="search-bar-container bg-white my-6 p-3 sm:p-4 rounded-xl w-full">
-          <div className="flex flex-col gap-4">
-            <Select
-              options={siteOptions}
-              value={selectedOption}
-              onChange={(selected: OptionType | null) => {
-                setSelectedOption(selected);
-                setSelectedSite(selected?.value ?? ''); // Update the selectedSite state
-                setDomain(selected?.value ?? ''); // Update the domain state
-              }}
-              onCreateOption={(inputValue: any) => {
-                // Handle new domain creation
-                const newOption = { value: inputValue, label: inputValue };
-                setSelectedOption(newOption);
-                setSelectedSite(inputValue); // Update the selectedSite state
-                setDomain(inputValue); // Update the domain state
-              }}
-              placeholder="Select or enter a domain"
-              isSearchable
-              isClearable
-              formatCreateLabel={(inputValue: any) => `Enter a new domain: "${inputValue}"`}
-            />
+                <button
+                  type="button"
+                  className="search-button w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-6 px-8 rounded-2xl transition-colors duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed border border-blue-600 hover:border-blue-700"
+                  disabled={loading}
+                  onClick={() => {
+                    if (domain) {
+                      handleSubmit();
+                    } else {
+                      toast.error('Please enter a valid enterprise domain for analysis.');
+                    }
+                  }}
+                >
+                  {/* Content */}
+                  <div className="relative flex items-center gap-3">
+                    {loading ? (
+                      <>
+                        <div className="relative">
+                          <CircularProgress size={24} sx={{ color: '#ffffff' }} />
+                          <div className="absolute inset-0 rounded-full border-2 border-white/40 animate-ping"></div>
+                        </div>
+                        <span className="text-lg font-bold text-white">
+                          Analyzing Enterprise Assets...
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <span className="text-xl font-bold tracking-wide text-white">
+                          Start Compliance Scan
+                        </span>
+                        <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-            <button
-              type="button"
-              className="search-button bg-primary text-white px-4 py-2 rounded"
-              onClick={() => {
-                if (domain) {
-                  //checkScript();
-                  handleSubmit();
-                } else {
-                  toast.error('Please enter or select a domain!');
-                }
-              }}
-            >
-              Free Scan
-              {loading && <CircularProgress size={14} sx={{ color: 'white' }} className="ml-2 my-auto" />}
-            </button>
+      {/* Features Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
+          {/* Easy Setup, Immediate Results */}
+          <div className="group bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-blue-300 h-full flex flex-col">
+            <div className="mb-6 flex-shrink-0">
+              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+            </div>
+            
+            <div className="flex-1 flex flex-col">
+              <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight">
+                Rapid Deployment,<br />Instant ROI
+              </h3>
+              
+              <p className="text-gray-600 text-sm leading-relaxed mt-auto">
+                Enterprise compliance in 48 hours • Reduce legal costs by 97%
+              </p>
+            </div>
+          </div>
+
+          {/* Legal Protection */}
+          <div className="group bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-green-300 h-full flex flex-col">
+            <div className="mb-6 flex-shrink-0">
+              <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            
+            <div className="flex-1 flex flex-col">
+              <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight">
+                Lawsuit Protection<br />& Risk Mitigation
+              </h3>
+              
+              <p className="text-gray-600 text-sm leading-relaxed mt-auto">
+                Shield your enterprise from ADA lawsuits • $400K average settlement protection
+              </p>
+            </div>
+          </div>
+
+          {/* Universal Compatibility */}
+          <div className="group bg-white rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-gray-300 h-full flex flex-col">
+            <div className="mb-6 flex-shrink-0">
+              <div className="w-16 h-16 bg-gray-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 919-9" />
+                </svg>
+              </div>
+            </div>
+            
+            <div className="flex-1 flex flex-col">
+              <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight">
+                Enterprise Integration<br />& Scalability
+              </h3>
+              
+              <p className="text-gray-600 text-sm leading-relaxed mt-auto">
+                Seamless deployment across all tech stacks • Scale to thousands of pages
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="mt-6 pl-6 pr-6 grid md:grid-cols-3 gap-6 text-center">
-          <Card>
-            <CardContent className="my-8">
-              <h2 className="text-xl font-semibold mb-2 text-gray-800">Comprehensive Analysis</h2>
-              <p className="text-gray-600 mb-4">
-                Our scanner checks for WCAG 2.1 compliance across your entire site.
-              </p>
-              <div className="flex justify-center w-full">
-                <FaCheckCircle size={90} color="green" />
+        {/* Compliance Indicators */}
+        <div className="mt-16">
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-gray-200 shadow-lg p-6">
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 lg:gap-8">
+              <div className="flex items-center gap-3 group">
+                <div className="w-10 h-10 bg-green-100 rounded-2xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                  </svg>
+                </div>
+                <span className="text-gray-900 font-semibold">WCAG 2.1 AA</span>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="my-8">
-              <h2 className="text-xl font-semibold mb-2 text-gray-800">Detailed Reports</h2>
-              <p className="text-gray-600 mb-4">
-                Receive a full breakdown of accessibility issues and how to fix them.
-              </p>
-              <div className="flex justify-center w-full">
-                <TbReportSearch size={95} color="green" />
+              
+              <div className="flex items-center gap-3 group">
+                <div className="w-10 h-10 bg-yellow-100 rounded-2xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300">
+                  <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <span className="text-gray-900 font-semibold">AI-Powered</span>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="my-8">
-              <h2 className="text-xl font-semibold mb-2 text-gray-800">Improve User Experience</h2>
-              <p className="text-gray-600 mb-4">
-                Make your website accessible to all users, regardless of abilities.
-              </p>
-              <div className="flex justify-center w-full">
-                <FaUniversalAccess size={95} color="blue" />
+              
+              <div className="flex items-center gap-3 group">
+                <div className="w-10 h-10 bg-purple-100 rounded-2xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <span className="text-gray-900 font-semibold">Enterprise Grade</span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
+      </div>
 
-        
-        {siteOptions.some((option: any) => normalizeDomain(option.value) === normalizeDomain(selectedOption?.value ?? '')) && enhancedScoresCalculated && processedReportKeys.length > 0 &&  (
-          <div className="accessibility-issues-section bg-white rounded-xl p-6 mt-12 shadow mr-6 ml-6">
-            <h3 className="text-2xl font-medium text-gray-800 mb-6 border-b-2 border-gray-300 pb-2">
-              Your audit history
-            </h3>
-            <table className="w-full text-left border-separate border-spacing-y-2">
-              <thead>
-                <tr className="text-gray-500 text-sm uppercase">
-                  <th className="py-2 px-4">Webpage</th>
-                  <th className="py-2 px-4">Date</th>
-                  <th className="py-2 px-4">Time</th>
-                  <th className="py-2 px-4">Compliance Status</th>
-                  <th className="py-2 px-4">Accessibility Score</th>
-                  <th className="print-report-button py-2 px-4">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {processedReportKeys.map((row: any, idx: number) => {
-                  const dateObj = new Date(Number(row.created_at));
-                  const date = dateObj.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-                  const time = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-                  const complianceStatus = getComplianceStatus(row.enhancedScore);
+      {/* Audit History Section */}
+      {siteOptions.some((option: any) => normalizeDomain(option.value) === normalizeDomain(selectedOption?.value ?? '')) && enhancedScoresCalculated && processedReportKeys.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
+          <div className="accessibility-issues-section bg-white rounded-3xl p-8 shadow-xl">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Compliance Dashboard</h2>
+                <p className="text-gray-600">Monitor enterprise accessibility performance and ROI metrics</p>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
+                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                <span>{processedReportKeys.length} enterprise audit{processedReportKeys.length !== 1 ? 's' : ''} completed</span>
+              </div>
+            </div>
+            
+            {/* Filters Section */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              {/* Modern Filter Controls */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-gray-700">Filter by:</span>
+                </div>
+                
+                <select 
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                  className="px-4 py-2 bg-white border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm font-medium text-gray-700 hover:border-gray-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
+                >
+                  <option value="">All Status</option>
+                  <option value="compliant">✓ Compliant</option>
+                  <option value="partial">⚠ Partial</option>
+                  <option value="non-compliant">✗ Non-Compliant</option>
+                </select>
 
-                  return (
-                    <tr
-                      key={row.r2_key}
-                      className={`bg-${idx % 2 === 0 ? 'white' : 'gray-50'} hover:bg-blue-50 transition`}
-                      style={{ borderRadius: 8 }}
+                <select
+                  value={filters.scoreRange}
+                  onChange={(e) => handleFilterChange('scoreRange', e.target.value)}
+                  className="px-4 py-2 bg-white border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm font-medium text-gray-700 hover:border-gray-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
+                >
+                  <option value="">All Scores</option>
+                  <option value="90-100">90-100%</option>
+                  <option value="70-89">70-89%</option>
+                  <option value="50-69">50-69%</option>
+                  <option value="0-49">0-49%</option>
+                </select>
+
+                <select
+                  value={filters.sortBy}
+                  onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                  className="px-4 py-2 bg-white border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm font-medium text-gray-700 hover:border-gray-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
+                >
+                  <option value="date-desc">Latest</option>
+                  <option value="date-asc">Oldest</option>
+                  <option value="score-desc">High Score</option>
+                  <option value="score-asc">Low Score</option>
+                  <option value="domain-asc">A-Z</option>
+                  <option value="domain-desc">Z-A</option>
+                </select>
+              </div>
+
+              {/* Results Count */}
+              <div className="flex items-center gap-3">
+                {activeFilters.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    {activeFilters.map((filter, index) => (
+                      <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">
+                        {filter}
+                        <button 
+                          onClick={() => removeFilter(filter)}
+                          className="ml-1.5 inline-flex items-center p-0.5 rounded-full text-blue-500 hover:bg-blue-200 transition-colors"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                    <button 
+                      onClick={clearAllFilters}
+                      className="text-xs text-gray-500 hover:text-gray-700 font-medium transition-colors px-2 py-1 hover:bg-gray-100 rounded-full"
                     >
-                      <td className="py-3 px-4 font-medium text-gray-900">{row.url}</td>
-                      <td className="py-3 px-4">{date}</td>
-                      <td className="py-3 px-4">{time}</td>
-                      <td className="py-3 px-4">
+                      Clear all
+                    </button>
+                  </div>
+                )}
+                
+                <div className="bg-gray-100 rounded-full px-3 py-1.5 text-sm font-semibold text-gray-700">
+                  {filteredReportKeys.length} of {processedReportKeys.length}
+                </div>
+              </div>
+            </div>
+            
+            {/* Desktop Table */}
+            <div className="hidden lg:block overflow-hidden rounded-2xl border border-gray-200">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Website
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Scan Date
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Score
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredReportKeys.map((row: any, idx: number) => {
+                    const dateObj = new Date(Number(row.created_at));
+                    const date = dateObj.toLocaleDateString(undefined, { 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    });
+                    const time = dateObj.toLocaleTimeString(undefined, { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    });
+                    const complianceStatus = getComplianceStatus(row.enhancedScore);
+
+                    return (
+                      <tr key={row.r2_key} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
+                              <span className="text-white font-semibold text-sm">
+                                {row.url.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                                {row.url}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {date} at {time}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {date}
+                        </td>
+                        <td className="px-6 py-4">
+                          {complianceStatus === 'Compliant' ? (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                              Compliant
+                            </span>
+                          ) : complianceStatus === 'Partially Compliant' ? (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                              <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                              Partially Compliant
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              <span className="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
+                              Non-Compliant
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            <div className="flex-1 bg-gray-200 rounded-full h-2 mr-3">
+                              <div 
+                                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${Math.max(row.score, 5)}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-sm font-semibold text-gray-900">
+                              {row.score}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setReportUrl(`/${row.r2_key}?domain=${encodeURIComponent(row.url)}`);
+                                setIsSuccessModalOpen(true);
+                              }}
+                              className="print-report-button flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl border border-blue-600 hover:border-blue-700"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              View Report
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const { data: fetchedReportData } = await fetchReportByR2Key({ 
+                                    variables: { r2_key: row.r2_key } 
+                                  });
+                                  
+                                  if (fetchedReportData && fetchedReportData.fetchReportByR2Key) {
+                                    const pdfBlob = generatePDF(fetchedReportData.fetchReportByR2Key, row.enhancedScore, row.url);
+                                    const url = window.URL.createObjectURL(pdfBlob);
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = 'accessibility-report.pdf';
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    window.URL.revokeObjectURL(url);
+                                  } else {
+                                    toast.error('Failed to generate PDF. Please try again.');
+                                  }
+                                } catch (error) {
+                                  console.error('Error fetching report:', error);
+                                  toast.error('Failed to generate PDF. Please try again.');
+                                }
+                              }}
+                              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl border border-green-600 hover:border-green-700"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              Download
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="lg:hidden space-y-4">
+              {filteredReportKeys.map((row: any, idx: number) => {
+                const dateObj = new Date(Number(row.created_at));
+                const date = dateObj.toLocaleDateString(undefined, { 
+                  year: 'numeric', 
+                  month: 'short', 
+                  day: 'numeric' 
+                });
+                const time = dateObj.toLocaleTimeString(undefined, { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                });
+                const complianceStatus = getComplianceStatus(row.enhancedScore);
+
+                return (
+                  <div key={row.r2_key} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200">
+                    {/* Header Section */}
+                    <div className="flex items-center mb-4">
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mr-4">
+                          <span className="text-white font-semibold text-base">
+                            {row.url.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-base font-semibold text-gray-900 truncate mb-1">
+                          {row.url}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          {date} at {time}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Score Section */}
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">Accessibility Score</span>
+                        <span className="text-2xl font-bold text-gray-900">{row.score}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${Math.max(row.score, 5)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Status and Actions */}
+                    <div className="flex items-center justify-between">
+                      <div>
                         {complianceStatus === 'Compliant' ? (
-                          <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Compliant</span>
+                          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                            <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            Compliant
+                          </span>
                         ) : complianceStatus === 'Partially Compliant' ? (
-                          <span className="bg-yellow-50 text-yellow-800 px-2 py-1 rounded text-xs">Partially Compliant</span>
+                          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                            <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                            Partial
+                          </span>
                         ) : (
-                          <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">{complianceStatus}</span>
+                          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                            <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            Non-Compliant
+                          </span>
                         )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-                          {row.score}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 flex gap-2">
+                      </div>
+                      
+                      <div className="flex gap-2">
                         <button
-                          className="text-blue-600 underline font-medium"
                           onClick={() => {
                             setReportUrl(`/${row.r2_key}?domain=${encodeURIComponent(row.url)}`);
                             setIsSuccessModalOpen(true);
                           }}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl border border-blue-600 hover:border-blue-700"
                         >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
                           View
                         </button>
                         <button
-                          className="text-blue-600 underline font-medium"
                           onClick={async () => {
                             try {
-                              // Fetch the report for the clicked row and wait for the response
-                              const { data: fetchedReportData } = await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
-
+                              const { data: fetchedReportData } = await fetchReportByR2Key({ 
+                                variables: { r2_key: row.r2_key } 
+                              });
+                              
                               if (fetchedReportData && fetchedReportData.fetchReportByR2Key) {
                                 const pdfBlob = generatePDF(fetchedReportData.fetchReportByR2Key, row.enhancedScore, row.url);
                                 const url = window.URL.createObjectURL(pdfBlob);
@@ -645,56 +1260,71 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                               toast.error('Failed to generate PDF. Please try again.');
                             }
                           }}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl border border-green-600 hover:border-green-700"
                         >
-                          Download
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          PDF
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
       
-      {/* Success Modal with link to open report */}
+      {/* Success Modal */}
       <Modal isOpen={isSuccessModalOpen}>
-        <div className="p-8 text-center relative">
+        <div className="relative p-8 text-center">
           <button
             onClick={() => setIsSuccessModalOpen(false)}
-            className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
+            className="absolute top-4 right-4 w-10 h-10 bg-gray-600 hover:bg-gray-700 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl border-2 border-gray-700 hover:border-gray-800 hover:scale-110"
             aria-label="Close modal"
           >
-            <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-          <div className="mb-6">
-            <FaCheckCircle size={64} color="green" className="mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Report Generated Successfully!</h2>
-            <p className="text-gray-600">
-              Your accessibility report is ready to view.
-            </p>
+          
+          <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FaCheckCircle size={32} className="text-white" />
           </div>
-          <div className="flex gap-4 justify-center">
-            <button
-              onClick={() => {
-                const newTab = window.open(reportUrl, '_blank');
-                if (newTab) newTab.focus();
-                setIsSuccessModalOpen(false);
-              }}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              Open Report
-            </button>
-            <button
-              onClick={() => setIsSuccessModalOpen(false)}
-              className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors font-medium"
-            >
-              Close
-            </button>
-          </div>
+          
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            Report Generated Successfully!
+          </h3>
+          <p className="text-gray-600 mb-8">
+            Your accessibility report is ready to view. Get detailed insights and actionable recommendations.
+          </p>
+          
+                     <div className="flex flex-col sm:flex-row gap-4">
+             <button
+               onClick={() => {
+                 const newTab = window.open(reportUrl, '_blank');
+                 if (newTab) newTab.focus();
+                 setIsSuccessModalOpen(false);
+               }}
+               className="flex items-center justify-center gap-3 flex-1 bg-blue-700 hover:bg-blue-800 active:bg-blue-900 text-white font-extrabold py-5 px-8 rounded-2xl transition-all duration-200 shadow-2xl hover:shadow-blue-500/50 border-2 border-blue-800 hover:border-blue-900 hover:scale-[1.02] active:scale-[0.98]"
+             >
+               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+               </svg>
+               Open Report
+             </button>
+             <button
+               onClick={() => setIsSuccessModalOpen(false)}
+               className="flex items-center justify-center gap-3 flex-1 bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white font-extrabold py-5 px-8 rounded-2xl transition-all duration-200 shadow-2xl hover:shadow-gray-500/50 border-2 border-gray-700 hover:border-gray-800 hover:scale-[1.02] active:scale-[0.98]"
+             >
+               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+               </svg>
+               Close
+             </button>
+           </div>
         </div>
       </Modal>
     </div>

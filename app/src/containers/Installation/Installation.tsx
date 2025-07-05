@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CodeContainer from './CodeContainer';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,22 @@ import { installationTourSteps, tourKeys } from '@/constants/toursteps';
 export default function Installation({ domain }: any) {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.installation') });
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  // Auto-collapse sidebar on mobile screens
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) { // lg breakpoint
+        setIsSidebarCollapsed(true);
+      }
+    };
+    
+    // Check on mount
+    handleResize();
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   function getCodeString(uniqueToken: string): string {
     return `<script src="https://widget.webability.io/widget.min.js" data-asw-token="${uniqueToken}" defer></script>`;
   }
@@ -46,11 +62,11 @@ export default function Installation({ domain }: any) {
                 
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-sapphire-blue mb-1 leading-tight">
-                    AI-Driven Accessibility, Simplified
+                    Enterprise Accessibility Intelligence
                   </h1>
                   
                   <p className="text-gray-700 text-sm sm:text-base">
-                    Automatic, ongoing remediation powered by cutting-edge AI. Achieve WCAG 2.1 AA compliance in minutes, mitigate legal risk, and unlock the $13 trillion disability market.
+                    AI-powered compliance monitoring trusted by enterprise clients worldwide. Eliminate ADA lawsuit risk, protect your brand reputation, and unlock the $13 trillion disability market with industry-leading technology.
                   </p>
                 </div>
               </div>
@@ -66,7 +82,7 @@ export default function Installation({ domain }: any) {
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
-                  Implementation Guide
+                  Enterprise Setup Guide
                 </a>
               </div>
             </div>
@@ -83,8 +99,8 @@ export default function Installation({ domain }: any) {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Easy Setup, Immediate Results</h3>
-                  <p className="text-gray-600 text-xs sm:text-sm">Compliance in 48 hours</p>
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Rapid Enterprise Deployment</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">Enterprise compliance in 48 hours</p>
                 </div>
               </div>
               
@@ -95,8 +111,8 @@ export default function Installation({ domain }: any) {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Legal Protection</h3>
-                  <p className="text-gray-600 text-xs sm:text-sm">Mitigate ADA lawsuits</p>
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Lawsuit Risk Mitigation</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">$400K average settlement protection</p>
                 </div>
               </div>
               
@@ -105,8 +121,8 @@ export default function Installation({ domain }: any) {
                   <span className="text-white text-base font-bold">🌐</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Universal Compatibility</h3>
-                  <p className="text-gray-600 text-xs sm:text-sm">Any CMS or site builder</p>
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Enterprise Scalability</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">Scale to thousands of pages</p>
                 </div>
               </div>
             </div>
@@ -116,10 +132,10 @@ export default function Installation({ domain }: any) {
           <section className="flex-shrink-0" aria-labelledby="installation-heading">
             <div className="mb-4">
               <h2 id="installation-heading" className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                Deploy Enterprise-Grade Accessibility in Minutes
+                Deploy Enterprise-Grade Accessibility Intelligence
               </h2>
               <p className="text-gray-600 text-sm sm:text-base max-w-4xl">
-                Install our AI-powered accessibility solution with one line of code. Join industry leaders protecting their brands while serving the world's largest minority market.
+                Implement enterprise-grade compliance monitoring with a single line of code. Join industry leaders eliminating ADA lawsuit risk while unlocking the $13 trillion disability market through AI-powered accessibility intelligence.
               </p>
             </div>
             
@@ -130,24 +146,68 @@ export default function Installation({ domain }: any) {
         </main>
           
         {/* Facts Sidebar */}
-        <aside className="w-full lg:w-80 flex-shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6 overflow-y-auto" aria-labelledby="impact-heading">
-          <div className="space-y-5">
+        <aside 
+          className={`
+            ${isSidebarCollapsed ? 'w-16 lg:w-16' : 'w-full lg:w-80'} 
+            flex-shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm 
+            ${isSidebarCollapsed ? 'p-2' : 'p-4 sm:p-6'} 
+            overflow-y-auto transition-all duration-300 ease-in-out
+          `}
+          aria-labelledby={isSidebarCollapsed ? undefined : "impact-heading"}
+          aria-label={isSidebarCollapsed ? "Accessibility insights sidebar (collapsed)" : undefined}
+        >
+          {/* Collapse Toggle Button */}
+          <button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="w-full mb-4 p-3 rounded-xl bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-105 shadow-sm hover:shadow-md"
+            aria-expanded={!isSidebarCollapsed}
+            aria-controls="sidebar-content"
+            aria-label={isSidebarCollapsed ? "Expand accessibility insights" : "Collapse accessibility insights"}
+          >
+            <div className="flex items-center justify-center gap-2">
+              {isSidebarCollapsed ? (
+                <>
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                  <span className="sr-only">Expand</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-700">Collapse</span>
+                </>
+              )}
+            </div>
+          </button>
+          <div 
+            id="sidebar-content"
+            className={`transition-all duration-300 ease-in-out ${
+              isSidebarCollapsed 
+                ? 'opacity-0 scale-95 pointer-events-none' 
+                : 'opacity-100 scale-100 pointer-events-auto'
+            }`}
+            aria-hidden={isSidebarCollapsed}
+          >
+            <div className="space-y-5">
             <div className="text-center mb-5">
-              <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl mb-3">
+              <div className="inline-flex items-center justify-center w-10 h-10 bg-blue-600 rounded-xl mb-3">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
               <h3 id="impact-heading" className="text-base sm:text-lg font-bold text-gray-900 mb-2">
-                Why Leading Brands Choose AI Accessibility
+                Why Enterprise Companies Trust Our Platform
               </h3>
               <p className="text-gray-800 text-xs sm:text-sm font-medium">
-                Data-driven insights from the accessibility market
+                Enterprise ROI and risk mitigation metrics
               </p>
             </div>
             
             <div className="space-y-4">
-              <div className="p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200 hover:shadow-md transition-all duration-200">
+              <div className="p-3 sm:p-4 bg-blue-50 rounded-xl border border-blue-200 hover:shadow-md transition-all duration-200">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,11 +216,11 @@ export default function Installation({ domain }: any) {
                   </div>
                   <div className="text-2xl font-bold text-blue-600">48hrs</div>
                 </div>
-                <div className="text-xs sm:text-sm text-gray-900 font-bold">Time to compliance</div>
-                <div className="text-xs text-gray-800 mt-1 font-medium">AI remediation delivers immediate results</div>
+                <div className="text-xs sm:text-sm text-gray-900 font-bold">Enterprise deployment time</div>
+                <div className="text-xs text-gray-800 mt-1 font-medium">Fastest time to legal compliance in the industry</div>
               </div>
               
-              <div className="p-3 sm:p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border border-green-200 hover:shadow-md transition-all duration-200">
+              <div className="p-3 sm:p-4 bg-green-50 rounded-xl border border-green-200 hover:shadow-md transition-all duration-200">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,11 +229,11 @@ export default function Installation({ domain }: any) {
                   </div>
                   <div className="text-2xl font-bold text-green-600">99.7%</div>
                 </div>
-                <div className="text-xs sm:text-sm text-gray-900 font-bold">Legal risk reduction</div>
-                <div className="text-xs text-gray-800 mt-1 font-medium">Automatic WCAG 2.1 AA compliance protection</div>
+                <div className="text-xs sm:text-sm text-gray-900 font-bold">Lawsuit risk elimination</div>
+                <div className="text-xs text-gray-800 mt-1 font-medium">Enterprise-grade legal protection and compliance</div>
               </div>
               
-              <div className="p-3 sm:p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200 hover:shadow-md transition-all duration-200">
+              <div className="p-3 sm:p-4 bg-purple-50 rounded-xl border border-purple-200 hover:shadow-md transition-all duration-200">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,11 +242,11 @@ export default function Installation({ domain }: any) {
                   </div>
                   <div className="text-2xl font-bold text-purple-600">2.3x</div>
                 </div>
-                <div className="text-xs sm:text-sm text-gray-900 font-bold">Revenue increase potential</div>
-                <div className="text-xs text-gray-800 mt-1 font-medium">Accessible sites convert better across all users</div>
+                <div className="text-xs sm:text-sm text-gray-900 font-bold">Enterprise revenue uplift</div>
+                <div className="text-xs text-gray-800 mt-1 font-medium">Proven ROI through improved user engagement</div>
               </div>
               
-              <div className="p-3 sm:p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl border border-orange-200 hover:shadow-md transition-all duration-200">
+              <div className="p-3 sm:p-4 bg-orange-50 rounded-xl border border-orange-200 hover:shadow-md transition-all duration-200">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,7 +259,7 @@ export default function Installation({ domain }: any) {
                 <div className="text-xs text-gray-800 mt-1 font-medium">World's largest underserved consumer segment</div>
               </div>
               
-              <div className="p-3 sm:p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border border-cyan-200 hover:shadow-md transition-all duration-200">
+              <div className="p-3 sm:p-4 bg-cyan-50 rounded-xl border border-cyan-200 hover:shadow-md transition-all duration-200">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,7 +273,7 @@ export default function Installation({ domain }: any) {
               </div>
             </div>
             
-            <div className="mt-4 p-3 sm:p-4 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl text-white border border-blue-500/20 shadow-lg">
+            <div className="mt-4 p-3 sm:p-4 bg-blue-600 rounded-xl text-white border border-blue-500/20 shadow-lg">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center">
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -222,9 +282,41 @@ export default function Installation({ domain }: any) {
                 </div>
                 <div className="text-xs sm:text-sm font-semibold">Welcome to Enterprise Accessibility</div>
               </div>
-              <div className="text-xs text-blue-50 text-center font-medium">Join leading brands protecting their digital assets with AI</div>
+              <div className="text-xs text-blue-50 text-center font-medium">Trusted by enterprise organizations for accessibility intelligence worldwide</div>
             </div>
           </div>
+          </div>
+          
+          {/* Collapsed State Icons */}
+          {isSidebarCollapsed && (
+            <div className="flex flex-col items-center justify-center space-y-3 mt-4 animate-fade-in">
+              <div 
+                className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200 cursor-pointer" 
+                title="Accessibility insights available"
+                role="button"
+                tabIndex={0}
+                onClick={() => setIsSidebarCollapsed(false)}
+                onKeyDown={(e) => e.key === 'Enter' && setIsSidebarCollapsed(false)}
+              >
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-200" title="99.7% legal risk reduction">
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4" />
+                </svg>
+              </div>
+              <div className="w-6 h-6 bg-purple-500 rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-200" title="2.3x revenue increase potential">
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <div className="mt-2 text-xs text-gray-500 text-center font-medium">
+                Click to expand
+              </div>
+            </div>
+          )}
         </aside>
         </div>
       </div>
