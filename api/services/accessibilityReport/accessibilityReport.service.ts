@@ -205,40 +205,68 @@ export const fetchAccessibilityReport = async (url: string) => {
       // Format URL with www prefix for initial scan using sanitized URL
       const formattedUrl = formatUrlForScan(sanitizedUrl);
       console.log('Formatted URL for scan:', formattedUrl);
-      let result: ResultWithOriginal = await getAccessibilityInformation(formattedUrl);
       
-      // If initial attempt fails, try variations
-      if (!result) {
-        const retryUrls = getRetryUrls(sanitizedUrl);
-        for (const retryUrl of retryUrls) {
-          try {
-            result = await getAccessibilityInformation(retryUrl);
-            if (result) break;
-          } catch (retryError) {
-            console.error(`Error with retry URL ${retryUrl}:`, retryError.message);
+      // Start all operations in parallel for better performance
+      console.log('🚀 Starting parallel operations: accessibility scan, screenshot, and script check');
+      const [scanResult, siteImgResult, scriptCheckResult] = await Promise.allSettled([
+        // Main accessibility scan with fallback logic
+        (async () => {
+          let accessibilityData: ResultWithOriginal = await getAccessibilityInformation(formattedUrl);
+          
+          // If initial attempt fails, try variations
+          if (!accessibilityData) {
+            const retryUrls = getRetryUrls(sanitizedUrl);
+            for (const retryUrl of retryUrls) {
+              try {
+                accessibilityData = await getAccessibilityInformation(retryUrl);
+                if (accessibilityData) break;
+              } catch (retryError) {
+                console.error(`Error with retry URL ${retryUrl}:`, retryError.message);
+              }
+            }
           }
-        }
-      }
+          
+          if (!accessibilityData) {
+            throw new Error('Failed to fetch accessibility report for all URL variations');
+          }
+          
+          return accessibilityData;
+        })(),
+        
+        // Screenshot fetching in parallel
+        fetchSitePreview(formattedUrl),
+        
+        // Script checking in parallel
+        checkScript(url)
+      ]);
 
-      // If all attempts fail, throw error
-      if (!result) {
-        throw new Error('Failed to fetch accessibility report for all URL variations');
+      // Handle accessibility scan result
+      if (scanResult.status === 'rejected') {
+        throw scanResult.reason;
       }
+      let result = scanResult.value;
 
-      console.log('📊 result from getAccessibilityInformationPally:', {
+      console.log('📊 result from getAccessibilityInformation:', {
         score: result.score,
         totalElements: result.totalElements,
         hasByFunctions: !!result.ByFunctions,
         ByFunctionsLength: result.ByFunctions?.length || 0
       });
-      const siteImg = await fetchSitePreview(formattedUrl);
-      if (result && siteImg) {
-        result.siteImg = siteImg;
+
+      // Handle screenshot result
+      if (siteImgResult.status === 'fulfilled' && siteImgResult.value) {
+        result.siteImg = siteImgResult.value;
+        console.log('📸 Screenshot fetched successfully in parallel');
+      } else if (siteImgResult.status === 'rejected') {
+        console.log('📸 Screenshot fetch failed (parallel):', siteImgResult.reason?.message || 'Unknown error');
       }
 
-      const scriptCheckResult = await checkScript(url);
-      if (result && scriptCheckResult) {
-        result.scriptCheckResult = scriptCheckResult;
+      // Handle script check result
+      if (scriptCheckResult.status === 'fulfilled' && scriptCheckResult.value) {
+        result.scriptCheckResult = scriptCheckResult.value;
+        console.log('🔍 Script check completed successfully in parallel');
+      } else if (scriptCheckResult.status === 'rejected') {
+        console.log('🔍 Script check failed (parallel):', scriptCheckResult.reason?.message || 'Unknown error');
       }
 
       if (result) {
@@ -249,7 +277,7 @@ export const fetchAccessibilityReport = async (url: string) => {
         const issuesByFunction = groupIssuesByFunctionality(issues);
         const functionalityNames = getFunctionalityNames(issuesByFunction);
 
-        const webabilityEnabled = scriptCheckResult === 'Web Ability';
+        const webabilityEnabled = result.scriptCheckResult === 'Web Ability';
         const totalStats = calculateTotalStats(result, issues, webabilityEnabled);
 
         // Add calculated fields to the result
