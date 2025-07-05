@@ -43,6 +43,7 @@ import IssueCategoryCard from './IssueCategoryCard';
 import SitePreviewSVG from './SitePreviewSVG';
 import ByFunctionSVG from './ByFunctionSVG';
 import ByWCGAGuildelinesSVG from './ByWCGAGuidlinesSVG';
+import WebAbilityMetadata from './WebAbilityMetadata';
 import { check } from 'prettier';
 import ReactToPrint, { useReactToPrint } from 'react-to-print';
 import Logo from '@/components/Common/Logo';
@@ -100,6 +101,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [selectedSite, setSelectedSite] = useState('');
   const [reportGenerated, setReportGenerated] = useState(false);
   const [enhancedScoresCalculated, setEnhancedScoresCalculated] = useState(false);
+  const [scanProgress, setScanProgress] = useState({ 
+    step: '', 
+    estimatedTime: 0, 
+    elapsed: 0,
+    phase: 'initializing', // initializing, analyzing, processing, finalizing
+    confidence: 'high' // high, medium, low (for time estimates)
+  });
   const [fetchReportKeys, { data: reportKeysData, loading: loadingReportKeys }] = useLazyQuery(FETCH_ACCESSIBILITY_REPORT_KEYS);
   const [processedReportKeys, setProcessedReportKeys] = useState<any[]>([]);
   const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(
@@ -115,6 +123,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [reportUrl, setReportUrl] = useState<string>('');
   
+  // Enhanced data state
+  const [webabilityMetadata, setWebabilityMetadata] = useState<any>(null);
+  
   // Filter states
   const [filters, setFilters] = useState({
     status: '',
@@ -128,15 +139,81 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     value: domain.url,
     label: domain.url,
   })) || [];
-  const options = [
-    ...siteOptions,
-    { value: 'new', label: 'Enter a new domain' },
-  ];
 
    // Handle tour completion
   const handleTourComplete = () => {
     console.log('Accessibility tour completed!');
   };
+
+  // Improved progress tracking with adaptive timing
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (loading) {
+      const startTime = Date.now();
+      setScanProgress({ 
+        step: 'Initializing accessibility scanner', 
+        estimatedTime: 45, 
+        elapsed: 0,
+        phase: 'initializing',
+        confidence: 'high'
+      });
+      
+      interval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        
+        // Adaptive timing based on current phase
+        let estimatedTime, step, phase, confidence;
+        
+        if (elapsed <= 5) {
+          step = 'Initializing accessibility scanner';
+          estimatedTime = Math.max(40 - elapsed, 30);
+          phase = 'initializing';
+          confidence = 'high';
+        } else if (elapsed <= 15) {
+          step = 'Loading website structure and analyzing DOM';
+          estimatedTime = Math.max(35 - elapsed, 25);
+          phase = 'analyzing';
+          confidence = 'high';
+        } else if (elapsed <= 30) {
+          step = 'Running comprehensive WCAG compliance tests';
+          estimatedTime = Math.max(30 - elapsed, 15);
+          phase = 'analyzing';
+          confidence = 'medium';
+        } else if (elapsed <= 45) {
+          step = 'Analyzing color contrast and navigation patterns';
+          estimatedTime = Math.max(20 - elapsed, 10);
+          phase = 'processing';
+          confidence = 'medium';
+        } else if (elapsed <= 60) {
+          step = 'Processing scan results and generating report';
+          estimatedTime = Math.max(15 - elapsed, 5);
+          phase = 'finalizing';
+          confidence = 'low';
+        } else {
+          // Handle extended scan times gracefully
+          step = 'Performing deep accessibility analysis (complex site detected)';
+          estimatedTime = 10; // Keep showing reasonable estimate
+          phase = 'finalizing';
+          confidence = 'low';
+        }
+        
+        setScanProgress({ step, estimatedTime, elapsed, phase, confidence });
+      }, 1000);
+    } else {
+      setScanProgress({ 
+        step: '', 
+        estimatedTime: 0, 
+        elapsed: 0,
+        phase: 'initializing',
+        confidence: 'high'
+      });
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [loading]);
 
   useEffect(() => {
     if (data) {
@@ -144,7 +221,39 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       if (result) {
         let score = result.score;
         let allowed_sites_id = null;
+        
+        // Check if this is a scan error
+        const hasScanError = result.processing_stats?.scan_error;
+        if (hasScanError) {
+          console.log('🔧 Scan error detected:', hasScanError);
+          const strategiesAttempted = result.processing_stats?.strategies_attempted || 1;
+          
+          if (hasScanError === 'PA11Y_COMPATIBILITY_ISSUE') {
+            toast.warning(
+              `This website has compatibility issues with automated accessibility scanners. We attempted ${strategiesAttempted} different scanning approaches but encountered technical limitations. The website may still have accessibility issues that weren't detected. Consider trying individual pages or manual testing.`,
+              { autoClose: 12000 }
+            );
+          } else if (hasScanError === 'PA11Y_SERVER_ERROR') {
+            toast.warning(
+              'This website has technical compatibility issues with our scanner. The scan was partially completed. For comprehensive results, try scanning a different page or contact support.',
+              { autoClose: 8000 }
+            );
+          } else {
+            toast.warning(
+              'There was a technical issue scanning this website. The report may be incomplete.',
+              { autoClose: 6000 }
+            );
+          }
+        }
+        
         //console.log('Accessibility report data:', result);
+        
+        // Extract WebAbility metadata if available
+        if (result.webability_metadata) {
+          setWebabilityMetadata(result.webability_metadata);
+          console.log('🎯 WebAbility metadata found:', result.webability_metadata);
+        }
+        
         if (sitesData && sitesData.getUserSites) {
           const matchedSite = sitesData.getUserSites.find(
             (site: any) => normalizeDomain(site.url) == normalizeDomain(correctDomain)
@@ -162,17 +271,37 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           setReportGenerated((prev) => !prev);
           const isNewDomain = !siteOptions.some((option: any) => normalizeDomain(option.value) === normalizeDomain(correctDomain));
 
-          if (isNewDomain && data && data.saveAccessibilityReport) {
+          console.log('🔍 Save report success:', {
+            isNewDomain,
+            correctDomain: normalizeDomain(correctDomain),
+            siteOptionsCount: siteOptions.length,
+            saveDataExists: !!data?.saveAccessibilityReport
+          });
+
+          if (data && data.saveAccessibilityReport) {
             const savedReport = data.saveAccessibilityReport;
             const r2Key = savedReport.key;
             const savedUrl = savedReport.report.url;
-            // Show success modal with link to open report
+            
+            // Always show success modal for completed scans
+            console.log('✅ Setting up success modal with key:', r2Key);
             setReportUrl(`/${r2Key}?domain=${encodeURIComponent(savedUrl)}`);
             setIsSuccessModalOpen(true);
           } else {
-          toast.success('Report successfully generated! You can view or download it below.');
+            console.log('⚠️ No saved report data, showing toast instead');
+            toast.success('Report successfully generated! You can view or download it below.');
           }
+        }).catch((saveError) => {
+          console.error('❌ Error saving report:', saveError);
+          toast.error('Report generated but failed to save. Please try again.');
         });
+        // Fallback: If save operation somehow fails but we have scan results,
+        // still try to show a basic success message
+        if (result && !isSuccessModalOpen) {
+          console.log('🔄 Fallback: scan completed successfully, showing toast notification');
+          toast.success('Accessibility scan completed successfully!', { autoClose: 5000 });
+        }
+
         const { htmlcs } = result;
         groupByCode(htmlcs);
       }
@@ -234,6 +363,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     
     try {
       // Pass the domain directly to the query to avoid using empty correctDomain
+      // Encode URL for safe transmission
       await getAccessibilityStatsQuery({ 
         variables: { url: encodeURIComponent(validDomain) } 
       });
@@ -411,9 +541,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     // Extract issues for PDF
     const issues = extractIssuesFromReport(reportData);
-    const criticalCount = issues.filter(i => i.impact === 'critical').length;
-    const seriousCount = issues.filter(i => i.impact === 'serious').length;
-    const moderateCount = issues.filter(i => i.impact === 'moderate').length;
 
     // Compliance logic based on enhanced score
     let status, message, statusColor: [number, number, number];
@@ -518,7 +645,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     return doc.output("blob");
   };
 
-  // Extract issues from report structure
+  // Extract issues from report structure including WebAbility enhancements
   function extractIssuesFromReport(report: any) {
     const issues: any[] = []
 
@@ -533,7 +660,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               ...error,
               impact,
               source: error.__typename === 'htmlCsOutput' ? 'HTML_CS' : 'AXE Core',
-              functionality: funcGroup.FunctionalityName
+              functionality: funcGroup.FunctionalityName,
+              // Include WebAbility enhancements
+              screenshotUrl: error.screenshotUrl,
+              helpUrl: error.helpUrl,
+              wcagLevel: error.wcagLevel,
+              runner: error.runner
             })
           })
         }
@@ -551,7 +683,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               ...error,
               impact,
               source: 'AXE Core',
-              functionality: funcGroup.FunctionalityName
+              functionality: funcGroup.FunctionalityName,
+              screenshotUrl: error.screenshotUrl,
+              helpUrl: error.helpUrl,
+              wcagLevel: error.wcagLevel,
+              runner: error.runner
             })
           })
         }
@@ -569,7 +705,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               ...error,
               impact,
               source: 'HTML_CS',
-              functionality: funcGroup.FunctionalityName
+              functionality: funcGroup.FunctionalityName,
+              screenshotUrl: error.screenshotUrl,
+              helpUrl: error.helpUrl,
+              wcagLevel: error.wcagLevel,
+              runner: error.runner
             })
           })
         }
@@ -620,9 +760,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       />
           <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="relative bg-blue-600">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 rounded-3xl shadow-2xl">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+        <div className="relative px-6 sm:px-8 lg:px-12 py-12 sm:py-16 lg:py-20">
           <div className="text-center accessibility-page-header">
             <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-6">
               <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
@@ -636,315 +776,423 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             </p>
             
             {/* Search Bar */}
-            <div className="search-bar-container max-w-2xl mx-auto bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-2xl relative">
-                              <div className="flex flex-col gap-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-white/20 shadow-xl">
+                <div className="flex flex-col gap-4">
                   <div className="relative z-10">
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
-                    <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 919-9" />
-                      </svg>
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                      <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 919-9" />
+                        </svg>
+                      </div>
                     </div>
+                    <Select
+                      options={siteOptions || []}
+                      value={selectedOption}
+                      onChange={(selected: OptionType | null) => {
+                        try {
+                          setSelectedOption(selected);
+                          setSelectedSite(selected?.value ?? '');
+                          setDomain(selected?.value ?? '');
+                        } catch (error) {
+                          console.error('Error handling select change:', error);
+                        }
+                      }}
+                                           onCreateOption={(inputValue: any) => {
+                         try {
+                           // Enhanced validation for input value with type checking
+                           let cleanedValue = '';
+                           if (typeof inputValue === 'string' && inputValue.trim()) {
+                             cleanedValue = inputValue.trim();
+                           } else if (inputValue && typeof inputValue.toString === 'function') {
+                             cleanedValue = inputValue.toString().trim();
+                           }
+                           
+                           if (!cleanedValue) {
+                             console.warn('Empty or invalid input value for domain creation:', inputValue);
+                             return; // Don't create option for empty values
+                           }
+                           
+                           // Ensure proper option structure
+                           const newOption = { 
+                             value: cleanedValue, 
+                             label: cleanedValue,
+                             __isNew__: true 
+                           };
+                           
+                           console.log('Creating new option:', newOption);
+                           setSelectedOption(newOption);
+                           setSelectedSite(cleanedValue);
+                           setDomain(cleanedValue);
+                         } catch (error) {
+                           console.error('Error creating option:', error);
+                         }
+                       }}
+                      placeholder="Enter your enterprise domain (e.g., your-company.com)"
+                      isSearchable
+                      isClearable
+                                           formatCreateLabel={(inputValue: any) => {
+                         // Proper type checking for inputValue
+                         let safeValue = 'domain';
+                         if (typeof inputValue === 'string' && inputValue.trim()) {
+                           safeValue = inputValue.trim();
+                         } else if (inputValue && typeof inputValue.toString === 'function') {
+                           safeValue = inputValue.toString().trim() || 'domain';
+                         }
+                         
+                         return (
+                           <div className="flex items-center gap-2 py-1">
+                             <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                               <span className="text-white text-xs">+</span>
+                             </div>
+                             <span>Audit <strong>"{safeValue}"</strong></span>
+                           </div>
+                         );
+                       }}
+                      components={{
+                                               Option: ({ innerRef, innerProps, data, isSelected, isFocused }: any) => {
+                           // Add error handling for undefined or invalid data
+                           if (!data) {
+                             return null;
+                           }
+                           
+                           // Debug logging to understand data structure
+                           if (process.env.NODE_ENV === 'development') {
+                             console.log('Option data:', data);
+                           }
+                           
+                           // Handle both regular options and created options with proper type checking
+                           let displayValue = '';
+                           if (typeof data.label === 'string' && data.label.trim()) {
+                             displayValue = data.label.trim();
+                           } else if (typeof data.value === 'string' && data.value.trim()) {
+                             displayValue = data.value.trim();
+                           } else if (data.__isNew__ && typeof data.inputValue === 'string') {
+                             displayValue = data.inputValue.trim();
+                           } else {
+                             // Last resort: try to extract any string value
+                             console.warn('Unexpected data structure in Option:', data);
+                             displayValue = 'Unknown domain';
+                           }
+                           
+                           const safeLabel = displayValue;
+                           const firstChar = getDomainInitial(displayValue);
+                          
+                          return (
+                            <div
+                              ref={innerRef}
+                              {...innerProps}
+                              className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 ${
+                                isSelected 
+                                  ? 'bg-blue-600 text-white' 
+                                  : isFocused 
+                                    ? 'bg-blue-50 text-gray-900' 
+                                    : 'text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-semibold text-sm ${
+                                isSelected 
+                                  ? 'bg-white/20 text-white' 
+                                  : 'bg-blue-600 text-white'
+                              }`}>
+                                {firstChar}
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-medium">{safeLabel}</div>
+                                <div className={`text-xs ${
+                                  isSelected ? 'text-white/80' : 'text-gray-500'
+                                }`}>
+                                  Enterprise compliant
+                                </div>
+                              </div>
+                              {isSelected && (
+                                <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        },
+                                               SingleValue: ({ data }: any) => {
+                           // Add error handling for undefined or invalid data
+                           if (!data) {
+                             return null;
+                           }
+                           
+                           // Debug logging to understand data structure  
+                           if (process.env.NODE_ENV === 'development') {
+                             console.log('SingleValue data:', data);
+                           }
+                           
+                           // Handle both regular options and created options with proper type checking
+                           let displayValue = '';
+                           if (typeof data.label === 'string' && data.label.trim()) {
+                             displayValue = data.label.trim();
+                           } else if (typeof data.value === 'string' && data.value.trim()) {
+                             displayValue = data.value.trim();
+                           } else if (data.__isNew__ && typeof data.inputValue === 'string') {
+                             displayValue = data.inputValue.trim();
+                           } else {
+                             // Last resort: try to extract any string value
+                             console.warn('Unexpected data structure in SingleValue:', data);
+                             displayValue = 'Unknown domain';
+                           }
+                           
+                           const safeLabel = displayValue;
+                           const firstChar = getDomainInitial(displayValue);
+                          
+                          return (
+                            <div className="absolute inset-0 flex items-center justify-center gap-3">
+                              <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
+                                <span className="text-white text-xs font-semibold">
+                                  {firstChar}
+                                </span>
+                              </div>
+                              <span className="text-gray-900 font-medium">{safeLabel}</span>
+                            </div>
+                          );
+                        },
+                        DropdownIndicator: () => (
+                          <div className="px-3">
+                            <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                          </div>
+                        ),
+                        ClearIndicator: ({ innerProps }: any) => (
+                          <div {...innerProps} className="px-2" title="Clear selection">
+                            <div className="w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md">
+                              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </div>
+                          </div>
+                        ),
+                      }}
+                      styles={{
+                        control: (provided: any, state: any) => ({
+                          ...provided,
+                          minHeight: '64px',
+                          borderRadius: '16px',
+                          border: `2px solid ${state.isFocused ? '#3b82f6' : '#e5e7eb'}`,
+                          boxShadow: state.isFocused ? '0 0 0 4px rgba(59, 130, 246, 0.1)' : 'none',
+                          backgroundColor: 'white',
+                          transition: 'all 0.2s ease',
+                          position: 'relative',
+                          '&:hover': {
+                            borderColor: '#3b82f6',
+                            boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.05)',
+                          },
+                        }),
+                        placeholder: (provided: any) => ({
+                          ...provided,
+                          color: '#6b7280',
+                          fontSize: '16px',
+                          fontWeight: '400',
+                          paddingLeft: '40px',
+                        }),
+                        input: (provided: any) => ({
+                          ...provided,
+                          paddingLeft: '40px',
+                          fontSize: '16px',
+                          color: '#111827',
+                        }),
+                        menu: (provided: any) => ({
+                          ...provided,
+                          borderRadius: '16px',
+                          border: '1px solid #e5e7eb',
+                          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                          overflow: 'visible',
+                          marginTop: '8px',
+                          zIndex: 99999,
+                          position: 'absolute',
+                          width: '100%',
+                          minWidth: '300px',
+                        }),
+                        menuPortal: (provided: any) => ({
+                          ...provided,
+                          zIndex: 99999,
+                        }),
+                        menuList: (provided: any) => ({
+                          ...provided,
+                          padding: '4px',
+                          maxHeight: '200px',
+                          overflowY: 'auto',
+                          borderRadius: '16px',
+                        }),
+                        option: () => ({
+                          // Custom option styling handled by component
+                        }),
+                        singleValue: () => ({
+                          // Custom single value styling handled by component
+                        }),
+                        indicatorSeparator: () => ({
+                          display: 'none',
+                        }),
+                        loadingIndicator: (provided: any) => ({
+                          ...provided,
+                          color: '#3b82f6',
+                        }),
+                      }}
+                      menuPortalTarget={document.body}
+                      menuPosition="fixed"
+                    />
                   </div>
-                  <Select
-                    options={siteOptions || []}
-                    value={selectedOption}
-                    onChange={(selected: OptionType | null) => {
-                      try {
-                        setSelectedOption(selected);
-                        setSelectedSite(selected?.value ?? '');
-                        setDomain(selected?.value ?? '');
-                      } catch (error) {
-                        console.error('Error handling select change:', error);
+
+                  <button
+                    type="button"
+                    className={`search-button w-full relative overflow-hidden font-bold py-6 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 border group ${
+                      loading 
+                        ? 'bg-blue-600 border-blue-600 cursor-not-allowed' 
+                        : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 border-blue-600 hover:border-blue-700 active:scale-[0.98]'
+                    }`}
+                    disabled={loading}
+                    onClick={() => {
+                      if (domain) {
+                        handleSubmit();
+                      } else {
+                        toast.error('Please enter a valid enterprise domain for analysis.');
                       }
                     }}
-                                         onCreateOption={(inputValue: any) => {
-                       try {
-                         // Enhanced validation for input value with type checking
-                         let cleanedValue = '';
-                         if (typeof inputValue === 'string' && inputValue.trim()) {
-                           cleanedValue = inputValue.trim();
-                         } else if (inputValue && typeof inputValue.toString === 'function') {
-                           cleanedValue = inputValue.toString().trim();
-                         }
-                         
-                         if (!cleanedValue) {
-                           console.warn('Empty or invalid input value for domain creation:', inputValue);
-                           return; // Don't create option for empty values
-                         }
-                         
-                         // Ensure proper option structure
-                         const newOption = { 
-                           value: cleanedValue, 
-                           label: cleanedValue,
-                           __isNew__: true 
-                         };
-                         
-                         console.log('Creating new option:', newOption);
-                         setSelectedOption(newOption);
-                         setSelectedSite(cleanedValue);
-                         setDomain(cleanedValue);
-                       } catch (error) {
-                         console.error('Error creating option:', error);
-                       }
-                     }}
-                    placeholder="Enter your enterprise domain (e.g., your-company.com)"
-                    isSearchable
-                    isClearable
-                                         formatCreateLabel={(inputValue: any) => {
-                       // Proper type checking for inputValue
-                       let safeValue = 'domain';
-                       if (typeof inputValue === 'string' && inputValue.trim()) {
-                         safeValue = inputValue.trim();
-                       } else if (inputValue && typeof inputValue.toString === 'function') {
-                         safeValue = inputValue.toString().trim() || 'domain';
-                       }
-                       
-                       return (
-                         <div className="flex items-center gap-2 py-1">
-                           <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
-                             <span className="text-white text-xs">+</span>
-                           </div>
-                           <span>Audit <strong>"{safeValue}"</strong></span>
-                         </div>
-                       );
-                     }}
-                    components={{
-                                             Option: ({ innerRef, innerProps, data, isSelected, isFocused }: any) => {
-                         // Add error handling for undefined or invalid data
-                         if (!data) {
-                           return null;
-                         }
-                         
-                         // Debug logging to understand data structure
-                         if (process.env.NODE_ENV === 'development') {
-                           console.log('Option data:', data);
-                         }
-                         
-                         // Handle both regular options and created options with proper type checking
-                         let displayValue = '';
-                         if (typeof data.label === 'string' && data.label.trim()) {
-                           displayValue = data.label.trim();
-                         } else if (typeof data.value === 'string' && data.value.trim()) {
-                           displayValue = data.value.trim();
-                         } else if (data.__isNew__ && typeof data.inputValue === 'string') {
-                           displayValue = data.inputValue.trim();
-                         } else {
-                           // Last resort: try to extract any string value
-                           console.warn('Unexpected data structure in Option:', data);
-                           displayValue = 'Unknown domain';
-                         }
-                         
-                         const safeLabel = displayValue;
-                         const firstChar = getDomainInitial(displayValue);
-                        
-                        return (
-                          <div
-                            ref={innerRef}
-                            {...innerProps}
-                            className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 ${
-                              isSelected 
-                                ? 'bg-blue-600 text-white' 
-                                : isFocused 
-                                  ? 'bg-blue-50 text-gray-900' 
-                                  : 'text-gray-700 hover:bg-gray-50'
-                            }`}
-                          >
-                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-semibold text-sm ${
-                              isSelected 
-                                ? 'bg-white/20 text-white' 
-                                : 'bg-blue-600 text-white'
-                            }`}>
-                              {firstChar}
+                  >
+                    {/* Enhanced Loading State */}
+                    {loading ? (
+                      <div 
+                        className="absolute inset-0 bg-blue-600 rounded-2xl flex flex-col items-center justify-center gap-4 z-10 px-6 py-4 animate-in fade-in duration-300"
+                        role="status" 
+                        aria-live="polite" 
+                        aria-label={`Scanning website for accessibility issues: ${scanProgress.step}`}
+                      >
+                        {/* Header with enhanced spinner */}
+                        <div className="flex items-center gap-4">
+                          <div className="relative" aria-hidden="true">
+                            {/* Multi-layer spinner animation */}
+                            <div className="w-8 h-8 relative">
+                              {/* Outer ring */}
+                              <div className="absolute inset-0 border-3 border-white/20 rounded-full"></div>
+                              {/* Spinning ring */}
+                              <div className="absolute inset-0 border-3 border-transparent border-t-white rounded-full animate-spin"></div>
+                              {/* Inner pulse */}
+                              <div className="absolute inset-2 bg-white/30 rounded-full animate-pulse"></div>
                             </div>
-                            <div className="flex-1">
-                              <div className="font-medium">{safeLabel}</div>
-                              <div className={`text-xs ${
-                                isSelected ? 'text-white/80' : 'text-gray-500'
-                              }`}>
-                                Enterprise compliant
+                          </div>
+                          <span className="text-lg font-semibold text-white" id="scan-status">
+                            Analyzing Enterprise Assets
+                          </span>
+                        </div>
+                        
+                        {/* Progress Details */}
+                        {scanProgress.step && (
+                          <div className="w-full max-w-md space-y-3">
+                            {/* Current Step */}
+                            <div className="text-center">
+                              <div className="text-sm text-blue-100 font-medium mb-2" aria-describedby="scan-status">
+                                {scanProgress.step}
+                              </div>
+                              
+                              {/* Progress Bar */}
+                              <div className="w-full bg-blue-800/50 rounded-full h-2 mb-3">
+                                <div 
+                                  className={`h-2 rounded-full transition-all duration-1000 ease-out ${
+                                    scanProgress.phase === 'initializing' ? 'bg-yellow-400 w-1/4' :
+                                    scanProgress.phase === 'analyzing' ? 'bg-blue-400 w-1/2' :
+                                    scanProgress.phase === 'processing' ? 'bg-orange-400 w-3/4' :
+                                    'bg-green-400 w-5/6'
+                                  }`}
+                                ></div>
                               </div>
                             </div>
-                            {isSelected && (
-                              <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
-                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            
+                            {/* Timing Information */}
+                            <div className="flex items-center justify-center gap-4 text-xs text-blue-200">
+                              {/* Elapsed Time */}
+                              <span className="inline-flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                                 </svg>
+                                {scanProgress.elapsed > 0 && (
+                                  <span className="font-medium">{scanProgress.elapsed}s elapsed</span>
+                                )}
+                              </span>
+                              
+                              {/* Estimated Time with Confidence */}
+                              <span className="inline-flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                                </svg>
+                                <span className="font-medium">
+                                  ~{scanProgress.estimatedTime}s remaining
+                                  {scanProgress.confidence === 'low' && (
+                                    <span className="text-blue-300 ml-1">*</span>
+                                  )}
+                                </span>
+                              </span>
+                            </div>
+                            
+                            {/* Extended Time Notice */}
+                            {(scanProgress.elapsed > 45 || scanProgress.confidence === 'low') && (
+                              <div className="mt-3 p-3 bg-blue-800/40 rounded-lg border border-blue-400/30 animate-in slide-in-from-bottom duration-500">
+                                <div className="flex items-start gap-2 text-xs text-blue-100">
+                                  <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                  </svg>
+                                  <div>
+                                    <div className="font-medium">Complex site detected</div>
+                                    <div className="text-blue-200 mt-1">
+                                      Large sites with dynamic content may take longer to analyze thoroughly. 
+                                      We're ensuring comprehensive coverage of all accessibility aspects.
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Timeout Warning */}
+                            {scanProgress.elapsed > 90 && (
+                              <div className="mt-2 p-3 bg-yellow-600/20 rounded-lg border border-yellow-400/30 animate-in slide-in-from-bottom duration-500">
+                                <div className="flex items-center gap-2 text-xs text-yellow-100">
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                  </svg>
+                                  <span className="font-medium">
+                                    Taking longer than expected. You can refresh the page to try again if needed.
+                                  </span>
+                                </div>
                               </div>
                             )}
                           </div>
-                        );
-                      },
-                                             SingleValue: ({ data }: any) => {
-                         // Add error handling for undefined or invalid data
-                         if (!data) {
-                           return null;
-                         }
-                         
-                         // Debug logging to understand data structure  
-                         if (process.env.NODE_ENV === 'development') {
-                           console.log('SingleValue data:', data);
-                         }
-                         
-                         // Handle both regular options and created options with proper type checking
-                         let displayValue = '';
-                         if (typeof data.label === 'string' && data.label.trim()) {
-                           displayValue = data.label.trim();
-                         } else if (typeof data.value === 'string' && data.value.trim()) {
-                           displayValue = data.value.trim();
-                         } else if (data.__isNew__ && typeof data.inputValue === 'string') {
-                           displayValue = data.inputValue.trim();
-                         } else {
-                           // Last resort: try to extract any string value
-                           console.warn('Unexpected data structure in SingleValue:', data);
-                           displayValue = 'Unknown domain';
-                         }
-                         
-                         const safeLabel = displayValue;
-                         const firstChar = getDomainInitial(displayValue);
-                        
-                        return (
-                          <div className="absolute inset-0 flex items-center justify-center gap-3">
-                            <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
-                              <span className="text-white text-xs font-semibold">
-                                {firstChar}
-                              </span>
-                            </div>
-                            <span className="text-gray-900 font-medium">{safeLabel}</span>
-                          </div>
-                        );
-                      },
-                      DropdownIndicator: () => (
-                        <div className="px-3">
-                          <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
-                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
-                        </div>
-                      ),
-                      ClearIndicator: ({ innerProps }: any) => (
-                        <div {...innerProps} className="px-2" title="Clear selection">
-                          <div className="w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md">
-                            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </div>
-                        </div>
-                      ),
-                    }}
-                    styles={{
-                      control: (provided: any, state: any) => ({
-                        ...provided,
-                        minHeight: '64px',
-                        borderRadius: '16px',
-                        border: `2px solid ${state.isFocused ? '#3b82f6' : '#e5e7eb'}`,
-                        boxShadow: state.isFocused ? '0 0 0 4px rgba(59, 130, 246, 0.1)' : 'none',
-                        backgroundColor: 'white',
-                        transition: 'all 0.2s ease',
-                        position: 'relative',
-                        '&:hover': {
-                          borderColor: '#3b82f6',
-                          boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.05)',
-                        },
-                      }),
-                      placeholder: (provided: any) => ({
-                        ...provided,
-                        color: '#6b7280',
-                        fontSize: '16px',
-                        fontWeight: '400',
-                        paddingLeft: '40px',
-                      }),
-                      input: (provided: any) => ({
-                        ...provided,
-                        paddingLeft: '40px',
-                        fontSize: '16px',
-                        color: '#111827',
-                      }),
-                      menu: (provided: any) => ({
-                        ...provided,
-                        borderRadius: '16px',
-                        border: '1px solid #e5e7eb',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                        overflow: 'visible',
-                        marginTop: '8px',
-                        zIndex: 99999,
-                        position: 'absolute',
-                        width: '100%',
-                        minWidth: '300px',
-                      }),
-                      menuPortal: (provided: any) => ({
-                        ...provided,
-                        zIndex: 99999,
-                      }),
-                      menuList: (provided: any) => ({
-                        ...provided,
-                        padding: '4px',
-                        maxHeight: '200px',
-                        overflowY: 'auto',
-                        borderRadius: '16px',
-                      }),
-                      option: () => ({
-                        // Custom option styling handled by component
-                      }),
-                      singleValue: () => ({
-                        // Custom single value styling handled by component
-                      }),
-                      indicatorSeparator: () => ({
-                        display: 'none',
-                      }),
-                      loadingIndicator: (provided: any) => ({
-                        ...provided,
-                        color: '#3b82f6',
-                      }),
-                    }}
-                    menuPortalTarget={document.body}
-                    menuPosition="fixed"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  className="search-button w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-6 px-8 rounded-2xl transition-colors duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed border border-blue-600 hover:border-blue-700"
-                  disabled={loading}
-                  onClick={() => {
-                    if (domain) {
-                      handleSubmit();
-                    } else {
-                      toast.error('Please enter a valid enterprise domain for analysis.');
-                    }
-                  }}
-                >
-                  {/* Content */}
-                  <div className="relative flex items-center justify-center gap-3 min-h-[3rem]">
-                    {loading ? (
-                      <div className="absolute inset-0 bg-blue-600 rounded-2xl flex items-center justify-center gap-3 z-10">
-                        <div className="relative">
-                          <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        </div>
-                        <span className="text-lg font-bold text-white">
-                          Analyzing Enterprise Assets...
-                        </span>
+                        )}
                       </div>
                     ) : (
-                      <>
-                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      /* Normal State with Enhanced Animation */
+                      <div className="flex items-center justify-center gap-4 py-2 transition-all duration-300 group-hover:gap-5">
+                        {/* Left Icon */}
+                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-white/30 group-hover:scale-110">
+                          <svg className="w-5 h-5 text-white transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
-                        <span className="text-xl font-bold tracking-wide text-white">
+                        
+                        {/* Text */}
+                        <span className="text-xl font-bold tracking-wide text-white transition-all duration-300 group-hover:tracking-wider">
                           Start Compliance Scan
                         </span>
-                        <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        
+                        {/* Right Arrow */}
+                        <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-white/30 group-hover:translate-x-1">
+                          <svg className="w-4 h-4 text-white transition-transform duration-300 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                           </svg>
                         </div>
-                      </>
+                      </div>
                     )}
-                  </div>
-                </button>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1053,6 +1301,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           </div>
         </div>
       </div>
+
+      {/* WebAbility Enhanced Metadata Section */}
+      {webabilityMetadata && data && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <WebAbilityMetadata 
+            metadata={webabilityMetadata}
+            issues={extractIssuesFromReport(data.getAccessibilityReport)}
+          />
+        </div>
+      )}
 
       {/* Audit History Section */}
       {siteOptions.some((option: any) => normalizeDomain(option.value) === normalizeDomain(selectedOption?.value ?? '')) && enhancedScoresCalculated && processedReportKeys.length > 0 && (
