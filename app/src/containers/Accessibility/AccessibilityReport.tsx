@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import './Accessibility.css'; // Ensure your CSS file includes styles for the accordion
 import { AiFillCloseCircle } from 'react-icons/ai';
 import { FaGaugeSimpleHigh } from 'react-icons/fa6';
@@ -264,46 +264,86 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   };
 
-  // Filter and sort audit history
-  const filteredReportKeys = processedReportKeys
-    .filter((row: any) => {
-      // Status filter
-      if (filters.status) {
-        const status = getComplianceStatus(row.enhancedScore);
-        if (filters.status === 'compliant' && status !== 'Compliant') return false;
-        if (filters.status === 'partial' && status !== 'Partially Compliant') return false;
-        if (filters.status === 'non-compliant' && status !== 'Non-Compliant') return false;
-      }
-      
-      // Score range filter
-      if (filters.scoreRange) {
-        const score = row.score;
-        if (filters.scoreRange === '90-100' && (score < 90 || score > 100)) return false;
-        if (filters.scoreRange === '70-89' && (score < 70 || score >= 90)) return false;
-        if (filters.scoreRange === '50-69' && (score < 50 || score >= 70)) return false;
-        if (filters.scoreRange === '0-49' && (score < 0 || score >= 50)) return false;
-      }
-      
-      return true;
-    })
-    .sort((a: any, b: any) => {
-      switch (filters.sortBy) {
-        case 'date-desc':
-          return Number(b.created_at) - Number(a.created_at);
-        case 'date-asc':
-          return Number(a.created_at) - Number(b.created_at);
-        case 'score-desc':
-          return b.score - a.score;
-        case 'score-asc':
-          return a.score - b.score;
-        case 'domain-asc':
-          return a.url.localeCompare(b.url);
-        case 'domain-desc':
-          return b.url.localeCompare(a.url);
-        default:
-          return Number(b.created_at) - Number(a.created_at);
-      }
+  // Memoized filter function for performance
+  const filterReports = useCallback((row: any) => {
+    // Status filter
+    if (filters.status) {
+      const status = getComplianceStatus(row.enhancedScore);
+      if (filters.status === 'compliant' && status !== 'Compliant') return false;
+      if (filters.status === 'partial' && status !== 'Partially Compliant') return false;
+      if (filters.status === 'non-compliant' && status !== 'Non-Compliant') return false;
+    }
+    
+    // Score range filter
+    if (filters.scoreRange) {
+      const score = row.score;
+      if (filters.scoreRange === '90-100' && (score < 90 || score > 100)) return false;
+      if (filters.scoreRange === '70-89' && (score < 70 || score >= 90)) return false;
+      if (filters.scoreRange === '50-69' && (score < 50 || score >= 70)) return false;
+      if (filters.scoreRange === '0-49' && (score < 0 || score >= 50)) return false;
+    }
+    
+    return true;
+  }, [filters.status, filters.scoreRange]);
+
+  // Memoized sort function for performance
+  const sortReports = useCallback((a: any, b: any) => {
+    switch (filters.sortBy) {
+      case 'date-desc':
+        return Number(b.created_at) - Number(a.created_at);
+      case 'date-asc':
+        return Number(a.created_at) - Number(b.created_at);
+      case 'score-desc':
+        return b.score - a.score;
+      case 'score-asc':
+        return a.score - b.score;
+      case 'domain-asc':
+        return a.url.localeCompare(b.url);
+      case 'domain-desc':
+        return b.url.localeCompare(a.url);
+      default:
+        return Number(b.created_at) - Number(a.created_at);
+    }
+  }, [filters.sortBy]);
+
+  // Memoized filtered and sorted audit history for performance
+  const filteredReportKeys = useMemo(() => {
+    return processedReportKeys
+      .filter(filterReports)
+      .sort(sortReports);
+  }, [processedReportKeys, filterReports, sortReports]);
+
+  // Shared utility functions to reduce code duplication
+  const formatReportDate = useCallback((timestamp: number) => {
+    const dateObj = new Date(timestamp);
+    const date = dateObj.toLocaleDateString(undefined, { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
     });
+    const time = dateObj.toLocaleTimeString(undefined, { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+    return { date, time, dateObj };
+  }, []);
+
+  const getReportData = useCallback((row: any) => {
+    const { date, time } = formatReportDate(Number(row.created_at));
+    const complianceStatus = getComplianceStatus(row.enhancedScore);
+    const urlInitial = row.url.charAt(0).toUpperCase();
+    
+    return {
+      date,
+      time,
+      complianceStatus,
+      urlInitial,
+      score: row.score,
+      url: row.url,
+      r2_key: row.r2_key,
+      enhancedScore: row.enhancedScore
+    };
+  }, [formatReportDate]);
 
   // Update active filters for display
   const updateActiveFilters = () => {
@@ -1023,48 +1063,38 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredReportKeys.map((row: any, idx: number) => {
-                    const dateObj = new Date(Number(row.created_at));
-                    const date = dateObj.toLocaleDateString(undefined, { 
-                      year: 'numeric', 
-                      month: 'short', 
-                      day: 'numeric' 
-                    });
-                    const time = dateObj.toLocaleTimeString(undefined, { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    });
-                    const complianceStatus = getComplianceStatus(row.enhancedScore);
+                  {filteredReportKeys.map((row: any) => {
+                    const reportData = getReportData(row);
 
                     return (
-                      <tr key={row.r2_key} className="hover:bg-gray-50 transition-colors">
+                      <tr key={reportData.r2_key} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
                               <span className="text-white font-semibold text-sm">
-                                {row.url.charAt(0).toUpperCase()}
+                                {reportData.urlInitial}
                               </span>
                             </div>
                             <div>
                               <div className="text-sm font-medium text-gray-900 truncate max-w-xs">
-                                {row.url}
+                                {reportData.url}
                               </div>
                               <div className="text-xs text-gray-500">
-                                {date} at {time}
+                                {reportData.date} at {reportData.time}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          {date}
+                          {reportData.date}
                         </td>
                         <td className="px-6 py-4">
-                          {complianceStatus === 'Compliant' ? (
+                          {reportData.complianceStatus === 'Compliant' ? (
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                               <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
                               Compliant
                             </span>
-                          ) : complianceStatus === 'Partially Compliant' ? (
+                          ) : reportData.complianceStatus === 'Partially Compliant' ? (
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                               <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
                               Partially Compliant
@@ -1081,11 +1111,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             <div className="flex-1 bg-gray-200 rounded-full h-2 mr-3">
                               <div 
                                 className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${Math.max(row.score, 5)}%` }}
+                                style={{ width: `${Math.max(reportData.score, 5)}%` }}
                               ></div>
                             </div>
                             <span className="text-sm font-semibold text-gray-900">
-                              {row.score}%
+                              {reportData.score}%
                             </span>
                           </div>
                         </td>
@@ -1147,18 +1177,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
             {/* Mobile Cards */}
             <div className="lg:hidden space-y-4">
-              {filteredReportKeys.map((row: any, idx: number) => {
-                const dateObj = new Date(Number(row.created_at));
-                const date = dateObj.toLocaleDateString(undefined, { 
-                  year: 'numeric', 
-                  month: 'short', 
-                  day: 'numeric' 
-                });
-                const time = dateObj.toLocaleTimeString(undefined, { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                });
-                const complianceStatus = getComplianceStatus(row.enhancedScore);
+              {filteredReportKeys.map((row: any) => {
+                const reportData = getReportData(row);
 
                 return (
                   <div key={row.r2_key} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200">
@@ -1179,7 +1199,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                           <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                          {date} at {time}
+                          {reportData.date} at {reportData.time}
                         </div>
                       </div>
                     </div>
@@ -1188,12 +1208,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-gray-700">Accessibility Score</span>
-                        <span className="text-2xl font-bold text-gray-900">{row.score}%</span>
+                        <span className="text-2xl font-bold text-gray-900">{reportData.score}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
                           className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${Math.max(row.score, 5)}%` }}
+                          style={{ width: `${Math.max(reportData.score, 5)}%` }}
                         ></div>
                       </div>
                     </div>
@@ -1201,12 +1221,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     {/* Status and Actions */}
                     <div className="flex items-center justify-between">
                       <div>
-                        {complianceStatus === 'Compliant' ? (
+                        {reportData.complianceStatus === 'Compliant' ? (
                           <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-800">
                             <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
                             Compliant
                           </span>
-                        ) : complianceStatus === 'Partially Compliant' ? (
+                        ) : reportData.complianceStatus === 'Partially Compliant' ? (
                           <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
                             <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
                             Partial
@@ -1280,11 +1300,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         <div className="relative p-8 text-center">
           <button
             onClick={() => setIsSuccessModalOpen(false)}
-            className="absolute top-4 right-4 w-10 h-10 bg-gray-600 hover:bg-gray-700 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl border-2 border-gray-700 hover:border-gray-800 hover:scale-110"
+            className="absolute top-4 right-4 w-12 h-12 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl border-2 border-red-700 hover:border-red-800 hover:scale-110"
             aria-label="Close modal"
           >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
           
@@ -1315,7 +1335,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
              </button>
              <button
                onClick={() => setIsSuccessModalOpen(false)}
-               className="flex items-center justify-center gap-3 flex-1 bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white font-extrabold py-5 px-8 rounded-2xl transition-all duration-200 shadow-2xl hover:shadow-slate-500/50 border-2 border-slate-800 hover:border-slate-900 hover:scale-[1.02] active:scale-[0.98]"
+               className="flex items-center justify-center gap-3 flex-1 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-extrabold py-5 px-8 rounded-2xl transition-all duration-200 shadow-2xl hover:shadow-red-500/50 border-2 border-red-700 hover:border-red-800 hover:scale-[1.02] active:scale-[0.98]"
              >
                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />

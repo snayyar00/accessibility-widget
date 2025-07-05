@@ -302,12 +302,28 @@ export default function Installation({ domain }: any) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-200" title="99.7% legal risk reduction">
+              <div 
+                className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-200 cursor-pointer" 
+                title="99.7% legal risk reduction"
+                role="button"
+                tabIndex={0}
+                onClick={() => setIsSidebarCollapsed(false)}
+                onKeyDown={(e) => e.key === 'Enter' && setIsSidebarCollapsed(false)}
+                aria-label="Expand to view legal risk reduction details"
+              >
                 <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4" />
                 </svg>
               </div>
-              <div className="w-6 h-6 bg-purple-500 rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-200" title="2.3x revenue increase potential">
+              <div 
+                className="w-6 h-6 bg-purple-500 rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-200 cursor-pointer" 
+                title="2.3x revenue increase potential"
+                role="button"
+                tabIndex={0}
+                onClick={() => setIsSidebarCollapsed(false)}
+                onKeyDown={(e) => e.key === 'Enter' && setIsSidebarCollapsed(false)}
+                aria-label="Expand to view revenue increase details"
+              >
                 <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
