@@ -1,7 +1,8 @@
 import { getAccessibilityInformationPally } from '~/helpers/accessibility.helper';
+import { getAccessibilityInformation } from '~/helpers/accessibility-adapter.helper';
 import logger from '~/utils/logger';
 import { GPTChunks } from './accessibilityIssues.service';
-import { formatUrlForScan, getRetryUrls } from '~/utils/domain.utils';
+import { formatUrlForScan, getRetryUrls, sanitizeUrl, isValidScanDomain } from '~/utils/domain.utils';
 
 const { GraphQLJSON } = require('graphql-type-json');
 
@@ -175,18 +176,42 @@ export const fetchAccessibilityReport = async (url: string) => {
       throw new Error('Invalid URL provided to fetchAccessibilityReport');
     }
 
+    // Decode URL if it's encoded
+    let decodedUrl = url;
     try {
-      // Format URL with www prefix for initial scan
-      const formattedUrl = formatUrlForScan(url);
+      // Try to decode in case it's encoded
+      decodedUrl = decodeURIComponent(url);
+    } catch (e) {
+      // If decode fails, use original URL
+      decodedUrl = url;
+    }
+
+    // Sanitize and validate the URL for security
+    let sanitizedUrl: string;
+    try {
+      sanitizedUrl = sanitizeUrl(decodedUrl);
+      
+      // Additional validation for scan safety
+      if (!isValidScanDomain(sanitizedUrl)) {
+        throw new Error('Domain validation failed - URL may be malicious or malformed');
+      }
+    } catch (error: any) {
+      console.error('URL sanitization failed:', error.message);
+      throw new Error(`Invalid URL: ${error.message}`);
+    }
+
+    try {
+      // Format URL with www prefix for initial scan using sanitized URL
+      const formattedUrl = formatUrlForScan(sanitizedUrl);
       console.log('Formatted URL for scan:', formattedUrl);
-      let result: ResultWithOriginal = await getAccessibilityInformationPally(formattedUrl);
+      let result: ResultWithOriginal = await getAccessibilityInformation(formattedUrl);
       
       // If initial attempt fails, try variations
       if (!result) {
-        const retryUrls = getRetryUrls(url);
+        const retryUrls = getRetryUrls(sanitizedUrl);
         for (const retryUrl of retryUrls) {
           try {
-            result = await getAccessibilityInformationPally(retryUrl);
+            result = await getAccessibilityInformation(retryUrl);
             if (result) break;
           } catch (retryError) {
             console.error(`Error with retry URL ${retryUrl}:`, retryError.message);
@@ -233,6 +258,11 @@ export const fetchAccessibilityReport = async (url: string) => {
 
       if (result) {
         if (result.ByFunctions && Array.isArray(result.ByFunctions) && result.ByFunctions.length > 0) {
+          // Check if this is a scan error with helpful messaging
+          if (result.processing_stats?.scan_error) {
+            console.log('🔧 Returning scan error information:', result.processing_stats.scan_error);
+            return result;
+          }
           console.log('✅ ByFunctions data found, returning early with length:', result.ByFunctions.length);
           return result;
         }
@@ -348,6 +378,19 @@ export const fetchAccessibilityReport = async (url: string) => {
 
           result.ByFunctions = completion.HumanFunctionalities;
           console.log('✅ Final ByFunctions assigned with', result.ByFunctions.length, 'functionalities');
+          
+          // Ensure all array fields are properly initialized for GraphQL
+          if (!result.axe) result.axe = { errors: [], notices: [], warnings: [] };
+          if (!result.axe.errors) result.axe.errors = [];
+          if (!result.axe.notices) result.axe.notices = [];
+          if (!result.axe.warnings) result.axe.warnings = [];
+          
+          if (!result.htmlcs) result.htmlcs = { errors: [], notices: [], warnings: [] };
+          if (!result.htmlcs.errors) result.htmlcs.errors = [];
+          if (!result.htmlcs.notices) result.htmlcs.notices = [];
+          if (!result.htmlcs.warnings) result.htmlcs.warnings = [];
+          
+          if (!result.ByFunctions) result.ByFunctions = [];
           // Debug: Log first functionality structure to verify data integrity
           if (result.ByFunctions.length > 0) {
             const firstFunc = result.ByFunctions[0];
@@ -367,6 +410,19 @@ export const fetchAccessibilityReport = async (url: string) => {
         }
       }
 
+      // Final safety check: Ensure all required array fields are initialized before returning
+      if (!result.axe) result.axe = { errors: [], notices: [], warnings: [] };
+      if (!Array.isArray(result.axe.errors)) result.axe.errors = [];
+      if (!Array.isArray(result.axe.notices)) result.axe.notices = [];
+      if (!Array.isArray(result.axe.warnings)) result.axe.warnings = [];
+      
+      if (!result.htmlcs) result.htmlcs = { errors: [], notices: [], warnings: [] };
+      if (!Array.isArray(result.htmlcs.errors)) result.htmlcs.errors = [];
+      if (!Array.isArray(result.htmlcs.notices)) result.htmlcs.notices = [];
+      if (!Array.isArray(result.htmlcs.warnings)) result.htmlcs.warnings = [];
+      
+      if (!Array.isArray(result.ByFunctions)) result.ByFunctions = [];
+
       return result;
     } catch (error) {
       console.error(`Error with https://www.: ${error.message}`);
@@ -375,7 +431,7 @@ export const fetchAccessibilityReport = async (url: string) => {
           url = 'https://' + url.replace('https://www.', '').replace('http://www.', '');
         }
 
-        const result: ResultWithOriginal = await getAccessibilityInformationPally(url);
+        const result: ResultWithOriginal = await getAccessibilityInformation(url);
         console.log('result from retrying with https://:', result.score, result.totalElements, result.ByFunctions);
         return result;
       } catch (retryError) {
@@ -383,17 +439,32 @@ export const fetchAccessibilityReport = async (url: string) => {
         throw new Error(`Both attempts failed: ${retryError.message}`);
       }
     }
-  } catch (error) {
-    console.error(error);
-    throw new Error(`${error} Error fetching data from WebAIM API`);
+  } catch (error: any) {
+    console.error('❌ fetchAccessibilityReport error:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      url: url
+    });
+    throw new Error(`Error processing request: ${error.message}`);
   }
 };
 
 
 export const fetchSitePreview = async (url: string, retries = 3): Promise<string | null> => {
+  // Sanitize URL before using
+  let sanitizedUrl: string;
+  try {
+    sanitizedUrl = sanitizeUrl(url);
+  } catch (error: any) {
+    console.error('Invalid URL for screenshot:', error.message);
+    return null;
+  }
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const apiUrl = `${process.env.SECONDARY_SERVER_URL}/screenshot/?url=${url}`;
+      const apiUrl = `${process.env.SECONDARY_SERVER_URL}/screenshot/?url=${encodeURIComponent(sanitizedUrl)}`;
       console.log(`Attempt ${attempt}: Fetching screenshot from: ${apiUrl}`);
       
       // Set up timeout
@@ -428,9 +499,18 @@ export const fetchSitePreview = async (url: string, retries = 3): Promise<string
 };
 
 const checkScript = async (url: string, retries = 3): Promise<string> => {
+  // Sanitize URL before using
+  let sanitizedUrl: string;
+  try {
+    sanitizedUrl = sanitizeUrl(url);
+  } catch (error: any) {
+    console.error('Invalid URL for script check:', error.message);
+    return 'Error';
+  }
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${url}`;
+      const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${encodeURIComponent(sanitizedUrl)}`;
 
       // Set up timeout
       const controller = new AbortController();

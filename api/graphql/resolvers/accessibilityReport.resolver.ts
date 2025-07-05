@@ -38,11 +38,23 @@ const resolvers = {
     //getAccessibilityReport: combineResolvers((_, { url }) => fetchAccessibilityReport(url)),
     getAccessibilityReport: async (_: any, { url }: { url: string }) => {
       try {
+        console.log('🔍 GraphQL resolver: getAccessibilityReport called with URL:', url);
+        
         // Fetch the accessibility report
+        console.log('📡 Fetching accessibility report...');
         const accessibilityReport = await fetchAccessibilityReport(url);
+        console.log('✅ Accessibility report fetched successfully:', !!accessibilityReport);
 
         // Fetch the tech stack data
-        const techStack = await fetchTechStackFromAPI(url);
+        console.log('📡 Fetching tech stack data...');
+        let techStack = null;
+        try {
+          techStack = await fetchTechStackFromAPI(url);
+          console.log('✅ Tech stack data fetched successfully:', !!techStack);
+        } catch (techStackError: any) {
+          console.error('⚠️ Tech stack fetch failed, continuing without it:', techStackError.message);
+          techStack = null; // Continue without tech stack data
+        }
 
         // Ensure arrays are properly initialized to prevent GraphQL errors
         if (accessibilityReport) {
@@ -102,7 +114,13 @@ const resolvers = {
           ...accessibilityReport,
           techStack,
         };
-      } catch (error) {
+      } catch (error: any) {
+        console.error('❌ GraphQL resolver error:', error);
+        console.error('❌ GraphQL resolver error details:', {
+          message: error.message,
+          stack: error.stack,
+          url: url
+        });
         throw new Error(`Failed to fetch accessibility report: ${error.message}`);
       }
     },
