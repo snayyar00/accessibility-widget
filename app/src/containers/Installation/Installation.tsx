@@ -10,10 +10,10 @@ export default function Installation({ domain }: any) {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.installation') });
   function getCodeString(uniqueToken: string): string {
-    return `<script src="https://widget.webability.io/widget.min.js" defer></script>`;
+    return `<script src="https://widget.webability.io/widget.min.js" data-asw-token="${uniqueToken}" defer></script>`;
   }
 
-  const [codeString] = useState(getCodeString(''));
+  const [codeString] = useState(getCodeString(domain || 'default'));
 
   // Handle tour completion
   const handleTourComplete = () => {
@@ -31,11 +31,11 @@ export default function Installation({ domain }: any) {
       />
       
       <div className="min-h-screen bg-body flex flex-col overflow-hidden">
-        <div className="flex-1 max-w-none mx-0 px-1 sm:px-2 py-2 flex flex-col lg:flex-row gap-3 min-h-0">
+        <div className="flex-1 max-w-none mx-0 px-2 sm:px-3 py-3 flex flex-col lg:flex-row gap-4 sm:gap-6 min-h-0">
           {/* Main Content Column */}
           <main className="flex-1 flex flex-col min-h-0" role="main" aria-label="Accessibility installation guide">
             {/* Compact Header Section */}
-            <header className="installation-welcome-banner bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-3 flex-shrink-0">
+            <header className="installation-welcome-banner bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4 flex-shrink-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center" role="img" aria-label="Lightning bolt accessibility icon">
@@ -73,40 +73,40 @@ export default function Installation({ domain }: any) {
           </header>
 
           {/* Compact Features Row */}
-          <section className="mb-3 flex-shrink-0" aria-labelledby="features-heading">
+          <section className="mb-4 flex-shrink-0" aria-labelledby="features-heading">
             <h2 id="features-heading" className="sr-only">Key Features</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-500">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0" role="img" aria-label="Lightning bolt speed icon">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-500">
+                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center flex-shrink-0" role="img" aria-label="Lightning bolt speed icon">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900 text-xs sm:text-sm">Easy Setup, Immediate Results</h3>
-                  <p className="text-gray-600 text-xs">Compliance in 48 hours</p>
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Easy Setup, Immediate Results</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">Compliance in 48 hours</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-500">
-                <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0" role="img" aria-label="Checkmark compliance icon">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-500">
+                <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0" role="img" aria-label="Checkmark compliance icon">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900 text-xs sm:text-sm">Legal Protection</h3>
-                  <p className="text-gray-600 text-xs">Mitigate ADA lawsuits</p>
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Legal Protection</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">Mitigate ADA lawsuits</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-500">
-                <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0" role="img" aria-label="Universal compatibility icon">
-                  <span className="text-white text-sm font-bold">🌐</span>
+              <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-500">
+                <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0" role="img" aria-label="Universal compatibility icon">
+                  <span className="text-white text-base font-bold">🌐</span>
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900 text-xs sm:text-sm">Universal Compatibility</h3>
-                  <p className="text-gray-600 text-xs">Any CMS or site builder</p>
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Universal Compatibility</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">Any CMS or site builder</p>
                 </div>
               </div>
             </div>
@@ -114,11 +114,11 @@ export default function Installation({ domain }: any) {
 
           {/* Installation Section */}
           <section className="flex-shrink-0" aria-labelledby="installation-heading">
-            <div className="mb-3">
-              <h2 id="installation-heading" className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
+            <div className="mb-4">
+              <h2 id="installation-heading" className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                 Deploy Enterprise-Grade Accessibility in Minutes
               </h2>
-              <p className="text-gray-600 text-xs sm:text-sm">
+              <p className="text-gray-600 text-sm sm:text-base max-w-4xl">
                 Install our AI-powered accessibility solution with one line of code. Join industry leaders protecting their brands while serving the world's largest minority market.
               </p>
             </div>
@@ -130,9 +130,9 @@ export default function Installation({ domain }: any) {
         </main>
           
         {/* Facts Sidebar */}
-        <aside className="w-full lg:w-72 flex-shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 overflow-y-auto" aria-labelledby="impact-heading">
-          <div className="space-y-4">
-            <div className="text-center mb-4">
+        <aside className="w-full lg:w-80 flex-shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6 overflow-y-auto" aria-labelledby="impact-heading">
+          <div className="space-y-5">
+            <div className="text-center mb-5">
               <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl mb-3">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -146,7 +146,7 @@ export default function Installation({ domain }: any) {
               </p>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200 hover:shadow-md transition-all duration-200">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">

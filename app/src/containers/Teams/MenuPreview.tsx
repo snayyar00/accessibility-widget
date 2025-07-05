@@ -15,6 +15,52 @@ interface AccessibilityMenuProps {
   selectedFont: string;
 }
 
+// Move languages array outside component to prevent recreation on each render
+const languages = [
+  { code: 'en', name: 'English', englishName: 'English' },
+  { code: 'ar', name: 'العربية', englishName: 'Arabic' },
+  { code: 'bg', name: 'Български', englishName: 'Bulgarian' },
+  { code: 'bn', name: 'বাংলা', englishName: 'Bengali' },
+  { code: 'cs', name: 'Čeština', englishName: 'Czech' },
+  { code: 'de', name: 'Deutsch', englishName: 'German' },
+  { code: 'el', name: 'Ελληνικά', englishName: 'Greek' },
+  { code: 'es', name: 'Español', englishName: 'Spanish' },
+  { code: 'fi', name: 'Suomi', englishName: 'Finnish' },
+  { code: 'fr', name: 'Français', englishName: 'French' },
+  { code: 'he', name: 'עברית', englishName: 'Hebrew' },
+  { code: 'hi', name: 'हिन्दी', englishName: 'Hindi' },
+  { code: 'hr', name: 'Hrvatski', englishName: 'Croatian' },
+  { code: 'hu', name: 'Magyar', englishName: 'Hungarian' },
+  { code: 'id', name: 'Bahasa Indonesia', englishName: 'Indonesian' },
+  { code: 'it', name: 'Italiano', englishName: 'Italian' },
+  { code: 'ja', name: '日本語', englishName: 'Japanese' },
+  { code: 'ko', name: '한국어', englishName: 'Korean' },
+  { code: 'lt', name: 'Lietuvių', englishName: 'Lithuanian' },
+  { code: 'lv', name: 'Latviešu', englishName: 'Latvian' },
+  { code: 'ms', name: 'Bahasa Melayu', englishName: 'Malay' },
+  { code: 'nl', name: 'Nederlands', englishName: 'Dutch' },
+  { code: 'no', name: 'Norsk', englishName: 'Norwegian' },
+  { code: 'pl', name: 'Polski', englishName: 'Polish' },
+  { code: 'pt', name: 'Português', englishName: 'Portuguese' },
+  { code: 'pt-br', name: 'Português (Brasil)', englishName: 'Portuguese (Brazil)' },
+  { code: 'ro', name: 'Română', englishName: 'Romanian' },
+  { code: 'ru', name: 'Русский', englishName: 'Russian' },
+  { code: 'sk', name: 'Slovenčina', englishName: 'Slovak' },
+  { code: 'sl', name: 'Slovenščina', englishName: 'Slovenian' },
+  { code: 'sr', name: 'Српски', englishName: 'Serbian' },
+  { code: 'sv', name: 'Svenska', englishName: 'Swedish' },
+  { code: 'th', name: 'ไทย', englishName: 'Thai' },
+  { code: 'tr', name: 'Türkçe', englishName: 'Turkish' },
+  { code: 'uk', name: 'Українська', englishName: 'Ukrainian' },
+  { code: 'ur', name: 'اردو', englishName: 'Urdu' },
+  { code: 'vi', name: 'Tiếng Việt', englishName: 'Vietnamese' },
+  { code: 'zh', name: '中文 (简体)', englishName: 'Chinese (Simplified)' },
+  { code: 'zh-tw', name: '中文 (繁體)', englishName: 'Chinese (Traditional)' },
+  { code: 'da', name: 'Dansk', englishName: 'Danish' },
+  { code: 'et', name: 'Eesti', englishName: 'Estonian' },
+  { code: 'ca', name: 'Català', englishName: 'Catalan' }
+] as const;
+
 const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
   colors,
   toggles,
@@ -26,51 +72,6 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
   const [selectedLanguage, setSelectedLanguage] = useState({ code: 'en', name: 'English', englishName: 'English' });
 
   const fontStyle = { fontFamily: selectedFont };
-
-  const languages = [
-    { code: 'en', name: 'English', englishName: 'English' },
-    { code: 'ar', name: 'العربية', englishName: 'Arabic' },
-    { code: 'bg', name: 'Български', englishName: 'Bulgarian' },
-    { code: 'bn', name: 'বাংলা', englishName: 'Bengali' },
-    { code: 'cs', name: 'Čeština', englishName: 'Czech' },
-    { code: 'de', name: 'Deutsch', englishName: 'German' },
-    { code: 'el', name: 'Ελληνικά', englishName: 'Greek' },
-    { code: 'es', name: 'Español', englishName: 'Spanish' },
-    { code: 'fi', name: 'Suomi', englishName: 'Finnish' },
-    { code: 'fr', name: 'Français', englishName: 'French' },
-    { code: 'he', name: 'עברית', englishName: 'Hebrew' },
-    { code: 'hi', name: 'हिन्दी', englishName: 'Hindi' },
-    { code: 'hr', name: 'Hrvatski', englishName: 'Croatian' },
-    { code: 'hu', name: 'Magyar', englishName: 'Hungarian' },
-    { code: 'id', name: 'Bahasa Indonesia', englishName: 'Indonesian' },
-    { code: 'it', name: 'Italiano', englishName: 'Italian' },
-    { code: 'ja', name: '日本語', englishName: 'Japanese' },
-    { code: 'ko', name: '한국어', englishName: 'Korean' },
-    { code: 'lt', name: 'Lietuvių', englishName: 'Lithuanian' },
-    { code: 'lv', name: 'Latviešu', englishName: 'Latvian' },
-    { code: 'ms', name: 'Bahasa Melayu', englishName: 'Malay' },
-    { code: 'nl', name: 'Nederlands', englishName: 'Dutch' },
-    { code: 'no', name: 'Norsk', englishName: 'Norwegian' },
-    { code: 'pl', name: 'Polski', englishName: 'Polish' },
-    { code: 'pt', name: 'Português', englishName: 'Portuguese' },
-    { code: 'pt-br', name: 'Português (Brasil)', englishName: 'Portuguese (Brazil)' },
-    { code: 'ro', name: 'Română', englishName: 'Romanian' },
-    { code: 'ru', name: 'Русский', englishName: 'Russian' },
-    { code: 'sk', name: 'Slovenčina', englishName: 'Slovak' },
-    { code: 'sl', name: 'Slovenščina', englishName: 'Slovenian' },
-    { code: 'sr', name: 'Српски', englishName: 'Serbian' },
-    { code: 'sv', name: 'Svenska', englishName: 'Swedish' },
-    { code: 'th', name: 'ไทย', englishName: 'Thai' },
-    { code: 'tr', name: 'Türkçe', englishName: 'Turkish' },
-    { code: 'uk', name: 'Українська', englishName: 'Ukrainian' },
-    { code: 'ur', name: 'اردو', englishName: 'Urdu' },
-    { code: 'vi', name: 'Tiếng Việt', englishName: 'Vietnamese' },
-    { code: 'zh', name: '中文 (简体)', englishName: 'Chinese (Simplified)' },
-    { code: 'zh-tw', name: '中文 (繁體)', englishName: 'Chinese (Traditional)' },
-    { code: 'da', name: 'Dansk', englishName: 'Danish' },
-    { code: 'et', name: 'Eesti', englishName: 'Estonian' },
-    { code: 'ca', name: 'Català', englishName: 'Catalan' }
-  ];
 
   const accessibilityProfiles = [
     {
