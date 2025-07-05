@@ -31,8 +31,7 @@ const resolvers = {
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Translation failed',
-          languageCode,
-          cached: false
+          languageCode
         };
       }
     }
