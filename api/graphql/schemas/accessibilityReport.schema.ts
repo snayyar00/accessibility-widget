@@ -22,17 +22,17 @@ export const AccessibilitySchema = gql`
     occurrence_count: Int
     affected_elements: [String]
     fix_scope: String
-    confidence: Int
+    confidence: Float
     template_recommendation: String
     estimated_fix_effort: String
-    fix_priority_score: Int
+    fix_priority_score: Float
   }
 
   type TemplateAnalysis {
     patterns_detected: [TemplatePattern]
     total_template_issues: Int
     potential_cost_savings: Int
-    fix_priority_score: Int
+    fix_priority_score: Float
   }
 
   type ConfidenceDistribution {
@@ -56,11 +56,11 @@ export const AccessibilitySchema = gql`
     template_patterns_detected: Int
     template_issues_count: Int
     potential_template_savings: Int
-    avg_confidence_score: Int
+    avg_confidence_score: Float
     confidence_distribution: ConfidenceDistribution
     runner_breakdown: RunnerBreakdown
     issues_filtered: Int
-    filtering_efficiency: Int
+    filtering_efficiency: Float
   }
 
   type axeOutput {
@@ -70,7 +70,7 @@ export const AccessibilitySchema = gql`
     impact: String
     description: String
     help: String
-    confidence_score: Int
+    confidence_score: Float
     template_info: TemplateInfo
     processing_metadata: ProcessingMetadata
   }
@@ -82,7 +82,7 @@ export const AccessibilitySchema = gql`
     selectors: [String]
     description: String
     recommended_action: String
-    confidence_score: Int
+    confidence_score: Float
     template_info: TemplateInfo
     processing_metadata: ProcessingMetadata
   }
@@ -118,7 +118,7 @@ export const AccessibilitySchema = gql`
   type Report {
     axe: axeResult
     htmlcs: htmlCsResult
-    score: Int
+    score: Float
     totalElements: Int
     siteImg: String
     ByFunctions: [HumanFunctionality]
@@ -221,7 +221,7 @@ type Issue {
     total_processing_time: Int
     preprocessing_time: Int
     gpt_processing_time: Int
-    avg_confidence_score: Int
+    avg_confidence_score: Float
     success_rate: Float
   }
 
@@ -236,7 +236,7 @@ type Issue {
   type CostOptimization {
     original_issue_count: Int
     processed_issue_count: Int
-    cost_reduction_percentage: Int
+    cost_reduction_percentage: Float
     batch_efficiency: Float
     template_savings: Int
     estimated_monthly_savings: String

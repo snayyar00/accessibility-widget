@@ -284,14 +284,14 @@ export const accessibilityTourSteps: Step[] = [
     placement: 'top' as Placement,
   },
   {
-    target: '.print-report-button',
+    target: '.accessibility-issues-section',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">View or Download Report 📄</h3>
-        <p>Click the View button for the respective row to open the report in a new tab. Click the Download button to save the accessibility report as a PDF, which you can then share with your team or use for compliance documentation.</p>
+        <h3 className="text-lg font-semibold mb-2">View or Download Reports 📄</h3>
+        <p>In the audit history table below, you'll see View and PDF buttons for each scan. Click View to open the detailed report in a new tab, or click PDF to download the accessibility report for compliance documentation and team sharing.</p>
       </div>
     ),
-    placement: 'bottom' as Placement,
+    placement: 'top' as Placement,
   },
 ];
 
