@@ -404,21 +404,31 @@ export const GPTChunks = async (errorCodes: string[]) => {
       "HumanFunctionalities": [],
     };
     
-    aggregatedResult.forEach((result) => {
+    aggregatedResult.forEach((result, index) => {
       try {
+        // Skip empty, null, undefined, or invalid responses
+        if (!result || result === 'undefined' || result.trim() === '' || result === 'null') {
+          console.log(`⚠️ Skipping invalid GPT response ${index}: "${result}"`);
+          return;
+        }
+        
         const parsedObject = JSON.parse(result);
-        if (parsedObject && parsedObject.HumanFunctionalities) {
+        if (parsedObject && parsedObject.HumanFunctionalities && Array.isArray(parsedObject.HumanFunctionalities)) {
+          console.log(`✅ Merging ${parsedObject.HumanFunctionalities.length} functionalities from chunk ${index}`);
           mergedObject.HumanFunctionalities.push(...parsedObject.HumanFunctionalities);
+        } else {
+          console.log(`⚠️ Invalid GPT response structure in chunk ${index}:`, parsedObject);
         }
       } catch (parseError) {
-        console.error('Error parsing GPT chunk result:', parseError);
+        console.error(`❌ Error parsing GPT chunk ${index} result:`, parseError);
+        console.error(`❌ Raw response was: "${result}"`);
       }
     });
 
     return mergedObject;
   } catch (error) {
     console.error('Error in GPTChunks:', error);
-    // Return a default structure if all fails
+    // Return empty structure if GPT fails - no fallback for accessibility issues
     return {
       "HumanFunctionalities": []
     };

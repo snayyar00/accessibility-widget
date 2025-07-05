@@ -52,8 +52,36 @@ const resolvers = {
           techStack = await fetchTechStackFromAPI(url);
           console.log('✅ Tech stack data fetched successfully:', !!techStack);
         } catch (techStackError: any) {
-          console.error('⚠️ Tech stack fetch failed, continuing without it:', techStackError.message);
-          techStack = null; // Continue without tech stack data
+          console.error('⚠️ Tech stack fetch failed, using generic fallback:', techStackError.message);
+          // Provide generic tech stack fallback
+          techStack = {
+            technologies: [
+              {
+                name: "HTML",
+                category: "Markup",
+                version: null,
+                description: "Standard web markup language for structuring content"
+              },
+              {
+                name: "CSS",
+                category: "Styling",
+                version: null,
+                description: "Cascading Style Sheets for visual presentation"
+              },
+              {
+                name: "JavaScript",
+                category: "Programming Language",
+                version: null,
+                description: "Client-side scripting for interactive functionality"
+              }
+            ],
+            meta: {
+              source: "generic_fallback",
+              confidence: "low",
+              scan_date: new Date().toISOString()
+            }
+          };
+          console.log('📦 Using generic HTML/CSS/JavaScript tech stack fallback');
         }
 
         // Ensure arrays are properly initialized to prevent GraphQL errors

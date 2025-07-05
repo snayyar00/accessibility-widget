@@ -213,7 +213,7 @@ export const AccessibilitySchema = gql`
 
   type WebAbilityMetadata {
     job_id: String!
-    scan_duration: Int!
+    scan_duration: Float!
     scan_timestamp: String!
     browser_info: WebAbilityBrowserInfo!
     accessibility_standards: WebAbilityAccessibilityStandards!
