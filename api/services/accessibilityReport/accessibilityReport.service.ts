@@ -199,7 +199,12 @@ export const fetchAccessibilityReport = async (url: string) => {
         throw new Error('Failed to fetch accessibility report for all URL variations');
       }
 
-      console.log('result from getAccessibilityInformationPally:', result.score, result.totalElements, result.ByFunctions);
+      console.log('📊 result from getAccessibilityInformationPally:', {
+        score: result.score,
+        totalElements: result.totalElements,
+        hasByFunctions: !!result.ByFunctions,
+        ByFunctionsLength: result.ByFunctions?.length || 0
+      });
       const siteImg = await fetchSitePreview(formattedUrl);
       if (result && siteImg) {
         result.siteImg = siteImg;
@@ -228,59 +233,76 @@ export const fetchAccessibilityReport = async (url: string) => {
 
       if (result) {
         if (result.ByFunctions && Array.isArray(result.ByFunctions) && result.ByFunctions.length > 0) {
+          console.log('✅ ByFunctions data found, returning early with length:', result.ByFunctions.length);
           return result;
         }
+        
+        console.log('⚠️  ByFunctions is missing or empty, processing with GPT...');
 
         const guideErrors: {
           errors: htmlcsOutput[];
           notices: htmlcsOutput[];
           warnings: htmlcsOutput[];
-        } = result?._originalHtmlcs || result?.htmlcs;
+        } = result?._originalHtmlcs || result?.htmlcs || {
+          errors: [],
+          notices: [],
+          warnings: []
+        };
 
         const errorCodes: string[] = [];
         const errorCodeWithDescriptions: { [key: string]: { [key: string]: string | string[] } } = {};
 
-        guideErrors.errors.forEach((errorcode: htmlcsOutput) => {
-          errorCodes.push(errorcode?.code);
-          if (!errorCodeWithDescriptions[errorcode?.code]) {
-            errorCodeWithDescriptions[errorcode?.code] = {};
-          }
-          errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
-          errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
-          errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
-          errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
-          errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
-        });
+        // Ensure arrays exist before iterating
+        if (guideErrors.errors && Array.isArray(guideErrors.errors)) {
+          guideErrors.errors.forEach((errorcode: htmlcsOutput) => {
+            errorCodes.push(errorcode?.code);
+            if (!errorCodeWithDescriptions[errorcode?.code]) {
+              errorCodeWithDescriptions[errorcode?.code] = {};
+            }
+            errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
+            errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
+            errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
+            errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
+            errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
+          });
+        }
 
-        guideErrors.notices.forEach((errorcode: htmlcsOutput) => {
-          errorCodes.push(errorcode?.code);
-          if (!errorCodeWithDescriptions[errorcode?.code]) {
-            errorCodeWithDescriptions[errorcode?.code] = {};
-          }
-          errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
-          errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
-          errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
-          errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
-          errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
-        });
+        if (guideErrors.notices && Array.isArray(guideErrors.notices)) {
+          guideErrors.notices.forEach((errorcode: htmlcsOutput) => {
+            errorCodes.push(errorcode?.code);
+            if (!errorCodeWithDescriptions[errorcode?.code]) {
+              errorCodeWithDescriptions[errorcode?.code] = {};
+            }
+            errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
+            errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
+            errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
+            errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
+            errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
+          });
+        }
 
-        guideErrors.warnings.forEach((errorcode: htmlcsOutput) => {
-          errorCodes.push(errorcode?.code);
-          if (!errorCodeWithDescriptions[errorcode?.code]) {
-            errorCodeWithDescriptions[errorcode?.code] = {};
-          }
-          errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
-          errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
-          errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
-          errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
-          errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
-        });
+        if (guideErrors.warnings && Array.isArray(guideErrors.warnings)) {
+          guideErrors.warnings.forEach((errorcode: htmlcsOutput) => {
+            errorCodes.push(errorcode?.code);
+            if (!errorCodeWithDescriptions[errorcode?.code]) {
+              errorCodeWithDescriptions[errorcode?.code] = {};
+            }
+            errorCodeWithDescriptions[errorcode?.code].message = errorcode?.message;
+            errorCodeWithDescriptions[errorcode?.code].context = errorcode?.context;
+            errorCodeWithDescriptions[errorcode?.code].description = errorcode?.description;
+            errorCodeWithDescriptions[errorcode?.code].recommended_action = errorcode?.recommended_action;
+            errorCodeWithDescriptions[errorcode?.code].selectors = errorcode?.selectors;
+          });
+        }
 
+        console.log('🤖 Calling GPT with', errorCodes.length, 'error codes');
         const completion: GPTData = await GPTChunks(errorCodes);
 
         if (completion) {
+          console.log('✅ GPT returned completion with', completion.HumanFunctionalities?.length || 0, 'functionalities');
           completion.HumanFunctionalities.forEach(
             (functionality: HumanFunctionality) => {
+              console.log('📋 Processing functionality:', functionality.FunctionalityName, 'with', functionality.Errors?.length || 0, 'errors');
               functionality.Errors.forEach((error: Error) => {
                 let errorCode = error['ErrorGuideline'] || (error as any)['Error Guideline'] || (error as any)['code'] || (error as any)['Error Code'] || (error as any)['guideline'];
 
@@ -325,6 +347,23 @@ export const fetchAccessibilityReport = async (url: string) => {
           );
 
           result.ByFunctions = completion.HumanFunctionalities;
+          console.log('✅ Final ByFunctions assigned with', result.ByFunctions.length, 'functionalities');
+          // Debug: Log first functionality structure to verify data integrity
+          if (result.ByFunctions.length > 0) {
+            const firstFunc = result.ByFunctions[0];
+            console.log('🔍 First functionality structure:', {
+              name: firstFunc.FunctionalityName,
+              errorCount: firstFunc.Errors?.length || 0,
+              hasErrors: Array.isArray(firstFunc.Errors),
+              firstError: firstFunc.Errors?.[0] ? {
+                hasCode: !!firstFunc.Errors[0].code,
+                hasMessage: !!firstFunc.Errors[0].message,
+                hasDescription: !!firstFunc.Errors[0].description
+              } : null
+            });
+          }
+        } else {
+          console.log('❌ GPT returned no completion');
         }
       }
 

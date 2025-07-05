@@ -59,6 +59,42 @@ const resolvers = {
             accessibilityReport.axe.notices = accessibilityReport.axe.notices || [];
             accessibilityReport.axe.warnings = accessibilityReport.axe.warnings || [];
           }
+          
+          // Handle ByFunctions array - CRITICAL: This was missing from the recent GraphQL fix!
+          if (!accessibilityReport.ByFunctions) {
+            console.log('⚠️  ByFunctions is missing in fresh report, initializing empty array');
+            accessibilityReport.ByFunctions = [];
+          } else if (!Array.isArray(accessibilityReport.ByFunctions)) {
+            console.log('⚠️  ByFunctions is not an array in fresh report, converting:', typeof accessibilityReport.ByFunctions);
+            accessibilityReport.ByFunctions = [];
+          } else {
+            console.log('✅ ByFunctions array found in fresh report with length:', accessibilityReport.ByFunctions.length);
+            // Ensure each functionality has proper structure
+            accessibilityReport.ByFunctions = accessibilityReport.ByFunctions.map((func: any, index: number) => {
+              if (!func.FunctionalityName) {
+                console.log(`⚠️  Missing FunctionalityName in ByFunctions[${index}]`);
+              }
+              if (!Array.isArray(func.Errors)) {
+                console.log(`⚠️  Errors is not an array in ByFunctions[${index}]`);
+                func.Errors = [];
+              }
+              return {
+                FunctionalityName: func.FunctionalityName || 'Unknown',
+                Errors: func.Errors || []
+              };
+            });
+          }
+          
+          // Initialize other extended fields that might be missing
+          if (accessibilityReport.issues && !Array.isArray(accessibilityReport.issues)) {
+            console.log('⚠️  Issues field exists but is not an array in fresh report');
+            accessibilityReport.issues = [];
+          }
+          
+          if (accessibilityReport.functionalityNames && !Array.isArray(accessibilityReport.functionalityNames)) {
+            console.log('⚠️  FunctionalityNames field exists but is not an array in fresh report');
+            accessibilityReport.functionalityNames = [];
+          }
         }
 
         // Combine the accessibility report and tech stack data
@@ -84,26 +120,108 @@ const resolvers = {
       return formattedRows;
     },
     fetchReportByR2Key: async (_: any, { r2_key }: any) => {
-      const report = await fetchReportFromR2(r2_key);
-      
-      // Ensure arrays are properly initialized to prevent GraphQL errors
-      if (report) {
-        // Handle htmlcs results
-        if (report.htmlcs) {
-          report.htmlcs.errors = report.htmlcs.errors || [];
-          report.htmlcs.notices = report.htmlcs.notices || [];
-          report.htmlcs.warnings = report.htmlcs.warnings || [];
+      try {
+        console.log('🔍 Fetching report from R2 with key:', r2_key);
+        const report = await fetchReportFromR2(r2_key);
+        
+        if (!report) {
+          console.error('❌ No report found for R2 key:', r2_key);
+          return null;
         }
         
-        // Handle axe results
-        if (report.axe) {
-          report.axe.errors = report.axe.errors || [];
-          report.axe.notices = report.axe.notices || [];
-          report.axe.warnings = report.axe.warnings || [];
+        console.log('📦 Raw report from R2:', {
+          hasAxe: !!report.axe,
+          hasHtmlcs: !!report.htmlcs,
+          hasByFunctions: !!report.ByFunctions,
+          ByFunctionsLength: report.ByFunctions?.length || 0,
+          hasScore: !!report.score,
+          hasTotalElements: !!report.totalElements
+        });
+        
+        // Ensure arrays are properly initialized to prevent GraphQL errors
+        if (report) {
+          // Handle htmlcs results
+          if (report.htmlcs) {
+            report.htmlcs.errors = report.htmlcs.errors || [];
+            report.htmlcs.notices = report.htmlcs.notices || [];
+            report.htmlcs.warnings = report.htmlcs.warnings || [];
+            console.log('🔧 Initialized htmlcs arrays:', {
+              errors: report.htmlcs.errors.length,
+              notices: report.htmlcs.notices.length,
+              warnings: report.htmlcs.warnings.length
+            });
+          }
+          
+          // Handle axe results
+          if (report.axe) {
+            report.axe.errors = report.axe.errors || [];
+            report.axe.notices = report.axe.notices || [];
+            report.axe.warnings = report.axe.warnings || [];
+            console.log('🔧 Initialized axe arrays:', {
+              errors: report.axe.errors.length,
+              notices: report.axe.notices.length,
+              warnings: report.axe.warnings.length
+            });
+          }
+          
+          // Handle ByFunctions array - this was missing!
+          if (!report.ByFunctions) {
+            console.log('⚠️  ByFunctions is missing, initializing empty array');
+            report.ByFunctions = [];
+          } else if (!Array.isArray(report.ByFunctions)) {
+            console.log('⚠️  ByFunctions is not an array, converting:', typeof report.ByFunctions);
+            report.ByFunctions = [];
+          } else {
+            console.log('✅ ByFunctions array found with length:', report.ByFunctions.length);
+            // Ensure each functionality has proper structure
+            report.ByFunctions = report.ByFunctions.map((func: any, index: number) => {
+              if (!func.FunctionalityName) {
+                console.log(`⚠️  Missing FunctionalityName in ByFunctions[${index}]`);
+              }
+              if (!Array.isArray(func.Errors)) {
+                console.log(`⚠️  Errors is not an array in ByFunctions[${index}]`);
+                func.Errors = [];
+              }
+              return {
+                FunctionalityName: func.FunctionalityName || 'Unknown',
+                Errors: func.Errors || []
+              };
+            });
+          }
+          
+          // Initialize other fields that might be missing
+          report.score = report.score || 0;
+          report.totalElements = report.totalElements || 0;
+          
+          // Initialize extended fields if they exist
+          if (report.issues && !Array.isArray(report.issues)) {
+            console.log('⚠️  Issues field exists but is not an array');
+            report.issues = [];
+          }
+          
+          if (report.functionalityNames && !Array.isArray(report.functionalityNames)) {
+            console.log('⚠️  FunctionalityNames field exists but is not an array');
+            report.functionalityNames = [];
+          }
         }
+        
+        console.log('✅ Final report structure:', {
+          hasAxe: !!report.axe,
+          hasHtmlcs: !!report.htmlcs,
+          ByFunctionsLength: report.ByFunctions?.length || 0,
+          score: report.score,
+          totalElements: report.totalElements,
+          hasIssues: !!report.issues,
+          issuesLength: report.issues?.length || 0,
+          hasFunctionalityNames: !!report.functionalityNames,
+          functionalityNamesLength: report.functionalityNames?.length || 0
+        });
+        
+        return report;
+      } catch (error) {
+        console.error('❌ Error in fetchReportByR2Key:', error);
+        throw new Error(`Failed to fetch report from R2: ${error.message}`);
       }
-      
-      return report;
     },
   },
 };

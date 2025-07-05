@@ -11,7 +11,7 @@ import FETCH_ACCESSIBILITY_REPORT_KEYS from '@/queries/accessibility/fetchAccess
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
 import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
 import { toast } from 'react-toastify';
-import isValidDomain from '@/utils/verifyDomain';
+import isValidDomain, { validateDomainWithDetails } from '@/utils/verifyDomain';
 import Button from '@mui/joy/Button';
 import AccordionGroup from '@mui/joy/AccordionGroup';
 import Accordion from '@mui/joy/Accordion';
@@ -70,6 +70,17 @@ function calculateEnhancedScore(baseScore: number) {
 
 const normalizeDomain = (url: string) =>
   url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+
+// Helper function to extract domain initial
+const getDomainInitial = (url: string): string => {
+  try {
+    // Remove protocol and www, then get first character of domain
+    const cleanDomain = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    return cleanDomain.charAt(0).toUpperCase() || '?';
+  } catch {
+    return '?';
+  }
+};
 
 
 
@@ -204,10 +215,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   }, [selectedSite, reportGenerated]);
 
   const handleSubmit = async () => {
-    if (!isValidDomain(domain)) {
-      console.log('Invalid domain:', domain);
+    const validationResult = validateDomainWithDetails(domain);
+    if (!validationResult.isValid) {
+      console.log('Invalid domain:', domain, 'Reason:', validationResult.error);
       setDomain(currentDomain);
-      toast.error('You must enter a valid domain name!');
+      toast.error(`Invalid domain: ${validationResult.error}`);
       return;
     }
     
@@ -328,10 +340,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     return { date, time, dateObj };
   }, []);
 
-  const getReportData = useCallback((row: any) => {
-    const { date, time } = formatReportDate(Number(row.created_at));
-    const complianceStatus = getComplianceStatus(row.enhancedScore);
-    const urlInitial = row.url.charAt(0).toUpperCase();
+     const getReportData = useCallback((row: any) => {
+     const { date, time } = formatReportDate(Number(row.created_at));
+     const complianceStatus = getComplianceStatus(row.enhancedScore);
+     const urlInitial = getDomainInitial(row.url);
     
     return {
       date,
@@ -724,7 +736,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                          }
                          
                          const safeLabel = displayValue;
-                         const firstChar = safeLabel.charAt(0).toUpperCase() || '?';
+                         const firstChar = getDomainInitial(displayValue);
                         
                         return (
                           <div
@@ -789,7 +801,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                          }
                          
                          const safeLabel = displayValue;
-                         const firstChar = safeLabel.charAt(0).toUpperCase() || '?';
+                         const firstChar = getDomainInitial(displayValue);
                         
                         return (
                           <div className="absolute inset-0 flex items-center justify-center gap-3">
@@ -1282,7 +1294,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       <div className="flex-shrink-0">
                         <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mr-4">
                           <span className="text-white font-semibold text-base">
-                            {row.url.charAt(0).toUpperCase()}
+                            {getDomainInitial(row.url)}
                           </span>
                         </div>
                       </div>

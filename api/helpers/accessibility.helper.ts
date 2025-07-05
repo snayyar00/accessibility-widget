@@ -141,8 +141,20 @@ export async function getAccessibilityInformationPally(domain: string) {
 
     // Parse and return the response JSON
     results = await response.json();
+    
+    // Check if the response contains an error
+    if (results.error) {
+      console.error('🚨 PA11Y API returned error for domain:', domain, results.error, results.details);
+      throw new Error(`PA11Y API error: ${results.error} - ${results.details || 'Unknown error'}`);
+    }
+    
+    // Check if results has the expected structure
+    if (!results.issues || !Array.isArray(results.issues)) {
+      console.error('🚨 PA11Y API returned invalid structure for domain:', domain, 'missing issues array');
+      throw new Error('PA11Y API returned invalid response structure');
+    }
   } catch (error) {
-    console.error('pally API Error', error);
+    console.error('🚨 pally API Error for domain:', domain, error);
     // Return proper default structure instead of undefined
     return {
       axe: {
@@ -235,9 +247,17 @@ export async function getAccessibilityInformationPally(domain: string) {
   // Get preprocessing configuration
   const config = getPreprocessingConfig();
   
+  console.log('🔧 Preprocessing config enabled:', config.enabled);
   if (config.enabled) {
     // Use enhanced processing pipeline
     console.log('🚀 Using enhanced preprocessing pipeline');
+    console.log('📊 Input data to enhanced processing:', {
+      hasAxeErrors: !!output.axe?.errors?.length,
+      axeErrorsCount: output.axe?.errors?.length || 0,
+      hasHtmlcsErrors: !!output.htmlcs?.errors?.length,
+      htmlcsErrorsCount: output.htmlcs?.errors?.length || 0,
+      totalElements: output.totalElements
+    });
     try {
       const enhancedResult = await processAccessibilityIssuesWithFallback(output);
   
@@ -272,6 +292,10 @@ export async function getAccessibilityInformationPally(domain: string) {
       console.log('📦 Final output debug:')
       console.log('   finalOutput.ByFunctions exists:', !!finalOutput.ByFunctions)
       console.log('   finalOutput.ByFunctions length:', finalOutput.ByFunctions?.length || 0)
+      if (finalOutput.ByFunctions?.length > 0) {
+        console.log('   First ByFunction name:', finalOutput.ByFunctions[0].FunctionalityName)
+        console.log('   First ByFunction errors count:', finalOutput.ByFunctions[0].Errors?.length || 0)
+      }
       
       return finalOutput;
       
