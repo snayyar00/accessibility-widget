@@ -17,7 +17,7 @@ import AccordionGroup from '@mui/joy/AccordionGroup';
 import Accordion from '@mui/joy/Accordion';
 import ToggleButtonGroup from '@mui/joy/ToggleButtonGroup';
 import Stack from '@mui/joy/Stack';
-import { translateText,translateSingleText } from '@/utils/translator';
+import { translateText,translateSingleText, LANGUAGES } from '@/utils/translator';
 
 import AccordionDetails, {
   accordionDetailsClasses,
@@ -1079,30 +1079,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       setCurrentLanguage(e.target.value);
                       setShowLangTooltip(false);
                     }}
-                    className="appearance-none bg-white border border-gray-300 rounded-lg px-2 py-2 pr-6 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[38px] w-full"
+                    className="appearance-none bg-white border border-gray-300 rounded-md px-2 py-2 pr-6 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[38px] w-full"
                   >
                     <option value="">Select Language</option>
-                    <option value="en">English</option>
-                    <option value="es">Español</option>
-                    <option value="fr">Français</option>
-                    <option value="de">Deutsch</option>
-                    <option value="it">Italiano</option>
-                    <option value="pt">Português</option>
-                    <option value="nl">Nederlands</option>
-                    <option value="ru">Русский</option>
-                    <option value="ja">日本語</option>
-                    <option value="ko">한국어</option>
-                    <option value="zh">中文</option>
-                    <option value="ar">العربية</option>
-                    <option value="hi">हिन्दी</option>
-                    <option value="th">ไทย</option>
-                    <option value="vi">Tiếng Việt</option>
-                    <option value="tr">Türkçe</option>
-                    <option value="pl">Polski</option>
-                    <option value="sv">Svenska</option>
-                    <option value="no">Norsk</option>
-                    <option value="da">Dansk</option>
-                    <option value="fi">Suomi</option>
+                    {Object.values(LANGUAGES).map((language) => (
+                      <option key={language.code} value={language.code}>
+                        {language.nativeName}
+                      </option>
+                    ))}
                   </select>
                 </Tooltip>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
@@ -1111,6 +1095,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   </svg>
                 </div>
               </div>
+
+
+              
               <div className="w-full md:flex-1 min-w-0">
                 <Select
                   options={siteOptions}
@@ -1133,6 +1120,18 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   formatCreateLabel={(inputValue: any) => `Enter a new domain: \"${inputValue}\"`}
                   classNamePrefix="react-select"
                   className="w-full min-w-0"
+                  styles={{
+                    control: (provided: any, state: any) => ({
+                      ...provided,
+                      borderRadius: '6px',
+                      border: state.isFocused ? '1px solid #3b82f6' : '1px solid #d1d5db',
+                      minHeight: '38px',
+                      boxShadow: state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.1)' : 'none',
+                      '&:hover': {
+                        border: state.isFocused ? '1px solid #3b82f6' : '1px solid #d1d5db',
+                      },
+                    }),
+                  }}
                 />
               </div>
             </div>

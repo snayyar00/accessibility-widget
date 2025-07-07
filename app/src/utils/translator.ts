@@ -6,6 +6,34 @@ const region = 'northeurope'; // e.g., 'eastus'
 interface Issue {
   [key: string]: any;
 }
+
+
+export const LANGUAGES = {
+  en: { code: 'en', name: 'English', nativeName: 'English' },
+  es: { code: 'es', name: 'Spanish', nativeName: 'Español' },
+  fr: { code: 'fr', name: 'French', nativeName: 'Français' },
+  de: { code: 'de', name: 'German', nativeName: 'Deutsch' },
+  it: { code: 'it', name: 'Italian', nativeName: 'Italiano' },
+  pt: { code: 'pt', name: 'Portuguese', nativeName: 'Português' },
+  nl: { code: 'nl', name: 'Dutch', nativeName: 'Nederlands' },
+  ru: { code: 'ru', name: 'Russian', nativeName: 'Русский' },
+  ja: { code: 'ja', name: 'Japanese', nativeName: '日本語' },
+  ko: { code: 'ko', name: 'Korean', nativeName: '한국어' },
+  zh: { code: 'zh', name: 'Chinese', nativeName: '中文' },
+  ar: { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
+  hi: { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
+  th: { code: 'th', name: 'Thai', nativeName: 'ไทย' },
+  vi: { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
+  tr: { code: 'tr', name: 'Turkish', nativeName: 'Türkçe' },
+  pl: { code: 'pl', name: 'Polish', nativeName: 'Polski' },
+  sv: { code: 'sv', name: 'Swedish', nativeName: 'Svenska' },
+  no: { code: 'no', name: 'Norwegian', nativeName: 'Norsk' },
+  da: { code: 'da', name: 'Danish', nativeName: 'Dansk' },
+  fi: { code: 'fi', name: 'Finnish', nativeName: 'Suomi' }
+} as const;
+
+export type LanguageCode = keyof typeof LANGUAGES;
+
 export const translateText = async (issues: Issue[], toLang: string = 'en'): Promise<Issue[]> => {
   const fieldsToTranslate = ['code', 'message', 'recommended_action'];
 
@@ -80,4 +108,4 @@ if (!toLang || toLang.toLowerCase() === 'en') {
       console.error('Translation error:', error?.response?.data || error.message);
       return text; // return original text as fallback
     }
-  };
+};

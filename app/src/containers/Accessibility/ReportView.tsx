@@ -3,7 +3,7 @@ import { useParams, useLocation, useHistory } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
-import { translateText,translateSingleText } from '@/utils/translator';
+import { translateText,translateSingleText ,LANGUAGES} from '@/utils/translator';
 
 import {
   AlertTriangle,
@@ -1875,28 +1875,12 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               onChange={(e) => setCurrentLanguage(e.target.value)}
               className="appearance-none bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
             >
-              <option value="">Select Language</option>
-              <option value="en">English</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
-              <option value="de">Deutsch</option>
-              <option value="it">Italiano</option>
-              <option value="pt">Português</option>
-              <option value="nl">Nederlands</option>
-              <option value="ru">Русский</option>
-              <option value="ja">日本語</option>
-              <option value="ko">한국어</option>
-              <option value="zh">中文</option>
-              <option value="ar">العربية</option>
-              <option value="hi">हिन्दी</option>
-              <option value="th">ไทย</option>
-              <option value="vi">Tiếng Việt</option>
-              <option value="tr">Türkçe</option>
-              <option value="pl">Polski</option>
-              <option value="sv">Svenska</option>
-              <option value="no">Norsk</option>
-              <option value="da">Dansk</option>
-              <option value="fi">Suomi</option>
+                    <option value="">Select Language</option>
+                    {Object.values(LANGUAGES).map((language) => (
+                      <option key={language.code} value={language.code}>
+                        {language.nativeName}
+                      </option>
+                    ))}
             </select>
             <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
               <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
