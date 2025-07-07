@@ -12,7 +12,8 @@ import { useHistory } from 'react-router-dom';
 import TourGuide from '@/components/Common/TourGuide';
 import { defaultTourStyles } from '@/config/tourStyles';
 import { dashboardTourSteps, tourKeys } from '@/constants/toursteps';
-
+import getDomainStatus from '@/utils/getDomainStatus';
+import applyStatusClass from '@/utils/applyStatusClass';
 
 interface ChartData {
   date: string;
@@ -142,6 +143,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
   const [startDate, setStartDate] = useState<string>(defaultStart);
   const [endDate, setEndDate]     = useState<string>(defaultEnd);
 
+  const [appSumoDomains,setAppSumoDomain] = useState<string[]>([]);
   const [loadDashboard, { data, loading, error }] = useLazyQuery(fetchDashboardQuery, {
     fetchPolicy: 'cache-first',
     onCompleted: () => setLoadingAnimation(false),
@@ -237,39 +239,34 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
     );
   }, [granularity]);
 
-  const applyStatusClass = (status: string): string => {
-    if (!status) {
-      return 'bg-yellow-200 text-200';
-    }
-    const currentTime = new Date().getTime();
-    const timeDifference = new Date(parseInt(status)).getTime() - currentTime;
-    const sevendays = 7 * 24 * 60 * 60 * 1000;
 
-    if (timeDifference > sevendays) {
-      return 'bg-green-200 text-green-600';
-    }
-    if (timeDifference < sevendays && timeDifference > 0) {
-      return 'bg-red-200 text-red-600';
-    }
-    return 'bg-yellow-200 text-200';
-  }
+  useEffect(() => {
+  
+    if(customerData?.subscriptions){
+      const appSumoDomains:any = [];
+      let subs = JSON.parse(customerData.subscriptions);
+      // console.log("subs = ",subs);
+      ['monthly', 'yearly'].forEach((subscriptionType) => {
+          // Loop over each subscription in the current type (monthly or yearly)
+          subs[subscriptionType].forEach((subscription:any) => {
+              const description = subscription.description;
+              
+              // Regex to extract domain name before '(' and promo codes
+              const match = description?.match(/Plan for ([^(\s]+)\(/);
 
-  const getDomainStatus = (status: string): string => {
-    if (!status) {
-      return 'Not Available';
+              if (match && match[1] && match[1].trim()) {
+                  const domain = match[1].trim();
+                  appSumoDomains.push(domain); // Save the domain name in the list
+              }
+          });
+      });
+      setAppSumoDomain(appSumoDomains);
+      // setSubCount(subs.length);
     }
-    const currentTime = new Date().getTime();
-    const timeDifference = new Date(parseInt(status)).getTime() - currentTime;
-    const sevendays = 7 * 24 * 60 * 60 * 1000;
+  }, [customerData]);
 
-    if (timeDifference > sevendays) {
-      return 'Active';
-    }
-    if (timeDifference < sevendays && timeDifference > 0) {
-      return 'Expiring';
-    }
-    return 'Expired';
-  }
+ 
+
 
   const adjustCountByGranularity = (baseCount: number): number => {
     switch (granularity) {
@@ -305,16 +302,31 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
         <div className="flex gap-3">
           <p
             className={`p-1.5 text-xs font-semibold rounded w-fit whitespace-no-wrap ${applyStatusClass(
+              domainData.domain,
               domainData.expiredAt,
+              domainData.trial,
+              appSumoDomains,
             )}`}
           >
-            {getDomainStatus(domainData.expiredAt)}
+            {getDomainStatus(
+              domainData.url,
+              domainData.expiredAt,
+              domainData.trial,
+              appSumoDomains 
+            )}
           </p>
-          <p className="text-gray-900 whitespace-no-wrap">
-            {domainData.expiredAt
-              ? new Date(parseInt(domainData.expiredAt)).toLocaleString() ?? '-'
-              : '-'}
-          </p>
+          {getDomainStatus(
+              domainData.url,
+              domainData.expiredAt,
+              domainData.trial,
+              appSumoDomains 
+            ) != 'Life Time' && (
+              <p className="text-gray-900 whitespace-no-wrap">
+                {domainData.expiredAt
+                  ? new Date(parseInt(domainData.expiredAt)).toLocaleString() ?? '-'
+                  : '-'}
+              </p>
+            )} 
         </div>
       ) : (
         <p>-</p>
