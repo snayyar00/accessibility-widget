@@ -1891,8 +1891,17 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 
   app.use('/graphql', (req, res, next) => {
-    req.setTimeout(70000);
-    res.setTimeout(70000);
+    // Parse the GraphQL query to determine timeout
+    const body = req.body;
+    let timeout = 70000; // Default 70 seconds
+    
+    // Check if this is the accessibility report query
+    if (body && body.query && body.query.includes('getAccessibilityReport')) {
+      timeout = 120000; // 5 minutes for accessibility report
+    }
+    
+    req.setTimeout(timeout);
+    res.setTimeout(timeout);
     next();
   });
   app.use('/graphql', express.json({ limit: '5mb' }));
