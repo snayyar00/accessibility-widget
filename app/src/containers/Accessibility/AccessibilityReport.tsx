@@ -17,7 +17,7 @@ import AccordionGroup from '@mui/joy/AccordionGroup';
 import Accordion from '@mui/joy/Accordion';
 import ToggleButtonGroup from '@mui/joy/ToggleButtonGroup';
 import Stack from '@mui/joy/Stack';
-import { translateText,translateSingleText } from '@/utils/translator';
+import { translateText,translateSingleText,LANGUAGES } from '@/utils/translator';
 
 import AccordionDetails, {
   accordionDetailsClasses,
@@ -60,6 +60,7 @@ import autoTable from 'jspdf-autotable';
 import Select from 'react-select/creatable';
 import { set } from 'lodash';
 import Modal from '@/components/Common/Modal';
+import Tooltip from '@mui/material/Tooltip';
 
 import getWidgetSettings from '@/utils/getWidgetSettings'
 const WEBABILITY_SCORE_BONUS = 45;
@@ -108,7 +109,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [reportUrl, setReportUrl] = useState<string>('');
 
   
-  const [currentLanguage, setCurrentLanguage] = useState<string>(' ');
+  const [currentLanguage, setCurrentLanguage] = useState<string>('');
+  const [showLangTooltip, setShowLangTooltip] = useState(false);
   // Combine options for existing sites and a custom "Enter a new domain" option
   const siteOptions = sitesData?.getUserSites?.map((domain: any) => ({
     value: domain.url,
@@ -1058,49 +1060,105 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         <p className="text-xl text-gray-600">
           Evaluate your website's accessibility in seconds. View a history of all accessibility scans. Download your reports.
         </p>
+  
       </header>
 
       <div className="w-full pl-6 pr-6 border-none shadow-none flex flex-col justify-center items-center">
         <div className="search-bar-container bg-white my-6 p-3 sm:p-4 rounded-xl w-full">
-          <div className="flex flex-col gap-4">
-            <Select
-              options={siteOptions}
-              value={selectedOption}
-              onChange={(selected: OptionType | null) => {
-                setSelectedOption(selected);
-                setSelectedSite(selected?.value ?? ''); // Update the selectedSite state
-                setDomain(selected?.value ?? ''); // Update the domain state
-              }}
-              onCreateOption={(inputValue: any) => {
-                // Handle new domain creation
-                const newOption = { value: inputValue, label: inputValue };
-                setSelectedOption(newOption);
-                setSelectedSite(inputValue); // Update the selectedSite state
-                setDomain(inputValue); // Update the domain state
-              }}
-              placeholder="Select or enter a domain"
-              isSearchable
-              isClearable
-              formatCreateLabel={(inputValue: any) => `Enter a new domain: "${inputValue}"`}
-            />
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
 
-            <button
-              type="button"
-              className="search-button bg-primary text-white px-4 py-2 rounded"
-              onClick={() => {
-                if (domain) {
-                  //checkScript();
-                  handleSubmit();
-                } else {
-                  toast.error('Please enter or select a domain!');
-                }
-              }}
-            >
-              Free Scan
-              {loading && <CircularProgress size={14} sx={{ color: 'white' }} className="ml-2 my-auto" />}
-            </button>
+              <div className="relative w-full md:flex-1 min-w-0 md:min-w-[130px] md:max-w-[140px]">
+                <Tooltip
+                  title="Please select a language before scanning."
+                  open={showLangTooltip}
+                  placement="top"
+                  arrow
+                >
+                  <select
+                    value={currentLanguage}
+                    onChange={(e) => {
+                      setCurrentLanguage(e.target.value);
+                      setShowLangTooltip(false);
+                    }}
+                    className="appearance-none bg-white border border-gray-300 rounded-md px-2 py-2 pr-6 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[38px] w-full"
+                  >
+                    <option value="">Select Language</option>
+                    {Object.values(LANGUAGES).map((language) => (
+                      <option key={language.code} value={language.code}>
+                        {language.nativeName}
+                      </option>
+                    ))}
+                  </select>
+                </Tooltip>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+
+
+              
+              <div className="w-full md:flex-1 min-w-0">
+                <Select
+                  options={siteOptions}
+                  value={selectedOption}
+                  onChange={(selected: OptionType | null) => {
+                    setSelectedOption(selected);
+                    setSelectedSite(selected?.value ?? ''); // Update the selectedSite state
+                    setDomain(selected?.value ?? ''); // Update the domain state
+                  }}
+                  onCreateOption={(inputValue: any) => {
+                    // Handle new domain creation
+                    const newOption = { value: inputValue, label: inputValue };
+                    setSelectedOption(newOption);
+                    setSelectedSite(inputValue); // Update the selectedSite state
+                    setDomain(inputValue); // Update the domain state
+                  }}
+                  placeholder="Select or enter a domain"
+                  isSearchable
+                  isClearable
+                  formatCreateLabel={(inputValue: any) => `Enter a new domain: \"${inputValue}\"`}
+                  classNamePrefix="react-select"
+                  className="w-full min-w-0"
+                  styles={{
+                    control: (provided: any, state: any) => ({
+                      ...provided,
+                      borderRadius: '6px',
+                      border: state.isFocused ? '1px solid #3b82f6' : '1px solid #d1d5db',
+                      minHeight: '38px',
+                      boxShadow: state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.1)' : 'none',
+                      '&:hover': {
+                        border: state.isFocused ? '1px solid #3b82f6' : '1px solid #d1d5db',
+                      },
+                    }),
+                  }}
+                />
+              </div>
+            </div>
+            <div className="flex justify-center mt-4 w-full">
+              <button
+                type="button"
+                className="search-button bg-primary text-white px-4 py-2 rounded whitespace-nowrap w-full"
+                style={{ width: '100%' }}
+                onClick={() => {
+                    if (!currentLanguage || !currentLanguage.trim()) {
+                    setShowLangTooltip(true);
+                    setTimeout(() => setShowLangTooltip(false), 2000);
+                    return;
+                  }
+                  if (domain) {
+                    handleSubmit();
+                  } else {
+                    toast.error('Please enter or select a domain!');
+                  }
+                }}
+              >
+                Free Scan
+                {loading && <CircularProgress size={14} sx={{ color: 'white' }} className="ml-2 my-auto" />}
+              </button>
+            </div>
           </div>
-        </div>
 
         <div className="mt-6 pl-6 pr-6 grid md:grid-cols-3 gap-6 text-center">
           <Card>
@@ -1145,41 +1203,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               <h3 className="text-2xl font-medium text-gray-800">
                 Your audit history
               </h3>
-              <div className="relative">
-                <select
-                  value={currentLanguage}
-                  onChange={(e) => setCurrentLanguage(e.target.value)}
-                  className="appearance-none bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
-                >
-                  <option value="">Select Language</option>
-                  <option value="en">English</option>
-                  <option value="es">Español</option>
-                  <option value="fr">Français</option>
-                  <option value="de">Deutsch</option>
-                  <option value="it">Italiano</option>
-                  <option value="pt">Português</option>
-                  <option value="nl">Nederlands</option>
-                  <option value="ru">Русский</option>
-                  <option value="ja">日本語</option>
-                  <option value="ko">한국어</option>
-                  <option value="zh">中文</option>
-                  <option value="ar">العربية</option>
-                  <option value="hi">हिन्दी</option>
-                  <option value="th">ไทย</option>
-                  <option value="vi">Tiếng Việt</option>
-                  <option value="tr">Türkçe</option>
-                  <option value="pl">Polski</option>
-                  <option value="sv">Svenska</option>
-                  <option value="no">Norsk</option>
-                  <option value="da">Dansk</option>
-                  <option value="fi">Suomi</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
             </div>
             <table className="w-full text-left border-separate border-spacing-y-2">
               <thead>
