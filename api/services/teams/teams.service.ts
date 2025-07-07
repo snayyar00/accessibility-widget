@@ -1,4 +1,4 @@
-import { ApolloError } from 'apollo-server-express';
+import { ApolloError, ValidationError } from 'apollo-server-express';
 import dayjs from 'dayjs';
 
 import { getAllTeam, createNewTeamAndMember, getTeam, GetAllTeamResponse } from '~/repository/team.repository';
@@ -12,6 +12,7 @@ import {sendMail} from '~/libs/mail';
 import { createMemberAndInviteToken, getListTeamMemberByAliasTeam } from '../../repository/team_members.repository';
 import { findUser } from '../../repository/user.repository';
 import { UserProfile } from '~/repository/user.repository';
+import { emailValidation } from '~/validations/email.validation';
 
 type FindTeamByAliasResponse = {
   userName: string;
@@ -87,6 +88,13 @@ export async function createTeam(user: UserProfile, teamName: string, teamAlias:
  * @param string inviteeEmail Email of who you want to send invitation to
  */
 export async function inviteTeamMember(user: UserProfile, alias: string, inviteeEmail: string): Promise<FindTeamByAliasResponse> {
+
+  const validateResult = emailValidation(inviteeEmail);
+    
+  if (Array.isArray(validateResult) && validateResult.length) {
+    throw new ValidationError(validateResult.map((it) => it.message).join(','));
+  }
+
   try {
     const team = await getTeam({ alias });
     if (!team) {
