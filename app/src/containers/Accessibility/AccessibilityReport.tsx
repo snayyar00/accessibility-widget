@@ -17,6 +17,8 @@ import AccordionGroup from '@mui/joy/AccordionGroup';
 import Accordion from '@mui/joy/Accordion';
 import ToggleButtonGroup from '@mui/joy/ToggleButtonGroup';
 import Stack from '@mui/joy/Stack';
+import { translateText,translateSingleText } from '@/utils/translator';
+
 import AccordionDetails, {
   accordionDetailsClasses,
 } from '@mui/joy/AccordionDetails';
@@ -105,6 +107,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [reportUrl, setReportUrl] = useState<string>('');
 
+  
+  const [currentLanguage, setCurrentLanguage] = useState<string>(' ');
   // Combine options for existing sites and a custom "Enter a new domain" option
   const siteOptions = sitesData?.getUserSites?.map((domain: any) => ({
     value: domain.url,
@@ -271,7 +275,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     if (!reportData.url) {
       reportData.url = processedReportKeys?.[0]?.url || "";
     }
-
     const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
       await getWidgetSettings(reportData.url);
     const WEBABILITY_SCORE_BONUS = 45;
@@ -284,6 +287,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
       : baseScore;
 
+      
     let status: string, message: string, statusColor: [number, number, number];
     if (enhancedScore >= 80) {
       status = 'Compliant';
@@ -300,6 +304,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       statusColor = [220, 38, 38]; // red-600
     }
 
+    status = await translateSingleText(status, currentLanguage);
     doc.setFillColor(21, 101, 192); // dark blue background
     doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F'); 
 
@@ -399,7 +404,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       }
     }
 
-
     const containerWidth = 170;
     const containerHeight = 60;
     const containerX = 105 - containerWidth / 2;
@@ -424,7 +428,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setFontSize(15);
     doc.setTextColor(0, 0, 0);
     // Compose the full string and measure widths
-    const label = 'Scan results for ';
+    let  label = 'Scan results for ';
+    label = await translateSingleText(label, currentLanguage);
+
     const url = `${reportData.url}`;
     const labelWidth = doc.getTextWidth(label);
     const urlWidth = doc.getTextWidth(url);
@@ -446,11 +452,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setFont('helvetica', 'bold');
     doc.text(status, 105, textY, { align: 'center' });
 
+    message = await translateSingleText(message, currentLanguage);
     textY += 9;
     doc.setFontSize(12);
     doc.setTextColor(51, 65, 85); 
     doc.setFont('helvetica', 'normal');
     doc.text(message, 105, textY, { align: 'center' });
+    
 
     textY += 9;
     doc.setFontSize(10);
@@ -484,7 +492,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
-    doc.text('Total Errors', circle1X, circleY + circleRadius + 9, {
+    doc.text(await translateSingleText('Total Errors', currentLanguage), circle1X, circleY + circleRadius + 9, {
       align: 'center',
     });
 
@@ -507,7 +515,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
-    doc.text('Score', circle2X, circleY + circleRadius + 9, {
+    doc.text(await translateSingleText('Score', currentLanguage), circle2X, circleY + circleRadius + 9, {
       align: 'center',
     });
     // --- END CIRCLES ---
@@ -524,13 +532,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     // Use blue shades for all summary boxes
     const summaryBoxes = [
       {
-        label: 'Severe',
+        label: await translateSingleText('Severe', currentLanguage),
         count: counts.critical + counts.serious,
         color: [255, 204, 204],
       },
-      { label: 'Moderate', count: counts.moderate, color: [187, 222, 251] },
+      { label: await translateSingleText('Moderate', currentLanguage), count: counts.moderate, color: [187, 222, 251] },
       {
-        label: 'Mild',
+        label: await translateSingleText('Mild', currentLanguage),
         count: total - (counts.critical + counts.serious + counts.moderate),
         color: [225, 245, 254],
       }, 
@@ -560,12 +568,19 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     // Build the rows
     let tableBody: any[] = [];
+    const translatedIssues = await translateText(issues, currentLanguage);
 
-    issues.forEach((issue, issueIdx) => {
+    const translatedIssue = await translateSingleText('Issue', currentLanguage);
+    const translatedMessage = await translateSingleText('Message', currentLanguage);
+    const translatedContext = await translateSingleText('Context', currentLanguage);
+    const translatedFix = await translateSingleText('Fix', currentLanguage);
+
+
+    translatedIssues.forEach((issue, issueIdx) => {
       // Add header row for each issue with beautiful styling
       tableBody.push([
         {
-          content: 'Issue',
+          content: translatedIssue,
           colSpan: 2,
           styles: {
             fillColor: [255, 255, 255], // white background
@@ -578,7 +593,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           },
         },
         {
-          content: 'Message',
+          content: translatedMessage,
           colSpan: 2,
           styles: {
             fillColor: [255, 255, 255], // matching white background
@@ -643,7 +658,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         // Heading: "Context:"
         tableBody.push([
           {
-            content: 'Context:',
+            content: translatedContext,
             colSpan: 4,
             styles: {
               fontStyle: 'bolditalic',
@@ -710,7 +725,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         // Heading row for Fix
         tableBody.push([
           {
-            content: 'Fix:',
+            content: translatedFix,
             colSpan: 4,
             styles: {
               fontStyle: 'bolditalic',
@@ -934,6 +949,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     return doc.output('blob');
   };
+
+
+
   // Extract issues from report structure
   function extractIssuesFromReport(report: any) {
     const issues: any[] = []
@@ -1123,9 +1141,46 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         
         {siteOptions.some((option: any) => normalizeDomain(option.value) === normalizeDomain(selectedOption?.value ?? '')) && enhancedScoresCalculated && processedReportKeys.length > 0 &&  (
           <div className="accessibility-issues-section bg-white rounded-xl p-6 mt-12 shadow mr-6 ml-6">
-            <h3 className="text-2xl font-medium text-gray-800 mb-6 border-b-2 border-gray-300 pb-2">
-              Your audit history
-            </h3>
+            <div className="flex items-center justify-between mb-6 border-b-2 border-gray-300 pb-2">
+              <h3 className="text-2xl font-medium text-gray-800">
+                Your audit history
+              </h3>
+              <div className="relative">
+                <select
+                  value={currentLanguage}
+                  onChange={(e) => setCurrentLanguage(e.target.value)}
+                  className="appearance-none bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
+                >
+                  <option value="">Select Language</option>
+                  <option value="en">English</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                  <option value="de">Deutsch</option>
+                  <option value="it">Italiano</option>
+                  <option value="pt">Português</option>
+                  <option value="nl">Nederlands</option>
+                  <option value="ru">Русский</option>
+                  <option value="ja">日本語</option>
+                  <option value="ko">한국어</option>
+                  <option value="zh">中文</option>
+                  <option value="ar">العربية</option>
+                  <option value="hi">हिन्दी</option>
+                  <option value="th">ไทย</option>
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="tr">Türkçe</option>
+                  <option value="pl">Polski</option>
+                  <option value="sv">Svenska</option>
+                  <option value="no">Norsk</option>
+                  <option value="da">Dansk</option>
+                  <option value="fi">Suomi</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
             <table className="w-full text-left border-separate border-spacing-y-2">
               <thead>
                 <tr className="text-gray-500 text-sm uppercase">
