@@ -1065,7 +1065,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
       <div className="w-full pl-6 pr-6 border-none shadow-none flex flex-col justify-center items-center">
         <div className="search-bar-container bg-white my-6 p-3 sm:p-4 rounded-xl w-full">
-            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4 w-full">
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
+
               <div className="relative w-full md:flex-1 min-w-0 md:min-w-[130px] md:max-w-[140px]">
                 <Tooltip
                   title="Please select a language before scanning."
