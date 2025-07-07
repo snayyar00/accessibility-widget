@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const subscriptionKey = process.env.REACT_APP_AZURE_API_KEY;
-const endpoint = 'https://api.cognitive.microsofttranslator.com/';
-const region = 'northeurope'; // e.g., 'eastus'
+const endpoint = process.env.REACT_APP_AZURE_ENDPOINT;
+const region = process.env.REACT_APP_AZURE_REGION;
 interface Issue {
   [key: string]: any;
 }

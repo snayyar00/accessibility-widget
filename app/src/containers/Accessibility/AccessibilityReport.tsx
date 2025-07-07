@@ -17,7 +17,7 @@ import AccordionGroup from '@mui/joy/AccordionGroup';
 import Accordion from '@mui/joy/Accordion';
 import ToggleButtonGroup from '@mui/joy/ToggleButtonGroup';
 import Stack from '@mui/joy/Stack';
-import { translateText,translateSingleText, LANGUAGES } from '@/utils/translator';
+import { translateText,translateSingleText,LANGUAGES } from '@/utils/translator';
 
 import AccordionDetails, {
   accordionDetailsClasses,
@@ -109,7 +109,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [reportUrl, setReportUrl] = useState<string>('');
 
   
-  const [currentLanguage, setCurrentLanguage] = useState<string>(' ');
+  const [currentLanguage, setCurrentLanguage] = useState<string>('');
   const [showLangTooltip, setShowLangTooltip] = useState(false);
   // Combine options for existing sites and a custom "Enter a new domain" option
   const siteOptions = sitesData?.getUserSites?.map((domain: any) => ({
@@ -1142,7 +1142,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 className="search-button bg-primary text-white px-4 py-2 rounded whitespace-nowrap w-full"
                 style={{ width: '100%' }}
                 onClick={() => {
-                  if (!currentLanguage || currentLanguage === '' || currentLanguage === ' ') {
+                    if (!currentLanguage || !currentLanguage.trim()) {
                     setShowLangTooltip(true);
                     setTimeout(() => setShowLangTooltip(false), 2000);
                     return;

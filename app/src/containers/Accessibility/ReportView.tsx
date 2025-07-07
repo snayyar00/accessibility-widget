@@ -3,7 +3,7 @@ import { useParams, useLocation, useHistory } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
-import { translateText,translateSingleText ,LANGUAGES} from '@/utils/translator';
+import { translateText,translateSingleText,LANGUAGES} from '@/utils/translator';
 
 import {
   AlertTriangle,
@@ -135,6 +135,8 @@ const ReportView: React.FC = () => {
   const [fetchReport, { data, loading, error }] = useLazyQuery(
     FETCH_REPORT_BY_R2_KEY,
   );
+  
+const [currentLanguage, setCurrentLanguage] = useState('en');
   const [activeTab, setActiveTab] = useState('all');
   const [organization, setOrganization] = useState('structure');
   const [issueFilter, setIssueFilter] = useState(ISSUE_FILTERS.ALL);
@@ -1847,7 +1849,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     return doc.output('blob');
   };
 
-  const [currentLanguage, setCurrentLanguage] = useState<string>(' ');
+  const [currentLanguage, setCurrentLanguage] = useState<string>('');
 
   return (
     <>
