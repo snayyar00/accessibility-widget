@@ -6,12 +6,6 @@ const region = 'northeurope'; // e.g., 'eastus'
 interface Issue {
   [key: string]: any;
 }
-const getBrowserLanguage = () => {
-    const lang = navigator.language  // e.g., "en-US", "fr-CA"
-    return lang.split('-')[0]; // return "en", "fr", etc.
-  };
-
-
 export const translateText = async (issues: Issue[], toLang: string = 'en'): Promise<Issue[]> => {
   const fieldsToTranslate = ['code', 'message', 'recommended_action'];
 
@@ -27,8 +21,11 @@ export const translateText = async (issues: Issue[], toLang: string = 'en'): Pro
   });
 
   
+if (!toLang || toLang.toLowerCase() === 'en') {
+  return issues;
+}
 
-  try {
+try {
     const response = await axios.post(
       `${endpoint}translate?api-version=3.0&to=${toLang}`,
       textsToTranslate.map((item) => ({ Text: item.text })),
@@ -61,6 +58,10 @@ export const translateSingleText = async (
   ): Promise<string> => {
     if (!text) return '';
   
+if (!toLang || toLang.toLowerCase() === 'en') {
+  return text;
+}
+
     try {
       const response = await axios.post(
         `${endpoint}translate?api-version=3.0&to=${toLang}`,
