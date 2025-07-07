@@ -15,6 +15,8 @@ import updateSite from '@/queries/sites/updateSite';
 import isValidDomain from '@/utils/verifyDomain';
 import ConfirmDeleteSiteModal from './DeleteWarningModal';
 import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
+import getDomainStatus from '@/utils/getDomainStatus';
+import applyStatusClass from '@/utils/applyStatusClass';
 import ActivatePlanWarningModal from './ActivatePlanWarningModal';
 
 export interface Domain {
@@ -217,51 +219,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
     setEditingId(null);
   };
 
-  const applyStatusClass = (domainUrl:string,status: string, trial: number): string => {
-    if(appSumoDomains.includes(domainUrl)){
-      return 'bg-green-200 text-green-600';
-    }
-    if (!status) {
-      return 'bg-yellow-200 text-yellow-800';
-    }
-    if (trial) {
-      return 'bg-yellow-200 text-yellow-800';
-    }
-    const currentTime = new Date().getTime();
-    const timeDifference = new Date(parseInt(status)).getTime() - currentTime;
-    const sevendays = 7 * 24 * 60 * 60 * 1000;
 
-    if (timeDifference > sevendays) {
-      return 'bg-green-200 text-green-600';
-    }
-    if (timeDifference < sevendays && timeDifference > 0) {
-      return 'bg-red-200 text-red-600';
-    }
-    return 'bg-yellow-200 text-yellow-800';
-  };
 
-  const getDomainStatus = (domainUrl:string,status: string, trial: number): string => {
-    if(appSumoDomains.includes(domainUrl)){
-      return 'Life Time';
-    }
-    if (!status) {
-      return 'Trial Expired';
-    }
-    if (trial) {
-      return 'Trial';
-    }
-    const currentTime = new Date().getTime();
-    const timeDifference = new Date(parseInt(status)).getTime() - currentTime;
-    const sevendays = 7 * 24 * 60 * 60 * 1000;
-
-    if (timeDifference > sevendays) {
-      return 'Active';
-    }
-    if (timeDifference < sevendays && timeDifference > 0) {
-      return trial === 1 ? 'Trial' : 'Expiring';
-    }
-    return 'Expired';
-  };
 
   const [tierPlan,setTierPlan] = useState(false);
   const [appSumoDomains,setAppSumoDomain] = useState<string[]>([]);
@@ -437,6 +396,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   domain.url,
                   domain.expiredAt,
                   domain.trial,
+                  appSumoDomains
                 );
                 return (
                   <tr
@@ -461,6 +421,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           domain.url,
                           domain.expiredAt,
                           domain.trial,
+                          appSumoDomains,
                         )}`}
                       >
                         {domainStatus}
@@ -575,6 +536,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
               domain.url,
               domain.expiredAt,
               domain.trial,
+              appSumoDomains
             );
             return (
               <div
@@ -605,6 +567,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           domain.url,
                           domain.expiredAt,
                           domain.trial,
+                          appSumoDomains,
                         )}`}
                       >
                         {domainStatus}
