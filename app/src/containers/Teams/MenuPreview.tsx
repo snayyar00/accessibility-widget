@@ -15,6 +15,52 @@ interface AccessibilityMenuProps {
   selectedFont: string;
 }
 
+// Move languages array outside component to prevent recreation on each render
+const languages = [
+  { code: 'en', name: 'English', englishName: 'English' },
+  { code: 'ar', name: 'العربية', englishName: 'Arabic' },
+  { code: 'bg', name: 'Български', englishName: 'Bulgarian' },
+  { code: 'bn', name: 'বাংলা', englishName: 'Bengali' },
+  { code: 'cs', name: 'Čeština', englishName: 'Czech' },
+  { code: 'de', name: 'Deutsch', englishName: 'German' },
+  { code: 'el', name: 'Ελληνικά', englishName: 'Greek' },
+  { code: 'es', name: 'Español', englishName: 'Spanish' },
+  { code: 'fi', name: 'Suomi', englishName: 'Finnish' },
+  { code: 'fr', name: 'Français', englishName: 'French' },
+  { code: 'he', name: 'עברית', englishName: 'Hebrew' },
+  { code: 'hi', name: 'हिन्दी', englishName: 'Hindi' },
+  { code: 'hr', name: 'Hrvatski', englishName: 'Croatian' },
+  { code: 'hu', name: 'Magyar', englishName: 'Hungarian' },
+  { code: 'id', name: 'Bahasa Indonesia', englishName: 'Indonesian' },
+  { code: 'it', name: 'Italiano', englishName: 'Italian' },
+  { code: 'ja', name: '日本語', englishName: 'Japanese' },
+  { code: 'ko', name: '한국어', englishName: 'Korean' },
+  { code: 'lt', name: 'Lietuvių', englishName: 'Lithuanian' },
+  { code: 'lv', name: 'Latviešu', englishName: 'Latvian' },
+  { code: 'ms', name: 'Bahasa Melayu', englishName: 'Malay' },
+  { code: 'nl', name: 'Nederlands', englishName: 'Dutch' },
+  { code: 'no', name: 'Norsk', englishName: 'Norwegian' },
+  { code: 'pl', name: 'Polski', englishName: 'Polish' },
+  { code: 'pt', name: 'Português', englishName: 'Portuguese' },
+  { code: 'pt-br', name: 'Português (Brasil)', englishName: 'Portuguese (Brazil)' },
+  { code: 'ro', name: 'Română', englishName: 'Romanian' },
+  { code: 'ru', name: 'Русский', englishName: 'Russian' },
+  { code: 'sk', name: 'Slovenčina', englishName: 'Slovak' },
+  { code: 'sl', name: 'Slovenščina', englishName: 'Slovenian' },
+  { code: 'sr', name: 'Српски', englishName: 'Serbian' },
+  { code: 'sv', name: 'Svenska', englishName: 'Swedish' },
+  { code: 'th', name: 'ไทย', englishName: 'Thai' },
+  { code: 'tr', name: 'Türkçe', englishName: 'Turkish' },
+  { code: 'uk', name: 'Українська', englishName: 'Ukrainian' },
+  { code: 'ur', name: 'اردو', englishName: 'Urdu' },
+  { code: 'vi', name: 'Tiếng Việt', englishName: 'Vietnamese' },
+  { code: 'zh', name: '中文 (简体)', englishName: 'Chinese (Simplified)' },
+  { code: 'zh-tw', name: '中文 (繁體)', englishName: 'Chinese (Traditional)' },
+  { code: 'da', name: 'Dansk', englishName: 'Danish' },
+  { code: 'et', name: 'Eesti', englishName: 'Estonian' },
+  { code: 'ca', name: 'Català', englishName: 'Catalan' }
+] as const;
+
 const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
   colors,
   toggles,
@@ -22,6 +68,8 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
 }) => {
   const [fontSize, setFontSize] = useState(100);
   const [showProfiles, setShowProfiles] = useState(false);
+  const [showLanguages, setShowLanguages] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState({ code: 'en', name: 'English', englishName: 'English' });
 
   const fontStyle = { fontFamily: selectedFont };
 
@@ -303,25 +351,59 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
       <div style={fontStyle} className="flex-grow overflow-y-auto">
         <div style={fontStyle} className="p-4 space-y-4">
           {toggles['language'] && (
-            <button
-              style={{
-                ...fontStyle,
-                backgroundColor: colors['dropdownBg'],
-                color: colors['dropdownText'],
-              }}
-              className="w-full flex items-center justify-between p-4 bg-white rounded-xl"
-            >
-              <div style={fontStyle} className="flex items-center gap-3">
-                <span
-                  style={fontStyle}
-                  className="w-8 h-8 bg-[#0848ca] text-white rounded-full flex items-center justify-center"
+            <div style={fontStyle} className="relative">
+              <button
+                style={{
+                  ...fontStyle,
+                  backgroundColor: colors['dropdownBg'],
+                  color: colors['dropdownText'],
+                }}
+                onClick={() => setShowLanguages(!showLanguages)}
+                className="w-full flex items-center justify-between p-4 bg-white rounded-xl"
+              >
+                <div style={fontStyle} className="flex items-center gap-3">
+                  <span
+                    style={fontStyle}
+                    className="w-8 h-8 bg-[#0848ca] text-white rounded-full flex items-center justify-center text-xs"
+                  >
+                    {selectedLanguage.code.toUpperCase().slice(0, 2)}
+                  </span>
+                  <span style={fontStyle}>{selectedLanguage.name}</span>
+                </div>
+                <FaChevronDown className="w-5 h-5" style={fontStyle} />
+              </button>
+              
+              {showLanguages && (
+                <div 
+                  style={{
+                    ...fontStyle,
+                    backgroundColor: colors['dropdownBg'],
+                  }}
+                  className="absolute z-10 w-full mt-2 bg-white rounded-xl shadow-lg max-h-64 overflow-y-auto"
                 >
-                  US
-                </span>
-                <span style={fontStyle}>English (USA)</span>
-              </div>
-              <FaChevronDown className="w-5 h-5" style={fontStyle} />
-            </button>
+                  {languages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => {
+                        setSelectedLanguage(lang);
+                        setShowLanguages(false);
+                      }}
+                      style={{
+                        ...fontStyle,
+                        backgroundColor: selectedLanguage.code === lang.code ? colors['buttonBg'] : 'transparent',
+                        color: colors['dropdownText'],
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-100 first:rounded-t-xl last:rounded-b-xl flex justify-between items-center"
+                    >
+                      <span>{lang.name} <span className="text-gray-500 text-sm">({lang.englishName})</span></span>
+                      {selectedLanguage.code === lang.code && (
+                        <span className="text-[#0848ca]">✓</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
           
           <div style={fontStyle} className="relative">

@@ -17,7 +17,6 @@ export default gql`
       translatedContent
       error
       languageCode
-      cached
     }
   }
 `;

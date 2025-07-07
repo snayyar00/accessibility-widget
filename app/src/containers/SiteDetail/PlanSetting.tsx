@@ -23,6 +23,7 @@ import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import AppSumoInfo from '@/components/Plans/AppSumoInfo';
 import { MdLocalOffer } from 'react-icons/md';
+import { plans } from '@/constants';
 
 declare global {
   namespace JSX {
@@ -37,57 +38,6 @@ interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
 }
-
-const plans = [
-  {
-    id: process.env.REACT_APP_PLAN_NAME || 'single',
-    name: 'WebAbility Pro',
-    price: 12,
-    desc: 'Ideal for all your accessibility needs for a single site',
-    features: [
-      'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
-      'Accessbility Statement',
-      'AI powered Screen Reader and Accessbility Profiles',
-      'Web Ability accesbility Statement',
-    ]
-  },
-  // {
-  //   id: 'small tier',
-  //   name: 'Small Business',
-  //   price: 30,
-  //   desc: '',
-  //   features: [
-  //     'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
-  //     'Accessbility Statement',
-  //     'AI powered Screen Reader and Accessbility Profiles',
-  //     'Web Ability accesbility Statement',
-  //   ]
-  // },
-  // {
-  //   id: 'medium tier',
-  //   name: 'Medium Business',
-  //   price: 70,
-  //   desc: '',
-  //   features: [
-  //     'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
-  //     'Accessbility Statement',
-  //     'AI powered Screen Reader and Accessbility Profiles',
-  //     'Web Ability accesbility Statement',
-  //   ]
-  // },
-  // {
-  //   id: 'large tier',
-  //   name: 'Enterprise',
-  //   price: 100,
-  //   desc: '',
-  //   features: [
-  //     'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
-  //     'Accessbility Statement',
-  //     'AI powered Screen Reader and Accessbility Profiles',
-  //     'Web Ability accesbility Statement',
-  //   ]
-  // },
-];
 
 let appSumoPlansList = [{
   id: APP_SUMO_BUNDLE_NAMES[0],
