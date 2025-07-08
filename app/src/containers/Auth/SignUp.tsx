@@ -24,6 +24,7 @@ const linkify = new LinkifyIt();
 const SignUpSchema = yup.object().shape({
   name: yup.string()
     .required('Common.validation.require_name')
+    .max(100, 'Common.validation.max_name')
     .test('no-links', 'Common.validation.name_contains_links', (value) => {
       if (!value) return true;
       
@@ -34,6 +35,7 @@ const SignUpSchema = yup.object().shape({
   email: yup
     .string()
     .required('Common.validation.require_email')
+    .max(100, 'Common.validation.max_email')
     .transform((value) => DOMPurify.sanitize(value || '', { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }))
     .email('Common.validation.valid_email')
     .max(254, 'Common.validation.max_email_length')
@@ -49,6 +51,7 @@ const SignUpSchema = yup.object().shape({
     })
     .nullable()
     .notRequired() // Make it optional
+    .max(100, 'Common.validation.max_url') // Max domain length
     .test('valid-domain', 'Common.validation.valid_url', (value) => {
       // Skip validation if field is empty or undefined
       if (!value) return true;
@@ -69,6 +72,7 @@ const SignUpSchema = yup.object().shape({
     .string()
     .required('Common.validation.require_password')
     .min(8, 'Common.validation.min_password')
+    .max(50, 'Common.validation.max_password')
     .test('strong-password', 'Common.validation.weak_password', (value:any) => {
       const passwordStrength = zxcvbn(value);
       return passwordStrength.score >= 3; // Ensure password is at least "strong"
@@ -76,6 +80,7 @@ const SignUpSchema = yup.object().shape({
   passwordConfirmation: yup
     .string()
     .required('Common.validation.require_password_confirm')
+    .max(50, 'Common.validation.max_password')
     .oneOf([yup.ref('password'), ""], 'Common.validation.password_match'),
 });
 
