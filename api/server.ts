@@ -58,9 +58,9 @@ type ContextParams = {
   req: Request;
   res: Response;
 };
-const subscriptionKey = process.env.REACT_APP_AZURE_API_KEY;
-const endpoint = process.env.REACT_APP_AZURE_ENDPOINT;
-const region = process.env.REACT_APP_AZURE_REGION;
+const subscriptionKey = process.env.AZURE_API_KEY;
+const endpoint = process.env.AZURE_ENDPOINT;
+const region = process.env.AZURE_REGION;
 interface Issue {
   [key: string]: any;
 }
