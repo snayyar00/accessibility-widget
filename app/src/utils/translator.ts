@@ -77,3 +77,38 @@ export const translateSingleText = async (
     return text; // return original text as fallback
   }
 };
+
+export const translateMultipleTexts = async (
+  texts: string[],
+  toLang: string = 'en'
+): Promise<string[]> => {
+  if (!Array.isArray(texts) || texts.length === 0) return [];
+  if (!toLang || toLang.toLowerCase() === 'en') {
+    return texts;
+  }
+
+  console.log("I am called 1st ", texts);
+
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_BACKEND_URL}/translate-text`,
+      {
+        issues: texts.map(text => ({ code: text })),
+        toLang,
+      }
+    );
+
+    console.log("I am called 2nd ", texts);
+
+    if (Array.isArray(response.data)) {
+      return response.data.map((item: any, idx: number) =>
+        typeof item?.code === 'string' ? item.code : texts[idx]
+      );
+    }
+
+    return texts;
+  } catch (error: any) {
+    console.error('Translation error:', error?.response?.data || error.message);
+    return texts;
+  }
+};

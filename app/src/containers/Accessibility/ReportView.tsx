@@ -3,7 +3,7 @@ import { useParams, useLocation, useHistory } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
-import { translateText,translateSingleText,LANGUAGES} from '@/utils/translator';
+import { translateText,translateMultipleTexts,LANGUAGES} from '@/utils/translator';
 
 import {
   AlertTriangle,
@@ -1207,7 +1207,38 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       statusColor = [220, 38, 38]; // red-600
     }
 
-    status = await translateSingleText(status, currentLanguage);
+    const [
+      translatedStatus,
+      translatedMessage,
+      translatedMild,
+      translatedModerate,
+      translatedSevere,
+      translatedScore,
+      translatedIssue,
+      translatedIssueMessage,
+      translatedContext,
+      translatedFix,
+      translatedLabel,
+      translatedTotalErrors
+    ] = await translateMultipleTexts(
+      [
+        status,
+        message,
+        'Mild',
+        'Moderate',
+        'Severe',
+        'Score',
+        'Issue',
+        'Message',
+        'Context',
+        'Fix',
+        'Scan results for ',
+        'Total Errors'
+      ],
+      currentLanguage
+    );
+    
+    status = translatedStatus;
     doc.setFillColor(21, 101, 192); // dark blue background
     doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F'); 
 
@@ -1332,7 +1363,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setTextColor(0, 0, 0);
     // Compose the full string and measure widths
     let  label = 'Scan results for ';
-    label = await translateSingleText(label, currentLanguage);
+    label = translatedLabel;
 
     const url = `${reportData.url}`;
     const labelWidth = doc.getTextWidth(label);
@@ -1355,7 +1386,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setFont('helvetica', 'bold');
     doc.text(status, 105, textY, { align: 'center' });
 
-    message = await translateSingleText(message, currentLanguage);
+    message = translatedMessage;
     textY += 9;
     doc.setFontSize(12);
     doc.setTextColor(51, 65, 85); 
@@ -1395,7 +1426,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
-    doc.text(await translateSingleText('Total Errors', currentLanguage), circle1X, circleY + circleRadius + 9, {
+    doc.text(translatedTotalErrors, circle1X, circleY + circleRadius + 9, {
       align: 'center',
     });
 
@@ -1418,7 +1449,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
-    doc.text(await translateSingleText('Score', currentLanguage), circle2X, circleY + circleRadius + 9, {
+    doc.text(translatedScore, circle2X, circleY + circleRadius + 9, {
       align: 'center',
     });
     // --- END CIRCLES ---
@@ -1435,13 +1466,13 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     // Use blue shades for all summary boxes
     const summaryBoxes = [
       {
-        label: await translateSingleText('Severe', currentLanguage),
+        label:  translatedSevere,
         count: counts.critical + counts.serious,
         color: [255, 204, 204],
       },
-      { label: await translateSingleText('Moderate', currentLanguage), count: counts.moderate, color: [187, 222, 251] },
+      { label: translatedModerate, count: counts.moderate, color: [187, 222, 251] },
       {
-        label: await translateSingleText('Mild', currentLanguage),
+        label:  translatedMild,
         count: total - (counts.critical + counts.serious + counts.moderate),
         color: [225, 245, 254],
       }, 
@@ -1473,11 +1504,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     let tableBody: any[] = [];
     const translatedIssues = await translateText(issues, currentLanguage);
 
-    const translatedIssue = await translateSingleText('Issue', currentLanguage);
-    const translatedMessage = await translateSingleText('Message', currentLanguage);
-    const translatedContext = await translateSingleText('Context', currentLanguage);
-    const translatedFix = await translateSingleText('Fix', currentLanguage);
-
+  
 
     translatedIssues.forEach((issue, issueIdx) => {
       // Add header row for each issue with beautiful styling
@@ -1496,7 +1523,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           },
         },
         {
-          content: translatedMessage,
+          content: translatedIssueMessage,
           colSpan: 2,
           styles: {
             fillColor: [255, 255, 255], // matching white background
