@@ -1289,8 +1289,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         >
                           <span className="flex justify-end items-center w-full">
                             {downloadingRow === row.r2_key ? (
-                              <CircularProgress size={14} sx={{ color: 'blue', marginLeft: 4 }} className="ml-2" />
-                            ) : (
+                              <CircularProgress size={14} sx={{ color: 'blue', marginLeft: 4 }} />
+                               ) : (
                               'Download'
                             )}
                           </span>

@@ -136,7 +136,6 @@ const ReportView: React.FC = () => {
     FETCH_REPORT_BY_R2_KEY,
   );
   
-const [currentLanguage, setCurrentLanguage] = useState('en');
   const [activeTab, setActiveTab] = useState('all');
   const [organization, setOrganization] = useState('structure');
   const [issueFilter, setIssueFilter] = useState(ISSUE_FILTERS.ALL);
@@ -1184,7 +1183,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     const MAX_TOTAL_SCORE = 95;
     const issues = extractIssuesFromReport(reportData);
 
-    console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
+    //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
     const baseScore = reportData.score || 0;
     const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility';
     const enhancedScore = hasWebAbility
