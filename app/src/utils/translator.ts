@@ -1,8 +1,4 @@
 import axios from 'axios';
-
-const subscriptionKey = process.env.REACT_APP_AZURE_API_KEY;
-const endpoint = process.env.REACT_APP_AZURE_ENDPOINT;
-const region = process.env.REACT_APP_AZURE_REGION;
 interface Issue {
   [key: string]: any;
 }
@@ -36,77 +32,48 @@ export const LANGUAGES = {
 export type LanguageCode = keyof typeof LANGUAGES;
 
 export const translateText = async (issues: Issue[], toLang: string = 'en'): Promise<Issue[]> => {
-  const fieldsToTranslate = ['code', 'message', 'recommended_action'];
+  if (!toLang || toLang.toLowerCase() === 'en') {
+    return issues;
+  }
 
-  // Prepare texts with reference to issue index and field name
-  const textsToTranslate: { issueIndex: number; field: string; text: string }[] = [];
-
-  issues.forEach((issue, idx) => {
-    fieldsToTranslate.forEach((field) => {
-      if (issue[field]) {
-        textsToTranslate.push({ issueIndex: idx, field, text: issue[field] });
-      }
-    });
-  });
-
-  
-if (!toLang || toLang.toLowerCase() === 'en') {
-  return issues;
-}
-
-try {
-    const response = await axios.post(
-      `${endpoint}translate?api-version=3.0&to=${toLang}`,
-      textsToTranslate.map((item) => ({ Text: item.text })),
-      {
-        headers: {
-          'Ocp-Apim-Subscription-Key': subscriptionKey,
-          'Ocp-Apim-Subscription-Region': region,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    const translatedIssues = issues.map((issue) => ({ ...issue })); // shallow copy
-
-    response.data.forEach((translation: any, idx: number) => {
-      const { issueIndex, field } = textsToTranslate[idx];
-      translatedIssues[issueIndex][field] = translation.translations[0].text;
+  try {
+    const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/translate`, {
+      issues,
+      toLang,
     });
 
-    return translatedIssues;
+    return response.data;
   } catch (err: any) {
     console.error('Translation failed:', err?.response?.data || err.message);
     return issues;
   }
 };
 
-export const translateSingleText = async (
-    text: string,
-    toLang: string = 'en'
-  ): Promise<string> => {
-    if (!text) return '';
-  
-if (!toLang || toLang.toLowerCase() === 'en') {
-  return text;
-}
 
-    try {
-      const response = await axios.post(
-        `${endpoint}translate?api-version=3.0&to=${toLang}`,
-        [{ Text: text }],
-        {
-          headers: {
-            'Ocp-Apim-Subscription-Key': subscriptionKey,
-            'Ocp-Apim-Subscription-Region': region,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-  
-      return response.data[0]?.translations[0]?.text || text;
-    } catch (error: any) {
-      console.error('Translation error:', error?.response?.data || error.message);
-      return text; // return original text as fallback
-    }
+
+
+export const translateSingleText = async (
+  text: string,
+  toLang: string = 'en'
+): Promise<string> => {
+  if (!text) return '';
+
+  if (!toLang || toLang.toLowerCase() === 'en') {
+    return text;
+  }
+
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_BACKEND_URL}/translate-text`,
+      {
+        issues: [{ code: text }], // using 'code' as a generic field
+        toLang,
+      }
+    );
+    // The backend returns an array of issues, so we extract the translated 'code' field
+    return response.data?.[0]?.code || text;
+  } catch (error: any) {
+    console.error('Translation error:', error?.response?.data || error.message);
+    return text; // return original text as fallback
+  }
 };
