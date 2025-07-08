@@ -17,7 +17,7 @@ import AccordionGroup from '@mui/joy/AccordionGroup';
 import Accordion from '@mui/joy/Accordion';
 import ToggleButtonGroup from '@mui/joy/ToggleButtonGroup';
 import Stack from '@mui/joy/Stack';
-import { translateText,translateSingleText,LANGUAGES } from '@/utils/translator';
+import { translateText,translateMultipleTexts,LANGUAGES } from '@/utils/translator';
 
 import AccordionDetails, {
   accordionDetailsClasses,
@@ -277,12 +277,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     if (!reportData.url) {
       reportData.url = processedReportKeys?.[0]?.url || "";
     }
+
     const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
       await getWidgetSettings(reportData.url);
     const WEBABILITY_SCORE_BONUS = 45;
     const MAX_TOTAL_SCORE = 95;
     const issues = extractIssuesFromReport(reportData);
 
+    //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
     const baseScore = reportData.score || 0;
     const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility';
     const enhancedScore = hasWebAbility
@@ -306,11 +308,43 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       statusColor = [220, 38, 38]; // red-600
     }
 
-    status = await translateSingleText(status, currentLanguage);
+    const [
+      translatedStatus,
+      translatedMessage,
+      translatedMild,
+      translatedModerate,
+      translatedSevere,
+      translatedScore,
+      translatedIssue,
+      translatedIssueMessage,
+      translatedContext,
+      translatedFix,
+      translatedLabel,
+      translatedTotalErrors
+    ] = await translateMultipleTexts(
+      [
+        status,
+        message,
+        'Mild',
+        'Moderate',
+        'Severe',
+        'Score',
+        'Issue',
+        'Message',
+        'Context',
+        'Fix',
+        'Scan results for ',
+        'Total Errors'
+      ],
+      currentLanguage
+    );
+    
+    status = translatedStatus;
     doc.setFillColor(21, 101, 192); // dark blue background
     doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F'); 
 
     let logoBottomY = 0;
+
 
     if (logoImage) {
       const img = new Image();
@@ -394,7 +428,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
         doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
 
-        // Add a link to logoUrl if available
         if (logoUrl) {
           doc.link(logoX, logoY, drawWidth, drawHeight, {
             url: logoUrl,
@@ -431,7 +464,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setTextColor(0, 0, 0);
     // Compose the full string and measure widths
     let  label = 'Scan results for ';
-    label = await translateSingleText(label, currentLanguage);
+    label = translatedLabel;
 
     const url = `${reportData.url}`;
     const labelWidth = doc.getTextWidth(label);
@@ -454,7 +487,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setFont('helvetica', 'bold');
     doc.text(status, 105, textY, { align: 'center' });
 
-    message = await translateSingleText(message, currentLanguage);
+    message = translatedMessage;
     textY += 9;
     doc.setFontSize(12);
     doc.setTextColor(51, 65, 85); 
@@ -494,7 +527,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
-    doc.text(await translateSingleText('Total Errors', currentLanguage), circle1X, circleY + circleRadius + 9, {
+    doc.text(translatedTotalErrors, circle1X, circleY + circleRadius + 9, {
       align: 'center',
     });
 
@@ -517,7 +550,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
-    doc.text(await translateSingleText('Score', currentLanguage), circle2X, circleY + circleRadius + 9, {
+    doc.text(translatedScore, circle2X, circleY + circleRadius + 9, {
       align: 'center',
     });
     // --- END CIRCLES ---
@@ -534,13 +567,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     // Use blue shades for all summary boxes
     const summaryBoxes = [
       {
-        label: await translateSingleText('Severe', currentLanguage),
+        label:  translatedSevere,
         count: counts.critical + counts.serious,
         color: [255, 204, 204],
       },
-      { label: await translateSingleText('Moderate', currentLanguage), count: counts.moderate, color: [187, 222, 251] },
+      { label: translatedModerate, count: counts.moderate, color: [187, 222, 251] },
       {
-        label: await translateSingleText('Mild', currentLanguage),
+        label:  translatedMild,
         count: total - (counts.critical + counts.serious + counts.moderate),
         color: [225, 245, 254],
       }, 
@@ -572,11 +605,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     let tableBody: any[] = [];
     const translatedIssues = await translateText(issues, currentLanguage);
 
-    const translatedIssue = await translateSingleText('Issue', currentLanguage);
-    const translatedMessage = await translateSingleText('Message', currentLanguage);
-    const translatedContext = await translateSingleText('Context', currentLanguage);
-    const translatedFix = await translateSingleText('Fix', currentLanguage);
-
+  
 
     translatedIssues.forEach((issue, issueIdx) => {
       // Add header row for each issue with beautiful styling
@@ -595,7 +624,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           },
         },
         {
-          content: translatedMessage,
+          content: translatedIssueMessage,
           colSpan: 2,
           styles: {
             fillColor: [255, 255, 255], // matching white background
@@ -951,6 +980,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     return doc.output('blob');
   };
+
 
 
 
