@@ -1,7 +1,6 @@
 /* eslint-disable wrap-iife */
 import dotenv from 'dotenv';
 
-import { resolve, join } from 'path';
 import express, { NextFunction, Request, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
@@ -10,17 +9,15 @@ import cookieParser from 'cookie-parser';
 import { ApolloServer, ApolloError } from 'apollo-server-express';
 import { withScope, Severity, captureException, init, Handlers } from '@sentry/node';
 import * as Sentry from '@sentry/node';
-import * as Tracing from '@sentry/tracing';
 import { IResolvers } from '@graphql-tools/utils';
 import { makeExecutableSchema } from 'graphql-tools';
 import accessLogStream from './middlewares/logger.middleware';
-import logger from './utils/logger';
 import RootSchema from './graphql/root.schema';
 import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
 import stripeHooks from './services/stripe/webhooks.servive';
 import {sendMail} from './libs/mail';
-import { AddTokenToDB, GetVisitorTokenByWebsite } from './services/webToken/mongoVisitors';
+import { AddTokenToDB } from './services/webToken/mongoVisitors';
 import { fetchAccessibilityReport } from './services/accessibilityReport/accessibilityReport.service';
 import { findProductAndPriceByType, findProductById } from './repository/products.repository';
 import { createSitesPlan, deleteExpiredSitesPlan, deleteSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-sites.service';
@@ -28,22 +25,20 @@ import Stripe from 'stripe';
 import { getAnySitePlanBySiteId, getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
 import { APP_SUMO_COUPON_ID, APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, RETENTION_COUPON_ID } from './constants/billing.constant';
-import axios from 'axios';
 import OpenAI from 'openai';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
 import database from '~/config/database.config';
 import { addProblemReport, getProblemReportsBySiteId, problemReportProps } from './repository/problem_reports.repository';
-import { deleteSiteByURL, deleteSiteWithRelatedRecords, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
+import { deleteSiteWithRelatedRecords, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
 import { addWidgetSettings, getWidgetSettingsBySiteId } from './repository/widget_settings.repository';
 import { addNewsletterSub } from './repository/newsletter_subscribers.repository';
 import findPromo from './services/stripe/findPromo';
 import { appSumoPromoCount } from './utils/appSumoPromoCount';
 import { expireUsedPromo } from './utils/expireUsedPromo';
-import { findUsersByToken, getUserTokens } from './repository/user_plan_tokens.repository';
+import { getUserTokens } from './repository/user_plan_tokens.repository';
 import { customTokenCount } from './utils/customTokenCount';
 import { addCancelFeedback, CancelFeedbackProps } from './repository/cancel_feedback.repository';
 
-// import run from './scripts/create-products';
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -68,7 +63,7 @@ const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, '
 const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction','reportProblem','updateImpressionProfileCounts','getWidgetSettings','getAccessibilityReport','getAccessibilityStats'];
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
-app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
+app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks); // TODO: Check Security
 app.use(express.json({ limit: '5mb'}));
 
 scheduleMonthlyEmails();
@@ -106,35 +101,28 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     app.use(morgan('combined')); // Will use console
   }
 
-  // app.use(cors({
-  //   origin: 'https://www.webability.io',
-  //   methods: 'GET,POST',
-  //   credentials: true
-  // }));
   app.use(dynamicCors);
 
-  app.use(express.static(join(resolve(), 'public', 'uploads')));
   app.use(cookieParser());
 
   app.use(bodyParser.urlencoded({ extended: true, limit: '5mb' }));
 
-  app.get('/', (req, res) => {
-    res.send('Hello orld!');
-  });
-
-  app.get('/token/:url', async (req, res) => {
-    const url = req.params.url;
-    const token = await GetVisitorTokenByWebsite(url);
-    res.send(token);
+  app.get('/', (_, res) => {
+    res.send('Hello world!');
   });
 
   app.post('/create-customer-portal-session',async (req,res)=>{
-    const {id,returnURL} = req.body;
+    const { id, returnURL } = req.body;
+
+    console.log("id",id);
+    console.log("returnURL",returnURL);
+
     try {
       const session = await stripe.billingPortal.sessions.create({
         customer:id,
         return_url:returnURL
       });
+
       return res.status(200).json(session);
     } catch (error) {
       console.log(error);
@@ -1891,63 +1879,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 })();
 
-
-// 1000 Promo Code Generation Code
-
-// try {
-//   for (let i = 0; i < 1000; i++) {
-//     const promotionCode = await stripe.promotionCodes.create({
-//       coupon: APP_SUMO_COUPON_ID,
-//       max_redemptions: 1, // Ensure the code can only be redeemed once
-//       active: true,
-//     });
-//     if(i % 10 == 0)
-//     {
-//       console.log(i, "Codes generated")
-//     }
-//   }
-// } catch (error) {
-//   console.error('Error creating promotion code:', error);
-// }
-// res.status(200).json({error:"1000 Created"});
-
-// Code for Promo Code List
-    // let promotionCodes:any = [];
-    // let hasMore = true;
-    // let startingAfter = null;
-
-    // try {
-    //   // Retrieve all promotion codes for the coupon
-    //   while (hasMore) {
-    //     let response:any;
-    //     if(startingAfter == null)
-    //     {
-    //       response = await stripe.promotionCodes.list({
-    //         coupon: APP_SUMO_COUPON_ID,
-    //         limit: 100, // Stripe's max limit per request
-    //       });
-    //     }
-    //     else{
-    //       response = await stripe.promotionCodes.list({
-    //         coupon: APP_SUMO_COUPON_ID,
-    //         limit: 100, // Stripe's max limit per request
-    //         starting_after: startingAfter,
-    //       });  
-    //     }
-    //     const codes = response.data.map((promo:any) => promo.code);
-    //     promotionCodes = promotionCodes.concat(codes);
-    //     // promotionCodes = promotionCodes.concat(response.data);
-    //     hasMore = response.has_more;
-    //     if (hasMore) {
-    //       startingAfter = response.data[response.data.length - 1].id;
-    //     }
-    //     console.log("yes");
-    //   }
-    // } catch (error) {
-    //   console.error('Error listing promotion codes:', error);
-    // }
-    // res.status(200).json({ error: "error.message",codes:promotionCodes });
-
 // Health check endpoint
 app.get('/health', async (req: Request, res: Response) => {
   try {
@@ -1961,7 +1892,6 @@ app.get('/health', async (req: Request, res: Response) => {
     console.error('Health check failed:', error);
     res.status(503).json({
       status: 'unhealthy',
-      error: error.message,
       timestamp: new Date().toISOString()
     });
   }
