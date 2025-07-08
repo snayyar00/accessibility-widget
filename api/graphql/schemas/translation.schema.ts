@@ -110,7 +110,6 @@ export const TranslationSchema = gql`
     translatedContent: String
     error: String
     languageCode: String!
-    cached: Boolean!
   }
 
   extend type Mutation {

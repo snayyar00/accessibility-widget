@@ -79,18 +79,18 @@ async function registerUser(email: string, password: string, name: string, payme
       newUserId = await createUser(userData);
     }
 
-    const tokenVerifyEmail = await generateRandomKey();
-    const template = await compileEmailTemplate({
-      fileName: 'verifyEmail.mjml',
-      data: {
-        name,
-        url: `${process.env.FRONTEND_URL}/verify-email?token=${tokenVerifyEmail}`,
-      },
-    });
+    // const tokenVerifyEmail = await generateRandomKey();
+    // const template = await compileEmailTemplate({
+    //   fileName: 'verifyEmail.mjml',
+    //   data: {
+    //     name,
+    //     url: `${process.env.FRONTEND_URL}/verify-email?token=${tokenVerifyEmail}`,
+    //   },
+    // });
 
-    if (typeof newUserId === 'number') {
-      await Promise.all([sendMail(email, 'Confirm your email address', template), createToken(newUserId, tokenVerifyEmail, SEND_MAIL_TYPE.VERIFY_EMAIL)]);
-    }
+    // if (typeof newUserId === 'number') {
+    //   await Promise.all([sendMail(email, 'Confirm your email address', template), createToken(newUserId, tokenVerifyEmail, SEND_MAIL_TYPE.VERIFY_EMAIL)]);
+    // }
 
     const token = sign({ email, name });
 

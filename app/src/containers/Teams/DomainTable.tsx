@@ -16,7 +16,6 @@ import isValidDomain from '@/utils/verifyDomain';
 import ConfirmDeleteSiteModal from './DeleteWarningModal';
 import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
 import getDomainStatus from '@/utils/getDomainStatus';
-
 import applyStatusClass from '@/utils/applyStatusClass';
 import ActivatePlanWarningModal from './ActivatePlanWarningModal';
 

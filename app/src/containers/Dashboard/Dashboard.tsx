@@ -143,11 +143,13 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
   const [startDate, setStartDate] = useState<string>(defaultStart);
   const [endDate, setEndDate]     = useState<string>(defaultEnd);
 
-  const [appSumoDomains,setAppSumoDomain] = useState<string[]>([]);
+  const [appSumoDomains,setAppSumoDomain] = useState<string[]|undefined>(undefined);
   const [loadDashboard, { data, loading, error }] = useLazyQuery(fetchDashboardQuery, {
     fetchPolicy: 'cache-first',
     onCompleted: () => setLoadingAnimation(false),
   });
+  const [domainStatus,setDomainStatus] = useState<string|undefined>(undefined);
+  const [statusClass,setStatusClass] = useState<string|undefined>(undefined);
   
   useEffect(() => {
     setLoadingAnimation(true);
@@ -254,8 +256,8 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
               // Regex to extract domain name before '(' and promo codes
               const match = description?.match(/Plan for ([^(\s]+)\(/);
 
-              if (match) {
-                  const domain = match[1];  // Extract domain name
+              if (match && match[1] && match[1].trim()) {
+                  const domain = match[1].trim();
                   appSumoDomains.push(domain); // Save the domain name in the list
               }
           });
@@ -284,6 +286,26 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
     console.log('Dashboard tour completed!');
   };
 
+  useEffect(() => {
+    if(domainData != null && appSumoDomains != undefined){
+      setDomainStatus(getDomainStatus(
+        domainData?.url,
+        domainData?.expiredAt,
+        domainData?.trial,
+        appSumoDomains 
+      ));
+
+      setStatusClass(applyStatusClass(
+        domainData?.url,
+        domainData?.expiredAt,
+        domainData?.trial,
+        appSumoDomains,
+      ));
+    }
+  }, [domainData,appSumoDomains]);
+
+
+
   return (
     <>
       <TourGuide
@@ -301,25 +323,17 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
       <>{domainData ? (
         <div className="flex gap-3">
           <p
-            className={`p-1.5 text-xs font-semibold rounded w-fit whitespace-no-wrap ${applyStatusClass(
-              domainData.domain,
-              domainData.expiredAt,
-              domainData.trial,
-              appSumoDomains,
-            )}`}
+            className={`p-1.5 text-xs font-semibold rounded w-fit whitespace-no-wrap ${statusClass}`}
           >
-            {getDomainStatus(
-              domainData.domain,
-              domainData.expiredAt,
-              domainData.trial,
-              appSumoDomains 
-            )}
+            {domainStatus}
           </p>
-          <p className="text-gray-900 whitespace-no-wrap">
-            {domainData.expiredAt
-              ? new Date(parseInt(domainData.expiredAt)).toLocaleString() ?? '-'
-              : '-'}
-          </p>
+          {domainStatus != 'Life Time' && (
+              <p className="text-gray-900 whitespace-no-wrap">
+                {domainData?.expiredAt
+                  ? new Date(parseInt(domainData?.expiredAt)).toLocaleString() ?? '-'
+                  : '-'}
+              </p>
+            )} 
         </div>
       ) : (
         <p>-</p>
