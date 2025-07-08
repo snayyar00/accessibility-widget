@@ -50,6 +50,12 @@ export function stringToJson(messageString: string): object[] {
         // Fix cases where there might be malformed quotes in arrays
         fixedContent = fixedContent.replace(/("\w+)""\s*,/g, '"$1",');
         
+        // Fix backslashes that might be breaking JSON
+        fixedContent = fixedContent.replace(/\\(?!["\\/bfnrt])/g, '\\\\');
+        
+        // Fix unescaped quotes inside string values
+        fixedContent = fixedContent.replace(/(?<!\\)"(?=.*".*:)/g, '\\"');
+        
         // Try parsing again
         try {
             jsonData = JSON.parse(fixedContent);

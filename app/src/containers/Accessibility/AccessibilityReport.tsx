@@ -3,6 +3,7 @@ import './Accessibility.css'; // Ensure your CSS file includes styles for the ac
 import { AiFillCloseCircle } from 'react-icons/ai';
 import { FaGaugeSimpleHigh } from 'react-icons/fa6';
 import { FaUniversalAccess, FaCheckCircle, FaCircle } from 'react-icons/fa';
+import { Sparkles, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import getAccessibilityStats from '@/queries/accessibility/accessibility';
 import SAVE_ACCESSIBILITY_REPORT from '@/queries/accessibility/saveAccessibilityReport'
@@ -43,7 +44,6 @@ import IssueCategoryCard from './IssueCategoryCard';
 import SitePreviewSVG from './SitePreviewSVG';
 import ByFunctionSVG from './ByFunctionSVG';
 import ByWCGAGuildelinesSVG from './ByWCGAGuidlinesSVG';
-import WebAbilityMetadata from './WebAbilityMetadata';
 import { check } from 'prettier';
 import ReactToPrint, { useReactToPrint } from 'react-to-print';
 import Logo from '@/components/Common/Logo';
@@ -219,6 +219,32 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     if (data) {
       const result = data.getAccessibilityReport;
       if (result) {
+        // DEBUG: Log complete result structure from GraphQL
+        console.log('🔍 FRONTEND RECEIVED RESULT:', {
+          hasAxe: !!result.axe,
+          hasHtmlcs: !!result.htmlcs,
+          hasByFunctions: !!result.ByFunctions,
+          ByFunctionsType: typeof result.ByFunctions,
+          ByFunctionsLength: result.ByFunctions?.length || 0,
+          hasIssues: !!result.issues,
+          hasIssuesByFunction: !!result.issuesByFunction,
+          hasFunctionalityNames: !!result.functionalityNames,
+          hasTotalStats: !!result.totalStats,
+          hasWebabilityMetadata: !!result.webability_metadata,
+          score: result.score,
+          totalElements: result.totalElements
+        });
+        
+        // Log first few ByFunctions if they exist
+        if (result.ByFunctions && Array.isArray(result.ByFunctions)) {
+          console.log('🔍 FRONTEND FIRST 3 BYFUNCTIONS:', result.ByFunctions.slice(0, 3).map((func: any, index: number) => ({
+            index,
+            name: func.FunctionalityName,
+            errorCount: func.Errors?.length || 0,
+            hasErrors: Array.isArray(func.Errors)
+          })));
+        }
+        
         let score = result.score;
         let allowed_sites_id = null;
         
@@ -1067,9 +1093,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                           <div className="relative" aria-hidden="true">
                             {/* Enhanced spinner */}
                             <div className="w-8 h-8 sm:w-10 sm:h-10 relative">
-                              <div className="absolute inset-0 border-2 sm:border-3 border-white/20 rounded-full"></div>
-                              <div className="absolute inset-0 border-2 sm:border-3 border-transparent border-t-white rounded-full animate-spin"></div>
-                              <div className="absolute inset-1 sm:inset-2 bg-white/20 rounded-full animate-pulse"></div>
+                              <div className="absolute inset-0 border-3 border-white/30 rounded-full"></div>
+                              <div className="absolute inset-0 border-3 border-transparent border-t-white border-r-white rounded-full spinner-ring"></div>
+                              <div className="absolute inset-2 bg-white/10 rounded-full animate-pulse"></div>
                             </div>
                           </div>
                           <span className="text-lg sm:text-xl lg:text-2xl font-semibold text-white text-center" id="scan-status">
@@ -1105,15 +1131,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         
                         {/* Timing information with better spacing */}
                         <div className="flex items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm text-blue-200 flex-wrap">
-                          {scanProgress.elapsed > 0 && (
-                            <div className="flex items-center gap-1.5 bg-blue-800/30 px-3 py-1.5 rounded-full">
-                              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                              </svg>
-                              <span className="font-medium">{scanProgress.elapsed}s elapsed</span>
-                            </div>
-                          )}
-                          
                           <div className="flex items-center gap-1.5 bg-blue-800/30 px-3 py-1.5 rounded-full">
                             <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                               <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
@@ -1295,15 +1312,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         </div>
       </div>
 
-      {/* WebAbility Enhanced Metadata Section */}
-      {webabilityMetadata && data && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <WebAbilityMetadata 
-            metadata={webabilityMetadata}
-            issues={extractIssuesFromReport(data.getAccessibilityReport)}
-          />
-        </div>
-      )}
 
       {/* Audit History Section */}
       {siteOptions.some((option: any) => normalizeDomain(option.value) === normalizeDomain(selectedOption?.value ?? '')) && enhancedScoresCalculated && processedReportKeys.length > 0 && (

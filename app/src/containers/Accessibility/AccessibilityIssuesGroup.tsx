@@ -66,6 +66,10 @@ export default function AccessibilityIssuesGroup({ issueObj, expand }: Accessibi
                   elements={issue.context}
                   selectors={issue.selectors}
                   screenshotUrl={(issue as any).screenshotUrl}
+                  helpUrl={(issue as any).helpUrl}
+                  wcagLevel={(issue as any).wcagLevel}
+                  runner={(issue as any).runner}
+                  impact={(issue as any).impact}
                 />
               </AccordionDetails>
             ))}

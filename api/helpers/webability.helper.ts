@@ -1,6 +1,7 @@
-import { readAccessibilityDescriptionFromDb } from '../services/accessibilityReport/accessibilityIssues.service';
+// Database lookup removed - WebAbility provides rich descriptions directly
 
 interface WebAbilityIssue {
+  id?: string;  // Deterministic 16-character ID
   code: string;
   type: string;
   typeCode: number;
@@ -28,7 +29,7 @@ interface WebAbilityResponse {
   violation_screenshots: number;
   browser_info: {
     userAgent: string;
-    viewport: [number, number];
+    viewport: [number, number] | string;
     orientation: string;
   };
   accessibility_standards: {
@@ -53,6 +54,7 @@ interface WebAbilityResponse {
 
 // Legacy format interfaces (maintain compatibility)
 interface axeOutput {
+  id?: string;  // Deterministic 16-character ID from WebAbility
   message: string;
   context: string[];
   selectors: string[];
@@ -67,10 +69,13 @@ interface axeOutput {
 }
 
 interface htmlcsOutput {
+  id?: string;  // Deterministic 16-character ID from WebAbility
   code: string;
   message: string;
   context: string[];
   selectors: string[];
+  description?: string;
+  recommended_action?: string;
   // Enhanced WebAbility fields
   screenshotUrl?: string;
   helpUrl?: string;
@@ -206,17 +211,35 @@ function adaptWebAbilityToPallyFormat(webAbilityResponse: WebAbilityResponse): f
   // Convert ALL WebAbility issues to legacy format (don't limit - users need to see everything)
   console.log('🔄 Converting WebAbility issues to legacy format. Total:', webAbilityResponse.issues.length);
   
+  // Debug first few issues to see raw data
+  if (webAbilityResponse.issues.length > 0) {
+    console.log('🔍 Raw WebAbility issue data (first 3):');
+    webAbilityResponse.issues.slice(0, 3).forEach((issue, index) => {
+      console.log(`Issue ${index}:`, {
+        id: issue.id,
+        message: issue.message,
+        selector: issue.selector,
+        context: issue.context,
+        type: issue.type,
+        runner: issue.runner,
+        screenshotUrl: issue.screenshotUrl,
+        impact: issue.runnerExtras?.impact
+      });
+    });
+  }
+  
   webAbilityResponse.issues.forEach((issue: WebAbilityIssue, index: number) => {
     // Process each issue for conversion
     
     if (issue.runner === 'axe') {
       const axeIssue: axeOutput = {
-        message: issue.message.replace(/\s*\(.*$/, ''),
+        id: issue.id,  // Preserve deterministic ID from WebAbility
+        message: issue.runnerExtras?.description || issue.message.replace(/\s*\(.*$/, ''),
         context: [issue.context],
         selectors: [issue.selector],
         impact: issue.runnerExtras.impact,
-        description: issue.runnerExtras.description,
-        help: issue.runnerExtras.help,
+        description: issue.runnerExtras?.description || issue.message,
+        help: issue.runnerExtras?.help || issue.runnerExtras?.description || issue.message,
         // Enhanced WebAbility fields
         screenshotUrl: issue.screenshotUrl,
         helpUrl: issue.runnerExtras.helpUrl,
@@ -226,71 +249,75 @@ function adaptWebAbilityToPallyFormat(webAbilityResponse: WebAbilityResponse): f
       
       // Created axe issue for processing
 
-      // Map issue types to legacy categories with smart grouping
-      if (issue.type === 'error' || issue.runnerExtras.impact === 'critical' || issue.runnerExtras.impact === 'serious') {
-        // Group by message + impact for better deduplication
-        const groupKey = `${axeIssue.message}_${axeIssue.impact}`;
-        const existingIndex = output.axe.errors.findIndex((existing: any) => 
-          `${existing.message}_${existing.impact}` === groupKey
-        );
-        if (existingIndex === -1) {
-          // First occurrence - add the issue
+      // Map issue types to legacy categories with smart grouping that preserves screenshots
+      if (issue.runnerExtras.impact === 'critical' || (issue.type === 'error' && issue.message.toLowerCase().includes('missing'))) {
+        // Critical errors: missing alt text, missing labels, etc.
+        const groupKey = issue.id || `${axeIssue.message.substring(0, 30)}_${issue.selector}`;
+        const existingIndex = output.axe.errors.findIndex(existing => existing.id === issue.id || existing.message === axeIssue.message);
+        
+        if (existingIndex === -1 || issue.screenshotUrl) {
+          // Add new issue OR if it has a screenshot (don't group screenshots away)
           output.axe.errors.push(axeIssue);
-          console.log(`📸 New axe error with screenshot:`, !!axeIssue.screenshotUrl);
+          console.log(`📸 Added axe error (critical) with ID:`, issue.id, 'screenshot:', !!axeIssue.screenshotUrl, 'selector:', issue.selector);
         } else {
-          // Group similar issues together - preserve all selectors, context, and screenshots
-          output.axe.errors[existingIndex].context.push(...(Array.isArray(issue.context) ? issue.context : [issue.context]));
-          output.axe.errors[existingIndex].selectors.push(...(Array.isArray(issue.selector) ? issue.selector : [issue.selector]));
-          // Preserve screenshot URL if this grouped issue has one
-          if (issue.screenshotUrl && !output.axe.errors[existingIndex].screenshotUrl) {
-            output.axe.errors[existingIndex].screenshotUrl = issue.screenshotUrl;
-            console.log(`📸 Added screenshot to grouped axe error:`, issue.screenshotUrl);
-          }
-          console.log(`🔗 Grouped axe error: existing screenshot:`, !!output.axe.errors[existingIndex].screenshotUrl, 'new screenshot:', !!issue.screenshotUrl);
+          // Group with existing issue but preserve selectors and context
+          output.axe.errors[existingIndex].context.push(...axeIssue.context);
+          output.axe.errors[existingIndex].selectors.push(...axeIssue.selectors);
+          console.log(`🔗 Grouped axe error (critical) - no screenshot lost`);
         }
-      } else if (issue.type === 'warning' || issue.runnerExtras.impact === 'moderate') {
-        const groupKey = `${axeIssue.message}_${axeIssue.impact}`;
-        const existingIndex = output.axe.warnings.findIndex((existing: any) => 
-          `${existing.message}_${existing.impact}` === groupKey
-        );
-        if (existingIndex === -1) {
+      } else if (issue.runnerExtras.impact === 'serious' || (issue.type === 'error' && issue.message.toLowerCase().includes('contrast'))) {
+        // Serious issues: contrast, discernible text, etc.
+        const existingIndex = output.axe.warnings.findIndex(existing => existing.id === issue.id || existing.message === axeIssue.message);
+        
+        if (existingIndex === -1 || issue.screenshotUrl) {
+          // Add new issue OR if it has a screenshot
           output.axe.warnings.push(axeIssue);
-          // Added new axe warning
+          console.log(`📸 Added axe warning (serious) with ID:`, issue.id, 'screenshot:', !!axeIssue.screenshotUrl, 'selector:', issue.selector);
         } else {
-          output.axe.warnings[existingIndex].context.push(...(Array.isArray(issue.context) ? issue.context : [issue.context]));
-          output.axe.warnings[existingIndex].selectors.push(...(Array.isArray(issue.selector) ? issue.selector : [issue.selector]));
-          // Preserve screenshot URL if this grouped issue has one
-          if (issue.screenshotUrl && !output.axe.warnings[existingIndex].screenshotUrl) {
-            output.axe.warnings[existingIndex].screenshotUrl = issue.screenshotUrl;
-          }
-          // Grouped similar axe warning
+          // Group with existing issue
+          output.axe.warnings[existingIndex].context.push(...axeIssue.context);
+          output.axe.warnings[existingIndex].selectors.push(...axeIssue.selectors);
+          console.log(`🔗 Grouped axe warning (serious) - no screenshot lost`);
+        }
+      } else if (issue.runnerExtras.impact === 'moderate' || issue.type === 'warning') {
+        // Moderate issues  
+        const existingIndex = output.axe.warnings.findIndex(existing => existing.id === issue.id || existing.message === axeIssue.message);
+        
+        if (existingIndex === -1 || issue.screenshotUrl) {
+          output.axe.warnings.push(axeIssue);
+          console.log(`📸 Added axe warning (moderate) with ID:`, issue.id, 'screenshot:', !!axeIssue.screenshotUrl, 'selector:', issue.selector);
+        } else {
+          output.axe.warnings[existingIndex].context.push(...axeIssue.context);
+          output.axe.warnings[existingIndex].selectors.push(...axeIssue.selectors);
+          console.log(`🔗 Grouped axe warning (moderate) - no screenshot lost`);
         }
       } else {
-        const groupKey = `${axeIssue.message}_${axeIssue.impact}`;
-        const existingIndex = output.axe.notices.findIndex((existing: any) => 
-          `${existing.message}_${existing.impact}` === groupKey
-        );
+        // Minor issues and notices - more aggressive grouping OK since they're less critical
+        const existingIndex = output.axe.notices.findIndex(existing => existing.message === axeIssue.message);
+        
         if (existingIndex === -1) {
           output.axe.notices.push(axeIssue);
-          // Added new axe notice
+          console.log(`📸 Added axe notice (minor) with ID:`, issue.id, 'screenshot:', !!axeIssue.screenshotUrl, 'selector:', issue.selector);
         } else {
-          output.axe.notices[existingIndex].context.push(...(Array.isArray(issue.context) ? issue.context : [issue.context]));
-          output.axe.notices[existingIndex].selectors.push(...(Array.isArray(issue.selector) ? issue.selector : [issue.selector]));
-          // Preserve screenshot URL if this grouped issue has one
+          output.axe.notices[existingIndex].context.push(...axeIssue.context);
+          output.axe.notices[existingIndex].selectors.push(...axeIssue.selectors);
           if (issue.screenshotUrl && !output.axe.notices[existingIndex].screenshotUrl) {
             output.axe.notices[existingIndex].screenshotUrl = issue.screenshotUrl;
           }
-          // Grouped similar axe notice
+          console.log(`🔗 Grouped axe notice (minor)`);
         }
       }
     } else {
       // Treat non-axe issues as htmlcs for compatibility
       console.log(`📝 Converting ${issue.runner} issue to htmlcs format`);
       const htmlcsIssue: htmlcsOutput = {
+        id: issue.id,  // Preserve deterministic ID from WebAbility
         code: issue.code,
-        message: issue.message,
+        message: issue.runnerExtras?.description || issue.message,
         context: [issue.context],
         selectors: [issue.selector],
+        description: issue.runnerExtras?.description || issue.message,
+        recommended_action: issue.runnerExtras?.help || 'Review and fix this accessibility issue according to WCAG guidelines.',
         // Enhanced WebAbility fields
         screenshotUrl: issue.screenshotUrl,
         helpUrl: issue.runnerExtras?.helpUrl,
@@ -301,42 +328,18 @@ function adaptWebAbilityToPallyFormat(webAbilityResponse: WebAbilityResponse): f
       
       // Created htmlcs issue for processing
 
-      if (issue.type === 'error' || issue.runnerExtras.impact === 'critical' || issue.runnerExtras.impact === 'serious') {
-        const existingIndex = output.htmlcs.errors.findIndex((existing: any) => existing.message === htmlcsIssue.message);
-        if (existingIndex === -1) {
-          output.htmlcs.errors.push(htmlcsIssue);
-        } else {
-          output.htmlcs.errors[existingIndex].context.push(issue.context);
-          output.htmlcs.errors[existingIndex].selectors.push(issue.selector);
-          // Preserve screenshot URL if this grouped issue has one
-          if (issue.screenshotUrl && !output.htmlcs.errors[existingIndex].screenshotUrl) {
-            output.htmlcs.errors[existingIndex].screenshotUrl = issue.screenshotUrl;
-          }
-        }
-      } else if (issue.type === 'warning' || issue.runnerExtras.impact === 'moderate') {
-        const existingIndex = output.htmlcs.warnings.findIndex((existing: any) => existing.message === htmlcsIssue.message);
-        if (existingIndex === -1) {
-          output.htmlcs.warnings.push(htmlcsIssue);
-        } else {
-          output.htmlcs.warnings[existingIndex].context.push(issue.context);
-          output.htmlcs.warnings[existingIndex].selectors.push(issue.selector);
-          // Preserve screenshot URL if this grouped issue has one
-          if (issue.screenshotUrl && !output.htmlcs.warnings[existingIndex].screenshotUrl) {
-            output.htmlcs.warnings[existingIndex].screenshotUrl = issue.screenshotUrl;
-          }
-        }
+      if (issue.runnerExtras.impact === 'critical' || (issue.type === 'error' && issue.message.toLowerCase().includes('missing'))) {
+        // Critical errors 
+        output.htmlcs.errors.push(htmlcsIssue);
+        console.log(`📸 Added htmlcs error (critical) with ID:`, issue.id, 'screenshot:', !!htmlcsIssue.screenshotUrl, 'selector:', issue.selector);
+      } else if (issue.runnerExtras.impact === 'serious' || issue.runnerExtras.impact === 'moderate' || issue.type === 'warning') {
+        // Serious/moderate issues
+        output.htmlcs.warnings.push(htmlcsIssue);
+        console.log(`📸 Added htmlcs warning with ID:`, issue.id, 'screenshot:', !!htmlcsIssue.screenshotUrl, 'selector:', issue.selector);
       } else {
-        const existingIndex = output.htmlcs.notices.findIndex((existing: any) => existing.message === htmlcsIssue.message);
-        if (existingIndex === -1) {
-          output.htmlcs.notices.push(htmlcsIssue);
-        } else {
-          output.htmlcs.notices[existingIndex].context.push(issue.context);
-          output.htmlcs.notices[existingIndex].selectors.push(issue.selector);
-          // Preserve screenshot URL if this grouped issue has one
-          if (issue.screenshotUrl && !output.htmlcs.notices[existingIndex].screenshotUrl) {
-            output.htmlcs.notices[existingIndex].screenshotUrl = issue.screenshotUrl;
-          }
-        }
+        // Minor issues
+        output.htmlcs.notices.push(htmlcsIssue);
+        console.log(`📸 Added htmlcs notice with ID:`, issue.id, 'screenshot:', !!htmlcsIssue.screenshotUrl, 'selector:', issue.selector);
       }
     }
   });
@@ -413,12 +416,161 @@ function adaptWebAbilityToPallyFormat(webAbilityResponse: WebAbilityResponse): f
   // Store original htmlcs for ByFunctions processing
   output._originalHtmlcs = JSON.parse(JSON.stringify(output.htmlcs));
 
+  // Create ByFunctions format directly from WebAbility data to avoid GPT processing data loss
+  console.log('🔄 Creating ByFunctions format directly from WebAbility data');
+  
+  // Group issues by functionality based on their impact and type
+  const functionalityGroups: { [key: string]: Error[] } = {};
+  
+  // AI-powered enhancement for missing data
+  const enhanceIssueWithAI = (issue: WebAbilityIssue): { description: string, recommendedAction: string, functionalityName: string } => {
+    const message = issue.message.toLowerCase();
+    const code = issue.code.toLowerCase();
+    const selector = issue.selector.toLowerCase();
+    
+    // Enhanced functionality mapping with AI-like intelligence
+    let functionalityName = 'General Accessibility Issues';
+    let description = issue.runnerExtras?.description || issue.message;
+    let recommendedAction = issue.runnerExtras?.help || 'Review and fix this accessibility issue according to WCAG guidelines.';
+    
+    // Smart categorization and enhancement
+    if (message.includes('contrast') || code.includes('contrast') || code.includes('color-contrast')) {
+      functionalityName = 'Color and Contrast';
+      if (!issue.runnerExtras?.description) {
+        description = `Color contrast ratio is insufficient between foreground and background colors. This affects users with visual impairments and color vision deficiencies.`;
+        recommendedAction = `Increase the contrast ratio to meet WCAG AA standards (4.5:1 for normal text, 3:1 for large text). Use tools like WebAIM's contrast checker to verify compliance.`;
+      }
+    } else if (message.includes('alt') || message.includes('image') || code.includes('image') || selector.includes('img')) {
+      functionalityName = 'Images and Media';
+      if (!issue.runnerExtras?.description) {
+        description = `Image is missing alternative text (alt attribute), making it inaccessible to screen reader users and when images fail to load.`;
+        recommendedAction = `Add descriptive alt text that conveys the purpose and content of the image. For decorative images, use alt="" to indicate they should be ignored by assistive technology.`;
+      }
+    } else if (message.includes('form') || message.includes('label') || code.includes('form') || selector.includes('input') || selector.includes('select')) {
+      functionalityName = 'Forms and Inputs';
+      if (!issue.runnerExtras?.description) {
+        description = `Form control is missing a proper label or accessible name, making it difficult for screen reader users to understand its purpose.`;
+        recommendedAction = `Associate form controls with descriptive labels using the <label> element or aria-label/aria-labelledby attributes. Ensure the label clearly describes the expected input.`;
+      }
+    } else if (message.includes('heading') || code.includes('heading') || selector.includes('h1') || selector.includes('h2') || selector.includes('h3')) {
+      functionalityName = 'Content Structure';
+      if (!issue.runnerExtras?.description) {
+        description = `Heading structure is improper, which affects navigation for screen reader users who rely on headings to understand page hierarchy.`;
+        recommendedAction = `Use headings in proper hierarchical order (h1, h2, h3, etc.) and ensure each heading accurately describes the content that follows.`;
+      }
+    } else if (message.includes('link') || code.includes('link') || selector.includes('a[')) {
+      functionalityName = 'Navigation and Links';
+      if (!issue.runnerExtras?.description) {
+        description = `Link lacks sufficient context or accessible name, making it unclear to assistive technology users where the link leads.`;
+        recommendedAction = `Provide descriptive link text that makes sense out of context. Avoid generic phrases like "click here" or "read more" without additional context.`;
+      }
+    } else if (message.includes('keyboard') || message.includes('focus') || code.includes('keyboard') || code.includes('focus')) {
+      functionalityName = 'Keyboard Navigation';
+      if (!issue.runnerExtras?.description) {
+        description = `Element cannot be properly navigated using keyboard alone, preventing users with motor disabilities from accessing this functionality.`;
+        recommendedAction = `Ensure all interactive elements are keyboard accessible with proper focus indicators and logical tab order. Use tabindex appropriately if needed.`;
+      }
+    } else if (message.includes('landmark') || message.includes('region') || code.includes('landmark') || code.includes('region')) {
+      functionalityName = 'Page Structure';
+      if (!issue.runnerExtras?.description) {
+        description = `Page is missing proper landmark regions or semantic structure, making navigation difficult for screen reader users.`;
+        recommendedAction = `Use semantic HTML5 elements (nav, main, aside, section, article) or ARIA landmarks to define page regions and improve screen reader navigation.`;
+      }
+    } else if (message.includes('aria') || code.includes('aria')) {
+      functionalityName = 'ARIA and Semantics';
+      if (!issue.runnerExtras?.description) {
+        description = `ARIA attributes are missing, incorrect, or conflicting, which can confuse assistive technology and create barriers for users.`;
+        recommendedAction = `Review ARIA implementation to ensure attributes are used correctly and provide meaningful semantic information. Follow the first rule of ARIA: don't use ARIA if native HTML can do the job.`;
+      }
+    } else {
+      // Default based on impact level with enhanced descriptions
+      if (issue.runnerExtras.impact === 'critical') {
+        functionalityName = 'Critical Accessibility Issues';
+        if (!issue.runnerExtras?.description) {
+          description = `Critical accessibility barrier that significantly impacts users with disabilities. This issue prevents access to essential functionality.`;
+          recommendedAction = `Address this issue immediately as it creates significant barriers for users with disabilities. Prioritize fixing critical issues first.`;
+        }
+      } else if (issue.runnerExtras.impact === 'serious') {
+        functionalityName = 'Serious Accessibility Issues';
+        if (!issue.runnerExtras?.description) {
+          description = `Serious accessibility concern that affects usability for users with disabilities. While not blocking, this creates significant friction.`;
+          recommendedAction = `Address this issue to improve accessibility. These issues affect user experience but may have workarounds.`;
+        }
+      } else {
+        functionalityName = 'General Accessibility Issues';
+        if (!issue.runnerExtras?.description) {
+          description = `Accessibility improvement opportunity that enhances the experience for users with disabilities.`;
+          recommendedAction = `Consider addressing this issue to improve overall accessibility and user experience.`;
+        }
+      }
+    }
+    
+    return {
+      description,
+      recommendedAction,
+      functionalityName
+    };
+  };
+  
+  // Helper function to determine functionality based on issue characteristics
+  const getFunctionalityName = (issue: WebAbilityIssue): string => {
+    return enhanceIssueWithAI(issue).functionalityName;
+  };
+  
+  webAbilityResponse.issues.forEach((issue: WebAbilityIssue) => {
+    // Get AI-enhanced data for this issue
+    const enhancement = enhanceIssueWithAI(issue);
+    
+    if (!functionalityGroups[enhancement.functionalityName]) {
+      functionalityGroups[enhancement.functionalityName] = [];
+    }
+    
+    const errorItem: Error = {
+      code: issue.code,
+      description: enhancement.description,
+      message: enhancement.description,
+      context: [issue.context],
+      recommended_action: enhancement.recommendedAction,
+      selectors: [issue.selector],
+      // Enhanced WebAbility fields
+      screenshotUrl: issue.screenshotUrl,
+      helpUrl: issue.runnerExtras?.helpUrl,
+      runner: issue.runner,
+      impact: issue.runnerExtras?.impact,
+      wcagLevel: extractWCAGLevel(issue.code, issue.runnerExtras?.helpUrl),
+    };
+    
+    functionalityGroups[enhancement.functionalityName].push(errorItem);
+    
+    console.log(`📋 Added AI-enhanced issue to ${enhancement.functionalityName}:`, {
+      code: issue.code,
+      hasDescription: !!enhancement.description,
+      hasScreenshot: !!issue.screenshotUrl,
+      hasSelector: !!issue.selector,
+      hasContext: !!issue.context,
+      aiEnhanced: !issue.runnerExtras?.description
+    });
+  });
+  
+  // Convert to ByFunctions format
+  output.ByFunctions = Object.keys(functionalityGroups).map(functionality => ({
+    FunctionalityName: functionality,
+    Errors: functionalityGroups[functionality]
+  }));
+  
+  console.log(`✅ Created ${output.ByFunctions.length} functionality groups with direct WebAbility data mapping`);
+
   // Add essential WebAbility metadata for frontend display
   output.webability_metadata = {
     job_id: webAbilityResponse.job_id,
     scan_duration: webAbilityResponse.scan_duration,
     scan_timestamp: webAbilityResponse.scan_timestamp,
-    browser_info: webAbilityResponse.browser_info,
+    browser_info: {
+      userAgent: webAbilityResponse.browser_info.userAgent,
+      viewport: Array.isArray(webAbilityResponse.browser_info.viewport) ? 
+        webAbilityResponse.browser_info.viewport : [1920, 1080],
+      orientation: webAbilityResponse.browser_info.orientation
+    },
     accessibility_standards: webAbilityResponse.accessibility_standards,
     issue_breakdown: webAbilityResponse.issue_breakdown,
     screenshots: webAbilityResponse.screenshots,
@@ -552,11 +704,10 @@ export async function getAccessibilityInformationWebAbility(domain: string): Pro
       totalElements: legacyFormat.totalElements
     });
     
-    // Use standard processing pipeline for production
+    // Use standard processing pipeline for production  
     console.log('⚙️ Using standard processing pipeline with WebAbility data');
     legacyFormat.processing_stats.scanner_type = 'webability';
-    const result = await readAccessibilityDescriptionFromDb(legacyFormat.htmlcs);
-    legacyFormat.htmlcs = result;
+    // Skip database lookup since WebAbility already provides rich descriptions
     return legacyFormat;
     
   } catch (error: any) {

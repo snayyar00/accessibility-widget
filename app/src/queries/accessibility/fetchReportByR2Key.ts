@@ -11,6 +11,10 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           impact
           description
           help
+          screenshotUrl
+          helpUrl
+          runner
+          wcagLevel
         }
         notices {
           message
@@ -19,6 +23,10 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           impact
           description
           help
+          screenshotUrl
+          helpUrl
+          runner
+          wcagLevel
         }
         warnings {
           message
@@ -27,6 +35,10 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           impact
           description
           help
+          screenshotUrl
+          helpUrl
+          runner
+          wcagLevel
         }
       }
       htmlcs {
@@ -37,6 +49,11 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           selectors
           description
           recommended_action
+          screenshotUrl
+          helpUrl
+          runner
+          impact
+          wcagLevel
         }
         notices {
           code
@@ -45,6 +62,11 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           selectors
           description
           recommended_action
+          screenshotUrl
+          helpUrl
+          runner
+          impact
+          wcagLevel
         }
         warnings {
           code
@@ -53,6 +75,11 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           selectors
           description
           recommended_action
+          screenshotUrl
+          helpUrl
+          runner
+          impact
+          wcagLevel
         }
       }
       score
@@ -68,6 +95,11 @@ const FETCH_REPORT_BY_R2_KEY = gql`
               selectors
               description
               recommended_action
+              screenshotUrl
+              helpUrl
+              runner
+              impact
+              wcagLevel
             } 
       }
       scriptCheckResult
@@ -102,6 +134,50 @@ const FETCH_REPORT_BY_R2_KEY = gql`
       issuesByFunction
       functionalityNames
       totalStats
+      webability_metadata {
+        job_id
+        scan_duration
+        scan_timestamp
+        browser_info {
+          userAgent
+          viewport
+          orientation
+        }
+        accessibility_standards {
+          wcag_version
+          compliance_level
+          tested_rules
+          passed_rules
+          failed_rules
+          incomplete_rules
+          inapplicable_rules
+        }
+        issue_breakdown {
+          by_type {
+            errors
+            warnings
+            notices
+            total
+          }
+          by_severity {
+            critical
+            serious
+            moderate
+            minor
+            unknown
+          }
+          by_category {
+            perceivable
+            operable
+            understandable
+            robust
+            best_practice
+            other
+          }
+        }
+        screenshots
+        violation_screenshots
+      }
     }
   }
 `;

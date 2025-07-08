@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import CodeContainer from './CodeContainer';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
@@ -9,22 +9,7 @@ import { installationTourSteps, tourKeys } from '@/constants/toursteps';
 export default function Installation({ domain }: any) {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.installation') });
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
-  // Auto-collapse sidebar on mobile screens
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1024) { // lg breakpoint
-        setIsSidebarCollapsed(true);
-      }
-    };
-    
-    // Check on mount
-    handleResize();
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
   function getCodeString(uniqueToken: string): string {
     return `<script src="https://widget.webability.io/widget.min.js" data-asw-token="${uniqueToken}" defer></script>`;
   }
@@ -147,51 +132,10 @@ export default function Installation({ domain }: any) {
           
         {/* Facts Sidebar */}
         <aside 
-          className={`
-            ${isSidebarCollapsed ? 'w-16 lg:w-16' : 'w-full lg:w-80'} 
-            flex-shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm 
-            ${isSidebarCollapsed ? 'p-2' : 'p-4 sm:p-6'} 
-            overflow-y-auto transition-all duration-300 ease-in-out
-          `}
-          aria-labelledby={isSidebarCollapsed ? undefined : "impact-heading"}
-          aria-label={isSidebarCollapsed ? "Accessibility insights sidebar (collapsed)" : undefined}
+          className="w-full lg:w-80 flex-shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6 overflow-y-auto"
+          aria-labelledby="impact-heading"
         >
-          {/* Collapse Toggle Button */}
-          <button
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="w-full mb-4 p-3 rounded-xl bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-105 shadow-sm hover:shadow-md"
-            aria-expanded={!isSidebarCollapsed}
-            aria-controls="sidebar-content"
-            aria-label={isSidebarCollapsed ? "Expand accessibility insights" : "Collapse accessibility insights"}
-          >
-            <div className="flex items-center justify-center gap-2">
-              {isSidebarCollapsed ? (
-                <>
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                  <span className="sr-only">Expand</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                  <span className="text-sm font-medium text-gray-700">Collapse</span>
-                </>
-              )}
-            </div>
-          </button>
-          <div 
-            id="sidebar-content"
-            className={`transition-all duration-300 ease-in-out ${
-              isSidebarCollapsed 
-                ? 'opacity-0 scale-95 pointer-events-none' 
-                : 'opacity-100 scale-100 pointer-events-auto'
-            }`}
-            aria-hidden={isSidebarCollapsed}
-          >
-            <div className="space-y-5">
+          <div className="space-y-5">
             <div className="text-center mb-5">
               <div className="inline-flex items-center justify-center w-10 h-10 bg-blue-600 rounded-xl mb-3">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,54 +229,6 @@ export default function Installation({ domain }: any) {
               <div className="text-xs text-blue-50 text-center font-medium">Trusted by enterprise organizations for accessibility intelligence worldwide</div>
             </div>
           </div>
-          </div>
-          
-          {/* Collapsed State Icons */}
-          {isSidebarCollapsed && (
-            <div className="flex flex-col items-center justify-center space-y-3 mt-4 animate-fade-in">
-              <div 
-                className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200 cursor-pointer" 
-                title="Accessibility insights available"
-                role="button"
-                tabIndex={0}
-                onClick={() => setIsSidebarCollapsed(false)}
-                onKeyDown={(e) => e.key === 'Enter' && setIsSidebarCollapsed(false)}
-              >
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div 
-                className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-200 cursor-pointer" 
-                title="99.7% legal risk reduction"
-                role="button"
-                tabIndex={0}
-                onClick={() => setIsSidebarCollapsed(false)}
-                onKeyDown={(e) => e.key === 'Enter' && setIsSidebarCollapsed(false)}
-                aria-label="Expand to view legal risk reduction details"
-              >
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4" />
-                </svg>
-              </div>
-              <div 
-                className="w-6 h-6 bg-purple-500 rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-200 cursor-pointer" 
-                title="2.3x revenue increase potential"
-                role="button"
-                tabIndex={0}
-                onClick={() => setIsSidebarCollapsed(false)}
-                onKeyDown={(e) => e.key === 'Enter' && setIsSidebarCollapsed(false)}
-                aria-label="Expand to view revenue increase details"
-              >
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
-              <div className="mt-2 text-xs text-gray-500 text-center font-medium">
-                Click to expand
-              </div>
-            </div>
-          )}
         </aside>
         </div>
       </div>

@@ -64,6 +64,7 @@ export const AccessibilitySchema = gql`
   }
 
   type axeOutput {
+    id: String
     message: String
     context: [String]
     selectors: [String]
@@ -80,6 +81,7 @@ export const AccessibilitySchema = gql`
   }
 
   type htmlCsOutput {
+    id: String
     code: String
     message: String
     context: [String]
@@ -231,6 +233,7 @@ export const AccessibilitySchema = gql`
   }
 
 type Issue {
+  id: String
   functionality: String
   impact: String
   message: String

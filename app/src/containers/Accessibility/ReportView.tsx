@@ -112,6 +112,14 @@ type WidgetInfo = {
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
 
+// Issue filter constants to match WebAbility impact levels
+const ISSUE_FILTERS = {
+  ALL: 'all',
+  CRITICAL: 'critical',
+  WARNING: 'serious',  // Maps to WebAbility 'serious' impact
+  MODERATE: 'moderate'
+};
+
 // Add this helper function
 function calculateEnhancedScore(baseScore: number) {
   const enhancedScore = baseScore + WEBABILITY_SCORE_BONUS;
@@ -192,9 +200,90 @@ const ReportView: React.FC = () => {
   };
 
   const report = data?.fetchReportByR2Key || {};
-  //console.log("Report data:", report);
+  
+  // Debug: Check what's in the report
+  if (report && report.ByFunctions) {
+    console.log('🔍 ReportView - Raw report data:', {
+      hasByFunctions: !!report.ByFunctions,
+      byFunctionsLength: report.ByFunctions?.length || 0,
+      firstFunction: report.ByFunctions?.[0],
+      hasIssues: !!report.issues,
+      issuesLength: report.issues?.length || 0,
+      firstIssue: report.issues?.[0],
+      hasWebabilityMetadata: !!report.webability_metadata
+    });
+    
+    // Check the actual ByFunctions data
+    if (report.ByFunctions?.[0]?.Errors?.[0]) {
+      console.log('🔍 First error in ByFunctions:', report.ByFunctions[0].Errors[0]);
+      
+      // Check all errors to see what enhanced data we have
+      report.ByFunctions.forEach((func, funcIndex) => {
+        if (func.Errors && func.Errors.length > 0) {
+          console.log(`🔍 Function ${funcIndex} (${func.FunctionalityName}):`, {
+            errorCount: func.Errors.length,
+            firstError: {
+              message: func.Errors[0].message,
+              selectors: func.Errors[0].selectors,
+              selectorsLength: func.Errors[0].selectors?.length,
+              selectorsContent: JSON.stringify(func.Errors[0].selectors),
+              screenshotUrl: func.Errors[0].screenshotUrl,
+              hasScreenshot: !!func.Errors[0].screenshotUrl,
+              context: func.Errors[0].context,
+              contextContent: JSON.stringify(func.Errors[0].context),
+              runner: func.Errors[0].runner,
+              wcagLevel: func.Errors[0].wcagLevel
+            }
+          });
+        }
+      });
+    }
+  }
 
-  const issues = report.issues || [];
+  // Always use extractIssuesFromReport to get properly formatted issues from ByFunctions
+  // This ensures we get the enhanced WebAbility data
+  const issues = report.ByFunctions ? extractIssuesFromReport(report) : (report.issues || []);
+  
+  // Debug the extracted issues and check for enhanced data
+  let hasEnhancedData = false;
+  let issuesWithSelectors = 0;
+  let issuesWithScreenshots = 0;
+  let issuesWithContext = 0;
+  
+  if (issues.length > 0) {
+    issues.forEach(issue => {
+      if (issue.selectors && issue.selectors.length > 0 && issue.selectors[0] !== '') {
+        issuesWithSelectors++;
+      }
+      if (issue.screenshotUrl) {
+        issuesWithScreenshots++;
+      }
+      if (issue.context && issue.context.length > 0 && issue.context[0] !== '') {
+        issuesWithContext++;
+      }
+    });
+    
+    hasEnhancedData = issuesWithSelectors > 0 || issuesWithScreenshots > 0;
+    
+    console.log('🔍 Enhanced data analysis:', {
+      totalIssues: issues.length,
+      issuesWithSelectors,
+      issuesWithScreenshots,
+      issuesWithContext,
+      hasEnhancedData,
+      firstIssue: {
+        message: issues[0].message,
+        selectors: issues[0].selectors,
+        selectorsLength: issues[0].selectors?.length,
+        selectorsContent: JSON.stringify(issues[0].selectors),
+        screenshotUrl: issues[0].screenshotUrl,
+        hasScreenshot: !!issues[0].screenshotUrl,
+        context: issues[0].context,
+        contextContent: JSON.stringify(issues[0].context),
+        functionality: issues[0].functionality
+      }
+    });
+  }
   const totalStats = report.totalStats || {
     score: report.score || 0,
     originalScore: report.score || 0,
@@ -382,6 +471,8 @@ const filteredIssues = useMemo(() => {
           <div className="lg:col-span-8">
             <ScanningPreview siteImg={report.siteImg} />
             <ComplianceStatus score={totalStats.score} results={report} />
+            
+            
             <TechStack techStack={report.techStack} />
           </div>
           <div className="lg:col-span-4 grid grid-cols-1 gap-4">
@@ -506,21 +597,85 @@ const filteredIssues = useMemo(() => {
                       </p>
                     </div>
 
-                    {issue.context && issue.context.length > 0 && (
+                    {issue.context && issue.context.length > 0 && issue.context[0] !== '' ? (
                       <div>
                         <h3 className="text-sm font-semibold mb-2">Affected Element</h3>
-                        <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto border border-gray-element">
+                        <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto border border-gray-200 font-mono">
                           {issue.context[0]}
                         </pre>
                       </div>
+                    ) : (
+                      <div className="bg-orange-50 border border-orange-200 rounded p-3">
+                        <h3 className="text-sm font-semibold mb-1 text-orange-800 flex items-center gap-1">
+                          <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                          </svg>
+                          Missing Element Context
+                        </h3>
+                        <p className="text-xs text-orange-700">HTML element details not available for this issue.</p>
+                      </div>
                     )}
 
-                    {issue.selectors && issue.selectors.length > 0 && (
+                    {issue.selectors && issue.selectors.length > 0 && issue.selectors[0] !== '' ? (
                       <div>
-                        <h3 className="text-sm font-semibold mb-2">CSS Selector</h3>
-                        <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto border border-gray-element">
-                          {issue.selectors[0]}
+                        <h3 className="text-sm font-semibold mb-2 flex items-center gap-1">
+                          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                          </svg>
+                          CSS Selector
+                        </h3>
+                        <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto border border-gray-200 font-mono">
+                          {issue.selectors.filter(s => s !== '').join(', ')}
                         </pre>
+                      </div>
+                    ) : (
+                      <div className="bg-red-50 border border-red-200 rounded p-3">
+                        <h3 className="text-sm font-semibold mb-1 text-red-800 flex items-center gap-1">
+                          <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                          </svg>
+                          Missing CSS Selector
+                        </h3>
+                        <p className="text-xs text-red-700">Enhanced targeting data not available for this issue.</p>
+                      </div>
+                    )}
+
+                    {issue.screenshotUrl && (
+                      <div>
+                        <h3 className="text-sm font-semibold mb-2 flex items-center gap-1">
+                          <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          Visual Evidence
+                        </h3>
+                        <div className="p-2 bg-purple-50 rounded-lg border border-purple-200">
+                          <img 
+                            src={issue.screenshotUrl} 
+                            alt="Accessibility issue screenshot" 
+                            className="max-w-full h-auto rounded border-2 border-purple-300 shadow-md cursor-pointer"
+                            style={{ maxHeight: '200px' }}
+                            onClick={() => window.open(issue.screenshotUrl, '_blank')}
+                          />
+                          <p className="text-xs text-purple-700 mt-2">
+                            Click to view full screenshot
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {issue.helpUrl && (
+                      <div className="mt-2">
+                        <a 
+                          href={issue.helpUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Learn more about this WCAG requirement
+                        </a>
                       </div>
                     )}
 

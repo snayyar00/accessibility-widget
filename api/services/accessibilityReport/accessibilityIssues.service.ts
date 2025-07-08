@@ -94,7 +94,7 @@ async function getIssueDescription(issues: any) {
         },
         { role: 'user', content: JSON.stringify(issues) },
       ],
-      model: "google/gemini-2.5-flash-preview-05-20",
+      model: "openai/gpt-4o-mini",
     });
 
     // Validate that we have a response
@@ -339,59 +339,47 @@ export const GPTChunks = async (errorCodes: string[]) => {
         {
           role: "system",
           content:
-            "You are a website accessibility report expert. You are given a List of WCGA Guideline Error Codes. You must group the error codes based on human functionality e.g 'deaf', 'blind',' Mobility','Low vision','Cognitive' and other such functionality.Remeber to group all of the given error codes. Donot Group One error code under more than one Human Functionality .Always provide the result in JSON format.",
+            "You are a website accessibility report expert. You are given a List of WCAG Guideline Error Codes. You must group the error codes based on human functionality e.g 'deaf', 'blind', 'Mobility', 'Low vision', 'Cognitive' and other such functionality. Remember to group all of the given error codes. Do not Group One error code under more than one Human Functionality. Always provide the result in valid JSON format. Return only the JSON, no other text.",
         },
         {
           role: "user",
           content:
-            "These are WCGA error Codes give JSON Object where each error code is mapped to a human functionality : [" +
-            chunk.join(" , ") +
-            "]",
+            `Please group these WCAG error codes by human functionality. Each error code should only appear in one functionality group.
+
+Error codes to group: ${chunk.join(", ")}
+
+Return valid JSON in exactly this format:
+{
+  "HumanFunctionalities": [
+    {
+      "FunctionalityName": "Low Vision",
+      "Errors": [
+        {"ErrorGuideline": "error_code_1"},
+        {"ErrorGuideline": "error_code_2"}
+      ]
+    },
+    {
+      "FunctionalityName": "Mobility",
+      "Errors": [
+        {"ErrorGuideline": "error_code_3"}
+      ]
+    }
+  ]
+}
+
+Group into categories like: Low Vision, Mobility, Cognitive, Deaf/Hard of Hearing, Blind, Motor Impairments, etc.`,
         },
       ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "map_errorcodes",
-            parameters: {
-              type: "object",
-              properties: {
-                "HumanFunctionalities": {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      "FunctionalityName": {
-                        type: "string",
-                        description: "Name of the human functionality",
-                      },
-                      Errors: {
-                        type: "array",
-                        items: {
-                          type: "object",
-                          properties: {
-                            "ErrorGuideline": {
-                              type: "string",
-                              description: "WCGA Error Codes",
-                            },
-                          },
-                          required: ["ErrorGuideline"], // Ensure these properties are required
-                        },
-                        description: "Errors related to this functionality",
-                      },
-                    },
-                    required: ["FunctionalityName", "Errors"], // Ensure these properties are required
-                  },
-                },
-              },
-            },
-          },
-        },
-      ],
-      model: "google/gemini-2.5-flash-preview-05-20",
+      model: "openai/gpt-4o-mini",
     });
-    return completion.choices[0].message.tool_calls?.[0].function.arguments;
+    
+    // Return the content directly instead of using tool calls
+    const response = completion.choices[0]?.message?.content;
+    if (!response) {
+      console.log(`⚠️ No response from GPT for chunk: ${chunk.join(', ')}`);
+      return null;
+    }
+    return response;
   });
 
   try {
@@ -407,12 +395,24 @@ export const GPTChunks = async (errorCodes: string[]) => {
     aggregatedResult.forEach((result, index) => {
       try {
         // Skip empty, null, undefined, or invalid responses
-        if (!result || result === 'undefined' || result.trim() === '' || result === 'null') {
+        if (!result || result === null || (typeof result === 'string' && (result.trim() === '' || result === 'null' || result === 'undefined'))) {
           console.log(`⚠️ Skipping invalid GPT response ${index}: "${result}"`);
           return;
         }
         
-        const parsedObject = JSON.parse(result);
+        // Clean the response - remove any markdown code blocks or extra text
+        let cleanResult = result;
+        if (typeof result === 'string') {
+          cleanResult = result.replace(/^```[\w]*\n?/, '').replace(/\n```$/, '').trim();
+          
+          // Find JSON object in the response
+          const jsonMatch = cleanResult.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            cleanResult = jsonMatch[0];
+          }
+        }
+        
+        const parsedObject = JSON.parse(cleanResult);
         if (parsedObject && parsedObject.HumanFunctionalities && Array.isArray(parsedObject.HumanFunctionalities)) {
           console.log(`✅ Merging ${parsedObject.HumanFunctionalities.length} functionalities from chunk ${index}`);
           mergedObject.HumanFunctionalities.push(...parsedObject.HumanFunctionalities);

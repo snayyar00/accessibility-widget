@@ -80,23 +80,63 @@ function transformResponse(data: any) {
   // Collect all technologies
   const technologies = [];
 
+  // Helper function to extract string value from technology item
+  const extractTechName = (tech: any): string | null => {
+    if (typeof tech === 'string') return tech;
+    if (tech && typeof tech === 'object') {
+      return tech.name || tech.technology || tech.label || String(tech);
+    }
+    return null;
+  };
+
   // Frontend
-  if (techStack.frontend?.primary) technologies.push(techStack.frontend.primary);
-  if (techStack.frontend?.frameworks) technologies.push(...techStack.frontend.frameworks);
-  if (techStack.frontend?.libraries) technologies.push(...techStack.frontend.libraries);
-  if (techStack.frontend?.css_framework) technologies.push(techStack.frontend.css_framework);
+  if (techStack.frontend?.primary) {
+    const name = extractTechName(techStack.frontend.primary);
+    if (name) technologies.push(name);
+  }
+  if (techStack.frontend?.frameworks) {
+    techStack.frontend.frameworks.forEach((fw: any) => {
+      const name = extractTechName(fw);
+      if (name) technologies.push(name);
+    });
+  }
+  if (techStack.frontend?.libraries) {
+    techStack.frontend.libraries.forEach((lib: any) => {
+      const name = extractTechName(lib);
+      if (name) technologies.push(name);
+    });
+  }
+  if (techStack.frontend?.css_framework) {
+    const name = extractTechName(techStack.frontend.css_framework);
+    if (name) technologies.push(name);
+  }
 
   // Backend
-  if (techStack.backend?.cms) technologies.push(techStack.backend.cms);
-  if (techStack.backend?.server) technologies.push(techStack.backend.server);
-  if (techStack.backend?.language) technologies.push(techStack.backend.language);
-  if (techStack.backend?.hosting) technologies.push(techStack.backend.hosting);
+  if (techStack.backend?.cms) {
+    const name = extractTechName(techStack.backend.cms);
+    if (name) technologies.push(name);
+  }
+  if (techStack.backend?.server) {
+    const name = extractTechName(techStack.backend.server);
+    if (name) technologies.push(name);
+  }
+  if (techStack.backend?.language) {
+    const name = extractTechName(techStack.backend.language);
+    if (name) technologies.push(name);
+  }
+  if (techStack.backend?.hosting) {
+    const name = extractTechName(techStack.backend.hosting);
+    if (name) technologies.push(name);
+  }
 
   // Services
   if (techStack.services) {
     Object.values(techStack.services).forEach(serviceArray => {
       if (Array.isArray(serviceArray)) {
-        technologies.push(...serviceArray);
+        serviceArray.forEach((service: any) => {
+          const name = extractTechName(service);
+          if (name) technologies.push(name);
+        });
       }
     });
   }
@@ -113,7 +153,7 @@ function transformResponse(data: any) {
       ...(techStack.frontend.frameworks || []),
       ...(techStack.frontend.libraries || []),
       techStack.frontend.css_framework,
-    ].filter(Boolean);
+    ].map(tech => extractTechName(tech)).filter(Boolean);
 
     if (frontendTechs.length > 0) {
       categorizedTechnologies.push({
@@ -129,7 +169,7 @@ function transformResponse(data: any) {
       techStack.backend.server,
       techStack.backend.language,
       techStack.backend.hosting,
-    ].filter(Boolean);
+    ].map(tech => extractTechName(tech)).filter(Boolean);
 
     if (backendTechs.length > 0) {
       categorizedTechnologies.push({
@@ -140,17 +180,23 @@ function transformResponse(data: any) {
   }
 
   if (techStack.services?.analytics?.length > 0) {
-    categorizedTechnologies.push({
-      category: 'Analytics',
-      technologies: techStack.services.analytics,
-    });
+    const analyticsTechs = techStack.services.analytics.map((tech: any) => extractTechName(tech)).filter(Boolean);
+    if (analyticsTechs.length > 0) {
+      categorizedTechnologies.push({
+        category: 'Analytics',
+        technologies: analyticsTechs,
+      });
+    }
   }
 
   if (techStack.services?.ecommerce?.length > 0) {
-    categorizedTechnologies.push({
-      category: 'E-commerce',
-      technologies: techStack.services.ecommerce,
-    });
+    const ecommerceTechs = techStack.services.ecommerce.map((tech: any) => extractTechName(tech)).filter(Boolean);
+    if (ecommerceTechs.length > 0) {
+      categorizedTechnologies.push({
+        category: 'E-commerce',
+        technologies: ecommerceTechs,
+      });
+    }
   }
 
   // Determine confidence

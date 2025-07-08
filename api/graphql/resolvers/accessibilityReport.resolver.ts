@@ -44,6 +44,11 @@ const resolvers = {
         console.log('📡 Fetching accessibility report...');
         const accessibilityReport = await fetchAccessibilityReport(url);
         console.log('✅ Accessibility report fetched successfully:', !!accessibilityReport);
+        
+        // Basic logging for debugging
+        if (accessibilityReport?.ByFunctions) {
+          console.log('✅ ByFunctions data:', accessibilityReport.ByFunctions.length, 'functionalities');
+        }
 
         // Fetch the tech stack data
         console.log('📡 Fetching tech stack data...');
@@ -53,36 +58,56 @@ const resolvers = {
           console.log('✅ Tech stack data fetched successfully:', !!techStack);
         } catch (techStackError: any) {
           console.error('⚠️ Tech stack fetch failed, using generic fallback:', techStackError.message);
-          // Provide generic tech stack fallback
+          // Provide generic tech stack fallback with all required fields
           techStack = {
-            technologies: [
+            technologies: ["HTML", "CSS", "JavaScript"],
+            categorizedTechnologies: [
               {
-                name: "HTML",
                 category: "Markup",
-                version: null,
-                description: "Standard web markup language for structuring content"
+                technologies: ["HTML"]
               },
               {
-                name: "CSS",
-                category: "Styling",
-                version: null,
-                description: "Cascading Style Sheets for visual presentation"
+                category: "Styling", 
+                technologies: ["CSS"]
               },
               {
-                name: "JavaScript",
                 category: "Programming Language",
-                version: null,
-                description: "Client-side scripting for interactive functionality"
+                technologies: ["JavaScript"]
               }
             ],
-            meta: {
-              source: "generic_fallback",
-              confidence: "low",
-              scan_date: new Date().toISOString()
-            }
+            confidence: "low",
+            accessibilityContext: {
+              platform: "web",
+              platform_type: "website",
+              has_cms: false,
+              has_ecommerce: false,
+              has_framework: false,
+              is_spa: false
+            },
+            analyzedUrl: url,
+            analyzedAt: new Date().toISOString(),
+            source: "generic_fallback"
           };
           console.log('📦 Using generic HTML/CSS/JavaScript tech stack fallback');
         }
+
+        // Function to sanitize string values for GraphQL
+        const sanitizeString = (value: any): string => {
+          if (typeof value !== 'string') return value;
+          // Escape backslashes and quotes properly for JSON
+          return value
+            .replace(/\\/g, '\\\\')  // Escape backslashes
+            .replace(/"/g, '\\"')   // Escape quotes
+            .replace(/\n/g, '\\n')  // Escape newlines
+            .replace(/\r/g, '\\r')  // Escape carriage returns
+            .replace(/\t/g, '\\t'); // Escape tabs
+        };
+
+        // Function to sanitize array of strings
+        const sanitizeStringArray = (arr: any[]): string[] => {
+          if (!Array.isArray(arr)) return [];
+          return arr.map(item => typeof item === 'string' ? sanitizeString(item) : String(item));
+        };
 
         // Ensure arrays are properly initialized to prevent GraphQL errors
         if (accessibilityReport) {
@@ -109,7 +134,7 @@ const resolvers = {
             accessibilityReport.ByFunctions = [];
           } else {
             console.log('✅ ByFunctions array found in fresh report with length:', accessibilityReport.ByFunctions.length);
-            // Ensure each functionality has proper structure
+            // Ensure each functionality has proper structure and sanitize strings
             accessibilityReport.ByFunctions = accessibilityReport.ByFunctions.map((func: any, index: number) => {
               if (!func.FunctionalityName) {
                 console.log(`⚠️  Missing FunctionalityName in ByFunctions[${index}]`);
@@ -118,9 +143,21 @@ const resolvers = {
                 console.log(`⚠️  Errors is not an array in ByFunctions[${index}]`);
                 func.Errors = [];
               }
+              
+              // Sanitize all error data to prevent JSON parsing issues
+              const sanitizedErrors = func.Errors.map((error: any) => ({
+                ...error,
+                message: sanitizeString(error.message || ''),
+                description: sanitizeString(error.description || ''),
+                recommended_action: sanitizeString(error.recommended_action || ''),
+                code: sanitizeString(error.code || ''),
+                context: sanitizeStringArray(error.context || []),
+                selectors: sanitizeStringArray(error.selectors || [])
+              }));
+              
               return {
-                FunctionalityName: func.FunctionalityName || 'Unknown',
-                Errors: func.Errors || []
+                FunctionalityName: sanitizeString(func.FunctionalityName || 'Unknown'),
+                Errors: sanitizedErrors
               };
             });
           }
@@ -137,11 +174,38 @@ const resolvers = {
           }
         }
 
+        // Ensure techStack has all required fields
+        if (techStack && !techStack.categorizedTechnologies) {
+          console.log('⚠️ Tech stack missing categorizedTechnologies, adding fallback');
+          techStack.categorizedTechnologies = [
+            {
+              category: "Markup",
+              technologies: ["HTML"]
+            },
+            {
+              category: "Styling", 
+              technologies: ["CSS"]
+            },
+            {
+              category: "Programming Language",
+              technologies: ["JavaScript"]
+            }
+          ];
+        }
+
         // Combine the accessibility report and tech stack data
-        return {
+        const finalResult = {
           ...accessibilityReport,
           techStack,
         };
+        
+        // Final result logging
+        console.log('📊 Final result:', {
+          score: finalResult.score,
+          functions: finalResult.ByFunctions?.length || 0
+        });
+        
+        return finalResult;
       } catch (error: any) {
         console.error('❌ GraphQL resolver error:', error);
         console.error('❌ GraphQL resolver error details:', {
@@ -248,6 +312,80 @@ const resolvers = {
           if (report.functionalityNames && !Array.isArray(report.functionalityNames)) {
             console.log('⚠️  FunctionalityNames field exists but is not an array');
             report.functionalityNames = [];
+          }
+          
+          // Calculate missing fields that frontend expects (same as in main service)
+          if (!report.issues || !Array.isArray(report.issues) || report.issues.length === 0) {
+            console.log('🔄 Calculating missing issues, functionalityNames, issuesByFunction, and totalStats');
+            
+            // Extract issues from ByFunctions structure
+            const issues: any[] = [];
+            if (report.ByFunctions && Array.isArray(report.ByFunctions)) {
+              report.ByFunctions.forEach((funcGroup: any) => {
+                if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
+                  funcGroup.Errors.forEach((error: any) => {
+                    const impact = error.impact || 'moderate';
+                    issues.push({
+                      ...error,
+                      impact,
+                      source: 'ByFunctions',
+                      functionality: funcGroup.FunctionalityName
+                    });
+                  });
+                }
+              });
+            }
+            
+            // Group issues by functionality  
+            const issuesByFunction: { [key: string]: any[] } = {};
+            issues.forEach((issue: any) => {
+              if (issue.functionality) {
+                const normalizedName = issue.functionality.split(' ')
+                  .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                  .join(' ');
+                
+                if (!issuesByFunction[normalizedName]) {
+                  issuesByFunction[normalizedName] = [];
+                }
+                issuesByFunction[normalizedName].push({
+                  ...issue,
+                  functionality: normalizedName
+                });
+              }
+            });
+            
+            // Get functionality names
+            const functionalityNames = Object.keys(issuesByFunction).sort();
+            
+            // Calculate total stats
+            const criticalIssues = issues.filter(issue => issue.impact === 'critical').length;
+            const warnings = issues.filter(issue => issue.impact === 'serious').length;
+            const moderateIssues = issues.filter(issue => issue.impact === 'moderate').length;
+            const webabilityEnabled = report.scriptCheckResult === 'Web Ability';
+            const baseScore = report.score || 0;
+            const enhancedScore = webabilityEnabled ? Math.min(95, baseScore + 45) : baseScore;
+            
+            const totalStats = {
+              score: enhancedScore,
+              originalScore: baseScore,
+              criticalIssues,
+              warnings,
+              moderateIssues,
+              totalElements: report.totalElements || 0,
+              hasWebAbility: webabilityEnabled,
+            };
+            
+            // Add calculated fields to report
+            report.issues = issues;
+            report.issuesByFunction = issuesByFunction;
+            report.functionalityNames = functionalityNames;
+            report.totalStats = totalStats;
+            
+            console.log('✅ Calculated fields:', {
+              issuesLength: issues.length,
+              functionalityNamesLength: functionalityNames.length,
+              totalStatsKeys: Object.keys(totalStats)
+            });
           }
         }
         

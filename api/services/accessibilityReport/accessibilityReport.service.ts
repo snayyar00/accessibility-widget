@@ -133,13 +133,18 @@ function calculateAccessibilityScore(data: any) {
   };
 }
 interface htmlcsOutput {
+  id?: string;
   code: string;
   message?: string;
   context?: string[];
   selectors?: string[];
-  description?:string;
-  recommended_action?:string;
+  description?: string;
+  recommended_action?: string;
   screenshotUrl?: string;
+  helpUrl?: string;
+  runner?: string;
+  impact?: string;
+  wcagLevel?: string;
 }
 
 interface ResultWithOriginal {
@@ -299,10 +304,10 @@ export const fetchAccessibilityReport = async (url: string) => {
             return result;
           }
           
-          // Check if this is a WebAbility result that needs GPT processing for consistency
+          // Check if this is a WebAbility result - no GPT processing needed since it already has rich descriptions
           if (result.processing_stats?.scanner_type === 'webability') {
-            console.log('🔄 WebAbility result detected, forcing through GPT processing for format consistency');
-            // Continue to GPT processing below instead of returning early
+            console.log('✅ WebAbility result detected with rich descriptions, skipping GPT processing to preserve data integrity');
+            return result;
           } else {
             console.log('✅ Pally ByFunctions data found, returning with calculated fields. Length:', result.ByFunctions.length);
             return result;
@@ -322,6 +327,9 @@ export const fetchAccessibilityReport = async (url: string) => {
             reason: result.processing_stats?.scanner_type === 'webability' ? 'WebAbility format standardization' : 'Missing ByFunctions'
           });
 
+          // Preserve enhanced data BEFORE GPT processing - store by sequential index
+          const preservedEnhancedData: any[] = [];
+          
           // For WebAbility, use both axe and htmlcs data for comprehensive GPT processing
           const guideErrors: {
             errors: htmlcsOutput[];
@@ -332,6 +340,59 @@ export const fetchAccessibilityReport = async (url: string) => {
             notices: [],
             warnings: []
           };
+          
+          // Store enhanced data in order they will be processed
+          const preserveDataInOrder = (errors: htmlcsOutput[]) => {
+            errors.forEach((error) => {
+              preservedEnhancedData.push({
+                selectors: error.selectors || [],
+                context: error.context || [],
+                screenshotUrl: (error as any).screenshotUrl,
+                helpUrl: (error as any).helpUrl,
+                runner: (error as any).runner,
+                impact: (error as any).impact,
+                wcagLevel: (error as any).wcagLevel,
+                code: error.code,
+                description: error.description,
+                recommended_action: error.recommended_action,
+                originalMessage: error.message
+              });
+            });
+          };
+          
+          // Store all enhanced data in the same order as errorCodes array
+          if (guideErrors.errors) preserveDataInOrder(guideErrors.errors);
+          if (guideErrors.notices) preserveDataInOrder(guideErrors.notices);
+          if (guideErrors.warnings) preserveDataInOrder(guideErrors.warnings);
+          
+          // For WebAbility scans, also preserve axe data (where most enhanced data is)
+          if (result.processing_stats?.scanner_type === 'webability' && result.axe) {
+            console.log('🔄 Also preserving axe data for WebAbility scan');
+            
+            // Convert axe format to htmlcs format for preservation
+            const convertAxeToHtmlcs = (axeArray: any[]): htmlcsOutput[] => {
+              return axeArray.map(axeItem => ({
+                id: axeItem.id,
+                code: axeItem.code || 'AXE_ERROR',
+                message: axeItem.message || '',
+                selectors: axeItem.selectors || [],
+                context: axeItem.context || [],
+                screenshotUrl: axeItem.screenshotUrl,
+                helpUrl: axeItem.helpUrl,
+                runner: axeItem.runner,
+                impact: axeItem.impact,
+                wcagLevel: axeItem.wcagLevel,
+                description: axeItem.description,
+                recommended_action: axeItem.help
+              }));
+            };
+            
+            if (result.axe.errors) preserveDataInOrder(convertAxeToHtmlcs(result.axe.errors));
+            if (result.axe.warnings) preserveDataInOrder(convertAxeToHtmlcs(result.axe.warnings));
+            if (result.axe.notices) preserveDataInOrder(convertAxeToHtmlcs(result.axe.notices));
+          }
+          
+          console.log('💾 Preserved enhanced data for', preservedEnhancedData.length, 'errors before GPT processing');
 
           // Add axe errors to GPT processing for WebAbility results
           if (result.processing_stats?.scanner_type === 'webability' && result.axe) {
@@ -438,10 +499,14 @@ export const fetchAccessibilityReport = async (url: string) => {
 
           if (completion) {
             console.log('✅ GPT returned completion with', completion.HumanFunctionalities?.length || 0, 'functionalities');
+            
+            // Track global error index across all functionalities for preserved data mapping
+            let globalErrorIndex = 0;
+            
             completion.HumanFunctionalities.forEach(
               (functionality: HumanFunctionality) => {
                 console.log('📋 Processing functionality:', functionality.FunctionalityName, 'with', functionality.Errors?.length || 0, 'errors');
-                functionality.Errors.forEach((error: Error) => {
+                functionality.Errors.forEach((error: Error, localErrorIndex: number) => {
                   let errorCode = error['ErrorGuideline'] || (error as any)['Error Guideline'] || (error as any)['code'] || (error as any)['Error Code'] || (error as any)['guideline'];
 
                   if (!errorCode) {
@@ -455,7 +520,46 @@ export const fetchAccessibilityReport = async (url: string) => {
                   delete error['ErrorGuideline'];
                   delete (error as any)['Error Guideline'];
 
-                  if (errorCode && errorCodeWithDescriptions[errorCode]) {
+                  // Try to restore enhanced data from preserved array by global index
+                  const enhancedData = preservedEnhancedData[globalErrorIndex];
+                  
+                  if (enhancedData) {
+                    // Restore all preserved enhanced data
+                    error.selectors = enhancedData.selectors || [];
+                    error.context = enhancedData.context || [];
+                    error.description = enhancedData.description || error.description;
+                    error.recommended_action = enhancedData.recommended_action || error.recommended_action;
+                    
+                    // Add WebAbility enhanced fields
+                    if (enhancedData.screenshotUrl) {
+                      (error as any).screenshotUrl = enhancedData.screenshotUrl;
+                      console.log('📸 Restored screenshot URL for error', globalErrorIndex, ':', String(error.message).substring(0, 50));
+                    }
+                    if (enhancedData.helpUrl) {
+                      (error as any).helpUrl = enhancedData.helpUrl;
+                    }
+                    if (enhancedData.runner) {
+                      (error as any).runner = enhancedData.runner;
+                    }
+                    if (enhancedData.impact) {
+                      (error as any).impact = enhancedData.impact;
+                    }
+                    if (enhancedData.wcagLevel) {
+                      (error as any).wcagLevel = enhancedData.wcagLevel;
+                    }
+                    
+                    console.log('🔗 Restored enhanced data for error', globalErrorIndex, ':', {
+                      originalMessage: enhancedData.originalMessage,
+                      newMessage: error.message,
+                      hasSelectors: !!(error.selectors && error.selectors.length > 0),
+                      selectorsCount: error.selectors?.length || 0,
+                      selectorsContent: error.selectors,
+                      hasScreenshot: !!(error as any).screenshotUrl,
+                      hasContext: !!(error.context && error.context.length > 0)
+                    });
+                  }
+                  // Fallback to old logic if no preserved data found
+                  else if (errorCode && errorCodeWithDescriptions[errorCode]) {
                     error.description = errorCodeWithDescriptions[errorCode]?.description;
                     error.context = errorCodeWithDescriptions[errorCode]?.context;
                     error.message = errorCodeWithDescriptions[errorCode]?.message;
@@ -464,29 +568,12 @@ export const fetchAccessibilityReport = async (url: string) => {
                     // Add screenshot URL for frontend display
                     if (errorCodeWithDescriptions[errorCode]?.screenshotUrl) {
                       (error as any).screenshotUrl = errorCodeWithDescriptions[errorCode].screenshotUrl;
-                      console.log('📸 Added screenshot URL to GPT result for:', errorCode, 'URL:', errorCodeWithDescriptions[errorCode].screenshotUrl);
+                      console.log('📸 Added screenshot URL to GPT result for:', errorCode);
                     }
-                    // Add all other WebAbility fields
-                    if (errorCodeWithDescriptions[errorCode]?.helpUrl) {
-                      (error as any).helpUrl = errorCodeWithDescriptions[errorCode].helpUrl;
-                    }
-                    if (errorCodeWithDescriptions[errorCode]?.runner) {
-                      (error as any).runner = errorCodeWithDescriptions[errorCode].runner;
-                    }
-                    if (errorCodeWithDescriptions[errorCode]?.impact) {
-                      (error as any).impact = errorCodeWithDescriptions[errorCode].impact;
-                    }
-                    if (errorCodeWithDescriptions[errorCode]?.wcagLevel) {
-                      (error as any).wcagLevel = errorCodeWithDescriptions[errorCode].wcagLevel;
-                    }
-                    console.log('🔗 Final error data for', errorCode, {
-                      hasSelectors: !!(error.selectors && error.selectors.length > 0),
-                      hasContext: !!(error.context && error.context.length > 0),
-                      hasScreenshot: !!(error as any).screenshotUrl,
-                      selectorsCount: error.selectors?.length || 0,
-                      contextCount: error.context?.length || 0
-                    });
-                  } else {
+                  }
+                  
+                  // If no enhanced data found, try fallback logic
+                  else {
                     let enhancedDescription = null;
                     if (result?.htmlcs?.errors) {
                       const enhancedError = result.htmlcs.errors.find((e: any) => e.code === errorCode);
@@ -530,6 +617,9 @@ export const fetchAccessibilityReport = async (url: string) => {
                       contextCount: error.context?.length || 0
                     });
                   }
+                  
+                  // Increment global error index for next error
+                  globalErrorIndex++;
                 });
               },
             );
@@ -595,28 +685,16 @@ export const fetchAccessibilityReport = async (url: string) => {
 
         }
 
-      // Final safety check: Ensure all required array fields are initialized before returning
-      if (!result.axe) result.axe = { errors: [], notices: [], warnings: [] };
-      if (!Array.isArray(result.axe.errors)) result.axe.errors = [];
-      if (!Array.isArray(result.axe.notices)) result.axe.notices = [];
-      if (!Array.isArray(result.axe.warnings)) result.axe.warnings = [];
-      
-      if (!result.htmlcs) result.htmlcs = { errors: [], notices: [], warnings: [] };
-      if (!Array.isArray(result.htmlcs.errors)) result.htmlcs.errors = [];
-      if (!Array.isArray(result.htmlcs.notices)) result.htmlcs.notices = [];
-      if (!Array.isArray(result.htmlcs.warnings)) result.htmlcs.warnings = [];
-      
-      if (!Array.isArray(result.ByFunctions)) result.ByFunctions = [];
-
       return result;
     } catch (error) {
       console.error(`Error with https://www.: ${error.message}`);
       try {
-        if (!url.startsWith('https://') && !url.startsWith('http://')) {
-          url = 'https://' + url.replace('https://www.', '').replace('http://www.', '');
+        let retryUrl = sanitizedUrl;
+        if (!retryUrl.startsWith('https://') && !retryUrl.startsWith('http://')) {
+          retryUrl = 'https://' + retryUrl.replace('https://www.', '').replace('http://www.', '');
         }
 
-        const result: ResultWithOriginal = await getAccessibilityInformation(url);
+        const result: ResultWithOriginal = await getAccessibilityInformation(retryUrl);
         console.log('result from retrying with https://:', result.score, result.totalElements, result.ByFunctions);
         return result;
       } catch (retryError) {

@@ -29,6 +29,19 @@
     overflow: auto;
   }
 
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .spinner-ring {
+    animation: spin 1s linear infinite;
+  }
+
   .topbar_avatar img {
     border-radius: 100%;
     width: 50px;

@@ -155,10 +155,10 @@ export async function getAccessibilityInformationPally(domain: string) {
 
   let results;
   
-  // Multiple retry strategies for different types of websites
+  // Single Pally attempt, then let adapter fall back to WebAbility
   const strategies = [
     {
-      name: 'Enhanced JavaScript Handling',
+      name: 'Pally Scan',
       options: {
         wait: 3000,
         timeout: 30000,
@@ -179,40 +179,6 @@ export async function getAccessibilityInformationPally(domain: string) {
           ]
         }
       }
-    },
-    {
-      name: 'JavaScript Disabled Mode',
-      options: {
-        wait: 1000,
-        timeout: 20000,
-        chromeLaunchConfig: {
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-javascript',
-            '--disable-gpu'
-          ]
-        }
-      }
-    },
-    {
-      name: 'Conservative Mode',
-      options: {
-        wait: 5000,
-        timeout: 45000,
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        chromeLaunchConfig: {
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox'
-          ]
-        }
-      }
-    },
-    {
-      name: 'Basic Mode',
-      options: {}
     }
   ];
 
