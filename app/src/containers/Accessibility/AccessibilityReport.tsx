@@ -17,7 +17,7 @@ import AccordionGroup from '@mui/joy/AccordionGroup';
 import Accordion from '@mui/joy/Accordion';
 import ToggleButtonGroup from '@mui/joy/ToggleButtonGroup';
 import Stack from '@mui/joy/Stack';
-import { translateText,translateSingleText, LANGUAGES } from '@/utils/translator';
+import { translateText,translateSingleText,LANGUAGES } from '@/utils/translator';
 
 import AccordionDetails, {
   accordionDetailsClasses,
@@ -109,7 +109,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [reportUrl, setReportUrl] = useState<string>('');
 
   
-  const [currentLanguage, setCurrentLanguage] = useState<string>(' ');
+  const [currentLanguage, setCurrentLanguage] = useState<string>('');
   const [showLangTooltip, setShowLangTooltip] = useState(false);
   // Combine options for existing sites and a custom "Enter a new domain" option
   const siteOptions = sitesData?.getUserSites?.map((domain: any) => ({
@@ -1045,6 +1045,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     return 'moderate'
   }
 
+  const [downloadingRow, setDownloadingRow] = useState<string | null>(null);
+
   return (
     <>
     <TourGuide
@@ -1142,7 +1144,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 className="search-button bg-primary text-white px-4 py-2 rounded whitespace-nowrap w-full"
                 style={{ width: '100%' }}
                 onClick={() => {
-                  if (!currentLanguage || currentLanguage === '' || currentLanguage === ' ') {
+                    if (!currentLanguage || !currentLanguage.trim()) {
                     setShowLangTooltip(true);
                     setTimeout(() => setShowLangTooltip(false), 2000);
                     return;
@@ -1256,8 +1258,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                           View
                         </button>
                         <button
-                          className="text-blue-600 underline font-medium"
+                          className="text-blue-600 underline font-medium flex items-center gap-2"
+                          disabled={downloadingRow === row.r2_key}
                           onClick={async () => {
+                            setDownloadingRow(row.r2_key);
                             try {
                               // Fetch the report for the clicked row and wait for the response
                               const { data: fetchedReportData } = await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
@@ -1278,10 +1282,18 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             } catch (error) {
                               console.error('Error fetching report:', error);
                               toast.error('Failed to generate PDF. Please try again.');
+                            } finally {
+                              setDownloadingRow(null);
                             }
                           }}
                         >
-                          Download
+                          <span className="flex justify-end items-center w-full">
+                            {downloadingRow === row.r2_key ? (
+                              <CircularProgress size={14} sx={{ color: 'blue', marginLeft: 4 }} />
+                               ) : (
+                              'Download'
+                            )}
+                          </span>
                         </button>
                       </td>
                     </tr>
