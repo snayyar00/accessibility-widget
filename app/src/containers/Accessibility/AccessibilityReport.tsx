@@ -1045,6 +1045,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     return 'moderate'
   }
 
+  const [downloadingRow, setDownloadingRow] = useState<string | null>(null);
+
   return (
     <>
     <TourGuide
@@ -1256,8 +1258,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                           View
                         </button>
                         <button
-                          className="text-blue-600 underline font-medium"
+                          className="text-blue-600 underline font-medium flex items-center gap-2"
+                          disabled={downloadingRow === row.r2_key}
                           onClick={async () => {
+                            setDownloadingRow(row.r2_key);
                             try {
                               // Fetch the report for the clicked row and wait for the response
                               const { data: fetchedReportData } = await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
@@ -1278,10 +1282,18 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             } catch (error) {
                               console.error('Error fetching report:', error);
                               toast.error('Failed to generate PDF. Please try again.');
+                            } finally {
+                              setDownloadingRow(null);
                             }
                           }}
                         >
-                          Download
+                          <span className="flex justify-end items-center w-full">
+                            {downloadingRow === row.r2_key ? (
+                              <CircularProgress size={14} sx={{ color: 'blue', marginLeft: 4 }} className="ml-2" />
+                            ) : (
+                              'Download'
+                            )}
+                          </span>
                         </button>
                       </td>
                     </tr>

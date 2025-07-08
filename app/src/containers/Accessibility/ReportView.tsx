@@ -1093,6 +1093,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [email, setEmail] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false); // <-- Add this line
 
   let status, message, icon, bgColor, textColor;
 
@@ -1124,6 +1125,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
   // Handle PDF generation and download only
   const handleDownloadSubmit = async () => {
+    setIsDownloading(true); // <-- Set loading state
     try {
       // Generate PDF using the same logic as ScannerHero
        const pdfBlob = await generatePDF(results);
@@ -1142,6 +1144,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     } catch (error) {
       toast.error('Failed to generate the report. Please try again.');
       console.error('PDF generation error:', error);
+    } finally {
+      setIsDownloading(false); // <-- Reset loading state
     }
   };
 
@@ -1180,6 +1184,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     const MAX_TOTAL_SCORE = 95;
     const issues = extractIssuesFromReport(reportData);
 
+    console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
     const baseScore = reportData.score || 0;
     const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility';
     const enhancedScore = hasWebAbility
@@ -1208,6 +1213,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F'); 
 
     let logoBottomY = 0;
+
 
     if (logoImage) {
       const img = new Image();
@@ -1291,7 +1297,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
         doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
 
-        // Add a link to logoUrl if available
         if (logoUrl) {
           doc.link(logoX, logoY, drawWidth, drawHeight, {
             url: logoUrl,
@@ -1867,9 +1872,16 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       
           <button
             onClick={handleDownloadSubmit}
-            className="whitespace-nowrap px-6 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 transition-colors"
+            className="whitespace-nowrap px-6 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            disabled={isDownloading}
           >
-            Get Free Report
+            <span className="flex justify-center items-center w-full">
+              {isDownloading ? (
+                <CircularProgress size={22} sx={{ color: 'white' }} />
+              ) : (
+                'Get Free Report'
+              )}
+            </span>
           </button>
           <div className="relative">
             <select

@@ -16,6 +16,11 @@ export const LANGUAGES = {
   it: { code: 'it', name: 'Italian', nativeName: 'Italiano' },
   pt: { code: 'pt', name: 'Portuguese', nativeName: 'Português' },
   nl: { code: 'nl', name: 'Dutch', nativeName: 'Nederlands' },
+  pl: { code: 'pl', name: 'Polish', nativeName: 'Polski' },
+  sv: { code: 'sv', name: 'Swedish', nativeName: 'Svenska' },
+  no: { code: 'no', name: 'Norwegian', nativeName: 'Norsk' },
+  da: { code: 'da', name: 'Danish', nativeName: 'Dansk' },
+  fi: { code: 'fi', name: 'Finnish', nativeName: 'Suomi' },
   ru: { code: 'ru', name: 'Russian', nativeName: 'Русский' },
   ja: { code: 'ja', name: 'Japanese', nativeName: '日本語' },
   ko: { code: 'ko', name: 'Korean', nativeName: '한국어' },
@@ -24,12 +29,8 @@ export const LANGUAGES = {
   hi: { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
   th: { code: 'th', name: 'Thai', nativeName: 'ไทย' },
   vi: { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
-  tr: { code: 'tr', name: 'Turkish', nativeName: 'Türkçe' },
-  pl: { code: 'pl', name: 'Polish', nativeName: 'Polski' },
-  sv: { code: 'sv', name: 'Swedish', nativeName: 'Svenska' },
-  no: { code: 'no', name: 'Norwegian', nativeName: 'Norsk' },
-  da: { code: 'da', name: 'Danish', nativeName: 'Dansk' },
-  fi: { code: 'fi', name: 'Finnish', nativeName: 'Suomi' }
+  tr: { code: 'tr', name: 'Turkish', nativeName: 'Türkçe' }
+
 } as const;
 
 export type LanguageCode = keyof typeof LANGUAGES;
