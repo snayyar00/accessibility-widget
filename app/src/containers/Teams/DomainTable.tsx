@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useMutation } from '@apollo/client';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLazyQuery, useMutation } from '@apollo/client';
 import { FaTrash, FaCheck, FaTimes, FaCog } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
@@ -15,8 +15,11 @@ import updateSite from '@/queries/sites/updateSite';
 import isValidDomain from '@/utils/verifyDomain';
 import ConfirmDeleteSiteModal from './DeleteWarningModal';
 import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
+import getDomainStatus from '@/utils/getDomainStatus';
+import applyStatusClass from '@/utils/applyStatusClass';
+import ActivatePlanWarningModal from './ActivatePlanWarningModal';
 
-interface Domain {
+export interface Domain {
   id: number;
   url: string;
   expiredAt: string;
@@ -54,6 +57,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [tempDomain, setTempDomain] = useState('');
   const [expiryDays,setExpiryDays] = useState(-1);
+  const selectedDomain = useRef<Domain | null>(null);
+  const [showActivateModal, setShowActivateModal] = useState(false);
 
   const [deleteSiteMutation] = useMutation(deleteSite, {
     onCompleted: (response) => {
@@ -214,54 +219,14 @@ const DomainTable: React.FC<DomainTableProps> = ({
     setEditingId(null);
   };
 
-  const applyStatusClass = (domainUrl:string,status: string, trial: number): string => {
-    if(appSumoDomains.includes(domainUrl)){
-      return 'bg-green-200 text-green-600';
-    }
-    if (!status) {
-      return 'bg-yellow-200 text-yellow-800';
-    }
-    if (trial) {
-      return 'bg-yellow-200 text-yellow-800';
-    }
-    const currentTime = new Date().getTime();
-    const timeDifference = new Date(parseInt(status)).getTime() - currentTime;
-    const sevendays = 7 * 24 * 60 * 60 * 1000;
 
-    if (timeDifference > sevendays) {
-      return 'bg-green-200 text-green-600';
-    }
-    if (timeDifference < sevendays && timeDifference > 0) {
-      return 'bg-red-200 text-red-600';
-    }
-    return 'bg-yellow-200 text-yellow-800';
-  };
 
-  const getDomainStatus = (domainUrl:string,status: string, trial: number): string => {
-    if(appSumoDomains.includes(domainUrl)){
-      return 'Life Time';
-    }
-    if (!status) {
-      return 'Trial Expired';
-    }
-    if (trial) {
-      return 'Trial';
-    }
-    const currentTime = new Date().getTime();
-    const timeDifference = new Date(parseInt(status)).getTime() - currentTime;
-    const sevendays = 7 * 24 * 60 * 60 * 1000;
-
-    if (timeDifference > sevendays) {
-      return 'Active';
-    }
-    if (timeDifference < sevendays && timeDifference > 0) {
-      return trial === 1 ? 'Trial' : 'Expiring';
-    }
-    return 'Expired';
-  };
 
   const [tierPlan,setTierPlan] = useState(false);
   const [appSumoDomains,setAppSumoDomain] = useState<string[]>([]);
+  const [appSumoCount,setAppSumoCount] = useState(0);
+  const [codeCount,setCodeCount] = useState(0);
+  const [isStripeCustomer,setIsStripeCustomer] = useState(false);
 
   const handleSubscription = async (selectedDomain: Domain) => {
     setBillingLoading(true);
@@ -313,6 +278,15 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const handleCloseModal = () => {
     setShowModal(false);
   };
+  
+  const handleCloseActivateModal = () => {
+    setShowActivateModal(false);
+  }
+
+  const handleOpenActivateModal = (domain: Domain) => {
+    setShowActivateModal(true);
+    selectedDomain.current = domain;
+  }
 
   useEffect(() => {
     if (data) {
@@ -358,80 +332,21 @@ const DomainTable: React.FC<DomainTableProps> = ({
       if(customerData.expiry){
         setExpiryDays(customerData.expiry);
       }
+      if(customerData.appSumoCount){
+        setAppSumoCount(customerData.appSumoCount);
+      }
+      if(customerData.codeCount){
+        setCodeCount((customerData.codeCount * 2));
+      }
+      if(customerData.isCustomer == true && customerData.card)
+      {
+        setIsStripeCustomer(true);
+      }
     }
   },[customerData])
 
   return (
     <>
-      {/* {activePlan && planMetaData ? (
-        <Card
-          sx={{ borderRadius: 5 }}
-          className="max-w-5xl mx-auto my-6 shadow-md hover:shadow-xl transition-shadow duration-300 bg-gradient-to-br from-background to-secondary/10 rounded-xl"
-        >
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-              <div>
-                <h2 className="text-2xl font-semibold text-primary">
-                  Subscription Details
-                </h2>
-                <p className="text-muted-foreground mt-1">
-                  You are subscribed to the{' '}
-                  <span className="font-bold text-black uppercase">
-                    {activePlan}{expiryDays > 0 ? (`(Trial)`):(null)}
-                  </span>
-                </p>
-                {expiryDays > 0 ? ( <h2 className="text-lg font-semibold text-primary">
-                  Days Remaining: {expiryDays} Days
-                </h2>):(null)}
-              </div>
-            </div>
-            <div className="h-px bg-border my-4" />
-            <div>
-              <h3 className="text-lg font-medium mb-2 text-primary">
-                Domain Usage
-              </h3>
-              <LinearProgress
-                value={
-                  (Number(planMetaData.usedDomains) /
-                    Number(planMetaData.maxDomains)) *
-                  100
-                }
-                variant="determinate"
-                className="h-2 mb-2"
-              />
-              <div className="flex justify-between text-sm text-muted-foreground">
-                {planMetaData.usedDomains ? (
-                  <>
-                    <span className="font-medium">
-                      {planMetaData.usedDomains} used
-                    </span>
-                    <span>{planMetaData.maxDomains} total</span>
-                  </>
-                ) : (
-                  <span className="font-medium">No Domains Added to Plan</span>
-                )}
-              </div>
-            </div>
-            <div className="mt-4 p-4 bg-[#f5f7fb] rounded-lg hover:bg-secondary/30 transition-colors duration-300">
-              <h4 className="text-md font-semibold text-secondary-foreground mb-2">
-                Upgrade your plan
-              </h4>
-              <p className="text-sm text-secondary-foreground/80">
-                Need more domains? Upgrade now for additional features and
-                increased limits.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : <div className='flex justify-center mt-5'>
-        <CircularProgress
-          size={100}
-          sx={{ color: 'primary' }}
-          className="m-auto"
-        />
-      </div>
-      } */}
-
       <ConfirmDeleteSiteModal
         billingLoading={billingLoading}
         domainID={deleteSiteID}
@@ -440,6 +355,17 @@ const DomainTable: React.FC<DomainTableProps> = ({
         onClose={handleCloseModal}
         onDelete={handleDelete}
         appSumoCount={customerData?.appSumoCount || 0}
+      />
+
+      <ActivatePlanWarningModal
+        billingLoading={billingLoading}
+        setBillingLoading={setBillingLoading}
+        domain={selectedDomain.current}
+        promoCode={appSumoCount <= codeCount ? [appSumoCount]:[]}
+        setReloadSites={setReloadSites}
+        isOpen={showActivateModal}
+        onClose={handleCloseActivateModal}
+        isStripeCustomer={isStripeCustomer}
       />
 
       <div className="container mx-auto px-4 py-8">
@@ -470,6 +396,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   domain.url,
                   domain.expiredAt,
                   domain.trial,
+                  appSumoDomains
                 );
                 return (
                   <tr
@@ -494,6 +421,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           domain.url,
                           domain.expiredAt,
                           domain.trial,
+                          appSumoDomains,
                         )}`}
                       >
                         {domainStatus}
@@ -547,7 +475,18 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                       : 'Activate'}
                                   </button>
                                 ) : (
-                                  <button
+                                  appSumoCount < codeCount ? (
+                                    <button
+                                    onClick={() => {
+                                      handleOpenActivateModal(domain);
+                                    }}
+                                    type="submit"
+                                    className="p-2 bg-green text-white rounded-md text-sm flex items-center justify-center hover:bg-green-600 transition-colors duration-200"
+                                  >
+                                    Activate
+                                  </button>
+                                  ) : (
+                                    <button
                                     onClick={() => {
                                       setPaymentView(true);
                                       openModal();
@@ -559,6 +498,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                   >
                                     Buy License
                                   </button>
+                                  )
+                                  
                                 )}
                               </>
                             )}
@@ -595,6 +536,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
               domain.url,
               domain.expiredAt,
               domain.trial,
+              appSumoDomains
             );
             return (
               <div
@@ -625,6 +567,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           domain.url,
                           domain.expiredAt,
                           domain.trial,
+                          appSumoDomains,
                         )}`}
                       >
                         {domainStatus}

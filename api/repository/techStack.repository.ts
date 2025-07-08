@@ -3,6 +3,25 @@ import fetch from 'node-fetch';
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 const cache = new Map();
 
+function createFallbackResponse(url: string = '') {
+  return {
+    technologies: ["Unknown"],
+    detectedTechnologies: ["Unknown"],
+    categorizedTechnologies: [] as Array<{category: string; technologies: string[]}>,
+    categories: ["Unknown"],
+    confidence: 'low' as const,
+    platform: 'Unknown',
+    platformType: 'Unknown',
+    accessibilityContext: {},
+    architecture: {},
+    confidenceScores: {},
+    aiAnalysis: {},
+    analyzedUrl: url,
+    analyzedAt: new Date().toISOString(),
+    source: 'external_api',
+  };
+}
+
 export async function fetchTechStackFromAPI(url: string) {
   if (!url) {
     throw new Error('Missing URL parameter');
@@ -58,7 +77,8 @@ export async function fetchTechStackFromAPI(url: string) {
 
     return transformedData;
   } catch (error) {
-    throw new Error(`Error processing request: ${error.message}`);
+    console.error('Error fetching tech stack:', error);
+    return createFallbackResponse(url);
   }
 }
 
