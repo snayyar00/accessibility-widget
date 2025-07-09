@@ -40,7 +40,7 @@ export async function findSitesByUserId(id: number): Promise<IUserSites[]> {
 		.where({ [siteColumns.user_id]: id });
 }
 
-export async function findSiteById(id: number): Promise<IUserSites[]> {
+export async function findSiteById(id: number): Promise<FindAllowedSitesProps> {
 	return database(TABLE)
 		.where({ [siteColumns.id]: id }).first();
 }
