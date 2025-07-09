@@ -1444,27 +1444,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
-  app.get('/health', async (_: Request, res: Response) => {
-    try {
-      await database.raw('SELECT 1');
-
-      res.status(200).json({
-        status: 'healthy',
-        database: 'connected',
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error) {
-      console.error('Health check failed:', error);
-
-      res.status(503).json({
-        status: 'unhealthy',
-        database: 'disconnected',
-        error: error.message,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  });
-
   const { rateLimitDirectiveTransformer } = rateLimitDirective({
     keyGenerator: (source: any, args: any, context: any, info: any): string => {
       // Priority 1: Use authenticated user ID for better isolation
