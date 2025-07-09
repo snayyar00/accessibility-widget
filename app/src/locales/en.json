@@ -63,6 +63,13 @@
       "valid_email": "Email invalid",
       "require_password": "Password is required",
       "min_password": "Password must be at least 8 characters",
+      "max_password": "Password cannot exceed 50 characters",
+      "max_name": "Name cannot exceed 100 characters",
+      "max_email": "Email cannot exceed 100 characters",
+      "max_url": "URL cannot exceed 100 characters",
+      "account_locked": "Account locked. Check email or reset password",
+      "account_locked_after_attempts": "Account locked. Reset password to unlock",
+      "attempts_warning": "{{attempts}} attempts remaining before account lock",
       "require_password_confirm": "Password confirm is required",
       "password_match": "Password must match",
       "require_current_password": "Current password is required",
@@ -101,6 +108,7 @@
       "button_text": "Sign in",
       "next": "Next",
       "forgot_password": "Forgot Password?",
+      "reset_password_to_unlock": "Reset Password to Unlock Account",
       "not_have_account": "Dont have account? <0>Register</0>"
     },
     "error": {
