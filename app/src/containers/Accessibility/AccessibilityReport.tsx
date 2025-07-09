@@ -17,6 +17,8 @@ import AccordionGroup from '@mui/joy/AccordionGroup';
 import Accordion from '@mui/joy/Accordion';
 import ToggleButtonGroup from '@mui/joy/ToggleButtonGroup';
 import Stack from '@mui/joy/Stack';
+import { translateText,translateMultipleTexts,LANGUAGES } from '@/utils/translator';
+
 import AccordionDetails, {
   accordionDetailsClasses,
 } from '@mui/joy/AccordionDetails';
@@ -58,6 +60,7 @@ import autoTable from 'jspdf-autotable';
 import Select from 'react-select/creatable';
 import { set } from 'lodash';
 import Modal from '@/components/Common/Modal';
+import Tooltip from '@mui/material/Tooltip';
 
 import getWidgetSettings from '@/utils/getWidgetSettings'
 const WEBABILITY_SCORE_BONUS = 45;
@@ -105,6 +108,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [reportUrl, setReportUrl] = useState<string>('');
 
+  
+  const [currentLanguage, setCurrentLanguage] = useState<string>('');
+  const [showLangTooltip, setShowLangTooltip] = useState(false);
   // Combine options for existing sites and a custom "Enter a new domain" option
   const siteOptions = sitesData?.getUserSites?.map((domain: any) => ({
     value: domain.url,
@@ -278,12 +284,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     const MAX_TOTAL_SCORE = 95;
     const issues = extractIssuesFromReport(reportData);
 
+    //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
     const baseScore = reportData.score || 0;
     const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility';
     const enhancedScore = hasWebAbility
       ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
       : baseScore;
 
+      
     let status: string, message: string, statusColor: [number, number, number];
     if (enhancedScore >= 80) {
       status = 'Compliant';
@@ -300,10 +308,43 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       statusColor = [220, 38, 38]; // red-600
     }
 
+    const [
+      translatedStatus,
+      translatedMessage,
+      translatedMild,
+      translatedModerate,
+      translatedSevere,
+      translatedScore,
+      translatedIssue,
+      translatedIssueMessage,
+      translatedContext,
+      translatedFix,
+      translatedLabel,
+      translatedTotalErrors
+    ] = await translateMultipleTexts(
+      [
+        status,
+        message,
+        'Mild',
+        'Moderate',
+        'Severe',
+        'Score',
+        'Issue',
+        'Message',
+        'Context',
+        'Fix',
+        'Scan results for ',
+        'Total Errors'
+      ],
+      currentLanguage
+    );
+    
+    status = translatedStatus;
     doc.setFillColor(21, 101, 192); // dark blue background
     doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F'); 
 
     let logoBottomY = 0;
+
 
     if (logoImage) {
       const img = new Image();
@@ -387,7 +428,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
         doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
 
-        // Add a link to logoUrl if available
         if (logoUrl) {
           doc.link(logoX, logoY, drawWidth, drawHeight, {
             url: logoUrl,
@@ -398,7 +438,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         logoBottomY = Math.max(logoY + drawHeight, containerY + containerH);
       }
     }
-
 
     const containerWidth = 170;
     const containerHeight = 60;
@@ -424,7 +463,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setFontSize(15);
     doc.setTextColor(0, 0, 0);
     // Compose the full string and measure widths
-    const label = 'Scan results for ';
+    let  label = 'Scan results for ';
+    label = translatedLabel;
+
     const url = `${reportData.url}`;
     const labelWidth = doc.getTextWidth(label);
     const urlWidth = doc.getTextWidth(url);
@@ -446,11 +487,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setFont('helvetica', 'bold');
     doc.text(status, 105, textY, { align: 'center' });
 
+    message = translatedMessage;
     textY += 9;
     doc.setFontSize(12);
     doc.setTextColor(51, 65, 85); 
     doc.setFont('helvetica', 'normal');
     doc.text(message, 105, textY, { align: 'center' });
+    
 
     textY += 9;
     doc.setFontSize(10);
@@ -484,7 +527,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
-    doc.text('Total Errors', circle1X, circleY + circleRadius + 9, {
+    doc.text(translatedTotalErrors, circle1X, circleY + circleRadius + 9, {
       align: 'center',
     });
 
@@ -507,7 +550,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
-    doc.text('Score', circle2X, circleY + circleRadius + 9, {
+    doc.text(translatedScore, circle2X, circleY + circleRadius + 9, {
       align: 'center',
     });
     // --- END CIRCLES ---
@@ -524,13 +567,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     // Use blue shades for all summary boxes
     const summaryBoxes = [
       {
-        label: 'Severe',
+        label:  translatedSevere,
         count: counts.critical + counts.serious,
         color: [255, 204, 204],
       },
-      { label: 'Moderate', count: counts.moderate, color: [187, 222, 251] },
+      { label: translatedModerate, count: counts.moderate, color: [187, 222, 251] },
       {
-        label: 'Mild',
+        label:  translatedMild,
         count: total - (counts.critical + counts.serious + counts.moderate),
         color: [225, 245, 254],
       }, 
@@ -560,12 +603,15 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     // Build the rows
     let tableBody: any[] = [];
+    const translatedIssues = await translateText(issues, currentLanguage);
 
-    issues.forEach((issue, issueIdx) => {
+  
+
+    translatedIssues.forEach((issue, issueIdx) => {
       // Add header row for each issue with beautiful styling
       tableBody.push([
         {
-          content: 'Issue',
+          content: translatedIssue,
           colSpan: 2,
           styles: {
             fillColor: [255, 255, 255], // white background
@@ -578,7 +624,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           },
         },
         {
-          content: 'Message',
+          content: translatedIssueMessage,
           colSpan: 2,
           styles: {
             fillColor: [255, 255, 255], // matching white background
@@ -643,7 +689,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         // Heading: "Context:"
         tableBody.push([
           {
-            content: 'Context:',
+            content: translatedContext,
             colSpan: 4,
             styles: {
               fontStyle: 'bolditalic',
@@ -710,7 +756,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         // Heading row for Fix
         tableBody.push([
           {
-            content: 'Fix:',
+            content: translatedFix,
             colSpan: 4,
             styles: {
               fontStyle: 'bolditalic',
@@ -934,6 +980,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     return doc.output('blob');
   };
+
+
+
+
   // Extract issues from report structure
   function extractIssuesFromReport(report: any) {
     const issues: any[] = []
@@ -1025,6 +1075,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     return 'moderate'
   }
 
+  const [downloadingRow, setDownloadingRow] = useState<string | null>(null);
+
   return (
     <>
     <TourGuide
@@ -1040,49 +1092,105 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         <p className="text-xl text-gray-600">
           Evaluate your website's accessibility in seconds. View a history of all accessibility scans. Download your reports.
         </p>
+  
       </header>
 
       <div className="w-full pl-6 pr-6 border-none shadow-none flex flex-col justify-center items-center">
         <div className="search-bar-container bg-white my-6 p-3 sm:p-4 rounded-xl w-full">
-          <div className="flex flex-col gap-4">
-            <Select
-              options={siteOptions}
-              value={selectedOption}
-              onChange={(selected: OptionType | null) => {
-                setSelectedOption(selected);
-                setSelectedSite(selected?.value ?? ''); // Update the selectedSite state
-                setDomain(selected?.value ?? ''); // Update the domain state
-              }}
-              onCreateOption={(inputValue: any) => {
-                // Handle new domain creation
-                const newOption = { value: inputValue, label: inputValue };
-                setSelectedOption(newOption);
-                setSelectedSite(inputValue); // Update the selectedSite state
-                setDomain(inputValue); // Update the domain state
-              }}
-              placeholder="Select or enter a domain"
-              isSearchable
-              isClearable
-              formatCreateLabel={(inputValue: any) => `Enter a new domain: "${inputValue}"`}
-            />
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
 
-            <button
-              type="button"
-              className="search-button bg-primary text-white px-4 py-2 rounded"
-              onClick={() => {
-                if (domain) {
-                  //checkScript();
-                  handleSubmit();
-                } else {
-                  toast.error('Please enter or select a domain!');
-                }
-              }}
-            >
-              Free Scan
-              {loading && <CircularProgress size={14} sx={{ color: 'white' }} className="ml-2 my-auto" />}
-            </button>
+              <div className="relative w-full md:flex-1 min-w-0 md:min-w-[130px] md:max-w-[140px]">
+                <Tooltip
+                  title="Please select a language before scanning."
+                  open={showLangTooltip}
+                  placement="top"
+                  arrow
+                >
+                  <select
+                    value={currentLanguage}
+                    onChange={(e) => {
+                      setCurrentLanguage(e.target.value);
+                      setShowLangTooltip(false);
+                    }}
+                    className="appearance-none bg-white border border-gray-300 rounded-md px-2 py-2 pr-6 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[38px] w-full"
+                  >
+                    <option value="">Select Language</option>
+                    {Object.values(LANGUAGES).map((language) => (
+                      <option key={language.code} value={language.code}>
+                        {language.nativeName}
+                      </option>
+                    ))}
+                  </select>
+                </Tooltip>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+
+
+              
+              <div className="w-full md:flex-1 min-w-0">
+                <Select
+                  options={siteOptions}
+                  value={selectedOption}
+                  onChange={(selected: OptionType | null) => {
+                    setSelectedOption(selected);
+                    setSelectedSite(selected?.value ?? ''); // Update the selectedSite state
+                    setDomain(selected?.value ?? ''); // Update the domain state
+                  }}
+                  onCreateOption={(inputValue: any) => {
+                    // Handle new domain creation
+                    const newOption = { value: inputValue, label: inputValue };
+                    setSelectedOption(newOption);
+                    setSelectedSite(inputValue); // Update the selectedSite state
+                    setDomain(inputValue); // Update the domain state
+                  }}
+                  placeholder="Select or enter a domain"
+                  isSearchable
+                  isClearable
+                  formatCreateLabel={(inputValue: any) => `Enter a new domain: \"${inputValue}\"`}
+                  classNamePrefix="react-select"
+                  className="w-full min-w-0"
+                  styles={{
+                    control: (provided: any, state: any) => ({
+                      ...provided,
+                      borderRadius: '6px',
+                      border: state.isFocused ? '1px solid #3b82f6' : '1px solid #d1d5db',
+                      minHeight: '38px',
+                      boxShadow: state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.1)' : 'none',
+                      '&:hover': {
+                        border: state.isFocused ? '1px solid #3b82f6' : '1px solid #d1d5db',
+                      },
+                    }),
+                  }}
+                />
+              </div>
+            </div>
+            <div className="flex justify-center mt-4 w-full">
+              <button
+                type="button"
+                className="search-button bg-primary text-white px-4 py-2 rounded whitespace-nowrap w-full"
+                style={{ width: '100%' }}
+                onClick={() => {
+                    if (!currentLanguage || !currentLanguage.trim()) {
+                    setShowLangTooltip(true);
+                    setTimeout(() => setShowLangTooltip(false), 2000);
+                    return;
+                  }
+                  if (domain) {
+                    handleSubmit();
+                  } else {
+                    toast.error('Please enter or select a domain!');
+                  }
+                }}
+              >
+                Free Scan
+                {loading && <CircularProgress size={14} sx={{ color: 'white' }} className="ml-2 my-auto" />}
+              </button>
+            </div>
           </div>
-        </div>
 
         <div className="mt-6 pl-6 pr-6 grid md:grid-cols-3 gap-6 text-center">
           <Card>
@@ -1123,9 +1231,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         
         {siteOptions.some((option: any) => normalizeDomain(option.value) === normalizeDomain(selectedOption?.value ?? '')) && enhancedScoresCalculated && processedReportKeys.length > 0 &&  (
           <div className="accessibility-issues-section bg-white rounded-xl p-6 mt-12 shadow mr-6 ml-6">
-            <h3 className="text-2xl font-medium text-gray-800 mb-6 border-b-2 border-gray-300 pb-2">
-              Your audit history
-            </h3>
+            <div className="flex items-center justify-between mb-6 border-b-2 border-gray-300 pb-2">
+              <h3 className="text-2xl font-medium text-gray-800">
+                Your audit history
+              </h3>
+            </div>
             <table className="w-full text-left border-separate border-spacing-y-2">
               <thead>
                 <tr className="text-gray-500 text-sm uppercase">
@@ -1178,8 +1288,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                           View
                         </button>
                         <button
-                          className="text-blue-600 underline font-medium"
+                          className="text-blue-600 underline font-medium flex items-center gap-2"
+                          disabled={downloadingRow === row.r2_key}
                           onClick={async () => {
+                            setDownloadingRow(row.r2_key);
                             try {
                               // Fetch the report for the clicked row and wait for the response
                               const { data: fetchedReportData } = await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
@@ -1200,10 +1312,18 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             } catch (error) {
                               console.error('Error fetching report:', error);
                               toast.error('Failed to generate PDF. Please try again.');
+                            } finally {
+                              setDownloadingRow(null);
                             }
                           }}
                         >
-                          Download
+                          <span className="flex justify-end items-center w-full">
+                            {downloadingRow === row.r2_key ? (
+                              <CircularProgress size={14} sx={{ color: 'blue', marginLeft: 4 }} />
+                               ) : (
+                              'Download'
+                            )}
+                          </span>
                         </button>
                       </td>
                     </tr>

@@ -1,4 +1,5 @@
-/* eslint-disable wrap-iife */
+import { requireJsonContent } from './middlewares/contentType.middleware';
+import { emailLimiter } from './middlewares/limiters.middleware';
 import dotenv from 'dotenv';
 
 import express, { NextFunction, Request, Response } from 'express';
@@ -38,13 +39,23 @@ import { validateBody } from './middlewares/validation.middleware';
 import { isAuthenticated } from '~/middlewares/auth.middleware';
 import { UserProfile } from '~/repository/user.repository';
 
-import { strictLimiter, moderateLimiter, couponLimiter } from './middlewares/limiters.middleware';
+import { strictLimiter, moderateLimiter } from './middlewares/limiters.middleware';
 import { validateWidgetSettings } from '~/validations/widget.validation';
+import axios from 'axios';
+import { sendMail } from '~/libs/mail';
+import { emailValidation } from '~/validations/email.validation';
+import { addNewsletterSub } from '~/repository/newsletter_subscribers.repository';
 
 type ContextParams = {
   req: Request;
   res: Response;
 };
+const subscriptionKey = process.env.AZURE_API_KEY;
+const endpoint = process.env.AZURE_ENDPOINT;
+const region = process.env.AZURE_REGION;
+interface Issue {
+  [key: string]: any;
+}
 
 dotenv.config();
 
@@ -296,7 +307,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
-  app.post('/validate-coupon', couponLimiter, isAuthenticated, validateBody(validateCouponValidation), async (req, res) => {
+  app.post('/validate-coupon', strictLimiter, isAuthenticated, validateBody(validateCouponValidation), async (req, res) => {
     const { couponCode } = req.body;
 
     try {
@@ -1266,6 +1277,171 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
+  app.post('/translate', strictLimiter, isAuthenticated, async (req: Request, res: Response) => {
+    const { issues, toLang = 'en' } = req.body;
+
+    if (!Array.isArray(issues)) {
+      return res.status(400).json({ error: 'Invalid or missing "issues" array' });
+    }
+
+    const fieldsToTranslate = ['code', 'message', 'recommended_action'];
+    const textsToTranslate: { issueIndex: number; field: string; text: string }[] = [];
+
+    issues.forEach((issue: Issue, idx: number) => {
+      fieldsToTranslate.forEach((field) => {
+        if (issue[field]) {
+          textsToTranslate.push({ issueIndex: idx, field, text: issue[field] });
+        }
+      });
+    });
+
+    // Skip translation if language is English
+    if (!toLang || toLang.toLowerCase() === 'en') {
+      return res.json(issues);
+    }
+
+    try {
+      const response = await axios.post(
+        `${endpoint}translate?api-version=3.0&to=${toLang}`,
+        textsToTranslate.map((item) => ({ Text: item.text })),
+        {
+          headers: {
+            'Ocp-Apim-Subscription-Key': subscriptionKey,
+            'Ocp-Apim-Subscription-Region': region,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      const translatedIssues = issues.map((issue) => ({ ...issue }));
+
+      response.data.forEach((translation: any, idx: number) => {
+        const { issueIndex, field } = textsToTranslate[idx];
+        translatedIssues[issueIndex][field] = translation.translations[0].text;
+      });
+
+      return res.json(translatedIssues);
+    } catch (err: any) {
+      console.error('Translation error:', err?.response?.data || err.message);
+      return res.status(500).json({ error: 'Translation failed' });
+    }
+  });
+
+  app.post('/translate-text', strictLimiter, isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { issues, toLang = 'en' } = req.body;
+
+      if (!Array.isArray(issues) || issues.length === 0) {
+        return res.status(400).json({ error: 'Invalid or missing "issues" array' });
+      }
+
+      if (!toLang || toLang.toLowerCase() === 'en') {
+        // No translation needed — return original input format
+        return res.json(issues);
+      }
+
+      // Extract texts from the `code` field
+      const texts = issues.map((item: { code: string }) => item.code);
+
+      // Send to Microsoft Translator
+      const response = await axios.post(
+        `${endpoint}translate?api-version=3.0&to=${toLang}`,
+        texts.map((text) => ({ Text: text })),
+        {
+          headers: {
+            'Ocp-Apim-Subscription-Key': subscriptionKey,
+            'Ocp-Apim-Subscription-Region': region,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      const translated = response.data.map((item: any) => ({
+        code: item.translations[0].text,
+      }));
+
+      return res.json(translated);
+    } catch (err: any) {
+      console.error('Translation failed:', err?.response?.data || err.message);
+      return res.status(500).json({ error: 'Translation failed' });
+    }
+  });
+
+  app.post('/form', requireJsonContent, emailLimiter, moderateLimiter, async (req, res) => {
+    const validateResult = emailValidation(req.body.email);
+
+    if (Array.isArray(validateResult) && validateResult.length) {
+      return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
+    }
+
+    try {
+      await sendMail(
+        req.body.email,
+        'Welcome to Webability',
+        `
+            <html>
+            <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 20px;
+                    color: #333333;
+                }
+                .script-box {
+                    background-color: #f4f4f4;
+                    border: 1px solid #dddddd;
+                    padding: 15px;
+                    overflow: auto;
+                    font-family: monospace;
+                    margin-top: 20px;
+                    white-space: pre-wrap;
+                }
+                .instructions {
+                    margin-bottom: 10px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Welcome to Webability!</h1>
+            <p class="instructions">To get started with Webability on your website, please follow these steps:</p>
+            <ol>
+                <li>Copy the script code provided below.</li>
+                <li>Paste it into the HTML of your website, preferably near the closing &lt;/body&gt; tag.</li>
+            </ol>
+            <div class="script-box">
+                &lt;script src="https://widget.webability.io/widget.min.js" data-asw-position="bottom-left" data-asw-lang="en" defer&gt;&lt;/script&gt;
+            </div>
+            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+            <p>Thank you for choosing Webability!</p>
+        </body>
+            </html>
+        `,
+      );
+
+      return res.status(200).json({ success: true, message: 'Email sent successfully' });
+    } catch (error) {
+      console.error('Error sending email:', error);
+      return res.status(500).json({ error: 'Failed to send email' });
+    }
+  });
+
+  app.post('/subscribe-newsletter', requireJsonContent, emailLimiter, moderateLimiter, async (req, res) => {
+    try {
+      const { email } = req.body;
+      const validateResult = emailValidation(email);
+
+      if (Array.isArray(validateResult) && validateResult.length) {
+        return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
+      }
+
+      await addNewsletterSub(email);
+      res.status(200).json({ message: 'Subscription successful' });
+    } catch (error) {
+      console.error('Error subscribing to newsletter:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
   app.get('/health', async (_: Request, res: Response) => {
     try {
       await database.raw('SELECT 1');
@@ -1277,7 +1453,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       });
     } catch (error) {
       console.error('Health check failed:', error);
-      
+
       res.status(503).json({
         status: 'unhealthy',
         database: 'disconnected',
@@ -1371,7 +1547,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         },
       },
     ],
-    
+
     context: async ({ req, res }: ContextParams) => {
       const { cookies } = req;
       const bearerToken = cookies.token || null;

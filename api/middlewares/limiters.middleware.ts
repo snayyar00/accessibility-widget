@@ -1,6 +1,4 @@
-// Centralized rate limiters for Express routes
-// Use these to protect sensitive or abuse-prone endpoints
-
+import { Request } from 'express';
 import rateLimit from 'express-rate-limit';
 
 // Strict limiter: for financial, Stripe, and other sensitive operations
@@ -17,9 +15,10 @@ export const moderateLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' }
 });
 
-// Coupon limiter: for coupon validation endpoints
-export const couponLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 30,
-  message: { error: 'Too many coupon validation requests, please try again later.' }
+// Email limiter
+export const emailLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  keyGenerator: (req: Request) => req.body?.email || req.ip,
+  message: { error: 'Too many emails sent to this address, please try again later.' }
 });

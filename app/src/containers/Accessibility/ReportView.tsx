@@ -3,6 +3,7 @@ import { useParams, useLocation, useHistory } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
+import { translateText,translateMultipleTexts,LANGUAGES} from '@/utils/translator';
 
 import {
   AlertTriangle,
@@ -134,6 +135,7 @@ const ReportView: React.FC = () => {
   const [fetchReport, { data, loading, error }] = useLazyQuery(
     FETCH_REPORT_BY_R2_KEY,
   );
+  
   const [activeTab, setActiveTab] = useState('all');
   const [organization, setOrganization] = useState('structure');
   const [issueFilter, setIssueFilter] = useState(ISSUE_FILTERS.ALL);
@@ -145,6 +147,7 @@ const ReportView: React.FC = () => {
     loading: getProfileLoading,
   } = useQuery(getProfileQuery);
 
+  
   // Processing state management
   const [isProcessing, setIsProcessing] = useState(true);
   // Fact rotation state
@@ -1089,6 +1092,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [email, setEmail] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false); // <-- Add this line
 
   let status, message, icon, bgColor, textColor;
 
@@ -1120,6 +1124,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
   // Handle PDF generation and download only
   const handleDownloadSubmit = async () => {
+    setIsDownloading(true); // <-- Set loading state
     try {
       // Generate PDF using the same logic as ScannerHero
        const pdfBlob = await generatePDF(results);
@@ -1138,6 +1143,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     } catch (error) {
       toast.error('Failed to generate the report. Please try again.');
       console.error('PDF generation error:', error);
+    } finally {
+      setIsDownloading(false); // <-- Reset loading state
     }
   };
 
@@ -1176,12 +1183,14 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     const MAX_TOTAL_SCORE = 95;
     const issues = extractIssuesFromReport(reportData);
 
+    //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
     const baseScore = reportData.score || 0;
     const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility';
     const enhancedScore = hasWebAbility
       ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
       : baseScore;
 
+      
     let status: string, message: string, statusColor: [number, number, number];
     if (enhancedScore >= 80) {
       status = 'Compliant';
@@ -1198,10 +1207,43 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       statusColor = [220, 38, 38]; // red-600
     }
 
+    const [
+      translatedStatus,
+      translatedMessage,
+      translatedMild,
+      translatedModerate,
+      translatedSevere,
+      translatedScore,
+      translatedIssue,
+      translatedIssueMessage,
+      translatedContext,
+      translatedFix,
+      translatedLabel,
+      translatedTotalErrors
+    ] = await translateMultipleTexts(
+      [
+        status,
+        message,
+        'Mild',
+        'Moderate',
+        'Severe',
+        'Score',
+        'Issue',
+        'Message',
+        'Context',
+        'Fix',
+        'Scan results for ',
+        'Total Errors'
+      ],
+      currentLanguage
+    );
+    
+    status = translatedStatus;
     doc.setFillColor(21, 101, 192); // dark blue background
     doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F'); 
 
     let logoBottomY = 0;
+
 
     if (logoImage) {
       const img = new Image();
@@ -1285,7 +1327,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
         doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
 
-        // Add a link to logoUrl if available
         if (logoUrl) {
           doc.link(logoX, logoY, drawWidth, drawHeight, {
             url: logoUrl,
@@ -1321,7 +1362,9 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setFontSize(15);
     doc.setTextColor(0, 0, 0);
     // Compose the full string and measure widths
-    const label = 'Scan results for ';
+    let  label = 'Scan results for ';
+    label = translatedLabel;
+
     const url = `${reportData.url}`;
     const labelWidth = doc.getTextWidth(label);
     const urlWidth = doc.getTextWidth(url);
@@ -1343,11 +1386,13 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setFont('helvetica', 'bold');
     doc.text(status, 105, textY, { align: 'center' });
 
+    message = translatedMessage;
     textY += 9;
     doc.setFontSize(12);
     doc.setTextColor(51, 65, 85); 
     doc.setFont('helvetica', 'normal');
     doc.text(message, 105, textY, { align: 'center' });
+    
 
     textY += 9;
     doc.setFontSize(10);
@@ -1381,7 +1426,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
-    doc.text('Total Errors', circle1X, circleY + circleRadius + 9, {
+    doc.text(translatedTotalErrors, circle1X, circleY + circleRadius + 9, {
       align: 'center',
     });
 
@@ -1404,7 +1449,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
     doc.setFont('helvetica', 'normal');
-    doc.text('Score', circle2X, circleY + circleRadius + 9, {
+    doc.text(translatedScore, circle2X, circleY + circleRadius + 9, {
       align: 'center',
     });
     // --- END CIRCLES ---
@@ -1421,13 +1466,13 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     // Use blue shades for all summary boxes
     const summaryBoxes = [
       {
-        label: 'Severe',
+        label:  translatedSevere,
         count: counts.critical + counts.serious,
         color: [255, 204, 204],
       },
-      { label: 'Moderate', count: counts.moderate, color: [187, 222, 251] },
+      { label: translatedModerate, count: counts.moderate, color: [187, 222, 251] },
       {
-        label: 'Mild',
+        label:  translatedMild,
         count: total - (counts.critical + counts.serious + counts.moderate),
         color: [225, 245, 254],
       }, 
@@ -1457,12 +1502,15 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     // Build the rows
     let tableBody: any[] = [];
+    const translatedIssues = await translateText(issues, currentLanguage);
 
-    issues.forEach((issue, issueIdx) => {
+  
+
+    translatedIssues.forEach((issue, issueIdx) => {
       // Add header row for each issue with beautiful styling
       tableBody.push([
         {
-          content: 'Issue',
+          content: translatedIssue,
           colSpan: 2,
           styles: {
             fillColor: [255, 255, 255], // white background
@@ -1475,7 +1523,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           },
         },
         {
-          content: 'Message',
+          content: translatedIssueMessage,
           colSpan: 2,
           styles: {
             fillColor: [255, 255, 255], // matching white background
@@ -1540,7 +1588,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         // Heading: "Context:"
         tableBody.push([
           {
-            content: 'Context:',
+            content: translatedContext,
             colSpan: 4,
             styles: {
               fontStyle: 'bolditalic',
@@ -1607,7 +1655,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         // Heading row for Fix
         tableBody.push([
           {
-            content: 'Fix:',
+            content: translatedFix,
             colSpan: 4,
             styles: {
               fontStyle: 'bolditalic',
@@ -1832,6 +1880,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     return doc.output('blob');
   };
 
+  const [currentLanguage, setCurrentLanguage] = useState<string>('');
+
   return (
     <>
       <div
@@ -1844,14 +1894,40 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             <p className={`${textColor}/80`}>{message}</p>
           </div>
         </div>
-
-        <div className="relative mr-4">
+        <div className="relative mr-4 flex items-center gap-4">
+      
           <button
             onClick={handleDownloadSubmit}
-            className="whitespace-nowrap px-6 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 transition-colors"
+            className="whitespace-nowrap px-6 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            disabled={isDownloading}
           >
-            Get Free Report
+            <span className="flex justify-center items-center w-full">
+              {isDownloading ? (
+                <CircularProgress size={22} sx={{ color: 'white' }} />
+              ) : (
+                'Get Free Report'
+              )}
+            </span>
           </button>
+          <div className="relative">
+            <select
+              value={currentLanguage}
+              onChange={(e) => setCurrentLanguage(e.target.value)}
+              className="appearance-none bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
+            >
+                    <option value="">Select Language</option>
+                    {Object.values(LANGUAGES).map((language) => (
+                      <option key={language.code} value={language.code}>
+                        {language.nativeName}
+                      </option>
+                    ))}
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
     </>
