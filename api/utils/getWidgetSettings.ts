@@ -3,8 +3,8 @@ type LogoSettings = {
   logoUrl: string;
   accessibilityStatementLinkUrl: string;
 };
-import { findSiteByURL } from '../../api/repository/sites_allowed.repository';
-import { getWidgetSettingsBySiteId } from '../../api/repository/widget_settings.repository';
+import { findSiteByURL } from '../repository/sites_allowed.repository';
+import { getWidgetSettingsBySiteId } from '../repository/widget_settings.repository';
 
 const getWidgetSettings = async (
   siteUrl: string
