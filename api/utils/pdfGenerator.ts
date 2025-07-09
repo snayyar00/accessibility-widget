@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import getWidgetSettings from '../utils/getWidgetSettings';
 import { translateText, translateMultipleTexts, LANGUAGES } from '../utils/translator';
+import sharp from 'sharp';
 
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
@@ -207,15 +208,7 @@ export async function generateAccessibilityReportPDF(
 
 
  let logoBase64 = null;
- const logoPadding = 14; 
- const maxWidth = 48, 
-       maxHeight = 14; 
-let drawWidth = 18,    
-    drawHeight = 6;    
-const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight);
-drawWidth *= scale; 
-drawHeight *= scale;
-
+let logopath: string | undefined;
 
  if (logoImage && logoImage.startsWith('data:image')) {
    // Already base64
@@ -225,13 +218,29 @@ drawHeight *= scale;
  } else {
    // fallback: try to load from default path
    const fallbackLogoPath = path.join(process.cwd(), 'email-templates', 'logo.png');
+   logopath=fallbackLogoPath;
    if (fs.existsSync(fallbackLogoPath)) {
      logoBase64 = fs.readFileSync(fallbackLogoPath, { encoding: 'base64' });
    }
  }
-
  try {
    if (logoBase64) {
+
+
+    const image = sharp(logopath); 
+
+    const maxWidth = 48,
+    maxHeight = 36; // increased size for a bigger logo
+      // Get metadata (dimensions)
+      const metadata = await image.metadata();
+      let drawWidth = metadata.width || maxWidth;
+      let drawHeight = metadata.height || maxHeight;
+   
+    console.log("drawWidth,drawHeight",drawWidth,drawHeight);
+   const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight);
+   drawWidth *= scale;
+   drawHeight *= scale;
+
   const logoX = 0;
   const logoY = 3;
 
