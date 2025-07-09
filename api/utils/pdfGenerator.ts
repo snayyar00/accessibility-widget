@@ -212,8 +212,10 @@ let logopath: string | undefined;
  if (logoImage && logoImage.startsWith('data:image')) {
    // Already base64
    logoBase64 = logoImage.split(',')[1];
+   logopath= logoImage.split(',')[1];
  } else if (logoImage && fs.existsSync(logoImage)) {
    logoBase64 = fs.readFileSync(logoImage, { encoding: 'base64' });
+   logopath= fs.readFileSync(logoImage, { encoding: 'base64' });
  } else {
    // fallback: try to load from default path
    const fallbackLogoPath = path.join(process.cwd(), 'email-templates', 'logo.png');
