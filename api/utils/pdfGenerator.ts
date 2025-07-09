@@ -126,7 +126,6 @@ function mapIssueToImpact(message: string, code: any) {
 
   return 'moderate'
 }
-
 export async function generateAccessibilityReportPDF(
   reportData: any,
   url: string,
@@ -137,136 +136,137 @@ export async function generateAccessibilityReportPDF(
 
   // Fetch widget settings (logo, URLs)
   const { logoImage, logoUrl, accessibilityStatementLinkUrl } = await getWidgetSettings(url);
-  console.log("I am called ",logoImage,logoUrl,accessibilityStatementLinkUrl);
-  // Prepare static texts for translation
-  const staticTexts = [
-    'Compliant',
-    'Your website meets the basic requirements for accessibility.',
-    'Partially Compliant',
-    'Your website meets some accessibility requirements but needs improvement.',
-    'Non-compliant',
-    'Your website needs significant accessibility improvements.',
-    'Mild',
-    'Moderate',
-    'Severe',
-    'Accessibility Score',
-    'Scan Results for',
-    'Total Errors',
-    'Issue',
-    'Message',
-    'Context',
-    'Fix',
-    'Accessibility Statement'
-  ];
-  const [
-    compliantText,
-    compliantMsg,
-    partialText,
-    partialMsg,
-    nonCompliantText,
-    nonCompliantMsg,
-    mildText,
-    moderateText,
-    severeText,
-    scoreTextLabel,
-    scanResultsLabel,
-    totalErrorsLabel,
-    issueLabel,
-    messageLabel,
-    contextLabel,
-    fixLabel,
-    accessibilityStatementLabel
-  ] = await translateMultipleTexts(staticTexts, language);
 
-  // Logo loading (Node.js: base64)
-  let logoBase64 = null;
-  if (logoImage && logoImage.startsWith('data:image')) {
-    // Already base64
-    logoBase64 = logoImage.split(',')[1];
-  } else if (logoImage && fs.existsSync(logoImage)) {
-    logoBase64 = fs.readFileSync(logoImage, { encoding: 'base64' });
-  } else {
-    // fallback: try to load from default path
-    const fallbackLogoPath = path.join(process.cwd(), 'email-templates', 'logo.png');
-    if (fs.existsSync(fallbackLogoPath)) {
-      logoBase64 = fs.readFileSync(fallbackLogoPath, { encoding: 'base64' });
-    }
-  }
-
-  try {
-    if (logoBase64) {
-      doc.addImage(logoBase64, 'PNG', 8, 6, 50, 18, undefined, 'FAST');
-    } else {
-      console.warn('Logo not found for PDF generation.');
-    }
-  } catch (error) {
-    console.warn('Could not add logo to PDF:', error);
-  }
-
-  const baseScore = reportData?.score || 0;
-  const isWebAbilityEnabled = widgetStatus === 'Web Ability';
-  const enhancedScore = isWebAbilityEnabled ? calculateEnhancedScore(baseScore) : baseScore;
-
+  // Constants for scoring
+  const WEBABILITY_SCORE_BONUS = 45;
+  const MAX_TOTAL_SCORE = 95;
   const issues = extractIssuesFromReport(reportData);
-  const criticalCount = issues.filter(i => i.impact === 'critical').length;
-  const seriousCount = issues.filter(i => i.impact === 'serious').length;
-  const moderateCount = issues.filter(i => i.impact === 'moderate').length;
 
+  // Calculate score and status
+  const baseScore = reportData.score || 0;
+  const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility';
+  const enhancedScore = hasWebAbility
+    ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
+    : baseScore;
 
-  let status, message, statusColor: [number, number, number];
+  let status: string, message: string, statusColor: [number, number, number];
   if (enhancedScore >= 80) {
-    status = compliantText;
-    message = compliantMsg;
-    statusColor = [43, 168, 74]; // green
+    status = 'Compliant';
+    message = 'Your website is highly accessible. Great job!';
+    statusColor = [22, 163, 74]; // green-600
   } else if (enhancedScore >= 50) {
-    status = partialText;
-    message = partialMsg;
-    statusColor = [243, 182, 31]; // yellow
+    status = 'Partially Compliant';
+    message = 'Your website is partially accessible. Some improvements are needed.';
+    statusColor = [202, 138, 4]; // yellow-600
   } else {
-    status = nonCompliantText;
-    message = nonCompliantMsg;
-    statusColor = [255, 27, 28]; // red
+    status = 'Not Compliant';
+    message = 'Your website needs significant accessibility improvements.';
+    statusColor = [220, 38, 38]; // red-600
   }
 
-  // --- HEADER: Colored background ---
-  doc.setFillColor(21, 101, 192); // dark blue background
+  // Translate static and dynamic texts
+  const [
+    translatedStatus,
+    translatedMessage,
+    translatedMild,
+    translatedModerate,
+    translatedSevere,
+    translatedScore,
+    translatedIssue,
+    translatedIssueMessage,
+    translatedContext,
+    translatedFix,
+    translatedLabel,
+    translatedTotalErrors
+  ]=
+    [
+      status,
+      message,
+      'Mild',
+      'Moderate',
+      'Severe',
+      'Score',
+      'Issue',
+      'Message',
+      'Context',
+      'Fix',
+      'Scan results for ',
+      'Total Errors'
+    ];
+
+  status = translatedStatus;
+
+  // Draw header background
+  doc.setFillColor(21, 101, 192); // dark blue
   doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F');
 
-  // --- LOGO in rounded white box ---
   let logoBottomY = 0;
-  if (logoBase64) {
-    // Make the logo and container bigger
-    const maxWidth = 48, maxHeight = 36;
-    let drawWidth = maxWidth, drawHeight = maxHeight;
-    // Draw logo at (0,3)
-    const logoX = 0;
-    const logoY = 3;
-    const padding = 14;
-    const containerX = logoX - padding;
-    const containerYOffset = 10;
-    const containerY = logoY - padding - containerYOffset;
-    const containerW = drawWidth + 2 * padding - 10;
-    const containerH = drawHeight + 2 * padding;
-    doc.setFillColor(255, 255, 255); // white
-    doc.roundedRect(
-      containerX,
-      containerY,
-      containerW,
-      containerH,
-      4,
-      4,
-      'F',
-    );
-    doc.addImage(logoBase64, 'PNG', logoX, logoY, drawWidth, drawHeight);
-    // No clickable link in Node.js PDF
-    logoBottomY = Math.max(logoY + drawHeight, containerY + containerH);
-  }
 
-  // --- SCAN RESULTS CONTAINER ---
+  // Draw logo if available
+  console.log("url of image is ",logoImage);
+
+
+ let logoBase64 = null;
+ const logoPadding = 14; 
+ const maxWidth = 48, 
+       maxHeight = 14; 
+let drawWidth = 18,    
+    drawHeight = 6;    
+const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight);
+drawWidth *= scale; 
+drawHeight *= scale;
+
+
+ if (logoImage && logoImage.startsWith('data:image')) {
+   // Already base64
+   logoBase64 = logoImage.split(',')[1];
+ } else if (logoImage && fs.existsSync(logoImage)) {
+   logoBase64 = fs.readFileSync(logoImage, { encoding: 'base64' });
+ } else {
+   // fallback: try to load from default path
+   const fallbackLogoPath = path.join(process.cwd(), 'email-templates', 'logo.png');
+   if (fs.existsSync(fallbackLogoPath)) {
+     logoBase64 = fs.readFileSync(fallbackLogoPath, { encoding: 'base64' });
+   }
+ }
+
+ try {
+   if (logoBase64) {
+  const logoX = 0;
+  const logoY = 3;
+
+  const padding = 14;
+  const containerX = logoX - padding;
+  // Keep the container as before, do not move it up
+  const containerYOffset = 10;
+  const containerY = logoY - padding - containerYOffset;
+  const containerW = drawWidth + 2 * padding - 10;
+  const containerH = drawHeight + 2 * padding;
+  logoBottomY = containerY + containerH;
+  doc.setFillColor(255, 255, 255); // white
+  doc.roundedRect(
+    containerX,
+    containerY,
+    containerW,
+    containerH,
+    4,
+    4,
+    'F',
+  );
+
+  doc.addImage(logoBase64, 'PNG', logoX, logoY, drawWidth, drawHeight);
+   } else {
+     console.warn('Logo not found for PDF generation.');
+   }
+ } catch (error) {
+   console.warn('Could not add logo to PDF:', error);
+ }
+  // Draw main info container
   const containerWidth = 170;
   const containerHeight = 60;
   const containerX = 105 - containerWidth / 2;
-  const containerY = (logoBottomY || 0) + 10; // 10 units gap after logo
+  const containerY = (logoBottomY || 0) + 10;
+
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.2);
@@ -277,18 +277,20 @@ export async function generateAccessibilityReportPDF(
     containerHeight,
     4,
     4,
-    'FD',
+    'FD'
   );
 
-  // --- SCAN RESULTS LABEL + URL ---
+  // Draw text inside container
   let textY = containerY + 13;
   doc.setFontSize(15);
   doc.setTextColor(0, 0, 0);
-  let label = scanResultsLabel;
+
+  let label = translatedLabel;
   const labelWidth = doc.getTextWidth(label);
   const urlWidth = doc.getTextWidth(url);
   const totalWidth = labelWidth + urlWidth;
   const startX = 105 - totalWidth / 2;
+
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(51, 65, 85);
   doc.text(label, startX, textY, { align: 'left' });
@@ -296,13 +298,13 @@ export async function generateAccessibilityReportPDF(
   doc.text(url, startX + labelWidth, textY, { align: 'left' });
   doc.setFont('helvetica', 'normal');
 
-  // --- COMPLIANCE STATUS ---
   textY += 12;
   doc.setFontSize(20);
   doc.setTextColor(...statusColor);
   doc.setFont('helvetica', 'bold');
   doc.text(status, 105, textY, { align: 'center' });
 
+  message = translatedMessage;
   textY += 9;
   doc.setFontSize(12);
   doc.setTextColor(51, 65, 85);
@@ -314,48 +316,15 @@ export async function generateAccessibilityReportPDF(
   doc.setTextColor(51, 65, 85);
   doc.text(`${new Date().toDateString()}`, 105, textY, { align: 'center' });
 
-  // Accessibility Score
-  textY += 10;
-  doc.setFontSize(12);
-  doc.setFont('Helvetica', 'bold');
-  doc.setTextColor(41, 128, 185);
-  const scoreLabel = `${scoreTextLabel}: `;
-  doc.text(scoreLabel, 8, textY);
-  doc.setFont('Helvetica', 'normal');
-  doc.setTextColor(0, 0, 0);
-  const scoreText = `${enhancedScore}%`;
-  doc.text(scoreText, 12 + doc.getTextWidth(scoreLabel), textY);
-
-  // Check if widgetInfo exists and has the correct result for bonus text
-  const hasWidgetInfo = reportData.widgetInfo?.result === 'WebAbility' || 
-                       reportData.scriptCheckResult === 'Web Ability';
-  
-  if (hasWidgetInfo) {
-    doc.setFontSize(12);
-    doc.setFont('Helvetica', 'normal');
-    doc.setTextColor(43, 168, 74);
-    const bonusText = `(Base: ${baseScore}% + ${WEBABILITY_SCORE_BONUS}% WebAbility Bonus)`;
-    doc.text(bonusText, 14 + doc.getTextWidth(scoreLabel + scoreText), textY);
-  }
-
-  // Issue counts
-  textY += 12;
-  doc.setFontSize(13);
-  doc.setTextColor(60, 60, 60);
-  doc.setFont('Helvetica', 'normal');
-  doc.text(`${totalErrorsLabel}: ${issues.length}`, 8, textY);
-
-  textY += 8;
-
-  // --- SUMMARY CIRCLES (Total Errors and Score) ---
-  const circleY = textY + 25;
+  // Draw summary circles
+  const circleY = containerY + containerHeight + 25;
   const circleRadius = 15;
   const centerX = 105;
   const gap = 40;
   const circle1X = centerX - circleRadius - gap / 2;
   const circle2X = centerX + circleRadius + gap / 2;
 
-  // Circle 1: Total Errors (filled dark blue)
+  // Total Errors
   doc.setDrawColor(21, 101, 192);
   doc.setLineWidth(1.5);
   doc.setFillColor(21, 101, 192);
@@ -367,14 +336,15 @@ export async function generateAccessibilityReportPDF(
     align: 'center',
     baseline: 'middle',
   });
+
   doc.setFontSize(10);
   doc.setTextColor(21, 101, 192);
   doc.setFont('helvetica', 'normal');
-  doc.text(totalErrorsLabel, circle1X, circleY + circleRadius + 9, {
+  doc.text(translatedTotalErrors, circle1X, circleY + circleRadius + 9, {
     align: 'center',
   });
 
-  // Circle 2: Score (filled lighter blue)
+  // Score
   doc.setDrawColor(33, 150, 243);
   doc.setLineWidth(1.5);
   doc.setFillColor(33, 150, 243);
@@ -382,19 +352,20 @@ export async function generateAccessibilityReportPDF(
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(19);
   doc.setTextColor(255, 255, 255);
-  const scoreTextCircle = `${Math.round(enhancedScore)}%`;
-  doc.text(scoreTextCircle, circle2X, circleY, {
+  const scoreText = `${Math.round(enhancedScore)}%`;
+  doc.text(scoreText, circle2X, circleY, {
     align: 'center',
     baseline: 'middle',
   });
+
   doc.setFontSize(10);
   doc.setTextColor(21, 101, 192);
   doc.setFont('helvetica', 'normal');
-  doc.text(scoreTextLabel, circle2X, circleY + circleRadius + 9, {
+  doc.text(translatedScore, circle2X, circleY + circleRadius + 9, {
     align: 'center',
   });
 
-  // --- SEVERITY SUMMARY BOXES ---
+  // Severity summary boxes
   const yStart = circleY + circleRadius + 30;
   const total = issues.length;
   const counts = {
@@ -404,17 +375,18 @@ export async function generateAccessibilityReportPDF(
   };
   const summaryBoxes = [
     {
-      label: severeText,
+      label: translatedSevere,
       count: counts.critical + counts.serious,
       color: [255, 204, 204],
     },
-    { label: moderateText, count: counts.moderate, color: [187, 222, 251] },
+    { label: translatedModerate, count: counts.moderate, color: [187, 222, 251] },
     {
-      label: mildText,
+      label: translatedMild,
       count: total - (counts.critical + counts.serious + counts.moderate),
       color: [225, 245, 254],
     },
   ];
+
   let x = 20;
   for (const box of summaryBoxes) {
     doc.setFillColor(box.color[0], box.color[1], box.color[2]);
@@ -428,22 +400,22 @@ export async function generateAccessibilityReportPDF(
     x += 60;
   }
 
-  // Set the start Y for the issues table after the summary boxes
   const yTable = yStart + 40;
-
-  // --- TRANSLATE ISSUES ---
-  const translatedIssues = await translateText(issues, language);
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const footerHeight = 15;
 
   // Helper to ensure array
   const toArray = (val: any) => (Array.isArray(val) ? val : val ? [val] : []);
 
   // Build the rows
   let tableBody: any[] = [];
+  const translatedIssues = issues;
+
   translatedIssues.forEach((issue, issueIdx) => {
     // Add header row for each issue
     tableBody.push([
       {
-        content: issueLabel,
+        content: translatedIssue,
         colSpan: 2,
         styles: {
           fillColor: [255, 255, 255],
@@ -455,7 +427,7 @@ export async function generateAccessibilityReportPDF(
         },
       },
       {
-        content: messageLabel,
+        content: translatedIssueMessage,
         colSpan: 2,
         styles: {
           fillColor: [255, 255, 255],
@@ -467,6 +439,7 @@ export async function generateAccessibilityReportPDF(
         },
       },
     ]);
+
     // Row 1: Issue + Message
     tableBody.push([
       {
@@ -510,12 +483,14 @@ export async function generateAccessibilityReportPDF(
         },
       },
     ]);
+
     // Contexts block
     const contexts = toArray(issue.context).filter(Boolean);
+
     if (contexts.length > 0) {
       tableBody.push([
         {
-          content: contextLabel,
+          content: translatedContext,
           colSpan: 4,
           styles: {
             fontStyle: 'bolditalic',
@@ -528,16 +503,19 @@ export async function generateAccessibilityReportPDF(
           },
         },
       ]);
+
       contexts.forEach((ctx, index) => {
         const combinedContent = `${index + 1}. ${ctx}`;
         tableBody.push([
           {
             content: combinedContent,
             colSpan: 4,
+            pageBreak: 'avoid',
+            rowSpan: 1,
             styles: {
               font: 'courier',
               fontSize: 10,
-              textColor: [15, 23, 42],
+              textColor: [255, 255, 255],
               fillColor: [255, 255, 255],
               halign: 'left',
               valign: 'top',
@@ -546,7 +524,10 @@ export async function generateAccessibilityReportPDF(
               minCellHeight: Math.max(20, Math.ceil(combinedContent.length / 50) * 6),
               overflow: 'linebreak',
             },
-          },
+            _isCodeBlock: true,
+            _originalContent: combinedContent,
+            _indexNumber: index + 1,
+          } as any,
         ]);
         if (index < contexts.length - 1) {
           tableBody.push([
@@ -564,12 +545,13 @@ export async function generateAccessibilityReportPDF(
         }
       });
     }
-    // Fixes block
+
+    // Fixes
     const fixes = toArray(issue.recommended_action);
     if (fixes.length > 0 && fixes.some((f) => !!f)) {
       tableBody.push([
         {
-          content: fixLabel,
+          content: translatedFix,
           colSpan: 4,
           styles: {
             fontStyle: 'bolditalic',
@@ -617,10 +599,10 @@ export async function generateAccessibilityReportPDF(
     }
   });
 
-  // Render the table
+  // Render table
   autoTable(doc, {
     startY: yTable,
-    margin: { left: 15, right: 15, top: 0, bottom: 15 },
+    margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
     head: [],
     body: tableBody,
     theme: 'plain',
@@ -638,28 +620,121 @@ export async function generateAccessibilityReportPDF(
       lineWidth: 0,
       cellPadding: 8,
     },
+    willDrawCell: (data: any) => {
+      if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const currentY = data.cursor.y;
+        const bottomMargin = 25;
+        const fullText = (data.cell.raw as any).content || '';
+        const indexNumber = (data.cell.raw as any)._indexNumber;
+        const indexPrefix = `${indexNumber}`;
+        const indexWidth = doc.getTextWidth(indexPrefix) + 16;
+        const codeContent = fullText.substring(`${indexNumber}. `.length);
+        const availableWidth = data.cell.width - 16 - indexWidth;
+        doc.setFont('courier', 'normal');
+        doc.setFontSize(10);
+        const lines = doc.splitTextToSize(codeContent, availableWidth);
+        const lineHeight = 4;
+        const topPadding = 8;
+        const bottomPadding = 4;
+        const textHeight = (lines.length * lineHeight) + topPadding + bottomPadding;
+        const estimatedHeight = Math.max(textHeight, 30);
+        if (currentY + estimatedHeight > pageHeight - bottomMargin) {
+          return false;
+        }
+      }
+      return true;
+    },
+    didDrawCell: (data: any) => {
+      if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
+        const { x, y, width, height } = data.cell;
+        const padding = 2;
+        const cornerRadius = 4;
+        const indexNumber = (data.cell.raw as any)._indexNumber;
+        doc.setFont('courier', 'normal');
+        doc.setFontSize(12);
+        const indexPrefix = `${indexNumber}`;
+        const indexWidth = doc.getTextWidth(indexPrefix) + 8;
+        doc.setDrawColor(100, 116, 139);
+        doc.setLineWidth(0.5);
+        doc.setFillColor(15, 23, 42);
+        doc.roundedRect(
+          x + padding,
+          y + padding,
+          width - (padding * 2),
+          height - (padding * 2),
+          cornerRadius,
+          cornerRadius,
+          'FD'
+        );
+        doc.setFillColor(51, 65, 85);
+        doc.roundedRect(
+          x + padding,
+          y + padding,
+          indexWidth,
+          height - (padding * 2),
+          cornerRadius,
+          cornerRadius,
+          'F'
+        );
+        doc.setFillColor(51, 65, 85);
+        doc.rect(
+          x + padding + indexWidth - cornerRadius,
+          y + padding,
+          cornerRadius,
+          height - (padding * 2),
+          'F'
+        );
+        doc.setTextColor(255, 255, 255);
+        const indexTextX = x + padding + 4;
+        const textY = y + padding + 8;
+        doc.text(indexPrefix, indexTextX, textY);
+        const fullText = (data.cell.raw as any).content;
+        const codeContent = fullText.substring(`${indexNumber}. `.length);
+        const codeTextX = x + padding + indexWidth + 4;
+        const availableWidth = width - (padding * 2) - indexWidth - 8;
+        const lines = doc.splitTextToSize(codeContent, availableWidth);
+        let codeTextY = y + padding + 8;
+        lines.forEach((line: string) => {
+          doc.text(line, codeTextX, codeTextY);
+          codeTextY += 4;
+        });
+      }
+      if (
+        data.cell.raw &&
+        data.cell.raw.styles &&
+        data.cell.raw.styles.fontStyle === 'bold' &&
+        data.cell.raw.styles.fontSize === 14
+      ) {
+        const { x, y, width, height } = data.cell;
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.5);
+        doc.line(x, y + height, x + width, y + height);
+      }
+    },
   });
 
-  // Footer
-  const pageCount = (doc as any).internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    const footerY = doc.internal.pageSize.height - 10;
-    // Accessibility Statement link (if available)
-    if (accessibilityStatementLinkUrl) {
+  // Footer: Accessibility Statement link
+  if (accessibilityStatementLinkUrl) {
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    const footerY = doc.internal.pageSize.getHeight() - 10;
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'italic');
       doc.setTextColor(33, 150, 243);
-      doc.text(accessibilityStatementLabel, 15, footerY);
-      // No clickable link in Node.js PDF, but text is shown
+      doc.text('Accessibility Statement', 15, footerY);
+      doc.link(
+        15,
+        footerY - 3,
+        doc.getTextWidth('Accessibility Statement'),
+        4,
+        {
+          url: accessibilityStatementLinkUrl,
+          target: '_blank',
+        }
+      );
     }
-    // Page number footer (centered)
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    const footerText = `Generated by WebAbility.io - Page ${i} of ${pageCount}`;
-    const pageWidth = doc.internal.pageSize.width;
-    const textWidth = doc.getTextWidth(footerText);
-    doc.text(footerText, (pageWidth - textWidth) / 2, footerY);
   }
 
   return Buffer.from(doc.output('arraybuffer'));

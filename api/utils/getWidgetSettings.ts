@@ -3,26 +3,30 @@ type LogoSettings = {
   logoUrl: string;
   accessibilityStatementLinkUrl: string;
 };
+import { findSiteByURL } from '../../api/repository/sites_allowed.repository';
+import { getWidgetSettingsBySiteId } from '../../api/repository/widget_settings.repository';
 
 const getWidgetSettings = async (
   siteUrl: string
 ): Promise<LogoSettings> => {
   const fallbackLogoUrl = '/images/logo.png';
-  const url = `${process.env.REACT_APP_BACKEND_URL}/get-site-widget-settings`;
-  const bodyData = { site_url: siteUrl };
-
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(bodyData),
-      credentials: 'include',
-    });
-
-    if (!response.ok) throw new Error('Network error');
-
-    const data = await response.json();
-    const settings = typeof data.settings === 'string' ? JSON.parse(data.settings) : data.settings;
+    const site = await findSiteByURL(siteUrl);
+    if (!site) {
+      // Site not found, return fallback
+      return {
+        logoImage: fallbackLogoUrl,
+        logoUrl: '',
+        accessibilityStatementLinkUrl: '',
+      };
+    }
+    // Get widget settings by site ID
+    const widgetSettings = await getWidgetSettingsBySiteId(site.id);
+    const settings = widgetSettings?.settings
+      ? typeof widgetSettings.settings === 'string'
+        ? JSON.parse(widgetSettings.settings)
+        : widgetSettings.settings
+      : {};
     const logoImage = settings?.logoImage || fallbackLogoUrl;
     const logoUrl = settings?.logoUrl || '';
     const accessibilityStatementLinkUrl = settings?.accessibilityStatementLinkUrl || '';
@@ -30,10 +34,10 @@ const getWidgetSettings = async (
     return {
       logoImage,
       logoUrl,
-      accessibilityStatementLinkUrl
+      accessibilityStatementLinkUrl,
     };
   } catch (err) {
-    console.error('Failed to fetch logoUrl:', err);
+    console.error('Failed to fetch widget settings:', err);
     return {
       logoImage: fallbackLogoUrl,
       logoUrl: '',
