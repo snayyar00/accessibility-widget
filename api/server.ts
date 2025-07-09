@@ -16,37 +16,30 @@ import RootSchema from './graphql/root.schema';
 import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
 import stripeHooks from './services/stripe/webhooks.servive';
-import {sendMail} from './libs/mail';
-import { AddTokenToDB } from './services/webToken/mongoVisitors';
-import { fetchAccessibilityReport } from './services/accessibilityReport/accessibilityReport.service';
 import { findProductAndPriceByType, findProductById } from './repository/products.repository';
 import { createSitesPlan, deleteExpiredSitesPlan, deleteSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-sites.service';
 import Stripe from 'stripe';
 import { getAnySitePlanBySiteId, getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
 import { findPriceById } from './repository/prices.repository';
-import { APP_SUMO_COUPON_ID, APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, RETENTION_COUPON_ID } from './constants/billing.constant';
-import OpenAI from 'openai';
+import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, RETENTION_COUPON_ID } from './constants/billing.constant';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
 import database from '~/config/database.config';
-import { addProblemReport, getProblemReportsBySiteId, problemReportProps } from './repository/problem_reports.repository';
-import { deleteSiteWithRelatedRecords, FindAllowedSitesProps, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
+import { getProblemReportsBySiteId } from './repository/problem_reports.repository';
+import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
 import { addWidgetSettings, getWidgetSettingsBySiteId } from './repository/widget_settings.repository';
-import { addNewsletterSub } from './repository/newsletter_subscribers.repository';
 import findPromo from './services/stripe/findPromo';
 import { appSumoPromoCount } from './utils/appSumoPromoCount';
 import { expireUsedPromo } from './utils/expireUsedPromo';
 import { getUserTokens } from './repository/user_plan_tokens.repository';
 import { customTokenCount } from './utils/customTokenCount';
 import { addCancelFeedback, CancelFeedbackProps } from './repository/cancel_feedback.repository';
+import { billingPortalSessionValidation, createCustomerPortalSessionValidation, validateCancelSiteSubscription, validateCouponValidation, validateCreateCheckoutSession, validateCreateSubscription, validateApplyRetentionDiscount } from '~/validations/stripe.validation';
+import { validateBody } from './middlewares/validation.middleware';
+import { isAuthenticated } from '~/middlewares/auth.middleware';
+import { UserProfile } from '~/repository/user.repository';
 
-const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY,
-  defaultHeaders: {
-    "HTTP-Referer": "Webability.io",
-    "X-Title": "Webability.io - Accesbility Compliance Solution",
-  },
-});
+import { strictLimiter, moderateLimiter, couponLimiter } from './middlewares/limiters.middleware';
+import { validateWidgetSettings } from '~/validations/widget.validation';
 
 type ContextParams = {
   req: Request;
@@ -60,11 +53,11 @@ const IS_LOCAL_DEV = !process.env.COOLIFY_URL && process.env.NODE_ENV !== 'produ
 const app = express();
 const port = process.env.PORT || 3001;
 const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, 'https://www.webability.io', 'https://hoppscotch.webability.io'];
-const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction','reportProblem','updateImpressionProfileCounts','getWidgetSettings','getAccessibilityReport','getAccessibilityStats'];
+const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction', 'reportProblem', 'updateImpressionProfileCounts', 'getWidgetSettings', 'getAccessibilityReport', 'getAccessibilityStats'];
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
-app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks); // TODO: Check Security
-app.use(express.json({ limit: '5mb'}));
+app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
+app.use(express.json({ limit: '5mb' }));
 
 scheduleMonthlyEmails();
 
@@ -82,10 +75,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         // Allow your specific frontend origin
         callback(null, true);
       }
-      // else {
-      //   // Disallow other origins
-      //   callback(new Error('Not allowed by CORS'));
-      // }
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   };
@@ -111,279 +100,241 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     res.send('Hello world!');
   });
 
-  app.post('/create-customer-portal-session',async (req,res)=>{
-    const { id, returnURL } = req.body;
+  app.post('/create-customer-portal-session', strictLimiter, isAuthenticated, validateBody(createCustomerPortalSessionValidation), async (req, res) => {
+    const user: UserProfile = (req as any).user;
+    const { returnURL } = req.body;
 
-    console.log("id",id);
-    console.log("returnURL",returnURL);
+    let customerId: string;
+    try {
+      const customers = await stripe.customers.list({
+        email: user.email,
+        limit: 1,
+      });
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+      } else {
+        const newCustomer = await stripe.customers.create({
+          email: user.email,
+        });
+        customerId = newCustomer.id;
+      }
+    } catch (error) {
+      console.error('Stripe customer error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
 
     try {
       const session = await stripe.billingPortal.sessions.create({
-        customer:id,
-        return_url:returnURL
+        customer: customerId,
+        return_url: returnURL,
       });
-
       return res.status(200).json(session);
     } catch (error) {
-      console.log(error);
-      return res.status(500);
-    }
-  })
-
-  app.post('/billing-portal-session', async (req, res) => {
-    const { email, returnURL } = req.body;
-
-    // Search for an existing customer by email
-    const customers = await stripe.customers.list({
-      email: email,
-      limit: 1,
-    });
-
-    let customer;
-
-    // Check if customer exists
-    if (customers.data.length > 0) {
-      customer = customers.data[0];
-      // console.log("customer exists = ",customer);
-    } else {
-      customer = await stripe.customers.create({
-        email: email,
-      });
-    }
-
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customer.id,
-      status: 'active',
-      limit:100
-    });
-
-    const trialingSubscriptions = await stripe.subscriptions.list({
-      customer: customer.id,
-      status: 'trialing',
-      limit:100
-    });
-
-    // Merge trialing subscriptions into active subscriptions (modifying subscriptions.data)
-    subscriptions.data.push(...trialingSubscriptions.data);
-
-    if (subscriptions.data.length !== 0) {
-      const prices = await stripe.prices.list({
-        limit: 50, // Optional: limit the number of results per request
-      });
-
-      let usablePrices = await Promise.all(
-        prices.data.map(async (price: Stripe.Price) => {
-          if (
-            price?.tiers_mode === "graduated" &&
-            price?.recurring?.usage_type === "licensed"
-          ) {
-            const product = await stripe.products.retrieve(price.product as string);
-      
-            if (product.name.toLowerCase().includes("app sumo")) {
-              return null;
-            }
-            return price;
-          }
-          return null; // Exclude prices without tiers
-        })
-      );
-
-      // Filter out null values
-      usablePrices = usablePrices.filter((price: Stripe.Price) => price !== null);
-      const productPriceArray: any = [];
-      const productMap = new Map();
-
-      usablePrices.forEach((price: Stripe.Price) => {
-        if (!productMap.has(price.product)) {
-          productMap.set(price.product, []);
-        }
-        productMap.get(price.product).push(price);
-      });
-
-      // Convert map to array of dictionaries
-      productMap.forEach((prices, productId) => {
-        productPriceArray.push({
-          product: productId,
-          prices: prices.map((price: Stripe.Price) => price.id),
-        });
-      });
-
-      const configurations = await stripe.billingPortal.configurations.list({
-        is_default: true,
-      });
-
-      // console.log(productPriceArray);
-      if (productPriceArray.length) {
-        let configuration: any = {};
-
-        if (subscriptions.data[0].status == 'trialing') {
-          configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
-            features: {
-              // subscription_update: {
-              //   enabled: true,
-              //   default_allowed_updates: ['price'], // Allow price updates
-              //   products: productPriceArray,
-              // },
-              subscription_update: {
-                enabled: false,
-              },
-              subscription_cancel: {
-                enabled: false,
-              },
-              // subscription_cancel: {
-              //   proration_behavior: 'none',
-              //   enabled: true,
-              //   mode: 'at_period_end', // or 'immediately' based on your preference
-              //   cancellation_reason: {
-              //     enabled: true,
-              //     options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
-              //   },
-              // },
-            },
-          });
-        } else {
-          configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
-            features: {
-              // subscription_update: {
-              //   enabled: true,
-              //   default_allowed_updates: ['price'], // Allow price updates
-              //   products: productPriceArray,
-              // },
-              subscription_update: {
-                enabled: false,
-              },
-              subscription_cancel: {
-                enabled: false,
-              },
-              // subscription_cancel: {
-              //   enabled: true,
-              //   mode: 'immediately', // or 'immediately' based on your preference
-              //   cancellation_reason: {
-              //     enabled: true,
-              //     options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
-              //   },
-              // },
-            },
-          });
-        }
-
-        try {
-          const session = await stripe.billingPortal.sessions.create({
-            customer: customer.id,
-            return_url: returnURL,
-            configuration: configuration.id,
-          });
-          return res.status(200).json(session);
-        } catch (error) {
-          console.log(error);
-          return res.status(500);
-        }
-      } else {
-        let configuration: any = {};
-        if (subscriptions.data[0].status == 'trialing') {
-          configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
-            features: {
-              subscription_update: {
-                enabled: false,
-              },
-              subscription_cancel: {
-                enabled: false,
-              },
-              // subscription_cancel: {
-              //   enabled: true,
-              //   mode: 'immediately', // or 'immediately' based on your preference
-              //   cancellation_reason: {
-              //     enabled: true,
-              //     options: ['too_expensive', 'missing_features', 'switched_service', 'unused', 'other'],
-              //   },
-              // },
-            },
-          });
-        } else {
-          configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
-            features: {
-              subscription_update: {
-                enabled: false,
-              },
-              subscription_cancel: {
-                enabled: false,
-              },
-            },
-          });
-        }
-
-        try {
-          const session = await stripe.billingPortal.sessions.create({
-            customer: customer.id,
-            return_url: returnURL,
-            configuration: configuration.id,
-          });
-          return res.status(200).json(session);
-        } catch (error) {
-          console.log(error);
-          return res.status(500);
-        }
-      }
-    } else {
-      try {
-        const session = await stripe.billingPortal.sessions.create({
-          customer: customer.id,
-          return_url: returnURL,
-        });
-        return res.status(200).json(session);
-      } catch (error) {
-        console.log(error);
-        return res.status(500);
-      }
+      console.error('Stripe session error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
     }
   });
 
-  app.post('/validate-coupon', async (req, res) => {
-    const { couponCode } = req.body;
+  app.post('/billing-portal-session', strictLimiter, isAuthenticated, validateBody(billingPortalSessionValidation), async (req, res) => {
     try {
-      let promoCodeData = null;
-      promoCodeData = await findPromo(stripe,couponCode);
+      const user: UserProfile = (req as any).user;
+      const { returnURL } = req.body;
+
+      // Search for an existing customer by email
+      let customers;
+      try {
+        customers = await stripe.customers.list({
+          email: user.email,
+          limit: 1,
+        });
+      } catch (error) {
+        console.error('Stripe customers.list error:', error);
+        return res.status(500).json({ error: 'Failed to fetch Stripe customer' });
+      }
+
+      let customer;
+      // Check if customer exists
+      if (customers.data.length > 0) {
+        customer = customers.data[0];
+      } else {
+        try {
+          customer = await stripe.customers.create({
+            email: user.email,
+          });
+        } catch (error) {
+          console.error('Stripe customers.create error:', error);
+          return res.status(500).json({ error: 'Failed to create Stripe customer' });
+        }
+      }
+
+      let subscriptions, trialingSubscriptions;
+      try {
+        subscriptions = await stripe.subscriptions.list({
+          customer: customer.id,
+          status: 'active',
+          limit: 100,
+        });
+
+        trialingSubscriptions = await stripe.subscriptions.list({
+          customer: customer.id,
+          status: 'trialing',
+          limit: 100,
+        });
+      } catch (error) {
+        console.error('Stripe subscriptions.list error:', error);
+        return res.status(500).json({ error: 'Failed to fetch subscriptions' });
+      }
+
+      // Merge trialing subscriptions into active subscriptions
+      subscriptions.data.push(...trialingSubscriptions.data);
+
+      if (subscriptions.data.length !== 0) {
+        let prices;
+        try {
+          prices = await stripe.prices.list({
+            limit: 50,
+          });
+        } catch (error) {
+          console.error('Stripe prices.list error:', error);
+          return res.status(500).json({ error: 'Failed to fetch prices' });
+        }
+
+        let usablePrices;
+        try {
+          usablePrices = await Promise.all(
+            prices.data.map(async (price: Stripe.Price) => {
+              if (price?.tiers_mode === 'graduated' && price?.recurring?.usage_type === 'licensed') {
+                const product = await stripe.products.retrieve(price.product as string);
+                if (product.name.toLowerCase().includes('app sumo')) {
+                  return null;
+                }
+                return price;
+              }
+              return null;
+            }),
+          );
+        } catch (error) {
+          console.error('Stripe products.retrieve error:', error);
+          return res.status(500).json({ error: 'Failed to process prices' });
+        }
+
+        usablePrices = usablePrices.filter((price: Stripe.Price) => price !== null);
+        const productPriceArray: any = [];
+        const productMap = new Map();
+
+        usablePrices.forEach((price: Stripe.Price) => {
+          if (!productMap.has(price.product)) {
+            productMap.set(price.product, []);
+          }
+          productMap.get(price.product).push(price);
+        });
+
+        productMap.forEach((prices, productId) => {
+          productPriceArray.push({
+            product: productId,
+            prices: prices.map((price: Stripe.Price) => price.id),
+          });
+        });
+
+        let configurations;
+
+        try {
+          configurations = await stripe.billingPortal.configurations.list({
+            is_default: true,
+          });
+        } catch (error) {
+          console.error('Stripe billingPortal.configurations.list error:', error);
+          return res.status(500).json({ error: 'Failed to fetch billing portal configurations' });
+        }
+
+        // Check if there is at least one configuration
+        if (!configurations.data || configurations.data.length === 0) {
+          console.error('No billing portal configurations found');
+          return res.status(500).json({ error: 'No billing portal configurations found' });
+        }
+
+        let configuration: any = {};
+
+        try {
+          configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
+            features: {
+              subscription_update: { enabled: false },
+              subscription_cancel: { enabled: false },
+            },
+          });
+        } catch (error) {
+          console.error('Stripe billingPortal.configurations.update error:', error);
+          return res.status(500).json({ error: 'Failed to update billing portal configuration' });
+        }
+
+        try {
+          const session = await stripe.billingPortal.sessions.create({
+            customer: customer.id,
+            return_url: returnURL,
+            configuration: configuration.id,
+          });
+          return res.status(200).json(session);
+        } catch (error) {
+          console.error('Stripe billingPortal.sessions.create error:', error);
+          return res.status(500).json({ error: 'Failed to create billing portal session' });
+        }
+      } else {
+        try {
+          const session = await stripe.billingPortal.sessions.create({
+            customer: customer.id,
+            return_url: returnURL,
+          });
+          return res.status(200).json(session);
+        } catch (error) {
+          console.error('Stripe billingPortal.sessions.create error:', error);
+          return res.status(500).json({ error: 'Failed to create billing portal session' });
+        }
+      }
+    } catch (error) {
+      console.error('Unexpected error in /billing-portal-session:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.post('/validate-coupon', couponLimiter, isAuthenticated, validateBody(validateCouponValidation), async (req, res) => {
+    const { couponCode } = req.body;
+
+    try {
+      let promoCodeData = await findPromo(stripe, couponCode.trim());
 
       if (!promoCodeData) {
         return res.json({ valid: false, error: 'Invalid promo code' });
       }
-      if(!promoCodeData.active)
-      {
+
+      if (!promoCodeData.active) {
         return res.json({ valid: false, error: 'Promo Expired' });
       }
-      if(!APP_SUMO_COUPON_IDS.includes(promoCodeData.coupon.id))
-      {
+
+      if (!APP_SUMO_COUPON_IDS.includes(promoCodeData.coupon.id)) {
         return res.json({ valid: false, error: 'Invalid promo code Not from App Sumo' });
       }
-      if(promoCodeData.coupon.percent_off)
-      {
-        const coupon:Stripe.Coupon = await stripe.coupons.retrieve(promoCodeData?.coupon?.id,{expand:['applies_to']});        
-        const product:Stripe.Product = await stripe.products.retrieve(coupon.applies_to.products[0]);
 
-        res.json({ valid: true, discount: (Number(promoCodeData.coupon.percent_off)/100),id:promoCodeData?.coupon?.id,percent:true,planName:product?.name.toLowerCase()});
-      }
-      else
-      {
-        res.json({ valid: true, discount: (Number(promoCodeData.coupon.amount_off)/100),id:promoCodeData?.coupon?.id,percent:false });
+      if (promoCodeData.coupon.percent_off) {
+        const coupon = await stripe.coupons.retrieve(promoCodeData.coupon.id, { expand: ['applies_to'] });
+        const product = await stripe.products.retrieve(coupon.applies_to.products[0]);
+        return res.json({ valid: true, discount: Number(promoCodeData.coupon.percent_off) / 100, id: promoCodeData.coupon.id, percent: true, planName: product.name.toLowerCase() });
+      } else {
+        return res.json({ valid: true, discount: Number(promoCodeData.coupon.amount_off) / 100, id: promoCodeData.coupon.id, percent: false });
       }
     } catch (error) {
-      console.log("err",error);
+      console.log('err', error);
       res.status(500).json({ error: error.message });
     }
   });
 
-  app.post('/update-site-widget-settings', async (req, res) => {
-    const { cookies } = req;
+  app.post('/update-site-widget-settings', moderateLimiter, isAuthenticated, validateBody(validateWidgetSettings), async (req, res) => {
+    const user: UserProfile = (req as any).user;
     const { settings, site_url } = req.body;
 
-    const bearerToken = cookies.token || null;
-
     try {
-      const user = await getUserLogined(bearerToken, res);
       const site = await findSiteByURL(site_url);
 
-      if (site.user_id !== user.id) {
-        console.log('site.user_id:', site.user_id, 'user.id:', user.id, 'equal:', site.user_id === user.id);
+      if (!site || site.user_id !== user.id) {
         return res.status(403).json({ error: 'User does not own this site' });
       }
 
@@ -394,48 +345,57 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         user_id: site.user_id,
       });
 
-      res.status(200).json("Success");
+      res.status(200).json('Success');
     } catch (error) {
       console.error(error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
-  app.post('/get-site-widget-settings', async (req, res) => {
-    const { cookies } = req;
-    const { site_url } = req.body;
+  app.post(
+    '/get-site-widget-settings',
+    moderateLimiter,
+    isAuthenticated,
+    validateBody((body) => validateWidgetSettings({ site_url: body.site_url, settings: null })),
+    async (req, res) => {
+      const user: UserProfile = (req as any).user;
+      const { site_url } = req.body;
 
-    const bearerToken = cookies.token || null;
+      try {
+        const site = await findSiteByURL(site_url);
 
-    try {
-      const user = await getUserLogined(bearerToken, res);
-      const site = await findSiteByURL(site_url);
+        if (site?.user_id !== user.id) {
+          return res.status(403).json({ error: 'User does not own this site' });
+        }
 
-      if (site.user_id !== user.id) {
-        console.log('site.user_id:', site.user_id, 'user.id:', user.id, 'equal:', site.user_id === user.id);
-        return res.status(403).json({ error: 'User does not own this site' });
+        const widgetSettings = await getWidgetSettingsBySiteId(site?.id);
+        let response = widgetSettings?.settings || {};
+
+        res.status(200).json({ settings: response });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
       }
+    },
+  );
 
-      const widgetSettings = await getWidgetSettingsBySiteId(site.id);
-      let response = widgetSettings?.settings || {};
+  app.post('/create-checkout-session', strictLimiter, isAuthenticated, validateBody(validateCreateCheckoutSession), async (req, res) => {
+    const { planName, billingInterval, returnUrl, domainId, domain, cardTrial, promoCode } = req.body;
 
-      res.status(200).json({ settings: response });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: error.message });
+    const user: UserProfile = (req as any).user;
+    const site = await findSiteByURL(domain);
+
+    if (!site || site.user_id !== user.id) {
+      return res.status(403).json({ error: 'User does not own this domain' });
     }
-  });
-  
-  app.post('/create-checkout-session',async (req,res)=>{
-    const { email,planName,billingInterval,returnUrl,domainId,userId,domain,cardTrial,promoCode} = req.body;
-    
+
     try {
       const [price, customers] = await Promise.all([
         findProductAndPriceByType(planName, billingInterval),
         stripe.customers.list({
-          email: email,
-          limit: 1
-        })
+          email: user.email,
+          limit: 1,
+        }),
       ]);
 
       let customer;
@@ -443,23 +403,22 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
       if (customers.data.length > 0) {
         customer = customers.data[0];
-        subscriptions = await stripe.subscriptions.list({ 
-          customer: customer.id, 
-          limit: 100 
+        subscriptions = await stripe.subscriptions.list({
+          customer: customer.id,
+          limit: 100,
         });
       } else {
         customer = await stripe.customers.create({
-          email: email,
+          email: user.email,
         });
       }
 
+      let promoCodeData: Stripe.PromotionCode[];
 
-      let promoCodeData:Stripe.PromotionCode[];
-
-      if (promoCode && promoCode.length > 0 && typeof(promoCode[0]) != 'number') {
+      if (promoCode && promoCode.length > 0 && typeof promoCode?.[0] != 'number') {
         const validCodesData: Stripe.PromotionCode[] = [];
         const invalidCodes: string[] = [];
-      
+
         for (const code of promoCode) {
           const found = await findPromo(stripe, code);
           if (found) {
@@ -468,111 +427,94 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             invalidCodes.push(code);
           }
         }
-      
+
         if (invalidCodes.length > 0) {
           return res.json({
             valid: false,
-            error: `Invalid Promo Code(s): ${invalidCodes.join(", ")}`
+            error: `Invalid Promo Code(s): ${invalidCodes.join(', ')}`,
           });
         }
-      
+
         promoCodeData = validCodesData;
       }
 
-      let session:any = {}
-      if(typeof(promoCode[0]) == 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id)))
-      {
-        const [
-          { orderedCodes, numPromoSites },
-          tokenUsed
-        ] = await Promise.all([
-          appSumoPromoCount(subscriptions, promoCode, userId),
-          getUserTokens(userId)
-        ]);
+      let session: any = {};
+      if (typeof promoCode?.[0] == 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id))) {
+        const [{ orderedCodes, numPromoSites }, tokenUsed] = await Promise.all([appSumoPromoCount(subscriptions, promoCode, user.id), getUserTokens(user.id)]);
 
-        console.log("promo");
-        const { lastCustomCode, nonCustomCodes } = await customTokenCount(userId, tokenUsed || []);
+        console.log('promo');
+        const { lastCustomCode, nonCustomCodes } = await customTokenCount(user.id, tokenUsed || []);
 
         // This will work on for AppSumo coupons, we allow use of coupons that should only work for the app sumo tier plans and we manually apply the discount according to new plan (single)
 
-        const subscription =  await stripe.subscriptions.create({
+        const subscription = await stripe.subscriptions.create({
           customer: customer.id,
           items: [{ price: price.price_stripe_id, quantity: 1 }],
           expand: ['latest_invoice.payment_intent'],
-          coupon:APP_SUMO_DISCOUNT_COUPON,
+          coupon: APP_SUMO_DISCOUNT_COUPON,
           metadata: {
             domainId: domainId,
-            userId: userId,
+            userId: user.id,
             maxDomains: 1,
             usedDomains: 1,
           },
-          description: `Plan for ${domain}(${lastCustomCode ? [lastCustomCode,...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
+          description: `Plan for ${domain}(${lastCustomCode ? [lastCustomCode, ...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
         });
-        
-        const cleanupPromises = [
-          expireUsedPromo(numPromoSites, stripe, orderedCodes, userId, email)
-        ];
+
+        const cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.email)];
 
         try {
           const previous_plan = await getSitePlanBySiteId(Number(domainId));
           cleanupPromises.push(deleteTrialPlan(previous_plan.id).then(() => {}));
-        } catch (error) {
-          
-        }
+        } catch (error) {}
 
-        
         await Promise.all(cleanupPromises);
 
-       
-        await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), 'appsumo');
+        await createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), 'appsumo');
 
         console.log('New Sub created');
 
         res.status(200).json({ success: true });
 
         return;
-
-      }
-      else if(promoCode && promoCode.length > 0) // Coupon is not valid or not the app sumo promo
-      {
+      } else if (promoCode && promoCode.length > 0) {
+        // Coupon is not valid or not the app sumo promo
         return res.json({ valid: false, error: 'Invalid promo code' });
-      }
-      else if(cardTrial)
-      {
-        console.log("trial")
+      } else if (cardTrial) {
+        console.log('trial');
         session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'subscription',
-          line_items: [{
-            price: price.price_stripe_id,
-            quantity: 1,
-          }],
+          line_items: [
+            {
+              price: price.price_stripe_id,
+              quantity: 1,
+            },
+          ],
           customer: customer.id,
           allow_promotion_codes: true,
           success_url: `${returnUrl}`,
           cancel_url: returnUrl,
           metadata: {
             domainId: domainId,
-            userId:userId,
-            updateMetaData:"true",
+            userId: user.id,
+            updateMetaData: 'true',
           },
-          subscription_data:{
+          subscription_data: {
             trial_period_days: 30,
             metadata: {
               domainId: domainId,
-              userId:userId,
-              updateMetaData:"true",
+              userId: user.id,
+              updateMetaData: 'true',
             },
-            description:`Plan for ${domain}`,
-          }
+            description: `Plan for ${domain}`,
+          },
         });
+      } else {
+        console.log('normal');
 
-      }
-      else{
-        console.log("normal")
-        
         if (subscriptions.data.length > 0) {
-          console.log("setup intent only");
+          console.log('setup intent only');
           session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             mode: 'setup',
@@ -583,12 +525,12 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               price_id: price.price_stripe_id,
               domainId: domainId,
               domain: domain,
-              userId: userId,
+              userId: user.id,
               updateMetaData: 'true',
             },
           });
         } else {
-          console.log("checkout intent");
+          console.log('checkout intent');
           session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             mode: 'subscription',
@@ -604,13 +546,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             cancel_url: returnUrl,
             metadata: {
               domainId: domainId,
-              userId: userId,
+              userId: user.id,
               updateMetaData: 'true',
             },
             subscription_data: {
               metadata: {
                 domainId: domainId,
-                userId: userId,
+                userId: user.id,
                 updateMetaData: 'true',
               },
               description: `Plan for ${domain}`,
@@ -619,106 +561,29 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         }
       }
 
-      
-
       res.status(303).json({ url: session.url });
-
     } catch (error) {
       console.log(error);
       res.status(500).json({ error: error.message });
     }
   });
 
-  app.post('/app-sumo-checkout-session',async (req,res)=>{
-    const { email,planName,promoCode,returnUrl,domainId,userId,domain} = req.body;
-     
-    const price = await findProductAndPriceByType(planName,"YEARLY");
+  app.post('/cancel-site-subscription', strictLimiter, isAuthenticated, validateBody(validateCancelSiteSubscription), async (req, res) => {
+    const { domainId, domainUrl, status, cancelReason, otherReason } = req.body;
 
-    try {
-      // Search for an existing customer by email
-      const customers = await stripe.customers.list({
-        email: email,
-        limit: 1
-      });
-
-      let customer;
-
-      // Check if customer exists
-      if (customers.data.length > 0) {
-        customer = customers.data[0];
-      } else {
-        // Create a new customer if not found
-        customer = await stripe.customers.create({
-          email: email,
-        });
-      }
-
-      const promoCodes = await stripe.promotionCodes.list({ limit: 100 });
-      const promoCodeData = await promoCodes.data.find((pc:any) => pc?.code == promoCode);
-      
-      if (!promoCodeData) {
-        return res.json({ valid: false, error: 'Invalid promo code' });
-      }
-      if(promoCodeData.coupon.valid && promoCodeData.active && promoCodeData.coupon.id == APP_SUMO_COUPON_ID)
-      {
-        const subscriptions = await stripe.subscriptions.list({ customer: customer.id,limit:100 });
-
-        for (const subscription of subscriptions.data) {
-          await stripe.subscriptions.del(subscription.id);
-        }
-
-        // Create the checkout session
-        const session = await stripe.checkout.sessions.create({
-          payment_method_types: ['card'],
-          mode: 'subscription',
-          line_items: [{
-            price: price.price_stripe_id,
-            quantity: 1,
-          }],
-          customer: customer.id,
-          discounts:[{
-            promotion_code: promoCodeData?.id,
-          }],
-          payment_method_collection:'if_required',
-          success_url: `${returnUrl}`,
-          cancel_url: returnUrl,
-          metadata: {
-            domainId: domainId,
-            userId:userId,
-            updateMetaData:"true",
-          },
-          subscription_data:{
-            metadata: {
-              domainId: domainId,
-              userId:userId,
-              updateMetaData:"true",
-            },
-            description:`Plan for ${domain}`
-          }
-        });
-
-        res.status(303).json({ url: session.url });
-
-      }
-      else
-      {
-        return res.json({ valid: false, error: 'Invalid promo code' });
-      }
-
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post('/cancel-site-subscription',async (req,res)=>{
-    const { domainId,domainUrl,userId,status,cancelReason,otherReason } = req.body;
-    let previous_plan:any[];
+    let previous_plan: any[];
     let stripeCustomerId: string | null = null;
-    
+
+    const user: UserProfile = (req as any).user;
+    const site = await findSiteByURL(domainUrl);
+
+    if (!site || site.user_id !== user.id) {
+      return res.status(403).json({ error: 'User does not own this domain' });
+    }
+
     try {
       previous_plan = await getAnySitePlanBySiteId(Number(domainId));
-      
+
       // Get stripe customer ID for feedback recording
       if (previous_plan && previous_plan.length > 0) {
         stripeCustomerId = previous_plan[0].customerId;
@@ -727,52 +592,46 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       console.log('err = ', error);
     }
 
-    if(status != 'Active' && status != 'Life Time'){
+    if (status != 'Active' && status != 'Life Time') {
       try {
-        if(previous_plan && previous_plan.length > 0) {
-          for(const plan of previous_plan) {
-            
-            if(plan.subscriptionId == 'Trial'){
+        if (previous_plan && previous_plan.length > 0) {
+          for (const plan of previous_plan) {
+            if (plan.subscriptionId == 'Trial') {
               await deleteTrialPlan(plan.id);
-            }
-            else{
+            } else {
               let errorCount = 0;
               try {
                 await deleteExpiredSitesPlan(plan.id);
               } catch (error) {
-                
                 errorCount++;
-                
               }
 
-              if(errorCount == 0){
-              try {
-                await deleteExpiredSitesPlan(plan.id,true);
-              } catch (error) {
+              if (errorCount == 0) {
+                try {
+                  await deleteExpiredSitesPlan(plan.id, true);
+                } catch (error) {
+                  errorCount++;
+                }
+              }
 
-                errorCount++;
-              }}
-
-              if(errorCount == 2){
-                return res.status(500).json({ error: "Error deleting expired sites plan" });
+              if (errorCount == 2) {
+                return res.status(500).json({ error: 'Error deleting expired sites plan' });
               }
             }
           }
         }
       } catch (error) {
-        console.log("error deleting site by url",error);
+        console.log('error deleting site by url', error);
         return res.status(500).json({ error: error.message });
       }
-    }
-    else{
+    } else {
       try {
         // Iterate through each plan in previous_plan array
-        if(previous_plan && previous_plan.length > 0){
-          for(const plan of previous_plan) {
-            if(plan.subscriptionId == 'Trial'){
+        if (previous_plan && previous_plan.length > 0) {
+          for (const plan of previous_plan) {
+            if (plan.subscriptionId == 'Trial') {
               await deleteTrialPlan(plan.id);
-            }
-            else{
+            } else {
               await deleteSitesPlan(plan.id);
             }
           }
@@ -784,7 +643,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
 
     try {
-      await deleteSiteWithRelatedRecords(domainUrl, userId);
+      await deleteSiteWithRelatedRecords(domainUrl, user.id);
     } catch (error) {
       console.error('Error deleting site:', error);
       return res.status(500).json({ error: 'Failed to delete site' });
@@ -794,7 +653,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     if (cancelReason) {
       try {
         const feedbackData: CancelFeedbackProps = {
-          user_id: Number(userId),
+          user_id: Number(user.id),
           user_feedback: cancelReason === 'other' ? otherReason : cancelReason,
           site_url: domainUrl,
           stripe_customer_id: stripeCustomerId,
@@ -810,36 +669,37 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
 
     return res.status(200).json({ success: true });
-
   });
 
-  app.post('/create-subscription',async (req,res)=>{
-    const { email,returnURL, planName,billingInterval,domainId,domainUrl,userId,cardTrial,promoCode } = req.body;
+  app.post('/create-subscription', strictLimiter, isAuthenticated, validateBody(validateCreateSubscription), async (req, res) => {
+    const { planName, billingInterval, domainId, domainUrl, cardTrial, promoCode } = req.body;
 
+    const user: UserProfile = (req as any).user;
+    const site = await findSiteByURL(domainUrl);
+
+    if (!site || site.user_id !== user.id) {
+      return res.status(403).json({ error: 'User does not own this domain' });
+    }
 
     const [price, sites, customers] = await Promise.all([
       findProductAndPriceByType(planName, billingInterval),
-      getSitesPlanByUserId(Number(userId)),
+      getSitesPlanByUserId(Number(user.id)),
       stripe.customers.list({
-        email: email,
-        limit: 1
-      })
+        email: user.email,
+        limit: 1,
+      }),
     ]);
 
-      const sub_id = sites[0]?.subcriptionId;
-      
+    const sub_id = sites[0]?.subcriptionId;
 
     let no_sub = false;
     let subscription;
 
-    if(sub_id == undefined)
-    {
+    if (sub_id == undefined) {
       no_sub = true;
-    }
-    else
-    {
+    } else {
       try {
-        subscription = await stripe.subscriptions.retrieve(sub_id,{active:true}) as Stripe.Subscription;
+        subscription = (await stripe.subscriptions.retrieve(sub_id, { active: true })) as Stripe.Subscription;
       } catch (error) {
         // console.log("error",error);
         no_sub = true;
@@ -848,13 +708,11 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
     try {
       let customer;
-      
+
       // Check if customer exists
       if (customers.data.length > 0) {
         customer = customers.data[0];
-      }
-      else
-      {
+      } else {
         // console.log("customer not found");
         res.status(404);
       }
@@ -862,9 +720,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       const [subscriptions, price_data] = await Promise.all([
         stripe.subscriptions.list({
           customer: customer.id,
-          limit: 100
+          limit: 100,
         }),
-        stripe.prices.retrieve(String(price.price_stripe_id), {expand: ['tiers']})
+        stripe.prices.retrieve(String(price.price_stripe_id), { expand: ['tiers'] }),
       ]);
 
       if (subscriptions.data.length > 0) {
@@ -872,19 +730,18 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         no_sub = false;
       }
 
-      if(!price_data?.tiers || price_data?.tiers?.length == 0){
-        no_sub = true
-        console.log("no tiers");
+      if (!price_data?.tiers || price_data?.tiers?.length == 0) {
+        no_sub = true;
+        console.log('no tiers');
       }
       let cleanupPromises: Promise<void>[] = [];
-      if(no_sub)
-      {   
-        let promoCodeData:Stripe.PromotionCode[];
+      if (no_sub) {
+        let promoCodeData: Stripe.PromotionCode[];
 
-        if (promoCode && promoCode.length > 0 && (typeof(promoCode[0]) != 'number') ) {
+        if (promoCode && promoCode.length > 0 && typeof promoCode[0] != 'number') {
           const validCodesData: Stripe.PromotionCode[] = [];
           const invalidCodes: string[] = [];
-        
+
           // Process each code sequentially (you can also use Promise.all if you prefer parallel execution)
           for (const code of promoCode) {
             const found = await findPromo(stripe, code);
@@ -894,50 +751,40 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
               invalidCodes.push(code);
             }
           }
-        
+
           if (invalidCodes.length > 0) {
             return res.json({
               valid: false,
-              error: `Invalid Promo Code(s): ${invalidCodes.join(", ")}`
+              error: `Invalid Promo Code(s): ${invalidCodes.join(', ')}`,
             });
           }
-        
+
           // Now, validCodesData contains all valid promo code objects.
           promoCodeData = validCodesData;
         }
 
-        if (typeof(promoCode[0]) == 'number' || (promoCodeData && promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id))) {
-          
-          const [
-            { orderedCodes, numPromoSites },
-            tokenUsed
-          ] = await Promise.all([
-            appSumoPromoCount(subscriptions, promoCode, userId),
-            getUserTokens(userId)
-          ]);
+        if (typeof promoCode[0] == 'number' || (promoCodeData && promoCodeData[0].coupon.valid && promoCodeData[0].active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id))) {
+          const [{ orderedCodes, numPromoSites }, tokenUsed] = await Promise.all([appSumoPromoCount(subscriptions, promoCode, user.id), getUserTokens(user.id)]);
 
-          const {lastCustomCode,nonCustomCodes} = await customTokenCount(userId,tokenUsed);
+          const { lastCustomCode, nonCustomCodes } = await customTokenCount(user.id, tokenUsed);
 
           subscription = await stripe.subscriptions.create({
             customer: customer.id,
             items: [{ price: price.price_stripe_id, quantity: 1 }],
             expand: ['latest_invoice.payment_intent'],
-            coupon:APP_SUMO_DISCOUNT_COUPON,
+            coupon: APP_SUMO_DISCOUNT_COUPON,
             default_payment_method: customer.invoice_settings.default_payment_method,
             metadata: {
               domainId: domainId,
-              userId: userId,
+              userId: user.id,
               maxDomains: 1,
               usedDomains: 1,
             },
-            description: `Plan for ${domainUrl}(${lastCustomCode ? [lastCustomCode,...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
+            description: `Plan for ${domainUrl}(${lastCustomCode ? [lastCustomCode, ...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
           });
-          
-          // Parallel execution for cleanup operations
-          cleanupPromises = [
-            expireUsedPromo(numPromoSites, stripe, orderedCodes, userId, email)
-          ];
 
+          // Parallel execution for cleanup operations
+          cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.email)];
         } else if (promoCode && promoCode.length > 0) {
           // Coupon is not valid or not the app sumo promo
           return res.json({ valid: false, error: 'Invalid promo code' });
@@ -950,7 +797,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             default_payment_method: customer.invoice_settings.default_payment_method,
             metadata: {
               domainId: domainId,
-              userId: userId,
+              userId: user.id,
               maxDomains: 1,
               usedDomains: 1,
             },
@@ -964,7 +811,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             default_payment_method: customer.invoice_settings.default_payment_method,
             metadata: {
               domainId: domainId,
-              userId: userId,
+              userId: user.id,
               maxDomains: 1,
               usedDomains: 1,
             },
@@ -980,23 +827,17 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         }
 
         await Promise.all(cleanupPromises);
-        
-        if(promoCode.length > 0){
-          await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), 'appsumo');
-        }
-        else{
-          await createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), '');
+
+        if (promoCode.length > 0) {
+          await createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), 'appsumo');
+        } else {
+          await createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), '');
         }
 
         console.log('New Sub created');
 
         res.status(200).json({ success: true });
-
-      }
-      else
-      {
-        
-
+      } else {
         if ('usedDomains' in subscription.metadata) {
           const UsedDomains = Number(subscription.metadata['usedDomains']);
           const MaxDomains = Number(subscription.metadata['maxDomains']);
@@ -1026,7 +867,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
             // Parallel execution for cleanup and site plan creation
             const cleanupPromises = [];
-            
+
             // Handle previous plan deletion
             try {
               const previous_plan = await getSitePlanBySiteId(Number(domainId));
@@ -1036,15 +877,11 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             }
 
             // Add site plan creation
-            cleanupPromises.push(createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), ''));
+            cleanupPromises.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''));
 
             await Promise.all(cleanupPromises);
 
-
             res.status(200).json({ success: true });
-
-
-
           } else {
             let metaData: any = subscription.metadata;
 
@@ -1056,10 +893,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             });
 
             console.log('meta data updated');
-            
+
             // Parallel execution for cleanup and site plan creation
             const cleanupPromises = [];
-            
+
             // Handle previous plan deletion
             try {
               const previous_plan = await getSitePlanBySiteId(Number(domainId));
@@ -1069,7 +906,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             }
 
             // Add site plan creation
-            cleanupPromises.push(createSitesPlan(Number(userId), String(subscription.id), planName, billingInterval, Number(domainId), ''));
+            cleanupPromises.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''));
 
             await Promise.all(cleanupPromises);
 
@@ -1081,185 +918,21 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           res.status(500).json({ error: 'Meta Data Not Configured' });
         }
       }
-
     } catch (error) {
-      console.log("erroring",error);
+      console.log('erroring', error);
       res.status(500).json({ error: error.message });
     }
   });
 
-  app.post('/create-appsumo-subscription',async (req,res)=>{
-    const { email,returnURL, planName,domainId,domainUrl,userId,promoCode } = req.body;
+  app.post('/apply-retention-discount', strictLimiter, isAuthenticated, validateBody(validateApplyRetentionDiscount), async (req, res) => {
+    const { domainId, status } = req.body;
 
-    const appSumoInterval = 'YEARLY';
+    const user: UserProfile = (req as any).user;
+    const site = await findSiteById(domainId);
 
-    const price = await findProductAndPriceByType(planName,appSumoInterval);
-
-    const sites = await getSitesPlanByUserId(Number(userId));
-
-    const sub_id = sites[0]?.subcriptionId;
-    
-
-    let no_sub = false;
-    let subscription;
-
-    if(sub_id == undefined)
-    {
-      no_sub = true;
+    if (!site || site.user_id !== user.id) {
+      return res.status(403).json({ error: 'User does not own this domain' });
     }
-    else
-    {
-      try {
-        subscription = await stripe.subscriptions.retrieve(sub_id) as Stripe.Subscription;
-      } catch (error) {
-        // console.log("error",error);
-        no_sub = true;
-      }
-    }
-
-    try {
-      // Search for an existing customer by email
-      const customers = await stripe.customers.list({
-        email: email,
-        limit: 1
-      });
-
-      let customer;
-
-      // Check if customer exists
-      if (customers.data.length > 0) {
-        customer = customers.data[0];
-      }
-      else
-      {
-        res.status(404);
-      }
-
-      const subscriptions = await stripe.subscriptions.list({
-          customer: customer.id,
-          limit:100
-      });
-
-      if (subscriptions.data.length > 0) {
-        subscription = subscriptions.data[0];
-        no_sub=false;
-      }
-
-
-      if(no_sub)
-      {   
-        const promoCodes = await stripe.promotionCodes.list({ limit: 100 });
-        const promoCodeData = await promoCodes.data.find((pc:any) => pc?.code == promoCode);
-      
-        if (!promoCodeData) {
-          return res.json({ valid: false, error: 'Invalid Promo Code' });
-        }
-        if (promoCodeData.coupon.valid && promoCodeData.active && promoCodeData.coupon.id == APP_SUMO_COUPON_ID) {
-          let price_data = await stripe.prices.retrieve(String(price.price_stripe_id));
-
-          subscription = await stripe.subscriptions.create({
-            customer: customer.id,
-            items: [{ price: price.price_stripe_id }],
-            expand: ['latest_invoice.payment_intent'],
-            default_payment_method: customer.invoice_settings.default_payment_method,
-            discounts:[{
-              promotion_code: promoCodeData?.id,
-            }],
-            metadata: {
-              domainId: domainId,
-              userId: userId,
-              maxDomains: Number(price_data.transform_quantity['divide_by']),
-              usedDomains: 1,
-            },
-            description: `Plan for ${domainUrl}`,
-          });
-
-          let previous_plan;
-          try {
-            previous_plan = await getSitePlanBySiteId(Number(domainId));
-            await deleteTrialPlan(previous_plan.id);
-          } catch (error) {
-            console.log('err = ', error);
-          }
-
-          await createSitesPlan(Number(userId), String(subscription.id), planName, appSumoInterval, Number(domainId), '');
-
-          console.log('New Sub created');
-
-          res.status(200).json({ success: true });
-        } else {
-          res.status(500).json({ error: "Invalid Promo Code" });
-        }
-
-      }
-      else
-      {
-        
-
-        if ('usedDomains' in subscription.metadata) {
-          const UsedDomains = Number(subscription.metadata['usedDomains']);
-          // console.log('UD', UsedDomains);
-          // console.log(subscription.metadata);
-          if (UsedDomains >= Number(subscription.metadata['maxDomains'])) {
-            res.status(500).json({ error: 'Your Plan Limit has Fulfilled' });
-          } else {
-            let metaData: any = subscription.metadata;
-
-            metaData['usedDomains'] = Number(UsedDomains + 1);
-            metaData['updateMetaData'] = true;
-
-            await stripe.subscriptions.update(subscription.id, {
-              metadata: metaData,
-            });
-
-            console.log('meta data updated');
-            let previous_plan;
-            try {
-              previous_plan = await getSitePlanBySiteId(Number(domainId));
-              await deleteTrialPlan(previous_plan.id);
-            } catch (error) {
-              // console.log('err = ', error);
-            }
-
-            await createSitesPlan(Number(userId), String(subscription.id), planName, appSumoInterval, Number(domainId), '');
-
-            console.log('Old Sub created');
-
-            res.status(200).json({ success: true });
-          }
-        } else {
-          res.status(500).json({ error: 'Meta Data Not Configured' });
-        }
-      }
-
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post('/subscribe-newsletter', async (req, res) => {
-    try {
-      const { email } = req.body;
-      
-      // Validate email format
-      if (!email || !email.includes('@')) {
-        return res.status(400).json({ error: 'Invalid email address' });
-      }
-
-      // Attempt to add the email to the database
-      await addNewsletterSub(email);
-
-      // Return success response
-      res.status(200).json({ message: 'Subscription successful' });
-    } catch (error) {
-      console.error('Error subscribing to newsletter:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  });
-
-  app.post('/apply-retention-discount', async (req, res) => {
-    const { domainId, email, status } = req.body;
 
     try {
       const sitePlan = await getSitePlanBySiteId(Number(domainId));
@@ -1273,7 +946,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
         if (status == 'Trial' || status == 'Trial Expired') {
           const customers = await stripe.customers.list({
-            email: email,
+            email: user.email,
             limit: 1,
           });
 
@@ -1322,13 +995,14 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
-  app.post('/check-customer',async (req,res)=>{
-    const {email,userId} = req.body;
+  app.post('/check-customer', moderateLimiter, isAuthenticated, async (req, res) => {
+    const user: UserProfile = (req as any).user;
+
     let plan_name;
     let interval;
-    
+
     try {
-      const plans = await getSitesPlanByUserId(userId);
+      const plans = await getSitesPlanByUserId(user.id);
       if (plans.length > 0) {
         for (let i = 0; i < plans.length; i++) {
           let plan = plans[i];
@@ -1344,31 +1018,29 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         }
       }
     } catch (error) {}
-    
 
     try {
       // Search for an existing customer by email
       const customers = await stripe.customers.list({
-        email: email,
-        limit: 1
+        email: user.email,
+        limit: 1,
       });
 
       let customer;
-      
-      const userAppSumoTokens = await getUserTokens(userId);
 
-      const hasCustomInfinityToken = userAppSumoTokens.includes("customInfinity");
+      const userAppSumoTokens = await getUserTokens(user.id);
 
-      let maxSites = 0
+      const hasCustomInfinityToken = userAppSumoTokens.includes('customInfinity');
 
-      if(!hasCustomInfinityToken){
-        const {lastCustomCode,nonCustomCodes} = await customTokenCount(userId,userAppSumoTokens);
+      let maxSites = 0;
 
-        if(lastCustomCode){
+      if (!hasCustomInfinityToken) {
+        const { lastCustomCode, nonCustomCodes } = await customTokenCount(user.id, userAppSumoTokens);
+
+        if (lastCustomCode) {
           const customCode = lastCustomCode.match(/^custom(\d+)$/);
           maxSites = Number(customCode[1]) + nonCustomCodes.length;
-        }
-        else{
+        } else {
           maxSites = nonCustomCodes.length;
         }
       }
@@ -1377,33 +1049,31 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         customer = customers.data[0];
 
         try {
-
           const trial_subs = await stripe.subscriptions.list({
             customer: customer.id,
             status: 'trialing', // Retrieve all statuses to filter manually
-            limit:100
+            limit: 100,
           });
 
           const subscriptions = await stripe.subscriptions.list({
             customer: customer.id,
             status: 'active', // Retrieve all statuses to filter manually
-            limit:100
+            limit: 100,
           });
 
           let price_id;
-          let price:Stripe.Price;
+          let price: Stripe.Price;
 
-          if(subscriptions.data.length > 0){
-             price_id = (subscriptions.data[0] as Stripe.Subscription).items.data[0].price
+          if (subscriptions.data.length > 0) {
+            price_id = (subscriptions.data[0] as Stripe.Subscription).items.data[0].price;
 
             price = await stripe.prices.retrieve(price_id.id, {
               expand: ['tiers'], // Explicitly expand the tiers
             });
           }
-          
 
           // handle trial output and show trial sub seperately
-          if(trial_subs?.data?.length){
+          if (trial_subs?.data?.length) {
             const prod = await stripe.products.retrieve(String(trial_subs?.data[0]?.plan?.product));
 
             const trialEndTimestamp = trial_subs?.data[0]?.trial_end; // Unix timestamp
@@ -1411,29 +1081,26 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
             const daysRemaining = Math.ceil((trialEndTimestamp - currentTimestamp) / (60 * 60 * 24));
 
-            if(!price || price?.tiers?.length > 0 ){
-              
-              res.status(200).json({ tierPlan:true,isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining});
-            }
-            else{
-              
+            if (!price || price?.tiers?.length > 0) {
+              res.status(200).json({ tierPlan: true, isCustomer: true, plan_name: prod.name, interval: trial_subs.data[0].plan.interval, submeta: trial_subs.data[0].metadata, card: customers?.data[0]?.invoice_settings.default_payment_method, expiry: daysRemaining });
+            } else {
               const monthlyTrialSubs: Array<{ id: string; description: any; trial_end: number | null }> = [];
               const yearlyTrialSubs: Array<{ id: string; description: any; trial_end: number | null }> = [];
 
-              const monthlySubs: Array<{ id: string; description: any;}> = [];
-              const yearlySubs: Array<{ id: string; description: any;}> = [];
+              const monthlySubs: Array<{ id: string; description: any }> = [];
+              const yearlySubs: Array<{ id: string; description: any }> = [];
 
-              trial_subs.data.forEach((subscription:any) => {
+              trial_subs.data.forEach((subscription: any) => {
                 // Retrieve the recurring interval from the first subscription item
                 const recurringInterval = subscription.items.data[0]?.price?.recurring?.interval;
-              
+
                 // Build an object that includes the subscription's description along with other properties
                 const outputObj = {
                   id: subscription.id,
                   description: subscription.description, //subscription.metadata.description
                   trial_end: subscription.trial_end,
                 };
-              
+
                 // Categorize into monthly or yearly based on the recurring interval
                 if (recurringInterval === 'month') {
                   monthlyTrialSubs.push(outputObj);
@@ -1442,7 +1109,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 }
               });
 
-              subscriptions.data.forEach((subscription:any) => {
+              subscriptions.data.forEach((subscription: any) => {
                 // Retrieve the recurring interval from the first subscription item
                 const recurringInterval = subscription.items.data[0]?.price?.recurring?.interval;
 
@@ -1460,8 +1127,8 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                 }
               });
 
-              const trial_sub_data = {'monthly':monthlyTrialSubs,'yearly':yearlyTrialSubs}
-              const regular_sub_data = {'monthly':monthlySubs,'yearly':yearlySubs}
+              const trial_sub_data = { monthly: monthlyTrialSubs, yearly: yearlyTrialSubs };
+              const regular_sub_data = { monthly: monthlySubs, yearly: yearlySubs };
 
               let appSumoCount = 0;
               const uniquePromoCodes = new Set<string>();
@@ -1476,278 +1143,149 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                     const codesInDesc = match[1]
                       .split(',')
                       .map((c: string) => c.trim())
-                      .filter((c:any) => c.length > 0);
+                      .filter((c: any) => c.length > 0);
 
-                    codesInDesc.forEach((code:any) => uniquePromoCodes.add(code));
+                    codesInDesc.forEach((code: any) => uniquePromoCodes.add(code));
                   }
                 }
               }
 
-              res.status(200).json({ trial_subs:JSON.stringify(trial_sub_data),subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:trial_subs.data[0].plan.interval,submeta:trial_subs.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,expiry:daysRemaining,appSumoCount:appSumoCount,codeCount:maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size,infinityToken:hasCustomInfinityToken});
-
+              res.status(200).json({
+                trial_subs: JSON.stringify(trial_sub_data),
+                subscriptions: JSON.stringify(regular_sub_data),
+                isCustomer: true,
+                plan_name: prod.name,
+                interval: trial_subs.data[0].plan.interval,
+                submeta: trial_subs.data[0].metadata,
+                card: customers?.data[0]?.invoice_settings.default_payment_method,
+                expiry: daysRemaining,
+                appSumoCount: appSumoCount,
+                codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length : uniquePromoCodes.size,
+                infinityToken: hasCustomInfinityToken,
+              });
             }
-  
-          }
-          else{
+          } else {
+            const prod = await stripe.products.retrieve(String(subscriptions.data[0]?.plan?.product));
 
-          const prod = await stripe.products.retrieve(String(subscriptions.data[0]?.plan?.product));
+            if (!price || price?.tiers?.length > 0) {
+              res.status(200).json({ tierPlan: true, isCustomer: true, plan_name: prod.name, interval: subscriptions.data[0].plan.interval, submeta: subscriptions.data[0].metadata, card: customers?.data[0]?.invoice_settings.default_payment_method });
+            } else {
+              // New Pricing, return all subs
 
-          if(!price || price?.tiers?.length > 0 ){
-            
-            res.status(200).json({ tierPlan:true,isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method});
-          }
-          else{
-            // New Pricing, return all subs
-            
-            const monthlySubs: Array<{ id: string; description: any;}> = [];
-            const yearlySubs: Array<{ id: string; description: any;}> = [];
+              const monthlySubs: Array<{ id: string; description: any }> = [];
+              const yearlySubs: Array<{ id: string; description: any }> = [];
 
-            subscriptions.data.forEach((subscription:any) => {
-              // Retrieve the recurring interval from the first subscription item
-              const recurringInterval = subscription.items.data[0]?.price?.recurring?.interval;
+              subscriptions.data.forEach((subscription: any) => {
+                // Retrieve the recurring interval from the first subscription item
+                const recurringInterval = subscription.items.data[0]?.price?.recurring?.interval;
 
-              // Create an output object with the desired properties
-              const outputObj = {
-                id: subscription.id,
-                description: subscription?.description,
-              };
+                // Create an output object with the desired properties
+                const outputObj = {
+                  id: subscription.id,
+                  description: subscription?.description,
+                };
 
-              // Push the subscription into the appropriate array based on the interval
-              if (recurringInterval === 'month') {
-                monthlySubs.push(outputObj);
-              } else if (recurringInterval === 'year') {
-                yearlySubs.push(outputObj);
-              }
-            });
-            const regular_sub_data = {'monthly':monthlySubs,'yearly':yearlySubs}
+                // Push the subscription into the appropriate array based on the interval
+                if (recurringInterval === 'month') {
+                  monthlySubs.push(outputObj);
+                } else if (recurringInterval === 'year') {
+                  yearlySubs.push(outputObj);
+                }
+              });
+              const regular_sub_data = { monthly: monthlySubs, yearly: yearlySubs };
 
-            let appSumoCount = 0;
-            const uniquePromoCodes = new Set<string>();
+              let appSumoCount = 0;
+              const uniquePromoCodes = new Set<string>();
 
-            for (const subs of Object.values(regular_sub_data)) {
-              for (const sub of subs) {
-                const match = sub.description?.match(/\(([^)]*)\)$/);
-                if (match) {
-                  appSumoCount++;
+              for (const subs of Object.values(regular_sub_data)) {
+                for (const sub of subs) {
+                  const match = sub.description?.match(/\(([^)]*)\)$/);
+                  if (match) {
+                    appSumoCount++;
 
-                  // split in case there are multiple codes in the ()
-                  const codesInDesc = match[1]
-                    .split(',')
-                    .map((c: string) => c.trim())
-                    .filter((c:any) => c.length > 0);
+                    // split in case there are multiple codes in the ()
+                    const codesInDesc = match[1]
+                      .split(',')
+                      .map((c: string) => c.trim())
+                      .filter((c: any) => c.length > 0);
 
-                  codesInDesc.forEach((code:any) => uniquePromoCodes.add(code));
+                    codesInDesc.forEach((code: any) => uniquePromoCodes.add(code));
+                  }
                 }
               }
+
+              res.status(200).json({
+                subscriptions: JSON.stringify(regular_sub_data),
+                isCustomer: true,
+                plan_name: prod.name,
+                interval: subscriptions.data[0].plan.interval,
+                submeta: subscriptions.data[0].metadata,
+                card: customers?.data[0]?.invoice_settings.default_payment_method,
+                appSumoCount: appSumoCount,
+                codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length : uniquePromoCodes.size,
+                infinityToken: hasCustomInfinityToken,
+              });
             }
-
-            res.status(200).json({ subscriptions:JSON.stringify(regular_sub_data),isCustomer: true,plan_name:prod.name,interval:subscriptions.data[0].plan.interval,submeta:subscriptions.data[0].metadata,card:customers?.data[0]?.invoice_settings.default_payment_method,appSumoCount:appSumoCount,codeCount:maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length :uniquePromoCodes.size,infinityToken:hasCustomInfinityToken});
-
           }
-  
-          
-        }
-  
-          
         } catch (error) {
           // console.log(error);
           // silent fail
-          res.status(200).json({ isCustomer: true,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,codeCount:maxSites > 0 ? maxSites : userAppSumoTokens.length,infinityToken:hasCustomInfinityToken});
-          
+          res.status(200).json({ isCustomer: true, plan_name: '', interval: '', card: customers?.data[0]?.invoice_settings.default_payment_method, codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length, infinityToken: hasCustomInfinityToken });
         }
-        
+      } else {
+        console.log('no customer');
+        res.status(200).json({ isCustomer: false, plan_name: '', interval: '', card: customers?.data[0]?.invoice_settings.default_payment_method, infinityToken: hasCustomInfinityToken, codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length });
       }
-      else
-      {
-        console.log("no customer");
-        res.status(200).json({ isCustomer: false,plan_name:"",interval:"",card:customers?.data[0]?.invoice_settings.default_payment_method,infinityToken:hasCustomInfinityToken,codeCount:maxSites > 0 ? maxSites : userAppSumoTokens.length});
-      }
-
     } catch (error) {
       console.log(error);
       res.status(500).json({ error: error.message });
     }
   });
 
-  app.post('/fix-with-ai', async (req, res) => {
-    const { heading, description, help, code } = req.body;
-  
-    const response = await openai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: `
-            You are an expert in web accessibility, well-versed in WCAG and ADA guidelines. You understand various accessibility issues and the impact they have on users, especially those with disabilities. 
-            Your task is to analyze a provided code snippet and suggest specific corrections or enhancements based on given accessibility issues.
-            Here's the structure of the response I want:
-  
-            {
-              correctedCode: Provide the corrected version of the code snippet based on the guidance given in heading, description, and help.
-            }
-  
-            Note: Only return the JSON object, with no additional explanation or introduction.
-          `,
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({
-            heading: heading,
-            description: description,
-            help: help,
-            code: code
-          }),
-        },
-      ],
-       model: "google/gemini-2.5-flash-preview-05-20",
-    });
-  
-    const correctedResponse = response.choices[0].message.content.replace(/```json|```/g, '');
-    return res.status(200).json(JSON.parse(correctedResponse));
-  });
+  app.post('/get-problem-reports', moderateLimiter, isAuthenticated, async (req, res) => {
+    const user: UserProfile = (req as any).user;
 
-  app.post('/report-problem',async(req,res)=>{
-    const { site_url, issue_type, description, reporter_email } = req.body;
-    try {
-      const domain = site_url.replace(/^(https?:\/\/)?(www\.)?/, '');
-      const site:FindAllowedSitesProps = await findSiteByURL(domain);
-      if(!site)
-      {
-        throw new Error("Site not found");
-      }
-      const problem:problemReportProps = {site_id:site.id, issue_type:issue_type, description:description, reporter_email:reporter_email};
-
-      await addProblemReport(problem);
-
-      res.status(200).send('Success');
-      
-    } catch (error) {
-      console.error("Error reporting problem:", error);
-      res.status(500).send("Cannot report problem");
-    }
-
-  })
-
-  app.post('/get-problem-reports', async (req, res) => {
-    const { user_id } = req.body;
     try {
       // Fetch sites by user ID
-      const Sites: IUserSites[] = await findSitesByUserId(user_id);
-  
+      const Sites: IUserSites[] = await findSitesByUserId(user.id);
+
       // Use Promise.all to fetch problem reports for all sites concurrently
       const allReports = (
         await Promise.all(
           Sites.map(async (site: IUserSites) => {
             const reports = await getProblemReportsBySiteId(site.id);
             return reports; // Return reports for each site
-          })
+          }),
         )
       ).flat(); // Flatten the array of arrays into a single array
-  
+
       res.status(200).send(allReports);
     } catch (error) {
       console.error('Error fetching problem reports:', error);
       res.status(500).send('Cannot fetch reports');
     }
-  });  
-
-  // app.get('/webAbilityV1.0.min.js', (req, res) => {
-  //   res.sendFile(path.join(__dirname, 'webAbilityV1.0.min.js'));
-  // });
-
-  // app.get('/create-products', (req, res) => {
-  //   run()
-  //     .then(() => res.send('insert successfully'))
-  //     .catch((err) => res.send(err));
-  // });
-  app.post('/getScreenshortUrl', async (req: Request, res: Response) => {
-    try {
-        const url = req.body.url; // Extract URL from request body
-        const dataUrl = await fetchAccessibilityReport(url); // Call fetchSitePreview function
-        res.send(dataUrl); // Send the generated Data URL as response
-    } catch (error) {
-        console.error('Error generating screenshot:', error);
-        res.status(500).send('Error generating screenshot');
-    }
-});
-
-  app.post('/form', async (req, res) => {
-    console.log('Received POST request for /form:', req.body);
-    const uniqueToken = await AddTokenToDB(req.body.businessName, req.body.email, req.body.website);
-    if (uniqueToken !== '') {
-      res.send('Received POST request for /form');
-    } else {
-      res.status(500).send('Internal Server Error');
-      return;
-    }
-
-    try {
-      sendMail(
-        req.body.email,
-        'Welcome to Webability',
-        `
-            <html>
-            <head>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 20px;
-                    color: #333333;
-                }
-                .script-box {
-                    background-color: #f4f4f4;
-                    border: 1px solid #dddddd;
-                    padding: 15px;
-                    overflow: auto;
-                    font-family: monospace;
-                    margin-top: 20px;
-                    white-space: pre-wrap;
-                }
-                .instructions {
-                    margin-bottom: 10px;
-                }
-            </style>
-        </head>
-        <body>
-            <h1>Welcome to Webability!</h1>
-            <p class="instructions">To get started with Webability on your website, please follow these steps:</p>
-            <ol>
-                <li>Copy the script code provided below.</li>
-                <li>Paste it into the HTML of your website, preferably near the closing &lt;/body&gt; tag.</li>
-            </ol>
-            <div class="script-box">
-                &lt;script src="https://webability.ca/webAbility.min.js" token="${uniqueToken}"&gt;&lt;/script&gt;
-            </div>
-            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
-            <p>Thank you for choosing Webability!</p>
-        </body>
-            </html>
-        `,
-      );
-    } catch (error) {
-      console.error('Error sending email:', error);
-    }
   });
 
-  app.get('/health', async (req: Request, res: Response) => {
+  app.get('/health', async (_: Request, res: Response) => {
     try {
       await database.raw('SELECT 1');
-      
+
       res.status(200).json({
         status: 'healthy',
         database: 'connected',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
       console.error('Health check failed:', error);
+      
       res.status(503).json({
         status: 'unhealthy',
         database: 'disconnected',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   });
-
 
   const serverGraph = new ApolloServer({
     schema: makeExecutableSchema({
@@ -1766,6 +1304,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
       if (process.env.NODE_ENV === 'production') {
         const result = err.message.match(/ValidationError: (.*)/);
+
         if (result && result[1]) {
           return new Error(result[1]);
         }
@@ -1781,25 +1320,25 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             op: 'graphql.request',
             name: requestContext.request.operationName || 'GraphQL Query',
           });
-          
+
           // Store the transaction on the request context
           requestContext.context.sentryTransaction = transaction;
-          
+
           return {
             didEncounterErrors(ctx) {
               // Capture any errors that occur during operation execution
               if (!ctx.operation) return;
-              
+
               for (const err of ctx.errors) {
                 if (err instanceof ApolloError) {
                   continue;
                 }
-                
+
                 withScope((scope) => {
                   scope.setTag('kind', ctx.operation.operation);
                   scope.setExtra('query', ctx.request.query);
                   scope.setExtra('variables', ctx.request.variables);
-                  
+
                   if (err.path) {
                     scope.addBreadcrumb({
                       category: 'query-path',
@@ -1807,20 +1346,20 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
                       level: Severity.Debug,
                     });
                   }
-                  
+
                   // Set the transaction on the scope
                   scope.setSpan(ctx.context.sentryTransaction);
-                  
+
                   const transactionId = ctx.request.http.headers.get('x-transaction-id');
                   if (transactionId) {
                     scope.setTransactionName(transactionId);
                   }
-                  
+
                   captureException(err);
                 });
               }
             },
-            
+
             // Finish the transaction when the request is complete
             willSendResponse(ctx) {
               const transaction = ctx.context.sentryTransaction;
@@ -1832,6 +1371,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         },
       },
     ],
+    
     context: async ({ req, res }: ContextParams) => {
       const { cookies } = req;
       const bearerToken = cookies.token || null;
@@ -1849,64 +1389,33 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     // Parse the GraphQL query to determine timeout
     const body = req.body;
     let timeout = 70000; // Default 70 seconds
-    
+
     // Check if this is the accessibility report query
     if (body && body.query && body.query.includes('getAccessibilityReport')) {
       timeout = 120000; // 5 minutes for accessibility report
     }
-    
+
     req.setTimeout(timeout);
     res.setTimeout(timeout);
     next();
   });
+
   app.use('/graphql', express.json({ limit: '5mb' }));
   serverGraph.applyMiddleware({ app, cors: false });
-  
+
   // Initialize Sentry with tracing for GraphQL
-  init({ 
+  init({
     dsn: process.env.SENTRY_DSN,
     serverName: process.env.COOLIFY_URL || `http://localhost:${port}`,
     tracesSampleRate: 1.0,
     integrations: [
       // Enable HTTP calls tracing
-      new Sentry.Integrations.Http({ tracing: true })
+      new Sentry.Integrations.Http({ tracing: true }),
     ],
     attachStacktrace: true,
   });
-  
+
   app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);
   });
 })();
-
-// Health check endpoint
-app.get('/health', async (req: Request, res: Response) => {
-  try {
-    // Test database connection using existing knex instance
-    await database.raw('SELECT 1');
-    res.status(200).json({
-      status: 'healthy',
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Health check failed:', error);
-    res.status(503).json({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
-// Add connection error handler to existing database instance
-database.on('error', (error: Error) => {
-  console.error('Database connection error:', error);
-  // Attempt to reconnect
-  setTimeout(async () => {
-    try {
-      await database.raw('SELECT 1');
-      console.info('Database reconnected successfully');
-    } catch (reconnectError) {
-      console.error('Database reconnection failed:', reconnectError);
-    }
-  }, 5000); // Try to reconnect after 5 seconds
-});
