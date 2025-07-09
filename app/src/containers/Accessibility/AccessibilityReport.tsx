@@ -400,8 +400,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           maxHeight = 36; // increased size for a bigger logo
         let drawWidth = img.width,
           drawHeight = img.height;
-
-          console.log("drawWidth,drawHeight",drawWidth,drawHeight);
         const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight);
         drawWidth *= scale;
         drawHeight *= scale;

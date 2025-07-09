@@ -68,8 +68,7 @@ const sendMonthlyEmails = async () => {
             // Generate PDF attachment
             let attachments: EmailAttachment[] = [];
             try {
-             
-              const pdfBuffer = await generateAccessibilityReportPDF(report, site?.url, widgetStatus, 'en');
+              const pdfBuffer = generateAccessibilityReportPDF(report, site?.url, widgetStatus);
               attachments = [
                 {
                   content: pdfBuffer,
