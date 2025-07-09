@@ -3,7 +3,6 @@ import autoTable from 'jspdf-autotable';
 import path from 'path';
 import fs from 'fs';
 import getWidgetSettings from '../utils/getWidgetSettings';
-import { translateText, translateMultipleTexts, LANGUAGES } from '../utils/translator';
 import sharp from 'sharp';
 
 const WEBABILITY_SCORE_BONUS = 45;
@@ -204,7 +203,7 @@ export async function generateAccessibilityReportPDF(
   let logoBottomY = 0;
 
   // Draw logo if available
-  console.log("url of image is ",logoImage);
+  //console.log("url of image is ",logoImage);
 
 
  let logoBase64 = null;
@@ -236,7 +235,7 @@ let logopath: string | undefined;
       let drawWidth = metadata.width || maxWidth;
       let drawHeight = metadata.height || maxHeight;
    
-    console.log("drawWidth,drawHeight",drawWidth,drawHeight);
+   // console.log("drawWidth,drawHeight",drawWidth,drawHeight);
    const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight);
    drawWidth *= scale;
    drawHeight *= scale;
