@@ -12,6 +12,7 @@ import { withScope, Severity, captureException, init, Handlers } from '@sentry/n
 import * as Sentry from '@sentry/node';
 import { IResolvers } from '@graphql-tools/utils';
 import { makeExecutableSchema } from 'graphql-tools';
+import { rateLimitDirective } from 'graphql-rate-limit-directive';
 import accessLogStream from './middlewares/logger.middleware';
 import RootSchema from './graphql/root.schema';
 import RootResolver from './graphql/root.resolver';
@@ -38,6 +39,7 @@ import { billingPortalSessionValidation, createCustomerPortalSessionValidation, 
 import { validateBody } from './middlewares/validation.middleware';
 import { isAuthenticated } from '~/middlewares/auth.middleware';
 import { UserProfile } from '~/repository/user.repository';
+import  getIpAddress  from "./utils/getIpAddress"
 
 import { strictLimiter, moderateLimiter } from './middlewares/limiters.middleware';
 import { validateWidgetSettings } from '~/validations/widget.validation';
@@ -1442,11 +1444,51 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
+  const { rateLimitDirectiveTransformer } = rateLimitDirective({
+    keyGenerator: (source: any, args: any, context: any, info: any): string => {
+      // Priority 1: Use authenticated user ID for better isolation
+      if (context.user?.id) {
+        return `user:${context.user.id}`;
+      }
+      
+      // Priority 2: Try multiple IP sources
+      const ip = context.ip || 
+                  context.req?.ip || 
+                  context.req?.connection?.remoteAddress ||
+                  context.req?.socket?.remoteAddress;
+      
+      if (ip && ip !== 'unknown' && ip !== '::1' && ip !== '127.0.0.1') {
+        return `ip:${ip}`;
+      }
+      
+      // Priority 3: Create fingerprint from available headers (for edge cases)
+      const req = context.req;
+      const userAgent = req?.headers?.['user-agent']?.slice(0, 50) || '';
+      const acceptLanguage = req?.headers?.['accept-language']?.slice(0, 30) || '';
+      const acceptEncoding = req?.headers?.['accept-encoding']?.slice(0, 30) || '';
+      
+      // Create a hash-like fingerprint for uniqueness
+      const fingerprint = Buffer.from(`${userAgent}-${acceptLanguage}-${acceptEncoding}`)
+        .toString('base64')
+        .slice(0, 20);
+      
+      return `fingerprint:${fingerprint}`;
+    },
+    onLimit: (response: any, directiveArgs: any, source: any, args: any, context: any, info: any): Error => {
+      const customMessage = directiveArgs.message || 'Too many requests, please try again later.';
+      return new Error(customMessage);
+    },
+  });
+
+  let schema = makeExecutableSchema({
+    typeDefs: RootSchema,
+    resolvers: RootResolver as IResolvers[],
+  });
+
+  schema = rateLimitDirectiveTransformer(schema);
+
   const serverGraph = new ApolloServer({
-    schema: makeExecutableSchema({
-      typeDefs: RootSchema,
-      resolvers: RootResolver as IResolvers[],
-    }),
+    schema,
     playground: IS_LOCAL_DEV,
     uploads: {
       maxFileSize: 10000000,
@@ -1531,11 +1573,12 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       const { cookies } = req;
       const bearerToken = cookies.token || null;
       const user = await getUserLogined(bearerToken, res);
-      // const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
+      const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
       return {
-        user,
-        // ip,
+        req,
         res,
+        ip,
+        user,
       };
     },
   });
