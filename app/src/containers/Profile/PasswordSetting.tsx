@@ -13,10 +13,16 @@ import { ReactComponent as ArrowDown24Icon } from '@/assets/images/svg/arrow-dow
 import { ReactComponent as SettingIcon } from '@/assets/images/svg/setting.svg';
 
 const PasswordSchema = yup.object().shape({
-  currentPassword: yup.string().required('Common.validation.require_current_password'),
-  newPassword: yup.string().required('Common.validation.require_new_password').min(6, 'Common.validation.min_password'),
+  currentPassword: yup.string()
+    .required('Common.validation.require_current_password')
+    .max(50, 'Common.validation.max_password'),
+  newPassword: yup.string()
+    .required('Common.validation.require_new_password')
+    .min(6, 'Common.validation.min_password')
+    .max(50, 'Common.validation.max_password'),
   confirmPassword: yup
     .string()
+    .max(50, 'Common.validation.max_password')
     .oneOf([yup.ref('newPassword'), ""], 'Common.validation.password_match'),
 });
 
