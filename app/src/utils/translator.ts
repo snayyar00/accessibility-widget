@@ -40,7 +40,9 @@ export const translateText = async (issues: Issue[], toLang: string = 'en'): Pro
     const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/translate`, {
       issues,
       toLang,
-    });
+    }, {
+        withCredentials: true
+      });
 
     return response.data;
   } catch (err: any) {
@@ -68,6 +70,9 @@ export const translateSingleText = async (
       {
         issues: [{ code: text }], // using 'code' as a generic field
         toLang,
+      },
+      {
+        withCredentials: true
       }
     );
     // The backend returns an array of issues, so we extract the translated 'code' field
@@ -95,6 +100,9 @@ export const translateMultipleTexts = async (
       {
         issues: texts.map(text => ({ code: text })),
         toLang,
+      },
+      {
+        withCredentials: true
       }
     );
 

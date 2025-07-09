@@ -66,6 +66,7 @@ export async function AddTokenToDB(businessName: string, email: string, website:
 
 export const GetVisitorTokenByWebsite = async (websiteName: string) => {
   try {
+    console.log('Fetching visitor by website:', websiteName);
     const visitor = await Visitor.findOne({ Website: websiteName });
     return (visitor !== null ? visitor.Uniquetoken : 'none');
   } catch (error) {
