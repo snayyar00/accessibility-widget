@@ -109,7 +109,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [reportUrl, setReportUrl] = useState<string>('');
 
   
-  const [currentLanguage, setCurrentLanguage] = useState<string>('');
+  const [currentLanguage, setCurrentLanguage] = useState<string>('en');
   const [showLangTooltip, setShowLangTooltip] = useState(false);
   // Combine options for existing sites and a custom "Enter a new domain" option
   const siteOptions = sitesData?.getUserSites?.map((domain: any) => ({
@@ -1116,7 +1116,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     }}
                     className="appearance-none bg-white border border-gray-300 rounded-md px-2 py-2 pr-6 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[38px] w-full"
                   >
-                    <option value="">Select Language</option>
+                    <option value="en">English</option>
                     {Object.values(LANGUAGES).map((language) => (
                       <option key={language.code} value={language.code}>
                         {language.nativeName}

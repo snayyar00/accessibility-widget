@@ -5,7 +5,7 @@ interface Issue {
 
 
 export const LANGUAGES = {
-  en: { code: 'en', name: 'English', nativeName: 'English' },
+  // en: { code: 'en', name: 'English', nativeName: 'English' },
   es: { code: 'es', name: 'Spanish', nativeName: 'Español' },
   fr: { code: 'fr', name: 'French', nativeName: 'Français' },
   de: { code: 'de', name: 'German', nativeName: 'Deutsch' },
