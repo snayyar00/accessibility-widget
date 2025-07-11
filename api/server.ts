@@ -1494,10 +1494,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   const serverGraph = new ApolloServer({
     schema,
     playground: IS_LOCAL_DEV,
-    uploads: {
-      maxFileSize: 10000000,
-      maxFiles: 20,
-    },
     formatError: (err) => {
       if (err.message.includes('Not authenticated')) {
         return new Error('Please login to make this action');
