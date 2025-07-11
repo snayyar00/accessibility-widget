@@ -10,10 +10,10 @@ nixPkgs = [
   "gcc",
   "gnumake",
   "python3",
-  "libcairo",
+  "cairo",
   "libjpeg",
-  "libpango",
-  "libgif",
+  "pango",
+  "giflib",
   "librsvg"
 ]
 
