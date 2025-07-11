@@ -49,27 +49,30 @@ import { addNewsletterSub } from '~/repository/newsletter_subscribers.repository
 import { rateLimitDirective } from 'graphql-rate-limit-directive';
 import getIpAddress from '~/utils/getIpAddress';
 
+dotenv.config();
+
+const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
+
+const subscriptionKey = process.env.AZURE_API_KEY;
+const endpoint = process.env.AZURE_ENDPOINT;
+const region = process.env.AZURE_REGION;
+
 
 type ContextParams = {
   req: Request;
   res: Response;
 };
-const subscriptionKey = process.env.AZURE_API_KEY;
-const endpoint = process.env.AZURE_ENDPOINT;
-const region = process.env.AZURE_REGION;
 interface Issue {
   [key: string]: any;
 }
-
-dotenv.config();
 
 const IS_LOCAL_DEV = !process.env.COOLIFY_URL && process.env.NODE_ENV !== 'production';
 
 const app = express();
 const port = process.env.PORT || 3001;
-const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, 'https://www.webability.io', 'https://hoppscotch.webability.io'];
-const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction', 'reportProblem', 'updateImpressionProfileCounts', 'getWidgetSettings', 'getAccessibilityReport', 'getAccessibilityStats'];
-const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
+
+const allowedOrigins = [process.env.FRONTEND_URL, 'https://www.webability.io', 'https://hoppscotch.webability.io'];
+
 
 app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
 app.use(express.json({ limit: '5mb' }));
@@ -80,17 +83,15 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   const corsOptions = {
     optionsSuccessStatus: 200,
     credentials: true,
+
     origin: (origin: any, callback: any) => {
-      if (IS_LOCAL_DEV) {
+      if (IS_LOCAL_DEV || allowedOrigins.includes(origin) || req.method === 'OPTIONS') {
         callback(null, true);
-      } else if (req.body && allowedOperations.includes(req.body.operationName)) {
-        // Allow any origin for 'validateToken'
-        callback(null, true);
-      } else if (allowedOrigins.includes(origin) || req.method === 'OPTIONS') {
-        // Allow your specific frontend origin
-        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
       }
     },
+
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   };
 
@@ -106,9 +107,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   }
 
   app.use(dynamicCors);
-
   app.use(cookieParser());
-
   app.use(bodyParser.urlencoded({ extended: true, limit: '5mb' }));
 
   app.get('/', (_, res) => {
@@ -1477,7 +1476,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     
     onLimit: (_, directiveArgs: any): Error => {
       const customMessage = directiveArgs.message || 'Too many requests, please try again later.';
-      
+
       return new Error(customMessage);
     },
   });
@@ -1579,6 +1578,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       const bearerToken = cookies.token || null;
       const user = await getUserLogined(bearerToken, res);
       const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
+      
       return {
         req,
         res,
