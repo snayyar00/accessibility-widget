@@ -30,6 +30,7 @@ interface ProcessedIssue {
     merged_from: number
     partial?: boolean
   }
+  screenshotUrl?: string
 }
 
 interface EnhancedIssue extends ProcessedIssue {
@@ -37,6 +38,7 @@ interface EnhancedIssue extends ProcessedIssue {
   recommended_action: string
   affected_disabilities: string[]
   wcag_code: string
+  screenshotUrl?: string
 }
 
 interface BatchResult {
@@ -401,7 +403,8 @@ export function mergeBatchResults(batchResults: BatchResult[]): {
           batch_id: batch.batch_id,
           gpt_success: batch.success,
           retry_count: batch.retry_count
-        }
+        },
+        screenshotUrl: issue.screenshotUrl
       }
 
       result[targetRunner][targetType].push(finalIssue)

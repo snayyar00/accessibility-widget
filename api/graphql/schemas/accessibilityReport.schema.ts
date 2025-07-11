@@ -73,6 +73,7 @@ export const AccessibilitySchema = gql`
     confidence_score: Int
     template_info: TemplateInfo
     processing_metadata: ProcessingMetadata
+    screenshotUrl: String
   }
 
   type htmlCsOutput {
@@ -85,6 +86,7 @@ export const AccessibilitySchema = gql`
     confidence_score: Int
     template_info: TemplateInfo
     processing_metadata: ProcessingMetadata
+    screenshotUrl: String
   }
 
   type axeResult {
@@ -171,6 +173,7 @@ type Issue {
   selectors: [String]
   description: String
   recommended_action: String
+  screenshotUrl: String
 }
 
   type AccessibilityReportMeta {

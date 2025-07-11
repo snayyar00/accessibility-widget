@@ -38,11 +38,19 @@ const resolvers = {
     //getAccessibilityReport: combineResolvers((_, { url }) => fetchAccessibilityReport(url)),
     getAccessibilityReport: async (_: any, { url }: { url: string }) => {
       try {
-        // Fetch the accessibility report
-        const accessibilityReport = await fetchAccessibilityReport(url);
 
-        // Fetch the tech stack data
-        const techStack = await fetchTechStackFromAPI(url);
+
+                // Fetch the accessibility report
+                // const accessibilityReport = await fetchAccessibilityReport(url);
+                // Fetch the tech stack data
+               //const techStack = await fetchTechStackFromAPI(url);
+
+
+        // Run both fetches in parallel
+        const [accessibilityReport, techStack] = await Promise.all([
+          fetchAccessibilityReport(url),
+          fetchTechStackFromAPI(url)
+        ]);
 
         // Combine the accessibility report and tech stack data
         return {

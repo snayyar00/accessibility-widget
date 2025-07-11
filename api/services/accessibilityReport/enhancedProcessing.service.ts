@@ -372,8 +372,15 @@ function createEnhancedByFunctions(enhancedResults: any): any[] {
         recommended_action: issue.recommended_action || 'Review and fix this accessibility issue',
         selectors: issue.selectors || [],
         confidence_score: issue.confidence_score || 0,
-        template_info: issue.template_info
+        template_info: issue.template_info,
+        screenshotUrl: issue.screenshotUrl
       }))
+      .map(issue => {
+        if (issue.screenshotUrl) {
+          console.log('[ByFunctions] Grouped issue with screenshotUrl:', issue.screenshotUrl, 'message:', issue.message);
+        }
+        return issue;
+      })
     }))
 
   return byFunctions
