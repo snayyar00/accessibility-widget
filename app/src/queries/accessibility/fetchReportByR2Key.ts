@@ -11,6 +11,7 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           impact
           description
           help
+          screenshotUrl
         }
         notices {
           message
@@ -19,6 +20,7 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           impact
           description
           help
+          screenshotUrl
         }
         warnings {
           message
@@ -27,6 +29,7 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           impact
           description
           help
+          screenshotUrl
         }
       }
       htmlcs {
@@ -37,6 +40,7 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           selectors
           description
           recommended_action
+          screenshotUrl
         }
         notices {
           code
@@ -45,6 +49,7 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           selectors
           description
           recommended_action
+          screenshotUrl
         }
         warnings {
           code
@@ -53,6 +58,7 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           selectors
           description
           recommended_action
+          screenshotUrl
         }
       }
       score
@@ -68,6 +74,7 @@ const FETCH_REPORT_BY_R2_KEY = gql`
               selectors
               description
               recommended_action
+              screenshotUrl
             } 
       }
       scriptCheckResult
@@ -98,6 +105,7 @@ const FETCH_REPORT_BY_R2_KEY = gql`
         selectors
         description
         recommended_action
+        screenshotUrl
       }
       issuesByFunction
       functionalityNames

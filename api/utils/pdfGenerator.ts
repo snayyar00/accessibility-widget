@@ -29,7 +29,8 @@ function extractIssuesFromReport(report: any) {
             ...error,
             impact,
             source: error.__typename === 'htmlCsOutput' ? 'HTML_CS' : 'AXE Core',
-            functionality: funcGroup.FunctionalityName
+            functionality: funcGroup.FunctionalityName,
+            screenshotUrl: error.screenshotUrl
           })
         })
       }
@@ -47,7 +48,8 @@ function extractIssuesFromReport(report: any) {
             ...error,
             impact,
             source: 'AXE Core',
-            functionality: funcGroup.FunctionalityName
+            functionality: funcGroup.FunctionalityName,
+            screenshotUrl: error.screenshotUrl
           })
         })
       }
@@ -65,7 +67,8 @@ function extractIssuesFromReport(report: any) {
             ...error,
             impact,
             source: 'HTML_CS',
-            functionality: funcGroup.FunctionalityName
+            functionality: funcGroup.FunctionalityName,
+            screenshotUrl: error.screenshotUrl
           })
         })
       }

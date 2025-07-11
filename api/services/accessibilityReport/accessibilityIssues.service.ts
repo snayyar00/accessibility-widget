@@ -314,6 +314,7 @@ interface Error {
   context?: string | string[];
   recommended_action?: string | string[];
   selectors?: string | string[];
+  screenshotUrl?: string;
 }
 
 interface HumanFunctionality {

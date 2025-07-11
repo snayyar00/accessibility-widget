@@ -11,6 +11,7 @@ interface axeOutput {
   impact: string;
   description: string;
   help: string;
+  screenshotUrl?: string;
 }
 
 interface htmlcsOutput {
@@ -18,6 +19,7 @@ interface htmlcsOutput {
   message: string;
   context: string[];
   selectors: string[];
+  screenshotUrl?: string;
 }
 
 interface finalOutput {
@@ -70,7 +72,11 @@ function createAxeArrayObj(message: string, issue: any) {
     impact: issue.runnerExtras.impact,
     description: issue.runnerExtras.description,
     help: issue.runnerExtras.help,
+    screenshotUrl: issue.screenshotUrl || undefined,
   };
+  if (obj.screenshotUrl) {
+    console.log('[AXE] Parsed screenshotUrl:', obj.screenshotUrl, 'for message:', obj.message);
+  }
   return obj;
 }
 function createHtmlcsArrayObj(issue: any) {
@@ -79,7 +85,11 @@ function createHtmlcsArrayObj(issue: any) {
     message: issue.message,
     context: [issue.context],
     selectors: [issue.selector],
+    screenshotUrl: issue.screenshotUrl || undefined,
   };
+  if (obj.screenshotUrl) {
+    console.log('[HTMLCS] Parsed screenshotUrl:', obj.screenshotUrl, 'for message:', obj.message);
+  }
   return obj;
 }
 
@@ -122,7 +132,7 @@ export async function getAccessibilityInformationPally(domain: string) {
     totalElements: 0,
   };
 
-  const apiUrl = `${process.env.PA11Y_SERVER_URL}/test`;
+  const apiUrl =`${process.env.FALLBACK_PA11Y_SERVER_URL}/scan`;
   let results;
   try {
     console.log("Using pally API");
@@ -133,6 +143,7 @@ export async function getAccessibilityInformationPally(domain: string) {
       },
       body: JSON.stringify({ url: domain }),
     });
+    
 
     // Check if the response is successful
     if (!response.ok) {
@@ -141,6 +152,16 @@ export async function getAccessibilityInformationPally(domain: string) {
 
     // Parse and return the response JSON
     results = await response.json();
+
+    // Log all screenshotUrls found in the issues array
+    if (results && Array.isArray(results.issues)) {
+      results.issues.forEach((issue: any) => {
+        if (issue.screenshotUrl) {
+          console.log('[PALLY API RESPONSE] Found screenshotUrl:', issue.screenshotUrl, 'for message:', issue.message);
+        }
+      });
+    }
+
   } catch (error) {
     console.error('pally API Error', error);
     const  apiUrl2=`${process.env.FALLBACK_PA11Y_SERVER_URL}/scan`;

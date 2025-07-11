@@ -9,6 +9,7 @@ interface RawIssue {
   runner: 'axe' | 'htmlcs'
   impact?: string
   help?: string
+  screenshotUrl?: string
 }
 
 interface ProcessedIssue extends RawIssue {
@@ -26,6 +27,7 @@ interface ProcessedIssue extends RawIssue {
     partial?: boolean
     runner_agreement?: boolean
   }
+  screenshotUrl?: string
 }
 
 interface GroupedIssue {
@@ -215,6 +217,7 @@ function mergeDuplicateIssues(issues: RawIssue[]): RawIssue {
   
   // Prefer axe data if available, otherwise htmlcs
   const axeIssue = issues.find(issue => issue.runner === 'axe')
+  const htmlcsIssue = issues.find(issue => issue.runner === 'htmlcs')
   const mergedIssue: RawIssue = {
     ...baseIssue,
     context: allContext,
@@ -223,7 +226,10 @@ function mergeDuplicateIssues(issues: RawIssue[]): RawIssue {
     ...(axeIssue ? {
       message: axeIssue.message,
       impact: axeIssue.impact,
-      help: axeIssue.help
+      help: axeIssue.help,
+      screenshotUrl: axeIssue.screenshotUrl
+    } : htmlcsIssue ? {
+      screenshotUrl: htmlcsIssue.screenshotUrl
     } : {})
   }
   
@@ -412,7 +418,11 @@ function processGroupedIssues(groupedIssues: GroupedIssue[]): ProcessedIssue[] {
         runners: allRunners,
         merged_from: group.occurrence_count,
         runner_agreement: hasRunnerAgreement
-      }
+      },
+      screenshotUrl: representative.screenshotUrl
+    }
+    if (processedIssue.screenshotUrl) {
+      console.log('[processGroupedIssues] Preserved screenshotUrl:', processedIssue.screenshotUrl, 'for message:', processedIssue.message);
     }
     
     // Add template info if applicable
@@ -636,6 +646,9 @@ export function convertPa11yToRawIssues(pa11yOutput: any): RawIssue[] {
     ['errors', 'warnings', 'notices'].forEach(type => {
       if (pa11yOutput.axe[type] && Array.isArray(pa11yOutput.axe[type])) {
         pa11yOutput.axe[type].forEach((issue: any) => {
+          if (issue.screenshotUrl) {
+            console.log('[convertPa11yToRawIssues][AXE]', type, 'screenshotUrl:', issue.screenshotUrl, 'message:', issue.message);
+          }
           rawIssues.push({
             code: issue.message || '',
             message: issue.message || '',
@@ -644,7 +657,8 @@ export function convertPa11yToRawIssues(pa11yOutput: any): RawIssue[] {
             type: type.slice(0, -1) as 'error' | 'warning' | 'notice', // Remove 's'
             runner: 'axe',
             impact: issue.impact,
-            help: issue.help
+            help: issue.help,
+            screenshotUrl: issue.screenshotUrl || undefined,
           })
         })
       }
@@ -656,13 +670,17 @@ export function convertPa11yToRawIssues(pa11yOutput: any): RawIssue[] {
     ['errors', 'warnings', 'notices'].forEach(type => {
       if (pa11yOutput.htmlcs[type] && Array.isArray(pa11yOutput.htmlcs[type])) {
         pa11yOutput.htmlcs[type].forEach((issue: any) => {
+          if (issue.screenshotUrl) {
+            console.log('[convertPa11yToRawIssues][HTMLCS]', type, 'screenshotUrl:', issue.screenshotUrl, 'message:', issue.message);
+          }
           rawIssues.push({
             code: issue.code || issue.message || '',
             message: issue.message || '',
             context: Array.isArray(issue.context) ? issue.context : [issue.context].filter(Boolean),
             selectors: Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors].filter(Boolean),
             type: type.slice(0, -1) as 'error' | 'warning' | 'notice', // Remove 's'
-            runner: 'htmlcs'
+            runner: 'htmlcs',
+            screenshotUrl: issue.screenshotUrl || undefined,
           })
         })
       }
@@ -705,6 +723,7 @@ export function convertToOriginalFormat(processedIssues: ProcessedIssue[]): any 
     // Add optional fields if they exist
     if (issue.impact) convertedIssue.impact = issue.impact
     if (issue.help) convertedIssue.help = issue.help
+    if (issue.screenshotUrl) convertedIssue.screenshotUrl = issue.screenshotUrl
     
     // Use bracket notation to avoid TypeScript indexing issues
     const targetArray = (result as any)[targetRunner][targetType] as any[]

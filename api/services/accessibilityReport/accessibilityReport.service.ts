@@ -92,6 +92,7 @@ function createAxeArrayObj(message: string, issue: any) {
     impact: issue.impact || 'moderate',
     description: issue.description || '',
     help: issue.recommended_action || '',
+    screenshotUrl: issue.screenshotUrl || undefined,
   };
   return obj;
 }
@@ -101,6 +102,7 @@ function createHtmlcsArrayObj(issue: any) {
     message: issue.message || '',
     context: Array.isArray(issue.context) ? issue.context : [issue.context],
     selectors: Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors],
+    screenshotUrl: issue.screenshotUrl || undefined,
   };
   return obj;
 }
@@ -158,6 +160,7 @@ interface htmlcsOutput {
   selectors?: string[];
   description?:string;
   recommended_action?:string;
+  screenshotUrl?: string;
 }
 interface axeOutput {
   message: string;
@@ -166,6 +169,7 @@ interface axeOutput {
   impact: string;
   description: string;
   help: string;
+  screenshotUrl?: string;
 }
 
 
@@ -241,6 +245,9 @@ interface ResultWithOriginal {
                   if (errorIndex === -1) {
                     const obj: axeOutput = createAxeArrayObj(normalizedMessage, issue);
                     output.axe.errors.push(obj);
+                    if (obj.screenshotUrl) {
+                      console.log('[mergeIssuesToOutput][AXE][error] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
+                    }
                   } else {
                     // Append context and selectors to existing error
                   const contextToAdd = Array.isArray(issue.context) ? issue.context : (issue.context ? [issue.context] : []);
@@ -255,6 +262,9 @@ interface ResultWithOriginal {
                   if (noticeIndex === -1) {
                     const obj: axeOutput = createAxeArrayObj(normalizedMessage, issue);
                     output.axe.notices.push(obj);
+                    if (obj.screenshotUrl) {
+                      console.log('[mergeIssuesToOutput][AXE][notice] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
+                    }
                   } else {
                     const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
                     const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
@@ -268,6 +278,9 @@ interface ResultWithOriginal {
                   if (warningIndex === -1) {
                     const obj: axeOutput = createAxeArrayObj(normalizedMessage, issue);
                     output.axe.warnings.push(obj);
+                    if (obj.screenshotUrl) {
+                      console.log('[mergeIssuesToOutput][AXE][warning] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
+                    }
                   } else {
                     const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
                     const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
@@ -285,6 +298,9 @@ interface ResultWithOriginal {
                     const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
                     obj.message = normalizedMessage;
                     output.htmlcs.errors.push(obj);
+                    if (obj.screenshotUrl) {
+                      console.log('[mergeIssuesToOutput][HTMLCS][error] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
+                    }
                   } else {
                     const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
                     const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
@@ -299,6 +315,9 @@ interface ResultWithOriginal {
                     const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
                     obj.message = normalizedMessage;
                     output.htmlcs.notices.push(obj);
+                    if (obj.screenshotUrl) {
+                      console.log('[mergeIssuesToOutput][HTMLCS][notice] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
+                    }
                   } else {
                     const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
                     const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
@@ -313,6 +332,9 @@ interface ResultWithOriginal {
                     const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
                     obj.message = normalizedMessage;
                     output.htmlcs.warnings.push(obj);
+                    if (obj.screenshotUrl) {
+                      console.log('[mergeIssuesToOutput][HTMLCS][warning] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
+                    }
                   } else {
                     const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
                     const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
@@ -613,15 +635,19 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
   if (report?.ByFunctions && Array.isArray(report.ByFunctions)) {
     report.ByFunctions.forEach(funcGroup => {
       if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
-        funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; }) => {
+        funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; screenshotUrl?: string }) => {
           const impact = mapIssueToImpact(error.message, error.code)
           
           issues.push({
             ...error,
             impact,
             source: error.__typename === 'htmlCsOutput' ? 'HTML_CS' : 'AXE Core',
-            functionality: funcGroup.FunctionalityName
+            functionality: funcGroup.FunctionalityName,
+            screenshotUrl: error.screenshotUrl
           })
+          if (error.screenshotUrl) {
+            console.log('[extractIssuesFromReport][ByFunctions] screenshotUrl:', error.screenshotUrl, 'message:', error.message);
+          }
         })
       }
     })
@@ -629,7 +655,7 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
   
   // Try the axe structure
   if (report?.axe?.ByFunction && Array.isArray(report.axe.ByFunction)) {
-    report.axe.ByFunction.forEach((funcGroup: { FunctionalityName: any; Errors: any[]; }) => {
+    report.axe.ByFunction.forEach((funcGroup: { FunctionalityName: any; Errors: any[] }) => {
       if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
         funcGroup.Errors.forEach(error => {
           const impact = mapIssueToImpact(error.message, error.code)
@@ -638,8 +664,12 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
             ...error,
             impact,
             source: 'AXE Core',
-            functionality: funcGroup.FunctionalityName
+            functionality: funcGroup.FunctionalityName,
+            screenshotUrl: error.screenshotUrl
           })
+          if (error.screenshotUrl) {
+            console.log('[extractIssuesFromReport][AXE] screenshotUrl:', error.screenshotUrl, 'message:', error.message);
+          }
         })
       }
     })
@@ -647,17 +677,21 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
   
   // Try the htmlcs structure
   if (report?.htmlcs?.ByFunction && Array.isArray(report.htmlcs.ByFunction)) {
-    report.htmlcs.ByFunction.forEach((funcGroup: { FunctionalityName: any; Errors: any[]; }) => {
+    report.htmlcs.ByFunction.forEach((funcGroup: { FunctionalityName: any; Errors: any[] }) => {
       if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
-        funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; }) => {
+        funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; screenshotUrl?: string }) => {
           const impact = mapIssueToImpact(error.message, error.code)
           
           issues.push({
             ...error,
             impact,
             source: 'HTML_CS',
-            functionality: funcGroup.FunctionalityName
+            functionality: funcGroup.FunctionalityName,
+            screenshotUrl: error.screenshotUrl
           })
+          if (error.screenshotUrl) {
+            console.log('[extractIssuesFromReport][HTMLCS] screenshotUrl:', error.screenshotUrl, 'message:', error.message);
+          }
         })
       }
     })
@@ -724,7 +758,7 @@ function countIssuesBySeverity(issues: any[]) {
 function groupIssuesByFunctionality(issues: any[]): { [key: string]: any[] } {
   const groupedIssues: { [key: string]: any[] } = {};
 
-  issues.forEach((issue: { functionality: string }) => {
+  issues.forEach((issue: { functionality: string, screenshotUrl?: string }) => {
     if (issue.functionality) {
       // Normalize functionality name to prevent duplicates like "Low Vision" and "Low vision"
       const normalizedName = issue.functionality.split(' ')
@@ -738,7 +772,8 @@ function groupIssuesByFunctionality(issues: any[]): { [key: string]: any[] } {
       // Store the issue with the normalized functionality name
       const normalizedIssue = {
         ...issue,
-        functionality: normalizedName
+        functionality: normalizedName,
+        screenshotUrl: issue.screenshotUrl
       };
       
       groupedIssues[normalizedName].push(normalizedIssue);

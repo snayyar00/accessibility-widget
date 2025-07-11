@@ -522,6 +522,7 @@ const ReportView: React.FC = () => {
                       | Iterable<ReactI18NextChild>
                       | null
                       | undefined;
+                    screenshotUrl?: string;
                   },
                   index: React.Key | null | undefined,
                 ) => (
@@ -617,6 +618,19 @@ const ReportView: React.FC = () => {
                         </div>
                       )}
                     </div>
+
+                    {issue.screenshotUrl && (
+                      <div style={{ margin: '1em 0' }}>
+                          <h3 className="text-sm font-semibold mb-2">
+                            Picture
+                          </h3>
+                        <img
+                          src={issue.screenshotUrl}
+                          alt="Accessibility issue screenshot"
+                          style={{ maxWidth: '100%', border: '1px solid #ccc', borderRadius: 4 }}
+                        />
+                      </div>
+                    )}
                   </div>
                 ),
               )}
@@ -2019,6 +2033,7 @@ function extractIssuesFromReport(report: any) {
               source:
                 error.__typename === 'htmlCsOutput' ? 'HTML_CS' : 'AXE Core',
               functionality: funcGroup.FunctionalityName,
+              screenshotUrl: error.screenshotUrl,
             });
           });
         }
@@ -2039,6 +2054,7 @@ function extractIssuesFromReport(report: any) {
               impact,
               source: 'AXE Core',
               functionality: funcGroup.FunctionalityName,
+              screenshotUrl: error.screenshotUrl,
             });
           });
         }
@@ -2059,6 +2075,7 @@ function extractIssuesFromReport(report: any) {
               impact,
               source: 'HTML_CS',
               functionality: funcGroup.FunctionalityName,
+              screenshotUrl: error.screenshotUrl,
             });
           });
         }
