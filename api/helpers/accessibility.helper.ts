@@ -192,7 +192,7 @@ export async function getAccessibilityInformationPally(domain: string) {
     if (issue.runner === 'axe') {
       const message = issue.message.replace(/\s*\(.*$/, '');
       if (issue.type === 'error') {
-        const errorIndex = output.axe.errors.findIndex((error) => error.message === message);
+        const errorIndex = -1;
         if (errorIndex === -1) {
           const obj: axeOutput = createAxeArrayObj(message, issue);
           output.axe.errors.push(obj);
@@ -201,7 +201,7 @@ export async function getAccessibilityInformationPally(domain: string) {
           output.axe.errors[errorIndex].selectors.push(issue.selector);
         }
       } else if (issue.type === 'notice') {
-        const noticeIndex = output.axe.notices.findIndex((notice) => notice.message === message);
+        const noticeIndex = -1;
         if (noticeIndex === -1) {
           const obj: axeOutput = createAxeArrayObj(message, issue);
           output.axe.notices.push(obj);
@@ -210,7 +210,7 @@ export async function getAccessibilityInformationPally(domain: string) {
           output.axe.notices[noticeIndex].selectors.push(issue.selector);
         }
       } else if (issue.type === 'warning') {
-        const warningIndex = output.axe.warnings.findIndex((warning) => warning.message === message);
+        const warningIndex = -1;
         if (warningIndex === -1) {
           const obj: axeOutput = createAxeArrayObj(message, issue);
           output.axe.warnings.push(obj);
@@ -223,7 +223,7 @@ export async function getAccessibilityInformationPally(domain: string) {
     } else if (issue.runner === 'htmlcs') {
       if (issue.type === 'error') {
         const message = issue.message;
-        const errorIndex = output.htmlcs.errors.findIndex((error) => error.message === message);
+        const errorIndex = -1;
         if (errorIndex === -1) {
           const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
           output.htmlcs.errors.push(obj);
@@ -232,7 +232,7 @@ export async function getAccessibilityInformationPally(domain: string) {
           output.htmlcs.errors[errorIndex].selectors.push(issue.selector);
         }
       } else if (issue.type === 'notice') {
-        const noticeIndex = output.htmlcs.notices.findIndex((notice) => notice.message === issue.message);
+        const noticeIndex = -1;
         if (noticeIndex === -1) {
           const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
           output.htmlcs.notices.push(obj);
@@ -241,7 +241,7 @@ export async function getAccessibilityInformationPally(domain: string) {
           output.htmlcs.notices[noticeIndex].selectors.push(issue.selector);
         }
       } else if (issue.type === 'warning') {
-        const warningIndex = output.htmlcs.warnings.findIndex((warning) => warning.message === issue.message);
+        const warningIndex = -1;
         if (warningIndex === -1) {
           const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
           output.htmlcs.warnings.push(obj);

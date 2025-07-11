@@ -521,8 +521,14 @@ export function preprocessAccessibilityIssues(rawIssues: RawIssue[]): {
   // Step 1: Advanced template analysis for big sites
   const templateAnalysis = TemplateAnalysisService.analyzeTemplatePatterns(rawIssues)
   
-  // Step 2: Smart deduplication
-  const groupedIssues = deduplicateIssues(rawIssues)
+  // Step 2: Smart deduplication - DISABLED
+  // const groupedIssues = deduplicateIssues(rawIssues)
+  const groupedIssues = rawIssues.map(issue => ({
+    groupKey: issue.code + issue.message,
+    issues: [issue],
+    isTemplate: false,
+    occurrence_count: 1
+  }))
   
   // Step 3: Process groups (confidence scoring, filtering)
   const processedIssues = processGroupedIssues(groupedIssues)
