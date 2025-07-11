@@ -53,6 +53,7 @@ export async function addSite(userId: number, url: string): Promise<string> {
 //   if (Array.isArray(validateResult) && validateResult.length) {
 //     throw new ValidationError(validateResult.map((it) => it.message).join(','));
 //   }
+
   const year = new Date().getFullYear();
   try {
     const data = {
@@ -91,7 +92,9 @@ export async function addSite(userId: number, url: string): Promise<string> {
       });
 
       // Generate PDF attachment
-      const pdfBuffer = generateAccessibilityReportPDF(report, url, widgetStatus);
+
+      const pdfBuffer = await generateAccessibilityReportPDF(report, url, widgetStatus, 'en');
+      
       const attachments: EmailAttachment[] = [{
         content: pdfBuffer,
         name: `accessibility-report-${url.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`

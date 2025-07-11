@@ -28,16 +28,19 @@ export function getUserPlan(userId: number): Promise<GetUserPlanByCustomerIdResp
 export async function createUserPlan(userId: number, paymentMethodToken: string, planName: string, billingType: 'MONTHLY' | 'YEARLY'): Promise<true | ApolloError> {
   try {
     const user = await findUser({ id: userId });
+
     if (!user) {
       return new ApolloError('Can not find any user');
     }
 
     const product: FindProductAndPriceByTypeResponse = await findProductAndPriceByType(planName, billingType);
+
     if (!product) {
       return new ApolloError('Can not find any plan');
     }
 
     const userPlan = await getUserPlanByUserId(userId);
+    
     if (userPlan) {
       await updateUserPlanById(userPlan.id, { is_active: false });
       await deletePermissionByUserPlanId(userPlan.id);
