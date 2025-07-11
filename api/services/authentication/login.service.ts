@@ -31,6 +31,7 @@ export async function loginUser(email: string, password: string, res: Response):
   }
   
   const user = await findUser({ email });
+  
   if (!user) {
     clearCookie(res, COOKIE_NAME.TOKEN);
     return new AuthenticationError('Invalid email or password');

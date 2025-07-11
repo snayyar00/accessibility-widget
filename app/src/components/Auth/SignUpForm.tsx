@@ -216,8 +216,6 @@ const SignUpForm: React.FC<CustomProps> = ({
         setScore(result?.score);
         groupByCode(result?.htmlcs);
       }
-      // setSiteImg(data.getAccessibilityReport?.siteImg);
-      // setScoreBackup(data.getAccessibilityReport.score);
       
     }
   }, [data]);

@@ -196,27 +196,6 @@ type Issue {
     score: JSON
   } 
 
-  extend type Query {
-    getAccessibilityReport(url: String!): Report
-    getProcessingDashboard(url: String!): ProcessingDashboard
-    getAccessibilityReportMeta(id: Int!): AccessibilityReportMeta
-    fetchAccessibilityReportFromR2(
-    url: String!
-    created_at: String
-    updated_at: String
-  ): [AccessibilityReportTableRow!]!
-    fetchReportByR2Key(r2_key: String!): Report
-  }
-
-  type ProcessingDashboard {
-    site_url: String
-    last_processed: String
-    performance_metrics: PerformanceMetrics
-    template_insights: TemplateAnalysis
-    quality_metrics: QualityMetrics
-    cost_optimization: CostOptimization
-  }
-
   type PerformanceMetrics {
     total_processing_time: Int
     preprocessing_time: Int
@@ -242,14 +221,14 @@ type Issue {
     estimated_monthly_savings: String
   }
 
+  extend type Query {
+    getAccessibilityReport(url: String!): Report @rateLimit(limit: 3, duration: 60, message: "Too many requests. Please try again in a minute.")
+    fetchAccessibilityReportFromR2(url: String! created_at: String updated_at: String): [AccessibilityReportTableRow!]! @rateLimit(limit: 30, duration: 60, message: "Too many R2 report requests. Please try again later.")
+    fetchReportByR2Key(r2_key: String!): Report @rateLimit(limit: 20, duration: 60, message: "Too many R2 key report requests. Please try again later.")
+  }
+
   extend type Mutation {
-    saveAccessibilityReport(
-      report: JSON!
-      url: String!
-      allowed_sites_id: Int
-      key: String
-      score: JSON
-    ): SaveReportResponse!
-    deleteAccessibilityReport(r2_key: String!): Boolean!    
+    saveAccessibilityReport(report: JSON! url: String! allowed_sites_id: Int key: String score: JSON): SaveReportResponse! @rateLimit(limit: 10, duration: 60, message: "Too many save report requests. Please try again later.")
+    deleteAccessibilityReport(r2_key: String!): Boolean! @rateLimit(limit: 10, duration: 60, message: "Too many delete report requests. Please try again later.")   
   }
 `;
