@@ -243,8 +243,8 @@ interface ResultWithOriginal {
                     output.axe.errors.push(obj);
                   } else {
                     // Append context and selectors to existing error
-                    const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
-                    const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
+                  const contextToAdd = Array.isArray(issue.context) ? issue.context : (issue.context ? [issue.context] : []);
+                  const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : (issue.selectors ? [issue.selectors] : []);
                     output.axe.errors[errorIndex].context.push(...contextToAdd);
                     output.axe.errors[errorIndex].selectors.push(...selectorToAdd);
                   }
