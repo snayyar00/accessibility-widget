@@ -2,7 +2,20 @@
 CI = 'false'
 
 [phases.setup]
-nixPkgs = ["nodejs_18", "curl", "wget", "nano"]
+nixPkgs = [
+  "nodejs_18",
+  "curl",
+  "wget",
+  "nano",
+  "gcc",
+  "gnumake",
+  "python3",
+  "libcairo",
+  "libjpeg",
+  "libpango",
+  "libgif",
+  "librsvg"
+]
 
 [phases.install]
 cmds = ["npm install --legacy-peer-deps --ignore-scripts"]
