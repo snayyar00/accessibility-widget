@@ -1671,7 +1671,25 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         
         const screenshotWidth = drawWidth * scale;
         const screenshotHeight = drawHeight * scale;
+
+        // Add a heading row for the screenshot
+        tableBody.push([
+          {
+            content: 'Screenshot',
+            colSpan: 4,
+            styles: {
+              fontStyle: 'bold',
+              fontSize: 12,
+              textColor: [30, 41, 59],
+              halign: 'center',
+              cellPadding: 6,
+              fillColor: [237, 242, 247],
+              minCellHeight: 18,
+            },
+          } as any,
+        ]);
         
+        // Add the screenshot image row
         tableBody.push([
           {
             content: '',
@@ -2037,7 +2055,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               onChange={(e) => setCurrentLanguage(e.target.value)}
               className="appearance-none bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
             >
-                    <option value="">Select Language</option>
+                    <option value="en">English</option>
                     {Object.values(LANGUAGES).map((language) => (
                       <option key={language.code} value={language.code}>
                         {language.nativeName}

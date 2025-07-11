@@ -268,13 +268,45 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   };
 
-
+  async function fetchImageAsBase64(url: string): Promise<string | null> {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (e) {
+      console.warn('Failed to fetch image for PDF:', url, e);
+      return null;
+    }
+  }
   
-  const generatePDF = async (reportData: {
-    score: number;
-    widgetInfo: { result: string };
-    url: string;
-  }): Promise<Blob> => {
+  // Add this helper function to get image dimensions from base64
+  function getImageDimensions(base64Data: string): Promise<{ width: number; height: number }> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        resolve({ width: img.width, height: img.height });
+      };
+      img.onerror = () => {
+        // Fallback dimensions if image fails to load
+        resolve({ width: 120, height: 80 });
+      };
+      img.src = base64Data;
+    });
+  }
+  
+  const generatePDF = async (
+    reportData: {
+      score: number;
+      widgetInfo: { result: string };
+      url: string;
+    },
+    currentLanguage: string
+  ): Promise<Blob> => {
     const { jsPDF } = await import('jspdf');
     const autoTable = (await import('jspdf-autotable')).default;
     const doc = new jsPDF();
@@ -405,8 +437,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           maxHeight = 36; // increased size for a bigger logo
         let drawWidth = img.width,
           drawHeight = img.height;
-
-          console.log("drawWidth,drawHeight",drawWidth,drawHeight);
         const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight);
         drawWidth *= scale;
         drawHeight *= scale;
@@ -611,9 +641,18 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     // Build the rows
     let tableBody: any[] = [];
     const FilteredIssues = await deduplicateIssuesByMessage(issues);
+
     const translatedIssues = await translateText(FilteredIssues, currentLanguage);
 
-    translatedIssues.forEach((issue, issueIdx) => {
+    // After fetching base64
+    for (const issue of translatedIssues) {
+      if (issue.screenshotUrl && !issue.screenshotBase64) {
+        issue.screenshotBase64 = await fetchImageAsBase64(issue.screenshotUrl);
+        // console.log('Fetched base64 for', issue.screenshotUrl, '->', !!issue.screenshotBase64);
+      }
+    }
+
+    for (const issue of translatedIssues) {
       // Add header row for each issue with beautiful styling
       tableBody.push([
         {
@@ -687,6 +726,58 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           },
         },
       ]);
+      // If screenshotBase64 is available, add a row with the image
+      if (issue.screenshotBase64) {
+        // Get actual image dimensions from base64 data
+        const dimensions = await getImageDimensions(issue.screenshotBase64);
+        let drawWidth = dimensions.width;
+        let drawHeight = dimensions.height;
+        
+        // Scale down if image is too large for PDF
+        const maxWidth = 120;
+        const maxHeight = 80;
+        const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight, 1);
+        
+        const screenshotWidth = drawWidth * scale;
+        const screenshotHeight = drawHeight * scale;
+
+        // Add a heading row for the screenshot
+        tableBody.push([
+          {
+            content: 'Screenshot',
+            colSpan: 4,
+            styles: {
+              fontStyle: 'bold',
+              fontSize: 12,
+              textColor: [30, 41, 59],
+              halign: 'center',
+              cellPadding: 6,
+              fillColor: [237, 242, 247],
+              minCellHeight: 18,
+            },
+          } as any,
+        ]);
+        
+        // Add the screenshot image row
+        tableBody.push([
+          {
+            content: '',
+            colSpan: 4,
+            styles: {
+              halign: 'center',
+              valign: 'middle',
+              cellPadding: 8,
+              fillColor: [248, 250, 252],
+              minCellHeight: screenshotHeight + 20, // Add padding around image
+            },
+            _isScreenshot: true,
+            _screenshotBase64: issue.screenshotBase64,
+            _screenshotWidth: screenshotWidth,
+            _screenshotHeight: screenshotHeight,
+            _screenshotUrl: issue.screenshotUrl, // Add the screenshot URL for linking
+          } as any,
+        ]);
+      }
 
       // Contexts block (styled like code snapshots with numbers and black rounded boxes)
       const contexts = toArray(issue.context).filter(Boolean);
@@ -810,7 +901,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           }
         });
       }
-    });
+    }
 
     // No global table header, since each issue has its own header row
     autoTable(doc, {
@@ -957,6 +1048,17 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           doc.setDrawColor(226, 232, 240); // Light gray
           doc.setLineWidth(0.5);
           doc.line(x, y + height, x + width, y + height); // Bottom border
+        }
+        if (data.cell.raw && data.cell.raw._isScreenshot && data.cell.raw._screenshotBase64) {
+          const { x, y, width, height } = data.cell;
+          const imgWidth = data.cell.raw._screenshotWidth || 80;
+          const imgHeight = data.cell.raw._screenshotHeight || 80;
+          const imgX = x + (width - imgWidth) / 2;
+          const imgY = y + (height - imgHeight) / 2;
+          data.doc.addImage(data.cell.raw._screenshotBase64, 'PNG', imgX, imgY, imgWidth, imgHeight);
+        }
+        if (data.cell.raw && data.cell.raw._isScreenshot) {
+          console.log('didDrawCell for screenshot', data.cell.raw._screenshotBase64 ? 'has base64' : 'no base64');
         }
       },
     });
@@ -1303,7 +1405,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                               const { data: fetchedReportData } = await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
                               if (fetchedReportData && fetchedReportData.fetchReportByR2Key) {
                                 fetchedReportData.fetchReportByR2Key.url = row.url;
-                                const pdfBlob = await generatePDF(fetchedReportData.fetchReportByR2Key);
+                                const pdfBlob = await generatePDF(fetchedReportData.fetchReportByR2Key,currentLanguage);
                                 const url = window.URL.createObjectURL(pdfBlob);
                                 const link = document.createElement('a');
                                 link.href = url;

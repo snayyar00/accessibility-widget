@@ -213,63 +213,39 @@ export async function getAccessibilityInformationPally(domain: string) {
     if (issue.runner === 'axe') {
       const message = issue.message.replace(/\s*\(.*$/, '');
       if (issue.type === 'error') {
-        const errorIndex = -1;
-        if (errorIndex === -1) {
           const obj: axeOutput = createAxeArrayObj(message, issue);
           output.axe.errors.push(obj);
-        } else {
-          output.axe.errors[errorIndex].context.push(issue.context);
-          output.axe.errors[errorIndex].selectors.push(issue.selector);
-        }
+        
       } else if (issue.type === 'notice') {
-        const noticeIndex = -1;
-        if (noticeIndex === -1) {
+  
           const obj: axeOutput = createAxeArrayObj(message, issue);
           output.axe.notices.push(obj);
-        } else {
-          output.axe.notices[noticeIndex].context.push(issue.context);
-          output.axe.notices[noticeIndex].selectors.push(issue.selector);
-        }
+   
       } else if (issue.type === 'warning') {
-        const warningIndex = -1;
-        if (warningIndex === -1) {
+   
           const obj: axeOutput = createAxeArrayObj(message, issue);
           output.axe.warnings.push(obj);
-        } else {
-          output.axe.warnings[warningIndex].context.push(issue.context);
-          output.axe.warnings[warningIndex].selectors.push(issue.selector);
-        }
+    
       }
       output.totalElements += 1;
     } else if (issue.runner === 'htmlcs') {
       if (issue.type === 'error') {
         const message = issue.message;
-        const errorIndex = -1;
-        if (errorIndex === -1) {
+  
           const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
           output.htmlcs.errors.push(obj);
-        } else {
-          output.htmlcs.errors[errorIndex].context.push(issue.context);
-          output.htmlcs.errors[errorIndex].selectors.push(issue.selector);
-        }
+       
+     
       } else if (issue.type === 'notice') {
-        const noticeIndex = -1;
-        if (noticeIndex === -1) {
+    
           const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
           output.htmlcs.notices.push(obj);
-        } else {
-          output.htmlcs.notices[noticeIndex].context.push(issue.context);
-          output.htmlcs.notices[noticeIndex].selectors.push(issue.selector);
-        }
+   
       } else if (issue.type === 'warning') {
-        const warningIndex = -1;
-        if (warningIndex === -1) {
+       
           const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
           output.htmlcs.warnings.push(obj);
-        } else {
-          output.htmlcs.warnings[warningIndex].context.push(issue.context);
-          output.htmlcs.warnings[warningIndex].selectors.push(issue.selector);
-        }
+    
       }
     }
   });
