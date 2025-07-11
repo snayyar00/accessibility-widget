@@ -24,6 +24,7 @@ async function registerUser(email: string, password: string, name: string, payme
   name = sanitizedInput.name;
 
   const validateResult = registerValidation({ email, password, name });
+
   if (Array.isArray(validateResult) && validateResult.length) {
     const errorMessages = validateResult.map((it) => it.message);
     
@@ -37,6 +38,7 @@ async function registerUser(email: string, password: string, name: string, payme
 
   try {
     const user = await findUser({ email });
+
     if (user) {
       return new ApolloError('Email address has been used');
     }
@@ -51,10 +53,12 @@ async function registerUser(email: string, password: string, name: string, payme
       password: passwordHashed,
       name,
     };
+    
     let newUserId = null;
 
     if (planName) {
       const product = await findProductAndPriceByType(planName, billingType);
+
       if (!product) {
         return new ApolloError('Can not find any plan');
       }

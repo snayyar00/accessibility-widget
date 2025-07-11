@@ -12,6 +12,7 @@ import { withScope, Severity, captureException, init, Handlers } from '@sentry/n
 import * as Sentry from '@sentry/node';
 import { IResolvers } from '@graphql-tools/utils';
 import { makeExecutableSchema } from 'graphql-tools';
+
 import accessLogStream from './middlewares/logger.middleware';
 import RootSchema from './graphql/root.schema';
 import RootResolver from './graphql/root.resolver';
@@ -24,7 +25,6 @@ import { getAnySitePlanBySiteId, getSitePlanBySiteId, getSitesPlanByUserId } fro
 import { findPriceById } from './repository/prices.repository';
 import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, RETENTION_COUPON_ID } from './constants/billing.constant';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
-import database from '~/config/database.config';
 import { getProblemReportsBySiteId } from './repository/problem_reports.repository';
 import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
 import { addWidgetSettings, getWidgetSettingsBySiteId } from './repository/widget_settings.repository';
@@ -45,6 +45,10 @@ import axios from 'axios';
 import { sendMail } from '~/libs/mail';
 import { emailValidation } from '~/validations/email.validation';
 import { addNewsletterSub } from '~/repository/newsletter_subscribers.repository';
+
+import { rateLimitDirective } from 'graphql-rate-limit-directive';
+import getIpAddress from '~/utils/getIpAddress';
+
 
 type ContextParams = {
   req: Request;
@@ -1442,11 +1446,54 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
+  const { rateLimitDirectiveTypeDefs, rateLimitDirectiveTransformer } = rateLimitDirective({
+    keyGenerator: (_: any, __: any, context: any): string => {
+
+      // Priority 1: Use authenticated user ID for better isolation
+      if (context.user?.id) {
+        return `user:${context.user.id}`;
+      }
+      
+      // Priority 2: Try multiple IP sources
+      const ip = context.ip || context.req?.ip || context.req?.connection?.remoteAddress || context.req?.socket?.remoteAddress;
+      
+      if (ip && ip !== 'unknown' && ip !== '::1' && ip !== '127.0.0.1') {
+        return `ip:${ip}`;
+      }
+      
+      // Priority 3: Create fingerprint from available headers (for edge cases)
+      const req = context.req;
+      const userAgent = req?.headers?.['user-agent']?.slice(0, 50) || '';
+      const acceptLanguage = req?.headers?.['accept-language']?.slice(0, 30) || '';
+      const acceptEncoding = req?.headers?.['accept-encoding']?.slice(0, 30) || '';
+      
+      // Create a hash-like fingerprint for uniqueness
+      const fingerprint = Buffer.from(`${userAgent}-${acceptLanguage}-${acceptEncoding}`)
+        .toString('base64')
+        .slice(0, 20);
+      
+      return `fingerprint:${fingerprint}`;
+    },
+    
+    onLimit: (_, directiveArgs: any): Error => {
+      const customMessage = directiveArgs.message || 'Too many requests, please try again later.';
+      
+      return new Error(customMessage);
+    },
+  });
+
+  let schema = makeExecutableSchema({
+    typeDefs: [
+      rateLimitDirectiveTypeDefs,
+      RootSchema,
+    ],
+    resolvers: RootResolver as IResolvers[],
+  });
+  
+  schema = rateLimitDirectiveTransformer(schema);
+
   const serverGraph = new ApolloServer({
-    schema: makeExecutableSchema({
-      typeDefs: RootSchema,
-      resolvers: RootResolver as IResolvers[],
-    }),
+    schema,
     playground: IS_LOCAL_DEV,
     uploads: {
       maxFileSize: 10000000,
@@ -1531,11 +1578,12 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       const { cookies } = req;
       const bearerToken = cookies.token || null;
       const user = await getUserLogined(bearerToken, res);
-      // const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
+      const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
       return {
-        user,
-        // ip,
+        req,
         res,
+        ip,
+        user,
       };
     },
   });
