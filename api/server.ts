@@ -11,7 +11,7 @@ import { ApolloServer, ApolloError } from 'apollo-server-express';
 import { withScope, Severity, captureException, init, Handlers } from '@sentry/node';
 import * as Sentry from '@sentry/node';
 import { IResolvers } from '@graphql-tools/utils';
-import { makeExecutableSchema } from 'graphql-tools';
+import { makeExecutableSchema } from '@graphql-tools/schema';
 
 import accessLogStream from './middlewares/logger.middleware';
 import RootSchema from './graphql/root.schema';
