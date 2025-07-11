@@ -38,10 +38,6 @@ import { billingPortalSessionValidation, createCustomerPortalSessionValidation, 
 import { validateBody } from './middlewares/validation.middleware';
 import { isAuthenticated } from '~/middlewares/auth.middleware';
 import { UserProfile } from '~/repository/user.repository';
-<<<<<<< HEAD
-import  getIpAddress  from "./utils/getIpAddress"
-=======
->>>>>>> fixes/security-part-5
 
 import { strictLimiter, moderateLimiter } from './middlewares/limiters.middleware';
 import { validateWidgetSettings } from '~/validations/widget.validation';
