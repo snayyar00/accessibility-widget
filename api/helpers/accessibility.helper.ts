@@ -125,7 +125,7 @@ export async function getAccessibilityInformationPally(domain: string) {
   const apiUrl = `${process.env.PA11Y_SERVER_URL}/test`;
   let results;
   try {
-    // Make the POST request with the URL in the body
+    console.log("Using pally API");
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -143,28 +143,49 @@ export async function getAccessibilityInformationPally(domain: string) {
     results = await response.json();
   } catch (error) {
     console.error('pally API Error', error);
-    // Return proper default structure instead of undefined
-    return {
-      axe: {
-        errors: [],
-        notices: [],
-        warnings: [],
-      },
-      htmlcs: {
-        errors: [],
-        notices: [],
-        warnings: [],
-      },
-      score: 0,
-      totalElements: 0,
-      ByFunctions: [],
-      processing_stats: {
-        total_batches: 0,
-        successful_batches: 0,
-        failed_batches: 1,
-        total_issues: 0
+    const  apiUrl2=`${process.env.FALLBACK_PA11Y_SERVER_URL}/scan`;
+    try {
+      console.log("Using fallback pally API");
+      const response = await fetch(apiUrl2, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: domain }),
+      });
+  
+      // Check if the response is successful
+      if (!response.ok) {
+        throw new Error(`Failed to fetch screenshot. Status: ${response.status}`);
       }
-    };
+  
+      // Parse and return the response JSON
+      results = await response.json();
+    } catch (error) {
+      console.error('fall back pally API Error', error);
+  
+      return {
+        axe: {
+          errors: [],
+          notices: [],
+          warnings: [],
+        },
+        htmlcs: {
+          errors: [],
+          notices: [],
+          warnings: [],
+        },
+        score: 0,
+        totalElements: 0,
+        ByFunctions: [],
+        processing_stats: {
+          total_batches: 0,
+          successful_batches: 0,
+          failed_batches: 1,
+          total_issues: 0
+        }
+      };
+    }
   }
 
   results.issues.forEach((issue: any) => {

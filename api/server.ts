@@ -12,7 +12,11 @@ import { withScope, Severity, captureException, init, Handlers } from '@sentry/n
 import * as Sentry from '@sentry/node';
 import { IResolvers } from '@graphql-tools/utils';
 import { makeExecutableSchema } from 'graphql-tools';
+<<<<<<< HEAD
 
+=======
+import { rateLimitDirective } from 'graphql-rate-limit-directive';
+>>>>>>> b46ac33fc0f7ea1fe008f3f4bd16428b220de4ad
 import accessLogStream from './middlewares/logger.middleware';
 import RootSchema from './graphql/root.schema';
 import RootResolver from './graphql/root.resolver';
@@ -1445,9 +1449,14 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
+<<<<<<< HEAD
   const { rateLimitDirectiveTypeDefs, rateLimitDirectiveTransformer } = rateLimitDirective({
     keyGenerator: (_: any, __: any, context: any): string => {
 
+=======
+  const { rateLimitDirectiveTransformer } = rateLimitDirective({
+    keyGenerator: (source: any, args: any, context: any, info: any): string => {
+>>>>>>> b46ac33fc0f7ea1fe008f3f4bd16428b220de4ad
       // Priority 1: Use authenticated user ID for better isolation
       if (context.user?.id) {
         return `user:${context.user.id}`;
@@ -1578,7 +1587,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       const bearerToken = cookies.token || null;
       const user = await getUserLogined(bearerToken, res);
       const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
+<<<<<<< HEAD
       
+=======
+>>>>>>> b46ac33fc0f7ea1fe008f3f4bd16428b220de4ad
       return {
         req,
         res,
