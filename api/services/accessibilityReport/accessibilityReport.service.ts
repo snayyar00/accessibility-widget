@@ -494,7 +494,6 @@ export const fetchAccessibilityReport = async (url: string) => {
           result.ByFunctions = completion.HumanFunctionalities;
         }
       }
-      console.log("Hi i am called 1");
       const output = mergeIssuesToOutput(result.issues);
       result.axe = output.axe;
       result.htmlcs = output.htmlcs;
@@ -509,8 +508,6 @@ export const fetchAccessibilityReport = async (url: string) => {
         }
 
         const result: ResultWithOriginal = await getAccessibilityInformationPally(url);
-        console.log('result from retrying with https://:', result.score, result.totalElements, result.ByFunctions);
-        console.log("Hi i am called 2");
         const output = mergeIssuesToOutput(result.issues);
         result.axe = output.axe;
         result.htmlcs = output.htmlcs;
