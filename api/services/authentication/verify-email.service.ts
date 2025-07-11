@@ -94,7 +94,9 @@ export async function resendEmailAction(user: UserProfile, type: 'verify_email' 
   try {
     let template;
     let subject;
+
     const token = await generateRandomKey();
+    
     switch (type) {
       case SEND_MAIL_TYPE.VERIFY_EMAIL:
         if (user.is_active) {

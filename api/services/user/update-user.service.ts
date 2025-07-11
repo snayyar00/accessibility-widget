@@ -16,11 +16,13 @@ type ChangeUserAvatarResponse = {
 export async function updateProfile(id: number, name: string, company: string, position: string): Promise<true | ApolloError> {
   try {
     const sanitizedInput = sanitizeUserInput({ name, company, position });
+    
     name = sanitizedInput.name;
     company = sanitizedInput.company;
     position = sanitizedInput.position;
 
     const validateResult = profileUpdateValidation({ name, company, position });
+    
     if (Array.isArray(validateResult) && validateResult.length) {
       const errorMessages = validateResult.map((it) => it.message);
       
@@ -39,26 +41,6 @@ export async function updateProfile(id: number, name: string, company: string, p
 
     await updateUser(id, { name, position, company });
     return true;
-  } catch (error) {
-    logger.error(error);
-    throw new ApolloError('Something went wrong!');
-  }
-}
-
-export async function changeUserAvatar(fileData: FileUpload, user: UserProfile): Promise<ChangeUserAvatarResponse> {
-  try {
-    const file = await fileData;
-    const fileName = `avatar-${user.id}-new-${new Date().getTime()}-${file.filename}`;
-    const stream = file.createReadStream();
-    await new Promise<void>((resolve, reject) => {
-      const writeStream = createWriteStream(join(FOLDER_PATHS.avatarDir, fileName));
-      writeStream.on('finish', () => resolve());
-      writeStream.on('error', async (error) => reject(error));
-      stream.on('error', (error) => writeStream.destroy(error));
-      stream.pipe(writeStream);
-    });
-    await updateUser(user.id, { avatar_url: fileName });
-    return { url: fileName };
   } catch (error) {
     logger.error(error);
     throw new ApolloError('Something went wrong!');

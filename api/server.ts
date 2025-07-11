@@ -11,8 +11,8 @@ import { ApolloServer, ApolloError } from 'apollo-server-express';
 import { withScope, Severity, captureException, init, Handlers } from '@sentry/node';
 import * as Sentry from '@sentry/node';
 import { IResolvers } from '@graphql-tools/utils';
-import { makeExecutableSchema } from 'graphql-tools';
-import { rateLimitDirective } from 'graphql-rate-limit-directive';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+
 import accessLogStream from './middlewares/logger.middleware';
 import RootSchema from './graphql/root.schema';
 import RootResolver from './graphql/root.resolver';
@@ -25,7 +25,6 @@ import { getAnySitePlanBySiteId, getSitePlanBySiteId, getSitesPlanByUserId } fro
 import { findPriceById } from './repository/prices.repository';
 import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, RETENTION_COUPON_ID } from './constants/billing.constant';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
-import database from '~/config/database.config';
 import { getProblemReportsBySiteId } from './repository/problem_reports.repository';
 import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findSitesByUserId, IUserSites } from './repository/sites_allowed.repository';
 import { addWidgetSettings, getWidgetSettingsBySiteId } from './repository/widget_settings.repository';
@@ -39,7 +38,6 @@ import { billingPortalSessionValidation, createCustomerPortalSessionValidation, 
 import { validateBody } from './middlewares/validation.middleware';
 import { isAuthenticated } from '~/middlewares/auth.middleware';
 import { UserProfile } from '~/repository/user.repository';
-import  getIpAddress  from "./utils/getIpAddress"
 
 import { strictLimiter, moderateLimiter } from './middlewares/limiters.middleware';
 import { validateWidgetSettings } from '~/validations/widget.validation';
@@ -48,26 +46,33 @@ import { sendMail } from '~/libs/mail';
 import { emailValidation } from '~/validations/email.validation';
 import { addNewsletterSub } from '~/repository/newsletter_subscribers.repository';
 
+import { rateLimitDirective } from 'graphql-rate-limit-directive';
+import getIpAddress from '~/utils/getIpAddress';
+
+dotenv.config();
+
+const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
+
+const subscriptionKey = process.env.AZURE_API_KEY;
+const endpoint = process.env.AZURE_ENDPOINT;
+const region = process.env.AZURE_REGION;
+
+
 type ContextParams = {
   req: Request;
   res: Response;
 };
-const subscriptionKey = process.env.AZURE_API_KEY;
-const endpoint = process.env.AZURE_ENDPOINT;
-const region = process.env.AZURE_REGION;
 interface Issue {
   [key: string]: any;
 }
-
-dotenv.config();
 
 const IS_LOCAL_DEV = !process.env.COOLIFY_URL && process.env.NODE_ENV !== 'production';
 
 const app = express();
 const port = process.env.PORT || 3001;
-const allowedOrigins = [process.env.FRONTEND_URL, undefined, process.env.PORT, 'https://www.webability.io', 'https://hoppscotch.webability.io'];
-const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction', 'reportProblem', 'updateImpressionProfileCounts', 'getWidgetSettings', 'getAccessibilityReport', 'getAccessibilityStats'];
-const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
+
+const allowedOrigins = [process.env.FRONTEND_URL, 'https://www.webability.io', 'https://hoppscotch.webability.io'];
+
 
 app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
 app.use(express.json({ limit: '5mb' }));
@@ -78,17 +83,15 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   const corsOptions = {
     optionsSuccessStatus: 200,
     credentials: true,
+
     origin: (origin: any, callback: any) => {
-      if (IS_LOCAL_DEV) {
+      if (IS_LOCAL_DEV || allowedOrigins.includes(origin) || req.method === 'OPTIONS') {
         callback(null, true);
-      } else if (req.body && allowedOperations.includes(req.body.operationName)) {
-        // Allow any origin for 'validateToken'
-        callback(null, true);
-      } else if (allowedOrigins.includes(origin) || req.method === 'OPTIONS') {
-        // Allow your specific frontend origin
-        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
       }
     },
+
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   };
 
@@ -104,9 +107,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   }
 
   app.use(dynamicCors);
-
   app.use(cookieParser());
-
   app.use(bodyParser.urlencoded({ extended: true, limit: '5mb' }));
 
   app.get('/', (_, res) => {
@@ -1444,18 +1445,16 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
-  const { rateLimitDirectiveTransformer } = rateLimitDirective({
-    keyGenerator: (source: any, args: any, context: any, info: any): string => {
+  const { rateLimitDirectiveTypeDefs, rateLimitDirectiveTransformer } = rateLimitDirective({
+    keyGenerator: (_: any, __: any, context: any): string => {
+
       // Priority 1: Use authenticated user ID for better isolation
       if (context.user?.id) {
         return `user:${context.user.id}`;
       }
       
       // Priority 2: Try multiple IP sources
-      const ip = context.ip || 
-                  context.req?.ip || 
-                  context.req?.connection?.remoteAddress ||
-                  context.req?.socket?.remoteAddress;
+      const ip = context.ip || context.req?.ip || context.req?.connection?.remoteAddress || context.req?.socket?.remoteAddress;
       
       if (ip && ip !== 'unknown' && ip !== '::1' && ip !== '127.0.0.1') {
         return `ip:${ip}`;
@@ -1474,17 +1473,22 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       
       return `fingerprint:${fingerprint}`;
     },
-    onLimit: (response: any, directiveArgs: any, source: any, args: any, context: any, info: any): Error => {
+    
+    onLimit: (_, directiveArgs: any): Error => {
       const customMessage = directiveArgs.message || 'Too many requests, please try again later.';
+
       return new Error(customMessage);
     },
   });
 
   let schema = makeExecutableSchema({
-    typeDefs: RootSchema,
+    typeDefs: [
+      rateLimitDirectiveTypeDefs,
+      RootSchema,
+    ],
     resolvers: RootResolver as IResolvers[],
   });
-
+  
   schema = rateLimitDirectiveTransformer(schema);
 
   const serverGraph = new ApolloServer({
@@ -1574,6 +1578,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       const bearerToken = cookies.token || null;
       const user = await getUserLogined(bearerToken, res);
       const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
+      
       return {
         req,
         res,
