@@ -17,7 +17,7 @@ import AccordionGroup from '@mui/joy/AccordionGroup';
 import Accordion from '@mui/joy/Accordion';
 import ToggleButtonGroup from '@mui/joy/ToggleButtonGroup';
 import Stack from '@mui/joy/Stack';
-import { translateText,translateMultipleTexts,LANGUAGES } from '@/utils/translator';
+import { translateText,translateMultipleTexts,LANGUAGES,deduplicateIssuesByMessage } from '@/utils/translator';
 
 import { getRootDomain, isValidRootDomainFormat, isIpAddress } from '@/utils/domainUtils';
 
@@ -610,9 +610,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     // Build the rows
     let tableBody: any[] = [];
-    const translatedIssues = await translateText(issues, currentLanguage);
-
-  
+    const FilteredIssues = await deduplicateIssuesByMessage(issues);
+    const translatedIssues = await translateText(FilteredIssues, currentLanguage);
 
     translatedIssues.forEach((issue, issueIdx) => {
       // Add header row for each issue with beautiful styling

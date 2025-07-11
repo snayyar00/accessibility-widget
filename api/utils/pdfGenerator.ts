@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import getWidgetSettings from '../utils/getWidgetSettings';
 import sharp from 'sharp';
-
+import { deduplicateIssuesByMessage } from '../utils/translator';
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
 
@@ -419,9 +419,11 @@ let logopath: string | undefined;
 
   // Build the rows
   let tableBody: any[] = [];
-  const translatedIssues = issues;
+  
+  const FilteredIssues = await deduplicateIssuesByMessage(issues);
+  const translatedIssues = FilteredIssues;
 
-  translatedIssues.forEach((issue, issueIdx) => {
+  FilteredIssues.forEach((issue, issueIdx) => {
     // Add header row for each issue
     tableBody.push([
       {

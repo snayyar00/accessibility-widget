@@ -3,7 +3,7 @@ import { useParams, useLocation, useHistory } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
-import { translateText,translateMultipleTexts,LANGUAGES} from '@/utils/translator';
+import { translateText,translateMultipleTexts,deduplicateIssuesByMessage,LANGUAGES} from '@/utils/translator';
 
 import {
   AlertTriangle,
@@ -1502,7 +1502,10 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     // Build the rows
     let tableBody: any[] = [];
-    const translatedIssues = await translateText(issues, currentLanguage);
+    const FilteredIssues = await deduplicateIssuesByMessage(issues);
+
+    const translatedIssues = await translateText(FilteredIssues, currentLanguage);
+
 
   
 
