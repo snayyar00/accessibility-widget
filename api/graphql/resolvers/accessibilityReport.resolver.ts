@@ -163,8 +163,10 @@ const resolvers = {
             throw new Error('User does not own this site');
           }
 
+          const result = await deleteAccessibilityReportByR2Key(r2_key);
           await deleteReportFromR2(r2_key);
-          return await deleteAccessibilityReportByR2Key(r2_key);
+
+          return result;
         } catch (error) {
           throw new Error(`Failed to delete accessibility report: ${error.message}`);
         }

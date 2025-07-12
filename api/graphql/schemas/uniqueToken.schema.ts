@@ -1,16 +1,12 @@
-import { gql } from "apollo-server-express";
+import { gql } from 'apollo-server-express';
 
+export const UniqueTokenSchema = gql`
+  type TokenValidationResponse {
+    validation: String!
+    savedState: JSON
+  }
 
-
-export const uniqueTokenSchema = gql`
-    type TokenValidationResponse {
-        validation: String!
-        savedState: JSON
-    }
-
-    extend type Query{
-        getVisitorTokenByWebsite(url: String!): String!
-        validateToken(url: String!): TokenValidationResponse!
-    }
-
-`
+  extend type Query {
+    validateToken(url: String!): TokenValidationResponse! @rateLimit(limit: 30, duration: 60, message: "Too many requests, please try again later.")
+  }
+`;

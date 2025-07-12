@@ -150,7 +150,7 @@ export default function AnalyticsDashboard({
       icon: <FaEye className="h-6 w-6 text-primary" />,
     },
     {
-      title: 'Unique Visitors',
+      title: 'Visitors',
       value: visitorCount,
       change: '',
       icon: <FaUser className="h-6 w-6 text-primary" />,

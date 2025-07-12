@@ -72,6 +72,7 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 const allowedOrigins = [process.env.FRONTEND_URL, 'https://www.webability.io', 'https://hoppscotch.webability.io'];
+const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction', 'reportProblem', 'updateImpressionProfileCounts'];
 
 
 app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
@@ -85,11 +86,28 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     credentials: true,
 
     origin: (origin: any, callback: any) => {
-      if (IS_LOCAL_DEV || allowedOrigins.includes(origin) || req.method === 'OPTIONS') {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
+      // Allow local development
+      if (IS_LOCAL_DEV) {
+        return callback(null, true);
       }
+
+      // Allow preflight OPTIONS requests
+      if (req.method === 'OPTIONS') {
+        return callback(null, true);
+      }
+
+      // Allow predefined origins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Allow specific GraphQL operations (widget operations)
+      if (req.body && allowedOperations.includes(req.body.operationName)) {
+        return callback(null, true);
+      }
+
+      // Reject all other origins
+      callback(new Error('Not allowed by CORS'));
     },
 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
