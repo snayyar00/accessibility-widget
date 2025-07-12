@@ -1,101 +1,95 @@
 import database from '~/config/database.config';
 import { TABLES } from '~/constants/database.constant';
 
-
 const TABLE = TABLES.allowed_sites;
 
 export const siteColumns = {
-	id: 'allowed_sites.id',
-	user_id: 'allowed_sites.user_id',
-	url: 'allowed_sites.url',
-	createAt: 'allowed_sites.created_at',
-	updatedAt: 'allowed_sites.updated_at',
-
+  id: 'allowed_sites.id',
+  user_id: 'allowed_sites.user_id',
+  url: 'allowed_sites.url',
+  createAt: 'allowed_sites.created_at',
+  updatedAt: 'allowed_sites.updated_at',
 };
 
 export type FindAllowedSitesProps = {
-	id?: number;
-	user_id?: number
-	url?: string,
-	createAt?: string,
-	updatedAt?: string,
+  id?: number;
+  user_id?: number;
+  url?: string;
+  createAt?: string;
+  updatedAt?: string;
 };
 
 export interface IUserSites extends FindAllowedSitesProps {
-	expiredAt?: string | null | undefined,
-	trial?:number|null|undefined
+  expiredAt?: string | null | undefined;
+  trial?: number | null | undefined;
 }
 
 export type allowedSites = {
-	id?: number;
-	user_id?: number
-	url?: string,
+  id?: number;
+  user_id?: number;
+  url?: string;
 };
 
 export async function findSitesByUserId(id: number): Promise<IUserSites[]> {
-	return database(TABLE)
-		.where({ [siteColumns.user_id]: id });
+  return database(TABLE).where({ [siteColumns.user_id]: id });
 }
 
 export async function findSiteById(id: number): Promise<FindAllowedSitesProps> {
-	return database(TABLE)
-		.where({ [siteColumns.id]: id }).first();
+  return database(TABLE)
+    .where({ [siteColumns.id]: id })
+    .first();
 }
 
 export async function findSiteByURL(url: string): Promise<FindAllowedSitesProps> {
-	const result = await database(TABLE)
-		.select(siteColumns)
-		.where({ [siteColumns.url]: url })
-		.first();
-	return result;
+  const result = await database(TABLE)
+    .select(siteColumns)
+    .where({ [siteColumns.url]: url })
+    .first();
+  return result;
 }
 
 export async function findSiteByUserIdAndSiteId(user_id: number, site_id: number): Promise<FindAllowedSitesProps> {
-	return database(TABLE)
-		.select(siteColumns)
-		.where({ [siteColumns.user_id]: user_id, [siteColumns.id]: site_id })
-		.first();
+  return database(TABLE)
+    .select(siteColumns)
+    .where({ [siteColumns.user_id]: user_id, [siteColumns.id]: site_id })
+    .first();
 }
 
 export async function insertSite(data: allowedSites): Promise<FindAllowedSitesProps | string> {
-	const startTime = Date.now();
-	
-	return database.transaction(async (trx) => {
-		try {
-			const existing = await trx(TABLE)
-                .select('id')
-                .where({ url: data.url })
-                .forUpdate()
-                .first();
+  const startTime = Date.now();
 
-			if (existing) {
-				console.log(`insertSite (duplicate) took: ${Date.now() - startTime}ms`);
-				return 'You have already added this site.';
-			}
-			const site_id = await trx(TABLE).insert(data);
-			
-			if (!site_id || site_id.length === 0) {
-				throw new Error('Failed to insert site - no ID returned');
-			}
+  return database.transaction(async (trx) => {
+    try {
+      const existing = await trx(TABLE).select('id').where({ url: data.url }).forUpdate().first();
 
-			const insertedSite:FindAllowedSitesProps = {
-				id: site_id[0],
-				user_id: data.user_id,
-				url: data.url,
-				createAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString()
-			};
+      if (existing) {
+        console.log(`insertSite (duplicate) took: ${Date.now() - startTime}ms`);
+        return 'You have already added this site.';
+      }
+      const site_id = await trx(TABLE).insert(data);
 
-			return insertedSite;
-		} catch (error) {
-			console.error('insertSite transaction error:', error);
-			return `insert failed: ${error.message}`;
-		}
-	});
+      if (!site_id || site_id.length === 0) {
+        throw new Error('Failed to insert site - no ID returned');
+      }
+
+      const insertedSite: FindAllowedSitesProps = {
+        id: site_id[0],
+        user_id: data.user_id,
+        url: data.url,
+        createAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      return insertedSite;
+    } catch (error) {
+      console.error('insertSite transaction error:', error);
+      return `insert failed: ${error.message}`;
+    }
+  });
 }
 
 export async function deleteSiteByURL(url: string, user_id: number): Promise<number> {
-	return database(TABLE).where({ 'user_id': user_id, 'url': url }).del()
+  return database(TABLE).where({ user_id: user_id, url: url }).del();
 }
 
 /**
@@ -103,81 +97,88 @@ export async function deleteSiteByURL(url: string, user_id: number): Promise<num
  * Uses a transaction to ensure atomicity - either all records are deleted or none are
  */
 export async function deleteSiteWithRelatedRecords(url: string, user_id: number): Promise<number> {
-	return database.transaction(async (trx) => {
-		try {
-			// Find the site within the transaction
-			const site = await trx(TABLE)
-				.select(siteColumns)
-				.where({ [siteColumns.url]: url, [siteColumns.user_id]: user_id })
-				.first();
+  return database.transaction(async (trx) => {
+    try {
+      // Find the site within the transaction
+      const site = await trx(TABLE)
+        .select(siteColumns)
+        .where({ [siteColumns.url]: url, [siteColumns.user_id]: user_id })
+        .first();
 
-			if (!site) {
-				throw new Error(`Site not found: ${url} for user ${user_id}`);
-			}
+      if (!site) {
+        throw new Error(`Site not found: ${url} for user ${user_id}`);
+      }
 
-			const siteId = site.id;
+      const siteId = site.id;
 
-			// Delete all related records within the same transaction
-			await trx.raw('SET FOREIGN_KEY_CHECKS = 0');
-			
-			await Promise.all([
-				trx('impressions').where('site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} impressions`))
-					.catch(err => console.log(`Impressions deletion skipped: ${err.message}`)),
-				trx('problem_reports').where('site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} problem_reports`))
-					.catch(err => console.log(`Problem reports deletion skipped: ${err.message}`)),
-				trx('unique_visitors').where('site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} unique_visitors`))
-					.catch(err => console.log(`Unique visitors deletion skipped: ${err.message}`)),
-				trx('accessibility_reports').where('allowed_sites_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} accessibility_reports`))
-					.catch(err => console.log(`Accessibility reports deletion skipped: ${err.message}`)),
-				trx('accessibility_scans').where('site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} accessibility_scans`))
-					.catch(err => console.log(`Accessibility scans deletion skipped: ${err.message}`)),
-				trx('widget_settings').where('allowed_site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} widget_settings`))
-					.catch(err => console.log(`Widget settings deletion skipped: ${err.message}`)),
-				trx('sites_plans').where('allowed_site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} sites_plans`))
-					.catch(err => console.log(`Sites plans deletion skipped: ${err.message}`)),
-				trx('site_permissions').where('allowed_site_id', siteId).del()
-					.then(count => console.log(`Deleted ${count} site_permissions`))
-					.catch(err => console.log(`Site permissions deletion skipped: ${err.message}`)),
-			]);
+      // Delete all related records within the same transaction
+      await trx.raw('SET FOREIGN_KEY_CHECKS = 0');
 
-			await trx.raw('SET FOREIGN_KEY_CHECKS = 1');
+      await Promise.all([
+        trx('impressions')
+          .where('site_id', siteId)
+          .del()
+          .then((count) => console.log(`Deleted ${count} impressions`))
+          .catch((err) => console.log(`Impressions deletion skipped: ${err.message}`)),
+        trx('problem_reports')
+          .where('site_id', siteId)
+          .del()
+          .then((count) => console.log(`Deleted ${count} problem_reports`))
+          .catch((err) => console.log(`Problem reports deletion skipped: ${err.message}`)),
+        trx('unique_visitors')
+          .where('site_id', siteId)
+          .del()
+          .then((count) => console.log(`Deleted ${count} unique_visitors`))
+          .catch((err) => console.log(`Unique visitors deletion skipped: ${err.message}`)),
+        trx('accessibility_reports')
+          .where('allowed_sites_id', siteId)
+          .del()
+          .then((count) => console.log(`Deleted ${count} accessibility_reports`))
+          .catch((err) => console.log(`Accessibility reports deletion skipped: ${err.message}`)),
+        trx('accessibility_scans')
+          .where('site_id', siteId)
+          .del()
+          .then((count) => console.log(`Deleted ${count} accessibility_scans`))
+          .catch((err) => console.log(`Accessibility scans deletion skipped: ${err.message}`)),
+        trx('widget_settings')
+          .where('allowed_site_id', siteId)
+          .del()
+          .then((count) => console.log(`Deleted ${count} widget_settings`))
+          .catch((err) => console.log(`Widget settings deletion skipped: ${err.message}`)),
+        trx('sites_plans')
+          .where('allowed_site_id', siteId)
+          .del()
+          .then((count) => console.log(`Deleted ${count} sites_plans`))
+          .catch((err) => console.log(`Sites plans deletion skipped: ${err.message}`)),
+        trx('site_permissions')
+          .where('allowed_site_id', siteId)
+          .del()
+          .then((count) => console.log(`Deleted ${count} site_permissions`))
+          .catch((err) => console.log(`Site permissions deletion skipped: ${err.message}`)),
+      ]);
 
-			// Delete the main site record within the same transaction
-			const deletedCount = await trx(TABLE)
-				.where({ 'user_id': user_id, 'url': url })
-				.del();
+      await trx.raw('SET FOREIGN_KEY_CHECKS = 1');
 
-			console.log(`Deleted site: ${url} (${deletedCount} records)`);
-			return deletedCount;
-			
-		} catch (error) {
-			console.error(`Error in deleteSiteWithRelatedRecords for ${url}:`, error);
-			throw error;
-		}
-	});
+      // Delete the main site record within the same transaction
+      const deletedCount = await trx(TABLE).where({ user_id: user_id, url: url }).del();
+
+      console.log(`Deleted site: ${url} (${deletedCount} records)`);
+      return deletedCount;
+    } catch (error) {
+      console.error(`Error in deleteSiteWithRelatedRecords for ${url}:`, error);
+      throw error;
+    }
+  });
 }
 
 export async function updateAllowedSiteURL(site_id: number, url: string, user_id: number): Promise<number> {
-	const urlExists = await database(TABLE)
-        .select(siteColumns)
-        .where({ 'allowed_sites.url': url })
-        .andWhereNot({ 'allowed_sites.id': site_id })
-        .first();
+  const urlExists = await database(TABLE).select(siteColumns).where({ 'allowed_sites.url': url }).andWhereNot({ 'allowed_sites.id': site_id }).first();
 
-    if (urlExists) {
-        throw new Error("The provided URL is already in use.");
-    }
-	
-	const exisitingSite = await database(TABLE).select(siteColumns).where({ [siteColumns.id]: site_id }).first();
-	//await UpdateWebsiteURL(exisitingSite.url, url)
-	return database(TABLE).where({ 'allowed_sites.user_id': user_id, 'allowed_sites.id': site_id }).update({
-		'url': url
-	});
+  if (urlExists) {
+    throw new Error('The provided URL is already in use.');
+  }
+
+  return database(TABLE).where({ 'allowed_sites.user_id': user_id, 'allowed_sites.id': site_id }).update({
+    url: url,
+  });
 }
