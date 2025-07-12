@@ -1,9 +1,5 @@
-import { ApolloError, ValidationError } from 'apollo-server-express';
-
 import logger from '~/utils/logger';
-import { insertDocument, findDocumentById, findDocuments, updateDocumentById, deleteDocumentById, FindDocumentsResponse, FindDocumentById } from '~/repository/documents.repository';
-import { FindAllowedSitesProps, IUserSites, deleteSiteByURL, deleteSiteWithRelatedRecords, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL} from '~/repository/sites_allowed.repository';
-import { createValidation } from '~/validations/document.validation';
+import { IUserSites, deleteSiteWithRelatedRecords, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL} from '~/repository/sites_allowed.repository';
 import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
 import { createSitesPlan } from './plans-sites.service';
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '~/constants/database.constant';
@@ -49,10 +45,6 @@ export async function checkScript(url: String) {
  * @param {string} url
  */
 export async function addSite(userId: number, url: string): Promise<string> {
-//   const validateResult = createValidation({ name, body });
-//   if (Array.isArray(validateResult) && validateResult.length) {
-//     throw new ValidationError(validateResult.map((it) => it.message).join(','));
-//   }
 
   const year = new Date().getFullYear();
   try {

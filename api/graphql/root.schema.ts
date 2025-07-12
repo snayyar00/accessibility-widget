@@ -2,8 +2,6 @@ import { gql } from 'apollo-server-express';
 
 import { UserSchema } from './schemas/user.schema';
 import { UserPlanSchema } from './schemas/user-plan.schema';
-import { TeamSchema } from './schemas/team.schema';
-import { DocumentSchema } from './schemas/document.schema';
 import { ImpressionsSchema } from './schemas/impressions.schema';
 import { AllowedSitesSchema } from './schemas/allowedSites.schema';
 import { UniqueVisitorSchema } from './schemas/uniqueVisitor.schema';
@@ -31,4 +29,4 @@ const rootSchema = gql`
   }
 `;
 
-export default [rootSchema, UserSchema, UserPlanSchema, TeamSchema, DocumentSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, UniqueTokenSchema, SitesPlanSchema, reportProblemSchema, TranslationSchema];
+export default [rootSchema, UserSchema, UserPlanSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, UniqueTokenSchema, SitesPlanSchema, reportProblemSchema, TranslationSchema];

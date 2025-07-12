@@ -10,11 +10,9 @@ import PrivateRoute from '@/routes/PrivateRoute';
 import PublicRoute from '@/routes/PublicRoute';
 import AdminLayout from '@/containers/Layout/Admin';
 import VerifyEmail from '@/containers/VerifyEmail';
-import AcceptInvitation from '@/containers/Teams/AcceptInvitation';
 import { createClient } from '@/config/apollo';
 import GlobalLoading from '@/components/Layout/GlobalLoading';
 import 'react-toastify/dist/ReactToastify.css';
-import useDocumentHeader from './hooks/useDocumentTitle';
 import { RootState } from './config/store';
 import ReportView from './containers/Accessibility/ReportView';
 
@@ -24,12 +22,7 @@ type props = {
 const client = createClient();
 
 const App: React.FC<props> = ({ options }) => {
-
-  const { t } = useTranslation();
-  // useDocumentHeader({ title: t('WebAbility') });
   const { error } = useSelector((state: RootState) => state.user);
-
-
 
   useEffect(() => {
     if (error) {
@@ -44,10 +37,6 @@ const App: React.FC<props> = ({ options }) => {
         <ToastContainer />
         <Switch>
           <Route path="/verify-email" component={VerifyEmail} />
-          <Route
-            path="/teams/invitation/:invitationToken"
-            component={AcceptInvitation}
-          />
           <PublicRoute path="/auth" component={Auth} />
           <Route path="/reports/:r2_key" component={ReportView} exact />
           <PrivateRoute render={() => <AdminLayout options={options} />} />
