@@ -5,7 +5,6 @@ import { RootState } from '@/config/store';
 import { CircularProgress } from '@mui/material';
 import InformationSetting from './InformationSetting';
 import PasswordSetting from './PasswordSetting';
-import PlanSetting from './PlanSetting';
 import BillingPortalLink from './BillingPortalLink';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 
@@ -31,7 +30,6 @@ const Profile: React.FC = () => {
             <PasswordSetting />
             <BillingPortalLink/>
           </div>
-          {/* <PlanSetting /> */}
         </>
       )}
     </div>

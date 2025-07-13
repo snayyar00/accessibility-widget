@@ -18,7 +18,6 @@ import checkDomainQuery from '@/queries/allowedSites/checkDomain.js';
 import checkEmailQuery from '@/queries/user/checkEmail.js';
 import { CircularProgress } from '@mui/material';
 import WebAbilityWidget from './TryWidgetBanner';
-import PlanSetting from '@/containers/SiteDetail/PlanSetting';
 import { toast } from 'react-toastify';
 import AccessibilitySteps from './AccessibilitySteps';
 import { parse } from 'tldts';

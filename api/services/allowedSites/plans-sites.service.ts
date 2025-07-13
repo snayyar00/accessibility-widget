@@ -34,33 +34,7 @@ export interface ResponseSitesPlan {
   isActive: boolean;
 }
 
-export async function getUserSitesPlan(userId: number): Promise<ResponseSitesPlan[]> {
-  const sitePlans = await database(TABLE)
-    .where({ user_id: userId, is_active: true })
-    .select('*');
-  
-  if (sitePlans.length === 0) {
-    throw new ApolloError('No active plans found for the user');
-  }
-
-  // Map database results to ResponseSitesPlan
-  return sitePlans.map(plan => ({
-    id: plan.id,
-    allowedSiteId: plan.allowed_site_id,
-    productId: plan.product_id,
-    priceId: plan.price_id,
-    name: plan.name,
-    amount: plan.amount,
-    productType: plan.product_type,
-    priceType: plan.price_type,
-    expiredAt: plan.expired_at,
-    deletedAt: plan.deleted_at,
-    isActive: plan.is_active,
-  }));
-}
-
 export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
-  // console.log(`getPlanBySiteIdAndUserId called with userId: ${userId}, siteId: ${siteId}`);
 
   const site = await findSiteByUserIdAndSiteId(userId, siteId);
 
@@ -69,11 +43,7 @@ export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
     throw new ApolloError('Can not find any site');
   }
 
-  // console.log('Site found:', JSON.stringify(site, null, 2));
-
   const plan = await getSitePlanBySiteId(site.id);
-  
-  // console.log('Raw plan data:', JSON.stringify(plan, null, 2));
 
   if (!plan) {
     console.log(`No plan found for site: ${site.id}`);
@@ -235,7 +205,6 @@ export async function deleteTrialPlan(id: number): Promise<true> {
       throw new ApolloError('Can not find any trial user plan');
     }
     await deleteSitePlanById(sitePlan.id);
-    // await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)]);
 
     return true;
   } catch (error) {
@@ -271,34 +240,11 @@ export async function deleteSitesPlan(id: number, hook = false): Promise<true> {
     }
 
     try {
-      // await deleteSitesPlan(plan.id, true);
       await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)]);
     } catch (error) {
       console.log('Error Deleting Plan for site:', sitePlan.allowed_site_id);
       throw error;
     }
-
-    // let previous_plan;
-    // try {
-    //   previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(customer, sitePlan.subcription_id);
-    // } catch (error) {
-    //   console.log('err = ', error);
-    // }
-
-    // const updatePromises = previous_plan.map(async (plan) => {
-    //   try {
-    //     // await deleteSitesPlan(plan.id, true);
-    //     await Promise.all([deleteSitePlanById(plan.id), deletePermissionBySitePlanId(plan.id)]);
-    //     console.log('Deleted Plan for site', plan.siteId);
-    //   } catch (error) {
-    //     console.log('Error Deleting Plan for site:', plan.siteId);
-    //     throw error;
-    //   }
-    // });
-
-    // await Promise.all(updatePromises);
-    // await deleteSitesPlanById(sitePlan.id);
-    // await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)]);
 
     return true;
   } catch (error) {
@@ -331,36 +277,11 @@ export async function deleteExpiredSitesPlan(id: number, hook = false): Promise<
     }
 
     try {
-      // await deleteSitesPlan(plan.id, true);
       await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)]);
     } catch (error) {
       console.log('Error Deleting Plan for site:', sitePlan.allowed_site_id);
       throw error;
     }
-
-
-
-    // let previous_plan;
-    // try {
-    //   previous_plan = await getSitesPlanByCustomerIdAndSubscriptionId(customer, sitePlan.subcription_id);
-    // } catch (error) {
-    //   console.log('err = ', error);
-    // }
-
-    // const updatePromises = previous_plan.map(async (plan) => {
-    //   try {
-    //     // await deleteSitesPlan(plan.id, true);
-    //     await Promise.all([deleteSitePlanById(plan.id), deletePermissionBySitePlanId(plan.id)]);
-    //     console.log('Deleted Plan for site', plan.siteId);
-    //   } catch (error) {
-    //     console.log('Error Deleting Plan for site:', plan.siteId);
-    //     throw error;
-    //   }
-    // });
-
-    // await Promise.all(updatePromises);
-    // await deleteSitesPlanById(sitePlan.id);
-    // await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)]);
 
     return true;
   } catch (error) {
@@ -369,99 +290,3 @@ export async function deleteExpiredSitesPlan(id: number, hook = false): Promise<
     throw new ApolloError('Something went wrong!');
   }
 }
-
-// export async function invoicePaymentSuccess(data: DataSubcription): Promise<boolean> {
-//   try {
-//     const userPlan = await getUserPlanByCustomerId(data.customer);
-//     if (!userPlan) {
-//       throw new ApolloError('Can not find any user plan');
-//     }
-
-//     const expiredAt = formatDateDB(dayjs().add(1, userPlan.priceType === 'yearly' ? 'y' : 'M'));
-//     const dataUserPlan: UserPlanData = {
-//       expired_at: expiredAt,
-//       deleted_at: null,
-//     };
-
-//     await updateUserPlanById(userPlan.id, dataUserPlan);
-
-//     const user = await findUser({ id: userPlan.userId });
-//     if (user) {
-//       const template = await compileEmailTemplate({
-//         fileName: 'invoicePaymentSuccess.mjml',
-//         data: {
-//           link: data.hosted_invoice_url,
-//           name: user.name,
-//           date: expiredAt,
-//         },
-//       });
-
-//       sendMail(user.email, 'Invoice payment successfully', template);
-//     }
-
-//     return true;
-//   } catch (error) {
-//     logger.error(error);
-//     throw new ApolloError('Something went wrong!');
-//   }
-// }
-
-// export async function invoicePaymentFailed(data: DataSubcription): Promise<boolean> {
-//   try {
-//     const userPlan = await getUserPlanByCustomerId(data.customer);
-//     if (!userPlan) {
-//       throw new ApolloError('Can not find any user plan');
-//     }
-
-//     const expiredAt = formatDateDB(dayjs(userPlan.expiredAt).add(10, 'd'));
-//     const dataUserPlan = {
-//       expired_at: expiredAt,
-//       deleted_at: formatDateDB(),
-//     };
-
-//     await updateUserPlanById(userPlan.id, dataUserPlan);
-
-//     const user = await findUser({ id: userPlan.userId });
-//     if (user) {
-//       const template = await compileEmailTemplate({
-//         fileName: 'invoicePaymentFailed.mjml',
-//         data: {
-//           name: user.name,
-//           date: expiredAt,
-//         },
-//       });
-
-//       sendMail(user.email, 'Invoice payment failed', template);
-//     }
-//     return true;
-//   } catch (error) {
-//     logger.error(error);
-//     throw new ApolloError('Something went wrong!');
-//   }
-// }
-
-// export async function trialWillEnd(data: DataSubcription): Promise<boolean> {
-//   try {
-//     const userPlan = await getUserPlanByCustomerId(data.customer);
-//     if (!userPlan) {
-//       throw new ApolloError('Can not find any user plan');
-//     }
-
-//     const user = await findUser({ id: userPlan.userId });
-//     if (user) {
-//       const template = await compileEmailTemplate({
-//         fileName: 'trialWillEnd.mjml',
-//         data: {
-//           name: user.name,
-//           date: formatDateDB(dayjs(data.trial_end * 1000)),
-//         },
-//       });
-
-//       sendMail(user.email, 'Trial will end', template);
-//     }
-//     return true;
-//   } catch (error) {
-//     logger.error(error);
-//     throw new ApolloError('Something went wrong!');
-//   }
-// }

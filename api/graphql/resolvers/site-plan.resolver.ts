@@ -1,13 +1,9 @@
 import { combineResolvers } from 'graphql-resolvers';
 import { isAuthenticated } from './authorization.resolver';
-import { createSitesPlan, deleteSitesPlan, getPlanBySiteIdAndUserId, getUserSitesPlan, updateSitesPlan } from '~/services/allowedSites/plans-sites.service';
+import { createSitesPlan, deleteSitesPlan, getPlanBySiteIdAndUserId, updateSitesPlan } from '~/services/allowedSites/plans-sites.service';
 
 const resolvers = {
   Query: {
-    getUserSitesPlan: combineResolvers(
-      isAuthenticated,
-      (_, args, { user }) => getUserSitesPlan(user.id),
-    ),
     getPlanBySiteIdAndUserId: combineResolvers(
       isAuthenticated,
       async (_, { siteId }, { user }) => {

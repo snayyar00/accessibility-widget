@@ -37,7 +37,6 @@ export const SitesPlanSchema = gql`
     }
   
     extend type Query {
-      getUserSitesPlan: ResponseSitesPlan
       getPlanBySiteIdAndUserId(siteId: Int!): SitesPlanData
     }
   

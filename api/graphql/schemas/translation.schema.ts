@@ -118,6 +118,6 @@ export const TranslationSchema = gql`
       targetLanguage: String!
       languageCode: String!
       context: String
-    ): TranslationResponse!
+    ): TranslationResponse! @rateLimit(limit: 5, duration: 60, message: "Too many translateStatement requests. Please try again later.")
   }
 `;
