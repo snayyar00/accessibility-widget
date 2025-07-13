@@ -160,7 +160,7 @@ export async function deleteSiteWithRelatedRecords(url: string, user_id: number)
       console.log(`Deleted site: ${url} (${deletedCount} records)`);
       return deletedCount;
     } catch (error) {
-      console.error(`Error in deleteSiteWithRelatedRecords for ${url}:`, error);
+      console.error('Error in deleteSiteWithRelatedRecords for %s:', url, error);
       throw error;
     }
   });
