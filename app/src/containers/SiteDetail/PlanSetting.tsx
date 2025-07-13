@@ -2,26 +2,20 @@ import React, { useState, useEffect } from 'react';
 import isEmpty from 'lodash/isEmpty';
 import { useLazyQuery, useMutation } from '@apollo/client';
 import { useDispatch, useSelector } from 'react-redux';
-import dayjs from 'dayjs';
-import { useTranslation, Trans } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import "./PlanSetting.css";
 import { RootState } from '@/config/store';
-import StripeContainer from '@/containers/Stripe';
 import deleteSitePlanQuery from '@/queries/sitePlans/deleteSitePlan';
 import updateSitePlanQuery from '@/queries/sitePlans/updateSitePlan';
 import createSitePlanQuery from '@/queries/sitePlans/createSitePlan';
 import getSitePlanQuery from '@/queries/sitePlans/getSitePlan';
-import { setUserPlan } from '@/features/auth/userPlan';
 import Plans from '@/components/Plans';
-import Toggle from '@/components/Common/Input/Toggle';
-import ErrorText from '@/components/Common/ErrorText';
 import Button from '@/components/Common/Button';
 import { TDomain } from '.';
 import { setSitePlan } from '@/features/site/sitePlan';
 import { toast } from 'react-toastify';
 import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import AppSumoInfo from '@/components/Plans/AppSumoInfo';
 import { MdLocalOffer } from 'react-icons/md';
 import { plans } from '@/constants';
 
@@ -411,15 +405,6 @@ const PlanSetting: React.FC<{
   }
   const planChanged = plans.find((item: any) => item.id === selectedPlan);
 
-  const amountCurrent = currentPlan.amount || 0;
-  const amountNew = planChanged
-    ? isYearly
-      ? planChanged.name == 'Enterprise'
-        ? planChanged.price
-        : planChanged.price
-      : planChanged.price
-    : 0;
-
 
   return (
     <div className="bg-white border border-solid border-dark-grey shadow-xxl rounded-[10px] p-6 mb-[25px] sm:px-[10px] sm:py-6">
@@ -459,16 +444,6 @@ const PlanSetting: React.FC<{
               </p>
             </div>
           ) : null}
-
-          {/* {(true || currentPlan.isTrial ||
-            showPlans ||
-            ((planChanged || Object.keys(currentPlan).length == 0) &&
-              Object.keys(currentPlan).length == 0 &&
-              currentActivePlan == '')) && (
-            <div className="flex justify-center mb-[25px] sm:mt-[25px] [&_label]:mx-auto [&_label]:my-0">
-              <Toggle onChange={toggle} label="Bill Yearly" />
-            </div>
-          )} */}
           <>
             <div className="flex sm:flex-col md:flex-row">
               {validatedCoupons.length > 0 &&
