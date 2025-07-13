@@ -1,6 +1,6 @@
 import { combineResolvers } from 'graphql-resolvers';
 import { isAuthenticated } from './authorization.resolver';
-import { createSitesPlan, deleteSitesPlan, getPlanBySiteIdAndUserId, updateSitesPlan } from '~/services/allowedSites/plans-sites.service';
+import { getPlanBySiteIdAndUserId, updateSitesPlan } from '~/services/allowedSites/plans-sites.service';
 
 const resolvers = {
   Query: {
@@ -14,17 +14,9 @@ const resolvers = {
     ),
   },
   Mutation: {
-    createSitesPlan: combineResolvers(
-      isAuthenticated,
-      (_, { paymentMethodToken, planName, billingType, siteId,couponCode }, { user }) => createSitesPlan(user.id, paymentMethodToken, planName, billingType, siteId,couponCode),
-    ),
     updateSitesPlan: combineResolvers(
       isAuthenticated,
-      (_, { sitesPlanId, planName, billingType }) => updateSitesPlan(sitesPlanId, planName, billingType),
-    ),
-    deleteSitesPlan: combineResolvers(
-      isAuthenticated,
-      (_, { sitesPlanId }) => deleteSitesPlan(sitesPlanId),
+      (_, { sitesPlanId, planName, billingType }, {user}) => updateSitesPlan(user.id, sitesPlanId, planName, billingType),
     ),
   },
 };

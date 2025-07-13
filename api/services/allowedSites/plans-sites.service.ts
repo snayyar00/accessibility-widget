@@ -1,4 +1,5 @@
-import { ApolloError } from 'apollo-server-express';
+import { ApolloError, ValidationError } from 'apollo-server-express';
+import { validateGetPlanBySiteIdAndUserId, validateUpdateSitesPlan } from '~/validations/planSites.validation';
 import dayjs from 'dayjs';
 
 import logger from '~/utils/logger';
@@ -28,17 +29,22 @@ export interface ResponseSitesPlan {
 
 export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
 
+  const validateResult = await validateGetPlanBySiteIdAndUserId({ userId, siteId });
+
+  if (Array.isArray(validateResult) && validateResult.length) {
+    throw new ValidationError(validateResult.map((it) => it.message).join(','));
+  }
+
   const site = await findSiteByUserIdAndSiteId(userId, siteId);
 
   if (!site) {
-    console.log(`Site not found for userId: ${userId}, siteId: ${siteId}`);
+    logger.warn(`Site not found for userId: ${userId}, siteId: ${siteId}`);
     throw new ApolloError('Can not find any site');
   }
 
   const plan = await getSitePlanBySiteId(site.id);
-
   if (!plan) {
-    console.log(`No plan found for site: ${site.id}`);
+    logger.warn(`No plan found for site: ${site.id}`);
     return null;
   }
 
@@ -48,7 +54,7 @@ export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
     isTrial: Boolean(plan.isTrial || plan.is_trial)
   };
 
-  console.log('Processed plan data:', JSON.stringify(result, null, 2));
+  logger.info('Processed plan data', { planId: result.id, isActive: result.isActive, isTrial: result.isTrial });
   return result;
 }
 
@@ -142,18 +148,39 @@ export async function createSitesPlan(
 }
 
 export async function updateSitesPlan(
+  userId: number,
   sitePlanId: number,
   planName: string,
   billingType: 'MONTHLY' | 'YEARLY',
   hook = false
 ): Promise<true> {
   try {
+    const validateResult = await validateUpdateSitesPlan({
+      userId,
+      sitePlanId,
+      planName,
+      billingType,
+      hook,
+    });
+
+    if (Array.isArray(validateResult) && validateResult.length) {
+      throw new ValidationError(validateResult.map((it) => it.message).join(','));
+    }
+
     const sitePlan = await getSitePlanById(sitePlanId);
+
     if (!sitePlan) {
       throw new ApolloError('Can not find any user plan');
     }
 
+    const site = await findSiteByUserIdAndSiteId(userId, sitePlan.allowed_site_id);
+
+    if (!site) {
+      throw new ApolloError('Can not find any site');
+    }
+
     const product: FindProductAndPriceByTypeResponse = await findProductAndPriceByType(planName, billingType);
+
     if (!product) {
       throw new ApolloError('Can not find any plan');
     }
@@ -196,6 +223,7 @@ export async function deleteTrialPlan(id: number): Promise<true> {
     if (!sitePlan) {
       throw new ApolloError('Can not find any trial user plan');
     }
+
     await deleteSitePlanById(sitePlan.id);
 
     return true;

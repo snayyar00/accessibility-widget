@@ -194,31 +194,6 @@ type Issue {
     r2_key: String!
     created_at: String!
     score: JSON
-  } 
-
-  type PerformanceMetrics {
-    total_processing_time: Int
-    preprocessing_time: Int
-    gpt_processing_time: Int
-    avg_confidence_score: Int
-    success_rate: Float
-  }
-
-  type QualityMetrics {
-    high_confidence_issues: Int
-    medium_confidence_issues: Int
-    low_confidence_issues: Int
-    runner_agreement_rate: Float
-    template_detection_rate: Float
-  }
-
-  type CostOptimization {
-    original_issue_count: Int
-    processed_issue_count: Int
-    cost_reduction_percentage: Int
-    batch_efficiency: Float
-    template_savings: Int
-    estimated_monthly_savings: String
   }
 
   extend type Query {

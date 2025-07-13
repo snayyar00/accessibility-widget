@@ -11,16 +11,6 @@ export const UniqueVisitorSchema = gql`
     continent: String
     firstVisit: String
   }
-  input VisitorInput {
-    id: Int
-    siteId: Int
-    ipAddress: String
-    city: String
-    country: String
-    zipcode: String
-    continent: String
-    firstVisit: String
-  }
 
   type visitorResponse {
     visitors: [Visitor]

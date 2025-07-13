@@ -75,7 +75,7 @@ const allowedOrigins = [process.env.FRONTEND_URL, 'https://www.webability.io', '
 const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction', 'reportProblem', 'updateImpressionProfileCounts'];
 
 
-app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
+app.post('/stripe-hooks', strictLimiter, express.raw({ type: 'application/json' }), stripeHooks);
 app.use(express.json({ limit: '5mb' }));
 
 scheduleMonthlyEmails();
@@ -1620,7 +1620,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.use('/graphql', express.json({ limit: '5mb' }));
   serverGraph.applyMiddleware({ app, cors: false });
 
-  // Initialize Sentry with tracing for GraphQL
   init({
     dsn: process.env.SENTRY_DSN,
     serverName: process.env.COOLIFY_URL || `http://localhost:${port}`,

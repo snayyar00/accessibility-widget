@@ -5,9 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import "./PlanSetting.css";
 import { RootState } from '@/config/store';
-import deleteSitePlanQuery from '@/queries/sitePlans/deleteSitePlan';
 import updateSitePlanQuery from '@/queries/sitePlans/updateSitePlan';
-import createSitePlanQuery from '@/queries/sitePlans/createSitePlan';
 import getSitePlanQuery from '@/queries/sitePlans/getSitePlan';
 import Plans from '@/components/Plans';
 import Button from '@/components/Common/Button';
@@ -79,9 +77,7 @@ const PlanSetting: React.FC<{
   const [isYearly, setIsYearly] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('');
   const { data: currentPlan } = useSelector((state: RootState) => state.sitePlan);
-  const [deleteSitePlanMutation, { error: errorDelete, loading: isDeletingSitePlan }] = useMutation(deleteSitePlanQuery);
   const [updateSitePlanMutation, { error: errorUpdate, loading: isUpdatingSitePlan }] = useMutation(updateSitePlanQuery);
-  const [createSitePlanMutation, { error: errorCreate, loading: isCreatingSitePlan }] = useMutation(createSitePlanQuery);
   const [fetchSitePlan, { data: sitePlanData }] = useLazyQuery(getSitePlanQuery);
   const dispatch = useDispatch();
   const { t } = useTranslation();
@@ -129,40 +125,6 @@ const PlanSetting: React.FC<{
 
   function checkIsCurrentPlan(planId: string) {
     return currentPlan.productType === planId && ((currentPlan.priceType === 'monthly' && !isYearly) || (currentPlan.priceType === 'yearly' && isYearly))
-  }
-
-  async function handleCancelSubscription() {
-    await deleteSitePlanMutation({
-      variables: { sitesPlanId: currentPlan.id }
-    });
-    setReloadSites(true);
-    fetchSitePlan({
-      variables: { siteId }
-    });
-    window.location.reload();
-  }
-
-  async function createPaymentMethodSuccess(token: string) {
-    if (!planChanged) return;
-    const data = {
-      paymentMethodToken: token,
-      planName: planChanged.id,
-      billingType: isYearly ? 'YEARLY' : 'MONTHLY',
-      siteId: domain.id,
-      couponCode:coupon,
-    }
-    try {
-      await createSitePlanMutation({
-        variables: data
-      });
-    } catch (error) {
-      console.log("error = ",error);
-    }
-    
-    setReloadSites(true);
-    fetchSitePlan({
-      variables: { siteId }
-    });
   }
 
   async function handleChangeSubcription() {
