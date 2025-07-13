@@ -71,8 +71,15 @@ const IS_LOCAL_DEV = !process.env.COOLIFY_URL && process.env.NODE_ENV !== 'produ
 const app = express();
 const port = process.env.PORT || 3001;
 
-const allowedOrigins = [process.env.FRONTEND_URL, 'https://www.webability.io', 'https://hoppscotch.webability.io'];
+const allowedOrigins = [
+  process.env.FRONTEND_URL, 
+  ...(process.env.COOLIFY_URL ? [process.env.COOLIFY_URL] : []), 
+  'https://www.webability.io', 
+  'https://hoppscotch.webability.io'
+];
+
 const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction', 'reportProblem', 'updateImpressionProfileCounts'];
+
 
 
 app.post('/stripe-hooks', strictLimiter, express.raw({ type: 'application/json' }), stripeHooks);
