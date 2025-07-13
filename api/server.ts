@@ -78,6 +78,8 @@ const allowedOrigins = [
   'https://hoppscotch.webability.io'
 ];
 
+console.log('Allowed Origins:', allowedOrigins);
+
 const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction', 'reportProblem', 'updateImpressionProfileCounts'];
 
 
