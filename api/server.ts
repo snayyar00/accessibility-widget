@@ -78,8 +78,6 @@ const allowedOrigins = [
   'https://hoppscotch.webability.io'
 ];
 
-console.log('Allowed Origins:', allowedOrigins);
-
 const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction', 'reportProblem', 'updateImpressionProfileCounts'];
 
 
@@ -95,8 +93,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     credentials: true,
 
     origin: (origin: any, callback: any) => {
-      console.log('Request origin:', origin);
-      
       // Allow local development
       if (IS_LOCAL_DEV) {
         return callback(null, true);
@@ -117,8 +113,13 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         return callback(null, true);
       }
 
+      // Allow GET requests to root without Origin (for health checks, browsers, etc.)
+      if (!origin && req.method === 'GET' && req.path === '/') {
+        return callback(null, true);
+      }
+
       // Reject all other origins
-      callback(new Error('Not allowed by CORS'));
+      callback(null, false);
     },
 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
