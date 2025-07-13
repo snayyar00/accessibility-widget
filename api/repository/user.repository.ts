@@ -2,9 +2,6 @@ import union from 'lodash/union';
 import database from '~/config/database.config';
 import { userTokenColumns, UserToken } from './user_tokens.repository';
 import { TABLES } from '~/constants/database.constant';
-import { insertUserPlan, UserPlanData } from './user_plans.repository';
-import { insertMultiPermission } from './user_permission.repository';
-import { PERMISSION_PLAN } from '~/constants/billing.constant';
 
 const TABLE = TABLES.users;
 
@@ -60,30 +57,11 @@ export async function findUser({ id, email, provider_id, provider, deleted_at = 
   return database(TABLE).where(condition).first();
 }
 
-export async function createUser(userData: UserProfile, userPlanData: UserPlanData = null, planType: 'starter' | 'professional' = null): Promise<number | Error> {
+export async function createUser(userData: UserProfile): Promise<number | Error> {
   let t;
   try {
     t = await database.transaction();
     const [userId] = await database(TABLE).transacting(t).insert(userData);
-
-    if (userPlanData) {
-      const [userPlanId] = await insertUserPlan(
-        {
-          ...userPlanData,
-          user_id: userId,
-        },
-        t,
-      );
-
-      if (planType && PERMISSION_PLAN[planType]) {
-        const userPermissionData = PERMISSION_PLAN[planType].map((permission) => ({
-          user_id: userId,
-          user_plan_id: userPlanId,
-          permission,
-        }));
-        await insertMultiPermission(userPermissionData, t);
-      }
-    }
 
     await t.commit();
     return userId;
