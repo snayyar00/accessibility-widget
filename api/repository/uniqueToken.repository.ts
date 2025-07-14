@@ -50,7 +50,6 @@ export async function ValidateToken(url: string): Promise<{
 
     const site = await findSiteByURL(domain);
     const activePlan = site ? await getSitePlanBySiteId(site.id) : null;
-    console.log("activePlan",activePlan);
     if (!activePlan) {
       return {
         validation: 'notFound',
