@@ -1,19 +1,12 @@
 import { combineResolvers } from 'graphql-resolvers';
-import { GetVisitorTokenByWebsite, ValidateToken } from '~/services/webToken/mongoVisitors';
+import { ValidateToken } from '~/repository/uniqueToken.repository';
 
 const resolvers = {
   Query: {
-      
-    getVisitorTokenByWebsite: combineResolvers(
-      (_, { url },  { user }) => GetVisitorTokenByWebsite(url),
-    ),
-    validateToken: combineResolvers(
-      (_, { url }) => {
-        return ValidateToken(url);
-      },
-    ),
+    validateToken: combineResolvers((_, { url }) => {
+      return ValidateToken(url);
+    }),
   },
-   
 };
-  
+
 export default resolvers;

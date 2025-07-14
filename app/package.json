@@ -2,6 +2,10 @@
   "name": "app",
   "version": "0.1.0",
   "private": true,
+  "scripts": {
+    "start": "craco start",
+    "build": "craco build --no-audit"
+  },
   "dependencies": {
     "@apollo/client": "^3.4.11",
     "@apollo/react-hooks": "^4.0.0",
@@ -66,15 +70,6 @@
     "tldts": "^7.0.7",
     "typescript": "^4.0.5",
     "yup": "^0.29.3"
-  },
-  "scripts": {
-    "lint": "stylelint **/*.{js,jsx} && eslint --ext .js --ext .jsx .",
-    "lint:fix": "eslint --ext .js --ext .jsx . --fix",
-    "lint:staged": "lint-staged",
-    "lint:prod": "npm run lint",
-    "start": "craco start",
-    "build": "craco build --no-audit",
-    "eject": "craco eject"
   },
   "eslintConfig": {
     "extends": [

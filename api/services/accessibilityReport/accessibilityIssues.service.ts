@@ -1,4 +1,3 @@
-import { addAccessibilityDescription, getAccessibilityDescription } from '../../repository/accessibility.repository';
 import OpenAI from 'openai';
 import { stringToJson } from '../../helpers/stringToJSON.helper';
 import dotenv from 'dotenv';
@@ -200,18 +199,8 @@ async function getIssueDescription(issues: any) {
   }
 }
 
-async function addAccessibilityIssuesToDB(issue: dbIssue) {
-  return addAccessibilityDescription(issue);
-}
-
-const updateIssueDetails = (matchedRecords: dbIssue[], issueList: any[]) =>
+const updateIssueDetails = (issueList: any[]) =>
   issueList.map((issue) => {
-    const matchedRecord = matchedRecords.find((record) => record.heading === issue.message.replace(/Recommendation:.*$/, '').trim());
-    if (matchedRecord) {
-      issue.description = matchedRecord.description;
-      issue.recommended_action = matchedRecord.recommended_action;
-      issue.code = matchedRecord.code;
-    }
     return issue;
   });
 
@@ -219,10 +208,7 @@ async function populateMissingDescriptions(matchedRecords: dbIssue[], issueHeadi
   // console.log(type);
   const notFoundIssues = issueHeadings.filter((message: any) => !matchedRecords.some((record) => record.heading === message));
   if (notFoundIssues.length > 0) {
-    const apiResult = await getIssueDescription(notFoundIssues);
     // console.log(apiResult.finish_reason);
-    const result = stringToJson(apiResult.message.content);
-    await Promise.all(result.map(async (issue: any) => addAccessibilityIssuesToDB(issue)));
     return true;
   }
   return false;
@@ -247,7 +233,6 @@ export async function readAccessibilityDescriptionFromDb(issues: any) {
 
           if (result.length > 0 && result[0].description.trim() !== '') {
             // Add the single issue to the database
-            await addAccessibilityIssuesToDB(result[0]);
             return result[0];
           } else {
             throw new Error('Empty description received');
@@ -262,7 +247,6 @@ export async function readAccessibilityDescriptionFromDb(issues: any) {
               recommended_action: 'Review the element and ensure it meets accessibility standards.',
               code: 'WCAG General'
             };
-            await addAccessibilityIssuesToDB(defaultIssue);
             return defaultIssue;
           }
           // Wait before retrying (exponential backoff)
@@ -271,32 +255,10 @@ export async function readAccessibilityDescriptionFromDb(issues: any) {
       }
     }
 
-    let matchedRecords = await getAccessibilityDescription(headings);
-    
-    // Find missing descriptions and fetch them one by one with retry logic
-    const missingHeadings = headings.filter((heading) => 
-      !matchedRecords.some((record) => record.heading === heading)
-    );
-
-    if (missingHeadings.length > 0) {
-      console.log(`Processing ${missingHeadings.length} missing descriptions individually...`);
-      
-      for (const heading of missingHeadings) {
-        try {
-          await fetchSingleDescriptionWithRetry(heading);
-        } catch (error) {
-          console.error(`Failed to process heading after all retries: ${heading}`, error);
-        }
-      }
-
-      // Fetch updated records from the database
-      matchedRecords = await getAccessibilityDescription(headings);
-    }
-
     // Update issue details with matched records
-    issues.errors = updateIssueDetails(matchedRecords, issues.errors);
-    issues.warnings = updateIssueDetails(matchedRecords, issues.warnings);
-    issues.notices = updateIssueDetails(matchedRecords, issues.notices);
+    issues.errors = updateIssueDetails(issues.errors);
+    issues.warnings = updateIssueDetails(issues.warnings);
+    issues.notices = updateIssueDetails(issues.notices);
     
     return issues;
   } catch (error) {

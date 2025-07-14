@@ -33,9 +33,6 @@ const PrivateRoute: React.FC<Props> = ({ render }) => {
 
   useEffect(() => {
     if (userProfile && userProfile.profileUser) {
-      if (userProfile?.profileUser?.invitationToken) {
-        history.push(`/teams/invitation/${userProfile.profileUser.invitationToken}`);
-      }
       dispatch(setProfileUser({ data: userProfile.profileUser, loading: loadingUserProfile }));
     }
   }, [userProfile]);

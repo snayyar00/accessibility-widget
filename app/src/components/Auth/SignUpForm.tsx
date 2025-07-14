@@ -9,7 +9,6 @@ import ErrorText from '@/components/Common/ErrorText';
 import Button from '@/components/Common/Button';
 import Logo from '@/components/Common/Logo';
 import type { ReactHookFormType } from '@/typeReactHookForm';
-import SocialAuth from '@/containers/Auth/SocialAuth';
 import { FaEye, FaEyeSlash, FaCheck } from 'react-icons/fa';
 import ProgressIndicator from './ProgressIndicator';
 import { useLazyQuery } from '@apollo/client';
@@ -18,7 +17,6 @@ import checkDomainQuery from '@/queries/allowedSites/checkDomain.js';
 import checkEmailQuery from '@/queries/user/checkEmail.js';
 import { CircularProgress } from '@mui/material';
 import WebAbilityWidget from './TryWidgetBanner';
-import PlanSetting from '@/containers/SiteDetail/PlanSetting';
 import { toast } from 'react-toastify';
 import AccessibilitySteps from './AccessibilitySteps';
 import { parse } from 'tldts';
@@ -216,8 +214,6 @@ const SignUpForm: React.FC<CustomProps> = ({
         setScore(result?.score);
         groupByCode(result?.htmlcs);
       }
-      // setSiteImg(data.getAccessibilityReport?.siteImg);
-      // setScoreBackup(data.getAccessibilityReport.score);
       
     }
   }, [data]);
@@ -691,7 +687,6 @@ const SignUpForm: React.FC<CustomProps> = ({
               {t('Sign_up.text.footer_desc')}
             </Trans>
           </div>
-          <SocialAuth />
           <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center">
             <Trans components={[<Link to="/auth/signin"></Link>]}>
               {t('Sign_up.text.have_account')}

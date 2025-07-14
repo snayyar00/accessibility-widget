@@ -1,20 +1,15 @@
-import { ValidationError, ApolloError } from 'apollo-server-express';
+import { ApolloError } from 'apollo-server-express';
 import dayjs from 'dayjs';
 
 import { findUser, createUser } from '~/repository/user.repository';
-import { createToken } from '~/repository/user_tokens.repository';
 import { generatePassword } from '~/helpers/hashing.helper';
-import compileEmailTemplate from '~/helpers/compile-email-template';
-import generateRandomKey from '~/helpers/genarateRandomkey';
-import {sendMail} from '~/libs/mail';
 import { registerValidation } from '~/validations/authenticate.validation';
 import { sanitizeUserInput } from '~/utils/sanitization.helper';
 import { getValidationErrorCode, createValidationError, createMultipleValidationErrors } from '~/utils/validation-errors.helper';
-import logger from '~/utils/logger';
+import logger from '~/libs/logger/application-logger';
 import { sign } from '~/helpers/jwt.helper';
 import { findProductAndPriceByType } from '~/repository/products.repository';
 import { createNewSubcription } from '~/services/stripe/subcription.service';
-import { SEND_MAIL_TYPE } from '~/constants/send-mail-type.constant';
 import formatDateDB from '~/utils/format-date-db';
 import { Token } from './login.service';
 
@@ -24,6 +19,7 @@ async function registerUser(email: string, password: string, name: string, payme
   name = sanitizedInput.name;
 
   const validateResult = registerValidation({ email, password, name });
+
   if (Array.isArray(validateResult) && validateResult.length) {
     const errorMessages = validateResult.map((it) => it.message);
     
@@ -37,6 +33,7 @@ async function registerUser(email: string, password: string, name: string, payme
 
   try {
     const user = await findUser({ email });
+
     if (user) {
       return new ApolloError('Email address has been used');
     }
@@ -51,10 +48,12 @@ async function registerUser(email: string, password: string, name: string, payme
       password: passwordHashed,
       name,
     };
+    
     let newUserId = null;
 
     if (planName) {
       const product = await findProductAndPriceByType(planName, billingType);
+
       if (!product) {
         return new ApolloError('Can not find any plan');
       }
@@ -71,7 +70,7 @@ async function registerUser(email: string, password: string, name: string, payme
           expired_at: formatDateDB(dayjs().add(14, 'd')),
         };
         if (product.type === 'starter' || product.type === 'professional') {
-          newUserId = await createUser(userData, userPlanData, product.type);
+          newUserId = await createUser(userData);
         }
       }
     } else {

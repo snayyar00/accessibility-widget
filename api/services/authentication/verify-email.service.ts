@@ -9,7 +9,7 @@ import { activeUser, getUserbyId } from '~/repository/user.repository';
 import generateRandomKey from '~/helpers/genarateRandomkey';
 import compileEmailTemplate from '~/helpers/compile-email-template';
 import {sendMail} from '~/libs/mail';
-import logger from '~/utils/logger';
+import logger from '~/libs/logger/application-logger';
 import { normalizeEmail } from '~/helpers/string.helper';
 import { SEND_MAIL_TYPE } from '~/constants/send-mail-type.constant';
 import type { UserProfile } from '~/repository/user.repository';
@@ -94,7 +94,9 @@ export async function resendEmailAction(user: UserProfile, type: 'verify_email' 
   try {
     let template;
     let subject;
+
     const token = await generateRandomKey();
+    
     switch (type) {
       case SEND_MAIL_TYPE.VERIFY_EMAIL:
         if (user.is_active) {

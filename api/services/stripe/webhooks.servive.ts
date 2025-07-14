@@ -154,9 +154,10 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
           }
           else if (subscription.status === 'active') {
             try {
+              const session = event.data.object as Stripe.Checkout.Session;
               const updatePromises = previous_plan.map(async (plan) => {
                 try {
-                  await updateSitesPlan(plan.id, new_product.name, interval, true);
+                  await updateSitesPlan(Number(session.metadata['userId']), plan.id, new_product.name, interval, true);
                   // Retrieve the current price object to check metadata
                   console.log('Updated Plan for site', plan.siteId);
                 } catch (error) {

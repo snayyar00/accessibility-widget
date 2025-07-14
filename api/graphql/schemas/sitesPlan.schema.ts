@@ -1,21 +1,6 @@
 import { gql } from 'apollo-server-express';
 
 export const SitesPlanSchema = gql`
-  
-    type ResponseSitesPlan {
-      id: Int!
-      allowedSiteId: Int!
-      productId: Int!
-      priceId: Int!
-      name: String!
-      amount: Float!
-      productType: String!
-      priceType: String!
-      expiredAt: Date
-      deletedAt: Date
-      isActive: Boolean!
-    }
-
     type SitesPlanData {
       id: Int!
       siteId: Int!
@@ -37,13 +22,10 @@ export const SitesPlanSchema = gql`
     }
   
     extend type Query {
-      getUserSitesPlan: ResponseSitesPlan
-      getPlanBySiteIdAndUserId(siteId: Int!): SitesPlanData
+      getPlanBySiteIdAndUserId(siteId: Int!): SitesPlanData @rateLimit(limit: 30, duration: 60, message: "Too many plan requests. Please try again later.")
     }
   
     extend type Mutation {
-      createSitesPlan(paymentMethodToken: String!, planName: String!, billingType: BillingType!, siteId: Int!,couponCode:String!): Boolean!
-      updateSitesPlan(sitesPlanId: Int!, planName: String!, billingType: BillingType!): Boolean!
-      deleteSitesPlan(sitesPlanId: Int!): Boolean!
+      updateSitesPlan(sitesPlanId: Int!, planName: String!, billingType: BillingType!): Boolean! @rateLimit(limit: 10, duration: 60, message: "Too many plan updates. Please try again later.")
     }
   `;

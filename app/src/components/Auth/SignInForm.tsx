@@ -8,7 +8,6 @@ import Checkbox from '@/components/Common/Input/InputCheckbox';
 import Button from '@/components/Common/Button';
 import ErrorText from '@/components/Common/ErrorText';
 import Logo from '@/components/Common/Logo';
-import SocialAuth from '@/containers/Auth/SocialAuth';
 import { ReactHookFormType } from "@/typeReactHookForm";
 
 type Props = ReactHookFormType & {
@@ -96,7 +95,6 @@ const SignInForm: React.FC<Props> = ({
             </div>
           )}
           
-          <SocialAuth />
         </div>
       </form>
       

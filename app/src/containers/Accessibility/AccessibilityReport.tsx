@@ -19,6 +19,8 @@ import ToggleButtonGroup from '@mui/joy/ToggleButtonGroup';
 import Stack from '@mui/joy/Stack';
 import { translateText,translateMultipleTexts,LANGUAGES } from '@/utils/translator';
 
+import { getRootDomain, isValidRootDomainFormat, isIpAddress } from '@/utils/domainUtils';
+
 import AccordionDetails, {
   accordionDetailsClasses,
 } from '@mui/joy/AccordionDetails';
@@ -203,15 +205,18 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   }, [selectedSite, reportGenerated]);
 
   const handleSubmit = async () => {
-    if (!isValidDomain(domain)) {
+
+    const sanitizedDomain = getRootDomain(domain);
+    console.log("sanitizedDomain",sanitizedDomain);
+    if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {        
       console.log('Invalid domain:', domain);
       setDomain(currentDomain);
       toast.error('You must enter a valid domain name!');
-      return;
+        return;
     }
+
     
-    // Ensure we have a valid domain before setting correctDomain and making the query
-    const validDomain = domain.trim();
+    const validDomain = sanitizedDomain;
     if (!validDomain) {
       toast.error('Please enter a valid domain!');
       return;
