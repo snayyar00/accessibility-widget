@@ -49,7 +49,7 @@ export function getRootDomain(urlOrHostname: string, options?: RootDomainOptions
     cleanedInput = parts[0];
     cleanedInput = cleanedInput.replace(/:\d+$/, '');
   }
-.
+
   if (isIpAddress(cleanedInput)) {
     return cleanedInput;
   }
