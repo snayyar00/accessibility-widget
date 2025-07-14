@@ -14,7 +14,6 @@ export const logAuthenticationFailure = (req: Request, _: Response, message: str
     response_time_ms: Date.now() - (req as any).startTime || 0,
     content_length: 0,
     operation_name: getOperationName(req.body),
-    user_id: (req as any).user?.id || '-',
     error: {
       message: message,
       code: code,

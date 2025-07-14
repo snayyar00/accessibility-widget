@@ -3,7 +3,6 @@ import { Request, Response } from 'express';
 import accessLogStream from './stream';
 import { getOperationName } from '~/libs/logger/utils';
 
-morgan.token('user_id', (req) => (req as any).user?.id || '-');
 morgan.token('operation_name', (req) => getOperationName((req as Request).body));
 
 const gdprSafeJsonFormat = (tokens: any, req: Request, res: Response) => {
@@ -16,7 +15,6 @@ const gdprSafeJsonFormat = (tokens: any, req: Request, res: Response) => {
     status: Number(tokens.status(req, res)),
     content_length: Number(tokens.res(req, res, 'content-length')) || 0,
     response_time_ms: Number(tokens['response-time'](req, res)),
-    user_id: tokens.user_id(req, res),
     operation_name: tokens.operation_name(req, res),
   });
 };

@@ -19,7 +19,6 @@ export const expressErrorMiddleware = (error: any, req: Request, res: Response, 
     response_time_ms: responseTime,
     content_length: contentLength,
     operation_name: getOperationName(req.body),
-    user_id: (req as any).user?.id || '-',
     error: {
       message: error.message || 'Unknown error',
       code: error.code || 'INTERNAL_ERROR',

@@ -68,7 +68,6 @@ function logGraphQLErrors(
     response_time_ms: responseTime,
     content_length: contentLength,
     operation_name: req.body?.operationName || '-',
-    user_id: (req as any).user?.id || '-',
     errors: errors.map((err: any) => ({
       message: err.message,
       code: err.extensions?.code || 'UNKNOWN',
