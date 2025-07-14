@@ -2,7 +2,7 @@ import handlebars from 'handlebars';
 import mjml2html from 'mjml';
 import fs from 'fs';
 import path from 'path';
-import logger from '~/utils/logger';
+import logger from '~/libs/logger/application-logger';
 
 handlebars.registerHelper('eq', (a, b) => a === b);
 

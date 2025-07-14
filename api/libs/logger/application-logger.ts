@@ -56,42 +56,42 @@ const consoleWrapper = {
     if (isDevelopment) {
       originalConsole.log(...args);
     } else if (logger) {
-      logger.info({ msg: args.join(' ') });
+      logger.info(args.join(' '));
     }
   },
   info: (...args: unknown[]) => {
     if (isDevelopment) {
       originalConsole.info(...args);
     } else if (logger) {
-      logger.info({ msg: args.join(' ') });
+      logger.info(args.join(' '));
     }
   },
   warn: (...args: unknown[]) => {
     if (isDevelopment) {
       originalConsole.warn(...args);
     } else if (logger) {
-      logger.warn({ msg: args.join(' ') });
+      logger.warn(args.join(' '));
     }
   },
-  error: (...args: unknown[]) => {
+  error: (...args: unknown[]) => {    
     if (isDevelopment) {
       originalConsole.error(...args);
     } else if (logger) {
-      logger.error({ msg: args.join(' ') });
+      logger.error(args.join(' '));
     }
   },
   debug: (...args: unknown[]) => {
     if (isDevelopment) {
       originalConsole.debug(...args);
     } else if (logger) {
-      logger.debug({ msg: args.join(' ') });
+      logger.debug(args.join(' '));
     }
   },
   trace: (...args: unknown[]) => {
     if (isDevelopment) {
       originalConsole.trace(...args);
     } else if (logger) {
-      logger.trace({ msg: args.join(' ') });
+      logger.trace(args.join(' '));
     }
   }
 };

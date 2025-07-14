@@ -1,4 +1,4 @@
-import logger from '~/utils/logger';
+import logger from '~/libs/logger/application-logger';
 import { findSiteByURL } from '~/repository/sites_allowed.repository';
 import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
 import { getWidgetSettingsBySiteId } from '~/repository/widget_settings.repository';

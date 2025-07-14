@@ -1,4 +1,4 @@
-import logger from '~/utils/logger';
+import logger from '~/libs/logger/application-logger';
 import { getCityAndCountry } from '~/helpers/uniqueVisitor.helper';
 import { findVisitorByURL, insertVisitor } from '~/repository/visitors.repository';
 import { UserProfile } from '~/repository/user.repository';

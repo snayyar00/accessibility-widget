@@ -1,4 +1,4 @@
-import logger from '~/utils/logger';
+import logger from '~/libs/logger/application-logger';
 import { IUserSites, deleteSiteWithRelatedRecords, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL, findSiteById } from '~/repository/sites_allowed.repository';
 import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
 import { createSitesPlan } from './plans-sites.service';

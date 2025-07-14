@@ -6,7 +6,7 @@ import { generatePassword } from '~/helpers/hashing.helper';
 import { registerValidation } from '~/validations/authenticate.validation';
 import { sanitizeUserInput } from '~/utils/sanitization.helper';
 import { getValidationErrorCode, createValidationError, createMultipleValidationErrors } from '~/utils/validation-errors.helper';
-import logger from '~/utils/logger';
+import logger from '~/libs/logger/application-logger';
 import { sign } from '~/helpers/jwt.helper';
 import { findProductAndPriceByType } from '~/repository/products.repository';
 import { createNewSubcription } from '~/services/stripe/subcription.service';

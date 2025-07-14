@@ -2,7 +2,7 @@ import { ApolloError, ValidationError } from 'apollo-server-express';
 import { validateGetPlanBySiteIdAndUserId, validateUpdateSitesPlan } from '~/validations/planSites.validation';
 import dayjs from 'dayjs';
 
-import logger from '~/utils/logger';
+import logger from '~/libs/logger/application-logger';
 import { createNewSubcription, updateSubcription, cancelSubcriptionBySubId } from '~/services/stripe/subcription.service';
 import { findProductAndPriceByType, FindProductAndPriceByTypeResponse } from '~/repository/products.repository';
 import { findUser } from '~/repository/user.repository';

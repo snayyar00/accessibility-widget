@@ -1,4 +1,4 @@
-import logger from '~/utils/logger';
+import logger from '~/libs/logger/application-logger';
 import { ValidationError } from 'apollo-server-express';
 
 import { findVisitorByIp } from '~/repository/visitors.repository';
