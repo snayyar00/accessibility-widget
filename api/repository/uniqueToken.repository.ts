@@ -12,8 +12,7 @@ export async function ValidateToken(url: string): Promise<{
   error?: string;
 }> {
 
-
-  const rootDomain = extractRootDomain(url);
+  const rootDomain = getRootDomain(url);
   const validateResult = validateTokenUrl({ url: rootDomain });
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -26,7 +25,7 @@ export async function ValidateToken(url: string): Promise<{
     };
   }
 
-  const domain = normalizeDomain(url);
+  const domain = normalizeDomain(rootDomain);
 
   let widgetSettings;
 
@@ -51,7 +50,7 @@ export async function ValidateToken(url: string): Promise<{
 
     const site = await findSiteByURL(domain);
     const activePlan = site ? await getSitePlanBySiteId(site.id) : null;
-
+    console.log("activePlan",activePlan);
     if (!activePlan) {
       return {
         validation: 'notFound',
