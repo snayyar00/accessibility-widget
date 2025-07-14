@@ -29,8 +29,8 @@ export const ImpressionsSchema = gql`
   }
 
   extend type Query {
-    getEngagementRates(url: String!, startDate: String, endDate: String): [engagementRate] @rateLimit(limit: 30, duration: 60, message: "Too many engagement rate requests. Please try again later.")
-    getImpressionsByURLAndDate(url: String!, startDate: String!, endDate: String!): ImpressionList @rateLimit(limit: 30, duration: 60, message: "Too many impression list requests. Please try again later.")
+    getEngagementRates(url: String!, startDate: String, endDate: String): [engagementRate] @rateLimit(limit: 60, duration: 60, message: "Too many engagement rate requests. Please try again later.")
+    getImpressionsByURLAndDate(url: String!, startDate: String!, endDate: String!): ImpressionList @rateLimit(limit: 60, duration: 60, message: "Too many impression list requests. Please try again later.")
   }
 
   extend type Mutation {

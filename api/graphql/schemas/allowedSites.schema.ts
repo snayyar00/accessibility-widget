@@ -12,7 +12,7 @@ export const AllowedSitesSchema = gql`
   }
 
   extend type Query {
-    getUserSites: [Site] @rateLimit(limit: 30, duration: 60, message: "Too many site list requests. Please try again later.")
+    getUserSites: [Site] @rateLimit(limit: 60, duration: 60, message: "Too many site list requests. Please try again later.")
     isDomainAlreadyAdded(url: String!): Boolean! @rateLimit(limit: 10, duration: 60, message: "Too many domain check attempts. Please try again later.")
   }
 

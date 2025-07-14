@@ -18,6 +18,6 @@ export const UniqueVisitorSchema = gql`
   }
 
   extend type Query {
-    getSiteVisitorsByURL(url: String!): visitorResponse @rateLimit(limit: 30, duration: 60, message: "Too many requests, please try again later.")
+    getSiteVisitorsByURL(url: String!): visitorResponse @rateLimit(limit: 60, duration: 60, message: "Too many requests, please try again later.")
   }
 `;
