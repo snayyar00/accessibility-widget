@@ -1,7 +1,7 @@
 import { ApolloError, UserInputError } from 'apollo-server-express';
 import dayjs from 'dayjs';
 import { findUser, updateUser } from '~/repository/user.repository';
-import logger from '~/utils/logger';
+import logger from '~/libs/logger/application-logger';
 import {sendMail} from '~/libs/mail';
 import compileEmailTemplate from '~/helpers/compile-email-template';
 import { comparePassword, generatePassword } from '~/helpers/hashing.helper';

@@ -1,6 +1,6 @@
 import { ValidationError } from 'apollo-server-express';
 import { findUser } from '~/repository/user.repository';
-import logger from '~/utils/logger';
+import logger from '~/libs/logger/application-logger';
 import { emailValidation } from '~/validations/email.validation';
 
 /**

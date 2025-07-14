@@ -1,9 +1,12 @@
-import { requireJsonContent } from './middlewares/contentType.middleware';
-import { emailLimiter } from './middlewares/limiters.middleware';
 import dotenv from 'dotenv';
 
+dotenv.config();
+
+import '~/libs/logger/application-logger';
+
+import { requireJsonContent } from './middlewares/contentType.middleware';
+import { emailLimiter } from './middlewares/limiters.middleware';
 import express, { NextFunction, Request, Response } from 'express';
-import morgan from 'morgan';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
@@ -13,7 +16,6 @@ import * as Sentry from '@sentry/node';
 import { IResolvers } from '@graphql-tools/utils';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 
-import accessLogStream from './middlewares/logger.middleware';
 import RootSchema from './graphql/root.schema';
 import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
@@ -48,15 +50,16 @@ import { addNewsletterSub } from '~/repository/newsletter_subscribers.repository
 
 import { rateLimitDirective } from 'graphql-rate-limit-directive';
 import getIpAddress from '~/utils/getIpAddress';
-
-dotenv.config();
+import { configureMorgan } from '~/libs/logger/morgan';
+import { requestTimingMiddleware } from '~/middlewares/requestTiming.middleware';
+import { expressErrorMiddleware } from '~/middlewares/expressError.middleware';
+import { graphqlErrorMiddleware } from '~/middlewares/graphqlError.middleware';
 
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 const subscriptionKey = process.env.AZURE_API_KEY;
 const endpoint = process.env.AZURE_ENDPOINT;
 const region = process.env.AZURE_REGION;
-
 
 type ContextParams = {
   req: Request;
@@ -71,10 +74,11 @@ const IS_LOCAL_DEV = !process.env.COOLIFY_URL && process.env.NODE_ENV !== 'produ
 const app = express();
 const port = process.env.PORT || 3001;
 
-const allowedOrigins = [process.env.FRONTEND_URL, 'https://www.webability.io', 'https://hoppscotch.webability.io'];
+const allowedOrigins = [process.env.FRONTEND_URL, ...(process.env.COOLIFY_URL ? [process.env.COOLIFY_URL] : []), 'https://www.webability.io', 'https://hoppscotch.webability.io'];
 
+const allowedOperations = ['validateToken', 'addImpressionsURL', 'registerInteraction', 'reportProblem', 'updateImpressionProfileCounts'];
 
-app.post('/stripe-hooks', express.raw({ type: 'application/json' }), stripeHooks);
+app.post('/stripe-hooks', strictLimiter, express.raw({ type: 'application/json' }), stripeHooks);
 app.use(express.json({ limit: '5mb' }));
 
 scheduleMonthlyEmails();
@@ -85,11 +89,33 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     credentials: true,
 
     origin: (origin: any, callback: any) => {
-      if (IS_LOCAL_DEV || allowedOrigins.includes(origin) || req.method === 'OPTIONS') {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
+      // Allow local development
+      if (IS_LOCAL_DEV) {
+        return callback(null, true);
       }
+
+      // Allow preflight OPTIONS requests
+      if (req.method === 'OPTIONS') {
+        return callback(null, true);
+      }
+
+      // Allow predefined origins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Allow specific GraphQL operations (widget operations)
+      if (req.body && allowedOperations.includes(req.body.operationName)) {
+        return callback(null, true);
+      }
+
+      // Allow GET requests to root without Origin (for health checks, browsers, etc.)
+      if (!origin && req.method === 'GET' && req.path === '/') {
+        return callback(null, true);
+      }
+
+      // Reject all other origins
+      callback(null, false);
     },
 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -99,12 +125,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 }
 
 (function startServer() {
-  // Configure Morgan with conditional stream (null = console, stream = file)
-  if (accessLogStream) {
-    app.use(morgan('combined', { stream: accessLogStream }));
-  } else {
-    app.use(morgan('combined')); // Will use console
-  }
+  app.use(configureMorgan());
+
+  // Add request start time tracking for accurate response time calculation
+  app.use(requestTimingMiddleware);
 
   app.use(dynamicCors);
   app.use(cookieParser());
@@ -1445,35 +1469,35 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     }
   });
 
+  // Express error logging middleware
+  app.use(expressErrorMiddleware);
+
   const { rateLimitDirectiveTypeDefs, rateLimitDirectiveTransformer } = rateLimitDirective({
     keyGenerator: (_: any, __: any, context: any): string => {
-
       // Priority 1: Use authenticated user ID for better isolation
       if (context.user?.id) {
         return `user:${context.user.id}`;
       }
-      
+
       // Priority 2: Try multiple IP sources
       const ip = context.ip || context.req?.ip || context.req?.connection?.remoteAddress || context.req?.socket?.remoteAddress;
-      
+
       if (ip && ip !== 'unknown' && ip !== '::1' && ip !== '127.0.0.1') {
         return `ip:${ip}`;
       }
-      
+
       // Priority 3: Create fingerprint from available headers (for edge cases)
       const req = context.req;
       const userAgent = req?.headers?.['user-agent']?.slice(0, 50) || '';
       const acceptLanguage = req?.headers?.['accept-language']?.slice(0, 30) || '';
       const acceptEncoding = req?.headers?.['accept-encoding']?.slice(0, 30) || '';
-      
+
       // Create a hash-like fingerprint for uniqueness
-      const fingerprint = Buffer.from(`${userAgent}-${acceptLanguage}-${acceptEncoding}`)
-        .toString('base64')
-        .slice(0, 20);
-      
+      const fingerprint = Buffer.from(`${userAgent}-${acceptLanguage}-${acceptEncoding}`).toString('base64').slice(0, 20);
+
       return `fingerprint:${fingerprint}`;
     },
-    
+
     onLimit: (_, directiveArgs: any): Error => {
       const customMessage = directiveArgs.message || 'Too many requests, please try again later.';
 
@@ -1482,22 +1506,15 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   });
 
   let schema = makeExecutableSchema({
-    typeDefs: [
-      rateLimitDirectiveTypeDefs,
-      RootSchema,
-    ],
+    typeDefs: [rateLimitDirectiveTypeDefs, RootSchema],
     resolvers: RootResolver as IResolvers[],
   });
-  
+
   schema = rateLimitDirectiveTransformer(schema);
 
   const serverGraph = new ApolloServer({
     schema,
     playground: IS_LOCAL_DEV,
-    uploads: {
-      maxFileSize: 10000000,
-      maxFiles: 20,
-    },
     formatError: (err) => {
       if (err.message.includes('Not authenticated')) {
         return new Error('Please login to make this action');
@@ -1578,7 +1595,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       const bearerToken = cookies.token || null;
       const user = await getUserLogined(bearerToken, res);
       const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
-      
+
       return {
         req,
         res,
@@ -1587,6 +1604,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       };
     },
   });
+
+  // Add GraphQL error logging middleware
+  app.use('/graphql', graphqlErrorMiddleware);
 
   app.use('/graphql', (req, res, next) => {
     // Parse the GraphQL query to determine timeout
@@ -1606,7 +1626,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
   app.use('/graphql', express.json({ limit: '5mb' }));
   serverGraph.applyMiddleware({ app, cors: false });
 
-  // Initialize Sentry with tracing for GraphQL
   init({
     dsn: process.env.SENTRY_DSN,
     serverName: process.env.COOLIFY_URL || `http://localhost:${port}`,

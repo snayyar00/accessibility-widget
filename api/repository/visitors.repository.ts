@@ -1,6 +1,5 @@
 import database from '~/config/database.config';
-import { DEFAULT_LIMIT, TABLES } from '~/constants/database.constant';
-import { usersColumns } from './user.repository';
+import { TABLES } from '~/constants/database.constant';
 import { siteColumns } from './sites_allowed.repository';
 
 const TABLE = TABLES.visitors;

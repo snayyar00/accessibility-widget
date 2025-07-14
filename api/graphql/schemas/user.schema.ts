@@ -17,12 +17,6 @@ export const UserSchema = gql`
     FORGOT_PASSWORD
   }
 
-  enum SocialProviderType {
-    GITHUB
-    FACEBOOK
-    GOOGLE
-  }
-
   type User {
     id: ID!
     email: String!
@@ -32,23 +26,6 @@ export const UserSchema = gql`
     company: String
     avatarUrl: String
     invitationToken: String
-  }
-
-  type UserSocial {
-    providerId: String!
-    provider: String!
-    avatarUrl: String
-    name: String!
-    email: String
-  }
-
-  type ResponseUserSocial {
-    token: String
-    user: UserSocial
-  }
-
-  type ChangeAvatarResponse {
-    url: String
   }
 
   extend type Query {

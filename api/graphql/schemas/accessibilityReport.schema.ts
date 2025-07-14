@@ -197,62 +197,16 @@ type Issue {
     r2_key: String!
     created_at: String!
     score: JSON
-  } 
+  }
 
   extend type Query {
-    getAccessibilityReport(url: String!): Report
-    getProcessingDashboard(url: String!): ProcessingDashboard
-    getAccessibilityReportMeta(id: Int!): AccessibilityReportMeta
-    fetchAccessibilityReportFromR2(
-    url: String!
-    created_at: String
-    updated_at: String
-  ): [AccessibilityReportTableRow!]!
-    fetchReportByR2Key(r2_key: String!): Report
-  }
-
-  type ProcessingDashboard {
-    site_url: String
-    last_processed: String
-    performance_metrics: PerformanceMetrics
-    template_insights: TemplateAnalysis
-    quality_metrics: QualityMetrics
-    cost_optimization: CostOptimization
-  }
-
-  type PerformanceMetrics {
-    total_processing_time: Int
-    preprocessing_time: Int
-    gpt_processing_time: Int
-    avg_confidence_score: Int
-    success_rate: Float
-  }
-
-  type QualityMetrics {
-    high_confidence_issues: Int
-    medium_confidence_issues: Int
-    low_confidence_issues: Int
-    runner_agreement_rate: Float
-    template_detection_rate: Float
-  }
-
-  type CostOptimization {
-    original_issue_count: Int
-    processed_issue_count: Int
-    cost_reduction_percentage: Int
-    batch_efficiency: Float
-    template_savings: Int
-    estimated_monthly_savings: String
+    getAccessibilityReport(url: String!): Report @rateLimit(limit: 3, duration: 60, message: "Too many requests. Please try again in a minute.")
+    fetchAccessibilityReportFromR2(url: String! created_at: String updated_at: String): [AccessibilityReportTableRow!]! @rateLimit(limit: 60, duration: 60, message: "Too many R2 report requests. Please try again later.")
+    fetchReportByR2Key(r2_key: String!): Report @rateLimit(limit: 20, duration: 60, message: "Too many R2 key report requests. Please try again later.")
   }
 
   extend type Mutation {
-    saveAccessibilityReport(
-      report: JSON!
-      url: String!
-      allowed_sites_id: Int
-      key: String
-      score: JSON
-    ): SaveReportResponse!
-    deleteAccessibilityReport(r2_key: String!): Boolean!    
+    saveAccessibilityReport(report: JSON! url: String! allowed_sites_id: Int key: String score: JSON): SaveReportResponse! @rateLimit(limit: 10, duration: 60, message: "Too many save report requests. Please try again later.")
+    deleteAccessibilityReport(r2_key: String!): Boolean! @rateLimit(limit: 10, duration: 60, message: "Too many delete report requests. Please try again later.")   
   }
 `;

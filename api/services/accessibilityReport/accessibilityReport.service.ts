@@ -1,9 +1,6 @@
 import { getAccessibilityInformationPally } from '~/helpers/accessibility.helper';
-import logger from '~/utils/logger';
 import { GPTChunks } from './accessibilityIssues.service';
 import { formatUrlForScan, getRetryUrls } from '~/utils/domain.utils';
-
-const { GraphQLJSON } = require('graphql-type-json');
 
 
 interface Status {
@@ -811,35 +808,3 @@ function calculateTotalStats(report: any, issues: any[], webabilityEnabled: bool
     hasWebAbility: webabilityEnabled,
   };
 }
-
-// example usage:
-
-// query GetAccessibilityReport {
-//     getAccessibilityReport(url: "https://example.com") {
-//       status {
-//         success
-//         httpstatuscode
-//       }
-//       statistics {
-//         pagetitle
-//         pageurl
-//         time
-//         creditsremaining
-//         allitemcount
-//         totalelements
-//         waveurl
-//       }
-//       categories {
-//         description
-//         count
-//         items {
-//           id
-//           description
-//           count
-//           xpaths
-//           contrastdata
-//           selectors
-//         }
-//       }
-//     }
-//   }

@@ -2,7 +2,6 @@ import { AuthenticationError } from 'apollo-server-express';
 import { Response } from 'express';
 import { verify } from '~/helpers/jwt.helper';
 import { findUser } from '~/repository/user.repository';
-import { getTeamInvitation } from '~/repository/team_invitations.repository';
 
 type UserLoginedResponse = {
   id: number;
@@ -12,7 +11,6 @@ type UserLoginedResponse = {
   position: string;
   company: string;
   avatarUrl: string;
-  invitationToken: string | null;
 };
 
 export default async function getUserLogined(bearerToken: string | null, res: Response): Promise<UserLoginedResponse> {
@@ -26,7 +24,6 @@ export default async function getUserLogined(bearerToken: string | null, res: Re
       if (typeof verifyToken === 'object') {
         const { user } = verifyToken;
         const userInfo = await findUser({ email: user.email });
-        const [invitationToken] = await getTeamInvitation({ email: user.email, status: 'active' });
         return {
           id: userInfo.id,
           email: userInfo.email,
@@ -35,7 +32,6 @@ export default async function getUserLogined(bearerToken: string | null, res: Re
           position: userInfo.position,
           company: userInfo.company,
           avatarUrl: userInfo.avatar_url,
-          invitationToken: invitationToken ? invitationToken.token : null,
         };
       }
     } catch (error) {

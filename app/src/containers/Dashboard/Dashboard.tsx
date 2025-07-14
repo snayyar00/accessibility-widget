@@ -211,7 +211,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
 
       {
         id: 2,
-        heading: 'Unique Visitors',
+        heading: 'Visitors',
         count: uniqueVisitors,
         countType: 'people',
       },

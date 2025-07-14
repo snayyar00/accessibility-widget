@@ -63,3 +63,7 @@ export async function deleteAccessibilityReportByR2Key(r2_key: string) {
     .del();
   return !!deleted;
 }
+
+export async function getAccessibilityReportByR2Key(r2_key: string): Promise<any | null> {
+  return await database(TABLES.accessibilityReports).where({ r2_key }).first() || null;
+}

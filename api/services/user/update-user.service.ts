@@ -1,13 +1,9 @@
-import { createWriteStream } from 'fs';
-import { join } from 'path';
-import { ApolloError, ValidationError } from 'apollo-server-express';
-import { FileUpload } from 'graphql-upload';
-import { findUser, updateUser, UserProfile } from '~/repository/user.repository';
+import { ApolloError } from 'apollo-server-express';
+import { findUser, updateUser } from '~/repository/user.repository';
 import { profileUpdateValidation } from '~/validations/authenticate.validation';
 import { sanitizeUserInput } from '~/utils/sanitization.helper';
 import { getValidationErrorCode, createValidationError, createMultipleValidationErrors } from '~/utils/validation-errors.helper';
-import logger from '~/utils/logger';
-import { FOLDER_PATHS } from '~/utils/folder-path';
+import logger from '~/libs/logger/application-logger';
 
 type ChangeUserAvatarResponse = {
   url: string;
