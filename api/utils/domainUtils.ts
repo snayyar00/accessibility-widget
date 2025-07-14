@@ -69,3 +69,53 @@ export function getRootDomain(urlOrHostname: string, options?: RootDomainOptions
     return cleanedInput; // Fallback in case of tldts error
   }
 }
+export function extractRootDomain(hostname: string): string {
+  // Handle localhost and IP addresses
+  if (hostname === 'localhost' || /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+    return hostname;
+  }
+
+  // Remove port number if present
+  hostname = hostname.replace(/:\d+$/, '');
+
+  // Handle special cases for common country-specific TLDs
+  const specialTlds = [
+    'co.uk', 'com.au', 'co.nz', 'co.za', 'com.sg', 'com.br', 'com.mx',
+    'com.tw', 'com.hk', 'com.my', 'com.ph', 'com.pk', 'com.pe', 'com.ve',
+    'com.tr', 'com.eg', 'com.sa', 'com.ae', 'com.bd', 'com.bh', 'com.kw',
+    'com.qa', 'com.om', 'com.lb', 'com.jo', 'com.ye', 'com.ng', 'com.gh',
+    'com.ke', 'com.tz', 'com.ug', 'com.na', 'com.bw', 'com.zm', 'com.mw',
+    'com.mu', 'com.sc', 'com.mv', 'com.bt', 'com.np', 'com.lk', 'com.mm',
+    'com.kh', 'com.la', 'com.vn', 'com.id', 'com.my', 'com.sg', 'com.bn',
+    'com.ph', 'com.pg', 'com.fj', 'com.to', 'com.ws', 'com.as', 'com.gu',
+    'com.mp', 'com.pf', 'com.nc', 'com.vu', 'com.nr', 'com.ck', 'com.nu',
+    'com.tk', 'com.wf', 'com.pn', 'com.sh', 'com.ac', 'com.gg', 'com.je',
+    'com.im', 'com.ms', 'com.tc', 'com.vg', 'com.vi', 'com.ky', 'com.bm',
+    'com.ai', 'com.ag', 'com.dm', 'com.gd', 'com.lc', 'com.vc', 'com.bb',
+    'com.tt', 'com.jm', 'com.ht', 'com.do', 'com.pr', 'com.cu', 'com.bs',
+    'com.tc', 'com.vg', 'com.vi', 'com.ky', 'com.bm', 'com.ai', 'com.ag',
+    'com.dm', 'com.gd', 'com.lc', 'com.vc', 'com.bb', 'com.tt', 'com.jm',
+    'com.ht', 'com.do', 'com.pr', 'com.cu', 'com.bs','com.pl'
+  ];
+
+  // Check for special TLDs first
+  for (const tld of specialTlds) {
+    if (hostname.endsWith(`.${tld}`)) {
+      const parts = hostname.split('.');
+      // Get the domain and the special TLD
+      return parts.slice(-3).join('.');
+    }
+  }
+
+  // For regular domains, split by dots and get the last two parts
+  const parts = hostname.split('.');
+  
+  // Handle cases with multiple subdomains
+  if (parts.length > 2) {
+    // Return the last two parts (domain.tld)
+    return parts.slice(-2).join('.');
+  }
+
+  // If we have exactly two parts or less, return as is
+  return hostname;
+}
