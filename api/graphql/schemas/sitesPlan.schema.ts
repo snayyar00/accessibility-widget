@@ -22,7 +22,7 @@ export const SitesPlanSchema = gql`
     }
   
     extend type Query {
-      getPlanBySiteIdAndUserId(siteId: Int!): SitesPlanData @rateLimit(limit: 30, duration: 60, message: "Too many plan requests. Please try again later.")
+      getPlanBySiteIdAndUserId(siteId: Int!): SitesPlanData @rateLimit(limit: 60, duration: 60, message: "Too many plan requests. Please try again later.")
     }
   
     extend type Mutation {

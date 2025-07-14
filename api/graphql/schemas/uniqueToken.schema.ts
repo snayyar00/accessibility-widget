@@ -7,6 +7,6 @@ export const UniqueTokenSchema = gql`
   }
 
   extend type Query {
-    validateToken(url: String!): TokenValidationResponse! @rateLimit(limit: 30, duration: 60, message: "Too many requests, please try again later.")
+    validateToken(url: String!): TokenValidationResponse! @rateLimit(limit: 60, duration: 60, message: "Too many requests, please try again later.")
   }
 `;
