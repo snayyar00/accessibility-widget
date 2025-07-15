@@ -38,9 +38,17 @@ export function getRootDomain(urlOrHostname: string, options?: RootDomainOptions
     return '';
   }
 
-  let cleanedInput = urlOrHostname.replace(/^(https?:\/\/)?(www\.)?/, '');
-  const parts = cleanedInput.split(/[\/?#]/);
-  cleanedInput = parts[0];
+  
+  let cleanedInput: string;
+  try {
+    const urlObj = new URL(urlOrHostname.startsWith('http') ? urlOrHostname : `http://${urlOrHostname}`);
+    cleanedInput = urlObj.hostname;
+  } catch {
+    cleanedInput = urlOrHostname.replace(/^(https?:\/\/)?(www\.)?/, '');
+    const parts = cleanedInput.split(/[\/?#]/);
+    cleanedInput = parts[0];
+    cleanedInput = cleanedInput.replace(/:\d+$/, '');
+  }
 
   if (isIpAddress(cleanedInput)) {
     return cleanedInput;
