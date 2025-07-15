@@ -132,7 +132,7 @@ export async function getAccessibilityInformationPally(domain: string) {
     totalElements: 0,
   };
 
-  const apiUrl =`${process.env.FALLBACK_PA11Y_SERVER_URL}/scan`;
+  const apiUrl =`${process.env.PA11Y_SERVER_URL}/test`;
   let results;
   try {
     console.log("Using pally API");
