@@ -20,7 +20,13 @@ const { rateLimitDirectiveTransformer } = rateLimitDirective({
     }
 
     // Priority 2: Use IP address if user ID is not available
-    const ip = context.ip || context.req?.ip || context.req?.connection?.remoteAddress || context.req?.socket?.remoteAddress;
+    const ip =
+      context.req?.headers['cf-connecting-ip'] ||
+      context.req?.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+      context.ip ||
+      context.req?.ip ||
+      context.req?.connection?.remoteAddress ||
+      context.req?.socket?.remoteAddress;
 
     if (ip && ip !== 'unknown' && ip !== '::1' && ip !== '127.0.0.1') {
       const key = `ip:${ip}:${operationKey}`;
