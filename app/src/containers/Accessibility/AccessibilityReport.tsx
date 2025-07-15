@@ -70,7 +70,7 @@ const MAX_TOTAL_SCORE = 95;
 
 // Helper function to calculate enhanced scores
 function calculateEnhancedScore(baseScore: number) {
-  const enhancedScore = baseScore + WEBABILITY_SCORE_BONUS;
+  const enhancedScore = baseScore;
   return Math.min(enhancedScore, MAX_TOTAL_SCORE);
 }
 

@@ -117,7 +117,7 @@ const MAX_TOTAL_SCORE = 95;
 
 // Add this helper function
 function calculateEnhancedScore(baseScore: number) {
-  const enhancedScore = baseScore + WEBABILITY_SCORE_BONUS;
+  const enhancedScore = baseScore ;
   return Math.min(enhancedScore, MAX_TOTAL_SCORE);
 }
 
@@ -652,38 +652,25 @@ const ReportView: React.FC = () => {
                     </div>
 
                     {issue.screenshotUrl && (
-                      <div className="my-6 flex flex-col items-center">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100">
-                            <button
-                              type="button"
-                              className="focus:outline-none"
-                              aria-label="View screenshot evidence"
-                              onClick={() => window.open(issue.screenshotUrl, '_blank', 'noopener,noreferrer')}
-                              tabIndex={0}
-                            >
-                              <Eye className="w-5 h-5 text-blue-600" />
-                            </button>
+                      <div className="my-8 flex flex-col items-center">
+                        <button
+                          type="button"
+                          className="flex items-center gap-3 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 border-2 border-blue-500 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 group"
+                          aria-label="View screenshot evidence"
+                          onClick={() => window.open(issue.screenshotUrl, '_blank', 'noopener,noreferrer')}
+                          tabIndex={0}
+                          title="Click to view screenshot evidence"
+                        >
+                          <span className="flex items-center justify-center bg-white rounded-full p-2 shadow group-hover:scale-110 transition-transform">
+                            <Eye className="w-6 h-6 text-blue-600 group-hover:text-blue-800 transition-colors" />
                           </span>
-                          <h3 className="text-base font-semibold text-blue-800 tracking-tight">
+                          <span className="text-lg font-bold text-white tracking-tight drop-shadow">
                             View Evidence
-                          </h3>
-                        </div>
-                        <div className="relative group">
-                          <img
-                            src={issue.screenshotUrl}
-                            alt="Evidence screenshot"
-                            className="rounded-lg border-2 border-blue-200 shadow-md max-w-xs max-h-40 object-contain transition-transform duration-200 group-hover:scale-105 group-hover:shadow-lg cursor-pointer"
-                            onClick={() => window.open(issue.screenshotUrl, '_blank', 'noopener,noreferrer')}
-                            style={{ background: '#f8fafc' }}
-                          />
-                    
-                        </div>
-                        <p className="text-xs text-gray-500 mt-2">
-                          Click the image or "Open" to view the full screenshot.
-                        </p>
+                          </span>
+                        </button>
                       </div>
                     )}
+                    
                   </div>
                 ),
               )}
@@ -702,6 +689,7 @@ const ReportView: React.FC = () => {
                 </p>
                 {widgetInfo.details && (
                   <p className="text-blue-600 text-sm mt-1">
+                    
                     {widgetInfo.details}
                   </p>
                 )}

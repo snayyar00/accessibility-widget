@@ -5,6 +5,7 @@ import fs from 'fs';
 import getWidgetSettings from '../utils/getWidgetSettings';
 import sharp from 'sharp';
 import { deduplicateIssuesByMessage } from '../utils/translator';
+import axios from 'axios';
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
 
@@ -133,14 +134,18 @@ function mapIssueToImpact(message: string, code: any) {
 
   async function fetchImageAsBase64(url: string): Promise<string | null> {
     try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      return await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
+      const response = await axios.get(url, { responseType: 'arraybuffer' });
+      const base64 = Buffer.from(response.data, 'binary').toString('base64');
+      // Try to detect image type from URL or response headers
+      let mimeType = 'image/png';
+      if (response.headers['content-type']) {
+        mimeType = response.headers['content-type'];
+      } else if (url.endsWith('.jpg') || url.endsWith('.jpeg')) {
+        mimeType = 'image/jpeg';
+      } else if (url.endsWith('.gif')) {
+        mimeType = 'image/gif';
+      }
+      return `data:${mimeType};base64,${base64}`;
     } catch (e) {
       console.warn('Failed to fetch image for PDF:', url, e);
       return null;
@@ -148,18 +153,20 @@ function mapIssueToImpact(message: string, code: any) {
   }
   
   // Add this helper function to get image dimensions from base64
-  function getImageDimensions(base64Data: string): Promise<{ width: number; height: number }> {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        resolve({ width: img.width, height: img.height });
+  async function getImageDimensions(base64Data: string): Promise<{ width: number; height: number }> {
+    try {
+      // Remove the data URL prefix if present
+      const base64 = base64Data.split(',')[1] || base64Data;
+      const buffer = Buffer.from(base64, 'base64');
+      const metadata = await sharp(buffer).metadata();
+      return {
+        width: metadata.width || 120,
+        height: metadata.height || 80,
       };
-      img.onerror = () => {
-        // Fallback dimensions if image fails to load
-        resolve({ width: 120, height: 80 });
-      };
-      img.src = base64Data;
-    });
+    } catch (e) {
+      // Fallback dimensions if image fails to load
+      return { width: 120, height: 80 };
+    }
   }
   
 export async function generateAccessibilityReportPDF(
@@ -465,6 +472,9 @@ let logopath: string | undefined;
   for (const issue of translatedIssues) {
     if (issue.screenshotUrl && !issue.screenshotBase64) {
       issue.screenshotBase64 = await fetchImageAsBase64(issue.screenshotUrl);
+    
+if(issue.screenshotBase64){      console.log("issue.screenshotUrl",issue.screenshotUrl);
+}
       // console.log('Fetched base64 for', issue.screenshotUrl, '->', !!issue.screenshotBase64);
     }
   }
