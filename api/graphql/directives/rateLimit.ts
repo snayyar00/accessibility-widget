@@ -5,8 +5,6 @@ const { rateLimitDirectiveTransformer } = rateLimitDirective({
   keyGenerator: (directiveArgs, source, args, context: any, info: GraphQLResolveInfo): string => {
     let operationKey = 'unknown';
 
-    console.info('user.id:', context.user?.id, 'ip:', context.ip, 'user-agent:', context.req?.headers?.['user-agent']);
-
     // Get operation key (type and field name) from GraphQLResolveInfo
     if (info && info.parentType && info.fieldName) {
       operationKey = `${info.parentType.name}.${info.fieldName}`;
