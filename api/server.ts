@@ -54,6 +54,8 @@ import { configureMorgan } from '~/libs/logger/morgan';
 import { requestTimingMiddleware } from '~/middlewares/requestTiming.middleware';
 import { expressErrorMiddleware } from '~/middlewares/expressError.middleware';
 import { graphqlErrorMiddleware } from '~/middlewares/graphqlError.middleware';
+import { GraphQLResolveInfo } from 'graphql';
+import { rateLimitDirectiveTransformer, rateLimitDirectiveTypeDefs } from '~/graphql/directives/rateLimit';
 
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
@@ -1471,39 +1473,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
   // Express error logging middleware
   app.use(expressErrorMiddleware);
-
-  const { rateLimitDirectiveTypeDefs, rateLimitDirectiveTransformer } = rateLimitDirective({
-    keyGenerator: (_: any, __: any, context: any): string => {
-      // Priority 1: Use authenticated user ID for better isolation
-      if (context.user?.id) {
-        return `user:${context.user.id}`;
-      }
-
-      // Priority 2: Try multiple IP sources
-      const ip = context.ip || context.req?.ip || context.req?.connection?.remoteAddress || context.req?.socket?.remoteAddress;
-
-      if (ip && ip !== 'unknown' && ip !== '::1' && ip !== '127.0.0.1') {
-        return `ip:${ip}`;
-      }
-
-      // Priority 3: Create fingerprint from available headers (for edge cases)
-      const req = context.req;
-      const userAgent = req?.headers?.['user-agent']?.slice(0, 50) || '';
-      const acceptLanguage = req?.headers?.['accept-language']?.slice(0, 30) || '';
-      const acceptEncoding = req?.headers?.['accept-encoding']?.slice(0, 30) || '';
-
-      // Create a hash-like fingerprint for uniqueness
-      const fingerprint = Buffer.from(`${userAgent}-${acceptLanguage}-${acceptEncoding}`).toString('base64').slice(0, 20);
-
-      return `fingerprint:${fingerprint}`;
-    },
-
-    onLimit: (_, directiveArgs: any): Error => {
-      const customMessage = directiveArgs.message || 'Too many requests, please try again later.';
-
-      return new Error(customMessage);
-    },
-  });
 
   let schema = makeExecutableSchema({
     typeDefs: [rateLimitDirectiveTypeDefs, RootSchema],
