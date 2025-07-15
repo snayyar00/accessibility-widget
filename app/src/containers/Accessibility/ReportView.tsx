@@ -3,7 +3,7 @@ import { useParams, useLocation, useHistory } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
-import { translateText,translateMultipleTexts,LANGUAGES} from '@/utils/translator';
+import { translateText,translateMultipleTexts,deduplicateIssuesByMessage,LANGUAGES} from '@/utils/translator';
 
 import {
   AlertTriangle,
@@ -117,7 +117,7 @@ const MAX_TOTAL_SCORE = 95;
 
 // Add this helper function
 function calculateEnhancedScore(baseScore: number) {
-  const enhancedScore = baseScore + WEBABILITY_SCORE_BONUS;
+  const enhancedScore = baseScore ;
   return Math.min(enhancedScore, MAX_TOTAL_SCORE);
 }
 
@@ -126,6 +126,38 @@ const fullUrl = queryParams.get('domain') || '';
 
 // const cleanUrl = fullUrl.trim().replace(/^(https?:\/\/)?(www\.)?/, '');
 // const urlParam = `https://${cleanUrl}`;
+
+// Add this helper function near the top (outside the component)
+async function fetchImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    console.warn('Failed to fetch image for PDF:', url, e);
+    return null;
+  }
+}
+
+// Add this helper function to get image dimensions from base64
+function getImageDimensions(base64Data: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      resolve({ width: img.width, height: img.height });
+    };
+    img.onerror = () => {
+      // Fallback dimensions if image fails to load
+      resolve({ width: 120, height: 80 });
+    };
+    img.src = base64Data;
+  });
+}
 
 const ReportView: React.FC = () => {
   const { r2_key } = useParams<ReportParams>();
@@ -522,6 +554,7 @@ const ReportView: React.FC = () => {
                       | Iterable<ReactI18NextChild>
                       | null
                       | undefined;
+                    screenshotUrl?: string;
                   },
                   index: React.Key | null | undefined,
                 ) => (
@@ -617,6 +650,27 @@ const ReportView: React.FC = () => {
                         </div>
                       )}
                     </div>
+
+                    {issue.screenshotUrl && (
+                      <div className="my-8 flex flex-col items-center">
+                        <button
+                          type="button"
+                          className="flex items-center gap-3 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 border-2 border-blue-500 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 group"
+                          aria-label="View screenshot evidence"
+                          onClick={() => window.open(issue.screenshotUrl, '_blank', 'noopener,noreferrer')}
+                          tabIndex={0}
+                          title="Click to view screenshot evidence"
+                        >
+                          <span className="flex items-center justify-center bg-white rounded-full p-2 shadow group-hover:scale-110 transition-transform">
+                            <Eye className="w-6 h-6 text-blue-600 group-hover:text-blue-800 transition-colors" />
+                          </span>
+                          <span className="text-lg font-bold text-white tracking-tight drop-shadow">
+                            View Evidence
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                    
                   </div>
                 ),
               )}
@@ -635,6 +689,7 @@ const ReportView: React.FC = () => {
                 </p>
                 {widgetInfo.details && (
                   <p className="text-blue-600 text-sm mt-1">
+                    
                     {widgetInfo.details}
                   </p>
                 )}
@@ -1127,8 +1182,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     setIsDownloading(true); // <-- Set loading state
     try {
       // Generate PDF using the same logic as ScannerHero
-       const pdfBlob = await generatePDF(results);
-
+      const pdfBlob = await generatePDF(results, currentLanguage);
       // Create download link for immediate download
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
@@ -1164,11 +1218,14 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     });
   }
 
-  const generatePDF = async (reportData: {
-    score: number;
-    widgetInfo: { result: string };
-    url: string;
-  }): Promise<Blob> => {
+  const generatePDF = async (
+    reportData: {
+      score: number;
+      widgetInfo: { result: string };
+      url: string;
+    },
+    currentLanguage: string
+  ): Promise<Blob> => {
     const { jsPDF } = await import('jspdf');
     const autoTable = (await import('jspdf-autotable')).default;
     const doc = new jsPDF();
@@ -1502,11 +1559,19 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     // Build the rows
     let tableBody: any[] = [];
-    const translatedIssues = await translateText(issues, currentLanguage);
+    const FilteredIssues = await deduplicateIssuesByMessage(issues);
 
-  
+    const translatedIssues = await translateText(FilteredIssues, currentLanguage);
 
-    translatedIssues.forEach((issue, issueIdx) => {
+    // After fetching base64
+    for (const issue of translatedIssues) {
+      if (issue.screenshotUrl && !issue.screenshotBase64) {
+        issue.screenshotBase64 = await fetchImageAsBase64(issue.screenshotUrl);
+        // console.log('Fetched base64 for', issue.screenshotUrl, '->', !!issue.screenshotBase64);
+      }
+    }
+
+    for (const issue of translatedIssues) {
       // Add header row for each issue with beautiful styling
       tableBody.push([
         {
@@ -1580,6 +1645,58 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           },
         },
       ]);
+      // If screenshotBase64 is available, add a row with the image
+      if (issue.screenshotBase64) {
+        // Get actual image dimensions from base64 data
+        const dimensions = await getImageDimensions(issue.screenshotBase64);
+        let drawWidth = dimensions.width;
+        let drawHeight = dimensions.height;
+        
+        // Scale down if image is too large for PDF
+        const maxWidth = 120;
+        const maxHeight = 80;
+        const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight, 1);
+        
+        const screenshotWidth = drawWidth * scale;
+        const screenshotHeight = drawHeight * scale;
+
+        // Add a heading row for the screenshot
+        tableBody.push([
+          {
+            content: 'Screenshot',
+            colSpan: 4,
+            styles: {
+              fontStyle: 'bold',
+              fontSize: 12,
+              textColor: [30, 41, 59],
+              halign: 'center',
+              cellPadding: 6,
+              fillColor: [237, 242, 247],
+              minCellHeight: 18,
+            },
+          } as any,
+        ]);
+        
+        // Add the screenshot image row
+        tableBody.push([
+          {
+            content: '',
+            colSpan: 4,
+            styles: {
+              halign: 'center',
+              valign: 'middle',
+              cellPadding: 8,
+              fillColor: [248, 250, 252],
+              minCellHeight: screenshotHeight + 20, // Add padding around image
+            },
+            _isScreenshot: true,
+            _screenshotBase64: issue.screenshotBase64,
+            _screenshotWidth: screenshotWidth,
+            _screenshotHeight: screenshotHeight,
+            _screenshotUrl: issue.screenshotUrl, // Add the screenshot URL for linking
+          } as any,
+        ]);
+      }
 
       // Contexts block (styled like code snapshots with numbers and black rounded boxes)
       const contexts = toArray(issue.context).filter(Boolean);
@@ -1703,7 +1820,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           }
         });
       }
-    });
+    }
 
     // No global table header, since each issue has its own header row
     autoTable(doc, {
@@ -1851,6 +1968,17 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           doc.setLineWidth(0.5);
           doc.line(x, y + height, x + width, y + height); // Bottom border
         }
+        if (data.cell.raw && data.cell.raw._isScreenshot && data.cell.raw._screenshotBase64) {
+          const { x, y, width, height } = data.cell;
+          const imgWidth = data.cell.raw._screenshotWidth || 80;
+          const imgHeight = data.cell.raw._screenshotHeight || 80;
+          const imgX = x + (width - imgWidth) / 2;
+          const imgY = y + (height - imgHeight) / 2;
+          data.doc.addImage(data.cell.raw._screenshotBase64, 'PNG', imgX, imgY, imgWidth, imgHeight);
+        }
+        if (data.cell.raw && data.cell.raw._isScreenshot) {
+          console.log('didDrawCell for screenshot', data.cell.raw._screenshotBase64 ? 'has base64' : 'no base64');
+        }
       },
     });
 
@@ -1915,7 +2043,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               onChange={(e) => setCurrentLanguage(e.target.value)}
               className="appearance-none bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
             >
-                    <option value="">Select Language</option>
+                    <option value="en">English</option>
                     {Object.values(LANGUAGES).map((language) => (
                       <option key={language.code} value={language.code}>
                         {language.nativeName}
@@ -2016,6 +2144,7 @@ function extractIssuesFromReport(report: any) {
               source:
                 error.__typename === 'htmlCsOutput' ? 'HTML_CS' : 'AXE Core',
               functionality: funcGroup.FunctionalityName,
+              screenshotUrl: error.screenshotUrl,
             });
           });
         }
@@ -2036,6 +2165,7 @@ function extractIssuesFromReport(report: any) {
               impact,
               source: 'AXE Core',
               functionality: funcGroup.FunctionalityName,
+              screenshotUrl: error.screenshotUrl,
             });
           });
         }
@@ -2056,6 +2186,7 @@ function extractIssuesFromReport(report: any) {
               impact,
               source: 'HTML_CS',
               functionality: funcGroup.FunctionalityName,
+              screenshotUrl: error.screenshotUrl,
             });
           });
         }

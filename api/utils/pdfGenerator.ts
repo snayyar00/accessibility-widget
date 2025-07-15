@@ -4,7 +4,8 @@ import path from 'path';
 import fs from 'fs';
 import getWidgetSettings from '../utils/getWidgetSettings';
 import sharp from 'sharp';
-
+import { deduplicateIssuesByMessage } from '../utils/translator';
+import axios from 'axios';
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
 
@@ -29,7 +30,8 @@ function extractIssuesFromReport(report: any) {
             ...error,
             impact,
             source: error.__typename === 'htmlCsOutput' ? 'HTML_CS' : 'AXE Core',
-            functionality: funcGroup.FunctionalityName
+            functionality: funcGroup.FunctionalityName,
+            screenshotUrl: error.screenshotUrl
           })
         })
       }
@@ -47,7 +49,8 @@ function extractIssuesFromReport(report: any) {
             ...error,
             impact,
             source: 'AXE Core',
-            functionality: funcGroup.FunctionalityName
+            functionality: funcGroup.FunctionalityName,
+            screenshotUrl: error.screenshotUrl
           })
         })
       }
@@ -65,7 +68,8 @@ function extractIssuesFromReport(report: any) {
             ...error,
             impact,
             source: 'HTML_CS',
-            functionality: funcGroup.FunctionalityName
+            functionality: funcGroup.FunctionalityName,
+            screenshotUrl: error.screenshotUrl
           })
         })
       }
@@ -125,7 +129,46 @@ function mapIssueToImpact(message: string, code: any) {
   }
 
   return 'moderate'
+  
 }
+
+  async function fetchImageAsBase64(url: string): Promise<string | null> {
+    try {
+      const response = await axios.get(url, { responseType: 'arraybuffer' });
+      const base64 = Buffer.from(response.data).toString('base64');
+      // Try to detect image type from URL or response headers
+      let mimeType = 'image/png';
+      if (response.headers['content-type']) {
+        mimeType = response.headers['content-type'];
+      } else if (url.endsWith('.jpg') || url.endsWith('.jpeg')) {
+        mimeType = 'image/jpeg';
+      } else if (url.endsWith('.gif')) {
+        mimeType = 'image/gif';
+      }
+      return `data:${mimeType};base64,${base64}`;
+    } catch (e) {
+      console.warn('Failed to fetch image for PDF:', url, e);
+      return null;
+    }
+  }
+  
+  // Add this helper function to get image dimensions from base64
+  async function getImageDimensions(base64Data: string): Promise<{ width: number; height: number }> {
+    try {
+      // Remove the data URL prefix if present
+      const base64 = base64Data.split(',')[1] || base64Data;
+      const buffer = Buffer.from(base64, 'base64');
+      const metadata = await sharp(buffer).metadata();
+      return {
+        width: metadata.width || 120,
+        height: metadata.height || 80,
+      };
+    } catch (e) {
+      // Fallback dimensions if image fails to load
+      return { width: 120, height: 80 };
+    }
+  }
+  
 export async function generateAccessibilityReportPDF(
   reportData: any,
   url: string,
@@ -141,6 +184,8 @@ export async function generateAccessibilityReportPDF(
   const WEBABILITY_SCORE_BONUS = 45;
   const MAX_TOTAL_SCORE = 95;
   const issues = extractIssuesFromReport(reportData);
+
+  
 
   // Calculate score and status
   const baseScore = reportData.score || 0;
@@ -419,29 +464,41 @@ let logopath: string | undefined;
 
   // Build the rows
   let tableBody: any[] = [];
-  const translatedIssues = issues;
+  
+  const FilteredIssues = await deduplicateIssuesByMessage(issues);
+  const translatedIssues = FilteredIssues;
 
-  translatedIssues.forEach((issue, issueIdx) => {
-    // Add header row for each issue
+  // After fetching base64
+  for (const issue of translatedIssues) {
+    if (issue.screenshotUrl && !issue.screenshotBase64) {
+      issue.screenshotBase64 = await fetchImageAsBase64(issue.screenshotUrl);
+    
+      // console.log('Fetched base64 for', issue.screenshotUrl, '->', !!issue.screenshotBase64);
+    }
+  }
+
+  for (const issue of translatedIssues) {
+    // Add header row for each issue with beautiful styling
     tableBody.push([
       {
         content: translatedIssue,
         colSpan: 2,
         styles: {
-          fillColor: [255, 255, 255],
-          textColor: [0, 0, 0],
+          fillColor: [255, 255, 255], // white background
+          textColor: [0, 0, 0], // black text
           fontStyle: 'bold',
           fontSize: 14,
           halign: 'center',
           cellPadding: 8,
+
         },
       },
       {
         content: translatedIssueMessage,
         colSpan: 2,
         styles: {
-          fillColor: [255, 255, 255],
-          textColor: [0, 0, 0],
+          fillColor: [255, 255, 255], // matching white background
+          textColor: [0, 0, 0], // black text
           fontStyle: 'bold',
           fontSize: 14,
           halign: 'center',
@@ -450,7 +507,7 @@ let logopath: string | undefined;
       },
     ]);
 
-    // Row 1: Issue + Message
+    // Row 1: Issue + Message with elegant code block styling
     tableBody.push([
       {
         content: `${issue.code ? `${issue.code} (${issue.impact})` : ''}`,
@@ -458,46 +515,82 @@ let logopath: string | undefined;
         styles: {
           fontStyle: 'bold',
           fontSize: 12,
-          textColor: [30, 41, 59],
+          textColor: [30, 41, 59], // dark navy text
           halign: 'left',
           cellPadding: 10,
           fillColor: issue.impact === 'critical'
-            ? [255, 204, 204]
+            ? [255, 204, 204] 
             : issue.impact === 'Mild'
-              ? [225, 245, 254]
+              ? [225, 245, 254] 
               : issue.impact === 'moderate'
-                ? [187, 222, 251]
-                : [248, 250, 252],
+                ? [187, 222, 251] 
+                : [248, 250, 252], 
           font: 'courier',
           minCellHeight: 30,
         },
       },
+      
       {
         content: `${issue.message || ''}`,
         colSpan: 2,
         styles: {
           fontStyle: 'normal',
           fontSize: 12,
-          textColor: [30, 41, 59],
+          textColor: [30, 41, 59], // dark navy text
           halign: 'left',
           cellPadding: 10,
           fillColor: issue.impact === 'critical'
-            ? [255, 204, 204]
-            : issue.impact === 'Mild'
-              ? [225, 245, 254]
-              : issue.impact === 'moderate'
-                ? [187, 222, 251]
-                : [248, 250, 252],
+          ? [255, 204, 204] 
+          : issue.impact === 'Mild'
+            ? [225, 245, 254] 
+            : issue.impact === 'moderate'
+              ? [187, 222, 251] 
+              : [248, 250, 252], 
           font: 'courier',
           minCellHeight: 30,
         },
       },
     ]);
+    // If screenshotBase64 is available, add a row with the image
+    if (issue.screenshotBase64) {
+      // Get actual image dimensions from base64 data
+      const dimensions = await getImageDimensions(issue.screenshotBase64);
+      let drawWidth = dimensions.width;
+      let drawHeight = dimensions.height;
+      
+      // Scale down if image is too large for PDF
+      const maxWidth = 120;
+      const maxHeight = 80;
+      const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight, 1);
+      
+      const screenshotWidth = drawWidth * scale;
+      const screenshotHeight = drawHeight * scale;
+      
+      tableBody.push([
+        {
+          content: '',
+          colSpan: 4,
+          styles: {
+            halign: 'center',
+            valign: 'middle',
+            cellPadding: 8,
+            fillColor: [248, 250, 252],
+            minCellHeight: screenshotHeight + 20, // Add padding around image
+          },
+          _isScreenshot: true,
+          _screenshotBase64: issue.screenshotBase64,
+          _screenshotWidth: screenshotWidth,
+          _screenshotHeight: screenshotHeight,
+          _screenshotUrl: issue.screenshotUrl, // Add the screenshot URL for linking
+        } as any,
+      ]);
+    }
 
-    // Contexts block
+    // Contexts block (styled like code snapshots with numbers and black rounded boxes)
     const contexts = toArray(issue.context).filter(Boolean);
 
     if (contexts.length > 0) {
+      // Heading: "Context:"
       tableBody.push([
         {
           content: translatedContext,
@@ -515,7 +608,9 @@ let logopath: string | undefined;
       ]);
 
       contexts.forEach((ctx, index) => {
+        // Combined code block with index number
         const combinedContent = `${index + 1}. ${ctx}`;
+        
         tableBody.push([
           {
             content: combinedContent,
@@ -525,20 +620,23 @@ let logopath: string | undefined;
             styles: {
               font: 'courier',
               fontSize: 10,
-              textColor: [255, 255, 255],
-              fillColor: [255, 255, 255],
+              textColor: [255, 255, 255], // This will be overridden by didDrawCell
+              fillColor: [255, 255, 255], // White background for the cell
               halign: 'left',
               valign: 'top',
               cellPadding: 8,
               lineWidth: 0,
-              minCellHeight: Math.max(20, Math.ceil(combinedContent.length / 50) * 6),
+              minCellHeight: Math.max(20, Math.ceil(combinedContent.length / 50) * 6), // Dynamic height based on content
               overflow: 'linebreak',
             },
+            
             _isCodeBlock: true,
-            _originalContent: combinedContent,
-            _indexNumber: index + 1,
+            _originalContent: combinedContent, // Store original content for height calculation
+            _indexNumber: index + 1, // Store index for potential special formatting
           } as any,
         ]);
+
+        // Spacer row after each block (except the last)
         if (index < contexts.length - 1) {
           tableBody.push([
             {
@@ -556,9 +654,10 @@ let logopath: string | undefined;
       });
     }
 
-    // Fixes
+    // Row 3: Fix(es) - display heading first, then each fix in its own white back container with spacing
     const fixes = toArray(issue.recommended_action);
     if (fixes.length > 0 && fixes.some((f) => !!f)) {
+      // Heading row for Fix
       tableBody.push([
         {
           content: translatedFix,
@@ -566,14 +665,15 @@ let logopath: string | undefined;
           styles: {
             fontStyle: 'bolditalic',
             fontSize: 11,
-            textColor: [0, 0, 0],
+            textColor: [0, 0, 0], // black text
             halign: 'left',
             cellPadding: 5,
-            fillColor: [255, 255, 255],
+            fillColor: [255, 255, 255], // white background
             lineWidth: 0,
           },
         },
       ]);
+      // Each fix in its own row/container, with white background and spacing
       const filteredFixes = fixes.filter(Boolean);
       filteredFixes.forEach((fix, fixIdx) => {
         tableBody.push([
@@ -583,14 +683,15 @@ let logopath: string | undefined;
             styles: {
               fontStyle: 'normal',
               fontSize: 11,
-              textColor: [0, 0, 0],
+              textColor: [0, 0, 0], // black text
               halign: 'left',
-              cellPadding: { top: 10, right: 8, bottom: 10, left: 8 },
-              fillColor: [255, 255, 255],
+              cellPadding: { top: 10, right: 8, bottom: 10, left: 8 }, // more vertical space for separation
+              fillColor: [255, 255, 255], // white background for back container
               lineWidth: 0,
             },
           },
         ]);
+        // Add a spacer row after each fix except the last
         if (fixIdx < filteredFixes.length - 1) {
           tableBody.push([
             {
@@ -600,16 +701,16 @@ let logopath: string | undefined;
                 cellPadding: 0,
                 fillColor: [255, 255, 255],
                 lineWidth: 0,
-                minCellHeight: 6,
+                minCellHeight: 6, // vertical space between containers
               },
             },
           ]);
         }
       });
     }
-  });
+  }
 
-  // Render table
+  // No global table header, since each issue has its own header row
   autoTable(doc, {
     startY: yTable,
     margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
@@ -622,52 +723,76 @@ let logopath: string | undefined;
       2: { cellWidth: 50 },
       3: { cellWidth: 45 },
     },
+    // Enhanced page break handling
     rowPageBreak: 'avoid',
-    tableLineColor: [226, 232, 240],
-    tableLineWidth: 0.5,
+    
+    // Custom table styling
+    tableLineColor: [226, 232, 240], // Light gray border
+    tableLineWidth: 0.5, // Thin border
     styles: {
-      lineColor: [255, 255, 255],
-      lineWidth: 0,
+      lineColor: [255, 255, 255], // White (invisible) line color for cells
+      lineWidth: 0, // No cell borders
       cellPadding: 8,
     },
+    
+    // Check before drawing each cell to prevent page breaks in code blocks
     willDrawCell: (data: any) => {
       if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
         const pageHeight = doc.internal.pageSize.getHeight();
         const currentY = data.cursor.y;
-        const bottomMargin = 25;
+        const bottomMargin = 25; // Space needed at bottom of page
+        
+        // Calculate actual text height for more accurate estimation
         const fullText = (data.cell.raw as any).content || '';
         const indexNumber = (data.cell.raw as any)._indexNumber;
+        
+        // Calculate the actual content that will be displayed
         const indexPrefix = `${indexNumber}`;
-        const indexWidth = doc.getTextWidth(indexPrefix) + 16;
+        const indexWidth = doc.getTextWidth(indexPrefix) + 16; // Index section width
         const codeContent = fullText.substring(`${indexNumber}. `.length);
-        const availableWidth = data.cell.width - 16 - indexWidth;
+        
+        // Calculate available width for code content
+        const availableWidth = data.cell.width - 16 - indexWidth; // Cell padding + index width
+        
         doc.setFont('courier', 'normal');
         doc.setFontSize(10);
         const lines = doc.splitTextToSize(codeContent, availableWidth);
-        const lineHeight = 4;
-        const topPadding = 8;
-        const bottomPadding = 4;
+        
+        // More accurate height calculation
+        const lineHeight = 4; // Line spacing
+        const topPadding = 8; // Top padding
+        const bottomPadding = 4; // Bottom padding
         const textHeight = (lines.length * lineHeight) + topPadding + bottomPadding;
-        const estimatedHeight = Math.max(textHeight, 30);
+        const estimatedHeight = Math.max(textHeight, 30); // Minimum height of 30
+        
+        // If the code block won't fit on current page, force a page break
         if (currentY + estimatedHeight > pageHeight - bottomMargin) {
-          return false;
+          return false; // This will trigger a page break
         }
       }
       return true;
     },
+    
     didDrawCell: (data: any) => {
+      // Check if this cell is marked as a code block
       if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
         const { x, y, width, height } = data.cell;
+        
         const padding = 2;
         const cornerRadius = 4;
         const indexNumber = (data.cell.raw as any)._indexNumber;
+        
+        // Calculate index section width
         doc.setFont('courier', 'normal');
         doc.setFontSize(12);
         const indexPrefix = `${indexNumber}`;
-        const indexWidth = doc.getTextWidth(indexPrefix) + 8;
-        doc.setDrawColor(100, 116, 139);
+        const indexWidth = doc.getTextWidth(indexPrefix) + 8; // Extra padding for the index section
+        
+        // Draw the overall rounded rectangle background (darker blue)
+        doc.setDrawColor(100, 116, 139); // slate-500 border
         doc.setLineWidth(0.5);
-        doc.setFillColor(15, 23, 42);
+        doc.setFillColor(15, 23, 42); // slate-900 background (darker blue)
+        
         doc.roundedRect(
           x + padding,
           y + padding,
@@ -675,9 +800,11 @@ let logopath: string | undefined;
           height - (padding * 2),
           cornerRadius,
           cornerRadius,
-          'FD'
+          'FD' // Fill and Draw
         );
-        doc.setFillColor(51, 65, 85);
+        
+        // Draw the lighter blue section for the index number (left side)
+        doc.setFillColor(51, 65, 85); // slate-700 (lighter blue than the main background)
         doc.roundedRect(
           x + padding,
           y + padding,
@@ -685,9 +812,11 @@ let logopath: string | undefined;
           height - (padding * 2),
           cornerRadius,
           cornerRadius,
-          'F'
+          'F' // Fill only
         );
-        doc.setFillColor(51, 65, 85);
+        
+        // Fix the right side of the index section to not be rounded
+        doc.setFillColor(51, 65, 85); // slate-700
         doc.rect(
           x + padding + indexWidth - cornerRadius,
           y + padding,
@@ -695,31 +824,48 @@ let logopath: string | undefined;
           height - (padding * 2),
           'F'
         );
-        doc.setTextColor(255, 255, 255);
-        const indexTextX = x + padding + 4;
-        const textY = y + padding + 8;
+        
+        // Now draw the text - both in white
+        doc.setTextColor(255, 255, 255); // white text for both sections
+        
+        // Draw the index number in the lighter blue section (top-left aligned)
+        const indexTextX = x + padding + 4; // Small padding from left edge
+        const textY = y + padding + 8; // Same as code content top alignment
         doc.text(indexPrefix, indexTextX, textY);
+        
+        // Draw the code content in the darker blue section
         const fullText = (data.cell.raw as any).content;
         const codeContent = fullText.substring(`${indexNumber}. `.length);
         const codeTextX = x + padding + indexWidth + 4;
         const availableWidth = width - (padding * 2) - indexWidth - 8;
+        
+        // Split code content into lines
         const lines = doc.splitTextToSize(codeContent, availableWidth);
         let codeTextY = y + padding + 8;
+        
         lines.forEach((line: string) => {
           doc.text(line, codeTextX, codeTextY);
-          codeTextY += 4;
+          codeTextY += 4; // Line spacing
         });
       }
-      if (
-        data.cell.raw &&
-        data.cell.raw.styles &&
-        data.cell.raw.styles.fontStyle === 'bold' &&
-        data.cell.raw.styles.fontSize === 14
-      ) {
+      
+      // Add bottom border only to header rows (Issue/Message rows)
+      if (data.cell.raw && data.cell.raw.styles && data.cell.raw.styles.fontStyle === 'bold' && data.cell.raw.styles.fontSize === 14) {
         const { x, y, width, height } = data.cell;
-        doc.setDrawColor(226, 232, 240);
+        doc.setDrawColor(226, 232, 240); // Light gray
         doc.setLineWidth(0.5);
-        doc.line(x, y + height, x + width, y + height);
+        doc.line(x, y + height, x + width, y + height); // Bottom border
+      }
+      if (data.cell.raw && data.cell.raw._isScreenshot && data.cell.raw._screenshotBase64) {
+        const { x, y, width, height } = data.cell;
+        const imgWidth = data.cell.raw._screenshotWidth || 80;
+        const imgHeight = data.cell.raw._screenshotHeight || 80;
+        const imgX = x + (width - imgWidth) / 2;
+        const imgY = y + (height - imgHeight) / 2;
+        data.doc.addImage(data.cell.raw._screenshotBase64, 'PNG', imgX, imgY, imgWidth, imgHeight);
+      }
+      if (data.cell.raw && data.cell.raw._isScreenshot) {
+        console.log('didDrawCell for screenshot', data.cell.raw._screenshotBase64 ? 'has base64' : 'no base64');
       }
     },
   });
