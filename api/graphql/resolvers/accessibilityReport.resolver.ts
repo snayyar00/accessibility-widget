@@ -48,11 +48,11 @@ const resolvers = {
         }
 
         try {
-          const site = await findSiteByURL(url);
+          // const site = await findSiteByURL(url);
 
-          if (!site || site.user_id !== user.id) {
-            throw new Error('User does not own this site');
-          }
+          // if (!site || site.user_id !== user.id) {
+          //   throw new Error('User does not own this site');
+          // }
 
           const rows = await getR2KeysByParams({ url, created_at, updated_at });
           // Ensure score is properly formatted
@@ -89,11 +89,11 @@ const resolvers = {
             throw new Error('Report not found');
           }
 
-          const site = await findSiteByURL(report.url);
+          // const site = await findSiteByURL(report.url);
 
-          if (!site || site.user_id !== user.id) {
-            throw new Error('User does not own this site');
-          }
+          // if (!site || site.user_id !== user.id) {
+          //   throw new Error('User does not own this site');
+          // }
 
           return await fetchReportFromR2(r2_key);
         } catch (error) {
@@ -115,11 +115,11 @@ const resolvers = {
         }
 
         try {
-          const site = await findSiteByURL(url);
+          // const site = await findSiteByURL(url);
 
-          if (!site || site.user_id !== user.id) {
-            throw new Error('User does not own this site');
-          }
+          // if (!site || site.user_id !== user.id) {
+          //   throw new Error('User does not own this site');
+          // }
 
           const reportKey =
             key ||
@@ -161,11 +161,11 @@ const resolvers = {
             throw new Error('Report not found');
           }
 
-          const site = await findSiteByURL(report.url);
+          // const site = await findSiteByURL(report.url);
 
-          if (!site || site.user_id !== user.id) {
-            throw new Error('User does not own this site');
-          }
+          // if (!site || site.user_id !== user.id) {
+          //   throw new Error('User does not own this site');
+          // }
 
           const result = await deleteAccessibilityReportByR2Key(r2_key);
           await deleteReportFromR2(r2_key);

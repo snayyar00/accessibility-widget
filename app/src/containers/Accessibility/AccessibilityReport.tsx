@@ -149,19 +149,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             score: typeof score === 'object' ? score : { value: score },
           },
         }).then(({ data }) => {
-          setReportGenerated((prev) => !prev);
-          const isNewDomain = !siteOptions.some((option: any) => normalizeDomain(option.value) === normalizeDomain(correctDomain));
-
-          if (isNewDomain && data && data.saveAccessibilityReport) {
-            const savedReport = data.saveAccessibilityReport;
-            const r2Key = savedReport.key;
-            const savedUrl = savedReport.report.url;
-            // Show success modal with link to open report
-            setReportUrl(`/${r2Key}?domain=${encodeURIComponent(savedUrl)}`);
-            setIsSuccessModalOpen(true);
-          } else {
-          toast.success('Report successfully generated! You can view or download it below.');
-          }
+          const savedReport = data.saveAccessibilityReport;
+          const r2Key = savedReport.key;
+          const savedUrl = savedReport.report.url;
+          setReportUrl(`/${r2Key}?domain=${encodeURIComponent(savedUrl)}`);
+          setIsSuccessModalOpen(true);
         });
         const { htmlcs } = result;
         groupByCode(htmlcs);
