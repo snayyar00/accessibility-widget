@@ -149,11 +149,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             score: typeof score === 'object' ? score : { value: score },
           },
         }).then(({ data }) => {
-          const savedReport = data.saveAccessibilityReport;
-          const r2Key = savedReport.key;
-          const savedUrl = savedReport.report.url;
-          setReportUrl(`/${r2Key}?domain=${encodeURIComponent(savedUrl)}`);
-          setIsSuccessModalOpen(true);
+          if (data && data.saveAccessibilityReport) {
+            const savedReport = data.saveAccessibilityReport;
+            const r2Key = savedReport.key;
+            const savedUrl = savedReport.report.url;
+            setReportUrl(`/${r2Key}?domain=${encodeURIComponent(savedUrl)}`);
+            setIsSuccessModalOpen(true);
+            toast.success('Accessibility report saved successfully!');
+          }
         });
         const { htmlcs } = result;
         groupByCode(htmlcs);
