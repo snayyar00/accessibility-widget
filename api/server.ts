@@ -74,6 +74,11 @@ interface Issue {
 const IS_LOCAL_DEV = !process.env.COOLIFY_URL && process.env.NODE_ENV !== 'production';
 
 const app = express();
+
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', true);
+}
+
 const port = process.env.PORT || 3001;
 
 const allowedOrigins = [process.env.FRONTEND_URL, ...(process.env.COOLIFY_URL ? [process.env.COOLIFY_URL] : []), 'https://www.webability.io', 'https://hoppscotch.webability.io'];
