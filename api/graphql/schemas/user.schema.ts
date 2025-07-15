@@ -1,12 +1,6 @@
 import { gql } from 'apollo-server-express';
 
 export const UserSchema = gql`
-  directive @rateLimit(
-    limit: Int! = 5
-    duration: Int! = 60
-    message: String = "Rate limit exceeded"
-  ) on FIELD_DEFINITION
-
   enum BillingType {
     MONTHLY
     YEARLY
