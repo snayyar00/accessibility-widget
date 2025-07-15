@@ -555,7 +555,6 @@ if(issue.screenshotBase64){      console.log("issue.screenshotUrl",issue.screens
     ]);
     // If screenshotBase64 is available, add a row with the image
     if (issue.screenshotBase64) {
-      console.log("issue.screenshotBase64",issue.screenshotBase64);
       // Get actual image dimensions from base64 data
       const dimensions = await getImageDimensions(issue.screenshotBase64);
       let drawWidth = dimensions.width;
