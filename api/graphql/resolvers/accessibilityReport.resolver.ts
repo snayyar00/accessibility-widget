@@ -161,11 +161,11 @@ const resolvers = {
             throw new Error('Report not found');
           }
 
-          // const site = await findSiteByURL(report.url);
+          const site = await findSiteByURL(report.url);
 
-          // if (!site || site.user_id !== user.id) {
-          //   throw new Error('User does not own this site');
-          // }
+          if (!site || site.user_id !== user.id) {
+            throw new Error('User does not own this site');
+          }
 
           const result = await deleteAccessibilityReportByR2Key(r2_key);
           await deleteReportFromR2(r2_key);
