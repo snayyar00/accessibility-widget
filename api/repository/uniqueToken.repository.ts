@@ -4,15 +4,17 @@ import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
 import { getWidgetSettingsBySiteId } from '~/repository/widget_settings.repository';
 import { validateTokenUrl } from '~/validations/widget.validation';
 import { normalizeDomain } from '~/utils/domain.utils';
+import { getRootDomain,extractRootDomain } from '~/utils/domainUtils';
 
 export async function ValidateToken(url: string): Promise<{
   validation: string;
   savedState: any;
   error?: string;
 }> {
-  
-  const validateResult = validateTokenUrl({ url });
-  
+
+  const rootDomain = getRootDomain(url);
+  const validateResult = validateTokenUrl({ url: rootDomain });
+
   if (Array.isArray(validateResult) && validateResult.length) {
     console.error('Error in ValidateToken:', validateResult);
     logger.error('There was an error validating the provided unique token.', validateResult);
@@ -23,7 +25,7 @@ export async function ValidateToken(url: string): Promise<{
     };
   }
 
-  const domain = normalizeDomain(url);
+  const domain = normalizeDomain(rootDomain);
 
   let widgetSettings;
 
@@ -48,7 +50,6 @@ export async function ValidateToken(url: string): Promise<{
 
     const site = await findSiteByURL(domain);
     const activePlan = site ? await getSitePlanBySiteId(site.id) : null;
-
     if (!activePlan) {
       return {
         validation: 'notFound',
