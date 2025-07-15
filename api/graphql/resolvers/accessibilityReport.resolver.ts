@@ -20,8 +20,12 @@ const resolvers = {
       }
 
       try {
-        const accessibilityReport = await fetchAccessibilityReport(url);
-        const techStack = await fetchTechStackFromAPI(url);
+   
+
+        const [accessibilityReport, techStack] = await Promise.all([
+          fetchAccessibilityReport(url),
+          fetchTechStackFromAPI(url)
+        ]);
 
         return {
           ...accessibilityReport,
