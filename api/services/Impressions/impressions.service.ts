@@ -7,17 +7,17 @@ import { findSite } from '../allowedSites/allowedSites.service';
 import { addNewVisitor } from '../uniqueVisitors/uniqueVisitor.service';
 import { validateGetEngagementRates, validateFindImpressionsByURLAndDate, validateAddImpressionsURL, validateAddProfileCount, validateAddInteraction } from '~/validations/impression.validation';
 import { normalizeDomain } from '~/utils/domain.utils';
+import { getRootDomain,extractRootDomain } from '~/utils/domainUtils';
 
 export async function addImpressionsURL(ipAddress: string, url: string) {
   const validateResult = validateAddImpressionsURL({ ipAddress, url });
   
-  if (Array.isArray(validateResult) && validateResult.length) {
-    return new ValidationError(
-      validateResult.map((it) => it.message).join(','),
-    );
-  }
-
-  const domain = normalizeDomain(url);
+  // if (Array.isArray(validateResult) && validateResult.length) {
+  //   return new ValidationError(
+  //     validateResult.map((it) => it.message).join(','),
+  //   );
+  // }
+  const domain = getRootDomain(url);
 
   try {
     const visitor = await findVisitorByIp(ipAddress);
