@@ -473,8 +473,6 @@ let logopath: string | undefined;
     if (issue.screenshotUrl && !issue.screenshotBase64) {
       issue.screenshotBase64 = await fetchImageAsBase64(issue.screenshotUrl);
     
-if(issue.screenshotBase64){      console.log("issue.screenshotUrl",issue.screenshotUrl);
-}
       // console.log('Fetched base64 for', issue.screenshotUrl, '->', !!issue.screenshotBase64);
     }
   }
