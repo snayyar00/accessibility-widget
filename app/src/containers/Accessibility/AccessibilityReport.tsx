@@ -63,11 +63,10 @@ import Select from 'react-select/creatable';
 import { set } from 'lodash';
 import Modal from '@/components/Common/Modal';
 import Tooltip from '@mui/material/Tooltip';
-
-import getWidgetSettings from '@/utils/getWidgetSettings'
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import { generateReport } from '@/features/report/reportSlice';
+import getWidgetSettings from '@/utils/getWidgetSettings'
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
 
@@ -100,19 +99,20 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [enhancedScoresCalculated, setEnhancedScoresCalculated] = useState(false);
   const [fetchReportKeys, { data: reportKeysData, loading: loadingReportKeys }] = useLazyQuery(FETCH_ACCESSIBILITY_REPORT_KEYS);
   const [processedReportKeys, setProcessedReportKeys] = useState<any[]>([]);
-  // Change destructure to avoid duplicate 'error' variable
-  const [getAccessibilityStatsQuery, { data, loading, error: accessibilityStatsError }] = useLazyQuery(getAccessibilityStats);
+  const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(
+    getAccessibilityStats
+  );
   const [fetchReportByR2Key, { loading: loadingReport, data: reportData }] = useLazyQuery(FETCH_REPORT_BY_R2_KEY);
   type OptionType = { value: string; label: string };
   const [selectedOption, setSelectedOption] = useState<OptionType | null>(null)
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef: contentRef });
   
-  const dispatch = useDispatch();
-  const { isGenerating, showModal, reportUrl, error } = useSelector((state: RootState) => state.report);
-  console.log('Modal open state:', showModal);
+  // Modal state for success message with report link
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [reportUrl, setReportUrl] = useState<string>('');
 
-  // Restore local state and handlers for language and tooltip
+  
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
   const [showLangTooltip, setShowLangTooltip] = useState(false);
   // Combine options for existing sites and a custom "Enter a new domain" option
@@ -124,48 +124,130 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     ...siteOptions,
     { value: 'new', label: 'Enter a new domain' },
   ];
-  // Handle tour completion
+
+   // Handle tour completion
   const handleTourComplete = () => {
     console.log('Accessibility tour completed!');
   };
+  const dispatch = useDispatch();
 
-  useEffect(() => {
-    if (data) {
-      const result = data.getAccessibilityReport;
-      if (result) {
-        let score = result.score;
-        let allowed_sites_id = null;
-        //console.log('Accessibility report data:', result);
-        if (sitesData && sitesData.getUserSites) {
-          const matchedSite = sitesData.getUserSites.find(
-            (site: any) => normalizeDomain(site.url) == normalizeDomain(correctDomain)
-          );
-          allowed_sites_id = matchedSite ? matchedSite.id : null;
-        }
-        saveAccessibilityReport({
-          variables: {
-            report: result,
-            url: normalizeDomain(correctDomain),
-            allowed_sites_id,
-            score: typeof score === 'object' ? score : { value: score },
-          },
-        }).then(({ data }) => {
-          if (data && data.saveAccessibilityReport) {
-            const savedReport = data.saveAccessibilityReport;
+
+  // useEffect(() => {
+  //   if (data) {
+  //     const result = data.getAccessibilityReport;
+  //     if (result) {
+  //       let score = result.score;
+  //       let allowed_sites_id = null;
+  //       //console.log('Accessibility report data:', result);
+  //       if (sitesData && sitesData.getUserSites) {
+  //         const matchedSite = sitesData.getUserSites.find(
+  //           (site: any) => normalizeDomain(site.url) == normalizeDomain(correctDomain)
+  //         );
+  //         allowed_sites_id = matchedSite ? matchedSite.id : null;
+  //       }
+  //       saveAccessibilityReport({
+  //         variables: {
+  //           report: result,
+  //           url: normalizeDomain(correctDomain),
+  //           allowed_sites_id,
+  //           score: typeof score === 'object' ? score : { value: score },
+  //         },
+  //       }).then(({ data }) => {
+  //         if (data && data.saveAccessibilityReport) {
+  //           const savedReport = data.saveAccessibilityReport;
+  //           const r2Key = savedReport.key;
+  //           const savedUrl = savedReport.report.url;
+  //           setReportUrl(`/${r2Key}?domain=${encodeURIComponent(savedUrl)}`);
+  //           setIsSuccessModalOpen(true);
+  //           toast.success('Accessibility report saved successfully!');
+  //         }
+  //       });
+  //       const { htmlcs } = result;
+  //       groupByCode(htmlcs);
+  //     }
+  //     setSiteImg(result?.siteImg);
+  //     setScoreBackup(Math.min(result?.score || 0, 95));
+  //     setScore(Math.min(result?.score || 0, 95));
+  //     // setAccessibilityData(htmlcs);
+  //   }
+  // }, [data]);
+
+  const handleSubmit = async () => {
+
+    const sanitizedDomain = getRootDomain(domain);
+    console.log("sanitizedDomain",sanitizedDomain);
+    if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {        
+      console.log('Invalid domain:', domain);
+      setDomain(currentDomain);
+      toast.error('You must enter a valid domain name!');
+        return;
+    }
+
+    
+    const validDomain = sanitizedDomain;
+    if (!validDomain) {
+      toast.error('Please enter a valid domain!');
+      return;
+    }
+    
+    setcorrectDomain(validDomain);
+    
+    try {
+      // Pass the domain directly to the query to avoid using empty correctDomain
+      const { data: queryData } = await getAccessibilityStatsQuery({ 
+        variables: { url: encodeURIComponent(validDomain) } 
+      });
+      
+      // Process the data immediately if available
+      if (queryData) {
+        const result = queryData.getAccessibilityReport;
+        if (result) {
+          let score = result.score;
+          let allowed_sites_id = null;
+          
+          if (sitesData && sitesData.getUserSites) {
+            const matchedSite = sitesData.getUserSites.find(
+              (site: any) => normalizeDomain(site.url) == normalizeDomain(validDomain)
+            );
+            allowed_sites_id = matchedSite ? matchedSite.id : null;
+          }
+          
+          // Save the report
+          const { data: saveData } = await saveAccessibilityReport({
+            variables: {
+              report: result,
+              url: normalizeDomain(validDomain),
+              allowed_sites_id,
+              score: typeof score === 'object' ? score : { value: score },
+            },
+          });
+          
+          if (saveData && saveData.saveAccessibilityReport) {
+            const savedReport = saveData.saveAccessibilityReport;
             const r2Key = savedReport.key;
             const savedUrl = savedReport.report.url;
-            toast.success('Accessibility report saved successfully!');
+            const newReportUrl = `/${r2Key}?domain=${encodeURIComponent(savedUrl)}`;
+            setReportUrl(newReportUrl);
+            //setIsSuccessModalOpen(true);
+            //toast.success('Accessibility report saved successfully!');
+            
+            // Dispatch the report generation
+            dispatch(generateReport({ url: normalizeDomain(newReportUrl), allowed_sites_id }));
           }
-        });
-        const { htmlcs } = result;
-        groupByCode(htmlcs);
+          
+          // Process the data
+          const { htmlcs } = result;
+          groupByCode(htmlcs);
+          setSiteImg(result?.siteImg);
+          setScoreBackup(Math.min(result?.score || 0, 95));
+          setScore(Math.min(result?.score || 0, 95));
+        }
       }
-      setSiteImg(result?.siteImg);
-      setScoreBackup(Math.min(result?.score || 0, 95));
-      setScore(Math.min(result?.score || 0, 95));
-      // setAccessibilityData(htmlcs);
+    } catch (error) {
+      console.error('Error generating report:', error);
+      toast.error('Failed to generate report. Please try again.');
     }
-  }, [data]);
+  };
 
   useEffect(() => {
     if (selectedSite) {
@@ -198,46 +280,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   }, [selectedSite, reportGenerated]);
 
-  const handleSubmit = async () => {
-
-    const sanitizedDomain = getRootDomain(domain);
-    console.log("sanitizedDomain",sanitizedDomain);
-    if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {        
-      console.log('Invalid domain:', domain);
-      setDomain(currentDomain);
-      toast.error('You must enter a valid domain name!');
-        return;
-    }
-
-    
-    const validDomain = sanitizedDomain;
-    if (!validDomain) {
-      toast.error('Please enter a valid domain!');
-      return;
-    }
-    
-    setcorrectDomain(validDomain);
-    
-    try {
-      // Pass the domain directly to the query to avoid using empty correctDomain
-      await getAccessibilityStatsQuery({ 
-        variables: { url: encodeURIComponent(validDomain) } 
-      });
-    } catch (error) {
-      console.error('Error generating report:', error);
-      toast.error('Failed to generate report. Please try again.');
-    }
-
-    let allowed_sites_id = null;
-    if (sitesData && sitesData.getUserSites) {
-      const matchedSite = sitesData.getUserSites.find(
-        (site: any) => normalizeDomain(site.url) == normalizeDomain(validDomain)
-      );
-      allowed_sites_id = matchedSite ? matchedSite.id : null;
-    }
-    console.log('About to dispatch generateReport', { validDomain, allowed_sites_id });
-    dispatch(generateReport({ url: normalizeDomain(validDomain), allowed_sites_id }));
-  };
+ 
 
   const groupByCodeUtil = (issues: any) => {
     const groupedByCode: any = {};
@@ -321,6 +364,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
       await getWidgetSettings(reportData.url);
+    const WEBABILITY_SCORE_BONUS = 45;
+    const MAX_TOTAL_SCORE = 95;
     const issues = extractIssuesFromReport(reportData);
 
     //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
@@ -1243,7 +1288,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               
               <div className="w-full md:flex-1 min-w-0">
                 <Select
-                  options={options}
+                  options={siteOptions}
                   value={selectedOption}
                   onChange={(selected: OptionType | null) => {
                     setSelectedOption(selected);
@@ -1391,8 +1436,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         <button
                           className="text-blue-600 underline font-medium"
                           onClick={() => {
-                            dispatch({ type: 'report/setReportUrl', payload: `/${row.r2_key}?domain=${encodeURIComponent(row.url)}` });
-                            dispatch({ type: 'report/setShowModal', payload: true });
+                            setReportUrl(`/${row.r2_key}?domain=${encodeURIComponent(row.url)}`);
+                            setIsSuccessModalOpen(true);
                           }}
                         >
                           View
@@ -1446,10 +1491,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       </div>
       
       {/* Success Modal with link to open report */}
-      <Modal isOpen={showModal}>
+      <Modal isOpen={isSuccessModalOpen}>
         <div className="p-8 text-center relative">
           <button
-            onClick={() => dispatch({ type: 'report/closeModal' })}
+            onClick={() => setIsSuccessModalOpen(false)}
             className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
             aria-label="Close modal"
           >
@@ -1469,14 +1514,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               onClick={() => {
                 const newTab = window.open(reportUrl, '_blank');
                 if (newTab) newTab.focus();
-                dispatch({ type: 'report/closeModal' });
+                setIsSuccessModalOpen(false);
               }}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               Open Report
             </button>
             <button
-              onClick={() => dispatch({ type: 'report/closeModal' })}
+              onClick={() => setIsSuccessModalOpen(false)}
               className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors font-medium"
             >
               Close
