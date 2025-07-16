@@ -65,6 +65,9 @@ import Modal from '@/components/Common/Modal';
 import Tooltip from '@mui/material/Tooltip';
 
 import getWidgetSettings from '@/utils/getWidgetSettings'
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/config/store';
+import { generateReport } from '@/features/report/reportSlice';
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
 
@@ -97,20 +100,19 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [enhancedScoresCalculated, setEnhancedScoresCalculated] = useState(false);
   const [fetchReportKeys, { data: reportKeysData, loading: loadingReportKeys }] = useLazyQuery(FETCH_ACCESSIBILITY_REPORT_KEYS);
   const [processedReportKeys, setProcessedReportKeys] = useState<any[]>([]);
-  const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(
-    getAccessibilityStats
-  );
+  // Change destructure to avoid duplicate 'error' variable
+  const [getAccessibilityStatsQuery, { data, loading, error: accessibilityStatsError }] = useLazyQuery(getAccessibilityStats);
   const [fetchReportByR2Key, { loading: loadingReport, data: reportData }] = useLazyQuery(FETCH_REPORT_BY_R2_KEY);
   type OptionType = { value: string; label: string };
   const [selectedOption, setSelectedOption] = useState<OptionType | null>(null)
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef: contentRef });
   
-  // Modal state for success message with report link
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [reportUrl, setReportUrl] = useState<string>('');
+  const dispatch = useDispatch();
+  const { isGenerating, showModal, reportUrl, error } = useSelector((state: RootState) => state.report);
+  console.log('Modal open state:', showModal);
 
-  
+  // Restore local state and handlers for language and tooltip
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
   const [showLangTooltip, setShowLangTooltip] = useState(false);
   // Combine options for existing sites and a custom "Enter a new domain" option
@@ -122,8 +124,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     ...siteOptions,
     { value: 'new', label: 'Enter a new domain' },
   ];
-
-   // Handle tour completion
+  // Handle tour completion
   const handleTourComplete = () => {
     console.log('Accessibility tour completed!');
   };
@@ -153,8 +154,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             const savedReport = data.saveAccessibilityReport;
             const r2Key = savedReport.key;
             const savedUrl = savedReport.report.url;
-            setReportUrl(`/${r2Key}?domain=${encodeURIComponent(savedUrl)}`);
-            setIsSuccessModalOpen(true);
             toast.success('Accessibility report saved successfully!');
           }
         });
@@ -228,6 +227,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       console.error('Error generating report:', error);
       toast.error('Failed to generate report. Please try again.');
     }
+
+    let allowed_sites_id = null;
+    if (sitesData && sitesData.getUserSites) {
+      const matchedSite = sitesData.getUserSites.find(
+        (site: any) => normalizeDomain(site.url) == normalizeDomain(validDomain)
+      );
+      allowed_sites_id = matchedSite ? matchedSite.id : null;
+    }
+    console.log('About to dispatch generateReport', { validDomain, allowed_sites_id });
+    dispatch(generateReport({ url: normalizeDomain(validDomain), allowed_sites_id }));
   };
 
   const groupByCodeUtil = (issues: any) => {
@@ -312,8 +321,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
       await getWidgetSettings(reportData.url);
-    const WEBABILITY_SCORE_BONUS = 45;
-    const MAX_TOTAL_SCORE = 95;
     const issues = extractIssuesFromReport(reportData);
 
     //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
@@ -1236,7 +1243,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               
               <div className="w-full md:flex-1 min-w-0">
                 <Select
-                  options={siteOptions}
+                  options={options}
                   value={selectedOption}
                   onChange={(selected: OptionType | null) => {
                     setSelectedOption(selected);
@@ -1384,8 +1391,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         <button
                           className="text-blue-600 underline font-medium"
                           onClick={() => {
-                            setReportUrl(`/${row.r2_key}?domain=${encodeURIComponent(row.url)}`);
-                            setIsSuccessModalOpen(true);
+                            dispatch({ type: 'report/setReportUrl', payload: `/${row.r2_key}?domain=${encodeURIComponent(row.url)}` });
+                            dispatch({ type: 'report/setShowModal', payload: true });
                           }}
                         >
                           View
@@ -1439,10 +1446,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       </div>
       
       {/* Success Modal with link to open report */}
-      <Modal isOpen={isSuccessModalOpen}>
+      <Modal isOpen={showModal}>
         <div className="p-8 text-center relative">
           <button
-            onClick={() => setIsSuccessModalOpen(false)}
+            onClick={() => dispatch({ type: 'report/closeModal' })}
             className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
             aria-label="Close modal"
           >
@@ -1462,14 +1469,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               onClick={() => {
                 const newTab = window.open(reportUrl, '_blank');
                 if (newTab) newTab.focus();
-                setIsSuccessModalOpen(false);
+                dispatch({ type: 'report/closeModal' });
               }}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               Open Report
             </button>
             <button
-              onClick={() => setIsSuccessModalOpen(false)}
+              onClick={() => dispatch({ type: 'report/closeModal' })}
               className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors font-medium"
             >
               Close
