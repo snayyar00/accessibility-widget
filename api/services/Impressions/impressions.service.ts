@@ -12,11 +12,11 @@ import { getRootDomain,extractRootDomain } from '~/utils/domainUtils';
 export async function addImpressionsURL(ipAddress: string, url: string) {
   const validateResult = validateAddImpressionsURL({ ipAddress, url });
   
-  // if (Array.isArray(validateResult) && validateResult.length) {
-  //   return new ValidationError(
-  //     validateResult.map((it) => it.message).join(','),
-  //   );
-  // }
+  if (Array.isArray(validateResult) && validateResult.length) {
+    return new ValidationError(
+      validateResult.map((it) => it.message).join(','),
+    );
+  }
   const domain = getRootDomain(url);
 
   try {
