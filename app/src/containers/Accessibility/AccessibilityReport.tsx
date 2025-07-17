@@ -273,7 +273,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             }
             dispatch(setIsGenerating(false));
 
-             dispatch(generateReport({ url: normalizeDomain(newReportUrl), allowed_sites_id })); // This line is now redundant as generateReport is dispatched in the try block
+             dispatch(generateReport({ url: normalizeDomain(newReportUrl), allowed_sites_id }));
           }
           
           // Process the data
@@ -288,9 +288,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       }
     } catch (error) {
       console.error('Error generating report:', error);
-      if (isMounted.current) {
       dispatch(setIsGenerating(false));
-      }
+      
       toast.error('Failed to generate report. Please try again.');
     }
   };
