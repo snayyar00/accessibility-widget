@@ -16,16 +16,11 @@ export const LANGUAGES = {
   no: { code: 'no', name: 'Norwegian', nativeName: 'Norsk' },
   da: { code: 'da', name: 'Danish', nativeName: 'Dansk' },
   fi: { code: 'fi', name: 'Finnish', nativeName: 'Suomi' },
-  // pl: { code: 'pl', name: 'Polish', nativeName: 'Polski' }
-  // ru: { code: 'ru', name: 'Russian', nativeName: 'Русский' },
-  // ja: { code: 'ja', name: 'Japanese', nativeName: '日本語' },
-  // ko: { code: 'ko', name: 'Korean', nativeName: '한국어' },
-  // zh: { code: 'zh', name: 'Chinese', nativeName: '中文' },
-  // ar: { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
-  // hi: { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
-  // th: { code: 'th', name: 'Thai', nativeName: 'ไทย' },
-  // vi: { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
-  // tr: { code: 'tr', name: 'Turkish', nativeName: 'Türkçe' }
+  ro: { code: 'ro', name: 'Romanian', nativeName: 'Română' },
+  pl: { code: 'pl', name: 'Polish', nativeName: 'Polski' },
+  ru: { code: 'ru', name: 'Russian', nativeName: 'Русский' },
+  vi: { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
+  tr: { code: 'tr', name: 'Turkish', nativeName: 'Türkçe' }
 
 } as const;
 
