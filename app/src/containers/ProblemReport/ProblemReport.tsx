@@ -1,4 +1,4 @@
-import React, { useEffect, useState,useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import ProblemCard from './ProblemCard';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
@@ -27,13 +27,7 @@ const ProblemReport: React.FC = () => {
   const [loader, setLoader] = useState(true);
   const [filter, setFilter] = useState<'all' | 'bug' | 'accessibility'>('all');
 
-  const isMounted = useRef(true);
 
-  useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
 
   // Handle tour completion
   const handleTourComplete = () => {
@@ -60,10 +54,8 @@ const ProblemReport: React.FC = () => {
 
         response.json().then((data) => {
           // Handle the JSON data received from the backend
-          if (isMounted.current) {
           setProblemArray(data);
           setLoader(false);
-          }
         });
       })
       .catch((error) => {

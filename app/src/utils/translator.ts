@@ -16,7 +16,6 @@ export const LANGUAGES = {
   no: { code: 'no', name: 'Norwegian', nativeName: 'Norsk' },
   da: { code: 'da', name: 'Danish', nativeName: 'Dansk' },
   fi: { code: 'fi', name: 'Finnish', nativeName: 'Suomi' },
-  ro: { code: 'ro', name: 'Romanian', nativeName: 'Română' },
   // pl: { code: 'pl', name: 'Polish', nativeName: 'Polski' }
   // ru: { code: 'ru', name: 'Russian', nativeName: 'Русский' },
   // ja: { code: 'ja', name: 'Japanese', nativeName: '日本語' },
