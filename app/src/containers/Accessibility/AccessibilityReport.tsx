@@ -135,6 +135,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   };
 
   const errorToastShown = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Only show one error toast at a time
@@ -154,8 +155,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
     // Reset after a short delay so next error can be shown if needed
     if (errorToastShown.current) {
-      setTimeout(() => { errorToastShown.current = false; }, 2000);
-    }
+     timeoutRef.current = setTimeout(() => { errorToastShown.current = false; }, 2000);
+      }
+      
+      return () => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      };
+      
+    
   }, [error, reportKeysError, reportByR2KeyError, sitesError]);
 
 
