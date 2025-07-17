@@ -1227,13 +1227,20 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     currentLanguage: string
   ): Promise<Blob> => {
     const { jsPDF } = await import('jspdf');
+    // Patch: temporarily assign jsPDF to window for font registration
+    // @ts-ignore
+    window.jsPDF = jsPDF;
+    // @ts-ignore
+    require('@/assets/fonts/NotoSans-normal.js');
+    // @ts-ignore
+    delete window.jsPDF;
     const autoTable = (await import('jspdf-autotable')).default;
     const doc = new jsPDF();
 
     if (!reportData.url) {
       reportData.url = queryParams.get('domain') || '';
     }
-
+    
     const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
       await getWidgetSettings(reportData.url);
     const WEBABILITY_SCORE_BONUS = 45;
@@ -1429,25 +1436,27 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     // Calculate starting X so the whole line is centered
     const startX = 105 - totalWidth / 2;
     // Draw the label
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans_Condensed-Regular'); 
+
+    doc.setFont('NotoSans_Condensed-Regular'); 
     doc.setTextColor(51, 65, 85); // slate-800 for message
     doc.text(label, startX, textY, { align: 'left' });
     // Draw the URL in bold, immediately after the label, no overlap
-    doc.setFont('helvetica', 'bold');
+   
     doc.text(url, startX + labelWidth, textY, { align: 'left' });
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans_Condensed-Regular'); 
 
     textY += 12;
     doc.setFontSize(20);
     doc.setTextColor(...statusColor);
-    doc.setFont('helvetica', 'bold');
+   doc.setFont('NotoSans_Condensed-Regular'); 
     doc.text(status, 105, textY, { align: 'center' });
 
     message = translatedMessage;
     textY += 9;
     doc.setFontSize(12);
     doc.setTextColor(51, 65, 85); 
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans_Condensed-Regular'); 
     doc.text(message, 105, textY, { align: 'center' });
     
 
@@ -1471,7 +1480,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setLineWidth(1.5);
     doc.setFillColor(21, 101, 192); 
     doc.circle(circle1X, circleY, circleRadius, 'FD');
-    doc.setFont('helvetica', 'bold');
+   doc.setFont('NotoSans_Condensed-Regular'); 
     doc.setFontSize(19); 
     doc.setTextColor(255, 255, 255); 
 
@@ -1482,7 +1491,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans_Condensed-Regular'); 
     doc.text(translatedTotalErrors, circle1X, circleY + circleRadius + 9, {
       align: 'center',
     });
@@ -1491,7 +1500,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setLineWidth(1.5);
     doc.setFillColor(33, 150, 243); 
     doc.circle(circle2X, circleY, circleRadius, 'FD');
-    doc.setFont('helvetica', 'bold');
+   doc.setFont('NotoSans_Condensed-Regular'); 
     doc.setFontSize(19); 
     doc.setTextColor(255, 255, 255); 
     const scoreText = `${Math.round(enhancedScore)}%`;
@@ -1505,7 +1514,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans_Condensed-Regular'); 
     doc.text(translatedScore, circle2X, circleY + circleRadius + 9, {
       align: 'center',
     });
@@ -1541,7 +1550,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       doc.roundedRect(x, yStart, 55, 20, 3, 3, 'F');
       doc.setTextColor(0, 0, 0); 
       doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
+     doc.setFont('NotoSans_Condensed-Regular'); 
       doc.text(`${box.count}`, x + 4, yStart + 8);
       doc.setFontSize(10);
       doc.text(box.label, x + 4, yStart + 16);
@@ -1580,7 +1589,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           styles: {
             fillColor: [255, 255, 255], // white background
             textColor: [0, 0, 0], // black text
-            fontStyle: 'bold',
             fontSize: 14,
             halign: 'center',
             cellPadding: 8,
@@ -1593,7 +1601,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           styles: {
             fillColor: [255, 255, 255], // matching white background
             textColor: [0, 0, 0], // black text
-            fontStyle: 'bold',
             fontSize: 14,
             halign: 'center',
             cellPadding: 8,
@@ -1607,7 +1614,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           content: `${issue.code ? `${issue.code} (${issue.impact})` : ''}`,
           colSpan: 2,
           styles: {
-            fontStyle: 'bold',
             fontSize: 12,
             textColor: [30, 41, 59], // dark navy text
             halign: 'left',
@@ -1619,7 +1625,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
                 : issue.impact === 'moderate'
                   ? [187, 222, 251] 
                   : [248, 250, 252], 
-            font: 'courier',
+            font: 'NotoSans_Condensed-Regular',
             minCellHeight: 30,
           },
         },
@@ -1628,7 +1634,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           content: `${issue.message || ''}`,
           colSpan: 2,
           styles: {
-            fontStyle: 'normal',
             fontSize: 12,
             textColor: [30, 41, 59], // dark navy text
             halign: 'left',
@@ -1640,7 +1645,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               : issue.impact === 'moderate'
                 ? [187, 222, 251] 
                 : [248, 250, 252], 
-            font: 'courier',
+            font: 'NotoSans_Condensed-Regular',
             minCellHeight: 30,
           },
         },
@@ -1666,7 +1671,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             content: 'Screenshot',
             colSpan: 4,
             styles: {
-              fontStyle: 'bold',
+             
               fontSize: 12,
               textColor: [30, 41, 59],
               halign: 'center',
@@ -1708,7 +1713,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             content: translatedContext,
             colSpan: 4,
             styles: {
-              fontStyle: 'bolditalic',
               fontSize: 11,
               textColor: [0, 0, 0],
               halign: 'left',
@@ -1730,7 +1734,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               pageBreak: 'avoid',
               rowSpan: 1,
               styles: {
-                font: 'courier',
+                font: 'NotoSans_Condensed-Regular',
                 fontSize: 10,
                 textColor: [255, 255, 255], // This will be overridden by didDrawCell
                 fillColor: [255, 255, 255], // White background for the cell
@@ -1775,13 +1779,13 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             content: translatedFix,
             colSpan: 4,
             styles: {
-              fontStyle: 'bolditalic',
               fontSize: 11,
               textColor: [0, 0, 0], // black text
               halign: 'left',
               cellPadding: 5,
               fillColor: [255, 255, 255], // white background
               lineWidth: 0,
+              font: 'NotoSans_Condensed-Regular',
             },
           },
         ]);
@@ -1793,13 +1797,13 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               content: `${fixIdx + 1}. ${fix}`,
               colSpan: 4,
               styles: {
-                fontStyle: 'normal',
                 fontSize: 11,
                 textColor: [0, 0, 0], // black text
                 halign: 'left',
                 cellPadding: { top: 10, right: 8, bottom: 10, left: 8 }, // more vertical space for separation
                 fillColor: [255, 255, 255], // white background for back container
                 lineWidth: 0,
+                font: 'NotoSans_Condensed-Regular',
               },
             },
           ]);
@@ -1866,7 +1870,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           // Calculate available width for code content
           const availableWidth = data.cell.width - 16 - indexWidth; // Cell padding + index width
           
-          doc.setFont('courier', 'normal');
+          doc.setFont('NotoSans_Condensed-Regular', 'normal');
           doc.setFontSize(10);
           const lines = doc.splitTextToSize(codeContent, availableWidth);
           
@@ -1895,7 +1899,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           const indexNumber = (data.cell.raw as any)._indexNumber;
           
           // Calculate index section width
-          doc.setFont('courier', 'normal');
+          doc.setFont('NotoSans_Condensed-Regular', 'normal');
           doc.setFontSize(12);
           const indexPrefix = `${indexNumber}`;
           const indexWidth = doc.getTextWidth(indexPrefix) + 8; // Extra padding for the index section
@@ -2007,7 +2011,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     return doc.output('blob');
   };
-
   const [currentLanguage, setCurrentLanguage] = useState<string>('');
 
   return (
