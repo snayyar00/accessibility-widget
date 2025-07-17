@@ -20,12 +20,14 @@ const reportSlice = createSlice({
     error: null,
     showModal: false,
     reportUrl: '',
+    selectedDomain: null,
   } as {
     isGenerating: boolean;
     reportData: any;
     error: string | null;
     showModal: boolean;
     reportUrl: string;
+    selectedDomain: string | null;
   },
   reducers: {
     closeModal(state) {
@@ -37,6 +39,13 @@ const reportSlice = createSlice({
       state.error = null;
       state.showModal = false;
       state.reportUrl = '';
+      state.selectedDomain = null;
+    },
+    setIsGenerating(state, action) {
+      state.isGenerating = action.payload;
+    },
+    setSelectedDomain(state, action) {
+      state.selectedDomain = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -63,5 +72,5 @@ const reportSlice = createSlice({
   },
 });
 
-export const { closeModal, resetReport } = reportSlice.actions;
+export const { closeModal, resetReport, setIsGenerating, setSelectedDomain } = reportSlice.actions;
 export default reportSlice.reducer; 
