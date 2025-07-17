@@ -302,16 +302,26 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     currentLanguage: string
   ): Promise<Blob> => {
     const { jsPDF } = await import('jspdf');
-    // Patch: temporarily assign jsPDF to window for font registration
-    // @ts-ignore
-    window.jsPDF = jsPDF;
-    // @ts-ignore
-    require('@/assets/fonts/NotoSans-normal.js');
-    // @ts-ignore
-    delete window.jsPDF;
+
+    let fontLoaded = true;
+    try {
+      // @ts-ignore
+      window.jsPDF = jsPDF;
+      // @ts-ignore
+      require('@/assets/fonts/NotoSans-normal.js');
+      // @ts-ignore
+      delete window.jsPDF;
+    } catch (e) {
+      console.error('Failed to load custom font for jsPDF:', e);
+      fontLoaded = false;
+    }
+
+
     const autoTable = (await import('jspdf-autotable')).default;
     const doc = new jsPDF();
-
+     if (!fontLoaded) {
+      doc.setFont('helvetica', 'normal');
+    }
     if (!reportData.url) {
       reportData.url = processedReportKeys?.[0]?.url || "";
     }
