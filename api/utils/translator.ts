@@ -92,7 +92,7 @@ export const translateMultipleTexts = async (
     return texts;
   }
 
-  console.log("I am called 1st ", texts);
+  // console.log("I am called 1st ", texts);
 
   try {
     const response = await axios.post(
@@ -106,7 +106,7 @@ export const translateMultipleTexts = async (
       }
     );
 
-    console.log("I am called 2nd ", texts);
+    // console.log("I am called 2nd ", texts);
 
     if (Array.isArray(response.data)) {
       return response.data.map((item: any, idx: number) =>
