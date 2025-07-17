@@ -520,8 +520,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     const totalWidth = labelWidth + urlWidth;
     // Calculate starting X so the whole line is centered
     const startX = 105 - totalWidth / 2;
-    // Draw the label
-    doc.setFont('NotoSans_Condensed-Regular'); 
 
     doc.setFont('NotoSans_Condensed-Regular'); 
     doc.setTextColor(51, 65, 85); // slate-800 for message
