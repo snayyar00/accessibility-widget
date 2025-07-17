@@ -265,7 +265,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             const newReportUrl = `/${r2Key}?domain=${encodeURIComponent(savedUrl)}`;
             if (isMounted.current) {
             setReportUrl(newReportUrl);
-            //setIsSuccessModalOpen(true);
             toast.success('Accessibility report saved successfully!');
             
             // Dispatch the report generation
