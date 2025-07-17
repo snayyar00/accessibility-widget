@@ -92,17 +92,15 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [correctDomain, setcorrectDomain] = useState(currentDomain);
   //console.log('Current domain:', correctDomain);
   // const [accessibilityData, setAccessibilityData] = useState({});
-  const { data: sitesData } = useQuery(GET_USER_SITES);
+  const { data: sitesData, error: sitesError } = useQuery(GET_USER_SITES);
   const [saveAccessibilityReport] = useMutation(SAVE_ACCESSIBILITY_REPORT);
   const [selectedSite, setSelectedSite] = useState('');
   const [reportGenerated, setReportGenerated] = useState(false);
   const [enhancedScoresCalculated, setEnhancedScoresCalculated] = useState(false);
-  const [fetchReportKeys, { data: reportKeysData, loading: loadingReportKeys }] = useLazyQuery(FETCH_ACCESSIBILITY_REPORT_KEYS);
+  const [fetchReportKeys, { data: reportKeysData, loading: loadingReportKeys, error: reportKeysError }] = useLazyQuery(FETCH_ACCESSIBILITY_REPORT_KEYS);
   const [processedReportKeys, setProcessedReportKeys] = useState<any[]>([]);
-  const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(
-    getAccessibilityStats
-  );
-  const [fetchReportByR2Key, { loading: loadingReport, data: reportData }] = useLazyQuery(FETCH_REPORT_BY_R2_KEY);
+  const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(getAccessibilityStats);
+  const [fetchReportByR2Key, { loading: loadingReport, data: reportData, error: reportByR2KeyError }] = useLazyQuery(FETCH_REPORT_BY_R2_KEY);
   type OptionType = { value: string; label: string };
   const [selectedOption, setSelectedOption] = useState<OptionType | null>(null)
   const contentRef = useRef<HTMLDivElement>(null);
@@ -130,6 +128,30 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     console.log('Accessibility tour completed!');
   };
   const dispatch = useDispatch();
+
+  const errorToastShown = useRef(false);
+
+  useEffect(() => {
+    // Only show one error toast at a time
+    if (errorToastShown.current) return;
+    if (error) {
+      toast.error('Failed to generate report. Please try again.');
+      errorToastShown.current = true;
+    } else if (reportKeysError) {
+      toast.error('Failed to fetch report history. Please try again.');
+      errorToastShown.current = true;
+    } else if (reportByR2KeyError) {
+      toast.error('Failed to fetch report. Please try again.');
+      errorToastShown.current = true;
+    } else if (sitesError) {
+      toast.error('Failed to load your sites. Please refresh the page.');
+      errorToastShown.current = true;
+    }
+    // Reset after a short delay so next error can be shown if needed
+    if (errorToastShown.current) {
+      setTimeout(() => { errorToastShown.current = false; }, 2000);
+    }
+  }, [error, reportKeysError, reportByR2KeyError, sitesError]);
 
 
   // useEffect(() => {
@@ -172,13 +194,25 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   //   }
   // }, [data]);
 
+
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+
   const handleSubmit = async () => {
 
     const sanitizedDomain = getRootDomain(domain);
     console.log("sanitizedDomain",sanitizedDomain);
     if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {        
       console.log('Invalid domain:', domain);
-      setDomain(currentDomain);
+      if (isMounted.current) {
+        setDomain(currentDomain);
+      }
       toast.error('You must enter a valid domain name!');
         return;
     }
@@ -189,9 +223,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       toast.error('Please enter a valid domain!');
       return;
     }
-    
+    if (isMounted.current) { 
     setcorrectDomain(validDomain);
-    
+    }
     try {
       // Pass the domain directly to the query to avoid using empty correctDomain
       const { data: queryData } = await getAccessibilityStatsQuery({ 
@@ -227,20 +261,23 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             const r2Key = savedReport.key;
             const savedUrl = savedReport.report.url;
             const newReportUrl = `/${r2Key}?domain=${encodeURIComponent(savedUrl)}`;
+            if (isMounted.current) {
             setReportUrl(newReportUrl);
-            //setIsSuccessModalOpen(true);
-            //toast.success('Accessibility report saved successfully!');
+            setIsSuccessModalOpen(true);
+            toast.success('Accessibility report saved successfully!');
             
             // Dispatch the report generation
+            }
+
             dispatch(generateReport({ url: normalizeDomain(newReportUrl), allowed_sites_id }));
           }
           
           // Process the data
           const { htmlcs } = result;
           groupByCode(htmlcs);
-          setSiteImg(result?.siteImg);
-          setScoreBackup(Math.min(result?.score || 0, 95));
-          setScore(Math.min(result?.score || 0, 95));
+         // setSiteImg(result?.siteImg);
+          //setScoreBackup(Math.min(result?.score || 0, 95));
+          //setScore(Math.min(result?.score || 0, 95));
         }
       }
     } catch (error) {
@@ -297,8 +334,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   };
 
   const groupByCode = (issues: any) => {
-    console.log('group code called');
-    if (issues && typeof issues === 'object') {
+    // console.log('group code called');
+    if (issues && typeof issues === 'object') { 
       issues.errors = groupByCodeUtil(issues.errors);
       issues.warnings = groupByCodeUtil(issues.warnings);
       issues.notices = groupByCodeUtil(issues.notices);
