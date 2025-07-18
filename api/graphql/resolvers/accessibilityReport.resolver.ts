@@ -134,8 +134,7 @@ const resolvers = {
       if (!job) {
         return { status: 'not_found', result: null, error: 'Error generating report please try agian' };
       }
-      if (job.status === 'done') {
-        // Clean up immediately after fetch
+      if (job.status === 'done' || job.status === 'error') {
         clearTimeout(job.timeout);
         accessibilityReportJobs.delete(jobId);
       }
