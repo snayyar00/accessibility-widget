@@ -2,6 +2,7 @@ import union from 'lodash/union';
 import database from '~/config/database.config';
 import { userTokenColumns, UserToken } from './user_tokens.repository';
 import { TABLES } from '~/constants/database.constant';
+import Knex from 'knex';
 
 const TABLE = TABLES.users;
 
@@ -18,6 +19,7 @@ export const usersColumns = {
   provider: 'users.provider',
   providerId: 'users.provider_id',
   deletedAt: 'users.deleted_at',
+  current_organization_id: 'users.current_organization_id',
 };
 
 type FindUserProps = {
@@ -42,6 +44,7 @@ export type UserProfile = {
   created_at?: string;
   updated_at?: string;
   deleted_at?: string;
+  current_organization_id?: number;
 };
 
 type GetUserByIdAndJoinUserTokenResponse = UserProfile & UserToken;
@@ -50,20 +53,24 @@ export async function findUser({ id, email, provider_id, provider, deleted_at = 
   const condition: FindUserProps = {
     deleted_at,
   };
+
   if (id) condition.id = id;
   if (email) condition.email = email;
   if (provider_id) condition.provider_id = provider_id;
   if (provider) condition.provider = provider;
+
   return database(TABLE).where(condition).first();
 }
 
 export async function createUser(userData: UserProfile): Promise<number | Error> {
   let t;
+
   try {
     t = await database.transaction();
     const [userId] = await database(TABLE).transacting(t).insert(userData);
 
     await t.commit();
+
     return userId;
   } catch (error) {
     if (error) t.rollback();
@@ -71,15 +78,15 @@ export async function createUser(userData: UserProfile): Promise<number | Error>
   }
 }
 
-export async function updateUser(id: number, data: UserProfile): Promise<number> {
-  return database(TABLE).where({ id }).update(data);
+export async function updateUser(id: number, data: Partial<UserProfile>, trx?: Knex.Transaction): Promise<number> {
+  const query = database(TABLE).where({ id }).update(data);
+
+  return trx ? query.transacting(trx) : query;
 }
 
 export async function getUserbyId(id: number): Promise<UserProfile> {
   return database(TABLE).where({ id }).first();
 }
-
-
 
 export async function getUserByIdAndJoinUserToken(id: number, type: 'verify_email' | 'forgot_password' | 'team_invitation_email'): Promise<GetUserByIdAndJoinUserTokenResponse> {
   const users = Object.values(usersColumns);

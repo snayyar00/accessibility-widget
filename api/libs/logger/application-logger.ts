@@ -11,7 +11,7 @@ const originalConsole = {
   warn: console.warn,
   error: console.error,
   debug: console.debug,
-  trace: console.trace
+  trace: console.trace,
 };
 
 let logger: bunyan | null = null;
@@ -73,7 +73,7 @@ const consoleWrapper = {
       logger.warn(args.join(' '));
     }
   },
-  error: (...args: unknown[]) => {    
+  error: (...args: unknown[]) => {
     if (isDevelopment) {
       originalConsole.error(...args);
     } else if (logger) {
@@ -93,7 +93,7 @@ const consoleWrapper = {
     } else if (logger) {
       logger.trace(args.join(' '));
     }
-  }
+  },
 };
 
 // Override global console
@@ -135,7 +135,7 @@ const safeLogger = {
     } else if (logger) {
       logger.trace(msg, ...args);
     }
-  }
+  },
 };
 
 // Export safe logger (works in both development and production)

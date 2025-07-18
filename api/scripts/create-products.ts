@@ -133,6 +133,6 @@ async function run(): Promise<true | boolean[]> {
 run()
   .then(() => console.log('insert successfully'))
   .then(() => process.exit())
-  .catch((err) => {});
+  .catch(() => {});
 
 export default run;

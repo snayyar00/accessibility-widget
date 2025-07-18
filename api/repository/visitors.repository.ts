@@ -49,7 +49,10 @@ export type FindVisitorsResponse = FindVisitorsBySiteId[] & {
  * @returns {Array}
  */
 export async function insertVisitor(data: VisitorInfo): Promise<number[]> {
-  const exisitingVisitors = await database(TABLE).select(visitorColumns).where({ [visitorColumns.ip_address]: data.ip_address, [visitorColumns.site_id]: data.site_id }).first();
+  const exisitingVisitors = await database(TABLE)
+    .select(visitorColumns)
+    .where({ [visitorColumns.ip_address]: data.ip_address, [visitorColumns.site_id]: data.site_id })
+    .first();
   if (exisitingVisitors !== undefined) return [0];
   else return database(TABLE).insert(data).onConflict(['unique_visitors.ip_address', 'unique_visitors.site_id']).ignore();
 }
@@ -66,7 +69,7 @@ export async function findVisitorBySiteId(id: number) {
     .join(TABLES.allowed_sites, visitorColumns.site_id, siteColumns.id)
     .select(visitorColumns, `${siteColumns.url} as site`)
     .where({ [visitorColumns.site_id]: id });
-  return visitors.map(visitor => ({
+  return visitors.map((visitor) => ({
     id: visitor.id,
     siteId: visitor.site_id, // Mapping from 'site_id' to 'siteId'
     ipAddress: visitor.ip_address, // Mapping from 'ip_address' to 'ipAddress'
@@ -82,7 +85,7 @@ export async function findVisitorByURL(url: string) {
     .join(TABLES.allowed_sites, visitorColumns.site_id, siteColumns.id)
     .select(visitorColumns, `${siteColumns.url} as site`)
     .where({ [siteColumns.url]: url });
-  return visitors.map(visitor => ({
+  return visitors.map((visitor) => ({
     id: visitor.id,
     siteId: visitor.site_id, // Mapping from 'site_id' to 'siteId'
     ipAddress: visitor.ip_address, // Mapping from 'ip_address' to 'ipAddress'
@@ -90,10 +93,9 @@ export async function findVisitorByURL(url: string) {
     country: visitor.country,
     zipcode: visitor.zipcode,
     continent: visitor.continent,
-    firstVisit: visitor.first_visit // Mapping from 'first_visit' to 'firstVisit'
+    firstVisit: visitor.first_visit, // Mapping from 'first_visit' to 'firstVisit'
   }));
 }
-
 
 export async function findVisitorByURLDate(url: string, startDate: Date, endDate: Date) {
   const visitors = await database(TABLE)
@@ -103,7 +105,7 @@ export async function findVisitorByURLDate(url: string, startDate: Date, endDate
     .andWhere(visitorColumns.first_visit, '>=', startDate)
     .andWhere(visitorColumns.first_visit, '<=', endDate);
 
-  return visitors.map(visitor => ({
+  return visitors.map((visitor) => ({
     id: visitor.id,
     siteId: visitor.site_id, // Mapping from 'site_id' to 'siteId'
     ipAddress: visitor.ip_address, // Mapping from 'ip_address' to 'ipAddress'
@@ -139,8 +141,7 @@ export async function findVisitorByIp(ip_address: string) {
       continent: visitor.continent,
       firstVisit: visitor.first_visit,
     };
-  }
-  else {
+  } else {
     return undefined;
   }
 }
@@ -153,12 +154,18 @@ export async function findVisitorByIp(ip_address: string) {
  *
  */
 export function updateVisitorByIp(ip_address: string, data: VisitorInfo): Promise<number> {
-  return database(TABLE).where({ [visitorColumns.ip_address]: ip_address }).update(data);
+  return database(TABLE)
+    .where({ [visitorColumns.ip_address]: ip_address })
+    .update(data);
 }
 
 export function deleteVisitorId(id: number): Promise<any> {
-  return database(TABLE).where({ [visitorColumns.id]: id }).del();
+  return database(TABLE)
+    .where({ [visitorColumns.id]: id })
+    .del();
 }
 export function deleteVisitorIp(ip_address: string): Promise<any> {
-  return database(TABLE).where({ [visitorColumns.ip_address]: ip_address }).del();
+  return database(TABLE)
+    .where({ [visitorColumns.ip_address]: ip_address })
+    .del();
 }

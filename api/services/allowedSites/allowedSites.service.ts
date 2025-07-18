@@ -2,8 +2,8 @@ import logger from '~/libs/logger/application-logger';
 import { IUserSites, deleteSiteWithRelatedRecords, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL, findSiteById } from '~/repository/sites_allowed.repository';
 import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
 import { createSitesPlan } from './plans-sites.service';
-import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '~/constants/database.constant';
-import { sendEmailWithRetries, sendMail, EmailAttachment } from '~/libs/mail';
+import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '~/constants/billing.constant';
+import { sendEmailWithRetries, EmailAttachment } from '~/libs/mail';
 import { getUserbyId } from '~/repository/user.repository';
 import compileEmailTemplate from '~/helpers/compile-email-template';
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service';
@@ -75,11 +75,7 @@ export async function addSite(userId: number, url: string): Promise<string> {
         const user = await getUserbyId(userId);
         const widgetStatus = await checkScript(domain);
         const status = widgetStatus == 'true' || widgetStatus == 'Web Ability' ? 'Compliant' : 'Not Compliant';
-        const score = widgetStatus == 'Web Ability'
-          ? Math.floor(Math.random() * (100 - 90 + 1)) + 90
-          : widgetStatus == 'true'
-            ? Math.floor(Math.random() * (88 - 80 + 1)) + 80
-            : report.score;
+        const score = widgetStatus == 'Web Ability' ? Math.floor(Math.random() * (100 - 90 + 1)) + 90 : widgetStatus == 'true' ? Math.floor(Math.random() * (88 - 80 + 1)) + 80 : report.score;
 
         const template = await compileEmailTemplate({
           fileName: 'accessReport.mjml',
@@ -87,9 +83,7 @@ export async function addSite(userId: number, url: string): Promise<string> {
             status: status,
             url: domain,
             statusImage: report?.siteImg,
-            statusDescription: report?.score > 89
-              ? 'You achieved exceptionally high compliance status!'
-              : 'Your Site may not comply with WCAG 2.1 AA.',
+            statusDescription: report?.score > 89 ? 'You achieved exceptionally high compliance status!' : 'Your Site may not comply with WCAG 2.1 AA.',
             score: score,
             errorsCount: report?.htmlcs?.errors?.length,
             warningsCount: report?.htmlcs?.warnings?.length,
@@ -108,14 +102,7 @@ export async function addSite(userId: number, url: string): Promise<string> {
           },
         ];
 
-        await sendEmailWithRetries(
-          user.email,
-          template,
-          `Accessibility Report for ${url}`,
-          5,
-          2000,
-          attachments,
-        );
+        await sendEmailWithRetries(user.email, template, `Accessibility Report for ${url}`, 5, 2000, attachments);
       } catch (error) {
         logger.error('Async email/report task failed:', error);
       }
@@ -151,7 +138,7 @@ export async function findUserSites(userId: number): Promise<IUserSites[]> {
         };
       }),
     );
-    
+
     return result;
   } catch (e) {
     logger.error(e);
@@ -180,7 +167,7 @@ export async function deleteSite(userId: number, url: string) {
 
   try {
     const deletedRecs = await deleteSiteWithRelatedRecords(domain, userId);
-    
+
     return deletedRecs;
   } catch (e) {
     logger.error(e);
@@ -205,9 +192,8 @@ export async function changeURL(siteId: number, userId: number, url: string) {
     }
 
     const x = await updateAllowedSiteURL(siteId, domain, userId);
-    
-    if (x > 0) return 'Successfully updated URL';
 
+    if (x > 0) return 'Successfully updated URL';
     else return 'Could not change URL';
   } catch (e) {
     logger.error(e);
@@ -217,11 +203,9 @@ export async function changeURL(siteId: number, userId: number, url: string) {
 
 export async function isDomainAlreadyAdded(url: string): Promise<boolean> {
   const validateResult = validateDomain({ url });
-      
+
   if (Array.isArray(validateResult) && validateResult.length) {
-    throw new ValidationError(
-      validateResult.map((it) => it.message).join(','),
-    );
+    throw new ValidationError(validateResult.map((it) => it.message).join(','));
   }
 
   const domain = normalizeDomain(url);

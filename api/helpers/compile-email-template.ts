@@ -15,16 +15,12 @@ type Props = {
     teamName?: string;
     link?: string;
     [key: string]: any;
-  }
+  };
 };
 
 export default async function compileEmailTemplate({ fileName, data }: Props): Promise<string> {
   try {
-    const possiblePaths = [
-      path.join(process.cwd(), 'dist', 'email-templates', fileName),
-      path.join(process.cwd(), 'api', 'email-templates', fileName),
-      path.join(__dirname, '..', 'email-templates', fileName)
-    ];
+    const possiblePaths = [path.join(process.cwd(), 'dist', 'email-templates', fileName), path.join(process.cwd(), 'api', 'email-templates', fileName), path.join(__dirname, '..', 'email-templates', fileName)];
 
     let mjmlContent: string | null = null;
     let usedPath: string | null = null;
@@ -54,7 +50,6 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
     if (errors && errors.length > 0) {
       logger.warn('MJML compilation warnings:', errors);
     }
-
 
     // Escape all string values in data using entities
 

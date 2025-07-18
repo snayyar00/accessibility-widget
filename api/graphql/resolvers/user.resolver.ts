@@ -13,6 +13,8 @@ import { updateProfile } from '~/services/user/update-user.service';
 import { isEmailAlreadyRegistered } from '~/services/user/user.service';
 import { normalizeEmail } from '~/helpers/string.helper';
 import { clearCookie, COOKIE_NAME, setAuthenticationCookie } from '~/utils/cookie';
+import { getOrganizationById } from '~/services/organization/organization.service';
+import { getUserOrganization } from '~/services/organization/organization_users.service';
 
 type Res = {
   res: Response;
@@ -22,9 +24,6 @@ type Register = {
   email: string;
   password: string;
   name: string;
-  paymentMethodToken: string;
-  planName: string;
-  billingType: 'MONTHLY' | 'YEARLY';
 };
 
 type Login = {
@@ -48,17 +47,31 @@ type Verify = {
 
 const resolvers = {
   Query: {
-    profileUser: combineResolvers(
-      isAuthenticated,
-      (_, __, { user }) => user,
-    ),
-    isEmailAlreadyRegistered: async (_: unknown, { email }: { email: string }) => {
-      return isEmailAlreadyRegistered(normalizeEmail(email));
+    profileUser: combineResolvers(isAuthenticated, (_, __, { user }) => user),
+    isEmailAlreadyRegistered: async (_: unknown, { email }: { email: string }) => isEmailAlreadyRegistered(normalizeEmail(email)),
+  },
+  User: {
+    currentOrganization: async (parent: { current_organization_id?: number; id?: number }) => {
+      if (!parent.current_organization_id || !parent.id) return null;
+
+      const org = await getOrganizationById(parent.current_organization_id, parent);
+
+      return org || null;
     },
+
+    currentOrganizationUser: async (parent: { id?: number; current_organization_id?: number }) => {
+      if (!parent.id || !parent.current_organization_id) return null;
+
+      const orgUser = await getUserOrganization(parent.id, parent.current_organization_id);
+
+      return orgUser || null;
+    },
+
+    hasOrganization: (parent: { current_organization_id?: number }) => Boolean(parent.current_organization_id),
   },
   Mutation: {
-    register: async (_: unknown, { email, password, name, paymentMethodToken, planName, billingType } : Register, { res }: Res) => {
-      const result = await registerUser(normalizeEmail(email), password, name, paymentMethodToken, planName, billingType);
+    register: async (_: unknown, { email, password, name }: Register, { res }: Res) => {
+      const result = await registerUser(normalizeEmail(email), password, name);
 
       if (result && result.token) {
         setAuthenticationCookie(res, result.token);
@@ -86,37 +99,25 @@ const resolvers = {
 
     forgotPassword: async (_: unknown, { email }: ForgotPassword) => forgotPasswordUser(normalizeEmail(email)),
 
-    changePassword: combineResolvers(
-      isAuthenticated,
-      (_, { currentPassword, newPassword }, { user }) => changePasswordUser(user.id, currentPassword, newPassword),
-    ),
+    changePassword: combineResolvers(isAuthenticated, (_, { currentPassword, newPassword }, { user }) => changePasswordUser(user.id, currentPassword, newPassword)),
 
     resetPassword: async (_: unknown, { token, password, confirmPassword }: ResetPassword) => resetPasswordUser(token, password, confirmPassword),
 
     verify: (_: unknown, { token }: Verify) => verifyEmail(token),
 
-    resendEmail: combineResolvers(
-      isAuthenticated,
-      (_, { type }, { user }) => resendEmailAction(user, <'verify_email' | 'forgot_password'>normalizeEmail(type)),
-    ),
+    resendEmail: combineResolvers(isAuthenticated, (_, { type }, { user }) => resendEmailAction(user, <'verify_email' | 'forgot_password'>normalizeEmail(type))),
 
-    deleteAccount: combineResolvers(
-      isAuthenticated,
-      async (_, __, { user, res }) => {
-        const result = await deleteUser(user);
+    deleteAccount: combineResolvers(isAuthenticated, async (_, __, { user, res }) => {
+      const result = await deleteUser(user);
 
-        if (result === true) {
-          clearCookie(res, COOKIE_NAME.TOKEN);
-        }
-        
-        return result;
-      },
-    ),
+      if (result === true) {
+        clearCookie(res, COOKIE_NAME.TOKEN);
+      }
 
-    updateProfile: combineResolvers(
-      isAuthenticated,
-      (_, { name, company, position }, { user }) => updateProfile(user.id, name, company, position),
-    ),
+      return result;
+    }),
+
+    updateProfile: combineResolvers(isAuthenticated, (_, { name, company, position }, { user }) => updateProfile(user.id, name, company, position)),
   },
 };
 

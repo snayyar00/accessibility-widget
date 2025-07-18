@@ -1,25 +1,21 @@
+let slugify = require('slugify');
+
 export function normalizeEmail(text: string): string {
   return text.toLowerCase().trim();
 }
 
-/**
- * Function to convert vietnamese string to slug
- *
- * Link https://gist.github.com/codeguy/6684588
- *
- */
 export function stringToSlug(str: string): string {
-  const from = 'àáãảạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệđùúủũụưừứửữựòóỏõọôồốổỗộơờớởỡợìíỉĩịäëïîöüûñçýỳỹỵỷ';
-  const to = 'aaaaaaaaaaaaaaaaaeeeeeeeeeeeduuuuuuuuuuuoooooooooooooooooiiiiiaeiiouuncyyyyy';
+  return slugify(str, {
+    lower: true,
+    strict: true,
+  });
+}
 
-  for (let i = 0, l = from.length; i < l; i += 1) {
-    str = str.replace(RegExp(from[i], 'gi'), to[i]);
-  }
+export function objectToString(value: any): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === '' || value === null) return null;
+  if (typeof value === 'string') throw new Error('objectToString: non-empty string is not allowed, except empty string');
+  if (typeof value === 'object') return JSON.stringify(value);
 
-  str = str.toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9-]/g, '-')
-    .replace(/-+/g, '-');
-
-  return str;
+  return null;
 }

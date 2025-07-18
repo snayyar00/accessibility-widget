@@ -1,0 +1,50 @@
+import { addOrganization, editOrganization, removeOrganization, CreateOrganizationInput, getOrganizationById, getOrganizations } from '~/services/organization/organization.service';
+import { getOrganizationUsers } from '~/services/organization/organization_users.service';
+import { Organization } from '~/repository/organization.repository';
+import { combineResolvers } from 'graphql-resolvers';
+import { isAuthenticated } from './authorization.resolver';
+
+const organizationResolver = {
+  Query: {
+    getUserOrganizations: combineResolvers(isAuthenticated, async (_: unknown, __: unknown, { user }): Promise<Organization[]> => {
+      const orgs = await getOrganizations(user);
+
+      return orgs || [];
+    }),
+
+    getOrganizationUsers: combineResolvers(isAuthenticated, async (_: unknown, __: unknown, { user }) => getOrganizationUsers(user)),
+  },
+
+  Mutation: {
+    addOrganization: combineResolvers(isAuthenticated, async (_: unknown, args: CreateOrganizationInput, { user }): Promise<Organization | null> => {
+      const id = await addOrganization(args, user);
+
+      if (id) {
+        const org = await getOrganizationById(id, user);
+        return org || null;
+      }
+
+      return null;
+    }),
+
+    editOrganization: combineResolvers(isAuthenticated, async (_: unknown, args: Partial<Organization>, { user }): Promise<Organization | null> => {
+      const { id, ...editData } = args;
+      const updated = await editOrganization(editData, user, id);
+
+      if (updated) {
+        const org = await getOrganizationById(id, user);
+        return org || null;
+      }
+
+      return null;
+    }),
+
+    removeOrganization: combineResolvers(isAuthenticated, async (_: unknown, args: { id: number }, { user }): Promise<boolean> => {
+      const deleted = await removeOrganization(user, args.id);
+
+      return !!deleted;
+    }),
+  },
+};
+
+export default organizationResolver;

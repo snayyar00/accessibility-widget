@@ -2,8 +2,6 @@ import Knex from 'knex';
 import database from '~/config/database.config';
 import { TABLES } from '~/constants/database.constant';
 import formatDateDB from '~/utils/format-date-db';
-import { priceColumns } from './prices.repository';
-import { productColumns } from './products.repository';
 
 const TABLE = TABLES.sitePermissions;
 
@@ -37,5 +35,7 @@ export async function insertMultiSitePermission(data: SitePermission[], transact
 
 export function deletePermissionBySitePlanId(sitePlanId: number, dateDeleted: string = null): Promise<number> {
   const deleteAt = dateDeleted || formatDateDB();
-  return database(TABLE).where({ [sitePermissionColumns.sitePlanId]: sitePlanId }).update({ deleted_at: deleteAt });
+  return database(TABLE)
+    .where({ [sitePermissionColumns.sitePlanId]: sitePlanId })
+    .update({ deleted_at: deleteAt });
 }

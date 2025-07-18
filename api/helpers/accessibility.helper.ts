@@ -35,7 +35,7 @@ interface finalOutput {
   };
   score?: number;
   totalElements: number;
-  siteImg?:string;
+  siteImg?: string;
   ByFunctions?: HumanFunctionality[];
   processing_stats?: any;
   _originalHtmlcs?: {
@@ -56,12 +56,8 @@ interface Error {
 }
 
 interface HumanFunctionality {
-  'FunctionalityName': string;
+  FunctionalityName: string;
   Errors: Error[];
-}
-
-interface GPTData {
-  'HumanFunctionalities': HumanFunctionality[];
 }
 
 function createAxeArrayObj(message: string, issue: any) {
@@ -132,10 +128,10 @@ export async function getAccessibilityInformationPally(domain: string) {
     totalElements: 0,
   };
 
-  const apiUrl =`${process.env.PA11Y_SERVER_URL}/test`;
+  const apiUrl = `${process.env.PA11Y_SERVER_URL}/test`;
   let results;
   try {
-    console.log("Using pally API");
+    console.log('Using pally API');
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -143,7 +139,6 @@ export async function getAccessibilityInformationPally(domain: string) {
       },
       body: JSON.stringify({ url: domain }),
     });
-    
 
     // Check if the response is successful
     if (!response.ok) {
@@ -161,12 +156,11 @@ export async function getAccessibilityInformationPally(domain: string) {
         }
       });
     }
-
   } catch (error) {
     console.error('pally API Error', error);
-    const  apiUrl2=`${process.env.FALLBACK_PA11Y_SERVER_URL}/scan`;
+    const apiUrl2 = `${process.env.FALLBACK_PA11Y_SERVER_URL}/scan`;
     try {
-      console.log("Using fallback pally API");
+      console.log('Using fallback pally API');
       const response = await fetch(apiUrl2, {
         method: 'POST',
         headers: {
@@ -174,17 +168,17 @@ export async function getAccessibilityInformationPally(domain: string) {
         },
         body: JSON.stringify({ url: domain }),
       });
-  
+
       // Check if the response is successful
       if (!response.ok) {
         throw new Error(`Failed to fetch screenshot. Status: ${response.status}`);
       }
-  
+
       // Parse and return the response JSON
       results = await response.json();
-    } catch (error) {
-      console.error('fall back pally API Error', error);
-  
+    } catch (err) {
+      console.error('fall back pally API Error', err);
+
       return {
         axe: {
           errors: [],
@@ -203,8 +197,8 @@ export async function getAccessibilityInformationPally(domain: string) {
           total_batches: 0,
           successful_batches: 0,
           failed_batches: 1,
-          total_issues: 0
-        }
+          total_issues: 0,
+        },
       };
     }
   }
@@ -213,92 +207,78 @@ export async function getAccessibilityInformationPally(domain: string) {
     if (issue.runner === 'axe') {
       const message = issue.message.replace(/\s*\(.*$/, '');
       if (issue.type === 'error') {
-          const obj: axeOutput = createAxeArrayObj(message, issue);
-          output.axe.errors.push(obj);
-        
+        const obj: axeOutput = createAxeArrayObj(message, issue);
+        output.axe.errors.push(obj);
       } else if (issue.type === 'notice') {
-  
-          const obj: axeOutput = createAxeArrayObj(message, issue);
-          output.axe.notices.push(obj);
-   
+        const obj: axeOutput = createAxeArrayObj(message, issue);
+        output.axe.notices.push(obj);
       } else if (issue.type === 'warning') {
-   
-          const obj: axeOutput = createAxeArrayObj(message, issue);
-          output.axe.warnings.push(obj);
-    
+        const obj: axeOutput = createAxeArrayObj(message, issue);
+        output.axe.warnings.push(obj);
       }
       output.totalElements += 1;
     } else if (issue.runner === 'htmlcs') {
       if (issue.type === 'error') {
-        const message = issue.message;
-  
-          const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
-          output.htmlcs.errors.push(obj);
-       
-     
+        const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
+        output.htmlcs.errors.push(obj);
       } else if (issue.type === 'notice') {
-    
-          const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
-          output.htmlcs.notices.push(obj);
-   
+        const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
+        output.htmlcs.notices.push(obj);
       } else if (issue.type === 'warning') {
-       
-          const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
-          output.htmlcs.warnings.push(obj);
-    
+        const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
+        output.htmlcs.warnings.push(obj);
       }
     }
   });
-  
+
   // Get preprocessing configuration
   const config = getPreprocessingConfig();
-  
+
   if (config.enabled) {
     // Use enhanced processing pipeline
     console.log('🚀 Using enhanced preprocessing pipeline');
     try {
       const enhancedResult = await processAccessibilityIssuesWithFallback(output);
-  
+
       // Debug: Check what we got from enhanced processing
-      console.log('🔍 Enhanced processing result debug:')
-      console.log('   enhancedResult.ByFunctions exists:', !!enhancedResult.ByFunctions)
-      console.log('   enhancedResult.ByFunctions length:', enhancedResult.ByFunctions?.length || 0)
+      console.log('🔍 Enhanced processing result debug:');
+      console.log('   enhancedResult.ByFunctions exists:', !!enhancedResult.ByFunctions);
+      console.log('   enhancedResult.ByFunctions length:', enhancedResult.ByFunctions?.length || 0);
       if (enhancedResult.ByFunctions?.[0]) {
-        console.log('   First group:', enhancedResult.ByFunctions[0].FunctionalityName)
-        console.log('   First group errors:', enhancedResult.ByFunctions[0].Errors?.length || 0)
+        console.log('   First group:', enhancedResult.ByFunctions[0].FunctionalityName);
+        console.log('   First group errors:', enhancedResult.ByFunctions[0].Errors?.length || 0);
         if (enhancedResult.ByFunctions[0].Errors?.[0]) {
-          console.log('   First error description:', enhancedResult.ByFunctions[0].Errors[0].description?.substring(0, 50))
+          console.log('   First error description:', enhancedResult.ByFunctions[0].Errors[0].description?.substring(0, 50));
         }
       }
-      
+
       // Preserve original error codes for ByFunctions processing
       // Store the original format before enhancement
       const originalOutput = JSON.parse(JSON.stringify(output)); // Deep clone
-      
+
       // Merge enhanced results back to original format
       const finalOutput: finalOutput = {
         axe: enhancedResult.axe,
         htmlcs: enhancedResult.htmlcs,
         ByFunctions: enhancedResult.ByFunctions, // Preserve enhanced ByFunctions
-        score: calculateAccessibilityScore(output.axe), //enhancedResult.score || 
+        score: calculateAccessibilityScore(output.axe), //enhancedResult.score ||
         totalElements: output.totalElements,
         processing_stats: enhancedResult.processing_stats,
         // Preserve original htmlcs for ByFunctions processing
-        _originalHtmlcs: originalOutput.htmlcs
+        _originalHtmlcs: originalOutput.htmlcs,
       };
-      
-      console.log('📦 Final output debug:')
-      console.log('   finalOutput.ByFunctions exists:', !!finalOutput.ByFunctions)
-      console.log('   finalOutput.ByFunctions length:', finalOutput.ByFunctions?.length || 0)
-      
+
+      console.log('📦 Final output debug:');
+      console.log('   finalOutput.ByFunctions exists:', !!finalOutput.ByFunctions);
+      console.log('   finalOutput.ByFunctions length:', finalOutput.ByFunctions?.length || 0);
+
       return finalOutput;
-      
     } catch (error) {
       console.error('❌ Enhanced processing failed, falling back to legacy:', error);
       // Continue with legacy processing below
     }
   }
-  
+
   // Legacy processing path (fallback)
   console.log('⚙️ Using legacy processing pipeline');
   output.score = calculateAccessibilityScore(output.axe);

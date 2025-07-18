@@ -46,18 +46,18 @@ export function getSitesPlanByUserId(userId: number) {
     .where(sitesPlansColumns.expiredAt, '>=', formatDateDB());
 }
 
-export function getSitesPlanByCustomerIdAndSubscriptionId(customerId: string, subscriptionId:string) {
+export function getSitesPlanByCustomerIdAndSubscriptionId(customerId: string, subscriptionId: string) {
   return database(TABLE)
     .select(sitesPlansColumns)
-    .where({ [sitesPlansColumns.customerId]: customerId, [sitesPlansColumns.isActive]: true, [sitesPlansColumns.subcriptionId]:subscriptionId })
+    .where({ [sitesPlansColumns.customerId]: customerId, [sitesPlansColumns.isActive]: true, [sitesPlansColumns.subcriptionId]: subscriptionId })
     .where(sitesPlansColumns.expiredAt, '>=', formatDateDB());
 }
 
 export function getActiveSitesPlan() {
   return database(TABLE)
     .select(sitesPlansColumns)
-    .whereNot({[sitesPlansColumns.subcriptionId]: "Trial"})
-    .where({ [sitesPlansColumns.isActive]: true})
+    .whereNot({ [sitesPlansColumns.subcriptionId]: 'Trial' })
+    .where({ [sitesPlansColumns.isActive]: true })
     .where(sitesPlansColumns.expiredAt, '>=', formatDateDB());
 }
 
@@ -77,9 +77,7 @@ export function getSitePlanById(id: number): Promise<SitesPlanData> {
 }
 
 export function getAnySitePlanById(id: number): Promise<SitesPlanData> {
-  return database(TABLE)
-    .where({ id })
-    .first();
+  return database(TABLE).where({ id }).first();
 }
 
 export function updateSitePlanById(id: number, data: SitesPlanData): Promise<number> {
@@ -98,7 +96,7 @@ export function getSitePlanBySiteId(siteId: number) {
       `${productColumns.type} as productType`,
       priceColumns.amount,
       `${priceColumns.type} as priceType`,
-      `${sitesPlansColumns.isActive} as is_active`,  // Change this line
+      `${sitesPlansColumns.isActive} as is_active`, // Change this line
     )
     .where({ [sitesPlansColumns.siteId]: siteId, [sitesPlansColumns.isActive]: true })
     .where(sitesPlansColumns.expiredAt, '>=', formatDateDB())
@@ -117,13 +115,15 @@ export function getAnySitePlanBySiteId(siteId: number) {
       `${productColumns.type} as productType`,
       priceColumns.amount,
       `${priceColumns.type} as priceType`,
-      `${sitesPlansColumns.isActive} as is_active`,  // Change this line
+      `${sitesPlansColumns.isActive} as is_active`, // Change this line
     )
-    .where({ [sitesPlansColumns.siteId]: siteId })
+    .where({ [sitesPlansColumns.siteId]: siteId });
 }
 
 export function deleteSitesPlanById(id: number): Promise<number> {
-  return database(TABLE).where({ id }).update({ [sitesPlansColumns.deletedAt]: formatDateDB() });
+  return database(TABLE)
+    .where({ id })
+    .update({ [sitesPlansColumns.deletedAt]: formatDateDB() });
 }
 
 export function deleteSitePlanById(id: number): Promise<number> {

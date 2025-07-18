@@ -8,19 +8,19 @@ export const TRANSLATION_CONFIG = {
     maxTokens: 8192, // Increased for comprehensive statements with no limits
     timeout: 45000, // 45 second timeout for larger responses and complex languages
   },
-  
+
   // Caching Configuration
   cache: {
     duration: 24 * 60 * 60, // 24 hours in seconds
     keyPrefix: 'translation_v2_',
   },
-  
+
   // Rate Limiting
   rateLimit: {
     maxRequestsPerMinute: 60, // Higher limit for fast model
     cooldownPeriod: 1000, // 1 second between duplicate requests (faster)
   },
-  
+
   // Performance Monitoring
   monitoring: {
     logSuccessfulTranslations: process.env.NODE_ENV === 'production',
@@ -28,14 +28,14 @@ export const TRANSLATION_CONFIG = {
     trackMetrics: process.env.NODE_ENV === 'production',
     trackSpeed: true, // Track response times for speed optimization
   },
-  
+
   // Error Handling
   errorHandling: {
     maxRetries: 1, // Limited retries for speed
     fallbackToEnglish: true,
     userFriendlyErrors: true,
   },
-  
+
   // Production Optimizations
   optimizations: {
     compressPrompts: false, // Use full prompts for quality with fast model
@@ -45,7 +45,7 @@ export const TRANSLATION_CONFIG = {
     preWarmCache: process.env.NODE_ENV === 'production',
     useStreamingIfAvailable: true, // Enable streaming for faster perceived response
   },
-  
+
   // Batching Configuration
   batching: {
     enabled: false, // Disable batching for more reliable translations
@@ -53,7 +53,7 @@ export const TRANSLATION_CONFIG = {
     parallelBatches: 1, // Process sequentially for better reliability
     batchTimeout: 30000, // 30 seconds per batch
     retryFailedBatches: true,
-  }
+  },
 };
 
 // Environment-specific overrides
@@ -72,8 +72,46 @@ export const MODEL_TIERS = {
 } as const;
 
 export const SUPPORTED_LANGUAGES = [
-  'en', 'ar', 'bg', 'bn', 'cs', 'de', 'el', 'es', 'fi', 'fr', 'he', 'hi', 
-  'hr', 'hu', 'id', 'it', 'ja', 'ko', 'lt', 'lv', 'ms', 'nl', 'no', 'pl', 
-  'pt', 'pt-br', 'ro', 'ru', 'sk', 'sl', 'sr', 'sv', 'th', 'tr', 'uk', 
-  'ur', 'vi', 'zh', 'zh-tw', 'da', 'et', 'ca'
+  'en',
+  'ar',
+  'bg',
+  'bn',
+  'cs',
+  'de',
+  'el',
+  'es',
+  'fi',
+  'fr',
+  'he',
+  'hi',
+  'hr',
+  'hu',
+  'id',
+  'it',
+  'ja',
+  'ko',
+  'lt',
+  'lv',
+  'ms',
+  'nl',
+  'no',
+  'pl',
+  'pt',
+  'pt-br',
+  'ro',
+  'ru',
+  'sk',
+  'sl',
+  'sr',
+  'sv',
+  'th',
+  'tr',
+  'uk',
+  'ur',
+  'vi',
+  'zh',
+  'zh-tw',
+  'da',
+  'et',
+  'ca',
 ] as const;

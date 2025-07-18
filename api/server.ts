@@ -11,7 +11,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import { ApolloServer, ApolloError } from 'apollo-server-express';
-import { withScope, Severity, captureException, init, Handlers } from '@sentry/node';
+import { withScope, Severity, captureException, init } from '@sentry/node';
 import * as Sentry from '@sentry/node';
 import { IResolvers } from '@graphql-tools/utils';
 import { makeExecutableSchema } from '@graphql-tools/schema';
@@ -20,11 +20,10 @@ import RootSchema from './graphql/root.schema';
 import RootResolver from './graphql/root.resolver';
 import getUserLogined from './services/authentication/get-user-logined.service';
 import stripeHooks from './services/stripe/webhooks.servive';
-import { findProductAndPriceByType, findProductById } from './repository/products.repository';
+import { findProductAndPriceByType } from './repository/products.repository';
 import { createSitesPlan, deleteExpiredSitesPlan, deleteSitesPlan, deleteTrialPlan } from './services/allowedSites/plans-sites.service';
 import Stripe from 'stripe';
 import { getAnySitePlanBySiteId, getSitePlanBySiteId, getSitesPlanByUserId } from './repository/sites_plans.repository';
-import { findPriceById } from './repository/prices.repository';
 import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, RETENTION_COUPON_ID } from './constants/billing.constant';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
 import { getProblemReportsBySiteId } from './repository/problem_reports.repository';
@@ -48,13 +47,11 @@ import { sendMail } from '~/libs/mail';
 import { emailValidation } from '~/validations/email.validation';
 import { addNewsletterSub } from '~/repository/newsletter_subscribers.repository';
 
-import { rateLimitDirective } from 'graphql-rate-limit-directive';
 import getIpAddress from '~/utils/getIpAddress';
 import { configureMorgan } from '~/libs/logger/morgan';
 import { requestTimingMiddleware } from '~/middlewares/requestTiming.middleware';
 import { expressErrorMiddleware } from '~/middlewares/expressError.middleware';
 import { graphqlErrorMiddleware } from '~/middlewares/graphqlError.middleware';
-import { GraphQLResolveInfo } from 'graphql';
 import { rateLimitDirectiveTransformer, rateLimitDirectiveTypeDefs } from '~/graphql/directives/rateLimit';
 
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
@@ -274,10 +271,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
           productMap.get(price.product).push(price);
         });
 
-        productMap.forEach((prices, productId) => {
+        productMap.forEach((pricesArr, productId) => {
           productPriceArray.push({
             product: productId,
-            prices: prices.map((price: Stripe.Price) => price.id),
+            prices: pricesArr.map((price: Stripe.Price) => price.id),
           });
         });
 
@@ -884,17 +881,16 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
         res.status(200).json({ success: true });
       } else {
         if ('usedDomains' in subscription.metadata) {
-          const UsedDomains = Number(subscription.metadata['usedDomains']);
-          const MaxDomains = Number(subscription.metadata['maxDomains']);
+          const UsedDomains = Number(subscription.metadata.usedDomains);
           // console.log('UD', UsedDomains);
           // console.log(subscription.metadata);
-          if (UsedDomains >= Number(subscription.metadata['maxDomains'])) {
+          if (UsedDomains >= Number(subscription.metadata.maxDomains)) {
             // res.status(500).json({ error: 'Your Plan Limit has Fulfilled' }); // old code
 
             let metaData: any = subscription.metadata;
 
-            metaData['usedDomains'] = Number(UsedDomains + 1);
-            metaData['updateMetaData'] = true;
+            metaData.usedDomains = Number(UsedDomains + 1);
+            metaData.updateMetaData = true;
 
             const newQuant = subscription.items.data[0].quantity + 1;
 
@@ -911,27 +907,27 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             console.log('meta data updated');
 
             // Parallel execution for cleanup and site plan creation
-            const cleanupPromises = [];
+            const cleanupPromisesSecond = [];
 
             // Handle previous plan deletion
             try {
               const previous_plan = await getSitePlanBySiteId(Number(domainId));
-              cleanupPromises.push(deleteTrialPlan(previous_plan.id).then(() => {}));
+              cleanupPromisesSecond.push(deleteTrialPlan(previous_plan.id).then(() => {}));
             } catch (error) {
               // Previous plan doesn't exist, continue
             }
 
             // Add site plan creation
-            cleanupPromises.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''));
+            cleanupPromisesSecond.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''));
 
-            await Promise.all(cleanupPromises);
+            await Promise.all(cleanupPromisesSecond);
 
             res.status(200).json({ success: true });
           } else {
             let metaData: any = subscription.metadata;
 
-            metaData['usedDomains'] = Number(UsedDomains + 1);
-            metaData['updateMetaData'] = true;
+            metaData.usedDomains = Number(UsedDomains + 1);
+            metaData.updateMetaData = true;
 
             await stripe.subscriptions.update(subscription.id, {
               metadata: metaData,
@@ -940,20 +936,20 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
             console.log('meta data updated');
 
             // Parallel execution for cleanup and site plan creation
-            const cleanupPromises = [];
+            const cleanupPromisesThird = [];
 
             // Handle previous plan deletion
             try {
               const previous_plan = await getSitePlanBySiteId(Number(domainId));
-              cleanupPromises.push(deleteTrialPlan(previous_plan.id).then(() => {}));
+              cleanupPromisesThird.push(deleteTrialPlan(previous_plan.id).then(() => {}));
             } catch (error) {
               // Previous plan doesn't exist, continue
             }
 
             // Add site plan creation
-            cleanupPromises.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''));
+            cleanupPromisesThird.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''));
 
-            await Promise.all(cleanupPromises);
+            await Promise.all(cleanupPromisesThird);
 
             console.log('Old Sub created');
 
@@ -1042,27 +1038,6 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
   app.post('/check-customer', moderateLimiter, isAuthenticated, async (req, res) => {
     const user: UserProfile = (req as any).user;
-
-    let plan_name;
-    let interval;
-
-    try {
-      const plans = await getSitesPlanByUserId(user.id);
-      if (plans.length > 0) {
-        for (let i = 0; i < plans.length; i++) {
-          let plan = plans[i];
-          if (plan.subscription_id !== 'Trial') {
-            let prodId = plan.productId;
-            let priceId = plan.priceId;
-            const prod = await findProductById(Number(prodId));
-            const price = await findPriceById(Number(priceId));
-            plan_name = prod.type;
-            interval = price.type;
-            break; // This will exit the loop
-          }
-        }
-      }
-    } catch (error) {}
 
     try {
       // Search for an existing customer by email
@@ -1554,9 +1529,9 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
             // Finish the transaction when the request is complete
             willSendResponse(ctx) {
-              const transaction = ctx.context.sentryTransaction;
-              if (transaction) {
-                transaction.finish();
+              const transactionSentry = ctx.context.sentryTransaction;
+              if (transactionSentry) {
+                transactionSentry.finish();
               }
             },
           };
