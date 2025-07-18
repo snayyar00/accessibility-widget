@@ -47,7 +47,6 @@ import { sendMail } from '~/libs/mail';
 import { emailValidation } from '~/validations/email.validation';
 import { addNewsletterSub } from '~/repository/newsletter_subscribers.repository';
 
-import getIpAddress from '~/utils/getIpAddress';
 import { configureMorgan } from '~/libs/logger/morgan';
 import { requestTimingMiddleware } from '~/middlewares/requestTiming.middleware';
 import { expressErrorMiddleware } from '~/middlewares/expressError.middleware';
@@ -1543,12 +1542,10 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
       const { cookies } = req;
       const bearerToken = cookies.token || null;
       const user = await getUserLogined(bearerToken, res);
-      const ip = getIpAddress(req.headers['x-forwarded-for'], req.socket.remoteAddress);
 
       return {
         req,
         res,
-        ip,
         user,
       };
     },

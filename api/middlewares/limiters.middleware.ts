@@ -2,11 +2,7 @@ import { Request } from 'express';
 import rateLimit from 'express-rate-limit';
 
 function getRealIp(req: Request): string {
-  return (
-    req.headers['cf-connecting-ip'] as string ||
-    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-    req.ip
-  );
+  return (req.headers['cf-connecting-ip'] as string) || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip;
 }
 
 // Strict limiter: for financial, Stripe, and other sensitive operations

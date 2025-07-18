@@ -1,10 +1,6 @@
 import Validator, { ValidationError } from 'fastest-validator';
 
-export function validateGetEngagementRates(input: { 
-  url: string; 
-  startDate: string; 
-  endDate: string; 
-}): true | ValidationError[] {
+export function validateGetEngagementRates(input: { url: string; startDate: string; endDate: string }): true | ValidationError[] {
   const validator = new Validator();
 
   const schema = {
@@ -18,7 +14,7 @@ export function validateGetEngagementRates(input: {
         stringMin: 'URL must not be empty',
         stringMax: 'URL must not exceed 2048 characters',
         stringPattern: 'URL must be a valid domain (e.g., example.com, https://example.com)',
-      }
+      },
     },
     startDate: {
       type: 'string',
@@ -26,7 +22,7 @@ export function validateGetEngagementRates(input: {
       messages: {
         string: 'Start date must be a string',
         stringPattern: 'Start date must be in YYYY-MM-DD format',
-      }
+      },
     },
     endDate: {
       type: 'string',
@@ -34,8 +30,8 @@ export function validateGetEngagementRates(input: {
       messages: {
         string: 'End date must be a string',
         stringPattern: 'End date must be in YYYY-MM-DD format',
-      }
-    }
+      },
+    },
   };
 
   const result = validator.validate(input, schema);
@@ -45,11 +41,7 @@ export function validateGetEngagementRates(input: {
   return result as ValidationError[];
 }
 
-export function validateFindImpressionsByURLAndDate(input: { 
-  url: string; 
-  startDate: Date; 
-  endDate: Date; 
-}): true | ValidationError[] {
+export function validateFindImpressionsByURLAndDate(input: { url: string; startDate: Date; endDate: Date }): true | ValidationError[] {
   const validator = new Validator();
 
   const schema = {
@@ -63,20 +55,20 @@ export function validateFindImpressionsByURLAndDate(input: {
         stringMin: 'URL must not be empty',
         stringMax: 'URL must not exceed 2048 characters',
         stringPattern: 'URL must be a valid domain (e.g., example.com, https://example.com)',
-      }
+      },
     },
     startDate: {
       type: 'date',
       messages: {
         date: 'Start date must be a valid date',
-      }
+      },
     },
     endDate: {
       type: 'date',
       messages: {
         date: 'End date must be a valid date',
-      }
-    }
+      },
+    },
   };
 
   const result = validator.validate(input, schema);
@@ -86,10 +78,7 @@ export function validateFindImpressionsByURLAndDate(input: {
   return result as ValidationError[];
 }
 
-export function validateAddImpressionsURL(input: { 
-  ipAddress: string; 
-  url: string; 
-}): true | ValidationError[] {
+export function validateAddImpressionsURL(input: { ipAddress: string; url: string }): true | ValidationError[] {
   const validator = new Validator();
 
   const schema = {
@@ -103,7 +92,7 @@ export function validateAddImpressionsURL(input: {
         stringMin: 'IP address must not be empty',
         stringMax: 'IP address is too long',
         stringPattern: 'IP address must be a valid IPv4 or IPv6 address',
-      }
+      },
     },
     url: {
       type: 'string',
@@ -115,8 +104,8 @@ export function validateAddImpressionsURL(input: {
         stringMin: 'URL must not be empty',
         stringMax: 'URL must not exceed 2048 characters',
         stringPattern: 'URL must be a valid domain (e.g., example.com, https://example.com)',
-      }
-    }
+      },
+    },
   };
 
   const result = validator.validate(input, schema);
@@ -126,10 +115,7 @@ export function validateAddImpressionsURL(input: {
   return result as ValidationError[];
 }
 
-export function validateAddProfileCount(input: { 
-  impressionId: number; 
-  profileCount: any; 
-}): true | ValidationError[] {
+export function validateAddProfileCount(input: { impressionId: number; profileCount: any }): true | ValidationError[] {
   const validator = new Validator();
 
   const schema = {
@@ -141,15 +127,15 @@ export function validateAddProfileCount(input: {
         number: 'Impression ID must be a number',
         numberPositive: 'Impression ID must be positive',
         numberInteger: 'Impression ID must be an integer',
-      }
+      },
     },
     profileCount: {
       type: 'object',
       optional: true,
       messages: {
         object: 'Profile count must be an object',
-      }
-    }
+      },
+    },
   };
 
   const result = validator.validate(input, schema);
@@ -159,10 +145,7 @@ export function validateAddProfileCount(input: {
   return result as ValidationError[];
 }
 
-export function validateAddInteraction(input: { 
-  impressionId: number; 
-  interaction: string; 
-}): true | ValidationError[] {
+export function validateAddInteraction(input: { impressionId: number; interaction: string }): true | ValidationError[] {
   const validator = new Validator();
 
   const schema = {
@@ -174,7 +157,7 @@ export function validateAddInteraction(input: {
         number: 'Site ID must be a number',
         numberPositive: 'Site ID must be positive',
         numberInteger: 'Site ID must be an integer',
-      }
+      },
     },
     interaction: {
       type: 'string',
@@ -186,8 +169,8 @@ export function validateAddInteraction(input: {
       },
       messages: {
         string: 'Interaction must be a string',
-      }
-    }
+      },
+    },
   };
 
   const result = validator.validate(input, schema);

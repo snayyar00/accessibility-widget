@@ -7,7 +7,7 @@ const TABLE = TABLES.organizations;
 export type Organization = {
   id?: number;
   name: string;
-  subdomain: string;
+  domain: string;
   logo_url?: string;
   settings?: string | object;
   created_at?: string;
@@ -32,16 +32,16 @@ export async function deleteOrganization(id: number, trx?: Knex.Transaction): Pr
   return trx ? query.transacting(trx) : query;
 }
 
-export async function getOrganizationBySubdomain(subdomain: string): Promise<Organization | undefined> {
-  return database(TABLE).where({ subdomain }).first();
+export async function getOrganizationByDomain(domain: string): Promise<Organization | undefined> {
+  return database(TABLE).where({ domain }).first();
 }
 
 export async function getOrganizationById(id: number): Promise<Organization | undefined> {
   return database(TABLE).where({ id }).first();
 }
 
-export async function getOrganizationBySubdomainExcludeId(subdomain: string, id: number): Promise<Organization | undefined> {
-  return database(TABLE).where({ subdomain }).andWhereNot({ id }).first();
+export async function getOrganizationByDomainExcludeId(domain: string, id: number): Promise<Organization | undefined> {
+  return database(TABLE).where({ domain }).andWhereNot({ id }).first();
 }
 
 export async function getOrganizationsByIds(ids: number[]): Promise<Organization[]> {

@@ -27,7 +27,7 @@ export const UserSchema = gql`
   }
 
   extend type Query {
-    profileUser: User!
+    profileUser: User! @rateLimit(limit: 30, duration: 60, message: "Too many profile requests. Please try again later.")
     isEmailAlreadyRegistered(email: String!): Boolean! @rateLimit(limit: 5, duration: 60, message: "Too many email check attempts. Please try again later.")
   }
 

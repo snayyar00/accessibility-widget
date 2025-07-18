@@ -5,7 +5,7 @@ export function emailValidation(email: string | undefined, maxLength = 254): tru
   const validator = new Validator();
 
   const schema = {
-    email: { 
+    email: {
       type: 'email',
       max: maxLength,
       custom: (value: string) => {
@@ -14,10 +14,9 @@ export function emailValidation(email: string | undefined, maxLength = 254): tru
         }
 
         return true;
-      }
+      },
     },
-  }
+  };
 
   return validator.validate({ email }, schema);
 }
-

@@ -1,5 +1,4 @@
 import logger from '~/libs/logger/application-logger';
-import { getCityAndCountry } from '~/helpers/uniqueVisitor.helper';
 import { findVisitorByURL, insertVisitor } from '~/repository/visitors.repository';
 import { UserProfile } from '~/repository/user.repository';
 import { findUserSites } from '~/services/allowedSites/allowedSites.service';
@@ -15,12 +14,13 @@ import { normalizeDomain } from '~/utils/domain.utils';
  */
 export async function addNewVisitor(ipAddress: string, siteId: number): Promise<number[]> {
   try {
-    let data: any = await getCityAndCountry(ipAddress);
-
-    data.ip_address = ipAddress;
-    data.site_id = siteId;
+    let data = {
+      ip_address: ipAddress,
+      site_id: siteId,
+    };
 
     const response = await insertVisitor(data);
+
     return response;
   } catch (error) {
     logger.error(error);
@@ -31,11 +31,9 @@ export async function addNewVisitor(ipAddress: string, siteId: number): Promise<
 
 export async function getSiteVisitorsByURL(url: string, user: UserProfile) {
   const validateResult = validateGetSiteVisitorsByURL({ url });
-    
+
   if (Array.isArray(validateResult) && validateResult.length) {
-    return new ValidationError(
-      validateResult.map((it) => it.message).join(','),
-    );
+    return new ValidationError(validateResult.map((it) => it.message).join(','));
   }
 
   const domain = normalizeDomain(url);

@@ -3,6 +3,7 @@ import { getOrganizationUsers } from '~/services/organization/organization_users
 import { Organization } from '~/repository/organization.repository';
 import { combineResolvers } from 'graphql-resolvers';
 import { isAuthenticated } from './authorization.resolver';
+import { ValidationError } from 'apollo-server-express';
 
 const organizationResolver = {
   Query: {
@@ -16,22 +17,26 @@ const organizationResolver = {
   },
 
   Mutation: {
-    addOrganization: combineResolvers(isAuthenticated, async (_: unknown, args: CreateOrganizationInput, { user }): Promise<Organization | null> => {
-      const id = await addOrganization(args, user);
+    addOrganization: combineResolvers(isAuthenticated, async (_: unknown, args: CreateOrganizationInput, { user }): Promise<Organization | null | ValidationError> => {
+      const maybeId = await addOrganization(args, user);
 
-      if (id) {
-        const org = await getOrganizationById(id, user);
+      if (maybeId instanceof Error) return maybeId;
+
+      if (maybeId) {
+        const org = await getOrganizationById(maybeId, user);
         return org || null;
       }
 
       return null;
     }),
 
-    editOrganization: combineResolvers(isAuthenticated, async (_: unknown, args: Partial<Organization>, { user }): Promise<Organization | null> => {
+    editOrganization: combineResolvers(isAuthenticated, async (_: unknown, args: Partial<Organization>, { user }): Promise<Organization | null | ValidationError> => {
       const { id, ...editData } = args;
-      const updated = await editOrganization(editData, user, id);
+      const maybeUpdated = await editOrganization(editData, user, id);
 
-      if (updated) {
+      if (maybeUpdated instanceof Error) return maybeUpdated;
+
+      if (maybeUpdated) {
         const org = await getOrganizationById(id, user);
         return org || null;
       }
@@ -39,10 +44,12 @@ const organizationResolver = {
       return null;
     }),
 
-    removeOrganization: combineResolvers(isAuthenticated, async (_: unknown, args: { id: number }, { user }): Promise<boolean> => {
-      const deleted = await removeOrganization(user, args.id);
+    removeOrganization: combineResolvers(isAuthenticated, async (_: unknown, args: { id: number }, { user }): Promise<boolean | ValidationError> => {
+      const maybeDeleted = await removeOrganization(user, args.id);
 
-      return !!deleted;
+      if (maybeDeleted instanceof Error) return maybeDeleted;
+
+      return !!maybeDeleted;
     }),
   },
 };

@@ -1,5 +1,4 @@
 import Knex from 'knex';
-import { ApolloError } from 'apollo-server-express';
 import { UserProfile } from '~/repository/user.repository';
 import { ORGANIZATION_MANAGEMENT_ROLES, OrganizationUserRole, OrganizationUserStatus } from '~/constants/organization.constant';
 import logger from '~/libs/logger/application-logger';
@@ -69,13 +68,15 @@ export async function getOrganizationUsers(user: UserProfile) {
   const { id: userId, current_organization_id: organizationId } = user;
 
   if (!userId || !organizationId) {
-    throw new ApolloError('No current organization selected');
+    logger.warn('getOrganizationUsers: No current organization or userId', { userId, organizationId });
+    return [];
   }
 
   const orgUser = await getUserOrganization(userId, organizationId);
 
   if (!orgUser || !ORGANIZATION_MANAGEMENT_ROLES.includes(orgUser.role as (typeof ORGANIZATION_MANAGEMENT_ROLES)[number])) {
-    throw new ApolloError('Access denied: only owner or admin can view organization users');
+    logger.warn('getOrganizationUsers: No permission to view organization users', { userId, organizationId, orgUser });
+    return [];
   }
 
   return getUsersByOrganizationId(organizationId);

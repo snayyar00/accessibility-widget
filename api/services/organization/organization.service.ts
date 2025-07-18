@@ -1,9 +1,11 @@
-import { ApolloError } from 'apollo-server-express';
-import { createOrganization, updateOrganization, deleteOrganization, getOrganizationBySubdomainExcludeId, getOrganizationBySubdomain, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization } from '~/repository/organization.repository';
+import { ApolloError, ValidationError } from 'apollo-server-express';
+import { createOrganization, updateOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization } from '~/repository/organization.repository';
 import { UserProfile } from '~/repository/user.repository';
-import { stringToSlug, objectToString } from '~/helpers/string.helper';
+import { objectToString } from '~/helpers/string.helper';
 import database from '~/config/database.config';
 import { addUserToOrganization, getOrganizationsByUserId, getUserOrganization } from './organization_users.service';
+
+import { validateAddOrganization, validateEditOrganization, validateRemoveOrganization } from '~/validations/organization.validation';
 
 import { updateUser } from '~/repository/user.repository';
 import logger from '~/libs/logger/application-logger';
@@ -11,29 +13,37 @@ import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATI
 
 export interface CreateOrganizationInput {
   name: string;
+  domain: string;
   logo_url?: string;
   settings?: any;
 }
 
-export async function addOrganization(data: CreateOrganizationInput, user: UserProfile & { isActive?: number }): Promise<number> {
+export async function addOrganization(data: CreateOrganizationInput, user: UserProfile & { isActive?: number }): Promise<number | ValidationError> {
+  const validateResult = validateAddOrganization(data);
+
+  if (Array.isArray(validateResult) && validateResult.length) {
+    return new ValidationError(validateResult.map((it) => it.message).join(','));
+  }
+
   const orgLinks = await getOrganizationsByUserId(user.id);
   const maxOrgs = user.isActive ? 3 : 1;
 
-  if (orgLinks.length >= maxOrgs) {
-    throw new ApolloError(user.isActive ? 'You have reached the limit of organizations you can create (3 for verified users).' : 'Please verify your email to create more than one organization.');
+  if (process.env.NODE_ENV !== 'development') {
+    if (orgLinks.length >= maxOrgs) {
+      throw new ApolloError(user.isActive ? 'You have reached the limit of organizations you can create (3 for verified users).' : 'Please verify your email to create more than one organization.');
+    }
   }
 
   const trx = await database.transaction();
 
   try {
-    const subdomain = stringToSlug(data.name).toLowerCase();
-    const exists = await getOrganizationBySubdomain(subdomain);
+    const exists = await getOrganizationByDomain(data.domain);
 
     if (exists) {
-      throw new ApolloError('Organization name already exists, please choose another one');
+      throw new ApolloError('Organization domain already exists, please choose another one');
     }
 
-    let orgToCreate = { ...data, subdomain };
+    let orgToCreate = { ...data };
 
     if ('settings' in data) {
       orgToCreate.settings = objectToString(data.settings);
@@ -56,7 +66,13 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
   }
 }
 
-export async function editOrganization(data: Partial<Organization>, user: UserProfile, organizationId: number | string): Promise<number> {
+export async function editOrganization(data: Partial<Organization>, user: UserProfile, organizationId: number | string): Promise<number | ValidationError> {
+  const validateResult = validateEditOrganization({ ...data, id: organizationId });
+
+  if (Array.isArray(validateResult) && validateResult.length) {
+    return new ValidationError(validateResult.map((it) => it.message).join(','));
+  }
+
   await checkOrganizationAccess(user, organizationId, 'You can only edit your own organizations');
 
   const orgUser = await getUserOrganization(user.id, Number(organizationId));
@@ -71,13 +87,11 @@ export async function editOrganization(data: Partial<Organization>, user: UserPr
   try {
     let updateData = { ...data };
 
-    if (data.name) {
-      updateData.subdomain = stringToSlug(data.name).toLowerCase();
-
-      const exists = await getOrganizationBySubdomainExcludeId(updateData.subdomain, Number(organizationId));
+    if (data.domain) {
+      const exists = await getOrganizationByDomainExcludeId(data.domain, Number(organizationId));
 
       if (exists) {
-        throw new ApolloError('Organization name already exists, please choose another one');
+        throw new ApolloError('Organization domain already exists, please choose another one');
       }
     }
 
@@ -98,7 +112,13 @@ export async function editOrganization(data: Partial<Organization>, user: UserPr
   }
 }
 
-export async function removeOrganization(user: UserProfile, organizationId: number | string): Promise<number> {
+export async function removeOrganization(user: UserProfile, organizationId: number | string): Promise<number | ValidationError> {
+  const validateResult = validateRemoveOrganization({ id: organizationId });
+
+  if (Array.isArray(validateResult) && validateResult.length) {
+    return new ValidationError(validateResult.map((it) => it.message).join(','));
+  }
+
   await checkOrganizationAccess(user, organizationId, 'You can only remove your own organizations');
 
   const orgUser = await getUserOrganization(user.id, Number(organizationId));

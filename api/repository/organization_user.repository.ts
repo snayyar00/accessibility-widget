@@ -16,10 +16,7 @@ export type OrganizationUser = {
 
 const TABLE = TABLES.organization_users;
 
-export async function insertOrganizationUser(
-  data: OrganizationUser,
-  trx?: Knex.Transaction,
-): Promise<number[]> {
+export async function insertOrganizationUser(data: OrganizationUser, trx?: Knex.Transaction): Promise<number[]> {
   const query = database(TABLE).insert(data);
 
   if (!trx) {
@@ -29,10 +26,7 @@ export async function insertOrganizationUser(
   return query.transacting(trx);
 }
 
-export async function getOrganizationUser(
-  user_id: number,
-  organization_id: number,
-): Promise<OrganizationUser | undefined> {
+export async function getOrganizationUser(user_id: number, organization_id: number): Promise<OrganizationUser | undefined> {
   return database(TABLE).where({ user_id, organization_id }).first();
 }
 
@@ -40,17 +34,11 @@ export async function getOrganizationUsersByUserId(user_id: number): Promise<Org
   return database(TABLE).where({ user_id });
 }
 
-export async function getOrganizationUsersByOrganizationId(
-  organization_id: number,
-): Promise<OrganizationUser[]> {
+export async function getOrganizationUsersByOrganizationId(organization_id: number): Promise<OrganizationUser[]> {
   return database(TABLE).where({ organization_id });
 }
 
-export async function updateOrganizationUser(
-  id: number,
-  data: Partial<OrganizationUser>,
-  trx?: Knex.Transaction,
-): Promise<number> {
+export async function updateOrganizationUser(id: number, data: Partial<OrganizationUser>, trx?: Knex.Transaction): Promise<number> {
   const query = database(TABLE).where({ id }).update(data);
 
   if (!trx) {
