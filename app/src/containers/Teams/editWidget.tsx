@@ -1,7 +1,7 @@
 import type React from 'react';
 import AccessibilityMenu from './MenuPreview';
 import CustomizeWidget from './CustomizeWidget';
-import { useEffect, useState } from 'react';
+import { useEffect, useState,useRef } from 'react';
 import { CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
@@ -259,6 +259,15 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
     console.log('Customize widget tour completed!');
   };
 
+
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    //console.log("isGenerating",isGenerating);
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
   useEffect(() => {
     setSettings({
       'widgetFont': selectedFont,
@@ -313,9 +322,11 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
   }, [toggles, colors, selectedFont]);
 
   const resetAll = () => {
+    if (isMounted.current) {
     setColors(DefaultColors);
     setToggles(DefaultToggles);
     setSelectedFont("'Times New Roman', serif");
+    }
   };
 
   const handleSave = async () => {
@@ -402,7 +413,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({ allDomains, selectedSite }: an
         return response.json();
       })
       .then((data) => {
+        if (isMounted.current) {
         setButtonDisable(false);
+        }
         // Log the returned settings for debugging
 
         // If data.settings is a JSON string, parse it. Otherwise, use it directly.
