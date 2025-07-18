@@ -52,7 +52,7 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
     const ids = await createOrganization(orgToCreate, trx);
     const newOrgId = Number(ids[0]);
 
-    await addUserToOrganization(user.id, newOrgId, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE, undefined, trx);
+    await addUserToOrganization(user.id, newOrgId, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE, trx);
     await updateUser(user.id, { current_organization_id: newOrgId }, trx);
 
     await trx.commit();

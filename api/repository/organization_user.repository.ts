@@ -9,7 +9,6 @@ export type OrganizationUser = {
   organization_id: number;
   role?: OrganizationUserRole;
   status?: OrganizationUserStatus;
-  invited_by?: number | null;
   created_at?: string;
   updated_at?: string;
 };

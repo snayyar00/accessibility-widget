@@ -4,9 +4,9 @@ import { ORGANIZATION_MANAGEMENT_ROLES, OrganizationUserRole, OrganizationUserSt
 import logger from '~/libs/logger/application-logger';
 import { deleteOrganizationUser, getOrganizationUser, getOrganizationUsersByOrganizationId, getOrganizationUsersByUserId, insertOrganizationUser, OrganizationUser, updateOrganizationUser } from '~/repository/organization_user.repository';
 
-export async function addUserToOrganization(user_id: number, organization_id: number, role: OrganizationUserRole = 'member', status: OrganizationUserStatus = 'active', invited_by?: number, trx?: Knex.Transaction): Promise<number[]> {
+export async function addUserToOrganization(user_id: number, organization_id: number, role: OrganizationUserRole = 'member', status: OrganizationUserStatus = 'active', trx?: Knex.Transaction): Promise<number[]> {
   try {
-    return await insertOrganizationUser({ user_id, organization_id, role, status, invited_by }, trx);
+    return await insertOrganizationUser({ user_id, organization_id, role, status }, trx);
   } catch (error) {
     logger.error('Error adding user to organization:', error);
 
