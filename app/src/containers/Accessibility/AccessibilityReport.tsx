@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import './Accessibility.css'; // Ensure your CSS file includes styles for the accordion
 import { AiFillCloseCircle } from 'react-icons/ai';
 import { FaGaugeSimpleHigh } from 'react-icons/fa6';
@@ -20,7 +20,6 @@ import Stack from '@mui/joy/Stack';
 import { translateText,translateMultipleTexts,LANGUAGES,deduplicateIssuesByMessage } from '@/utils/translator';
 
 import { getRootDomain, isValidRootDomainFormat, isIpAddress } from '@/utils/domainUtils';
-
 import AccordionDetails, {
   accordionDetailsClasses,
 } from '@mui/joy/AccordionDetails';
@@ -63,7 +62,9 @@ import Select from 'react-select/creatable';
 import { set } from 'lodash';
 import Modal from '@/components/Common/Modal';
 import Tooltip from '@mui/material/Tooltip';
-
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/config/store';
+import { generateReport, setIsGenerating, setSelectedDomain } from '@/features/report/reportSlice';
 import getWidgetSettings from '@/utils/getWidgetSettings'
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
@@ -82,25 +83,27 @@ const normalizeDomain = (url: string) =>
 const AccessibilityReport = ({ currentDomain }: any) => {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.report') });
+  const dispatch = useDispatch();
+  const isGenerating = useSelector((state: RootState) => state.report.isGenerating);
+  const selectedDomainFromRedux = useSelector((state: RootState) => state.report.selectedDomain);
+
   const [score, setScore] = useState(0);
   const [scoreBackup, setScoreBackup] = useState(0);
-  const [domain, setDomain] = useState(currentDomain);
+  const [domain, setDomain] = useState(selectedDomainFromRedux || currentDomain);
   const [siteImg, setSiteImg] = useState('');
   const [expand, setExpand] = useState(false);
   const [correctDomain, setcorrectDomain] = useState(currentDomain);
   //console.log('Current domain:', correctDomain);
   // const [accessibilityData, setAccessibilityData] = useState({});
-  const { data: sitesData } = useQuery(GET_USER_SITES);
+  const { data: sitesData, error: sitesError } = useQuery(GET_USER_SITES);
   const [saveAccessibilityReport] = useMutation(SAVE_ACCESSIBILITY_REPORT);
   const [selectedSite, setSelectedSite] = useState('');
   const [reportGenerated, setReportGenerated] = useState(false);
   const [enhancedScoresCalculated, setEnhancedScoresCalculated] = useState(false);
-  const [fetchReportKeys, { data: reportKeysData, loading: loadingReportKeys }] = useLazyQuery(FETCH_ACCESSIBILITY_REPORT_KEYS);
+  const [fetchReportKeys, { data: reportKeysData, loading: loadingReportKeys, error: reportKeysError }] = useLazyQuery(FETCH_ACCESSIBILITY_REPORT_KEYS);
   const [processedReportKeys, setProcessedReportKeys] = useState<any[]>([]);
-  const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(
-    getAccessibilityStats
-  );
-  const [fetchReportByR2Key, { loading: loadingReport, data: reportData }] = useLazyQuery(FETCH_REPORT_BY_R2_KEY);
+  const [getAccessibilityStatsQuery, { data, loading, error }] = useLazyQuery(getAccessibilityStats);
+  const [fetchReportByR2Key, { loading: loadingReport, data: reportData, error: reportByR2KeyError }] = useLazyQuery(FETCH_REPORT_BY_R2_KEY);
   type OptionType = { value: string; label: string };
   const [selectedOption, setSelectedOption] = useState<OptionType | null>(null)
   const contentRef = useRef<HTMLDivElement>(null);
@@ -114,10 +117,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
   const [showLangTooltip, setShowLangTooltip] = useState(false);
   // Combine options for existing sites and a custom "Enter a new domain" option
-  const siteOptions = sitesData?.getUserSites?.map((domain: any) => ({
-    value: domain.url,
-    label: domain.url,
-  })) || [];
+  const siteOptions = useMemo(() => (
+    sitesData?.getUserSites?.map((domain: any) => ({
+      value: domain.url,
+      label: domain.url,
+    })) || []
+  ), [sitesData]);
   const options = [
     ...siteOptions,
     { value: 'new', label: 'Enter a new domain' },
@@ -128,45 +133,165 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     console.log('Accessibility tour completed!');
   };
 
+  const errorToastShown = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
-    if (data) {
-      const result = data.getAccessibilityReport;
-      if (result) {
-        let score = result.score;
-        let allowed_sites_id = null;
-        //console.log('Accessibility report data:', result);
-        if (sitesData && sitesData.getUserSites) {
-          const matchedSite = sitesData.getUserSites.find(
-            (site: any) => normalizeDomain(site.url) == normalizeDomain(correctDomain)
-          );
-          allowed_sites_id = matchedSite ? matchedSite.id : null;
+    // Only show one error toast at a time
+    if (errorToastShown.current) return;
+    if (error) {
+      toast.error('Failed to generate report. Please try again.');
+      errorToastShown.current = true;
+    } else if (reportKeysError) {
+      toast.error('Failed to fetch report history. Please try again.');
+      errorToastShown.current = true;
+    } else if (reportByR2KeyError) {
+      toast.error('Failed to fetch report. Please try again.');
+      errorToastShown.current = true;
+    } else if (sitesError) {
+      toast.error('Failed to load your sites. Please refresh the page.');
+      errorToastShown.current = true;
+    }
+    // Reset after a short delay so next error can be shown if needed
+    if (errorToastShown.current) {
+     timeoutRef.current = setTimeout(() => { errorToastShown.current = false; }, 2000);
+      }
+      
+      return () => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
         }
-        saveAccessibilityReport({
-          variables: {
-            report: result,
-            url: normalizeDomain(correctDomain),
-            allowed_sites_id,
-            score: typeof score === 'object' ? score : { value: score },
-          },
-        }).then(({ data }) => {
-          if (data && data.saveAccessibilityReport) {
-            const savedReport = data.saveAccessibilityReport;
+      };
+      
+    
+  }, [error, reportKeysError, reportByR2KeyError, sitesError]);
+
+
+
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    //console.log("isGenerating",isGenerating);
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (selectedDomainFromRedux) {
+      if (isMounted.current) {
+        setDomain(selectedDomainFromRedux);
+      }
+    }
+  }, [selectedDomainFromRedux]);
+
+  useEffect(() => {
+    if (selectedDomainFromRedux && siteOptions.length > 0) {
+      const matchedOption = siteOptions.find(
+        (opt: any) => normalizeDomain(opt.value) === normalizeDomain(selectedDomainFromRedux)
+      );
+      if (matchedOption) {
+        setSelectedOption(matchedOption);
+        setSelectedSite(matchedOption.value);
+      } else {
+        // If not in siteOptions, treat as custom domain
+        setSelectedOption({ value: selectedDomainFromRedux, label: selectedDomainFromRedux });
+        setSelectedSite(selectedDomainFromRedux);
+      }
+      setDomain(selectedDomainFromRedux);
+    }
+  }, [selectedDomainFromRedux, siteOptions]);
+
+
+  const handleSubmit = async () => {
+
+    const sanitizedDomain = getRootDomain(domain);
+    if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {        
+      console.log('Invalid domain:', domain);
+      if (isMounted.current) {
+        setDomain(currentDomain);
+      }
+      toast.error('You must enter a valid domain name!');
+        return;
+    }
+
+    
+    const validDomain = sanitizedDomain;
+    if (!validDomain) {
+      toast.error('Please enter a valid domain!');
+      return;
+    }
+    if (isMounted.current) { 
+    setcorrectDomain(validDomain);
+    }
+    // Dispatch before starting async work
+    dispatch(setIsGenerating(true));
+    dispatch(setSelectedDomain(validDomain));
+
+    try {
+      // Pass the domain directly to the query to avoid using empty correctDomain
+      const { data: queryData } = await getAccessibilityStatsQuery({ 
+        variables: { url: encodeURIComponent(validDomain) } 
+      });
+      
+      // Process the data immediately if available
+      if (queryData) {
+        const result = queryData.getAccessibilityReport;
+        if (result) {
+          let score = result.score;
+          let allowed_sites_id = null;
+          
+          if (sitesData && sitesData.getUserSites) {
+            const matchedSite = sitesData.getUserSites.find(
+              (site: any) => normalizeDomain(site.url) == normalizeDomain(validDomain)
+            );
+            allowed_sites_id = matchedSite ? matchedSite.id : null;
+          }
+          
+          // Save the report
+          const { data: saveData } = await saveAccessibilityReport({
+            variables: {
+              report: result,
+              url: normalizeDomain(validDomain),
+              allowed_sites_id,
+              score: typeof score === 'object' ? score : { value: score },
+            },
+          });
+          
+          if (saveData && saveData.saveAccessibilityReport) {
+            const savedReport = saveData.saveAccessibilityReport;
             const r2Key = savedReport.key;
             const savedUrl = savedReport.report.url;
-            setReportUrl(`/${r2Key}?domain=${encodeURIComponent(savedUrl)}`);
+            const newReportUrl = `/${r2Key}?domain=${encodeURIComponent(savedUrl)}`;
+            if (isMounted.current) {
+            setReportUrl(newReportUrl);
             setIsSuccessModalOpen(true);
             toast.success('Accessibility report saved successfully!');
+            
+            // Dispatch the report generation
+            }
+            dispatch(setIsGenerating(false));
+
+             dispatch(generateReport({ url: normalizeDomain(newReportUrl), allowed_sites_id }));
           }
-        });
-        const { htmlcs } = result;
-        groupByCode(htmlcs);
+          
+          // Process the data
+          const { htmlcs } = result;
+          groupByCode(htmlcs);
+          if (isMounted.current) {  
+         setSiteImg(result?.siteImg);
+          setScoreBackup(Math.min(result?.score || 0, 95));
+          setScore(Math.min(result?.score || 0, 95));
+          }
+        }
       }
-      setSiteImg(result?.siteImg);
-      setScoreBackup(Math.min(result?.score || 0, 95));
-      setScore(Math.min(result?.score || 0, 95));
-      // setAccessibilityData(htmlcs);
+    } catch (error) {
+      console.error('Error generating report:', error);
+      dispatch(setIsGenerating(false));
+      
+      toast.error('Failed to generate report. Please try again.');
     }
-  }, [data]);
+  };
 
   useEffect(() => {
     if (selectedSite) {
@@ -180,15 +305,19 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         const enhancedScore = calculateEnhancedScore(row.score || 0);
         return { ...row, enhancedScore };
       });
-      setProcessedReportKeys(updatedData);
-      setEnhancedScoresCalculated(true);
+      if (isMounted.current) {
+        setProcessedReportKeys(updatedData);
+        setEnhancedScoresCalculated(true);
+      }
     }
   }, [reportKeysData]);
 
   useEffect(() => {
     if (expand === true) {
       reactToPrintFn();
-      setExpand(false);
+      if (isMounted.current) {
+        setExpand(false);
+      }
     }
   }, [expand]);
 
@@ -199,36 +328,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   }, [selectedSite, reportGenerated]);
 
-  const handleSubmit = async () => {
-
-    const sanitizedDomain = getRootDomain(domain);
-    console.log("sanitizedDomain",sanitizedDomain);
-    if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {        
-      console.log('Invalid domain:', domain);
-      setDomain(currentDomain);
-      toast.error('You must enter a valid domain name!');
-        return;
-    }
-
-    
-    const validDomain = sanitizedDomain;
-    if (!validDomain) {
-      toast.error('Please enter a valid domain!');
-      return;
-    }
-    
-    setcorrectDomain(validDomain);
-    
-    try {
-      // Pass the domain directly to the query to avoid using empty correctDomain
-      await getAccessibilityStatsQuery({ 
-        variables: { url: encodeURIComponent(validDomain) } 
-      });
-    } catch (error) {
-      console.error('Error generating report:', error);
-      toast.error('Failed to generate report. Please try again.');
-    }
-  };
+ 
 
   const groupByCodeUtil = (issues: any) => {
     const groupedByCode: any = {};
@@ -245,8 +345,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   };
 
   const groupByCode = (issues: any) => {
-    console.log('group code called');
-    if (issues && typeof issues === 'object') {
+    // console.log('group code called');
+    if (issues && typeof issues === 'object') { 
       issues.errors = groupByCodeUtil(issues.errors);
       issues.warnings = groupByCodeUtil(issues.warnings);
       issues.notices = groupByCodeUtil(issues.notices);
@@ -303,9 +403,26 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     currentLanguage: string
   ): Promise<Blob> => {
     const { jsPDF } = await import('jspdf');
+
+    let fontLoaded = true;
+    try {
+      // @ts-ignore
+      window.jsPDF = jsPDF;
+      // @ts-ignore
+      require('@/assets/fonts/NotoSans-normal.js');
+      // @ts-ignore
+      delete window.jsPDF;
+    } catch (e) {
+      console.error('Failed to load custom font for jsPDF:', e);
+      fontLoaded = false;
+    }
+
+
     const autoTable = (await import('jspdf-autotable')).default;
     const doc = new jsPDF();
-
+     if (!fontLoaded) {
+      doc.setFont('helvetica', 'normal');
+    }
     if (!reportData.url) {
       reportData.url = processedReportKeys?.[0]?.url || "";
     }
@@ -504,26 +621,26 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     const totalWidth = labelWidth + urlWidth;
     // Calculate starting X so the whole line is centered
     const startX = 105 - totalWidth / 2;
-    // Draw the label
-    doc.setFont('helvetica', 'normal');
+
+    doc.setFont('NotoSans_Condensed-Regular'); 
     doc.setTextColor(51, 65, 85); // slate-800 for message
     doc.text(label, startX, textY, { align: 'left' });
     // Draw the URL in bold, immediately after the label, no overlap
-    doc.setFont('helvetica', 'bold');
+   
     doc.text(url, startX + labelWidth, textY, { align: 'left' });
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans_Condensed-Regular'); 
 
     textY += 12;
     doc.setFontSize(20);
     doc.setTextColor(...statusColor);
-    doc.setFont('helvetica', 'bold');
+   doc.setFont('NotoSans_Condensed-Regular'); 
     doc.text(status, 105, textY, { align: 'center' });
 
     message = translatedMessage;
     textY += 9;
     doc.setFontSize(12);
     doc.setTextColor(51, 65, 85); 
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans_Condensed-Regular'); 
     doc.text(message, 105, textY, { align: 'center' });
     
 
@@ -547,7 +664,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setLineWidth(1.5);
     doc.setFillColor(21, 101, 192); 
     doc.circle(circle1X, circleY, circleRadius, 'FD');
-    doc.setFont('helvetica', 'bold');
+   doc.setFont('NotoSans_Condensed-Regular'); 
     doc.setFontSize(19); 
     doc.setTextColor(255, 255, 255); 
 
@@ -558,7 +675,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans_Condensed-Regular'); 
     doc.text(translatedTotalErrors, circle1X, circleY + circleRadius + 9, {
       align: 'center',
     });
@@ -567,7 +684,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     doc.setLineWidth(1.5);
     doc.setFillColor(33, 150, 243); 
     doc.circle(circle2X, circleY, circleRadius, 'FD');
-    doc.setFont('helvetica', 'bold');
+   doc.setFont('NotoSans_Condensed-Regular'); 
     doc.setFontSize(19); 
     doc.setTextColor(255, 255, 255); 
     const scoreText = `${Math.round(enhancedScore)}%`;
@@ -581,7 +698,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans_Condensed-Regular'); 
     doc.text(translatedScore, circle2X, circleY + circleRadius + 9, {
       align: 'center',
     });
@@ -617,7 +734,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       doc.roundedRect(x, yStart, 55, 20, 3, 3, 'F');
       doc.setTextColor(0, 0, 0); 
       doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
+     doc.setFont('NotoSans_Condensed-Regular'); 
       doc.text(`${box.count}`, x + 4, yStart + 8);
       doc.setFontSize(10);
       doc.text(box.label, x + 4, yStart + 16);
@@ -656,7 +773,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           styles: {
             fillColor: [255, 255, 255], // white background
             textColor: [0, 0, 0], // black text
-            fontStyle: 'bold',
             fontSize: 14,
             halign: 'center',
             cellPadding: 8,
@@ -669,7 +785,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           styles: {
             fillColor: [255, 255, 255], // matching white background
             textColor: [0, 0, 0], // black text
-            fontStyle: 'bold',
             fontSize: 14,
             halign: 'center',
             cellPadding: 8,
@@ -683,7 +798,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           content: `${issue.code ? `${issue.code} (${issue.impact})` : ''}`,
           colSpan: 2,
           styles: {
-            fontStyle: 'bold',
             fontSize: 12,
             textColor: [30, 41, 59], // dark navy text
             halign: 'left',
@@ -695,7 +809,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 : issue.impact === 'moderate'
                   ? [187, 222, 251] 
                   : [248, 250, 252], 
-            font: 'courier',
+            font: 'NotoSans_Condensed-Regular',
             minCellHeight: 30,
           },
         },
@@ -704,7 +818,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           content: `${issue.message || ''}`,
           colSpan: 2,
           styles: {
-            fontStyle: 'normal',
             fontSize: 12,
             textColor: [30, 41, 59], // dark navy text
             halign: 'left',
@@ -716,7 +829,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               : issue.impact === 'moderate'
                 ? [187, 222, 251] 
                 : [248, 250, 252], 
-            font: 'courier',
+            font: 'NotoSans_Condensed-Regular',
             minCellHeight: 30,
           },
         },
@@ -742,7 +855,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             content: 'Screenshot',
             colSpan: 4,
             styles: {
-              fontStyle: 'bold',
+             
               fontSize: 12,
               textColor: [30, 41, 59],
               halign: 'center',
@@ -784,7 +897,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             content: translatedContext,
             colSpan: 4,
             styles: {
-              fontStyle: 'bolditalic',
               fontSize: 11,
               textColor: [0, 0, 0],
               halign: 'left',
@@ -806,7 +918,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               pageBreak: 'avoid',
               rowSpan: 1,
               styles: {
-                font: 'courier',
+                font: 'NotoSans_Condensed-Regular',
                 fontSize: 10,
                 textColor: [255, 255, 255], // This will be overridden by didDrawCell
                 fillColor: [255, 255, 255], // White background for the cell
@@ -851,13 +963,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             content: translatedFix,
             colSpan: 4,
             styles: {
-              fontStyle: 'bolditalic',
               fontSize: 11,
               textColor: [0, 0, 0], // black text
               halign: 'left',
               cellPadding: 5,
               fillColor: [255, 255, 255], // white background
               lineWidth: 0,
+              font: 'NotoSans_Condensed-Regular',
             },
           },
         ]);
@@ -869,13 +981,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               content: `${fixIdx + 1}. ${fix}`,
               colSpan: 4,
               styles: {
-                fontStyle: 'normal',
                 fontSize: 11,
                 textColor: [0, 0, 0], // black text
                 halign: 'left',
                 cellPadding: { top: 10, right: 8, bottom: 10, left: 8 }, // more vertical space for separation
                 fillColor: [255, 255, 255], // white background for back container
                 lineWidth: 0,
+                font: 'NotoSans_Condensed-Regular',
               },
             },
           ]);
@@ -942,7 +1054,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           // Calculate available width for code content
           const availableWidth = data.cell.width - 16 - indexWidth; // Cell padding + index width
           
-          doc.setFont('courier', 'normal');
+          doc.setFont('NotoSans_Condensed-Regular', 'normal');
           doc.setFontSize(10);
           const lines = doc.splitTextToSize(codeContent, availableWidth);
           
@@ -971,7 +1083,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           const indexNumber = (data.cell.raw as any)._indexNumber;
           
           // Calculate index section width
-          doc.setFont('courier', 'normal');
+          doc.setFont('NotoSans_Condensed-Regular', 'normal');
           doc.setFontSize(12);
           const indexPrefix = `${indexNumber}`;
           const indexWidth = doc.getTextWidth(indexPrefix) + 8; // Extra padding for the index section
@@ -1237,23 +1349,33 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               <div className="w-full md:flex-1 min-w-0">
                 <Select
                   options={siteOptions}
-                  value={selectedOption}
+                  value={
+                    selectedOption ||
+                    (selectedDomainFromRedux
+                      ? siteOptions.find((opt: any) => opt.value === selectedDomainFromRedux) || { value: selectedDomainFromRedux, label: selectedDomainFromRedux }
+                      : null)
+                  }
                   onChange={(selected: OptionType | null) => {
-                    setSelectedOption(selected);
-                    setSelectedSite(selected?.value ?? ''); // Update the selectedSite state
-                    setDomain(selected?.value ?? ''); // Update the domain state
+                    if (isMounted.current) {
+                      setSelectedOption(selected);
+                      setSelectedSite(selected?.value ?? '');
+                      setDomain(selected?.value ?? '');
+                    }
+                    dispatch(setSelectedDomain(selected?.value ?? ''));
                   }}
                   onCreateOption={(inputValue: any) => {
-                    // Handle new domain creation
                     const newOption = { value: inputValue, label: inputValue };
-                    setSelectedOption(newOption);
-                    setSelectedSite(inputValue); // Update the selectedSite state
-                    setDomain(inputValue); // Update the domain state
+                    if (isMounted.current) {
+                      setSelectedOption(newOption);
+                      setSelectedSite(inputValue);
+                      setDomain(inputValue);
+                    }
+                    dispatch(setSelectedDomain(inputValue));
                   }}
                   placeholder="Select or enter a domain"
                   isSearchable
                   isClearable
-                  formatCreateLabel={(inputValue: any) => `Enter a new domain: \"${inputValue}\"`}
+                  formatCreateLabel={(inputValue: any) => `Enter a new domain: "${inputValue}"`}
                   classNamePrefix="react-select"
                   className="w-full min-w-0"
                   styles={{
@@ -1272,6 +1394,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               </div>
             </div>
             <div className="flex justify-center mt-4 w-full">
+
               <button
                 type="button"
                 className="search-button bg-primary text-white px-4 py-2 rounded whitespace-nowrap w-full"
@@ -1288,9 +1411,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     toast.error('Please enter or select a domain!');
                   }
                 }}
+                disabled={isGenerating}
               >
                 Free Scan
-                {loading && <CircularProgress size={14} sx={{ color: 'white' }} className="ml-2 my-auto" />}
+                {isGenerating && <CircularProgress size={14} sx={{ color: 'white' }} className="ml-2 my-auto" />}
               </button>
             </div>
           </div>
