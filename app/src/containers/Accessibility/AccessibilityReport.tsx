@@ -64,8 +64,10 @@ import Modal from '@/components/Common/Modal';
 import Tooltip from '@mui/material/Tooltip';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
-import { generateReport, setIsGenerating, setSelectedDomain } from '@/features/report/reportSlice';
+import { generateReport, setIsGenerating, setSelectedDomain, setJobId, clearJobId } from '@/features/report/reportSlice';
 import getWidgetSettings from '@/utils/getWidgetSettings'
+import startAccessibilityReportJob from '@/queries/accessibility/startAccessibilityReportJob';
+import getAccessibilityReportByJobId from '@/queries/accessibility/getAccessibilityReportByJobId';
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
 
@@ -86,6 +88,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const dispatch = useDispatch();
   const isGenerating = useSelector((state: RootState) => state.report.isGenerating);
   const selectedDomainFromRedux = useSelector((state: RootState) => state.report.selectedDomain);
+  const jobId = useSelector((state: RootState) => state.report.jobId);
+  const [startJobQuery] = useLazyQuery(startAccessibilityReportJob);
+  const [getJobStatusQuery] = useLazyQuery(getAccessibilityReportByJobId);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   const [score, setScore] = useState(0);
   const [scoreBackup, setScoreBackup] = useState(0);
@@ -171,7 +177,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const isMounted = useRef(true);
 
   useEffect(() => {
-    //console.log("isGenerating",isGenerating);
     return () => {
       isMounted.current = false;
     };
@@ -202,93 +207,108 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   }, [selectedDomainFromRedux, siteOptions]);
 
+  // Helper to handle report result (used in both sync and async flows)
+  const handleReportResult = async (result: any, validDomain: string) => {
+    let score = result.score;
+    let allowed_sites_id = null;
+
+    if (sitesData && sitesData.getUserSites) {
+      const matchedSite = sitesData.getUserSites.find(
+        (site: any) => normalizeDomain(site.url) == normalizeDomain(validDomain)
+      );
+      allowed_sites_id = matchedSite ? matchedSite.id : null;
+    }
+
+    // Save the report
+    const { data: saveData } = await saveAccessibilityReport({
+      variables: {
+        report: result,
+        url: normalizeDomain(validDomain),
+        allowed_sites_id,
+        score: typeof score === 'object' ? score : { value: score },
+      },
+    });
+
+    if (saveData && saveData.saveAccessibilityReport) {
+      const savedReport = saveData.saveAccessibilityReport;
+      const r2Key = savedReport.key;
+      const savedUrl = savedReport.report.url;
+      const newReportUrl = `/${r2Key}?domain=${encodeURIComponent(savedUrl)}`;
+      if (isMounted.current) {
+        setReportUrl(newReportUrl);
+        toast.success('Accessibility report saved successfully!');
+      }
+      dispatch(setIsGenerating(false));
+      dispatch(generateReport({ url: normalizeDomain(newReportUrl), allowed_sites_id }));
+    }
+
+    // Process the data
+    const { htmlcs } = result;
+    groupByCode(htmlcs);
+    if (isMounted.current) {
+      setSiteImg(result?.siteImg);
+      setScoreBackup(Math.min(result?.score || 0, 95));
+      setScore(Math.min(result?.score || 0, 95));
+    }
+  };
+
+  // Polling function
+  const pollJobStatus = (jobId: string) => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    pollingRef.current = setInterval(async () => {
+      const { data } = await getJobStatusQuery({ variables: { jobId } });
+      if (data && data.getAccessibilityReportByJobId) {
+        const { status, result, error } = data.getAccessibilityReportByJobId;
+        if (status === 'done') {
+          dispatch(clearJobId());
+          await handleReportResult(result, domain);
+          clearInterval(pollingRef.current!);
+        } else if (status === 'error') {
+          dispatch(clearJobId());
+          dispatch(setIsGenerating(false));
+          toast.error(error || 'Failed to generate report.');
+          clearInterval(pollingRef.current!);
+        }
+      }
+    }, 2000); 
+  };
+
+ 
 
   const handleSubmit = async () => {
-
     const sanitizedDomain = getRootDomain(domain);
     if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {        
-      console.log('Invalid domain:', domain);
       if (isMounted.current) {
         setDomain(currentDomain);
       }
       toast.error('You must enter a valid domain name!');
-        return;
+      return;
     }
-
-    
     const validDomain = sanitizedDomain;
     if (!validDomain) {
       toast.error('Please enter a valid domain!');
       return;
     }
     if (isMounted.current) { 
-    setcorrectDomain(validDomain);
+      setcorrectDomain(validDomain);
     }
-    // Dispatch before starting async work
     dispatch(setIsGenerating(true));
     dispatch(setSelectedDomain(validDomain));
-
     try {
-      // Pass the domain directly to the query to avoid using empty correctDomain
-      const { data: queryData } = await getAccessibilityStatsQuery({ 
-        variables: { url: encodeURIComponent(validDomain) } 
-      });
-      
-      // Process the data immediately if available
-      if (queryData) {
-        const result = queryData.getAccessibilityReport;
-        if (result) {
-          let score = result.score;
-          let allowed_sites_id = null;
-          
-          if (sitesData && sitesData.getUserSites) {
-            const matchedSite = sitesData.getUserSites.find(
-              (site: any) => normalizeDomain(site.url) == normalizeDomain(validDomain)
-            );
-            allowed_sites_id = matchedSite ? matchedSite.id : null;
-          }
-          
-          // Save the report
-          const { data: saveData } = await saveAccessibilityReport({
-            variables: {
-              report: result,
-              url: normalizeDomain(validDomain),
-              allowed_sites_id,
-              score: typeof score === 'object' ? score : { value: score },
-            },
-          });
-          
-          if (saveData && saveData.saveAccessibilityReport) {
-            const savedReport = saveData.saveAccessibilityReport;
-            const r2Key = savedReport.key;
-            const savedUrl = savedReport.report.url;
-            const newReportUrl = `/${r2Key}?domain=${encodeURIComponent(savedUrl)}`;
-            if (isMounted.current) {
-            setReportUrl(newReportUrl);
-            toast.success('Accessibility report saved successfully!');
-            
-            // Dispatch the report generation
-            }
-            dispatch(setIsGenerating(false));
-
-             dispatch(generateReport({ url: normalizeDomain(newReportUrl), allowed_sites_id }));
-          }
-          
-          // Process the data
-          const { htmlcs } = result;
-          groupByCode(htmlcs);
-          if (isMounted.current) {  
-         setSiteImg(result?.siteImg);
-          setScoreBackup(Math.min(result?.score || 0, 95));
-          setScore(Math.min(result?.score || 0, 95));
-          }
-        }
+      const { data } = await startJobQuery({ variables: { url: encodeURIComponent(validDomain) } });
+      if (data && data.startAccessibilityReportJob && data.startAccessibilityReportJob.jobId) {
+        const jobId = data.startAccessibilityReportJob.jobId;
+        
+        dispatch(setJobId(jobId));
+        
+        toast.info('Report generation started. This may take a few seconds.');
+      } else {
+        dispatch(setIsGenerating(false));
+        toast.error('Failed to start report job.');
       }
     } catch (error) {
-      console.error('Error generating report:', error);
       dispatch(setIsGenerating(false));
-      
-      toast.error('Failed to generate report. Please try again.');
+      toast.error('Failed to start report job.');
     }
   };
 
@@ -1163,9 +1183,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           const imgY = y + (height - imgHeight) / 2;
           data.doc.addImage(data.cell.raw._screenshotBase64, 'PNG', imgX, imgY, imgWidth, imgHeight);
         }
-        if (data.cell.raw && data.cell.raw._isScreenshot) {
-          console.log('didDrawCell for screenshot', data.cell.raw._screenshotBase64 ? 'has base64' : 'no base64');
-        }
+        // if (data.cell.raw && data.cell.raw._isScreenshot) {
+        //   // console.log('didDrawCell for screenshot', data.cell.raw._screenshotBase64 ? 'has base64' : 'no base64');
+        // }
       },
     });
 
