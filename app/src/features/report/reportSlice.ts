@@ -57,11 +57,20 @@ export const pollReportJob = createAsyncThunk(
   'report/pollReportJob',
   async ({ jobId }: any, { dispatch }) => {
     const poll = async () => {
-      const { data } = await apolloClient.query({
-        query: getAccessibilityReportByJobId,
-        variables: { jobId },
-        fetchPolicy: 'network-only',
-      });
+      let data;
+      try {
+        const response = await apolloClient.query({
+          query: getAccessibilityReportByJobId,
+          variables: { jobId },
+          fetchPolicy: 'network-only',
+        });
+        data = response.data;
+      } catch (error) {
+        dispatch(clearJobId());
+        dispatch(setIsGenerating(false));
+        toast.error(error || 'Server error, please try again');
+        throw new Error('Server error, please try again');
+      }
       if (data && data.getAccessibilityReportByJobId) {
         const { status, result, error } = data.getAccessibilityReportByJobId;
         if (status === 'done' && result && result.savedReport) {

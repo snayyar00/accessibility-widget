@@ -207,71 +207,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   }, [selectedDomainFromRedux, siteOptions]);
 
-  // Helper to handle report result (used in both sync and async flows)
-  const handleReportResult = async (result: any, validDomain: string) => {
-    let score = result.score;
-    let allowed_sites_id = null;
 
-    if (sitesData && sitesData.getUserSites) {
-      const matchedSite = sitesData.getUserSites.find(
-        (site: any) => normalizeDomain(site.url) == normalizeDomain(validDomain)
-      );
-      allowed_sites_id = matchedSite ? matchedSite.id : null;
-    }
-
-    // Save the report
-    const { data: saveData } = await saveAccessibilityReport({
-      variables: {
-        report: result,
-        url: normalizeDomain(validDomain),
-        allowed_sites_id,
-        score: typeof score === 'object' ? score : { value: score },
-      },
-    });
-
-    if (saveData && saveData.saveAccessibilityReport) {
-      const savedReport = saveData.saveAccessibilityReport;
-      const r2Key = savedReport.key;
-      const savedUrl = savedReport.report.url;
-      const newReportUrl = `/${r2Key}?domain=${encodeURIComponent(savedUrl)}`;
-      if (isMounted.current) {
-        setReportUrl(newReportUrl);
-        toast.success('Accessibility report saved successfully!');
-      }
-      dispatch(setIsGenerating(false));
-      dispatch(generateReport({ url: normalizeDomain(newReportUrl), allowed_sites_id }));
-    }
-
-    // Process the data
-    const { htmlcs } = result;
-    groupByCode(htmlcs);
-    if (isMounted.current) {
-      setSiteImg(result?.siteImg);
-      setScoreBackup(Math.min(result?.score || 0, 95));
-      setScore(Math.min(result?.score || 0, 95));
-    }
-  };
-
-  // Polling function
-  const pollJobStatus = (jobId: string) => {
-    if (pollingRef.current) clearInterval(pollingRef.current);
-    pollingRef.current = setInterval(async () => {
-      const { data } = await getJobStatusQuery({ variables: { jobId } });
-      if (data && data.getAccessibilityReportByJobId) {
-        const { status, result, error } = data.getAccessibilityReportByJobId;
-        if (status === 'done') {
-          dispatch(clearJobId());
-          await handleReportResult(result, domain);
-          clearInterval(pollingRef.current!);
-        } else if (status === 'error') {
-          dispatch(clearJobId());
-          dispatch(setIsGenerating(false));
-          toast.error(error || 'Failed to generate report.');
-          clearInterval(pollingRef.current!);
-        }
-      }
-    }, 2000); 
-  };
+  
 
  
 
