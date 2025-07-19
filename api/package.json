@@ -12,8 +12,11 @@
     "db:create": "knex migrate:make --knexfile config/knexfile.ts",
     "db:down": "knex migrate:down --knexfile config/knexfile.ts",
     "db:seed": "knex seed:run --knexfile config/knexfile.ts",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --check \"**/*.{js,ts,tsx,jsx,json,css,scss,md}\"",
+    "format:fix": "prettier --write \"**/*.{js,ts,tsx,jsx,json,css,scss,md}\""
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.817.0",

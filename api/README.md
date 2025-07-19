@@ -1,11 +1,8 @@
-
-
 # Accessibility Widget API
 
 Backend service for managing data and logic of the accessibility-widget.
 
 ---
-
 
 ## Quick Start
 
@@ -29,6 +26,7 @@ npm install --legacy-peer-deps
 ```bash
 npm run dev
 ```
+
 The server will start on the port specified in `.env` (default: `http://localhost:3001`).
 
 ### 4. Run in production
@@ -170,9 +168,7 @@ query {
 
 ## Note
 
-
 All endpoints and request examples for this project are collected in Hoppscotch:
 https://hoppscotch.webability.io
 
 To get access to the request collection, please ask the administrator to add you to the team.
-
