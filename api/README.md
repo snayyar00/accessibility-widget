@@ -52,6 +52,8 @@ npm start
 ├── repository/            # Database access
 ├── scripts/               # Admin scripts
 ├── public/                # Public files
+├── controllers/           # Express route handlers (business logic for API endpoints)
+├── routes/                # Express route definitions (URL structure and registration)
 ├── utils/                 # Utilities
 ├── validations/           # Validations
 ├── package.json
@@ -142,6 +144,10 @@ AZURE_REGION=northeurope
 - **Linting:**  
   `npm run lint` — check code  
   `npm run lint:fix` — auto-fix
+
+- **Formatting:**
+  - `npm run format` — check formatting
+  - `npm run format:fix` — auto-format files
 
 ---
 
