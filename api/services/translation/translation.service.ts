@@ -241,7 +241,7 @@ export const translateStatement = async ({ content, targetLanguage, languageCode
 
       if (!translatedText) {
         console.error('No translation content received:', {
-          response: response,
+          response,
           choices: response.choices,
           model: TRANSLATION_CONFIG.model.name,
           contentLength: String(content).length,

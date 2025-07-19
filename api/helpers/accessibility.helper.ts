@@ -62,7 +62,7 @@ interface HumanFunctionality {
 
 function createAxeArrayObj(message: string, issue: any) {
   const obj: axeOutput = {
-    message: message,
+    message,
     context: [issue.context],
     selectors: [issue.selector],
     impact: issue.runnerExtras.impact,
@@ -149,8 +149,8 @@ export async function getAccessibilityInformationPally(domain: string) {
     results = await response.json();
 
     // Log all screenshotUrls found in the issues array
-    if (results && Array.isArray(results.issues)) {
-      results.issues.forEach((issue: any) => {
+    if (results && typeof results === 'object' && results !== null && 'issues' in results && Array.isArray((results as any).issues)) {
+      (results as any).issues.forEach((issue: any) => {
         if (issue.screenshotUrl) {
           console.log('[PALLY API RESPONSE] Found screenshotUrl:', issue.screenshotUrl, 'for message:', issue.message);
         }
@@ -203,33 +203,35 @@ export async function getAccessibilityInformationPally(domain: string) {
     }
   }
 
-  results.issues.forEach((issue: any) => {
-    if (issue.runner === 'axe') {
-      const message = issue.message.replace(/\s*\(.*$/, '');
-      if (issue.type === 'error') {
-        const obj: axeOutput = createAxeArrayObj(message, issue);
-        output.axe.errors.push(obj);
-      } else if (issue.type === 'notice') {
-        const obj: axeOutput = createAxeArrayObj(message, issue);
-        output.axe.notices.push(obj);
-      } else if (issue.type === 'warning') {
-        const obj: axeOutput = createAxeArrayObj(message, issue);
-        output.axe.warnings.push(obj);
+  if (results && typeof results === 'object' && results !== null && 'issues' in results && Array.isArray((results as any).issues)) {
+    (results as any).issues.forEach((issue: any) => {
+      if (issue.runner === 'axe') {
+        const message = issue.message.replace(/\s*\(.*$/, '');
+        if (issue.type === 'error') {
+          const obj: axeOutput = createAxeArrayObj(message, issue);
+          output.axe.errors.push(obj);
+        } else if (issue.type === 'notice') {
+          const obj: axeOutput = createAxeArrayObj(message, issue);
+          output.axe.notices.push(obj);
+        } else if (issue.type === 'warning') {
+          const obj: axeOutput = createAxeArrayObj(message, issue);
+          output.axe.warnings.push(obj);
+        }
+        output.totalElements += 1;
+      } else if (issue.runner === 'htmlcs') {
+        if (issue.type === 'error') {
+          const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
+          output.htmlcs.errors.push(obj);
+        } else if (issue.type === 'notice') {
+          const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
+          output.htmlcs.notices.push(obj);
+        } else if (issue.type === 'warning') {
+          const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
+          output.htmlcs.warnings.push(obj);
+        }
       }
-      output.totalElements += 1;
-    } else if (issue.runner === 'htmlcs') {
-      if (issue.type === 'error') {
-        const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
-        output.htmlcs.errors.push(obj);
-      } else if (issue.type === 'notice') {
-        const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
-        output.htmlcs.notices.push(obj);
-      } else if (issue.type === 'warning') {
-        const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
-        output.htmlcs.warnings.push(obj);
-      }
-    }
-  });
+    });
+  }
 
   // Get preprocessing configuration
   const config = getPreprocessingConfig();
@@ -261,7 +263,7 @@ export async function getAccessibilityInformationPally(domain: string) {
         axe: enhancedResult.axe,
         htmlcs: enhancedResult.htmlcs,
         ByFunctions: enhancedResult.ByFunctions, // Preserve enhanced ByFunctions
-        score: calculateAccessibilityScore(output.axe), //enhancedResult.score ||
+        score: calculateAccessibilityScore(output.axe), // enhancedResult.score ||
         totalElements: output.totalElements,
         processing_stats: enhancedResult.processing_stats,
         // Preserve original htmlcs for ByFunctions processing

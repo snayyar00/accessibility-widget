@@ -21,7 +21,7 @@ const gdprSafeJsonFormat = (tokens: any, req: Request, res: Response) =>
 export const configureMorgan = () => {
   if (accessLogStream) {
     return morgan(gdprSafeJsonFormat, { stream: accessLogStream });
-  } else {
-    return morgan('combined'); // Will use console
-  }
+  } 
+  return morgan('combined'); // Will use console
+  
 };

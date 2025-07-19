@@ -1,6 +1,6 @@
 import { ValidationError } from 'apollo-server-express';
 import compileEmailTemplate from '../../helpers/compile-email-template';
-import { sendMail } from '../../services/email/email.service';
+import { sendMail } from "../email/email.service";
 import { addProblemReport, problemReportProps } from '../../repository/problem_reports.repository';
 import { FindAllowedSitesProps, findSiteByURL } from '../../repository/sites_allowed.repository';
 import { validateReportProblem } from '../../validations/reportProblem.validation';
@@ -21,7 +21,7 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
       return 'Site not found';
     }
 
-    const problem: problemReportProps = { site_id: site.id, issue_type: issue_type as 'bug' | 'accessibility', description: description, reporter_email: reporter_email };
+    const problem: problemReportProps = { site_id: site.id, issue_type: issue_type as 'bug' | 'accessibility', description, reporter_email };
 
     await addProblemReport(problem);
 
@@ -30,7 +30,7 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
       data: {
         issue_type: problem.issue_type,
         description: problem.description,
-        year: year,
+        year,
       },
     });
 

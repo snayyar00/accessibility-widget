@@ -89,7 +89,7 @@ export async function insertSite(data: allowedSites): Promise<FindAllowedSitesPr
 }
 
 export async function deleteSiteByURL(url: string, user_id: number): Promise<number> {
-  return database(TABLE).where({ user_id: user_id, url: url }).del();
+  return database(TABLE).where({ user_id, url }).del();
 }
 
 /**
@@ -155,7 +155,7 @@ export async function deleteSiteWithRelatedRecords(url: string, user_id: number)
       await trx.raw('SET FOREIGN_KEY_CHECKS = 1');
 
       // Delete the main site record within the same transaction
-      const deletedCount = await trx(TABLE).where({ user_id: user_id, url: url }).del();
+      const deletedCount = await trx(TABLE).where({ user_id, url }).del();
 
       console.log(`Deleted site: ${url} (${deletedCount} records)`);
       return deletedCount;
@@ -174,6 +174,6 @@ export async function updateAllowedSiteURL(site_id: number, url: string, user_id
   }
 
   return database(TABLE).where({ 'allowed_sites.user_id': user_id, 'allowed_sites.id': site_id }).update({
-    url: url,
+    url,
   });
 }

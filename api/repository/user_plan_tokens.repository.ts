@@ -45,14 +45,14 @@ export async function addUserToken(
     return database(TABLE)
       .where({ user_id })
       .update({ token: JSON.stringify(merged) });
-  } else {
-    // Insert new row
-    return database(TABLE).insert({
-      user_id,
-      token: JSON.stringify(merged),
-      email,
-    });
-  }
+  } 
+  // Insert new row
+  return database(TABLE).insert({
+    user_id,
+    token: JSON.stringify(merged),
+    email,
+  });
+  
 }
  
 

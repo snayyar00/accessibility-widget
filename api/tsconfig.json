@@ -3,8 +3,11 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es6",
+    "target": "ES2022",
+    "lib": ["ES2022"],
     "noImplicitAny": true,
+    "strict": false,
+    "strictNullChecks": false,
     "moduleResolution": "node",
     "sourceMap": true,
     "skipLibCheck": true,
@@ -12,6 +15,23 @@
     "baseUrl": "./",
     "paths": {
       "./*": ["./*"]
-    }
-  }
+    },
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
+    "declaration": true,
+    "declarationMap": true,
+    "removeComments": true
+  },
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
 }

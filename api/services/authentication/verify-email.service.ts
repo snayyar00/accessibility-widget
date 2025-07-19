@@ -4,7 +4,7 @@ import { findToken, changeTokenStatus, createToken } from '../../repository/user
 import { activeUser, getUserbyId } from '../../repository/user.repository';
 import generateRandomKey from '../../helpers/genarateRandomkey';
 import compileEmailTemplate from '../../helpers/compile-email-template';
-import { sendMail } from '../../services/email/email.service';
+import { sendMail } from "../email/email.service";
 import logger from '../../config/logger.config';
 import { normalizeEmail } from '../../helpers/string.helper';
 import { SEND_MAIL_TYPE } from '../../constants/send-mail-type.constant';
@@ -46,9 +46,9 @@ function isValidDate(createdAt: string): boolean {
 
   if (diffInMs > fifteenMinutesInMs) {
     return false;
-  } else {
-    return true;
-  }
+  } 
+  return true;
+  
 }
 
 export async function verifyEmail(authToken: string): Promise<true | ApolloError> {

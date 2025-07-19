@@ -1,20 +1,21 @@
 {
   "env": {
     "commonjs": true,
-    "es6": true,
+    "es2022": true,
     "node": true
   },
   "extends": [
-    "airbnb-typescript"
+    "airbnb-base",
+    "airbnb-typescript/base",
+    "prettier"
   ],
-  "globals": {
-    "Atomics": "readonly",
-    "SharedArrayBuffer": "readonly"
-  },
+  "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaVersion": 2018,
-    "project": "tsconfig.json"
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "project": "./tsconfig.json"
   },
+  "plugins": ["@typescript-eslint"],
   "settings": {
     "import/resolver": {
       "node": {
@@ -22,11 +23,26 @@
       }
     }
   },
-  "parser": "@typescript-eslint/parser",
   "rules": {
     "@typescript-eslint/naming-convention": 0,
     "@typescript-eslint/no-use-before-define": 0,
     "@typescript-eslint/no-unused-expressions": 0,
+    "@typescript-eslint/no-unused-vars": "warn",
+    "radix": "warn",
+    "consistent-return": "warn",
+    "no-await-in-loop": "warn",
+    "no-plusplus": "off",
+    "eqeqeq": "warn",
+    "prefer-destructuring": "warn",
+    "no-nested-ternary": "warn",
+    "no-empty": "warn",
+    "no-unused-vars": "warn",
+    "no-useless-escape": "warn",
+    "no-prototype-builtins": "warn",
+    "no-underscore-dangle": "warn",
+    "prefer-template": "warn",
+    "object-shorthand": "warn",
+    "no-else-return": "warn",
     "operator-linebreak": ["error", "after"],
     "object-curly-newline": ["error", { "consistent": true }],
     "arrow-body-style": [2, "as-needed"],
@@ -52,7 +68,6 @@
     ],
     "no-confusing-arrow": 0,
     "no-console": 0,
-    "no-unused-vars": 2,
     "no-param-reassign": 0,
     "no-use-before-define": 0,
     "no-restricted-syntax": 0,

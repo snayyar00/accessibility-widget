@@ -1,9 +1,9 @@
+import { ValidationError } from 'apollo-server-express';
 import logger from '../../config/logger.config';
 import { findVisitorByURL, insertVisitor } from '../../repository/visitors.repository';
 import { UserProfile } from '../../repository/user.repository';
-import { findUserSites } from '../../services/allowedSites/allowedSites.service';
+import { findUserSites } from "../allowedSites/allowedSites.service";
 import { validateGetSiteVisitorsByURL } from '../../validations/uniqueVisitor.validation';
-import { ValidationError } from 'apollo-server-express';
 import { normalizeDomain } from '../../utils/domain.utils';
 
 /**
@@ -14,7 +14,7 @@ import { normalizeDomain } from '../../utils/domain.utils';
  */
 export async function addNewVisitor(ipAddress: string, siteId: number): Promise<number[]> {
   try {
-    let data = {
+    const data = {
       ip_address: ipAddress,
       site_id: siteId,
     };

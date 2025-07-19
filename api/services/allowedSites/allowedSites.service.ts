@@ -1,15 +1,15 @@
+import { ValidationError } from 'apollo-server-express';
 import logger from '../../config/logger.config';
 import { IUserSites, deleteSiteWithRelatedRecords, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL, findSiteById } from '../../repository/sites_allowed.repository';
 import { getSitePlanBySiteId } from '../../repository/sites_plans.repository';
 import { createSitesPlan } from './plans-sites.service';
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '../../constants/billing.constant';
-import { sendEmailWithRetries, EmailAttachment } from '../../services/email/email.service';
+import { sendEmailWithRetries, EmailAttachment } from '../email/email.service';
 import { getUserbyId } from '../../repository/user.repository';
 import compileEmailTemplate from '../../helpers/compile-email-template';
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service';
 import { generateAccessibilityReportPDF } from '../../utils/pdfGenerator';
 import { validateChangeURL, validateDomain } from '../../validations/allowedSites.validation';
-import { ValidationError } from 'apollo-server-express';
 import { normalizeDomain } from '../../utils/domain.utils';
 
 export async function checkScript(url: String) {
@@ -27,13 +27,13 @@ export async function checkScript(url: String) {
   const responseData = await response.json();
 
   // Access the result and respond accordingly
-  if (responseData.result === 'WebAbility') {
+  if ((responseData as any).result === 'WebAbility') {
     return 'Web Ability';
-  } else if (responseData.result != 'Not Found') {
-    return 'true';
-  } else {
-    return 'false';
   }
+  if ((responseData as any).result != 'Not Found') {
+    return 'true';
+  }
+  return 'false';
 }
 
 /**
@@ -80,16 +80,16 @@ export async function addSite(userId: number, url: string): Promise<string> {
         const template = await compileEmailTemplate({
           fileName: 'accessReport.mjml',
           data: {
-            status: status,
+            status,
             url: domain,
             statusImage: report?.siteImg,
             statusDescription: report?.score > 89 ? 'You achieved exceptionally high compliance status!' : 'Your Site may not comply with WCAG 2.1 AA.',
-            score: score,
+            score,
             errorsCount: report?.htmlcs?.errors?.length,
             warningsCount: report?.htmlcs?.warnings?.length,
             noticesCount: report?.htmlcs?.notices?.length,
             reportLink: 'https://app.webability.io/accessibility-test',
-            year: year,
+            year,
           },
         });
 
@@ -194,7 +194,7 @@ export async function changeURL(siteId: number, userId: number, url: string) {
     const x = await updateAllowedSiteURL(siteId, domain, userId);
 
     if (x > 0) return 'Successfully updated URL';
-    else return 'Could not change URL';
+    return 'Could not change URL';
   } catch (e) {
     logger.error(e);
     throw e;

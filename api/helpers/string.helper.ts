@@ -1,4 +1,4 @@
-let slugify = require('slugify');
+const slugify = require('slugify');
 
 export function normalizeEmail(text: string): string {
   return text.toLowerCase().trim();

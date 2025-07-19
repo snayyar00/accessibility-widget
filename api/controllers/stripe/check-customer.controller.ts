@@ -7,7 +7,7 @@ import { customTokenCount } from '../../utils/customTokenCount';
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 export async function checkCustomer(req: Request, res: Response) {
-  const user: UserProfile = (req as any).user;
+  const {user} = (req as any);
 
   try {
     // Search for an existing customer by email
@@ -78,25 +78,25 @@ export async function checkCustomer(req: Request, res: Response) {
               card: customers?.data[0]?.invoice_settings.default_payment_method,
               expiry: daysRemaining,
             });
-          } else {
-            const subscriptionData = processSubscriptions(trial_subs.data, subscriptions.data);
-            const appSumoData = calculateAppSumoData(subscriptions.data);
+          } 
+          const subscriptionData = processSubscriptions(trial_subs.data, subscriptions.data);
+          const appSumoData = calculateAppSumoData(subscriptions.data);
 
-            return res.status(200).json({
-              trial_subs: JSON.stringify(subscriptionData.trial_sub_data),
-              subscriptions: JSON.stringify(subscriptionData.regular_sub_data),
-              isCustomer: true,
-              plan_name: prod.name,
-              interval: trial_subs.data[0].plan.interval,
-              submeta: trial_subs.data[0].metadata,
-              card: customers?.data[0]?.invoice_settings.default_payment_method,
-              expiry: daysRemaining,
-              appSumoCount: appSumoData.appSumoCount,
-              codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length : appSumoData.uniquePromoCodes.size,
-              infinityToken: hasCustomInfinityToken,
-            });
-          }
-        } else if (subscriptions.data.length > 0) {
+          return res.status(200).json({
+            trial_subs: JSON.stringify(subscriptionData.trial_sub_data),
+            subscriptions: JSON.stringify(subscriptionData.regular_sub_data),
+            isCustomer: true,
+            plan_name: prod.name,
+            interval: trial_subs.data[0].plan.interval,
+            submeta: trial_subs.data[0].metadata,
+            card: customers?.data[0]?.invoice_settings.default_payment_method,
+            expiry: daysRemaining,
+            appSumoCount: appSumoData.appSumoCount,
+            codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length : appSumoData.uniquePromoCodes.size,
+            infinityToken: hasCustomInfinityToken,
+          });
+          
+        } if (subscriptions.data.length > 0) {
           const prod = await stripe.products.retrieve(String(subscriptions.data[0]?.plan?.product));
 
           if (!price || price?.tiers?.length! > 0) {
@@ -108,32 +108,32 @@ export async function checkCustomer(req: Request, res: Response) {
               submeta: subscriptions.data[0].metadata,
               card: customers?.data[0]?.invoice_settings.default_payment_method,
             });
-          } else {
-            const subscriptionData = processSubscriptions([], subscriptions.data);
-            const appSumoData = calculateAppSumoData(subscriptions.data);
+          } 
+          const subscriptionData = processSubscriptions([], subscriptions.data);
+          const appSumoData = calculateAppSumoData(subscriptions.data);
 
-            return res.status(200).json({
-              subscriptions: JSON.stringify(subscriptionData.regular_sub_data),
-              isCustomer: true,
-              plan_name: prod.name,
-              interval: subscriptions.data[0].plan.interval,
-              submeta: subscriptions.data[0].metadata,
-              card: customers?.data[0]?.invoice_settings.default_payment_method,
-              appSumoCount: appSumoData.appSumoCount,
-              codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length : appSumoData.uniquePromoCodes.size,
-              infinityToken: hasCustomInfinityToken,
-            });
-          }
-        } else {
           return res.status(200).json({
+            subscriptions: JSON.stringify(subscriptionData.regular_sub_data),
             isCustomer: true,
-            plan_name: '',
-            interval: '',
+            plan_name: prod.name,
+            interval: subscriptions.data[0].plan.interval,
+            submeta: subscriptions.data[0].metadata,
             card: customers?.data[0]?.invoice_settings.default_payment_method,
-            codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length,
+            appSumoCount: appSumoData.appSumoCount,
+            codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length : appSumoData.uniquePromoCodes.size,
             infinityToken: hasCustomInfinityToken,
           });
-        }
+          
+        } 
+        return res.status(200).json({
+          isCustomer: true,
+          plan_name: '',
+          interval: '',
+          card: customers?.data[0]?.invoice_settings.default_payment_method,
+          codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length,
+          infinityToken: hasCustomInfinityToken,
+        });
+        
       } catch (error) {
         return res.status(200).json({
           isCustomer: true,

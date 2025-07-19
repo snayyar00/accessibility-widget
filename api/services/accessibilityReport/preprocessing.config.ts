@@ -74,9 +74,9 @@ export function getOptimizedConfig() {
   
   if (nodeEnv === 'production') {
     return getPerformanceConfig('balanced');
-  } else if (nodeEnv === 'development') {
+  } if (nodeEnv === 'development') {
     return getPerformanceConfig('fast');
-  } else {
-    return getPerformanceConfig('thorough');
-  }
+  } 
+  return getPerformanceConfig('thorough');
+  
 } 

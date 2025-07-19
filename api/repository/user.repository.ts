@@ -1,8 +1,8 @@
 import union from 'lodash/union';
+import Knex from 'knex';
 import database from '../config/database.config';
 import { userTokenColumns, UserToken } from './user_tokens.repository';
 import { TABLES } from '../constants/database.constant';
-import Knex from 'knex';
 
 const TABLE = TABLES.users;
 

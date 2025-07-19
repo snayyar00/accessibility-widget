@@ -1,11 +1,11 @@
 import cron from 'node-cron';
+import pLimit from 'p-limit';
 import compileEmailTemplate from '../helpers/compile-email-template';
 import { sendEmailWithRetries, EmailAttachment } from '../services/email/email.service';
 import { findSiteById } from '../repository/sites_allowed.repository';
 import { getUserbyId } from '../repository/user.repository';
 import { fetchAccessibilityReport } from '../services/accessibilityReport/accessibilityReport.service';
 import { checkScript } from '../services/allowedSites/allowedSites.service';
-import pLimit from 'p-limit';
 import { getActiveSitesPlan } from '../repository/sites_plans.repository';
 import { generateAccessibilityReportPDF } from '../utils/pdfGenerator';
 
@@ -61,7 +61,7 @@ const sendMonthlyEmails = async () => {
                 warningsCount: report.htmlcs.warnings.length,
                 noticesCount: report.htmlcs.notices.length,
                 reportLink: 'https://app.webability.io/accessibility-test',
-                year: year,
+                year,
               },
             });
 

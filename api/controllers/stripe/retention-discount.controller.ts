@@ -9,7 +9,7 @@ const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 export async function applyRetentionDiscount(req: Request, res: Response) {
   const { domainId, status } = req.body;
 
-  const user: UserProfile = (req as any).user;
+  const {user} = (req as any);
   const site = await findSiteById(domainId);
 
   if (!site || site.user_id !== user.id) {
@@ -50,27 +50,27 @@ export async function applyRetentionDiscount(req: Request, res: Response) {
         couponCode: promoCode.code,
         message: 'Coupon code created successfully',
       });
-    } else {
-      // Apply existing coupon to active subscription
-      try {
-        const subscription = await stripe.subscriptions.retrieve(sitePlan.subcriptionId);
+    } 
+    // Apply existing coupon to active subscription
+    try {
+      const subscription = await stripe.subscriptions.retrieve(sitePlan.subcriptionId);
 
-        if (!subscription || subscription.status !== 'active') {
-          return res.status(400).json({ error: 'Active subscription not found' });
-        }
-
-        await stripe.subscriptions.update(subscription.id, {
-          coupon: RETENTION_COUPON_ID,
-        });
-
-        return res.status(200).json({
-          message: '5% discount applied to subscription successfully',
-        });
-      } catch (subscriptionError) {
-        console.error('Error applying discount to subscription:', subscriptionError);
-        return res.status(500).json({ error: 'Failed to apply discount to subscription' });
+      if (!subscription || subscription.status !== 'active') {
+        return res.status(400).json({ error: 'Active subscription not found' });
       }
+
+      await stripe.subscriptions.update(subscription.id, {
+        coupon: RETENTION_COUPON_ID,
+      });
+
+      return res.status(200).json({
+        message: '5% discount applied to subscription successfully',
+      });
+    } catch (subscriptionError) {
+      console.error('Error applying discount to subscription:', subscriptionError);
+      return res.status(500).json({ error: 'Failed to apply discount to subscription' });
     }
+    
   } catch (error) {
     console.error('Error applying retention discount:', error);
     res.status(500).json({ error: 'Internal server error' });

@@ -54,7 +54,7 @@ export async function insertVisitor(data: VisitorInfo): Promise<number[]> {
     .where({ [visitorColumns.ip_address]: data.ip_address, [visitorColumns.site_id]: data.site_id })
     .first();
   if (exisitingVisitors !== undefined) return [0];
-  else return database(TABLE).insert(data).onConflict(['unique_visitors.ip_address', 'unique_visitors.site_id']).ignore();
+  return database(TABLE).insert(data).onConflict(['unique_visitors.ip_address', 'unique_visitors.site_id']).ignore();
 }
 
 /**
@@ -141,9 +141,9 @@ export async function findVisitorByIp(ip_address: string) {
       continent: visitor.continent,
       firstVisit: visitor.first_visit,
     };
-  } else {
-    return undefined;
-  }
+  } 
+  return undefined;
+  
 }
 
 /**

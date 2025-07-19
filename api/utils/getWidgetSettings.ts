@@ -1,10 +1,10 @@
+import { findSiteByURL } from '../repository/sites_allowed.repository';
+import { getWidgetSettingsBySiteId } from '../repository/widget_settings.repository';
 type LogoSettings = {
   logoImage: string;
   logoUrl: string;
   accessibilityStatementLinkUrl: string;
 };
-import { findSiteByURL } from '../repository/sites_allowed.repository';
-import { getWidgetSettingsBySiteId } from '../repository/widget_settings.repository';
 
 const getWidgetSettings = async (
   siteUrl: string,

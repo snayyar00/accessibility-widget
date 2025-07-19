@@ -1,5 +1,5 @@
 import { combineResolvers } from 'graphql-resolvers';
-import { isAuthenticated } from '../../graphql/resolvers/authorization.resolver';
+import { isAuthenticated } from "./authorization.resolver";
 
 import { addImpressionsURL, addInteraction, addProfileCount, findImpressionsByURLAndDate, getEngagementRates } from '../../services/Impressions/impressions.service';
 

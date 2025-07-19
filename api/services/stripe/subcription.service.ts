@@ -54,7 +54,7 @@ export async function createNewSubcription(token: string, email: string, name: s
 
   try {
     const customers = await stripe.customers.list({
-      email: email,
+      email,
       limit: 1,
     });
 
@@ -107,14 +107,14 @@ export async function createNewSubcription(token: string, email: string, name: s
         customer_id: customer.id,
         subcription_id: 'Trial',
       };
-    } else {
-      const result = await stripe.subscriptions.create(dataSubcription);
+    } 
+    const result = await stripe.subscriptions.create(dataSubcription);
 
-      return {
-        customer_id: customer.id,
-        subcription_id: result.id,
-      };
-    }
+    return {
+      customer_id: customer.id,
+      subcription_id: result.id,
+    };
+    
   } catch (error) {
     console.log('Sub Func error = ', error);
     logger.error(error);
@@ -147,7 +147,7 @@ export async function updateSubcription(subId: string, priceId: string): Promise
         throw new ApolloError(`This plan has a domain limit of ${new_price.tiers[0].up_to}. please decrease your added domains to subscribe to this plan`);
       }
     } else {
-      const metadata = subscription.metadata;
+      const {metadata} = subscription;
 
       const updatedMetadata: any = { ...metadata, maxDomains: new_price.tiers[0].up_to, usedDomains: Number(previous_plan.length), updateMetaData: 'true' };
 
@@ -203,7 +203,7 @@ export async function getSubcriptionCustomerIDBySubId(subId: string): Promise<st
   try {
     const sub = await stripe.subscriptions.retrieve(subId);
 
-    const customer = sub.customer;
+    const {customer} = sub;
 
     return String(customer);
   } catch (error) {

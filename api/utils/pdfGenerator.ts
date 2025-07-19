@@ -2,10 +2,10 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import path from 'path';
 import fs from 'fs';
-import getWidgetSettings from '../utils/getWidgetSettings';
 import sharp from 'sharp';
-import { deduplicateIssuesByMessage } from '../utils/translator';
 import axios from 'axios';
+import getWidgetSettings from "./getWidgetSettings";
+import { deduplicateIssuesByMessage } from "./translator";
 
 function extractIssuesFromReport(report: any) {
   const issues: any[] = [];
@@ -158,7 +158,7 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
   const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility';
   const enhancedScore = hasWebAbility ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE) : baseScore;
 
-  let status: string, message: string, statusColor: [number, number, number];
+  let status: string; let message: string; let statusColor: [number, number, number];
   if (enhancedScore >= 80) {
     status = 'Compliant';
     message = 'Your website is highly accessible. Great job!';
@@ -198,7 +198,7 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
   let logoBottomY = 0;
 
   // Draw logo if available
-  //console.log("url of image is ",logoImage);
+  // console.log("url of image is ",logoImage);
 
   let logoBase64 = null;
   let logopath: string | undefined;
@@ -222,8 +222,8 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
     if (logoBase64) {
       const image = sharp(logopath);
 
-      const maxWidth = 48,
-        maxHeight = 36; // increased size for a bigger logo
+      const maxWidth = 48;
+      const maxHeight = 36; // increased size for a bigger logo
       // Get metadata (dimensions)
       const metadata = await image.metadata();
       let drawWidth = metadata.width || maxWidth;
@@ -271,7 +271,7 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
   doc.setFontSize(15);
   doc.setTextColor(0, 0, 0);
 
-  let label = translatedLabel;
+  const label = translatedLabel;
   const labelWidth = doc.getTextWidth(label);
   const urlWidth = doc.getTextWidth(url);
   const totalWidth = labelWidth + urlWidth;
@@ -393,7 +393,7 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
   const toArray = (val: any) => (Array.isArray(val) ? val : val ? [val] : []);
 
   // Build the rows
-  let tableBody: any[] = [];
+  const tableBody: any[] = [];
 
   const FilteredIssues = await deduplicateIssuesByMessage(issues);
   const translatedIssues = FilteredIssues;
@@ -472,8 +472,8 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
     if (issue.screenshotBase64) {
       // Get actual image dimensions from base64 data
       const dimensions = await getImageDimensions(issue.screenshotBase64);
-      let drawWidth = dimensions.width;
-      let drawHeight = dimensions.height;
+      const drawWidth = dimensions.width;
+      const drawHeight = dimensions.height;
 
       // Scale down if image is too large for PDF
       const maxWidth = 120;

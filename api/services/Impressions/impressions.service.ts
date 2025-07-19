@@ -1,5 +1,5 @@
-import logger from '../../config/logger.config';
 import { ValidationError } from 'apollo-server-express';
+import logger from '../../config/logger.config';
 
 import { findVisitorByIp } from '../../repository/visitors.repository';
 import { updateImpressions, insertImpressionURL, findEngagementURLDate, findImpressionsURLDate, updateImpressionProfileCount } from '../../repository/impressions.repository';
@@ -27,29 +27,29 @@ export async function addImpressionsURL(ipAddress: string, url: string) {
 
       const response = await insertImpressionURL(data, domain);
       return response;
-    } else {
-      const site = await findSite(domain);
+    } 
+    const site = await findSite(domain);
 
-      if (!site) {
-        throw new Error('Site not found for domain: ' + domain);
-      }
-
-      await addNewVisitor(ipAddress, site.id);
-
-      const visitorSecond = await findVisitorByIp(ipAddress);
-
-      if (!visitorSecond) {
-        throw new Error('Visitor not found after creation');
-      }
-
-      const data = {
-        visitor_id: visitorSecond.id,
-      };
-
-      const response = await insertImpressionURL(data, domain);
-
-      return response;
+    if (!site) {
+      throw new Error(`Site not found for domain: ${  domain}`);
     }
+
+    await addNewVisitor(ipAddress, site.id);
+
+    const visitorSecond = await findVisitorByIp(ipAddress);
+
+    if (!visitorSecond) {
+      throw new Error('Visitor not found after creation');
+    }
+
+    const data = {
+      visitor_id: visitorSecond.id,
+    };
+
+    const response = await insertImpressionURL(data, domain);
+
+    return response;
+    
   } catch (error) {
     logger.error(error);
     throw error;
@@ -68,7 +68,7 @@ export async function findImpressionsByURLAndDate(userId: number, url: string, s
   try {
     const impressions = await findImpressionsURLDate(userId, domain, startDate, endDate);
 
-    return { impressions: impressions, count: impressions.length };
+    return { impressions, count: impressions.length };
   } catch (e) {
     logger.error('Error finding impressions by URL and date', {
       userId,
@@ -118,12 +118,12 @@ export async function addProfileCount(impressionId: number, profileCount: any): 
         success: true,
         message: 'Profile counts updated successfully',
       };
-    } else {
-      return {
-        success: false,
-        message: 'No rows were updated. Invalid impression ID.',
-      };
-    }
+    } 
+    return {
+      success: false,
+      message: 'No rows were updated. Invalid impression ID.',
+    };
+    
   } catch (e) {
     console.error('Error updating profile count:', e);
     logger.error(e);

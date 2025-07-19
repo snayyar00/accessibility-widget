@@ -27,7 +27,7 @@ export const expressErrorMiddleware = (error: any, req: Request, res: Response, 
   });
 
   if (accessLogStream) {
-    accessLogStream.write(errorLog + '\n');
+    accessLogStream.write(`${errorLog  }\n`);
   } else {
     // console.log(errorLog);
   }

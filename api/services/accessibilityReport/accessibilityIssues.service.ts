@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import { stringToJson } from '../../helpers/stringToJSON.helper';
 import dotenv from 'dotenv';
+import { stringToJson } from '../../helpers/stringToJSON.helper';
 dotenv.config();
 const openai = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
@@ -232,15 +232,15 @@ export async function readAccessibilityDescriptionFromDb(issues: any) {
           if (result.length > 0 && result[0].description.trim() !== '') {
             // Add the single issue to the database
             return result[0];
-          } else {
-            throw new Error('Empty description received');
-          }
+          } 
+          throw new Error('Empty description received');
+          
         } catch (error) {
           console.error(`Attempt ${attempt} failed for heading: ${heading}`, error.message);
           if (attempt === retries) {
             // After all retries failed, create a default entry
             const defaultIssue: dbIssue = {
-              heading: heading,
+              heading,
               description: 'An accessibility issue was detected. Please review for WCAG compliance.',
               recommended_action: 'Review the element and ensure it meets accessibility standards.',
               code: 'WCAG General',
@@ -305,9 +305,9 @@ export const GPTChunks = async (errorCodes: string[]) => {
         {
           role: 'user',
           content:
-            'These are WCGA error Codes give JSON Object where each error code is mapped to a human functionality : [' +
-            chunk.join(' , ') +
-            ']',
+            `These are WCGA error Codes give JSON Object where each error code is mapped to a human functionality : [${ 
+              chunk.join(' , ') 
+            }]`,
         },
       ],
       tools: [
@@ -361,7 +361,7 @@ export const GPTChunks = async (errorCodes: string[]) => {
 
     // Flatten the array of arrays into a single array
     const aggregatedResult = results.flat();
-    let mergedObject: GPTData = {
+    const mergedObject: GPTData = {
       'HumanFunctionalities': [],
     };
     

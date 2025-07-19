@@ -15,14 +15,14 @@ export const logAuthenticationFailure = (req: Request, _: Response, message: str
     content_length: 0,
     operation_name: getOperationName(req.body),
     error: {
-      message: message,
-      code: code,
+      message,
+      code,
       stack: process.env.NODE_ENV === 'development' ? undefined : undefined,
     },
   });
 
   if (accessLogStream) {
-    accessLogStream.write(authLog + '\n');
+    accessLogStream.write(`${authLog  }\n`);
   } else {
     // console.log(authLog);
   }

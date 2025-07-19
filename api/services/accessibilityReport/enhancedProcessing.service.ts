@@ -70,9 +70,9 @@ export async function processAccessibilityIssuesEnhanced(
     const preprocessingResult = preprocessAccessibilityIssues(rawIssues);
     const { batches, template_analysis, preprocessing_stats } = preprocessingResult;
     
-    let issuesFiltered = rawIssues.length - preprocessingResult.batches.reduce((sum, batch) => sum + batch.issues.length, 0);
-    let templateIssues = template_analysis.patterns_detected.length;
-    let totalProcessedIssues = preprocessingResult.batches.reduce((sum, batch) => sum + batch.issues.length, 0);
+    const issuesFiltered = rawIssues.length - preprocessingResult.batches.reduce((sum, batch) => sum + batch.issues.length, 0);
+    const templateIssues = template_analysis.patterns_detected.length;
+    const totalProcessedIssues = preprocessingResult.batches.reduce((sum, batch) => sum + batch.issues.length, 0);
 
     // Step 3: GPT batch processing with optimized settings
     const batchResults = await processBatches(batches);
@@ -184,7 +184,7 @@ function calculateEnhancedScore(results: any): number {
     
     // Template issues get reduced penalty per occurrence
     if (issue.template_info?.is_template_issue) {
-      penalty = penalty * 2; // Single penalty for template issue, not per occurrence
+      penalty *= 2; // Single penalty for template issue, not per occurrence
     }
     
     score -= penalty;

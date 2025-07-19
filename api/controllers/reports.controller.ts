@@ -4,7 +4,7 @@ import { findSitesByUserId, IUserSites } from '../repository/sites_allowed.repos
 import { getProblemReportsBySiteId } from '../repository/problem_reports.repository';
 
 export async function getProblemReports(req: Request, res: Response) {
-  const user: UserProfile = (req as any).user;
+  const {user} = (req as any);
 
   try {
     // Fetch sites by user ID

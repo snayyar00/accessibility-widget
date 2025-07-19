@@ -59,7 +59,7 @@ function normalizeSelector(selector: string): string {
   if (!selector) return '';
   
   // Remove dynamic parts that might vary
-  let normalized = selector
+  const normalized = selector
     .replace(/\[\d+\]/g, '[]')  // array indices: [0] → []
     .replace(/:nth-child\(\d+\)/g, ':nth-child()')  // nth-child(3) → nth-child()
     .replace(/:nth-of-type\(\d+\)/g, ':nth-of-type()') // nth-of-type(2) → nth-of-type()

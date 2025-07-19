@@ -25,4 +25,4 @@ export const APP_SUMO_BUNDLE_NAMES = ['app sumo small', 'app sumo medium', 'app 
 export const APP_SUMO_DISCOUNT_COUPON = 'byYg4Q7W'; // prod
 
 // export const RETENTION_COUPON_ID = '006HOMLM'; //Test
-export const RETENTION_COUPON_ID = 'iLPvrYMc'; //Prod
+export const RETENTION_COUPON_ID = 'iLPvrYMc'; // Prod

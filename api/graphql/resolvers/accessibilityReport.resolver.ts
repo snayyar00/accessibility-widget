@@ -1,11 +1,11 @@
 import { combineResolvers } from 'graphql-resolvers';
+import { ValidationError } from 'apollo-server-express';
 import { fetchTechStackFromAPI } from '../../repository/techStack.repository';
 import { fetchAccessibilityReport } from '../../services/accessibilityReport/accessibilityReport.service';
 import { insertAccessibilityReport, deleteAccessibilityReportByR2Key, getR2KeysByParams, getAccessibilityReportByR2Key } from '../../repository/accessibilityReports.repository';
 import { saveReportToR2, fetchReportFromR2, deleteReportFromR2 } from '../../utils/r2Storage';
 import { validateAccessibilityReport, validateAccessibilityReportR2Filter, validateR2Key, validateSaveAccessibilityReportInput } from '../../validations/accesability.validation';
-import { ValidationError } from 'apollo-server-express';
-import { isAuthenticated } from '../../graphql/resolvers/authorization.resolver';
+import { isAuthenticated } from "./authorization.resolver";
 import { findSiteByURL } from '../../repository/sites_allowed.repository';
 
 const resolvers = {

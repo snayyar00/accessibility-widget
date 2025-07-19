@@ -6,7 +6,7 @@ const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 export async function createBillingPortalSession(req: Request, res: Response) {
   try {
-    const user: UserProfile = (req as any).user;
+    const {user} = (req as any);
     const { returnURL } = req.body;
 
     // Search for an existing customer by email
@@ -36,7 +36,7 @@ export async function createBillingPortalSession(req: Request, res: Response) {
       }
     }
 
-    let subscriptions, trialingSubscriptions;
+    let subscriptions; let trialingSubscriptions;
     try {
       subscriptions = await stripe.subscriptions.list({
         customer: customer.id,

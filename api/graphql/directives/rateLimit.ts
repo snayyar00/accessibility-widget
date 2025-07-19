@@ -26,7 +26,7 @@ const { rateLimitDirectiveTransformer } = rateLimitDirective({
     }
 
     // Priority 3: Use fingerprint based on request headers for fallback uniqueness
-    const req = context.req;
+    const {req} = context;
     const userAgent = req?.headers?.['user-agent']?.slice(0, 50) || '';
     const acceptLanguage = req?.headers?.['accept-language']?.slice(0, 30) || '';
     const acceptEncoding = req?.headers?.['accept-encoding']?.slice(0, 30) || '';

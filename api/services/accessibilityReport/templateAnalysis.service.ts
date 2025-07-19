@@ -216,11 +216,11 @@ export class TemplateAnalysisService {
     
     if (scope === 'theme_level') {
       return `${baseRec}. This affects ${count} elements across your site and should be fixed at the theme/CSS level for maximum efficiency.`;
-    } else if (scope === 'component_level') {
+    } if (scope === 'component_level') {
       return `${baseRec}. This affects ${count} instances and should be fixed in the component template or partial.`;
-    } else {
-      return `${baseRec}. This affects ${count} instances and requires individual content updates.`;
-    }
+    } 
+    return `${baseRec}. This affects ${count} instances and requires individual content updates.`;
+    
   }
   
   /**
@@ -303,7 +303,7 @@ export class TemplateAnalysisService {
     for (let i = 0; i < pattern.length; i++) {
       const char = pattern.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
+      hash &= hash; // Convert to 32bit integer
     }
     return Math.abs(hash).toString(36).substring(0, 6);
   }

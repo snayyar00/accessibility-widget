@@ -23,7 +23,7 @@ export const stripeWebhook = async (req: Request, res: Response, context: any) =
 
     if (event.type === 'product.updated') {
       // Handles product save and update in DB when you do so from the stripe dashboard
-      let product = event.data.object as Stripe.Product;
+      const product = event.data.object as Stripe.Product;
 
       console.log('product to be updated = ', product);
 
@@ -40,7 +40,7 @@ export const stripeWebhook = async (req: Request, res: Response, context: any) =
       }
 
       if (findProduct) {
-        //update product prices
+        // update product prices
         console.log('product exists update it');
         try {
           const productObject = { name: product.name, type: product.name.toLowerCase(), stripe_id: product.id };
@@ -53,16 +53,16 @@ export const stripeWebhook = async (req: Request, res: Response, context: any) =
               if (price?.tiers?.length > 0) {
                 return {
                   amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0]?.up_to),
-                  type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
+                  type: `${getPrice?.recurring?.interval  }ly`, // e.g., 'monthly' or 'yearly'
                   stripe_id: getPrice?.id, // Stripe price ID
                 };
-              } else {
-                return {
-                  amount: price.unit_amount / 100,
-                  type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
-                  stripe_id: getPrice?.id, // Stripe price ID
-                };
-              }
+              } 
+              return {
+                amount: price.unit_amount / 100,
+                type: `${getPrice?.recurring?.interval  }ly`, // e.g., 'monthly' or 'yearly'
+                stripe_id: getPrice?.id, // Stripe price ID
+              };
+              
             }),
           );
           if (await updateProduct(findProduct?.id, productObject, pricesArray)) {
@@ -86,16 +86,16 @@ export const stripeWebhook = async (req: Request, res: Response, context: any) =
               if (price?.tiers?.length > 0) {
                 return {
                   amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0]?.up_to),
-                  type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
+                  type: `${getPrice?.recurring?.interval  }ly`, // e.g., 'monthly' or 'yearly'
                   stripe_id: getPrice?.id, // Stripe price ID
                 };
-              } else {
-                return {
-                  amount: price.unit_amount / 100,
-                  type: ['monthly', 'yearly'].includes(getPrice?.recurring?.interval + 'ly') ? getPrice?.recurring?.interval + 'ly' : 'monthly', // e.g., 'monthly' or 'yearly'
-                  stripe_id: getPrice?.id, // Stripe price ID
-                };
-              }
+              } 
+              return {
+                amount: price.unit_amount / 100,
+                type: ['monthly', 'yearly'].includes(`${getPrice?.recurring?.interval  }ly`) ? `${getPrice?.recurring?.interval  }ly` : 'monthly', // e.g., 'monthly' or 'yearly'
+                stripe_id: getPrice?.id, // Stripe price ID
+              };
+              
             }),
           );
           if (await insertProduct(productObject, pricesArray)) {
@@ -114,10 +114,10 @@ export const stripeWebhook = async (req: Request, res: Response, context: any) =
 
       if (subscription.metadata.hasOwnProperty('updateMetaData') && subscription.metadata.updateMetaData == 'true') {
         console.log('Updating Metadata to stop create sub (only update metadata)');
-        const metadata = subscription.metadata;
+        const {metadata} = subscription;
         metadata.updateMetaData = 'false';
         await stripe.subscriptions.update(String(subscription.id), {
-          metadata: metadata,
+          metadata,
         });
       } else {
         console.log('Updating Metadata to stop update sub from stripe (update meta data and db)');
@@ -133,7 +133,7 @@ export const stripeWebhook = async (req: Request, res: Response, context: any) =
           console.log('err = ', error);
         }
         if (previous_plan) {
-          let prod = await findProductById(previous_plan[0].productId);
+          const prod = await findProductById(previous_plan[0].productId);
           if (prod.name == new_product.name) {
             console.log('No new change so Skip');
           } else if (subscription.status === 'active') {
@@ -152,7 +152,7 @@ export const stripeWebhook = async (req: Request, res: Response, context: any) =
 
               await Promise.all(updatePromises);
 
-              const metadata = subscription.metadata;
+              const {metadata} = subscription;
 
               const domainCount = previous_plan.length > Number(metadata.usedDomains) ? previous_plan.length : Number(metadata.usedDomains); // Domain Count remains the same if site deleted, else increments
 

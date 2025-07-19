@@ -81,7 +81,7 @@ interface WebAIMResponse {
 }
 function createAxeArrayObj(message: string, issue: any) {
   const obj: axeOutput = {
-    message: message,
+    message,
     context: Array.isArray(issue.context) ? issue.context : [issue.context],
     selectors: Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors],
     impact: issue.impact || 'moderate',
@@ -145,10 +145,10 @@ function calculateAccessibilityScore(data: any) {
   const score = Math.ceil(maxScore - issueSum);
   return {
     score: Math.max(30, score), // Ensure score doesn't go below 0
-    totalIssues: totalIssues,
+    totalIssues,
   };
 }
-interface htmlcsOutput {
+export interface htmlcsOutput {
   code: string;
   message?: string;
   context?: string[];
@@ -500,7 +500,7 @@ export const fetchAccessibilityReport = async (url: string) => {
       console.error(`Error with https://www.: ${error.message}`);
       try {
         if (!url.startsWith('https://') && !url.startsWith('http://')) {
-          url = 'https://' + url.replace('https://www.', '').replace('http://www.', '');
+          url = `https://${url.replace('https://www.', '').replace('http://www.', '')}`;
         }
 
         const result: ResultWithOriginal = await getAccessibilityInformationPally(url);
@@ -583,13 +583,13 @@ const checkScript = async (url: string, retries = 3): Promise<string> => {
 
       const responseData = await response.json();
 
-      if (responseData.result === 'WebAbility') {
+      if ((responseData as any).result === 'WebAbility') {
         return 'Web Ability';
-      } else if (responseData.result !== 'Not Found') {
-        return 'true';
-      } else {
-        return 'false';
       }
+      if ((responseData as any).result !== 'Not Found') {
+        return 'true';
+      }
+      return 'false';
     } catch (error) {
       console.error(`Error in checkScript attempt ${attempt}:`, error.message);
       if (attempt === retries) return 'Error';

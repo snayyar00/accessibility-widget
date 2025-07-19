@@ -17,7 +17,7 @@ const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 export async function createCheckoutSession(req: Request, res: Response) {
   const { planName, billingInterval, returnUrl, domainId, domain, cardTrial, promoCode } = req.body;
 
-  const user: UserProfile = (req as any).user;
+  const {user} = (req as any);
   const site = await findSiteByURL(domain);
 
   if (!site || site.user_id !== user.id) {
@@ -50,7 +50,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
 
     let promoCodeData: Stripe.PromotionCode[];
 
-    if (promoCode && promoCode.length > 0 && typeof promoCode?.[0] != 'number') {
+    if (promoCode && promoCode.length > 0 && typeof promoCode?.[0] !== 'number') {
       const validCodesData: Stripe.PromotionCode[] = [];
       const invalidCodes: string[] = [];
 
@@ -74,7 +74,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
     }
 
     let session: any = {};
-    if (typeof promoCode?.[0] == 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id))) {
+    if (typeof promoCode?.[0] === 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id))) {
       const [{ orderedCodes, numPromoSites }, tokenUsed] = await Promise.all([appSumoPromoCount(subscriptions, promoCode, user.id), getUserTokens(user.id)]);
 
       console.log('promo');
@@ -88,7 +88,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
         expand: ['latest_invoice.payment_intent'],
         coupon: APP_SUMO_DISCOUNT_COUPON,
         metadata: {
-          domainId: domainId,
+          domainId,
           userId: user.id,
           maxDomains: 1,
           usedDomains: 1,
@@ -112,10 +112,10 @@ export async function createCheckoutSession(req: Request, res: Response) {
       res.status(200).json({ success: true });
 
       return;
-    } else if (promoCode && promoCode.length > 0) {
+    } if (promoCode && promoCode.length > 0) {
       // Coupon is not valid or not the app sumo promo
       return res.json({ valid: false, error: 'Invalid promo code' });
-    } else if (cardTrial) {
+    } if (cardTrial) {
       console.log('trial');
       session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -131,14 +131,14 @@ export async function createCheckoutSession(req: Request, res: Response) {
         success_url: `${returnUrl}`,
         cancel_url: returnUrl,
         metadata: {
-          domainId: domainId,
+          domainId,
           userId: user.id,
           updateMetaData: 'true',
         },
         subscription_data: {
           trial_period_days: 30,
           metadata: {
-            domainId: domainId,
+            domainId,
             userId: user.id,
             updateMetaData: 'true',
           },
@@ -158,8 +158,8 @@ export async function createCheckoutSession(req: Request, res: Response) {
           cancel_url: returnUrl,
           metadata: {
             price_id: price.price_stripe_id,
-            domainId: domainId,
-            domain: domain,
+            domainId,
+            domain,
             userId: user.id,
             updateMetaData: 'true',
           },
@@ -180,13 +180,13 @@ export async function createCheckoutSession(req: Request, res: Response) {
           success_url: `${returnUrl}`,
           cancel_url: returnUrl,
           metadata: {
-            domainId: domainId,
+            domainId,
             userId: user.id,
             updateMetaData: 'true',
           },
           subscription_data: {
             metadata: {
-              domainId: domainId,
+              domainId,
               userId: user.id,
               updateMetaData: 'true',
             },

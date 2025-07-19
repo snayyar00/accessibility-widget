@@ -86,7 +86,7 @@ function getLogLevelAndType(hasAuthError: boolean, hasIntrospectionError: boolea
  */
 function writeLogToStream(logData: string) {
   if (accessLogStream) {
-    accessLogStream.write(logData + '\n');
+    accessLogStream.write(`${logData  }\n`);
   } else {
     // console.log(logData);
   }

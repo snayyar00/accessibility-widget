@@ -8,7 +8,7 @@ export async function validateCoupon(req: Request, res: Response) {
   const { couponCode } = req.body;
 
   try {
-    let promoCodeData = await findPromo(stripe, couponCode.trim());
+    const promoCodeData = await findPromo(stripe, couponCode.trim());
 
     if (!promoCodeData) {
       return res.json({ valid: false, error: 'Invalid promo code' });
@@ -26,9 +26,9 @@ export async function validateCoupon(req: Request, res: Response) {
       const coupon = await stripe.coupons.retrieve(promoCodeData.coupon.id, { expand: ['applies_to'] });
       const product = await stripe.products.retrieve(coupon.applies_to.products[0]);
       return res.json({ valid: true, discount: Number(promoCodeData.coupon.percent_off) / 100, id: promoCodeData.coupon.id, percent: true, planName: product.name.toLowerCase() });
-    } else {
-      return res.json({ valid: true, discount: Number(promoCodeData.coupon.amount_off) / 100, id: promoCodeData.coupon.id, percent: false });
-    }
+    } 
+    return res.json({ valid: true, discount: Number(promoCodeData.coupon.amount_off) / 100, id: promoCodeData.coupon.id, percent: false });
+    
   } catch (error) {
     console.log('err', error);
     res.status(500).json({ error: error.message });

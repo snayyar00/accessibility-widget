@@ -1,7 +1,7 @@
 import logger from '../config/logger.config';
-import { findSiteByURL } from '../repository/sites_allowed.repository';
-import { getSitePlanBySiteId } from '../repository/sites_plans.repository';
-import { getWidgetSettingsBySiteId } from '../repository/widget_settings.repository';
+import { findSiteByURL } from "./sites_allowed.repository";
+import { getSitePlanBySiteId } from "./sites_plans.repository";
+import { getWidgetSettingsBySiteId } from "./widget_settings.repository";
 import { validateTokenUrl } from '../validations/widget.validation';
 import { normalizeDomain } from '../utils/domain.utils';
 import { getRootDomain } from '../utils/domainUtils';

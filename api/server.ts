@@ -1,7 +1,5 @@
 import dotenv from 'dotenv';
 
-dotenv.config();
-
 import './config/logger.config';
 
 import express from 'express';
@@ -24,6 +22,8 @@ import routes from './routes';
 // Import services and hooks
 import stripeHooks from './services/stripe/webhooks.servive';
 import scheduleMonthlyEmails from './jobs/monthlyEmail';
+
+dotenv.config();
 
 const app = express();
 
@@ -61,7 +61,7 @@ const serverGraph = createGraphQLServer();
 
 // GraphQL timeout configuration (before Apollo middleware)
 app.use('/graphql', (req, res, next) => {
-  const body = req.body;
+  const {body} = req;
   let timeout = 70000; // Default 70 seconds
 
   // Check if this is the accessibility report query

@@ -4,7 +4,7 @@ import * as Sentry from '@sentry/node';
 export function initializeSentry(serverName: string) {
   init({
     dsn: process.env.SENTRY_DSN,
-    serverName: serverName,
+    serverName,
     tracesSampleRate: 1.0,
     integrations: [
       // Enable HTTP calls tracing

@@ -31,7 +31,7 @@ export function cleanDomain(input: string): string {
 
   // Check if www. is needed
   if (!domain.startsWith('www.')) {
-    domain = 'www.' + domain;
+    domain = `www.${  domain}`;
   }
 
   // Add https:// prefix

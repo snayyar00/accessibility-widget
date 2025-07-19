@@ -110,9 +110,9 @@ export function getValidationErrorCode(errors: string[]): ValidationErrorCode {
     // Check if it's specifically about links vs general malicious content
     if (errors.some(error => error.toLowerCase().includes('link'))) {
       return ValidationErrorCode.NAME_CONTAINS_LINKS;
-    } else {
-      return ValidationErrorCode.NAME_CONTAINS_MALICIOUS_CONTENT;
-    }
+    } 
+    return ValidationErrorCode.NAME_CONTAINS_MALICIOUS_CONTENT;
+    
   }
   
   // Default fallback for unrecognized errors

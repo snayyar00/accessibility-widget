@@ -1,13 +1,12 @@
 import { ApolloError, ValidationError } from 'apollo-server-express';
 import { createOrganization, updateOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization } from '../../repository/organization.repository';
-import { UserProfile } from '../../repository/user.repository';
+import { UserProfile , updateUser } from '../../repository/user.repository';
 import { objectToString } from '../../helpers/string.helper';
 import database from '../../config/database.config';
 import { addUserToOrganization, getOrganizationsByUserId, getUserOrganization } from './organization_users.service';
 
 import { validateAddOrganization, validateEditOrganization, validateRemoveOrganization } from '../../validations/organization.validation';
 
-import { updateUser } from '../../repository/user.repository';
 import logger from '../../config/logger.config';
 import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant';
 
@@ -43,7 +42,7 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
       throw new ApolloError('Organization domain already exists, please choose another one');
     }
 
-    let orgToCreate = { ...data };
+    const orgToCreate = { ...data };
 
     if ('settings' in data) {
       orgToCreate.settings = objectToString(data.settings);
@@ -85,7 +84,7 @@ export async function editOrganization(data: Partial<Organization>, user: UserPr
   const trx = await database.transaction();
 
   try {
-    let updateData = { ...data };
+    const updateData = { ...data };
 
     if (data.domain) {
       const exists = await getOrganizationByDomainExcludeId(data.domain, Number(organizationId));

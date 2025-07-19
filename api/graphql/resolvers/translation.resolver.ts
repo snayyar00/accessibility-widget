@@ -1,5 +1,5 @@
 import { combineResolvers } from 'graphql-resolvers';
-import { isAuthenticated } from '../../graphql/resolvers/authorization.resolver';
+import { isAuthenticated } from "./authorization.resolver";
 import { translateStatement } from '../../services/translation/translation.service';
 import { validateTranslateStatement } from '../../validations/translateStatement.validation';
 

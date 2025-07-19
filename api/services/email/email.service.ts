@@ -39,10 +39,10 @@ async function sendMail(to: string, subject: string, html: string, attachments?:
     if (response?.body?.messageId) {
       console.log('Email sent successfully:', response.body.messageId);
       return true;
-    } else {
-      console.error('Failed to send email: no messageId in response');
-      return false;
-    }
+    } 
+    console.error('Failed to send email: no messageId in response');
+    return false;
+    
   } catch (error) {
     console.error('Error sending email:', error);
     return false;
@@ -83,10 +83,10 @@ async function sendMailMultiple(recipients: string[], subject: string, html: str
     if (response?.body?.messageId) {
       console.log('Email sent successfully to multiple recipients:', response.body.messageId);
       return true;
-    } else {
-      console.error('Failed to send email to multiple recipients: no messageId in response');
-      return false;
-    }
+    } 
+    console.error('Failed to send email to multiple recipients: no messageId in response');
+    return false;
+    
   } catch (error) {
     console.error('Error sending email to multiple recipients:', error);
     return false;
@@ -121,7 +121,7 @@ async function sendEmailWithRetries(
       }
 
       // Wait before retrying
-      const retryDelay = delay * Math.pow(2, attempt - 1); // Exponential backoff
+      const retryDelay = delay * 2**(attempt - 1); // Exponential backoff
       console.log(`Retrying in ${retryDelay}ms...`);
       await new Promise((resolve) => setTimeout(resolve, retryDelay));
     }

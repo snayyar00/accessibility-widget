@@ -1,9 +1,9 @@
 import { ApolloError, ValidationError } from 'apollo-server-express';
-import { validateGetPlanBySiteIdAndUserId, validateUpdateSitesPlan } from '../../validations/planSites.validation';
 import dayjs from 'dayjs';
+import { validateGetPlanBySiteIdAndUserId, validateUpdateSitesPlan } from '../../validations/planSites.validation';
 
 import logger from '../../config/logger.config';
-import { createNewSubcription, updateSubcription, cancelSubcriptionBySubId } from '../../services/stripe/subcription.service';
+import { createNewSubcription, updateSubcription, cancelSubcriptionBySubId } from "../stripe/subcription.service";
 import { findProductAndPriceByType, FindProductAndPriceByTypeResponse } from '../../repository/products.repository';
 import { findUser } from '../../repository/user.repository';
 import formatDateDB from '../../utils/format-date-db';
@@ -238,7 +238,7 @@ export async function deleteSitesPlan(id: number, hook = false): Promise<true> {
 
 export async function deleteExpiredSitesPlan(id: number, hook = false): Promise<true> {
   try {
-    let sitePlan = await getAnySitePlanById(id);
+    const sitePlan = await getAnySitePlanById(id);
 
     if (!sitePlan) {
       throw new ApolloError('Can not find any user plan');

@@ -4,7 +4,7 @@ import { findSiteByURL } from '../repository/sites_allowed.repository';
 import { addWidgetSettings, getWidgetSettingsBySiteId } from '../repository/widget_settings.repository';
 
 export async function updateSiteWidgetSettings(req: Request, res: Response) {
-  const user: UserProfile = (req as any).user;
+  const {user} = (req as any);
   const { settings, site_url } = req.body;
 
   try {
@@ -15,9 +15,9 @@ export async function updateSiteWidgetSettings(req: Request, res: Response) {
     }
 
     await addWidgetSettings({
-      site_url: site_url,
+      site_url,
       allowed_site_id: site?.id,
-      settings: settings,
+      settings,
       user_id: site.user_id,
     });
 
@@ -29,7 +29,7 @@ export async function updateSiteWidgetSettings(req: Request, res: Response) {
 }
 
 export async function getSiteWidgetSettings(req: Request, res: Response) {
-  const user: UserProfile = (req as any).user;
+  const {user} = (req as any);
   const { site_url } = req.body;
 
   try {
@@ -40,7 +40,7 @@ export async function getSiteWidgetSettings(req: Request, res: Response) {
     }
 
     const widgetSettings = await getWidgetSettingsBySiteId(site?.id);
-    let response = widgetSettings?.settings || {};
+    const response = widgetSettings?.settings || {};
 
     res.status(200).json({ settings: response });
   } catch (error) {

@@ -11,7 +11,7 @@ export async function cancelSiteSubscription(req: Request, res: Response) {
   let previous_plan: any[];
   let stripeCustomerId: string | null = null;
 
-  const user: UserProfile = (req as any).user;
+  const {user} = (req as any);
   const site = await findSiteByURL(domainUrl);
 
   if (!site || site.user_id !== user.id) {
@@ -75,7 +75,7 @@ export async function cancelSiteSubscription(req: Request, res: Response) {
       }
     } catch (error) {
       console.log('err = ', error);
-      return res.status(500).json({ error: error });
+      return res.status(500).json({ error });
     }
   }
 

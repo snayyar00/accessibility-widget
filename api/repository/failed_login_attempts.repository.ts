@@ -33,22 +33,22 @@ export async function incrementFailedAttempts(userId: number): Promise<FailedLog
       const updatedRecord = await trx('failed_login_attempts').where('user_id', userId).first();
 
       return updatedRecord;
-    } else {
-      // Create new record
-      await trx('failed_login_attempts').insert({
-        user_id: userId,
-        failed_count: 1,
-        first_failed_at: trx.fn.now(),
-        last_failed_at: trx.fn.now(),
-        created_at: trx.fn.now(),
-        updated_at: trx.fn.now(),
-      });
+    } 
+    // Create new record
+    await trx('failed_login_attempts').insert({
+      user_id: userId,
+      failed_count: 1,
+      first_failed_at: trx.fn.now(),
+      last_failed_at: trx.fn.now(),
+      created_at: trx.fn.now(),
+      updated_at: trx.fn.now(),
+    });
 
-      // Get the newly created record
-      const newRecord = await trx('failed_login_attempts').where('user_id', userId).first();
+    // Get the newly created record
+    const newRecord = await trx('failed_login_attempts').where('user_id', userId).first();
 
-      return newRecord;
-    }
+    return newRecord;
+    
   });
 }
 

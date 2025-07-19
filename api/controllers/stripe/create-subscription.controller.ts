@@ -17,7 +17,7 @@ const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 export async function createSubscription(req: Request, res: Response) {
   const { planName, billingInterval, domainId, domainUrl, cardTrial, promoCode } = req.body;
 
-  const user: UserProfile = (req as any).user;
+  const {user} = (req as any);
   const site = await findSiteByURL(domainUrl);
 
   if (!site || site.user_id !== user.id) {
@@ -81,7 +81,7 @@ export async function createSubscription(req: Request, res: Response) {
     if (no_sub) {
       let promoCodeData: Stripe.PromotionCode[] = [];
 
-      if (promoCode && promoCode.length > 0 && typeof promoCode[0] != 'number') {
+      if (promoCode && promoCode.length > 0 && typeof promoCode[0] !== 'number') {
         const validCodesData: Stripe.PromotionCode[] = [];
         const invalidCodes: string[] = [];
 
@@ -104,7 +104,7 @@ export async function createSubscription(req: Request, res: Response) {
         promoCodeData = validCodesData;
       }
 
-      if (typeof promoCode[0] == 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id))) {
+      if (typeof promoCode[0] === 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id))) {
         const [{ orderedCodes, numPromoSites }, tokenUsed] = await Promise.all([appSumoPromoCount(subscriptions, promoCode, user.id), getUserTokens(user.id)]);
 
         const { lastCustomCode, nonCustomCodes } = await customTokenCount(user.id, tokenUsed);
@@ -116,7 +116,7 @@ export async function createSubscription(req: Request, res: Response) {
           coupon: APP_SUMO_DISCOUNT_COUPON,
           default_payment_method: customer.invoice_settings.default_payment_method,
           metadata: {
-            domainId: domainId,
+            domainId,
             userId: user.id,
             maxDomains: 1,
             usedDomains: 1,
@@ -135,7 +135,7 @@ export async function createSubscription(req: Request, res: Response) {
           expand: ['latest_invoice.payment_intent'],
           default_payment_method: customer.invoice_settings.default_payment_method,
           metadata: {
-            domainId: domainId,
+            domainId,
             userId: user.id,
             maxDomains: 1,
             usedDomains: 1,
@@ -149,7 +149,7 @@ export async function createSubscription(req: Request, res: Response) {
           expand: ['latest_invoice.payment_intent'],
           default_payment_method: customer.invoice_settings.default_payment_method,
           metadata: {
-            domainId: domainId,
+            domainId,
             userId: user.id,
             maxDomains: 1,
             usedDomains: 1,
@@ -175,70 +175,68 @@ export async function createSubscription(req: Request, res: Response) {
 
       console.log('New Sub created');
       res.status(200).json({ success: true });
-    } else {
-      if ('usedDomains' in subscription.metadata) {
-        const UsedDomains = Number(subscription.metadata.usedDomains);
+    } else if ('usedDomains' in subscription.metadata) {
+      const UsedDomains = Number(subscription.metadata.usedDomains);
 
-        if (UsedDomains >= Number(subscription.metadata.maxDomains)) {
-          let metaData: any = subscription.metadata;
-          metaData.usedDomains = Number(UsedDomains + 1);
-          metaData.updateMetaData = true;
+      if (UsedDomains >= Number(subscription.metadata.maxDomains)) {
+        const metaData: any = subscription.metadata;
+        metaData.usedDomains = Number(UsedDomains + 1);
+        metaData.updateMetaData = true;
 
-          const newQuant = subscription.items.data[0].quantity + 1;
+        const newQuant = subscription.items.data[0].quantity + 1;
 
-          await stripe.subscriptions.update(subscription.id, {
-            metadata: metaData,
-            items: [
-              {
-                id: subscription.items.data[0].id,
-                quantity: newQuant,
-              },
-            ],
-          });
+        await stripe.subscriptions.update(subscription.id, {
+          metadata: metaData,
+          items: [
+            {
+              id: subscription.items.data[0].id,
+              quantity: newQuant,
+            },
+          ],
+        });
 
-          console.log('meta data updated');
+        console.log('meta data updated');
 
-          const cleanupPromisesSecond = [];
-          try {
-            const previous_plan = await getSitePlanBySiteId(Number(domainId));
-            cleanupPromisesSecond.push(deleteTrialPlan(previous_plan.id).then(() => {}));
-          } catch (error) {
-            // Previous plan doesn't exist, continue
-          }
-
-          cleanupPromisesSecond.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''));
-
-          await Promise.all(cleanupPromisesSecond);
-          res.status(200).json({ success: true });
-        } else {
-          let metaData: any = subscription.metadata;
-          metaData.usedDomains = Number(UsedDomains + 1);
-          metaData.updateMetaData = true;
-
-          await stripe.subscriptions.update(subscription.id, {
-            metadata: metaData,
-          });
-
-          console.log('meta data updated');
-
-          const cleanupPromisesThird = [];
-          try {
-            const previous_plan = await getSitePlanBySiteId(Number(domainId));
-            cleanupPromisesThird.push(deleteTrialPlan(previous_plan.id).then(() => {}));
-          } catch (error) {
-            // Previous plan doesn't exist, continue
-          }
-
-          cleanupPromisesThird.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''));
-
-          await Promise.all(cleanupPromisesThird);
-
-          console.log('Old Sub created');
-          res.status(200).json({ success: true });
+        const cleanupPromisesSecond = [];
+        try {
+          const previous_plan = await getSitePlanBySiteId(Number(domainId));
+          cleanupPromisesSecond.push(deleteTrialPlan(previous_plan.id).then(() => {}));
+        } catch (error) {
+          // Previous plan doesn't exist, continue
         }
+
+        cleanupPromisesSecond.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''));
+
+        await Promise.all(cleanupPromisesSecond);
+        res.status(200).json({ success: true });
       } else {
-        res.status(500).json({ error: 'Meta Data Not Configured' });
+        const metaData: any = subscription.metadata;
+        metaData.usedDomains = Number(UsedDomains + 1);
+        metaData.updateMetaData = true;
+
+        await stripe.subscriptions.update(subscription.id, {
+          metadata: metaData,
+        });
+
+        console.log('meta data updated');
+
+        const cleanupPromisesThird = [];
+        try {
+          const previous_plan = await getSitePlanBySiteId(Number(domainId));
+          cleanupPromisesThird.push(deleteTrialPlan(previous_plan.id).then(() => {}));
+        } catch (error) {
+          // Previous plan doesn't exist, continue
+        }
+
+        cleanupPromisesThird.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''));
+
+        await Promise.all(cleanupPromisesThird);
+
+        console.log('Old Sub created');
+        res.status(200).json({ success: true });
       }
+    } else {
+      res.status(500).json({ error: 'Meta Data Not Configured' });
     }
   } catch (error) {
     console.log('erroring', error);
