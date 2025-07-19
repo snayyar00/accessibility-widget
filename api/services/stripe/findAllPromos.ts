@@ -3,14 +3,14 @@ import Stripe from 'stripe';
 
 export default async function findAllPromos(
   stripe: Stripe,
-  couponCode: string
+  couponCode: string,
 ): Promise<Stripe.PromotionCode | null> {
   let startingAfter: string | null = null;
   let promoCodeData: Stripe.PromotionCode | null = null;
 
   while (true) {
     // Build parameters with pagination.
-    const params: any = { limit: 100};
+    const params: any = { limit: 100 };
     if (startingAfter) {
       params.starting_after = startingAfter;
     }

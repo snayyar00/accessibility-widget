@@ -199,150 +199,150 @@ interface ResultWithOriginal {
 }
 
 
-          // Initialize output object to store merged results
- function mergeIssuesToOutput(issues: any[]): {
-            axe: {
-              errors: axeOutput[];
-              notices: axeOutput[];
-              warnings: axeOutput[];
-            };
-            htmlcs: {
-              errors: htmlcsOutput[];
-              notices: htmlcsOutput[];
-              warnings: htmlcsOutput[];
-            };
-            totalElements: number;
-          } {
-            const output = {
-              axe: {
-                errors: [] as axeOutput[],
-                notices: [] as axeOutput[],
-                warnings: [] as axeOutput[]
-              },
-              htmlcs: {
-                errors: [] as htmlcsOutput[],
-                notices: [] as htmlcsOutput[],
-                warnings: [] as htmlcsOutput[]
-              },
-              totalElements: 0
-            };
+// Initialize output object to store merged results
+function mergeIssuesToOutput(issues: any[]): {
+  axe: {
+    errors: axeOutput[];
+    notices: axeOutput[];
+    warnings: axeOutput[];
+  };
+  htmlcs: {
+    errors: htmlcsOutput[];
+    notices: htmlcsOutput[];
+    warnings: htmlcsOutput[];
+  };
+  totalElements: number;
+} {
+  const output = {
+    axe: {
+      errors: [] as axeOutput[],
+      notices: [] as axeOutput[],
+      warnings: [] as axeOutput[],
+    },
+    htmlcs: {
+      errors: [] as htmlcsOutput[],
+      notices: [] as htmlcsOutput[],
+      warnings: [] as htmlcsOutput[],
+    },
+    totalElements: 0,
+  };
 
-            issues.forEach((issue: any) => {
-              // Determine runner and type based on the actual data structure
-              const runner = issue.source === 'AXE Core' ? 'axe' : 
-                            issue.source === 'HTML_CS' ? 'htmlcs' : 'unknown';
-              const type = issue.impact === 'critical' ? 'error' : 
-                          issue.impact === 'serious' ? 'warning' : 'notice';
+  issues.forEach((issue: any) => {
+    // Determine runner and type based on the actual data structure
+    const runner = issue.source === 'AXE Core' ? 'axe' : 
+      issue.source === 'HTML_CS' ? 'htmlcs' : 'unknown';
+    const type = issue.impact === 'critical' ? 'error' : 
+      issue.impact === 'serious' ? 'warning' : 'notice';
 
-              if (runner === 'axe') {
-                // Normalize message for comparison (remove extra whitespace and parentheses)
-                const normalizedMessage = issue.message.replace(/\s*\(.*$/, '').trim();
-                if (type === 'error') {
-                  const errorIndex = output.axe.errors.findIndex((error:any) => error.message === normalizedMessage);
-                  if (errorIndex === -1) {
-                    const obj: axeOutput = createAxeArrayObj(normalizedMessage, issue);
-                    output.axe.errors.push(obj);
-                    if (obj.screenshotUrl) {
-                      console.log('[mergeIssuesToOutput][AXE][error] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
-                    }
-                  } else {
-                    // Append context and selectors to existing error
-                  const contextToAdd = Array.isArray(issue.context) ? issue.context : (issue.context ? [issue.context] : []);
-                  const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : (issue.selectors ? [issue.selectors] : []);
-                    output.axe.errors[errorIndex].context.push(...contextToAdd);
-                    output.axe.errors[errorIndex].selectors.push(...selectorToAdd);
-                  }
-                } else if (type === 'notice') {
-                  const noticeIndex = output.axe.notices.findIndex((notice:any) => 
-                    notice.message === normalizedMessage
-                  );
-                  if (noticeIndex === -1) {
-                    const obj: axeOutput = createAxeArrayObj(normalizedMessage, issue);
-                    output.axe.notices.push(obj);
-                    if (obj.screenshotUrl) {
-                      console.log('[mergeIssuesToOutput][AXE][notice] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
-                    }
-                  } else {
-                    const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
-                    const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
-                    output.axe.notices[noticeIndex].context.push(...contextToAdd);
-                    output.axe.notices[noticeIndex].selectors.push(...selectorToAdd);
-                  }
-                } else if (type === 'warning') {
-                  const warningIndex = output.axe.warnings.findIndex((warning:any) => 
-                    warning.message === normalizedMessage
-                  );
-                  if (warningIndex === -1) {
-                    const obj: axeOutput = createAxeArrayObj(normalizedMessage, issue);
-                    output.axe.warnings.push(obj);
-                    if (obj.screenshotUrl) {
-                      console.log('[mergeIssuesToOutput][AXE][warning] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
-                    }
-                  } else {
-                    const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
-                    const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
-                    output.axe.warnings[warningIndex].context.push(...contextToAdd);
-                    output.axe.warnings[warningIndex].selectors.push(...selectorToAdd);
-                  }
-                }
-                output.totalElements += 1;
-              } else if (runner === 'htmlcs') {
-                // Normalize message for comparison
-                const normalizedMessage = issue.message.trim();
-                if (type === 'error') {
-                  const errorIndex = output.htmlcs.errors.findIndex((error:any) => error.message === normalizedMessage);
-                  if (errorIndex === -1) {
-                    const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
-                    obj.message = normalizedMessage;
-                    output.htmlcs.errors.push(obj);
-                    if (obj.screenshotUrl) {
-                      console.log('[mergeIssuesToOutput][HTMLCS][error] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
-                    }
-                  } else {
-                    const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
-                    const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
-                    output.htmlcs.errors[errorIndex].context.push(...contextToAdd);
-                    output.htmlcs.errors[errorIndex].selectors.push(...selectorToAdd);
-                  }
-                } else if (type === 'notice') {
-                  const noticeIndex = output.htmlcs.notices.findIndex((notice:any) => 
-                    notice.message === normalizedMessage
-                  );
-                  if (noticeIndex === -1) {
-                    const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
-                    obj.message = normalizedMessage;
-                    output.htmlcs.notices.push(obj);
-                    if (obj.screenshotUrl) {
-                      console.log('[mergeIssuesToOutput][HTMLCS][notice] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
-                    }
-                  } else {
-                    const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
-                    const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
-                    output.htmlcs.notices[noticeIndex].context.push(...contextToAdd);
-                    output.htmlcs.notices[noticeIndex].selectors.push(...selectorToAdd);
-                  }
-                } else if (type === 'warning') {
-                  const warningIndex = output.htmlcs.warnings.findIndex((warning:any) => 
-                    warning.message === normalizedMessage
-                  );
-                  if (warningIndex === -1) {
-                    const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
-                    obj.message = normalizedMessage;
-                    output.htmlcs.warnings.push(obj);
-                    if (obj.screenshotUrl) {
-                      console.log('[mergeIssuesToOutput][HTMLCS][warning] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
-                    }
-                  } else {
-                    const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
-                    const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
-                    output.htmlcs.warnings[warningIndex].context.push(...contextToAdd);
-                    output.htmlcs.warnings[warningIndex].selectors.push(...selectorToAdd);
-                  }
-                }
-              }
-            });
-            return output;
+    if (runner === 'axe') {
+      // Normalize message for comparison (remove extra whitespace and parentheses)
+      const normalizedMessage = issue.message.replace(/\s*\(.*$/, '').trim();
+      if (type === 'error') {
+        const errorIndex = output.axe.errors.findIndex((error:any) => error.message === normalizedMessage);
+        if (errorIndex === -1) {
+          const obj: axeOutput = createAxeArrayObj(normalizedMessage, issue);
+          output.axe.errors.push(obj);
+          if (obj.screenshotUrl) {
+            console.log('[mergeIssuesToOutput][AXE][error] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
           }
+        } else {
+          // Append context and selectors to existing error
+          const contextToAdd = Array.isArray(issue.context) ? issue.context : (issue.context ? [issue.context] : []);
+          const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : (issue.selectors ? [issue.selectors] : []);
+          output.axe.errors[errorIndex].context.push(...contextToAdd);
+          output.axe.errors[errorIndex].selectors.push(...selectorToAdd);
+        }
+      } else if (type === 'notice') {
+        const noticeIndex = output.axe.notices.findIndex((notice:any) => 
+          notice.message === normalizedMessage,
+        );
+        if (noticeIndex === -1) {
+          const obj: axeOutput = createAxeArrayObj(normalizedMessage, issue);
+          output.axe.notices.push(obj);
+          if (obj.screenshotUrl) {
+            console.log('[mergeIssuesToOutput][AXE][notice] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
+          }
+        } else {
+          const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
+          const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
+          output.axe.notices[noticeIndex].context.push(...contextToAdd);
+          output.axe.notices[noticeIndex].selectors.push(...selectorToAdd);
+        }
+      } else if (type === 'warning') {
+        const warningIndex = output.axe.warnings.findIndex((warning:any) => 
+          warning.message === normalizedMessage,
+        );
+        if (warningIndex === -1) {
+          const obj: axeOutput = createAxeArrayObj(normalizedMessage, issue);
+          output.axe.warnings.push(obj);
+          if (obj.screenshotUrl) {
+            console.log('[mergeIssuesToOutput][AXE][warning] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
+          }
+        } else {
+          const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
+          const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
+          output.axe.warnings[warningIndex].context.push(...contextToAdd);
+          output.axe.warnings[warningIndex].selectors.push(...selectorToAdd);
+        }
+      }
+      output.totalElements += 1;
+    } else if (runner === 'htmlcs') {
+      // Normalize message for comparison
+      const normalizedMessage = issue.message.trim();
+      if (type === 'error') {
+        const errorIndex = output.htmlcs.errors.findIndex((error:any) => error.message === normalizedMessage);
+        if (errorIndex === -1) {
+          const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
+          obj.message = normalizedMessage;
+          output.htmlcs.errors.push(obj);
+          if (obj.screenshotUrl) {
+            console.log('[mergeIssuesToOutput][HTMLCS][error] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
+          }
+        } else {
+          const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
+          const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
+          output.htmlcs.errors[errorIndex].context.push(...contextToAdd);
+          output.htmlcs.errors[errorIndex].selectors.push(...selectorToAdd);
+        }
+      } else if (type === 'notice') {
+        const noticeIndex = output.htmlcs.notices.findIndex((notice:any) => 
+          notice.message === normalizedMessage,
+        );
+        if (noticeIndex === -1) {
+          const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
+          obj.message = normalizedMessage;
+          output.htmlcs.notices.push(obj);
+          if (obj.screenshotUrl) {
+            console.log('[mergeIssuesToOutput][HTMLCS][notice] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
+          }
+        } else {
+          const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
+          const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
+          output.htmlcs.notices[noticeIndex].context.push(...contextToAdd);
+          output.htmlcs.notices[noticeIndex].selectors.push(...selectorToAdd);
+        }
+      } else if (type === 'warning') {
+        const warningIndex = output.htmlcs.warnings.findIndex((warning:any) => 
+          warning.message === normalizedMessage,
+        );
+        if (warningIndex === -1) {
+          const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
+          obj.message = normalizedMessage;
+          output.htmlcs.warnings.push(obj);
+          if (obj.screenshotUrl) {
+            console.log('[mergeIssuesToOutput][HTMLCS][warning] screenshotUrl:', obj.screenshotUrl, 'message:', obj.message);
+          }
+        } else {
+          const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context];
+          const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors];
+          output.htmlcs.warnings[warningIndex].context.push(...contextToAdd);
+          output.htmlcs.warnings[warningIndex].selectors.push(...selectorToAdd);
+        }
+      }
+    }
+  });
+  return output;
+}
 
 
           
@@ -468,17 +468,17 @@ export const fetchAccessibilityReport = async (url: string) => {
           completion.HumanFunctionalities.forEach(
             (functionality: HumanFunctionality) => {
               functionality.Errors.forEach((error: Error) => {
-                let errorCode = error['ErrorGuideline'] || (error as any)['Error Guideline'] || (error as any)['code'] || (error as any)['Error Code'] || (error as any)['guideline'];
+                let errorCode = error.ErrorGuideline || (error as any)['Error Guideline'] || (error as any).code || (error as any)['Error Code'] || (error as any).guideline;
 
                 if (!errorCode) {
                   const possibleCode = Object.values(error).find((value: any) => 
-                    typeof value === 'string' && value.includes('WCAG')
+                    typeof value === 'string' && value.includes('WCAG'),
                   );
                   errorCode = possibleCode;
                 }
 
                 error.code = errorCode;
-                delete error['ErrorGuideline'];
+                delete error.ErrorGuideline;
                 delete (error as any)['Error Guideline'];
 
                 if (errorCode && errorCodeWithDescriptions[errorCode]) {
@@ -500,9 +500,9 @@ export const fetchAccessibilityReport = async (url: string) => {
                     }
                   }
 
-                  error.description = enhancedDescription || "Accessibility issue detected. Please review this element for compliance.";
-                  error.message = error.message || "Accessibility compliance issue";
-                  error.recommended_action = error.recommended_action || "Review and fix this accessibility issue according to WCAG guidelines.";
+                  error.description = enhancedDescription || 'Accessibility issue detected. Please review this element for compliance.';
+                  error.message = error.message || 'Accessibility compliance issue';
+                  error.recommended_action = error.recommended_action || 'Review and fix this accessibility issue according to WCAG guidelines.';
                   error.context = error.context || [];
                   error.selectors = error.selectors || [];
                 }
@@ -556,7 +556,7 @@ export const fetchSitePreview = async (url: string, retries = 3): Promise<string
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       const response = await fetch(apiUrl, {
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -592,7 +592,7 @@ const checkScript = async (url: string, retries = 3): Promise<string> => {
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       const response = await fetch(apiUrl, {
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -607,47 +607,47 @@ const checkScript = async (url: string, retries = 3): Promise<string> => {
 
       const responseData = await response.json();
 
-      if (responseData.result === "WebAbility") {
-        return "Web Ability";
-      } else if (responseData.result !== "Not Found") {
-        return "true";
+      if (responseData.result === 'WebAbility') {
+        return 'Web Ability';
+      } else if (responseData.result !== 'Not Found') {
+        return 'true';
       } else {
-        return "false";
+        return 'false';
       }
     } catch (error) {
       console.error(`Error in checkScript attempt ${attempt}:`, error.message);
-      if (attempt === retries) return "Error";
+      if (attempt === retries) return 'Error';
       // Wait before retrying (exponential backoff)
       await new Promise(resolve => setTimeout(resolve, attempt * 1000));
     }
   }
-  return "Error";
+  return 'Error';
 };
 
 // Extract issues from report structure
 function extractIssuesFromReport(report: ResultWithOriginal) {
-  const issues: any[] = []
+  const issues: any[] = [];
   
   // Check if we have the new data structure with top-level ByFunctions
   if (report?.ByFunctions && Array.isArray(report.ByFunctions)) {
     report.ByFunctions.forEach(funcGroup => {
       if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
         funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; screenshotUrl?: string }) => {
-          const impact = mapIssueToImpact(error.message, error.code)
+          const impact = mapIssueToImpact(error.message, error.code);
           
           issues.push({
             ...error,
             impact,
             source: error.__typename === 'htmlCsOutput' ? 'HTML_CS' : 'AXE Core',
             functionality: funcGroup.FunctionalityName,
-            screenshotUrl: error.screenshotUrl
-          })
+            screenshotUrl: error.screenshotUrl,
+          });
           if (error.screenshotUrl) {
             console.log('[extractIssuesFromReport][ByFunctions] screenshotUrl:', error.screenshotUrl, 'message:', error.message);
           }
-        })
+        });
       }
-    })
+    });
   }
   
   // Try the axe structure
@@ -655,21 +655,21 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
     report.axe.ByFunction.forEach((funcGroup: { FunctionalityName: any; Errors: any[] }) => {
       if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
         funcGroup.Errors.forEach(error => {
-          const impact = mapIssueToImpact(error.message, error.code)
+          const impact = mapIssueToImpact(error.message, error.code);
           
           issues.push({
             ...error,
             impact,
             source: 'AXE Core',
             functionality: funcGroup.FunctionalityName,
-            screenshotUrl: error.screenshotUrl
-          })
+            screenshotUrl: error.screenshotUrl,
+          });
           if (error.screenshotUrl) {
             console.log('[extractIssuesFromReport][AXE] screenshotUrl:', error.screenshotUrl, 'message:', error.message);
           }
-        })
+        });
       }
-    })
+    });
   }
   
   // Try the htmlcs structure
@@ -677,32 +677,32 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
     report.htmlcs.ByFunction.forEach((funcGroup: { FunctionalityName: any; Errors: any[] }) => {
       if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
         funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; screenshotUrl?: string }) => {
-          const impact = mapIssueToImpact(error.message, error.code)
+          const impact = mapIssueToImpact(error.message, error.code);
           
           issues.push({
             ...error,
             impact,
             source: 'HTML_CS',
             functionality: funcGroup.FunctionalityName,
-            screenshotUrl: error.screenshotUrl
-          })
+            screenshotUrl: error.screenshotUrl,
+          });
           if (error.screenshotUrl) {
             console.log('[extractIssuesFromReport][HTMLCS] screenshotUrl:', error.screenshotUrl, 'message:', error.message);
           }
-        })
+        });
       }
-    })
+    });
   }
   console.log(`Total issues extracted: ${issues.length}`);
-  return issues
+  return issues;
 }
 
 
 function mapIssueToImpact(message: string, code: any) {
-  if (!message && !code) return 'moderate'
+  if (!message && !code) return 'moderate';
   
-  const lowerMsg = (message || '').toLowerCase()
-  const lowerCode = (code || '').toLowerCase()
+  const lowerMsg = (message || '').toLowerCase();
+  const lowerCode = (code || '').toLowerCase();
   
   // Critical issues
   if (
@@ -712,7 +712,7 @@ function mapIssueToImpact(message: string, code: any) {
     (lowerMsg.includes('aria hidden') && lowerMsg.includes('focusable')) ||
     lowerMsg.includes('links must be distinguishable')
   ) {
-    return 'critical'
+    return 'critical';
   }
   
   // Serious issues
@@ -722,10 +722,10 @@ function mapIssueToImpact(message: string, code: any) {
     lowerMsg.includes('labels or instructions') ||
     lowerMsg.includes('error identification')
   ) {
-    return 'serious'
+    return 'serious';
   }
   
-  return 'moderate'
+  return 'moderate';
 }
 
 // Count issues by severity
@@ -735,21 +735,21 @@ function countIssuesBySeverity(issues: any[]) {
     criticalIssues: 0,
     warnings: 0,
     moderateIssues: 0,
-    totalIssues: issues.length
-  }
+    totalIssues: issues.length,
+  };
   
   // Count each issue by its impact
   issues.forEach(issue => {
     if (issue.impact === 'critical') {
-      counts.criticalIssues++
+      counts.criticalIssues++;
     } else if (issue.impact === 'serious') {
-      counts.warnings++
+      counts.warnings++;
     } else {
-      counts.moderateIssues++
+      counts.moderateIssues++;
     }
-  })
+  });
   
-  return counts
+  return counts;
 }
 
 function groupIssuesByFunctionality(issues: any[]): { [key: string]: any[] } {
@@ -770,7 +770,7 @@ function groupIssuesByFunctionality(issues: any[]): { [key: string]: any[] } {
       const normalizedIssue = {
         ...issue,
         functionality: normalizedName,
-        screenshotUrl: issue.screenshotUrl
+        screenshotUrl: issue.screenshotUrl,
       };
       
       groupedIssues[normalizedName].push(normalizedIssue);

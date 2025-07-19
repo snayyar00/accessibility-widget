@@ -14,8 +14,8 @@ export function validateDomain(input: { url: string }): true | ValidationError[]
         stringMin: 'URL must not be empty',
         stringMax: 'URL must not exceed 2048 characters',
         stringPattern: 'URL must be a valid domain (e.g., example.com, https://example.com)',
-      }
-    }
+      },
+    },
   };
 
   return validator.validate(input, schema);

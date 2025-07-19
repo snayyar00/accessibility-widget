@@ -14,7 +14,7 @@ async function sendMail(to: string, subject: string, html: string, attachments?:
   try {
     // Initialize Brevo API client
     const brevoClient = new TransactionalEmailsApi();
-    
+
     // Correctly set the API key using two arguments
     brevoClient.setApiKey(TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY as string);
 
@@ -27,29 +27,79 @@ async function sendMail(to: string, subject: string, html: string, attachments?:
 
     // Add attachments if provided
     if (attachments && attachments.length > 0) {
-      sendSmtpEmail.attachment = attachments.map(att => ({
+      sendSmtpEmail.attachment = attachments.map((att) => ({
         content: att.content.toString('base64'),
-        name: att.name
+        name: att.name,
       }));
     }
 
-    // Send the email via Brevo's API
     const response = await brevoClient.sendTransacEmail(sendSmtpEmail);
 
-    console.log('Email sent successfully');
-    return true;
+    // Check if email was sent successfully
+    if (response?.body?.messageId) {
+      console.log('Email sent successfully:', response.body.messageId);
+      return true;
+    } else {
+      console.error('Failed to send email: no messageId in response');
+      return false;
+    }
   } catch (error) {
     console.error('Error sending email:', error);
     return false;
   }
 }
+
+async function sendMailMultiple(recipients: string[], subject: string, html: string, attachments?: EmailAttachment[]) {
+  if (!recipients || recipients.length === 0) {
+    console.error('No recipients provided.');
+    return false;
+  }
+
+  try {
+    // Initialize Brevo API client
+    const brevoClient = new TransactionalEmailsApi();
+
+    // Correctly set the API key using two arguments
+    brevoClient.setApiKey(TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY as string);
+
+    // Create the email content
+    const sendSmtpEmail = new SendSmtpEmail();
+    sendSmtpEmail.to = recipients.map((email) => ({ email }));
+    sendSmtpEmail.sender = { email: process.env.EMAIL_FROM || 'your-email@domain.com' };
+    sendSmtpEmail.subject = subject;
+    sendSmtpEmail.htmlContent = html;
+
+    // Add attachments if provided
+    if (attachments && attachments.length > 0) {
+      sendSmtpEmail.attachment = attachments.map((att) => ({
+        content: att.content.toString('base64'),
+        name: att.name,
+      }));
+    }
+
+    const response = await brevoClient.sendTransacEmail(sendSmtpEmail);
+
+    // Check if email was sent successfully
+    if (response?.body?.messageId) {
+      console.log('Email sent successfully to multiple recipients:', response.body.messageId);
+      return true;
+    } else {
+      console.error('Failed to send email to multiple recipients: no messageId in response');
+      return false;
+    }
+  } catch (error) {
+    console.error('Error sending email to multiple recipients:', error);
+    return false;
+  }
+}
+
 async function sendEmailWithRetries(
   email: string,
   template: string,
   subject: string,
   maxRetries = 3, // Default to 3 retries
   delay = 2000, // Default to 2 seconds delay
-  attachments?: EmailAttachment[]
+  attachments?: EmailAttachment[],
 ): Promise<void> {
   let attempt = 0;
 
@@ -58,7 +108,7 @@ async function sendEmailWithRetries(
 
     try {
       console.log(`Attempt ${attempt} to send email to ${email}`);
-      await sendMail(email, subject, template, attachments); 
+      await sendMail(email, subject, template, attachments);
       console.log(`Email sent successfully to ${email}`);
       return; // Exit the function if email is sent successfully
     } catch (error) {
@@ -78,6 +128,5 @@ async function sendEmailWithRetries(
   }
 }
 
-
-export { sendMail, sendEmailWithRetries, EmailAttachment };
-
+export { sendMail, sendMailMultiple, sendEmailWithRetries };
+export type { EmailAttachment };

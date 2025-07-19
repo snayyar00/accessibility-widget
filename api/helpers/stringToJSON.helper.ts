@@ -28,58 +28,58 @@ function sanitizeJsonResponse(content: string): string {
 }
 
 export function stringToJson(messageString: string): object[] {
-    let content = messageString.replace('```json\n', '').replace('```', '');
+  let content = messageString.replace('```json\n', '').replace('```', '');
     
-    // Apply robust sanitization
-    content = sanitizeJsonResponse(content);
+  // Apply robust sanitization
+  content = sanitizeJsonResponse(content);
 
-    let jsonData;
+  let jsonData;
+  try {
+    jsonData = JSON.parse(content);
+  } catch (parseError) {
+    console.warn('Initial JSON parse failed, attempting to fix common issues...');
+    console.warn('Parse error:', parseError.message);
+    console.warn('Content:', content);
+        
+    // Try additional sanitization for specific patterns
+    let fixedContent = content;
+        
+    // Fix specific pattern from the error: "Dyslexia"", "Mobility Impairment"
+    fixedContent = fixedContent.replace(/"([^"]*)"",\s*"([^"]*)"/g, '"$1", "$2"');
+        
+    // Fix cases where there might be malformed quotes in arrays
+    fixedContent = fixedContent.replace(/("\w+)""\s*,/g, '"$1",');
+        
+    // Try parsing again
     try {
-        jsonData = JSON.parse(content);
-    } catch (parseError) {
-        console.warn('Initial JSON parse failed, attempting to fix common issues...');
-        console.warn('Parse error:', parseError.message);
-        console.warn('Content:', content);
-        
-        // Try additional sanitization for specific patterns
-        let fixedContent = content;
-        
-        // Fix specific pattern from the error: "Dyslexia"", "Mobility Impairment"
-        fixedContent = fixedContent.replace(/"([^"]*)"",\s*"([^"]*)"/g, '"$1", "$2"');
-        
-        // Fix cases where there might be malformed quotes in arrays
-        fixedContent = fixedContent.replace(/("\w+)""\s*,/g, '"$1",');
-        
-        // Try parsing again
-        try {
-            jsonData = JSON.parse(fixedContent);
-            console.log('Successfully parsed after sanitization');
-        } catch (secondError) {
-            console.error('Second parse attempt failed:', secondError.message);
+      jsonData = JSON.parse(fixedContent);
+      console.log('Successfully parsed after sanitization');
+    } catch (secondError) {
+      console.error('Second parse attempt failed:', secondError.message);
             
-            // Final fallback: try to extract JSON using regex if it's wrapped in other text
-            const jsonMatch = fixedContent.match(/\[[\s\S]*\]/);
-            if (jsonMatch) {
-                try {
-                    jsonData = JSON.parse(jsonMatch[0]);
-                    console.log('Successfully extracted and parsed JSON from response');
-                } catch (thirdError) {
-                    console.error('Failed to parse extracted JSON:', thirdError.message);
-                    console.error('Returning empty array as fallback');
-                    return [];
-                }
-            } else {
-                console.error('No valid JSON array found in response, returning empty array');
-                return [];
-            }
+      // Final fallback: try to extract JSON using regex if it's wrapped in other text
+      const jsonMatch = fixedContent.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        try {
+          jsonData = JSON.parse(jsonMatch[0]);
+          console.log('Successfully extracted and parsed JSON from response');
+        } catch (thirdError) {
+          console.error('Failed to parse extracted JSON:', thirdError.message);
+          console.error('Returning empty array as fallback');
+          return [];
         }
+      } else {
+        console.error('No valid JSON array found in response, returning empty array');
+        return [];
+      }
     }
+  }
 
-    // Ensure we return an array
-    if (!Array.isArray(jsonData)) {
-        console.warn('Parsed JSON is not an array, wrapping in array');
-        return [jsonData];
-    }
+  // Ensure we return an array
+  if (!Array.isArray(jsonData)) {
+    console.warn('Parsed JSON is not an array, wrapping in array');
+    return [jsonData];
+  }
 
-    return jsonData;
+  return jsonData;
 }

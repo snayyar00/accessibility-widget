@@ -16,7 +16,7 @@ export function sanitizeInput(input: string): string {
   return xss(input, {
     whiteList: {}, // No HTML tags allowed
     stripIgnoreTag: true,
-    stripIgnoreTagBody: ['script']
+    stripIgnoreTagBody: ['script'],
   });
 }
 

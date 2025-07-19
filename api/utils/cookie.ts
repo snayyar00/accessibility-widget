@@ -12,7 +12,7 @@ export function setAuthenticationCookie(res: Response, token: string): void {
     maxAge: 60 * 60 * 24 * 1000, 
     httpOnly: true,
     secure: isProduction, // Enable secure flag in production
-    sameSite: 'strict' // Add sameSite protection as an additional security measure
+    sameSite: 'strict', // Add sameSite protection as an additional security measure
   });
 }
 
@@ -21,6 +21,6 @@ export function clearCookie(res: Response, key: string): void {
   
   res.clearCookie(key, {
     secure: isProduction,
-    sameSite: 'strict'
+    sameSite: 'strict',
   });
 }

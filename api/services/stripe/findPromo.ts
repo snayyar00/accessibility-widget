@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 
 export default async function findPromo(
   stripe: Stripe,
-  couponCode: string
+  couponCode: string,
 ): Promise<Stripe.PromotionCode | null> {
   let startingAfter: string | null = null;
   let promoCodeData: Stripe.PromotionCode | null = null;

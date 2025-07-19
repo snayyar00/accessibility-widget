@@ -38,7 +38,7 @@ function logGraphQLErrors(
   res: Response, 
   startTime: number, 
   originalUrl: string, 
-  body: string
+  body: string,
 ) {
   const responseTime = Date.now() - startTime;
   const contentLength = Buffer.byteLength(body, 'utf8');
@@ -46,12 +46,12 @@ function logGraphQLErrors(
   // Determine error type
   const hasAuthError = errors.some((err: any) => 
     err.extensions?.code === 'UNAUTHENTICATED' || 
-    err.message?.includes('Authentication fail')
+    err.message?.includes('Authentication fail'),
   );
 
   const hasIntrospectionError = errors.some((err: any) => 
     err.extensions?.code === 'GRAPHQL_VALIDATION_FAILED' &&
-    err.message?.includes('introspection is not allowed')
+    err.message?.includes('introspection is not allowed'),
   );
 
   // Determine log level and type

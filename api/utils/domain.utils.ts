@@ -105,7 +105,7 @@ export function getRetryUrls(url: string): string[] {
     `https://www.${domain}`,  // Try with www first
     `https://${domain}`,      // Then without www
     `http://www.${domain}`,   // Then try http with www
-    `http://${domain}`        // Finally http without www
+    `http://${domain}`,        // Finally http without www
   ];
 }
 

@@ -41,8 +41,8 @@ export const translateText = async (issues: Issue[], toLang: string = 'en'): Pro
       issues,
       toLang,
     }, {
-        withCredentials: true
-      });
+      withCredentials: true,
+    });
 
     return response.data;
   } catch (err: any) {
@@ -56,7 +56,7 @@ export const translateText = async (issues: Issue[], toLang: string = 'en'): Pro
 
 export const translateSingleText = async (
   text: string,
-  toLang: string = 'en'
+  toLang: string = 'en',
 ): Promise<string> => {
   if (!text) return '';
 
@@ -72,8 +72,8 @@ export const translateSingleText = async (
         toLang,
       },
       {
-        withCredentials: true
-      }
+        withCredentials: true,
+      },
     );
     // The backend returns an array of issues, so we extract the translated 'code' field
     return response.data?.[0]?.code || text;
@@ -85,7 +85,7 @@ export const translateSingleText = async (
 
 export const translateMultipleTexts = async (
   texts: string[],
-  toLang: string = 'en'
+  toLang: string = 'en',
 ): Promise<string[]> => {
   if (!Array.isArray(texts) || texts.length === 0) return [];
   if (!toLang || toLang.toLowerCase() === 'en') {
@@ -102,15 +102,15 @@ export const translateMultipleTexts = async (
         toLang,
       },
       {
-        withCredentials: true
-      }
+        withCredentials: true,
+      },
     );
 
     // console.log("I am called 2nd ", texts);
 
     if (Array.isArray(response.data)) {
       return response.data.map((item: any, idx: number) =>
-        typeof item?.code === 'string' ? item.code : texts[idx]
+        typeof item?.code === 'string' ? item.code : texts[idx],
       );
     }
 

@@ -1,9 +1,9 @@
 import { 
   preprocessAccessibilityIssues, 
   convertPa11yToRawIssues, 
-  convertToOriginalFormat 
-} from './preprocessing.service'
-import { processBatches, mergeBatchResults } from './gptBatch.service'
+  convertToOriginalFormat, 
+} from './preprocessing.service';
+import { processBatches, mergeBatchResults } from './gptBatch.service';
 
 interface EnhancedProcessingOptions {
   enablePreprocessing?: boolean
@@ -48,13 +48,13 @@ interface EnhancedProcessingResult {
  */
 export async function processAccessibilityIssuesEnhanced(
   pa11yOutput: any,
-  options: EnhancedProcessingOptions = {}
+  options: EnhancedProcessingOptions = {},
 ): Promise<ProcessingResult> {
-  const startTime = Date.now()
+  const startTime = Date.now();
   
   try {
     // Step 1: Convert pa11y format to standardized format
-    const rawIssues = convertPa11yToRawIssues(pa11yOutput)
+    const rawIssues = convertPa11yToRawIssues(pa11yOutput);
     
     // Early return if no issues to process
     if (rawIssues.length === 0) {
@@ -62,27 +62,27 @@ export async function processAccessibilityIssuesEnhanced(
         axe: pa11yOutput.axe || { errors: [], warnings: [], notices: [] },
         htmlcs: pa11yOutput.htmlcs || { errors: [], warnings: [], notices: [] },
         score: pa11yOutput.score || 100,
-        totalElements: pa11yOutput.totalElements || 0
-      }
+        totalElements: pa11yOutput.totalElements || 0,
+      };
     }
 
     // Step 2: Smart preprocessing
-    const preprocessingResult = preprocessAccessibilityIssues(rawIssues)
-    const { batches, template_analysis, preprocessing_stats } = preprocessingResult
+    const preprocessingResult = preprocessAccessibilityIssues(rawIssues);
+    const { batches, template_analysis, preprocessing_stats } = preprocessingResult;
     
-    let issuesFiltered = rawIssues.length - preprocessingResult.batches.reduce((sum, batch) => sum + batch.issues.length, 0)
-    let templateIssues = template_analysis.patterns_detected.length
-    let totalProcessedIssues = preprocessingResult.batches.reduce((sum, batch) => sum + batch.issues.length, 0)
+    let issuesFiltered = rawIssues.length - preprocessingResult.batches.reduce((sum, batch) => sum + batch.issues.length, 0);
+    let templateIssues = template_analysis.patterns_detected.length;
+    let totalProcessedIssues = preprocessingResult.batches.reduce((sum, batch) => sum + batch.issues.length, 0);
 
     // Step 3: GPT batch processing with optimized settings
-    const batchResults = await processBatches(batches)
-    const successfulBatches = batchResults.filter(r => r.success).length
+    const batchResults = await processBatches(batches);
+    const successfulBatches = batchResults.filter(r => r.success).length;
 
     // Step 4: Merge results back to original format
-    const mergedResults = mergeBatchResults(batchResults)
+    const mergedResults = mergeBatchResults(batchResults);
 
     // Step 5: Create enhanced ByFunctions from the processed results
-    const enhancedByFunctions = createEnhancedByFunctions(mergedResults)
+    const enhancedByFunctions = createEnhancedByFunctions(mergedResults);
 
     // Calculate processing statistics
     const processingStats = {
@@ -93,10 +93,10 @@ export async function processAccessibilityIssuesEnhanced(
       preprocessing_applied: true,
       issues_filtered: issuesFiltered,
       issues_merged: rawIssues.length - totalProcessedIssues,
-      template_issues_detected: templateIssues
-    }
+      template_issues_detected: templateIssues,
+    };
 
-    const processingTime = Date.now() - startTime
+    const processingTime = Date.now() - startTime;
 
     const finalResult = {
       axe: mergedResults.axe,
@@ -104,14 +104,14 @@ export async function processAccessibilityIssuesEnhanced(
       ByFunctions: enhancedByFunctions,
       score: calculateEnhancedScore(mergedResults),
       totalElements: pa11yOutput.totalElements || 0,
-      processing_stats: processingStats
-    }
+      processing_stats: processingStats,
+    };
 
-    return finalResult
+    return finalResult;
 
   } catch (error) {
     // Fallback to legacy processing
-    const fallbackResult = await processWithLegacyMethod(pa11yOutput)
+    const fallbackResult = await processWithLegacyMethod(pa11yOutput);
     
     return {
       ...fallbackResult,
@@ -123,9 +123,9 @@ export async function processAccessibilityIssuesEnhanced(
         preprocessing_applied: false,
         issues_filtered: 0,
         issues_merged: 0,
-        template_issues_detected: 0
-      }
-    }
+        template_issues_detected: 0,
+      },
+    };
   }
 }
 
@@ -134,24 +134,24 @@ export async function processAccessibilityIssuesEnhanced(
  */
 async function processWithLegacyMethod(pa11yOutput: any): Promise<ProcessingResult> {
   // Import the original processing function
-  const { readAccessibilityDescriptionFromDb } = await import('./accessibilityIssues.service')
+  const { readAccessibilityDescriptionFromDb } = await import('./accessibilityIssues.service');
   
   // Process htmlcs issues with original method
-  const processedHtmlcs = await readAccessibilityDescriptionFromDb(pa11yOutput.htmlcs || { errors: [], warnings: [], notices: [] })
+  const processedHtmlcs = await readAccessibilityDescriptionFromDb(pa11yOutput.htmlcs || { errors: [], warnings: [], notices: [] });
   
   return {
     axe: pa11yOutput.axe || { errors: [], warnings: [], notices: [] },
     htmlcs: processedHtmlcs || { errors: [], warnings: [], notices: [] },
     score: pa11yOutput.score || 0,
-    totalElements: pa11yOutput.totalElements || 0
-  }
+    totalElements: pa11yOutput.totalElements || 0,
+  };
 }
 
 /**
  * Calculate enhanced accessibility score based on processed issues
  */
 function calculateEnhancedScore(results: any): number {
-  let score = 100
+  let score = 100;
   
   // Calculate penalties based on issue types and confidence scores
   const allIssues = [
@@ -160,50 +160,50 @@ function calculateEnhancedScore(results: any): number {
     ...results.axe.notices,
     ...results.htmlcs.errors,
     ...results.htmlcs.warnings,
-    ...results.htmlcs.notices
-  ]
+    ...results.htmlcs.notices,
+  ];
 
   allIssues.forEach(issue => {
-    let penalty = 0
+    let penalty = 0;
     
     // Base penalty by type
     if (issue.type === 'error' || results.axe.errors.includes(issue) || results.htmlcs.errors.includes(issue)) {
-      penalty = 5
+      penalty = 5;
     } else if (issue.type === 'warning' || results.axe.warnings.includes(issue) || results.htmlcs.warnings.includes(issue)) {
-      penalty = 2
+      penalty = 2;
     } else {
-      penalty = 1
+      penalty = 1;
     }
     
     // Adjust penalty based on confidence score
     if (issue.confidence_score >= 80) {
-      penalty *= 1.5 // High confidence issues are more impactful
+      penalty *= 1.5; // High confidence issues are more impactful
     } else if (issue.confidence_score < 50) {
-      penalty *= 0.5 // Low confidence issues have less impact
+      penalty *= 0.5; // Low confidence issues have less impact
     }
     
     // Template issues get reduced penalty per occurrence
     if (issue.template_info?.is_template_issue) {
-      penalty = penalty * 2 // Single penalty for template issue, not per occurrence
+      penalty = penalty * 2; // Single penalty for template issue, not per occurrence
     }
     
-    score -= penalty
-  })
+    score -= penalty;
+  });
   
-  return Math.max(0, Math.round(score))
+  return Math.max(0, Math.round(score));
 }
 
 /**
  * Enable/disable enhanced processing globally
  */
-let enhancedProcessingEnabled = process.env.ENHANCED_PROCESSING_ENABLED === 'true'
+let enhancedProcessingEnabled = process.env.ENHANCED_PROCESSING_ENABLED === 'true';
 
 export function setEnhancedProcessingEnabled(enabled: boolean): void {
-  enhancedProcessingEnabled = enabled
+  enhancedProcessingEnabled = enabled;
 }
 
 export function isEnhancedProcessingEnabled(): boolean {
-  return enhancedProcessingEnabled
+  return enhancedProcessingEnabled;
 }
 
 /**
@@ -214,33 +214,33 @@ export async function processAccessibilityIssuesWithFallback(pa11yOutput: any): 
     enablePreprocessing: enhancedProcessingEnabled,
     maxConcurrency: 10,
     confidenceThreshold: 30,
-    batchSize: 5
-  }
+    batchSize: 5,
+  };
   
-  return processAccessibilityIssuesEnhanced(pa11yOutput, options)
+  return processAccessibilityIssuesEnhanced(pa11yOutput, options);
 }
 
 /**
  * Enhanced processing pipeline with advanced analytics
  */
 export async function processWithEnhancedPipeline(pa11yOutput: any): Promise<EnhancedProcessingResult> {
-  const startTime = Date.now()
+  const startTime = Date.now();
   
   try {
     // Step 1: Convert pa11y format to standardized format
-    const rawIssues = convertPa11yToRawIssues(pa11yOutput)
+    const rawIssues = convertPa11yToRawIssues(pa11yOutput);
     
     // Step 2: Advanced preprocessing with template analysis
-    const preprocessingResult = preprocessAccessibilityIssues(rawIssues)
-    const { batches, template_analysis, preprocessing_stats } = preprocessingResult
+    const preprocessingResult = preprocessAccessibilityIssues(rawIssues);
+    const { batches, template_analysis, preprocessing_stats } = preprocessingResult;
     
     // Step 3: GPT batch processing
-    const batchResults = await processBatches(batches)
+    const batchResults = await processBatches(batches);
     
     // Step 4: Merge results back to original format
-    const finalOutput = mergeBatchResults(batchResults)
+    const finalOutput = mergeBatchResults(batchResults);
     
-    const totalTime = Date.now() - startTime
+    const totalTime = Date.now() - startTime;
     
     // Step 5: Calculate comprehensive analytics
     const gptBatchStats = {
@@ -248,18 +248,18 @@ export async function processWithEnhancedPipeline(pa11yOutput: any): Promise<Enh
       successful_batches: batchResults.filter(r => r.success).length,
       failed_batches: batchResults.filter(r => !r.success).length,
       total_retry_attempts: batchResults.reduce((sum, r) => sum + r.retry_count, 0),
-      avg_batch_size: batchResults.length > 0 ? Math.round(batchResults.reduce((sum: number, r: any) => sum + r.enhanced_issues.length, 0) / batchResults.length) : 0
-    }
+      avg_batch_size: batchResults.length > 0 ? Math.round(batchResults.reduce((sum: number, r: any) => sum + r.enhanced_issues.length, 0) / batchResults.length) : 0,
+    };
     
     // Enhanced cost savings calculation
-    const originalIssueCount = rawIssues.length
-    const processedIssueCount = finalOutput.processing_stats.total_issues
-    const templateSavings = template_analysis.potential_cost_savings
-    const batchingSavings = Math.max(0, originalIssueCount - gptBatchStats.total_batches)
-    const totalSavings = templateSavings + batchingSavings
-    const savingsPercentage = originalIssueCount > 0 ? Math.round((totalSavings / originalIssueCount) * 100) : 0
+    const originalIssueCount = rawIssues.length;
+    const processedIssueCount = finalOutput.processing_stats.total_issues;
+    const templateSavings = template_analysis.potential_cost_savings;
+    const batchingSavings = Math.max(0, originalIssueCount - gptBatchStats.total_batches);
+    const totalSavings = templateSavings + batchingSavings;
+    const savingsPercentage = originalIssueCount > 0 ? Math.round((totalSavings / originalIssueCount) * 100) : 0;
     
-    const costSavingsText = `${savingsPercentage}% reduction (${totalSavings}/${originalIssueCount} GPT calls saved)`
+    const costSavingsText = `${savingsPercentage}% reduction (${totalSavings}/${originalIssueCount} GPT calls saved)`;
 
     return {
       processed_output: finalOutput,
@@ -269,9 +269,9 @@ export async function processWithEnhancedPipeline(pa11yOutput: any): Promise<Enh
         template_analysis,
         gpt_batch_stats: gptBatchStats,
         total_processing_time: totalTime,
-        cost_savings_estimate: costSavingsText
-      }
-    }
+        cost_savings_estimate: costSavingsText,
+      },
+    };
 
   } catch (error) {
     
@@ -284,9 +284,9 @@ export async function processWithEnhancedPipeline(pa11yOutput: any): Promise<Enh
         template_analysis: null,
         gpt_batch_stats: null,
         total_processing_time: Date.now() - startTime,
-        cost_savings_estimate: 'Processing failed, using original output'
-      }
-    }
+        cost_savings_estimate: 'Processing failed, using original output',
+      },
+    };
   }
 }
 
@@ -296,20 +296,20 @@ export async function processWithEnhancedPipeline(pa11yOutput: any): Promise<Enh
 function createEnhancedByFunctions(enhancedResults: any): any[] {
   
   // Combine all enhanced issues from both runners
-  const allIssues: any[] = []
+  const allIssues: any[] = [];
   
   // Add issues from axe results
   if (enhancedResults.axe) {
-    allIssues.push(...(enhancedResults.axe.errors || []))
-    allIssues.push(...(enhancedResults.axe.warnings || []))
-    allIssues.push(...(enhancedResults.axe.notices || []))
+    allIssues.push(...(enhancedResults.axe.errors || []));
+    allIssues.push(...(enhancedResults.axe.warnings || []));
+    allIssues.push(...(enhancedResults.axe.notices || []));
   }
   
   // Add issues from htmlcs results  
   if (enhancedResults.htmlcs) {
-    allIssues.push(...(enhancedResults.htmlcs.errors || []))
-    allIssues.push(...(enhancedResults.htmlcs.warnings || []))
-    allIssues.push(...(enhancedResults.htmlcs.notices || []))
+    allIssues.push(...(enhancedResults.htmlcs.errors || []));
+    allIssues.push(...(enhancedResults.htmlcs.warnings || []));
+    allIssues.push(...(enhancedResults.htmlcs.notices || []));
   }
   
   // Group issues by functionality based on WCAG codes and issue characteristics
@@ -318,46 +318,41 @@ function createEnhancedByFunctions(enhancedResults: any): any[] {
     'Low Vision': [],
     'Mobility': [],
     'Cognitive': [], 
-    'Deaf/Hard of Hearing': []
-  }
+    'Deaf/Hard of Hearing': [],
+  };
   
   allIssues.forEach((issue, index) => {
-    const code = issue.code || issue.message || ''
-    const message = issue.message || ''
-    const description = issue.description || ''
+    const code = issue.code || issue.message || '';
+    const message = issue.message || '';
+    const description = issue.description || '';
     
     // Smart categorization based on WCAG codes and content
     if (code.includes('alt') || code.includes('image') || 
         code.includes('aria-label') || code.includes('screen-reader') ||
         message.includes('screen reader') || message.includes('alternative text')) {
-      functionalityGroups['Blind'].push(issue)
-    } 
-    else if (code.includes('contrast') || code.includes('color') ||
+      functionalityGroups.Blind.push(issue);
+    } else if (code.includes('contrast') || code.includes('color') ||
              code.includes('focus') || message.includes('contrast') ||
              message.includes('color') || message.includes('visibility')) {
-      functionalityGroups['Low Vision'].push(issue)
-    }
-    else if (code.includes('keyboard') || code.includes('focus') ||
+      functionalityGroups['Low Vision'].push(issue);
+    } else if (code.includes('keyboard') || code.includes('focus') ||
              code.includes('tab') || message.includes('keyboard') ||
              message.includes('mouse') || message.includes('click')) {
-      functionalityGroups['Mobility'].push(issue)
-    }
-    else if (code.includes('heading') || code.includes('landmark') ||
+      functionalityGroups.Mobility.push(issue);
+    } else if (code.includes('heading') || code.includes('landmark') ||
              code.includes('structure') || code.includes('navigation') ||
              message.includes('heading') || message.includes('structure') ||
              description.includes('confus') || description.includes('understand')) {
-      functionalityGroups['Cognitive'].push(issue)
-    }
-    else if (code.includes('audio') || code.includes('video') ||
+      functionalityGroups.Cognitive.push(issue);
+    } else if (code.includes('audio') || code.includes('video') ||
              code.includes('media') || message.includes('audio') ||
              message.includes('captions') || message.includes('transcript')) {
-      functionalityGroups['Deaf/Hard of Hearing'].push(issue)
-    }
-    else {
+      functionalityGroups['Deaf/Hard of Hearing'].push(issue);
+    } else {
       // Default to Cognitive for general accessibility issues
-      functionalityGroups['Cognitive'].push(issue)
+      functionalityGroups.Cognitive.push(issue);
     }
-  })
+  });
   
   // Convert to ByFunctions format
   const byFunctions = Object.entries(functionalityGroups)
@@ -373,15 +368,15 @@ function createEnhancedByFunctions(enhancedResults: any): any[] {
         selectors: issue.selectors || [],
         confidence_score: issue.confidence_score || 0,
         template_info: issue.template_info,
-        screenshotUrl: issue.screenshotUrl
+        screenshotUrl: issue.screenshotUrl,
       }))
-      .map(issue => {
-        if (issue.screenshotUrl) {
-          console.log('[ByFunctions] Grouped issue with screenshotUrl:', issue.screenshotUrl, 'message:', issue.message);
-        }
-        return issue;
-      })
-    }))
+        .map(issue => {
+          if (issue.screenshotUrl) {
+            console.log('[ByFunctions] Grouped issue with screenshotUrl:', issue.screenshotUrl, 'message:', issue.message);
+          }
+          return issue;
+        }),
+    }));
 
-  return byFunctions
+  return byFunctions;
 } 

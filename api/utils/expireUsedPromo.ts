@@ -26,7 +26,7 @@ export async function expireUsedPromo(
         orderedCodes.map(async (code) => {
           const promo = await findAllPromos(stripe, code);
           return promo;
-        })
+        }),
       ).then(promos => promos.filter(Boolean) as Stripe.PromotionCode[]);
 
       // 3) count how many are already inactive
@@ -43,7 +43,7 @@ export async function expireUsedPromo(
 
       // 6) expire them
       await Promise.all(
-        toExpire.map(p => stripe.promotionCodes.update(p.id, { active: false }))
+        toExpire.map(p => stripe.promotionCodes.update(p.id, { active: false })),
       );
     } catch (error) {
       console.error('Background promo code expiration failed:', error);

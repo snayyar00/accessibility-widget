@@ -3,9 +3,7 @@ import { ValidateToken } from '~/repository/uniqueToken.repository';
 
 const resolvers = {
   Query: {
-    validateToken: combineResolvers((_, { url }) => {
-      return ValidateToken(url);
-    }),
+    validateToken: combineResolvers((_, { url }) => ValidateToken(url)),
   },
 };
 

@@ -7,7 +7,7 @@ type ApplyRetentionDiscountInfo = {
 
 
 export function validateApplyRetentionDiscount(
-  data: ApplyRetentionDiscountInfo
+  data: ApplyRetentionDiscountInfo,
 ): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator();
   
@@ -38,7 +38,7 @@ type CancelSiteSubscriptionInfo = {
 };
 
 export function validateCancelSiteSubscription(
-  data: CancelSiteSubscriptionInfo
+  data: CancelSiteSubscriptionInfo,
 ): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator();
   const schema = {
@@ -65,7 +65,7 @@ type CreateSubscriptionInfo = {
 };
 
 export function validateCreateSubscription(
-  data: CreateSubscriptionInfo
+  data: CreateSubscriptionInfo,
 ): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator();
 
@@ -103,7 +103,7 @@ type CreateCheckoutSessionInfo = {
 };
 
 export function validateCreateCheckoutSession(
-  data: CreateCheckoutSessionInfo
+  data: CreateCheckoutSessionInfo,
 ): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator();
 
@@ -137,7 +137,7 @@ type ValidateCouponInfo = {
 };
 
 export function validateCouponValidation(
-  data: ValidateCouponInfo
+  data: ValidateCouponInfo,
 ): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator();
   const schema = {
@@ -157,7 +157,7 @@ type BillingPortalSessionInfo = {
 };
 
 export function billingPortalSessionValidation(
-  data: BillingPortalSessionInfo
+  data: BillingPortalSessionInfo,
 ): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator();
 
@@ -178,7 +178,7 @@ type CreateCustomerPortalSessionInfo = {
 };
 
 export function createCustomerPortalSessionValidation(
-  data: CreateCustomerPortalSessionInfo
+  data: CreateCustomerPortalSessionInfo,
 ): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator();
 

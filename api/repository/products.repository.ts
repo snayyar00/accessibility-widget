@@ -84,7 +84,7 @@ export function findProductByStripeId(stripeID: string): any {
 
 export async function updateProduct(productId: number, productData: ProductData, priceDatas: Price[] = []): Promise<boolean> {
   let t;
-  console.log("Updating");
+  console.log('Updating');
   try {
     t = await database.transaction();
 
@@ -106,7 +106,7 @@ export async function updateProduct(productId: number, productData: ProductData,
         ...priceItem,
         product_id: productId,
       })),
-      t
+      t,
     );
 
     // Commit the transaction

@@ -5,10 +5,10 @@ const cache = new Map();
 
 function createFallbackResponse(url: string = '') {
   return {
-    technologies: ["Unknown"],
-    detectedTechnologies: ["Unknown"],
-    categorizedTechnologies: [] as Array<{category: string; technologies: string[]}>,
-    categories: ["Unknown"],
+    technologies: ['Unknown'],
+    detectedTechnologies: ['Unknown'],
+    categorizedTechnologies: [] as Array<{ category: string; technologies: string[] }>,
+    categories: ['Unknown'],
     confidence: 'low' as const,
     platform: 'Unknown',
     platformType: 'Unknown',

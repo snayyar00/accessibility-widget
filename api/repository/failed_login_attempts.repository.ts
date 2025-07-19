@@ -15,7 +15,7 @@ export interface FailedLoginAttempt {
  * Increment failed login attempts for a user
  */
 export async function incrementFailedAttempts(userId: number): Promise<FailedLoginAttempt> {
-  return await database.transaction(async (trx) => {
+  return database.transaction(async (trx) => {
     // Try to get existing record with row lock
     const existingRecord = await trx('failed_login_attempts')
       .where('user_id', userId)
@@ -29,7 +29,7 @@ export async function incrementFailedAttempts(userId: number): Promise<FailedLog
         .update({
           failed_count: existingRecord.failed_count + 1,
           last_failed_at: trx.fn.now(),
-          updated_at: trx.fn.now()
+          updated_at: trx.fn.now(),
         });
       
       // Get the updated record
@@ -47,7 +47,7 @@ export async function incrementFailedAttempts(userId: number): Promise<FailedLog
           first_failed_at: trx.fn.now(),
           last_failed_at: trx.fn.now(),
           created_at: trx.fn.now(),
-          updated_at: trx.fn.now()
+          updated_at: trx.fn.now(),
         });
       
       // Get the newly created record
@@ -89,7 +89,7 @@ export async function lockAccount(userId: number): Promise<void> {
         .where('user_id', userId)
         .update({
           locked_at: trx.fn.now(),
-          updated_at: trx.fn.now()
+          updated_at: trx.fn.now(),
         });
     } else {
       // Create new record and lock it immediately
@@ -101,7 +101,7 @@ export async function lockAccount(userId: number): Promise<void> {
           last_failed_at: trx.fn.now(),
           locked_at: trx.fn.now(),
           created_at: trx.fn.now(),
-          updated_at: trx.fn.now()
+          updated_at: trx.fn.now(),
         });
     }
   });

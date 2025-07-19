@@ -7,7 +7,7 @@ import { findSiteByURL } from '../repository/sites_allowed.repository';
 import { getWidgetSettingsBySiteId } from '../repository/widget_settings.repository';
 
 const getWidgetSettings = async (
-  siteUrl: string
+  siteUrl: string,
 ): Promise<LogoSettings> => {
   const fallbackLogoUrl = '/images/logo.png';
   try {
@@ -22,11 +22,11 @@ const getWidgetSettings = async (
     }
     // Get widget settings by site ID
     const widgetSettings = await getWidgetSettingsBySiteId(site.id);
-    const settings = widgetSettings?.settings
-      ? typeof widgetSettings.settings === 'string'
-        ? JSON.parse(widgetSettings.settings)
-        : widgetSettings.settings
-      : {};
+    const settings = widgetSettings?.settings ?
+      typeof widgetSettings.settings === 'string' ?
+        JSON.parse(widgetSettings.settings) :
+        widgetSettings.settings :
+      {};
     const logoImage = settings?.logoImage || fallbackLogoUrl;
     const logoUrl = settings?.logoUrl || '';
     const accessibilityStatementLinkUrl = settings?.accessibilityStatementLinkUrl || '';

@@ -103,7 +103,7 @@ export function extractRootDomain(hostname: string): string {
     'com.tt', 'com.jm', 'com.ht', 'com.do', 'com.pr', 'com.cu', 'com.bs',
     'com.tc', 'com.vg', 'com.vi', 'com.ky', 'com.bm', 'com.ai', 'com.ag',
     'com.dm', 'com.gd', 'com.lc', 'com.vc', 'com.bb', 'com.tt', 'com.jm',
-    'com.ht', 'com.do', 'com.pr', 'com.cu', 'com.bs','com.pl'
+    'com.ht', 'com.do', 'com.pr', 'com.cu', 'com.bs', 'com.pl',
   ];
 
   // Check for special TLDs first

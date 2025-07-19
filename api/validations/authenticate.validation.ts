@@ -42,7 +42,7 @@ function registerValidation(data: RegisterInfo): true | ValidationError[] | Prom
           return [{ type: 'custom', message: 'Email addresses with + symbol are not allowed' }];
         }
         return true;
-      }
+      },
     },
     password: { type: 'string', min: 6, max: 50 },
     name: { 
@@ -54,7 +54,7 @@ function registerValidation(data: RegisterInfo): true | ValidationError[] | Prom
           return [{ type: 'custom', message: 'Name contains invalid characters or links' }];
         }
         return true;
-      }
+      },
     },
   };
   return validator.validate(data, schema);
@@ -86,7 +86,7 @@ function profileUpdateValidation(data: ProfileUpdateInfo): true | ValidationErro
           return [{ type: 'custom', message: 'Name contains invalid characters or links' }];
         }
         return true;
-      }
+      },
     },
     company: { type: 'string', optional: true, max: 100 },
     position: { type: 'string', optional: true, max: 100 },

@@ -1,60 +1,55 @@
 import { ApolloError } from 'apollo-server-express';
 import dayjs from 'dayjs';
-import {
-  findToken,
-  changeTokenStatus,
-  createToken,
-} from '~/repository/user_tokens.repository';
+import { findToken, changeTokenStatus, createToken } from '~/repository/user_tokens.repository';
 import { activeUser, getUserbyId } from '~/repository/user.repository';
 import generateRandomKey from '~/helpers/genarateRandomkey';
 import compileEmailTemplate from '~/helpers/compile-email-template';
-import {sendMail} from '~/libs/mail';
-import logger from '~/libs/logger/application-logger';
+import { sendMail } from '~/services/email/email.service';
+import logger from '~/config/logger.config';
 import { normalizeEmail } from '~/helpers/string.helper';
 import { SEND_MAIL_TYPE } from '~/constants/send-mail-type.constant';
 import type { UserProfile } from '~/repository/user.repository';
 import { error } from 'console';
 
 function isValidDate(createdAt: string): boolean {
-    // console.log(createdAt);
-    // console.log(new Date().toString());
-    const modifiedDateStr = createdAt.toString().replace(/(GMT|UTC|UMT)[+-]\d{4}.*$/, ''); // Remove the timezone part
+  // console.log(createdAt);
+  // console.log(new Date().toString());
+  const modifiedDateStr = createdAt.toString().replace(/(GMT|UTC|UMT)[+-]\d{4}.*$/, ''); // Remove the timezone part
 
-    // Parse the components manually
-    const dateParts = modifiedDateStr.split(' ');
+  // Parse the components manually
+  const dateParts = modifiedDateStr.split(' ');
 
-    // Example: [Tue, Sep, 17, 2024, 22:20:19] => Extract date and time parts
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const month = monthNames.indexOf(dateParts[1]);
-    const day = parseInt(dateParts[2]);
-    const year = parseInt(dateParts[3]);
-    const timeParts = dateParts[4].split(':');
-    const hours = parseInt(timeParts[0]);
-    const minutes = parseInt(timeParts[1]);
-    const seconds = parseInt(timeParts[2]);
+  // Example: [Tue, Sep, 17, 2024, 22:20:19] => Extract date and time parts
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = monthNames.indexOf(dateParts[1]);
+  const day = parseInt(dateParts[2]);
+  const year = parseInt(dateParts[3]);
+  const timeParts = dateParts[4].split(':');
+  const hours = parseInt(timeParts[0]);
+  const minutes = parseInt(timeParts[1]);
+  const seconds = parseInt(timeParts[2]);
 
-    // Create a new Date object using UTC (to avoid timezone adjustments)
-    const date = new Date(Date.UTC(year, month, day, hours, minutes, seconds));
+  // Create a new Date object using UTC (to avoid timezone adjustments)
+  const date = new Date(Date.UTC(year, month, day, hours, minutes, seconds));
 
-    const now = new Date();
+  const now = new Date();
 
-    // 15 minutes in milliseconds
-    const fifteenMinutesInMs = 15 * 60 * 1000;
+  // 15 minutes in milliseconds
+  const fifteenMinutesInMs = 15 * 60 * 1000;
 
-    // console.log(date.toISOString());
-    // console.log(now.toISOString());
-    // Calculate the difference in milliseconds
-    const diffInMs = now.getTime() - date.getTime();
+  // console.log(date.toISOString());
+  // console.log(now.toISOString());
+  // Calculate the difference in milliseconds
+  const diffInMs = now.getTime() - date.getTime();
 
-    // console.log(diffInMs);
-    // console.log(fifteenMinutesInMs);
+  // console.log(diffInMs);
+  // console.log(fifteenMinutesInMs);
 
-    if (diffInMs > fifteenMinutesInMs) {
-      return false;
-    }
-    else{
-      return true;
-    }
+  if (diffInMs > fifteenMinutesInMs) {
+    return false;
+  } else {
+    return true;
+  }
 }
 
 export async function verifyEmail(authToken: string): Promise<true | ApolloError> {
@@ -64,15 +59,15 @@ export async function verifyEmail(authToken: string): Promise<true | ApolloError
     if (!token || !token.is_active || token.type !== SEND_MAIL_TYPE.VERIFY_EMAIL) {
       return new ApolloError('Invalid token');
     }
-  
+
     if (!isValidDate(token.created_at.toString())) {
       return new ApolloError('Token has expired');
     }
 
     await Promise.all([changeTokenStatus(token.id, token.type, false), activeUser(token.user_id)]);
-    
+
     const user = await getUserbyId(token.user_id);
-    
+
     const template = await compileEmailTemplate({
       fileName: 'WelcomeEmail.mjml',
       data: {
@@ -96,7 +91,7 @@ export async function resendEmailAction(user: UserProfile, type: 'verify_email' 
     let subject;
 
     const token = await generateRandomKey();
-    
+
     switch (type) {
       case SEND_MAIL_TYPE.VERIFY_EMAIL:
         if (user.is_active) {

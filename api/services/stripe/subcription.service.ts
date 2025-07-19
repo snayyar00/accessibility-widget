@@ -1,7 +1,7 @@
 import { ApolloError } from 'apollo-server-express';
 import dayjs from 'dayjs';
 import Stripe from 'stripe';
-import logger from '~/libs/logger/application-logger';
+import logger from '~/config/logger.config';
 import { normalizeEmail } from '~/helpers/string.helper';
 import { getSitesPlanByCustomerIdAndSubscriptionId } from '~/repository/sites_plans.repository';
 
@@ -36,7 +36,7 @@ const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY, {
  * @param {string} couponCode
  * @returns {Promise<any>}
  */
-export async function createNewSubcription(token: string, email: string, name: string, priceId: string, isTrial = false,couponCode=""): Promise<NewSubcription> {
+export async function createNewSubcription(token: string, email: string, name: string, priceId: string, isTrial = false, couponCode = ''): Promise<NewSubcription> {
   if (!token) {
     throw new ApolloError('Invalid token');
   }
@@ -44,8 +44,7 @@ export async function createNewSubcription(token: string, email: string, name: s
   try {
     const existing_sub = await stripe.subscriptions.retrieve(token);
 
-    if(existing_sub)
-    {
+    if (existing_sub) {
       return {
         customer_id: String(existing_sub.customer),
         subcription_id: existing_sub.id,
@@ -87,19 +86,16 @@ export async function createNewSubcription(token: string, email: string, name: s
 
     let dataSubcription:DataSubcription;
 
-    if (couponCode !== "")
-    {
+    if (couponCode !== '') {
       dataSubcription = {
         customer: customer.id,
         items: [{ price: priceId }],
-        coupon:couponCode
+        coupon:couponCode,
       };
-    }
-    else
-    {
+    } else {
       dataSubcription = {
         customer: customer.id,
-        items: [{ price: priceId }]
+        items: [{ price: priceId }],
       };
     }
 
@@ -110,15 +106,13 @@ export async function createNewSubcription(token: string, email: string, name: s
         end_behavior: {
           missing_payment_method: 'cancel',
         },
-      }
+      };
 
       return {
         customer_id: customer.id,
-        subcription_id: "Trial",
+        subcription_id: 'Trial',
       };
-    }
-    else
-    {
+    } else {
       const result = await stripe.subscriptions.create(dataSubcription);
 
       return {
@@ -128,7 +122,7 @@ export async function createNewSubcription(token: string, email: string, name: s
     }
    
   } catch (error) {
-    console.log("Sub Func error = ",error);
+    console.log('Sub Func error = ', error);
     logger.error(error);
     throw new ApolloError('Payment failed! Please check your card.');
   }
@@ -145,7 +139,7 @@ export async function createNewSubcription(token: string, email: string, name: s
 export async function updateSubcription(subId: string, priceId: string): Promise<boolean> {
   try {
     const subscription = await stripe.subscriptions.retrieve(subId);
-    const new_price = await stripe.prices.retrieve(priceId,{expand: ['tiers']});
+    const new_price = await stripe.prices.retrieve(priceId, { expand: ['tiers'] });
     const userStripeId = subscription.customer as string;
 
     let previous_plan;
@@ -154,13 +148,11 @@ export async function updateSubcription(subId: string, priceId: string): Promise
     } catch (error) {
       console.log('err = ', error);
     }
-    if(new_price?.tiers)
-    {
+    if (new_price?.tiers) {
       if (Number(new_price.tiers[0].up_to) < previous_plan.length) {
         throw new ApolloError(`This plan has a domain limit of ${new_price.tiers[0].up_to}. please decrease your added domains to subscribe to this plan`);
       }
-    }
-    else{
+    } else {
       const metadata = subscription.metadata;
 
       const updatedMetadata: any = { ...metadata, maxDomains: new_price.tiers[0].up_to, usedDomains: Number(previous_plan.length), updateMetaData: 'true' };
@@ -224,7 +216,7 @@ export async function getSubcriptionCustomerIDBySubId(subId: string): Promise<st
 
     return String(customer);
   } catch (error) {
-    console.log("Sub del func error",error);
+    console.log('Sub del func error', error);
     logger.error(error);
     throw new ApolloError('Something went wrong!');
   }

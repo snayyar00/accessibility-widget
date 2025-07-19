@@ -3,6 +3,6 @@ export const getOperationName = (body: any) => {
   if (body && typeof body === 'object' && body.operationName) {
     return body.operationName;
   }
-  
+
   return '-';
 };

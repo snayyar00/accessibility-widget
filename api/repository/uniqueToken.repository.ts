@@ -1,10 +1,10 @@
-import logger from '~/libs/logger/application-logger';
+import logger from '~/config/logger.config';
 import { findSiteByURL } from '~/repository/sites_allowed.repository';
 import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
 import { getWidgetSettingsBySiteId } from '~/repository/widget_settings.repository';
 import { validateTokenUrl } from '~/validations/widget.validation';
 import { normalizeDomain } from '~/utils/domain.utils';
-import { getRootDomain,extractRootDomain } from '~/utils/domainUtils';
+import { getRootDomain, extractRootDomain } from '~/utils/domainUtils';
 
 export async function ValidateToken(url: string): Promise<{
   validation: string;

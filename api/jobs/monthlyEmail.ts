@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import compileEmailTemplate from '~/helpers/compile-email-template';
-import { sendEmailWithRetries, EmailAttachment } from '~/libs/mail';
+import { sendEmailWithRetries, EmailAttachment } from '~/services/email/email.service';
 import { findSiteById } from '~/repository/sites_allowed.repository';
 import { getUserbyId } from '~/repository/user.repository';
 import { fetchAccessibilityReport } from '~/services/accessibilityReport/accessibilityReport.service';
@@ -68,7 +68,6 @@ const sendMonthlyEmails = async () => {
             // Generate PDF attachment
             let attachments: EmailAttachment[] = [];
             try {
-             
               const pdfBuffer = await generateAccessibilityReportPDF(report, site?.url, widgetStatus, 'en');
               attachments = [
                 {

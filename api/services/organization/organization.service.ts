@@ -8,7 +8,7 @@ import { addUserToOrganization, getOrganizationsByUserId, getUserOrganization } 
 import { validateAddOrganization, validateEditOrganization, validateRemoveOrganization } from '~/validations/organization.validation';
 
 import { updateUser } from '~/repository/user.repository';
-import logger from '~/libs/logger/application-logger';
+import logger from '~/config/logger.config';
 import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '~/constants/organization.constant';
 
 export interface CreateOrganizationInput {

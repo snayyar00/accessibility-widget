@@ -1,9 +1,9 @@
-import logger from '~/libs/logger/application-logger';
+import logger from '~/config/logger.config';
 import { IUserSites, deleteSiteWithRelatedRecords, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL, findSiteById } from '~/repository/sites_allowed.repository';
 import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
 import { createSitesPlan } from './plans-sites.service';
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '~/constants/billing.constant';
-import { sendEmailWithRetries, EmailAttachment } from '~/libs/mail';
+import { sendEmailWithRetries, EmailAttachment } from '~/services/email/email.service';
 import { getUserbyId } from '~/repository/user.repository';
 import compileEmailTemplate from '~/helpers/compile-email-template';
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service';

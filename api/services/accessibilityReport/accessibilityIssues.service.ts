@@ -3,11 +3,11 @@ import { stringToJson } from '../../helpers/stringToJSON.helper';
 import dotenv from 'dotenv';
 dotenv.config();
 const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
+  baseURL: 'https://openrouter.ai/api/v1',
   apiKey: process.env.OPENROUTER_API_KEY,
   defaultHeaders: {
-    "HTTP-Referer": "Webability.io",
-    "X-Title": "Webability.io - Accesbility Compliance Solution",
+    'HTTP-Referer': 'Webability.io',
+    'X-Title': 'Webability.io - Accesbility Compliance Solution',
   },
 });
 
@@ -93,7 +93,7 @@ async function getIssueDescription(issues: any) {
         },
         { role: 'user', content: JSON.stringify(issues) },
       ],
-      model: "google/gemini-2.5-flash-preview-05-20",
+      model: 'google/gemini-2.5-flash-preview-05-20',
     });
 
     // Validate that we have a response
@@ -189,20 +189,18 @@ async function getIssueDescription(issues: any) {
       message: {
         content: JSON.stringify([{
           heading: issues[0],
-          description: "An accessibility issue was detected that requires attention.",
-          recommended_action: "Review the element for WCAG compliance and make necessary adjustments.",
-          affectedDisabilities: ["multiple"],
-          code: "WCAG General"
-        }])
-      }
+          description: 'An accessibility issue was detected that requires attention.',
+          recommended_action: 'Review the element for WCAG compliance and make necessary adjustments.',
+          affectedDisabilities: ['multiple'],
+          code: 'WCAG General',
+        }]),
+      },
     };
   }
 }
 
 const updateIssueDetails = (issueList: any[]) =>
-  issueList.map((issue) => {
-    return issue;
-  });
+  issueList.map((issue) => issue);
 
 async function populateMissingDescriptions(matchedRecords: dbIssue[], issueHeadings: any, type: string) {
   // console.log(type);
@@ -245,7 +243,7 @@ export async function readAccessibilityDescriptionFromDb(issues: any) {
               heading: heading,
               description: 'An accessibility issue was detected. Please review for WCAG compliance.',
               recommended_action: 'Review the element and ensure it meets accessibility standards.',
-              code: 'WCAG General'
+              code: 'WCAG General',
             };
             return defaultIssue;
           }
@@ -300,51 +298,51 @@ export const GPTChunks = async (errorCodes: string[]) => {
       seed: chunk.length,
       messages: [
         {
-          role: "system",
+          role: 'system',
           content:
             "You are a website accessibility report expert. You are given a List of WCGA Guideline Error Codes. You must group the error codes based on human functionality e.g 'deaf', 'blind',' Mobility','Low vision','Cognitive' and other such functionality.Remeber to group all of the given error codes. Donot Group One error code under more than one Human Functionality .Always provide the result in JSON format.",
         },
         {
-          role: "user",
+          role: 'user',
           content:
-            "These are WCGA error Codes give JSON Object where each error code is mapped to a human functionality : [" +
-            chunk.join(" , ") +
-            "]",
+            'These are WCGA error Codes give JSON Object where each error code is mapped to a human functionality : [' +
+            chunk.join(' , ') +
+            ']',
         },
       ],
       tools: [
         {
-          type: "function",
+          type: 'function',
           function: {
-            name: "map_errorcodes",
+            name: 'map_errorcodes',
             parameters: {
-              type: "object",
+              type: 'object',
               properties: {
-                "HumanFunctionalities": {
-                  type: "array",
+                'HumanFunctionalities': {
+                  type: 'array',
                   items: {
-                    type: "object",
+                    type: 'object',
                     properties: {
-                      "FunctionalityName": {
-                        type: "string",
-                        description: "Name of the human functionality",
+                      'FunctionalityName': {
+                        type: 'string',
+                        description: 'Name of the human functionality',
                       },
                       Errors: {
-                        type: "array",
+                        type: 'array',
                         items: {
-                          type: "object",
+                          type: 'object',
                           properties: {
-                            "ErrorGuideline": {
-                              type: "string",
-                              description: "WCGA Error Codes",
+                            'ErrorGuideline': {
+                              type: 'string',
+                              description: 'WCGA Error Codes',
                             },
                           },
-                          required: ["ErrorGuideline"], // Ensure these properties are required
+                          required: ['ErrorGuideline'], // Ensure these properties are required
                         },
-                        description: "Errors related to this functionality",
+                        description: 'Errors related to this functionality',
                       },
                     },
-                    required: ["FunctionalityName", "Errors"], // Ensure these properties are required
+                    required: ['FunctionalityName', 'Errors'], // Ensure these properties are required
                   },
                 },
               },
@@ -352,7 +350,7 @@ export const GPTChunks = async (errorCodes: string[]) => {
           },
         },
       ],
-      model: "google/gemini-2.5-flash-preview-05-20",
+      model: 'google/gemini-2.5-flash-preview-05-20',
     });
     return completion.choices[0].message.tool_calls?.[0].function.arguments;
   });
@@ -364,7 +362,7 @@ export const GPTChunks = async (errorCodes: string[]) => {
     // Flatten the array of arrays into a single array
     const aggregatedResult = results.flat();
     let mergedObject: GPTData = {
-      "HumanFunctionalities": [],
+      'HumanFunctionalities': [],
     };
     
     aggregatedResult.forEach((result) => {
@@ -383,7 +381,7 @@ export const GPTChunks = async (errorCodes: string[]) => {
     console.error('Error in GPTChunks:', error);
     // Return a default structure if all fails
     return {
-      "HumanFunctionalities": []
+      'HumanFunctionalities': [],
     };
   }
 };

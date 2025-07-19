@@ -1,7 +1,7 @@
 import Knex from 'knex';
 import { UserProfile } from '~/repository/user.repository';
 import { ORGANIZATION_MANAGEMENT_ROLES, OrganizationUserRole, OrganizationUserStatus } from '~/constants/organization.constant';
-import logger from '~/libs/logger/application-logger';
+import logger from '~/config/logger.config';
 import { deleteOrganizationUser, getOrganizationUser, getOrganizationUsersByOrganizationId, getOrganizationUsersByUserId, insertOrganizationUser, OrganizationUser, updateOrganizationUser } from '~/repository/organization_user.repository';
 
 export async function addUserToOrganization(user_id: number, organization_id: number, role: OrganizationUserRole = 'member', status: OrganizationUserStatus = 'active', trx?: Knex.Transaction): Promise<number[]> {

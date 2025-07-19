@@ -1,4 +1,4 @@
-import logger from '~/libs/logger/application-logger';
+import logger from '~/config/logger.config';
 import { ValidationError } from 'apollo-server-express';
 
 import { findVisitorByIp } from '~/repository/visitors.repository';
@@ -7,7 +7,7 @@ import { findSite } from '../allowedSites/allowedSites.service';
 import { addNewVisitor } from '../uniqueVisitors/uniqueVisitor.service';
 import { validateGetEngagementRates, validateFindImpressionsByURLAndDate, validateAddImpressionsURL, validateAddProfileCount, validateAddInteraction } from '~/validations/impression.validation';
 import { normalizeDomain } from '~/utils/domain.utils';
-import { getRootDomain,extractRootDomain } from '~/utils/domainUtils';
+import { getRootDomain, extractRootDomain } from '~/utils/domainUtils';
 
 export async function addImpressionsURL(ipAddress: string, url: string) {
   const validateResult = validateAddImpressionsURL({ ipAddress, url });
@@ -78,7 +78,7 @@ export async function findImpressionsByURLAndDate(userId: number, url: string, s
       userId,
       domain: domain.substring(0, 50),
       dateRange: `${startDate.toISOString()} to ${endDate.toISOString()}`,
-      error: e.message
+      error: e.message,
     });
 
     throw new Error('Failed to fetch impressions data');

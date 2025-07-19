@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import accessLogStream from '~/libs/logger/stream';
-import { getOperationName } from '~/libs/logger/utils';
+import { getOperationName } from '~/utils/logger.utils';
 import getUserLogined from '~/services/authentication/get-user-logined.service';
 
 export const logAuthenticationFailure = (req: Request, _: Response, message: string, code: string) => {

@@ -69,8 +69,8 @@ export function validateTokenUrl(input: { url: string }): true | ValidationError
         }
         
         return true;
-      }
-    }
+      },
+    },
   };
 
   const result = validator.validate(input, schema);

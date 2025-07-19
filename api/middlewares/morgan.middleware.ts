@@ -1,12 +1,12 @@
 import morgan from 'morgan';
 import { Request, Response } from 'express';
-import accessLogStream from './stream';
-import { getOperationName } from '~/libs/logger/utils';
+import accessLogStream from '../libs/logger/stream';
+import { getOperationName } from '~/utils/logger.utils';
 
 morgan.token('operation_name', (req) => getOperationName((req as Request).body));
 
-const gdprSafeJsonFormat = (tokens: any, req: Request, res: Response) => {
-  return JSON.stringify({
+const gdprSafeJsonFormat = (tokens: any, req: Request, res: Response) =>
+  JSON.stringify({
     timestamp: new Date().toISOString(),
     level: 'info',
     type: 'access',
@@ -17,7 +17,6 @@ const gdprSafeJsonFormat = (tokens: any, req: Request, res: Response) => {
     response_time_ms: Number(tokens['response-time'](req, res)),
     operation_name: tokens.operation_name(req, res),
   });
-};
 
 export const configureMorgan = () => {
   if (accessLogStream) {

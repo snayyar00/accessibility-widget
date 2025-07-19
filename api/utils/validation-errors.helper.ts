@@ -8,7 +8,7 @@ export enum ValidationErrorCode {
   NAME_CONTAINS_LINKS = 'NAME_CONTAINS_LINKS', 
   NAME_CONTAINS_MALICIOUS_CONTENT = 'NAME_CONTAINS_MALICIOUS_CONTENT',
   EMAIL_AND_NAME_INVALID = 'EMAIL_AND_NAME_INVALID',
-  GRAPHQL_VALIDATION_FAILED = 'GRAPHQL_VALIDATION_FAILED'
+  GRAPHQL_VALIDATION_FAILED = 'GRAPHQL_VALIDATION_FAILED',
 }
 
 /**
@@ -17,7 +17,7 @@ export enum ValidationErrorCode {
 export function createValidationError(code: ValidationErrorCode, message?: string): ApolloError {
   return new ApolloError(
     message || 'Validation failed',
-    code
+    code,
   );
 }
 
@@ -56,8 +56,8 @@ export function createMultipleValidationErrors(errors: string[]): ApolloError {
     'Multiple validation errors',
     ValidationErrorCode.GRAPHQL_VALIDATION_FAILED,
     {
-      validationErrors: errorDetails
-    }
+      validationErrors: errorDetails,
+    },
   );
 }
 
@@ -72,25 +72,25 @@ export function getValidationErrorCode(errors: string[]): ValidationErrorCode {
   // Categorize different types of validation errors
   const errorCategories = {
     emailPlus: errors.some(error => 
-      error.includes('Email addresses with + symbol are not allowed')
+      error.includes('Email addresses with + symbol are not allowed'),
     ),
     nameLinks: errors.some(error => 
-      error.includes('Name contains invalid characters or links')
+      error.includes('Name contains invalid characters or links'),
     ),
     emailFormat: errors.some(error => 
       error.toLowerCase().includes('email') && 
-      (error.toLowerCase().includes('invalid') || error.toLowerCase().includes('required'))
+      (error.toLowerCase().includes('invalid') || error.toLowerCase().includes('required')),
     ),
     passwordWeak: errors.some(error => 
       error.toLowerCase().includes('password') && 
-      (error.toLowerCase().includes('weak') || error.toLowerCase().includes('characters'))
+      (error.toLowerCase().includes('weak') || error.toLowerCase().includes('characters')),
     ),
     nameRequired: errors.some(error => 
-      error.toLowerCase().includes('name') && error.toLowerCase().includes('required')
+      error.toLowerCase().includes('name') && error.toLowerCase().includes('required'),
     ),
     urlInvalid: errors.some(error => 
-      error.toLowerCase().includes('url') || error.toLowerCase().includes('domain')
-    )
+      error.toLowerCase().includes('url') || error.toLowerCase().includes('domain'),
+    ),
   };
 
   // Count how many different categories of errors we have

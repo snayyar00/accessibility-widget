@@ -24,7 +24,7 @@ const resolvers = {
 
         const [accessibilityReport, techStack] = await Promise.all([
           fetchAccessibilityReport(url),
-          fetchTechStackFromAPI(url)
+          fetchTechStackFromAPI(url),
         ]);
 
         return {
@@ -43,7 +43,7 @@ const resolvers = {
 
         if (Array.isArray(validateResult) && validateResult.length) {
           return new ValidationError(
-            validateResult.map((it) => it.message).join(',')
+            validateResult.map((it) => it.message).join(','),
           );
         }
 
@@ -78,7 +78,7 @@ const resolvers = {
 
         if (Array.isArray(validateResult) && validateResult.length) {
           return new ValidationError(
-            validateResult.map((it) => it.message).join(',')
+            validateResult.map((it) => it.message).join(','),
           );
         }
 
@@ -99,7 +99,7 @@ const resolvers = {
         } catch (error) {
           throw new Error(`Failed to fetch report by R2 key: ${error.message}`);
         }
-      }
+      },
     ),
   },
   Mutation: {
@@ -110,7 +110,7 @@ const resolvers = {
 
         if (Array.isArray(validateResult) && validateResult.length) {
           return new ValidationError(
-            validateResult.map((it) => it.message).join(',')
+            validateResult.map((it) => it.message).join(','),
           );
         }
 
@@ -140,7 +140,7 @@ const resolvers = {
         } catch (error) {
           throw new Error(`Failed to save accessibility report: ${error.message}`);
         }
-      }
+      },
     ),
 
     deleteAccessibilityReport: combineResolvers(
@@ -150,7 +150,7 @@ const resolvers = {
 
         if (Array.isArray(validateResult) && validateResult.length) {
           return new ValidationError(
-            validateResult.map((it) => it.message).join(',')
+            validateResult.map((it) => it.message).join(','),
           );
         }
 
@@ -174,7 +174,7 @@ const resolvers = {
         } catch (error) {
           throw new Error(`Failed to delete accessibility report: ${error.message}`);
         }
-      }
+      },
     ),
   },
 };

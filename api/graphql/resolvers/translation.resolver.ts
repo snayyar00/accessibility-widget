@@ -20,7 +20,7 @@ const resolvers = {
       isAuthenticated,
       async (
         _: unknown,
-        { content, targetLanguage, languageCode, context }: TranslateStatementArgs
+        { content, targetLanguage, languageCode, context }: TranslateStatementArgs,
       ) => {
         const validateResult = validateTranslateStatement({ content, targetLanguage, languageCode, context });
 
@@ -45,7 +45,7 @@ const resolvers = {
             languageCode,
           };
         }
-      }
+      },
     ),
   },
 };

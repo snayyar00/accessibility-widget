@@ -6,11 +6,11 @@ import { TRANSLATION_CONFIG } from '~/config/translation.config';
 dotenv.config();
 
 const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
+  baseURL: 'https://openrouter.ai/api/v1',
   apiKey: process.env.OPENROUTER_API_KEY,
   defaultHeaders: {
-    "HTTP-Referer": "Webability.io",
-    "X-Title": "Webability.io - AI Statement Generator",
+    'HTTP-Referer': 'Webability.io',
+    'X-Title': 'Webability.io - AI Statement Generator',
   },
 });
 
@@ -56,7 +56,7 @@ const buildEnhancedTranslationPrompt = (content: TranslationContent | string, ta
     documentType = 'compliance-statement',
     industry = 'business',
     enhancement = '',
-    preserveTerms = ['WCAG', 'ADA', 'Section 508', 'ARIA', 'NVDA', 'JAWS', 'VoiceOver', 'TalkBack']
+    preserveTerms = ['WCAG', 'ADA', 'Section 508', 'ARIA', 'NVDA', 'JAWS', 'VoiceOver', 'TalkBack'],
   } = contextInfo;
 
   // Build specialized system prompt based on context
@@ -114,7 +114,7 @@ const getEnhancementContext = (enhancement: string): string => {
     'add-testing': 'Include detailed technical testing procedures and automated tools',
     'add-timeline': 'Emphasize response timelines and support processes',
     'add-training': 'Highlight staff training and certification programs',
-    'add-standards': 'Focus on multiple compliance standards and regulations'
+    'add-standards': 'Focus on multiple compliance standards and regulations',
   };
   return descriptions[enhancement as keyof typeof descriptions] || '';
 };
@@ -124,7 +124,7 @@ const translateBatch = async (
   batch: TranslationContent, 
   targetLanguage: string, 
   batchIndex: number,
-  context?: any
+  context?: any,
 ): Promise<TranslationContent> => {
   const translationPrompt = buildEnhancedTranslationPrompt(batch, targetLanguage, context);
 
@@ -134,22 +134,22 @@ const translateBatch = async (
       messages: [
         {
           role: 'system',
-          content: 'You are a professional translator specializing in accessibility and legal documents. Always respond with valid JSON only. Ensure high-quality, culturally appropriate translations.'
+          content: 'You are a professional translator specializing in accessibility and legal documents. Always respond with valid JSON only. Ensure high-quality, culturally appropriate translations.',
         },
         {
           role: 'user',
-          content: translationPrompt
-        }
+          content: translationPrompt,
+        },
       ],
       temperature: TRANSLATION_CONFIG.model.temperature,
       max_tokens: TRANSLATION_CONFIG.model.maxTokens,
       stream: false,
       top_p: 0.9,
-      presence_penalty: 0.1
+      presence_penalty: 0.1,
     }),
     new Promise((_, reject) => 
-      setTimeout(() => reject(new Error(`Batch ${batchIndex} timeout`)), TRANSLATION_CONFIG.batching.batchTimeout)
-    )
+      setTimeout(() => reject(new Error(`Batch ${batchIndex} timeout`)), TRANSLATION_CONFIG.batching.batchTimeout),
+    ),
   ]) as any;
 
   const translatedText = response.choices[0]?.message?.content;
@@ -173,7 +173,7 @@ export const translateStatement = async ({
   content,
   targetLanguage,
   languageCode,
-  context
+  context,
 }: TranslationRequest): Promise<TranslationResult> => {
   const startTime = Date.now();
   
@@ -186,7 +186,7 @@ export const translateStatement = async ({
       return {
         success: true,
         translatedContent: serializedContent,
-        languageCode
+        languageCode,
       };
     }
 
@@ -203,7 +203,7 @@ export const translateStatement = async ({
       // Use batching for large object content
       const batches = splitContentIntoBatches(content as TranslationContent, TRANSLATION_CONFIG.batching.maxBatchSize);
       const batchPromises = batches.map((batch, index) => 
-        translateBatch(batch, targetLanguage, index, context)
+        translateBatch(batch, targetLanguage, index, context),
       );
       
       const batchResults = await Promise.all(batchPromises);
@@ -215,26 +215,26 @@ export const translateStatement = async ({
         response = await Promise.race([
           openai.chat.completions.create({
             model: TRANSLATION_CONFIG.model.name,
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a professional translator specializing in accessibility and legal documents. Always respond with valid JSON only. Follow the instructions in the user prompt exactly.'
-            },
-            {
-              role: 'user',
-              content: String(content) // Ensure it's a string
-            }
-          ],
-          temperature: TRANSLATION_CONFIG.model.temperature,
-          max_tokens: TRANSLATION_CONFIG.model.maxTokens,
-          stream: false,
-          top_p: 0.9,
-          presence_penalty: 0.1
-        }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Translation timeout')), TRANSLATION_CONFIG.model.timeout)
-        )
-      ]) as any;
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a professional translator specializing in accessibility and legal documents. Always respond with valid JSON only. Follow the instructions in the user prompt exactly.',
+              },
+              {
+                role: 'user',
+                content: String(content), // Ensure it's a string
+              },
+            ],
+            temperature: TRANSLATION_CONFIG.model.temperature,
+            max_tokens: TRANSLATION_CONFIG.model.maxTokens,
+            stream: false,
+            top_p: 0.9,
+            presence_penalty: 0.1,
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Translation timeout')), TRANSLATION_CONFIG.model.timeout),
+          ),
+        ]) as any;
       } catch (primaryError) {
         console.warn(`Primary model ${TRANSLATION_CONFIG.model.name} failed, trying fallback:`, primaryError);
         
@@ -245,22 +245,22 @@ export const translateStatement = async ({
             messages: [
               {
                 role: 'system',
-                content: 'You are a professional translator specializing in accessibility and legal documents. Always respond with valid JSON only. Follow the instructions in the user prompt exactly.'
+                content: 'You are a professional translator specializing in accessibility and legal documents. Always respond with valid JSON only. Follow the instructions in the user prompt exactly.',
               },
               {
                 role: 'user',
-                content: String(content)
-              }
+                content: String(content),
+              },
             ],
             temperature: TRANSLATION_CONFIG.model.temperature,
             max_tokens: TRANSLATION_CONFIG.model.maxTokens,
             stream: false,
             top_p: 0.9,
-            presence_penalty: 0.1
+            presence_penalty: 0.1,
           }),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Fallback translation timeout')), TRANSLATION_CONFIG.model.timeout)
-          )
+            setTimeout(() => reject(new Error('Fallback translation timeout')), TRANSLATION_CONFIG.model.timeout),
+          ),
         ]) as any;
       }
       
@@ -271,7 +271,7 @@ export const translateStatement = async ({
           response: response,
           choices: response.choices,
           model: TRANSLATION_CONFIG.model.name,
-          contentLength: String(content).length
+          contentLength: String(content).length,
         });
         throw new Error('No translation content received from OpenRouter');
       }
@@ -298,7 +298,7 @@ export const translateStatement = async ({
           console.error('JSON parsing failed for translation:', {
             originalResponse: translatedText,
             jsonMatch: jsonMatch[0],
-            error: secondError
+            error: secondError,
           });
           throw new Error('Translation service error');
         }
@@ -317,19 +317,19 @@ export const translateStatement = async ({
         language: languageCode,
         duration,
         contentSize: metricsContentSize,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
 
     // Serialize the response for GraphQL
-    const serializedContent = typeof translatedContent === 'object' 
-      ? JSON.stringify(translatedContent) 
-      : translatedContent;
+    const serializedContent = typeof translatedContent === 'object' ? 
+      JSON.stringify(translatedContent) : 
+      translatedContent;
 
     return {
       success: true,
       translatedContent: serializedContent,
-      languageCode
+      languageCode,
     };
 
   } catch (error) {
@@ -346,7 +346,7 @@ export const translateStatement = async ({
       contentFields: errorContentSize,
       batchingEnabled: TRANSLATION_CONFIG.batching.enabled,
       batchingUsed,
-      model: TRANSLATION_CONFIG.model.name
+      model: TRANSLATION_CONFIG.model.name,
     };
     
     console.error('Translation service error:', errorDetails);
@@ -356,7 +356,7 @@ export const translateStatement = async ({
       try {
         Sentry.captureException(error, {
           tags: { service: 'translation' },
-          extra: errorDetails
+          extra: errorDetails,
         });
       } catch (sentryError) {
         console.error('Failed to report error to Sentry:', sentryError);
@@ -367,7 +367,7 @@ export const translateStatement = async ({
     return {
       success: false,
       error: `Translation to ${targetLanguage} is temporarily unavailable`,
-      languageCode
+      languageCode,
     };
   }
 };

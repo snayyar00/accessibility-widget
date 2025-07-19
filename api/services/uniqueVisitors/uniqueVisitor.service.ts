@@ -1,4 +1,4 @@
-import logger from '~/libs/logger/application-logger';
+import logger from '~/config/logger.config';
 import { findVisitorByURL, insertVisitor } from '~/repository/visitors.repository';
 import { UserProfile } from '~/repository/user.repository';
 import { findUserSites } from '~/services/allowedSites/allowedSites.service';
