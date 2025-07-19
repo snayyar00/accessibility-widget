@@ -1,10 +1,7 @@
 import * as Sentry from '@sentry/node'
-import dotenv from 'dotenv'
 import OpenAI from 'openai'
 
 import { TRANSLATION_CONFIG } from '../../config/translation.config'
-
-dotenv.config()
 
 const openai = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',

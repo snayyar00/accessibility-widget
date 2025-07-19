@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
 
-dotenv.config()
+dotenv.config({ quiet: true })
 
 import './config/logger.config'
 
@@ -16,6 +16,7 @@ import scheduleMonthlyEmails from './jobs/monthlyEmail'
 import { dynamicCors } from './middlewares/cors.middleware'
 import { expressErrorMiddleware } from './middlewares/expressError.middleware'
 import { graphqlErrorMiddleware } from './middlewares/graphqlError.middleware'
+import { graphqlTimeoutMiddleware } from './middlewares/graphqlTimeout.middleware'
 import { strictLimiter } from './middlewares/limiters.middleware'
 import { configureMorgan } from './middlewares/morgan.middleware'
 import { requestTimingMiddleware } from './middlewares/requestTiming.middleware'
@@ -23,6 +24,7 @@ import routes from './routes'
 import stripeHooks from './services/stripe/webhooks.servive'
 
 const app = express()
+const apiUrl = process.env.COOLIFY_URL || `http://localhost:${PORT}`
 
 configureServer(app)
 scheduleMonthlyEmails()
@@ -45,27 +47,13 @@ app.get('/', (_, res) => {
 app.use(routes)
 app.use(expressErrorMiddleware)
 
-// Apollo Server 5 setup
+// Apollo Server
 const serverGraph = createGraphQLServer()
 
 async function initializeServer() {
   await serverGraph.start()
 
-  // Timeout middleware for long-running accessibility reports
-  app.use('/graphql', (req, res, next) => {
-    const { body } = req
-    let timeout = 70000
-
-    if (body && body.query && body.query.includes('getAccessibilityReport')) {
-      timeout = 120000 // 2 minutes for accessibility report
-    }
-
-    req.setTimeout(timeout)
-    res.setTimeout(timeout)
-
-    next()
-  })
-
+  app.use('/graphql', graphqlTimeoutMiddleware)
   app.use('/graphql', graphqlErrorMiddleware)
 
   app.use(
@@ -76,10 +64,10 @@ async function initializeServer() {
     }),
   )
 
-  initializeSentry(process.env.COOLIFY_URL || `http://localhost:${PORT}`)
+  initializeSentry(apiUrl)
 
   app.listen(PORT, () => {
-    console.log(`🚀 Server ready at http://localhost:${PORT}`)
+    console.log(`🚀 Server ready at ${apiUrl}`)
   })
 }
 
