@@ -29,7 +29,15 @@ npm run dev
 
 The server will start on the port specified in `.env` (default: `http://localhost:3001`).
 
-### 4. Run in production
+### 4. Build the project
+
+Compile the TypeScript code into the `dist` folder:
+
+```bash
+npm run build
+```
+
+### 5. Run in production
 
 ```bash
 npm start
@@ -133,8 +141,11 @@ AZURE_REGION=northeurope
 ## Useful Commands
 
 - **Start server:**  
-  `npm start` — production  
-  `npm run dev` — development with hot-reload
+  `npm run dev` — development with hot-reload  
+  `npm start` — production
+
+- **Build project:**  
+  `npm run build` — compile TypeScript to `dist`
 
 - **Database migrations (currently not working):**  
   `npm run db:migrate` — apply migrations  
@@ -145,9 +156,9 @@ AZURE_REGION=northeurope
   `npm run lint` — check code  
   `npm run lint:fix` — auto-fix
 
-- **Formatting:**
-  - `npm run format` — check formatting
-  - `npm run format:fix` — auto-format files
+- **Formatting:**  
+  `npm run format` — check formatting  
+  `npm run format:fix` — auto-format files
 
 ---
 

@@ -4,8 +4,9 @@
   "main": "server.ts",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node -r tsconfig-paths/register server.ts",
     "dev": "nodemon --exec ts-node -r tsconfig-paths/register server.ts",
+    "build": "tsc --project tsconfig.json",
+    "start": "node dist/server.js",
     "db:create-products": "ts-node -r tsconfig-paths/register scripts/create-products.ts",
     "db:migrate": "knex migrate:latest --knexfile config/knexfile.ts",
     "db:rollback": "knex migrate:rollback --knexfile config/knexfile.ts",
@@ -97,8 +98,5 @@
     "nodemon": "^2.0.22",
     "prettier": "^3.3.3",
     "tsconfig-paths": "^4.2.0"
-  },
-  "husky": {
-    "hooks": {}
   }
 }

@@ -12,6 +12,9 @@ const compat = new FlatCompat({
 })
 
 const eslintConfig = [
+  {
+    ignores: ['dist/**', 'node_modules/**'],
+  },
   // I like the configuration that Next.js uses
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
