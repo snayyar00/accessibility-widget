@@ -1,7 +1,3 @@
-import { config } from 'dotenv';
-
-config({ path: '../.env' });
-
 type Config = {
   client: string;
   connection: {
@@ -10,16 +6,16 @@ type Config = {
     user: string;
     password: string;
     port: number;
-  },
+  };
   migrations: {
     tableName: string;
     directory: string;
     loadExtensions: string[];
-  },
+  };
   seeds: {
     directory: string;
     recursive: boolean;
-  }
+  };
 };
 
 export default (database: string, host: string, user: string, password: string, port: number): Config => ({
