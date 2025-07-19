@@ -1,9 +1,9 @@
 import { ApolloError, ValidationError, ForbiddenError, UserInputError } from 'apollo-server-express';
-import { updateUser } from '~/repository/user.repository';
-import { generatePassword } from '~/helpers/hashing.helper';
-import { findToken, removeUserToken } from '~/repository/user_tokens.repository';
-import { changePasswordValidation } from '~/validations/authenticate.validation';
-import { unlockAccount } from '~/repository/failed_login_attempts.repository';
+import { updateUser } from '../../repository/user.repository';
+import { generatePassword } from '../../helpers/hashing.helper';
+import { findToken, removeUserToken } from '../../repository/user_tokens.repository';
+import { changePasswordValidation } from '../../validations/authenticate.validation';
+import { unlockAccount } from '../../repository/failed_login_attempts.repository';
 
 export async function resetPasswordUser(token: string, password: string, confirmPassword: string): Promise<true | ApolloError> {
   try {
@@ -24,7 +24,6 @@ export async function resetPasswordUser(token: string, password: string, confirm
     if (!session || !session.id) {
       return new ApolloError('Your reset password link is expired');
     }
-
 
     const modifiedDateStr = session.updated_at.toString().replace(/(GMT|UTC|UMT)[+-]\d{4}.*$/, ''); // Remove the timezone part
 
@@ -60,7 +59,7 @@ export async function resetPasswordUser(token: string, password: string, confirm
     await updateUser(session.user_id, { password: newPassword });
 
     await unlockAccount(session.user_id);
-    
+
     return true;
   } catch (error) {
     console.error(error);

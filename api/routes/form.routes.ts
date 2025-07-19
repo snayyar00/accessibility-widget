@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { requireJsonContent } from '~/middlewares/contentType.middleware';
-import { emailLimiter, moderateLimiter } from '~/middlewares/limiters.middleware';
-import { handleFormSubmission, subscribeNewsletter } from '~/controllers/form.controller';
+import { requireJsonContent } from '../middlewares/contentType.middleware';
+import { emailLimiter, moderateLimiter } from '../middlewares/limiters.middleware';
+import { handleFormSubmission, subscribeNewsletter } from '../controllers/form.controller';
 
 const router = Router();
 

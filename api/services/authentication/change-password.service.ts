@@ -1,11 +1,11 @@
 import { ApolloError, UserInputError } from 'apollo-server-express';
 import dayjs from 'dayjs';
-import { findUser, updateUser } from '~/repository/user.repository';
-import logger from '~/config/logger.config';
-import { sendMail } from '~/services/email/email.service';
-import compileEmailTemplate from '~/helpers/compile-email-template';
-import { comparePassword, generatePassword } from '~/helpers/hashing.helper';
-import { changePasswordValidation } from '~/validations/authenticate.validation';
+import { findUser, updateUser } from '../../repository/user.repository';
+import logger from '../../config/logger.config';
+import { sendMail } from '../../services/email/email.service';
+import compileEmailTemplate from '../../helpers/compile-email-template';
+import { comparePassword, generatePassword } from '../../helpers/hashing.helper';
+import { changePasswordValidation } from '../../validations/authenticate.validation';
 
 export async function changePasswordUser(userId: number, currentPassword: string, newPassword: string): Promise<true | ApolloError> {
   try {

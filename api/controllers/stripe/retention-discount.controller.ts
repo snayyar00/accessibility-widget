@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import { UserProfile } from '~/repository/user.repository';
-import { findSiteById } from '~/repository/sites_allowed.repository';
-import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
-import { RETENTION_COUPON_ID } from '~/constants/billing.constant';
+import { UserProfile } from '../../repository/user.repository';
+import { findSiteById } from '../../repository/sites_allowed.repository';
+import { getSitePlanBySiteId } from '../../repository/sites_plans.repository';
+import { RETENTION_COUPON_ID } from '../../constants/billing.constant';
 
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 

@@ -1,15 +1,12 @@
 import { combineResolvers } from 'graphql-resolvers';
-import { isAuthenticated } from '~/graphql/resolvers/authorization.resolver';
+import { isAuthenticated } from '../../graphql/resolvers/authorization.resolver';
 
-import { addImpressionsURL, addInteraction, addProfileCount, findImpressionsByURLAndDate, getEngagementRates } from '~/services/Impressions/impressions.service';
+import { addImpressionsURL, addInteraction, addProfileCount, findImpressionsByURLAndDate, getEngagementRates } from '../../services/Impressions/impressions.service';
 
 // TODO Security - Consider comprehensive security measures for this location
 const resolvers = {
   Query: {
-    getEngagementRates: combineResolvers(
-      isAuthenticated,
-      (_, { url, startDate, endDate }, { user }) => getEngagementRates(user.id, url, startDate, endDate),
-    ),
+    getEngagementRates: combineResolvers(isAuthenticated, (_, { url, startDate, endDate }, { user }) => getEngagementRates(user.id, url, startDate, endDate)),
 
     getImpressionsByURLAndDate: combineResolvers(isAuthenticated, async (_, { url, startDate, endDate }, { user }) => {
       try {

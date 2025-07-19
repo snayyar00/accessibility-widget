@@ -1,16 +1,16 @@
-import logger from '~/config/logger.config';
-import { IUserSites, deleteSiteWithRelatedRecords, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL, findSiteById } from '~/repository/sites_allowed.repository';
-import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
+import logger from '../../config/logger.config';
+import { IUserSites, deleteSiteWithRelatedRecords, findSiteByURL, findSitesByUserId, insertSite, updateAllowedSiteURL, findSiteById } from '../../repository/sites_allowed.repository';
+import { getSitePlanBySiteId } from '../../repository/sites_plans.repository';
 import { createSitesPlan } from './plans-sites.service';
-import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '~/constants/billing.constant';
-import { sendEmailWithRetries, EmailAttachment } from '~/services/email/email.service';
-import { getUserbyId } from '~/repository/user.repository';
-import compileEmailTemplate from '~/helpers/compile-email-template';
+import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '../../constants/billing.constant';
+import { sendEmailWithRetries, EmailAttachment } from '../../services/email/email.service';
+import { getUserbyId } from '../../repository/user.repository';
+import compileEmailTemplate from '../../helpers/compile-email-template';
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service';
-import { generateAccessibilityReportPDF } from '~/utils/pdfGenerator';
-import { validateChangeURL, validateDomain } from '~/validations/allowedSites.validation';
+import { generateAccessibilityReportPDF } from '../../utils/pdfGenerator';
+import { validateChangeURL, validateDomain } from '../../validations/allowedSites.validation';
 import { ValidationError } from 'apollo-server-express';
-import { normalizeDomain } from '~/utils/domain.utils';
+import { normalizeDomain } from '../../utils/domain.utils';
 
 export async function checkScript(url: String) {
   const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${url}`;

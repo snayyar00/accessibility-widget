@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import accessLogStream from '~/libs/logger/stream';
+import accessLogStream from '../libs/logger/stream';
 
 /**
  * Middleware for logging GraphQL errors
@@ -32,27 +32,14 @@ export const graphqlErrorMiddleware = (req: Request, res: Response, next: NextFu
 /**
  * Logs GraphQL errors with appropriate level and type
  */
-function logGraphQLErrors(
-  errors: any[], 
-  req: Request, 
-  res: Response, 
-  startTime: number, 
-  originalUrl: string, 
-  body: string,
-) {
+function logGraphQLErrors(errors: any[], req: Request, res: Response, startTime: number, originalUrl: string, body: string) {
   const responseTime = Date.now() - startTime;
   const contentLength = Buffer.byteLength(body, 'utf8');
 
   // Determine error type
-  const hasAuthError = errors.some((err: any) => 
-    err.extensions?.code === 'UNAUTHENTICATED' || 
-    err.message?.includes('Authentication fail'),
-  );
+  const hasAuthError = errors.some((err: any) => err.extensions?.code === 'UNAUTHENTICATED' || err.message?.includes('Authentication fail'));
 
-  const hasIntrospectionError = errors.some((err: any) => 
-    err.extensions?.code === 'GRAPHQL_VALIDATION_FAILED' &&
-    err.message?.includes('introspection is not allowed'),
-  );
+  const hasIntrospectionError = errors.some((err: any) => err.extensions?.code === 'GRAPHQL_VALIDATION_FAILED' && err.message?.includes('introspection is not allowed'));
 
   // Determine log level and type
   const { level, type } = getLogLevelAndType(hasAuthError, hasIntrospectionError);
@@ -86,11 +73,11 @@ function getLogLevelAndType(hasAuthError: boolean, hasIntrospectionError: boolea
   if (hasAuthError) {
     return { level: 'warn', type: 'security' };
   }
-  
+
   if (hasIntrospectionError) {
     return { level: 'warn', type: 'graphql' };
   }
-  
+
   return { level: 'error', type: 'graphql' };
 }
 

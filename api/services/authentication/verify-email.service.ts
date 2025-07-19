@@ -1,15 +1,14 @@
 import { ApolloError } from 'apollo-server-express';
 import dayjs from 'dayjs';
-import { findToken, changeTokenStatus, createToken } from '~/repository/user_tokens.repository';
-import { activeUser, getUserbyId } from '~/repository/user.repository';
-import generateRandomKey from '~/helpers/genarateRandomkey';
-import compileEmailTemplate from '~/helpers/compile-email-template';
-import { sendMail } from '~/services/email/email.service';
-import logger from '~/config/logger.config';
-import { normalizeEmail } from '~/helpers/string.helper';
-import { SEND_MAIL_TYPE } from '~/constants/send-mail-type.constant';
-import type { UserProfile } from '~/repository/user.repository';
-import { error } from 'console';
+import { findToken, changeTokenStatus, createToken } from '../../repository/user_tokens.repository';
+import { activeUser, getUserbyId } from '../../repository/user.repository';
+import generateRandomKey from '../../helpers/genarateRandomkey';
+import compileEmailTemplate from '../../helpers/compile-email-template';
+import { sendMail } from '../../services/email/email.service';
+import logger from '../../config/logger.config';
+import { normalizeEmail } from '../../helpers/string.helper';
+import { SEND_MAIL_TYPE } from '../../constants/send-mail-type.constant';
+import type { UserProfile } from '../../repository/user.repository';
 
 function isValidDate(createdAt: string): boolean {
   // console.log(createdAt);

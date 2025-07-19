@@ -12,13 +12,8 @@
     "db:create": "knex migrate:make --knexfile config/knexfile.ts",
     "db:down": "knex migrate:down --knexfile config/knexfile.ts",
     "db:seed": "knex seed:run --knexfile config/knexfile.ts",
-    "postinstall": "link-module-alias && npx npm-force-resolutions",
     "lint": "eslint --ext .ts .",
     "lint:fix": "eslint --ext .ts . --fix"
-  },
-  "resolutions": {
-    "**/**/fs-capacitor": "^6.2.0",
-    "**/graphql-upload": "^11.0.0"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.817.0",
@@ -48,7 +43,6 @@
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
     "knex": "^0.21.12",
-    "link-module-alias": "^1.2.0",
     "linkify-it": "^5.0.0",
     "lodash": "^4.17.20",
     "mjml": "^4.7.1",

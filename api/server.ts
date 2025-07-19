@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-import '~/config/logger.config';
+import './config/logger.config';
 
 import express from 'express';
 import bodyParser from 'body-parser';
@@ -11,10 +11,10 @@ import cookieParser from 'cookie-parser';
 import { configureServer, PORT } from './config/server.config';
 import { dynamicCors } from './middlewares/cors.middleware';
 import { strictLimiter } from './middlewares/limiters.middleware';
-import { configureMorgan } from '~/middlewares/morgan.middleware';
-import { requestTimingMiddleware } from '~/middlewares/requestTiming.middleware';
-import { expressErrorMiddleware } from '~/middlewares/expressError.middleware';
-import { graphqlErrorMiddleware } from '~/middlewares/graphqlError.middleware';
+import { configureMorgan } from './middlewares/morgan.middleware';
+import { requestTimingMiddleware } from './middlewares/requestTiming.middleware';
+import { expressErrorMiddleware } from './middlewares/expressError.middleware';
+import { graphqlErrorMiddleware } from './middlewares/graphqlError.middleware';
 import { createGraphQLServer } from './config/graphql.config';
 import { initializeSentry } from './config/sentry.config';
 

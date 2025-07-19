@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { UserProfile } from '~/repository/user.repository';
-import { findSiteByURL } from '~/repository/sites_allowed.repository';
-import { addWidgetSettings, getWidgetSettingsBySiteId } from '~/repository/widget_settings.repository';
+import { UserProfile } from '../repository/user.repository';
+import { findSiteByURL } from '../repository/sites_allowed.repository';
+import { addWidgetSettings, getWidgetSettingsBySiteId } from '../repository/widget_settings.repository';
 
 export async function updateSiteWidgetSettings(req: Request, res: Response) {
   const user: UserProfile = (req as any).user;

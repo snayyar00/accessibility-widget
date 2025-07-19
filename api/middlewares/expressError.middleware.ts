@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import accessLogStream from '~/libs/logger/stream';
-import { getOperationName } from '~/utils/logger.utils';
+import accessLogStream from '../libs/logger/stream';
+import { getOperationName } from '../utils/logger.utils';
 
 export const expressErrorMiddleware = (error: any, req: Request, res: Response, next: NextFunction) => {
   // Calculate response time if not available

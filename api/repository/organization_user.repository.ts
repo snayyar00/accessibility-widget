@@ -1,7 +1,7 @@
 import Knex from 'knex';
-import database from '~/config/database.config';
-import { TABLES } from '~/constants/database.constant';
-import { OrganizationUserRole, OrganizationUserStatus } from '~/constants/organization.constant';
+import database from '../config/database.config';
+import { TABLES } from '../constants/database.constant';
+import { OrganizationUserRole, OrganizationUserStatus } from '../constants/organization.constant';
 
 export type OrganizationUser = {
   id?: number;

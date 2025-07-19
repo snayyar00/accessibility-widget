@@ -1,16 +1,16 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
-import { UserProfile } from '~/repository/user.repository';
-import { findSiteByURL } from '~/repository/sites_allowed.repository';
-import { findProductAndPriceByType } from '~/repository/products.repository';
-import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from '~/constants/billing.constant';
-import { createSitesPlan, deleteTrialPlan } from '~/services/allowedSites/plans-sites.service';
-import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
-import findPromo from '~/services/stripe/findPromo';
-import { appSumoPromoCount } from '~/utils/appSumoPromoCount';
-import { expireUsedPromo } from '~/utils/expireUsedPromo';
-import { getUserTokens } from '~/repository/user_plan_tokens.repository';
-import { customTokenCount } from '~/utils/customTokenCount';
+import { UserProfile } from '../../repository/user.repository';
+import { findSiteByURL } from '../../repository/sites_allowed.repository';
+import { findProductAndPriceByType } from '../../repository/products.repository';
+import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from '../../constants/billing.constant';
+import { createSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service';
+import { getSitePlanBySiteId } from '../../repository/sites_plans.repository';
+import findPromo from '../../services/stripe/findPromo';
+import { appSumoPromoCount } from '../../utils/appSumoPromoCount';
+import { expireUsedPromo } from '../../utils/expireUsedPromo';
+import { getUserTokens } from '../../repository/user_plan_tokens.repository';
+import { customTokenCount } from '../../utils/customTokenCount';
 
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 

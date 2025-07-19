@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { sendMail } from '~/services/email/email.service';
-import { emailValidation } from '~/validations/email.validation';
-import { addNewsletterSub } from '~/repository/newsletter_subscribers.repository';
+import { sendMail } from '../services/email/email.service';
+import { emailValidation } from '../validations/email.validation';
+import { addNewsletterSub } from '../repository/newsletter_subscribers.repository';
 
 export async function handleFormSubmission(req: Request, res: Response) {
   const validateResult = emailValidation(req.body.email);

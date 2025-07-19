@@ -1,9 +1,9 @@
 import { ApolloError } from 'apollo-server-express';
-import { findUser, updateUser } from '~/repository/user.repository';
-import { profileUpdateValidation } from '~/validations/authenticate.validation';
-import { sanitizeUserInput } from '~/utils/sanitization.helper';
-import { getValidationErrorCode, createValidationError, createMultipleValidationErrors } from '~/utils/validation-errors.helper';
-import logger from '~/config/logger.config';
+import { findUser, updateUser } from '../../repository/user.repository';
+import { profileUpdateValidation } from '../../validations/authenticate.validation';
+import { sanitizeUserInput } from '../../utils/sanitization.helper';
+import { getValidationErrorCode, createValidationError, createMultipleValidationErrors } from '../../utils/validation-errors.helper';
+import logger from '../../config/logger.config';
 
 export async function updateProfile(id: number, name: string, company: string, position: string): Promise<true | ApolloError> {
   try {

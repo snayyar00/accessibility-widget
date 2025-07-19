@@ -1,5 +1,5 @@
 import { combineResolvers } from 'graphql-resolvers';
-import { handleReportProblem } from '~/services/problemReport/reportProblem';
+import { handleReportProblem } from '../../services/problemReport/reportProblem';
 
 const resolvers = {
   Mutation: {

@@ -1,5 +1,5 @@
 import Validator, { ValidationError } from 'fastest-validator';
-import { validateNameField, validateEmailNotAlias } from '~/utils/sanitization.helper';
+import { validateNameField, validateEmailNotAlias } from '../utils/sanitization.helper';
 
 type LoginInfo = {
   email: string;
@@ -34,7 +34,7 @@ function loginValidation(data: LoginInfo): true | ValidationError[] | Promise<tr
 function registerValidation(data: RegisterInfo): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator();
   const schema = {
-    email: { 
+    email: {
       type: 'email',
       max: 100,
       custom: (value: string) => {
@@ -45,8 +45,8 @@ function registerValidation(data: RegisterInfo): true | ValidationError[] | Prom
       },
     },
     password: { type: 'string', min: 6, max: 50 },
-    name: { 
-      type: 'string', 
+    name: {
+      type: 'string',
       empty: false,
       max: 100,
       custom: (value: string) => {
@@ -77,8 +77,8 @@ function changePasswordValidation(data: ChangePasswordInfo): true | ValidationEr
 function profileUpdateValidation(data: ProfileUpdateInfo): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator();
   const schema = {
-    name: { 
-      type: 'string', 
+    name: {
+      type: 'string',
       empty: false,
       max: 100,
       custom: (value: string) => {

@@ -1,15 +1,15 @@
 import { ApolloError, ValidationError } from 'apollo-server-express';
-import { createOrganization, updateOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization } from '~/repository/organization.repository';
-import { UserProfile } from '~/repository/user.repository';
-import { objectToString } from '~/helpers/string.helper';
-import database from '~/config/database.config';
+import { createOrganization, updateOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization } from '../../repository/organization.repository';
+import { UserProfile } from '../../repository/user.repository';
+import { objectToString } from '../../helpers/string.helper';
+import database from '../../config/database.config';
 import { addUserToOrganization, getOrganizationsByUserId, getUserOrganization } from './organization_users.service';
 
-import { validateAddOrganization, validateEditOrganization, validateRemoveOrganization } from '~/validations/organization.validation';
+import { validateAddOrganization, validateEditOrganization, validateRemoveOrganization } from '../../validations/organization.validation';
 
-import { updateUser } from '~/repository/user.repository';
-import logger from '~/config/logger.config';
-import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '~/constants/organization.constant';
+import { updateUser } from '../../repository/user.repository';
+import logger from '../../config/logger.config';
+import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant';
 
 export interface CreateOrganizationInput {
   name: string;

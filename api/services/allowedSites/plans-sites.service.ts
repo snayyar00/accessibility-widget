@@ -1,16 +1,16 @@
 import { ApolloError, ValidationError } from 'apollo-server-express';
-import { validateGetPlanBySiteIdAndUserId, validateUpdateSitesPlan } from '~/validations/planSites.validation';
+import { validateGetPlanBySiteIdAndUserId, validateUpdateSitesPlan } from '../../validations/planSites.validation';
 import dayjs from 'dayjs';
 
-import logger from '~/config/logger.config';
-import { createNewSubcription, updateSubcription, cancelSubcriptionBySubId } from '~/services/stripe/subcription.service';
-import { findProductAndPriceByType, FindProductAndPriceByTypeResponse } from '~/repository/products.repository';
-import { findUser } from '~/repository/user.repository';
-import formatDateDB from '~/utils/format-date-db';
-import { PERMISSION_SITE_PLAN } from '~/constants/billing.constant';
-import { findSiteByUserIdAndSiteId } from '~/repository/sites_allowed.repository';
-import { SitesPlanData, deleteSitePlanById, getAnySitePlanById, getSitePlanById, getSitePlanBySiteId, insertSitePlan, updateSitePlanById } from '~/repository/sites_plans.repository';
-import { deletePermissionBySitePlanId, insertMultiSitePermission } from '~/repository/sites_permission.repository';
+import logger from '../../config/logger.config';
+import { createNewSubcription, updateSubcription, cancelSubcriptionBySubId } from '../../services/stripe/subcription.service';
+import { findProductAndPriceByType, FindProductAndPriceByTypeResponse } from '../../repository/products.repository';
+import { findUser } from '../../repository/user.repository';
+import formatDateDB from '../../utils/format-date-db';
+import { PERMISSION_SITE_PLAN } from '../../constants/billing.constant';
+import { findSiteByUserIdAndSiteId } from '../../repository/sites_allowed.repository';
+import { SitesPlanData, deleteSitePlanById, getAnySitePlanById, getSitePlanById, getSitePlanBySiteId, insertSitePlan, updateSitePlanById } from '../../repository/sites_plans.repository';
+import { deletePermissionBySitePlanId, insertMultiSitePermission } from '../../repository/sites_permission.repository';
 
 // Add this interface definition
 export interface ResponseSitesPlan {
@@ -28,7 +28,6 @@ export interface ResponseSitesPlan {
 }
 
 export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
-
   const validateResult = await validateGetPlanBySiteIdAndUserId({ userId, siteId });
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -58,21 +57,9 @@ export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
   return result;
 }
 
-export async function createSitesPlan(
-  userId: number,
-  paymentMethodToken: string,
-  planName: string,
-  billingType: 'MONTHLY' | 'YEARLY',
-  siteId: number,
-  couponCode: string,
-): Promise<true> {
+export async function createSitesPlan(userId: number, paymentMethodToken: string, planName: string, billingType: 'MONTHLY' | 'YEARLY', siteId: number, couponCode: string): Promise<true> {
   try {
-    const [user, site, product, sitePlan] = await Promise.all([
-      findUser({ id: userId }),
-      findSiteByUserIdAndSiteId(userId, siteId),
-      findProductAndPriceByType(planName, billingType),
-      getSitePlanBySiteId(siteId).catch((): null => null),
-    ]);
+    const [user, site, product, sitePlan] = await Promise.all([findUser({ id: userId }), findSiteByUserIdAndSiteId(userId, siteId), findProductAndPriceByType(planName, billingType), getSitePlanBySiteId(siteId).catch((): null => null)]);
 
     const coupon = couponCode || '';
 
@@ -87,33 +74,14 @@ export async function createSitesPlan(
     }
 
     if (sitePlan) {
-      await Promise.all([
-        updateSitePlanById(sitePlan.id, { is_active: false }),
-        deletePermissionBySitePlanId(sitePlan.id),
-      ]);
+      await Promise.all([updateSitePlanById(sitePlan.id, { is_active: false }), deletePermissionBySitePlanId(sitePlan.id)]);
     }
 
-    const { subcription_id, customer_id } = await createNewSubcription(
-      paymentMethodToken,
-      user.email,
-      user.name,
-      product.price_stripe_id,
-      paymentMethodToken === 'Trial',
-      coupon,
-    );
+    const { subcription_id, customer_id } = await createNewSubcription(paymentMethodToken, user.email, user.name, product.price_stripe_id, paymentMethodToken === 'Trial', coupon);
     if (subcription_id && customer_id) {
       const INFINITE_TIMESTAMP = '9999-12-31 23:59:59';
-      let expiry = formatDateDB(
-        dayjs().add(
-          paymentMethodToken === 'Trial' ? 15 : 1,
-          paymentMethodToken === 'Trial' ?
-            'day' :
-            product.price_type === 'yearly' ?
-              'y' :
-              'M',
-        ),
-      );
-      
+      let expiry = formatDateDB(dayjs().add(paymentMethodToken === 'Trial' ? 15 : 1, paymentMethodToken === 'Trial' ? 'day' : product.price_type === 'yearly' ? 'y' : 'M'));
+
       if (couponCode !== '') {
         // never expires
         expiry = INFINITE_TIMESTAMP;
@@ -147,13 +115,7 @@ export async function createSitesPlan(
   }
 }
 
-export async function updateSitesPlan(
-  userId: number,
-  sitePlanId: number,
-  planName: string,
-  billingType: 'MONTHLY' | 'YEARLY',
-  hook = false,
-): Promise<true> {
+export async function updateSitesPlan(userId: number, sitePlanId: number, planName: string, billingType: 'MONTHLY' | 'YEARLY', hook = false): Promise<true> {
   try {
     const validateResult = await validateUpdateSitesPlan({
       userId,
@@ -186,9 +148,9 @@ export async function updateSitesPlan(
     }
 
     if (hook === false) {
-      await updateSubcription(sitePlan.subcription_id, product.price_stripe_id);  
+      await updateSubcription(sitePlan.subcription_id, product.price_stripe_id);
     }
-    
+
     const dataSitePlan: SitesPlanData = {
       product_id: product.id,
       price_id: product.price_id,
@@ -238,7 +200,7 @@ export async function deleteSitesPlan(id: number, hook = false): Promise<true> {
   try {
     let sitePlan = await getSitePlanById(id);
 
-    if (!sitePlan){
+    if (!sitePlan) {
       sitePlan = await getAnySitePlanById(id);
     }
 
@@ -281,7 +243,6 @@ export async function deleteExpiredSitesPlan(id: number, hook = false): Promise<
     if (!sitePlan) {
       throw new ApolloError('Can not find any user plan');
     }
-
 
     if (hook === false) {
       try {

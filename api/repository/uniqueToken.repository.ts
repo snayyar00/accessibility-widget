@@ -1,17 +1,16 @@
-import logger from '~/config/logger.config';
-import { findSiteByURL } from '~/repository/sites_allowed.repository';
-import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
-import { getWidgetSettingsBySiteId } from '~/repository/widget_settings.repository';
-import { validateTokenUrl } from '~/validations/widget.validation';
-import { normalizeDomain } from '~/utils/domain.utils';
-import { getRootDomain, extractRootDomain } from '~/utils/domainUtils';
+import logger from '../config/logger.config';
+import { findSiteByURL } from '../repository/sites_allowed.repository';
+import { getSitePlanBySiteId } from '../repository/sites_plans.repository';
+import { getWidgetSettingsBySiteId } from '../repository/widget_settings.repository';
+import { validateTokenUrl } from '../validations/widget.validation';
+import { normalizeDomain } from '../utils/domain.utils';
+import { getRootDomain } from '../utils/domainUtils';
 
 export async function ValidateToken(url: string): Promise<{
   validation: string;
   savedState: any;
   error?: string;
 }> {
-
   const rootDomain = getRootDomain(url);
   const validateResult = validateTokenUrl({ url: rootDomain });
 
@@ -34,7 +33,6 @@ export async function ValidateToken(url: string): Promise<{
 
     widgetSettings = await getWidgetSettingsBySiteId(site.id);
     widgetSettings = widgetSettings?.settings || {};
-
   } catch (error) {
     console.error(error);
     widgetSettings = {};
@@ -74,7 +72,7 @@ export async function ValidateToken(url: string): Promise<{
         savedState: widgetSettings,
       };
     }
-    
+
     return {
       validation: 'notFound',
       savedState: null,
@@ -82,7 +80,7 @@ export async function ValidateToken(url: string): Promise<{
   } catch (error) {
     console.error('Error in ValidateToken:', error);
     logger.error('There was an error validating the provided unique token.', error);
-    
+
     return {
       validation: 'error',
       savedState: null,

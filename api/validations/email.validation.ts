@@ -1,5 +1,5 @@
 import Validator, { ValidationError } from 'fastest-validator';
-import { validateEmailNotAlias } from '~/utils/sanitization.helper';
+import { validateEmailNotAlias } from '../utils/sanitization.helper';
 
 export function emailValidation(email: string | undefined, maxLength = 254): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator();

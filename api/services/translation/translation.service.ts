@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import * as Sentry from '@sentry/node';
-import { TRANSLATION_CONFIG } from '~/config/translation.config';
+import { TRANSLATION_CONFIG } from '../../config/translation.config';
 
 dotenv.config();
 
@@ -38,26 +38,20 @@ interface TranslationResult {
 const splitContentIntoBatches = (content: TranslationContent, batchSize: number): TranslationContent[] => {
   const entries = Object.entries(content);
   const batches: TranslationContent[] = [];
-  
+
   for (let i = 0; i < entries.length; i += batchSize) {
     const batchEntries = entries.slice(i, i + batchSize);
     const batch = Object.fromEntries(batchEntries);
     batches.push(batch);
   }
-  
+
   return batches;
 };
 
 // Enhanced prompt builder with contextual information
 const buildEnhancedTranslationPrompt = (content: TranslationContent | string, targetLanguage: string, context?: any): string => {
   const contextInfo = context ? JSON.parse(context) : {};
-  const {
-    domain = 'accessibility-legal',
-    documentType = 'compliance-statement',
-    industry = 'business',
-    enhancement = '',
-    preserveTerms = ['WCAG', 'ADA', 'Section 508', 'ARIA', 'NVDA', 'JAWS', 'VoiceOver', 'TalkBack'],
-  } = contextInfo;
+  const { domain = 'accessibility-legal', documentType = 'compliance-statement', industry = 'business', enhancement = '', preserveTerms = ['WCAG', 'ADA', 'Section 508', 'ARIA', 'NVDA', 'JAWS', 'VoiceOver', 'TalkBack'] } = contextInfo;
 
   // Build specialized system prompt based on context
   const systemPrompt = `You are a professional translator specializing in ${domain} documents for the ${industry} industry.
@@ -120,15 +114,10 @@ const getEnhancementContext = (enhancement: string): string => {
 };
 
 // Helper function to translate a single batch
-const translateBatch = async (
-  batch: TranslationContent, 
-  targetLanguage: string, 
-  batchIndex: number,
-  context?: any,
-): Promise<TranslationContent> => {
+const translateBatch = async (batch: TranslationContent, targetLanguage: string, batchIndex: number, context?: any): Promise<TranslationContent> => {
   const translationPrompt = buildEnhancedTranslationPrompt(batch, targetLanguage, context);
 
-  const response = await Promise.race([
+  const response = (await Promise.race([
     openai.chat.completions.create({
       model: TRANSLATION_CONFIG.model.name,
       messages: [
@@ -147,13 +136,11 @@ const translateBatch = async (
       top_p: 0.9,
       presence_penalty: 0.1,
     }),
-    new Promise((_, reject) => 
-      setTimeout(() => reject(new Error(`Batch ${batchIndex} timeout`)), TRANSLATION_CONFIG.batching.batchTimeout),
-    ),
-  ]) as any;
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`Batch ${batchIndex} timeout`)), TRANSLATION_CONFIG.batching.batchTimeout)),
+  ])) as any;
 
   const translatedText = response.choices[0]?.message?.content;
-  
+
   if (!translatedText) {
     throw new Error(`No translation content received for batch ${batchIndex}`);
   }
@@ -169,14 +156,9 @@ const translateBatch = async (
   }
 };
 
-export const translateStatement = async ({
-  content,
-  targetLanguage,
-  languageCode,
-  context,
-}: TranslationRequest): Promise<TranslationResult> => {
+export const translateStatement = async ({ content, targetLanguage, languageCode, context }: TranslationRequest): Promise<TranslationResult> => {
   const startTime = Date.now();
-  
+
   try {
     // Cache removed - was used for development only
 
@@ -192,27 +174,22 @@ export const translateStatement = async ({
 
     // Handle content (should be a prompt string from frontend)
     let translatedContent: any;
-    
+
     // Check content size and disable batching for direct prompts
-    const contentSize = typeof content === 'string' ? content.length : JSON.stringify(content).length;
-    const shouldUseBatching = TRANSLATION_CONFIG.batching.enabled && 
-                              typeof content === 'object' && 
-                              Object.keys(content).length > TRANSLATION_CONFIG.batching.maxBatchSize;
-    
+    const shouldUseBatching = TRANSLATION_CONFIG.batching.enabled && typeof content === 'object' && Object.keys(content).length > TRANSLATION_CONFIG.batching.maxBatchSize;
+
     if (shouldUseBatching) {
       // Use batching for large object content
       const batches = splitContentIntoBatches(content as TranslationContent, TRANSLATION_CONFIG.batching.maxBatchSize);
-      const batchPromises = batches.map((batch, index) => 
-        translateBatch(batch, targetLanguage, index, context),
-      );
-      
+      const batchPromises = batches.map((batch, index) => translateBatch(batch, targetLanguage, index, context));
+
       const batchResults = await Promise.all(batchPromises);
       translatedContent = batchResults.reduce((acc, batch) => ({ ...acc, ...batch }), {});
     } else {
       // Direct translation for string content or small objects
       let response;
       try {
-        response = await Promise.race([
+        response = (await Promise.race([
           openai.chat.completions.create({
             model: TRANSLATION_CONFIG.model.name,
             messages: [
@@ -231,15 +208,13 @@ export const translateStatement = async ({
             top_p: 0.9,
             presence_penalty: 0.1,
           }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Translation timeout')), TRANSLATION_CONFIG.model.timeout),
-          ),
-        ]) as any;
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Translation timeout')), TRANSLATION_CONFIG.model.timeout)),
+        ])) as any;
       } catch (primaryError) {
         console.warn(`Primary model ${TRANSLATION_CONFIG.model.name} failed, trying fallback:`, primaryError);
-        
+
         // Fallback to alternative model
-        response = await Promise.race([
+        response = (await Promise.race([
           openai.chat.completions.create({
             model: TRANSLATION_CONFIG.model.fallback,
             messages: [
@@ -258,14 +233,12 @@ export const translateStatement = async ({
             top_p: 0.9,
             presence_penalty: 0.1,
           }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Fallback translation timeout')), TRANSLATION_CONFIG.model.timeout),
-          ),
-        ]) as any;
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Fallback translation timeout')), TRANSLATION_CONFIG.model.timeout)),
+        ])) as any;
       }
-      
+
       const translatedText = response.choices[0]?.message?.content;
-      
+
       if (!translatedText) {
         console.error('No translation content received:', {
           response: response,
@@ -283,7 +256,7 @@ export const translateStatement = async ({
         if (translatedText.includes('```json')) {
           cleanedText = translatedText.replace(/^```json\s*/m, '').replace(/\s*```$/m, '');
         }
-        
+
         translatedContent = JSON.parse(cleanedText);
       } catch (firstError) {
         // Try to extract JSON from response if direct parsing fails
@@ -291,7 +264,7 @@ export const translateStatement = async ({
         if (!jsonMatch) {
           throw new Error('Invalid translation response format');
         }
-        
+
         try {
           translatedContent = JSON.parse(jsonMatch[0]);
         } catch (secondError) {
@@ -306,11 +279,11 @@ export const translateStatement = async ({
     }
 
     // Translation caching removed
-    
+
     // Track usage metrics for monitoring
     const duration = Date.now() - startTime;
     const metricsContentSize = typeof content === 'object' ? Object.keys(content).length : content.length;
-    
+
     // Log metrics only in production for monitoring
     if (process.env.NODE_ENV === 'production') {
       console.info('Translation completed', {
@@ -322,16 +295,13 @@ export const translateStatement = async ({
     }
 
     // Serialize the response for GraphQL
-    const serializedContent = typeof translatedContent === 'object' ? 
-      JSON.stringify(translatedContent) : 
-      translatedContent;
+    const serializedContent = typeof translatedContent === 'object' ? JSON.stringify(translatedContent) : translatedContent;
 
     return {
       success: true,
       translatedContent: serializedContent,
       languageCode,
     };
-
   } catch (error) {
     // Enhanced error logging for production monitoring
     const errorMessage = error instanceof Error ? error.message : 'Unknown translation error';
@@ -348,9 +318,9 @@ export const translateStatement = async ({
       batchingUsed,
       model: TRANSLATION_CONFIG.model.name,
     };
-    
+
     console.error('Translation service error:', errorDetails);
-    
+
     // Send to monitoring service if available
     if (process.env.SENTRY_DSN) {
       try {
@@ -362,7 +332,7 @@ export const translateStatement = async ({
         console.error('Failed to report error to Sentry:', sentryError);
       }
     }
-    
+
     // Return user-friendly error
     return {
       success: false,

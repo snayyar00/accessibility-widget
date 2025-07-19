@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { moderateLimiter } from '~/middlewares/limiters.middleware';
-import { isAuthenticated } from '~/middlewares/auth.middleware';
-import { getProblemReports } from '~/controllers/reports.controller';
+import { moderateLimiter } from '../middlewares/limiters.middleware';
+import { isAuthenticated } from '../middlewares/auth.middleware';
+import { getProblemReports } from '../controllers/reports.controller';
 
 const router = Router();
 

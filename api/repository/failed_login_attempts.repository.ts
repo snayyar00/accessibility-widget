@@ -1,4 +1,4 @@
-import database from '~/config/database.config';
+import database from '../config/database.config';
 
 export interface FailedLoginAttempt {
   id: number;
@@ -17,10 +17,7 @@ export interface FailedLoginAttempt {
 export async function incrementFailedAttempts(userId: number): Promise<FailedLoginAttempt> {
   return database.transaction(async (trx) => {
     // Try to get existing record with row lock
-    const existingRecord = await trx('failed_login_attempts')
-      .where('user_id', userId)
-      .forUpdate()
-      .first();
+    const existingRecord = await trx('failed_login_attempts').where('user_id', userId).forUpdate().first();
 
     if (existingRecord) {
       // Update existing record
@@ -31,30 +28,25 @@ export async function incrementFailedAttempts(userId: number): Promise<FailedLog
           last_failed_at: trx.fn.now(),
           updated_at: trx.fn.now(),
         });
-      
+
       // Get the updated record
-      const updatedRecord = await trx('failed_login_attempts')
-        .where('user_id', userId)
-        .first();
-      
+      const updatedRecord = await trx('failed_login_attempts').where('user_id', userId).first();
+
       return updatedRecord;
     } else {
       // Create new record
-      await trx('failed_login_attempts')
-        .insert({
-          user_id: userId,
-          failed_count: 1,
-          first_failed_at: trx.fn.now(),
-          last_failed_at: trx.fn.now(),
-          created_at: trx.fn.now(),
-          updated_at: trx.fn.now(),
-        });
-      
+      await trx('failed_login_attempts').insert({
+        user_id: userId,
+        failed_count: 1,
+        first_failed_at: trx.fn.now(),
+        last_failed_at: trx.fn.now(),
+        created_at: trx.fn.now(),
+        updated_at: trx.fn.now(),
+      });
+
       // Get the newly created record
-      const newRecord = await trx('failed_login_attempts')
-        .where('user_id', userId)
-        .first();
-      
+      const newRecord = await trx('failed_login_attempts').where('user_id', userId).first();
+
       return newRecord;
     }
   });
@@ -64,10 +56,7 @@ export async function incrementFailedAttempts(userId: number): Promise<FailedLog
  * Check if account is locked
  */
 export async function isAccountLocked(userId: number): Promise<boolean> {
-  const record = await database('failed_login_attempts')
-    .where('user_id', userId)
-    .whereNotNull('locked_at')
-    .first();
+  const record = await database('failed_login_attempts').where('user_id', userId).whereNotNull('locked_at').first();
 
   return !!record;
 }
@@ -78,31 +67,25 @@ export async function isAccountLocked(userId: number): Promise<boolean> {
 export async function lockAccount(userId: number): Promise<void> {
   await database.transaction(async (trx) => {
     // Try to get existing record with row lock
-    const existingRecord = await trx('failed_login_attempts')
-      .where('user_id', userId)
-      .forUpdate()
-      .first();
+    const existingRecord = await trx('failed_login_attempts').where('user_id', userId).forUpdate().first();
 
     if (existingRecord) {
       // Update existing record to lock it
-      await trx('failed_login_attempts')
-        .where('user_id', userId)
-        .update({
-          locked_at: trx.fn.now(),
-          updated_at: trx.fn.now(),
-        });
+      await trx('failed_login_attempts').where('user_id', userId).update({
+        locked_at: trx.fn.now(),
+        updated_at: trx.fn.now(),
+      });
     } else {
       // Create new record and lock it immediately
-      await trx('failed_login_attempts')
-        .insert({
-          user_id: userId,
-          failed_count: 5, // Set to max attempts since we're locking
-          first_failed_at: trx.fn.now(),
-          last_failed_at: trx.fn.now(),
-          locked_at: trx.fn.now(),
-          created_at: trx.fn.now(),
-          updated_at: trx.fn.now(),
-        });
+      await trx('failed_login_attempts').insert({
+        user_id: userId,
+        failed_count: 5, // Set to max attempts since we're locking
+        first_failed_at: trx.fn.now(),
+        last_failed_at: trx.fn.now(),
+        locked_at: trx.fn.now(),
+        created_at: trx.fn.now(),
+        updated_at: trx.fn.now(),
+      });
     }
   });
 }
@@ -111,18 +94,14 @@ export async function lockAccount(userId: number): Promise<void> {
  * Unlock account by deleting the failed attempts record
  */
 export async function unlockAccount(userId: number): Promise<void> {
-  await database('failed_login_attempts')
-    .where('user_id', userId)
-    .del();
+  await database('failed_login_attempts').where('user_id', userId).del();
 }
 
 /**
  * Get failed login attempts info for a user
  */
 export async function getFailedAttempts(userId: number): Promise<FailedLoginAttempt | null> {
-  const record = await database('failed_login_attempts')
-    .where('user_id', userId)
-    .first();
+  const record = await database('failed_login_attempts').where('user_id', userId).first();
 
   return record || null;
 }
@@ -148,10 +127,8 @@ export async function resetFailedAttempts(userId: number): Promise<void> {
 export async function cleanupOldRecords(daysOld: number = 30): Promise<number> {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-  
-  const deletedCount = await database('failed_login_attempts')
-    .where('created_at', '<', cutoffDate)
-    .del();
+
+  const deletedCount = await database('failed_login_attempts').where('created_at', '<', cutoffDate).del();
 
   return deletedCount;
-} 
+}

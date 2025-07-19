@@ -1,7 +1,7 @@
-import { getToken } from '~/repository/user_tokens.repository';
-import database from '~/config/database.config';
-import { TABLES } from '~/constants/database.constant';
-import { UserProfile } from '~/repository/user.repository';
+import { getToken } from '../../repository/user_tokens.repository';
+import database from '../../config/database.config';
+import { TABLES } from '../../constants/database.constant';
+import { UserProfile } from '../../repository/user.repository';
 
 type TokenParams = {
   id?: number;

@@ -1,7 +1,7 @@
 import morgan from 'morgan';
 import { Request, Response } from 'express';
 import accessLogStream from '../libs/logger/stream';
-import { getOperationName } from '~/utils/logger.utils';
+import { getOperationName } from '../utils/logger.utils';
 
 morgan.token('operation_name', (req) => getOperationName((req as Request).body));
 

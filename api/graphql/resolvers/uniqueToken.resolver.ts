@@ -1,5 +1,5 @@
 import { combineResolvers } from 'graphql-resolvers';
-import { ValidateToken } from '~/repository/uniqueToken.repository';
+import { ValidateToken } from '../../repository/uniqueToken.repository';
 
 const resolvers = {
   Query: {

@@ -1,4 +1,4 @@
-import { findUsersByToken, getUserTokens } from '~/repository/user_plan_tokens.repository';
+import { findUsersByToken, getUserTokens } from '../repository/user_plan_tokens.repository';
 
 export async function appSumoPromoCount(subscriptions: any, promoCode: any, userId: number): Promise<any> {
   let promoSiteCount = 0;

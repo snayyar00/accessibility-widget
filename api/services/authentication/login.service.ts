@@ -1,12 +1,12 @@
 import { ValidationError, AuthenticationError } from 'apollo-server-express';
 import { Response } from 'express';
-import { comparePassword } from '~/helpers/hashing.helper';
-import { sign } from '~/helpers/jwt.helper';
-import { findUser } from '~/repository/user.repository';
-import { loginValidation } from '~/validations/authenticate.validation';
-import { sanitizeUserInput } from '~/utils/sanitization.helper';
-import { clearCookie, COOKIE_NAME } from '~/utils/cookie';
-import { isAccountLocked, incrementFailedAttempts, lockAccount, resetFailedAttempts } from '~/repository/failed_login_attempts.repository';
+import { comparePassword } from '../../helpers/hashing.helper';
+import { sign } from '../../helpers/jwt.helper';
+import { findUser } from '../../repository/user.repository';
+import { loginValidation } from '../../validations/authenticate.validation';
+import { sanitizeUserInput } from '../../utils/sanitization.helper';
+import { clearCookie, COOKIE_NAME } from '../../utils/cookie';
+import { isAccountLocked, incrementFailedAttempts, lockAccount, resetFailedAttempts } from '../../repository/failed_login_attempts.repository';
 
 export type Token = {
   token: string;

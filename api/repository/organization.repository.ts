@@ -1,5 +1,5 @@
-import database from '~/config/database.config';
-import { TABLES } from '~/constants/database.constant';
+import database from '../config/database.config';
+import { TABLES } from '../constants/database.constant';
 import Knex from 'knex';
 
 const TABLE = TABLES.organizations;

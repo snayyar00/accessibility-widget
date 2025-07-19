@@ -1,9 +1,9 @@
 import { ApolloError } from 'apollo-server-express';
 import dayjs from 'dayjs';
 import Stripe from 'stripe';
-import logger from '~/config/logger.config';
-import { normalizeEmail } from '~/helpers/string.helper';
-import { getSitesPlanByCustomerIdAndSubscriptionId } from '~/repository/sites_plans.repository';
+import logger from '../../config/logger.config';
+import { normalizeEmail } from '../../helpers/string.helper';
+import { getSitesPlanByCustomerIdAndSubscriptionId } from '../../repository/sites_plans.repository';
 
 export type DataSubcription = {
   customer: string;
@@ -12,8 +12,8 @@ export type DataSubcription = {
   }[];
   trial_end?: number;
   hosted_invoice_url?: string;
-  coupon?:string;
-  trial_settings?:any
+  coupon?: string;
+  trial_settings?: any;
 };
 
 type NewSubcription = {
@@ -50,13 +50,9 @@ export async function createNewSubcription(token: string, email: string, name: s
         subcription_id: existing_sub.id,
       };
     }
-    
-  } catch (error) {
-    
-  }
+  } catch (error) {}
 
   try {
-
     const customers = await stripe.customers.list({
       email: email,
       limit: 1,
@@ -84,13 +80,13 @@ export async function createNewSubcription(token: string, email: string, name: s
       }
     }
 
-    let dataSubcription:DataSubcription;
+    let dataSubcription: DataSubcription;
 
     if (couponCode !== '') {
       dataSubcription = {
         customer: customer.id,
         items: [{ price: priceId }],
-        coupon:couponCode,
+        coupon: couponCode,
       };
     } else {
       dataSubcription = {
@@ -98,7 +94,6 @@ export async function createNewSubcription(token: string, email: string, name: s
         items: [{ price: priceId }],
       };
     }
-
 
     if (isTrial) {
       dataSubcription.trial_end = dayjs().add(15, 'd').unix();
@@ -120,7 +115,6 @@ export async function createNewSubcription(token: string, email: string, name: s
         subcription_id: result.id,
       };
     }
-   
   } catch (error) {
     console.log('Sub Func error = ', error);
     logger.error(error);
@@ -168,10 +162,7 @@ export async function updateSubcription(subId: string, priceId: string): Promise
       });
 
       return true;
-
     }
-
-    
   } catch (error) {
     logger.error(error);
     throw new ApolloError(error.message);

@@ -1,15 +1,14 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import { createSitesPlan, deleteSitesPlan, deleteTrialPlan, updateSitesPlan } from '../allowedSites/plans-sites.service';
-import { findProductById, findProductByStripeId, insertProduct, updateProduct } from '~/repository/products.repository';
-import { getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId } from '~/repository/sites_plans.repository';
+import { findProductById, findProductByStripeId, insertProduct, updateProduct } from '../../repository/products.repository';
+import { getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId } from '../../repository/sites_plans.repository';
 
 const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY!, {
   apiVersion: '2020-08-27', // TODO find out where this is in the Stripe dashboard and document
 });
 
-export const stripeWebhook = async (req: Request, res: Response, context:any) => {
-
+export const stripeWebhook = async (req: Request, res: Response, context: any) => {
   let event: Stripe.Event;
 
   try {
@@ -17,13 +16,11 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
       const sig = req.headers['stripe-signature'];
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
       event = stripe.webhooks.constructEvent(req.body.toString(), sig, webhookSecret);
-      
-      
     } catch (error) {
       console.error('Could not Construct WebHook Event:', error);
       return res.status(400).send('Webhook signature verification failed.');
     }
-    
+
     if (event.type === 'product.updated') {
       // Handles product save and update in DB when you do so from the stripe dashboard
       let product = event.data.object as Stripe.Product;
@@ -33,7 +30,6 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
       const prices = await stripe.prices.list({
         product: product.id,
       });
-
 
       let findProduct;
       try {
@@ -54,22 +50,19 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
               const price = await stripe.prices.retrieve(getPrice.id, {
                 expand: ['tiers'], // Explicitly expand the tiers
               });
-              if (price?.tiers?.length > 0){
+              if (price?.tiers?.length > 0) {
                 return {
                   amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0]?.up_to),
                   type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
                   stripe_id: getPrice?.id, // Stripe price ID
                 };
-
               } else {
                 return {
-                  amount:price.unit_amount / 100,
+                  amount: price.unit_amount / 100,
                   type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
                   stripe_id: getPrice?.id, // Stripe price ID
                 };
-
               }
-              
             }),
           );
           if (await updateProduct(findProduct?.id, productObject, pricesArray)) {
@@ -90,17 +83,16 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
               const price = await stripe.prices.retrieve(getPrice.id, {
                 expand: ['tiers'], // Explicitly expand the tiers
               });
-              if (price?.tiers?.length > 0){
+              if (price?.tiers?.length > 0) {
                 return {
                   amount: (price?.tiers?.[0]?.unit_amount / 100) * Number(price?.tiers[0]?.up_to),
                   type: getPrice?.recurring?.interval + 'ly', // e.g., 'monthly' or 'yearly'
                   stripe_id: getPrice?.id, // Stripe price ID
                 };
-
               } else {
                 return {
-                  amount:price.unit_amount / 100,
-                  type: ['monthly', 'yearly'].includes(getPrice?.recurring?.interval + 'ly') ? getPrice?.recurring?.interval + 'ly' : 'monthly',  // e.g., 'monthly' or 'yearly'
+                  amount: price.unit_amount / 100,
+                  type: ['monthly', 'yearly'].includes(getPrice?.recurring?.interval + 'ly') ? getPrice?.recurring?.interval + 'ly' : 'monthly', // e.g., 'monthly' or 'yearly'
                   stripe_id: getPrice?.id, // Stripe price ID
                 };
               }
@@ -120,7 +112,7 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
       console.log('Updating subscription');
       const subscription = event.data.object as Stripe.Subscription;
 
-      if (subscription.metadata.hasOwnProperty('updateMetaData') && subscription.metadata.updateMetaData == 'true' ) {
+      if (subscription.metadata.hasOwnProperty('updateMetaData') && subscription.metadata.updateMetaData == 'true') {
         console.log('Updating Metadata to stop create sub (only update metadata)');
         const metadata = subscription.metadata;
         metadata.updateMetaData = 'false';
@@ -142,7 +134,7 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
         }
         if (previous_plan) {
           let prod = await findProductById(previous_plan[0].productId);
-          if (prod.name == new_product.name ) {
+          if (prod.name == new_product.name) {
             console.log('No new change so Skip');
           } else if (subscription.status === 'active') {
             try {
@@ -157,35 +149,33 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
                   throw error;
                 }
               });
-  
+
               await Promise.all(updatePromises);
-  
+
               const metadata = subscription.metadata;
-              
+
               const domainCount = previous_plan.length > Number(metadata.usedDomains) ? previous_plan.length : Number(metadata.usedDomains); // Domain Count remains the same if site deleted, else increments
-              
+
               const price = await stripe.prices.retrieve(subscription.items.data[0].price.id, {
                 expand: ['tiers'], // Explicitly expand the tiers
               });
-              
-              let updatedMetadata  = { ...metadata, maxDomains: 1, usedDomains: Number(domainCount) };
 
-              if (price?.tiers?.length > 0){
+              let updatedMetadata = { ...metadata, maxDomains: 1, usedDomains: Number(domainCount) };
+
+              if (price?.tiers?.length > 0) {
                 updatedMetadata = { ...metadata, maxDomains: price?.tiers[0]?.up_to, usedDomains: Number(domainCount) };
               }
-  
+
               await stripe.subscriptions.update(String(subscription.id), {
                 metadata: updatedMetadata,
               });
-  
-              console.log('All Subscriptions updated successfully.');
 
+              console.log('All Subscriptions updated successfully.');
             } catch (error) {
               console.log('error=', error);
             }
           }
         }
-        
       }
     } else if (event.type === 'checkout.session.completed') {
       console.log('Checkout Complete subscription');
@@ -195,10 +185,10 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
         if (session.mode === 'setup' && session.setup_intent) {
           const setupIntentId = session.setup_intent;
           // You could fetch the SetupIntent here to get the payment method:
-          const setupIntent = await stripe.setupIntents.retrieve((setupIntentId as string));
-          const paymentMethod = (setupIntent.payment_method as string);
-          const customerId = (setupIntent.customer as string);
-  
+          const setupIntent = await stripe.setupIntents.retrieve(setupIntentId as string);
+          const paymentMethod = setupIntent.payment_method as string;
+          const customerId = setupIntent.customer as string;
+
           // Now update the customer's default payment method:
           await stripe.customers.update(customerId as string, {
             invoice_settings: {
@@ -238,7 +228,7 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
             console.log('err = ', error);
           }
 
-          await createSitesPlan(Number(session.metadata.userId), String(subscription.id), ((price.product as any).name).toLowerCase(), planInterval, Number(session.metadata.domainId), '');
+          await createSitesPlan(Number(session.metadata.userId), String(subscription.id), (price.product as any).name.toLowerCase(), planInterval, Number(session.metadata.domainId), '');
 
           console.log('New Sub created');
 
@@ -246,7 +236,6 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
           return;
         }
 
-        
         // console.log("session = ",session)
         const userID = session?.metadata.userId;
         const siteID = session?.metadata.domainId;
@@ -262,7 +251,7 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
           invoice_intent = invoice.payment_intent;
         }
         // console.log("invoice intent = ",invoice_intent);
-        if ((session as any)) {
+        if (session as any) {
           // Get the payment method ID
           try {
             const paymentIntent = await stripe.paymentIntents.retrieve(String(invoice_intent));
@@ -278,7 +267,6 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
           } catch (error) {
             // No Payment Intent
           }
-          
         }
 
         const { line_items } = await stripe.checkout.sessions.retrieve(session.id, {
@@ -311,18 +299,17 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
           }
         }
 
+        let updatedMetadata = { ...currentMetadata, maxDomains: 1, usedDomains: 1 };
 
-        let updatedMetadata = { ...currentMetadata, maxDomains: 1, usedDomains:1 };
-
-        if (price?.tiers?.length > 0){
-          updatedMetadata = { ...currentMetadata, maxDomains: price?.tiers[0]?.up_to, usedDomains:1 };
+        if (price?.tiers?.length > 0) {
+          updatedMetadata = { ...currentMetadata, maxDomains: price?.tiers[0]?.up_to, usedDomains: 1 };
         }
 
         const updatedSubscription = await stripe.subscriptions.update(String(session.subscription), {
           metadata: updatedMetadata,
         });
         // console.log('Subscription Meta Data Updated',updatedSubscription.metadata);
-        
+
         // deletes the Trial Plan for the site
         let previous_plan;
         try {
@@ -332,10 +319,8 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
           console.log('err = ', error);
         }
 
-        
         await createSitesPlan(Number(userID), updatedSubscription.id, line_items.data[0].description, planInterval, Number(siteID), '');
         console.log('Created');
-
       } catch (error) {
         console.log('error in checkout', error);
       }
@@ -369,7 +354,6 @@ export const stripeWebhook = async (req: Request, res: Response, context:any) =>
       } catch (error) {
         console.log('error=', error);
       }
-
     } else {
       console.log(`Unhandled event type ${event.type}`);
     }

@@ -1,5 +1,5 @@
-import database from '~/config/database.config';
-import { TABLES } from '~/constants/database.constant';
+import database from '../config/database.config';
+import { TABLES } from '../constants/database.constant';
 import { insertPrice, priceColumns, Price } from './prices.repository';
 
 export type ProductData = {
@@ -37,14 +37,17 @@ export const productColumns = {
 
 export async function insertProduct(productData: ProductData, priceDatas: Price[] = []): Promise<boolean> {
   let t;
-  
+
   try {
     t = await database.transaction();
     const [productId] = await database(TABLE).transacting(t).insert(productData);
-    await insertPrice(priceDatas.map((priceItem) => ({
-      ...priceItem,
-      product_id: productId,
-    })), t);
+    await insertPrice(
+      priceDatas.map((priceItem) => ({
+        ...priceItem,
+        product_id: productId,
+      })),
+      t,
+    );
     await t.commit();
     return true;
   } catch (error) {
@@ -89,16 +92,10 @@ export async function updateProduct(productId: number, productData: ProductData,
     t = await database.transaction();
 
     // Update the product data
-    await database(TABLE)
-      .transacting(t)
-      .where({ id: productId })
-      .update(productData);
+    await database(TABLE).transacting(t).where({ id: productId }).update(productData);
 
     // Delete existing prices associated with the product
-    await database(TABLES.prices)
-      .transacting(t)
-      .where({ product_id: productId })
-      .del();
+    await database(TABLES.prices).transacting(t).where({ product_id: productId }).del();
 
     // Insert new prices
     await insertPrice(
@@ -111,7 +108,7 @@ export async function updateProduct(productId: number, productData: ProductData,
 
     // Commit the transaction
     await t.commit();
-    
+
     return true;
   } catch (error) {
     console.error(error);
@@ -120,4 +117,3 @@ export async function updateProduct(productId: number, productData: ProductData,
     return false;
   }
 }
-

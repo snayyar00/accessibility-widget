@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { UserProfile } from '~/repository/user.repository';
-import { findSiteByURL, deleteSiteWithRelatedRecords } from '~/repository/sites_allowed.repository';
-import { getAnySitePlanBySiteId } from '~/repository/sites_plans.repository';
-import { deleteExpiredSitesPlan, deleteSitesPlan, deleteTrialPlan } from '~/services/allowedSites/plans-sites.service';
-import { addCancelFeedback, CancelFeedbackProps } from '~/repository/cancel_feedback.repository';
+import { UserProfile } from '../../repository/user.repository';
+import { findSiteByURL, deleteSiteWithRelatedRecords } from '../../repository/sites_allowed.repository';
+import { getAnySitePlanBySiteId } from '../../repository/sites_plans.repository';
+import { deleteExpiredSitesPlan, deleteSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service';
+import { addCancelFeedback, CancelFeedbackProps } from '../../repository/cancel_feedback.repository';
 
 export async function cancelSiteSubscription(req: Request, res: Response) {
   const { domainId, domainUrl, status, cancelReason, otherReason } = req.body;

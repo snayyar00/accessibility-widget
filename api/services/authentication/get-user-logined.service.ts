@@ -1,7 +1,7 @@
 import { AuthenticationError } from 'apollo-server-express';
 import { Response } from 'express';
-import { verify } from '~/helpers/jwt.helper';
-import { findUser } from '~/repository/user.repository';
+import { verify } from '../../helpers/jwt.helper';
+import { findUser } from '../../repository/user.repository';
 
 type UserLoginedResponse = {
   id: number;

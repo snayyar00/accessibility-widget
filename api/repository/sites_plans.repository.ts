@@ -1,7 +1,7 @@
 import Knex from 'knex';
-import database from '~/config/database.config';
-import { TABLES } from '~/constants/database.constant';
-import formatDateDB from '~/utils/format-date-db';
+import database from '../config/database.config';
+import { TABLES } from '../constants/database.constant';
+import formatDateDB from '../utils/format-date-db';
 import { priceColumns } from './prices.repository';
 import { productColumns } from './products.repository';
 import { siteColumns } from './sites_allowed.repository';

@@ -1,6 +1,6 @@
 import Knex from 'knex';
-import database from '~/config/database.config';
-import { TABLES } from '~/constants/database.constant';
+import database from '../config/database.config';
+import { TABLES } from '../constants/database.constant';
 
 export type Price = {
   id?: number;

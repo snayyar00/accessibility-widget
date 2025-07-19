@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { UserProfile } from '~/repository/user.repository';
-import { findSitesByUserId, IUserSites } from '~/repository/sites_allowed.repository';
-import { getProblemReportsBySiteId } from '~/repository/problem_reports.repository';
+import { UserProfile } from '../repository/user.repository';
+import { findSitesByUserId, IUserSites } from '../repository/sites_allowed.repository';
+import { getProblemReportsBySiteId } from '../repository/problem_reports.repository';
 
 export async function getProblemReports(req: Request, res: Response) {
   const user: UserProfile = (req as any).user;

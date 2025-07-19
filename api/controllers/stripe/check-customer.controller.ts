@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
-import { UserProfile } from '~/repository/user.repository';
-import { getUserTokens } from '~/repository/user_plan_tokens.repository';
-import { customTokenCount } from '~/utils/customTokenCount';
+import { UserProfile } from '../../repository/user.repository';
+import { getUserTokens } from '../../repository/user_plan_tokens.repository';
+import { customTokenCount } from '../../utils/customTokenCount';
 
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 

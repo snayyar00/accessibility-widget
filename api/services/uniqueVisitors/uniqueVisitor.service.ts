@@ -1,10 +1,10 @@
-import logger from '~/config/logger.config';
-import { findVisitorByURL, insertVisitor } from '~/repository/visitors.repository';
-import { UserProfile } from '~/repository/user.repository';
-import { findUserSites } from '~/services/allowedSites/allowedSites.service';
-import { validateGetSiteVisitorsByURL } from '~/validations/uniqueVisitor.validation';
+import logger from '../../config/logger.config';
+import { findVisitorByURL, insertVisitor } from '../../repository/visitors.repository';
+import { UserProfile } from '../../repository/user.repository';
+import { findUserSites } from '../../services/allowedSites/allowedSites.service';
+import { validateGetSiteVisitorsByURL } from '../../validations/uniqueVisitor.validation';
 import { ValidationError } from 'apollo-server-express';
-import { normalizeDomain } from '~/utils/domain.utils';
+import { normalizeDomain } from '../../utils/domain.utils';
 
 /**
  * Create Document
@@ -43,7 +43,7 @@ export async function getSiteVisitorsByURL(url: string, user: UserProfile) {
     const userSiteIds = userSites.map((site) => site.id);
 
     const visitors = await findVisitorByURL(domain);
-    const filteredVisitors = visitors.filter((v) => userSiteIds.includes(v.siteId));
+    const filteredVisitors = visitors.filter((v: any) => userSiteIds.includes(v.siteId));
 
     return { visitors: filteredVisitors, count: filteredVisitors.length };
   } catch (e) {

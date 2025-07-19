@@ -1,12 +1,12 @@
 import { ApolloError } from 'apollo-server-express';
 
-import { findUser, createUser } from '~/repository/user.repository';
-import { generatePassword } from '~/helpers/hashing.helper';
-import { registerValidation } from '~/validations/authenticate.validation';
-import { sanitizeUserInput } from '~/utils/sanitization.helper';
-import { getValidationErrorCode, createValidationError, createMultipleValidationErrors } from '~/utils/validation-errors.helper';
-import logger from '~/config/logger.config';
-import { sign } from '~/helpers/jwt.helper';
+import { findUser, createUser } from '../../repository/user.repository';
+import { generatePassword } from '../../helpers/hashing.helper';
+import { registerValidation } from '../../validations/authenticate.validation';
+import { sanitizeUserInput } from '../../utils/sanitization.helper';
+import { getValidationErrorCode, createValidationError, createMultipleValidationErrors } from '../../utils/validation-errors.helper';
+import logger from '../../config/logger.config';
+import { sign } from '../../helpers/jwt.helper';
 import { Token } from './login.service';
 
 async function registerUser(email: string, password: string, name: string): Promise<ApolloError | Token> {

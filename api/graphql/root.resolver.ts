@@ -7,6 +7,6 @@ import sitePlanResolves from './resolvers/site-plan.resolver';
 import problemReportResolves from './resolvers/reportProblem.resolver';
 import translationResolves from './resolvers/translation.resolver';
 import uniqueTokenResolver from './resolvers/uniqueToken.resolver';
-import organizationResolver from '~/graphql/resolvers/organization.resolver';
+import organizationResolver from './resolvers/organization.resolver';
 
 export default [userResolves, allowedSitesResolves, uniqueVisitorResolves, impressionResolves, accessibilityResolves, sitePlanResolves, problemReportResolves, organizationResolver, translationResolves, uniqueTokenResolver];

@@ -1,7 +1,6 @@
-import { getAccessibilityInformationPally } from '~/helpers/accessibility.helper';
+import { getAccessibilityInformationPally } from '../../helpers/accessibility.helper';
 import { GPTChunks } from './accessibilityIssues.service';
-import { formatUrlForScan, getRetryUrls } from '~/utils/domain.utils';
-
+import { formatUrlForScan, getRetryUrls } from '../../utils/domain.utils';
 
 interface Status {
   success: boolean;
@@ -37,7 +36,7 @@ interface Status {
   success: boolean;
   httpstatuscode: number;
 }
-  
+
 interface Statistics {
   pagetitle: string;
   pageurl: string;
@@ -47,7 +46,7 @@ interface Statistics {
   totalelements: number;
   waveurl: string;
 }
-  
+
 interface CategoryItem {
   id: string;
   description: string;
@@ -56,25 +55,24 @@ interface CategoryItem {
   contrastdata?: (number | string | boolean)[][];
   selectors?: string[];
 }
-  
+
 // Use an index signature for the items within a category
 interface Category {
   description: string;
   count: number;
   items: { [key: string]: CategoryItem };
 }
-  
+
 // Use an index signature for the categories themselves
 interface Categories {
   [key: string]: Category;
 }
-  
+
 interface WebAIMResponse {
   status: Status;
   statistics: Statistics;
   categories: Categories;
 }
-  
 
 interface WebAIMResponse {
   status: Status;
@@ -105,7 +103,7 @@ function createHtmlcsArrayObj(issue: any) {
 }
 
 interface Error {
-  'ErrorGuideline'?: string;
+  ErrorGuideline?: string;
   code?: string;
   description?: string | string[];
   message?: string | string[];
@@ -115,19 +113,19 @@ interface Error {
 }
 
 interface HumanFunctionality {
-  'FunctionalityName': string;
+  FunctionalityName: string;
   Errors: Error[];
 }
 
 interface GPTData {
-  'HumanFunctionalities': HumanFunctionality[];
+  HumanFunctionalities: HumanFunctionality[];
 }
 
 function calculateAccessibilityScore(data: any) {
   const weights = {
-    'error': 1, // High severity
-    'contrast': 0.75, // Medium severity
-    'alert': 0.5, // Low severity
+    error: 1, // High severity
+    contrast: 0.75, // Medium severity
+    alert: 0.5, // Low severity
   };
 
   const defaultWeight = 0.35;
@@ -144,7 +142,7 @@ function calculateAccessibilityScore(data: any) {
   }
 
   const maxScore = 100;
-  const score = Math.ceil( maxScore - issueSum);
+  const score = Math.ceil(maxScore - issueSum);
   return {
     score: Math.max(30, score), // Ensure score doesn't go below 0
     totalIssues: totalIssues,
@@ -155,8 +153,8 @@ interface htmlcsOutput {
   message?: string;
   context?: string[];
   selectors?: string[];
-  description?:string;
-  recommended_action?:string;
+  description?: string;
+  recommended_action?: string;
   screenshotUrl?: string;
 }
 interface axeOutput {
@@ -168,7 +166,6 @@ interface axeOutput {
   help: string;
   screenshotUrl?: string;
 }
-
 
 interface ResultWithOriginal {
   axe?: any;
@@ -197,7 +194,6 @@ interface ResultWithOriginal {
     hasWebAbility: boolean;
   }; // Aggregated statistics
 }
-
 
 // Initialize output object to store merged results
 function mergeIssuesToOutput(issues: any[]): {
@@ -229,16 +225,14 @@ function mergeIssuesToOutput(issues: any[]): {
 
   issues.forEach((issue: any) => {
     // Determine runner and type based on the actual data structure
-    const runner = issue.source === 'AXE Core' ? 'axe' : 
-      issue.source === 'HTML_CS' ? 'htmlcs' : 'unknown';
-    const type = issue.impact === 'critical' ? 'error' : 
-      issue.impact === 'serious' ? 'warning' : 'notice';
+    const runner = issue.source === 'AXE Core' ? 'axe' : issue.source === 'HTML_CS' ? 'htmlcs' : 'unknown';
+    const type = issue.impact === 'critical' ? 'error' : issue.impact === 'serious' ? 'warning' : 'notice';
 
     if (runner === 'axe') {
       // Normalize message for comparison (remove extra whitespace and parentheses)
       const normalizedMessage = issue.message.replace(/\s*\(.*$/, '').trim();
       if (type === 'error') {
-        const errorIndex = output.axe.errors.findIndex((error:any) => error.message === normalizedMessage);
+        const errorIndex = output.axe.errors.findIndex((error: any) => error.message === normalizedMessage);
         if (errorIndex === -1) {
           const obj: axeOutput = createAxeArrayObj(normalizedMessage, issue);
           output.axe.errors.push(obj);
@@ -247,15 +241,13 @@ function mergeIssuesToOutput(issues: any[]): {
           }
         } else {
           // Append context and selectors to existing error
-          const contextToAdd = Array.isArray(issue.context) ? issue.context : (issue.context ? [issue.context] : []);
-          const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : (issue.selectors ? [issue.selectors] : []);
+          const contextToAdd = Array.isArray(issue.context) ? issue.context : issue.context ? [issue.context] : [];
+          const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : issue.selectors ? [issue.selectors] : [];
           output.axe.errors[errorIndex].context.push(...contextToAdd);
           output.axe.errors[errorIndex].selectors.push(...selectorToAdd);
         }
       } else if (type === 'notice') {
-        const noticeIndex = output.axe.notices.findIndex((notice:any) => 
-          notice.message === normalizedMessage,
-        );
+        const noticeIndex = output.axe.notices.findIndex((notice: any) => notice.message === normalizedMessage);
         if (noticeIndex === -1) {
           const obj: axeOutput = createAxeArrayObj(normalizedMessage, issue);
           output.axe.notices.push(obj);
@@ -269,9 +261,7 @@ function mergeIssuesToOutput(issues: any[]): {
           output.axe.notices[noticeIndex].selectors.push(...selectorToAdd);
         }
       } else if (type === 'warning') {
-        const warningIndex = output.axe.warnings.findIndex((warning:any) => 
-          warning.message === normalizedMessage,
-        );
+        const warningIndex = output.axe.warnings.findIndex((warning: any) => warning.message === normalizedMessage);
         if (warningIndex === -1) {
           const obj: axeOutput = createAxeArrayObj(normalizedMessage, issue);
           output.axe.warnings.push(obj);
@@ -290,7 +280,7 @@ function mergeIssuesToOutput(issues: any[]): {
       // Normalize message for comparison
       const normalizedMessage = issue.message.trim();
       if (type === 'error') {
-        const errorIndex = output.htmlcs.errors.findIndex((error:any) => error.message === normalizedMessage);
+        const errorIndex = output.htmlcs.errors.findIndex((error: any) => error.message === normalizedMessage);
         if (errorIndex === -1) {
           const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
           obj.message = normalizedMessage;
@@ -305,9 +295,7 @@ function mergeIssuesToOutput(issues: any[]): {
           output.htmlcs.errors[errorIndex].selectors.push(...selectorToAdd);
         }
       } else if (type === 'notice') {
-        const noticeIndex = output.htmlcs.notices.findIndex((notice:any) => 
-          notice.message === normalizedMessage,
-        );
+        const noticeIndex = output.htmlcs.notices.findIndex((notice: any) => notice.message === normalizedMessage);
         if (noticeIndex === -1) {
           const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
           obj.message = normalizedMessage;
@@ -322,9 +310,7 @@ function mergeIssuesToOutput(issues: any[]): {
           output.htmlcs.notices[noticeIndex].selectors.push(...selectorToAdd);
         }
       } else if (type === 'warning') {
-        const warningIndex = output.htmlcs.warnings.findIndex((warning:any) => 
-          warning.message === normalizedMessage,
-        );
+        const warningIndex = output.htmlcs.warnings.findIndex((warning: any) => warning.message === normalizedMessage);
         if (warningIndex === -1) {
           const obj: htmlcsOutput = createHtmlcsArrayObj(issue);
           obj.message = normalizedMessage;
@@ -344,8 +330,6 @@ function mergeIssuesToOutput(issues: any[]): {
   return output;
 }
 
-
-          
 export const fetchAccessibilityReport = async (url: string) => {
   try {
     if (!url || typeof url !== 'string' || url.trim() === '') {
@@ -358,7 +342,7 @@ export const fetchAccessibilityReport = async (url: string) => {
       const formattedUrl = formatUrlForScan(url);
       console.log('Formatted URL for scan:', formattedUrl);
       let result: ResultWithOriginal = await getAccessibilityInformationPally(formattedUrl);
-      
+
       // If initial attempt fails, try variations
       if (!result) {
         const retryUrls = getRetryUrls(url);
@@ -406,15 +390,12 @@ export const fetchAccessibilityReport = async (url: string) => {
 
       if (result) {
         if (result.ByFunctions && Array.isArray(result.ByFunctions) && result.ByFunctions.length > 0) {
-
-
           const output = mergeIssuesToOutput(result.issues);
           result.axe = output.axe;
           result.htmlcs = output.htmlcs;
           result.totalElements = output.totalElements;
 
           return result;
-
         }
 
         const guideErrors: {
@@ -465,50 +446,46 @@ export const fetchAccessibilityReport = async (url: string) => {
         const completion: GPTData = await GPTChunks(errorCodes);
 
         if (completion) {
-          completion.HumanFunctionalities.forEach(
-            (functionality: HumanFunctionality) => {
-              functionality.Errors.forEach((error: Error) => {
-                let errorCode = error.ErrorGuideline || (error as any)['Error Guideline'] || (error as any).code || (error as any)['Error Code'] || (error as any).guideline;
+          completion.HumanFunctionalities.forEach((functionality: HumanFunctionality) => {
+            functionality.Errors.forEach((error: Error) => {
+              let errorCode = error.ErrorGuideline || (error as any)['Error Guideline'] || (error as any).code || (error as any)['Error Code'] || (error as any).guideline;
 
-                if (!errorCode) {
-                  const possibleCode = Object.values(error).find((value: any) => 
-                    typeof value === 'string' && value.includes('WCAG'),
-                  );
-                  errorCode = possibleCode;
-                }
+              if (!errorCode) {
+                const possibleCode = Object.values(error).find((value: any) => typeof value === 'string' && value.includes('WCAG'));
+                errorCode = possibleCode;
+              }
 
-                error.code = errorCode;
-                delete error.ErrorGuideline;
-                delete (error as any)['Error Guideline'];
+              error.code = errorCode;
+              delete error.ErrorGuideline;
+              delete (error as any)['Error Guideline'];
 
-                if (errorCode && errorCodeWithDescriptions[errorCode]) {
-                  error.description = errorCodeWithDescriptions[errorCode]?.description;
-                  error.context = errorCodeWithDescriptions[errorCode]?.context;
-                  error.message = errorCodeWithDescriptions[errorCode]?.message;
-                  error.recommended_action = errorCodeWithDescriptions[errorCode]?.recommended_action;
-                  error.selectors = errorCodeWithDescriptions[errorCode]?.selectors;
-                } else {
-                  let enhancedDescription = null;
-                  if (result?.htmlcs?.errors) {
-                    const enhancedError = result.htmlcs.errors.find((e: any) => e.code === errorCode);
-                    if (enhancedError) {
-                      enhancedDescription = enhancedError.description;
-                      error.message = enhancedError.message;
-                      error.recommended_action = enhancedError.recommended_action;
-                      error.context = enhancedError.context || [];
-                      error.selectors = enhancedError.selectors || [];
-                    }
+              if (errorCode && errorCodeWithDescriptions[errorCode]) {
+                error.description = errorCodeWithDescriptions[errorCode]?.description;
+                error.context = errorCodeWithDescriptions[errorCode]?.context;
+                error.message = errorCodeWithDescriptions[errorCode]?.message;
+                error.recommended_action = errorCodeWithDescriptions[errorCode]?.recommended_action;
+                error.selectors = errorCodeWithDescriptions[errorCode]?.selectors;
+              } else {
+                let enhancedDescription = null;
+                if (result?.htmlcs?.errors) {
+                  const enhancedError = result.htmlcs.errors.find((e: any) => e.code === errorCode);
+                  if (enhancedError) {
+                    enhancedDescription = enhancedError.description;
+                    error.message = enhancedError.message;
+                    error.recommended_action = enhancedError.recommended_action;
+                    error.context = enhancedError.context || [];
+                    error.selectors = enhancedError.selectors || [];
                   }
-
-                  error.description = enhancedDescription || 'Accessibility issue detected. Please review this element for compliance.';
-                  error.message = error.message || 'Accessibility compliance issue';
-                  error.recommended_action = error.recommended_action || 'Review and fix this accessibility issue according to WCAG guidelines.';
-                  error.context = error.context || [];
-                  error.selectors = error.selectors || [];
                 }
-              });
-            },
-          );
+
+                error.description = enhancedDescription || 'Accessibility issue detected. Please review this element for compliance.';
+                error.message = error.message || 'Accessibility compliance issue';
+                error.recommended_action = error.recommended_action || 'Review and fix this accessibility issue according to WCAG guidelines.';
+                error.context = error.context || [];
+                error.selectors = error.selectors || [];
+              }
+            });
+          });
 
           result.ByFunctions = completion.HumanFunctionalities;
         }
@@ -531,7 +508,7 @@ export const fetchAccessibilityReport = async (url: string) => {
         result.axe = output.axe;
         result.htmlcs = output.htmlcs;
         result.totalElements = output.totalElements;
-        
+
         return result;
       } catch (retryError) {
         console.error(`Error with https:// retry: ${retryError.message}`);
@@ -544,13 +521,12 @@ export const fetchAccessibilityReport = async (url: string) => {
   }
 };
 
-
 export const fetchSitePreview = async (url: string, retries = 3): Promise<string | null> => {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const apiUrl = `${process.env.SECONDARY_SERVER_URL}/screenshot/?url=${url}`;
       console.log(`Attempt ${attempt}: Fetching screenshot from: ${apiUrl}`);
-      
+
       // Set up timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -565,7 +541,7 @@ export const fetchSitePreview = async (url: string, retries = 3): Promise<string
         console.error(`Failed to fetch screenshot for ${url}. Status: ${response.status}`);
         if (attempt === retries) return null;
         // Wait before retrying (exponential backoff)
-        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
         continue;
       }
 
@@ -576,7 +552,7 @@ export const fetchSitePreview = async (url: string, retries = 3): Promise<string
       console.error(`Error generating screenshot for ${url} (attempt ${attempt}):`, error);
       if (attempt === retries) return null;
       // Wait before retrying (exponential backoff)
-      await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
     }
   }
   return null;
@@ -601,7 +577,7 @@ const checkScript = async (url: string, retries = 3): Promise<string> => {
         console.error(`Failed to fetch script check on attempt ${attempt}. Status: ${response.status}`);
         if (attempt === retries) throw new Error(`Failed to fetch the script check. Status: ${response.status}`);
         // Wait before retrying (exponential backoff)
-        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
         continue;
       }
 
@@ -618,7 +594,7 @@ const checkScript = async (url: string, retries = 3): Promise<string> => {
       console.error(`Error in checkScript attempt ${attempt}:`, error.message);
       if (attempt === retries) return 'Error';
       // Wait before retrying (exponential backoff)
-      await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
     }
   }
   return 'Error';
@@ -627,14 +603,14 @@ const checkScript = async (url: string, retries = 3): Promise<string> => {
 // Extract issues from report structure
 function extractIssuesFromReport(report: ResultWithOriginal) {
   const issues: any[] = [];
-  
+
   // Check if we have the new data structure with top-level ByFunctions
   if (report?.ByFunctions && Array.isArray(report.ByFunctions)) {
-    report.ByFunctions.forEach(funcGroup => {
+    report.ByFunctions.forEach((funcGroup) => {
       if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
         funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; screenshotUrl?: string }) => {
           const impact = mapIssueToImpact(error.message, error.code);
-          
+
           issues.push({
             ...error,
             impact,
@@ -649,14 +625,14 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
       }
     });
   }
-  
+
   // Try the axe structure
   if (report?.axe?.ByFunction && Array.isArray(report.axe.ByFunction)) {
     report.axe.ByFunction.forEach((funcGroup: { FunctionalityName: any; Errors: any[] }) => {
       if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
-        funcGroup.Errors.forEach(error => {
+        funcGroup.Errors.forEach((error) => {
           const impact = mapIssueToImpact(error.message, error.code);
-          
+
           issues.push({
             ...error,
             impact,
@@ -671,14 +647,14 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
       }
     });
   }
-  
+
   // Try the htmlcs structure
   if (report?.htmlcs?.ByFunction && Array.isArray(report.htmlcs.ByFunction)) {
     report.htmlcs.ByFunction.forEach((funcGroup: { FunctionalityName: any; Errors: any[] }) => {
       if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
         funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; screenshotUrl?: string }) => {
           const impact = mapIssueToImpact(error.message, error.code);
-          
+
           issues.push({
             ...error,
             impact,
@@ -697,34 +673,22 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
   return issues;
 }
 
-
 function mapIssueToImpact(message: string, code: any) {
   if (!message && !code) return 'moderate';
-  
+
   const lowerMsg = (message || '').toLowerCase();
   const lowerCode = (code || '').toLowerCase();
-  
+
   // Critical issues
-  if (
-    lowerMsg.includes('color contrast') || 
-    lowerMsg.includes('minimum contrast') ||
-    lowerCode.includes('1.4.3') ||
-    (lowerMsg.includes('aria hidden') && lowerMsg.includes('focusable')) ||
-    lowerMsg.includes('links must be distinguishable')
-  ) {
+  if (lowerMsg.includes('color contrast') || lowerMsg.includes('minimum contrast') || lowerCode.includes('1.4.3') || (lowerMsg.includes('aria hidden') && lowerMsg.includes('focusable')) || lowerMsg.includes('links must be distinguishable')) {
     return 'critical';
   }
-  
+
   // Serious issues
-  if (
-    lowerMsg.includes('aria attributes') ||
-    lowerMsg.includes('permitted aria') ||
-    lowerMsg.includes('labels or instructions') ||
-    lowerMsg.includes('error identification')
-  ) {
+  if (lowerMsg.includes('aria attributes') || lowerMsg.includes('permitted aria') || lowerMsg.includes('labels or instructions') || lowerMsg.includes('error identification')) {
     return 'serious';
   }
-  
+
   return 'moderate';
 }
 
@@ -737,9 +701,9 @@ function countIssuesBySeverity(issues: any[]) {
     moderateIssues: 0,
     totalIssues: issues.length,
   };
-  
+
   // Count each issue by its impact
-  issues.forEach(issue => {
+  issues.forEach((issue) => {
     if (issue.impact === 'critical') {
       counts.criticalIssues++;
     } else if (issue.impact === 'serious') {
@@ -748,17 +712,18 @@ function countIssuesBySeverity(issues: any[]) {
       counts.moderateIssues++;
     }
   });
-  
+
   return counts;
 }
 
 function groupIssuesByFunctionality(issues: any[]): { [key: string]: any[] } {
   const groupedIssues: { [key: string]: any[] } = {};
 
-  issues.forEach((issue: { functionality: string, screenshotUrl?: string }) => {
+  issues.forEach((issue: { functionality: string; screenshotUrl?: string }) => {
     if (issue.functionality) {
       // Normalize functionality name to prevent duplicates like "Low Vision" and "Low vision"
-      const normalizedName = issue.functionality.split(' ')
+      const normalizedName = issue.functionality
+        .split(' ')
         .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
 
@@ -772,11 +737,11 @@ function groupIssuesByFunctionality(issues: any[]): { [key: string]: any[] } {
         functionality: normalizedName,
         screenshotUrl: issue.screenshotUrl,
       };
-      
+
       groupedIssues[normalizedName].push(normalizedIssue);
     }
   });
-  
+
   return groupedIssues;
 }
 
@@ -784,7 +749,11 @@ function getFunctionalityNames(issuesByFunction: { [key: string]: any[] }): stri
   return Object.keys(issuesByFunction).sort();
 }
 
-function calculateTotalStats(report: any, issues: any[], webabilityEnabled: boolean): {
+function calculateTotalStats(
+  report: any,
+  issues: any[],
+  webabilityEnabled: boolean,
+): {
   score: number;
   originalScore: number;
   criticalIssues: number;

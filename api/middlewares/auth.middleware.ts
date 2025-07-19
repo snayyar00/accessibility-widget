@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import accessLogStream from '~/libs/logger/stream';
-import { getOperationName } from '~/utils/logger.utils';
-import getUserLogined from '~/services/authentication/get-user-logined.service';
+import accessLogStream from '../libs/logger/stream';
+import { getOperationName } from '../utils/logger.utils';
+import getUserLogined from '../services/authentication/get-user-logined.service';
 
 export const logAuthenticationFailure = (req: Request, _: Response, message: string, code: string) => {
   const authLog = JSON.stringify({
@@ -20,7 +20,7 @@ export const logAuthenticationFailure = (req: Request, _: Response, message: str
       stack: process.env.NODE_ENV === 'development' ? undefined : undefined,
     },
   });
-  
+
   if (accessLogStream) {
     accessLogStream.write(authLog + '\n');
   } else {

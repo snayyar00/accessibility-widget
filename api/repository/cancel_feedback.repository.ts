@@ -1,4 +1,4 @@
-import database from '~/config/database.config';
+import database from '../config/database.config';
 
 export interface CancelFeedbackProps {
   user_id: number;

@@ -1,21 +1,19 @@
-import logger from '~/config/logger.config';
+import logger from '../../config/logger.config';
 import { ValidationError } from 'apollo-server-express';
 
-import { findVisitorByIp } from '~/repository/visitors.repository';
-import { updateImpressions, insertImpressionURL, findEngagementURLDate, findImpressionsURLDate, updateImpressionProfileCount } from '~/repository/impressions.repository';
+import { findVisitorByIp } from '../../repository/visitors.repository';
+import { updateImpressions, insertImpressionURL, findEngagementURLDate, findImpressionsURLDate, updateImpressionProfileCount } from '../../repository/impressions.repository';
 import { findSite } from '../allowedSites/allowedSites.service';
 import { addNewVisitor } from '../uniqueVisitors/uniqueVisitor.service';
-import { validateGetEngagementRates, validateFindImpressionsByURLAndDate, validateAddImpressionsURL, validateAddProfileCount, validateAddInteraction } from '~/validations/impression.validation';
-import { normalizeDomain } from '~/utils/domain.utils';
-import { getRootDomain, extractRootDomain } from '~/utils/domainUtils';
+import { validateGetEngagementRates, validateFindImpressionsByURLAndDate, validateAddImpressionsURL, validateAddProfileCount, validateAddInteraction } from '../../validations/impression.validation';
+import { normalizeDomain } from '../../utils/domain.utils';
+import { getRootDomain } from '../../utils/domainUtils';
 
 export async function addImpressionsURL(ipAddress: string, url: string) {
   const validateResult = validateAddImpressionsURL({ ipAddress, url });
-  
+
   if (Array.isArray(validateResult) && validateResult.length) {
-    return new ValidationError(
-      validateResult.map((it) => it.message).join(','),
-    );
+    return new ValidationError(validateResult.map((it) => it.message).join(','));
   }
   const domain = getRootDomain(url);
 
@@ -31,25 +29,25 @@ export async function addImpressionsURL(ipAddress: string, url: string) {
       return response;
     } else {
       const site = await findSite(domain);
-      
+
       if (!site) {
         throw new Error('Site not found for domain: ' + domain);
       }
 
       await addNewVisitor(ipAddress, site.id);
 
-      const visitor = await findVisitorByIp(ipAddress);
+      const visitorSecond = await findVisitorByIp(ipAddress);
 
-      if (!visitor) {
+      if (!visitorSecond) {
         throw new Error('Visitor not found after creation');
       }
 
       const data = {
-        visitor_id: visitor.id,
+        visitor_id: visitorSecond.id,
       };
-      
+
       const response = await insertImpressionURL(data, domain);
-      
+
       return response;
     }
   } catch (error) {
@@ -60,11 +58,9 @@ export async function addImpressionsURL(ipAddress: string, url: string) {
 
 export async function findImpressionsByURLAndDate(userId: number, url: string, startDate: Date, endDate: Date) {
   const validateResult = validateFindImpressionsByURLAndDate({ url, startDate, endDate });
-  
+
   if (Array.isArray(validateResult) && validateResult.length) {
-    return new ValidationError(
-      validateResult.map((it) => it.message).join(','),
-    );
+    return new ValidationError(validateResult.map((it) => it.message).join(','));
   }
 
   const domain = normalizeDomain(url);
@@ -89,16 +85,14 @@ export async function addInteraction(impressionId: number, interaction: string) 
   const validateResult = validateAddInteraction({ impressionId, interaction });
 
   if (Array.isArray(validateResult) && validateResult.length) {
-    return new ValidationError(
-      validateResult.map((it) => it.message).join(','),
-    );
+    return new ValidationError(validateResult.map((it) => it.message).join(','));
   }
 
   try {
     if (interaction !== 'widgetClosed' && interaction !== 'widgetOpened') {
       throw new Error('Invalid interaction type. Only "widgetClosed" or "widgetOpened" are acceptable.');
     }
-    
+
     return await updateImpressions(impressionId, interaction);
   } catch (e) {
     logger.error(e);
@@ -145,9 +139,7 @@ export async function getEngagementRates(userId: number, url: string, startDate:
   const validateResult = validateGetEngagementRates({ url, startDate, endDate });
 
   if (Array.isArray(validateResult) && validateResult.length) {
-    return new ValidationError(
-      validateResult.map((it) => it.message).join(','),
-    );
+    return new ValidationError(validateResult.map((it) => it.message).join(','));
   }
 
   const domain = normalizeDomain(url);

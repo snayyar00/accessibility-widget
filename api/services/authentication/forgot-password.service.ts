@@ -1,12 +1,12 @@
 import { ApolloError, ValidationError } from 'apollo-server-express';
-import { findUser, getUserByIdAndJoinUserToken } from '~/repository/user.repository';
-import generateRandomKey from '~/helpers/genarateRandomkey';
-import { createToken, updateUserTokenById } from '~/repository/user_tokens.repository';
-import logger from '~/config/logger.config';
-import { sendMail } from '~/services/email/email.service';
-import compileEmailTemplate from '~/helpers/compile-email-template';
-import { SEND_MAIL_TYPE } from '~/constants/send-mail-type.constant';
-import { emailValidation } from '~/validations/email.validation';
+import { findUser, getUserByIdAndJoinUserToken } from '../../repository/user.repository';
+import generateRandomKey from '../../helpers/genarateRandomkey';
+import { createToken, updateUserTokenById } from '../../repository/user_tokens.repository';
+import logger from '../../config/logger.config';
+import { sendMail } from '../../services/email/email.service';
+import compileEmailTemplate from '../../helpers/compile-email-template';
+import { SEND_MAIL_TYPE } from '../../constants/send-mail-type.constant';
+import { emailValidation } from '../../validations/email.validation';
 
 export async function forgotPasswordUser(email: string): Promise<boolean> {
   const validateResult = emailValidation(email);

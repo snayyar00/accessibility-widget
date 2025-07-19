@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { strictLimiter } from '~/middlewares/limiters.middleware';
-import { isAuthenticated } from '~/middlewares/auth.middleware';
-import { translateIssues, translateText } from '~/controllers/translation.controller';
+import { strictLimiter } from '../middlewares/limiters.middleware';
+import { isAuthenticated } from '../middlewares/auth.middleware';
+import { translateIssues, translateText } from '../controllers/translation.controller';
 
 const router = Router();
 

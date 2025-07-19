@@ -2,19 +2,19 @@ import { combineResolvers } from 'graphql-resolvers';
 
 import { Response } from 'express';
 import { isAuthenticated } from './authorization.resolver';
-import { registerUser } from '~/services/authentication/register.service';
-import { loginUser } from '~/services/authentication/login.service';
-import { verifyEmail, resendEmailAction } from '~/services/authentication/verify-email.service';
-import { forgotPasswordUser } from '~/services/authentication/forgot-password.service';
-import { resetPasswordUser } from '~/services/authentication/reset-password.service';
-import { changePasswordUser } from '~/services/authentication/change-password.service';
-import { deleteUser } from '~/services/user/delete-user.service';
-import { updateProfile } from '~/services/user/update-user.service';
-import { isEmailAlreadyRegistered } from '~/services/user/user.service';
-import { normalizeEmail } from '~/helpers/string.helper';
-import { clearCookie, COOKIE_NAME, setAuthenticationCookie } from '~/utils/cookie';
-import { getOrganizationById } from '~/services/organization/organization.service';
-import { getUserOrganization } from '~/services/organization/organization_users.service';
+import { registerUser } from '../../services/authentication/register.service';
+import { loginUser } from '../../services/authentication/login.service';
+import { verifyEmail, resendEmailAction } from '../../services/authentication/verify-email.service';
+import { forgotPasswordUser } from '../../services/authentication/forgot-password.service';
+import { resetPasswordUser } from '../../services/authentication/reset-password.service';
+import { changePasswordUser } from '../../services/authentication/change-password.service';
+import { deleteUser } from '../../services/user/delete-user.service';
+import { updateProfile } from '../../services/user/update-user.service';
+import { isEmailAlreadyRegistered } from '../../services/user/user.service';
+import { normalizeEmail } from '../../helpers/string.helper';
+import { clearCookie, COOKIE_NAME, setAuthenticationCookie } from '../../utils/cookie';
+import { getOrganizationById } from '../../services/organization/organization.service';
+import { getUserOrganization } from '../../services/organization/organization_users.service';
 
 type Res = {
   res: Response;

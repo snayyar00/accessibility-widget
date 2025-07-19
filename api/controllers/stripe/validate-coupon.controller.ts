@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { APP_SUMO_COUPON_IDS } from '~/constants/billing.constant';
-import findPromo from '~/services/stripe/findPromo';
+import { APP_SUMO_COUPON_IDS } from '../../constants/billing.constant';
+import findPromo from '../../services/stripe/findPromo';
 
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 

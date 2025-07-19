@@ -1,7 +1,7 @@
 import union from 'lodash/union';
-import database from '~/config/database.config';
+import database from '../config/database.config';
 import { userTokenColumns, UserToken } from './user_tokens.repository';
-import { TABLES } from '~/constants/database.constant';
+import { TABLES } from '../constants/database.constant';
 import Knex from 'knex';
 
 const TABLE = TABLES.users;

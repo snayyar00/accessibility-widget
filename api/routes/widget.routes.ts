@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { moderateLimiter } from '~/middlewares/limiters.middleware';
-import { isAuthenticated } from '~/middlewares/auth.middleware';
-import { validateBody } from '~/middlewares/validation.middleware';
-import { validateWidgetSettings } from '~/validations/widget.validation';
-import { updateSiteWidgetSettings, getSiteWidgetSettings } from '~/controllers/widget-settings.controller';
+import { moderateLimiter } from '../middlewares/limiters.middleware';
+import { isAuthenticated } from '../middlewares/auth.middleware';
+import { validateBody } from '../middlewares/validation.middleware';
+import { validateWidgetSettings } from '../validations/widget.validation';
+import { updateSiteWidgetSettings, getSiteWidgetSettings } from '../controllers/widget-settings.controller';
 
 const router = Router();
 

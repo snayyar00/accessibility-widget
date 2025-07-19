@@ -1,6 +1,6 @@
 import { combineResolvers } from 'graphql-resolvers';
 import { isAuthenticated } from './authorization.resolver';
-import { addSite, changeURL, deleteSite, findUserSites, isDomainAlreadyAdded } from '~/services/allowedSites/allowedSites.service';
+import { addSite, changeURL, deleteSite, findUserSites, isDomainAlreadyAdded } from '../../services/allowedSites/allowedSites.service';
 
 const resolvers = {
   Query: {

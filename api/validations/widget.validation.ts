@@ -1,5 +1,5 @@
 import Validator, { ValidationError } from 'fastest-validator';
-import { normalizeDomain } from '~/utils/domain.utils';
+import { normalizeDomain } from '../utils/domain.utils';
 
 export function validateWidgetSettings(input: { settings: any; site_url: any }): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator();
@@ -26,7 +26,7 @@ export function validateWidgetSettings(input: { settings: any; site_url: any }):
       },
       custom(value: any) {
         if (value === null) return true;
-        
+
         try {
           const parsed = JSON.parse(value);
 
@@ -59,15 +59,15 @@ export function validateTokenUrl(input: { url: string }): true | ValidationError
       max: 2048,
       custom(value: string) {
         const cleanUrl = normalizeDomain(value);
-        
+
         if (cleanUrl === 'localhost' || cleanUrl.startsWith('localhost:')) return true;
-        
+
         const domainPattern = /^[a-zA-Z0-9][a-zA-Z0-9-]*(\.[a-zA-Z0-9][a-zA-Z0-9-]*)*\.[a-zA-Z]{2,}$/;
-        
+
         if (!domainPattern.test(cleanUrl)) {
           return [{ type: 'url', message: 'URL must be a valid domain (e.g., example.com, https://example.com)' }];
         }
-        
+
         return true;
       },
     },

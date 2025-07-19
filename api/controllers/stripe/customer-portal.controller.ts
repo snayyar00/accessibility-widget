@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { UserProfile } from '~/repository/user.repository';
+import { UserProfile } from '../../repository/user.repository';
 
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
