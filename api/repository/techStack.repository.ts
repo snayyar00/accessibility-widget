@@ -1,5 +1,3 @@
-import fetch from 'node-fetch'
-
 const CACHE_DURATION = 30 * 60 * 1000 // 30 minutes
 const cache = new Map()
 
