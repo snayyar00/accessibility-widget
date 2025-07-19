@@ -1,8 +1,14 @@
-import { Request } from 'express'
+import { Request, Response } from 'express'
 import rateLimit from 'express-rate-limit'
 
-function getRealIp(req: Request): string {
-  return (req.headers['cf-connecting-ip'] as string) || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip
+function getRealIp(req: Request, _res: Response): string {
+  let realIp = (req.headers['cf-connecting-ip'] as string) || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip
+
+  if (realIp && realIp.includes('::ffff:')) {
+    realIp = realIp.replace('::ffff:', '')
+  }
+
+  return realIp || 'unknown'
 }
 
 // Strict limiter: for financial, Stripe, and other sensitive operations
@@ -25,6 +31,6 @@ export const moderateLimiter = rateLimit({
 export const emailLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
-  keyGenerator: (req: Request) => req.body?.email || getRealIp(req),
+  keyGenerator: (req: Request, res: Response) => req.body?.email || getRealIp(req, res),
   message: { error: 'Too many emails sent to this address, please try again later.' },
 })
