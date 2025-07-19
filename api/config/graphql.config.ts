@@ -32,6 +32,7 @@ export function createGraphQLServer() {
     ...(IS_LOCAL_DEV && {
       plugins: [ApolloServerPluginLandingPageLocalDefault({ footer: false })],
     }),
+
     formatError: (err) => {
       if (err.message.includes('Not authenticated')) {
         return new Error('Please login to make this action')
@@ -47,6 +48,7 @@ export function createGraphQLServer() {
 
       return err
     },
+
     plugins: [
       {
         // Add Sentry tracing for GraphQL operations
@@ -83,10 +85,9 @@ export function createGraphQLServer() {
                     })
                   }
 
-                  // Set the transaction on the scope (Apollo Server 5 uses contextValue)
+                  // Set the transaction on the scope
                   scope.setSpan(ctx.contextValue.sentryTransaction)
 
-                  // Adapt for Apollo Server 5
                   const transactionId = ctx.request.http?.headers?.get('x-transaction-id')
                   if (transactionId) {
                     scope.setTransactionName(transactionId)
@@ -100,6 +101,7 @@ export function createGraphQLServer() {
             // Finish the transaction when the request is complete
             async willSendResponse(ctx: any) {
               const transactionSentry = ctx.contextValue.sentryTransaction
+
               if (transactionSentry) {
                 transactionSentry.finish()
               }
@@ -107,18 +109,14 @@ export function createGraphQLServer() {
           }
         },
       },
-      // Add landing page only in dev mode
+
       ...(IS_LOCAL_DEV ? [ApolloServerPluginLandingPageLocalDefault({ footer: false })] : []),
     ],
-
-    // NOTE: In Apollo Server 5, context is removed from constructor!
-    // Context is now passed through expressMiddleware in server.ts
   })
 
   return serverGraph
 }
 
-// Export function for creating context (used in server.ts)
 export async function createGraphQLContext({ req, res }: ContextParams) {
   const { cookies } = req
   const bearerToken = cookies.token || null
