@@ -1,11 +1,10 @@
-import { ApolloError, ValidationError } from 'apollo-server-express'
-
 import database from '../../config/database.config'
 import logger from '../../config/logger.config'
 import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { objectToString } from '../../helpers/string.helper'
 import { createOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization, updateOrganization } from '../../repository/organization.repository'
 import { updateUser, UserProfile } from '../../repository/user.repository'
+import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import { validateAddOrganization, validateEditOrganization, validateRemoveOrganization } from '../../validations/organization.validation'
 import { addUserToOrganization, getOrganizationsByUserId, getUserOrganization } from './organization_users.service'
 

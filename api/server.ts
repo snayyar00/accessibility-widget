@@ -4,11 +4,12 @@ dotenv.config()
 
 import './config/logger.config'
 
-import bodyParser from 'body-parser'
+import { expressMiddleware } from '@as-integrations/express4'
+import bodyParser, { json } from 'body-parser'
 import cookieParser from 'cookie-parser'
 import express from 'express'
 
-import { createGraphQLServer } from './config/graphql.config'
+import { createGraphQLContext, createGraphQLServer } from './config/graphql.config'
 import { initializeSentry } from './config/sentry.config'
 import { configureServer, PORT } from './config/server.config'
 import scheduleMonthlyEmails from './jobs/monthlyEmail'
@@ -23,13 +24,9 @@ import stripeHooks from './services/stripe/webhooks.servive'
 
 const app = express()
 
-// Configure server settings
 configureServer(app)
-
-// Initialize scheduled jobs
 scheduleMonthlyEmails()
 
-// Set up basic middleware
 app.use(configureMorgan())
 app.use(requestTimingMiddleware)
 
@@ -41,52 +38,52 @@ app.use(cookieParser())
 app.use(bodyParser.urlencoded({ extended: true, limit: '5mb' }))
 app.use(express.json({ limit: '5mb' }))
 
-// Basic health check endpoint
 app.get('/', (_, res) => {
   res.send('Hello world!')
 })
 
-// Mount all API routes
 app.use(routes)
-
-// Express error logging middleware
 app.use(expressErrorMiddleware)
 
-// Set up GraphQL and start server (Apollo Server 3+)
-async function startServer() {
-  const serverGraph = createGraphQLServer()
+// Apollo Server 5 setup
+const serverGraph = createGraphQLServer()
 
+async function initializeServer() {
   await serverGraph.start()
 
-  // GraphQL timeout configuration (before Apollo middleware)
+  // Timeout middleware for long-running accessibility reports
   app.use('/graphql', (req, res, next) => {
     const { body } = req
-    let timeout = 70000 // Default 70 seconds
+    let timeout = 70000
 
-    // Check if this is the accessibility report query
     if (body && body.query && body.query.includes('getAccessibilityReport')) {
       timeout = 120000 // 2 minutes for accessibility report
     }
 
     req.setTimeout(timeout)
     res.setTimeout(timeout)
+
     next()
   })
 
-  // Add GraphQL error logging middleware
   app.use('/graphql', graphqlErrorMiddleware)
 
-  // Apply Apollo middleware (no duplicate JSON parser needed)
-  serverGraph.applyMiddleware({ app, cors: false })
+  app.use(
+    '/graphql',
+    json({ limit: '50mb' }),
+    expressMiddleware(serverGraph, {
+      context: createGraphQLContext,
+    }),
+  )
 
-  // Initialize Sentry
-  const serverName = process.env.COOLIFY_URL || `http://localhost:${PORT}`
-  initializeSentry(serverName)
+  initializeSentry(process.env.COOLIFY_URL || `http://localhost:${PORT}`)
 
-  // Start the server
   app.listen(PORT, () => {
-    console.log(`App listening at http://localhost:${PORT}`)
+    console.log(`🚀 Server ready at http://localhost:${PORT}`)
   })
 }
 
-startServer()
+initializeServer().catch((error) => {
+  console.error('Failed to start server:', error)
+  process.exit(1)
+})

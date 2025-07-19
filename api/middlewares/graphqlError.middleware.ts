@@ -1,30 +1,32 @@
 import { NextFunction, Request, Response } from 'express'
+import { GraphQLError } from 'graphql'
 
 import accessLogStream from '../libs/logger/stream'
 
 /**
  * Middleware for logging GraphQL errors
- * Intercepts response and analyzes GraphQL errors in JSON response
  */
 export const graphqlErrorMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.path.includes('/graphql')) {
+    return next()
+  }
+
   const startTime = Date.now()
   const originalUrl = req.originalUrl || req.url
-  const originalSend = res.send
+  const originalSend = res.send.bind(res)
 
-  // Intercept res.send to analyze GraphQL errors
-  res.send = function (body) {
+  res.send = function (body: string | Buffer | object) {
     try {
-      const parsed = JSON.parse(body)
+      const parsed = typeof body === 'string' ? JSON.parse(body) : body
 
-      // Check for GraphQL errors presence
-      if (parsed.errors && Array.isArray(parsed.errors) && parsed.errors.length > 0) {
+      if (parsed?.errors && Array.isArray(parsed.errors) && parsed.errors.length > 0) {
         logGraphQLErrors(parsed.errors, req, res, startTime, originalUrl, body)
       }
     } catch {
-      // Ignore JSON parsing errors
+      // Ignore JSON parsing errors - could be non-JSON response
     }
 
-    return originalSend.call(this, body)
+    return originalSend(body)
   }
 
   next()
@@ -33,19 +35,15 @@ export const graphqlErrorMiddleware = (req: Request, res: Response, next: NextFu
 /**
  * Logs GraphQL errors with appropriate level and type
  */
-function logGraphQLErrors(errors: any[], req: Request, res: Response, startTime: number, originalUrl: string, body: string) {
+function logGraphQLErrors(errors: GraphQLError[], req: Request, res: Response, startTime: number, originalUrl: string, body: string | object) {
   const responseTime = Date.now() - startTime
-  const contentLength = Buffer.byteLength(body, 'utf8')
+  const contentLength = Buffer.byteLength(typeof body === 'string' ? body : JSON.stringify(body), 'utf8')
 
-  // Determine error type
-  const hasAuthError = errors.some((err: any) => err.extensions?.code === 'UNAUTHENTICATED' || err.message?.includes('Authentication fail'))
+  const hasAuthError = errors.some((err) => err.extensions?.code === 'UNAUTHENTICATED' || err.message?.includes('Authentication fail'))
+  const hasIntrospectionError = errors.some((err) => err.extensions?.code === 'GRAPHQL_VALIDATION_FAILED' && err.message?.includes('introspection is not allowed'))
 
-  const hasIntrospectionError = errors.some((err: any) => err.extensions?.code === 'GRAPHQL_VALIDATION_FAILED' && err.message?.includes('introspection is not allowed'))
-
-  // Determine log level and type
   const { level, type } = getLogLevelAndType(hasAuthError, hasIntrospectionError)
 
-  // Build log entry
   const errorLog = JSON.stringify({
     timestamp: new Date().toISOString(),
     level,
@@ -56,14 +54,13 @@ function logGraphQLErrors(errors: any[], req: Request, res: Response, startTime:
     response_time_ms: responseTime,
     content_length: contentLength,
     operation_name: req.body?.operationName || '-',
-    errors: errors.map((err: any) => ({
+    errors: errors.map((err) => ({
       message: err.message,
       code: err.extensions?.code || 'UNKNOWN',
       path: err.path?.join('.') || '-',
     })),
   })
 
-  // Write to log
   writeLogToStream(errorLog)
 }
 

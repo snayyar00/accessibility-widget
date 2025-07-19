@@ -1,10 +1,10 @@
-import { ValidationError } from 'apollo-server-express'
 import { combineResolvers } from 'graphql-resolvers'
 
 import { deleteAccessibilityReportByR2Key, getAccessibilityReportByR2Key, getR2KeysByParams, insertAccessibilityReport } from '../../repository/accessibilityReports.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { fetchTechStackFromAPI } from '../../repository/techStack.repository'
 import { fetchAccessibilityReport } from '../../services/accessibilityReport/accessibilityReport.service'
+import { ValidationError } from '../../utils/graphql-errors.helper'
 import { deleteReportFromR2, fetchReportFromR2, saveReportToR2 } from '../../utils/r2Storage'
 import { validateAccessibilityReport, validateAccessibilityReportR2Filter, validateR2Key, validateSaveAccessibilityReportInput } from '../../validations/accesability.validation'
 import { isAuthenticated } from './authorization.resolver'

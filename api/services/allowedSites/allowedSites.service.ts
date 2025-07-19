@@ -1,5 +1,3 @@
-import { ValidationError } from 'apollo-server-express'
-
 import logger from '../../config/logger.config'
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '../../constants/billing.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
@@ -7,6 +5,7 @@ import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findSitesByU
 import { getSitePlanBySiteId } from '../../repository/sites_plans.repository'
 import { getUserbyId } from '../../repository/user.repository'
 import { normalizeDomain } from '../../utils/domain.utils'
+import { ValidationError } from '../../utils/graphql-errors.helper'
 import { generateAccessibilityReportPDF } from '../../utils/pdfGenerator'
 import { validateChangeURL, validateDomain } from '../../validations/allowedSites.validation'
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service'

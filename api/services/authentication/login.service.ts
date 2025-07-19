@@ -1,4 +1,3 @@
-import { AuthenticationError, ValidationError } from 'apollo-server-express'
 import { Response } from 'express'
 
 import { comparePassword } from '../../helpers/hashing.helper'
@@ -6,6 +5,7 @@ import { sign } from '../../helpers/jwt.helper'
 import { incrementFailedAttempts, isAccountLocked, lockAccount, resetFailedAttempts } from '../../repository/failed_login_attempts.repository'
 import { findUser } from '../../repository/user.repository'
 import { clearCookie, COOKIE_NAME } from '../../utils/cookie'
+import { AuthenticationError, ValidationError } from '../../utils/graphql-errors.helper'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
 import { loginValidation } from '../../validations/authenticate.validation'
 

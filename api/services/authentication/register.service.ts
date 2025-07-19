@@ -1,9 +1,8 @@
-import { ApolloError } from 'apollo-server-express'
-
 import logger from '../../config/logger.config'
 import { generatePassword } from '../../helpers/hashing.helper'
 import { sign } from '../../helpers/jwt.helper'
 import { createUser, findUser } from '../../repository/user.repository'
+import { ApolloError } from '../../utils/graphql-errors.helper'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
 import { createMultipleValidationErrors, createValidationError, getValidationErrorCode } from '../../utils/validation-errors.helper'
 import { registerValidation } from '../../validations/authenticate.validation'

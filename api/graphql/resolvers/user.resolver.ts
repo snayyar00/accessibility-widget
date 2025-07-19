@@ -73,7 +73,7 @@ const resolvers = {
     register: async (_: unknown, { email, password, name }: Register, { res }: Res) => {
       const result = await registerUser(normalizeEmail(email), password, name)
 
-      if (result && result.token) {
+      if (result && 'token' in result && result.token) {
         setAuthenticationCookie(res, result.token)
         return true
       }
@@ -84,7 +84,7 @@ const resolvers = {
     login: async (_: unknown, { email, password }: Login, { res }: Res) => {
       const result = await loginUser(normalizeEmail(email), password, res)
 
-      if (result && result.token) {
+      if (result && 'token' in result && result.token) {
         setAuthenticationCookie(res, result.token)
         return true
       }

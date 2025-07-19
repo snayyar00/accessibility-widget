@@ -1,4 +1,3 @@
-import { ApolloError, ValidationError } from 'apollo-server-express'
 import dayjs from 'dayjs'
 
 import logger from '../../config/logger.config'
@@ -9,6 +8,7 @@ import { deletePermissionBySitePlanId, insertMultiSitePermission } from '../../r
 import { deleteSitePlanById, getAnySitePlanById, getSitePlanById, getSitePlanBySiteId, insertSitePlan, SitesPlanData, updateSitePlanById } from '../../repository/sites_plans.repository'
 import { findUser } from '../../repository/user.repository'
 import formatDateDB from '../../utils/format-date-db'
+import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import { validateGetPlanBySiteIdAndUserId, validateUpdateSitesPlan } from '../../validations/planSites.validation'
 import { cancelSubcriptionBySubId, createNewSubcription, updateSubcription } from '../stripe/subcription.service'
 

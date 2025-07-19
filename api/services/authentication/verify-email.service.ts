@@ -1,4 +1,3 @@
-import { ApolloError } from 'apollo-server-express'
 import dayjs from 'dayjs'
 
 import logger from '../../config/logger.config'
@@ -9,6 +8,7 @@ import { normalizeEmail } from '../../helpers/string.helper'
 import type { UserProfile } from '../../repository/user.repository'
 import { activeUser, getUserbyId } from '../../repository/user.repository'
 import { changeTokenStatus, createToken, findToken } from '../../repository/user_tokens.repository'
+import { ApolloError } from '../../utils/graphql-errors.helper'
 import { sendMail } from '../email/email.service'
 
 function isValidDate(createdAt: string): boolean {

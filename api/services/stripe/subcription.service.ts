@@ -1,10 +1,10 @@
-import { ApolloError } from 'apollo-server-express'
 import dayjs from 'dayjs'
 import Stripe from 'stripe'
 
 import logger from '../../config/logger.config'
 import { normalizeEmail } from '../../helpers/string.helper'
 import { getSitesPlanByCustomerIdAndSubscriptionId } from '../../repository/sites_plans.repository'
+import { ApolloError } from '../../utils/graphql-errors.helper'
 
 export type DataSubcription = {
   customer: string

@@ -1,9 +1,8 @@
-import { ApolloError, ForbiddenError, UserInputError, ValidationError } from 'apollo-server-express'
-
 import { generatePassword } from '../../helpers/hashing.helper'
 import { unlockAccount } from '../../repository/failed_login_attempts.repository'
 import { updateUser } from '../../repository/user.repository'
 import { findToken, removeUserToken } from '../../repository/user_tokens.repository'
+import { ApolloError, ForbiddenError, UserInputError, ValidationError } from '../../utils/graphql-errors.helper'
 import { changePasswordValidation } from '../../validations/authenticate.validation'
 
 export async function resetPasswordUser(token: string, password: string, confirmPassword: string): Promise<true | ApolloError> {

@@ -1,11 +1,10 @@
-import { ApolloError, ValidationError } from 'apollo-server-express'
-
 import logger from '../../config/logger.config'
 import { SEND_MAIL_TYPE } from '../../constants/send-mail-type.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import generateRandomKey from '../../helpers/genarateRandomkey'
 import { findUser, getUserByIdAndJoinUserToken } from '../../repository/user.repository'
 import { createToken, updateUserTokenById } from '../../repository/user_tokens.repository'
+import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import { emailValidation } from '../../validations/email.validation'
 import { sendMail } from '../email/email.service'
 

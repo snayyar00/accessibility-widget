@@ -1,8 +1,8 @@
-import { AuthenticationError } from 'apollo-server-express'
 import { Response } from 'express'
 
 import { verify } from '../../helpers/jwt.helper'
 import { findUser } from '../../repository/user.repository'
+import { AuthenticationError } from '../../utils/graphql-errors.helper'
 
 type UserLoginedResponse = {
   id: number

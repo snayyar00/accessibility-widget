@@ -1,4 +1,4 @@
-import { ApolloError } from 'apollo-server-express'
+import { ApolloError } from './graphql-errors.helper'
 
 /**
  * Validation error codes for frontend localization

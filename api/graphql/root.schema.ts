@@ -1,4 +1,4 @@
-import { gql } from 'apollo-server-express'
+import { gql } from 'graphql-tag'
 
 import { AccessibilitySchema } from './schemas/accessibilityReport.schema'
 import { AllowedSitesSchema } from './schemas/allowedSites.schema'

@@ -1,9 +1,9 @@
-import { ValidationError } from 'apollo-server-express'
 import { combineResolvers } from 'graphql-resolvers'
 
 import { Organization } from '../../repository/organization.repository'
 import { addOrganization, CreateOrganizationInput, editOrganization, getOrganizationById, getOrganizations, removeOrganization } from '../../services/organization/organization.service'
 import { getOrganizationUsers } from '../../services/organization/organization_users.service'
+import { ValidationError } from '../../utils/graphql-errors.helper'
 import { isAuthenticated } from './authorization.resolver'
 
 const organizationResolver = {

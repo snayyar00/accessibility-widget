@@ -1,8 +1,7 @@
-import { ValidationError } from 'apollo-server-express'
-
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import { addProblemReport, problemReportProps } from '../../repository/problem_reports.repository'
 import { FindAllowedSitesProps, findSiteByURL } from '../../repository/sites_allowed.repository'
+import { ValidationError } from '../../utils/graphql-errors.helper'
 import { validateReportProblem } from '../../validations/reportProblem.validation'
 import { sendMail } from '../email/email.service'
 
