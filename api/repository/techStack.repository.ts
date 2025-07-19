@@ -46,7 +46,7 @@ export async function fetchTechStackFromAPI(url: string) {
       throw new Error(`External API error: ${apiRes.status}`)
     }
 
-    const rawData = await apiRes.json()
+    const rawData = (await apiRes.json()) as { data?: Record<string, unknown> }
 
     // Validate the response structure
     if (!rawData || typeof rawData !== 'object') {
@@ -58,17 +58,17 @@ export async function fetchTechStackFromAPI(url: string) {
     }
 
     // Add default platform if missing
-    if (!rawData.data.accessibility_context) {
-      rawData.data.accessibility_context = {}
+    if (!('accessibility_context' in rawData.data)) {
+      ;(rawData.data as any).accessibility_context = {}
     }
-    if (!rawData.data.accessibility_context.platform) {
-      rawData.data.accessibility_context.platform = 'Unknown'
+    if (!(rawData.data as any).accessibility_context.platform) {
+      ;(rawData.data as any).accessibility_context.platform = 'Unknown'
     }
-    if (!rawData.data.accessibility_context.platform_type) {
-      rawData.data.accessibility_context.platform_type = 'Unknown'
+    if (!(rawData.data as any).accessibility_context.platform_type) {
+      ;(rawData.data as any).accessibility_context.platform_type = 'Unknown'
     }
 
-    const transformedData = transformResponse(rawData.data)
+    const transformedData = transformResponse(rawData.data as Record<string, unknown>)
 
     cache.set(cacheKey, {
       data: transformedData,
@@ -82,16 +82,17 @@ export async function fetchTechStackFromAPI(url: string) {
   }
 }
 
-function transformResponse(data: any) {
-  if (!data) {
+function transformResponse(data: Record<string, unknown>) {
+  const d = data as any
+  if (!d) {
     throw new Error('No data received from API')
   }
 
-  const techStack = data.tech_stack || {}
+  const techStack = d.tech_stack || {}
 
   // Get platform information with fallbacks
-  const platform = data.accessibility_context?.platform || data.architecture?.platform || 'Unknown'
-  const platformType = data.accessibility_context?.platform_type || data.architecture?.platform_type || 'Unknown'
+  const platform = d.accessibility_context?.platform || d.architecture?.platform || 'Unknown'
+  const platformType = d.accessibility_context?.platform_type || d.architecture?.platform_type || 'Unknown'
 
   // Collect all technologies
   const technologies = []
@@ -160,7 +161,7 @@ function transformResponse(data: any) {
   }
 
   // Determine confidence
-  const overallConfidence = data.confidence?.overall || 0
+  const overallConfidence = d.confidence?.overall || 0
   let confidence = 'low'
   if (overallConfidence > 70) confidence = 'high'
   else if (overallConfidence > 40) confidence = 'medium'
@@ -178,12 +179,12 @@ function transformResponse(data: any) {
     confidence,
     platform,
     platformType,
-    accessibilityContext: data.accessibility_context || {},
-    architecture: data.architecture || {},
-    confidenceScores: data.confidence || {},
-    aiAnalysis: data.ai_analysis || {},
-    analyzedUrl: data.url || '',
-    analyzedAt: data.analyzed_at || new Date().toISOString(),
+    accessibilityContext: d.accessibility_context || {},
+    architecture: d.architecture || {},
+    confidenceScores: d.confidence || {},
+    aiAnalysis: d.ai_analysis || {},
+    analyzedUrl: d.url || '',
+    analyzedAt: d.analyzed_at || new Date().toISOString(),
     source: 'external_api',
   }
 }

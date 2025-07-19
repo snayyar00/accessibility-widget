@@ -52,35 +52,41 @@ app.use(routes)
 // Express error logging middleware
 app.use(expressErrorMiddleware)
 
-// Set up GraphQL
-const serverGraph = createGraphQLServer()
+// Set up GraphQL and start server (Apollo Server 3+)
+async function startServer() {
+  const serverGraph = createGraphQLServer()
 
-// GraphQL timeout configuration (before Apollo middleware)
-app.use('/graphql', (req, res, next) => {
-  const { body } = req
-  let timeout = 70000 // Default 70 seconds
+  await serverGraph.start()
 
-  // Check if this is the accessibility report query
-  if (body && body.query && body.query.includes('getAccessibilityReport')) {
-    timeout = 120000 // 2 minutes for accessibility report
-  }
+  // GraphQL timeout configuration (before Apollo middleware)
+  app.use('/graphql', (req, res, next) => {
+    const { body } = req
+    let timeout = 70000 // Default 70 seconds
 
-  req.setTimeout(timeout)
-  res.setTimeout(timeout)
-  next()
-})
+    // Check if this is the accessibility report query
+    if (body && body.query && body.query.includes('getAccessibilityReport')) {
+      timeout = 120000 // 2 minutes for accessibility report
+    }
 
-// Add GraphQL error logging middleware
-app.use('/graphql', graphqlErrorMiddleware)
+    req.setTimeout(timeout)
+    res.setTimeout(timeout)
+    next()
+  })
 
-// Apply Apollo middleware (no duplicate JSON parser needed)
-serverGraph.applyMiddleware({ app, cors: false })
+  // Add GraphQL error logging middleware
+  app.use('/graphql', graphqlErrorMiddleware)
 
-// Initialize Sentry
-const serverName = process.env.COOLIFY_URL || `http://localhost:${PORT}`
-initializeSentry(serverName)
+  // Apply Apollo middleware (no duplicate JSON parser needed)
+  serverGraph.applyMiddleware({ app, cors: false })
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`App listening at http://localhost:${PORT}`)
-})
+  // Initialize Sentry
+  const serverName = process.env.COOLIFY_URL || `http://localhost:${PORT}`
+  initializeSentry(serverName)
+
+  // Start the server
+  app.listen(PORT, () => {
+    console.log(`App listening at http://localhost:${PORT}`)
+  })
+}
+
+startServer()
