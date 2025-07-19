@@ -1,26 +1,27 @@
-import { combineResolvers } from 'graphql-resolvers';
-import { isAuthenticated } from "./authorization.resolver";
-import { translateStatement } from '../../services/translation/translation.service';
-import { validateTranslateStatement } from '../../validations/translateStatement.validation';
+import { combineResolvers } from 'graphql-resolvers'
+
+import { translateStatement } from '../../services/translation/translation.service'
+import { validateTranslateStatement } from '../../validations/translateStatement.validation'
+import { isAuthenticated } from './authorization.resolver'
 
 interface TranslationContentInput {
-  [key: string]: string;
+  [key: string]: string
 }
 
 interface TranslateStatementArgs {
-  content: TranslationContentInput | string;
-  targetLanguage: string;
-  languageCode: string;
-  context?: string;
+  content: TranslationContentInput | string
+  targetLanguage: string
+  languageCode: string
+  context?: string
 }
 
 const resolvers = {
   Mutation: {
     translateStatement: combineResolvers(isAuthenticated, async (_: unknown, { content, targetLanguage, languageCode, context }: TranslateStatementArgs) => {
-      const validateResult = validateTranslateStatement({ content, targetLanguage, languageCode, context });
+      const validateResult = validateTranslateStatement({ content, targetLanguage, languageCode, context })
 
       if (Array.isArray(validateResult) && validateResult.length) {
-        throw new Error(validateResult.map((it) => it.message).join(','));
+        throw new Error(validateResult.map((it) => it.message).join(','))
       }
 
       try {
@@ -29,19 +30,19 @@ const resolvers = {
           targetLanguage,
           languageCode,
           context,
-        });
+        })
 
-        return result;
+        return result
       } catch (error) {
-        console.error('Translation resolver error:', error);
+        console.error('Translation resolver error:', error)
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Translation failed',
           languageCode,
-        };
+        }
       }
     }),
   },
-};
+}
 
-export default resolvers;
+export default resolvers

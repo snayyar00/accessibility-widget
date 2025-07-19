@@ -1,4 +1,4 @@
-import { gql } from 'apollo-server-express';
+import { gql } from 'apollo-server-express'
 
 export const ImpressionsSchema = gql`
   type Impression {
@@ -38,4 +38,4 @@ export const ImpressionsSchema = gql`
     registerInteraction(impressionId: Int!, interaction: String!): Int! @rateLimit(limit: 10, duration: 5, message: "Too many interactions. Please try again later.")
     updateImpressionProfileCounts(impressionId: Int!, profileCounts: JSON!): ImpressionUpdateResponse! @rateLimit(limit: 10, duration: 5, message: "Too many profile updates. Please try again later.")
   }
-`;
+`

@@ -1,10 +1,11 @@
-import { Router } from 'express';
-import { moderateLimiter } from '../middlewares/limiters.middleware';
-import { isAuthenticated } from '../middlewares/auth.middleware';
-import { getProblemReports } from '../controllers/reports.controller';
+import { Router } from 'express'
 
-const router = Router();
+import { getProblemReports } from '../controllers/reports.controller'
+import { isAuthenticated } from '../middlewares/auth.middleware'
+import { moderateLimiter } from '../middlewares/limiters.middleware'
 
-router.post('/get-problem-reports', moderateLimiter, isAuthenticated, getProblemReports);
+const router = Router()
 
-export default router;
+router.post('/get-problem-reports', moderateLimiter, isAuthenticated, getProblemReports)
+
+export default router

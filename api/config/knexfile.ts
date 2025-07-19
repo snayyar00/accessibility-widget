@@ -1,24 +1,24 @@
 type Config = {
-  client: string;
+  client: string
   connection: {
-    database: string;
-    host: string;
-    user: string;
-    password: string;
-    port: number;
-  };
+    database: string
+    host: string
+    user: string
+    password: string
+    port: number
+  }
   migrations: {
-    tableName: string;
-    directory: string;
-    loadExtensions: string[];
-  };
+    tableName: string
+    directory: string
+    loadExtensions: string[]
+  }
   seeds: {
-    directory: string;
-    recursive: boolean;
-  };
-};
+    directory: string
+    recursive: boolean
+  }
+}
 
-export default (database: string, host: string, user: string, password: string, port: number): Config => ({
+const knexConfig = (database: string, host: string, user: string, password: string, port: number): Config => ({
   client: 'mysql2',
   connection: {
     database: database || process.env.DATABASE_NAME,
@@ -33,4 +33,6 @@ export default (database: string, host: string, user: string, password: string, 
     loadExtensions: ['.ts'],
   },
   seeds: { directory: '../seeds', recursive: true },
-});
+})
+
+export default knexConfig

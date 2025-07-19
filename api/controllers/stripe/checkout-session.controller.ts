@@ -1,27 +1,28 @@
-import { Request, Response } from 'express';
-import Stripe from 'stripe';
-import { UserProfile } from '../../repository/user.repository';
-import { findSiteByURL } from '../../repository/sites_allowed.repository';
-import { findProductAndPriceByType } from '../../repository/products.repository';
-import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from '../../constants/billing.constant';
-import { createSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service';
-import { getSitePlanBySiteId } from '../../repository/sites_plans.repository';
-import findPromo from '../../services/stripe/findPromo';
-import { appSumoPromoCount } from '../../utils/appSumoPromoCount';
-import { expireUsedPromo } from '../../utils/expireUsedPromo';
-import { getUserTokens } from '../../repository/user_plan_tokens.repository';
-import { customTokenCount } from '../../utils/customTokenCount';
+import { Request, Response } from 'express'
+import Stripe from 'stripe'
 
-const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
+import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from '../../constants/billing.constant'
+import { findProductAndPriceByType } from '../../repository/products.repository'
+import { findSiteByURL } from '../../repository/sites_allowed.repository'
+import { getSitePlanBySiteId } from '../../repository/sites_plans.repository'
+import { getUserTokens } from '../../repository/user_plan_tokens.repository'
+import { createSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service'
+import findPromo from '../../services/stripe/findPromo'
+import { appSumoPromoCount } from '../../utils/appSumoPromoCount'
+import { customTokenCount } from '../../utils/customTokenCount'
+import { expireUsedPromo } from '../../utils/expireUsedPromo'
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
 export async function createCheckoutSession(req: Request, res: Response) {
-  const { planName, billingInterval, returnUrl, domainId, domain, cardTrial, promoCode } = req.body;
+  const { planName, billingInterval, returnUrl, domainId, domain, cardTrial, promoCode } = req.body
 
-  const {user} = (req as any);
-  const site = await findSiteByURL(domain);
+  const { user } = req as any
+  const site = await findSiteByURL(domain)
 
   if (!site || site.user_id !== user.id) {
-    return res.status(403).json({ error: 'User does not own this domain' });
+    return res.status(403).json({ error: 'User does not own this domain' })
   }
 
   try {
@@ -31,35 +32,35 @@ export async function createCheckoutSession(req: Request, res: Response) {
         email: user.email,
         limit: 1,
       }),
-    ]);
+    ])
 
-    let customer;
-    let subscriptions;
+    let customer
+    let subscriptions
 
     if (customers.data.length > 0) {
-      customer = customers.data[0];
+      customer = customers.data[0]
       subscriptions = await stripe.subscriptions.list({
         customer: customer.id,
         limit: 100,
-      });
+      })
     } else {
       customer = await stripe.customers.create({
         email: user.email,
-      });
+      })
     }
 
-    let promoCodeData: Stripe.PromotionCode[];
+    let promoCodeData: Stripe.PromotionCode[]
 
     if (promoCode && promoCode.length > 0 && typeof promoCode?.[0] !== 'number') {
-      const validCodesData: Stripe.PromotionCode[] = [];
-      const invalidCodes: string[] = [];
+      const validCodesData: Stripe.PromotionCode[] = []
+      const invalidCodes: string[] = []
 
       for (const code of promoCode) {
-        const found = await findPromo(stripe, code);
+        const found = await findPromo(stripe, code)
         if (found) {
-          validCodesData.push(found);
+          validCodesData.push(found)
         } else {
-          invalidCodes.push(code);
+          invalidCodes.push(code)
         }
       }
 
@@ -67,18 +68,18 @@ export async function createCheckoutSession(req: Request, res: Response) {
         return res.json({
           valid: false,
           error: `Invalid Promo Code(s): ${invalidCodes.join(', ')}`,
-        });
+        })
       }
 
-      promoCodeData = validCodesData;
+      promoCodeData = validCodesData
     }
 
-    let session: any = {};
+    let session: any = {}
     if (typeof promoCode?.[0] === 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id))) {
-      const [{ orderedCodes, numPromoSites }, tokenUsed] = await Promise.all([appSumoPromoCount(subscriptions, promoCode, user.id), getUserTokens(user.id)]);
+      const [{ orderedCodes, numPromoSites }, tokenUsed] = await Promise.all([appSumoPromoCount(subscriptions, promoCode, user.id), getUserTokens(user.id)])
 
-      console.log('promo');
-      const { lastCustomCode, nonCustomCodes } = await customTokenCount(user.id, tokenUsed || []);
+      console.log('promo')
+      const { lastCustomCode, nonCustomCodes } = await customTokenCount(user.id, tokenUsed || [])
 
       // This will work on for AppSumo coupons, we allow use of coupons that should only work for the app sumo tier plans and we manually apply the discount according to new plan (single)
 
@@ -94,29 +95,31 @@ export async function createCheckoutSession(req: Request, res: Response) {
           usedDomains: 1,
         },
         description: `Plan for ${domain}(${lastCustomCode ? [lastCustomCode, ...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
-      });
+      })
 
-      const cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.email)];
+      const cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.email)]
 
       try {
-        const previous_plan = await getSitePlanBySiteId(Number(domainId));
-        cleanupPromises.push(deleteTrialPlan(previous_plan.id).then(() => {}));
-      } catch (error) {}
+        const previous_plan = await getSitePlanBySiteId(Number(domainId))
+        cleanupPromises.push(deleteTrialPlan(previous_plan.id).then(() => {}))
+      } catch {}
 
-      await Promise.all(cleanupPromises);
+      await Promise.all(cleanupPromises)
 
-      await createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), 'appsumo');
+      await createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), 'appsumo')
 
-      console.log('New Sub created');
+      console.log('New Sub created')
 
-      res.status(200).json({ success: true });
+      res.status(200).json({ success: true })
 
-      return;
-    } if (promoCode && promoCode.length > 0) {
+      return
+    }
+    if (promoCode && promoCode.length > 0) {
       // Coupon is not valid or not the app sumo promo
-      return res.json({ valid: false, error: 'Invalid promo code' });
-    } if (cardTrial) {
-      console.log('trial');
+      return res.json({ valid: false, error: 'Invalid promo code' })
+    }
+    if (cardTrial) {
+      console.log('trial')
       session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         mode: 'subscription',
@@ -144,12 +147,12 @@ export async function createCheckoutSession(req: Request, res: Response) {
           },
           description: `Plan for ${domain}`,
         },
-      });
+      })
     } else {
-      console.log('normal');
+      console.log('normal')
 
       if (subscriptions.data.length > 0) {
-        console.log('setup intent only');
+        console.log('setup intent only')
         session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'setup',
@@ -163,9 +166,9 @@ export async function createCheckoutSession(req: Request, res: Response) {
             userId: user.id,
             updateMetaData: 'true',
           },
-        });
+        })
       } else {
-        console.log('checkout intent');
+        console.log('checkout intent')
         session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'subscription',
@@ -192,13 +195,13 @@ export async function createCheckoutSession(req: Request, res: Response) {
             },
             description: `Plan for ${domain}`,
           },
-        });
+        })
       }
     }
 
-    res.status(303).json({ url: session.url });
+    res.status(303).json({ url: session.url })
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: error.message });
+    console.log(error)
+    res.status(500).json({ error: error.message })
   }
 }

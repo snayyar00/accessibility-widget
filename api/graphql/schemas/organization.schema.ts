@@ -1,4 +1,4 @@
-import { gql } from 'apollo-server-express';
+import { gql } from 'apollo-server-express'
 
 export const OrganizationSchema = gql`
   type Organization {
@@ -31,4 +31,4 @@ export const OrganizationSchema = gql`
     editOrganization(id: ID!, name: String, domain: String, logo_url: String, settings: JSON): Organization @rateLimit(limit: 10, duration: 60, message: "Too many edit attempts. Please try again later.")
     removeOrganization(id: ID!): Boolean @rateLimit(limit: 5, duration: 60, message: "Too many remove attempts. Please try again later.")
   }
-`;
+`

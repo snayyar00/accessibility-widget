@@ -1,12 +1,7 @@
-import Validator, { ValidationError } from 'fastest-validator';
+import Validator, { ValidationError } from 'fastest-validator'
 
-export function validateReportProblem(input: {
-  site_url: string;
-  issue_type: string;
-  description: string;
-  reporter_email: string;
-}): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator();
+export function validateReportProblem(input: { site_url: string; issue_type: string; description: string; reporter_email: string }): true | ValidationError[] | Promise<true | ValidationError[]> {
+  const validator = new Validator()
 
   const schema = {
     site_url: {
@@ -47,7 +42,7 @@ export function validateReportProblem(input: {
         stringMax: 'Reporter email is too long',
       },
     },
-  };
+  }
 
-  return validator.validate(input, schema);
+  return validator.validate(input, schema)
 }

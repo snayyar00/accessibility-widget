@@ -1,13 +1,14 @@
-import { Request, Response } from 'express';
-import { sendMail } from '../services/email/email.service';
-import { emailValidation } from '../validations/email.validation';
-import { addNewsletterSub } from '../repository/newsletter_subscribers.repository';
+import { Request, Response } from 'express'
+
+import { addNewsletterSub } from '../repository/newsletter_subscribers.repository'
+import { sendMail } from '../services/email/email.service'
+import { emailValidation } from '../validations/email.validation'
 
 export async function handleFormSubmission(req: Request, res: Response) {
-  const validateResult = emailValidation(req.body.email);
+  const validateResult = emailValidation(req.body.email)
 
   if (Array.isArray(validateResult) && validateResult.length) {
-    return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
+    return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') })
   }
 
   try {
@@ -52,28 +53,28 @@ export async function handleFormSubmission(req: Request, res: Response) {
       </body>
           </html>
       `,
-    );
+    )
 
-    return res.status(200).json({ success: true, message: 'Email sent successfully' });
+    return res.status(200).json({ success: true, message: 'Email sent successfully' })
   } catch (error) {
-    console.error('Error sending email:', error);
-    return res.status(500).json({ error: 'Failed to send email' });
+    console.error('Error sending email:', error)
+    return res.status(500).json({ error: 'Failed to send email' })
   }
 }
 
 export async function subscribeNewsletter(req: Request, res: Response) {
   try {
-    const { email } = req.body;
-    const validateResult = emailValidation(email);
+    const { email } = req.body
+    const validateResult = emailValidation(email)
 
     if (Array.isArray(validateResult) && validateResult.length) {
-      return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') });
+      return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') })
     }
 
-    await addNewsletterSub(email);
-    res.status(200).json({ message: 'Subscription successful' });
+    await addNewsletterSub(email)
+    res.status(200).json({ message: 'Subscription successful' })
   } catch (error) {
-    console.error('Error subscribing to newsletter:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Error subscribing to newsletter:', error)
+    res.status(500).json({ error: 'Internal Server Error' })
   }
 }

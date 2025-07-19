@@ -1,14 +1,14 @@
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'crypto'
 
 const generateRandomKey = (): Promise<string> =>
   new Promise((resolve, reject) => {
     randomBytes(32, (error, buf) => {
       if (error) {
-        return reject(error);
+        return reject(error)
       }
-      const token = buf.toString('hex');
-      return resolve(token);
-    });
-  });
+      const token = buf.toString('hex')
+      return resolve(token)
+    })
+  })
 
-export default generateRandomKey;
+export default generateRandomKey

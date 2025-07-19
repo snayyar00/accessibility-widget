@@ -50,33 +50,33 @@ export const preprocessingConfig = {
     debugMode: process.env.PREPROCESSING_DEBUG_MODE === 'true',
     performanceLogging: process.env.PREPROCESSING_PERF_LOG === 'true',
   },
-};
+}
 
 /**
  * Get performance-optimized config based on mode
  */
 export function getPerformanceConfig(mode: 'fast' | 'balanced' | 'thorough' = 'balanced') {
-  const baseConfig = preprocessingConfig.qualityLevels[mode];
-  
+  const baseConfig = preprocessingConfig.qualityLevels[mode]
+
   return {
     ...baseConfig,
     maxConcurrency: preprocessingConfig.performance.maxConcurrency,
     fastMode: mode === 'fast',
     features: preprocessingConfig.features,
-  };
+  }
 }
 
 /**
  * Environment-specific optimizations
  */
 export function getOptimizedConfig() {
-  const nodeEnv = process.env.NODE_ENV;
-  
+  const nodeEnv = process.env.NODE_ENV
+
   if (nodeEnv === 'production') {
-    return getPerformanceConfig('balanced');
-  } if (nodeEnv === 'development') {
-    return getPerformanceConfig('fast');
-  } 
-  return getPerformanceConfig('thorough');
-  
-} 
+    return getPerformanceConfig('balanced')
+  }
+  if (nodeEnv === 'development') {
+    return getPerformanceConfig('fast')
+  }
+  return getPerformanceConfig('thorough')
+}

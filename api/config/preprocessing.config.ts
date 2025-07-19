@@ -1,17 +1,17 @@
 interface PreprocessingConfig {
-  enabled: boolean;
-  batchSize: number;
-  maxConcurrency: number;
-  confidenceThreshold: number;
-  templateDetectionThreshold: number;
-  criticalIssuesBypass: boolean;
-  fallbackOnError: boolean;
-  debugMode: boolean;
+  enabled: boolean
+  batchSize: number
+  maxConcurrency: number
+  confidenceThreshold: number
+  templateDetectionThreshold: number
+  criticalIssuesBypass: boolean
+  fallbackOnError: boolean
+  debugMode: boolean
   costOptimization: {
-    maxTokensPerBatch: number;
-    skipLowConfidenceIssues: boolean;
-    cacheGptResults: boolean;
-  };
+    maxTokensPerBatch: number
+    skipLowConfidenceIssues: boolean
+    cacheGptResults: boolean
+  }
 }
 
 /**
@@ -31,28 +31,28 @@ const DEFAULT_CONFIG: PreprocessingConfig = {
     skipLowConfidenceIssues: process.env.PREPROCESSING_SKIP_LOW_CONFIDENCE !== 'false',
     cacheGptResults: process.env.PREPROCESSING_CACHE_GPT_RESULTS === 'true',
   },
-};
+}
 
 /**
  * Current configuration instance
  */
-let currentConfig: PreprocessingConfig = { ...DEFAULT_CONFIG };
+let currentConfig: PreprocessingConfig = { ...DEFAULT_CONFIG }
 
 /**
  * Get current preprocessing configuration
  */
 export function getPreprocessingConfig(): PreprocessingConfig {
-  return { ...currentConfig };
+  return { ...currentConfig }
 }
 
 /**
  * Update preprocessing configuration
  */
 export function updatePreprocessingConfig(updates: Partial<PreprocessingConfig>): void {
-  currentConfig = { ...currentConfig, ...updates };
+  currentConfig = { ...currentConfig, ...updates }
 
   if (currentConfig.debugMode) {
-    console.log('🔧 Preprocessing config updated:', updates);
+    console.log('🔧 Preprocessing config updated:', updates)
   }
 }
 
@@ -60,8 +60,8 @@ export function updatePreprocessingConfig(updates: Partial<PreprocessingConfig>)
  * Reset configuration to defaults
  */
 export function resetPreprocessingConfig(): void {
-  currentConfig = { ...DEFAULT_CONFIG };
-  console.log('🔄 Preprocessing config reset to defaults');
+  currentConfig = { ...DEFAULT_CONFIG }
+  console.log('🔄 Preprocessing config reset to defaults')
 }
 
 /**
@@ -88,16 +88,16 @@ export const ENVIRONMENT_CONFIGS = {
     maxConcurrency: 15,
     fallbackOnError: true,
   },
-};
+}
 
 /**
  * Apply environment-specific configuration
  */
 export function applyEnvironmentConfig(environment: keyof typeof ENVIRONMENT_CONFIGS): void {
-  const envConfig = ENVIRONMENT_CONFIGS[environment];
+  const envConfig = ENVIRONMENT_CONFIGS[environment]
   if (envConfig) {
-    updatePreprocessingConfig(envConfig);
-    console.log(`🌍 Applied ${environment} preprocessing configuration`);
+    updatePreprocessingConfig(envConfig)
+    console.log(`🌍 Applied ${environment} preprocessing configuration`)
   }
 }
 
@@ -120,13 +120,13 @@ export const FEATURE_FLAGS = {
   RUNNER_AGREEMENT_SCORING: process.env.FF_RUNNER_AGREEMENT === 'true',
   DYNAMIC_BATCHING: process.env.FF_DYNAMIC_BATCHING === 'true',
   PREDICTIVE_FILTERING: process.env.FF_PREDICTIVE_FILTERING === 'true',
-};
+}
 
 /**
  * Check if a feature is enabled
  */
 export function isFeatureEnabled(feature: keyof typeof FEATURE_FLAGS): boolean {
-  return FEATURE_FLAGS[feature] && currentConfig.enabled;
+  return FEATURE_FLAGS[feature] && currentConfig.enabled
 }
 
 /**
@@ -147,61 +147,61 @@ export function getProcessingThresholds() {
       size: currentConfig.batchSize,
       maxConcurrency: currentConfig.maxConcurrency,
     },
-  };
+  }
 }
 
 /**
  * Validate configuration
  */
 export function validateConfig(): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
+  const errors: string[] = []
 
   if (currentConfig.batchSize < 1 || currentConfig.batchSize > 10) {
-    errors.push('Batch size must be between 1 and 10');
+    errors.push('Batch size must be between 1 and 10')
   }
 
   if (currentConfig.maxConcurrency < 1 || currentConfig.maxConcurrency > 20) {
-    errors.push('Max concurrency must be between 1 and 20');
+    errors.push('Max concurrency must be between 1 and 20')
   }
 
   if (currentConfig.confidenceThreshold < 0 || currentConfig.confidenceThreshold > 100) {
-    errors.push('Confidence threshold must be between 0 and 100');
+    errors.push('Confidence threshold must be between 0 and 100')
   }
 
   if (currentConfig.templateDetectionThreshold < 2) {
-    errors.push('Template detection threshold must be at least 2');
+    errors.push('Template detection threshold must be at least 2')
   }
 
   return {
     valid: errors.length === 0,
     errors,
-  };
+  }
 }
 
 /**
  * Initialize configuration based on environment
  */
 export function initializePreprocessingConfig(): void {
-  const environment = (process.env.NODE_ENV as keyof typeof ENVIRONMENT_CONFIGS) || 'development';
+  const environment = (process.env.NODE_ENV as keyof typeof ENVIRONMENT_CONFIGS) || 'development'
 
   // Apply environment-specific settings
   if (ENVIRONMENT_CONFIGS[environment]) {
-    applyEnvironmentConfig(environment);
+    applyEnvironmentConfig(environment)
   }
 
   // Validate configuration
-  const validation = validateConfig();
+  const validation = validateConfig()
   if (!validation.valid) {
-    console.warn('⚠️ Preprocessing configuration validation failed:', validation.errors);
+    console.warn('⚠️ Preprocessing configuration validation failed:', validation.errors)
     // Reset to defaults on validation failure
-    resetPreprocessingConfig();
+    resetPreprocessingConfig()
   }
 
   if (currentConfig.debugMode) {
-    console.log('🚀 Preprocessing initialized with config:', currentConfig);
-    console.log('🎛️ Feature flags:', FEATURE_FLAGS);
+    console.log('🚀 Preprocessing initialized with config:', currentConfig)
+    console.log('🎛️ Feature flags:', FEATURE_FLAGS)
   }
 }
 
 // Initialize on module load
-initializePreprocessingConfig();
+initializePreprocessingConfig()

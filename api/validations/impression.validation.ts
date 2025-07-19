@@ -1,7 +1,7 @@
-import Validator, { ValidationError } from 'fastest-validator';
+import Validator, { ValidationError } from 'fastest-validator'
 
 export function validateGetEngagementRates(input: { url: string; startDate: string; endDate: string }): true | ValidationError[] {
-  const validator = new Validator();
+  const validator = new Validator()
 
   const schema = {
     url: {
@@ -32,17 +32,17 @@ export function validateGetEngagementRates(input: { url: string; startDate: stri
         stringPattern: 'End date must be in YYYY-MM-DD format',
       },
     },
-  };
+  }
 
-  const result = validator.validate(input, schema);
+  const result = validator.validate(input, schema)
 
-  if (result === true) return true;
+  if (result === true) return true
 
-  return result as ValidationError[];
+  return result as ValidationError[]
 }
 
 export function validateFindImpressionsByURLAndDate(input: { url: string; startDate: Date; endDate: Date }): true | ValidationError[] {
-  const validator = new Validator();
+  const validator = new Validator()
 
   const schema = {
     url: {
@@ -69,17 +69,17 @@ export function validateFindImpressionsByURLAndDate(input: { url: string; startD
         date: 'End date must be a valid date',
       },
     },
-  };
+  }
 
-  const result = validator.validate(input, schema);
+  const result = validator.validate(input, schema)
 
-  if (result === true) return true;
+  if (result === true) return true
 
-  return result as ValidationError[];
+  return result as ValidationError[]
 }
 
 export function validateAddImpressionsURL(input: { ipAddress: string; url: string }): true | ValidationError[] {
-  const validator = new Validator();
+  const validator = new Validator()
 
   const schema = {
     ipAddress: {
@@ -106,17 +106,17 @@ export function validateAddImpressionsURL(input: { ipAddress: string; url: strin
         stringPattern: 'URL must be a valid domain (e.g., example.com, https://example.com)',
       },
     },
-  };
+  }
 
-  const result = validator.validate(input, schema);
+  const result = validator.validate(input, schema)
 
-  if (result === true) return true;
+  if (result === true) return true
 
-  return result as ValidationError[];
+  return result as ValidationError[]
 }
 
 export function validateAddProfileCount(input: { impressionId: number; profileCount: any }): true | ValidationError[] {
-  const validator = new Validator();
+  const validator = new Validator()
 
   const schema = {
     impressionId: {
@@ -136,17 +136,17 @@ export function validateAddProfileCount(input: { impressionId: number; profileCo
         object: 'Profile count must be an object',
       },
     },
-  };
+  }
 
-  const result = validator.validate(input, schema);
+  const result = validator.validate(input, schema)
 
-  if (result === true) return true;
+  if (result === true) return true
 
-  return result as ValidationError[];
+  return result as ValidationError[]
 }
 
 export function validateAddInteraction(input: { impressionId: number; interaction: string }): true | ValidationError[] {
-  const validator = new Validator();
+  const validator = new Validator()
 
   const schema = {
     impressionId: {
@@ -163,19 +163,19 @@ export function validateAddInteraction(input: { impressionId: number; interactio
       type: 'string',
       custom(value: string) {
         if (value !== 'widgetClosed' && value !== 'widgetOpened') {
-          return [{ type: 'stringEnum', message: 'Interaction must be either "widgetClosed" or "widgetOpened"' }];
+          return [{ type: 'stringEnum', message: 'Interaction must be either "widgetClosed" or "widgetOpened"' }]
         }
-        return true;
+        return true
       },
       messages: {
         string: 'Interaction must be a string',
       },
     },
-  };
+  }
 
-  const result = validator.validate(input, schema);
+  const result = validator.validate(input, schema)
 
-  if (result === true) return true;
+  if (result === true) return true
 
-  return result as ValidationError[];
+  return result as ValidationError[]
 }

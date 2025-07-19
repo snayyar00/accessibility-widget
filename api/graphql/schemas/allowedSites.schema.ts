@@ -1,4 +1,4 @@
-import { gql } from 'apollo-server-express';
+import { gql } from 'apollo-server-express'
 
 export const AllowedSitesSchema = gql`
   type Site {
@@ -21,4 +21,4 @@ export const AllowedSitesSchema = gql`
     deleteSite(url: String!): Int! @rateLimit(limit: 10, duration: 60, message: "Too many site deletions. Please try again later.")
     changeURL(newURL: String!, siteId: Int!): String @rateLimit(limit: 10, duration: 60, message: "Too many URL changes. Please try again later.")
   }
-`;
+`

@@ -1,29 +1,30 @@
-import { ValidationError } from 'apollo-server-express';
-import compileEmailTemplate from '../../helpers/compile-email-template';
-import { sendMail } from "../email/email.service";
-import { addProblemReport, problemReportProps } from '../../repository/problem_reports.repository';
-import { FindAllowedSitesProps, findSiteByURL } from '../../repository/sites_allowed.repository';
-import { validateReportProblem } from '../../validations/reportProblem.validation';
+import { ValidationError } from 'apollo-server-express'
+
+import compileEmailTemplate from '../../helpers/compile-email-template'
+import { addProblemReport, problemReportProps } from '../../repository/problem_reports.repository'
+import { FindAllowedSitesProps, findSiteByURL } from '../../repository/sites_allowed.repository'
+import { validateReportProblem } from '../../validations/reportProblem.validation'
+import { sendMail } from '../email/email.service'
 
 export async function handleReportProblem(site_url: string, issue_type: string, description: string, reporter_email: string): Promise<string> {
-  const validateResult = validateReportProblem({ site_url, issue_type, description, reporter_email });
+  const validateResult = validateReportProblem({ site_url, issue_type, description, reporter_email })
 
   if (Array.isArray(validateResult) && validateResult.length) {
-    throw new ValidationError(validateResult.map((it) => it.message).join(','));
+    throw new ValidationError(validateResult.map((it) => it.message).join(','))
   }
 
   try {
-    const year = new Date().getFullYear();
-    const domain = site_url.replace(/^(https?:\/\/)?(www\.)?/, '');
-    const site: FindAllowedSitesProps = await findSiteByURL(domain);
+    const year = new Date().getFullYear()
+    const domain = site_url.replace(/^(https?:\/\/)?(www\.)?/, '')
+    const site: FindAllowedSitesProps = await findSiteByURL(domain)
 
     if (!site) {
-      return 'Site not found';
+      return 'Site not found'
     }
 
-    const problem: problemReportProps = { site_id: site.id, issue_type: issue_type as 'bug' | 'accessibility', description, reporter_email };
+    const problem: problemReportProps = { site_id: site.id, issue_type: issue_type as 'bug' | 'accessibility', description, reporter_email }
 
-    await addProblemReport(problem);
+    await addProblemReport(problem)
 
     const template = await compileEmailTemplate({
       fileName: 'reportProblem.mjml',
@@ -32,15 +33,15 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
         description: problem.description,
         year,
       },
-    });
+    })
 
     sendMail(problem.reporter_email, 'Report a problem', template)
       .then(() => console.log('Mail sent successfully'))
-      .catch((mailError) => console.error('Error sending mail:', mailError));
+      .catch((mailError) => console.error('Error sending mail:', mailError))
 
-    return 'Problem reported successfully';
+    return 'Problem reported successfully'
   } catch (error) {
-    console.error('Error reporting problem:', error);
-    return 'Cannot report problem';
+    console.error('Error reporting problem:', error)
+    return 'Cannot report problem'
   }
 }

@@ -1,8 +1,8 @@
-import database from '../config/database.config';
-import { TABLES } from '../constants/database.constant';
-import { siteColumns } from './sites_allowed.repository';
+import database from '../config/database.config'
+import { TABLES } from '../constants/database.constant'
+import { siteColumns } from './sites_allowed.repository'
 
-const TABLE = TABLES.visitors;
+const TABLE = TABLES.visitors
 
 export const visitorColumns = {
   id: 'unique_visitors.id',
@@ -13,33 +13,33 @@ export const visitorColumns = {
   zipcode: 'unique_visitors.zipcode',
   continent: 'unique_visitors.continent',
   first_visit: 'unique_visitors.first_visit',
-};
+}
 
 export type VisitorInfo = {
-  id?: number;
-  site_id?: number;
-  ip_address?: string;
-  city?: string;
-  country?: string;
-  zipcode?: string;
-  continent?: string;
-  first_visit?: string;
-};
+  id?: number
+  site_id?: number
+  ip_address?: string
+  city?: string
+  country?: string
+  zipcode?: string
+  continent?: string
+  first_visit?: string
+}
 
 export type FindVisitorsBySiteId = {
-  id: number;
-  siteId: number;
-  ipAddress: string;
-  city: string;
-  country: string;
-  zipcode: string;
-  continent: string;
-  firstVisit: string;
-};
+  id: number
+  siteId: number
+  ipAddress: string
+  city: string
+  country: string
+  zipcode: string
+  continent: string
+  firstVisit: string
+}
 
 export type FindVisitorsResponse = FindVisitorsBySiteId[] & {
-  count: number;
-};
+  count: number
+}
 
 /**
  * Insert Document
@@ -52,9 +52,9 @@ export async function insertVisitor(data: VisitorInfo): Promise<number[]> {
   const exisitingVisitors = await database(TABLE)
     .select(visitorColumns)
     .where({ [visitorColumns.ip_address]: data.ip_address, [visitorColumns.site_id]: data.site_id })
-    .first();
-  if (exisitingVisitors !== undefined) return [0];
-  return database(TABLE).insert(data).onConflict(['unique_visitors.ip_address', 'unique_visitors.site_id']).ignore();
+    .first()
+  if (exisitingVisitors !== undefined) return [0]
+  return database(TABLE).insert(data).onConflict(['unique_visitors.ip_address', 'unique_visitors.site_id']).ignore()
 }
 
 /**
@@ -68,7 +68,7 @@ export async function findVisitorBySiteId(id: number) {
   const visitors = await database(TABLE)
     .join(TABLES.allowed_sites, visitorColumns.site_id, siteColumns.id)
     .select(visitorColumns, `${siteColumns.url} as site`)
-    .where({ [visitorColumns.site_id]: id });
+    .where({ [visitorColumns.site_id]: id })
   return visitors.map((visitor) => ({
     id: visitor.id,
     siteId: visitor.site_id, // Mapping from 'site_id' to 'siteId'
@@ -78,13 +78,13 @@ export async function findVisitorBySiteId(id: number) {
     zipcode: visitor.zipcode,
     continent: visitor.continent,
     firstVisit: visitor.first_visit, // Mapping from 'first_visit' to 'firstVisit'
-  }));
+  }))
 }
 export async function findVisitorByURL(url: string) {
   const visitors = await database(TABLE)
     .join(TABLES.allowed_sites, visitorColumns.site_id, siteColumns.id)
     .select(visitorColumns, `${siteColumns.url} as site`)
-    .where({ [siteColumns.url]: url });
+    .where({ [siteColumns.url]: url })
   return visitors.map((visitor) => ({
     id: visitor.id,
     siteId: visitor.site_id, // Mapping from 'site_id' to 'siteId'
@@ -94,7 +94,7 @@ export async function findVisitorByURL(url: string) {
     zipcode: visitor.zipcode,
     continent: visitor.continent,
     firstVisit: visitor.first_visit, // Mapping from 'first_visit' to 'firstVisit'
-  }));
+  }))
 }
 
 export async function findVisitorByURLDate(url: string, startDate: Date, endDate: Date) {
@@ -103,7 +103,7 @@ export async function findVisitorByURLDate(url: string, startDate: Date, endDate
     .select(visitorColumns, `${siteColumns.url} as site`)
     .where({ [siteColumns.url]: url })
     .andWhere(visitorColumns.first_visit, '>=', startDate)
-    .andWhere(visitorColumns.first_visit, '<=', endDate);
+    .andWhere(visitorColumns.first_visit, '<=', endDate)
 
   return visitors.map((visitor) => ({
     id: visitor.id,
@@ -114,7 +114,7 @@ export async function findVisitorByURLDate(url: string, startDate: Date, endDate
     zipcode: visitor.zipcode,
     continent: visitor.continent,
     firstVisit: visitor.first_visit, // Mapping from 'first_visit' to 'firstVisit'
-  }));
+  }))
 }
 
 /**
@@ -129,7 +129,7 @@ export async function findVisitorByIp(ip_address: string) {
   const visitor = await database(TABLE)
     .select(visitorColumns)
     .where({ [visitorColumns.ip_address]: ip_address })
-    .first();
+    .first()
   if (visitor) {
     return {
       id: visitor.id,
@@ -140,10 +140,9 @@ export async function findVisitorByIp(ip_address: string) {
       zipcode: visitor.zipcode,
       continent: visitor.continent,
       firstVisit: visitor.first_visit,
-    };
-  } 
-  return undefined;
-  
+    }
+  }
+  return undefined
 }
 
 /**
@@ -156,16 +155,16 @@ export async function findVisitorByIp(ip_address: string) {
 export function updateVisitorByIp(ip_address: string, data: VisitorInfo): Promise<number> {
   return database(TABLE)
     .where({ [visitorColumns.ip_address]: ip_address })
-    .update(data);
+    .update(data)
 }
 
 export function deleteVisitorId(id: number): Promise<any> {
   return database(TABLE)
     .where({ [visitorColumns.id]: id })
-    .del();
+    .del()
 }
 export function deleteVisitorIp(ip_address: string): Promise<any> {
   return database(TABLE)
     .where({ [visitorColumns.ip_address]: ip_address })
-    .del();
+    .del()
 }

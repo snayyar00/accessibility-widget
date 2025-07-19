@@ -1,11 +1,12 @@
-import { Router } from 'express';
-import { strictLimiter } from '../middlewares/limiters.middleware';
-import { isAuthenticated } from '../middlewares/auth.middleware';
-import { translateIssues, translateText } from '../controllers/translation.controller';
+import { Router } from 'express'
 
-const router = Router();
+import { translateIssues, translateText } from '../controllers/translation.controller'
+import { isAuthenticated } from '../middlewares/auth.middleware'
+import { strictLimiter } from '../middlewares/limiters.middleware'
 
-router.post('/translate', strictLimiter, isAuthenticated, translateIssues);
-router.post('/translate-text', strictLimiter, isAuthenticated, translateText);
+const router = Router()
 
-export default router;
+router.post('/translate', strictLimiter, isAuthenticated, translateIssues)
+router.post('/translate-text', strictLimiter, isAuthenticated, translateText)
+
+export default router

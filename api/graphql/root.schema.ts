@@ -1,15 +1,15 @@
-import { gql } from 'apollo-server-express';
+import { gql } from 'apollo-server-express'
 
-import { UserSchema } from './schemas/user.schema';
-import { ImpressionsSchema } from './schemas/impressions.schema';
-import { AllowedSitesSchema } from './schemas/allowedSites.schema';
-import { UniqueVisitorSchema } from './schemas/uniqueVisitor.schema';
-import { AccessibilitySchema } from './schemas/accessibilityReport.schema';
-import { UniqueTokenSchema } from './schemas/uniqueToken.schema';
-import { SitesPlanSchema } from './schemas/sitesPlan.schema';
-import { reportProblemSchema } from './schemas/reportProblem.schema';
-import { TranslationSchema } from './schemas/translation.schema';
-import { OrganizationSchema } from './schemas/organization.schema';
+import { AccessibilitySchema } from './schemas/accessibilityReport.schema'
+import { AllowedSitesSchema } from './schemas/allowedSites.schema'
+import { ImpressionsSchema } from './schemas/impressions.schema'
+import { OrganizationSchema } from './schemas/organization.schema'
+import { reportProblemSchema } from './schemas/reportProblem.schema'
+import { SitesPlanSchema } from './schemas/sitesPlan.schema'
+import { TranslationSchema } from './schemas/translation.schema'
+import { UniqueTokenSchema } from './schemas/uniqueToken.schema'
+import { UniqueVisitorSchema } from './schemas/uniqueVisitor.schema'
+import { UserSchema } from './schemas/user.schema'
 
 const rootSchema = gql`
   scalar Date
@@ -27,6 +27,7 @@ const rootSchema = gql`
   type Subscription {
     _: Boolean
   }
-`;
+`
 
-export default [rootSchema, UserSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, UniqueTokenSchema, SitesPlanSchema, reportProblemSchema, OrganizationSchema, TranslationSchema];
+// eslint-disable-next-line import/no-anonymous-default-export
+export default [rootSchema, UserSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, UniqueTokenSchema, SitesPlanSchema, reportProblemSchema, OrganizationSchema, TranslationSchema]

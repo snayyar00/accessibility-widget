@@ -12,8 +12,8 @@
     "db:create": "knex migrate:make --knexfile config/knexfile.ts",
     "db:down": "knex migrate:down --knexfile config/knexfile.ts",
     "db:seed": "knex seed:run --knexfile config/knexfile.ts",
-    "lint": "eslint --ext .ts .",
-    "lint:fix": "eslint --ext .ts . --fix"
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.817.0",
@@ -63,6 +63,7 @@
   "devDependencies": {
     "@graphql-tools/schema": "^10.0.6",
     "@graphql-tools/utils": "^10.1.2",
+    "@next/eslint-plugin-next": "^15.4.2",
     "@types/bcryptjs": "^2.4.2",
     "@types/bunyan": "^1.8.7",
     "@types/cookie-parser": "^1.4.2",
@@ -75,18 +76,21 @@
     "@types/morgan": "^1.9.3",
     "@types/node": "^20.14.12",
     "@types/node-cron": "^3.0.11",
-    "@typescript-eslint/eslint-plugin": "^7.17.0",
-    "@typescript-eslint/parser": "^7.17.0",
+    "@typescript-eslint/eslint-plugin": "^8.37.0",
+    "@typescript-eslint/parser": "^8.37.0",
     "axios": "^1.6.8",
     "cpx": "^1.5.0",
     "cross-env": "^7.0.3",
-    "eslint": "^8.57.0",
+    "eslint": "^9.31.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^18.0.0",
+    "eslint-config-next": "^15.4.2",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
     "husky": "^4.3.0",
+    "next": "^15.4.2",
     "nodemon": "^2.0.22",
     "prettier": "^3.3.3",
     "tsconfig-paths": "^4.2.0"

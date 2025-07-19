@@ -1,4 +1,4 @@
-import { gql } from 'apollo-server-express';
+import { gql } from 'apollo-server-express'
 
 export const UserSchema = gql`
   enum BillingType {
@@ -52,4 +52,4 @@ export const UserSchema = gql`
 
     logout: Boolean!
   }
-`;
+`

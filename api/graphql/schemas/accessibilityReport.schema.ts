@@ -1,4 +1,4 @@
-import { gql } from 'apollo-server-express';
+import { gql } from 'apollo-server-express'
 
 export const AccessibilitySchema = gql`
   type TemplateInfo {
@@ -114,7 +114,7 @@ export const AccessibilitySchema = gql`
 
   type HumanFunctionality {
     FunctionalityName: String
-    Errors: [htmlCsOutput] 
+    Errors: [htmlCsOutput]
   }
 
   type Report {
@@ -159,22 +159,22 @@ export const AccessibilitySchema = gql`
   }
 
   extend type Report {
-  issues: [Issue!]
-  issuesByFunction: JSON
-  functionalityNames: [String!]
-  totalStats: JSON
-}
+    issues: [Issue!]
+    issuesByFunction: JSON
+    functionalityNames: [String!]
+    totalStats: JSON
+  }
 
-type Issue {
-  functionality: String
-  impact: String
-  message: String
-  context: [String]
-  selectors: [String]
-  description: String
-  recommended_action: String
-  screenshotUrl: String
-}
+  type Issue {
+    functionality: String
+    impact: String
+    message: String
+    context: [String]
+    selectors: [String]
+    description: String
+    recommended_action: String
+    screenshotUrl: String
+  }
 
   type AccessibilityReportMeta {
     id: Int!
@@ -201,12 +201,12 @@ type Issue {
 
   extend type Query {
     getAccessibilityReport(url: String!): Report @rateLimit(limit: 3, duration: 60, message: "Too many requests. Please try again in a minute.")
-    fetchAccessibilityReportFromR2(url: String! created_at: String updated_at: String): [AccessibilityReportTableRow!]! @rateLimit(limit: 60, duration: 60, message: "Too many R2 report requests. Please try again later.")
+    fetchAccessibilityReportFromR2(url: String!, created_at: String, updated_at: String): [AccessibilityReportTableRow!]! @rateLimit(limit: 60, duration: 60, message: "Too many R2 report requests. Please try again later.")
     fetchReportByR2Key(r2_key: String!): Report @rateLimit(limit: 20, duration: 60, message: "Too many R2 key report requests. Please try again later.")
   }
 
   extend type Mutation {
-    saveAccessibilityReport(report: JSON! url: String! allowed_sites_id: Int key: String score: JSON): SaveReportResponse! @rateLimit(limit: 10, duration: 60, message: "Too many save report requests. Please try again later.")
-    deleteAccessibilityReport(r2_key: String!): Boolean! @rateLimit(limit: 10, duration: 60, message: "Too many delete report requests. Please try again later.")   
+    saveAccessibilityReport(report: JSON!, url: String!, allowed_sites_id: Int, key: String, score: JSON): SaveReportResponse! @rateLimit(limit: 10, duration: 60, message: "Too many save report requests. Please try again later.")
+    deleteAccessibilityReport(r2_key: String!): Boolean! @rateLimit(limit: 10, duration: 60, message: "Too many delete report requests. Please try again later.")
   }
-`;
+`

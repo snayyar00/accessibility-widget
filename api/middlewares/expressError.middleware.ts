@@ -1,13 +1,20 @@
-import { Request, Response, NextFunction } from 'express';
-import accessLogStream from '../libs/logger/stream';
-import { getOperationName } from '../utils/logger.utils';
+import { NextFunction, Request, Response } from 'express'
 
-export const expressErrorMiddleware = (error: any, req: Request, res: Response, next: NextFunction) => {
+import accessLogStream from '../libs/logger/stream'
+import { getOperationName } from '../utils/logger.utils'
+
+interface ErrorWithStatus extends Error {
+  status?: number
+  statusCode?: number
+  code?: string
+}
+
+export const expressErrorMiddleware = (error: ErrorWithStatus, req: Request, res: Response, _next: NextFunction) => {
   // Calculate response time if not available
-  const responseTime = Date.now() - (req as any).startTime || 0;
+  const responseTime = Date.now() - (req as Request & { startTime?: number }).startTime || 0
 
-  const statusCode = error.status || error.statusCode || 500;
-  const contentLength = 0; // Error responses typically have minimal content
+  const statusCode = error.status || error.statusCode || 500
+  const contentLength = 0 // Error responses typically have minimal content
 
   const errorLog = JSON.stringify({
     timestamp: new Date().toISOString(),
@@ -24,10 +31,10 @@ export const expressErrorMiddleware = (error: any, req: Request, res: Response, 
       code: error.code || 'INTERNAL_ERROR',
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
     },
-  });
+  })
 
   if (accessLogStream) {
-    accessLogStream.write(`${errorLog  }\n`);
+    accessLogStream.write(`${errorLog}\n`)
   } else {
     // console.log(errorLog);
   }
@@ -36,6 +43,6 @@ export const expressErrorMiddleware = (error: any, req: Request, res: Response, 
   if (!res.headersSent) {
     res.status(statusCode).json({
       error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
-    });
+    })
   }
-};
+}

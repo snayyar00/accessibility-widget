@@ -17,6 +17,6 @@ export const TABLES = {
   cancelFeedback: 'cancel_feedback',
   organizations: 'organizations',
   organization_users: 'organization_users',
-};
+}
 
-export const DEFAULT_LIMIT = 25;
+export const DEFAULT_LIMIT = 25

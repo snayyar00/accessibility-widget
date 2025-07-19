@@ -1,8 +1,8 @@
-import bunyan from 'bunyan';
-import fs from 'fs';
+import bunyan from 'bunyan'
+import fs from 'fs'
 
 // Environment-based logging control - FIXED
-const isDevelopment = process.env.NODE_ENV === 'development';
+const isDevelopment = process.env.NODE_ENV === 'development'
 
 // Store original console methods
 const originalConsole = {
@@ -12,14 +12,14 @@ const originalConsole = {
   error: console.error,
   debug: console.debug,
   trace: console.trace,
-};
+}
 
-let logger: bunyan | null = null;
+let logger: bunyan | null = null
 
 // Only create bunyan logger in non-development environments
 if (!isDevelopment) {
   // Create logs directory if it doesn't exist
-  fs.existsSync('logs') || fs.mkdirSync('logs');
+  fs.existsSync('logs') || fs.mkdirSync('logs')
 
   // Create the main logger
   logger = bunyan.createLogger({
@@ -47,96 +47,96 @@ if (!isDevelopment) {
         count: 3,
       },
     ],
-  });
+  })
 }
 
 // Create a wrapper for console methods
 const consoleWrapper = {
   log: (...args: unknown[]) => {
     if (isDevelopment) {
-      originalConsole.log(...args);
+      originalConsole.log(...args)
     } else if (logger) {
-      logger.info(args.join(' '));
+      logger.info(args.join(' '))
     }
   },
   info: (...args: unknown[]) => {
     if (isDevelopment) {
-      originalConsole.info(...args);
+      originalConsole.info(...args)
     } else if (logger) {
-      logger.info(args.join(' '));
+      logger.info(args.join(' '))
     }
   },
   warn: (...args: unknown[]) => {
     if (isDevelopment) {
-      originalConsole.warn(...args);
+      originalConsole.warn(...args)
     } else if (logger) {
-      logger.warn(args.join(' '));
+      logger.warn(args.join(' '))
     }
   },
   error: (...args: unknown[]) => {
     if (isDevelopment) {
-      originalConsole.error(...args);
+      originalConsole.error(...args)
     } else if (logger) {
-      logger.error(args.join(' '));
+      logger.error(args.join(' '))
     }
   },
   debug: (...args: unknown[]) => {
     if (isDevelopment) {
-      originalConsole.debug(...args);
+      originalConsole.debug(...args)
     } else if (logger) {
-      logger.debug(args.join(' '));
+      logger.debug(args.join(' '))
     }
   },
   trace: (...args: unknown[]) => {
     if (isDevelopment) {
-      originalConsole.trace(...args);
+      originalConsole.trace(...args)
     } else if (logger) {
-      logger.trace(args.join(' '));
+      logger.trace(args.join(' '))
     }
   },
-};
+}
 
 // Override global console
-global.console = consoleWrapper as any;
+global.console = consoleWrapper as any
 
 // Create a safe logger wrapper that handles null case in development
 const safeLogger = {
   info: (msg: any, ...args: any[]) => {
     if (isDevelopment) {
-      originalConsole.info(msg, ...args);
+      originalConsole.info(msg, ...args)
     } else if (logger) {
-      logger.info(msg, ...args);
+      logger.info(msg, ...args)
     }
   },
   warn: (msg: any, ...args: any[]) => {
     if (isDevelopment) {
-      originalConsole.warn(msg, ...args);
+      originalConsole.warn(msg, ...args)
     } else if (logger) {
-      logger.warn(msg, ...args);
+      logger.warn(msg, ...args)
     }
   },
   error: (msg: any, ...args: any[]) => {
     if (isDevelopment) {
-      originalConsole.error(msg, ...args);
+      originalConsole.error(msg, ...args)
     } else if (logger) {
-      logger.error(msg, ...args);
+      logger.error(msg, ...args)
     }
   },
   debug: (msg: any, ...args: any[]) => {
     if (isDevelopment) {
-      originalConsole.debug(msg, ...args);
+      originalConsole.debug(msg, ...args)
     } else if (logger) {
-      logger.debug(msg, ...args);
+      logger.debug(msg, ...args)
     }
   },
   trace: (msg: any, ...args: any[]) => {
     if (isDevelopment) {
-      originalConsole.trace(msg, ...args);
+      originalConsole.trace(msg, ...args)
     } else if (logger) {
-      logger.trace(msg, ...args);
+      logger.trace(msg, ...args)
     }
   },
-};
+}
 
 // Export safe logger (works in both development and production)
-export default safeLogger;
+export default safeLogger

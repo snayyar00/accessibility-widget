@@ -1,7 +1,7 @@
-import xss from 'xss';
-import LinkifyIt from 'linkify-it';
+import LinkifyIt from 'linkify-it'
+import xss from 'xss'
 
-const linkify = new LinkifyIt();
+const linkify = new LinkifyIt()
 
 /**
  * Sanitizes input to prevent XSS attacks
@@ -10,14 +10,14 @@ const linkify = new LinkifyIt();
  */
 export function sanitizeInput(input: string): string {
   if (!input || typeof input !== 'string') {
-    return '';
+    return ''
   }
 
   return xss(input, {
     whiteList: {}, // No HTML tags allowed
     stripIgnoreTag: true,
     stripIgnoreTagBody: ['script'],
-  });
+  })
 }
 
 /**
@@ -27,16 +27,16 @@ export function sanitizeInput(input: string): string {
  */
 export function validateNoLinks(text: string): boolean {
   if (!text || typeof text !== 'string') {
-    return true;
+    return true
   }
 
   // Check for URLs using linkify-it
-  const matches = linkify.match(text);
+  const matches = linkify.match(text)
   if (matches && matches.length > 0) {
-    return false; // Contains links - not allowed
+    return false // Contains links - not allowed
   }
 
-  return true;
+  return true
 }
 
 /**
@@ -46,7 +46,7 @@ export function validateNoLinks(text: string): boolean {
  */
 export function validateNoMaliciousPatterns(text: string): boolean {
   if (!text || typeof text !== 'string') {
-    return true;
+    return true
   }
 
   // Patterns to detect malicious content
@@ -60,16 +60,16 @@ export function validateNoMaliciousPatterns(text: string): boolean {
     /\bunion\b[\s\S]*?\bselect\b/gi,
     /\bor\s+\d+\s*=\s*\d+/gi,
     /--|\/\*|\*\//g,
-  ];
+  ]
 
   // Check for malicious patterns
   for (const pattern of maliciousPatterns) {
     if (pattern.test(text)) {
-      return false;
+      return false
     }
   }
 
-  return true;
+  return true
 }
 
 /**
@@ -78,7 +78,7 @@ export function validateNoMaliciousPatterns(text: string): boolean {
  * @returns true if valid, false if contains links or malicious content
  */
 export function validateNameField(name: string): boolean {
-  return validateNoLinks(name) && validateNoMaliciousPatterns(name);
+  return validateNoLinks(name) && validateNoMaliciousPatterns(name)
 }
 
 /**
@@ -88,11 +88,11 @@ export function validateNameField(name: string): boolean {
  */
 export function validateEmailNotAlias(email: string): boolean {
   if (!email || typeof email !== 'string') {
-    return false;
+    return false
   }
 
   // Simply reject any email containing + symbol
-  return !email.includes('+');
+  return !email.includes('+')
 }
 
 /**
@@ -100,28 +100,22 @@ export function validateEmailNotAlias(email: string): boolean {
  * @param data - Object containing user input fields
  * @returns Sanitized data object
  */
-export function sanitizeUserInput(data: {
-  name?: string;
-  email?: string;
-  company?: string;
-  position?: string;
-  [key: string]: any;
-}) {
-  const sanitized: any = { ...data };
+export function sanitizeUserInput(data: { name?: string; email?: string; company?: string; position?: string; [key: string]: any }) {
+  const sanitized: any = { ...data }
 
   // Sanitize text fields
   if (sanitized.name) {
-    sanitized.name = sanitizeInput(sanitized.name);
+    sanitized.name = sanitizeInput(sanitized.name)
   }
   if (sanitized.email) {
-    sanitized.email = sanitizeInput(sanitized.email);
+    sanitized.email = sanitizeInput(sanitized.email)
   }
   if (sanitized.company) {
-    sanitized.company = sanitizeInput(sanitized.company);
+    sanitized.company = sanitizeInput(sanitized.company)
   }
   if (sanitized.position) {
-    sanitized.position = sanitizeInput(sanitized.position);
+    sanitized.position = sanitizeInput(sanitized.position)
   }
 
-  return sanitized;
-} 
+  return sanitized
+}

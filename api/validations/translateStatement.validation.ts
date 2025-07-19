@@ -1,12 +1,7 @@
-import Validator, { ValidationError } from 'fastest-validator';
+import Validator, { ValidationError } from 'fastest-validator'
 
-export function validateTranslateStatement(input: {
-  content: string | { [key: string]: string };
-  targetLanguage: string;
-  languageCode: string;
-  context?: string;
-}): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator();
+export function validateTranslateStatement(input: { content: string | { [key: string]: string }; targetLanguage: string; languageCode: string; context?: string }): true | ValidationError[] | Promise<true | ValidationError[]> {
+  const validator = new Validator()
 
   const schema = {
     content: {
@@ -49,7 +44,7 @@ export function validateTranslateStatement(input: {
         stringMax: 'Context is too long',
       },
     },
-  };
+  }
 
-  return validator.validate(input, schema);
+  return validator.validate(input, schema)
 }

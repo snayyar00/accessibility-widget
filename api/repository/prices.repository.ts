@@ -1,18 +1,19 @@
-import Knex from 'knex';
-import database from '../config/database.config';
-import { TABLES } from '../constants/database.constant';
+import Knex from 'knex'
+
+import database from '../config/database.config'
+import { TABLES } from '../constants/database.constant'
 
 export type Price = {
-  id?: number;
-  amount?: number;
-  type?: string;
-  stripe_id?: string;
-  product_id?: number;
-  created_at?: string;
-  updated_at?: string;
-};
+  id?: number
+  amount?: number
+  type?: string
+  stripe_id?: string
+  product_id?: number
+  created_at?: string
+  updated_at?: string
+}
 
-const TABLE = TABLES.prices;
+const TABLE = TABLES.prices
 
 export const priceColumns = {
   id: 'prices.id',
@@ -22,12 +23,12 @@ export const priceColumns = {
   productId: 'prices.product_id',
   createAt: 'prices.created_at',
   updatedAt: 'prices.updated_at',
-};
+}
 
 export function insertPrice(priceData: Price[] = [], transaction: Knex.Transaction): Promise<number[]> {
-  return database(TABLE).insert(priceData).transacting(transaction);
+  return database(TABLE).insert(priceData).transacting(transaction)
 }
 
 export function findPriceById(ID: number): Promise<Price> {
-  return database(TABLE).where({ ID }).first();
+  return database(TABLE).where({ ID }).first()
 }

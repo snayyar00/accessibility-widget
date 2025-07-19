@@ -1,27 +1,28 @@
-import { Request, Response } from 'express';
-import Stripe from 'stripe';
-import { UserProfile } from '../../repository/user.repository';
-import { findSiteByURL } from '../../repository/sites_allowed.repository';
-import { findProductAndPriceByType } from '../../repository/products.repository';
-import { getSitesPlanByUserId, getSitePlanBySiteId } from '../../repository/sites_plans.repository';
-import { createSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service';
-import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from '../../constants/billing.constant';
-import findPromo from '../../services/stripe/findPromo';
-import { appSumoPromoCount } from '../../utils/appSumoPromoCount';
-import { expireUsedPromo } from '../../utils/expireUsedPromo';
-import { getUserTokens } from '../../repository/user_plan_tokens.repository';
-import { customTokenCount } from '../../utils/customTokenCount';
+import { Request, Response } from 'express'
+import Stripe from 'stripe'
 
-const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
+import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from '../../constants/billing.constant'
+import { findProductAndPriceByType } from '../../repository/products.repository'
+import { findSiteByURL } from '../../repository/sites_allowed.repository'
+import { getSitePlanBySiteId, getSitesPlanByUserId } from '../../repository/sites_plans.repository'
+import { getUserTokens } from '../../repository/user_plan_tokens.repository'
+import { createSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service'
+import findPromo from '../../services/stripe/findPromo'
+import { appSumoPromoCount } from '../../utils/appSumoPromoCount'
+import { customTokenCount } from '../../utils/customTokenCount'
+import { expireUsedPromo } from '../../utils/expireUsedPromo'
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
 export async function createSubscription(req: Request, res: Response) {
-  const { planName, billingInterval, domainId, domainUrl, cardTrial, promoCode } = req.body;
+  const { planName, billingInterval, domainId, domainUrl, cardTrial, promoCode } = req.body
 
-  const {user} = (req as any);
-  const site = await findSiteByURL(domainUrl);
+  const { user } = req as any
+  const site = await findSiteByURL(domainUrl)
 
   if (!site || site.user_id !== user.id) {
-    return res.status(403).json({ error: 'User does not own this domain' });
+    return res.status(403).json({ error: 'User does not own this domain' })
   }
 
   const [price, sites, customers] = await Promise.all([
@@ -31,31 +32,31 @@ export async function createSubscription(req: Request, res: Response) {
       email: user.email,
       limit: 1,
     }),
-  ]);
+  ])
 
-  const sub_id = sites[0]?.subcriptionId;
+  const sub_id = sites[0]?.subcriptionId
 
-  let no_sub = false;
-  let subscription;
+  let no_sub = false
+  let subscription
 
   if (sub_id == undefined) {
-    no_sub = true;
+    no_sub = true
   } else {
     try {
-      subscription = (await stripe.subscriptions.retrieve(sub_id, { active: true })) as Stripe.Subscription;
-    } catch (error) {
-      no_sub = true;
+      subscription = (await stripe.subscriptions.retrieve(sub_id, { active: true })) as Stripe.Subscription
+    } catch {
+      no_sub = true
     }
   }
 
   try {
-    let customer;
+    let customer
 
     // Check if customer exists
     if (customers.data.length > 0) {
-      customer = customers.data[0];
+      customer = customers.data[0]
     } else {
-      return res.status(404).json({ error: 'Customer not found' });
+      return res.status(404).json({ error: 'Customer not found' })
     }
 
     const [subscriptions, price_data] = await Promise.all([
@@ -64,33 +65,33 @@ export async function createSubscription(req: Request, res: Response) {
         limit: 100,
       }),
       stripe.prices.retrieve(String(price.price_stripe_id), { expand: ['tiers'] }),
-    ]);
+    ])
 
     if (subscriptions.data.length > 0) {
-      subscription = subscriptions.data[0];
-      no_sub = false;
+      subscription = subscriptions.data[0]
+      no_sub = false
     }
 
     if (!price_data?.tiers || price_data?.tiers?.length == 0) {
-      no_sub = true;
-      console.log('no tiers');
+      no_sub = true
+      console.log('no tiers')
     }
 
-    let cleanupPromises: Promise<void>[] = [];
+    let cleanupPromises: Promise<void>[] = []
 
     if (no_sub) {
-      let promoCodeData: Stripe.PromotionCode[] = [];
+      let promoCodeData: Stripe.PromotionCode[] = []
 
       if (promoCode && promoCode.length > 0 && typeof promoCode[0] !== 'number') {
-        const validCodesData: Stripe.PromotionCode[] = [];
-        const invalidCodes: string[] = [];
+        const validCodesData: Stripe.PromotionCode[] = []
+        const invalidCodes: string[] = []
 
         for (const code of promoCode) {
-          const found = await findPromo(stripe, code);
+          const found = await findPromo(stripe, code)
           if (found) {
-            validCodesData.push(found);
+            validCodesData.push(found)
           } else {
-            invalidCodes.push(code);
+            invalidCodes.push(code)
           }
         }
 
@@ -98,16 +99,16 @@ export async function createSubscription(req: Request, res: Response) {
           return res.json({
             valid: false,
             error: `Invalid Promo Code(s): ${invalidCodes.join(', ')}`,
-          });
+          })
         }
 
-        promoCodeData = validCodesData;
+        promoCodeData = validCodesData
       }
 
       if (typeof promoCode[0] === 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id))) {
-        const [{ orderedCodes, numPromoSites }, tokenUsed] = await Promise.all([appSumoPromoCount(subscriptions, promoCode, user.id), getUserTokens(user.id)]);
+        const [{ orderedCodes, numPromoSites }, tokenUsed] = await Promise.all([appSumoPromoCount(subscriptions, promoCode, user.id), getUserTokens(user.id)])
 
-        const { lastCustomCode, nonCustomCodes } = await customTokenCount(user.id, tokenUsed);
+        const { lastCustomCode, nonCustomCodes } = await customTokenCount(user.id, tokenUsed)
 
         subscription = await stripe.subscriptions.create({
           customer: customer.id,
@@ -122,11 +123,11 @@ export async function createSubscription(req: Request, res: Response) {
             usedDomains: 1,
           },
           description: `Plan for ${domainUrl}(${lastCustomCode ? [lastCustomCode, ...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
-        });
+        })
 
-        cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.email)];
+        cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.email)]
       } else if (promoCode && promoCode.length > 0) {
-        return res.json({ valid: false, error: 'Invalid promo code' });
+        return res.json({ valid: false, error: 'Invalid promo code' })
       } else if (cardTrial) {
         subscription = await stripe.subscriptions.create({
           trial_period_days: 30,
@@ -141,7 +142,7 @@ export async function createSubscription(req: Request, res: Response) {
             usedDomains: 1,
           },
           description: `Plan for ${domainUrl}`,
-        });
+        })
       } else {
         subscription = await stripe.subscriptions.create({
           customer: customer.id,
@@ -155,35 +156,35 @@ export async function createSubscription(req: Request, res: Response) {
             usedDomains: 1,
           },
           description: `Plan for ${domainUrl}`,
-        });
+        })
       }
 
       try {
-        const previous_plan = await getSitePlanBySiteId(Number(domainId));
-        cleanupPromises.push(deleteTrialPlan(previous_plan.id).then(() => {}));
-      } catch (error) {
+        const previous_plan = await getSitePlanBySiteId(Number(domainId))
+        cleanupPromises.push(deleteTrialPlan(previous_plan.id).then(() => {}))
+      } catch {
         // Previous plan doesn't exist, continue
       }
 
-      await Promise.all(cleanupPromises);
+      await Promise.all(cleanupPromises)
 
       if (promoCode && promoCode.length > 0) {
-        await createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), 'appsumo');
+        await createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), 'appsumo')
       } else {
-        await createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), '');
+        await createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), '')
       }
 
-      console.log('New Sub created');
-      res.status(200).json({ success: true });
+      console.log('New Sub created')
+      res.status(200).json({ success: true })
     } else if ('usedDomains' in subscription.metadata) {
-      const UsedDomains = Number(subscription.metadata.usedDomains);
+      const UsedDomains = Number(subscription.metadata.usedDomains)
 
       if (UsedDomains >= Number(subscription.metadata.maxDomains)) {
-        const metaData: any = subscription.metadata;
-        metaData.usedDomains = Number(UsedDomains + 1);
-        metaData.updateMetaData = true;
+        const metaData: any = subscription.metadata
+        metaData.usedDomains = Number(UsedDomains + 1)
+        metaData.updateMetaData = true
 
-        const newQuant = subscription.items.data[0].quantity + 1;
+        const newQuant = subscription.items.data[0].quantity + 1
 
         await stripe.subscriptions.update(subscription.id, {
           metadata: metaData,
@@ -193,53 +194,53 @@ export async function createSubscription(req: Request, res: Response) {
               quantity: newQuant,
             },
           ],
-        });
+        })
 
-        console.log('meta data updated');
+        console.log('meta data updated')
 
-        const cleanupPromisesSecond = [];
+        const cleanupPromisesSecond = []
         try {
-          const previous_plan = await getSitePlanBySiteId(Number(domainId));
-          cleanupPromisesSecond.push(deleteTrialPlan(previous_plan.id).then(() => {}));
-        } catch (error) {
+          const previous_plan = await getSitePlanBySiteId(Number(domainId))
+          cleanupPromisesSecond.push(deleteTrialPlan(previous_plan.id).then(() => {}))
+        } catch {
           // Previous plan doesn't exist, continue
         }
 
-        cleanupPromisesSecond.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''));
+        cleanupPromisesSecond.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''))
 
-        await Promise.all(cleanupPromisesSecond);
-        res.status(200).json({ success: true });
+        await Promise.all(cleanupPromisesSecond)
+        res.status(200).json({ success: true })
       } else {
-        const metaData: any = subscription.metadata;
-        metaData.usedDomains = Number(UsedDomains + 1);
-        metaData.updateMetaData = true;
+        const metaData: any = subscription.metadata
+        metaData.usedDomains = Number(UsedDomains + 1)
+        metaData.updateMetaData = true
 
         await stripe.subscriptions.update(subscription.id, {
           metadata: metaData,
-        });
+        })
 
-        console.log('meta data updated');
+        console.log('meta data updated')
 
-        const cleanupPromisesThird = [];
+        const cleanupPromisesThird = []
         try {
-          const previous_plan = await getSitePlanBySiteId(Number(domainId));
-          cleanupPromisesThird.push(deleteTrialPlan(previous_plan.id).then(() => {}));
-        } catch (error) {
+          const previous_plan = await getSitePlanBySiteId(Number(domainId))
+          cleanupPromisesThird.push(deleteTrialPlan(previous_plan.id).then(() => {}))
+        } catch {
           // Previous plan doesn't exist, continue
         }
 
-        cleanupPromisesThird.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''));
+        cleanupPromisesThird.push(createSitesPlan(Number(user.id), String(subscription.id), planName, billingInterval, Number(domainId), ''))
 
-        await Promise.all(cleanupPromisesThird);
+        await Promise.all(cleanupPromisesThird)
 
-        console.log('Old Sub created');
-        res.status(200).json({ success: true });
+        console.log('Old Sub created')
+        res.status(200).json({ success: true })
       }
     } else {
-      res.status(500).json({ error: 'Meta Data Not Configured' });
+      res.status(500).json({ error: 'Meta Data Not Configured' })
     }
   } catch (error) {
-    console.log('erroring', error);
-    res.status(500).json({ error: (error as Error).message });
+    console.log('erroring', error)
+    res.status(500).json({ error: (error as Error).message })
   }
 }

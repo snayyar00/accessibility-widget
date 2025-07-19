@@ -54,12 +54,12 @@ export const TRANSLATION_CONFIG = {
     batchTimeout: 30000, // 30 seconds per batch
     retryFailedBatches: true,
   },
-};
+}
 
 // Environment-specific overrides
 if (process.env.NODE_ENV === 'development') {
-  TRANSLATION_CONFIG.model.timeout = 60000; // Extra long timeout in dev for debugging
-  TRANSLATION_CONFIG.monitoring.logSuccessfulTranslations = true;
+  TRANSLATION_CONFIG.model.timeout = 60000 // Extra long timeout in dev for debugging
+  TRANSLATION_CONFIG.monitoring.logSuccessfulTranslations = true
 }
 
 // Speed-optimized model alternatives (ordered by speed)
@@ -69,7 +69,7 @@ export const MODEL_TIERS = {
   balanced: 'google/gemini-pro-1.5', // High quality, 3-6s response
   premium: 'openai/gpt-4o', // Highest quality, 5-10s response
   anthropic: 'anthropic/claude-3-haiku', // Fast anthropic option
-} as const;
+} as const
 
 export const SUPPORTED_LANGUAGES = [
   'en',
@@ -114,4 +114,4 @@ export const SUPPORTED_LANGUAGES = [
   'da',
   'et',
   'ca',
-] as const;
+] as const

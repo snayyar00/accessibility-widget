@@ -1,11 +1,12 @@
-import { Router } from 'express';
-import { requireJsonContent } from '../middlewares/contentType.middleware';
-import { emailLimiter, moderateLimiter } from '../middlewares/limiters.middleware';
-import { handleFormSubmission, subscribeNewsletter } from '../controllers/form.controller';
+import { Router } from 'express'
 
-const router = Router();
+import { handleFormSubmission, subscribeNewsletter } from '../controllers/form.controller'
+import { requireJsonContent } from '../middlewares/contentType.middleware'
+import { emailLimiter, moderateLimiter } from '../middlewares/limiters.middleware'
 
-router.post('/form', requireJsonContent, emailLimiter, moderateLimiter, handleFormSubmission);
-router.post('/subscribe-newsletter', requireJsonContent, emailLimiter, moderateLimiter, subscribeNewsletter);
+const router = Router()
 
-export default router;
+router.post('/form', requireJsonContent, emailLimiter, moderateLimiter, handleFormSubmission)
+router.post('/subscribe-newsletter', requireJsonContent, emailLimiter, moderateLimiter, subscribeNewsletter)
+
+export default router

@@ -1,12 +1,12 @@
-import database from '../config/database.config';
+import database from '../config/database.config'
 
 export interface CancelFeedbackProps {
-  user_id: number;
-  user_feedback: string;
-  site_url: string;
-  stripe_customer_id?: string;
-  site_status_on_cancel: string;
-  deleted_at?: Date;
+  user_id: number
+  user_feedback: string
+  site_url: string
+  stripe_customer_id?: string
+  site_status_on_cancel: string
+  deleted_at?: Date
 }
 
 export const addCancelFeedback = async (feedbackData: CancelFeedbackProps): Promise<void> => {
@@ -20,27 +20,27 @@ export const addCancelFeedback = async (feedbackData: CancelFeedbackProps): Prom
       deleted_at: feedbackData.deleted_at || new Date(),
       created_at: new Date(),
       updated_at: new Date(),
-    });
+    })
   } catch (error) {
-    console.error('Error adding cancel feedback:', error);
-    throw error;
+    console.error('Error adding cancel feedback:', error)
+    throw error
   }
-};
+}
 
 export const getCancelFeedbackByUserId = async (userId: number) => {
   try {
-    return await database('cancel_feedback').where('user_id', userId).orderBy('created_at', 'desc');
+    return await database('cancel_feedback').where('user_id', userId).orderBy('created_at', 'desc')
   } catch (error) {
-    console.error('Error fetching cancel feedback:', error);
-    throw error;
+    console.error('Error fetching cancel feedback:', error)
+    throw error
   }
-};
+}
 
 export const getAllCancelFeedback = async () => {
   try {
-    return await database('cancel_feedback').orderBy('created_at', 'desc');
+    return await database('cancel_feedback').orderBy('created_at', 'desc')
   } catch (error) {
-    console.error('Error fetching all cancel feedback:', error);
-    throw error;
+    console.error('Error fetching all cancel feedback:', error)
+    throw error
   }
-};
+}

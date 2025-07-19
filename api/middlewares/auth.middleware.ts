@@ -1,7 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
-import accessLogStream from '../libs/logger/stream';
-import { getOperationName } from '../utils/logger.utils';
-import getUserLogined from '../services/authentication/get-user-logined.service';
+import { NextFunction, Request, Response } from 'express'
+
+import accessLogStream from '../libs/logger/stream'
+import getUserLogined from '../services/authentication/get-user-logined.service'
+import { getOperationName } from '../utils/logger.utils'
 
 export const logAuthenticationFailure = (req: Request, _: Response, message: string, code: string) => {
   const authLog = JSON.stringify({
@@ -19,32 +20,32 @@ export const logAuthenticationFailure = (req: Request, _: Response, message: str
       code,
       stack: process.env.NODE_ENV === 'development' ? undefined : undefined,
     },
-  });
+  })
 
   if (accessLogStream) {
-    accessLogStream.write(`${authLog  }\n`);
+    accessLogStream.write(`${authLog}\n`)
   } else {
     // console.log(authLog);
   }
-};
+}
 
 export async function isAuthenticated(req: Request, res: Response, next: NextFunction) {
-  const { cookies } = req;
-  const bearerToken = cookies.token || null;
+  const { cookies } = req
+  const bearerToken = cookies.token || null
 
   try {
-    const user = await getUserLogined(bearerToken, res);
+    const user = await getUserLogined(bearerToken, res)
 
     if (!user) {
-      logAuthenticationFailure(req, res, 'Authentication fail', 'UNAUTHENTICATED');
-      return res.status(401).json({ error: 'Not authenticated' });
+      logAuthenticationFailure(req, res, 'Authentication fail', 'UNAUTHENTICATED')
+      return res.status(401).json({ error: 'Not authenticated' })
     }
 
-    (req as any).user = user;
+    ;(req as any).user = user
 
-    next();
-  } catch (e) {
-    logAuthenticationFailure(req, res, 'Authentication fail', 'UNAUTHENTICATED');
-    return res.status(401).json({ error: 'Not authenticated' });
+    next()
+  } catch {
+    logAuthenticationFailure(req, res, 'Authentication fail', 'UNAUTHENTICATED')
+    return res.status(401).json({ error: 'Not authenticated' })
   }
 }

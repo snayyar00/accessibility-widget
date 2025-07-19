@@ -1,6 +1,7 @@
-import { combineResolvers } from 'graphql-resolvers';
-import { isAuthenticated } from './authorization.resolver';
-import { addSite, changeURL, deleteSite, findUserSites, isDomainAlreadyAdded } from '../../services/allowedSites/allowedSites.service';
+import { combineResolvers } from 'graphql-resolvers'
+
+import { addSite, changeURL, deleteSite, findUserSites, isDomainAlreadyAdded } from '../../services/allowedSites/allowedSites.service'
+import { isAuthenticated } from './authorization.resolver'
 
 const resolvers = {
   Query: {
@@ -15,6 +16,6 @@ const resolvers = {
 
     deleteSite: combineResolvers(isAuthenticated, (_, { url }, { user }) => deleteSite(user.id, url)),
   },
-};
+}
 
-export default resolvers;
+export default resolvers

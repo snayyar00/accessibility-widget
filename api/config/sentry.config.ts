@@ -1,5 +1,5 @@
-import { init } from '@sentry/node';
-import * as Sentry from '@sentry/node';
+import { init } from '@sentry/node'
+import * as Sentry from '@sentry/node'
 
 export function initializeSentry(serverName: string) {
   init({
@@ -11,5 +11,5 @@ export function initializeSentry(serverName: string) {
       new Sentry.Integrations.Http({ tracing: true }),
     ],
     attachStacktrace: true,
-  });
+  })
 }
