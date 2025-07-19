@@ -1,3 +1,5 @@
+import { Knex } from 'knex'
+
 import database from '../config/database.config'
 
 export interface FailedLoginAttempt {
@@ -15,7 +17,7 @@ export interface FailedLoginAttempt {
  * Increment failed login attempts for a user
  */
 export async function incrementFailedAttempts(userId: number): Promise<FailedLoginAttempt> {
-  return database.transaction(async (trx) => {
+  return database.transaction(async (trx: Knex.Transaction) => {
     // Try to get existing record with row lock
     const existingRecord = await trx('failed_login_attempts').where('user_id', userId).forUpdate().first()
 
@@ -64,7 +66,7 @@ export async function isAccountLocked(userId: number): Promise<boolean> {
  * Lock account by setting locked_at timestamp
  */
 export async function lockAccount(userId: number): Promise<void> {
-  await database.transaction(async (trx) => {
+  await database.transaction(async (trx: Knex.Transaction) => {
     // Try to get existing record with row lock
     const existingRecord = await trx('failed_login_attempts').where('user_id', userId).forUpdate().first()
 

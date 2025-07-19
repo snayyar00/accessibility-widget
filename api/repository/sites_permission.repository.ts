@@ -1,4 +1,4 @@
-import Knex from 'knex'
+import { Knex } from 'knex'
 
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'

@@ -1,4 +1,4 @@
-import Knex from 'knex'
+import { Knex } from 'knex'
 import union from 'lodash/union'
 
 import database from '../config/database.config'

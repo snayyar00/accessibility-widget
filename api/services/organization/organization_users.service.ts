@@ -1,4 +1,4 @@
-import Knex from 'knex'
+import { Knex } from 'knex'
 
 import logger from '../../config/logger.config'
 import { ORGANIZATION_MANAGEMENT_ROLES, OrganizationUserRole, OrganizationUserStatus } from '../../constants/organization.constant'

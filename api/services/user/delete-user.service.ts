@@ -1,3 +1,5 @@
+import { Knex } from 'knex'
+
 import database from '../../config/database.config'
 import { TABLES } from '../../constants/database.constant'
 import { UserProfile } from '../../repository/user.repository'
@@ -25,7 +27,7 @@ export async function deleteUser(currentUser: UserProfile): Promise<boolean> {
 }
 
 function disableAllField(user: UserProfile, tokens: TokenParams[]): Promise<unknown> {
-  return database.transaction((trx) => {
+  return database.transaction((trx: Knex.Transaction) => {
     const queries = []
     queries.push(database(TABLES.users).where({ id: user.id }).update({ deleted_at: new Date() }).transacting(trx))
 
