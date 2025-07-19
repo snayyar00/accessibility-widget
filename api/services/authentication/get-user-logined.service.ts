@@ -2,7 +2,6 @@ import { Response } from 'express'
 
 import { verify } from '../../helpers/jwt.helper'
 import { findUser } from '../../repository/user.repository'
-import { AuthenticationError } from '../../utils/graphql-errors.helper'
 
 type UserLoginedResponse = {
   id: number
@@ -15,14 +14,17 @@ type UserLoginedResponse = {
   current_organization_id: number | null
 }
 
-export default async function getUserLogined(bearerToken: string | null, res: Response): Promise<UserLoginedResponse> {
+export default async function getUserLogined(bearerToken: string | null, res: Response): Promise<UserLoginedResponse | null> {
   if (bearerToken) {
     try {
       const token = bearerToken.split(' ')
+
       if (!token[1] || token[0] !== 'Bearer') {
         return null
       }
+
       const verifyToken = verify(token[1])
+
       if (typeof verifyToken === 'object') {
         const { user } = verifyToken
         const userInfo = await findUser({ email: user.email })
@@ -38,9 +40,11 @@ export default async function getUserLogined(bearerToken: string | null, res: Re
         }
       }
     } catch {
+      // Clear invalid token but don't throw error - just return null
       res.clearCookie('token')
-      throw new AuthenticationError('Authentication failure')
+      return null
     }
   }
+
   return null
 }
