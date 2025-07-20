@@ -1,4 +1,4 @@
-import { GraphQLError } from 'graphql'
+import { GraphQLError } from 'graphql/error'
 
 export const createAuthenticationError = (message: string) =>
   new GraphQLError(message, {

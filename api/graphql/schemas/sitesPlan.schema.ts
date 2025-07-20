@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag'
-
-export const SitesPlanSchema = gql`
+export const SitesPlanSchema = `
   type SitesPlanData {
     id: Int!
     siteId: Int!

@@ -4,18 +4,18 @@ dotenv.config({ quiet: true })
 
 import './config/logger.config'
 
-import { expressMiddleware } from '@as-integrations/express4'
+import { expressMiddleware } from '@as-integrations/express5'
 import bodyParser, { json } from 'body-parser'
 import cookieParser from 'cookie-parser'
 import express from 'express'
+import { createServer } from 'http'
 
-import { createGraphQLContext, createGraphQLServer } from './config/graphql.config'
 import { initializeSentry } from './config/sentry.config'
 import { configureServer, PORT } from './config/server.config'
+import { createGraphQLContext, createGraphQLServer } from './graphql'
 import scheduleMonthlyEmails from './jobs/monthlyEmail'
 import { dynamicCors } from './middlewares/cors.middleware'
 import { expressErrorMiddleware } from './middlewares/expressError.middleware'
-import { graphqlErrorMiddleware } from './middlewares/graphqlError.middleware'
 import { graphqlTimeoutMiddleware } from './middlewares/graphqlTimeout.middleware'
 import { strictLimiter } from './middlewares/limiters.middleware'
 import { configureMorgan } from './middlewares/morgan.middleware'
@@ -23,8 +23,10 @@ import { requestTimingMiddleware } from './middlewares/requestTiming.middleware'
 import routes from './routes'
 import stripeHooks from './services/stripe/webhooks.servive'
 
-const app = express()
 const apiUrl = process.env.COOLIFY_URL || `http://localhost:${PORT}`
+
+const app = express()
+const httpServer = createServer(app)
 
 configureServer(app)
 scheduleMonthlyEmails()
@@ -47,14 +49,12 @@ app.get('/', (_, res) => {
 app.use(routes)
 app.use(expressErrorMiddleware)
 
-// Apollo Server
-const serverGraph = createGraphQLServer()
+const serverGraph = createGraphQLServer(httpServer)
 
 async function initializeServer() {
   await serverGraph.start()
 
   app.use('/graphql', graphqlTimeoutMiddleware)
-  app.use('/graphql', graphqlErrorMiddleware)
 
   app.use(
     '/graphql',
@@ -66,7 +66,7 @@ async function initializeServer() {
 
   initializeSentry(apiUrl)
 
-  app.listen(PORT, () => {
+  httpServer.listen(PORT, () => {
     console.log(`🚀 Server ready at ${apiUrl}`)
   })
 }
@@ -74,4 +74,26 @@ async function initializeServer() {
 initializeServer().catch((error) => {
   console.error('Failed to start server:', error)
   process.exit(1)
+})
+
+process.on('SIGINT', async () => {
+  console.info('Received SIGINT, shutting down gracefully...')
+
+  await serverGraph.stop()
+
+  httpServer.close(() => {
+    console.info('Server closed')
+    process.exit(0)
+  })
+})
+
+process.on('SIGTERM', async () => {
+  console.info('Received SIGTERM, shutting down gracefully...')
+
+  await serverGraph.stop()
+
+  httpServer.close(() => {
+    console.info('Server closed')
+    process.exit(0)
+  })
 })

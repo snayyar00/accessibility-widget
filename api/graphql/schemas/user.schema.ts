@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag'
-
-export const UserSchema = gql`
+export const UserSchema = `
   enum BillingType {
     MONTHLY
     YEARLY

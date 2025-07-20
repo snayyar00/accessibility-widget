@@ -3,7 +3,7 @@ import { Response } from 'express'
 import { verify } from '../../helpers/jwt.helper'
 import { findUser } from '../../repository/user.repository'
 
-type UserLoginedResponse = {
+export type UserLoginedResponse = {
   id: number
   email: string
   name: string

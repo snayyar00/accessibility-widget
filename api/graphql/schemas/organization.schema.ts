@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag'
-
-export const OrganizationSchema = gql`
+export const OrganizationSchema = `
   type Organization {
     id: ID!
     name: String!

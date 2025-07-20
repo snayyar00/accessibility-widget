@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag'
-
-export const ImpressionsSchema = gql`
+export const ImpressionsSchema = `
   type Impression {
     id: Int!
     site_id: Int!

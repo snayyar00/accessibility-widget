@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag'
-
-export const UniqueVisitorSchema = gql`
+export const UniqueVisitorSchema = `
   type Visitor {
     id: Int
     siteId: Int

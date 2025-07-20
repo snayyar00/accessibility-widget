@@ -1,5 +1,3 @@
-import { gql } from 'graphql-tag'
-
 import { AccessibilitySchema } from './schemas/accessibilityReport.schema'
 import { AllowedSitesSchema } from './schemas/allowedSites.schema'
 import { ImpressionsSchema } from './schemas/impressions.schema'
@@ -11,7 +9,7 @@ import { UniqueTokenSchema } from './schemas/uniqueToken.schema'
 import { UniqueVisitorSchema } from './schemas/uniqueVisitor.schema'
 import { UserSchema } from './schemas/user.schema'
 
-const rootSchema = gql`
+const rootSchema = `
   scalar Date
   scalar JSON
   scalar Upload

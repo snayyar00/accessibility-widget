@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag'
-
-export const AllowedSitesSchema = gql`
+export const AllowedSitesSchema = `
   type Site {
     id: Int
     user_id: Int

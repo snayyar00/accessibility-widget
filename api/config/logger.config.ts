@@ -19,6 +19,7 @@ let logger: bunyan | null = null
 // Only create bunyan logger in non-development environments
 if (!isDevelopment) {
   // Create logs directory if it doesn't exist
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   fs.existsSync('logs') || fs.mkdirSync('logs')
 
   // Create the main logger

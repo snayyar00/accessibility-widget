@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag'
-
-export const AccessibilitySchema = gql`
+export const AccessibilitySchema = `
   type TemplateInfo {
     is_template_issue: Boolean
     occurrence_count: Int

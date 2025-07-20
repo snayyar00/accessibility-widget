@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag'
-
-export const TranslationSchema = gql`
+export const TranslationSchema = `
   type TranslationResponse {
     success: Boolean!
     translatedContent: String

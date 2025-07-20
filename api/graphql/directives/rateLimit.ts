@@ -1,8 +1,7 @@
-import { GraphQLResolveInfo } from 'graphql'
 import { rateLimitDirective } from 'graphql-rate-limit-directive'
 
 const { rateLimitDirectiveTransformer } = rateLimitDirective({
-  keyGenerator: (directiveArgs, source, args, context: any, info: GraphQLResolveInfo): string => {
+  keyGenerator: (directiveArgs, source, args, context: any, info: any): string => {
     let operationKey = 'unknown'
 
     // Get operation key (type and field name) from GraphQLResolveInfo

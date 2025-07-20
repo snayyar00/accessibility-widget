@@ -36,7 +36,7 @@ export const expressErrorMiddleware = (error: ErrorWithStatus, req: Request, res
   if (accessLogStream) {
     accessLogStream.write(`${errorLog}\n`)
   } else {
-    // console.log(errorLog);
+    console.log(errorLog)
   }
 
   // Send error response if not already sent

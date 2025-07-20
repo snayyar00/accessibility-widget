@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag'
-
-export const UniqueTokenSchema = gql`
+export const UniqueTokenSchema = `
   type TokenValidationResponse {
     validation: String!
     savedState: JSON

@@ -25,7 +25,7 @@ export const logAuthenticationFailure = (req: Request, _: Response, message: str
   if (accessLogStream) {
     accessLogStream.write(`${authLog}\n`)
   } else {
-    // console.log(authLog);
+    console.log(authLog)
   }
 }
 
