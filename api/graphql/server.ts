@@ -1,6 +1,7 @@
 import { ApolloServer } from '@apollo/server'
+import { ApolloServerPluginLandingPageDisabled } from '@apollo/server/plugin/disabled'
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
-import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
+import { ApolloServerPluginLandingPageLocalDefault, ApolloServerPluginLandingPageProductionDefault } from '@apollo/server/plugin/landingPage/default'
 import { makeExecutableSchema } from '@graphql-tools/schema'
 import { IResolvers } from '@graphql-tools/utils'
 import { Server } from 'http'
@@ -23,9 +24,18 @@ export function createGraphQLServer(httpServer: Server) {
 
   schema = rateLimitDirectiveTransformer(schema)
 
+  let landingPagePlugin
+
+  if (process.env.NODE_ENV === 'production') {
+    landingPagePlugin = ApolloServerPluginLandingPageDisabled()
+  } else if (IS_LOCAL_DEV) {
+    landingPagePlugin = ApolloServerPluginLandingPageLocalDefault({ footer: false })
+  } else {
+    landingPagePlugin = ApolloServerPluginLandingPageProductionDefault({ footer: false })
+  }
+
   const serverGraph = new ApolloServer<GraphQLContext>({
     schema,
-
     formatError: (err) => {
       if (err.message.includes('Not authenticated')) {
         return new Error('Please login to make this action')
@@ -41,8 +51,7 @@ export function createGraphQLServer(httpServer: Server) {
 
       return err
     },
-
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer }), createSentryPlugin(), ...(IS_LOCAL_DEV ? [ApolloServerPluginLandingPageLocalDefault({ footer: false })] : [])],
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer }), createSentryPlugin(), landingPagePlugin],
   })
 
   return serverGraph
