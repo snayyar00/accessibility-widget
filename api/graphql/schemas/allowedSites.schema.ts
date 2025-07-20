@@ -1,4 +1,4 @@
-export const AllowedSitesSchema = `
+export const AllowedSitesSchema = `#graphql
   type Site {
     id: Int
     user_id: Int

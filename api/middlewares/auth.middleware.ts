@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
 
-import accessLogStream from '../libs/logger/stream'
 import getUserLogined from '../services/authentication/get-user-logined.service'
 import { getOperationName } from '../utils/logger.utils'
 
@@ -22,11 +21,7 @@ export const logAuthenticationFailure = (req: Request, _: Response, message: str
     },
   })
 
-  if (accessLogStream) {
-    accessLogStream.write(`${authLog}\n`)
-  } else {
-    console.log(authLog)
-  }
+  console.log(authLog)
 }
 
 export async function isAuthenticated(req: Request, res: Response, next: NextFunction) {

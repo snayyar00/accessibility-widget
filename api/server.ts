@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 
 dotenv.config({ quiet: true })
 
-import './config/logger.config'
+import './utils/logger'
 
 import { expressMiddleware } from '@as-integrations/express5'
 import bodyParser, { json } from 'body-parser'
@@ -12,7 +12,8 @@ import { createServer } from 'http'
 
 import { initializeSentry } from './config/sentry.config'
 import { configureServer, PORT } from './config/server.config'
-import { createGraphQLContext, createGraphQLServer } from './graphql'
+import { createGraphQLContext } from './graphql/context'
+import { createGraphQLServer } from './graphql/server'
 import scheduleMonthlyEmails from './jobs/monthlyEmail'
 import { dynamicCors } from './middlewares/cors.middleware'
 import { expressErrorMiddleware } from './middlewares/expressError.middleware'

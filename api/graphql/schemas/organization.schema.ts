@@ -1,4 +1,4 @@
-export const OrganizationSchema = `
+export const OrganizationSchema = `#graphql
   type Organization {
     id: ID!
     name: String!

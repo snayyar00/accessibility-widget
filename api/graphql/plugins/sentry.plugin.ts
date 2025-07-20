@@ -21,11 +21,9 @@ export const createSentryPlugin = () => ({
       async didEncounterErrors(ctx: ErrorContext) {
         if (!ctx.operation) return
 
-        // Логируем все GraphQL ошибки
         logGraphQLErrors(ctx.errors, ctx.contextValue.req, ctx.request.operationName)
 
         for (const err of ctx.errors) {
-          // Пропускаем известные GraphQL ошибки для Sentry
           if (err instanceof GraphQLError && err.extensions?.code) {
             continue
           }

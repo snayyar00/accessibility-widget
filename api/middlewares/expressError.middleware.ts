@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
 
-import accessLogStream from '../libs/logger/stream'
 import { getOperationName } from '../utils/logger.utils'
 
 interface ErrorWithStatus extends Error {
@@ -33,11 +32,7 @@ export const expressErrorMiddleware = (error: ErrorWithStatus, req: Request, res
     },
   })
 
-  if (accessLogStream) {
-    accessLogStream.write(`${errorLog}\n`)
-  } else {
-    console.log(errorLog)
-  }
+  console.log(errorLog)
 
   // Send error response if not already sent
   if (!res.headersSent) {

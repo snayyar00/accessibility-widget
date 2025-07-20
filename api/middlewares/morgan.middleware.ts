@@ -1,27 +1,56 @@
+import chalk from 'chalk'
 import { Request, Response } from 'express'
 import morgan from 'morgan'
 
-import accessLogStream from '../libs/logger/stream'
+import { IS_LOCAL_DEV } from '../config/server.config'
 import { getOperationName } from '../utils/logger.utils'
 
 morgan.token('operation_name', (req) => getOperationName((req as Request).body))
 
-const gdprSafeJsonFormat = (tokens: any, req: Request, res: Response) =>
-  JSON.stringify({
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`
+}
+
+const gdprSafeJsonFormat = (tokens: any, req: Request, res: Response) => {
+  const contentLength = Number(tokens.res(req, res, 'content-length')) || 0
+  const status = Number(tokens.status(req, res))
+
+  // Set log level based on HTTP status code
+  let level = 'info'
+
+  if (status >= 500) level = 'error'
+  else if (status >= 400) level = 'warn'
+  else if (status >= 300) level = 'info'
+
+  const logObj = {
     timestamp: new Date().toISOString(),
-    level: 'info',
+    level,
     type: 'access',
     method: tokens.method(req, res),
     url: tokens.url(req, res),
-    status: Number(tokens.status(req, res)),
-    content_length: Number(tokens.res(req, res, 'content-length')) || 0,
+    status,
+    content_length: contentLength,
     response_time_ms: Number(tokens['response-time'](req, res)),
     operation_name: tokens.operation_name(req, res),
-  })
+  }
+
+  if (IS_LOCAL_DEV) {
+    let statusColor = chalk.green
+
+    if (logObj.status >= 500) statusColor = chalk.red
+    else if (logObj.status >= 400) statusColor = chalk.yellow
+    else if (logObj.status >= 300) statusColor = chalk.cyan
+
+    return [chalk.gray(logObj.timestamp), chalk.blue(logObj.method), chalk.white(logObj.url), statusColor(String(logObj.status)), chalk.magenta(`${logObj.response_time_ms}ms`), chalk.gray(`op: ${logObj.operation_name || '-'}`), chalk.gray(`len: ${formatBytes(contentLength)}`)].join(' ')
+  }
+
+  return JSON.stringify(logObj)
+}
 
 export const configureMorgan = () => {
-  if (accessLogStream) {
-    return morgan(gdprSafeJsonFormat, { stream: accessLogStream })
-  }
-  return morgan('combined') // Will use console
+  return morgan(gdprSafeJsonFormat)
 }

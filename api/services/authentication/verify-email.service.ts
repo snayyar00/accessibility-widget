@@ -1,6 +1,5 @@
 import dayjs from 'dayjs'
 
-import logger from '../../config/logger.config'
 import { SEND_MAIL_TYPE } from '../../constants/send-mail-type.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import generateRandomKey from '../../helpers/genarateRandomkey'
@@ -9,6 +8,7 @@ import type { UserProfile } from '../../repository/user.repository'
 import { activeUser, getUserbyId } from '../../repository/user.repository'
 import { changeTokenStatus, createToken, findToken } from '../../repository/user_tokens.repository'
 import { ApolloError } from '../../utils/graphql-errors.helper'
+import logger from '../../utils/logger'
 import { sendMail } from '../email/email.service'
 
 function isValidDate(createdAt: string): boolean {

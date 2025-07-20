@@ -1,4 +1,4 @@
-export const ImpressionsSchema = `
+export const ImpressionsSchema = `#graphql
   type Impression {
     id: Int!
     site_id: Int!

@@ -1,4 +1,4 @@
-export const TranslationSchema = `
+export const TranslationSchema = `#graphql
   type TranslationResponse {
     success: Boolean!
     translatedContent: String

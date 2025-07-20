@@ -263,7 +263,7 @@ export const fetchAccessibilityReport = async (url: string) => {
         throw new Error('Failed to fetch accessibility report for all URL variations')
       }
 
-      console.log('result from getAccessibilityInformationPally:', result.score, result.totalElements, result.ByFunctions)
+      // console.log('result from getAccessibilityInformationPally:', result.score, result.totalElements, result.ByFunctions)
       const siteImg = await fetchSitePreview(formattedUrl)
       if (result && siteImg) {
         result.siteImg = siteImg

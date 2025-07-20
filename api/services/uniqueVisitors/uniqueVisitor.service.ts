@@ -1,8 +1,8 @@
-import logger from '../../config/logger.config'
 import { UserProfile } from '../../repository/user.repository'
 import { findVisitorByURL, insertVisitor } from '../../repository/visitors.repository'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
+import logger from '../../utils/logger'
 import { validateGetSiteVisitorsByURL } from '../../validations/uniqueVisitor.validation'
 import { findUserSites } from '../allowedSites/allowedSites.service'
 

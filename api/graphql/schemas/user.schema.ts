@@ -1,4 +1,4 @@
-export const UserSchema = `
+export const UserSchema = `#graphql
   enum BillingType {
     MONTHLY
     YEARLY

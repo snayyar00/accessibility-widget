@@ -1,4 +1,4 @@
-export const SitesPlanSchema = `
+export const SitesPlanSchema = `#graphql
   type SitesPlanData {
     id: Int!
     siteId: Int!

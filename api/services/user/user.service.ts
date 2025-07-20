@@ -1,6 +1,6 @@
-import logger from '../../config/logger.config'
 import { findUser } from '../../repository/user.repository'
 import { ValidationError } from '../../utils/graphql-errors.helper'
+import logger from '../../utils/logger'
 import { emailValidation } from '../../validations/email.validation'
 
 /**

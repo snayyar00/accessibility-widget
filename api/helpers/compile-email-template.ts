@@ -3,7 +3,7 @@ import handlebars from 'handlebars'
 import mjml2html from 'mjml'
 import path from 'path'
 
-import logger from '../config/logger.config'
+import logger from '../utils/logger'
 
 handlebars.registerHelper('eq', (a, b) => a === b)
 

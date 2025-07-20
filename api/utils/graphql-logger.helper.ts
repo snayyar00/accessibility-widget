@@ -1,8 +1,6 @@
 import { Request } from 'express'
 import { GraphQLError } from 'graphql/error'
 
-import accessLogStream from '../libs/logger/stream'
-
 /**
  * Determines log level and type based on error type
  */
@@ -16,17 +14,6 @@ function getLogLevelAndType(hasAuthError: boolean, hasIntrospectionError: boolea
   }
 
   return { level: 'error', type: 'graphql' }
-}
-
-/**
- * Writes log data to stream or console
- */
-function writeLogToStream(logData: string) {
-  if (accessLogStream) {
-    accessLogStream.write(`${logData}\n`)
-  } else {
-    console.log(logData)
-  }
 }
 
 /**
@@ -52,5 +39,5 @@ export function logGraphQLErrors(errors: readonly GraphQLError[], req: Request, 
     })),
   })
 
-  writeLogToStream(errorLog)
+  console.log(errorLog)
 }

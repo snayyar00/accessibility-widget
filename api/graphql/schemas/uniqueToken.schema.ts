@@ -1,4 +1,4 @@
-export const UniqueTokenSchema = `
+export const UniqueTokenSchema = `#graphql
   type TokenValidationResponse {
     validation: String!
     savedState: JSON

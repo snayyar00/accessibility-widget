@@ -1,6 +1,5 @@
 import dayjs from 'dayjs'
 
-import logger from '../../config/logger.config'
 import { PERMISSION_SITE_PLAN } from '../../constants/billing.constant'
 import { findProductAndPriceByType, FindProductAndPriceByTypeResponse } from '../../repository/products.repository'
 import { findSiteByUserIdAndSiteId } from '../../repository/sites_allowed.repository'
@@ -9,6 +8,7 @@ import { deleteSitePlanById, getAnySitePlanById, getSitePlanById, getSitePlanByS
 import { findUser } from '../../repository/user.repository'
 import formatDateDB from '../../utils/format-date-db'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
+import logger from '../../utils/logger'
 import { validateGetPlanBySiteIdAndUserId, validateUpdateSitesPlan } from '../../validations/planSites.validation'
 import { cancelSubcriptionBySubId, createNewSubcription, updateSubcription } from '../stripe/subcription.service'
 

@@ -1,4 +1,4 @@
-export const UniqueVisitorSchema = `
+export const UniqueVisitorSchema = `#graphql
   type Visitor {
     id: Int
     siteId: Int

@@ -1,4 +1,4 @@
-export const AccessibilitySchema = `
+export const AccessibilitySchema = `#graphql
   type TemplateInfo {
     is_template_issue: Boolean
     occurrence_count: Int

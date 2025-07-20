@@ -1,10 +1,10 @@
 import dayjs from 'dayjs'
 
-import logger from '../../config/logger.config'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import { comparePassword, generatePassword } from '../../helpers/hashing.helper'
 import { findUser, updateUser } from '../../repository/user.repository'
 import { ApolloError, UserInputError } from '../../utils/graphql-errors.helper'
+import logger from '../../utils/logger'
 import { changePasswordValidation } from '../../validations/authenticate.validation'
 import { sendMail } from '../email/email.service'
 

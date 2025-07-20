@@ -1,6 +1,6 @@
-import logger from '../config/logger.config'
 import { normalizeDomain } from '../utils/domain.utils'
 import { getRootDomain } from '../utils/domainUtils'
+import logger from '../utils/logger'
 import { validateTokenUrl } from '../validations/widget.validation'
 import { findSiteByURL } from './sites_allowed.repository'
 import { getSitePlanBySiteId } from './sites_plans.repository'
