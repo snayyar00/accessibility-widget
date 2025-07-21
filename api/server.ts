@@ -11,7 +11,7 @@ import express from 'express'
 import { createServer } from 'http'
 
 import { initializeSentry } from './config/sentry.config'
-import { configureServer, PORT } from './config/server.config'
+import { ALLOWED_OPERATIONS, ALLOWED_ORIGINS, configureServer, PORT } from './config/server.config'
 import { createGraphQLContext } from './graphql/context'
 import { createGraphQLServer } from './graphql/server'
 import scheduleMonthlyEmails from './jobs/monthlyEmail'
@@ -68,7 +68,27 @@ async function initializeServer() {
   initializeSentry(apiUrl)
 
   httpServer.listen(PORT, () => {
-    console.log(`🚀 Server ready at ${apiUrl}`)
+    console.log()
+
+    console.log(`🛠️  NODE_ENV: ${process.env.NODE_ENV}`)
+    console.log(`🚀 Server Ready: ${apiUrl}`)
+    console.log('🧩 Playground:', `${apiUrl}/graphql`)
+
+    console.log()
+
+    console.log('🌐 Allowed Origins:')
+    ALLOWED_ORIGINS.forEach((origin) => {
+      console.log(`   - ${origin}`)
+    })
+
+    console.log()
+
+    console.log('📝 Allowed Operations:')
+    ALLOWED_OPERATIONS.forEach((op) => {
+      console.log(`   - ${op}`)
+    })
+
+    console.log()
   })
 }
 

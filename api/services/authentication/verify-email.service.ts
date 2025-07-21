@@ -7,7 +7,8 @@ import { normalizeEmail } from '../../helpers/string.helper'
 import type { UserProfile } from '../../repository/user.repository'
 import { activeUser, getUserbyId } from '../../repository/user.repository'
 import { changeTokenStatus, createToken, findToken } from '../../repository/user_tokens.repository'
-import { ApolloError } from '../../utils/graphql-errors.helper'
+import { getMatchingFrontendUrl } from '../../utils/env.utils'
+import { ApolloError, ForbiddenError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sendMail } from '../email/email.service'
 
@@ -84,12 +85,19 @@ export async function verifyEmail(authToken: string): Promise<true | ApolloError
   }
 }
 
-export async function resendEmailAction(user: UserProfile, type: 'verify_email' | 'forgot_password'): Promise<boolean> {
+export async function resendEmailAction(user: UserProfile, type: 'verify_email' | 'forgot_password', clientDomain: string | null): Promise<boolean> {
   try {
     let template
     let subject
 
     const token = await generateRandomKey()
+    const currentUrl = getMatchingFrontendUrl(clientDomain)
+
+    logger.info('Current URL:', currentUrl)
+
+    if (!currentUrl) {
+      throw new ForbiddenError('Provided domain is not in the list of allowed frontend URLs')
+    }
 
     switch (type) {
       case SEND_MAIL_TYPE.VERIFY_EMAIL:
@@ -101,7 +109,7 @@ export async function resendEmailAction(user: UserProfile, type: 'verify_email' 
           fileName: 'verifyEmail.mjml',
           data: {
             name: user.name,
-            url: `${process.env.FRONTEND_URL}/verify-email?token=${token}`,
+            url: `${currentUrl}/verify-email?token=${token}`,
           },
         })
         break
@@ -112,7 +120,7 @@ export async function resendEmailAction(user: UserProfile, type: 'verify_email' 
           fileName: 'forgotPassword.mjml',
           data: {
             name: user.name,
-            url: `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}`,
+            url: `${currentUrl}/auth/reset-password?token=${token}`,
           },
         })
         break
@@ -123,7 +131,7 @@ export async function resendEmailAction(user: UserProfile, type: 'verify_email' 
           fileName: 'verifyEmail.mjml',
           data: {
             name: user.name,
-            url: `${process.env.FRONTEND_URL}/verify-email?token=${token}`,
+            url: `${currentUrl}/verify-email?token=${token}`,
           },
         })
         break

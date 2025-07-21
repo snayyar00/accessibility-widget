@@ -4,7 +4,8 @@ import { objectToString } from '../../helpers/string.helper'
 import { createOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization, updateOrganization } from '../../repository/organization.repository'
 import { updateUser, UserProfile } from '../../repository/user.repository'
 import { normalizeDomain } from '../../utils/domain.utils'
-import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
+import { getMatchingFrontendUrl } from '../../utils/env.utils'
+import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateAddOrganization, validateEditOrganization, validateGetOrganizationByDomain, validateRemoveOrganization } from '../../validations/organization.validation'
 import { addUserToOrganization, getOrganizationsByUserId, getUserOrganization } from './organization_users.service'
@@ -175,6 +176,13 @@ export async function getOrganizationByDomainService(domain: string): Promise<Or
 
   if (Array.isArray(validateResult) && validateResult.length) {
     return new ValidationError(validateResult.map((it) => it.message).join(','))
+  }
+
+  const currentUrl = getMatchingFrontendUrl(domain)
+  logger.info('Current URL:', currentUrl)
+
+  if (!currentUrl) {
+    throw new ForbiddenError('Provided domain is not in the list of allowed frontend URLs')
   }
 
   const normalizedDomain = normalizeDomain(domain)

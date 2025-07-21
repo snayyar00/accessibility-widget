@@ -96,7 +96,7 @@ FF_GPT_FUNCTION_CALLING=true
 FF_SMART_DEDUPLICATION=true
 FF_TEMPLATE_DETECTION=true
 
-FRONTEND_URL=
+FRONTEND_URL= # One or more URLs separated by commas (e.g. http://localhost:3000,https://app.example.com)
 
 JWT_ALGORITHM=
 JWT_AUDIENCE=

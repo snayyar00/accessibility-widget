@@ -3,12 +3,13 @@ import compileEmailTemplate from '../../helpers/compile-email-template'
 import generateRandomKey from '../../helpers/genarateRandomkey'
 import { findUser, getUserByIdAndJoinUserToken } from '../../repository/user.repository'
 import { createToken, updateUserTokenById } from '../../repository/user_tokens.repository'
-import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
+import { getMatchingFrontendUrl } from '../../utils/env.utils'
+import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { emailValidation } from '../../validations/email.validation'
 import { sendMail } from '../email/email.service'
 
-export async function forgotPasswordUser(email: string): Promise<boolean> {
+export async function forgotPasswordUser(email: string, clientDomain: string | null): Promise<boolean> {
   const validateResult = emailValidation(email)
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -23,8 +24,16 @@ export async function forgotPasswordUser(email: string): Promise<boolean> {
     }
 
     let session = await getUserByIdAndJoinUserToken(user.id, SEND_MAIL_TYPE.FORGOT_PASSWORD)
+
     const tokenGenerated = await generateRandomKey()
     const token = `${tokenGenerated}-${user.id}`
+    const currentUrl = getMatchingFrontendUrl(clientDomain)
+
+    logger.info('Current URL:', currentUrl)
+
+    if (!currentUrl) {
+      throw new ForbiddenError('Provided domain is not in the list of allowed frontend URLs')
+    }
 
     if (!session) {
       await createToken(user.id, token, SEND_MAIL_TYPE.FORGOT_PASSWORD)
@@ -40,7 +49,7 @@ export async function forgotPasswordUser(email: string): Promise<boolean> {
       fileName: 'forgotPassword.mjml',
       data: {
         name: session.name,
-        url: `${process.env.FRONTEND_URL}/auth/reset-password?&token=${token}`,
+        url: `${currentUrl}/auth/reset-password?&token=${token}`,
       },
     })
 

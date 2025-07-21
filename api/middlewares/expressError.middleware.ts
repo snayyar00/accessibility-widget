@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 
+import { extractClientDomain } from '../utils/domain.utils'
 import { getOperationName } from '../utils/logger.utils'
 
 interface ErrorWithStatus extends Error {
@@ -25,6 +26,7 @@ export const expressErrorMiddleware = (error: ErrorWithStatus, req: Request, res
     response_time_ms: responseTime,
     content_length: contentLength,
     operation_name: getOperationName(req.body),
+    domain: extractClientDomain(req),
     error: {
       message: error.message || 'Unknown error',
       code: error.code || 'INTERNAL_ERROR',
@@ -32,7 +34,7 @@ export const expressErrorMiddleware = (error: ErrorWithStatus, req: Request, res
     },
   })
 
-  console.log(errorLog)
+  console.error(errorLog)
 
   // Send error response if not already sent
   if (!res.headersSent) {

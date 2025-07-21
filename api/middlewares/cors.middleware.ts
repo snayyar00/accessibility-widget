@@ -8,7 +8,7 @@ export function dynamicCors(req: Request, res: Response, next: NextFunction) {
     optionsSuccessStatus: 200,
     credentials: true,
 
-    origin: (origin: any, callback: any) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow local development
       if (IS_LOCAL_DEV) {
         return callback(null, true)

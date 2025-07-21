@@ -1,5 +1,8 @@
 import Validator, { ValidationError } from 'fastest-validator'
 
+import { getMatchingFrontendUrl } from '../utils/env.utils'
+import { logger } from '../utils/logger'
+
 type ApplyRetentionDiscountInfo = {
   domainId: string | number
   status: string
@@ -184,7 +187,14 @@ function validateURL(value: string) {
       return [{ type: 'url', message: 'FRONTEND_URL is not configured on the server' }]
     }
 
-    if (!value.startsWith(frontendUrl)) {
+    const currentUrl = getMatchingFrontendUrl(value)
+
+    logger.info('Return URL:', value)
+    logger.info('Current URL:', currentUrl)
+
+    if (!currentUrl) {
+      logger.error('Provided domain is not in the list of allowed frontend URLs')
+
       return [{ type: 'url', message: 'Invalid return URL (not allowed)' }]
     }
 

@@ -13,6 +13,7 @@ export interface GraphQLContext {
   req: Request
   res: Response
   user: UserLoginedResponse
+  clientDomain: string | null
   sentryTransaction?: ReturnType<typeof Sentry.startTransaction>
 }
 

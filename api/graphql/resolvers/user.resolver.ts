@@ -1,5 +1,6 @@
 import { combineResolvers } from 'graphql-resolvers'
 
+import { GraphQLContext } from '../../graphql/types'
 import { normalizeEmail } from '../../helpers/string.helper'
 import { changePasswordUser } from '../../services/authentication/change-password.service'
 import { forgotPasswordUser } from '../../services/authentication/forgot-password.service'
@@ -80,7 +81,7 @@ const resolvers = {
       return true
     },
 
-    forgotPassword: async (_: unknown, { email }: ForgotPassword) => forgotPasswordUser(normalizeEmail(email)),
+    forgotPassword: async (_: unknown, { email }: ForgotPassword, { clientDomain }: GraphQLContext) => forgotPasswordUser(normalizeEmail(email), clientDomain),
 
     changePassword: combineResolvers(isAuthenticated, (_, { currentPassword, newPassword }, { user }) => changePasswordUser(user.id, currentPassword, newPassword)),
 
@@ -88,7 +89,7 @@ const resolvers = {
 
     verify: (_: unknown, { token }: Verify) => verifyEmail(token),
 
-    resendEmail: combineResolvers(isAuthenticated, (_, { type }, { user }) => resendEmailAction(user, <'verify_email' | 'forgot_password'>normalizeEmail(type))),
+    resendEmail: combineResolvers(isAuthenticated, (_, { type }, { user, clientDomain }: GraphQLContext) => resendEmailAction(user, <'verify_email' | 'forgot_password'>normalizeEmail(type), clientDomain)),
 
     deleteAccount: combineResolvers(isAuthenticated, async (_, __, { user }) => {
       const result = await deleteUser(user)

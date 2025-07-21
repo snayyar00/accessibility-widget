@@ -1,4 +1,5 @@
 import getUserLogined from '../services/authentication/get-user-logined.service'
+import { extractClientDomain } from '../utils/domain.utils'
 import { ContextParams, GraphQLContext } from './types'
 
 /**
@@ -10,10 +11,12 @@ export async function createGraphQLContext({ req, res }: ContextParams): Promise
   const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
 
   const user = await getUserLogined(bearerToken)
+  const clientDomain = extractClientDomain(req)
 
   return {
     req,
     res,
     user,
+    clientDomain,
   }
 }

@@ -1,18 +1,21 @@
 import { Request } from 'express'
 import { GraphQLError } from 'graphql/error'
 
+import { extractClientDomain } from '../utils/domain.utils'
+
 /**
  * Determines log level and type based on error type
  */
-function getLogLevelAndType(hasAuthError: boolean, hasIntrospectionError: boolean) {
+function getLogLevelAndType(hasAuthError: boolean, hasIntrospectionError: boolean, hasForbiddenError: boolean) {
   if (hasAuthError) {
     return { level: 'warn', type: 'security' }
   }
-
+  if (hasForbiddenError) {
+    return { level: 'warn', type: 'security' }
+  }
   if (hasIntrospectionError) {
     return { level: 'warn', type: 'graphql' }
   }
-
   return { level: 'error', type: 'graphql' }
 }
 
@@ -21,9 +24,10 @@ function getLogLevelAndType(hasAuthError: boolean, hasIntrospectionError: boolea
  */
 export function logGraphQLErrors(errors: readonly GraphQLError[], req: Request, operationName?: string) {
   const hasAuthError = errors.some((err) => err.extensions?.code === 'UNAUTHENTICATED' || err.message?.includes('Authentication fail'))
+  const hasForbiddenError = errors.some((err) => err.extensions?.code === 'FORBIDDEN')
   const hasIntrospectionError = errors.some((err) => err.extensions?.code === 'GRAPHQL_VALIDATION_FAILED' && err.message?.includes('introspection is not allowed'))
 
-  const { level, type } = getLogLevelAndType(hasAuthError, hasIntrospectionError)
+  const { level, type } = getLogLevelAndType(hasAuthError, hasIntrospectionError, hasForbiddenError)
 
   const errorLog = JSON.stringify({
     timestamp: new Date().toISOString(),
@@ -32,6 +36,7 @@ export function logGraphQLErrors(errors: readonly GraphQLError[], req: Request, 
     method: req.method,
     url: req.originalUrl || req.url,
     operation_name: operationName || '-',
+    domain: extractClientDomain(req),
     errors: errors.map((err) => ({
       message: err.message,
       code: err.extensions?.code || 'UNKNOWN',
@@ -39,5 +44,14 @@ export function logGraphQLErrors(errors: readonly GraphQLError[], req: Request, 
     })),
   })
 
-  console.log(errorLog)
+  switch (level) {
+    case 'warn':
+      console.warn(errorLog)
+      break
+    case 'error':
+      console.error(errorLog)
+      break
+    default:
+      console.log(errorLog)
+  }
 }

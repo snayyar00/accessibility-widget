@@ -3,6 +3,7 @@ import { Request, Response } from 'express'
 import morgan from 'morgan'
 
 import { IS_LOCAL_DEV } from '../config/server.config'
+import { extractClientDomain } from '../utils/domain.utils'
 import { getOperationName } from '../utils/logger.utils'
 
 morgan.token('operation_name', (req) => getOperationName((req as Request).body))
@@ -36,6 +37,7 @@ const gdprSafeJsonFormat = (tokens: any, req: Request, res: Response) => {
     content_length: contentLength,
     response_time_ms: Number(tokens['response-time'](req, res)),
     operation_name: tokens.operation_name(req, res),
+    domain: extractClientDomain(req),
   }
 
   if (IS_LOCAL_DEV) {
@@ -45,7 +47,16 @@ const gdprSafeJsonFormat = (tokens: any, req: Request, res: Response) => {
     else if (logObj.status >= 400) statusColor = chalk.yellow
     else if (logObj.status >= 300) statusColor = chalk.cyan
 
-    return [chalk.gray(logObj.timestamp), chalk.blue(logObj.method), chalk.white(logObj.url), statusColor(String(logObj.status)), chalk.magenta(`${logObj.response_time_ms}ms`), chalk.gray(`op: ${logObj.operation_name || '-'}`), chalk.gray(`len: ${formatBytes(contentLength)}`)].join(' ')
+    return [
+      chalk.gray(logObj.timestamp),
+      chalk.blue(logObj.method),
+      chalk.white(logObj.url),
+      statusColor(String(logObj.status)),
+      chalk.magenta(`${logObj.response_time_ms}ms`),
+      chalk.hex('#6c8eae')(`${logObj.operation_name || '-'}`),
+      chalk.hex('#a3a3a3')(`${formatBytes(contentLength)}`),
+      chalk.hex('#bfa700')(`${logObj.domain || '-'}`),
+    ].join(' ')
   }
 
   return JSON.stringify(logObj)

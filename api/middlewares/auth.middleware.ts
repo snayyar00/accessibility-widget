@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 
 import getUserLogined from '../services/authentication/get-user-logined.service'
+import { extractClientDomain } from '../utils/domain.utils'
 import { getOperationName } from '../utils/logger.utils'
 
 export const logAuthenticationFailure = (req: Request, _: Response, message: string, code: string) => {
@@ -14,6 +15,7 @@ export const logAuthenticationFailure = (req: Request, _: Response, message: str
     response_time_ms: Date.now() - (req as any).startTime || 0,
     content_length: 0,
     operation_name: getOperationName(req.body),
+    domain: extractClientDomain(req),
     error: {
       message,
       code,
@@ -21,7 +23,7 @@ export const logAuthenticationFailure = (req: Request, _: Response, message: str
     },
   })
 
-  console.log(authLog)
+  console.warn(authLog)
 }
 
 export async function isAuthenticated(req: Request, res: Response, next: NextFunction) {

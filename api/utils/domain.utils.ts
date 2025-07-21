@@ -1,5 +1,5 @@
+import { Request } from 'express'
 import { getDomain, parse } from 'tldts'
-
 /**
  * Utility functions for handling domain names and URLs
  */
@@ -123,7 +123,7 @@ export function getRetryUrls(url: string): string[] {
  * normalizeDomain('example.com') // 'example.com'
  * normalizeDomain('https://subdomain.example.com/path/') // 'subdomain.example.com'
  */
-export function normalizeDomain(url: string): string {
+export function normalizeDomain(url: string | null): string {
   if (!url || typeof url !== 'string') {
     return ''
   }
@@ -199,4 +199,25 @@ export function getRootDomain(urlOrHostname: string, options?: RootDomainOptions
     console.error('Error parsing domain with tldts:', error)
     return cleanedInput // Fallback in case of tldts error
   }
+}
+
+/**
+ * Helper function to extract client domain from request headers
+ */
+export function extractClientDomain(req: Request): string | null {
+  const origin = req.headers.origin || req.headers.referer
+
+  if (origin) {
+    try {
+      const url = new URL(origin)
+
+      return url.port ? `${normalizeDomain(url.hostname)}:${url.port}` : normalizeDomain(url.hostname)
+    } catch {
+      return null
+    }
+  } else if (req.headers.host) {
+    return normalizeDomain(req.headers.host)
+  }
+
+  return null
 }
