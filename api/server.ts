@@ -1597,7 +1597,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     next();
   });
 
-  app.use('/graphql', express.json({ limit: '5mb' }));
+  app.use('/graphql', express.json({ limit: '10mb' }));
   serverGraph.applyMiddleware({ app, cors: false });
 
   init({
