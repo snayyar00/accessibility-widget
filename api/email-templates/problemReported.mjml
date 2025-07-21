@@ -168,7 +168,7 @@
             display: inline-flex;
             align-items: center;
             gap: 12px;
-            background: linear-gradient(90deg, #0080ff 0%, #67e8f9 100%);
+            background: linear-gradient( #0080ff);
             color: #fff;
             font-family: Poppins, sans-serif;
             font-size: 22px;
@@ -187,7 +187,7 @@
             <circle cx="12" cy="12" r="12" fill="#fff" fill-opacity="0.18"/>
             <path d="M8 12h8M12 8l4 4-4 4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Visit Our Website
+          Check it out on dashboard
         </a>
       </div>
     </mj-raw>
