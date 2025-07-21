@@ -140,9 +140,6 @@
               </div>
             </div>
           </mj-raw>
-
-          
-        </mj-text>
         <mj-text font-family="Poppins, sans-serif" font-size="21px" color="#0080ff " padding="0 0 14px" font-weight="700" letter-spacing="1px">
           <mj-raw>
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -161,14 +158,42 @@
     </mj-section>
 
     <!-- Signature -->
-    <mj-section background-color="#ffffff" padding="0 0 30px">
-      <mj-column>
-        <mj-text font-family="Open Sans, sans-serif" font-size="16px" color="#718096" align="center" font-style="italic">
-          Best regards,<br /> <br />
-          <span class="signature-name">The Web Ability Team</span>
-        </mj-text>
-      </mj-column>
-    </mj-section>
+<mj-section background-color="#ffffff" padding="0 0 30px">
+  <mj-column>
+    <mj-raw>
+      <div style="text-align: center; margin: 32px 0;">
+        <a 
+          href="https://app.webability.io/" 
+          style="
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(90deg, #0080ff 0%, #67e8f9 100%);
+            color: #fff;
+            font-family: Poppins, sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            border-radius: 32px;
+            padding: 20px 48px;
+            text-decoration: none;
+            box-shadow: 0 8px 32px rgba(74, 108, 247, 0.18);
+            transition: background 0.3s;
+            letter-spacing: 1px;
+            border: none;
+          "
+          target="_blank"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style="margin-right: 8px;">
+            <circle cx="12" cy="12" r="12" fill="#fff" fill-opacity="0.18"/>
+            <path d="M8 12h8M12 8l4 4-4 4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Visit Our Website
+        </a>
+      </div>
+    </mj-raw>
+  </mj-column>
+</mj-section>
+
     <!-- Footer -->
     <mj-section background-color="#f8fafc" padding="20px 0">
       <mj-column>
