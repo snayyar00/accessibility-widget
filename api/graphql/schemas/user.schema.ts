@@ -24,15 +24,19 @@ export const UserSchema = `#graphql
     hasOrganization: Boolean!
   }
 
+  type AuthPayload {
+    token: String!
+  }
+
   extend type Query {
     profileUser: User! @rateLimit(limit: 30, duration: 60, message: "Too many profile requests. Please try again later.")
     isEmailAlreadyRegistered(email: String!): Boolean! @rateLimit(limit: 5, duration: 60, message: "Too many email check attempts. Please try again later.")
   }
 
   extend type Mutation {
-    register(email: String!, password: String!, name: String!): Boolean! @rateLimit(limit: 3, duration: 3600, message: "Too many registration attempts. Please try again later.")
+    register(email: String!, password: String!, name: String!): AuthPayload! @rateLimit(limit: 3, duration: 3600, message: "Too many registration attempts. Please try again later.")
 
-    login(email: String!, password: String!): Boolean! @rateLimit(limit: 7, duration: 900, message: "Too many login attempts. Please try again later.")
+    login(email: String!, password: String!): AuthPayload! @rateLimit(limit: 7, duration: 900, message: "Too many login attempts. Please try again later.")
 
     forgotPassword(email: String!): Boolean! @rateLimit(limit: 3, duration: 3600, message: "Too many password reset requests. Please try again later.")
 

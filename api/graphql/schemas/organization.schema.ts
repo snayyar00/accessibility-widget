@@ -22,6 +22,7 @@ export const OrganizationSchema = `#graphql
   extend type Query {
     getUserOrganizations: [Organization!]! @rateLimit(limit: 30, duration: 60, message: "Too many organization list requests. Please try again later.")
     getOrganizationUsers: [OrganizationUser!]! @rateLimit(limit: 30, duration: 60, message: "Too many organization users requests. Please try again later.")
+    getOrganizationByDomain: Organization @rateLimit(limit: 60, duration: 60, message: "Too many organization by domain requests. Please try again later.")
   }
 
   extend type Mutation {

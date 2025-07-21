@@ -1,7 +1,7 @@
 import { combineResolvers } from 'graphql-resolvers'
 
 import { Organization } from '../../repository/organization.repository'
-import { addOrganization, CreateOrganizationInput, editOrganization, getOrganizationById, getOrganizations, removeOrganization } from '../../services/organization/organization.service'
+import { addOrganization, CreateOrganizationInput, editOrganization, getOrganizationByDomainService, getOrganizationById, getOrganizations, removeOrganization } from '../../services/organization/organization.service'
 import { getOrganizationUsers } from '../../services/organization/organization_users.service'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import { isAuthenticated } from './authorization.resolver'
@@ -15,6 +15,16 @@ const organizationResolver = {
     }),
 
     getOrganizationUsers: combineResolvers(isAuthenticated, async (_: unknown, __: unknown, { user }) => getOrganizationUsers(user)),
+
+    getOrganizationByDomain: async (_: unknown, __: unknown, context: { req?: { headers?: { domain?: string; host?: string } } }): Promise<Organization | null | ValidationError> => {
+      const domainFromHeader = context?.req?.headers?.domain || context?.req?.headers?.host
+
+      if (!domainFromHeader) return null
+
+      const org = await getOrganizationByDomainService(domainFromHeader)
+
+      return org || null
+    },
   },
 
   Mutation: {

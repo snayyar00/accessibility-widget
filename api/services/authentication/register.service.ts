@@ -10,6 +10,7 @@ import { Token } from './login.service'
 
 async function registerUser(email: string, password: string, name: string): Promise<ApolloError | Token> {
   const sanitizedInput = sanitizeUserInput({ email, name })
+
   email = sanitizedInput.email
   name = sanitizedInput.name
 

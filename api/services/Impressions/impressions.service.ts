@@ -1,7 +1,6 @@
 import { findEngagementURLDate, findImpressionsURLDate, insertImpressionURL, updateImpressionProfileCount, updateImpressions } from '../../repository/impressions.repository'
 import { findVisitorByIp } from '../../repository/visitors.repository'
-import { normalizeDomain } from '../../utils/domain.utils'
-import { getRootDomain } from '../../utils/domainUtils'
+import { getRootDomain, normalizeDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateAddImpressionsURL, validateAddInteraction, validateAddProfileCount, validateFindImpressionsByURLAndDate, validateGetEngagementRates } from '../../validations/impression.validation'

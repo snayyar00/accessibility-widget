@@ -185,7 +185,7 @@ query {
 
 ## Note
 
-All endpoints and request examples for this project are collected in Hoppscotch:
-https://hoppscotch.webability.io
-
+All endpoints and request examples for this project are collected in [Hoppscotch](https://hoppscotch.webability.io).
 To get access to the request collection, please ask the administrator to add you to the team.
+
+For local GraphQL API testing during development, you can also use [Apollo Playground](http://localhost:3001/graphql).

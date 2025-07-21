@@ -20,9 +20,17 @@ import WebAbilityWidget from './TryWidgetBanner';
 import { toast } from 'react-toastify';
 import AccessibilitySteps from './AccessibilitySteps';
 import { parse } from 'tldts';
-import { getRootDomain, isIpAddress, isValidRootDomainFormat } from '@/utils/domainUtils';
+import {
+  getRootDomain,
+  isIpAddress,
+  isValidRootDomainFormat,
+} from '@/utils/domainUtils';
 import AccessibilityFacts from './AccessibilityFacts';
-import { extractValidationErrors, getLocalizedErrors } from '@/utils/errorHandler';
+import {
+  extractValidationErrors,
+  getLocalizedErrors,
+} from '@/utils/errorHandler';
+import { getAuthenticationCookie } from '@/utils/cookie';
 
 type CustomProps = ReactHookFormType & {
   isSubmitting: boolean;
@@ -67,7 +75,9 @@ const SignUpForm: React.FC<CustomProps> = ({
   // State for domain and email check
   const [checkingDomain, setCheckingDomain] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
-  const [analysisTimeout, setAnalysisTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [analysisTimeout, setAnalysisTimeout] = useState<NodeJS.Timeout | null>(
+    null,
+  );
 
   // State for accessibility facts rotation
   const [showFacts, setShowFacts] = useState(false);
@@ -78,11 +88,23 @@ const SignUpForm: React.FC<CustomProps> = ({
       if (data?.isDomainAlreadyAdded) {
         const sanitizedDomain = getRootDomain(formData.websiteUrl);
         const originalInputDetails = parse(formData.websiteUrl);
-        
-        if (originalInputDetails.domain === sanitizedDomain && originalInputDetails.subdomain && originalInputDetails.subdomain.toLowerCase() !== 'www') {
-          toast.error(`The root domain '${sanitizedDomain}' is already registered. This covers subdomains like '${formData.websiteUrl}'. You don't need to add it separately.`);
-        } else if (originalInputDetails.domain === sanitizedDomain && originalInputDetails.subdomain && originalInputDetails.subdomain.toLowerCase() === 'www') {
-          toast.error(`The domain '${sanitizedDomain}' (derived from your input '${formData.websiteUrl}') is already registered.`);
+
+        if (
+          originalInputDetails.domain === sanitizedDomain &&
+          originalInputDetails.subdomain &&
+          originalInputDetails.subdomain.toLowerCase() !== 'www'
+        ) {
+          toast.error(
+            `The root domain '${sanitizedDomain}' is already registered. This covers subdomains like '${formData.websiteUrl}'. You don't need to add it separately.`,
+          );
+        } else if (
+          originalInputDetails.domain === sanitizedDomain &&
+          originalInputDetails.subdomain &&
+          originalInputDetails.subdomain.toLowerCase() === 'www'
+        ) {
+          toast.error(
+            `The domain '${sanitizedDomain}' (derived from your input '${formData.websiteUrl}') is already registered.`,
+          );
         } else {
           toast.error(`The domain '${sanitizedDomain}' is already in use.`);
         }
@@ -94,7 +116,9 @@ const SignUpForm: React.FC<CustomProps> = ({
     },
     onError: (error) => {
       console.error('Error checking domain:', error);
-      toast.error('There was an issue validating your domain. Please try again.');
+      toast.error(
+        'There was an issue validating your domain. Please try again.',
+      );
       setCheckingDomain(false);
       // If there's an error checking the domain, still proceed to check email
       checkEmailAvailability();
@@ -157,20 +181,24 @@ const SignUpForm: React.FC<CustomProps> = ({
         issues.errors = groupByCodeUtil(issues.errors);
         issues.warnings = groupByCodeUtil(issues.warnings);
         issues.notices = groupByCodeUtil(issues.notices);
-        
+
         // Count total issues
-        const errorCount = Array.isArray(issues.errors) ? issues.errors.length : Object.keys(issues.errors || {}).length;
-        const warningCount = Array.isArray(issues.warnings) ? issues.warnings.length : Object.keys(issues.warnings || {}).length;
-        const noticeCount = Array.isArray(issues.notices) ? issues.notices.length : Object.keys(issues.notices || {}).length;
-        
+        const errorCount = Array.isArray(issues.errors)
+          ? issues.errors.length
+          : Object.keys(issues.errors || {}).length;
+        const warningCount = Array.isArray(issues.warnings)
+          ? issues.warnings.length
+          : Object.keys(issues.warnings || {}).length;
+        const noticeCount = Array.isArray(issues.notices)
+          ? issues.notices.length
+          : Object.keys(issues.notices || {}).length;
+
         const totalCount = errorCount + warningCount + noticeCount;
         setTotalErrorCount(totalCount);
       }
-      
     } catch (error) {
       setTotalErrorCount(119);
     }
-    
   };
 
   const [
@@ -188,19 +216,19 @@ const SignUpForm: React.FC<CustomProps> = ({
     },
     onError: async (error) => {
       console.error('Accessibility analysis failed:', error);
-      
+
       // Script check has already run and completed by now
       // If no script check result somehow, use default error count
       if (!scriptCheckResult) {
         setTotalErrorCount(119);
       }
-      
+
       // Clear timeout if it exists
       if (analysisTimeout) {
         clearTimeout(analysisTimeout);
         setAnalysisTimeout(null);
       }
-      
+
       // Skip to step 3 (keep websiteUrl)
       setCurrentStep(3);
     },
@@ -210,11 +238,10 @@ const SignUpForm: React.FC<CustomProps> = ({
     if (data) {
       const result = data.getAccessibilityReport;
 
-      if(result){
+      if (result) {
         setScore(result?.score);
         groupByCode(result?.htmlcs);
       }
-      
     }
   }, [data]);
 
@@ -223,24 +250,26 @@ const SignUpForm: React.FC<CustomProps> = ({
     if (currentStep === 2 && formData.websiteUrl) {
       // Start both accessibility analysis and script check simultaneously
       getAccessibilityStatsQuery();
-      
+
       // Start script check at the same time (it's faster)
-      checkScript(formData.websiteUrl).then(scriptResult => {
-        setScriptCheckResult(scriptResult);
-        // Set error count immediately based on script check result
-        setErrorCountBasedOnResults(scriptResult, false);
-      }).catch(error => {
-        console.error('Script check failed:', error);
-        setScriptCheckResult('false');
-        setErrorCountBasedOnResults('false', false);
-      });
-      
+      checkScript(formData.websiteUrl)
+        .then((scriptResult) => {
+          setScriptCheckResult(scriptResult);
+          // Set error count immediately based on script check result
+          setErrorCountBasedOnResults(scriptResult, false);
+        })
+        .catch((error) => {
+          console.error('Script check failed:', error);
+          setScriptCheckResult('false');
+          setErrorCountBasedOnResults('false', false);
+        });
+
       // Set a timeout (2 minutes) for the analysis
       const timeout = setTimeout(() => {
         // Script check has already completed by now, just skip to step 3
         setCurrentStep(3);
       }, 120000);
-      
+
       setAnalysisTimeout(timeout);
     } else if (currentStep === 2) {
       // If website URL is not provided, skip step 2
@@ -257,13 +286,13 @@ const SignUpForm: React.FC<CustomProps> = ({
         clearTimeout(analysisTimeout);
         setAnalysisTimeout(null);
       }
-      
+
       // If script check found WebAbility, keep the low error count
       // Otherwise, the real accessibility data from groupByCode will be used
       if (scriptCheckResult === 'Web Ability') {
         setTotalErrorCount(5);
       }
-      
+
       setCurrentStep((prev) => prev + 1);
     }
   }, [currentStep, data, analysisLoading, analysisTimeout, scriptCheckResult]);
@@ -291,7 +320,7 @@ const SignUpForm: React.FC<CustomProps> = ({
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-  const [activeTab, setActiveTab] = useState("overview")
+  const [activeTab, setActiveTab] = useState('overview');
   // Function to handle step navigation
   const handleNextStep = async () => {
     if (currentStep === 1) {
@@ -310,7 +339,11 @@ const SignUpForm: React.FC<CustomProps> = ({
           if (formData.websiteUrl) {
             // Validate domain format first
             const sanitizedDomain = getRootDomain(formData.websiteUrl);
-            if (sanitizedDomain !== 'localhost' && !isIpAddress(sanitizedDomain) && !isValidRootDomainFormat(sanitizedDomain)) {
+            if (
+              sanitizedDomain !== 'localhost' &&
+              !isIpAddress(sanitizedDomain) &&
+              !isValidRootDomainFormat(sanitizedDomain)
+            ) {
               toast.error('You must enter a valid domain name!');
               setCheckingDomain(false);
               return;
@@ -349,7 +382,7 @@ const SignUpForm: React.FC<CustomProps> = ({
           setShowFacts(true); // Fade in facts after logo fades out
         }, 400); // Small delay for smooth transition
       }, 30000);
-      
+
       return () => {
         clearTimeout(showFactsTimeout);
       };
@@ -364,7 +397,7 @@ const SignUpForm: React.FC<CustomProps> = ({
   // Step 1: Basic Information
   const renderStep1 = () => {
     return (
-      <div className='sm:px-6 md:px-16'>
+      <div className="sm:px-6 md:px-16">
         <div className="mb-4 w-full block">
           <label className="text-left font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block mb-[19px] uppercase">
             {t('Common.label.your_name')}
@@ -499,9 +532,11 @@ const SignUpForm: React.FC<CustomProps> = ({
       <div className="text-center flex flex-col items-center justify-center min-h-[600px]">
         {/* Logo Animation Section - Fade out after 30 seconds */}
         {showLogoAnimation && (
-          <div className={`transition-all duration-500 ease-in-out ${
-            showLogoAnimation ? 'opacity-100' : 'opacity-0'
-          }`}>
+          <div
+            className={`transition-all duration-500 ease-in-out ${
+              showLogoAnimation ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
             {/* Enhanced image container with throbbing animation */}
             <div className="mb-8 relative">
               {/* Main image container with rectangular border matching the logo image */}
@@ -551,7 +586,7 @@ const SignUpForm: React.FC<CustomProps> = ({
             <div className="flex justify-center mb-6">
               <CircularProgress />
             </div>
-            
+
             <div className="flex flex-col items-center gap-2 mb-8">
               <p className="text-blue-600 text-left font-medium flex items-center">
                 Scanning for accessibility issues
@@ -577,7 +612,9 @@ const SignUpForm: React.FC<CustomProps> = ({
     return (
       <div>
         <div className="mb-6">
-          {formData?.websiteUrl && formData?.websiteUrl.trim() !== '' && <WebAbilityWidget errorCount={errorCount} />}
+          {formData?.websiteUrl && formData?.websiteUrl.trim() !== '' && (
+            <WebAbilityWidget errorCount={errorCount} />
+          )}
 
           <AccessibilitySteps />
         </div>
@@ -593,15 +630,20 @@ const SignUpForm: React.FC<CustomProps> = ({
 
   // Function to check script installation
   const checkScript = async (url: string): Promise<string> => {
+    const token = getAuthenticationCookie();
+
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/check-script`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/check-script`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ siteUrl: url }),
         },
-        body: JSON.stringify({ siteUrl: url }),
-        credentials: 'include',
-      });
+      );
       const data = await response.json();
       return data;
     } catch (error) {
@@ -611,7 +653,10 @@ const SignUpForm: React.FC<CustomProps> = ({
   };
 
   // Function to set error count based on script check and accessibility data
-  const setErrorCountBasedOnResults = (scriptResult: string, hasAccessibilityData: boolean) => {
+  const setErrorCountBasedOnResults = (
+    scriptResult: string,
+    hasAccessibilityData: boolean,
+  ) => {
     if (scriptResult === 'Web Ability') {
       // WebAbility widget already installed - lowest error count
       setTotalErrorCount(5);
@@ -650,10 +695,14 @@ const SignUpForm: React.FC<CustomProps> = ({
           onClick={onSubmit}
           disabled={isSubmitting}
         >
-          {isSubmitting || siteAdding ? (<span className="flex items-center justify-center">
+          {isSubmitting || siteAdding ? (
+            <span className="flex items-center justify-center">
               <CircularProgress size={30} color={'inherit'} className="mr-2 " />
               Please Wait
-            </span>) : submitText}
+            </span>
+          ) : (
+            submitText
+          )}
         </Button>
       )}
 
@@ -661,14 +710,14 @@ const SignUpForm: React.FC<CustomProps> = ({
         <div className="mt-4">
           {(() => {
             const validationErrors = extractValidationErrors(apiError);
-            const localizedErrors = getLocalizedErrors(validationErrors, t, 'Sign_up');
-            
+            const localizedErrors = getLocalizedErrors(
+              validationErrors,
+              t,
+              'Sign_up',
+            );
+
             return localizedErrors.map((errorMessage, index) => (
-        <ErrorText
-                key={index}
-                message={errorMessage}
-          position="center"
-        />
+              <ErrorText key={index} message={errorMessage} position="center" />
             ));
           })()}
         </div>

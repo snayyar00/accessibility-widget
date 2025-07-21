@@ -1,4 +1,3 @@
-import { Response } from 'express'
 import { combineResolvers } from 'graphql-resolvers'
 
 import { normalizeEmail } from '../../helpers/string.helper'
@@ -13,12 +12,7 @@ import { getUserOrganization } from '../../services/organization/organization_us
 import { deleteUser } from '../../services/user/delete-user.service'
 import { updateProfile } from '../../services/user/update-user.service'
 import { isEmailAlreadyRegistered } from '../../services/user/user.service'
-import { clearCookie, COOKIE_NAME, setAuthenticationCookie } from '../../utils/cookie'
 import { isAuthenticated } from './authorization.resolver'
-
-type Res = {
-  res: Response
-}
 
 type Register = {
   email: string
@@ -70,30 +64,19 @@ const resolvers = {
     hasOrganization: (parent: { current_organization_id?: number }) => Boolean(parent.current_organization_id),
   },
   Mutation: {
-    register: async (_: unknown, { email, password, name }: Register, { res }: Res) => {
+    register: async (_: unknown, { email, password, name }: Register) => {
       const result = await registerUser(normalizeEmail(email), password, name)
 
-      if (result && 'token' in result && result.token) {
-        setAuthenticationCookie(res, result.token)
-        return true
-      }
+      return result
+    },
+
+    login: async (_: unknown, { email, password }: Login) => {
+      const result = await loginUser(normalizeEmail(email), password)
 
       return result
     },
 
-    login: async (_: unknown, { email, password }: Login, { res }: Res) => {
-      const result = await loginUser(normalizeEmail(email), password, res)
-
-      if (result && 'token' in result && result.token) {
-        setAuthenticationCookie(res, result.token)
-        return true
-      }
-
-      return result
-    },
-
-    logout: (_: unknown, __: unknown, { res }: Res) => {
-      clearCookie(res, COOKIE_NAME.TOKEN)
+    logout: (_: unknown, __: unknown) => {
       return true
     },
 
@@ -107,12 +90,8 @@ const resolvers = {
 
     resendEmail: combineResolvers(isAuthenticated, (_, { type }, { user }) => resendEmailAction(user, <'verify_email' | 'forgot_password'>normalizeEmail(type))),
 
-    deleteAccount: combineResolvers(isAuthenticated, async (_, __, { user, res }) => {
+    deleteAccount: combineResolvers(isAuthenticated, async (_, __, { user }) => {
       const result = await deleteUser(user)
-
-      if (result === true) {
-        clearCookie(res, COOKIE_NAME.TOKEN)
-      }
 
       return result
     }),

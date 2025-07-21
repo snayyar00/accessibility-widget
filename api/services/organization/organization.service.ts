@@ -3,9 +3,10 @@ import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATI
 import { objectToString } from '../../helpers/string.helper'
 import { createOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization, updateOrganization } from '../../repository/organization.repository'
 import { updateUser, UserProfile } from '../../repository/user.repository'
+import { normalizeDomain } from '../../utils/domain.utils'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
-import { validateAddOrganization, validateEditOrganization, validateRemoveOrganization } from '../../validations/organization.validation'
+import { validateAddOrganization, validateEditOrganization, validateGetOrganizationByDomain, validateRemoveOrganization } from '../../validations/organization.validation'
 import { addUserToOrganization, getOrganizationsByUserId, getUserOrganization } from './organization_users.service'
 
 export interface CreateOrganizationInput {
@@ -165,6 +166,23 @@ export async function getOrganizationById(id: number | string, user: UserProfile
   } catch (error) {
     logger.error('Error fetching organization by id:', error)
 
+    throw error
+  }
+}
+
+export async function getOrganizationByDomainService(domain: string): Promise<Organization | ValidationError | undefined> {
+  const validateResult = validateGetOrganizationByDomain({ domain })
+
+  if (Array.isArray(validateResult) && validateResult.length) {
+    return new ValidationError(validateResult.map((it) => it.message).join(','))
+  }
+
+  const normalizedDomain = normalizeDomain(domain)
+
+  try {
+    return await getOrganizationByDomain(normalizedDomain)
+  } catch (error) {
+    logger.error('Error fetching organization by domain:', error)
     throw error
   }
 }

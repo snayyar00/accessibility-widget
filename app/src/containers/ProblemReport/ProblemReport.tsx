@@ -1,4 +1,4 @@
-import React, { useEffect, useState,useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import ProblemCard from './ProblemCard';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import TourGuide from '@/components/Common/TourGuide';
 import { defaultTourStyles } from '@/config/tourStyles';
 import { reportsTourSteps, tourKeys } from '@/constants/toursteps';
+import { getAuthenticationCookie } from '@/utils/cookie';
 
 export interface Problem {
   id: number;
@@ -41,17 +42,19 @@ const ProblemReport: React.FC = () => {
   };
 
   const fetchProblemReports = async () => {
-    setLoader(true)
+    setLoader(true);
     const url = `${process.env.REACT_APP_BACKEND_URL}/get-problem-reports`;
     const bodyData = { user_id: data.id };
+
+    const token = getAuthenticationCookie();
 
     await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(bodyData),
-      credentials: 'include'
     })
       .then((response) => {
         if (!response.ok) {
@@ -61,8 +64,8 @@ const ProblemReport: React.FC = () => {
         response.json().then((data) => {
           // Handle the JSON data received from the backend
           if (isMounted.current) {
-          setProblemArray(data);
-          setLoader(false);
+            setProblemArray(data);
+            setLoader(false);
           }
         });
       })
@@ -95,7 +98,7 @@ const ProblemReport: React.FC = () => {
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}
       />
-      
+
       <div className="min-h-screen py-6 sm:py-8 md:py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <header className="reports-page-header mb-8 sm:mb-12 text-center">
@@ -108,14 +111,13 @@ const ProblemReport: React.FC = () => {
           </header>
 
           {loader ? (
-            <div className='flex justify-center'>
+            <div className="flex justify-center">
               <CircularProgress
-              size={100}
-              sx={{ color: '#0080ff' }}
-              className="mx-auto my-auto"
-            />
+                size={100}
+                sx={{ color: '#0080ff' }}
+                className="mx-auto my-auto"
+              />
             </div>
-            
           ) : (
             <>
               <div className="mb-6 sm:mb-8 flex md:flex-row ms:flex-col justify-center items-center gap-4">

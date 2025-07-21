@@ -11,11 +11,13 @@ import { sendMail } from '../email/email.service'
 export async function changePasswordUser(userId: number, currentPassword: string, newPassword: string): Promise<true | ApolloError> {
   try {
     const user = await findUser({ id: userId })
+
     if (!user || !user.id) {
       return new ApolloError('Can not find any user')
     }
 
     const validateResult = changePasswordValidation({ password: newPassword })
+
     if (Array.isArray(validateResult) && validateResult.length) {
       return new UserInputError(validateResult.map((it) => it.message).join(','), {
         invalidArgs: validateResult.map((it) => it.field).join(','),
@@ -23,6 +25,7 @@ export async function changePasswordUser(userId: number, currentPassword: string
     }
 
     const matchPassword = await comparePassword(currentPassword, user.password)
+
     if (!matchPassword) {
       return new ApolloError('Current password is not correct')
     }

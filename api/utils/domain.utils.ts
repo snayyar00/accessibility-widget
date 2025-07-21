@@ -1,3 +1,5 @@
+import { getDomain, parse } from 'tldts'
+
 /**
  * Utility functions for handling domain names and URLs
  */
@@ -119,7 +121,7 @@ export function getRetryUrls(url: string): string[] {
  * normalizeDomain('http://example.com') // 'example.com'
  * normalizeDomain('www.example.com') // 'example.com'
  * normalizeDomain('example.com') // 'example.com'
- * normalizeDomain('https://subdomain.example.com/path/') // 'subdomain.example.com/path'
+ * normalizeDomain('https://subdomain.example.com/path/') // 'subdomain.example.com'
  */
 export function normalizeDomain(url: string): string {
   if (!url || typeof url !== 'string') {
@@ -130,47 +132,71 @@ export function normalizeDomain(url: string): string {
     .trim()
     .toLowerCase()
     .replace(/^(https?:\/\/)?(www\.)?/, '') // Remove protocol and www
-    .replace(/\/$/, '') // Remove trailing slash
+    .replace(/\/.*/, '') // Remove everything after first slash (path, query, etc)
+    .replace(/\/$/, '') // Remove trailing slash (if any left)
+}
+
+interface RootDomainOptions {
+  validHosts?: string[]
+  allowPrivateDomains?: boolean
+}
+
+export function isIpAddress(value: string): boolean {
+  if (!value) return false
+  // Use tldts.parse to check for IP. It's more robust.
+  // Pass extractHostname: false because 'value' is already a hostname/IP.
+  // Pass validateHostname: false to prevent tldts from rejecting if it's just an IP string.
+  const parsed = parse(value, { extractHostname: false, validateHostname: false })
+  return parsed.isIp || false
 }
 
 /**
- * Extracts clean domain from any URL format
- * @param url - Any URL format (with/without protocol, with/without www, with paths, etc.)
- * @returns Clean domain name only
+ * Extracts the root domain (e.g., example.com, example.co.uk) from a given URL or hostname string.
+ * Handles IP addresses and localhost appropriately.
  *
- * @example
- * extractDomain('https://www.example.com/path?query=1#hash') // 'example.com'
- * extractDomain('http://subdomain.example.com:3000/api/users') // 'subdomain.example.com'
- * extractDomain('www.example.com/about') // 'example.com'
- * extractDomain('example.com') // 'example.com'
- * extractDomain('ftp://files.example.com/file.zip') // 'files.example.com'
+ * @param urlOrHostname - The URL or hostname string to parse.
+ * @param options - Optional configuration for tldts.
+ * @returns The root domain, IP, localhost, or a cleaned version of the input if no root domain is found.
  */
-export function extractDomain(url: string): string {
-  if (!url || typeof url !== 'string') {
+export function getRootDomain(urlOrHostname: string, options?: RootDomainOptions): string {
+  if (!urlOrHostname || typeof urlOrHostname !== 'string') {
     return ''
   }
 
-  let domain = url.trim().toLowerCase()
+  let cleanedInput: string
+  try {
+    const urlObj = new URL(urlOrHostname.startsWith('http') ? urlOrHostname : `http://${urlOrHostname}`)
+    cleanedInput = urlObj.hostname
+  } catch {
+    cleanedInput = urlOrHostname.replace(/^(https?:\/\/)?(www\.)?/, '')
+    const parts = cleanedInput.split(/[\/?#]/)
+    cleanedInput = parts[0]
+    cleanedInput = cleanedInput.replace(/:\d+$/, '')
+  }
 
-  // Remove any protocol (http://, https://, ftp://, etc.)
-  domain = domain.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '')
+  if (isIpAddress(cleanedInput)) {
+    return cleanedInput
+  }
 
-  // Remove www. prefix if present
-  domain = domain.replace(/^www\./i, '')
+  if (cleanedInput.toLowerCase() === 'localhost') {
+    return 'localhost'
+  }
 
-  // Remove everything after the domain (paths, queries, hashes)
-  domain = domain.split('/')[0]
-  domain = domain.split('?')[0]
-  domain = domain.split('#')[0]
+  const tldtsOptions = {
+    validHosts: options?.validHosts || ['localhost'],
+    allowPrivateDomains: options?.allowPrivateDomains || false,
+  }
 
-  // Remove port number if present
-  domain = domain.split(':')[0]
+  try {
+    const domainInfo = getDomain(urlOrHostname, tldtsOptions)
 
-  // Clean any remaining invalid characters but keep dots and hyphens
-  domain = domain.replace(/[^a-z0-9.-]/g, '')
+    if (domainInfo) {
+      return domainInfo
+    }
 
-  // Remove leading/trailing dots or hyphens
-  domain = domain.replace(/^[.-]+|[.-]+$/g, '')
-
-  return domain
+    return cleanedInput // Fallback to the cleaned input
+  } catch (error) {
+    console.error('Error parsing domain with tldts:', error)
+    return cleanedInput // Fallback in case of tldts error
+  }
 }

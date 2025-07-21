@@ -1,4 +1,3 @@
-
 # Accessibility Widget Frontend
 
 Frontend client for the Accessibility Widget project.
@@ -22,7 +21,6 @@ cp .env.example .env
 npm install --legacy-peer-deps
 ```
 
-
 ### 3. Run in development mode
 
 ```bash
@@ -34,6 +32,7 @@ npm start
 ```bash
 npm run build
 ```
+
 Production build will be output to the `build/` directory.
 
 ---
@@ -52,15 +51,12 @@ Production build will be output to the `build/` directory.
 
 ---
 
-
 ## Environment Variables
 
 Create a `.env` file and specify all required variables. Example:
 
 ```env
 NODE_ENV=development
-
-REACT_APP_DOMAIN=http://localhost:3000
 
 REACT_APP_BACKEND_URL=http://localhost:3001
 REACT_APP_GRAPHQL_URL=http://localhost:3001/graphql
@@ -69,6 +65,11 @@ REACT_APP_SENTRY_DSN=
 
 REACT_APP_STRIPE_PUBLIC_KEY=
 REACT_APP_PLAN_NAME=single
+
+# HOST and PORT below are for local development with sslip.io domain mapping
+# Example: http://app.trywebability.com.127.0.0.1.sslip.io:3000 will resolve to your local machine
+HOST=app.trywebability.com.127.0.0.1.sslip.io
+PORT=3000
 ```
 
 ---

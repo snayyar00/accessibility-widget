@@ -25,11 +25,11 @@ export const logAuthenticationFailure = (req: Request, _: Response, message: str
 }
 
 export async function isAuthenticated(req: Request, res: Response, next: NextFunction) {
-  const { cookies } = req
-  const bearerToken = cookies.token || null
+  const authHeader = req.headers.authorization || ''
+  const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
 
   try {
-    const user = await getUserLogined(bearerToken, res)
+    const user = await getUserLogined(bearerToken)
 
     if (!user) {
       logAuthenticationFailure(req, res, 'Authentication fail', 'UNAUTHENTICATED')

@@ -1,5 +1,4 @@
-import { normalizeDomain } from '../utils/domain.utils'
-import { getRootDomain } from '../utils/domainUtils'
+import { getRootDomain, normalizeDomain } from '../utils/domain.utils'
 import logger from '../utils/logger'
 import { validateTokenUrl } from '../validations/widget.validation'
 import { findSiteByURL } from './sites_allowed.repository'

@@ -6,9 +6,10 @@ import { ContextParams, GraphQLContext } from './types'
  * Extracts authentication token and resolves user information
  */
 export async function createGraphQLContext({ req, res }: ContextParams): Promise<GraphQLContext> {
-  const { cookies } = req
-  const bearerToken = cookies.token || null
-  const user = await getUserLogined(bearerToken, res)
+  const authHeader = req.headers.authorization || ''
+  const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+
+  const user = await getUserLogined(bearerToken)
 
   return {
     req,
