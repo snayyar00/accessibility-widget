@@ -1,4 +1,5 @@
 import Validator, { ValidationError } from 'fastest-validator';
+import { getRootDomain } from '~/utils/domainUtils';
 
 export function validateReportProblem(input: {
   site_url: string;
@@ -6,8 +7,9 @@ export function validateReportProblem(input: {
   description: string;
   reporter_email: string;
 }): true | ValidationError[] | Promise<true | ValidationError[]> {
+  const filtered = getRootDomain(input.site_url);
+  input.site_url = filtered;
   const validator = new Validator();
-
   const schema = {
     site_url: {
       type: 'string',
