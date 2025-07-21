@@ -14,7 +14,7 @@ export const saveState = (state: any) => {
   try {
     const serializedState = JSON.stringify(state);
     localStorage.setItem('reduxState', serializedState);
-  } catch {
-    // ignore write errors
+  } catch (error) {
+    console.error('Error saving state to localStorage:', error);
   }
 }; 
