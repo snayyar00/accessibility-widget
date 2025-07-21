@@ -134,7 +134,7 @@
       <mj-column>
           <mj-raw>
             <div style="padding: 18px 0; text-align: center;">
-              <div style="display: inline-block; border: 2px solid #0080ff ; background: #f8fafc; border-radius: 18px; padding: 10px 36px; font-size: 26px; font-weight: 700; color: #0080ff ;">
+              <div style="display: inline-block; border: 2px solid #0080ff ; background: #f8fafc; border-radius: 8px; padding: 10px 36px; font-size: 26px; font-weight: 700; color: #0080ff ;">
                 {{#if (eq issue_type "bug")}}Bug Report{{/if}}
                 {{#if (eq issue_type "accessibility")}}Accessibility Issue{{/if}}
               </div>
@@ -173,7 +173,7 @@
             font-family: Poppins, sans-serif;
             font-size: 22px;
             font-weight: 800;
-            border-radius: 32px;
+            border-radius: 8px;
             padding: 20px 48px;
             text-decoration: none;
             box-shadow: 0 8px 32px rgba(74, 108, 247, 0.18);
@@ -187,7 +187,7 @@
             <circle cx="12" cy="12" r="12" fill="#fff" fill-opacity="0.18"/>
             <path d="M8 12h8M12 8l4 4-4 4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Check it out on dashboard
+          View on dashboard
         </a>
       </div>
     </mj-raw>
