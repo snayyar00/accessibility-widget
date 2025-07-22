@@ -1,16 +1,146 @@
 import { combineResolvers } from 'graphql-resolvers'
+import { v4 as uuidv4 } from 'uuid'
 
 import { deleteAccessibilityReportByR2Key, getAccessibilityReportByR2Key, getR2KeysByParams, insertAccessibilityReport } from '../../repository/accessibilityReports.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { fetchTechStackFromAPI } from '../../repository/techStack.repository'
 import { fetchAccessibilityReport } from '../../services/accessibilityReport/accessibilityReport.service'
+import { normalizeDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import { deleteReportFromR2, fetchReportFromR2, saveReportToR2 } from '../../utils/r2Storage'
 import { validateAccessibilityReport, validateAccessibilityReportR2Filter, validateR2Key, validateSaveAccessibilityReportInput } from '../../validations/accesability.validation'
 import { isAuthenticated } from './authorization.resolver'
 
+type AccessibilityReportJob = {
+  status: 'pending' | 'done' | 'error'
+  result: any
+  error: string | null
+  createdAt: number
+  timeout: NodeJS.Timeout
+}
+
+// In-memory job store
+const accessibilityReportJobs = new Map<string, AccessibilityReportJob>() // jobId -> job
+const JOB_EXPIRY_MS = 10 * 60 * 1000 // 10 minutes
+
+function createJob(): string {
+  const jobId = uuidv4()
+  const job: AccessibilityReportJob = {
+    status: 'pending',
+    result: null,
+    error: null,
+    createdAt: Date.now(),
+    timeout: setTimeout(() => {
+      accessibilityReportJobs.delete(jobId)
+    }, JOB_EXPIRY_MS),
+  }
+  accessibilityReportJobs.set(jobId, job)
+  return jobId
+}
+
+async function processAccessibilityReportJob(jobId: string, url: string) {
+  try {
+    const [accessibilityReport, techStack] = await Promise.all([fetchAccessibilityReport(url), fetchTechStackFromAPI(url)])
+    const result = {
+      ...accessibilityReport,
+      techStack,
+    }
+
+    // --- Backend save logic ---
+    const normalizedUrl = normalizeDomain(url)
+    let allowed_sites_id = null
+    try {
+      const site = await findSiteByURL(normalizedUrl)
+      allowed_sites_id = site ? site.id : null
+    } catch {
+      allowed_sites_id = null
+    }
+    // Generate a report key
+    const reportKey = `reports/${Date.now()}-${Math.random().toString(36).substring(2, 10)}.json`
+    // Save to R2
+    await saveReportToR2(reportKey, result)
+    // Save metadata to DB
+    let scoreObj
+    if (result.score == null) {
+      scoreObj = { value: 0 }
+    } else if (typeof result.score === 'object' && result.score !== null && typeof result.score !== 'number' && !Array.isArray(result.score) && 'value' in result.score) {
+      scoreObj = result.score
+    } else if (typeof result.score === 'number') {
+      scoreObj = { value: result.score }
+    } else {
+      scoreObj = { value: 0 }
+    }
+    const meta = await insertAccessibilityReport({
+      url: normalizedUrl || '',
+      allowed_sites_id,
+      r2_key: reportKey,
+      score: scoreObj as any,
+    })
+    // Store the saved report meta in the job result
+    // Ensure result.score is a number for the frontend/GraphQL
+    const scoreVal = result.score
+    if (scoreVal == null) {
+      result.score = 0
+    } else if (typeof scoreVal === 'object' && scoreVal !== null && typeof scoreVal !== 'number' && !Array.isArray(scoreVal) && 'value' in scoreVal!) {
+      result.score = (scoreVal! as any).value ?? 0
+    } else if (typeof scoreVal !== 'number') {
+      result.score = 0
+    }
+    const job = accessibilityReportJobs.get(jobId)
+    if (job) {
+      job.status = 'done'
+      job.result = {
+        reportData: result,
+        savedReport: {
+          success: true,
+          key: reportKey,
+          report: meta,
+        },
+      }
+    }
+  } catch (error: any) {
+    const job = accessibilityReportJobs.get(jobId)
+    if (job) {
+      job.status = 'error'
+      job.error = error.message
+    }
+  }
+}
+
+type AccessibilityReportJobStatusResponse = {
+  status: string
+  result: any | null
+  error: string | null
+}
+
 const resolvers = {
   Query: {
+    startAccessibilityReportJob: async (_: any, { url }: { url: string }) => {
+      const validateResult = validateAccessibilityReport({ url })
+      if (Array.isArray(validateResult) && validateResult.length) {
+        return new ValidationError(validateResult.map((it) => it.message).join(','))
+      }
+      const jobId = createJob()
+      // Start processing in background
+      processAccessibilityReportJob(jobId, url).catch(console.error)
+      return { jobId }
+    },
+    getAccessibilityReportByJobId: async (_: any, { jobId }: { jobId: string }): Promise<AccessibilityReportJobStatusResponse> => {
+      const job = accessibilityReportJobs.get(jobId)
+      if (!job) {
+        return { status: 'not_found', result: null, error: 'Error generating report please try agian' }
+      }
+      if (job.status === 'done' || job.status === 'error') {
+        clearTimeout(job.timeout)
+        accessibilityReportJobs.delete(jobId)
+      }
+      return {
+        status: job.status,
+        result: job.result,
+        error: job.error,
+      }
+    },
+
     getAccessibilityReport: async (_: any, { url }: { url: string }) => {
       const validateResult = validateAccessibilityReport({ url })
 

@@ -190,6 +190,11 @@ export const AccessibilitySchema = `#graphql
     report: AccessibilityReportMeta
   }
 
+  type AccessibilityJobResult {
+    reportData: Report
+    savedReport: SaveReportResponse
+  }
+
   type AccessibilityReportTableRow {
     url: String!
     r2_key: String!
@@ -197,10 +202,22 @@ export const AccessibilitySchema = `#graphql
     score: JSON
   }
 
+  type AccessibilityJobResponse {
+    jobId: String!
+  }
+
+  type AccessibilityJobStatusResponse {
+    status: String!
+    result: AccessibilityJobResult
+    error: String
+  }
+
   extend type Query {
     getAccessibilityReport(url: String!): Report @rateLimit(limit: 3, duration: 60, message: "Too many requests. Please try again in a minute.")
     fetchAccessibilityReportFromR2(url: String!, created_at: String, updated_at: String): [AccessibilityReportTableRow!]! @rateLimit(limit: 60, duration: 60, message: "Too many R2 report requests. Please try again later.")
     fetchReportByR2Key(r2_key: String!): Report @rateLimit(limit: 20, duration: 60, message: "Too many R2 key report requests. Please try again later.")
+    startAccessibilityReportJob(url: String!): AccessibilityJobResponse!
+    getAccessibilityReportByJobId(jobId: String!): AccessibilityJobStatusResponse!
   }
 
   extend type Mutation {

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ApolloProvider, useQuery } from '@apollo/client';
+import { ApolloProvider, useQuery, useMutation } from '@apollo/client';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
@@ -16,6 +16,10 @@ import 'react-toastify/dist/ReactToastify.css';
 import { RootState } from './config/store';
 import ReportView from './containers/Accessibility/ReportView';
 import ReportSuccessModal from '@/components/Common/ReportSuccessModal';
+import { pollReportJob } from '@/features/report/reportSlice';
+import SAVE_ACCESSIBILITY_REPORT from '@/queries/accessibility/saveAccessibilityReport';
+import GET_USER_SITES from '@/queries/sites/getSites';
+import GlobalReportPolling from '@/components/Common/GlobalReportPolling';
 
 type props = {
   options: string[];
@@ -38,6 +42,7 @@ const App: React.FC<props> = ({ options }) => {
       <BrowserRouter>
         <GlobalLoading />
         <ToastContainer />
+        <GlobalReportPolling />
         {/* Global Report Modal */}
         <ReportSuccessModal isOpen={showModal} reportData={reportData} />
         <Switch>

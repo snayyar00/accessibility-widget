@@ -1,4 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import getAccessibilityReportByJobId from '@/queries/accessibility/getAccessibilityReportByJobId';
+import { toast } from 'react-toastify';
+import { createClient } from '@/config/apollo';
+
+const apolloClient = createClient();
 
 export const generateReport = createAsyncThunk<any, any>(
   'report/generateReport',
@@ -12,6 +17,88 @@ export const generateReport = createAsyncThunk<any, any>(
   }
 );
 
+export const processAndSaveReport = createAsyncThunk(
+  'report/processAndSaveReport',
+  async ({ result, validDomain, sitesData, saveAccessibilityReport, isMounted, groupByCode }: any, { dispatch }) => {
+    let score = result.score;
+    let allowed_sites_id = null;
+
+    if (sitesData && sitesData.getUserSites) {
+      const matchedSite = sitesData.getUserSites.find(
+        (site: any) => (site.url || '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '') == validDomain.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
+      );
+      allowed_sites_id = matchedSite ? matchedSite.id : null;
+    }
+
+    // Save the report
+    const { data: saveData } = await saveAccessibilityReport({
+      variables: {
+        report: result,
+        url: validDomain,
+        allowed_sites_id,
+        score: typeof score === 'object' ? score : { value: score },
+      },
+    });
+
+    if (saveData && saveData.saveAccessibilityReport) {
+      const savedReport = saveData.saveAccessibilityReport;
+      const r2Key = savedReport.key;
+      const savedUrl = savedReport.report.url;
+      const newReportUrl = `/${r2Key}?domain=${encodeURIComponent(savedUrl)}`;
+      toast.success('Accessibility report saved successfully!');
+      dispatch(setIsGenerating(false));
+      dispatch(generateReport({ url: newReportUrl, allowed_sites_id }));
+    }
+    // Optionally process htmlcs, siteImg, etc. here if needed
+  }
+);
+
+export const pollReportJob = createAsyncThunk(
+  'report/pollReportJob',
+  async ({ jobId }: any, { dispatch }) => {
+    const poll = async () => {
+      let data;
+      try {
+        const response = await apolloClient.query({
+          query: getAccessibilityReportByJobId,
+          variables: { jobId },
+          fetchPolicy: 'network-only',
+        });
+        data = response.data;
+      } catch (error) {
+        dispatch(clearJobId());
+        dispatch(setIsGenerating(false));
+        toast.error(error || 'Server error, please try again');
+        throw new Error('Server error, please try again');
+      }
+      if (data && data.getAccessibilityReportByJobId) {
+        const { status, result, error } = data.getAccessibilityReportByJobId;
+        if (status === 'done' && result && result.savedReport) {
+          dispatch(clearJobId());
+          dispatch(setIsGenerating(false));
+          // Compose the report URL from backend result
+          const r2Key = result.savedReport.key;
+          const savedUrl = result.savedReport.report.url;
+          const newReportUrl = `/${r2Key}?domain=${encodeURIComponent(savedUrl)}`;
+          dispatch(generateReport({ url: newReportUrl }));
+          return true;
+        } else if (status === 'error' || status === 'not_found') {
+          dispatch(clearJobId());
+          dispatch(setIsGenerating(false));
+          toast.error(error || 'Failed to generate report.');
+          return true;
+        }
+      }
+      return false;
+    };
+    let finished = false;
+    while (!finished) {
+      finished = await poll();
+      if (!finished) await new Promise(res => setTimeout(res, 5000));
+    }
+  }
+);
+
 const reportSlice = createSlice({
   name: 'report',
   initialState: {
@@ -21,6 +108,7 @@ const reportSlice = createSlice({
     showModal: false,
     reportUrl: '',
     selectedDomain: null,
+    jobId: null,
   } as {
     isGenerating: boolean;
     reportData: any;
@@ -28,6 +116,7 @@ const reportSlice = createSlice({
     showModal: boolean;
     reportUrl: string;
     selectedDomain: string | null;
+    jobId: string | null;
   },
   reducers: {
     closeModal(state) {
@@ -40,12 +129,19 @@ const reportSlice = createSlice({
       state.showModal = false;
       state.reportUrl = '';
       state.selectedDomain = null;
+      state.jobId = null;
     },
     setIsGenerating(state, action) {
       state.isGenerating = action.payload;
     },
     setSelectedDomain(state, action) {
       state.selectedDomain = action.payload;
+    },
+    setJobId(state, action) {
+      state.jobId = action.payload;
+    },
+    clearJobId(state) {
+      state.jobId = null;
     },
   },
   extraReducers: (builder) => {
@@ -72,5 +168,5 @@ const reportSlice = createSlice({
   },
 });
 
-export const { closeModal, resetReport, setIsGenerating, setSelectedDomain } = reportSlice.actions;
+export const { closeModal, resetReport, setIsGenerating, setSelectedDomain, setJobId, clearJobId } = reportSlice.actions;
 export default reportSlice.reducer; 

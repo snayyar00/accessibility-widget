@@ -12,10 +12,6 @@
     "sourceMap": true,
     "skipLibCheck": true,
     "outDir": "dist",
-    "baseUrl": "./",
-    "paths": {
-      "./*": ["./*"]
-    },
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": true,

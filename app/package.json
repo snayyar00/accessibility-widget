@@ -126,6 +126,7 @@
     "@types/react-redux": "^7.1.18",
     "@types/react-router-dom": "^5.1.8",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "@types/uuid": "^10.0.0",
     "@types/webpack-env": "^1.16.2",
     "@types/yup": "^0.29.13",
     "@types/zxcvbn": "^4.4.5",
