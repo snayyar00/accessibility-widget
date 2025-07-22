@@ -61,7 +61,7 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
                 domain: domain,
             },
         });
-        sendMail(problem.reporter_email, 'Problem reported', template1)
+        sendMail(problem.reporter_email, 'Problem reported', template)
         .then(() => console.log('Mail sent successfully'))
         .catch((mailError) => console.error('Error sending mail:', mailError));
 
@@ -70,7 +70,7 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
           
             const owner = await getUserbyId(site.user_id);
             if (owner && owner.email) {
-                sendMail(owner.email, 'A problem was reported for your site', template)
+                sendMail(owner.email, 'A problem was reported for your site', template1)
                 .then(() => console.log('Owner mail sent successfully'))
                 .catch((mailError) => console.error('Error sending owner mail:', mailError));
             }

@@ -1,47 +1,207 @@
 <mjml>
   <mj-head>
     <mj-preview>A problem was reported on your site</mj-preview>
-    <mj-style inline="inline"> .card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; text-align: center; } .image-shadow { box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15); border-radius: 8px; } </mj-style>
+    <mj-style>
+      .card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 32px;
+        margin: 24px 0;
+        box-shadow: 0 8px 32px rgba(74, 108, 247, 0.10);
+        border-left: 6px solid #0080ff;
+      }
+      .issue-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 28px;
+        border-radius: 50px;
+        font-weight: 700;
+        margin: 24px 0 16px 0;
+        font-size: 17px;
+        box-shadow: 0 2px 8px rgba(74, 108, 247, 0.08);
+      }
+      .bug-badge {
+        background: #ffeaea;
+        color: #d32f2f;
+      }
+      .accessibility-badge {
+        background: #e6f7ee;
+        color: #2e7d32;
+      }
+      .signature-name {
+        font-weight: 800;
+        color: #0080ff ;
+        font-size: 20px;
+        font-style: normal;
+        margin-top: 8px;
+      }
+      .gradient-divider {
+        height: 4px;
+        border: none;
+        background: linear-gradient(90deg, #0080ff  0%, #67e8f9 100%);
+        margin: 32px 0 24px 0;
+      }
+      .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 32px;
+        border-radius: 50px;
+        font-family: Poppins, sans-serif;
+        font-weight: 700;
+        font-size: 17px;
+        background: #0080ff ;
+        color: white;
+        text-decoration: none;
+        box-shadow: 0 5px 15px rgba(74, 108, 247, 0.18);
+        transition: background 0.3s;
+      }
+      .action-btn:hover {
+        background: #2e51c1;
+      }
+      .secondary-btn {
+        background: white;
+        color: #0080ff ;
+        border: 2px solid #e2e8f0;
+      }
+      .secondary-btn:hover {
+        background: #f1f5fa;
+      }
+      .footer-social {
+        display: flex;
+        justify-content: center;
+        gap: 18px;
+        margin: 24px 0 12px 0;
+      }
+      .footer-social a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        transition: background 0.3s;
+      }
+      .footer-social a:hover {
+        background: #0080ff ;
+      }
+    </mj-style>
+    <mj-font name="Poppins" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" />
+    <mj-font name="Open Sans" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" />
   </mj-head>
-  <mj-body>
-    <!-- Header -->
-    <mj-section background-color="#f8f8f8" padding="20px">
+  
+  <mj-body background-color="#f5f7fa" style="background-image: url('data:image/svg+xml;utf8,<svg width=\'400\' height=\'400\' xmlns=\'http://www.w3.org/2000/svg\'><circle cx=\'200\' cy=\'200\' r=\'180\' fill=\'%23e0e7ff\' fill-opacity=\'0.12\'/></svg>'); background-repeat: repeat;">
+    <!-- Decorative SVG wave at the top of the header -->
+    <mj-raw>
+      <div style="width:100%;overflow:hidden;line-height:0;">
+        <svg viewBox="0 0 500 40" width="100%" height="40" preserveAspectRatio="none" style="display:block;"><path d="M0,20 Q250,-20 500,20 L500,40 L0,40 Z" fill="#0080ff " fill-opacity="0.18"/></svg>
+      </div>
+    </mj-raw>
+    <!-- Header with logo, icon, and gradient overlay -->
+    <mj-section background-color="#0080ff " background-size="cover" background-repeat="no-repeat" padding="32px 0 24px 0">
       <mj-column>
-        <mj-text font-size="22px" font-weight="bold" color="#d32f2f" align="center"> A problem was reported on your site </mj-text>
+        <mj-raw>
+          <div style="display: flex; justify-content: center; margin-bottom: 8px;">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style="display:block;">
+              <circle cx="24" cy="24" r="24" fill="#fff" fill-opacity="0.12"/>
+              <path d="M24 14v10l7 4" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </mj-raw>
+          <mj-text font-family="Poppins, sans-serif" font-size="38px" font-weight="900" color="#ffffff" align="center" padding="0 0 8px 0" letter-spacing="2px">
+            A Problem Was Reported On <a href="{{domain}}" style="color: #ffffff !important; text-decoration: none !important; font-weight: 800;">{{domain}}</a>
+          </mj-text>
+        <mj-text font-family="Open Sans, sans-serif" font-size="21px" color="rgba(255,255,255,0.95)" align="center" padding="0 20px 0 20px" line-height="1.7">
+          We've received a report that requires your attention
+        </mj-text>
+        <mj-raw>
+          <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+            <div style="width: 100%; height: 100%; background: linear-gradient(120deg, rgba(47, 72, 173, 0.7) 0%, rgba(103,232,249,0.3) 100%);"></div>
+          </div>
+        </mj-raw>
       </mj-column>
     </mj-section>
-
-    <!-- Main message -->
-    <mj-section background-color="#ffffff" padding="20px">
+    <!-- Wavy SVG separator -->
+    <mj-raw>
+      <div style="width:100%;overflow:hidden;line-height:0;">
+        <svg viewBox="0 0 500 40" width="100%" height="40" preserveAspectRatio="none" style="display:block;"><path d="M0,20 Q250,-20 500,20 L500,40 L0,40 Z" fill="#fff"/></svg>
+      </div>
+    </mj-raw>
+    <!-- Issue Card with double border and glow -->
+    <mj-section background-color="#ffffff00" padding="0">
       <mj-column>
-        <mj-text font-size="16px" color="#333333" align="center">
-          A user has reported a&nbsp;
-          <b> {{#if (eq issue_type "bug")}}bug{{/if}}{{#if (eq issue_type "accessibility")}}accessibility issue{{/if}} </b> on your site.
+          <mj-raw>
+            <div style="padding: 18px 0; text-align: center;">
+              <div style="display: inline-block; border: 2px solid #0080ff ; background: #f8fafc; border-radius: 8px; padding: 10px 36px; font-size: 26px; font-weight: 700; color: #0080ff ;">
+                {{#if (eq issue_type "bug")}}Bug Report{{/if}}
+                {{#if (eq issue_type "accessibility")}}Accessibility Issue{{/if}}
+              </div>
+            </div>
+          </mj-raw>
+        <mj-text font-family="Poppins, sans-serif" font-size="21px" color="#0080ff " padding="0 0 14px" font-weight="700" letter-spacing="1px">
+          <mj-raw>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="#0080ff "><path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"></path></svg>
+              Issue Description
+            </div>
+          </mj-raw>
         </mj-text>
-        <mj-text font-size="16px" color="#333333" align="center">
-          <b>Description:</b><br />
+        <mj-text css-class="card" font-family="Open Sans, sans-serif" font-size="19px" color="#4a5568" line-height="2" padding="32px">
           {{description}}
         </mj-text>
-        <mj-text font-size="16px" color="#333333" align="center">
-          <b>Domain:</b> {{domain}}
-        </mj-text>
-        <mj-text font-size="16px" color="#333333" align="center">
-          Please review the reported issue and take any necessary action.<br />
-          Thank you for helping us maintain a high-quality experience for all users!
-        </mj-text>
-        <mj-divider border-color="#007bff" width="80px"></mj-divider>
-        <mj-text font-size="15px" color="#666666" align="center">
-          Best regards,<br />
-          The Web Ability Team
-        </mj-text>
+        <mj-raw>
+          </div></div>
+        </mj-raw>
       </mj-column>
     </mj-section>
 
+    <!-- Signature -->
+<mj-section background-color="#ffffff" padding="0 0 30px">
+  <mj-column>
+    <mj-raw>
+      <div style="text-align: center; margin: 32px 0;">
+        <a 
+          href="https://app.webability.io/" 
+          style="
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient( #0080ff);
+            color: #fff;
+            font-family: Poppins, sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            border-radius: 8px;
+            padding: 20px 48px;
+            text-decoration: none;
+            box-shadow: 0 8px 32px rgba(74, 108, 247, 0.18);
+            transition: background 0.3s;
+            letter-spacing: 1px;
+            border: none;
+          "
+          target="_blank"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style="margin-right: 8px;">
+            <circle cx="12" cy="12" r="12" fill="#fff" fill-opacity="0.18"/>
+            <path d="M8 12h8M12 8l4 4-4 4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          View on dashboard
+        </a>
+      </div>
+    </mj-raw>
+  </mj-column>
+</mj-section>
+
     <!-- Footer -->
-    <mj-section background-color="#f8f8f8" padding="20px">
+    <mj-section background-color="#f8fafc" padding="20px 0">
       <mj-column>
-        <mj-text font-size="12px" color="#666666" align="center"> © {{year}} Web Ability. All Rights Reserved. </mj-text>
+        <mj-text font-family="Open Sans, sans-serif" font-size="14px" color="#718096" align="center">
+          © {{year}} Web Ability. All Rights Reserved.
+        </mj-text>
       </mj-column>
     </mj-section>
   </mj-body>
+  
 </mjml>
