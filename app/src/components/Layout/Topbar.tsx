@@ -208,12 +208,12 @@ const Topbar: React.FC<Props> = ({ signout }) => {
       
       {/* Notification Settings Dropdown */}
       {isShowNotificationSettings && (
-        <div className="absolute top-[calc(100%_+_10px)] right-[215px] w-[280px] sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:top-[calc(100%_+_10px)] md:right-[215px] lg:right-[215px] z-50">
+        <div className="absolute top-[calc(100%_+_10px)] right-[215px] w-[280px] sm:left-3/4 sm:transform sm:-translate-x-1/2 sm:top-[calc(100%_+_10px)] md:right-[215px] lg:right-[215px] z-50">
           <div className="relative p-4 border border-solid border-dark-grey rounded-[5px] shadow-xsl bg-white">
             <h3 className="text-lg font-semibold text-sapphire-blue mb-4">Notification Settings</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex-1 pr-4">
                   <p className="text-sm font-medium text-sapphire-blue">Monthly Reports</p>
                   <p className="text-xs text-gray-500">Receive monthly accessibility reports</p>
                 </div>
@@ -230,7 +230,7 @@ const Topbar: React.FC<Props> = ({ signout }) => {
               </div>
               
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex-1 pr-4">
                   <p className="text-sm font-medium text-sapphire-blue">New Domain Alerts</p>
                   <p className="text-xs text-gray-500">Get report when new domains are added</p>
                 </div>
@@ -241,13 +241,13 @@ const Topbar: React.FC<Props> = ({ signout }) => {
                   }`}
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
-                    notificationSettings.new_domain_flag ? "translate-x-4" : "translate-x-0.5"
+                    notificationSettings.new_domain_flag ? "translate-x-5" : "translate-x-0.5"
                   }`} />
                 </button>
               </div>
               
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex-1 pr-4">
                   <p className="text-sm font-medium text-sapphire-blue">Issue Reports</p>
                   <p className="text-xs text-gray-500">Receive notifications for reported issues</p>
                 </div>
@@ -258,7 +258,7 @@ const Topbar: React.FC<Props> = ({ signout }) => {
                   }`}
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
-                    notificationSettings.issue_reported_flag ? "translate-x-4" : "translate-x-0.5"
+                    notificationSettings.issue_reported_flag ? "translate-x-5" : "translate-x-0.5"
                   }`} />
                 </button>
               </div>
