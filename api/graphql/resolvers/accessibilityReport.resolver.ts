@@ -126,7 +126,7 @@ const resolvers = {
       }
       const jobId = createJob(url);
       // Start processing in background
-      processAccessibilityReportJob(jobId, url);
+      processAccessibilityReportJob(jobId, url).catch(console.error);
       return { jobId };
     },
     getAccessibilityReportByJobId: async (_: any, { jobId }: { jobId: string }): Promise<AccessibilityReportJobStatusResponse> => {

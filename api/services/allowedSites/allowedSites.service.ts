@@ -4,7 +4,7 @@ import { getSitePlanBySiteId } from '~/repository/sites_plans.repository';
 import { createSitesPlan } from './plans-sites.service';
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '~/constants/database.constant';
 import { sendEmailWithRetries, sendMail, EmailAttachment } from '~/libs/mail';
-import { getUserbyId } from '~/repository/user.repository';
+import { getUserbyId, findUserNotificationByUserId } from '~/repository/user.repository';
 import compileEmailTemplate from '~/helpers/compile-email-template';
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service';
 import { generateAccessibilityReportPDF } from '~/utils/pdfGenerator';
@@ -73,6 +73,8 @@ export async function addSite(userId: number, url: string): Promise<string> {
 
         const report = await fetchAccessibilityReport(domain);
         const user = await getUserbyId(userId);
+        // Check user_notifications flag for new_domain_flag
+ 
         const widgetStatus = await checkScript(domain);
         const status = widgetStatus == 'true' || widgetStatus == 'Web Ability' ? 'Compliant' : 'Not Compliant';
         const score = widgetStatus == 'Web Ability'
@@ -81,6 +83,11 @@ export async function addSite(userId: number, url: string): Promise<string> {
             ? Math.floor(Math.random() * (88 - 80 + 1)) + 80
             : report.score;
 
+        const notification = await findUserNotificationByUserId(user.id);
+        if (!notification || !notification.new_domain_flag) {
+          console.log(`Skipping new domain email for user ${user.email} (no notification flag)`);
+          return 'The site was successfully added.';
+        }
         const template = await compileEmailTemplate({
           fileName: 'accessReport.mjml',
           data: {

@@ -2,7 +2,7 @@ import { ValidationError, AuthenticationError } from 'apollo-server-express';
 import { Response } from 'express';
 import { comparePassword } from '~/helpers/hashing.helper';
 import { sign } from '~/helpers/jwt.helper';
-import { findUser } from '~/repository/user.repository';
+import { findUser, findUserNotificationByUserId, insertUserNotification } from '~/repository/user.repository';
 import { loginValidation } from '~/validations/authenticate.validation';
 import { sanitizeUserInput } from '~/utils/sanitization.helper';
 import { clearCookie, COOKIE_NAME } from '~/utils/cookie';
@@ -61,6 +61,18 @@ export async function loginUser(email: string, password: string, res: Response):
 
   // Clear failed attempts after successful authentication
   await resetFailedAttempts(user.id);
+
+  // Ensure user_notifications row exists for this user
+  const notification = await findUserNotificationByUserId(user.id);
+  if (!notification) {
+ 
+    try {
+      await insertUserNotification(user.id);
+      console.log("User added to notification");
+    } catch (error) {
+      console.error("Failed to add user to notification:", error);
+    }
+  }
 
   return {
     token: sign({
