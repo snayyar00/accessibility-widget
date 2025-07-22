@@ -144,6 +144,7 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
   const [endDate, setEndDate]     = useState<string>(defaultEnd);
 
   const [appSumoDomains,setAppSumoDomain] = useState<string[]|undefined>(undefined);
+
   const [loadDashboard, { data, loading, error }] = useLazyQuery(fetchDashboardQuery, {
     fetchPolicy: 'cache-first',
     onCompleted: () => setLoadingAnimation(false),
@@ -152,10 +153,17 @@ const Dashboard: React.FC<any> = ({ domain, domainData,allDomains,setReloadSites
   const [statusClass,setStatusClass] = useState<string|undefined>(undefined);
   
   useEffect(() => {
-    setLoadingAnimation(true);
-    loadDashboard({
+    if(domain!='Select a Domain' || domain!='Add a new Domain')
+      {
+        setLoadingAnimation(false);
+      }
+    if(domain!='Select a Domain' && domain!='Add a new Domain')
+    {
+      setLoadingAnimation(true);
+      loadDashboard({
       variables: { url: domain, startDate, endDate },
     });
+  }
   }, [domain, startDate, endDate, loadDashboard]);
 
   useEffect(() => {
