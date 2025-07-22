@@ -6,16 +6,27 @@ import { extractClientDomain } from '../utils/domain.utils'
 /**
  * Determines log level and type based on error type
  */
-function getLogLevelAndType(hasAuthError: boolean, hasIntrospectionError: boolean, hasForbiddenError: boolean) {
+function getLogLevelAndType(hasAuthError: boolean, hasIntrospectionError: boolean, hasForbiddenError: boolean, hasInternalError: boolean, hasBadUserInputError: boolean) {
   if (hasAuthError) {
     return { level: 'warn', type: 'security' }
   }
+
   if (hasForbiddenError) {
     return { level: 'warn', type: 'security' }
   }
+
   if (hasIntrospectionError) {
     return { level: 'warn', type: 'graphql' }
   }
+
+  if (hasBadUserInputError) {
+    return { level: 'error', type: 'security' }
+  }
+
+  if (hasInternalError) {
+    return { level: 'error', type: 'graphql' }
+  }
+
   return { level: 'error', type: 'graphql' }
 }
 
@@ -26,8 +37,10 @@ export function logGraphQLErrors(errors: readonly GraphQLError[], req: Request, 
   const hasAuthError = errors.some((err) => err.extensions?.code === 'UNAUTHENTICATED' || err.message?.includes('Authentication fail'))
   const hasForbiddenError = errors.some((err) => err.extensions?.code === 'FORBIDDEN')
   const hasIntrospectionError = errors.some((err) => err.extensions?.code === 'GRAPHQL_VALIDATION_FAILED' && err.message?.includes('introspection is not allowed'))
+  const hasInternalError = errors.some((err) => err.extensions?.code === 'INTERNAL_SERVER_ERROR')
+  const hasBadUserInputError = errors.some((err) => err.extensions?.code === 'BAD_USER_INPUT')
 
-  const { level, type } = getLogLevelAndType(hasAuthError, hasIntrospectionError, hasForbiddenError)
+  const { level, type } = getLogLevelAndType(hasAuthError, hasIntrospectionError, hasForbiddenError, hasInternalError, hasBadUserInputError)
 
   const errorLog = JSON.stringify({
     timestamp: new Date().toISOString(),

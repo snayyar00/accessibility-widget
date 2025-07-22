@@ -17,6 +17,7 @@ export async function saveReportToR2(key: string, json: any) {
     Body: JSON.stringify(json),
     ContentType: 'application/json',
   })
+
   await s3.send(command)
 }
 
@@ -25,12 +26,15 @@ export async function fetchReportFromR2(key: string) {
     Bucket: process.env.R2_BUCKET!,
     Key: key,
   })
+
   const response = await s3.send(command)
   const stream = response.Body as Readable
   const chunks: Buffer[] = []
+
   for await (const chunk of stream) {
     chunks.push(chunk as Buffer)
   }
+
   return JSON.parse(Buffer.concat(chunks).toString('utf-8'))
 }
 
@@ -39,5 +43,6 @@ export async function deleteReportFromR2(key: string) {
     Bucket: process.env.R2_BUCKET!,
     Key: key,
   })
+
   await s3.send(command)
 }
