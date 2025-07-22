@@ -9,7 +9,7 @@ import { forgotPasswordUser } from '~/services/authentication/forgot-password.se
 import { resetPasswordUser } from '~/services/authentication/reset-password.service';
 import { changePasswordUser } from '~/services/authentication/change-password.service';
 import { deleteUser } from '~/services/user/delete-user.service';
-import { updateProfile } from '~/services/user/update-user.service';
+import { updateProfile, updateUserNotificationSettings, getUserNotificationSettingsService } from '~/services/user/update-user.service';
 import { isEmailAlreadyRegistered } from '~/services/user/user.service';
 import { normalizeEmail } from '~/helpers/string.helper';
 import { clearCookie, COOKIE_NAME, setAuthenticationCookie } from '~/utils/cookie';
@@ -55,6 +55,12 @@ const resolvers = {
     isEmailAlreadyRegistered: async (_: unknown, { email }: { email: string }) => {
       return isEmailAlreadyRegistered(normalizeEmail(email));
     },
+    getUserNotificationSettings: combineResolvers(
+      isAuthenticated,
+      async (_, __, { user }) => {
+        return await getUserNotificationSettingsService(user.id);
+      },
+    ),
   },
   Mutation: {
     register: async (_: unknown, { email, password, name, paymentMethodToken, planName, billingType } : Register, { res }: Res) => {
@@ -116,6 +122,18 @@ const resolvers = {
     updateProfile: combineResolvers(
       isAuthenticated,
       (_, { name, company, position }, { user }) => updateProfile(user.id, name, company, position),
+    ),
+
+    updateNotificationSettings: combineResolvers(
+      isAuthenticated,
+      async (_, { monthly_report_flag, new_domain_flag, issue_reported_flag }, { user }) => {
+        const result = await updateUserNotificationSettings(user.id, {
+          monthly_report_flag,
+          new_domain_flag,
+          issue_reported_flag,
+        });
+        return result.success;
+      },
     ),
   },
 };

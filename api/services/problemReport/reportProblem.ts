@@ -4,6 +4,7 @@ import { sendMail } from "~/libs/mail";
 import { addProblemReport, problemReportProps } from "~/repository/problem_reports.repository";
 import { FindAllowedSitesProps, findSiteByURL } from "~/repository/sites_allowed.repository";
 import { validateReportProblem } from "~/validations/reportProblem.validation";
+import { findUserNotificationByUserId, getUserbyId } from '~/repository/user.repository';
 
 export async function handleReportProblem(site_url: string, issue_type: string, description: string, reporter_email: string): Promise<string> {
     const validateResult = validateReportProblem({ site_url, issue_type, description, reporter_email });
@@ -24,6 +25,22 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
         const problem:problemReportProps = {site_id:site.id, issue_type:(issue_type as "bug" | "accessibility"), description:description, reporter_email:reporter_email};
     
         await addProblemReport(problem);
+
+        // Check user_notifications flag for issue_reported_flag
+        let user = null;
+        try {
+          user = await getUserbyId(site.user_id);
+        } catch (e) {
+        // If user not found, skip notification logic
+        console.log(`User not found for site ${site_url}, skipping notification check`);
+        }
+        if (user) {
+          const notification = await findUserNotificationByUserId(user.id);
+          if (!notification || !notification.issue_reported_flag) {
+            console.log(`Skipping issue report email for user ${user.email} (no notification flag)`);
+            return "Problem reported successfully (notification skipped)";
+          }
+        }
 
         const template = await compileEmailTemplate({
             fileName: 'reportProblem.mjml',
