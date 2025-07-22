@@ -1,4 +1,7 @@
-import { getAuthenticationCookie } from '@/utils/cookie';
+import {
+  clearAuthenticationCookie,
+  getAuthenticationCookie,
+} from '@/utils/cookie';
 import {
   ApolloClient,
   ApolloLink,
@@ -25,6 +28,8 @@ const authLink = new ApolloLink((operation, forward) => {
 
   return forward(operation);
 });
+
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 export function createClient(): ApolloClient<NormalizedCacheObject> {
   // Create the cache first, which we'll share across Apollo tooling.
@@ -54,15 +59,20 @@ export function createClient(): ApolloClient<NormalizedCacheObject> {
       // out to third-party services, etc
       onError(({ graphQLErrors, networkError }) => {
         if (graphQLErrors) {
-          graphQLErrors.map(({ message, locations, path }) =>
-            console.log(
-              `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`,
-            ),
-          );
+          if (isDevelopment) {
+            graphQLErrors.map(({ message, locations, path }) =>
+              console.log(
+                `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`,
+              ),
+            );
+          }
+
           const errors = graphQLErrors[0];
+
           switch (errors.extensions?.code) {
             case 'UNAUTHENTICATED':
               if (!window.location.pathname.startsWith('/auth')) {
+                clearAuthenticationCookie();
                 window.location.href = '/auth/signin';
               }
               break;
@@ -72,7 +82,9 @@ export function createClient(): ApolloClient<NormalizedCacheObject> {
           }
         }
         if (networkError) {
-          console.log(`[Network error]: ${networkError}`);
+          if (isDevelopment) {
+            console.log(`[Network error]: ${networkError}`);
+          }
         }
       }),
       authLink,

@@ -16,6 +16,7 @@ import ReportView from './containers/Accessibility/ReportView';
 import ReportSuccessModal from '@/components/Common/ReportSuccessModal';
 import GlobalReportPolling from '@/components/Common/GlobalReportPolling';
 import { GlobalLoader } from '@/containers/Root';
+import AuthRedirect from '@/containers/Auth/AuthRedirect';
 
 type props = {
   options: string[];
@@ -38,17 +39,21 @@ const App: React.FC<props> = ({ options }) => {
     <ApolloProvider client={client}>
       <BrowserRouter>
         <GlobalLoader />
-
         <ToastContainer />
+
         <GlobalReportPolling />
 
         <ReportSuccessModal isOpen={showModal} reportData={reportData} />
 
         <Switch>
-          <Route path="/verify-email" component={VerifyEmail} />
           <PublicRoute path="/auth" component={Auth} />
+
+          <Route path="/auth-redirect" component={AuthRedirect} />
+          <Route path="/verify-email" component={VerifyEmail} />
           <Route path="/reports/:r2_key" component={ReportView} exact />
+
           <PrivateRoute render={() => <AdminLayout options={options} />} />
+
           <Redirect from="*" to="/" />
         </Switch>
       </BrowserRouter>

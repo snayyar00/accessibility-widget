@@ -5,12 +5,12 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useMutation } from '@apollo/client';
 import { useHistory } from 'react-router-dom';
-import Cookies from 'js-cookie';
 import SignInForm from '@/components/Auth/SignInForm';
 import loginQuery from '@/queries/auth/login';
 import AuthAdsArea from '@/components/Auth/AuthAds';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { setAuthenticationCookie } from '@/utils/cookie';
+import { LoginMutation, Mutation } from '@/generated/graphql';
 
 const SignInSchema = yup.object().shape({
   email: yup
@@ -39,16 +39,25 @@ const SignIn: React.FC = () => {
   } = useForm({
     resolver: yupResolver(SignInSchema),
   });
-  const [loginMutation, { error, loading }] = useMutation(loginQuery);
+  const [loginMutation, { error, loading }] =
+    useMutation<LoginMutation>(loginQuery);
+
   const history = useHistory();
 
   async function onSubmit(params: Payload) {
     try {
       const { data } = await loginMutation({ variables: params });
 
-      if (data?.login?.token) {
-        setAuthenticationCookie(data?.login?.token);
-        history.push('/');
+      if (data?.login.token && data?.login.url) {
+        const currentHost = window.location.hostname;
+        const targetHost = new URL(data.login.url).hostname;
+
+        if (currentHost !== targetHost) {
+          window.location.href = `${data.login.url}/auth-redirect?token=${data.login.token}`;
+        } else {
+          setAuthenticationCookie(data.login.token);
+          history.push('/');
+        }
       }
     } catch (e) {
       console.log(e);

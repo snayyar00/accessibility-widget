@@ -24,8 +24,13 @@ export const UserSchema = `#graphql
     hasOrganization: Boolean!
   }
 
-  type AuthPayload {
+  type RegisterPayload {
     token: String!
+  }
+
+  type LoginPayload {
+    token: String!
+    url: String!
   }
 
   extend type Query {
@@ -34,9 +39,9 @@ export const UserSchema = `#graphql
   }
 
   extend type Mutation {
-    register(email: String!, password: String!, name: String!): AuthPayload! @rateLimit(limit: 3, duration: 3600, message: "Too many registration attempts. Please try again later.")
+    register(email: String!, password: String!, name: String!): RegisterPayload! @rateLimit(limit: 3, duration: 3600, message: "Too many registration attempts. Please try again later.")
 
-    login(email: String!, password: String!): AuthPayload! @rateLimit(limit: 7, duration: 900, message: "Too many login attempts. Please try again later.")
+    login(email: String!, password: String!): LoginPayload! @rateLimit(limit: 7, duration: 900, message: "Too many login attempts. Please try again later.")
 
     forgotPassword(email: String!): Boolean! @rateLimit(limit: 3, duration: 3600, message: "Too many password reset requests. Please try again later.")
 

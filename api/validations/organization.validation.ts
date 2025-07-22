@@ -1,9 +1,9 @@
 import Validator, { ValidationError } from 'fastest-validator'
 
 // Domain pattern examples:
-//   Pass: example.com, my-site.io, sub.domain.net
+//   Pass: example.com, my-site.io, sub.domain.net, app.trywebability.com.127.0.0.1.sslip.io:3000
 //   Fail: http://example.com, https://my-site.io, example (no dot), .com (no name), example@com (invalid char)
-const domainPattern = /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+const domainPattern = /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(:\d+)?$/
 
 // Domain pattern with protocol examples:
 //   Pass: example.com, my-site.io, http://example.com, https://my-site.io, sub.domain.net, https://example.com/1212/12/12, localhost, localhost:3001

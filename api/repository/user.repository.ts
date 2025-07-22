@@ -63,19 +63,25 @@ export async function findUser({ id, email, provider_id, provider, deleted_at = 
   return database(TABLE).where(condition).first()
 }
 
-export async function createUser(userData: UserProfile): Promise<number | Error> {
-  let t
-
-  try {
-    t = await database.transaction()
-    const [userId] = await database(TABLE).transacting(t).insert(userData)
-
-    await t.commit()
+export async function createUser(userData: UserProfile, trx?: Knex.Transaction): Promise<number | Error> {
+  if (trx) {
+    const [userId] = await database(TABLE).transacting(trx).insert(userData)
 
     return userId
-  } catch (error) {
-    if (error) t.rollback()
-    return new Error(error)
+  } else {
+    let t
+
+    try {
+      t = await database.transaction()
+      const [userId] = await database(TABLE).transacting(t).insert(userData)
+
+      await t.commit()
+
+      return userId
+    } catch (error) {
+      if (t) await t.rollback()
+      return new Error(error)
+    }
   }
 }
 

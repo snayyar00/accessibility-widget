@@ -25,7 +25,7 @@ type Documents = {
     "\n  mutation ChangePassword($currentPassword: String!, $newPassword: String!) {\n    changePassword(currentPassword: $currentPassword, newPassword: $newPassword)\n  }\n": typeof types.ChangePasswordDocument,
     "\n  mutation ForgotPassword($email: String!) {\n    forgotPassword(email: $email)\n  }\n": typeof types.ForgotPasswordDocument,
     "\n  query GetProfile {\n    profileUser {\n      id\n      email\n      name\n      isActive\n      company\n      position\n      avatarUrl\n      invitationToken\n    }\n  }\n": typeof types.GetProfileDocument,
-    "\n  mutation Login($email: String!, $password: String!) {\n    login(email: $email, password: $password) {\n      token\n    }\n  }\n": typeof types.LoginDocument,
+    "\n  mutation Login($email: String!, $password: String!) {\n    login(email: $email, password: $password) {\n      token\n      url\n    }\n  }\n": typeof types.LoginDocument,
     "\n  mutation Logout {\n    logout\n  }\n": typeof types.LogoutDocument,
     "\n  mutation Register($email: String!, $password: String!, $name: String!) {\n    register(email: $email, password: $password, name: $name) {\n      token\n    }\n  }\n": typeof types.RegisterDocument,
     "\n  mutation ResendVerification {\n    resendEmail(type: VERIFY_EMAIL)\n  }\n": typeof types.ResendVerificationDocument,
@@ -55,7 +55,7 @@ const documents: Documents = {
     "\n  mutation ChangePassword($currentPassword: String!, $newPassword: String!) {\n    changePassword(currentPassword: $currentPassword, newPassword: $newPassword)\n  }\n": types.ChangePasswordDocument,
     "\n  mutation ForgotPassword($email: String!) {\n    forgotPassword(email: $email)\n  }\n": types.ForgotPasswordDocument,
     "\n  query GetProfile {\n    profileUser {\n      id\n      email\n      name\n      isActive\n      company\n      position\n      avatarUrl\n      invitationToken\n    }\n  }\n": types.GetProfileDocument,
-    "\n  mutation Login($email: String!, $password: String!) {\n    login(email: $email, password: $password) {\n      token\n    }\n  }\n": types.LoginDocument,
+    "\n  mutation Login($email: String!, $password: String!) {\n    login(email: $email, password: $password) {\n      token\n      url\n    }\n  }\n": types.LoginDocument,
     "\n  mutation Logout {\n    logout\n  }\n": types.LogoutDocument,
     "\n  mutation Register($email: String!, $password: String!, $name: String!) {\n    register(email: $email, password: $password, name: $name) {\n      token\n    }\n  }\n": types.RegisterDocument,
     "\n  mutation ResendVerification {\n    resendEmail(type: VERIFY_EMAIL)\n  }\n": types.ResendVerificationDocument,
@@ -135,7 +135,7 @@ export function graphql(source: "\n  query GetProfile {\n    profileUser {\n    
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation Login($email: String!, $password: String!) {\n    login(email: $email, password: $password) {\n      token\n    }\n  }\n"): (typeof documents)["\n  mutation Login($email: String!, $password: String!) {\n    login(email: $email, password: $password) {\n      token\n    }\n  }\n"];
+export function graphql(source: "\n  mutation Login($email: String!, $password: String!) {\n    login(email: $email, password: $password) {\n      token\n      url\n    }\n  }\n"): (typeof documents)["\n  mutation Login($email: String!, $password: String!) {\n    login(email: $email, password: $password) {\n      token\n      url\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -27,6 +27,7 @@ export async function forgotPasswordUser(email: string, clientDomain: string | n
 
     const tokenGenerated = await generateRandomKey()
     const token = `${tokenGenerated}-${user.id}`
+
     const currentUrl = getMatchingFrontendUrl(clientDomain)
 
     logger.info('Current URL:', currentUrl)

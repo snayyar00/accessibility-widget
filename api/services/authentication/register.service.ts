@@ -1,14 +1,21 @@
+import database from '../../config/database.config'
+import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { generatePassword } from '../../helpers/hashing.helper'
 import { sign } from '../../helpers/jwt.helper'
-import { createUser, findUser } from '../../repository/user.repository'
-import { ApolloError } from '../../utils/graphql-errors.helper'
+import { createUser, findUser, updateUser } from '../../repository/user.repository'
+import { ApolloError, ForbiddenError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
 import { createMultipleValidationErrors, createValidationError, getValidationErrorCode } from '../../utils/validation-errors.helper'
 import { registerValidation } from '../../validations/authenticate.validation'
-import { Token } from './login.service'
+import { getOrganizationByDomainService } from '../organization/organization.service'
+import { addUserToOrganization } from '../organization/organization_users.service'
 
-async function registerUser(email: string, password: string, name: string): Promise<ApolloError | Token> {
+type RegisterResponse = {
+  token: string
+}
+
+async function registerUser(email: string, password: string, name: string, clientDomain: string | null): Promise<ApolloError | RegisterResponse> {
   const sanitizedInput = sanitizeUserInput({ email, name })
 
   email = sanitizedInput.email
@@ -28,6 +35,12 @@ async function registerUser(email: string, password: string, name: string): Prom
   }
 
   try {
+    const organization = await getOrganizationByDomainService(clientDomain)
+
+    if (!organization || !('id' in organization) || !organization.id) {
+      return new ForbiddenError('Sorry, you cannot create an account.')
+    }
+
     const user = await findUser({ email })
 
     if (user) {
@@ -38,14 +51,30 @@ async function registerUser(email: string, password: string, name: string): Prom
       return new ApolloError('Your account is not yet verify')
     }
 
-    const passwordHashed = await generatePassword(password)
-    const userData = {
-      email,
-      password: passwordHashed,
-      name,
-    }
+    await database.transaction(async (trx) => {
+      const passwordHashed = await generatePassword(password)
 
-    await createUser(userData)
+      const userData = {
+        email,
+        password: passwordHashed,
+        name,
+      }
+
+      const newUserId = await createUser(userData, trx)
+
+      if (typeof newUserId !== 'number') {
+        throw new ApolloError('Failed to create user.')
+      }
+
+      const ids = await addUserToOrganization(newUserId, organization.id, ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE, trx)
+
+      if (!Array.isArray(ids) || ids.length === 0) {
+        throw new ApolloError('Failed to add user to organization.')
+      }
+
+      await updateUser(newUserId, { current_organization_id: organization.id }, trx)
+    })
+
     const token = sign({ email, name })
 
     return { token }

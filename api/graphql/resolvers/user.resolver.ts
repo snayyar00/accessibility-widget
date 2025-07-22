@@ -65,19 +65,19 @@ const resolvers = {
     hasOrganization: (parent: { current_organization_id?: number }) => Boolean(parent.current_organization_id),
   },
   Mutation: {
-    register: async (_: unknown, { email, password, name }: Register) => {
-      const result = await registerUser(normalizeEmail(email), password, name)
+    register: async (_: unknown, { email, password, name }: Register, { clientDomain }: GraphQLContext) => {
+      const result = await registerUser(normalizeEmail(email), password, name, clientDomain)
 
       return result
     },
 
-    login: async (_: unknown, { email, password }: Login) => {
-      const result = await loginUser(normalizeEmail(email), password)
+    login: async (_: unknown, { email, password }: Login, { clientDomain }: GraphQLContext) => {
+      const result = await loginUser(normalizeEmail(email), password, clientDomain)
 
       return result
     },
 
-    logout: (_: unknown, __: unknown) => {
+    logout: () => {
       return true
     },
 
