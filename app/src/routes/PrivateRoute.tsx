@@ -14,15 +14,14 @@ import { CircularProgress } from '@mui/material';
 
 type Props = {
   render: RouteProps['render'];
-}
+};
 
 const PrivateRoute: React.FC<Props> = ({ render }) => {
   const history = useHistory();
   const dispatch = useDispatch();
   const { t } = useTranslation();
-  const [getProfile, { data: userProfile, loading: loadingUserProfile }] = useLazyQuery(
-    getProfileQuery,
-  );
+  const [getProfile, { data: userProfile, loading: loadingUserProfile }] =
+    useLazyQuery(getProfileQuery);
   const { data } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
@@ -33,19 +32,24 @@ const PrivateRoute: React.FC<Props> = ({ render }) => {
 
   useEffect(() => {
     if (userProfile && userProfile.profileUser) {
-      dispatch(setProfileUser({ data: userProfile.profileUser, loading: loadingUserProfile }));
+      dispatch(
+        setProfileUser({
+          data: userProfile.profileUser,
+          loading: loadingUserProfile,
+        }),
+      );
     }
   }, [userProfile]);
 
   return (
     <>
       {data && data.id && !loadingUserProfile && render && (
-        <Route
-          render={props => render(props)}
-        />
+        <Route render={(props) => render(props)} />
       )}
       {(!data || !data.id || loadingUserProfile) && (
-        <div className='flex items-center justify-center h-screen w-screen'><CircularProgress size={150}/></div>
+        <div className="flex items-center justify-center h-screen w-screen">
+          <CircularProgress size={150} />
+        </div>
       )}
     </>
   );
