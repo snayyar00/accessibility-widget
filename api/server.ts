@@ -48,13 +48,11 @@ import { sendMail } from '~/libs/mail';
 import { emailValidation } from '~/validations/email.validation';
 import { addNewsletterSub } from '~/repository/newsletter_subscribers.repository';
 
-import { rateLimitDirective } from 'graphql-rate-limit-directive';
 import getIpAddress from '~/utils/getIpAddress';
 import { configureMorgan } from '~/libs/logger/morgan';
 import { requestTimingMiddleware } from '~/middlewares/requestTiming.middleware';
 import { expressErrorMiddleware } from '~/middlewares/expressError.middleware';
 import { graphqlErrorMiddleware } from '~/middlewares/graphqlError.middleware';
-import { GraphQLResolveInfo } from 'graphql';
 import { rateLimitDirectiveTransformer, rateLimitDirectiveTypeDefs } from '~/graphql/directives/rateLimit';
 
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
@@ -1597,7 +1595,7 @@ function dynamicCors(req: Request, res: Response, next: NextFunction) {
     next();
   });
 
-  app.use('/graphql', express.json({ limit: '5mb' }));
+  app.use('/graphql', express.json({ limit: '10mb' }));
   serverGraph.applyMiddleware({ app, cors: false });
 
   init({
