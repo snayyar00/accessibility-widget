@@ -6,7 +6,7 @@ import { incrementFailedAttempts, isAccountLocked, lockAccount, resetFailedAttem
 import { Organization } from '../../repository/organization.repository'
 import { findUser, findUserNotificationByUserId, insertUserNotification, updateUser } from '../../repository/user.repository'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
-import { ApolloError, AuthenticationError, ValidationError } from '../../utils/graphql-errors.helper'
+import { ApolloError, AuthenticationError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
 import { loginValidation } from '../../validations/authenticate.validation'
 import { getOrganizationById } from '../organization/organization.service'
@@ -94,6 +94,12 @@ export async function loginUser(email: string, password: string, organization: O
     }
   }
 
+  const currentUrl = getMatchingFrontendUrl(userOrganization.domain)
+
+  if (!currentUrl) {
+    throw new ForbiddenError('Provided domain is not in the list of allowed URLs')
+  }
+
   return {
     token: sign({
       email: user.email,
@@ -101,6 +107,6 @@ export async function loginUser(email: string, password: string, organization: O
       createdAt: user.created_at,
     }),
 
-    url: getMatchingFrontendUrl(userOrganization.domain),
+    url: currentUrl,
   }
 }

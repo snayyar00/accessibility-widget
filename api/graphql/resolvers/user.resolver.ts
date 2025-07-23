@@ -43,7 +43,12 @@ type Verify = {
 const resolvers = {
   Query: {
     profileUser: combineResolvers(allowedOrganization, isAuthenticated, (_, __, { user }) => user),
+
     isEmailAlreadyRegistered: combineResolvers(allowedOrganization, async (_: unknown, { email }: { email: string }) => isEmailAlreadyRegistered(normalizeEmail(email))),
+
+    getUserNotificationSettings: combineResolvers(allowedOrganization, isAuthenticated, async (_, __, { user }) => {
+      return await getUserNotificationSettingsService(user.id)
+    }),
   },
   User: {
     currentOrganization: async (parent: { current_organization_id?: number; id?: number }) => {
@@ -63,10 +68,6 @@ const resolvers = {
     },
 
     hasOrganization: (parent: { current_organization_id?: number }) => Boolean(parent.current_organization_id),
-
-    getUserNotificationSettings: combineResolvers(isAuthenticated, async (_, __, { user }) => {
-      return await getUserNotificationSettingsService(user.id)
-    }),
   },
   Mutation: {
     register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name }: Register, { organization }: GraphQLContext) => {

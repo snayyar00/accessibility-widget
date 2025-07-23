@@ -11,12 +11,12 @@ import AdminLayout from '@/containers/Layout/Admin';
 import VerifyEmail from '@/containers/VerifyEmail';
 import { createClient } from '@/config/apollo';
 import 'react-toastify/dist/ReactToastify.css';
-import { RootState } from './config/store';
-import ReportView from './containers/Accessibility/ReportView';
 import ReportSuccessModal from '@/components/Common/ReportSuccessModal';
 import GlobalReportPolling from '@/components/Common/GlobalReportPolling';
 import { GlobalLoader } from '@/containers/Root';
 import AuthRedirect from '@/containers/Auth/AuthRedirect';
+import ReportView from './containers/Accessibility/ReportView';
+import { RootState } from './config/store';
 
 type props = {
   options: string[];

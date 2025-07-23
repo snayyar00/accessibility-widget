@@ -5,7 +5,7 @@ import { Organization } from '../../repository/organization.repository'
 import { findUser, getUserByIdAndJoinUserToken } from '../../repository/user.repository'
 import { createToken, updateUserTokenById } from '../../repository/user_tokens.repository'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
-import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
+import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { emailValidation } from '../../validations/email.validation'
 import { sendMail } from '../email/email.service'
@@ -30,6 +30,10 @@ export async function forgotPasswordUser(email: string, organization: Organizati
     const token = `${tokenGenerated}-${user.id}`
 
     const currentUrl = getMatchingFrontendUrl(organization.domain)
+
+    if (!currentUrl) {
+      throw new ForbiddenError('Provided domain is not in the list of allowed URLs')
+    }
 
     if (!session) {
       await createToken(user.id, token, SEND_MAIL_TYPE.FORGOT_PASSWORD)

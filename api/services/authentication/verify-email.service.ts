@@ -9,7 +9,7 @@ import type { UserProfile } from '../../repository/user.repository'
 import { activeUser, getUserbyId } from '../../repository/user.repository'
 import { changeTokenStatus, createToken, findToken } from '../../repository/user_tokens.repository'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
-import { ApolloError } from '../../utils/graphql-errors.helper'
+import { ApolloError, ForbiddenError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sendMail } from '../email/email.service'
 
@@ -93,6 +93,10 @@ export async function resendEmailAction(user: UserProfile, type: 'verify_email' 
 
     const token = await generateRandomKey()
     const currentUrl = getMatchingFrontendUrl(organization.domain)
+
+    if (!currentUrl) {
+      throw new ForbiddenError('Provided domain is not in the list of allowed URLs')
+    }
 
     switch (type) {
       case SEND_MAIL_TYPE.VERIFY_EMAIL:

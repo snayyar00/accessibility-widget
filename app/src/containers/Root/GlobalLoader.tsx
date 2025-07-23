@@ -6,7 +6,7 @@ import GET_ORGANIZATION from '@/queries/organization/getOrganization';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Query } from '@/generated/graphql';
 
-const GlobalLoader: React.FC = () => {
+export const GlobalLoader: React.FC = () => {
   const dispatch = useDispatch();
   const { data, loading } = useQuery<Query>(GET_ORGANIZATION);
 
@@ -26,5 +26,3 @@ const GlobalLoader: React.FC = () => {
 
   return null;
 };
-
-export default GlobalLoader;
