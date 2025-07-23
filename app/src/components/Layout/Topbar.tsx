@@ -208,7 +208,7 @@ const Topbar: React.FC<Props> = ({ signout }) => {
       
       {/* Notification Settings Dropdown */}
       {isShowNotificationSettings && (
-        <div className="absolute top-[calc(100%_+_10px)] right-[215px] w-[280px] sm:left-3/4 sm:transform sm:-translate-x-1/2 sm:top-[calc(100%_+_10px)] md:right-[215px] lg:right-[215px] z-50">
+        <div className="absolute top-[calc(100%_+_10px)] right-0 w-[280px] sm:right-0 md:right-[215px] lg:right-[215px] z-50">
           <div className="relative p-4 border border-solid border-dark-grey rounded-[5px] shadow-xsl bg-white">
             <h3 className="text-lg font-semibold text-sapphire-blue mb-4">Notification Settings</h3>
             <div className="space-y-3">
