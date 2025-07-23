@@ -177,8 +177,10 @@ const Topbar: React.FC<Props> = ({ signout }) => {
             
             {/* Button Text */}
             <span className="text-white font-medium text-sm drop-shadow-sm relative z-10">
-              Start Tour
+              <span className="hidden sm:inline">Tour</span>
+              <span className="sm:hidden">Start Tour</span>
             </span>
+
             
             {/* Subtle glow effect */}
             <div className="absolute inset-0 bg-white/20 rounded-lg 
