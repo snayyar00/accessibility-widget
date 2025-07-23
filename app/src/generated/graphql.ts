@@ -156,6 +156,7 @@ export type Mutation = {
   saveAccessibilityReport: SaveReportResponse;
   translateStatement: TranslationResponse;
   updateImpressionProfileCounts: ImpressionUpdateResponse;
+  updateNotificationSettings: Scalars['Boolean']['output'];
   updateProfile: Scalars['Boolean']['output'];
   updateSitesPlan: Scalars['Boolean']['output'];
   verify: Scalars['Boolean']['output'];
@@ -284,6 +285,13 @@ export type MutationUpdateImpressionProfileCountsArgs = {
 };
 
 
+export type MutationUpdateNotificationSettingsArgs = {
+  issue_reported_flag?: InputMaybe<Scalars['Boolean']['input']>;
+  monthly_report_flag?: InputMaybe<Scalars['Boolean']['input']>;
+  new_domain_flag?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+
 export type MutationUpdateProfileArgs = {
   company?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
@@ -300,6 +308,13 @@ export type MutationUpdateSitesPlanArgs = {
 
 export type MutationVerifyArgs = {
   token: Scalars['String']['input'];
+};
+
+export type NotificationSettings = {
+  __typename?: 'NotificationSettings';
+  issue_reported_flag: Scalars['Boolean']['output'];
+  monthly_report_flag: Scalars['Boolean']['output'];
+  new_domain_flag: Scalars['Boolean']['output'];
 };
 
 export type Organization = {
@@ -374,6 +389,7 @@ export type Query = {
   getOrganizationUsers: Array<OrganizationUser>;
   getPlanBySiteIdAndUserId?: Maybe<SitesPlanData>;
   getSiteVisitorsByURL?: Maybe<VisitorResponse>;
+  getUserNotificationSettings: NotificationSettings;
   getUserOrganizations: Array<Organization>;
   getUserSites?: Maybe<Array<Maybe<Site>>>;
   isDomainAlreadyAdded: Scalars['Boolean']['output'];

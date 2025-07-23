@@ -8,6 +8,7 @@ import getProfileQuery from '@/queries/auth/getProfile';
 
 import { setProfileUser } from '@/features/auth/user';
 import { CircularProgress } from '@mui/material';
+import { redirectToUserOrganization } from '@/helpers/redirectToUserOrganization';
 
 type Props = {
   render: RouteProps['render'];
@@ -15,6 +16,7 @@ type Props = {
 
 const PrivateRoute: React.FC<Props> = ({ render }) => {
   const dispatch = useDispatch();
+
   const [getProfile, { data: userProfile, loading: loadingUserProfile }] =
     useLazyQuery(getProfileQuery);
   const { data } = useSelector((state: RootState) => state.user);
@@ -27,6 +29,14 @@ const PrivateRoute: React.FC<Props> = ({ render }) => {
 
   useEffect(() => {
     if (userProfile && userProfile.profileUser) {
+      const domain = userProfile?.profileUser?.currentOrganization?.domain;
+
+      if (domain) {
+        const redirected = redirectToUserOrganization(domain);
+
+        if (redirected) return;
+      }
+
       dispatch(
         setProfileUser({
           data: userProfile.profileUser,
