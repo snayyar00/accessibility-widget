@@ -22,6 +22,7 @@ export const UserSchema = `#graphql
     currentOrganization: Organization
     currentOrganizationUser: OrganizationUser
     hasOrganization: Boolean!
+    getUserNotificationSettings: NotificationSettings!
   }
 
   type RegisterPayload {
@@ -33,9 +34,16 @@ export const UserSchema = `#graphql
     url: String!
   }
 
+  type NotificationSettings {
+    monthly_report_flag: Boolean!
+    new_domain_flag: Boolean!
+    issue_reported_flag: Boolean!
+  }
+
   extend type Query {
     profileUser: User! @rateLimit(limit: 30, duration: 60, message: "Too many profile requests. Please try again later.")
     isEmailAlreadyRegistered(email: String!): Boolean! @rateLimit(limit: 5, duration: 60, message: "Too many email check attempts. Please try again later.")
+    getUserNotificationSettings: NotificationSettings! @rateLimit(limit: 10, duration: 60, message: "Too many notification settings requests. Please try again later.")
   }
 
   extend type Mutation {
@@ -56,6 +64,9 @@ export const UserSchema = `#graphql
     deleteAccount: Boolean! @rateLimit(limit: 3, duration: 3600, message: "Too many account deletion requests. Please try again later.")
 
     updateProfile(name: String, company: String, position: String): Boolean! @rateLimit(limit: 20, duration: 3600, message: "Too many profile update requests. Please try again later.")
+
+    updateNotificationSettings(monthly_report_flag: Boolean, new_domain_flag: Boolean, issue_reported_flag: Boolean): Boolean!
+      @rateLimit(limit: 10, duration: 3600, message: "Too many notification settings updates. Please try again later.")
 
     logout: Boolean!
   }

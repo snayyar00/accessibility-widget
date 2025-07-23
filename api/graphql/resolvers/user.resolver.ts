@@ -11,7 +11,7 @@ import { resendEmailAction, verifyEmail } from '../../services/authentication/ve
 import { getOrganizationById } from '../../services/organization/organization.service'
 import { getUserOrganization } from '../../services/organization/organization_users.service'
 import { deleteUser } from '../../services/user/delete-user.service'
-import { updateProfile } from '../../services/user/update-user.service'
+import { getUserNotificationSettingsService, updateProfile, updateUserNotificationSettings } from '../../services/user/update-user.service'
 import { isEmailAlreadyRegistered } from '../../services/user/user.service'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
@@ -63,6 +63,10 @@ const resolvers = {
     },
 
     hasOrganization: (parent: { current_organization_id?: number }) => Boolean(parent.current_organization_id),
+
+    getUserNotificationSettings: combineResolvers(isAuthenticated, async (_, __, { user }) => {
+      return await getUserNotificationSettingsService(user.id)
+    }),
   },
   Mutation: {
     register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name }: Register, { organization }: GraphQLContext) => {
@@ -98,6 +102,16 @@ const resolvers = {
     }),
 
     updateProfile: combineResolvers(allowedOrganization, isAuthenticated, (_, { name, company, position }, { user }) => updateProfile(user.id, name, company, position)),
+
+    updateNotificationSettings: combineResolvers(allowedOrganization, isAuthenticated, async (_, { monthly_report_flag, new_domain_flag, issue_reported_flag }, { user }) => {
+      const result = await updateUserNotificationSettings(user.id, {
+        monthly_report_flag,
+        new_domain_flag,
+        issue_reported_flag,
+      })
+
+      return result.success
+    }),
   },
 }
 

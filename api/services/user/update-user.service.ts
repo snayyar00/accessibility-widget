@@ -1,4 +1,4 @@
-import { findUser, updateUser } from '../../repository/user.repository'
+import { findUser, findUserNotificationByUserId, getUserNotificationSettings, insertUserNotification, updateUser, updateUserNotificationFlags } from '../../repository/user.repository'
 import { ApolloError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
@@ -37,5 +37,65 @@ export async function updateProfile(id: number, name: string, company: string, p
   } catch (error) {
     logger.error(error)
     throw new ApolloError('Something went wrong!')
+  }
+}
+
+export async function updateUserNotificationSettings(
+  userId: number,
+  flags: {
+    monthly_report_flag?: boolean
+    new_domain_flag?: boolean
+    issue_reported_flag?: boolean
+  },
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const updatedRows = await updateUserNotificationFlags(userId, flags)
+
+    if (updatedRows > 0) {
+      return {
+        success: true,
+        message: 'Notification settings updated successfully',
+      }
+    } else {
+      return {
+        success: false,
+        message: 'No settings were updated',
+      }
+    }
+  } catch (error) {
+    console.error('Error updating notification settings:', error)
+    return {
+      success: false,
+      message: 'Failed to update notification settings',
+    }
+  }
+}
+
+export async function getUserNotificationSettingsService(userId: number): Promise<any> {
+  try {
+    const notification = await findUserNotificationByUserId(userId)
+    if (!notification) {
+      try {
+        await insertUserNotification(userId)
+        console.log('User added to notification')
+      } catch (error) {
+        console.error('Failed to add user to notification:', error)
+      }
+    }
+    const settings = await getUserNotificationSettings(userId)
+    return (
+      settings || {
+        monthly_report_flag: false,
+        new_domain_flag: false,
+        issue_reported_flag: false,
+      }
+    )
+  } catch (error) {
+    console.error('Error getting notification settings:', error)
+    return {
+      monthly_report_flag: false,
+      new_domain_flag: false,
+      issue_reported_flag: false,
+    }
   }
 }

@@ -4,7 +4,7 @@ import pLimit from 'p-limit'
 import compileEmailTemplate from '../helpers/compile-email-template'
 import { findSiteById } from '../repository/sites_allowed.repository'
 import { getActiveSitesPlan } from '../repository/sites_plans.repository'
-import { getUserbyId } from '../repository/user.repository'
+import { findUserNotificationByUserId, getUserbyId } from '../repository/user.repository'
 import { fetchAccessibilityReport } from '../services/accessibilityReport/accessibilityReport.service'
 import { checkScript } from '../services/allowedSites/allowedSites.service'
 import { EmailAttachment, sendEmailWithRetries } from '../services/email/email.service'
@@ -45,6 +45,12 @@ const sendMonthlyEmails = async () => {
 
             const report = await fetchAccessibilityReport(site?.url)
             const user = await getUserbyId(site?.user_id)
+            // Check user_notifications flag
+            const notification = await findUserNotificationByUserId(user.id)
+            if (!notification || !notification.monthly_report_flag) {
+              console.log(`Skipping monthly report for user ${user.email} (no notification flag)`)
+              return
+            }
             const widgetStatus = await checkScript(site?.url)
 
             const status = widgetStatus === 'true' || widgetStatus === 'Web Ability' ? 'Compliant' : 'Not Compliant'

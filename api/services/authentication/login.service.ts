@@ -4,7 +4,7 @@ import { comparePassword } from '../../helpers/hashing.helper'
 import { sign } from '../../helpers/jwt.helper'
 import { incrementFailedAttempts, isAccountLocked, lockAccount, resetFailedAttempts } from '../../repository/failed_login_attempts.repository'
 import { Organization } from '../../repository/organization.repository'
-import { findUser, updateUser } from '../../repository/user.repository'
+import { findUser, findUserNotificationByUserId, insertUserNotification, updateUser } from '../../repository/user.repository'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
 import { ApolloError, AuthenticationError, ValidationError } from '../../utils/graphql-errors.helper'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
@@ -81,6 +81,17 @@ export async function loginUser(email: string, password: string, organization: O
 
       await resetFailedAttempts(user.id, trx)
     })
+  }
+
+  // Ensure user_notifications row exists for this user
+  const notification = await findUserNotificationByUserId(user.id)
+  if (!notification) {
+    try {
+      await insertUserNotification(user.id)
+      console.log('User added to notification')
+    } catch (error) {
+      console.error('Failed to add user to notification:', error)
+    }
   }
 
   return {

@@ -108,3 +108,27 @@ export async function getUserByIdAndJoinUserToken(id: number, type: 'verify_emai
 export async function activeUser(id: number): Promise<number> {
   return database(TABLE).where({ id }).update({ is_active: true })
 }
+
+// USER NOTIFICATIONS
+export async function findUserNotificationByUserId(user_id: number): Promise<any> {
+  return database('user_notifications').where({ user_id }).first()
+}
+
+export async function insertUserNotification(user_id: number): Promise<any> {
+  return database('user_notifications').insert({ user_id })
+}
+
+export async function updateUserNotificationFlags(
+  user_id: number,
+  flags: {
+    monthly_report_flag?: boolean
+    new_domain_flag?: boolean
+    issue_reported_flag?: boolean
+  },
+): Promise<number> {
+  return database('user_notifications').where({ user_id }).update(flags)
+}
+
+export async function getUserNotificationSettings(user_id: number): Promise<any> {
+  return database('user_notifications').where({ user_id }).first()
+}

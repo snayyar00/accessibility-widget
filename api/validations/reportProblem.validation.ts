@@ -1,8 +1,11 @@
 import Validator, { ValidationError } from 'fastest-validator'
 
-export function validateReportProblem(input: { site_url: string; issue_type: string; description: string; reporter_email: string }): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator()
+import { getRootDomain } from '../utils/domain.utils'
 
+export function validateReportProblem(input: { site_url: string; issue_type: string; description: string; reporter_email: string }): true | ValidationError[] | Promise<true | ValidationError[]> {
+  const filtered = getRootDomain(input.site_url)
+  input.site_url = filtered
+  const validator = new Validator()
   const schema = {
     site_url: {
       type: 'string',

@@ -2,7 +2,7 @@ import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '../../constants/billing.co
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findSitesByUserId, insertSite, IUserSites, updateAllowedSiteURL } from '../../repository/sites_allowed.repository'
 import { getSitePlanBySiteId } from '../../repository/sites_plans.repository'
-import { getUserbyId } from '../../repository/user.repository'
+import { findUserNotificationByUserId, getUserbyId } from '../../repository/user.repository'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
@@ -73,10 +73,17 @@ export async function addSite(userId: number, url: string): Promise<string> {
 
         const report = await fetchAccessibilityReport(domain)
         const user = await getUserbyId(userId)
+        // Check user_notifications flag for new_domain_flag
+
         const widgetStatus = await checkScript(domain)
         const status = widgetStatus == 'true' || widgetStatus == 'Web Ability' ? 'Compliant' : 'Not Compliant'
         const score = widgetStatus == 'Web Ability' ? Math.floor(Math.random() * (100 - 90 + 1)) + 90 : widgetStatus == 'true' ? Math.floor(Math.random() * (88 - 80 + 1)) + 80 : report.score
 
+        const notification = await findUserNotificationByUserId(user.id)
+        if (!notification || !notification.new_domain_flag) {
+          console.log(`Skipping new domain email for user ${user.email} (no notification flag)`)
+          return 'The site was successfully added.'
+        }
         const template = await compileEmailTemplate({
           fileName: 'accessReport.mjml',
           data: {
