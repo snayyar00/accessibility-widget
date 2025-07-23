@@ -13,7 +13,7 @@ import { getUserOrganization } from '../../services/organization/organization_us
 import { deleteUser } from '../../services/user/delete-user.service'
 import { updateProfile } from '../../services/user/update-user.service'
 import { isEmailAlreadyRegistered } from '../../services/user/user.service'
-import { isAuthenticated } from './authorization.resolver'
+import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 type Register = {
   email: string
@@ -42,8 +42,8 @@ type Verify = {
 
 const resolvers = {
   Query: {
-    profileUser: combineResolvers(isAuthenticated, (_, __, { user }) => user),
-    isEmailAlreadyRegistered: async (_: unknown, { email }: { email: string }) => isEmailAlreadyRegistered(normalizeEmail(email)),
+    profileUser: combineResolvers(allowedOrganization, isAuthenticated, (_, __, { user }) => user),
+    isEmailAlreadyRegistered: combineResolvers(allowedOrganization, async (_: unknown, { email }: { email: string }) => isEmailAlreadyRegistered(normalizeEmail(email))),
   },
   User: {
     currentOrganization: async (parent: { current_organization_id?: number; id?: number }) => {
@@ -65,39 +65,39 @@ const resolvers = {
     hasOrganization: (parent: { current_organization_id?: number }) => Boolean(parent.current_organization_id),
   },
   Mutation: {
-    register: async (_: unknown, { email, password, name }: Register, { clientDomain }: GraphQLContext) => {
-      const result = await registerUser(normalizeEmail(email), password, name, clientDomain)
+    register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name }: Register, { organization }: GraphQLContext) => {
+      const result = await registerUser(normalizeEmail(email), password, name, organization)
 
       return result
-    },
+    }),
 
-    login: async (_: unknown, { email, password }: Login, { clientDomain }: GraphQLContext) => {
-      const result = await loginUser(normalizeEmail(email), password, clientDomain)
+    login: combineResolvers(allowedOrganization, async (_: unknown, { email, password }: Login, { organization }: GraphQLContext) => {
+      const result = await loginUser(normalizeEmail(email), password, organization)
 
       return result
-    },
+    }),
 
-    logout: () => {
+    logout: combineResolvers(allowedOrganization, () => {
       return true
-    },
+    }),
 
-    forgotPassword: async (_: unknown, { email }: ForgotPassword, { clientDomain }: GraphQLContext) => forgotPasswordUser(normalizeEmail(email), clientDomain),
+    forgotPassword: combineResolvers(allowedOrganization, async (_: unknown, { email }: ForgotPassword, { organization }: GraphQLContext) => forgotPasswordUser(normalizeEmail(email), organization)),
 
-    changePassword: combineResolvers(isAuthenticated, (_, { currentPassword, newPassword }, { user }) => changePasswordUser(user.id, currentPassword, newPassword)),
+    changePassword: combineResolvers(allowedOrganization, isAuthenticated, (_, { currentPassword, newPassword }, { user }) => changePasswordUser(user.id, currentPassword, newPassword)),
 
-    resetPassword: async (_: unknown, { token, password, confirmPassword }: ResetPassword) => resetPasswordUser(token, password, confirmPassword),
+    resetPassword: combineResolvers(allowedOrganization, async (_: unknown, { token, password, confirmPassword }: ResetPassword) => resetPasswordUser(token, password, confirmPassword)),
 
-    verify: (_: unknown, { token }: Verify) => verifyEmail(token),
+    verify: combineResolvers(allowedOrganization, (_: unknown, { token }: Verify) => verifyEmail(token)),
 
-    resendEmail: combineResolvers(isAuthenticated, (_, { type }, { user, clientDomain }: GraphQLContext) => resendEmailAction(user, <'verify_email' | 'forgot_password'>normalizeEmail(type), clientDomain)),
+    resendEmail: combineResolvers(allowedOrganization, isAuthenticated, (_, { type }, { user, organization }) => resendEmailAction(user, <'verify_email' | 'forgot_password'>normalizeEmail(type), organization)),
 
-    deleteAccount: combineResolvers(isAuthenticated, async (_, __, { user }) => {
+    deleteAccount: combineResolvers(allowedOrganization, isAuthenticated, async (_, __, { user }) => {
       const result = await deleteUser(user)
 
       return result
     }),
 
-    updateProfile: combineResolvers(isAuthenticated, (_, { name, company, position }, { user }) => updateProfile(user.id, name, company, position)),
+    updateProfile: combineResolvers(allowedOrganization, isAuthenticated, (_, { name, company, position }, { user }) => updateProfile(user.id, name, company, position)),
   },
 }
 

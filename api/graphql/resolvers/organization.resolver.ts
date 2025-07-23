@@ -5,23 +5,23 @@ import { Organization } from '../../repository/organization.repository'
 import { addOrganization, CreateOrganizationInput, editOrganization, getOrganizationByDomainService, getOrganizationById, getOrganizations, removeOrganization } from '../../services/organization/organization.service'
 import { getOrganizationUsers } from '../../services/organization/organization_users.service'
 import { ValidationError } from '../../utils/graphql-errors.helper'
-import { isAuthenticated } from './authorization.resolver'
+import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 const organizationResolver = {
   Query: {
-    getUserOrganizations: combineResolvers(isAuthenticated, async (_: unknown, __: unknown, { user }): Promise<Organization[]> => {
+    getUserOrganizations: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, __: unknown, { user }): Promise<Organization[]> => {
       const orgs = await getOrganizations(user)
 
       return orgs || []
     }),
 
-    getOrganizationUsers: combineResolvers(isAuthenticated, async (_: unknown, __: unknown, { user }) => getOrganizationUsers(user)),
+    getOrganizationUsers: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, __: unknown, { user }) => getOrganizationUsers(user)),
 
-    getOrganizationByDomain: async (_: unknown, __: unknown, { clientDomain }: GraphQLContext): Promise<Organization | null | ValidationError> => {
+    getOrganizationByDomain: combineResolvers(allowedOrganization, async (_: unknown, __: unknown, { clientDomain }: GraphQLContext): Promise<Organization | null | ValidationError> => {
       const org = await getOrganizationByDomainService(clientDomain)
 
       return org || null
-    },
+    }),
   },
 
   Mutation: {
@@ -38,7 +38,7 @@ const organizationResolver = {
       return null
     }),
 
-    editOrganization: combineResolvers(isAuthenticated, async (_: unknown, args: Partial<Organization>, { user }): Promise<Organization | null | ValidationError> => {
+    editOrganization: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: Partial<Organization>, { user }): Promise<Organization | null | ValidationError> => {
       const { id, ...editData } = args
       const maybeUpdated = await editOrganization(editData, user, id)
 
@@ -52,7 +52,7 @@ const organizationResolver = {
       return null
     }),
 
-    removeOrganization: combineResolvers(isAuthenticated, async (_: unknown, args: { id: number }, { user }): Promise<boolean | ValidationError> => {
+    removeOrganization: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { id: number }, { user }): Promise<boolean | ValidationError> => {
       const maybeDeleted = await removeOrganization(user, args.id)
 
       if (maybeDeleted instanceof Error) return maybeDeleted

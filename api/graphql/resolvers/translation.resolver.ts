@@ -2,7 +2,7 @@ import { combineResolvers } from 'graphql-resolvers'
 
 import { translateStatement } from '../../services/translation/translation.service'
 import { validateTranslateStatement } from '../../validations/translateStatement.validation'
-import { isAuthenticated } from './authorization.resolver'
+import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 interface TranslationContentInput {
   [key: string]: string
@@ -17,7 +17,7 @@ interface TranslateStatementArgs {
 
 const resolvers = {
   Mutation: {
-    translateStatement: combineResolvers(isAuthenticated, async (_: unknown, { content, targetLanguage, languageCode, context }: TranslateStatementArgs) => {
+    translateStatement: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, { content, targetLanguage, languageCode, context }: TranslateStatementArgs) => {
       const validateResult = validateTranslateStatement({ content, targetLanguage, languageCode, context })
 
       if (Array.isArray(validateResult) && validateResult.length) {

@@ -24,7 +24,12 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
     return new ValidationError(validateResult.map((it) => it.message).join(','))
   }
 
-  checkAllowedDomain(data.domain)
+  const currentUrl = getMatchingFrontendUrl(data.domain)
+  logger.info('Current URL:', currentUrl)
+
+  if (!currentUrl) {
+    throw new ForbiddenError('Provided domain is not in the list of allowed URLs')
+  }
 
   const orgLinks = await getOrganizationsByUserId(user.id)
   const maxOrgs = user.isActive ? 3 : 1
@@ -180,8 +185,6 @@ export async function getOrganizationByDomainService(domain: string): Promise<Or
     return new ValidationError(validateResult.map((it) => it.message).join(','))
   }
 
-  checkAllowedDomain(domain)
-
   const normalizedDomain = normalizeDomain(domain)
 
   try {
@@ -189,16 +192,6 @@ export async function getOrganizationByDomainService(domain: string): Promise<Or
   } catch (error) {
     logger.error('Error fetching organization by domain:', error)
     throw error
-  }
-}
-
-function checkAllowedDomain(domain: string) {
-  const currentUrl = getMatchingFrontendUrl(domain)
-
-  logger.info('Current URL:', currentUrl)
-
-  if (!currentUrl) {
-    throw new ForbiddenError('Provided domain is not in the list of allowed frontend URLs')
   }
 }
 

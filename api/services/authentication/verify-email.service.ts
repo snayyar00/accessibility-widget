@@ -4,11 +4,12 @@ import { SEND_MAIL_TYPE } from '../../constants/send-mail-type.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import generateRandomKey from '../../helpers/genarateRandomkey'
 import { normalizeEmail } from '../../helpers/string.helper'
+import { Organization } from '../../repository/organization.repository'
 import type { UserProfile } from '../../repository/user.repository'
 import { activeUser, getUserbyId } from '../../repository/user.repository'
 import { changeTokenStatus, createToken, findToken } from '../../repository/user_tokens.repository'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
-import { ApolloError, ForbiddenError } from '../../utils/graphql-errors.helper'
+import { ApolloError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sendMail } from '../email/email.service'
 
@@ -85,19 +86,13 @@ export async function verifyEmail(authToken: string): Promise<true | ApolloError
   }
 }
 
-export async function resendEmailAction(user: UserProfile, type: 'verify_email' | 'forgot_password', clientDomain: string | null): Promise<boolean> {
+export async function resendEmailAction(user: UserProfile, type: 'verify_email' | 'forgot_password', organization: Organization): Promise<boolean> {
   try {
     let template
     let subject
 
     const token = await generateRandomKey()
-    const currentUrl = getMatchingFrontendUrl(clientDomain)
-
-    logger.info('Current URL:', currentUrl)
-
-    if (!currentUrl) {
-      throw new ForbiddenError('Provided domain is not in the list of allowed frontend URLs')
-    }
+    const currentUrl = getMatchingFrontendUrl(organization.domain)
 
     switch (type) {
       case SEND_MAIL_TYPE.VERIFY_EMAIL:

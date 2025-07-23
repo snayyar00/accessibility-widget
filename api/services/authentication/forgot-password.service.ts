@@ -1,15 +1,16 @@
 import { SEND_MAIL_TYPE } from '../../constants/send-mail-type.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import generateRandomKey from '../../helpers/genarateRandomkey'
+import { Organization } from '../../repository/organization.repository'
 import { findUser, getUserByIdAndJoinUserToken } from '../../repository/user.repository'
 import { createToken, updateUserTokenById } from '../../repository/user_tokens.repository'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
-import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
+import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { emailValidation } from '../../validations/email.validation'
 import { sendMail } from '../email/email.service'
 
-export async function forgotPasswordUser(email: string, clientDomain: string | null): Promise<boolean> {
+export async function forgotPasswordUser(email: string, organization: Organization): Promise<boolean> {
   const validateResult = emailValidation(email)
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -28,13 +29,7 @@ export async function forgotPasswordUser(email: string, clientDomain: string | n
     const tokenGenerated = await generateRandomKey()
     const token = `${tokenGenerated}-${user.id}`
 
-    const currentUrl = getMatchingFrontendUrl(clientDomain)
-
-    logger.info('Current URL:', currentUrl)
-
-    if (!currentUrl) {
-      throw new ForbiddenError('Provided domain is not in the list of allowed frontend URLs')
-    }
+    const currentUrl = getMatchingFrontendUrl(organization.domain)
 
     if (!session) {
       await createToken(user.id, token, SEND_MAIL_TYPE.FORGOT_PASSWORD)

@@ -9,7 +9,7 @@ import { normalizeDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import { deleteReportFromR2, fetchReportFromR2, saveReportToR2 } from '../../utils/r2Storage'
 import { validateAccessibilityReport, validateAccessibilityReportR2Filter, validateR2Key, validateSaveAccessibilityReportInput } from '../../validations/accesability.validation'
-import { isAuthenticated } from './authorization.resolver'
+import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 type AccessibilityReportJob = {
   status: 'pending' | 'done' | 'error'
@@ -115,17 +115,21 @@ type AccessibilityReportJobStatusResponse = {
 
 const resolvers = {
   Query: {
-    startAccessibilityReportJob: async (_: any, { url }: { url: string }) => {
+    startAccessibilityReportJob: combineResolvers(allowedOrganization, async (_: any, { url }: { url: string }) => {
       const validateResult = validateAccessibilityReport({ url })
+
       if (Array.isArray(validateResult) && validateResult.length) {
         return new ValidationError(validateResult.map((it) => it.message).join(','))
       }
+
       const jobId = createJob()
+
       // Start processing in background
       processAccessibilityReportJob(jobId, url).catch(console.error)
       return { jobId }
-    },
-    getAccessibilityReportByJobId: async (_: any, { jobId }: { jobId: string }): Promise<AccessibilityReportJobStatusResponse> => {
+    }),
+
+    getAccessibilityReportByJobId: combineResolvers(allowedOrganization, async (_: any, { jobId }: { jobId: string }): Promise<AccessibilityReportJobStatusResponse> => {
       const job = accessibilityReportJobs.get(jobId)
       if (!job) {
         return { status: 'not_found', result: null, error: 'Error generating report please try agian' }
@@ -139,7 +143,7 @@ const resolvers = {
         result: job.result,
         error: job.error,
       }
-    },
+    }),
 
     getAccessibilityReport: async (_: any, { url }: { url: string }) => {
       const validateResult = validateAccessibilityReport({ url })
@@ -160,7 +164,7 @@ const resolvers = {
       }
     },
 
-    fetchAccessibilityReportFromR2: combineResolvers(isAuthenticated, async (_: any, { url, created_at, updated_at }: any) => {
+    fetchAccessibilityReportFromR2: combineResolvers(allowedOrganization, isAuthenticated, async (_: any, { url, created_at, updated_at }: any) => {
       const validateResult = validateAccessibilityReportR2Filter({ url, created_at, updated_at })
 
       if (Array.isArray(validateResult) && validateResult.length) {
@@ -190,7 +194,7 @@ const resolvers = {
       }
     }),
 
-    fetchReportByR2Key: combineResolvers(isAuthenticated, async (_: any, { r2_key }: any) => {
+    fetchReportByR2Key: combineResolvers(allowedOrganization, isAuthenticated, async (_: any, { r2_key }: any) => {
       const validateResult = validateR2Key(r2_key)
 
       if (Array.isArray(validateResult) && validateResult.length) {
@@ -217,7 +221,7 @@ const resolvers = {
     }),
   },
   Mutation: {
-    saveAccessibilityReport: combineResolvers(isAuthenticated, async (_: any, { report, url, allowed_sites_id, key, score }: any) => {
+    saveAccessibilityReport: combineResolvers(allowedOrganization, isAuthenticated, async (_: any, { report, url, allowed_sites_id, key, score }: any) => {
       const validateResult = validateSaveAccessibilityReportInput({ report, url, allowed_sites_id, key, score })
 
       if (Array.isArray(validateResult) && validateResult.length) {
@@ -248,7 +252,7 @@ const resolvers = {
       }
     }),
 
-    deleteAccessibilityReport: combineResolvers(isAuthenticated, async (_: any, { r2_key }: any, { user }) => {
+    deleteAccessibilityReport: combineResolvers(allowedOrganization, isAuthenticated, async (_: any, { r2_key }: any, { user }) => {
       const validateResult = validateR2Key(r2_key)
 
       if (Array.isArray(validateResult) && validateResult.length) {

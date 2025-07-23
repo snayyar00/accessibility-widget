@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/node'
 import { Request, Response } from 'express'
 import { GraphQLError } from 'graphql/error'
 
+import { Organization } from '../repository/organization.repository'
 import { UserLoginedResponse } from '../services/authentication/get-user-logined.service'
 
 export type ContextParams = {
@@ -14,6 +15,8 @@ export interface GraphQLContext {
   res: Response
   user: UserLoginedResponse
   clientDomain: string | null
+  allowedFrontendUrl: string | null
+  organization: Organization | null
   sentryTransaction?: ReturnType<typeof Sentry.startTransaction>
 }
 

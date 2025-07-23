@@ -1,14 +1,14 @@
 import { combineResolvers } from 'graphql-resolvers'
 
 import { addImpressionsURL, addInteraction, addProfileCount, findImpressionsByURLAndDate, getEngagementRates } from '../../services/Impressions/impressions.service'
-import { isAuthenticated } from './authorization.resolver'
+import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 // TODO Security - Consider comprehensive security measures for this location
 const resolvers = {
   Query: {
-    getEngagementRates: combineResolvers(isAuthenticated, (_, { url, startDate, endDate }, { user }) => getEngagementRates(user.id, url, startDate, endDate)),
+    getEngagementRates: combineResolvers(allowedOrganization, isAuthenticated, (_, { url, startDate, endDate }, { user }) => getEngagementRates(user.id, url, startDate, endDate)),
 
-    getImpressionsByURLAndDate: combineResolvers(isAuthenticated, async (_, { url, startDate, endDate }, { user }) => {
+    getImpressionsByURLAndDate: combineResolvers(allowedOrganization, isAuthenticated, async (_, { url, startDate, endDate }, { user }) => {
       try {
         const result = await findImpressionsByURLAndDate(user.id, url, new Date(startDate), new Date(endDate))
         return result

@@ -8,7 +8,6 @@ import widgetRoutes from './widget.routes'
 
 const router = Router()
 
-// Mount all route modules
 router.use(stripeRoutes)
 router.use(widgetRoutes)
 router.use(translationRoutes)
