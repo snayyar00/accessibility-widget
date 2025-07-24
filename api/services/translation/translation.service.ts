@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 import OpenAI from 'openai'
 
-import { IS_PROD } from '../../config/server.config'
+import { IS_PROD } from '../../config/env'
 import { TRANSLATION_CONFIG } from '../../config/translation.config'
 
 const openai = new OpenAI({

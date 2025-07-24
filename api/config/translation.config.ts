@@ -1,4 +1,4 @@
-import { IS_DEV, IS_LOCAL, IS_PROD } from './server.config'
+import { IS_DEV, IS_LOCAL, IS_PROD } from './env'
 
 // Production-ready translation configuration
 export const TRANSLATION_CONFIG = {

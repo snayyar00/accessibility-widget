@@ -1,3 +1,4 @@
+import { IS_LOCAL } from '../config/env'
 import { normalizeDomain } from './domain.utils'
 
 /**
@@ -19,6 +20,12 @@ export function parseEnvUrls(envValue?: string): string[] {
  * @returns the best matching frontendUrl
  */
 export function getMatchingFrontendUrl(currentDomain: string | null): string | null {
+  if (IS_LOCAL) {
+    if (!currentDomain) return null
+
+    return `http://${currentDomain}`
+  }
+
   const frontendUrls = parseEnvUrls(process.env.FRONTEND_URL)
 
   if (!frontendUrls.length) return null

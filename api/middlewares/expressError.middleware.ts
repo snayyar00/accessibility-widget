@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 
-import { IS_DEV, IS_LOCAL, IS_PROD } from '../config/server.config'
+import { IS_DEV, IS_LOCAL, IS_PROD } from '../config/env'
 import { extractClientDomain } from '../utils/domain.utils'
 import { getOperationName } from '../utils/logger.utils'
 

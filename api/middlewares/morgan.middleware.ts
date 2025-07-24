@@ -2,7 +2,7 @@ import chalk from 'chalk'
 import { Request, Response } from 'express'
 import morgan from 'morgan'
 
-import { IS_LOCAL } from '../config/server.config'
+import { IS_LOCAL } from '../config/env'
 import { extractClientDomain } from '../utils/domain.utils'
 import { getOperationName } from '../utils/logger.utils'
 

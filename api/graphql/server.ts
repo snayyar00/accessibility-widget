@@ -6,7 +6,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema'
 import { IResolvers } from '@graphql-tools/utils'
 import { Server } from 'http'
 
-import { IS_LOCAL, IS_PROD } from '../config/server.config'
+import { IS_LOCAL, IS_PROD } from '../config/env'
 import { rateLimitDirectiveTransformer, rateLimitDirectiveTypeDefs } from './directives/rateLimit'
 import { createSentryPlugin } from './plugins/sentry.plugin'
 import RootResolver from './root.resolver'

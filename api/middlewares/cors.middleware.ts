@@ -1,7 +1,8 @@
 import cors from 'cors'
 import { NextFunction, Request, Response } from 'express'
 
-import { ALLOWED_OPERATIONS, ALLOWED_ORIGINS, IS_LOCAL } from '../config/server.config'
+import { IS_LOCAL } from '../config/env'
+import { ALLOWED_OPERATIONS, ALLOWED_ORIGINS } from '../config/server.config'
 
 export function dynamicCors(req: Request, res: Response, next: NextFunction) {
   const corsOptions = {

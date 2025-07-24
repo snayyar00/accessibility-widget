@@ -1,7 +1,7 @@
 import bunyan from 'bunyan'
 import chalk from 'chalk'
 
-import { IS_LOCAL } from '../config/server.config'
+import { IS_LOCAL } from '../config/env'
 
 const logger = bunyan.createLogger({
   name: 'accessibility-widget',
