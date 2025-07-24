@@ -1,8 +1,19 @@
 import { configureStore } from '@reduxjs/toolkit';
 import rootReducer from '@/features/rootReducer';
+import { loadState, saveState } from '@/utils/localStorage';
+
+const preloadedState = loadState();
 
 const store = configureStore({
   reducer: rootReducer,
+  preloadedState,
+});
+
+store.subscribe(() => {
+  saveState({
+    report: store.getState().report,
+    // Add other slices here if you want to persist more
+  });
 });
 
 if (process.env.NODE_ENV === 'development' && module.hot) {

@@ -368,19 +368,19 @@ const ReportView: React.FC = () => {
   }
 
   return (
-    <div className="bg-report-blue text-foreground min-h-screen pt-20 pr-28 pb-20 pl-28">
-      <div className="absolute top-4 left-10">
+    <div className="bg-report-blue text-foreground min-h-screen pt-20 pb-20 px-4 sm:px-8 md:px-16 lg:pr-28 lg:pl-28">
+      <div className="absolute top-4 left-4 sm:left-8 lg:left-10 z-20">
         <button
           onClick={handleBackToDashboard}
-          className="bg-blue-800 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          className="bg-blue-800 text-white px-4 py-2 rounded hover:bg-blue-700 transition text-sm sm:text-base"
         >
           Back to Dashboard
         </button>
       </div>
 
-      <header className="text-center relative z-10 mb-16">
+      <header className="text-center relative z-10 mb-10 sm:mb-14 lg:mb-16 px-2 sm:px-0">
         <h1 className="mb-4">
-          <span className="block text-3xl sm:text-5xl lg:text-7xl font-extrabold text-white leading-tight tracking-tight break-words">
+          <span className="block text-2xl sm:text-4xl lg:text-7xl font-extrabold text-white leading-tight tracking-tight break-words">
             Free
             <br />
             Website{' '}
@@ -390,12 +390,12 @@ const ReportView: React.FC = () => {
             <br />
             Checker
           </span>
-          <span className="text-xl sm:text-2xl font-medium text-blue-300/90 tracking-wide block mt-2">
+          <span className="text-base sm:text-xl font-medium text-blue-300/90 tracking-wide block mt-2">
             WCAG, AODA & ADA Compliance Tool
           </span>
         </h1>
 
-        <p className="text-lg sm:text-xl text-blue-100/80 max-w-2xl mx-auto mb-10 leading-relaxed">
+        <p className="text-base sm:text-lg text-blue-100/80 max-w-2xl mx-auto mb-6 sm:mb-10 leading-relaxed">
           Instantly analyze your website for accessibility compliance.
           <span className="hidden sm:inline">
             <br />
@@ -404,28 +404,22 @@ const ReportView: React.FC = () => {
           protect your business.
         </p>
         {/* Trust indicators */}
-        <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
-          <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-4 py-2 rounded-full">
+        <div className="flex flex-wrap justify-center gap-2 sm:gap-4 lg:gap-8 mb-2 sm:mb-0">
+          <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-3 py-1.5 rounded-full text-xs sm:text-sm">
             <Check className="w-5 h-5 text-green-400" />
-            <span className="text-sm font-medium text-blue-100">
-              WCAG 2.1 AA Compliant
-            </span>
+            <span className="font-medium text-blue-100">WCAG 2.1 AA Compliant</span>
           </div>
-          <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-4 py-2 rounded-full">
+          <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-3 py-1.5 rounded-full text-xs sm:text-sm">
             <Shield className="w-5 h-5 text-green-400" />
-            <span className="text-sm font-medium text-blue-100">
-              ADA & Section 508
-            </span>
+            <span className="font-medium text-blue-100">ADA & Section 508</span>
           </div>
-          <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-4 py-2 rounded-full">
+          <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-3 py-1.5 rounded-full text-xs sm:text-sm">
             <FileText className="w-5 h-5 text-green-400" />
-            <span className="text-sm font-medium text-blue-100">
-              Detailed Reports
-            </span>
+            <span className="font-medium text-blue-100">Detailed Reports</span>
           </div>
         </div>
         <h1 className="mb-2">
-          <span className="block text-xl sm:text-5xl lg:text-4xl font-medium text-white leading-tight tracking-tight break-words">
+          <span className="block text-base sm:text-3xl lg:text-4xl font-medium text-white leading-tight tracking-tight break-words">
             <br />
             Scan results for{' '}
             <span className="bg-gradient-to-r from-blue-300 to-blue-100 font-medium text-transparent bg-clip-text">
@@ -494,7 +488,7 @@ const ReportView: React.FC = () => {
           {filteredIssues.length === 0 ? (
             <div className="text-center py-8">
               <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-4" />
-              <h3 className="text-xl font-medium text-gray-700">
+              <h3 className="text-lg sm:text-xl font-medium text-gray-700">
                 No issues found!
               </h3>
               <p className="text-gray-500 mt-2">
@@ -513,167 +507,161 @@ const ReportView: React.FC = () => {
                 activeFilter={issueFilter}
               />
 
-              {filteredIssues.map(
-                (
-                  issue: {
-                    message: any;
-                    help: any;
-                    context: string | any[];
-                    code:
-                      | boolean
-                      | React.ReactChild
-                      | React.ReactFragment
-                      | React.ReactPortal
-                      | Iterable<ReactI18NextChild>
-                      | null
-                      | undefined;
-                    impact: string;
-                    category:
-                      | boolean
-                      | React.ReactChild
-                      | React.ReactFragment
-                      | React.ReactPortal
-                      | Iterable<ReactI18NextChild>
-                      | null
-                      | undefined;
-                    source:
-                      | boolean
-                      | React.ReactChild
-                      | React.ReactFragment
-                      | React.ReactPortal
-                      | Iterable<ReactI18NextChild>
-                      | null
-                      | undefined;
-                    description: any;
-                    selectors: string | any[];
-                    recommended_action:
-                      | boolean
-                      | React.ReactChild
-                      | React.ReactFragment
-                      | React.ReactPortal
-                      | Iterable<ReactI18NextChild>
-                      | null
-                      | undefined;
-                    screenshotUrl?: string;
-                  },
-                  index: React.Key | null | undefined,
-                ) => (
-                  <div
-                    key={index}
-                    className="border rounded-lg bg-white p-5 shadow-sm"
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-2 flex-1 pr-4 overflow-hidden">
-                        {getIssueTypeIcon(issue)}
-                        <h2 className="text-lg font-semibold truncate">
-                          {issue.message || issue.help || 'Accessibility Issue'}
-                        </h2>
+              {/* Only one issue card per row, always, and responsive width */}
+              <div className="w-full max-w-xl lg:max-w-full mx-auto flex flex-col gap-4">
+                {filteredIssues.map(
+                  (
+                    issue: {
+                      message: any;
+                      help: any;
+                      context: string | any[];
+                      code:
+                        | boolean
+                        | React.ReactChild
+                        | React.ReactFragment
+                        | React.ReactPortal
+                        | Iterable<ReactI18NextChild>
+                        | null
+                        | undefined;
+                      impact: string;
+                      category:
+                        | boolean
+                        | React.ReactChild
+                        | React.ReactFragment
+                        | React.ReactPortal
+                        | Iterable<ReactI18NextChild>
+                        | null
+                        | undefined;
+                      source:
+                        | boolean
+                        | React.ReactChild
+                        | React.ReactFragment
+                        | React.ReactPortal
+                        | Iterable<ReactI18NextChild>
+                        | null
+                        | undefined;
+                      description: any;
+                      selectors: string | any[];
+                      recommended_action:
+                        | boolean
+                        | React.ReactChild
+                        | React.ReactFragment
+                        | React.ReactPortal
+                        | Iterable<ReactI18NextChild>
+                        | null
+                        | undefined;
+                      screenshotUrl?: string;
+                    },
+                    index: React.Key | null | undefined,
+                  ) => (
+                    <div
+                      key={index}
+                      className="border rounded-lg bg-white p-4 sm:p-5 shadow-sm flex flex-col h-full"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-2 flex-1 pr-2 sm:pr-4 overflow-hidden">
+                          {getIssueTypeIcon(issue)}
+                          <h2 className="text-base sm:text-lg font-semibold truncate">
+                            {issue.message || issue.help || 'Accessibility Issue'}
+                          </h2>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <span
-                        className={`text-xs font-medium px-2 py-1 rounded-md ${
-                          issue.impact === 'critical'
-                            ? 'bg-red-100 text-red-700'
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <span
+                          className={`text-xs font-medium px-2 py-1 rounded-md ${
+                            issue.impact === 'critical'
+                              ? 'bg-red-100 text-red-700'
+                              : issue.impact === 'serious'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-blue-100 text-blue-700'
+                          }`}
+                        >
+                          {issue.impact === 'critical'
+                            ? 'Critical'
                             : issue.impact === 'serious'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-blue-100 text-blue-700'
-                        }`}
-                      >
-                        {issue.impact === 'critical'
-                          ? 'Critical'
-                          : issue.impact === 'serious'
-                          ? 'Serious'
-                          : 'Moderate'}
-                      </span>
-
-                      {issue.category && (
-                        <span className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 text-gray-700">
-                          {issue.category}
+                            ? 'Serious'
+                            : 'Moderate'}
                         </span>
-                      )}
 
-                      {issue.source && (
-                        <span className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 text-gray-700">
-                          {issue.source}
-                        </span>
-                      )}
+                        {issue.category && (
+                          <span className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 text-gray-700">
+                            {issue.category}
+                          </span>
+                        )}
 
-                      {issue.code && (
-                        <span className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 text-gray-700">
-                          {issue.code}
-                        </span>
-                      )}
-                    </div>
+                        {issue.source && (
+                          <span className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 text-gray-700">
+                            {issue.source}
+                          </span>
+                        )}
 
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-sm font-semibold mb-2">
-                          Description
-                        </h3>
-                        <p className="text-gray-600">
-                          {issue.description || 'No description available'}
-                        </p>
+                        {issue.code && (
+                          <span className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 text-gray-700">
+                            {issue.code}
+                          </span>
+                        )}
                       </div>
 
-                      {issue.context && issue.context.length > 0 && (
+                      <div className="space-y-4">
                         <div>
-                          <h3 className="text-sm font-semibold mb-2">
-                            Affected Element
-                          </h3>
-                          <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto border border-gray-element">
-                            {issue.context[0]}
-                          </pre>
-                        </div>
-                      )}
-
-                      {issue.selectors && issue.selectors.length > 0 && (
-                        <div>
-                          <h3 className="text-sm font-semibold mb-2">
-                            CSS Selector
-                          </h3>
-                          <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto border border-gray-element">
-                            {issue.selectors[0]}
-                          </pre>
-                        </div>
-                      )}
-
-                      {issue.recommended_action && (
-                        <div>
-                          <h3 className="text-sm font-semibold mb-2">
-                            Suggested Fix
-                          </h3>
-                          <p className="text-gray-600">
-                            {issue.recommended_action}
+                          <h3 className="text-xs sm:text-sm font-semibold mb-2">Description</h3>
+                          <p className="text-gray-600 text-xs sm:text-base">
+                            {issue.description || 'No description available'}
                           </p>
                         </div>
+
+                        {issue.context && issue.context.length > 0 && (
+                          <div>
+                            <h3 className="text-xs sm:text-sm font-semibold mb-2">Affected Element</h3>
+                            <pre className="bg-gray-50 p-2 sm:p-3 rounded text-xs overflow-x-auto border border-gray-element">
+                              {issue.context[0]}
+                            </pre>
+                          </div>
+                        )}
+
+                        {issue.selectors && issue.selectors.length > 0 && (
+                          <div>
+                            <h3 className="text-xs sm:text-sm font-semibold mb-2">CSS Selector</h3>
+                            <pre className="bg-gray-50 p-2 sm:p-3 rounded text-xs overflow-x-auto border border-gray-element">
+                              {issue.selectors[0]}
+                            </pre>
+                          </div>
+                        )}
+
+                        {issue.recommended_action && (
+                          <div>
+                            <h3 className="text-xs sm:text-sm font-semibold mb-2">Suggested Fix</h3>
+                            <p className="text-gray-600 text-xs sm:text-base">
+                              {issue.recommended_action}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {issue.screenshotUrl && (
+                        <div className="my-6 sm:my-8 flex flex-col items-center">
+                          <button
+                            type="button"
+                            className="flex items-center gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 border-2 border-blue-500 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 group"
+                            aria-label="View screenshot evidence"
+                            onClick={() => window.open(issue.screenshotUrl, '_blank', 'noopener,noreferrer')}
+                            tabIndex={0}
+                            title="Click to view screenshot evidence"
+                          >
+                            <span className="flex items-center justify-center bg-white rounded-full p-2 shadow group-hover:scale-110 transition-transform">
+                              <Eye className="w-6 h-6 text-blue-600 group-hover:text-blue-800 transition-colors" />
+                            </span>
+                            <span className="text-base sm:text-lg font-bold text-white tracking-tight drop-shadow">
+                              View Evidence
+                            </span>
+                          </button>
+                        </div>
                       )}
                     </div>
-
-                    {issue.screenshotUrl && (
-                      <div className="my-8 flex flex-col items-center">
-                        <button
-                          type="button"
-                          className="flex items-center gap-3 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 border-2 border-blue-500 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 group"
-                          aria-label="View screenshot evidence"
-                          onClick={() => window.open(issue.screenshotUrl, '_blank', 'noopener,noreferrer')}
-                          tabIndex={0}
-                          title="Click to view screenshot evidence"
-                        >
-                          <span className="flex items-center justify-center bg-white rounded-full p-2 shadow group-hover:scale-110 transition-transform">
-                            <Eye className="w-6 h-6 text-blue-600 group-hover:text-blue-800 transition-colors" />
-                          </span>
-                          <span className="text-lg font-bold text-white tracking-tight drop-shadow">
-                            View Evidence
-                          </span>
-                        </button>
-                      </div>
-                    )}
-                    
-                  </div>
-                ),
-              )}
+                  ),
+                )}
+              </div>
             </>
           )}
         </div>
@@ -688,8 +676,7 @@ const ReportView: React.FC = () => {
                   Existing accessibility solution detected: {widgetInfo.result}
                 </p>
                 {widgetInfo.details && (
-                  <p className="text-blue-600 text-sm mt-1">
-                    
+                  <p className="text-blue-600 text-xs sm:text-sm mt-1">
                     {widgetInfo.details}
                   </p>
                 )}
@@ -703,25 +690,25 @@ const ReportView: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-green-50 border border-green-200 rounded-lg p-6 mb-4 relative"
+            className="bg-green-50 border border-green-200 rounded-lg p-4 sm:p-6 mb-4 relative"
           >
-            <div className="flex items-center gap-4">
-              <div className="bg-green-100 p-3 rounded-full">
+            <div className="flex items-center gap-2 sm:gap-4 flex-col sm:flex-row text-center sm:text-left">
+              <div className="bg-green-100 p-2 sm:p-3 rounded-full mb-2 sm:mb-0">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
               <div className="flex-1">
-                <h3 className="text-green-800 text-lg font-medium mb-1">
+                <h3 className="text-green-800 text-base sm:text-lg font-medium mb-1">
                   WebAbility Widget Detected! 🎉
                 </h3>
-                <p className="text-green-700">
+                <p className="text-green-700 text-xs sm:text-base">
                   Your website's accessibility score has been enhanced because
                   you're using WebAbility's accessibility solution.
                 </p>
-                <div className="mt-3 flex gap-2">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                <div className="mt-2 sm:mt-3 flex flex-col sm:flex-row gap-2 justify-center sm:justify-start">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-green-100 text-green-800">
                     Base Score: {totalStats.originalScore}%
                   </span>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-200 text-green-800">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-green-200 text-green-800">
                     Enhanced Score:{' '}
                     {calculateEnhancedScore(totalStats.originalScore)}%
                   </span>
@@ -969,7 +956,7 @@ const FunctionTabs: React.FC<FunctionTabsProps> = ({
       <div className="flex flex-wrap">
         <button
           onClick={() => onChange('all')}
-          className={`px-4 py-2 text-sm transition-colors flex items-center gap-1.5 ${
+          className={`px-4 py-2 text-sm transition-colors flex items-center gap-1.5 whitespace-nowrap ${
             active === 'all'
               ? 'text-blue-400 border-b-2 border-blue-400'
               : 'text-blue-100 hover:text-white'
@@ -978,12 +965,11 @@ const FunctionTabs: React.FC<FunctionTabsProps> = ({
           <LayoutGrid className="w-4 h-4" />
           All Issues
         </button>
-
         {functionalityNames.map((name) => (
           <button
             key={name}
             onClick={() => onChange(name)}
-            className={`px-4 py-2 text-sm transition-colors flex items-center gap-1.5 ${
+            className={`px-4 py-2 text-sm transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               active === name
                 ? 'text-blue-400 border-b-2 border-blue-400'
                 : 'text-blue-100 hover:text-white'
@@ -1044,12 +1030,12 @@ const StructureTabs: React.FC<StructureTabsProps> = ({ active, onChange }) => {
 
   return (
     <div className="bg-blue-900 w-full border-t border-blue-800">
-      <div className="flex">
+      <div className="flex flex-wrap">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => onChange(tab.id)}
-            className={`px-4 py-2 text-sm transition-colors flex items-center gap-1.5 ${
+            className={`px-4 py-2 text-sm transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               active === tab.id
                 ? 'text-blue-400 border-b-2 border-blue-400'
                 : 'text-blue-100 hover:text-white'
@@ -1227,13 +1213,28 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     currentLanguage: string
   ): Promise<Blob> => {
     const { jsPDF } = await import('jspdf');
+    let fontLoaded = true;
+    try {
+      // @ts-ignore
+      window.jsPDF = jsPDF;
+      // @ts-ignore
+      require('@/assets/fonts/NotoSans-normal.js');
+      // @ts-ignore
+      delete window.jsPDF;
+    } catch (e) {
+      console.error('Failed to load custom font for jsPDF:', e);
+      fontLoaded = false;
+    }
     const autoTable = (await import('jspdf-autotable')).default;
     const doc = new jsPDF();
-
+    if (!fontLoaded) {
+      doc.setFont('helvetica', 'normal');
+    }
+  
     if (!reportData.url) {
       reportData.url = queryParams.get('domain') || '';
     }
-
+    
     const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
       await getWidgetSettings(reportData.url);
     const WEBABILITY_SCORE_BONUS = 45;
@@ -1428,26 +1429,26 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     const totalWidth = labelWidth + urlWidth;
     // Calculate starting X so the whole line is centered
     const startX = 105 - totalWidth / 2;
-    // Draw the label
-    doc.setFont('helvetica', 'normal');
+
+    doc.setFont('NotoSans_Condensed-Regular'); 
     doc.setTextColor(51, 65, 85); // slate-800 for message
     doc.text(label, startX, textY, { align: 'left' });
     // Draw the URL in bold, immediately after the label, no overlap
-    doc.setFont('helvetica', 'bold');
+   
     doc.text(url, startX + labelWidth, textY, { align: 'left' });
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans_Condensed-Regular'); 
 
     textY += 12;
     doc.setFontSize(20);
     doc.setTextColor(...statusColor);
-    doc.setFont('helvetica', 'bold');
+   doc.setFont('NotoSans_Condensed-Regular'); 
     doc.text(status, 105, textY, { align: 'center' });
 
     message = translatedMessage;
     textY += 9;
     doc.setFontSize(12);
     doc.setTextColor(51, 65, 85); 
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans_Condensed-Regular'); 
     doc.text(message, 105, textY, { align: 'center' });
     
 
@@ -1471,7 +1472,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setLineWidth(1.5);
     doc.setFillColor(21, 101, 192); 
     doc.circle(circle1X, circleY, circleRadius, 'FD');
-    doc.setFont('helvetica', 'bold');
+   doc.setFont('NotoSans_Condensed-Regular'); 
     doc.setFontSize(19); 
     doc.setTextColor(255, 255, 255); 
 
@@ -1482,7 +1483,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans_Condensed-Regular'); 
     doc.text(translatedTotalErrors, circle1X, circleY + circleRadius + 9, {
       align: 'center',
     });
@@ -1491,7 +1492,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     doc.setLineWidth(1.5);
     doc.setFillColor(33, 150, 243); 
     doc.circle(circle2X, circleY, circleRadius, 'FD');
-    doc.setFont('helvetica', 'bold');
+   doc.setFont('NotoSans_Condensed-Regular'); 
     doc.setFontSize(19); 
     doc.setTextColor(255, 255, 255); 
     const scoreText = `${Math.round(enhancedScore)}%`;
@@ -1505,7 +1506,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     doc.setFontSize(10); 
     doc.setTextColor(21, 101, 192); 
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans_Condensed-Regular'); 
     doc.text(translatedScore, circle2X, circleY + circleRadius + 9, {
       align: 'center',
     });
@@ -1541,7 +1542,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       doc.roundedRect(x, yStart, 55, 20, 3, 3, 'F');
       doc.setTextColor(0, 0, 0); 
       doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
+     doc.setFont('NotoSans_Condensed-Regular'); 
       doc.text(`${box.count}`, x + 4, yStart + 8);
       doc.setFontSize(10);
       doc.text(box.label, x + 4, yStart + 16);
@@ -1580,7 +1581,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           styles: {
             fillColor: [255, 255, 255], // white background
             textColor: [0, 0, 0], // black text
-            fontStyle: 'bold',
             fontSize: 14,
             halign: 'center',
             cellPadding: 8,
@@ -1593,7 +1593,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           styles: {
             fillColor: [255, 255, 255], // matching white background
             textColor: [0, 0, 0], // black text
-            fontStyle: 'bold',
             fontSize: 14,
             halign: 'center',
             cellPadding: 8,
@@ -1607,7 +1606,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           content: `${issue.code ? `${issue.code} (${issue.impact})` : ''}`,
           colSpan: 2,
           styles: {
-            fontStyle: 'bold',
             fontSize: 12,
             textColor: [30, 41, 59], // dark navy text
             halign: 'left',
@@ -1619,7 +1617,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
                 : issue.impact === 'moderate'
                   ? [187, 222, 251] 
                   : [248, 250, 252], 
-            font: 'courier',
+            font: 'NotoSans_Condensed-Regular',
             minCellHeight: 30,
           },
         },
@@ -1628,7 +1626,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           content: `${issue.message || ''}`,
           colSpan: 2,
           styles: {
-            fontStyle: 'normal',
             fontSize: 12,
             textColor: [30, 41, 59], // dark navy text
             halign: 'left',
@@ -1640,7 +1637,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               : issue.impact === 'moderate'
                 ? [187, 222, 251] 
                 : [248, 250, 252], 
-            font: 'courier',
+            font: 'NotoSans_Condensed-Regular',
             minCellHeight: 30,
           },
         },
@@ -1666,7 +1663,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             content: 'Screenshot',
             colSpan: 4,
             styles: {
-              fontStyle: 'bold',
+             
               fontSize: 12,
               textColor: [30, 41, 59],
               halign: 'center',
@@ -1708,7 +1705,6 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             content: translatedContext,
             colSpan: 4,
             styles: {
-              fontStyle: 'bolditalic',
               fontSize: 11,
               textColor: [0, 0, 0],
               halign: 'left',
@@ -1730,7 +1726,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               pageBreak: 'avoid',
               rowSpan: 1,
               styles: {
-                font: 'courier',
+                font: 'NotoSans_Condensed-Regular',
                 fontSize: 10,
                 textColor: [255, 255, 255], // This will be overridden by didDrawCell
                 fillColor: [255, 255, 255], // White background for the cell
@@ -1775,13 +1771,13 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             content: translatedFix,
             colSpan: 4,
             styles: {
-              fontStyle: 'bolditalic',
               fontSize: 11,
               textColor: [0, 0, 0], // black text
               halign: 'left',
               cellPadding: 5,
               fillColor: [255, 255, 255], // white background
               lineWidth: 0,
+              font: 'NotoSans_Condensed-Regular',
             },
           },
         ]);
@@ -1793,13 +1789,13 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               content: `${fixIdx + 1}. ${fix}`,
               colSpan: 4,
               styles: {
-                fontStyle: 'normal',
                 fontSize: 11,
                 textColor: [0, 0, 0], // black text
                 halign: 'left',
                 cellPadding: { top: 10, right: 8, bottom: 10, left: 8 }, // more vertical space for separation
                 fillColor: [255, 255, 255], // white background for back container
                 lineWidth: 0,
+                font: 'NotoSans_Condensed-Regular',
               },
             },
           ]);
@@ -1866,7 +1862,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           // Calculate available width for code content
           const availableWidth = data.cell.width - 16 - indexWidth; // Cell padding + index width
           
-          doc.setFont('courier', 'normal');
+          doc.setFont('NotoSans_Condensed-Regular', 'normal');
           doc.setFontSize(10);
           const lines = doc.splitTextToSize(codeContent, availableWidth);
           
@@ -1895,7 +1891,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           const indexNumber = (data.cell.raw as any)._indexNumber;
           
           // Calculate index section width
-          doc.setFont('courier', 'normal');
+          doc.setFont('NotoSans_Condensed-Regular', 'normal');
           doc.setFontSize(12);
           const indexPrefix = `${indexNumber}`;
           const indexWidth = doc.getTextWidth(indexPrefix) + 8; // Extra padding for the index section
@@ -2007,26 +2003,62 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     return doc.output('blob');
   };
-
   const [currentLanguage, setCurrentLanguage] = useState<string>('');
 
   return (
     <>
       <div
-        className={`${bgColor} rounded-lg shadow-sm mb-6 flex justify-between items-center min-h-[120px]`}
+        className={`${bgColor} rounded-lg shadow-sm mb-6 flex flex-col md:flex-row justify-between items-center min-h-[120px]`}
       >
-        <div className="flex items-center p-4">
-          <div className="bg-white/70 p-2 rounded-full mr-4">{icon}</div>
+        <div className="flex flex-col items-start p-4 w-full md:w-auto">
+          <div className="bg-white/70 p-2 rounded-full mr-0 mb-3 md:mr-4 md:mb-0">{icon}</div>
           <div>
             <h3 className={`text-xl font-semibold ${textColor}`}>{status}</h3>
             <p className={`${textColor}/80`}>{message}</p>
           </div>
+          {/* Mobile controls below text */}
+          <div className="block md:hidden w-full">
+            <div className="w-full flex flex-col gap-3 pt-4">
+              <button
+                onClick={handleDownloadSubmit}
+                className="whitespace-nowrap w-full px-6 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={isDownloading}
+              >
+                <span className="flex justify-center items-center w-full">
+                  {isDownloading ? (
+                    <CircularProgress size={22} sx={{ color: 'white' }} />
+                  ) : (
+                    'Get Free Report'
+                  )}
+                </span>
+              </button>
+              <div className="relative w-full">
+                <select
+                  value={currentLanguage}
+                  onChange={(e) => setCurrentLanguage(e.target.value)}
+                  className="appearance-none w-full bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
+                >
+                  <option value="en">English</option>
+                  {Object.values(LANGUAGES).map((language) => (
+                    <option key={language.code} value={language.code}>
+                      {language.nativeName}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="relative mr-4 flex items-center gap-4">
-      
+        {/* Desktop controls to the right */}
+        <div className="hidden md:flex relative mr-0 md:mr-4 flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4 w-full md:w-auto pt-4 md:pt-0">
           <button
             onClick={handleDownloadSubmit}
-            className="whitespace-nowrap px-6 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="whitespace-nowrap w-full md:w-auto px-6 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={isDownloading}
           >
             <span className="flex justify-center items-center w-full">
@@ -2037,18 +2069,18 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               )}
             </span>
           </button>
-          <div className="relative">
+          <div className="relative w-full md:w-auto">
             <select
               value={currentLanguage}
               onChange={(e) => setCurrentLanguage(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
+              className="appearance-none w-full md:w-auto bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
             >
-                    <option value="en">English</option>
-                    {Object.values(LANGUAGES).map((language) => (
-                      <option key={language.code} value={language.code}>
-                        {language.nativeName}
-                      </option>
-                    ))}
+              <option value="en">English</option>
+              {Object.values(LANGUAGES).map((language) => (
+                <option key={language.code} value={language.code}>
+                  {language.nativeName}
+                </option>
+              ))}
             </select>
             <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
               <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
