@@ -23,6 +23,10 @@ export function getMatchingFrontendUrl(currentDomain: string | null): string | n
   if (IS_LOCAL) {
     if (!currentDomain) return null
 
+    if (/^https?:\/\//i.test(currentDomain)) {
+      return currentDomain
+    }
+
     return `http://${currentDomain}`
   }
 
