@@ -6,7 +6,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema'
 import { IResolvers } from '@graphql-tools/utils'
 import { Server } from 'http'
 
-import { IS_LOCAL_DEV } from '../config/server.config'
+import { IS_LOCAL, IS_PROD } from '../config/server.config'
 import { rateLimitDirectiveTransformer, rateLimitDirectiveTypeDefs } from './directives/rateLimit'
 import { createSentryPlugin } from './plugins/sentry.plugin'
 import RootResolver from './root.resolver'
@@ -26,9 +26,9 @@ export function createGraphQLServer(httpServer: Server) {
 
   let landingPagePlugin
 
-  if (process.env.NODE_ENV === 'production') {
+  if (IS_PROD) {
     landingPagePlugin = ApolloServerPluginLandingPageDisabled()
-  } else if (IS_LOCAL_DEV) {
+  } else if (IS_LOCAL) {
     landingPagePlugin = ApolloServerPluginLandingPageLocalDefault({ footer: false })
   } else {
     landingPagePlugin = ApolloServerPluginLandingPageProductionDefault({ footer: false })
@@ -41,7 +41,7 @@ export function createGraphQLServer(httpServer: Server) {
         return new Error('Please login to make this action')
       }
 
-      if (process.env.NODE_ENV === 'production') {
+      if (IS_PROD) {
         const result = err.message.match(/ValidationError: (.*)/)
 
         if (result && result[1]) {

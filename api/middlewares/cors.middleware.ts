@@ -1,7 +1,7 @@
 import cors from 'cors'
 import { NextFunction, Request, Response } from 'express'
 
-import { ALLOWED_OPERATIONS, ALLOWED_ORIGINS, IS_LOCAL_DEV } from '../config/server.config'
+import { ALLOWED_OPERATIONS, ALLOWED_ORIGINS, IS_LOCAL } from '../config/server.config'
 
 export function dynamicCors(req: Request, res: Response, next: NextFunction) {
   const corsOptions = {
@@ -10,7 +10,7 @@ export function dynamicCors(req: Request, res: Response, next: NextFunction) {
 
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow local development
-      if (IS_LOCAL_DEV) {
+      if (IS_LOCAL) {
         return callback(null, true)
       }
 

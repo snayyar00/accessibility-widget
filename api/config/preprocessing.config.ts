@@ -75,6 +75,13 @@ export const ENVIRONMENT_CONFIGS = {
     fallbackOnError: true,
   },
 
+  local: {
+    enabled: true,
+    debugMode: false,
+    maxConcurrency: 3,
+    fallbackOnError: true,
+  },
+
   staging: {
     enabled: true,
     debugMode: false,

@@ -2,7 +2,7 @@ import chalk from 'chalk'
 import { Request, Response } from 'express'
 import morgan from 'morgan'
 
-import { IS_LOCAL_DEV } from '../config/server.config'
+import { IS_LOCAL } from '../config/server.config'
 import { extractClientDomain } from '../utils/domain.utils'
 import { getOperationName } from '../utils/logger.utils'
 
@@ -40,7 +40,7 @@ const gdprSafeJsonFormat = (tokens: any, req: Request, res: Response) => {
     domain: extractClientDomain(req),
   }
 
-  if (IS_LOCAL_DEV) {
+  if (IS_LOCAL) {
     let statusColor = chalk.green
 
     if (logObj.status >= 500) statusColor = chalk.red

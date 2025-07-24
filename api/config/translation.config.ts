@@ -1,3 +1,5 @@
+import { IS_DEV, IS_LOCAL, IS_PROD } from './server.config'
+
 // Production-ready translation configuration
 export const TRANSLATION_CONFIG = {
   // AI Model Configuration - Optimized for speed and unlimited generation
@@ -23,9 +25,9 @@ export const TRANSLATION_CONFIG = {
 
   // Performance Monitoring
   monitoring: {
-    logSuccessfulTranslations: process.env.NODE_ENV === 'production',
+    logSuccessfulTranslations: IS_PROD,
     logErrors: true,
-    trackMetrics: process.env.NODE_ENV === 'production',
+    trackMetrics: IS_PROD,
     trackSpeed: true, // Track response times for speed optimization
   },
 
@@ -42,7 +44,7 @@ export const TRANSLATION_CONFIG = {
     batchRequests: true, // Enable batching for speed
     batchSize: 3, // Split content into chunks of 3 fields each
     maxParallelBatches: 2, // Process 2 batches in parallel
-    preWarmCache: process.env.NODE_ENV === 'production',
+    preWarmCache: IS_PROD,
     useStreamingIfAvailable: true, // Enable streaming for faster perceived response
   },
 
@@ -57,7 +59,7 @@ export const TRANSLATION_CONFIG = {
 }
 
 // Environment-specific overrides
-if (process.env.NODE_ENV === 'development') {
+if (IS_DEV || IS_LOCAL) {
   TRANSLATION_CONFIG.model.timeout = 60000 // Extra long timeout in dev for debugging
   TRANSLATION_CONFIG.monitoring.logSuccessfulTranslations = true
 }

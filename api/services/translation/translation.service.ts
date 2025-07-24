@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/node'
 import OpenAI from 'openai'
 
+import { IS_PROD } from '../../config/server.config'
 import { TRANSLATION_CONFIG } from '../../config/translation.config'
 
 const openai = new OpenAI({
@@ -283,7 +284,7 @@ export const translateStatement = async ({ content, targetLanguage, languageCode
     const metricsContentSize = typeof content === 'object' ? Object.keys(content).length : content.length
 
     // Log metrics only in production for monitoring
-    if (process.env.NODE_ENV === 'production') {
+    if (IS_PROD) {
       console.info('Translation completed', {
         language: languageCode,
         duration,

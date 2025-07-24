@@ -22,7 +22,6 @@ export const logAuthenticationFailure = (req: Request, _: Response, message: str
     error: {
       message,
       code,
-      stack: process.env.NODE_ENV === 'development' ? undefined : undefined,
     },
   })
 

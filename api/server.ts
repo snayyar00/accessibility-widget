@@ -72,6 +72,7 @@ async function initializeServer() {
 
     console.log(`🛠️  NODE_ENV: ${process.env.NODE_ENV}`)
     console.log(`🚀 Server Ready: ${apiUrl}`)
+    console.log('🧪 Hoppscotch:', `https://hoppscotch.webability.io`)
     console.log('🧩 Playground:', `${apiUrl}/graphql`)
 
     console.log()

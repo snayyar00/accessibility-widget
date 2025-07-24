@@ -1,4 +1,5 @@
 import database from '../../config/database.config'
+import { IS_PROD } from '../../config/server.config'
 import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { objectToString } from '../../helpers/string.helper'
 import { createOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization, updateOrganization } from '../../repository/organization.repository'
@@ -34,7 +35,7 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
   const orgLinks = await getOrganizationsByUserId(user.id)
   const maxOrgs = user.isActive ? 3 : 1
 
-  if (process.env.NODE_ENV !== 'development') {
+  if (IS_PROD) {
     if (orgLinks.length >= maxOrgs) {
       throw new ApolloError(user.isActive ? 'You have reached the limit of organizations you can create (3 for verified users).' : 'Please verify your email to create more than one organization.')
     }

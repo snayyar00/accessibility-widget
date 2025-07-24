@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 
+import { IS_DEV, IS_LOCAL, IS_PROD } from '../config/server.config'
 import { extractClientDomain } from '../utils/domain.utils'
 import { getOperationName } from '../utils/logger.utils'
 
@@ -30,7 +31,7 @@ export const expressErrorMiddleware = (error: ErrorWithStatus, req: Request, res
     error: {
       message: error.message || 'Unknown error',
       code: error.code || 'INTERNAL_ERROR',
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      stack: IS_LOCAL || IS_DEV ? error.stack : undefined,
     },
   })
 
@@ -39,7 +40,7 @@ export const expressErrorMiddleware = (error: ErrorWithStatus, req: Request, res
   // Send error response if not already sent
   if (!res.headersSent) {
     res.status(statusCode).json({
-      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+      error: IS_PROD ? 'Internal server error' : error.message,
     })
   }
 }

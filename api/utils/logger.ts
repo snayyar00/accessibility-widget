@@ -1,7 +1,7 @@
 import bunyan from 'bunyan'
 import chalk from 'chalk'
 
-import { IS_LOCAL_DEV } from '../config/server.config'
+import { IS_LOCAL } from '../config/server.config'
 
 const logger = bunyan.createLogger({
   name: 'accessibility-widget',
@@ -19,7 +19,7 @@ const createColoredLogger = () => {
     info: (...args: any[]) => {
       const message = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ')
 
-      if (IS_LOCAL_DEV) {
+      if (IS_LOCAL) {
         originalConsole.log(chalk.cyan('[INFO]'), chalk.white(message))
       } else {
         logger.info(message)
@@ -28,7 +28,7 @@ const createColoredLogger = () => {
     error: (...args: any[]) => {
       const message = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ')
 
-      if (IS_LOCAL_DEV) {
+      if (IS_LOCAL) {
         originalConsole.error(chalk.red('[ERROR]'), chalk.white(message))
       } else {
         logger.error(message)
@@ -37,7 +37,7 @@ const createColoredLogger = () => {
     warn: (...args: any[]) => {
       const message = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ')
 
-      if (IS_LOCAL_DEV) {
+      if (IS_LOCAL) {
         originalConsole.log(chalk.yellow('[WARN]'), chalk.white(message))
       } else {
         logger.warn(message)
@@ -46,7 +46,7 @@ const createColoredLogger = () => {
     debug: (...args: any[]) => {
       const message = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ')
 
-      if (IS_LOCAL_DEV) {
+      if (IS_LOCAL) {
         originalConsole.log(chalk.gray('[DEBUG]'), chalk.white(message))
       } else {
         logger.debug(message)
@@ -55,7 +55,7 @@ const createColoredLogger = () => {
     trace: (...args: any[]) => {
       const message = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ')
 
-      if (IS_LOCAL_DEV) {
+      if (IS_LOCAL) {
         originalConsole.log(chalk.gray('[TRACE]'), chalk.white(message))
       } else {
         logger.trace(message)
@@ -64,7 +64,7 @@ const createColoredLogger = () => {
     fatal: (...args: any[]) => {
       const message = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ')
 
-      if (IS_LOCAL_DEV) {
+      if (IS_LOCAL) {
         originalConsole.error(chalk.bgRed.white('[FATAL]'), chalk.white(message))
       } else {
         logger.fatal(message)
@@ -88,7 +88,7 @@ const originalConsole = {
 console.log = (...args) => {
   const message = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ')
 
-  if (IS_LOCAL_DEV) {
+  if (IS_LOCAL) {
     originalConsole.log(chalk.blue('[INFO]'), chalk.white(message))
   } else {
     logger.info(message)
@@ -98,7 +98,7 @@ console.log = (...args) => {
 console.error = (...args) => {
   const message = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ')
 
-  if (IS_LOCAL_DEV) {
+  if (IS_LOCAL) {
     originalConsole.error(chalk.red('[ERROR]'), chalk.white(message))
   } else {
     logger.error(message)
@@ -108,7 +108,7 @@ console.error = (...args) => {
 console.warn = (...args) => {
   const message = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ')
 
-  if (IS_LOCAL_DEV) {
+  if (IS_LOCAL) {
     originalConsole.log(chalk.yellow('[WARN]'), chalk.white(message))
   } else {
     logger.warn(message)
@@ -118,7 +118,7 @@ console.warn = (...args) => {
 console.info = (...args) => {
   const message = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ')
 
-  if (IS_LOCAL_DEV) {
+  if (IS_LOCAL) {
     originalConsole.log(chalk.cyan('[INFO]'), chalk.white(message))
   } else {
     logger.info(message)
@@ -128,7 +128,7 @@ console.info = (...args) => {
 console.debug = (...args) => {
   const message = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ')
 
-  if (IS_LOCAL_DEV) {
+  if (IS_LOCAL) {
     originalConsole.log(chalk.gray('[DEBUG]'), chalk.white(message))
   } else {
     logger.debug(message)
