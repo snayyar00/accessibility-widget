@@ -21,6 +21,9 @@ const Sidebar = ({
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const { isOpen } = useSelector((state: RootState) => state.sidebar);
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
 
   function closeSidebar() {
     dispatch(toggleSidebar(false));
@@ -43,7 +46,16 @@ const Sidebar = ({
           href="/"
           className="flex h-[81px] items-center px-4 border-b border-r border-solid border-gray"
         >
-          <LogoIcon />
+          {organization?.logo_url ? (
+            <img
+              width={198}
+              height={47}
+              src={organization.logo_url}
+              alt={organization.name}
+            />
+          ) : (
+            <LogoIcon />
+          )}
         </a>
 
         <div className="flex-grow min-w-[250px] sm:w-[20%] md:w-[18%] lg:w-[15%] transition-all duration-300">
@@ -67,7 +79,7 @@ const Sidebar = ({
           [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200 [&.active>.menu-icon>svg_*[fill]]:fill-primary [&.active>.menu-icon>svg_*[stroke]]:stroke-primary"
               >
                 <div className="menu-icon flex items-center justify-center w-12 h-6">
-                  <DashboardIcon aria-label="Dashboard navigation icon"/>
+                  <DashboardIcon aria-label="Dashboard navigation icon" />
                 </div>
                 <span className="menu-text text-lg text-white-blue ml-4">
                   Dashboard
@@ -129,10 +141,10 @@ const Sidebar = ({
           [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200 [&.active>.menu-icon>svg_*[fill]]:fill-primary [&.active>.menu-icon>svg_*[stroke]]:stroke-primary"
               >
                 <div className="menu-icon flex items-center justify-center w-12 h-6">
-                  <HiOutlineGlobeAlt 
-                    className="menu-icon text-white-blue transition-colors duration-200" 
-                    size={25} 
-                    aria-label="Add domain navigation icon" 
+                  <HiOutlineGlobeAlt
+                    className="menu-icon text-white-blue transition-colors duration-200"
+                    size={25}
+                    aria-label="Add domain navigation icon"
                   />
                 </div>
                 <span className="menu-text text-lg text-white-blue ml-4">

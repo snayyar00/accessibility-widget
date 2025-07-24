@@ -59,6 +59,10 @@ const Modal: React.FC<ModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
+
   return (
     <div
       className={`fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50`}
@@ -66,7 +70,16 @@ const Modal: React.FC<ModalProps> = ({
       <div className="bg-white rounded-lg sm:w-full md:w-3/4 overflow-y-auto max-h-[95vh]">
         <div className="grid grid-cols-12 justify-evenly">
           <div className="sm:col-span-9 col-span-6 pl-4 pt-2">
-            <LogoIcon />
+            {organization?.logo_url ? (
+              <img
+                width={198}
+                height={47}
+                src={organization.logo_url}
+                alt={organization.name}
+              />
+            ) : (
+              <LogoIcon />
+            )}
           </div>
           <div
             className={`sm:col-span-3 col-span-6 pt-2 pr-4 text-end rounded-tr-lg sm:bg-white ${

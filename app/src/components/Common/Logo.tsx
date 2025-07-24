@@ -1,15 +1,27 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/config/store';
 
 const Logo: React.FC = () => {
-  const { t } = useTranslation();
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
 
   return (
-    <div className='mb-2'>
-      <LogoIcon />
+    <div className="mb-2">
+      {organization?.logo_url ? (
+        <img
+          width={198}
+          height={47}
+          src={organization.logo_url}
+          alt={organization.name}
+        />
+      ) : (
+        <LogoIcon />
+      )}
     </div>
   );
-}
+};
 
 export default Logo;

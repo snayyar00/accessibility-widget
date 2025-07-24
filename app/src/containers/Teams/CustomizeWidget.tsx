@@ -4,7 +4,8 @@ import { Colors, Toggles } from './editWidget';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/config/store';
 
 interface CustomizeWidgetProps {
   colors: Colors;
@@ -86,66 +87,68 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   ];
 
   const fileInputRef = useRef(null); // Create a ref for the file input
-  const urlInputRef = useRef(null);  // Create a ref for the URL input
+  const urlInputRef = useRef(null); // Create a ref for the URL input
 
   const handleReset = () => {
     setColors((prevColors) => ({
-      ...prevColors,  // Keep all the previous state values
-      logoImage: "",  // Reset the logoImage to an empty string
+      ...prevColors, // Keep all the previous state values
+      logoImage: '', // Reset the logoImage to an empty string
     }));
-    
+
     // Clear the file input using the ref
     if (fileInputRef.current) {
-      (fileInputRef.current as any).value = "";  // Clear the file input field
+      (fileInputRef.current as any).value = ''; // Clear the file input field
     }
 
     // Clear the URL input field using the ref
     if (urlInputRef.current) {
-      (urlInputRef.current as any).value = "";  // Clear the URL input field
+      (urlInputRef.current as any).value = ''; // Clear the URL input field
     }
     setIsFileInput(true);
     setIsUrlInput(true);
   };
   const [isFileInput, setIsFileInput] = useState(true);
   const [isUrlInput, setIsUrlInput] = useState(true);
-  const [logoInput, setLogoInput] = useState("");
-  const[accessibilityStatementLinkUrl, setAccessibilityStatementLinkUrl] = useState(colors.accessibilityStatementLinkUrl);
-  const[logoUrl, setLogoUrl] = useState(colors.logoUrl);
+  const [logoInput, setLogoInput] = useState('');
+  const [accessibilityStatementLinkUrl, setAccessibilityStatementLinkUrl] =
+    useState(colors.accessibilityStatementLinkUrl);
+  const [logoUrl, setLogoUrl] = useState(colors.logoUrl);
 
-  useEffect(()=>{
+  useEffect(() => {
     setAccessibilityStatementLinkUrl(colors.accessibilityStatementLinkUrl);
-    setLogoUrl(colors.logoUrl)
-  },[colors.accessibilityStatementLinkUrl,colors.logoUrl])
-  const isBase64 = (str:any) => {
+    setLogoUrl(colors.logoUrl);
+  }, [colors.accessibilityStatementLinkUrl, colors.logoUrl]);
+  const isBase64 = (str: any) => {
     const regex = /^data:image\/(png|jpg|jpeg|gif|bmp);base64,/;
     return regex.test(str);
   };
 
   // Function to validate URL
-  const isValidUrl = (str:any) => {
-    const regex = /^(http:\/\/|https:\/\/)([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+)(\/[a-zA-Z0-9\-._~:?#\[\]@!$&'()*+,;=]*)?$/;
+  const isValidUrl = (str: any) => {
+    const regex =
+      /^(http:\/\/|https:\/\/)([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+)(\/[a-zA-Z0-9\-._~:?#\[\]@!$&'()*+,;=]*)?$/;
     return regex.test(str);
   };
-  
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-  
+
     if (file) {
       // Validate file type
       const validTypes = ['image/png', 'image/svg+xml', 'image/webp'];
       if (!validTypes.includes(file.type)) {
-                  toast.error("Only PNG, SVG, or WebP images are allowed.");
-        e.target.value = ""; // Reset the input field to remove the file name
+        toast.error('Only PNG, SVG, or WebP images are allowed.');
+        e.target.value = ''; // Reset the input field to remove the file name
         return; // Prevent the file from being processed if the type is invalid
       }
-  
+
       // Validate file size (should not exceed 10 KB)
       if (file.size > 76800) {
-        toast.error("File size should not exceed 75 KB.");
-        e.target.value = ""; // Reset the input field to remove the file name
+        toast.error('File size should not exceed 75 KB.');
+        e.target.value = ''; // Reset the input field to remove the file name
         return; // Prevent the file from being processed if the size is too large
       }
-  
+
       // If valid, read the file as base64
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -157,14 +160,16 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         }));
       };
       reader.readAsDataURL(file); // Only proceed if the file passed validation
-  
+
       // Disable the URL input once file input is used
       setIsUrlInput(false);
       setIsFileInput(true);
     }
   };
-  
-  
+
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
 
   return (
     <div className="w-full max-w-[500px] mx-auto bg-[#eff1f5] font-serif text-base sm:text-lg flex flex-col h-[calc(100vh-2rem)] md:h-screen overflow-hidden">
@@ -219,52 +224,70 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           </div>
 
           <div className="logo-upload-section bg-white p-3 sm:p-4 rounded-xl">
-          <h2 className="text-lg sm:text-xl font-semibold mb-2">
-            Upload Widget Logo
-          </h2>
-          <p className="text-sm text-gray-600 mb-3 sm:mb-4">
-            <strong>Optimal dimensions:</strong> 200 × 50 pixels for best display quality
-          </p>
+            <h2 className="text-lg sm:text-xl font-semibold mb-2">
+              Upload Widget Logo
+            </h2>
+            <p className="text-sm text-gray-600 mb-3 sm:mb-4">
+              <strong>Optimal dimensions:</strong> 200 × 50 pixels for best
+              display quality
+            </p>
 
-          {/* File upload */}
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            disabled={!isFileInput}
-            className="w-full p-2 border rounded mb-3 sm:mb-4 text-sm sm:text-base"
-            onChange={handleFileChange}
-          />
-
-          {/* URL input */}
-          <div className="flex items-center mb-3 sm:mb-4">
+            {/* File upload */}
             <input
-              type="text"
-              placeholder="Or enter image URL"
-              className="w-full p-2 border rounded text-sm sm:text-base"
-              ref={urlInputRef}
-              disabled={!isUrlInput}
-              onChange={(e) => {
-                const url = e.target.value.trim();
-                if (url) {
-                  // Validate if it's a proper URL (you can use a more complex regex for URL validation if needed)
-                  setLogoInput(url);
-                }
-                setIsFileInput(false); // Mark URL input as used, disable file input
-              }}
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              disabled={!isFileInput}
+              className="w-full p-2 border rounded mb-3 sm:mb-4 text-sm sm:text-base"
+              onChange={handleFileChange}
             />
-          </div>
 
-          {/* Displaying the logo */}
-          <div>
-            {colors.logoImage.length ? (
-              <img
-                src={colors.logoImage.length ? colors.logoImage : (LogoIcon as any)}
-                alt="Logo Preview"
-                className="w-24 h-24 sm:w-32 sm:h-32 object-contain"
+            {/* URL input */}
+            <div className="flex items-center mb-3 sm:mb-4">
+              <input
+                type="text"
+                placeholder="Or enter image URL"
+                className="w-full p-2 border rounded text-sm sm:text-base"
+                ref={urlInputRef}
+                disabled={!isUrlInput}
+                onChange={(e) => {
+                  const url = e.target.value.trim();
+                  if (url) {
+                    // Validate if it's a proper URL (you can use a more complex regex for URL validation if needed)
+                    setLogoInput(url);
+                  }
+                  setIsFileInput(false); // Mark URL input as used, disable file input
+                }}
               />
-            ):<LogoIcon/>}
-          </div>
+            </div>
+
+            {/* Displaying the logo */}
+            <div>
+              {colors.logoImage.length ? (
+                <img
+                  src={
+                    colors.logoImage.length
+                      ? colors.logoImage
+                      : (LogoIcon as any)
+                  }
+                  alt="Logo Preview"
+                  className="w-24 h-24 sm:w-32 sm:h-32 object-contain"
+                />
+              ) : (
+                <>
+                  {organization?.logo_url ? (
+                    <img
+                      width={198}
+                      height={47}
+                      src={organization.logo_url}
+                      alt={organization.name}
+                    />
+                  ) : (
+                    <LogoIcon />
+                  )}
+                </>
+              )}
+            </div>
             <button
               onClick={handleReset}
               className="px-3 py-2 mt-4 sm:px-4 sm:py-2 bg-[#0948c9] text-white rounded text-sm sm:text-base"
@@ -272,7 +295,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
               Reset
             </button>
             <button
-              onClick={()=>{
+              onClick={() => {
                 if (isBase64(logoInput)) {
                   // If Base64, just update the state
                   setColors((prev) => ({
@@ -280,7 +303,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     logoImage: logoInput,
                   }));
                   setIsFileInput(true);
-                  setIsUrlInput(false);  // Disable URL input after selecting Base64
+                  setIsUrlInput(false); // Disable URL input after selecting Base64
                 } else if (isValidUrl(logoInput)) {
                   // If URL, check if valid and update the state
                   setColors((prev) => ({
@@ -288,7 +311,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     logoImage: logoInput,
                   }));
                   setIsUrlInput(true);
-                  setIsFileInput(false);  // Disable file input after selecting URL
+                  setIsFileInput(false); // Disable file input after selecting URL
                 } else {
                   // Alert the user if the input is neither a valid Base64 nor URL
                   toast.error('Please provide a valid Image or URL.');
@@ -301,33 +324,32 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           </div>
 
           <div className="bg-white p-3 sm:p-4 rounded-xl">
-          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
-            Set Logo Link Url
-          </h2>
-          {/* URL input */}
-          <div className="flex items-center mb-3 sm:mb-4">
-            <input
-              type="text"
-              placeholder="Enter Logo Link URL"
-              className="w-full p-2 border rounded text-sm sm:text-base"
-              value={logoUrl}
-              onChange={(e) => {
-                const url = e.target.value.trim();
-                if (url) {
-                  // Validate if it's a proper URL (you can use a more complex regex for URL validation if needed)
-                  setColors((prev) => ({
-                    ...prev,
-                    logoUrl: url,
-                  }));
-                }
-                setLogoUrl(url);
-              }}
-            />
-          </div>
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+              Set Logo Link Url
+            </h2>
+            {/* URL input */}
+            <div className="flex items-center mb-3 sm:mb-4">
+              <input
+                type="text"
+                placeholder="Enter Logo Link URL"
+                className="w-full p-2 border rounded text-sm sm:text-base"
+                value={logoUrl}
+                onChange={(e) => {
+                  const url = e.target.value.trim();
+                  if (url) {
+                    // Validate if it's a proper URL (you can use a more complex regex for URL validation if needed)
+                    setColors((prev) => ({
+                      ...prev,
+                      logoUrl: url,
+                    }));
+                  }
+                  setLogoUrl(url);
+                }}
+              />
+            </div>
 
-         
             <button
-              onClick={()=>{
+              onClick={() => {
                 setColors((prev) => ({
                   ...prev,
                   logoUrl: DefaultColors.logoUrl,
@@ -341,37 +363,40 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           </div>
 
           <div className="bg-white p-3 sm:p-4 rounded-xl">
-          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
-            Set Accesibility Statement Link Url
-          </h2>
-          {/* URL input */}
-          <div className="flex items-center mb-3 sm:mb-4">
-            <input
-              type="text"
-              placeholder="Enter Accessibility Statement Link URL"
-              className="w-full p-2 border rounded text-sm sm:text-base"
-              value={accessibilityStatementLinkUrl}
-              onChange={(e) => {
-                const url = e.target.value.trim();
-                if (url) {
-                  // Validate if it's a proper URL (you can use a more complex regex for URL validation if needed)
-                  setColors((prev) => ({
-                    ...prev,
-                    accessibilityStatementLinkUrl: url,
-                  }));
-                }
-                setAccessibilityStatementLinkUrl(url);
-              }}
-            />
-          </div>
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+              Set Accesibility Statement Link Url
+            </h2>
+            {/* URL input */}
+            <div className="flex items-center mb-3 sm:mb-4">
+              <input
+                type="text"
+                placeholder="Enter Accessibility Statement Link URL"
+                className="w-full p-2 border rounded text-sm sm:text-base"
+                value={accessibilityStatementLinkUrl}
+                onChange={(e) => {
+                  const url = e.target.value.trim();
+                  if (url) {
+                    // Validate if it's a proper URL (you can use a more complex regex for URL validation if needed)
+                    setColors((prev) => ({
+                      ...prev,
+                      accessibilityStatementLinkUrl: url,
+                    }));
+                  }
+                  setAccessibilityStatementLinkUrl(url);
+                }}
+              />
+            </div>
 
             <button
-              onClick={()=>{
+              onClick={() => {
                 setColors((prev) => ({
                   ...prev,
-                  accessibilityStatementLinkUrl: DefaultColors.accessibilityStatementLinkUrl,
+                  accessibilityStatementLinkUrl:
+                    DefaultColors.accessibilityStatementLinkUrl,
                 }));
-                setAccessibilityStatementLinkUrl(DefaultColors.accessibilityStatementLinkUrl);
+                setAccessibilityStatementLinkUrl(
+                  DefaultColors.accessibilityStatementLinkUrl,
+                );
               }}
               className="px-3 py-2 mt-4 sm:px-4 sm:py-2 bg-[#0948c9] text-white rounded text-sm sm:text-base"
             >
