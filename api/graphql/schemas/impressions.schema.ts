@@ -1,6 +1,4 @@
-import { gql } from 'apollo-server-express';
-
-export const ImpressionsSchema = gql`
+export const ImpressionsSchema = `#graphql
   type Impression {
     id: Int!
     site_id: Int!
@@ -34,8 +32,8 @@ export const ImpressionsSchema = gql`
   }
 
   extend type Mutation {
-    addImpressionsURL(url: String!, ip: String!): [Int] @rateLimit(limit: 5, duration: 5, message: "Too many impression additions. Please try again later.")
-    registerInteraction(impressionId: Int!, interaction: String!): Int! @rateLimit(limit: 5, duration: 5, message: "Too many interactions. Please try again later.")
-    updateImpressionProfileCounts(impressionId: Int!, profileCounts: JSON!): ImpressionUpdateResponse! @rateLimit(limit: 5, duration: 5, message: "Too many profile updates. Please try again later.")
+    addImpressionsURL(url: String!, ip: String!): [Int] @rateLimit(limit: 10, duration: 5, message: "Too many impression additions. Please try again later.")
+    registerInteraction(impressionId: Int!, interaction: String!): Int! @rateLimit(limit: 10, duration: 5, message: "Too many interactions. Please try again later.")
+    updateImpressionProfileCounts(impressionId: Int!, profileCounts: JSON!): ImpressionUpdateResponse! @rateLimit(limit: 10, duration: 5, message: "Too many profile updates. Please try again later.")
   }
-`;
+`

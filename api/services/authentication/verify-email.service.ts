@@ -1,146 +1,147 @@
-import { ApolloError } from 'apollo-server-express';
-import dayjs from 'dayjs';
-import {
-  findToken,
-  changeTokenStatus,
-  createToken,
-} from '~/repository/user_tokens.repository';
-import { activeUser, getUserbyId } from '~/repository/user.repository';
-import generateRandomKey from '~/helpers/genarateRandomkey';
-import compileEmailTemplate from '~/helpers/compile-email-template';
-import {sendMail} from '~/libs/mail';
-import logger from '~/libs/logger/application-logger';
-import { normalizeEmail } from '~/helpers/string.helper';
-import { SEND_MAIL_TYPE } from '~/constants/send-mail-type.constant';
-import type { UserProfile } from '~/repository/user.repository';
-import { error } from 'console';
+import dayjs from 'dayjs'
+
+import { SEND_MAIL_TYPE } from '../../constants/send-mail-type.constant'
+import compileEmailTemplate from '../../helpers/compile-email-template'
+import generateRandomKey from '../../helpers/genarateRandomkey'
+import { normalizeEmail } from '../../helpers/string.helper'
+import { Organization } from '../../repository/organization.repository'
+import type { UserProfile } from '../../repository/user.repository'
+import { activeUser, getUserbyId } from '../../repository/user.repository'
+import { changeTokenStatus, createToken, findToken } from '../../repository/user_tokens.repository'
+import { getMatchingFrontendUrl } from '../../utils/env.utils'
+import { ApolloError, ForbiddenError } from '../../utils/graphql-errors.helper'
+import logger from '../../utils/logger'
+import { sendMail } from '../email/email.service'
 
 function isValidDate(createdAt: string): boolean {
-    // console.log(createdAt);
-    // console.log(new Date().toString());
-    const modifiedDateStr = createdAt.toString().replace(/(GMT|UTC|UMT)[+-]\d{4}.*$/, ''); // Remove the timezone part
+  // console.log(createdAt);
+  // console.log(new Date().toString());
+  const modifiedDateStr = createdAt.toString().replace(/(GMT|UTC|UMT)[+-]\d{4}.*$/, '') // Remove the timezone part
 
-    // Parse the components manually
-    const dateParts = modifiedDateStr.split(' ');
+  // Parse the components manually
+  const dateParts = modifiedDateStr.split(' ')
 
-    // Example: [Tue, Sep, 17, 2024, 22:20:19] => Extract date and time parts
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const month = monthNames.indexOf(dateParts[1]);
-    const day = parseInt(dateParts[2]);
-    const year = parseInt(dateParts[3]);
-    const timeParts = dateParts[4].split(':');
-    const hours = parseInt(timeParts[0]);
-    const minutes = parseInt(timeParts[1]);
-    const seconds = parseInt(timeParts[2]);
+  // Example: [Tue, Sep, 17, 2024, 22:20:19] => Extract date and time parts
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const month = monthNames.indexOf(dateParts[1])
+  const day = parseInt(dateParts[2])
+  const year = parseInt(dateParts[3])
+  const timeParts = dateParts[4].split(':')
+  const hours = parseInt(timeParts[0])
+  const minutes = parseInt(timeParts[1])
+  const seconds = parseInt(timeParts[2])
 
-    // Create a new Date object using UTC (to avoid timezone adjustments)
-    const date = new Date(Date.UTC(year, month, day, hours, minutes, seconds));
+  // Create a new Date object using UTC (to avoid timezone adjustments)
+  const date = new Date(Date.UTC(year, month, day, hours, minutes, seconds))
 
-    const now = new Date();
+  const now = new Date()
 
-    // 15 minutes in milliseconds
-    const fifteenMinutesInMs = 15 * 60 * 1000;
+  // 15 minutes in milliseconds
+  const fifteenMinutesInMs = 15 * 60 * 1000
 
-    // console.log(date.toISOString());
-    // console.log(now.toISOString());
-    // Calculate the difference in milliseconds
-    const diffInMs = now.getTime() - date.getTime();
+  // console.log(date.toISOString());
+  // console.log(now.toISOString());
+  // Calculate the difference in milliseconds
+  const diffInMs = now.getTime() - date.getTime()
 
-    // console.log(diffInMs);
-    // console.log(fifteenMinutesInMs);
+  // console.log(diffInMs);
+  // console.log(fifteenMinutesInMs);
 
-    if (diffInMs > fifteenMinutesInMs) {
-      return false;
-    }
-    else{
-      return true;
-    }
+  if (diffInMs > fifteenMinutesInMs) {
+    return false
+  }
+  return true
 }
 
 export async function verifyEmail(authToken: string): Promise<true | ApolloError> {
   try {
-    const token = await findToken(authToken);
+    const token = await findToken(authToken)
 
     if (!token || !token.is_active || token.type !== SEND_MAIL_TYPE.VERIFY_EMAIL) {
-      return new ApolloError('Invalid token');
-    }
-  
-    if (!isValidDate(token.created_at.toString())) {
-      return new ApolloError('Token has expired');
+      return new ApolloError('Invalid token')
     }
 
-    await Promise.all([changeTokenStatus(token.id, token.type, false), activeUser(token.user_id)]);
-    
-    const user = await getUserbyId(token.user_id);
-    
+    if (!isValidDate(token.created_at.toString())) {
+      return new ApolloError('Token has expired')
+    }
+
+    await Promise.all([changeTokenStatus(token.id, token.type, false), activeUser(token.user_id)])
+
+    const user = await getUserbyId(token.user_id)
+
     const template = await compileEmailTemplate({
       fileName: 'WelcomeEmail.mjml',
       data: {
         name: user?.name,
         date: dayjs().format('dddd, MMMM D, YYYY h:mm A'),
       },
-    });
+    })
 
-    await sendMail(user?.email, "Welcome to WebAbility ! Let's Make the Web Accessible Together", template);
+    await sendMail(user?.email, "Welcome to WebAbility ! Let's Make the Web Accessible Together", template)
 
-    return true;
+    return true
   } catch (error) {
-    logger.error(error);
-    throw error;
+    logger.error(error)
+    throw error
   }
 }
 
-export async function resendEmailAction(user: UserProfile, type: 'verify_email' | 'forgot_password'): Promise<boolean> {
+export async function resendEmailAction(user: UserProfile, type: 'verify_email' | 'forgot_password', organization: Organization): Promise<boolean> {
   try {
-    let template;
-    let subject;
+    let template
+    let subject
 
-    const token = await generateRandomKey();
-    
+    const token = await generateRandomKey()
+    const currentUrl = getMatchingFrontendUrl(organization.domain)
+
+    if (!currentUrl) {
+      throw new ForbiddenError('Provided domain is not in the list of allowed URLs')
+    }
+
     switch (type) {
       case SEND_MAIL_TYPE.VERIFY_EMAIL:
         if (user.is_active) {
-          throw new ApolloError('Account verified');
+          throw new ApolloError('Account verified')
         }
-        subject = 'Resend confirm your email address';
+        subject = 'Resend confirm your email address'
         template = await compileEmailTemplate({
           fileName: 'verifyEmail.mjml',
           data: {
             name: user.name,
-            url: `${process.env.FRONTEND_URL}/verify-email?token=${token}`,
+            url: `${currentUrl}/verify-email?token=${token}`,
           },
-        });
-        break;
+        })
+        break
 
       case SEND_MAIL_TYPE.FORGOT_PASSWORD:
-        subject = 'Resend reset password';
+        subject = 'Resend reset password'
         template = await compileEmailTemplate({
           fileName: 'forgotPassword.mjml',
           data: {
             name: user.name,
-            url: `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}`,
+            url: `${currentUrl}/auth/reset-password?token=${token}`,
           },
-        });
-        break;
+        })
+        break
 
       default:
-        subject = 'Resend confirm your email address';
+        subject = 'Resend confirm your email address'
         template = await compileEmailTemplate({
           fileName: 'verifyEmail.mjml',
           data: {
             name: user.name,
-            url: `${process.env.FRONTEND_URL}/verify-email?token=${token}`,
+            url: `${currentUrl}/verify-email?token=${token}`,
           },
-        });
-        break;
+        })
+        break
     }
 
-    await changeTokenStatus(null, type, false);
-    await Promise.all([createToken(user.id, token, type), sendMail(normalizeEmail(user.email), subject, template)]);
+    await changeTokenStatus(null, type, false)
+    await Promise.all([createToken(user.id, token, type), sendMail(normalizeEmail(user.email), subject, template)])
 
-    return true;
+    return true
   } catch (error) {
-    logger.error(error);
-    throw error;
+    logger.error(error)
+    throw error
   }
 }

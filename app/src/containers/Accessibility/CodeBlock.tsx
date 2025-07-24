@@ -4,6 +4,7 @@ import { okaidia } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { VscSparkle } from 'react-icons/vsc';
 import { toast } from 'react-toastify';
 import { CircularProgress } from '@mui/material';
+import { getAuthenticationCookie } from '@/utils/cookie';
 
 export default function CodeBlock({
   heading,
@@ -24,13 +25,15 @@ export default function CodeBlock({
       code: element,
     };
 
+    const token = getAuthenticationCookie();
+
     await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(bodyData),
-      credentials: 'include'
     })
       .then((response) => {
         if (!response.ok) {
@@ -75,7 +78,7 @@ export default function CodeBlock({
                   {loading ? (
                     <CircularProgress
                       size={20}
-                      sx={{ color: 'white',marginBottom:'-4px' }}
+                      sx={{ color: 'white', marginBottom: '-4px' }}
                       className="m-auto"
                     />
                   ) : (
@@ -123,7 +126,11 @@ export default function CodeBlock({
           <h4 className="text-xs font-medium text-dark-gray p-1.5 mt-0.5">
             AI Suggestion
           </h4>
-          <SyntaxHighlighter language="javascript" wrapLongLines style={okaidia}>
+          <SyntaxHighlighter
+            language="javascript"
+            wrapLongLines
+            style={okaidia}
+          >
             {correctedCode}
           </SyntaxHighlighter>
         </>

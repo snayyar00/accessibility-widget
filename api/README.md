@@ -1,11 +1,8 @@
-
-
 # Accessibility Widget API
 
 Backend service for managing data and logic of the accessibility-widget.
 
 ---
-
 
 ## Quick Start
 
@@ -29,9 +26,18 @@ npm install --legacy-peer-deps
 ```bash
 npm run dev
 ```
+
 The server will start on the port specified in `.env` (default: `http://localhost:3001`).
 
-### 4. Run in production
+### 4. Build the project
+
+Compile the TypeScript code into the `dist` folder:
+
+```bash
+npm run build
+```
+
+### 5. Run in production
 
 ```bash
 npm start
@@ -54,6 +60,8 @@ npm start
 ├── repository/            # Database access
 ├── scripts/               # Admin scripts
 ├── public/                # Public files
+├── controllers/           # Express route handlers (business logic for API endpoints)
+├── routes/                # Express route definitions (URL structure and registration)
 ├── utils/                 # Utilities
 ├── validations/           # Validations
 ├── package.json
@@ -88,7 +96,7 @@ FF_GPT_FUNCTION_CALLING=true
 FF_SMART_DEDUPLICATION=true
 FF_TEMPLATE_DETECTION=true
 
-FRONTEND_URL=
+FRONTEND_URL= # One or more URLs separated by commas (e.g. http://localhost:3000,https://app.example.com)
 
 JWT_ALGORITHM=
 JWT_AUDIENCE=
@@ -97,7 +105,7 @@ JWT_ISSUER=
 JWT_SECRET=
 JWT_SUBJECT=
 
-NODE_ENV=development
+NODE_ENV=local
 
 OPENROUTER_API_KEY=
 
@@ -133,8 +141,11 @@ AZURE_REGION=northeurope
 ## Useful Commands
 
 - **Start server:**  
-  `npm start` — production  
-  `npm run dev` — development with hot-reload
+  `npm run dev` — development with hot-reload  
+  `npm start` — production
+
+- **Build project:**  
+  `npm run build` — compile TypeScript to `dist`
 
 - **Database migrations (currently not working):**  
   `npm run db:migrate` — apply migrations  
@@ -144,6 +155,10 @@ AZURE_REGION=northeurope
 - **Linting:**  
   `npm run lint` — check code  
   `npm run lint:fix` — auto-fix
+
+- **Formatting:**  
+  `npm run format` — check formatting  
+  `npm run format:fix` — auto-format files
 
 ---
 
@@ -170,9 +185,7 @@ query {
 
 ## Note
 
-
-All endpoints and request examples for this project are collected in Hoppscotch:
-https://hoppscotch.webability.io
-
+All endpoints and request examples for this project are collected in [Hoppscotch](https://hoppscotch.webability.io).
 To get access to the request collection, please ask the administrator to add you to the team.
 
+For local GraphQL API testing during development, you can also use [Apollo Playground](http://localhost:3001/graphql).

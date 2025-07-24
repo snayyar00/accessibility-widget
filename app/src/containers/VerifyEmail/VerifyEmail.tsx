@@ -16,9 +16,8 @@ const VerifyEmail: React.FC = () => {
   const { t } = useTranslation();
   const token = query.get('token');
   const history = useHistory();
-  const [verifyEmailMutation, { error, loading }] = useMutation(
-    verifyEmailQuery,
-  );
+  const [verifyEmailMutation, { error, loading }] =
+    useMutation(verifyEmailQuery);
   const [verifyResult, setVerifyResult] = useState(null);
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
@@ -32,8 +31,10 @@ const VerifyEmail: React.FC = () => {
     },
     onError: (error) => {
       setIsResending(false);
-      toast.error(error.message || 'Failed to send verification email. Please try again.');
-    }
+      toast.error(
+        error.message || 'Failed to send verification email. Please try again.',
+      );
+    },
   });
 
   useEffect(() => {
@@ -69,10 +70,10 @@ const VerifyEmail: React.FC = () => {
         <p className="text-[14px] leading-6 text-sapphire-blue max-w-[567px] mx-auto mt-6 mb-10">
           {t('Verify_email.description')}
         </p>
-        
+
         {loading ? (
           <div className="flex flex-col justify-center items-center py-6">
-            <CircularProgress 
+            <CircularProgress
               size={60}
               sx={{ color: '#0033ed' }}
               className="mx-auto"
@@ -81,33 +82,34 @@ const VerifyEmail: React.FC = () => {
           </div>
         ) : (
           <>
-          <Badge type={verifyResult !== null ? 'success' : 'error'}>
-            {verifyResult !== null ? t('Verify_email.success') : error?.message}
-          </Badge>
-          {error && (
-          <div className="mt-6">
-            {resendSuccess ? (
-              <p className="text-green-600 font-medium">
-                A new verification email has been sent to your inbox.
-              </p>
-            ) : (
-              <div>
-                <p className="text-gray-600 mb-2">
-                  If you need a new verification link, click below:
-                </p>
-                <button
-                  onClick={handleResend}
-                  disabled={isResending}
-                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  {isResending ? 'Sending...' : 'Resend verification email'}
-                </button>
+            <Badge type={verifyResult !== null ? 'success' : 'error'}>
+              {verifyResult !== null
+                ? t('Verify_email.success')
+                : error?.message}
+            </Badge>
+            {error && (
+              <div className="mt-6">
+                {resendSuccess ? (
+                  <p className="text-green-600 font-medium">
+                    A new verification email has been sent to your inbox.
+                  </p>
+                ) : (
+                  <div>
+                    <p className="text-gray-600 mb-2">
+                      If you need a new verification link, click below:
+                    </p>
+                    <button
+                      onClick={handleResend}
+                      disabled={isResending}
+                      className="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      {isResending ? 'Sending...' : 'Resend verification email'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
           </>
-          
         )}
         <div className="absolute w-[495px] h-[480px] left-[-400px] top-[-175px] z-[-1]">
           <svg
@@ -223,6 +225,6 @@ const VerifyEmail: React.FC = () => {
       </div>
     </div>
   );
-}
+};
 
 export default VerifyEmail;

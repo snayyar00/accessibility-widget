@@ -7,21 +7,26 @@ import App from './App';
 
 import './index.css';
 import './config/i18n';
+import { IS_LOCAL } from '@/config/env';
 
-
-const options = ["Option1", "Option2"];
+const options = ['Option1', 'Option2'];
 
 init({
   dsn: process.env.REACT_APP_SENTRY_DSN,
   integrations: [
     new Integrations.BrowserTracing({
-      tracingOrigins: ['localhost', 'webability.io', 'app.webability.io', /^\//],
+      tracingOrigins: [
+        'localhost',
+        'webability.io',
+        'app.webability.io',
+        /^\//,
+      ],
     }),
   ],
   // Adjust this sample rate in production to avoid affecting performance
   tracesSampleRate: 1.0,
   // Set environment
-  environment: process.env.NODE_ENV || 'development',
+  environment: process.env.REACT_APP_NODE_ENV,
   // Enable error captures including component boundaries
   attachStacktrace: true,
 });
@@ -33,12 +38,12 @@ const render = () => {
         <App options={options} />
       </Provider>
     </ErrorBoundary>,
-    document.getElementById('root')
+    document.getElementById('root'),
   );
 };
 
 render();
 
-if (process.env.NODE_ENV === 'development' && module.hot) {
+if (IS_LOCAL && module.hot) {
   module.hot.accept('./App', render);
 }

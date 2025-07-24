@@ -1,13 +1,7 @@
-import Validator, { ValidationError } from 'fastest-validator';
+import Validator, { ValidationError } from 'fastest-validator'
 
-export function validateUpdateSitesPlan(input: {
-  userId: number;
-  sitePlanId: number;
-  planName: string;
-  billingType: 'MONTHLY' | 'YEARLY';
-  hook?: boolean;
-}): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator();
+export function validateUpdateSitesPlan(input: { userId: number; sitePlanId: number; planName: string; billingType: 'MONTHLY' | 'YEARLY'; hook?: boolean }): true | ValidationError[] | Promise<true | ValidationError[]> {
+  const validator = new Validator()
 
   const schema = {
     userId: {
@@ -60,13 +54,13 @@ export function validateUpdateSitesPlan(input: {
       type: 'boolean',
       optional: true,
     },
-  };
+  }
 
-  return validator.validate(input, schema);
+  return validator.validate(input, schema)
 }
 
 export function validateGetPlanBySiteIdAndUserId(input: { userId: number; siteId: number }): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator();
+  const validator = new Validator()
 
   const schema = {
     userId: {
@@ -97,7 +91,7 @@ export function validateGetPlanBySiteIdAndUserId(input: { userId: number; siteId
         numberMax: 'siteId is too large',
       },
     },
-  };
+  }
 
-  return validator.validate(input, schema);
+  return validator.validate(input, schema)
 }

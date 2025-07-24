@@ -1,19 +1,34 @@
-// Apollo GraphQL client
-
-// ----------------------------------------------------------------------------
-// IMPORTS
-
-/* NPM */
-import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, NormalizedCacheObject } from '@apollo/client';
+import { IS_DEV, IS_LOCAL } from '@/config/env';
+import {
+  clearAuthenticationCookie,
+  getAuthenticationCookie,
+} from '@/utils/cookie';
+import {
+  ApolloClient,
+  ApolloLink,
+  HttpLink,
+  InMemoryCache,
+  NormalizedCacheObject,
+} from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
-import {createNetworkStatusNotifier} from 'react-apollo-network-status';
+import { createNetworkStatusNotifier } from 'react-apollo-network-status';
 
-// ----------------------------------------------------------------------------
+export const { link: networkStatusNotifierLink, useApolloNetworkStatus } =
+  createNetworkStatusNotifier();
 
-export const {
-  link: networkStatusNotifierLink,
-  useApolloNetworkStatus,
-} = createNetworkStatusNotifier();
+const authLink = new ApolloLink((operation, forward) => {
+  const token = getAuthenticationCookie();
+
+  if (token) {
+    operation.setContext({
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  return forward(operation);
+});
 
 export function createClient(): ApolloClient<NormalizedCacheObject> {
   // Create the cache first, which we'll share across Apollo tooling.
@@ -27,7 +42,6 @@ export function createClient(): ApolloClient<NormalizedCacheObject> {
   // server from the `GRAPHQL` environment variable, which by default is
   // set to an external playground at https://graphqlhub.com/graphql
   const httpLink = new HttpLink({
-    credentials: 'include',
     uri: process.env.REACT_APP_GRAPHQL_URL,
   });
 
@@ -44,28 +58,35 @@ export function createClient(): ApolloClient<NormalizedCacheObject> {
       // out to third-party services, etc
       onError(({ graphQLErrors, networkError }) => {
         if (graphQLErrors) {
-          graphQLErrors.map(({ message, locations, path }) =>
-            console.log(
-              `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
-            )
-          );
+          if (IS_DEV || IS_LOCAL) {
+            graphQLErrors.map(({ message, locations, path }) =>
+              console.log(
+                `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`,
+              ),
+            );
+          }
+
           const errors = graphQLErrors[0];
+
           switch (errors.extensions?.code) {
             case 'UNAUTHENTICATED':
               if (!window.location.pathname.startsWith('/auth')) {
+                clearAuthenticationCookie();
                 window.location.href = '/auth/signin';
               }
               break;
             case 'ANOTHER_ERROR_CODE':
               break;
-            default: 
+            default:
           }
         }
         if (networkError) {
-          console.log(`[Network error]: ${networkError}`);
+          if (IS_DEV || IS_LOCAL) {
+            console.log(`[Network error]: ${networkError}`);
+          }
         }
       }),
-
+      authLink,
       // Split on HTTP and WebSockets
       httpLink,
     ]),
@@ -80,6 +101,5 @@ export function createClient(): ApolloClient<NormalizedCacheObject> {
         errorPolicy: 'all',
       },
     },
-    credentials: "include"
   });
 }

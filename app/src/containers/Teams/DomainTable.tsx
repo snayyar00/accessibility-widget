@@ -4,9 +4,7 @@ import { FaTrash, FaCheck, FaTimes, FaCog } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
-import {
-  CircularProgress,
-} from '@mui/material';
+import { CircularProgress } from '@mui/material';
 import deleteSite from '@/queries/sites/deleteSite';
 import updateSite from '@/queries/sites/updateSite';
 import isValidDomain from '@/utils/verifyDomain';
@@ -15,6 +13,7 @@ import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
 import getDomainStatus from '@/utils/getDomainStatus';
 import applyStatusClass from '@/utils/applyStatusClass';
 import ActivatePlanWarningModal from './ActivatePlanWarningModal';
+import { getAuthenticationCookie } from '@/utils/cookie';
 
 export interface Domain {
   id: number;
@@ -30,7 +29,7 @@ interface DomainTableProps {
   setPaymentView: (view: boolean) => void;
   openModal: () => void;
   setOptionalDomain: (domain: string) => void;
-  customerData:any;
+  customerData: any;
 }
 
 const DomainTable: React.FC<DomainTableProps> = ({
@@ -53,7 +52,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [deleteSiteStatus, setDeleteSiteStatus] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [tempDomain, setTempDomain] = useState('');
-  const [expiryDays,setExpiryDays] = useState(-1);
+  const [expiryDays, setExpiryDays] = useState(-1);
   const selectedDomain = useRef<Domain | null>(null);
   const [showActivateModal, setShowActivateModal] = useState(false);
 
@@ -83,7 +82,12 @@ const DomainTable: React.FC<DomainTableProps> = ({
     },
   });
 
-  const handleDelete = async (id: number, status: string, cancelReason?: string, otherReason?: string) => {
+  const handleDelete = async (
+    id: number,
+    status: string,
+    cancelReason?: string,
+    otherReason?: string,
+  ) => {
     const index = domains.findIndex((domain) => domain.id === id);
     const foundUrl = domains[index].url;
 
@@ -98,14 +102,16 @@ const DomainTable: React.FC<DomainTableProps> = ({
       otherReason: otherReason,
     };
 
+    const token = getAuthenticationCookie();
+
     try {
       await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(bodyData),
-        credentials: 'include',
       })
         .then((response) => {
           if (!response.ok) {
@@ -164,7 +170,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
 
     // Duplicate check
     const isDuplicate = domains.some(
-      d => d.url.replace(/^(https?:\/\/)?(www\.)?/, '') === sanitizedDomain && d.id !== id
+      (d) =>
+        d.url.replace(/^(https?:\/\/)?(www\.)?/, '') === sanitizedDomain &&
+        d.id !== id,
     );
     if (isDuplicate) {
       toast.error('This domain already exists');
@@ -185,14 +193,11 @@ const DomainTable: React.FC<DomainTableProps> = ({
     setEditingId(null);
   };
 
-
-
-
-  const [tierPlan,setTierPlan] = useState(false);
-  const [appSumoDomains,setAppSumoDomain] = useState<string[]>([]);
-  const [appSumoCount,setAppSumoCount] = useState(0);
-  const [codeCount,setCodeCount] = useState(0);
-  const [isStripeCustomer,setIsStripeCustomer] = useState(false);
+  const [tierPlan, setTierPlan] = useState(false);
+  const [appSumoDomains, setAppSumoDomain] = useState<string[]>([]);
+  const [appSumoCount, setAppSumoCount] = useState(0);
+  const [codeCount, setCodeCount] = useState(0);
+  const [isStripeCustomer, setIsStripeCustomer] = useState(false);
 
   const handleSubscription = async (selectedDomain: Domain) => {
     setBillingLoading(true);
@@ -201,21 +206,25 @@ const DomainTable: React.FC<DomainTableProps> = ({
       email: userData.email,
       returnURL: window.location.href,
       planName: activePlan.toLowerCase(),
-      billingInterval: !isYearly || APP_SUMO_BUNDLE_NAMES.includes(activePlan.toLowerCase()) ? "MONTHLY" : "YEARLY",
+      billingInterval:
+        !isYearly || APP_SUMO_BUNDLE_NAMES.includes(activePlan.toLowerCase())
+          ? 'MONTHLY'
+          : 'YEARLY',
       domainId: selectedDomain.id,
       domainUrl: selectedDomain.url,
       userId: userData.id,
     };
 
+    const token = getAuthenticationCookie();
 
     try {
       await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(bodyData),
-        credentials: 'include',
       })
         .then((response) => {
           if (!response.ok) {
@@ -244,15 +253,15 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const handleCloseModal = () => {
     setShowModal(false);
   };
-  
+
   const handleCloseActivateModal = () => {
     setShowActivateModal(false);
-  }
+  };
 
   const handleOpenActivateModal = (domain: Domain) => {
     setShowActivateModal(true);
     selectedDomain.current = domain;
-  }
+  };
 
   useEffect(() => {
     if (data) {
@@ -260,31 +269,31 @@ const DomainTable: React.FC<DomainTableProps> = ({
     }
   }, [data]);
 
-  useEffect(()=>{
-    if(customerData){
+  useEffect(() => {
+    if (customerData) {
       if (customerData.submeta) {
         setPlanMetaData(customerData.submeta);
       }
-      if(customerData.tierPlan && customerData.tierPlan==true){
+      if (customerData.tierPlan && customerData.tierPlan == true) {
         setTierPlan(true);
       }
-      if(customerData.subscriptions){
-        const appSumoDomains:any = [];
+      if (customerData.subscriptions) {
+        const appSumoDomains: any = [];
         let subs = JSON.parse(customerData.subscriptions);
         // console.log("subs = ",subs);
         ['monthly', 'yearly'].forEach((subscriptionType) => {
-            // Loop over each subscription in the current type (monthly or yearly)
-            subs[subscriptionType].forEach((subscription:any) => {
-                const description = subscription.description;
-                
-                // Regex to extract domain name before '(' and promo codes
-                const match = description?.match(/Plan for ([^(\s]+)\(/);
+          // Loop over each subscription in the current type (monthly or yearly)
+          subs[subscriptionType].forEach((subscription: any) => {
+            const description = subscription.description;
 
-                if (match) {
-                    const domain = match[1];  // Extract domain name
-                    appSumoDomains.push(domain); // Save the domain name in the list
-                }
-            });
+            // Regex to extract domain name before '(' and promo codes
+            const match = description?.match(/Plan for ([^(\s]+)\(/);
+
+            if (match) {
+              const domain = match[1]; // Extract domain name
+              appSumoDomains.push(domain); // Save the domain name in the list
+            }
+          });
         });
         setAppSumoDomain(appSumoDomains);
         // setSubCount(subs.length);
@@ -295,21 +304,20 @@ const DomainTable: React.FC<DomainTableProps> = ({
           setIsYearly(true);
         }
       }
-      if(customerData.expiry){
+      if (customerData.expiry) {
         setExpiryDays(customerData.expiry);
       }
-      if(customerData.appSumoCount){
+      if (customerData.appSumoCount) {
         setAppSumoCount(customerData.appSumoCount);
       }
-      if(customerData.codeCount){
-        setCodeCount((customerData.codeCount * 2));
+      if (customerData.codeCount) {
+        setCodeCount(customerData.codeCount * 2);
       }
-      if(customerData.isCustomer == true && customerData.card)
-      {
+      if (customerData.isCustomer == true && customerData.card) {
         setIsStripeCustomer(true);
       }
     }
-  },[customerData])
+  }, [customerData]);
 
   return (
     <>
@@ -327,7 +335,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
         billingLoading={billingLoading}
         setBillingLoading={setBillingLoading}
         domain={selectedDomain.current}
-        promoCode={appSumoCount <= codeCount ? [appSumoCount]:[]}
+        promoCode={appSumoCount <= codeCount ? [appSumoCount] : []}
         setReloadSites={setReloadSites}
         isOpen={showActivateModal}
         onClose={handleCloseActivateModal}
@@ -362,7 +370,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   domain.url,
                   domain.expiredAt,
                   domain.trial,
-                  appSumoDomains
+                  appSumoDomains,
                 );
                 return (
                   <tr
@@ -394,7 +402,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
                       </span>
                     </td>
                     <td className="py-4 px-4 border-b border-gray-200">
-                      {domainStatus == 'Life Time' ? null : domain?.expiredAt
+                      {domainStatus == 'Life Time'
+                        ? null
+                        : domain?.expiredAt
                         ? new Date(
                             Number.parseInt(domain.expiredAt),
                           ).toLocaleDateString()
@@ -425,10 +435,11 @@ const DomainTable: React.FC<DomainTableProps> = ({
                       ) : (
                         // Desktop action buttons (all in one row)
                         <div className="flex justify-end items-center space-x-2">
-                          {domainStatus !== 'Active' && domainStatus !== 'Life Time' &&
+                          {domainStatus !== 'Active' &&
+                            domainStatus !== 'Life Time' &&
                             domainStatus !== 'Expiring' && (
                               <>
-                                {activePlan !== '' && tierPlan ?(
+                                {activePlan !== '' && tierPlan ? (
                                   <button
                                     disabled={billingLoading}
                                     onClick={() => handleSubscription(domain)}
@@ -440,9 +451,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                       ? 'Please Wait...'
                                       : 'Activate'}
                                   </button>
-                                ) : (
-                                  appSumoCount < codeCount ? (
-                                    <button
+                                ) : appSumoCount < codeCount ? (
+                                  <button
                                     onClick={() => {
                                       handleOpenActivateModal(domain);
                                     }}
@@ -451,8 +461,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                   >
                                     Activate
                                   </button>
-                                  ) : (
-                                    <button
+                                ) : (
+                                  <button
                                     onClick={() => {
                                       setPaymentView(true);
                                       openModal();
@@ -464,8 +474,6 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                   >
                                     Buy License
                                   </button>
-                                  )
-                                  
                                 )}
                               </>
                             )}
@@ -502,7 +510,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
               domain.url,
               domain.expiredAt,
               domain.trial,
-              appSumoDomains
+              appSumoDomains,
             );
             return (
               <div
@@ -590,32 +598,34 @@ const DomainTable: React.FC<DomainTableProps> = ({
                         <FaTrash className="mr-2" /> Delete
                       </button>
                     </div>
-                    {domainStatus !== 'Active' && domainStatus != 'Life Time' && domainStatus !== 'Expiring' && (
-                      <div className="p-4 bg-gray-100">
-                        {activePlan !== '' && tierPlan ? (
-                          <button
-                            disabled={billingLoading}
-                            onClick={() => handleSubscription(domain)}
-                            type="submit"
-                            className="p-2 bg-primary text-white rounded-md text-sm flex items-center justify-center hover:bg-[#1D4ED8] transition-colors duration-200"
-                          >
-                            {billingLoading ? 'Please Wait...' : 'Activate'}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setPaymentView(true);
-                              openModal();
-                              setOptionalDomain(domain.url);
-                            }}
-                            type="submit"
-                            className="p-2 bg-green w-full text-white rounded-md text-sm flex items-center justify-center hover:bg-green-600 transition-colors duration-200"
-                          >
-                            Buy Plan
-                          </button>
-                        )}
-                      </div>
-                    )}
+                    {domainStatus !== 'Active' &&
+                      domainStatus != 'Life Time' &&
+                      domainStatus !== 'Expiring' && (
+                        <div className="p-4 bg-gray-100">
+                          {activePlan !== '' && tierPlan ? (
+                            <button
+                              disabled={billingLoading}
+                              onClick={() => handleSubscription(domain)}
+                              type="submit"
+                              className="p-2 bg-primary text-white rounded-md text-sm flex items-center justify-center hover:bg-[#1D4ED8] transition-colors duration-200"
+                            >
+                              {billingLoading ? 'Please Wait...' : 'Activate'}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setPaymentView(true);
+                                openModal();
+                                setOptionalDomain(domain.url);
+                              }}
+                              type="submit"
+                              className="p-2 bg-green w-full text-white rounded-md text-sm flex items-center justify-center hover:bg-green-600 transition-colors duration-200"
+                            >
+                              Buy Plan
+                            </button>
+                          )}
+                        </div>
+                      )}
                   </>
                 )}
               </div>

@@ -10,11 +10,12 @@ import { useHistory } from 'react-router-dom';
 import DeleteAccountModal from '@/components/Profile/DeleteAccountModal';
 import deleteAccountQuery from '@/queries/user/deleteAccount';
 import { RootState } from '@/config/store';
+import { clearAuthenticationCookie } from '@/utils/cookie';
 
 type Props = {
   closeModal?: () => void;
   isOpen: boolean;
-}
+};
 
 const DeleteAccount: React.FC<Props> = ({ closeModal, isOpen }) => {
   const {
@@ -39,7 +40,9 @@ const DeleteAccount: React.FC<Props> = ({ closeModal, isOpen }) => {
 
   async function onSubmit() {
     const { data } = await deleteAccountMutation();
+
     if (data?.deleteAccount) {
+      clearAuthenticationCookie();
       history.replace('/auth/signin');
     }
   }
@@ -57,6 +60,6 @@ const DeleteAccount: React.FC<Props> = ({ closeModal, isOpen }) => {
       />
     </Portal>
   );
-}
+};
 
 export default DeleteAccount;

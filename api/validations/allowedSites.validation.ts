@@ -1,7 +1,7 @@
-import Validator, { ValidationError } from 'fastest-validator';
+import Validator, { ValidationError } from 'fastest-validator'
 
 export function validateDomain(input: { url: string }): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator();
+  const validator = new Validator()
 
   const schema = {
     url: {
@@ -14,15 +14,15 @@ export function validateDomain(input: { url: string }): true | ValidationError[]
         stringMin: 'URL must not be empty',
         stringMax: 'URL must not exceed 2048 characters',
         stringPattern: 'URL must be a valid domain (e.g., example.com, https://example.com)',
-      }
-    }
-  };
+      },
+    },
+  }
 
-  return validator.validate(input, schema);
+  return validator.validate(input, schema)
 }
 
 export function validateChangeURL(input: { siteId: number; url: string }): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator();
+  const validator = new Validator()
 
   const schema = {
     siteId: {
@@ -49,7 +49,7 @@ export function validateChangeURL(input: { siteId: number; url: string }): true 
         stringPattern: 'URL must be a valid domain (e.g., example.com, https://example.com)',
       },
     },
-  };
+  }
 
-  return validator.validate(input, schema);
+  return validator.validate(input, schema)
 }

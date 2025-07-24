@@ -11,6 +11,15 @@ export default gql`
       position
       avatarUrl
       invitationToken
+      currentOrganization {
+        id
+        name
+        domain
+        logo_url
+        settings
+        created_at
+        updated_at
+      }
     }
   }
 `;

@@ -3,7 +3,7 @@ import isEmpty from 'lodash/isEmpty';
 import { useLazyQuery, useMutation } from '@apollo/client';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import "./PlanSetting.css";
+import './PlanSetting.css';
 import { RootState } from '@/config/store';
 import updateSitePlanQuery from '@/queries/sitePlans/updateSitePlan';
 import getSitePlanQuery from '@/queries/sitePlans/getSitePlan';
@@ -16,11 +16,15 @@ import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { MdLocalOffer } from 'react-icons/md';
 import { plans } from '@/constants';
+import { getAuthenticationCookie } from '@/utils/cookie';
 
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      'stripe-pricing-table': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+      'stripe-pricing-table': React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      >;
     }
   }
 }
@@ -31,89 +35,101 @@ interface ModalProps {
   children: React.ReactNode;
 }
 
-let appSumoPlansList = [{
-  id: APP_SUMO_BUNDLE_NAMES[0],
-  name: 'App Sumo Bundle Small',
-  price: 100,
-  desc: '',
-  features: [
-    'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
-    'Accessbility Statement',
-    'AI powered Screen Reader and Accessbility Profiles',
-    'Web Ability accesbility Statement',
-  ]
-},{
-  id: APP_SUMO_BUNDLE_NAMES[1],
-  name: 'App Sumo Bundle Medium',
-  price: 200,
-  desc: '',
-  features: [
-    'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
-    'Accessbility Statement',
-    'AI powered Screen Reader and Accessbility Profiles',
-    'Web Ability accesbility Statement',
-  ]
-},{
-  id: APP_SUMO_BUNDLE_NAMES[2],
-  name: 'App Sumo Bundle Large',
-  price: 300,
-  desc: '',
-  features: [
-    'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
-    'Accessbility Statement',
-    'AI powered Screen Reader and Accessbility Profiles',
-    'Web Ability accesbility Statement',
-  ]
-}];
-
+let appSumoPlansList = [
+  {
+    id: APP_SUMO_BUNDLE_NAMES[0],
+    name: 'App Sumo Bundle Small',
+    price: 100,
+    desc: '',
+    features: [
+      'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
+      'Accessbility Statement',
+      'AI powered Screen Reader and Accessbility Profiles',
+      'Web Ability accesbility Statement',
+    ],
+  },
+  {
+    id: APP_SUMO_BUNDLE_NAMES[1],
+    name: 'App Sumo Bundle Medium',
+    price: 200,
+    desc: '',
+    features: [
+      'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
+      'Accessbility Statement',
+      'AI powered Screen Reader and Accessbility Profiles',
+      'Web Ability accesbility Statement',
+    ],
+  },
+  {
+    id: APP_SUMO_BUNDLE_NAMES[2],
+    name: 'App Sumo Bundle Large',
+    price: 300,
+    desc: '',
+    features: [
+      'Compliance with ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5568',
+      'Accessbility Statement',
+      'AI powered Screen Reader and Accessbility Profiles',
+      'Web Ability accesbility Statement',
+    ],
+  },
+];
 
 const PlanSetting: React.FC<{
-  domain: TDomain,
-  setReloadSites: (value: boolean) => void,
-  cardTrial?:Boolean,
-  customerData?:any
-}> = ({ domain, setReloadSites,cardTrial,customerData }) => {
+  domain: TDomain;
+  setReloadSites: (value: boolean) => void;
+  cardTrial?: Boolean;
+  customerData?: any;
+}> = ({ domain, setReloadSites, cardTrial, customerData }) => {
   const [appSumoPlan, setAppSumoPlan] = useState(appSumoPlansList[0]);
   const [isYearly, setIsYearly] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('');
-  const { data: currentPlan } = useSelector((state: RootState) => state.sitePlan);
-  const [updateSitePlanMutation, { error: errorUpdate, loading: isUpdatingSitePlan }] = useMutation(updateSitePlanQuery);
-  const [fetchSitePlan, { data: sitePlanData }] = useLazyQuery(getSitePlanQuery);
+  const { data: currentPlan } = useSelector(
+    (state: RootState) => state.sitePlan,
+  );
+  const [
+    updateSitePlanMutation,
+    { error: errorUpdate, loading: isUpdatingSitePlan },
+  ] = useMutation(updateSitePlanQuery);
+  const [fetchSitePlan, { data: sitePlanData }] =
+    useLazyQuery(getSitePlanQuery);
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const { data, loading } = useSelector((state: RootState) => state.user);
   const siteId = parseInt(domain.id);
   const [clicked, setClicked] = useState(false);
-  const [coupon,setCoupon] = useState("");
-  const [discount,setDiscount] = useState(0);
-  const [percentDiscount,setpercentDiscount] = useState(false);
-  const [isStripeCustomer,setisStripeCustomer] = useState(false);
+  const [coupon, setCoupon] = useState('');
+  const [discount, setDiscount] = useState(0);
+  const [percentDiscount, setpercentDiscount] = useState(false);
+  const [isStripeCustomer, setisStripeCustomer] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const openModal = () => setIsModalOpen(true);
-  const closeModal = () => {setIsModalOpen(false);window.location.reload()};
-  const [billingClick,setbillingClick] = useState(false);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    window.location.reload();
+  };
+  const [billingClick, setbillingClick] = useState(false);
   const [subFailed, setSubFailed] = useState(false);
-  const [currentActivePlan,setCurrentActivePlan] = useState("");
-  const [showPlans,setShowPlans] = useState(false);
-  const [validCoupon,setValidCoupon] = useState(false);
-  const [couponClicked,setCouponClicked] = useState(false);
-  const [couponStack,setCouponStack] = useState(0);
+  const [currentActivePlan, setCurrentActivePlan] = useState('');
+  const [showPlans, setShowPlans] = useState(false);
+  const [validCoupon, setValidCoupon] = useState(false);
+  const [couponClicked, setCouponClicked] = useState(false);
+  const [couponStack, setCouponStack] = useState(0);
   const [validatedCoupons, setValidatedCoupons] = useState<string[]>([]);
-  const [customerCheckLoading,setCustomerCheckLoading] = useState(false);
-  const [codeCount,setCodeCount] = useState(0);
-  const [infinityToken,setInfinityToken] = useState(false);
+  const [customerCheckLoading, setCustomerCheckLoading] = useState(false);
+  const [codeCount, setCodeCount] = useState(0);
+  const [infinityToken, setInfinityToken] = useState(false);
   useEffect(() => {
     dispatch(setSitePlan({ data: {} }));
     fetchSitePlan({
-      variables: { siteId }
+      variables: { siteId },
     });
-  }, [])
-  
+  }, []);
+
   useEffect(() => {
     if (sitePlanData?.getPlanBySiteIdAndUserId) {
       dispatch(setSitePlan({ data: sitePlanData?.getPlanBySiteIdAndUserId }));
     }
-  }, [sitePlanData])
+  }, [sitePlanData]);
 
   function toggle() {
     setIsYearly(!isYearly);
@@ -124,22 +140,26 @@ const PlanSetting: React.FC<{
   }
 
   function checkIsCurrentPlan(planId: string) {
-    return currentPlan.productType === planId && ((currentPlan.priceType === 'monthly' && !isYearly) || (currentPlan.priceType === 'yearly' && isYearly))
+    return (
+      currentPlan.productType === planId &&
+      ((currentPlan.priceType === 'monthly' && !isYearly) ||
+        (currentPlan.priceType === 'yearly' && isYearly))
+    );
   }
 
   async function handleChangeSubcription() {
     if (!planChanged) return;
-    const result = planChanged.id.replace(/\d+/g, "");
+    const result = planChanged.id.replace(/\d+/g, '');
     await updateSitePlanMutation({
       variables: {
         sitesPlanId: currentPlan.id,
         planName: result,
         billingType: isYearly ? 'YEARLY' : 'MONTHLY',
-      }
+      },
     });
     setReloadSites(true);
     fetchSitePlan({
-      variables: { siteId }
+      variables: { siteId },
     });
   }
 
@@ -147,65 +167,81 @@ const PlanSetting: React.FC<{
     setClicked(true);
 
     const url = `${process.env.REACT_APP_BACKEND_URL}/create-customer-portal-session`;
-    const bodyData = { id:sitePlanData?.getPlanBySiteIdAndUserId?.customerId,returnURL:window.location.href };
+    const bodyData = {
+      id: sitePlanData?.getPlanBySiteIdAndUserId?.customerId,
+      returnURL: window.location.href,
+    };
+    const token = getAuthenticationCookie();
 
     await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(bodyData),
-      credentials: 'include'
     })
-      .then(response => {
+      .then((response) => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
 
-        response.json().then(data => {
+        response.json().then((data) => {
           // Handle the JSON data received from the backend
           window.location.href = data.url;
         });
       })
-      .catch(error => {
+      .catch((error) => {
         // Handle error
         console.error('There was a problem with the fetch operation:', error);
       });
-  }
+  };
 
-  const handleCheckout = async (card?:boolean)=>{
+  const handleCheckout = async (card?: boolean) => {
     setbillingClick(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-checkout-session`;
-    const result = planChanged?.id.replace(/\d+/g, "");
+    const result = planChanged?.id.replace(/\d+/g, '');
 
-    const bodyData = { email:data.email,planName:result,billingInterval:isYearly ? "YEARLY" : "MONTHLY",returnUrl:window.location.origin+"/add-domain",domainId:domain.id,userId:data.id,domain:domain.url,promoCode:validatedCoupons.length ? validatedCoupons : appSumoCount >= (codeCount*2) ? validatedCoupons:[appSumoCount],cardTrial:cardTrial || card };
+    const bodyData = {
+      email: data.email,
+      planName: result,
+      billingInterval: isYearly ? 'YEARLY' : 'MONTHLY',
+      returnUrl: window.location.origin + '/add-domain',
+      domainId: domain.id,
+      userId: data.id,
+      domain: domain.url,
+      promoCode: validatedCoupons.length
+        ? validatedCoupons
+        : appSumoCount >= codeCount * 2
+        ? validatedCoupons
+        : [appSumoCount],
+      cardTrial: cardTrial || card,
+    };
+
+    const token = getAuthenticationCookie();
 
     await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(bodyData),
-      credentials: 'include'
     })
-      .then(response => {
+      .then((response) => {
         // if (!response.ok) {
         //   throw new Error('Network response was not ok');
         // }
-        response.json().then(data => {
+        response.json().then((data) => {
           setbillingClick(false);
-          if(data.error)
-          {
+          if (data.error) {
             toast.error(`An error occured: ${data.error}`);
             console.log(data);
             // setTimeout(()=>{window.location.reload()},2000);
-          }
-          else
-          {
-            if(data.url){
+          } else {
+            if (data.url) {
               window.location.href = data.url;
-            }
-            else{
+            } else {
               window.location.reload();
             }
           }
@@ -214,49 +250,66 @@ const PlanSetting: React.FC<{
       .catch((error) => {
         // Handle error
         toast.error(error);
-        console.log("error = ",error)
+        console.log('error = ', error);
         console.error('There was a problem with the fetch operation:', error);
       });
-  }
+  };
 
-  const handleSubscription = async (card?:boolean) => {
+  const handleSubscription = async (card?: boolean) => {
     setbillingClick(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
-    const result = planChanged?.id.replace(/\d+/g, "");
-    const bodyData = { email:data.email,returnURL:window.location.href, planName:result,billingInterval:!isYearly || APP_SUMO_BUNDLE_NAMES.includes((planChanged?.id || "")) ? "MONTHLY" : "YEARLY",domainId:domain.id,domainUrl:domain.url,userId:data.id,promoCode:validatedCoupons.length ? validatedCoupons : appSumoCount >= (codeCount*2) ? validatedCoupons:[appSumoCount],cardTrial:card };
+    const result = planChanged?.id.replace(/\d+/g, '');
+    const bodyData = {
+      email: data.email,
+      returnURL: window.location.href,
+      planName: result,
+      billingInterval:
+        !isYearly || APP_SUMO_BUNDLE_NAMES.includes(planChanged?.id || '')
+          ? 'MONTHLY'
+          : 'YEARLY',
+      domainId: domain.id,
+      domainUrl: domain.url,
+      userId: data.id,
+      promoCode: validatedCoupons.length
+        ? validatedCoupons
+        : appSumoCount >= codeCount * 2
+        ? validatedCoupons
+        : [appSumoCount],
+      cardTrial: card,
+    };
+
+    const token = getAuthenticationCookie();
 
     try {
       await fetch(url, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(bodyData),
-        credentials: 'include'
       })
-        .then(response => {
+        .then((response) => {
           // if (!response.ok) {
           //   throw new Error('Network response was not ok');
           // }
-  
-          response.json().then(data => {
+
+          response.json().then((data) => {
             // Handle the JSON data received from the backend
             setbillingClick(false);
-            if(data.error){
+            if (data.error) {
               toast.error(`An Error Occured: ${data.error}`);
               console.log(data);
-            }
-            else{
+            } else {
               openModal();
               setReloadSites(true);
               fetchSitePlan({
-                variables: { siteId }
+                variables: { siteId },
               });
             }
-            
           });
         })
-        .catch(error => {
+        .catch((error) => {
           // Handle error
           console.error('There was a problem with the fetch operation:', error);
           setSubFailed(true);
@@ -264,59 +317,55 @@ const PlanSetting: React.FC<{
           openModal();
         });
     } catch (error) {
-      console.log("error",error);
+      console.log('error', error);
     }
-    
-  }
+  };
 
   const handleCouponValidation = async () => {
-
     // Prevent duplicate coupon validation
     if (validatedCoupons.includes(coupon)) {
-      toast.error("This coupon has already been applied.");
+      toast.error('This coupon has already been applied.');
       return;
     }
 
     setCouponClicked(true);
     const url = `${process.env.REACT_APP_BACKEND_URL}/validate-coupon`;
-    const bodyData = { couponCode:coupon};
+    const bodyData = { couponCode: coupon };
+    const token = getAuthenticationCookie();
 
     await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(bodyData),
-      credentials: 'include'
     })
-      .then(response => {
+      .then((response) => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
 
-        response.json().then(data => {
+        response.json().then((data) => {
           // Handle the JSON data received from the backend
-          if(data?.valid == true)
-          {
-            setCouponStack(prevCount => prevCount + 1);
-            setValidatedCoupons(prevCoupons => [...prevCoupons, coupon]);
+          if (data?.valid == true) {
+            setCouponStack((prevCount) => prevCount + 1);
+            setValidatedCoupons((prevCoupons) => [...prevCoupons, coupon]);
             setValidCoupon(true);
             setpercentDiscount(true);
             setDiscount(data.discount);
-          }
-          else
-          {
+          } else {
             toast.error(data?.error);
           }
           setCouponClicked(false);
         });
       })
-      .catch(error => {
+      .catch((error) => {
         // Handle error
         setCouponClicked(false);
         console.error('There was a problem with the fetch operation:', error);
       });
-  }
+  };
 
   useEffect(() => {
     if (validatedCoupons.length > 0) {
@@ -327,36 +376,38 @@ const PlanSetting: React.FC<{
     }
   }, [validatedCoupons]);
 
-  const[appSumoCount,setAppSumoCount] = useState(0);
+  const [appSumoCount, setAppSumoCount] = useState(0);
 
-  useEffect(()=>{
-    if(customerData){
-      if(customerData.isCustomer == true && customerData.card)
-        {
-          setisStripeCustomer(true);
-          setCurrentActivePlan(customerData.plan_name);
-        }
-      if(customerData.appSumoCount){
+  useEffect(() => {
+    if (customerData) {
+      if (customerData.isCustomer == true && customerData.card) {
+        setisStripeCustomer(true);
+        setCurrentActivePlan(customerData.plan_name);
+      }
+      if (customerData.appSumoCount) {
         setAppSumoCount(customerData.appSumoCount);
       }
-      if(customerData.codeCount){
+      if (customerData.codeCount) {
         setCodeCount(customerData.codeCount);
       }
-      if(customerData.infinityToken){
+      if (customerData.infinityToken) {
         setInfinityToken(customerData.infinityToken);
         setCodeCount(Infinity);
       }
     }
-  },[customerData])
-  
+  }, [customerData]);
+
   const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
     if (!isOpen) return null;
-  
+
     return (
       <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
         <div className="bg-white rounded-lg p-4 w-1/3">
           <div className="flex justify-end">
-            <button className="text-gray-800 text-3xl hover:text-gray-700" onClick={onClose}>
+            <button
+              className="text-gray-800 text-3xl hover:text-gray-700"
+              onClick={onClose}
+            >
               ×
             </button>
           </div>
@@ -364,9 +415,8 @@ const PlanSetting: React.FC<{
         </div>
       </div>
     );
-  }
+  };
   const planChanged = plans.find((item: any) => item.id === selectedPlan);
-
 
   return (
     <div className="bg-white border border-solid border-dark-grey shadow-xxl rounded-[10px] p-6 mb-[25px] sm:px-[10px] sm:py-6">
@@ -408,28 +458,27 @@ const PlanSetting: React.FC<{
           ) : null}
           <>
             <div className="flex sm:flex-col md:flex-row">
-              {validatedCoupons.length > 0 &&
-                (
-                  <div className="mb-2 flex flex-col justify-start">
-                    {/* <AppSumoInfo activeSites={appSumoCount} validatedCoupons={validatedCoupons}/> */}
-                    <Box className="flex items-center gap-2 mb-3">
-                      <MdLocalOffer className="text-primary" size={16} />
-                      <Typography className="text-sm font-medium text-gray-700">
-                        Valid Coupons
-                      </Typography>
-                    </Box>
-                    <div className="mb-2">
-                      {validatedCoupons.map((code, index) => (
-                        <span
-                          key={index}
-                          className="inline-block bg-green-200 text-green-800 text-sm font-semibold mr-2 px-2.5 py-0.5 rounded"
-                        >
-                          {code}
-                        </span>
-                      ))}
-                    </div>
+              {validatedCoupons.length > 0 && (
+                <div className="mb-2 flex flex-col justify-start">
+                  {/* <AppSumoInfo activeSites={appSumoCount} validatedCoupons={validatedCoupons}/> */}
+                  <Box className="flex items-center gap-2 mb-3">
+                    <MdLocalOffer className="text-primary" size={16} />
+                    <Typography className="text-sm font-medium text-gray-700">
+                      Valid Coupons
+                    </Typography>
+                  </Box>
+                  <div className="mb-2">
+                    {validatedCoupons.map((code, index) => (
+                      <span
+                        key={index}
+                        className="inline-block bg-green-200 text-green-800 text-sm font-semibold mr-2 px-2.5 py-0.5 rounded"
+                      >
+                        {code}
+                      </span>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
             </div>
             <div className="coupon-input-section block w-full mb-4">
               <div className="flex items-center">
@@ -458,7 +507,6 @@ const PlanSetting: React.FC<{
               </div>
             </div>
           </>
-          
 
           <Plans
             plans={
@@ -488,7 +536,9 @@ const PlanSetting: React.FC<{
                 currentPlan.isTrial ? (
                   isStripeCustomer ? (
                     <>
-                      {((coupon == '' && validatedCoupons.length == 0) && appSumoCount >= (codeCount * 2))  ? (
+                      {coupon == '' &&
+                      validatedCoupons.length == 0 &&
+                      appSumoCount >= codeCount * 2 ? (
                         <Button
                           variant="outline"
                           onClick={() => {
@@ -512,7 +562,9 @@ const PlanSetting: React.FC<{
                     </>
                   ) : (
                     <>
-                      {((coupon == '' && validatedCoupons.length == 0) && appSumoCount >= (codeCount * 2)) ? (
+                      {coupon == '' &&
+                      validatedCoupons.length == 0 &&
+                      appSumoCount >= codeCount * 2 ? (
                         <Button
                           variant="outline"
                           onClick={() => {
@@ -566,6 +618,6 @@ const PlanSetting: React.FC<{
       </div>
     </div>
   );
-}
+};
 
 export default PlanSetting;
