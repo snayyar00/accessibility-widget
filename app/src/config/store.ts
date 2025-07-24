@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import rootReducer from '@/features/rootReducer';
 import { loadState, saveState } from '@/utils/localStorage';
+import { IS_LOCAL } from '@/config/env';
 
 const preloadedState = loadState();
 
@@ -16,7 +17,7 @@ store.subscribe(() => {
   });
 });
 
-if (process.env.NODE_ENV === 'development' && module.hot) {
+if (IS_LOCAL && module.hot) {
   module.hot.accept('../features/rootReducer', () => {
     const newRootReducer = rootReducer;
     store.replaceReducer(newRootReducer);

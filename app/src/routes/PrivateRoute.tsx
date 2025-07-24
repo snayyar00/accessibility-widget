@@ -8,7 +8,8 @@ import getProfileQuery from '@/queries/auth/getProfile';
 
 import { setProfileUser } from '@/features/auth/user';
 import { CircularProgress } from '@mui/material';
-import { redirectToUserOrganization } from '@/helpers/redirectToUserOrganization';
+import { redirectToUserOrganization } from '@/helpers/redirectToOrganization';
+import { IS_LOCAL } from '@/config/env';
 
 type Props = {
   render: RouteProps['render'];
@@ -31,7 +32,7 @@ const PrivateRoute: React.FC<Props> = ({ render }) => {
     if (userProfile && userProfile.profileUser) {
       const domain = userProfile?.profileUser?.currentOrganization?.domain;
 
-      if (domain) {
+      if (domain && !IS_LOCAL) {
         const redirected = redirectToUserOrganization(domain);
 
         if (redirected) return;

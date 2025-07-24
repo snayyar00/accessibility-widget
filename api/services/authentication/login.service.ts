@@ -85,6 +85,7 @@ export async function loginUser(email: string, password: string, organization: O
 
   // Ensure user_notifications row exists for this user
   const notification = await findUserNotificationByUserId(user.id)
+
   if (!notification) {
     try {
       await insertUserNotification(user.id)

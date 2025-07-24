@@ -24,7 +24,7 @@ type Documents = {
     "\n  query IsDomainAlreadyAdded($url: String!) {\n    isDomainAlreadyAdded(url: $url)\n  }\n": typeof types.IsDomainAlreadyAddedDocument,
     "\n  mutation ChangePassword($currentPassword: String!, $newPassword: String!) {\n    changePassword(currentPassword: $currentPassword, newPassword: $newPassword)\n  }\n": typeof types.ChangePasswordDocument,
     "\n  mutation ForgotPassword($email: String!) {\n    forgotPassword(email: $email)\n  }\n": typeof types.ForgotPasswordDocument,
-    "\n  query GetProfile {\n    profileUser {\n      id\n      email\n      name\n      isActive\n      company\n      position\n      avatarUrl\n      invitationToken\n    }\n  }\n": typeof types.GetProfileDocument,
+    "\n  query GetProfile {\n    profileUser {\n      id\n      email\n      name\n      isActive\n      company\n      position\n      avatarUrl\n      invitationToken\n      currentOrganization {\n        id\n        name\n        domain\n        logo_url\n        settings\n        created_at\n        updated_at\n      }\n    }\n  }\n": typeof types.GetProfileDocument,
     "\n  mutation Login($email: String!, $password: String!) {\n    login(email: $email, password: $password) {\n      token\n      url\n    }\n  }\n": typeof types.LoginDocument,
     "\n  mutation Logout {\n    logout\n  }\n": typeof types.LogoutDocument,
     "\n  mutation Register($email: String!, $password: String!, $name: String!) {\n    register(email: $email, password: $password, name: $name) {\n      token\n    }\n  }\n": typeof types.RegisterDocument,
@@ -54,7 +54,7 @@ const documents: Documents = {
     "\n  query IsDomainAlreadyAdded($url: String!) {\n    isDomainAlreadyAdded(url: $url)\n  }\n": types.IsDomainAlreadyAddedDocument,
     "\n  mutation ChangePassword($currentPassword: String!, $newPassword: String!) {\n    changePassword(currentPassword: $currentPassword, newPassword: $newPassword)\n  }\n": types.ChangePasswordDocument,
     "\n  mutation ForgotPassword($email: String!) {\n    forgotPassword(email: $email)\n  }\n": types.ForgotPasswordDocument,
-    "\n  query GetProfile {\n    profileUser {\n      id\n      email\n      name\n      isActive\n      company\n      position\n      avatarUrl\n      invitationToken\n    }\n  }\n": types.GetProfileDocument,
+    "\n  query GetProfile {\n    profileUser {\n      id\n      email\n      name\n      isActive\n      company\n      position\n      avatarUrl\n      invitationToken\n      currentOrganization {\n        id\n        name\n        domain\n        logo_url\n        settings\n        created_at\n        updated_at\n      }\n    }\n  }\n": types.GetProfileDocument,
     "\n  mutation Login($email: String!, $password: String!) {\n    login(email: $email, password: $password) {\n      token\n      url\n    }\n  }\n": types.LoginDocument,
     "\n  mutation Logout {\n    logout\n  }\n": types.LogoutDocument,
     "\n  mutation Register($email: String!, $password: String!, $name: String!) {\n    register(email: $email, password: $password, name: $name) {\n      token\n    }\n  }\n": types.RegisterDocument,
@@ -131,7 +131,7 @@ export function graphql(source: "\n  mutation ForgotPassword($email: String!) {\
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query GetProfile {\n    profileUser {\n      id\n      email\n      name\n      isActive\n      company\n      position\n      avatarUrl\n      invitationToken\n    }\n  }\n"): (typeof documents)["\n  query GetProfile {\n    profileUser {\n      id\n      email\n      name\n      isActive\n      company\n      position\n      avatarUrl\n      invitationToken\n    }\n  }\n"];
+export function graphql(source: "\n  query GetProfile {\n    profileUser {\n      id\n      email\n      name\n      isActive\n      company\n      position\n      avatarUrl\n      invitationToken\n      currentOrganization {\n        id\n        name\n        domain\n        logo_url\n        settings\n        created_at\n        updated_at\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetProfile {\n    profileUser {\n      id\n      email\n      name\n      isActive\n      company\n      position\n      avatarUrl\n      invitationToken\n      currentOrganization {\n        id\n        name\n        domain\n        logo_url\n        settings\n        created_at\n        updated_at\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

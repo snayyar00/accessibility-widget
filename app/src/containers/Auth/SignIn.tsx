@@ -11,6 +11,7 @@ import AuthAdsArea from '@/components/Auth/AuthAds';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { setAuthenticationCookie } from '@/utils/cookie';
 import { LoginMutation, Mutation } from '@/generated/graphql';
+import { IS_LOCAL } from '@/config/env';
 
 const SignInSchema = yup.object().shape({
   email: yup
@@ -52,7 +53,7 @@ const SignIn: React.FC = () => {
         const currentHost = window.location.hostname;
         const targetHost = new URL(data.login.url).hostname;
 
-        if (currentHost !== targetHost) {
+        if (currentHost !== targetHost && !IS_LOCAL) {
           window.location.href = `${data.login.url}/auth-redirect?token=${data.login.token}`;
         } else {
           setAuthenticationCookie(data.login.token);

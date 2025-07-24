@@ -56,7 +56,7 @@ Production build will be output to the `build/` directory.
 Create a `.env` file and specify all required variables. Example:
 
 ```env
-NODE_ENV=development
+REACT_APP_NODE_ENV=local
 
 REACT_APP_BACKEND_URL=http://localhost:3001
 REACT_APP_GRAPHQL_URL=http://localhost:3001/graphql
@@ -81,6 +81,9 @@ PORT=3000
 
 - **Build for production:**  
   `npm run build` — output to `build/`
+
+- **Generate GraphQL types for TypeScript:**  
+  `npm run codegen` — runs `graphql-codegen` with `codegen.ts` config to generate TypeScript types and hooks from your GraphQL schema
 
 ---
 

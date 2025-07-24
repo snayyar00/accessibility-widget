@@ -1,3 +1,4 @@
+import { IS_DEV, IS_LOCAL } from '@/config/env';
 import {
   clearAuthenticationCookie,
   getAuthenticationCookie,
@@ -29,8 +30,6 @@ const authLink = new ApolloLink((operation, forward) => {
   return forward(operation);
 });
 
-const isDevelopment = process.env.NODE_ENV === 'development';
-
 export function createClient(): ApolloClient<NormalizedCacheObject> {
   // Create the cache first, which we'll share across Apollo tooling.
   // This is an in-memory cache. Since we'll be calling `createClient` on
@@ -59,7 +58,7 @@ export function createClient(): ApolloClient<NormalizedCacheObject> {
       // out to third-party services, etc
       onError(({ graphQLErrors, networkError }) => {
         if (graphQLErrors) {
-          if (isDevelopment) {
+          if (IS_DEV || IS_LOCAL) {
             graphQLErrors.map(({ message, locations, path }) =>
               console.log(
                 `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`,
@@ -82,7 +81,7 @@ export function createClient(): ApolloClient<NormalizedCacheObject> {
           }
         }
         if (networkError) {
-          if (isDevelopment) {
+          if (IS_DEV || IS_LOCAL) {
             console.log(`[Network error]: ${networkError}`);
           }
         }
