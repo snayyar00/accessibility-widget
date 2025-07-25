@@ -1,5 +1,6 @@
 import Validator, { ValidationError } from 'fastest-validator'
 
+import { IS_DEV, IS_LOCAL } from '../config/env'
 import { normalizeDomain } from '../utils/domain.utils'
 
 export function validateWidgetSettings(input: { settings: any; site_url: any }): true | ValidationError[] | Promise<true | ValidationError[]> {
@@ -11,10 +12,21 @@ export function validateWidgetSettings(input: { settings: any; site_url: any }):
       empty: false,
       trim: true,
       max: 253,
-      pattern: /^(?!https?:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/,
       messages: {
-        stringPattern: 'Site URL must be a valid domain.',
         stringEmpty: 'Site URL is required.',
+      },
+      custom(value: string) {
+        const cleanUrl = value.trim().toLowerCase()
+
+        if (IS_LOCAL || IS_DEV) {
+          if (cleanUrl === 'localhost' || cleanUrl.startsWith('localhost:')) return true
+        }
+
+        if (!/^(?!https?:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/.test(cleanUrl)) {
+          return [{ type: 'site_url', message: 'Site URL must be a valid domain.' }]
+        }
+
+        return true
       },
     },
     settings: {
@@ -61,7 +73,9 @@ export function validateTokenUrl(input: { url: string }): true | ValidationError
       custom(value: string) {
         const cleanUrl = normalizeDomain(value)
 
-        if (cleanUrl === 'localhost' || cleanUrl.startsWith('localhost:')) return true
+        if (IS_LOCAL || IS_DEV) {
+          if (cleanUrl === 'localhost' || cleanUrl.startsWith('localhost:')) return true
+        }
 
         const domainPattern = /^[a-zA-Z0-9][a-zA-Z0-9-]*(\.[a-zA-Z0-9][a-zA-Z0-9-]*)*\.[a-zA-Z]{2,}$/
 
