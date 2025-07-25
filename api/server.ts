@@ -38,10 +38,11 @@ app.use(requestTimingMiddleware)
 // Stripe webhook endpoint (before CORS and JSON parsing)
 app.post('/stripe-hooks', strictLimiter, express.raw({ type: 'application/json' }), stripeHooks)
 
-app.use(dynamicCors)
 app.use(cookieParser())
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }))
 app.use(express.json({ limit: '50mb' }))
+
+app.use(dynamicCors)
 
 app.get('/', (_, res) => {
   res.send('Hello world!')
