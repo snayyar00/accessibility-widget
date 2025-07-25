@@ -1,1 +1,0 @@
-export { GlobalLoader } from './GlobalLoader';

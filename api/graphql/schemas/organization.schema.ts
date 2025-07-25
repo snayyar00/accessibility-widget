@@ -3,6 +3,7 @@ export const OrganizationSchema = `#graphql
     id: ID!
     name: String!
     domain: String!
+    favicon: String
     logo_url: String
     settings: JSON
     created_at: Date

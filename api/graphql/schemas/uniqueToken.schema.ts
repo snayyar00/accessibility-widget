@@ -2,6 +2,7 @@ export const UniqueTokenSchema = `#graphql
   type TokenValidationResponse {
     validation: String!
     savedState: JSON
+    organization: Organization
   }
 
   extend type Query {

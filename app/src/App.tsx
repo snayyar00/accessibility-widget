@@ -13,8 +13,9 @@ import { createClient } from '@/config/apollo';
 import 'react-toastify/dist/ReactToastify.css';
 import ReportSuccessModal from '@/components/Common/ReportSuccessModal';
 import GlobalReportPolling from '@/components/Common/GlobalReportPolling';
-import { GlobalLoader } from '@/containers/Root';
 import AuthRedirect from '@/containers/Auth/AuthRedirect';
+import { GlobalLoader } from '@/containers/Root/GlobalLoader';
+import { useFavicon } from '@/hooks/useFavicon';
 import ReportView from './containers/Accessibility/ReportView';
 import { RootState } from './config/store';
 
@@ -28,6 +29,12 @@ const App: React.FC<props> = ({ options }) => {
   const { showModal, reportData } = useSelector(
     (state: RootState) => state.report,
   );
+
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
+
+  useFavicon(organization?.favicon || null);
 
   useEffect(() => {
     if (error) {
