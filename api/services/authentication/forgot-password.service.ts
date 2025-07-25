@@ -1,54 +1,63 @@
-import { ApolloError, ValidationError } from 'apollo-server-express';
-import { findUser, getUserByIdAndJoinUserToken } from '~/repository/user.repository';
-import generateRandomKey from '~/helpers/genarateRandomkey';
-import { createToken, updateUserTokenById } from '~/repository/user_tokens.repository';
-import logger from '~/libs/logger/application-logger';
-import {sendMail} from '~/libs/mail';
-import compileEmailTemplate from '~/helpers/compile-email-template';
-import { SEND_MAIL_TYPE } from '~/constants/send-mail-type.constant';
-import { emailValidation } from '~/validations/email.validation';
+import { SEND_MAIL_TYPE } from '../../constants/send-mail-type.constant'
+import compileEmailTemplate from '../../helpers/compile-email-template'
+import generateRandomKey from '../../helpers/genarateRandomkey'
+import { Organization } from '../../repository/organization.repository'
+import { findUser, getUserByIdAndJoinUserToken } from '../../repository/user.repository'
+import { createToken, updateUserTokenById } from '../../repository/user_tokens.repository'
+import { getMatchingFrontendUrl } from '../../utils/env.utils'
+import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
+import logger from '../../utils/logger'
+import { emailValidation } from '../../validations/email.validation'
+import { sendMail } from '../email/email.service'
 
-export async function forgotPasswordUser(email: string): Promise<boolean> {
-  const validateResult = emailValidation(email);
-  
+export async function forgotPasswordUser(email: string, organization: Organization): Promise<boolean> {
+  const validateResult = emailValidation(email)
+
   if (Array.isArray(validateResult) && validateResult.length) {
-    throw new ValidationError(validateResult.map((it) => it.message).join(','));
+    throw new ValidationError(validateResult.map((it) => it.message).join(','))
   }
 
   try {
-    const user = await findUser({ email });
+    const user = await findUser({ email })
 
     if (!user || !user.id) {
-      return true;
+      return true
     }
 
-    let session = await getUserByIdAndJoinUserToken(user.id, SEND_MAIL_TYPE.FORGOT_PASSWORD);
-    const tokenGenerated = await generateRandomKey();
-    const token = `${tokenGenerated}-${user.id}`;
+    let session = await getUserByIdAndJoinUserToken(user.id, SEND_MAIL_TYPE.FORGOT_PASSWORD)
+
+    const tokenGenerated = await generateRandomKey()
+    const token = `${tokenGenerated}-${user.id}`
+
+    const currentUrl = getMatchingFrontendUrl(organization.domain)
+
+    if (!currentUrl) {
+      throw new ForbiddenError('Provided domain is not in the list of allowed URLs')
+    }
 
     if (!session) {
-      await createToken(user.id, token, SEND_MAIL_TYPE.FORGOT_PASSWORD);
+      await createToken(user.id, token, SEND_MAIL_TYPE.FORGOT_PASSWORD)
       session = {
         name: user.name,
         email: user.email,
-      };
+      }
     } else {
-      await updateUserTokenById(session.id, token);
+      await updateUserTokenById(session.id, token)
     }
 
     const template = await compileEmailTemplate({
       fileName: 'forgotPassword.mjml',
       data: {
         name: session.name,
-        url: `${process.env.FRONTEND_URL}/auth/reset-password?&token=${token}`,
+        url: `${currentUrl}/auth/reset-password?&token=${token}`,
       },
-    });
+    })
 
-    await sendMail(session.email, 'Reset Password from WebAbility', template);
-    
-    return true;
+    await sendMail(session.email, 'Reset Password from WebAbility', template)
+
+    return true
   } catch (error) {
-    logger.error(error);
-    throw new ApolloError(error);
+    logger.error(error)
+    throw new ApolloError(error)
   }
 }

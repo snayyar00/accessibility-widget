@@ -16,36 +16,54 @@ const routes = [
     isSidebar: false,
   },
   {
-    path:'/scanner',
-    name:'Scanner',
-    exact:true,
+    path: '/scanner',
+    name: 'Scanner',
+    exact: true,
     component: Accessibility,
-    icon: <TbReportSearch className="menu-icon text-white-blue transition-colors duration-200" size={30} aria-label="Scanner navigation icon"/>,
-    isSidebar:true,
+    icon: (
+      <TbReportSearch
+        className="menu-icon text-white-blue transition-colors duration-200"
+        size={30}
+        aria-label="Scanner navigation icon"
+      />
+    ),
+    isSidebar: true,
   },
   {
-    path:'/problem-reports',
-    name:'Issues',
-    exact:true,
+    path: '/problem-reports',
+    name: 'Issues',
+    exact: true,
     component: ProblemReport,
-    icon: <MdBugReport className="menu-icon text-white-blue transition-colors duration-200" size={35} aria-label="Issues navigation icon"/>,
-    isSidebar:true,
+    icon: (
+      <MdBugReport
+        className="menu-icon text-white-blue transition-colors duration-200"
+        size={35}
+        aria-label="Issues navigation icon"
+      />
+    ),
+    isSidebar: true,
   },
   {
-    path:'/statement-generator',
-    name:'AI Statement',
-    exact:true,
+    path: '/statement-generator',
+    name: 'AI Statement',
+    exact: true,
     component: StatementGenerator,
-    icon: <MdOutlineGavel className="menu-icon text-white-blue transition-colors duration-200" size={30} aria-label="AI Statement Generator navigation icon"/>,
-    isSidebar:true,
+    icon: (
+      <MdOutlineGavel
+        className="menu-icon text-white-blue transition-colors duration-200"
+        size={30}
+        aria-label="AI Statement Generator navigation icon"
+      />
+    ),
+    isSidebar: true,
   },
   {
     path: '/reports/:r2_key',
     name: 'Report View',
     exact: true,
-    component: ReportView, // Use the new ReportView component
+    component: ReportView,
     isSidebar: false,
-  }
+  },
 ];
 
 export default routes;

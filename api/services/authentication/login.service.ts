@@ -1,77 +1,104 @@
-import { ValidationError, AuthenticationError } from 'apollo-server-express';
-import { Response } from 'express';
-import { comparePassword } from '~/helpers/hashing.helper';
-import { sign } from '~/helpers/jwt.helper';
-import { findUser, findUserNotificationByUserId, insertUserNotification } from '~/repository/user.repository';
-import { loginValidation } from '~/validations/authenticate.validation';
-import { sanitizeUserInput } from '~/utils/sanitization.helper';
-import { clearCookie, COOKIE_NAME } from '~/utils/cookie';
-import { isAccountLocked, incrementFailedAttempts, lockAccount, resetFailedAttempts } from '~/repository/failed_login_attempts.repository';
+import database from '../../config/database.config'
+import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
+import { comparePassword } from '../../helpers/hashing.helper'
+import { sign } from '../../helpers/jwt.helper'
+import { incrementFailedAttempts, isAccountLocked, lockAccount, resetFailedAttempts } from '../../repository/failed_login_attempts.repository'
+import { Organization } from '../../repository/organization.repository'
+import { findUser, findUserNotificationByUserId, insertUserNotification, updateUser } from '../../repository/user.repository'
+import { getMatchingFrontendUrl } from '../../utils/env.utils'
+import { ApolloError, AuthenticationError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
+import { sanitizeUserInput } from '../../utils/sanitization.helper'
+import { loginValidation } from '../../validations/authenticate.validation'
+import { getOrganizationById } from '../organization/organization.service'
+import { addUserToOrganization } from '../organization/organization_users.service'
 
-export type Token = {
-  token: string;
-};
+export type LoginResponse = {
+  token: string
+  url: string
+}
 
-export async function loginUser(email: string, password: string, res: Response): Promise<ValidationError | AuthenticationError | Token> {
-  const sanitizedInput = sanitizeUserInput({ email });
-  email = sanitizedInput.email;
+export async function loginUser(email: string, password: string, organization: Organization): Promise<ValidationError | AuthenticationError | LoginResponse> {
+  const sanitizedInput = sanitizeUserInput({ email })
+  email = sanitizedInput.email
 
-  const validateResult = loginValidation({ email, password });
+  const validateResult = loginValidation({ email, password })
+
   if (Array.isArray(validateResult) && validateResult.length) {
-    return new ValidationError(validateResult.map((it) => it.message).join(','));
+    return new ValidationError(validateResult.map((it) => it.message).join(','))
   }
 
-  const user = await findUser({ email });
+  const user = await findUser({ email })
 
   if (!user) {
-    clearCookie(res, COOKIE_NAME.TOKEN);
-    return new AuthenticationError('Invalid email or password');
+    return new AuthenticationError('Invalid email or password')
   }
 
   // Check if account is locked BEFORE authentication
-  const accountLocked = await isAccountLocked(user.id);
+  const accountLocked = await isAccountLocked(user.id)
+
   if (accountLocked) {
-    clearCookie(res, COOKIE_NAME.TOKEN);
-    return new AuthenticationError('ACCOUNT_LOCKED');
+    return new AuthenticationError('ACCOUNT_LOCKED')
   }
 
-  const matchPassword = await comparePassword(password, user.password);
+  const matchPassword = await comparePassword(password, user.password)
+
   if (!matchPassword) {
     // Increment failed attempts after failed authentication
-    const attemptRecord = await incrementFailedAttempts(user.id);
-    const currentAttempts = attemptRecord.failed_count;
+    const attemptRecord = await incrementFailedAttempts(user.id)
+    const currentAttempts = attemptRecord.failed_count
 
     // Check if account should be locked (>= 5 attempts)
     if (currentAttempts >= 5) {
-      await lockAccount(user.id);
-      clearCookie(res, COOKIE_NAME.TOKEN);
-      return new AuthenticationError('ACCOUNT_LOCKED_AFTER_ATTEMPTS');
+      await lockAccount(user.id)
+      return new AuthenticationError('ACCOUNT_LOCKED_AFTER_ATTEMPTS')
     }
 
     // Show warning after 3 attempts
     if (currentAttempts >= 3) {
-      const remainingAttempts = 5 - currentAttempts;
-      clearCookie(res, COOKIE_NAME.TOKEN);
-      return new AuthenticationError(`ATTEMPTS_WARNING:${remainingAttempts}`);
+      const remainingAttempts = 5 - currentAttempts
+      return new AuthenticationError(`ATTEMPTS_WARNING:${remainingAttempts}`)
     }
 
-    clearCookie(res, COOKIE_NAME.TOKEN);
-    return new AuthenticationError('Invalid email or password');
+    return new AuthenticationError('Invalid email or password')
   }
 
-  // Clear failed attempts after successful authentication
-  await resetFailedAttempts(user.id);
+  let userOrganization
+
+  if (user.current_organization_id) {
+    userOrganization = await getOrganizationById(user.current_organization_id, user)
+    await resetFailedAttempts(user.id)
+  } else {
+    await database.transaction(async (trx) => {
+      const ids = await addUserToOrganization(user.id, organization.id, ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE, trx)
+
+      if (!Array.isArray(ids) || ids.length === 0) {
+        throw new ApolloError('Failed to add user to organization.')
+      }
+
+      await updateUser(user.id, { current_organization_id: organization.id }, trx)
+
+      userOrganization = organization
+
+      await resetFailedAttempts(user.id, trx)
+    })
+  }
 
   // Ensure user_notifications row exists for this user
-  const notification = await findUserNotificationByUserId(user.id);
+  const notification = await findUserNotificationByUserId(user.id)
+
   if (!notification) {
- 
     try {
-      await insertUserNotification(user.id);
-      console.log("User added to notification");
+      await insertUserNotification(user.id)
+      console.log('User added to notification')
     } catch (error) {
-      console.error("Failed to add user to notification:", error);
+      console.error('Failed to add user to notification:', error)
     }
+  }
+
+  const currentUrl = getMatchingFrontendUrl(userOrganization.domain)
+
+  if (!currentUrl) {
+    throw new ForbiddenError('Provided domain is not in the list of allowed URLs')
   }
 
   return {
@@ -80,5 +107,7 @@ export async function loginUser(email: string, password: string, res: Response):
       name: user.name,
       createdAt: user.created_at,
     }),
-  };
+
+    url: currentUrl,
+  }
 }

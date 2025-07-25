@@ -1,11 +1,12 @@
-import { combineResolvers } from 'graphql-resolvers';
-import { isAuthenticated } from '~/graphql/resolvers/authorization.resolver';
-import { getSiteVisitorsByURL } from '~/services/uniqueVisitors/uniqueVisitor.service';
+import { combineResolvers } from 'graphql-resolvers'
+
+import { getSiteVisitorsByURL } from '../../services/uniqueVisitors/uniqueVisitor.service'
+import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 const resolvers = {
   Query: {
-    getSiteVisitorsByURL: combineResolvers(isAuthenticated, (_, { url }, { user }) => getSiteVisitorsByURL(url, user)),
+    getSiteVisitorsByURL: combineResolvers(allowedOrganization, isAuthenticated, (_, { url }, { user }) => getSiteVisitorsByURL(url, user)),
   },
-};
+}
 
-export default resolvers;
+export default resolvers

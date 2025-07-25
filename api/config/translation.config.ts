@@ -1,3 +1,5 @@
+import { IS_DEV, IS_LOCAL, IS_PROD } from './env'
+
 // Production-ready translation configuration
 export const TRANSLATION_CONFIG = {
   // AI Model Configuration - Optimized for speed and unlimited generation
@@ -8,44 +10,44 @@ export const TRANSLATION_CONFIG = {
     maxTokens: 8192, // Increased for comprehensive statements with no limits
     timeout: 45000, // 45 second timeout for larger responses and complex languages
   },
-  
+
   // Caching Configuration
   cache: {
     duration: 24 * 60 * 60, // 24 hours in seconds
     keyPrefix: 'translation_v2_',
   },
-  
+
   // Rate Limiting
   rateLimit: {
     maxRequestsPerMinute: 60, // Higher limit for fast model
     cooldownPeriod: 1000, // 1 second between duplicate requests (faster)
   },
-  
+
   // Performance Monitoring
   monitoring: {
-    logSuccessfulTranslations: process.env.NODE_ENV === 'production',
+    logSuccessfulTranslations: IS_PROD,
     logErrors: true,
-    trackMetrics: process.env.NODE_ENV === 'production',
+    trackMetrics: IS_PROD,
     trackSpeed: true, // Track response times for speed optimization
   },
-  
+
   // Error Handling
   errorHandling: {
     maxRetries: 1, // Limited retries for speed
     fallbackToEnglish: true,
     userFriendlyErrors: true,
   },
-  
+
   // Production Optimizations
   optimizations: {
     compressPrompts: false, // Use full prompts for quality with fast model
     batchRequests: true, // Enable batching for speed
     batchSize: 3, // Split content into chunks of 3 fields each
     maxParallelBatches: 2, // Process 2 batches in parallel
-    preWarmCache: process.env.NODE_ENV === 'production',
+    preWarmCache: IS_PROD,
     useStreamingIfAvailable: true, // Enable streaming for faster perceived response
   },
-  
+
   // Batching Configuration
   batching: {
     enabled: false, // Disable batching for more reliable translations
@@ -53,13 +55,13 @@ export const TRANSLATION_CONFIG = {
     parallelBatches: 1, // Process sequentially for better reliability
     batchTimeout: 30000, // 30 seconds per batch
     retryFailedBatches: true,
-  }
-};
+  },
+}
 
 // Environment-specific overrides
-if (process.env.NODE_ENV === 'development') {
-  TRANSLATION_CONFIG.model.timeout = 60000; // Extra long timeout in dev for debugging
-  TRANSLATION_CONFIG.monitoring.logSuccessfulTranslations = true;
+if (IS_DEV || IS_LOCAL) {
+  TRANSLATION_CONFIG.model.timeout = 60000 // Extra long timeout in dev for debugging
+  TRANSLATION_CONFIG.monitoring.logSuccessfulTranslations = true
 }
 
 // Speed-optimized model alternatives (ordered by speed)
@@ -69,11 +71,49 @@ export const MODEL_TIERS = {
   balanced: 'google/gemini-pro-1.5', // High quality, 3-6s response
   premium: 'openai/gpt-4o', // Highest quality, 5-10s response
   anthropic: 'anthropic/claude-3-haiku', // Fast anthropic option
-} as const;
+} as const
 
 export const SUPPORTED_LANGUAGES = [
-  'en', 'ar', 'bg', 'bn', 'cs', 'de', 'el', 'es', 'fi', 'fr', 'he', 'hi', 
-  'hr', 'hu', 'id', 'it', 'ja', 'ko', 'lt', 'lv', 'ms', 'nl', 'no', 'pl', 
-  'pt', 'pt-br', 'ro', 'ru', 'sk', 'sl', 'sr', 'sv', 'th', 'tr', 'uk', 
-  'ur', 'vi', 'zh', 'zh-tw', 'da', 'et', 'ca'
-] as const;
+  'en',
+  'ar',
+  'bg',
+  'bn',
+  'cs',
+  'de',
+  'el',
+  'es',
+  'fi',
+  'fr',
+  'he',
+  'hi',
+  'hr',
+  'hu',
+  'id',
+  'it',
+  'ja',
+  'ko',
+  'lt',
+  'lv',
+  'ms',
+  'nl',
+  'no',
+  'pl',
+  'pt',
+  'pt-br',
+  'ro',
+  'ru',
+  'sk',
+  'sl',
+  'sr',
+  'sv',
+  'th',
+  'tr',
+  'uk',
+  'ur',
+  'vi',
+  'zh',
+  'zh-tw',
+  'da',
+  'et',
+  'ca',
+] as const

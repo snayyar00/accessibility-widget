@@ -1,141 +1,119 @@
-import { combineResolvers } from 'graphql-resolvers';
+import { combineResolvers } from 'graphql-resolvers'
 
-import { Response } from 'express';
-import { isAuthenticated } from './authorization.resolver';
-import { registerUser } from '~/services/authentication/register.service';
-import { loginUser } from '~/services/authentication/login.service';
-import { verifyEmail, resendEmailAction } from '~/services/authentication/verify-email.service';
-import { forgotPasswordUser } from '~/services/authentication/forgot-password.service';
-import { resetPasswordUser } from '~/services/authentication/reset-password.service';
-import { changePasswordUser } from '~/services/authentication/change-password.service';
-import { deleteUser } from '~/services/user/delete-user.service';
-import { updateProfile, updateUserNotificationSettings, getUserNotificationSettingsService } from '~/services/user/update-user.service';
-import { isEmailAlreadyRegistered } from '~/services/user/user.service';
-import { normalizeEmail } from '~/helpers/string.helper';
-import { clearCookie, COOKIE_NAME, setAuthenticationCookie } from '~/utils/cookie';
-
-type Res = {
-  res: Response;
-};
+import { GraphQLContext } from '../../graphql/types'
+import { normalizeEmail } from '../../helpers/string.helper'
+import { changePasswordUser } from '../../services/authentication/change-password.service'
+import { forgotPasswordUser } from '../../services/authentication/forgot-password.service'
+import { loginUser } from '../../services/authentication/login.service'
+import { registerUser } from '../../services/authentication/register.service'
+import { resetPasswordUser } from '../../services/authentication/reset-password.service'
+import { resendEmailAction, verifyEmail } from '../../services/authentication/verify-email.service'
+import { getOrganizationById } from '../../services/organization/organization.service'
+import { getUserOrganization } from '../../services/organization/organization_users.service'
+import { deleteUser } from '../../services/user/delete-user.service'
+import { getUserNotificationSettingsService, updateProfile, updateUserNotificationSettings } from '../../services/user/update-user.service'
+import { isEmailAlreadyRegistered } from '../../services/user/user.service'
+import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 type Register = {
-  email: string;
-  password: string;
-  name: string;
-  paymentMethodToken: string;
-  planName: string;
-  billingType: 'MONTHLY' | 'YEARLY';
-};
+  email: string
+  password: string
+  name: string
+}
 
 type Login = {
-  email: string;
-  password: string;
-};
+  email: string
+  password: string
+}
 
 type ForgotPassword = {
-  email: string;
-};
+  email: string
+}
 
 type ResetPassword = {
-  token: string;
-  password: string;
-  confirmPassword: string;
-};
+  token: string
+  password: string
+  confirmPassword: string
+}
 
 type Verify = {
-  token: string;
-};
+  token: string
+}
 
 const resolvers = {
   Query: {
-    profileUser: combineResolvers(
-      isAuthenticated,
-      (_, __, { user }) => user,
-    ),
-    isEmailAlreadyRegistered: async (_: unknown, { email }: { email: string }) => {
-      return isEmailAlreadyRegistered(normalizeEmail(email));
+    profileUser: combineResolvers(allowedOrganization, isAuthenticated, (_, __, { user }) => user),
+
+    isEmailAlreadyRegistered: combineResolvers(allowedOrganization, async (_: unknown, { email }: { email: string }) => isEmailAlreadyRegistered(normalizeEmail(email))),
+
+    getUserNotificationSettings: combineResolvers(allowedOrganization, isAuthenticated, async (_, __, { user }) => {
+      return await getUserNotificationSettingsService(user.id)
+    }),
+  },
+  User: {
+    currentOrganization: async (parent: { current_organization_id?: number; id?: number }) => {
+      if (!parent.current_organization_id || !parent.id) return null
+
+      const org = await getOrganizationById(parent.current_organization_id, parent)
+
+      return org || null
     },
-    getUserNotificationSettings: combineResolvers(
-      isAuthenticated,
-      async (_, __, { user }) => {
-        return await getUserNotificationSettingsService(user.id);
-      },
-    ),
+
+    currentOrganizationUser: async (parent: { id?: number; current_organization_id?: number }) => {
+      if (!parent.id || !parent.current_organization_id) return null
+
+      const orgUser = await getUserOrganization(parent.id, parent.current_organization_id)
+
+      return orgUser || null
+    },
+
+    hasOrganization: (parent: { current_organization_id?: number }) => Boolean(parent.current_organization_id),
   },
   Mutation: {
-    register: async (_: unknown, { email, password, name, paymentMethodToken, planName, billingType } : Register, { res }: Res) => {
-      const result = await registerUser(normalizeEmail(email), password, name, paymentMethodToken, planName, billingType);
+    register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name }: Register, { organization }: GraphQLContext) => {
+      const result = await registerUser(normalizeEmail(email), password, name, organization)
 
-      if (result && result.token) {
-        setAuthenticationCookie(res, result.token);
-        return true;
-      }
+      return result
+    }),
 
-      return result;
-    },
+    login: combineResolvers(allowedOrganization, async (_: unknown, { email, password }: Login, { organization }: GraphQLContext) => {
+      const result = await loginUser(normalizeEmail(email), password, organization)
 
-    login: async (_: unknown, { email, password }: Login, { res }: Res) => {
-      const result = await loginUser(normalizeEmail(email), password, res);
+      return result
+    }),
 
-      if (result && result.token) {
-        setAuthenticationCookie(res, result.token);
-        return true;
-      }
+    logout: combineResolvers(allowedOrganization, () => {
+      return true
+    }),
 
-      return result;
-    },
+    forgotPassword: combineResolvers(allowedOrganization, async (_: unknown, { email }: ForgotPassword, { organization }: GraphQLContext) => forgotPasswordUser(normalizeEmail(email), organization)),
 
-    logout: (_: unknown, __: unknown, { res }: Res) => {
-      clearCookie(res, COOKIE_NAME.TOKEN);
-      return true;
-    },
+    changePassword: combineResolvers(allowedOrganization, isAuthenticated, (_, { currentPassword, newPassword }, { user }) => changePasswordUser(user.id, currentPassword, newPassword)),
 
-    forgotPassword: async (_: unknown, { email }: ForgotPassword) => forgotPasswordUser(normalizeEmail(email)),
+    resetPassword: combineResolvers(allowedOrganization, async (_: unknown, { token, password, confirmPassword }: ResetPassword) => resetPasswordUser(token, password, confirmPassword)),
 
-    changePassword: combineResolvers(
-      isAuthenticated,
-      (_, { currentPassword, newPassword }, { user }) => changePasswordUser(user.id, currentPassword, newPassword),
-    ),
+    verify: combineResolvers(allowedOrganization, (_: unknown, { token }: Verify) => verifyEmail(token)),
 
-    resetPassword: async (_: unknown, { token, password, confirmPassword }: ResetPassword) => resetPasswordUser(token, password, confirmPassword),
+    resendEmail: combineResolvers(allowedOrganization, isAuthenticated, (_, { type }, { user, organization }) => resendEmailAction(user, <'verify_email' | 'forgot_password'>normalizeEmail(type), organization)),
 
-    verify: (_: unknown, { token }: Verify) => verifyEmail(token),
+    deleteAccount: combineResolvers(allowedOrganization, isAuthenticated, async (_, __, { user }) => {
+      const result = await deleteUser(user)
 
-    resendEmail: combineResolvers(
-      isAuthenticated,
-      (_, { type }, { user }) => resendEmailAction(user, <'verify_email' | 'forgot_password'>normalizeEmail(type)),
-    ),
+      return result
+    }),
 
-    deleteAccount: combineResolvers(
-      isAuthenticated,
-      async (_, __, { user, res }) => {
-        const result = await deleteUser(user);
+    updateProfile: combineResolvers(allowedOrganization, isAuthenticated, (_, { name, company, position }, { user }) => updateProfile(user.id, name, company, position)),
 
-        if (result === true) {
-          clearCookie(res, COOKIE_NAME.TOKEN);
-        }
-        
-        return result;
-      },
-    ),
+    updateNotificationSettings: combineResolvers(allowedOrganization, isAuthenticated, async (_, { monthly_report_flag, new_domain_flag, issue_reported_flag }, { user }) => {
+      const result = await updateUserNotificationSettings(user.id, {
+        monthly_report_flag,
+        new_domain_flag,
+        issue_reported_flag,
+      })
 
-    updateProfile: combineResolvers(
-      isAuthenticated,
-      (_, { name, company, position }, { user }) => updateProfile(user.id, name, company, position),
-    ),
-
-    updateNotificationSettings: combineResolvers(
-      isAuthenticated,
-      async (_, { monthly_report_flag, new_domain_flag, issue_reported_flag }, { user }) => {
-        const result = await updateUserNotificationSettings(user.id, {
-          monthly_report_flag,
-          new_domain_flag,
-          issue_reported_flag,
-        });
-        return result.success;
-      },
-    ),
+      return result.success
+    }),
   },
-};
+}
 
-export default resolvers;
+export default resolvers

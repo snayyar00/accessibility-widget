@@ -1,8 +1,8 @@
-import database from '~/config/database.config';
-import { TABLES } from '~/constants/database.constant';
-import { siteColumns } from './sites_allowed.repository';
+import database from '../config/database.config'
+import { TABLES } from '../constants/database.constant'
+import { siteColumns } from './sites_allowed.repository'
 
-const TABLE = TABLES.impressions;
+const TABLE = TABLES.impressions
 
 export const impressionsColumns = {
   id: 'impressions.id',
@@ -12,17 +12,17 @@ export const impressionsColumns = {
   widget_closed: 'impressions.widget_closed',
   createdAt: 'impressions.created_at',
   profileCounts: 'impressions.profileCounts',
-};
+}
 
 type impressionsProps = {
-  id?: number;
-  site_id?: number;
-  visitor_id?: number;
-  widget_opened?: boolean;
-  widget_closed?: boolean;
-  createdAt?: string;
-  profileCounts?: any;
-};
+  id?: number
+  site_id?: number
+  visitor_id?: number
+  widget_opened?: boolean
+  widget_closed?: boolean
+  createdAt?: string
+  profileCounts?: any
+}
 
 export async function findImpressionsURLDate(user_id: number, site_url: string, startDate: Date, endDate: Date): Promise<impressionsProps[]> {
   const result = await database(TABLE)
@@ -30,10 +30,10 @@ export async function findImpressionsURLDate(user_id: number, site_url: string, 
     .select(impressionsColumns, `${siteColumns.url} as url`)
     .where({ [siteColumns.url]: site_url, [siteColumns.user_id]: user_id })
     .andWhere(impressionsColumns.createdAt, '>=', startDate)
-    .andWhere(impressionsColumns.createdAt, '<=', endDate);
+    .andWhere(impressionsColumns.createdAt, '<=', endDate)
 
   // throw new Error('Method not implemented.');
-  return result;
+  return result
 }
 
 export async function findEngagementURLDate(user_id: number, site_url: string, startDate: string, endDate: string) {
@@ -49,23 +49,23 @@ export async function findEngagementURLDate(user_id: number, site_url: string, s
     .whereBetween('impressions.created_at', [startDate, endDate])
     .andWhere({ 'allowed_sites.url': site_url, 'allowed_sites.user_id': user_id })
     .groupByRaw('DATE(impressions.created_at)')
-    .orderBy('date', 'asc');
+    .orderBy('date', 'asc')
 
   const engagementRates = results.map((result: any) => {
     // Convert the UTC date to the desired time zone
-    const localDate = new Date(result.date + 'Z'); // Assuming result.date is in 'YYYY-MM-DD' format
+    const localDate = new Date(`${result.date}Z`) // Assuming result.date is in 'YYYY-MM-DD' format
 
-    const engagementRate = (Number(result.engagedImpressions) / Number(result.totalImpressions)) * 100;
+    const engagementRate = (Number(result.engagedImpressions) / Number(result.totalImpressions)) * 100
 
     return {
       date: localDate.toISOString().split('T')[0],
-      engagementRate: engagementRate,
+      engagementRate,
       totalEngagements: result.engagedImpressions,
       totalImpressions: result.totalImpressions,
-    };
-  });
+    }
+  })
 
-  return engagementRates;
+  return engagementRates
 }
 
 export async function updateImpressionProfileCount(id: number, profileCounts: any): Promise<number> {
@@ -73,35 +73,35 @@ export async function updateImpressionProfileCount(id: number, profileCounts: an
     .where('id', id)
     .update({
       profileCounts: JSON.stringify(profileCounts),
-    });
+    })
 }
 
 export async function updateImpressions(id: number, interaction: string): Promise<number> {
-  let field;
+  let field
   if (interaction === 'widgetClosed') {
-    field = 'widget_closed';
+    field = 'widget_closed'
   } else if (interaction === 'widgetOpened') {
-    field = 'widget_opened';
+    field = 'widget_opened'
   }
   return database(TABLE)
     .where('id', id)
     .update({
       [field]: true,
-    });
+    })
 }
 
 export async function insertImpressionURL(data: any, url: string) {
-  const site = await database(TABLES.allowed_sites).select('id').where({ url: url }).first();
+  const site = await database(TABLES.allowed_sites).select('id').where({ url }).first()
 
   if (!site) {
-    throw new Error('Site not found for URL: ' + url);
+    throw new Error(`Site not found for URL: ${url}`)
   }
 
   // Now, insert the impression data with the found site_id
   const dataToInsert = {
     ...data,
     site_id: site.id, // Using the site_id from the found site
-  };
+  }
 
-  return database(TABLE).insert(dataToInsert);
+  return database(TABLE).insert(dataToInsert)
 }

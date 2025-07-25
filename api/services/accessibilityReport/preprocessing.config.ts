@@ -7,7 +7,7 @@ export const preprocessingConfig = {
     skipLowConfidenceThreshold: parseInt(process.env.SKIP_LOW_CONFIDENCE_THRESHOLD || '40'),
     maxLowConfidenceIssues: parseInt(process.env.MAX_LOW_CONFIDENCE_ISSUES || '20'),
     fastMode: process.env.PREPROCESSING_FAST_MODE === 'true',
-    gptModel: process.env.PREPROCESSING_GPT_MODEL || 'meta-llama/llama-3.1-8b-instruct:free'
+    gptModel: process.env.PREPROCESSING_GPT_MODEL || 'meta-llama/llama-3.1-8b-instruct:free',
   },
 
   // Quality vs Speed tradeoffs
@@ -17,22 +17,22 @@ export const preprocessingConfig = {
       maxBatchSize: 20,
       skipTemplateAnalysis: true,
       useFallbacks: true,
-      maxRetries: 0
+      maxRetries: 0,
     },
     balanced: {
       confidenceThreshold: 30,
       maxBatchSize: 15,
       skipTemplateAnalysis: false,
       useFallbacks: false,
-      maxRetries: 1
+      maxRetries: 1,
     },
     thorough: {
       confidenceThreshold: 20,
       maxBatchSize: 10,
       skipTemplateAnalysis: false,
       useFallbacks: false,
-      maxRetries: 2
-    }
+      maxRetries: 2,
+    },
   },
 
   // Feature flags for speed
@@ -42,14 +42,14 @@ export const preprocessingConfig = {
     FF_TEMPLATE_ANALYSIS: process.env.FF_TEMPLATE_ANALYSIS !== 'false' && process.env.PREPROCESSING_FAST_MODE !== 'true',
     FF_BATCH_PROCESSING: process.env.FF_BATCH_PROCESSING !== 'false',
     FF_PARALLEL_PROCESSING: process.env.FF_PARALLEL_PROCESSING !== 'false',
-    FF_SKIP_LOW_CONFIDENCE: process.env.FF_SKIP_LOW_CONFIDENCE === 'true'
+    FF_SKIP_LOW_CONFIDENCE: process.env.FF_SKIP_LOW_CONFIDENCE === 'true',
   },
 
   // Debug and monitoring
   monitoring: {
     debugMode: process.env.PREPROCESSING_DEBUG_MODE === 'true',
-    performanceLogging: process.env.PREPROCESSING_PERF_LOG === 'true'
-  }
+    performanceLogging: process.env.PREPROCESSING_PERF_LOG === 'true',
+  },
 }
 
 /**
@@ -57,12 +57,12 @@ export const preprocessingConfig = {
  */
 export function getPerformanceConfig(mode: 'fast' | 'balanced' | 'thorough' = 'balanced') {
   const baseConfig = preprocessingConfig.qualityLevels[mode]
-  
+
   return {
     ...baseConfig,
     maxConcurrency: preprocessingConfig.performance.maxConcurrency,
     fastMode: mode === 'fast',
-    features: preprocessingConfig.features
+    features: preprocessingConfig.features,
   }
 }
 
@@ -71,12 +71,12 @@ export function getPerformanceConfig(mode: 'fast' | 'balanced' | 'thorough' = 'b
  */
 export function getOptimizedConfig() {
   const nodeEnv = process.env.NODE_ENV
-  
+
   if (nodeEnv === 'production') {
     return getPerformanceConfig('balanced')
-  } else if (nodeEnv === 'development') {
-    return getPerformanceConfig('fast')
-  } else {
-    return getPerformanceConfig('thorough')
   }
-} 
+  if (nodeEnv === 'development') {
+    return getPerformanceConfig('fast')
+  }
+  return getPerformanceConfig('thorough')
+}

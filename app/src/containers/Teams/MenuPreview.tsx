@@ -2,12 +2,29 @@ import type React from 'react';
 import { useState } from 'react';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import { FaDroplet, FaGear, FaRotateRight, FaX } from 'react-icons/fa6';
-import { FaAccessibleIcon, FaBookReader, FaChevronDown, FaFont, FaLink, FaMicrophone, FaMouse, FaPuzzlePiece, FaRegSun, FaUniversalAccess } from 'react-icons/fa';
+import {
+  FaAccessibleIcon,
+  FaBookReader,
+  FaChevronDown,
+  FaFont,
+  FaLink,
+  FaMicrophone,
+  FaMouse,
+  FaPuzzlePiece,
+  FaRegSun,
+  FaUniversalAccess,
+} from 'react-icons/fa';
 
-import { LuAudioWaveform } from "react-icons/lu";
-import { MdGradient, MdMonochromePhotos, MdMotionPhotosPause } from 'react-icons/md';
+import { LuAudioWaveform } from 'react-icons/lu';
+import {
+  MdGradient,
+  MdMonochromePhotos,
+  MdMotionPhotosPause,
+} from 'react-icons/md';
 import { TbBrain, TbCircleHalf2 } from 'react-icons/tb';
 import { Colors, Toggles } from './editWidget';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/config/store';
 
 interface AccessibilityMenuProps {
   colors: Colors;
@@ -42,7 +59,11 @@ const languages = [
   { code: 'no', name: 'Norsk', englishName: 'Norwegian' },
   { code: 'pl', name: 'Polski', englishName: 'Polish' },
   { code: 'pt', name: 'Português', englishName: 'Portuguese' },
-  { code: 'pt-br', name: 'Português (Brasil)', englishName: 'Portuguese (Brazil)' },
+  {
+    code: 'pt-br',
+    name: 'Português (Brasil)',
+    englishName: 'Portuguese (Brazil)',
+  },
   { code: 'ro', name: 'Română', englishName: 'Romanian' },
   { code: 'ru', name: 'Русский', englishName: 'Russian' },
   { code: 'sk', name: 'Slovenčina', englishName: 'Slovak' },
@@ -58,7 +79,7 @@ const languages = [
   { code: 'zh-tw', name: '中文 (繁體)', englishName: 'Chinese (Traditional)' },
   { code: 'da', name: 'Dansk', englishName: 'Danish' },
   { code: 'et', name: 'Eesti', englishName: 'Estonian' },
-  { code: 'ca', name: 'Català', englishName: 'Catalan' }
+  { code: 'ca', name: 'Català', englishName: 'Catalan' },
 ] as const;
 
 const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
@@ -69,7 +90,11 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
   const [fontSize, setFontSize] = useState(100);
   const [showProfiles, setShowProfiles] = useState(false);
   const [showLanguages, setShowLanguages] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState({ code: 'en', name: 'English', englishName: 'English' });
+  const [selectedLanguage, setSelectedLanguage] = useState({
+    code: 'en',
+    name: 'English',
+    englishName: 'English',
+  });
 
   const fontStyle = { fontFamily: selectedFont };
 
@@ -77,23 +102,17 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
     {
       id: 'motorImpaired',
       name: 'Motor Impaired',
-      icon: (
-        <FaAccessibleIcon size={40} />
-      ),
+      icon: <FaAccessibleIcon size={40} />,
     },
     {
       id: 'blind',
       name: 'Blind',
-      icon: (
-        <LuAudioWaveform size={40}/>
-      ),
+      icon: <LuAudioWaveform size={40} />,
     },
     {
       id: 'colorBlind',
       name: 'Color Blind',
-      icon: (
-       <FaDroplet size={40} />
-      ),
+      icon: <FaDroplet size={40} />,
     },
     {
       id: 'dyslexia',
@@ -122,16 +141,12 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
     {
       id: 'cognitiveAndLearning',
       name: 'Cognitive & Learning',
-      icon: (
-        <FaPuzzlePiece size={40} />
-      ),
+      icon: <FaPuzzlePiece size={40} />,
     },
     {
       id: 'seizureAndEpileptic',
       name: 'Seizure & Epileptic',
-      icon: (
-        <TbBrain size={40} />
-      ),
+      icon: <TbBrain size={40} />,
     },
     {
       id: 'adhd',
@@ -182,37 +197,27 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
     {
       id: 'screenReader',
       name: 'Screen Reader',
-      icon: (
-        <LuAudioWaveform size={40}/>
-      ),
+      icon: <LuAudioWaveform size={40} />,
     },
     {
       id: 'readingGuide',
       name: 'Reading Guide',
-      icon: (
-        <FaBookReader size={40}/>
-      ),
+      icon: <FaBookReader size={40} />,
     },
     {
       id: 'stopAnimations',
       name: 'Stop Animations',
-      icon: (
-        <MdMotionPhotosPause size={40}/>
-      ),
+      icon: <MdMotionPhotosPause size={40} />,
     },
     {
       id: 'bigCursor',
       name: 'Big Cursor',
-      icon: (
-       <FaMouse size={40}/>
-      ),
+      icon: <FaMouse size={40} />,
     },
     {
       id: 'voiceNavigation',
       name: 'Voice Navigation',
-      icon: (
-       <FaMicrophone size={40}/>
-      ),
+      icon: <FaMicrophone size={40} />,
     },
   ];
 
@@ -229,16 +234,12 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
     {
       id: 'lightContrast',
       name: 'Light Contrast',
-      icon: (
-       <FaRegSun size={40} />
-      ),
+      icon: <FaRegSun size={40} />,
     },
     {
       id: 'highContrast',
       name: 'High Contrast',
-      icon: (
-        <TbCircleHalf2 size={40} />
-      ),
+      icon: <TbCircleHalf2 size={40} />,
     },
     {
       id: 'highSaturation',
@@ -259,16 +260,12 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
     {
       id: 'lowSaturation',
       name: 'Low Saturation',
-      icon: (
-        <MdGradient size={40} />
-      ),
+      icon: <MdGradient size={40} />,
     },
     {
       id: 'monochrome',
       name: 'Monochrome',
-      icon: (
-        <MdMonochromePhotos size={40} />
-      ),
+      icon: <MdMonochromePhotos size={40} />,
     },
   ];
 
@@ -295,6 +292,10 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
 
   const filteredContentAdjustment = ContentAdjustments.filter(
     (button) => toggles[button.id as keyof Toggles] !== false,
+  );
+
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
   );
 
   return (
@@ -372,9 +373,9 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                 </div>
                 <FaChevronDown className="w-5 h-5" style={fontStyle} />
               </button>
-              
+
               {showLanguages && (
-                <div 
+                <div
                   style={{
                     ...fontStyle,
                     backgroundColor: colors['dropdownBg'],
@@ -390,12 +391,20 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                       }}
                       style={{
                         ...fontStyle,
-                        backgroundColor: selectedLanguage.code === lang.code ? colors['buttonBg'] : 'transparent',
+                        backgroundColor:
+                          selectedLanguage.code === lang.code
+                            ? colors['buttonBg']
+                            : 'transparent',
                         color: colors['dropdownText'],
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-gray-100 first:rounded-t-xl last:rounded-b-xl flex justify-between items-center"
                     >
-                      <span>{lang.name} <span className="text-gray-500 text-sm">({lang.englishName})</span></span>
+                      <span>
+                        {lang.name}{' '}
+                        <span className="text-gray-500 text-sm">
+                          ({lang.englishName})
+                        </span>
+                      </span>
                       {selectedLanguage.code === lang.code && (
                         <span className="text-[#0848ca]">✓</span>
                       )}
@@ -405,7 +414,7 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
               )}
             </div>
           )}
-          
+
           <div style={fontStyle} className="relative">
             <button
               style={{
@@ -713,12 +722,22 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
             Report a Problem
           </button>
         </div>
-        <LogoIcon
-          style={{
-            ...fontStyle,
-            color: colors['footerText'],
-          }}
-        />
+
+        {organization?.logo_url ? (
+          <img
+            width={198}
+            height={47}
+            src={organization.logo_url}
+            alt={organization.name}
+          />
+        ) : (
+          <LogoIcon
+            style={{
+              ...fontStyle,
+              color: colors['footerText'],
+            }}
+          />
+        )}
       </footer>
     </div>
   );

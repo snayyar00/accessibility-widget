@@ -1,16 +1,16 @@
-import Validator, { ValidationError } from 'fastest-validator';
+import Validator, { ValidationError } from 'fastest-validator'
+
+import { getMatchingFrontendUrl } from '../utils/env.utils'
+import { logger } from '../utils/logger'
 
 type ApplyRetentionDiscountInfo = {
-  domainId: string | number;
-  status: string;
-};
+  domainId: string | number
+  status: string
+}
 
+export function validateApplyRetentionDiscount(data: ApplyRetentionDiscountInfo): true | ValidationError[] | Promise<true | ValidationError[]> {
+  const validator = new Validator()
 
-export function validateApplyRetentionDiscount(
-  data: ApplyRetentionDiscountInfo
-): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator();
-  
   const schema = {
     domainId: [
       { type: 'number', integer: true, positive: true },
@@ -23,24 +23,21 @@ export function validateApplyRetentionDiscount(
       max: 32,
       enum: ['Trial', 'Trial Expired', 'Active', 'Canceled', 'Life Time'],
     },
-  };
+  }
 
-  return validator.validate(data, schema);
+  return validator.validate(data, schema)
 }
 
-
 type CancelSiteSubscriptionInfo = {
-  domainId: string | number;
-  domainUrl: string;
-  status: string;
-  cancelReason?: string;
-  otherReason?: string;
-};
+  domainId: string | number
+  domainUrl: string
+  status: string
+  cancelReason?: string
+  otherReason?: string
+}
 
-export function validateCancelSiteSubscription(
-  data: CancelSiteSubscriptionInfo
-): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator();
+export function validateCancelSiteSubscription(data: CancelSiteSubscriptionInfo): true | ValidationError[] | Promise<true | ValidationError[]> {
+  const validator = new Validator()
   const schema = {
     domainId: [
       { type: 'number', integer: true, positive: true },
@@ -50,24 +47,21 @@ export function validateCancelSiteSubscription(
     status: { type: 'string', empty: false, min: 2, max: 32 },
     cancelReason: { type: 'string', optional: true, max: 128 },
     otherReason: { type: 'string', optional: true, max: 256 },
-  };
-  return validator.validate(data, schema);
+  }
+  return validator.validate(data, schema)
 }
 
-
 type CreateSubscriptionInfo = {
-  planName: string;
-  billingInterval: 'MONTHLY' | 'YEARLY';
-  domainId: string | number;
-  domainUrl: string;
-  cardTrial?: boolean;
-  promoCode?: string[];
-};
+  planName: string
+  billingInterval: 'MONTHLY' | 'YEARLY'
+  domainId: string | number
+  domainUrl: string
+  cardTrial?: boolean
+  promoCode?: string[]
+}
 
-export function validateCreateSubscription(
-  data: CreateSubscriptionInfo
-): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator();
+export function validateCreateSubscription(data: CreateSubscriptionInfo): true | ValidationError[] | Promise<true | ValidationError[]> {
+  const validator = new Validator()
 
   const schema = {
     planName: { type: 'string', empty: false, min: 1, max: 100 },
@@ -87,25 +81,23 @@ export function validateCreateSubscription(
       optional: true,
       max: 10,
     },
-  };
+  }
 
-  return validator.validate(data, schema);
+  return validator.validate(data, schema)
 }
 
 type CreateCheckoutSessionInfo = {
-  planName: string;
-  billingInterval: 'MONTHLY' | 'YEARLY';
-  returnUrl: string;
-  domainId: string | number;
-  domain: string;
-  cardTrial?: boolean;
-  promoCode?: string[];
-};
+  planName: string
+  billingInterval: 'MONTHLY' | 'YEARLY'
+  returnUrl: string
+  domainId: string | number
+  domain: string
+  cardTrial?: boolean
+  promoCode?: string[]
+}
 
-export function validateCreateCheckoutSession(
-  data: CreateCheckoutSessionInfo
-): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator();
+export function validateCreateCheckoutSession(data: CreateCheckoutSessionInfo): true | ValidationError[] | Promise<true | ValidationError[]> {
+  const validator = new Validator()
 
   const schema = {
     planName: { type: 'string', empty: false, min: 1, max: 100 },
@@ -126,20 +118,17 @@ export function validateCreateCheckoutSession(
       optional: true,
       max: 10,
     },
-  };
+  }
 
-  return validator.validate(data, schema);
+  return validator.validate(data, schema)
 }
 
-
 type ValidateCouponInfo = {
-  couponCode: string;
-};
+  couponCode: string
+}
 
-export function validateCouponValidation(
-  data: ValidateCouponInfo
-): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator();
+export function validateCouponValidation(data: ValidateCouponInfo): true | ValidationError[] | Promise<true | ValidationError[]> {
+  const validator = new Validator()
   const schema = {
     couponCode: {
       type: 'string',
@@ -148,18 +137,16 @@ export function validateCouponValidation(
       max: 32,
       trim: true,
     },
-  };
-  return validator.validate(data, schema);
+  }
+  return validator.validate(data, schema)
 }
 
 type BillingPortalSessionInfo = {
-  returnURL: string;
-};
+  returnURL: string
+}
 
-export function billingPortalSessionValidation(
-  data: BillingPortalSessionInfo
-): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator();
+export function billingPortalSessionValidation(data: BillingPortalSessionInfo): true | ValidationError[] | Promise<true | ValidationError[]> {
+  const validator = new Validator()
 
   const schema = {
     returnURL: {
@@ -169,18 +156,16 @@ export function billingPortalSessionValidation(
       max: 300,
       custom: validateURL,
     },
-  };
-  return validator.validate(data, schema);
+  }
+  return validator.validate(data, schema)
 }
 
 type CreateCustomerPortalSessionInfo = {
-  returnURL: string;
-};
+  returnURL: string
+}
 
-export function createCustomerPortalSessionValidation(
-  data: CreateCustomerPortalSessionInfo
-): true | ValidationError[] | Promise<true | ValidationError[]> {
-  const validator = new Validator();
+export function createCustomerPortalSessionValidation(data: CreateCustomerPortalSessionInfo): true | ValidationError[] | Promise<true | ValidationError[]> {
+  const validator = new Validator()
 
   const schema = {
     returnURL: {
@@ -190,24 +175,31 @@ export function createCustomerPortalSessionValidation(
       max: 300,
       custom: validateURL,
     },
-  };
-  return validator.validate(data, schema);
+  }
+  return validator.validate(data, schema)
 }
 
 function validateURL(value: string) {
   try {
-    const frontendUrl = process.env.FRONTEND_URL;
+    const frontendUrl = process.env.FRONTEND_URL
 
     if (!frontendUrl) {
-      return [{ type: 'url', message: 'FRONTEND_URL is not configured on the server' }];
+      return [{ type: 'url', message: 'FRONTEND_URL is not configured on the server' }]
     }
 
-    if (!value.startsWith(frontendUrl)) {
-      return [{ type: 'url', message: 'Invalid return URL (not allowed)' }];
+    const currentUrl = getMatchingFrontendUrl(value)
+
+    logger.info('Return URL:', value)
+    logger.info('Current URL:', currentUrl)
+
+    if (!currentUrl) {
+      logger.error('Provided domain is not in the list of allowed frontend URLs')
+
+      return [{ type: 'url', message: 'Invalid return URL (not allowed)' }]
     }
 
-    return true;
-  } catch (e) {
-    return [{ type: 'url', message: 'Invalid return URL' }];
+    return true
+  } catch {
+    return [{ type: 'url', message: 'Invalid return URL' }]
   }
 }

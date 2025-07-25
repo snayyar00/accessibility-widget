@@ -1,27 +1,28 @@
-import pkg, { Algorithm } from 'jsonwebtoken';
+import jwt, { Algorithm, JwtPayload, SignOptions } from 'jsonwebtoken'
 
 type Payload = {
-  email?: string;
-  name?: string;
-  createdAt?: string;
-};
+  email?: string
+  name?: string
+  createdAt?: string
+}
 
-const { sign: jwtSign, verify: jwtVerify } = pkg;
+const expiresInEnv = process.env.JWT_EXPIRESIN
+const expiresIn = expiresInEnv && !isNaN(Number(expiresInEnv)) ? Number(expiresInEnv) : expiresInEnv
 
-const signOptions = {
+const signOptions: SignOptions = {
   issuer: process.env.JWT_ISSUER,
   subject: process.env.JWT_SUBJECT,
   audience: process.env.JWT_AUDIENCE,
-  expiresIn: process.env.JWT_EXPIRESIN,
+  expiresIn: expiresIn as SignOptions['expiresIn'],
   algorithm: process.env.JWT_ALGORITHM as Algorithm,
-};
+}
 
 function sign(payload: Payload): string {
-  return jwtSign({ user: payload }, process.env.JWT_SECRET, signOptions);
+  return jwt.sign({ user: payload }, process.env.JWT_SECRET as string, signOptions)
 }
 
-function verify(token: string): string | pkg.JwtPayload {
-  return jwtVerify(token, process.env.JWT_SECRET, signOptions);
+function verify(token: string): string | JwtPayload {
+  return jwt.verify(token, process.env.JWT_SECRET as string)
 }
 
-export { sign, verify };
+export { sign, verify }

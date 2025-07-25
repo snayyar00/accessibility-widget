@@ -1,9 +1,9 @@
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs'
 
 export default function formatDateDB(date: string | Dayjs = null): string {
-  let dateFormat = dayjs();
+  let dateFormat = dayjs()
   if (date) {
-    dateFormat = dayjs(date);
+    dateFormat = dayjs(date)
   }
-  return dateFormat.format('YYYY-MM-DD HH:mm:ss');
+  return dateFormat.format('YYYY-MM-DD HH:mm:ss')
 }

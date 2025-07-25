@@ -1,10 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express'
 
 export function requireJsonContent(req: Request, res: Response, next: NextFunction) {
-    
   if (req.is('application/json')) {
-    return next();
+    return next()
   }
 
-  res.status(415).json({ error: 'Unsupported Media Type. Use application/json.' });
+  res.status(415).json({ error: 'Unsupported Media Type. Use application/json.' })
 }

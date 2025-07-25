@@ -1,6 +1,4 @@
-import { gql } from 'apollo-server-express';
-
-export const TranslationSchema = gql`
+export const TranslationSchema = `#graphql
   type TranslationResponse {
     success: Boolean!
     translatedContent: String
@@ -9,11 +7,6 @@ export const TranslationSchema = gql`
   }
 
   extend type Mutation {
-    translateStatement(
-      content: String!
-      targetLanguage: String!
-      languageCode: String!
-      context: String
-    ): TranslationResponse! @rateLimit(limit: 5, duration: 60, message: "Too many translateStatement requests. Please try again later.")
+    translateStatement(content: String!, targetLanguage: String!, languageCode: String!, context: String): TranslationResponse! @rateLimit(limit: 5, duration: 60, message: "Too many translateStatement requests. Please try again later.")
   }
-`;
+`

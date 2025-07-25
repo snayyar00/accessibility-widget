@@ -1,8 +1,7 @@
-import axios from 'axios';
+import axios from 'axios'
 interface Issue {
-  [key: string]: any;
+  [key: string]: any
 }
-
 
 export const LANGUAGES = {
   // en: { code: 'en', name: 'English', nativeName: 'English' },
@@ -26,42 +25,39 @@ export const LANGUAGES = {
   // th: { code: 'th', name: 'Thai', nativeName: 'ไทย' },
   // vi: { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
   // tr: { code: 'tr', name: 'Turkish', nativeName: 'Türkçe' }
+} as const
 
-} as const;
-
-export type LanguageCode = keyof typeof LANGUAGES;
+export type LanguageCode = keyof typeof LANGUAGES
 
 export const translateText = async (issues: Issue[], toLang: string = 'en'): Promise<Issue[]> => {
   if (!toLang || toLang.toLowerCase() === 'en') {
-    return issues;
+    return issues
   }
 
   try {
-    const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/translate`, {
-      issues,
-      toLang,
-    }, {
-        withCredentials: true
-      });
+    const response = await axios.post(
+      `${process.env.REACT_APP_BACKEND_URL}/translate`,
+      {
+        issues,
+        toLang,
+      },
+      {
+        withCredentials: true,
+      },
+    )
 
-    return response.data;
+    return response.data
   } catch (err: any) {
-    console.error('Translation failed:', err?.response?.data || err.message);
-    return issues;
+    console.error('Translation failed:', err?.response?.data || err.message)
+    return issues
   }
-};
+}
 
-
-
-
-export const translateSingleText = async (
-  text: string,
-  toLang: string = 'en'
-): Promise<string> => {
-  if (!text) return '';
+export const translateSingleText = async (text: string, toLang: string = 'en'): Promise<string> => {
+  if (!text) return ''
 
   if (!toLang || toLang.toLowerCase() === 'en') {
-    return text;
+    return text
   }
 
   try {
@@ -72,24 +68,21 @@ export const translateSingleText = async (
         toLang,
       },
       {
-        withCredentials: true
-      }
-    );
+        withCredentials: true,
+      },
+    )
     // The backend returns an array of issues, so we extract the translated 'code' field
-    return response.data?.[0]?.code || text;
+    return response.data?.[0]?.code || text
   } catch (error: any) {
-    console.error('Translation error:', error?.response?.data || error.message);
-    return text; // return original text as fallback
+    console.error('Translation error:', error?.response?.data || error.message)
+    return text // return original text as fallback
   }
-};
+}
 
-export const translateMultipleTexts = async (
-  texts: string[],
-  toLang: string = 'en'
-): Promise<string[]> => {
-  if (!Array.isArray(texts) || texts.length === 0) return [];
+export const translateMultipleTexts = async (texts: string[], toLang: string = 'en'): Promise<string[]> => {
+  if (!Array.isArray(texts) || texts.length === 0) return []
   if (!toLang || toLang.toLowerCase() === 'en') {
-    return texts;
+    return texts
   }
 
   // console.log("I am called 1st ", texts);
@@ -98,28 +91,26 @@ export const translateMultipleTexts = async (
     const response = await axios.post(
       `${process.env.REACT_APP_BACKEND_URL}/translate-text`,
       {
-        issues: texts.map(text => ({ code: text })),
+        issues: texts.map((text) => ({ code: text })),
         toLang,
       },
       {
-        withCredentials: true
-      }
-    );
+        withCredentials: true,
+      },
+    )
 
     // console.log("I am called 2nd ", texts);
 
     if (Array.isArray(response.data)) {
-      return response.data.map((item: any, idx: number) =>
-        typeof item?.code === 'string' ? item.code : texts[idx]
-      );
+      return response.data.map((item: any, idx: number) => (typeof item?.code === 'string' ? item.code : texts[idx]))
     }
 
-    return texts;
+    return texts
   } catch (error: any) {
-    console.error('Translation error:', error?.response?.data || error.message);
-    return texts;
+    console.error('Translation error:', error?.response?.data || error.message)
+    return texts
   }
-};
+}
 
 /**
  * Removes duplicate issues by message, keeping the one with the most contexts.
@@ -127,22 +118,22 @@ export const translateMultipleTexts = async (
  * @returns Filtered array of issues.
  */
 export function deduplicateIssuesByMessage(issues: Issue[]): Issue[] {
-  const messageMap = new Map<string, Issue>();
+  const messageMap = new Map<string, Issue>()
 
   for (const issue of issues) {
-    const msg = issue.message;
-    const contextCount = Array.isArray(issue.contexts) ? issue.contexts.length : 0;
+    const msg = issue.message
+    const contextCount = Array.isArray(issue.contexts) ? issue.contexts.length : 0
 
     if (!messageMap.has(msg)) {
-      messageMap.set(msg, issue);
+      messageMap.set(msg, issue)
     } else {
-      const existing = messageMap.get(msg)!;
-      const existingContextCount = Array.isArray(existing.contexts) ? existing.contexts.length : 0;
+      const existing = messageMap.get(msg)!
+      const existingContextCount = Array.isArray(existing.contexts) ? existing.contexts.length : 0
       if (contextCount > existingContextCount) {
-        messageMap.set(msg, issue);
+        messageMap.set(msg, issue)
       }
     }
   }
 
-  return Array.from(messageMap.values());
+  return Array.from(messageMap.values())
 }
