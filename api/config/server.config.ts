@@ -10,7 +10,7 @@ export const ALLOWED_OPERATIONS = ['validateToken', 'addImpressionsURL', 'regist
 
 export const configureServer = (app: Express): void => {
   if (IS_PROD) {
-    // For Cloudflare
-    app.set('trust proxy', true)
+    app.set('trust proxy', true) // For Cloudflare
+    app.disable('x-powered-by')
   }
 }
