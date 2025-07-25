@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { ApolloProvider } from '@apollo/client';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
@@ -14,10 +14,10 @@ import 'react-toastify/dist/ReactToastify.css';
 import ReportSuccessModal from '@/components/Common/ReportSuccessModal';
 import GlobalReportPolling from '@/components/Common/GlobalReportPolling';
 import AuthRedirect from '@/containers/Auth/AuthRedirect';
+import { GlobalLoader } from '@/containers/Root/GlobalLoader';
+import { useFavicon } from '@/hooks/useFavicon';
 import ReportView from './containers/Accessibility/ReportView';
 import { RootState } from './config/store';
-import { GlobalLoader } from '@/containers/Root/GlobalLoader';
-import { useFavicon } from '@uidotdev/usehooks';
 
 type props = {
   options: string[];
@@ -30,11 +30,11 @@ const App: React.FC<props> = ({ options }) => {
     (state: RootState) => state.report,
   );
 
-  const [favicon, setFavicon] = useState(
-    'https://ui.dev/favicon/favicon-32x32.png',
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
   );
 
-  useFavicon(favicon);
+  useFavicon(organization?.favicon || null);
 
   useEffect(() => {
     if (error) {
