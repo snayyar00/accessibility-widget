@@ -1,14 +1,22 @@
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import { comparePassword, generatePassword } from '../../helpers/hashing.helper'
+import { sign } from '../../helpers/jwt.helper'
 import { findUser, updateUser } from '../../repository/user.repository'
 import { ApolloError, UserInputError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { changePasswordValidation } from '../../validations/authenticate.validation'
 import { sendMail } from '../email/email.service'
 
-export async function changePasswordUser(userId: number, currentPassword: string, newPassword: string): Promise<true | ApolloError> {
+dayjs.extend(utc)
+
+export type ChangePasswordResponse = {
+  token: string
+}
+
+export async function changePasswordUser(userId: number, currentPassword: string, newPassword: string): Promise<ChangePasswordResponse | ApolloError> {
   try {
     const user = await findUser({ id: userId })
 
@@ -31,7 +39,9 @@ export async function changePasswordUser(userId: number, currentPassword: string
     }
 
     const passwordHashed = await generatePassword(newPassword)
-    await updateUser(user.id, { password: passwordHashed })
+    await updateUser(user.id, { password: passwordHashed, password_changed_at: dayjs().utc().format('YYYY-MM-DD HH:mm:ss') })
+
+    const newToken = sign({ email: user.email, name: user.name })
 
     const template = await compileEmailTemplate({
       fileName: 'changePassword.mjml',
@@ -42,7 +52,7 @@ export async function changePasswordUser(userId: number, currentPassword: string
     })
 
     await sendMail(user.email, 'Change Password from WebAbility', template)
-    return true
+    return { token: newToken }
   } catch (error) {
     logger.error(error)
     throw new ApolloError(error)

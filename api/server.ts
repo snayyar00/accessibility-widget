@@ -1,7 +1,4 @@
-import dotenv from 'dotenv'
-
-dotenv.config({ quiet: true })
-
+import 'dotenv/config'
 import './utils/logger'
 
 import { expressMiddleware } from '@as-integrations/express5'

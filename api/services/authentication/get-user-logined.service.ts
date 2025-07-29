@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 import { verify } from '../../helpers/jwt.helper'
 import { findUser } from '../../repository/user.repository'
 
@@ -18,8 +20,13 @@ export default async function getUserLogined(bearerToken: string | null): Promis
       const verifyToken = verify(bearerToken)
 
       if (typeof verifyToken === 'object') {
-        const { user } = verifyToken
+        const { user, iat } = verifyToken
+
         const userInfo = await findUser({ email: user.email })
+
+        if (userInfo.password_changed_at && iat && iat * 1000 < dayjs.utc(userInfo.password_changed_at).valueOf()) {
+          return null
+        }
 
         return {
           id: userInfo.id,

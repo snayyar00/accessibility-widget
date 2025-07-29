@@ -24,6 +24,10 @@ export const UserSchema = `#graphql
     hasOrganization: Boolean!
   }
 
+  type ChangePasswordPayload {
+    token: String!
+  }
+
   type RegisterPayload {
     token: String!
   }
@@ -52,7 +56,7 @@ export const UserSchema = `#graphql
 
     forgotPassword(email: String!): Boolean! @rateLimit(limit: 3, duration: 3600, message: "Too many password reset requests. Please try again later.")
 
-    changePassword(currentPassword: String!, newPassword: String!): Boolean! @rateLimit(limit: 5, duration: 3600, message: "Too many password change attempts. Please try again later.")
+    changePassword(currentPassword: String!, newPassword: String!): ChangePasswordPayload! @rateLimit(limit: 5, duration: 3600, message: "Too many password change attempts. Please try again later.")
 
     resetPassword(token: String!, password: String!, confirmPassword: String!): Boolean! @rateLimit(limit: 5, duration: 3600, message: "Too many password reset attempts. Please try again later.")
 

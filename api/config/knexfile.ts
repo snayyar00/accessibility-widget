@@ -1,24 +1,6 @@
-type Config = {
-  client: string
-  connection: {
-    database: string
-    host: string
-    user: string
-    password: string
-    port: number
-  }
-  migrations: {
-    tableName: string
-    directory: string
-    loadExtensions: string[]
-  }
-  seeds: {
-    directory: string
-    recursive: boolean
-  }
-}
+import type { Knex } from 'knex'
 
-const knexConfig = (database: string, host: string, user: string, password: string, port: number): Config => ({
+const knexConfig = (database: string, host: string, user: string, password: string, port: number): Knex.Config => ({
   client: 'mysql2',
   connection: {
     database: database || process.env.DATABASE_NAME,
@@ -26,6 +8,14 @@ const knexConfig = (database: string, host: string, user: string, password: stri
     user: user || process.env.DATABASE_USER,
     password: password || process.env.DATABASE_PASSWORD,
     port: port || Number(process.env.DATABASE_PORT),
+
+    typeCast: function (field: any, next: any) {
+      if (field.type === 'TIMESTAMP' && field.table === 'users' && field.name === 'password_changed_at') {
+        return field.string()
+      }
+
+      return next()
+    },
   },
   migrations: {
     tableName: 'migrations',
