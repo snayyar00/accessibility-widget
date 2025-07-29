@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 import database from '../../config/database.config'
 import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { generatePassword } from '../../helpers/hashing.helper'
@@ -52,6 +54,7 @@ async function registerUser(email: string, password: string, name: string, organ
         email,
         password: passwordHashed,
         name,
+        password_changed_at: dayjs().format('YYYY-MM-DD HH:mm:ss'),
       }
 
       const newUserId = await createUser(userData, trx)

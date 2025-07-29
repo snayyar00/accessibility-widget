@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 import { generatePassword } from '../../helpers/hashing.helper'
 import { unlockAccount } from '../../repository/failed_login_attempts.repository'
 import { updateUser } from '../../repository/user.repository'
@@ -56,7 +58,7 @@ export async function resetPasswordUser(token: string, password: string, confirm
     }
 
     const [newPassword] = await Promise.all([generatePassword(password), removeUserToken(session.id)])
-    await updateUser(session.user_id, { password: newPassword })
+    await updateUser(session.user_id, { password: newPassword, password_changed_at: dayjs().format('YYYY-MM-DD HH:mm:ss') })
 
     await unlockAccount(session.user_id)
 

@@ -18,8 +18,13 @@ export default async function getUserLogined(bearerToken: string | null): Promis
       const verifyToken = verify(bearerToken)
 
       if (typeof verifyToken === 'object') {
-        const { user } = verifyToken
+        const { user, iat } = verifyToken
+
         const userInfo = await findUser({ email: user.email })
+
+        if (userInfo.password_changed_at && iat && iat * 1000 < new Date(userInfo.password_changed_at).getTime()) {
+          return null
+        }
 
         return {
           id: userInfo.id,
