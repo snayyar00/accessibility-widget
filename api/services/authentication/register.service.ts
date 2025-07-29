@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 
 import database from '../../config/database.config'
 import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
@@ -12,6 +13,8 @@ import { sanitizeUserInput } from '../../utils/sanitization.helper'
 import { createMultipleValidationErrors, createValidationError, getValidationErrorCode } from '../../utils/validation-errors.helper'
 import { registerValidation } from '../../validations/authenticate.validation'
 import { addUserToOrganization } from '../organization/organization_users.service'
+
+dayjs.extend(utc)
 
 type RegisterResponse = {
   token: string
@@ -54,7 +57,7 @@ async function registerUser(email: string, password: string, name: string, organ
         email,
         password: passwordHashed,
         name,
-        password_changed_at: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        password_changed_at: dayjs().utc().format('YYYY-MM-DD HH:mm:ss'),
       }
 
       const newUserId = await createUser(userData, trx)

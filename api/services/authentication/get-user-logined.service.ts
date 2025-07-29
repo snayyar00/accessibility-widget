@@ -24,7 +24,7 @@ export default async function getUserLogined(bearerToken: string | null): Promis
 
         const userInfo = await findUser({ email: user.email })
 
-        if (userInfo.password_changed_at && iat && iat * 1000 < dayjs(userInfo.password_changed_at).valueOf()) {
+        if (userInfo.password_changed_at && iat && iat * 1000 < dayjs.utc(userInfo.password_changed_at).valueOf()) {
           return null
         }
 
