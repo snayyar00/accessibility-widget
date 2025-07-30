@@ -98,11 +98,23 @@ const Sidebar = ({
     }
   };
 
-  const organizations = organizationsData?.getUserOrganizations || [];
+  const allOrganizations = organizationsData?.getUserOrganizations || [];
+
+  const filteredOrganizatioons = IS_LOCAL
+    ? allOrganizations
+    : allOrganizations.filter(
+        (org) =>
+          org.domain &&
+          !org.domain.includes('sslip.io') &&
+          !org.domain.includes('localhost'),
+      );
+
   const currentOrganization = userData?.currentOrganization || null;
 
   const showOrganizationsSelect =
-    !!organizations.length && currentOrganization && userData.isAdminOrOwner;
+    !!filteredOrganizatioons.length &&
+    currentOrganization &&
+    userData.isAdminOrOwner;
 
   return (
     <>
@@ -145,7 +157,7 @@ const Sidebar = ({
                   onChange={handleChange}
                   className="[&>fieldset>legend>span]:hidden"
                 >
-                  {organizations.map(({ id, domain }) => (
+                  {filteredOrganizatioons.map(({ id, domain }) => (
                     <MenuItem key={id} value={id}>
                       {domain}
                     </MenuItem>
