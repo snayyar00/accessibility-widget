@@ -34,12 +34,16 @@ const Sidebar = ({
 
   const { isOpen } = useSelector((state: RootState) => state.sidebar);
 
+  const { data: userData } = useSelector((state: RootState) => state.user);
   const organization = useSelector(
     (state: RootState) => state.organization.data,
   );
 
-  const { data: userData } = useSelector((state: RootState) => state.user);
-  const { data: organizationsData } = useQuery<Query>(GET_USER_ORGANIZATIONS);
+  const skipOrganizationsQuery = !userData || !userData.id;
+
+  const { data: organizationsData } = useQuery<Query>(GET_USER_ORGANIZATIONS, {
+    skip: skipOrganizationsQuery,
+  });
 
   function closeSidebar() {
     dispatch(toggleSidebar(false));
