@@ -20,6 +20,15 @@ export default gql`
         created_at
         updated_at
       }
+      currentOrganizationUser {
+        id
+        user_id
+        organization_id
+        role
+        status
+        created_at
+        updated_at
+      }
     }
   }
 `;

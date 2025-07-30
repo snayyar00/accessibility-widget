@@ -1,3 +1,5 @@
+import { Organization, OrganizationUser } from '@/generated/graphql';
+import { isAdminOrOwner } from '@/helpers/organizationRole';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 type Profile = {
@@ -9,22 +11,25 @@ type Profile = {
   company?: string;
   name?: string;
   invitationToken?: string;
-}
+  currentOrganization?: Organization | null;
+  currentOrganizationUser?: OrganizationUser | null;
+  isAdminOrOwner?: boolean;
+};
 
 type Error = {
-  error: string | null
-}
+  error: string | null;
+};
 
 type ProfileUser = {
   data: Profile;
   loading: boolean;
-}
+};
 
 type State = {
   data: Profile;
   error: Error['error'];
   loading: boolean;
-}
+};
 
 const initialState: State = {
   data: {},
@@ -42,7 +47,14 @@ const user = createSlice({
     setProfileUser(state: State, action: PayloadAction<ProfileUser>) {
       const { data, loading } = action.payload;
       const dataUser = data || {};
-      state.data = {...state.data, ...dataUser};
+      const organizationUser = dataUser?.currentOrganizationUser || null;
+
+      state.data = {
+        ...state.data,
+        ...dataUser,
+        isAdminOrOwner: isAdminOrOwner(organizationUser),
+      };
+
       state.loading = loading;
     },
     toggleToastError(state: State, action: PayloadAction<Error>) {

@@ -12,6 +12,7 @@ import { getOrganizationById } from '../../services/organization/organization.se
 import { getUserOrganization } from '../../services/organization/organization_users.service'
 import { deleteUser } from '../../services/user/delete-user.service'
 import { getUserNotificationSettingsService, updateProfile, updateUserNotificationSettings } from '../../services/user/update-user.service'
+import { changeCurrentOrganization } from '../../services/user/update-user.service'
 import { isEmailAlreadyRegistered } from '../../services/user/user.service'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
@@ -112,6 +113,10 @@ const resolvers = {
       })
 
       return result.success
+    }),
+
+    changeCurrentOrganization: combineResolvers(allowedOrganization, isAuthenticated, async (_, { organizationId }, { user }) => {
+      return await changeCurrentOrganization(user, organizationId)
     }),
   },
 }
