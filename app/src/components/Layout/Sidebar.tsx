@@ -51,6 +51,24 @@ const Sidebar = ({
 
   const [getProfile] = useLazyQuery(getProfileQuery);
 
+  const allOrganizations = organizationsData?.getUserOrganizations || [];
+
+  const filteredOrganizatioons = IS_LOCAL
+    ? allOrganizations
+    : allOrganizations.filter(
+        (org) =>
+          org.domain &&
+          !org.domain.includes('sslip.io') &&
+          !org.domain.includes('localhost'),
+      );
+
+  const currentOrganization = userData?.currentOrganization || null;
+
+  const showOrganizationsSelect =
+    !!filteredOrganizatioons.length &&
+    currentOrganization &&
+    userData.isAdminOrOwner;
+
   const handleChange = async (event: SelectChangeEvent) => {
     const newOrgId = Number(event.target.value);
 
@@ -65,7 +83,7 @@ const Sidebar = ({
       }
 
       if (!IS_LOCAL) {
-        const targetOrganization = organizations.find(
+        const targetOrganization = filteredOrganizatioons.find(
           (org) => Number(org.id) === newOrgId,
         );
 
@@ -97,24 +115,6 @@ const Sidebar = ({
       toast.error('Failed to change organization. Please try again.');
     }
   };
-
-  const allOrganizations = organizationsData?.getUserOrganizations || [];
-
-  const filteredOrganizatioons = IS_LOCAL
-    ? allOrganizations
-    : allOrganizations.filter(
-        (org) =>
-          org.domain &&
-          !org.domain.includes('sslip.io') &&
-          !org.domain.includes('localhost'),
-      );
-
-  const currentOrganization = userData?.currentOrganization || null;
-
-  const showOrganizationsSelect =
-    !!filteredOrganizatioons.length &&
-    currentOrganization &&
-    userData.isAdminOrOwner;
 
   return (
     <>
