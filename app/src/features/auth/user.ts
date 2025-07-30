@@ -11,6 +11,7 @@ type Profile = {
   company?: string;
   name?: string;
   invitationToken?: string;
+  current_organization_id?: number | null;
   currentOrganization?: Organization | null;
   currentOrganizationUser?: OrganizationUser | null;
   isAdminOrOwner?: boolean;

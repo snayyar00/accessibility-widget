@@ -11,6 +11,7 @@ export default gql`
       position
       avatarUrl
       invitationToken
+      current_organization_id
       currentOrganization {
         id
         name

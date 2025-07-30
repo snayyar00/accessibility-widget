@@ -9,20 +9,8 @@ import routes from '@/routes';
 import Dropdown from '@/containers/Dashboard/DropDown';
 import { GoGear } from 'react-icons/go';
 import { GrInstallOption } from 'react-icons/gr';
-import { useQuery } from '@apollo/client';
-import { Query } from '@/generated/graphql';
-import GET_USER_ORGANIZATIONS from '@/queries/organization/getUserOrganizations';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import { useMutation } from '@apollo/client';
-import CHANGE_CURRENT_ORGANIZATION from '@/queries/user/changeCurrentOrganization';
-import { toast } from 'react-toastify';
-import { useLazyQuery } from '@apollo/client';
-import getProfileQuery from '@/queries/auth/getProfile';
-import { IS_LOCAL } from '@/config/env';
-import { setProfileUser } from '@/features/auth/user';
-import { redirectToUserOrganization } from '@/helpers/redirectToOrganization';
+import OrganizationsSelect from '@/containers/Dashboard/OrganizationsSelect';
+import { UserIcon } from 'lucide-react';
 
 const Sidebar = ({
   options,
@@ -39,86 +27,9 @@ const Sidebar = ({
     (state: RootState) => state.organization.data,
   );
 
-  const skipOrganizationsQuery = !userData || !userData.id;
-
-  const { data: organizationsData } = useQuery<Query>(GET_USER_ORGANIZATIONS, {
-    skip: skipOrganizationsQuery,
-  });
-
   function closeSidebar() {
     dispatch(toggleSidebar(false));
   }
-
-  const [changeCurrentOrganizationMutation] = useMutation(
-    CHANGE_CURRENT_ORGANIZATION,
-  );
-
-  const [getProfile] = useLazyQuery(getProfileQuery);
-
-  const allOrganizations = organizationsData?.getUserOrganizations || [];
-
-  const filteredOrganizatioons = IS_LOCAL
-    ? allOrganizations
-    : allOrganizations.filter(
-        (org) =>
-          org.domain &&
-          !org.domain.includes('sslip.io') &&
-          !org.domain.includes('localhost'),
-      );
-
-  const currentOrganization = userData?.currentOrganization || null;
-
-  const showOrganizationsSelect =
-    !!filteredOrganizatioons.length &&
-    currentOrganization &&
-    userData.isAdminOrOwner;
-
-  const handleChange = async (event: SelectChangeEvent) => {
-    const newOrgId = Number(event.target.value);
-
-    try {
-      const { data } = await changeCurrentOrganizationMutation({
-        variables: { organizationId: newOrgId },
-      });
-
-      if (!data) {
-        toast.error('Failed to change organization. Please try again.');
-        return;
-      }
-
-      if (!IS_LOCAL) {
-        const targetOrganization = filteredOrganizatioons.find(
-          (org) => Number(org.id) === newOrgId,
-        );
-
-        if (targetOrganization?.domain) {
-          const redirected = redirectToUserOrganization(
-            targetOrganization.domain,
-          );
-
-          if (redirected) return;
-        }
-      }
-
-      const profileResult = await getProfile();
-      const profileUser = profileResult?.data?.profileUser;
-
-      if (profileUser) {
-        dispatch(
-          setProfileUser({
-            data: profileUser,
-            loading: false,
-          }),
-        );
-
-        toast.success('Organization changed successfully!');
-      } else {
-        toast.error('Failed to update user profile after organization change.');
-      }
-    } catch (error) {
-      toast.error('Failed to change organization. Please try again.');
-    }
-  };
 
   return (
     <>
@@ -152,23 +63,7 @@ const Sidebar = ({
 
         <div className="flex-grow min-w-[250px] sm:w-[20%] md:w-[18%] lg:w-[15%] transition-all duration-300">
           <div className="px-3 py-5 space-y-3 max-w-full">
-            {showOrganizationsSelect && (
-              <FormControl fullWidth>
-                <Select
-                  size="small"
-                  value={currentOrganization.id}
-                  label={currentOrganization.domain}
-                  onChange={handleChange}
-                  className="[&>fieldset>legend>span]:hidden"
-                >
-                  {filteredOrganizatioons.map(({ id, domain }) => (
-                    <MenuItem key={id} value={id}>
-                      {domain}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
+            <OrganizationsSelect />
 
             <Dropdown
               data={options}
@@ -284,6 +179,28 @@ const Sidebar = ({
                   </NavLink>
                 </li>
               ))}
+
+            {userData.isAdminOrOwner && (
+              <li key="/users" className="h-[60px] flex items-center">
+                <NavLink
+                  to="/users"
+                  activeClassName="active"
+                  onClick={closeSidebar}
+                  className="w-full h-full flex items-center px-2 border-l-2 border-transparent [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200 [&.active>.menu-icon>svg_*[fill]]:fill-primary [&.active>.menu-icon>svg_*[stroke]]:stroke-primary"
+                >
+                  <div className="menu-icon flex items-center justify-center w-12 h-6">
+                    <UserIcon
+                      className="menu-icon text-white-blue transition-colors duration-200"
+                      size={25}
+                      aria-label="User navigation icon"
+                    />
+                  </div>
+                  <span className="menu-text text-lg text-white-blue ml-4">
+                    Users
+                  </span>
+                </NavLink>
+              </li>
+            )}
           </ul>
         </div>
       </div>
