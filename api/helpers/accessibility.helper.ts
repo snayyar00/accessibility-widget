@@ -128,10 +128,10 @@ export async function getAccessibilityInformationPally(domain: string) {
     totalElements: 0,
   }
 
-  const apiUrl = `${process.env.PA11Y_SERVER_URL}/test`
+  const apiUrl = `${process.env.Scanner_SERVER_URL}/scan`
   let results
   try {
-    console.log('Using pally API')
+    console.log('Using scanner API')
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -158,7 +158,7 @@ export async function getAccessibilityInformationPally(domain: string) {
     }
   } catch (error) {
     console.error('pally API Error', error)
-    const apiUrl2 = `${process.env.FALLBACK_PA11Y_SERVER_URL}/scan`
+    const apiUrl2 = `${process.env.FALLBACK_PA11Y_SERVER_URL}/test`
     try {
       console.log('Using fallback pally API')
       const response = await fetch(apiUrl2, {
