@@ -1,0 +1,165 @@
+<mjml>
+  <mj-head>
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+    <mj-attributes>
+      <mj-all font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif" />
+      <mj-text font-size="16px" line-height="1.6" color="#374151" />
+      <mj-button font-weight="600" border-radius="8px" />
+    </mj-attributes>
+    <mj-style>
+      .header-logo { max-width: 150px !important; }
+      .welcome-title { font-size: 28px !important; font-weight: 700 !important; color: #1f2937 !important; line-height: 1.2 !important; }
+      .section-title { font-size: 22px !important; font-weight: 600 !important; color: #1f2937 !important; margin-bottom: 16px !important; }
+      .tip-card { background-color: #ecfdf5 !important; border-radius: 8px !important; padding: 20px !important; margin-bottom: 16px !important; border-left: 4px solid #10b981 !important; }
+      .footer-text { font-size: 14px !important; color: #6b7280 !important; }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#1565C0">
+    <!-- Header -->
+    <mj-section background-color="#1565C0" padding="32px 24px">
+      <mj-column width="100%">
+        <mj-text align="center">
+          <div style="background-color: #ffffff; border-radius: 8px; padding: 12px; display: inline-block; width: 200px;">
+            <!-- Gmail-optimized logo with multiple fallbacks -->
+            <img 
+              src="{{logoUrl}}" 
+              alt="WebAbility - Making the web accessible for everyone" 
+              style="width: 150px; max-width: 150px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" 
+              width="150"
+              border="0"
+              onerror="this.onerror=null; this.src='{{fallbackLogoUrl}}'; if(this.onerror) { this.onerror=null; this.src='{{altFallbackUrl}}'; }"
+            />
+            <!-- Gmail-specific fallback using conditional comments -->
+            <!--[if mso]>
+            <img src="{{altFallbackUrl}}" alt="WebAbility Logo" style="width: 150px; height: 40px; display: block; margin: 0 auto;" width="150" height="40" />
+            <![endif]-->
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Welcome Message -->
+    <mj-section background-color="#ffffff" padding="12px 24px 32px">
+      <mj-column>
+        <mj-text css-class="welcome-title" align="center">
+          Quick Wins: Fix Alt‑Text, Headings, Contrast 🏆
+        </mj-text>
+        <mj-text align="center" font-size="18px" color="#6b7280" padding="16px 0 0">
+          Hi {{name}}, let's master the WCAG fundamentals! These three quick fixes will dramatically improve your site's accessibility.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- WCAG Fundamentals Section -->
+    <mj-section background-color="#ffffff" padding="0 24px 40px">
+      <mj-column>
+        <mj-text css-class="section-title" align="center" padding="0 0 24px">
+          Master These WCAG Fundamentals
+        </mj-text>
+
+        <!-- Alt Text -->
+        <mj-text css-class="tip-card">
+          <div style="text-align: left;">
+            <strong style="font-size: 18px; color: #1f2937;">🖼️ Alt-Text for Images</strong><br><br>
+            <span style="color: #374151; font-size: 16px;">
+              <strong>What:</strong> Descriptive text that screen readers can announce for images.<br>
+              <strong>Why:</strong> Blind and visually impaired users need descriptions to understand visual content.<br>
+              <strong>How WebAbility helps:</strong> We identify missing alt-text and suggest descriptions automatically.
+            </span>
+          </div>
+        </mj-text>
+
+        <!-- Heading Structure -->
+        <mj-text css-class="tip-card">
+          <div style="text-align: left;">
+            <strong style="font-size: 18px; color: #1f2937;">📋 Proper Heading Structure</strong><br><br>
+            <span style="color: #374151; font-size: 16px;">
+              <strong>What:</strong> Using H1, H2, H3 tags in logical order (like a table of contents).<br>
+              <strong>Why:</strong> Screen reader users navigate pages by jumping between headings.<br>
+              <strong>How WebAbility helps:</strong> We scan your heading hierarchy and flag structure issues.
+            </span>
+          </div>
+        </mj-text>
+
+        <!-- Color Contrast -->
+        <mj-text css-class="tip-card">
+          <div style="text-align: left;">
+            <strong style="font-size: 18px; color: #1f2937;">🎨 Color Contrast Ratios</strong><br><br>
+            <span style="color: #374151; font-size: 16px;">
+              <strong>What:</strong> Sufficient contrast between text and background colors.<br>
+              <strong>Why:</strong> Users with low vision need high contrast to read content easily.<br>
+              <strong>How WebAbility helps:</strong> We check all text-background combinations and suggest improvements.
+            </span>
+          </div>
+        </mj-text>
+
+        <mj-button 
+          background-color="#3b82f6" 
+          color="#ffffff"
+          font-size="16px"
+          padding="14px 32px"
+          href="{{scannerLink}}"
+        >
+          🔍 Check Your Issues
+        </mj-button>
+      </mj-column>
+    </mj-section>
+
+    <!-- Visual Divider -->
+    <mj-section background-color="#ffffff" padding="0">
+      <mj-column>
+        <mj-divider border-color="#e5e7eb" border-width="1px" width="80%" padding="0"></mj-divider>
+      </mj-column>
+    </mj-section>
+
+    <!-- Resources Section -->
+    <mj-section background-color="#ffffff" padding="32px 24px 40px">
+      <mj-column>
+        <mj-text css-class="section-title" align="center">
+          📚 Learn More About Accessibility
+        </mj-text>
+        <mj-text align="center" font-size="16px" color="#6b7280" padding="0 0 20px">
+          Want to dive deeper? Check out these trusted resources for accessibility guidelines and best practices.
+        </mj-text>
+        
+        <mj-text align="center" font-size="14px" color="#6b7280" padding="0 0 20px">
+          <a href="https://www.w3.org/WAI/fundamentals/" style="color: #3b82f6; text-decoration: none;">Accessibility Fundamentals</a> • 
+          <a href="https://www.wcag.com/resource/what-is-wcag/" style="color: #3b82f6; text-decoration: none;">WCAG101: What is WCAG</a> • 
+          <a href="https://www.w3.org/WAI/WCAG21/quickref/" style="color: #3b82f6; text-decoration: none;">WCAG Guidelines</a>
+        </mj-text>
+        
+        <mj-button 
+          background-color="#10b981" 
+          color="#ffffff"
+          font-size="16px"
+          padding="12px 24px"
+          href="{{supportLink}}"
+        >
+          💬 Get Expert Help
+        </mj-button>
+        <mj-text align="center" font-size="14px" color="#9ca3af" padding="16px 0 0">
+          Need help prioritizing fixes? Contact our support team for personalized guidance!
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f9fafb" padding="32px 24px">
+      <mj-column>
+        <mj-text css-class="footer-text" align="center">
+          <strong>WebAbility</strong><br>
+          Making the web accessible for everyone
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" padding="16px 0 0">
+          © {{year}} WebAbility. All rights reserved.
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
+          You're mastering accessibility fundamentals - keep up the great work!
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
+          <a href="mailto:support@webability.io?subject=Unsubscribe%20Request" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

@@ -1,0 +1,243 @@
+<mjml>
+  <mj-head>
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+    <mj-attributes>
+      <mj-all font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif" />
+      <mj-text font-size="16px" line-height="1.6" color="#374151" />
+      <mj-button font-weight="600" border-radius="8px" />
+    </mj-attributes>
+    <mj-style>
+      .header-logo { max-width: 150px !important; }
+      .welcome-title { font-size: 28px !important; font-weight: 700 !important; color: #1f2937 !important; line-height: 1.2 !important; }
+      .faq-title { font-size: 18px !important; font-weight: 600 !important; color: #1f2937 !important; margin-bottom: 8px !important; }
+      .faq-section { background-color: #f9fafb !important; border-radius: 8px !important; padding: 20px !important; margin-bottom: 16px !important; border-left: 4px solid #3b82f6 !important; }
+      .support-section { background-color: #ecfdf5 !important; border-radius: 8px !important; padding: 24px !important; border-left: 4px solid #10b981 !important; }
+      .footer-text { font-size: 14px !important; color: #6b7280 !important; }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#1565C0">
+    <!-- Header -->
+    <mj-section background-color="#1565C0" padding="32px 24px">
+      <mj-column width="100%">
+        <mj-text align="center">
+          <div style="background-color: #ffffff; border-radius: 8px; padding: 12px; display: inline-block; width: 200px;">
+            <!-- Gmail-optimized logo with multiple fallbacks -->
+            <img 
+              src="{{logoUrl}}" 
+              alt="WebAbility - Making the web accessible for everyone" 
+              style="width: 150px; max-width: 150px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" 
+              width="150"
+              border="0"
+              onerror="this.onerror=null; this.src='{{fallbackLogoUrl}}'; if(this.onerror) { this.onerror=null; this.src='{{altFallbackUrl}}'; }"
+            />
+            <!-- Gmail-specific fallback using conditional comments -->
+            <!--[if mso]>
+            <img src="{{altFallbackUrl}}" alt="WebAbility Logo" style="width: 150px; height: 40px; display: block; margin: 0 auto;" width="150" height="40" />
+            <![endif]-->
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Welcome Message -->
+    <mj-section background-color="#ffffff" padding="12px 24px 32px">
+      <mj-column>
+        <mj-text css-class="welcome-title" align="center">
+          Frequently Asked Questions 💬
+        </mj-text>
+        <mj-text align="center" font-size="18px" color="#6b7280" padding="16px 0 0">
+          Hi {{name}}, here are answers to the most common questions about WebAbility and how it can help make your website accessible.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- FAQ Section 1 -->
+    <mj-section background-color="#ffffff" padding="0 24px">
+      <mj-column>
+        <mj-text css-class="faq-section">
+          <div style="margin-bottom: 12px;">
+            <strong style="font-size: 18px; color: #1f2937;">🧠 What does WebAbility.io's AI do?</strong>
+          </div>
+          <div style="color: #374151; line-height: 1.6;">
+            Our AI-powered accessibility widget automatically enhances your website's accessibility by:
+            <ul style="margin: 12px 0; padding-left: 20px;">
+              <li>Generating and applying alt text for images.</li>
+              <li>Ensuring real-time screen reader compatibility.</li>
+              <li>Enabling features like voice navigation, font adjustments, and contrast toggles.</li>
+            </ul>
+            These enhancements improve usability for individuals with various accessibility needs.
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- FAQ Section 2 -->
+    <mj-section background-color="#ffffff" padding="0 24px">
+      <mj-column>
+        <mj-text css-class="faq-section">
+          <div style="margin-bottom: 12px;">
+            <strong style="font-size: 18px; color: #1f2937;">🛠️ What is included in my WebAbility.io plan?</strong>
+          </div>
+          <div style="color: #374151; line-height: 1.6;">
+            Your plan includes:
+            <ul style="margin: 12px 0; padding-left: 20px;">
+              <li><strong>AI-powered widget:</strong> Automatically improves accessibility with features like alt text generation, contrast adjustment, dyslexia-friendly fonts, keyboard navigation, and voice support.</li>
+              <li><strong>Accessibility scanner:</strong> Provides a detailed report of your site's compliance gaps.</li>
+              <li><strong>Remediation tools:</strong> AI-based adjustments that run in real-time, benefiting real users.</li>
+              <li><strong>Compliance support:</strong> Guidance toward ADA, WCAG 2.1, Section 508, AODA, EN 301 549, and IS 5 standards.</li>
+            </ul>
+            <em>Please note that while our AI tools provide significant improvements, full compliance may require manual code-level changes.</em>
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- FAQ Section 3 -->
+    <mj-section background-color="#ffffff" padding="0 24px">
+      <mj-column>
+        <mj-text css-class="faq-section">
+          <div style="margin-bottom: 12px;">
+            <strong style="font-size: 18px; color: #1f2937;">🧰 What is not automated?</strong>
+          </div>
+          <div style="color: #374151; line-height: 1.6;">
+            Despite our AI remediation, full compliance still involves manual work. Our checker combines:
+            <ul style="margin: 12px 0; padding-left: 20px;">
+              <li><strong>AI + widget:</strong> Instantly improves accessibility and shows effort toward compliance.</li>
+              <li><strong>Audit & reporting:</strong> Highlights remaining issues and how to fix them.</li>
+              <li><strong>Manual adjustments:</strong> Needed for certain code-level corrections.</li>
+            </ul>
+            This layered approach ensures meaningful accessibility improvements.
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- FAQ Section 4 -->
+    <mj-section background-color="#ffffff" padding="0 24px">
+      <mj-column>
+        <mj-text css-class="faq-section">
+          <div style="margin-bottom: 12px;">
+            <strong style="font-size: 18px; color: #1f2937;">⚙️ How does the AI fixing process work?</strong>
+          </div>
+          <div style="color: #374151; line-height: 1.6;">
+            AI accessibility fixes are applied in real-time via the widget, improving elements like missing alt tags and semantics on the fly. These improvements are functional for assistive technologies but may not always be visible to source-code scanning tools. Currently, we don't have an audit log showing which fixes are being made, but it's a feature on our roadmap for future updates.
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- FAQ Section 5 -->
+    <mj-section background-color="#ffffff" padding="0 24px">
+      <mj-column>
+        <mj-text css-class="faq-section">
+          <div style="margin-bottom: 12px;">
+            <strong style="font-size: 18px; color: #1f2937;">📩 Does WebAbility.io offer manual audit help?</strong>
+          </div>
+          <div style="color: #374151; line-height: 1.6;">
+            Yes, we offer manual audits and implementation assistance as an additional service. If you're interested, we can schedule a consultation or provide a quote based on your needs.
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- FAQ Section 6 -->
+    <mj-section background-color="#ffffff" padding="0 24px">
+      <mj-column>
+        <mj-text css-class="faq-section">
+          <div style="margin-bottom: 12px;">
+            <strong style="font-size: 18px; color: #1f2937;">🧭 What's the clear path to make my website compliant?</strong>
+          </div>
+          <div style="color: #374151; line-height: 1.6;">
+            To achieve compliance:
+            <ol style="margin: 12px 0; padding-left: 20px;">
+              <li>Install the accessibility widget to improve real-time accessibility.</li>
+              <li>Run an accessibility audit using our scanner to identify issues.</li>
+              <li>Implement manual code-level changes for issues not addressed by the AI tools.</li>
+              <li>Regularly monitor and update your website to maintain compliance.</li>
+            </ol>
+            This approach combines automated improvements with manual interventions to ensure full compliance.
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- FAQ Section 7 -->
+    <mj-section background-color="#ffffff" padding="0 24px">
+      <mj-column>
+        <mj-text css-class="faq-section">
+          <div style="margin-bottom: 12px;">
+            <strong style="font-size: 18px; color: #1f2937;">🌍 Does WebAbility.io support global compliance standards?</strong>
+          </div>
+          <div style="color: #374151; line-height: 1.6;">
+            Yes, WebAbility.io is designed to support compliance with various global accessibility standards, including:
+            <ul style="margin: 12px 0; padding-left: 20px;">
+              <li>ADA (Americans with Disabilities Act)</li>
+              <li>WCAG 2.1 and 2.2 (Web Content Accessibility Guidelines)</li>
+              <li>Section 508 (U.S. federal accessibility requirements)</li>
+              <li>AODA (Accessibility for Ontarians with Disabilities Act)</li>
+              <li>EN 301 549 (European accessibility requirements)</li>
+            </ul>
+            By adhering to these standards, we help ensure your website is accessible to all users.
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- FAQ Section 8 -->
+    <mj-section background-color="#ffffff" padding="0 24px">
+      <mj-column>
+        <mj-text css-class="faq-section">
+          <div style="margin-bottom: 12px;">
+            <strong style="font-size: 18px; color: #1f2937;">🛡️ Is WebAbility.io GDPR compliant?</strong>
+          </div>
+          <div style="color: #374151; line-height: 1.6;">
+            Yes, WebAbility.io is fully GDPR compliant. All analytics are securely processed and stored in Canadian data centers with TLS encryption and role-based access controls. We can provide a Data Processing Agreement (DPA) upon request.
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Support CTA -->
+    <mj-section background-color="#ffffff" padding="24px">
+      <mj-column>
+        <mj-text css-class="support-section">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <strong style="font-size: 20px; color: #1f2937;">Need More Help? 🤝</strong>
+          </div>
+          <div style="color: #374151; line-height: 1.6; text-align: center; margin-bottom: 20px;">
+            If you have any more questions or need further assistance, our support team is here to help!
+          </div>
+        </mj-text>
+        <mj-button 
+          background-color="#10b981" 
+          color="#ffffff" 
+          href="{{supportLink}}"
+          font-size="16px"
+          padding="12px 24px"
+          align="center"
+        >
+          Contact Support Team
+        </mj-button>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f9fafb" padding="32px 24px">
+      <mj-column>
+        <mj-text css-class="footer-text" align="center">
+          <strong>WebAbility</strong><br>
+          Making the web accessible for everyone
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" padding="16px 0 0">
+          © {{year}} WebAbility. All rights reserved.
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
+          You're receiving this as part of our onboarding series to help you succeed with accessibility.
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
+          <a href="mailto:support@webability.io?subject=Unsubscribe%20Request" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

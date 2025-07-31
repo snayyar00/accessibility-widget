@@ -5,8 +5,10 @@ import database from '../../config/database.config'
 import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { generatePassword } from '../../helpers/hashing.helper'
 import { sign } from '../../helpers/jwt.helper'
+import { addNewsletterSub } from '../../repository/newsletter_subscribers.repository'
 import { Organization } from '../../repository/organization.repository'
 import { createUser, findUser, updateUser } from '../../repository/user.repository'
+import EmailSequenceService from '../../services/email/emailSequence.service'
 import { ApolloError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
@@ -61,6 +63,26 @@ async function registerUser(email: string, password: string, name: string, organ
       }
 
       const newUserId = await createUser(userData, trx)
+
+      // Auto-subscribe new users to newsletter and send welcome email
+      if (newUserId && typeof newUserId === 'number') {
+        try {
+          // Subscribe to newsletter
+          await addNewsletterSub(email)
+          logger.info(`Auto-subscribed new user to newsletter: ${email}`)
+
+          // Send Day 0 welcome email immediately
+          const welcomeEmailSent = await EmailSequenceService.sendWelcomeEmail(email, name, newUserId)
+          if (welcomeEmailSent) {
+            logger.info(`Welcome email sent successfully to new user: ${email}`)
+          } else {
+            logger.warn(`Welcome email failed to send to new user: ${email}`)
+          }
+        } catch (error) {
+          logger.error(`Failed to auto-subscribe user to newsletter or send welcome email: ${email}`, error)
+          // Don't fail registration if newsletter subscription or welcome email fails
+        }
+      }
 
       if (typeof newUserId !== 'number') {
         throw new ApolloError('Failed to create user.')
