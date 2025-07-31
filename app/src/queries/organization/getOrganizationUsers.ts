@@ -8,8 +8,22 @@ export default gql`
       organization_id
       role
       status
-      created_at
       updated_at
+      user {
+        id
+        name
+        email
+        current_organization_id
+        isActive
+      }
+      organizations {
+        id
+        name
+      }
+      currentOrganization {
+        id
+        name
+      }
     }
   }
 `;

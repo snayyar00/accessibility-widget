@@ -1,7 +1,7 @@
 import { Knex } from 'knex'
 
 import { ORGANIZATION_MANAGEMENT_ROLES, OrganizationUserRole, OrganizationUserStatus } from '../../constants/organization.constant'
-import { deleteOrganizationUser, getOrganizationUser, getOrganizationUsersByOrganizationId, getOrganizationUsersByUserId, insertOrganizationUser, OrganizationUser, updateOrganizationUser } from '../../repository/organization_user.repository'
+import { deleteOrganizationUser, getOrganizationUser, getOrganizationUsersByUserId, getOrganizationUsersWithUserInfo, insertOrganizationUser, OrganizationUser, updateOrganizationUser } from '../../repository/organization_user.repository'
 import { UserProfile } from '../../repository/user.repository'
 import logger from '../../utils/logger'
 
@@ -30,16 +30,6 @@ export async function getOrganizationsByUserId(userId: number): Promise<Organiza
     return await getOrganizationUsersByUserId(userId)
   } catch (error) {
     logger.error('Error getting organizations of user:', error)
-
-    throw error
-  }
-}
-
-export async function getUsersByOrganizationId(organizationId: number): Promise<OrganizationUser[]> {
-  try {
-    return await getOrganizationUsersByOrganizationId(organizationId)
-  } catch (error) {
-    logger.error('Error getting users of organization:', error)
 
     throw error
   }
@@ -80,5 +70,14 @@ export async function getOrganizationUsers(user: UserProfile) {
     return []
   }
 
-  return getUsersByOrganizationId(organizationId)
+  const users = await getOrganizationUsersWithUserInfo(organizationId)
+
+  const myOrgs = await getOrganizationsByUserId(userId)
+  const allowedOrgIds = myOrgs.filter((o) => ORGANIZATION_MANAGEMENT_ROLES.includes(o.role as (typeof ORGANIZATION_MANAGEMENT_ROLES)[number])).map((o) => o.organization_id)
+
+  return users.map((u) => ({
+    ...u,
+    organizations: u.organizations.filter((org) => allowedOrgIds.includes(org.id)),
+    currentOrganization: u.currentOrganization && allowedOrgIds.includes(u.currentOrganization.id) ? u.currentOrganization : null,
+  }))
 }

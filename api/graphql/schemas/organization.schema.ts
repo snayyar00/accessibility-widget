@@ -18,6 +18,9 @@ export const OrganizationSchema = `#graphql
     status: String
     created_at: Date
     updated_at: Date
+    user: User!
+    organizations: [Organization!]!
+    currentOrganization: Organization
   }
 
   extend type Query {
