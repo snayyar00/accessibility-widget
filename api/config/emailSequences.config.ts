@@ -1,15 +1,15 @@
 // Email sequence configuration
 export interface EmailSequenceStep {
-  day: number;
-  template: string;
-  subject: string;
-  description: string;
+  day: number
+  template: string
+  subject: string
+  description: string
 }
 
 export interface EmailSequence {
-  name: string;
-  description: string;
-  steps: EmailSequenceStep[];
+  name: string
+  description: string
+  steps: EmailSequenceStep[]
 }
 
 export const EMAIL_SEQUENCES: Record<string, EmailSequence> = {
@@ -20,13 +20,13 @@ export const EMAIL_SEQUENCES: Record<string, EmailSequence> = {
       {
         day: 0,
         template: 'welcomeQuickStart.mjml',
-        subject: 'Welcome to WebAbility! Let\'s make your site accessible',
+        subject: "Welcome to WebAbility! Let's make your site accessible",
         description: 'Welcome & Quick Start guide',
       },
       {
         day: 1,
         template: 'day1FollowUp.mjml',
-        subject: '{{#if hasActiveDomains}}Your WebAbility widget is live—what\'s next?{{else}}Finish setting up your WebAbility widget{{/if}}',
+        subject: "{{#if hasActiveDomains}}Your WebAbility widget is live—what's next?{{else}}Finish setting up your WebAbility widget{{/if}}",
         description: 'Widget Live - Customization Guide',
       },
       {
@@ -44,7 +44,7 @@ export const EMAIL_SEQUENCES: Record<string, EmailSequence> = {
       {
         day: 7,
         template: 'day7ProductWalkthrough.mjml',
-        subject: 'Explore WebAbility\'s key features',
+        subject: "Explore WebAbility's key features",
         description: 'Product Walkthrough',
       },
       {
@@ -79,6 +79,6 @@ export const EMAIL_SEQUENCES: Record<string, EmailSequence> = {
       },
     ],
   },
-};
+}
 
-export default EMAIL_SEQUENCES;
+export default EMAIL_SEQUENCES

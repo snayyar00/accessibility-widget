@@ -138,16 +138,12 @@ export async function getUserNotificationSettings(user_id: number): Promise<any>
  * Get users registered on a specific date
  */
 export async function getUsersRegisteredOnDate(date: string): Promise<UserProfile[]> {
-  return database(TABLE)
-    .whereRaw('DATE(created_at) = ?', [date])
-    .select('*');
+  return database(TABLE).whereRaw('DATE(created_at) = ?', [date]).select('*')
 }
 
 /**
  * Get the latest registered user for testing purposes
  */
 export async function getLatestRegisteredUser(): Promise<UserProfile | null> {
-  return database(TABLE)
-    .orderBy('created_at', 'desc')
-    .first();
+  return database(TABLE).orderBy('created_at', 'desc').first()
 }

@@ -9,6 +9,6 @@ const router = Router()
 router.post('/form', requireJsonContent, emailLimiter, moderateLimiter, handleFormSubmission)
 router.post('/subscribe-newsletter', requireJsonContent, emailLimiter, moderateLimiter, subscribeNewsletter)
 router.post('/unsubscribe-newsletter', requireJsonContent, emailLimiter, moderateLimiter, unsubscribeNewsletter)
-router.get('/unsubscribe', requireJsonContent, emailLimiter, moderateLimiter, unsubscribeNewsletter)    
+router.get('/unsubscribe', requireJsonContent, emailLimiter, moderateLimiter, unsubscribeNewsletter)
 
 export default router

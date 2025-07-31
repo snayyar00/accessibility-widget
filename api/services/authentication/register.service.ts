@@ -5,16 +5,16 @@ import database from '../../config/database.config'
 import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { generatePassword } from '../../helpers/hashing.helper'
 import { sign } from '../../helpers/jwt.helper'
+import { addNewsletterSub } from '../../repository/newsletter_subscribers.repository'
 import { Organization } from '../../repository/organization.repository'
 import { createUser, findUser, updateUser } from '../../repository/user.repository'
+import EmailSequenceService from '../../services/email/emailSequence.service'
 import { ApolloError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
 import { createMultipleValidationErrors, createValidationError, getValidationErrorCode } from '../../utils/validation-errors.helper'
 import { registerValidation } from '../../validations/authenticate.validation'
 import { addUserToOrganization } from '../organization/organization_users.service'
-import { addNewsletterSub } from '../../repository/newsletter_subscribers.repository';
-import EmailSequenceService from '../../services/email/emailSequence.service';
 
 dayjs.extend(utc)
 
