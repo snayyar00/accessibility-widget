@@ -46,6 +46,7 @@ export type UserProfile = {
   updated_at?: string
   deleted_at?: string
   current_organization_id?: number
+  password_changed_at?: string
 }
 
 type GetUserByIdAndJoinUserTokenResponse = UserProfile & UserToken

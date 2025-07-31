@@ -1,9 +1,14 @@
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+
 import { generatePassword } from '../../helpers/hashing.helper'
 import { unlockAccount } from '../../repository/failed_login_attempts.repository'
 import { updateUser } from '../../repository/user.repository'
 import { findToken, removeUserToken } from '../../repository/user_tokens.repository'
 import { ApolloError, ForbiddenError, UserInputError, ValidationError } from '../../utils/graphql-errors.helper'
 import { changePasswordValidation } from '../../validations/authenticate.validation'
+
+dayjs.extend(utc)
 
 export async function resetPasswordUser(token: string, password: string, confirmPassword: string): Promise<true | ApolloError> {
   try {
@@ -56,7 +61,7 @@ export async function resetPasswordUser(token: string, password: string, confirm
     }
 
     const [newPassword] = await Promise.all([generatePassword(password), removeUserToken(session.id)])
-    await updateUser(session.user_id, { password: newPassword })
+    await updateUser(session.user_id, { password: newPassword, password_changed_at: dayjs().utc().format('YYYY-MM-DD HH:mm:ss') })
 
     await unlockAccount(session.user_id)
 
