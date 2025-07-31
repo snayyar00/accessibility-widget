@@ -128,7 +128,7 @@ export async function getAccessibilityInformationPally(domain: string) {
     totalElements: 0,
   }
 
-  const apiUrl = `${process.env.Scanner_SERVER_URL}/scan`
+  const apiUrl = `${process.env.SCANNER_SERVER_URL}/scan`
   let results
   try {
     console.log('Using scanner API')
