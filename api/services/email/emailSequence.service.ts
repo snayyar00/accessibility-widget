@@ -93,7 +93,7 @@ export class EmailSequenceService {
           installationGuide: 'https://www.webability.io/installation',
           dashboardLink: frontendUrl,
           supportLink: 'mailto:support@webability.io',
-          unsubscribeLink: `${frontendUrl}/unsubscribe?email=${encodeURIComponent(userEmail)}`,
+          unsubscribeLink: `${process.env.REACT_APP_BACKEND_URL}/unsubscribe?email=${encodeURIComponent(userEmail)}`,
           year: new Date().getFullYear(),
         },
       })
