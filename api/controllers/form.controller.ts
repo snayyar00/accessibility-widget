@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 
-import { addNewsletterSub } from '../repository/newsletter_subscribers.repository'
+import { addNewsletterSub, unsubscribeFromNewsletter } from '../repository/newsletter_subscribers.repository'
 import { sendMail } from '../services/email/email.service'
 import { emailValidation } from '../validations/email.validation'
 
@@ -76,5 +76,86 @@ export async function subscribeNewsletter(req: Request, res: Response) {
   } catch (error) {
     console.error('Error subscribing to newsletter:', error)
     res.status(500).json({ error: 'Internal Server Error' })
+  }
+}
+
+export async function unsubscribeNewsletter(req: Request, res: Response) {
+  try {
+    const { email } = req.body
+    const validateResult = emailValidation(email)
+
+    if (Array.isArray(validateResult) && validateResult.length) {
+      return res.status(400).json({ error: validateResult.map((it) => it.message).join(',') })
+    }
+
+    const success = await unsubscribeFromNewsletter(email)
+    if (success) {
+      res.status(200).json({ message: 'Successfully unsubscribed from newsletter' })
+    } else {
+      res.status(404).json({ error: 'Email not found in newsletter subscribers' })
+    }
+  } catch (error) {
+    console.error('Error unsubscribing from newsletter:', error)
+    res.status(500).json({ error: 'Internal Server Error' })
+  }
+}
+
+export async function unsubscribe(req: Request, res: Response) {
+  try {
+    const { email } = req.query
+
+    if (!email || typeof email !== 'string') {
+      return res.status(400).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px;">
+              <h2 style="color: #dc3545;">Invalid Request</h2>
+              <p>Email parameter is required.</p>
+            </body>
+          </html>
+        `)
+    }
+
+    const success = await unsubscribeFromNewsletter(email)
+
+    if (success) {
+      res.status(200).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+              <h2 style="color: #28a745;">✓ Successfully Unsubscribed</h2>
+              <p>You have been successfully unsubscribed from the WebAbility newsletter.</p>
+              <p style="color: #666;">Email: ${email}</p>
+              <p style="margin-top: 30px;">
+                <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
+              </p>
+            </body>
+          </html>
+        `)
+    } else {
+      res.status(404).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+              <h2 style="color: #ffc107;">Email Not Found</h2>
+              <p>The email address was not found in our newsletter subscribers.</p>
+              <p style="color: #666;">Email: ${email}</p>
+              <p style="margin-top: 30px;">
+                <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
+              </p>
+            </body>
+          </html>
+        `)
+    }
+  } catch (error) {
+    console.error('Error processing unsubscribe:', error)
+    res.status(500).send(`
+        <html>
+          <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+            <h2 style="color: #dc3545;">Error</h2>
+            <p>An error occurred while processing your unsubscribe request.</p>
+            <p style="margin-top: 30px;">
+              <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
+            </p>
+          </body>
+        </html>
+      `)
   }
 }

@@ -12,6 +12,7 @@ import { ALLOWED_OPERATIONS, ALLOWED_ORIGINS, configureServer, PORT } from './co
 import { createGraphQLContext } from './graphql/context'
 import { createGraphQLServer } from './graphql/server'
 import scheduleMonthlyEmails from './jobs/monthlyEmail'
+import scheduleEmailSequences from './jobs/emailSequence'
 import { dynamicCors } from './middlewares/cors.middleware'
 import { expressErrorMiddleware } from './middlewares/expressError.middleware'
 import { graphqlTimeoutMiddleware } from './middlewares/graphqlTimeout.middleware'
@@ -28,6 +29,7 @@ const httpServer = createServer(app)
 
 configureServer(app)
 scheduleMonthlyEmails()
+scheduleEmailSequences()
 
 app.use(configureMorgan())
 app.use(requestTimingMiddleware)

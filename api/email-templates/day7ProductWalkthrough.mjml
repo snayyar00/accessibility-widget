@@ -1,0 +1,193 @@
+<mjml>
+  <mj-head>
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+    <mj-attributes>
+      <mj-all font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif" />
+      <mj-text font-size="16px" line-height="1.6" color="#374151" />
+      <mj-button font-weight="600" border-radius="8px" />
+    </mj-attributes>
+    <mj-style>
+      .header-logo { max-width: 150px !important; }
+      .welcome-title { font-size: 28px !important; font-weight: 700 !important; color: #1f2937 !important; line-height: 1.2 !important; }
+      .section-title { font-size: 22px !important; font-weight: 600 !important; color: #1f2937 !important; margin-bottom: 16px !important; }
+      .feature-card { background-color: #f8fafc !important; border-radius: 8px !important; padding: 20px !important; margin-bottom: 16px !important; border-left: 4px solid #3b82f6 !important; }
+      .support-section { background-color: #f9fafb !important; border-radius: 8px !important; padding: 24px !important; }
+      .footer-text { font-size: 14px !important; color: #6b7280 !important; }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#1565C0">
+    <!-- Header -->
+    <mj-section background-color="#1565C0" padding="32px 24px">
+      <mj-column width="100%">
+        <mj-text align="center">
+          <div style="background-color: #ffffff; border-radius: 8px; padding: 12px; display: inline-block; width: 200px;">
+            <!-- Gmail-optimized logo with multiple fallbacks -->
+            <img 
+              src="{{logoUrl}}" 
+              alt="WebAbility - Making the web accessible for everyone" 
+              style="width: 150px; max-width: 150px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" 
+              width="150"
+              border="0"
+              onerror="this.onerror=null; this.src='{{fallbackLogoUrl}}'; if(this.onerror) { this.onerror=null; this.src='{{altFallbackUrl}}'; }"
+            />
+            <!-- Gmail-specific fallback using conditional comments -->
+            <!--[if mso]>
+            <img src="{{altFallbackUrl}}" alt="WebAbility Logo" style="width: 150px; height: 40px; display: block; margin: 0 auto;" width="150" height="40" />
+            <![endif]-->
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Welcome Message -->
+    <mj-section background-color="#ffffff" padding="12px 24px 32px">
+      <mj-column>
+        <mj-text css-class="welcome-title" align="center">
+          Explore WebAbility's Key Features 🚀
+        </mj-text>
+        <mj-text align="center" font-size="18px" color="#6b7280" padding="16px 0 0">
+          Hi {{name}}, you've had a week to explore WebAbility! Let's take a deeper dive into the powerful features that make your site more accessible.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Key Features Section -->
+    <mj-section background-color="#ffffff" padding="0 24px 40px">
+      <mj-column>
+        <mj-text css-class="section-title" align="center" padding="0 0 24px">
+          Your Accessibility Toolkit
+        </mj-text>
+
+        <!-- Feature 1: AI Accessibility Statement Generator -->
+        <mj-text css-class="feature-card">
+          <div style="text-align: left;">
+            <strong style="font-size: 18px; color: #1f2937;">📝 AI Accessibility Statement Generator</strong><br><br>
+            <span style="color: #374151; font-size: 16px;">
+              Create professional, WCAG 2.1 AA compliant accessibility statements in 42+ languages using our advanced AI engine. Generate industry-standard, legally compliant content based on your site information. Download as Markdown, HTML, or Plain Text - ready for immediate deployment.
+            </span>
+          </div>
+        </mj-text>
+
+        <!-- Feature 1: Accessibility Widget -->
+        <mj-text css-class="feature-card">
+          <div style="text-align: left;">
+            <strong style="font-size: 18px; color: #1f2937;">🔧 Accessibility Widget</strong><br><br>
+            <span style="color: #374151; font-size: 16px;">
+              Your visitors can instantly adjust text size, contrast, cursor size, and more. The widget works in real-time without page reloads, providing immediate accessibility improvements.
+            </span>
+          </div>
+        </mj-text>
+
+        <!-- Feature 2: Analytics Overview -->
+        <mj-text css-class="feature-card">
+          <div style="text-align: left;">
+            <strong style="font-size: 18px; color: #1f2937;">📈 Analytics Overview & Detailed Insights</strong><br><br>
+            <span style="color: #374151; font-size: 16px;">
+              Track key metrics including impressions, unique visitors, and widget interactions to understand your accessibility impact. Dive deeper with detailed charts and insights to monitor your progress over time and see how your accessibility improvements are performing.
+            </span>
+          </div>
+        </mj-text>
+
+        <!-- Feature 2: Live Audit Results -->
+        <mj-text css-class="feature-card">
+          <div style="text-align: left;">
+            <strong style="font-size: 18px; color: #1f2937;">📊 Live Audit Results</strong><br><br>
+            <span style="color: #374151; font-size: 16px;">
+              Get detailed reports showing exactly what accessibility issues exist on your site, where they're located, and how to fix them. Updated automatically every month to track your progress.
+            </span>
+          </div>
+        </mj-text>
+
+        <!-- Feature 3: Automated Fixes -->
+        <mj-text css-class="feature-card">
+          <div style="text-align: left;">
+            <strong style="font-size: 18px; color: #1f2937;">🤖 Automated Fixes & Compliance Score</strong><br><br>
+            <span style="color: #374151; font-size: 16px;">
+              Our AI automatically fixes many common accessibility issues and provides you with a real-time compliance score. Watch your accessibility improve without manual work.
+            </span>
+          </div>
+        </mj-text>
+
+        <mj-button 
+          background-color="#3b82f6" 
+          color="#ffffff"
+          font-size="16px"
+          padding="14px 32px"
+          href="{{dashboardLink}}"
+        >
+          🎯 Explore Your Dashboard
+        </mj-button>
+      </mj-column>
+    </mj-section>
+
+    <!-- Visual Divider -->
+    <mj-section background-color="#ffffff" padding="0">
+      <mj-column>
+        <mj-divider border-color="#e5e7eb" border-width="1px" width="80%" padding="0"></mj-divider>
+      </mj-column>
+    </mj-section>
+
+    <!-- Demo Section -->
+    <mj-section background-color="#ffffff" padding="32px 24px 40px">
+      <mj-column>
+        <mj-text css-class="section-title" align="center">
+          🎥 See It In Action
+        </mj-text>
+        <mj-text align="center" font-size="16px" color="#6b7280" padding="0 0 20px">
+          Watch our short demo video to see how WebAbility works behind the scenes and learn advanced tips for maximizing your accessibility impact.
+        </mj-text>
+        <mj-button 
+          background-color="#10b981" 
+          color="#ffffff"
+          font-size="16px"
+          padding="12px 24px"
+          href="https://www.youtube.com/watch?v=bL0pVOzYuS0"
+        >
+          ▶️ Watch 2-Minute Demo
+        </mj-button>
+      </mj-column>
+    </mj-section>
+
+    <!-- Support Section -->
+    <mj-section background-color="#ffffff" padding="0 24px 40px">
+      <mj-column>
+        <mj-text css-class="support-section">
+          <div style="text-align: center;">
+            <strong style="font-size: 18px; color: #1f2937;">Have Questions After Watching?</strong><br>
+            <span style="color: #6b7280; font-size: 16px;">
+              Our support team is ready to provide personalized guidance to help you maximize your accessibility impact and get the most out of WebAbility's features.
+            </span>
+          </div>
+        </mj-text>
+        <mj-button 
+          background-color="#10b981" 
+          color="#ffffff"
+          font-size="16px"
+          padding="12px 24px"
+          href="{{supportLink}}"
+        >
+          💬 Get Personalized Guidance
+        </mj-button>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f9fafb" padding="32px 24px">
+      <mj-column>
+        <mj-text css-class="footer-text" align="center">
+          <strong>WebAbility</strong><br>
+          Making the web accessible for everyone
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" padding="16px 0 0">
+          © {{year}} WebAbility. All rights reserved.
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
+          You're receiving this as part of our onboarding series. Keep building an accessible web!
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
+          <a href="mailto:support@webability.io?subject=Unsubscribe%20Request" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

@@ -13,6 +13,8 @@ import { sanitizeUserInput } from '../../utils/sanitization.helper'
 import { createMultipleValidationErrors, createValidationError, getValidationErrorCode } from '../../utils/validation-errors.helper'
 import { registerValidation } from '../../validations/authenticate.validation'
 import { addUserToOrganization } from '../organization/organization_users.service'
+import { addNewsletterSub } from '../../repository/newsletter_subscribers.repository';
+import EmailSequenceService from '../../services/email/emailSequence.service';
 
 dayjs.extend(utc)
 
@@ -61,6 +63,26 @@ async function registerUser(email: string, password: string, name: string, organ
       }
 
       const newUserId = await createUser(userData, trx)
+
+      // Auto-subscribe new users to newsletter and send welcome email
+      if (newUserId && typeof newUserId === 'number') {
+        try {
+          // Subscribe to newsletter
+          await addNewsletterSub(email)
+          logger.info(`Auto-subscribed new user to newsletter: ${email}`)
+
+          // Send Day 0 welcome email immediately
+          const welcomeEmailSent = await EmailSequenceService.sendWelcomeEmail(email, name, newUserId)
+          if (welcomeEmailSent) {
+            logger.info(`Welcome email sent successfully to new user: ${email}`)
+          } else {
+            logger.warn(`Welcome email failed to send to new user: ${email}`)
+          }
+        } catch (error) {
+          logger.error(`Failed to auto-subscribe user to newsletter or send welcome email: ${email}`, error)
+          // Don't fail registration if newsletter subscription or welcome email fails
+        }
+      }
 
       if (typeof newUserId !== 'number') {
         throw new ApolloError('Failed to create user.')

@@ -1,0 +1,157 @@
+<mjml>
+  <mj-head>
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+    <mj-attributes>
+      <mj-all font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif" />
+      <mj-text font-size="16px" line-height="1.6" color="#374151" />
+      <mj-button font-weight="600" border-radius="8px" />
+    </mj-attributes>
+    <mj-style>
+      .header-logo { max-width: 150px !important; }
+      .welcome-title { font-size: 28px !important; font-weight: 700 !important; color: #1f2937 !important; line-height: 1.2 !important; }
+      .section-title { font-size: 22px !important; font-weight: 600 !important; color: #1f2937 !important; margin-bottom: 16px !important; }
+      .checkin-card { background-color: #f0f9ff !important; border-radius: 8px !important; padding: 20px !important; margin-bottom: 16px !important; border-left: 4px solid #0ea5e9 !important; }
+      .footer-text { font-size: 14px !important; color: #6b7280 !important; }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#1565C0">
+    <!-- Header -->
+    <mj-section background-color="#1565C0" padding="32px 24px">
+      <mj-column width="100%">
+        <mj-text align="center">
+          <div style="background-color: #ffffff; border-radius: 8px; padding: 12px; display: inline-block; width: 200px;">
+            <!-- Gmail-optimized logo with multiple fallbacks -->
+            <img 
+              src="{{logoUrl}}" 
+              alt="WebAbility - Making the web accessible for everyone" 
+              style="width: 150px; max-width: 150px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" 
+              width="150"
+              border="0"
+              onerror="this.onerror=null; this.src='{{fallbackLogoUrl}}'; if(this.onerror) { this.onerror=null; this.src='{{altFallbackUrl}}'; }"
+            />
+            <!-- Gmail-specific fallback using conditional comments -->
+            <!--[if mso]>
+            <img src="{{altFallbackUrl}}" alt="WebAbility Logo" style="width: 150px; height: 40px; display: block; margin: 0 auto;" width="150" height="40" />
+            <![endif]-->
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Welcome Message -->
+    <mj-section background-color="#ffffff" padding="12px 24px 32px">
+      <mj-column>
+        <mj-text css-class="welcome-title" align="center">
+          How is WebAbility Working for You? 💬
+        </mj-text>
+        <mj-text align="center" font-size="18px" color="#6b7280" padding="16px 0 0">
+          Hi {{name}}, it's been 6 weeks since you started your accessibility journey with us. We'd love to hear about your progress and help with any challenges you're facing.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Progress Check Section -->
+    <mj-section background-color="#ffffff" padding="0 24px 40px">
+      <mj-column>
+        <mj-text css-class="section-title" align="center" padding="0 0 24px">
+          Tell Us About Your Experience
+        </mj-text>
+
+        <!-- Progress Questions -->
+        <mj-text css-class="checkin-card">
+          <div style="text-align: left;">
+            <strong style="font-size: 18px; color: #1f2937;">📈 How's Your Progress?</strong><br><br>
+            <span style="color: #374151; font-size: 16px;">
+              • Have you seen improvements in your accessibility score?<br>
+              • Are visitors using the accessibility widget features?<br>
+              • What accessibility wins have you achieved so far?
+            </span>
+          </div>
+        </mj-text>
+
+        <!-- Challenges Check -->
+        <mj-text css-class="checkin-card">
+          <div style="text-align: left;">
+            <strong style="font-size: 18px; color: #1f2937;">🤔 Any Challenges?</strong><br><br>
+            <span style="color: #374151; font-size: 16px;">
+              • Are there accessibility issues you're struggling to fix?<br>
+              • Do you need help prioritizing which fixes to tackle first?<br>
+              • Any features you'd like us to explain better?
+            </span>
+          </div>
+        </mj-text>
+
+        <!-- Resources Offer -->
+        <mj-text css-class="checkin-card">
+          <div style="text-align: left;">
+            <strong style="font-size: 18px; color: #1f2937;">🎯 How Can We Help?</strong><br><br>
+            <span style="color: #374151; font-size: 16px;">
+              We're here to share best practices, provide personalized recommendations, and help you maximize your accessibility impact. Just reply to this email!
+            </span>
+          </div>
+        </mj-text>
+
+        <mj-button 
+          background-color="#3b82f6" 
+          color="#ffffff"
+          font-size="16px"
+          padding="14px 32px"
+          href="{{supportLink}}"
+        >
+          💬 Share Your Feedback
+        </mj-button>
+      </mj-column>
+    </mj-section>
+
+    <!-- Visual Divider -->
+    <mj-section background-color="#ffffff" padding="0">
+      <mj-column>
+        <mj-divider border-color="#e5e7eb" border-width="1px" width="80%" padding="0"></mj-divider>
+      </mj-column>
+    </mj-section>
+
+    <!-- Quick Meeting Offer -->
+    <mj-section background-color="#ffffff" padding="32px 24px 40px">
+      <mj-column>
+        <mj-text css-class="section-title" align="center">
+          📅 Want a Quick Chat?
+        </mj-text>
+        <mj-text align="center" font-size="16px" color="#6b7280" padding="0 0 20px">
+          Sometimes a 15-minute conversation is worth a dozen emails. If you'd like personalized guidance on your accessibility strategy, we're happy to schedule a brief call.
+        </mj-text>
+        
+        <mj-button 
+          background-color="#10b981" 
+          color="#ffffff"
+          font-size="16px"
+          padding="12px 24px"
+          href="https://calendly.com/webability/15min"
+        >
+          📞 Schedule 15-Minute Call
+        </mj-button>
+        <mj-text align="center" font-size="14px" color="#9ca3af" padding="16px 0 0">
+          Or simply reply to this email with your questions and feedback!
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f9fafb" padding="32px 24px">
+      <mj-column>
+        <mj-text css-class="footer-text" align="center">
+          <strong>WebAbility</strong><br>
+          Making the web accessible for everyone
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" padding="16px 0 0">
+          © {{year}} WebAbility. All rights reserved.
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
+          Your success is our success. We're here to help you every step of the way!
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
+          <a href="mailto:support@webability.io?subject=Unsubscribe%20Request" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
