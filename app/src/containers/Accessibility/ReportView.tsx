@@ -2108,7 +2108,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       translatedNeedAction,
       translatedReviewRequired,
       translatedCanBeFixedWithWebability,
-      translatedUseWebabilityToFix
+      translatedUseWebabilityToFix,
+      translatedCriticalComplianceGaps
     ] = await translateMultipleTexts(
       [
         status,
@@ -2141,13 +2142,14 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         '✓ Instant compliance improvement',
         '✓ Protect your business from legal risks TODAY',
         'Accessibility Statement',
-        'WCAG 2.1 AA Compliance Issues of',
+        'WCAG 2.1 AA Compliance Issues for',
         'Auto-Fixed',
         ' Ready to use',
         'Need Action',
         '⚠ Review required',
         'Fix with AI',
-        'use webability to fix'
+        'use webability to fix',
+        'Critical compliance gaps exposing your business to legal action'
       ],
       currentLanguage
     );
@@ -2626,15 +2628,18 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       }
     };
 
-    // Issues by Category Analysis - Clean Horizontal Bar Format
+    // Issues by Category Analysis - Card Layout with Progress Bars
     const categoryGroups = new Map<string, number>();
     
+    // First, collect all raw functionality and structure data like the original
+    const rawCategories = new Map<string, number>();
+    
     issues.forEach(issue => {
-      // Function grouping
+      // Function grouping (like original)
       const functionName = issue.functionality || 'Unknown';
-      categoryGroups.set(functionName, (categoryGroups.get(functionName) || 0) + 1);
+      rawCategories.set(functionName, (rawCategories.get(functionName) || 0) + 1);
       
-      // Structure grouping
+      // Structure grouping (like original)
       const selector = issue.selectors?.[0]?.toLowerCase() || '';
       let structure = 'Other';
       
@@ -2646,7 +2651,29 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         structure = 'Forms';
       }
       
-      categoryGroups.set(structure, (categoryGroups.get(structure) || 0) + 1);
+      rawCategories.set(structure, (rawCategories.get(structure) || 0) + 1);
+    });
+
+    // Now map the raw categories to our 6 predefined categories
+    rawCategories.forEach((count, rawCategory) => {
+      const lowerCategory = rawCategory.toLowerCase();
+      let mappedCategory = 'Other';
+      
+      // Map based on category name
+      if (lowerCategory.includes('content') || rawCategory === 'Content') {
+        mappedCategory = 'Content';
+      } else if (lowerCategory.includes('navigation') || rawCategory === 'Navigation' || rawCategory === 'Forms') {
+        mappedCategory = 'Navigation';
+      } else if (lowerCategory.includes('cognitive') || lowerCategory.includes('brain') || lowerCategory.includes('mental')) {
+        mappedCategory = 'Cognitive';
+      } else if (lowerCategory.includes('vision') || lowerCategory.includes('visual') || lowerCategory.includes('contrast') || lowerCategory.includes('color')) {
+        mappedCategory = 'Low Vision';
+      } else if (lowerCategory.includes('mobility') || lowerCategory.includes('motor') || lowerCategory.includes('keyboard')) {
+        mappedCategory = 'Mobility';
+      }
+      
+      // Add to final category groups
+      categoryGroups.set(mappedCategory, (categoryGroups.get(mappedCategory) || 0) + count);
     });
 
     // Create category data sorted by count
@@ -2673,95 +2700,185 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       doc.text(translatedIssuesDetectedByCategory, 105, nextY + 8, { align: 'center' });
       let currentY = nextY + 18;
 
+      // Define category colors to match the display image
+      const categoryColors = new Map<string, [number, number, number]>([
+        ['Content', [147, 51, 234]], // Purple
+        ['Cognitive', [34, 197, 94]], // Green  
+        ['Low Vision', [249, 115, 22]], // Orange
+        ['Navigation', [59, 130, 246]], // Blue
+        ['Mobility', [239, 68, 68]], // Red
+        ['Other', [107, 114, 128]], // Gray
+        ['Forms', [168, 85, 247]] // Different purple shade
+      ]);
+
+      // Card layout - 3 columns, 2 rows to match the image exactly
+      const itemsPerRow = 3;
+      const cardWidth = 58; // Increased width
+      const cardHeight = 40; // Increased height
+      const cardSpacing = 3; // Reduced spacing
+      const startX = 12; // Adjusted start position
+      const totalIssues = issues.length;
+      
+      // Ensure we have exactly these 6 categories in the right order
+      const predefinedCategories = ['Content', 'Cognitive', 'Low Vision', 'Navigation', 'Mobility', 'Other'];
+      const orderedCategoryData: [string, number][] = [];
+      
+      // Add categories in the predefined order if they exist
+      predefinedCategories.forEach(category => {
+        const found = categoryData.find(([cat]) => cat === category);
+        if (found) {
+          orderedCategoryData.push(found);
+        } else {
+          // Add with 0 count if category doesn't exist
+          orderedCategoryData.push([category, 0]);
+        }
+      });
+
       // Load all SVG icons first
-      const iconPromises = categoryData.map(async ([category]) => {
+      const iconPromises = orderedCategoryData.map(async ([category]) => {
         return { category, svgIcon: await loadSVGIcon(category) };
       });
       
       const iconResults = await Promise.all(iconPromises);
       const iconMap = new Map(iconResults.map(result => [result.category, result.svgIcon]));
       
-      // Simple text-based layout - 3 columns, no cards
-      const itemsPerRow = 3;
-      const columnWidth = 60;
-      const rowHeight = 12;
-      const startX = 25;
-      const iconSize = 6;
-      
-      // First pass: Calculate max text width for each column
-      const columnMaxWidths = [0, 0, 0]; // For 3 columns
-      doc.setFontSize(9);
-      doc.setFont('NotoSans_Condensed-Regular');
-      
-      categoryData.forEach(([category], index) => {
-        const column = index % itemsPerRow;
-        let displayCategory = category;
-        const maxCategoryWidth = 35;
-        if (doc.getTextWidth(displayCategory) > maxCategoryWidth) {
-          while (doc.getTextWidth(displayCategory + '...') > maxCategoryWidth && displayCategory.length > 3) {
-            displayCategory = displayCategory.slice(0, -1);
-          }
-          displayCategory += '...';
-        }
-        const textWidth = doc.getTextWidth(displayCategory);
-        columnMaxWidths[column] = Math.max(columnMaxWidths[column], textWidth);
-      });
-      
-      // Second pass: Render items with aligned badges
-      categoryData.forEach(([category, count], index) => {
+      orderedCategoryData.forEach(([category, count], index) => {
         const column = index % itemsPerRow;
         const row = Math.floor(index / itemsPerRow);
-        const x = startX + (column * columnWidth);
-        const y = currentY + (row * rowHeight);
+        const x = startX + (column * (cardWidth + cardSpacing));
+        const y = currentY + (row * (cardHeight + 6));
         
-        // Icon
-        const iconX = x;
-        const iconY = y - 2;
+        // Calculate percentage
+        const percentage = totalIssues > 0 ? ((count / totalIssues) * 100) : 0;
+        const categoryColor = categoryColors.get(category) || [107, 114, 128];
         
+        // Card background - clean white with subtle shadow
+        doc.setFillColor(250, 250, 250); // Very light shadow
+        doc.roundedRect(x + 0.5, y + 0.5, cardWidth, cardHeight, 2, 2, 'F');
+        
+        doc.setFillColor(255, 255, 255); // Clean white background
+        doc.setDrawColor(230, 230, 230); // Light border
+        doc.setLineWidth(0.3);
+        doc.roundedRect(x, y, cardWidth, cardHeight, 2, 2, 'FD');
+        
+        // Category icon in colored rounded square - top left
+        const iconSize = 10;
+        const iconX = x + 4;
+        const iconY = y + 4;
+        
+        // Colored rounded square background for icon
+        doc.setFillColor(...categoryColor);
+        doc.roundedRect(iconX, iconY, iconSize, iconSize, 2, 2, 'F');
+        
+        // Add white icon
         const svgIcon = iconMap.get(category);
         if (svgIcon) {
-          doc.addImage(svgIcon, 'PNG', iconX, iconY, iconSize, iconSize);
+          // Add the SVG icon in white (smaller)
+          const svgSize = iconSize - 4; // Make SVG smaller
+          const svgOffset = (iconSize - svgSize) / 2; // Center the smaller SVG
+          doc.addImage(svgIcon, 'PNG', iconX + svgOffset, iconY + svgOffset, svgSize, svgSize);
         } else {
-          drawCategoryIcon(doc, category, iconX, iconY, iconSize);
-        }
-        
-        // Category name
-        doc.setFontSize(9);
-        doc.setTextColor(51, 51, 51);
-        doc.setFont('NotoSans_Condensed-Regular');
-        
-        let displayCategory = category;
-        const maxCategoryWidth = 35;
-        if (doc.getTextWidth(displayCategory) > maxCategoryWidth) {
-          while (doc.getTextWidth(displayCategory + '...') > maxCategoryWidth && displayCategory.length > 3) {
-            displayCategory = displayCategory.slice(0, -1);
+          // Draw simple white icon shapes
+          doc.setFillColor(255, 255, 255);
+          doc.setDrawColor(255, 255, 255);
+          doc.setLineWidth(0.4);
+          
+          if (category === 'Content') {
+            // Simple document icon
+            doc.rect(iconX + 2.5, iconY + 2, iconSize - 5, iconSize - 4, 'FD');
+            doc.setLineWidth(0.2);
+            doc.line(iconX + 3.5, iconY + 4, iconX + 6.5, iconY + 4);
+            doc.line(iconX + 3.5, iconY + 5.5, iconX + 6.5, iconY + 5.5);
+          } else if (category === 'Cognitive') {
+            // Simple brain/puzzle piece
+            doc.circle(iconX + iconSize/2, iconY + iconSize/2, 2.5, 'FD');
+          } else if (category === 'Low Vision') {
+            // Simple eye icon
+            doc.ellipse(iconX + iconSize/2, iconY + iconSize/2, 3, 1.5, 'FD');
+            doc.circle(iconX + iconSize/2, iconY + iconSize/2, 1, 'F');
+          } else if (category === 'Navigation') {
+            // Simple arrow
+            doc.setLineWidth(0.6);
+            doc.line(iconX + 2, iconY + 6, iconX + 6, iconY + 2);
+            doc.line(iconX + 6, iconY + 2, iconX + 5, iconY + 3.5);
+            doc.line(iconX + 6, iconY + 2, iconX + 4.5, iconY + 3);
+          } else if (category === 'Mobility') {
+            // Simple person icon
+            doc.circle(iconX + iconSize/2, iconY + 3, 1, 'F');
+            doc.rect(iconX + iconSize/2 - 0.5, iconY + 4.5, 1, 3, 'F');
+          } else {
+            // Simple gear/other icon
+            doc.circle(iconX + iconSize/2, iconY + iconSize/2, 2, 'FD');
           }
-          displayCategory += '...';
         }
-        doc.text(displayCategory, iconX + iconSize + 2, y + 2);
         
-        // Count number in rounded rectangle - aligned after longest text in column
-        const countText = count.toString();
+        // Category name (below icon, clean)
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('NotoSans_Condensed-Regular');
+        const categoryX = x + 4;
+        const categoryY = y + 20;
+        doc.text(category, categoryX, categoryY);
+        
+        // Get category text width to align count with it
+        const categoryWidth = doc.getTextWidth(category);
+        
+        // Count number (right-aligned with category name in round rect)
         doc.setFontSize(8);
-        const countTextWidth = doc.getTextWidth(countText);
-        
-        const badgeWidth = countTextWidth + 6;
-        const badgeHeight = 6;
-        // Position badge just after the longest text in this column
-        const badgeX = iconX + iconSize + 2 + columnMaxWidths[column] + 4;
-        const badgeY = y - 2;
-        
-        // Rounded rectangle background
-        doc.setFillColor(21, 101, 192);
-        doc.roundedRect(badgeX, badgeY, badgeWidth, badgeHeight, 2, 2, 'F');
-        
-        // Count text in white
         doc.setTextColor(255, 255, 255);
         doc.setFont('NotoSans_Condensed-Regular');
-        doc.text(countText, badgeX + (badgeWidth / 2), badgeY + (badgeHeight / 2) + 1, { align: 'center' });
+        const countText = count.toString();
+        const countWidth = doc.getTextWidth(countText);
+        
+        // Round rectangle background for count
+        const rectPadding = 3;
+        const rectWidth = countWidth + (rectPadding * 2);
+        const rectHeight = 5.5;
+        const rectX = x + cardWidth - rectWidth - 4; // Right-aligned with card
+        const rectY = categoryY - rectHeight + 1.5;
+        doc.setFillColor(80, 80, 80); // Dark gray for better contrast
+        doc.roundedRect(rectX, rectY, rectWidth, rectHeight, 2.5, 2.5, 'F');
+        
+        // Count text
+        doc.text(countText, rectX + rectPadding, categoryY - 0.5);
+        
+        // Progress bar at bottom
+        const progressBarWidth = cardWidth - 6;
+        const progressBarHeight = 3;
+        const progressBarX = x + 3;
+        const progressBarY = y + cardHeight - 9;
+        
+        // Progress bar background
+        doc.setFillColor(240, 240, 240);
+        doc.roundedRect(progressBarX, progressBarY, progressBarWidth, progressBarHeight, 1.5, 1.5, 'F');
+        
+        // Progress bar fill
+        const fillWidth = (progressBarWidth * percentage) / 100;
+        if (fillWidth > 1) {
+          doc.setFillColor(...categoryColor);
+          doc.roundedRect(progressBarX, progressBarY, fillWidth, progressBarHeight, 1.5, 1.5, 'F');
+        }
+        
+        // Percentage text
+        doc.setFontSize(7);
+        doc.setTextColor(120, 120, 120);
+        doc.setFont('NotoSans_Condensed-Regular');
+        doc.text(`${percentage.toFixed(1)}% of total issues`, x + 3, y + cardHeight - 3);
       });
       
-      nextY = currentY + (Math.ceil(categoryData.length / itemsPerRow) * rowHeight) + 8;
+      // Calculate the actual Y position after all cards are drawn
+      const totalRows = Math.ceil(orderedCategoryData.length / itemsPerRow);
+      nextY = currentY + (totalRows * (cardHeight + 6)) + 15; // Added more spacing
+    }
+
+    // Check if we need a new page for the warning/compliance section
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const requiredHeight = hasWebAbility ? 70 : 120; // Estimated height needed for warning/compliance section
+    
+    if (nextY + requiredHeight > pageHeight - 20) {
+      // Add new page if not enough space
+      doc.addPage();
+      nextY = 20; // Start from top of new page with margin
     }
 
     // Add status section after category analysis (warning or compliance)
@@ -2869,9 +2986,41 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       doc.text(translatedProtectBusiness, rightBoxX + 2, warningY + 34);
     }
 
-    // Footer for first page
+    // Update warningY position after warning section is complete
+    if (!hasWebAbility) {
+      // For non-compliant sites, update position after the consequence boxes
+      warningY += 45 + 10; // consequence box height + spacing
+    } else {
+      // For compliant sites, update position after the status section
+      warningY += 35 + 10; // status section height + spacing
+    }
+
+    // Check if we need a new page for WCAG section
+    const wcagSectionHeight = 100; // Estimated height needed for WCAG header and initial content
+    const currentPageHeight = doc.internal.pageSize.getHeight();
+    const footerSpace = 20;
+    
+    let wcagStartY = warningY;
+    let needsNewPage = false;
+    
+    if (warningY + wcagSectionHeight > currentPageHeight - footerSpace) {
+      // Add new page if not enough space
+      needsNewPage = true;
+      doc.addPage();
+      wcagStartY = 30; // Start from top of new page
+    } else {
+      // Add some spacing between sections on same page
+      wcagStartY = warningY + 15;
+    }
+
+    // Add footer to previous page(s) before continuing
     if (accessibilityStatementLinkUrl) {
-      const footerY = doc.internal.pageSize.getHeight() - 10;
+      const totalPages = (doc as any).internal.getNumberOfPages();
+      const footerY = currentPageHeight - 10;
+      
+      // Add footer to all pages up to current point
+      for (let i = 1; i <= (needsNewPage ? totalPages - 1 : totalPages); i++) {
+        doc.setPage(i);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'italic');
       doc.setTextColor(33, 150, 243);
@@ -2882,10 +3031,13 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       });
     }
 
-    // Add new page for WCAG compliance issues
-    doc.addPage();
+      // Return to current page
+      if (needsNewPage) {
+        doc.setPage(totalPages);
+      }
+    }
 
-    // WCAG 2.1 AA Compliance Issues Section (Second Page)
+    // WCAG 2.1 AA Compliance Issues Section
     const wcagIssues = issues.filter(issue => {
       const code = issue.code || '';
       const message = issue.message || '';
@@ -2928,118 +3080,167 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       return result.replace('Principle', 'Principle ').replace('Guideline', 'Guideline ').replace(/_/g, '.');
     };
 
-    // Parse all codes and group by truncated version
-    const parsedCodes = wcagIssues.map(issue => parseWcagCode(issue.code || '')).filter(Boolean);
+    // Parse all codes and group by truncated version, keeping track of messages
+    const codeGroupsWithMessages: {[key: string]: {count: number, messages: string[]}} = {};
     
-    // Group codes and count occurrences
-    const codeGroups = parsedCodes.reduce((acc: {[key: string]: number}, code: string) => {
-      acc[code] = (acc[code] || 0) + 1;
-      return acc;
-    }, {});
+    wcagIssues.forEach(issue => {
+      const parsedCode = parseWcagCode(issue.code || '');
+      if (parsedCode) {
+        if (!codeGroupsWithMessages[parsedCode]) {
+          codeGroupsWithMessages[parsedCode] = { count: 0, messages: [] };
+        }
+        codeGroupsWithMessages[parsedCode].count += 1;
+        // Store unique messages for this code
+        const message = issue.message || '';
+        if (message && !codeGroupsWithMessages[parsedCode].messages.includes(message)) {
+          codeGroupsWithMessages[parsedCode].messages.push(message);
+        }
+      }
+    });
     
-    // Convert to array for display
-    const groupedWcagCodes = Object.entries(codeGroups).map(([code, count]) => ({
+    // Convert to array for display with sample message
+    const groupedWcagCodes = Object.entries(codeGroupsWithMessages).map(([code, data]) => ({
       code,
-      count
+      count: data.count,
+      message: data.messages[0] || '' // Use first message as sample
     }));
 
     if (groupedWcagCodes.length > 0) {
-      let currentY = 30; // Start from top of second page
-      
-      // Modern section header with gradient-like effect
-      doc.setFillColor(21, 101, 192);
-      doc.roundedRect(15, currentY - 5, 180, 25, 4, 4, 'F');
-      
-      doc.setFontSize(16);
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('NotoSans_Condensed-Regular');
-      doc.text(`${translatedWcagComplianceIssues} ${url}`, 105, currentY + 8, { align: 'center' });
-      currentY += 30;
+      let currentY = wcagStartY; // Use calculated start position
       
       // Create card data with compliance check based on WCAG codes
-      const wcagCardData = groupedWcagCodes.map((codeGroup: {code: string, count: number}) => {
+      const wcagCardData = groupedWcagCodes.map((codeGroup: {code: string, count: number, message: string}) => {
         const isFixedByWebability = isCodeCompliant(codeGroup.code);
         return {
           code: codeGroup.code,
           count: codeGroup.count,
+          message: codeGroup.message,
           status: isFixedByWebability ? 'FIXED' : 'NA_FIX'
         };
       });
 
-      // Summary stats at the top
-      const fixedCount = wcagCardData.filter((item: {code: string, count: number, status: string}) => item.status === 'FIXED').length;
-      const manualCount = wcagCardData.filter((item: {code: string, count: number, status: string}) => item.status === 'NA_FIX').length;
+      // Calculate total height needed for the big container card
+      const totalRows = Math.ceil(wcagCardData.length / 3);
+      const cardsHeight = totalRows * (14 + 3); // card height + spacing
+      const containerHeight =  10 + cardsHeight + 24; // ultra compact blue banner, stats, and bottom padding
       
-      // Compact stats cards - centered
+      // 3D effect shadow
+      doc.setFillColor(220, 220, 220); // Light gray shadow
+      doc.roundedRect(12, currentY - 6, 190, containerHeight, 3, 3, 'F');
+      
+      // Big container card background
+      doc.setFillColor(255, 255, 255); // White background
+      doc.setDrawColor(203, 213, 225); // Light border
+      doc.setLineWidth(0.5);
+      doc.roundedRect(10, currentY - 6, 190, containerHeight, 3, 3, 'FD');
+      
+      // Blue banner header section (full width of container) - ultra compact height
+      doc.setFillColor(26, 92, 255);
+      doc.roundedRect(10, currentY - 6, 190, 20, 3, 3, 'F'); // Ultra compact blue section
+      
+      // Cover bottom corners of blue section to make it rectangular at bottom
+      doc.setFillColor(26, 92, 255);
+      doc.rect(10, currentY + 11, 190, 3, 'F');
+      
+      // Load shield SVG icon
+      let shieldIconDataUrl: string | null = null;
+      try {
+        const response = await fetch('/images/report_icons/shield.svg');
+        if (response.ok) {
+          const svgText = await response.text();
+          
+          // Convert SVG to high-resolution PNG using canvas
+          shieldIconDataUrl = await new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            // Use high resolution for crisp icons
+            const size = 256;
+            canvas.width = size;
+            canvas.height = size;
+            
+            img.onload = () => {
+              if (ctx) {
+                // Enable smooth scaling for better quality
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                
+                // Clear canvas and draw the SVG at high resolution
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // Convert to high-quality PNG data URL
+                const pngDataUrl = canvas.toDataURL('image/png', 1.0);
+                resolve(pngDataUrl);
+              } else {
+                resolve(null);
+              }
+            };
+            
+            img.onerror = () => {
+              resolve(null);
+            };
+            
+            // Create data URL from SVG
+            const svgDataUrl = `data:image/svg+xml;base64,${btoa(svgText)}`;
+            img.src = svgDataUrl;
+          });
+        }
+      } catch (error) {
+        console.warn('Failed to load shield SVG icon:', error);
+      }
+
+      // Left-aligned text with shield icon
+      doc.setFontSize(13); // Slightly smaller font for compact banner
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('NotoSans_Condensed-Regular');
+      
+      const textStartX = 15; // Reduced left margin
+      let currentTextX = textStartX;
+      currentY=currentY+3;
+      // Add shield icon if loaded
+      if (shieldIconDataUrl) {
+        const iconSize = 4; // Small icon size
+        const iconY = currentY - 3; // Align icon with first line text baseline
+        doc.addImage(shieldIconDataUrl, 'PNG', currentTextX, iconY, iconSize, iconSize);
+        currentTextX += iconSize + 2; // Small spacing after icon
+      }
+      
+      // First line - WCAG compliance title
+      doc.text(`${translatedWcagComplianceIssues} ${url}`, currentTextX, currentY + 1, { align: 'left' });
+      
+      // Second line - Critical compliance message
+      doc.setFontSize(9); // Smaller font for subtitle
+      doc.setTextColor(255, 255, 255);
+      doc.text(translatedCriticalComplianceGaps, textStartX, currentY + 6, { align: 'left' });
+      
+      currentY += 22; // Adjusted for ultra compact banner
+
+      // Summary stats at the top
+      const fixedCount = wcagCardData.filter((item: {code: string, count: number, message: string, status: string}) => item.status === 'FIXED').length;
+      const manualCount = wcagCardData.filter((item: {code: string, count: number, message: string, status: string}) => item.status === 'NA_FIX').length;
+      
+      // Compact stats cards - centered within the big container
       const statsY = currentY;
       const cardWidth = 70;
       const cardHeight = 18;
       const cardSpacing = 8;
-      // Center the two cards on the page
+      // Center the two cards within the big container (190 width, starting at x=10)
+      const containerWidth = 190;
       const totalWidth = (cardWidth * 2) + cardSpacing;
-      const statsStartX = (210 - totalWidth) / 2; // Center on page width
+      const statsStartX = 10 + (containerWidth - totalWidth) / 2; // Center within container
       const leftCardX = statsStartX;
       const rightCardX = leftCardX + cardWidth + cardSpacing;
       
-      // Fixed issues card - color and text based on hasWebAbility
-      if (hasWebAbility) {
-        // Green for sites with WebAbility (already fixed)
-        doc.setFillColor(220, 252, 231); // Light green background
-        doc.setDrawColor(34, 197, 94);
-        doc.setLineWidth(1);
-        doc.roundedRect(leftCardX, statsY, cardWidth, cardHeight, 4, 4, 'FD');
-        
-        doc.setFontSize(12);
-        doc.setTextColor(22, 163, 74);
-        doc.setFont('NotoSans_Condensed-Regular');
-        doc.text(`${fixedCount} ${translatedAutoFixed}`, leftCardX + cardWidth/2, statsY + 8, { align: 'center' });
-        
-        doc.setFontSize(7);
-        doc.setTextColor(75, 85, 99);
-        doc.setFont('NotoSans_Condensed-Regular');
-        doc.text(translatedReadyToUse, leftCardX + cardWidth/2, statsY + 16, { align: 'center' });
-      } else {
-        // Yellow for sites without WebAbility (can be fixed)
-        doc.setFillColor(254, 249, 195); // Light yellow background
-        doc.setDrawColor(202, 138, 4);
-        doc.setLineWidth(1);
-        doc.roundedRect(leftCardX, statsY, cardWidth, cardHeight, 4, 4, 'FD');
-        
-        doc.setFontSize(12);
-        doc.setTextColor(202, 138, 4);
-        doc.setFont('NotoSans_Condensed-Regular');
-        doc.text(`${fixedCount} ${translatedCanBeFixedWithWebability}`, leftCardX + cardWidth/2, statsY + 8, { align: 'center' });
-        
-        doc.setFontSize(7);
-        doc.setTextColor(75, 85, 99);
-        doc.setFont('NotoSans_Condensed-Regular');
-        doc.text(translatedUseWebabilityToFix, leftCardX + cardWidth/2, statsY + 16, { align: 'center' });
-      }
-      
-      // Manual issues card
-      doc.setFillColor(254, 242, 242); // Light red background
-      doc.setDrawColor(239, 68, 68);
-      doc.setLineWidth(1);
-      doc.roundedRect(rightCardX, statsY, cardWidth, cardHeight, 4, 4, 'FD');
-      
-      doc.setFontSize(12);
-      doc.setTextColor(220, 38, 38);
-      doc.setFont('NotoSans_Condensed-Regular');
-      doc.text(`${manualCount} ${translatedNeedAction}`, rightCardX + cardWidth/2, statsY + 8, { align: 'center' });
-      
-      doc.setFontSize(7);
-      doc.setTextColor(75, 85, 99);
-      doc.setFont('NotoSans_Condensed-Regular');
-      doc.text(translatedReviewRequired, rightCardX + cardWidth/2, statsY + 16, { align: 'center' });
-      
-      currentY = statsY + cardHeight + 10;
-      
-      // Compact issues grid layout - 3 columns with natural flow
-      const issueCardWidth = 55;
-      const issueCardHeight = 16;
+      // Issues grid layout - 3 columns with natural flow
+      const issueCardWidth = 55; // Card width
+      const issueCardHeight = 14; // Card height  
       const issueCardSpacing = 5;
       const itemsPerRow = 3;
-      const cardsStartX = 20;
+      // Center the grid within the container
+      const gridWidth = (issueCardWidth * 3) + (issueCardSpacing * 2);
+      const cardsStartX = 10 + (190 - gridWidth) / 2; // Center within big container
       const pageHeight = doc.internal.pageSize.getHeight();
       const pageMargin = 15; // Reduced margin to fit 27 cards (9 rows × 3 cards)
       let pageRowCount = 0; // Track rows on current page
@@ -3104,11 +3305,11 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       
       console.log('Eye icon data URL result:', eyeIconDataUrl ? 'Loaded' : 'Failed');
 
-      wcagCardData.forEach((item: {code: string, count: number, status: string}, index: number) => {
+      wcagCardData.forEach((item: {code: string, count: number, message: string, status: string}, index: number) => {
         const column = index % itemsPerRow;
         const row = pageRowCount; // Use page-relative row count
         const x = cardsStartX + (column * (issueCardWidth + issueCardSpacing));
-        const y = currentY + (row * (issueCardHeight + 4));
+        const y = currentY + (row * (issueCardHeight + 3)); // Reduced row spacing for compact layout
         
         // Check if we need a new page (only at start of a new row)
         if (column === 0 && y + issueCardHeight > pageHeight - pageMargin) {
@@ -3118,7 +3319,11 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         }
         
         // Recalculate y position with current page row count
-        const cardY = currentY + (pageRowCount * (issueCardHeight + 4));
+        const cardY = currentY + (pageRowCount * (issueCardHeight + 3)); // Reduced row spacing for compact layout
+        
+        // 3D shadow for individual cards
+        doc.setFillColor(220, 220, 220);
+        doc.roundedRect(x + 1, cardY + 1, issueCardWidth, issueCardHeight, 2, 2, 'F');
         
         // Card background based on status and hasWebAbility
         if (item.status === 'FIXED') {
@@ -3126,7 +3331,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             doc.setFillColor(240, 253, 244); // Very light green
             doc.setDrawColor(34, 197, 94);
           } else {
-            doc.setFillColor(254, 249, 195); // Very light yellow
+            doc.setFillColor(255, 248, 225); // Very light yellow
             doc.setDrawColor(202, 138, 4);
           }
         } else {
@@ -3134,61 +3339,14 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           doc.setDrawColor(239, 68, 68);
         }
         
-        doc.setLineWidth(0.5);
+        doc.setLineWidth(0.2);
         doc.roundedRect(x, cardY, issueCardWidth, issueCardHeight, 2, 2, 'FD');
         
-        // Status icon (smaller)
-        const iconX = x + 6;
-        const iconY = cardY + issueCardHeight/2;
-        
-        if (item.status === 'FIXED') {
-          if (hasWebAbility) {
-            // Green checkmark (smaller)
-            doc.setFillColor(34, 197, 94);
-            doc.setDrawColor(22, 163, 74);
-            doc.setLineWidth(0.3);
-            doc.circle(iconX, iconY, 2.5, 'FD');
-            
-            doc.setDrawColor(255, 255, 255);
-            doc.setLineWidth(0.8);
-            doc.line(iconX - 1.2, iconY - 0.3, iconX - 0.3, iconY + 0.8);
-            doc.line(iconX - 0.5, iconY + 1, iconX + 1.5, iconY - 1);
-          } else {
-            // Eye icon for can be fixed with WebAbility
-            if (eyeIconDataUrl) {
-              console.log('Adding eye icon to PDF at position:', iconX, iconY);
-              // Center the eye icon properly within the card
-              const iconSize = 7; // Smaller size to fit better
-              const iconOffsetX = (7 - iconSize) / 2-4; // Center horizontally
-              const iconOffsetY = (issueCardHeight - iconSize) / 2; // Center vertically
-              doc.addImage(eyeIconDataUrl, 'PNG', iconX + iconOffsetX, cardY + iconOffsetY, iconSize, iconSize);
-            } else {
-              console.log('Eye icon not available, using yellow circle fallback');
-              // Fallback to yellow circle if eye icon failed to load
-              doc.setFillColor(202, 138, 4);
-              doc.setDrawColor(161, 98, 7);
-              doc.setLineWidth(0.3);
-              doc.circle(iconX, iconY, 2.5, 'FD');
-            }
-          }
-        } else {
-          // Red X (smaller)
-          doc.setFillColor(239, 68, 68);
-          doc.setDrawColor(220, 38, 38);
-          doc.setLineWidth(0.3);
-          doc.circle(iconX, iconY, 2.5, 'FD');
-          
-          doc.setDrawColor(255, 255, 255);
-          doc.setLineWidth(0.8);
-          doc.line(iconX - 1, iconY - 1, iconX + 1, iconY + 1);
-          doc.line(iconX - 1, iconY + 1, iconX + 1, iconY - 1);
-        }
-        
-        // Count badge in top right corner - rounded rectangle with consistent size
-        const countBadgeHeight = 4;
-        const countBadgeWidth = 6; // Fixed width for consistent appearance
-        const countBadgeX = x + issueCardWidth - countBadgeWidth - 1; // Align with card border
-        const countBadgeY = cardY + 2; // Small offset from top edge
+        // Count badge on left side, aligned with code - very small
+        const countBadgeHeight = 3; // Slightly larger for better centering
+        const countBadgeWidth = 3; // Keep width
+        const countBadgeX = x + 3; // Left position
+        const countBadgeY = cardY + 3; // Fixed position for better alignment with code text
         
         // Count background rounded rectangle - color based on status and hasWebAbility
         if (item.status === 'FIXED') {
@@ -3203,35 +3361,111 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         // Draw a perfect round circle as the count badge (not a rounded rectangle)
         const countBadgeCircleRadius = Math.max(countBadgeWidth, countBadgeHeight) / 2;
         const countBadgeCircleX = countBadgeX + countBadgeWidth / 2;
-        const countBadgeCircleY = countBadgeY + countBadgeHeight / 2 ;
+        const countBadgeCircleY = countBadgeY + countBadgeHeight / 2;
         doc.circle(countBadgeCircleX, countBadgeCircleY, countBadgeCircleRadius, 'F');
         
-        // Count text
-        doc.setFontSize(7); // Increased font size
+        // Count text - properly centered in badge
+        doc.setFontSize(5); // Smaller font for better centering in small badge
         doc.setTextColor(255, 255, 255);
         doc.setFont('NotoSans_Condensed-Regular');
-        doc.text(item.count.toString(), countBadgeX + countBadgeWidth/2, countBadgeY + countBadgeHeight/2 + 1, { align: 'center' });
+        // Use the exact center coordinates with no offset for perfect centering
+        doc.text(item.count.toString(), countBadgeCircleX, countBadgeCircleY + 0.6, { align: 'center' });
+
+        // Status icon in top right corner - very small
+        const iconX = x + issueCardWidth - 5; // Move a bit left from the right edge
+        const iconY = cardY + 4; // Moved down slightly
         
-        // Issue code text (smaller and truncated, without count since it's now in corner)
-        doc.setFontSize(6);
-        doc.setTextColor(75, 85, 99);
-        doc.setFont('NotoSans_Condensed-Regular');
-        
-        // Truncate text to fit in card (leaving space for count badge)
-        const maxWidth = issueCardWidth - 20; // Extra space for count badge
-        let displayText = item.code;
-        if (doc.getTextWidth(displayText) > maxWidth) {
-          // Truncate and add ellipsis
-          while (doc.getTextWidth(displayText + '...') > maxWidth && displayText.length > 10) {
-            displayText = displayText.slice(0, -1);
+        if (item.status === 'FIXED') {
+          if (hasWebAbility) {
+            // Green checkmark (very small)
+            doc.setFillColor(34, 197, 94);
+            doc.setDrawColor(22, 163, 74);
+            doc.setLineWidth(0.2);
+            doc.circle(iconX, iconY, 1.5, 'FD'); // Reduced from 2.5 to 1.5
+            
+            doc.setDrawColor(255, 255, 255);
+            doc.setLineWidth(0.4); // Reduced line width
+            doc.line(iconX - 0.7, iconY - 0.2, iconX - 0.2, iconY + 0.5);
+            doc.line(iconX - 0.3, iconY + 0.6, iconX + 0.9, iconY - 0.6);
+          } else {
+            // Eye icon for can be fixed with WebAbility (very small)
+            if (eyeIconDataUrl) {
+           //   console.log('Adding eye icon to PDF at position:', iconX, iconY);
+              // Very small eye icon in top right corner
+              const iconSize = 4; // Reduced from 7 to 4
+              const iconOffsetX = -iconSize/2; // Center horizontally
+              const iconOffsetY = -iconSize/2; // Center vertically
+              doc.addImage(eyeIconDataUrl, 'PNG', iconX + iconOffsetX, iconY + iconOffsetY, iconSize, iconSize);
+            } else {
+              console.log('Eye icon not available, using yellow circle fallback');
+              // Fallback to yellow circle if eye icon failed to load (very small)
+              doc.setFillColor(202, 138, 4);
+              doc.setDrawColor(161, 98, 7);
+              doc.setLineWidth(0.2);
+              doc.circle(iconX, iconY, 1.5, 'FD'); // Reduced from 2.5 to 1.5
+            }
           }
-          displayText += '...';
+        } else {
+          // Red X (very small)
+          doc.setFillColor(239, 68, 68);
+          doc.setDrawColor(220, 38, 38);
+          doc.setLineWidth(0.2);
+          doc.circle(iconX, iconY, 1.5, 'FD'); // Reduced from 2.5 to 1.5
+          
+          doc.setDrawColor(255, 255, 255);
+          doc.setLineWidth(0.4); // Reduced line width
+          doc.line(iconX - 0.6, iconY - 0.6, iconX + 0.6, iconY + 0.6);
+          doc.line(iconX - 0.6, iconY + 0.6, iconX + 0.6, iconY - 0.6);
         }
         
-        // Position text properly relative to the icon
-        const textX = iconX + 8; // Keep consistent spacing from icon
-        const textY = cardY + issueCardHeight/2 + 1; // Center text vertically in card
-        doc.text(displayText, textX, textY);
+        // Issue code text as heading (smaller and truncated, positioned after count badge)
+        doc.setFontSize(7);
+        doc.setTextColor(0, 0, 0); // Darker color for heading
+        doc.setFont('NotoSans_Condensed-Regular');
+        
+        // Truncate code to fit in card (leaving space for count badge and status icon)
+        const maxWidth = issueCardWidth - 15; // Adjusted for very small count badge and status icon
+        let displayCode = item.code;
+        if (doc.getTextWidth(displayCode) > maxWidth) {
+          // Truncate and add ellipsis
+          while (doc.getTextWidth(displayCode + '...') > maxWidth && displayCode.length > 10) {
+            displayCode = displayCode.slice(0, -1);
+          }
+          displayCode += '...';
+        }
+        
+        // Position code heading aligned with count badge
+        const textX = countBadgeX + countBadgeWidth + 1.5; // Position after count badge with proper spacing
+        const codeY = countBadgeCircleY + 0.6; // Aligned exactly with count badge center/text
+        doc.text(displayCode, textX, codeY);
+        
+        // Message description (7-10 words, smaller font)
+        if (item.message) {
+          doc.setFontSize(7);
+          doc.setTextColor(0, 0, 0); // Same color as WCAG code heading
+          doc.setFont('NotoSans_Condensed-Regular');
+          
+          // Truncate message to 7-10 words
+          const words = item.message.split(' ');
+          let messageText = words.slice(0, Math.min(10, words.length)).join(' ');
+          if (words.length > 10) {
+            messageText += '...';
+          }
+          
+          // Further truncate if still too wide
+          if (doc.getTextWidth(messageText) > maxWidth) {
+            while (doc.getTextWidth(messageText + '...') > maxWidth && messageText.length > 20) {
+              messageText = messageText.slice(0, -1);
+            }
+            if (!messageText.endsWith('...')) {
+              messageText += '...';
+            }
+          }
+          
+          const messageY = codeY + 4; // Moved down slightly for better spacing
+          const messageX = countBadgeX; // Align message with count badge (start under count badge)
+          doc.text(messageText, messageX, messageY);
+        }
         
         // Increment row count when we complete a row (at the last column)
         if (column === itemsPerRow - 1) {
@@ -3239,17 +3473,22 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         }
       });
       
-      // Update currentY to the final position
-      currentY = currentY + ((pageRowCount + (wcagCardData.length % itemsPerRow > 0 ? 1 : 0)) * (issueCardHeight + 4)) + 20;
+      // Update currentY to the final position - add some padding for the container
+      currentY = currentY + ((pageRowCount + (wcagCardData.length % itemsPerRow > 0 ? 1 : 0)) * (issueCardHeight + 3)) + 25; // Extra padding for big container
       
 
      }
 
         // --- END CUSTOM TABLE LAYOUT ---
+        // Add footer to any remaining pages (WCAG section pages)
         if (accessibilityStatementLinkUrl) {
           const totalPages = (doc as any).internal.getNumberOfPages();
           const footerY = doc.internal.pageSize.getHeight() - 10;
-          for (let i = 1; i <= totalPages; i++) {
+          
+          // Start from the WCAG section pages (skip already handled pages)
+          const startPageForWcagFooters = needsNewPage ? totalPages : 1;
+          
+          for (let i = startPageForWcagFooters; i <= totalPages; i++) {
             doc.setPage(i);
             doc.setFontSize(9);
             doc.setFont('helvetica', 'italic');
@@ -3270,7 +3509,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     return doc.output('blob');
   };
-
+  
   // Handle short report download
   const handleShortReportDownload = async () => {
     setIsDownloading(true);
@@ -3330,7 +3569,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
                   {isDownloading ? (
                     <CircularProgress size={22} sx={{ color: 'white' }} />
                   ) : (
-                    'Short Report'
+                    'Prospect report'
                   )}
                 </span>
               </button>
@@ -3367,7 +3606,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               {isDownloading ? (
                 <CircularProgress size={22} sx={{ color: 'white' }} />
               ) : (
-                'Get Free Report'
+                'Get Detailed Report'
               )}
             </span>
           </button>
@@ -3380,7 +3619,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               {isDownloading ? (
                 <CircularProgress size={22} sx={{ color: 'white' }} />
               ) : (
-                'Short Report'
+                'Prospect report'
               )}
             </span>
           </button>

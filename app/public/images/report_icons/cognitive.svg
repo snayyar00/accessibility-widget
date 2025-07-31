@@ -1,19 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
-
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg version="1.1"
-	 id="svg2" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" sodipodi:docname="New document 1" inkscape:version="0.48.4 r9939"
-	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  width="800px" height="800px"
-	 viewBox="0 0 1200 1200" enable-background="new 0 0 1200 1200" xml:space="preserve">
-<g id="layer1" transform="translate(0,147.63782)" inkscape:label="Layer 1" inkscape:groupmode="layer">
-	<path id="rect3006" inkscape:connector-curvature="0" d="M471.749-147.637c-94.045,0-170.273,76.304-170.273,170.441
-		c0,46.55,18.624,88.767,48.842,119.528H0.001v284.069c31.224-36.108,77.389-59.006,128.842-59.006
-		c94.044,0,170.273,76.304,170.273,170.44c0,94.137-76.229,170.441-170.274,170.441C77.39,708.276,31.225,685.378,0,649.27v403.092
-		h368c-38.914-31.238-63.832-79.199-63.832-133.016c0-94.139,76.229-170.441,170.274-170.441
-		c94.044,0,170.272,76.305,170.272,170.441c0,53.814-24.918,101.775-63.832,133.016h328.253V696.307
-		c30.828,30.945,73.48,50.07,120.59,50.07c94.045,0,170.273-76.305,170.273-170.441c0-94.139-76.23-170.441-170.273-170.441
-		c-47.109,0-89.762,19.125-120.59,50.07V142.331H593.18c30.228-30.763,48.843-72.971,48.843-119.528
-		C642.023-71.334,565.793-147.637,471.749-147.637L471.749-147.637z"/>
-</g>
-</svg>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Transformed by: SVG Repo Mixer Tools -->
+<svg fill="#FFFFFF" width="800px" height="800px" viewBox="0 0 256 256" id="Flat" xmlns="http://www.w3.org/2000/svg" stroke="#FFFFFF">
+<g id="SVGRepo_bgCarrier" stroke-width="0"/>
+<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"/>
+<g id="SVGRepo_iconCarrier"> <path d="M248,132a56.1211,56.1211,0,0,0-31.99951-50.61035L216,72a47.98283,47.98283,0,0,0-88-26.49316A47.98283,47.98283,0,0,0,40,71.99951l-.00049,9.39014A56.00268,56.00268,0,0,0,40,182.58569V184a47.98283,47.98283,0,0,0,88,26.49316A47.98283,47.98283,0,0,0,216,184v-1.41431A56.06726,56.06726,0,0,0,248,132ZM88,216a32.0433,32.0433,0,0,1-31.812-28.55664A56.1738,56.1738,0,0,0,64,188h8a8,8,0,0,0,0-16H64A40.00827,40.00827,0,0,1,50.66553,94.27393a7.99958,7.99958,0,0,0,5.33349-7.542L56,72a32,32,0,0,1,64,0v76.26147A47.80252,47.80252,0,0,0,88,136a8,8,0,0,0,0,16,32,32,0,0,1,0,64Zm104-44h-8a8,8,0,0,0,0,16h8a56.1738,56.1738,0,0,0,7.812-.55664A31.999,31.999,0,1,1,168,152a8,8,0,0,0,0-16,47.80252,47.80252,0,0,0-32,12.26147V72a32,32,0,1,1,64,.00049l.001,14.73144a7.99958,7.99958,0,0,0,5.33349,7.542A40.00827,40.00827,0,0,1,192,172ZM60,128a8,8,0,0,1,0-16A20.0226,20.0226,0,0,0,80,92V84a8,8,0,0,1,16,0v8A36.04061,36.04061,0,0,1,60,128Zm144-8a8.00008,8.00008,0,0,1-8,8,36.04061,36.04061,0,0,1-36-36V84a8,8,0,0,1,16,0v8a20.0226,20.0226,0,0,0,20,20A8.00008,8.00008,0,0,1,204,120Z"/> </g>
+</svg>
