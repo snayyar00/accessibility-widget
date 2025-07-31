@@ -7,7 +7,7 @@ import {
   DialogActions,
   TextField,
 } from '@mui/material';
-import { useLazyQuery, useMutation } from '@apollo/client';
+import { useMutation } from '@apollo/client';
 import ADD_USER_TO_ORGANIZATION from '@/queries/organization/addUserToOrganization';
 import { toast } from 'react-toastify';
 import { AddUserToOrganizationByEmailMutation } from '@/generated/graphql';
