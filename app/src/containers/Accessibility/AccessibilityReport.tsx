@@ -2506,12 +2506,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       // Load eye SVG icon once for reuse
       let eyeIconDataUrl: string | null = null;
       try {
-        console.log('Loading eye SVG icon...');
+       // console.log('Loading eye SVG icon...');
         const response = await fetch('/images/report_icons/eye.svg');
-        console.log('Eye SVG response status:', response.status);
+        //console.log('Eye SVG response status:', response.status);
         if (response.ok) {
           const svgText = await response.text();
-          console.log('Eye SVG content loaded, length:', svgText.length);
+          //console.log('Eye SVG content loaded, length:', svgText.length);
           
           // Convert SVG to high-resolution PNG using canvas
           eyeIconDataUrl = await new Promise((resolve) => {
@@ -2525,7 +2525,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             canvas.height = size;
             
             img.onload = () => {
-              console.log('Eye SVG image loaded successfully');
+           //   console.log('Eye SVG image loaded successfully');
               if (ctx) {
                 // Enable smooth scaling for better quality
                 ctx.imageSmoothingEnabled = true;
@@ -2537,7 +2537,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 
                 // Convert to high-quality PNG data URL
                 const pngDataUrl = canvas.toDataURL('image/png', 1.0);
-                console.log('Eye icon converted to PNG data URL');
+               // console.log('Eye icon converted to PNG data URL');
                 resolve(pngDataUrl);
               } else {
                 console.warn('Canvas context not available for eye icon');
@@ -2561,7 +2561,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         console.error('Failed to load eye SVG icon:', error);
       }
       
-      console.log('Eye icon data URL result:', eyeIconDataUrl ? 'Loaded' : 'Failed');
+     // console.log('Eye icon data URL result:', eyeIconDataUrl ? 'Loaded' : 'Failed');
 
       wcagCardData.forEach((item: {code: string, count: number, message: string, status: string}, index: number) => {
         const column = index % itemsPerRow;
@@ -2648,14 +2648,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           } else {
             // Eye icon for can be fixed with WebAbility (very small)
             if (eyeIconDataUrl) {
-              console.log('Adding eye icon to PDF at position:', iconX, iconY);
+             // console.log('Adding eye icon to PDF at position:', iconX, iconY);
               // Very small eye icon in top right corner
               const iconSize = 4; // Reduced from 7 to 4
               const iconOffsetX = -iconSize/2; // Center horizontally
               const iconOffsetY = -iconSize/2; // Center vertically
               doc.addImage(eyeIconDataUrl, 'PNG', iconX + iconOffsetX, iconY + iconOffsetY, iconSize, iconSize);
             } else {
-              console.log('Eye icon not available, using yellow circle fallback');
+            //  console.log('Eye icon not available, using yellow circle fallback');
               // Fallback to yellow circle if eye icon failed to load (very small)
               doc.setFillColor(202, 138, 4);
               doc.setDrawColor(161, 98, 7);
