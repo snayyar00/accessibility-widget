@@ -3,6 +3,7 @@ import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Chip } from '@mui/material';
 import { ChangeOrganizationSelect } from './ChangeOrganizationSelect';
 import { AddUserToOrganization } from './AddUserToOrganization';
+import { DeleteUserFromOrganization } from './DeleteUserFromOrganization';
 import { useLazyQuery } from '@apollo/client';
 import GET_ORGANIZATION_USERS from '@/queries/organization/getOrganizationUsers';
 import { Query } from '@/generated/graphql';
@@ -165,7 +166,31 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
         if (!params.value) return '';
 
         const date = new Date(params.value);
+
         return date.toLocaleString();
+      },
+    },
+    {
+      field: 'actions',
+      headerName: '',
+      width: 60,
+      align: 'right',
+      headerAlign: 'right',
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      renderCell: (params) => {
+        const rowUserId = params.row.id;
+        const rowOwner = params.row.role === 'owner';
+
+        return (
+          <DeleteUserFromOrganization
+            disabled={rowUserId === userId || rowOwner}
+            userId={rowUserId}
+            organizationId={organizationId}
+            onUserDeleted={refetch}
+          />
+        );
       },
     },
   ];
@@ -179,8 +204,9 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
         />
       </div>
 
-      <div className="bg-white h-[calc(100vh-310px)]">
+      <div className="h-[calc(100vh-310px)]">
         <DataGrid
+          style={{ background: 'white' }}
           error={error}
           loading={loading}
           pageSize={pageSize}

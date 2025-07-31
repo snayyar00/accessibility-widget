@@ -36,6 +36,7 @@ type Documents = {
     "\n  query GetOrganizationByDomain {\n    getOrganizationByDomain {\n      id\n      name\n      domain\n      favicon\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n": typeof types.GetOrganizationByDomainDocument,
     "\n  query GetOrganizationUsers {\n    getOrganizationUsers {\n      id\n      user_id\n      organization_id\n      role\n      status\n      updated_at\n      user {\n        id\n        name\n        email\n        current_organization_id\n        isActive\n      }\n      organizations {\n        id\n        name\n      }\n      currentOrganization {\n        id\n        name\n      }\n    }\n  }\n": typeof types.GetOrganizationUsersDocument,
     "\n  query getUserOrganizations {\n    getUserOrganizations {\n      id\n      name\n      domain\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n": typeof types.GetUserOrganizationsDocument,
+    "\n  mutation RemoveUserFromOrganization($userId: Int!) {\n    removeUserFromOrganization(userId: $userId)\n  }\n": typeof types.RemoveUserFromOrganizationDocument,
     "\n  query GetPlanBySiteIdAndUserId($siteId: Int!) {\n    getPlanBySiteIdAndUserId(siteId: $siteId) {\n      id,\n      siteId,\n      productId,\n      priceId,\n      subcriptionId,\n      customerId,\n      isTrial,\n      expiredAt,\n      isActive,\n      createdAt,\n      updatedAt,\n      deletedAt,\n      siteName,\n      productType,\n      amount,\n      priceType\n    }\n  }\n": typeof types.GetPlanBySiteIdAndUserIdDocument,
     "\n  mutation UpdateSitesPlan($sitesPlanId: Int!, $planName: String!, $billingType: BillingType!) {\n    updateSitesPlan(sitesPlanId: $sitesPlanId, planName: $planName, billingType: $billingType)\n  }\n": typeof types.UpdateSitesPlanDocument,
     "\n  mutation addSite($url: String!) {\n    addSite(url:$url)\n  }\n": typeof types.AddSiteDocument,
@@ -71,6 +72,7 @@ const documents: Documents = {
     "\n  query GetOrganizationByDomain {\n    getOrganizationByDomain {\n      id\n      name\n      domain\n      favicon\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n": types.GetOrganizationByDomainDocument,
     "\n  query GetOrganizationUsers {\n    getOrganizationUsers {\n      id\n      user_id\n      organization_id\n      role\n      status\n      updated_at\n      user {\n        id\n        name\n        email\n        current_organization_id\n        isActive\n      }\n      organizations {\n        id\n        name\n      }\n      currentOrganization {\n        id\n        name\n      }\n    }\n  }\n": types.GetOrganizationUsersDocument,
     "\n  query getUserOrganizations {\n    getUserOrganizations {\n      id\n      name\n      domain\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n": types.GetUserOrganizationsDocument,
+    "\n  mutation RemoveUserFromOrganization($userId: Int!) {\n    removeUserFromOrganization(userId: $userId)\n  }\n": types.RemoveUserFromOrganizationDocument,
     "\n  query GetPlanBySiteIdAndUserId($siteId: Int!) {\n    getPlanBySiteIdAndUserId(siteId: $siteId) {\n      id,\n      siteId,\n      productId,\n      priceId,\n      subcriptionId,\n      customerId,\n      isTrial,\n      expiredAt,\n      isActive,\n      createdAt,\n      updatedAt,\n      deletedAt,\n      siteName,\n      productType,\n      amount,\n      priceType\n    }\n  }\n": types.GetPlanBySiteIdAndUserIdDocument,
     "\n  mutation UpdateSitesPlan($sitesPlanId: Int!, $planName: String!, $billingType: BillingType!) {\n    updateSitesPlan(sitesPlanId: $sitesPlanId, planName: $planName, billingType: $billingType)\n  }\n": types.UpdateSitesPlanDocument,
     "\n  mutation addSite($url: String!) {\n    addSite(url:$url)\n  }\n": types.AddSiteDocument,
@@ -186,6 +188,10 @@ export function graphql(source: "\n  query GetOrganizationUsers {\n    getOrgani
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query getUserOrganizations {\n    getUserOrganizations {\n      id\n      name\n      domain\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n"): (typeof documents)["\n  query getUserOrganizations {\n    getUserOrganizations {\n      id\n      name\n      domain\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation RemoveUserFromOrganization($userId: Int!) {\n    removeUserFromOrganization(userId: $userId)\n  }\n"): (typeof documents)["\n  mutation RemoveUserFromOrganization($userId: Int!) {\n    removeUserFromOrganization(userId: $userId)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
