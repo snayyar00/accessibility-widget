@@ -71,7 +71,7 @@ export const UserSchema = `#graphql
     updateNotificationSettings(monthly_report_flag: Boolean, new_domain_flag: Boolean, issue_reported_flag: Boolean): Boolean!
       @rateLimit(limit: 10, duration: 3600, message: "Too many notification settings updates. Please try again later.")
 
-    changeCurrentOrganization(organizationId: Int!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many organization change requests. Please try again later.")
+    changeCurrentOrganization(organizationId: Int!, userId: Int): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many organization change requests. Please try again later.")
 
     logout: Boolean!
   }

@@ -115,8 +115,8 @@ const resolvers = {
       return result.success
     }),
 
-    changeCurrentOrganization: combineResolvers(allowedOrganization, isAuthenticated, async (_, { organizationId }, { user }) => {
-      return await changeCurrentOrganization(user, organizationId)
+    changeCurrentOrganization: combineResolvers(allowedOrganization, isAuthenticated, async (_, { organizationId, userId }, { user }) => {
+      return await changeCurrentOrganization(user, organizationId, userId)
     }),
   },
 }

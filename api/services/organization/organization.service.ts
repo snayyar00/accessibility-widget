@@ -3,11 +3,13 @@ import { IS_PROD } from '../../config/env'
 import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { objectToString } from '../../helpers/string.helper'
 import { createOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization, updateOrganization } from '../../repository/organization.repository'
+import { findUser } from '../../repository/user.repository'
 import { updateUser, UserProfile } from '../../repository/user.repository'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
 import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
+import { emailValidation } from '../../validations/email.validation'
 import { validateAddOrganization, validateEditOrganization, validateGetOrganizationByDomain, validateRemoveOrganization } from '../../validations/organization.validation'
 import { addUserToOrganization, getOrganizationsByUserId, getUserOrganization } from './organization_users.service'
 
@@ -194,6 +196,41 @@ export async function getOrganizationByDomainService(domain: string): Promise<Or
     logger.error('Error fetching organization by domain:', error)
     throw error
   }
+}
+
+export async function addUserToOrganizationByEmail(initiator: UserProfile, email: string): Promise<number[]> {
+  const validateResult = emailValidation(email)
+
+  if (Array.isArray(validateResult) && validateResult.length) {
+    throw new ValidationError(validateResult.map((it) => it.message).join(','))
+  }
+
+  const organizationId = initiator.current_organization_id
+
+  if (!organizationId) {
+    throw new ApolloError('No current organization selected')
+  }
+
+  const orgUser = await getUserOrganization(initiator.id, organizationId)
+  const isAllowed = orgUser && ORGANIZATION_MANAGEMENT_ROLES.includes(orgUser.role as (typeof ORGANIZATION_MANAGEMENT_ROLES)[number])
+
+  if (!isAllowed) {
+    throw new ForbiddenError('Only owner or admin can add users to the organization')
+  }
+
+  const user = await findUser({ email })
+
+  if (!user) {
+    throw new ValidationError('User with this email not found')
+  }
+
+  const existing = await getUserOrganization(user.id, organizationId)
+
+  if (existing) {
+    throw new ValidationError('User is already a member of this organization')
+  }
+
+  return await addUserToOrganization(user.id, organizationId)
 }
 
 async function checkOrganizationAccess(user: UserProfile, organizationId: number | string, errorMessage: string) {
