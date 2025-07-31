@@ -1,18 +1,21 @@
 import * as React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { Chip, Select, MenuItem } from '@mui/material';
+import { Chip } from '@mui/material';
+import { ChangeOrganizationSelect } from './ChangeOrganizationSelect';
+import { AddUserToOrganization } from './AddUserToOrganization';
 import { useLazyQuery } from '@apollo/client';
 import GET_ORGANIZATION_USERS from '@/queries/organization/getOrganizationUsers';
-import { Organization, Query } from '@/generated/graphql';
+import { Query } from '@/generated/graphql';
 
 type TableUsersProps = {
   organizationId: number;
+  userId: number;
 };
 
-export const TableUsers = ({ organizationId }: TableUsersProps) => {
+export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
   const [pageSize, setPageSize] = React.useState<number>(50);
 
-  const [getUsers, { data, loading, error }] = useLazyQuery<Query>(
+  const [getUsers, { data, loading, error, refetch }] = useLazyQuery<Query>(
     GET_ORGANIZATION_USERS,
   );
 
@@ -44,8 +47,40 @@ export const TableUsers = ({ organizationId }: TableUsersProps) => {
   const columns: GridColDef[] = [
     { field: 'number', headerName: '№', width: 60 },
     { field: 'id', headerName: 'User ID', width: 100 },
-    { field: 'name', headerName: 'Name', width: 220, minWidth: 220, flex: 1 },
-    { field: 'email', headerName: 'Email', width: 280, minWidth: 280, flex: 1 },
+    {
+      field: 'name',
+      headerName: 'Name',
+      width: 220,
+      minWidth: 220,
+      flex: 1,
+      renderCell: (params) => {
+        const rowUserId = params.row.id;
+        let name = params.value;
+
+        if (rowUserId === userId) {
+          name += ' (you)';
+        }
+
+        return name;
+      },
+    },
+    {
+      field: 'email',
+      headerName: 'Email',
+      width: 280,
+      minWidth: 280,
+      flex: 1,
+      renderCell: (params) => {
+        const rowUserId = params.row.id;
+        let email = params.value;
+
+        if (rowUserId === userId) {
+          email += ' (you)';
+        }
+
+        return email;
+      },
+    },
     {
       field: 'isActive',
       headerName: 'Account',
@@ -64,24 +99,28 @@ export const TableUsers = ({ organizationId }: TableUsersProps) => {
       headerName: 'Active Organization',
       width: 200,
       renderCell: (params) => {
-        const orgs = params.row.organizations || [];
+        const organizations = params.row.organizations || [];
         const value = params.row.currentOrganizationId;
+        const rowUserId = params.row.id || null;
+
+        if (!value) {
+          return (
+            <Chip
+              label="No access"
+              color="warning"
+              size="small"
+              variant="filled"
+            />
+          );
+        }
 
         return (
-          <Select
-            value={value}
-            size="small"
-            sx={{ minWidth: 120 }}
-            onChange={(e) => {
-              // TODO
-            }}
-          >
-            {orgs.map((org: Organization) => (
-              <MenuItem key={org.id} value={org.id}>
-                {org.name}
-              </MenuItem>
-            ))}
-          </Select>
+          <ChangeOrganizationSelect
+            disabled={rowUserId === userId}
+            initialValue={value}
+            organizations={organizations}
+            userId={rowUserId}
+          />
         );
       },
     },
@@ -90,24 +129,19 @@ export const TableUsers = ({ organizationId }: TableUsersProps) => {
       headerName: 'Role',
       width: 100,
       renderCell: (params) => {
-        let chipColor = 'default';
         let chipStyle = {};
 
         switch ((params.value || '').toLowerCase()) {
           case 'admin':
-            chipColor = 'error';
             chipStyle = { backgroundColor: '#f87171', color: '#fff' };
             break;
           case 'owner':
-            chipColor = 'success';
             chipStyle = { backgroundColor: '#4ade80', color: '#fff' };
             break;
           case 'member':
-            chipColor = 'primary';
             chipStyle = { backgroundColor: '#2563eb', color: '#fff' };
             break;
           default:
-            chipColor = 'default';
             chipStyle = {};
         }
 
@@ -137,26 +171,35 @@ export const TableUsers = ({ organizationId }: TableUsersProps) => {
   ];
 
   return (
-    <div className="bg-white h-[calc(100vh-310px)]">
-      <DataGrid
-        error={error}
-        loading={loading}
-        pageSize={pageSize}
-        onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-        rowsPerPageOptions={[25, 50, 100]}
-        rows={rows}
-        columns={columns}
-        disableSelectionOnClick
-        sx={{
-          '.MuiDataGrid-columnHeader:focus, .MuiDataGrid-cell:focus': {
-            outline: 'none !important',
-          },
-          '.MuiDataGrid-columnHeader:focus-within, .MuiDataGrid-cell:focus-within':
-            {
+    <>
+      <div className="static mb-5 top-[15px] right-[17px] lg:absolute lg:mb-0">
+        <AddUserToOrganization
+          onUserAdded={refetch}
+          organizationId={organizationId}
+        />
+      </div>
+
+      <div className="bg-white h-[calc(100vh-310px)]">
+        <DataGrid
+          error={error}
+          loading={loading}
+          pageSize={pageSize}
+          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+          rowsPerPageOptions={[25, 50, 100]}
+          rows={rows}
+          columns={columns}
+          disableSelectionOnClick
+          sx={{
+            '.MuiDataGrid-columnHeader:focus, .MuiDataGrid-cell:focus': {
               outline: 'none !important',
             },
-        }}
-      />
-    </div>
+            '.MuiDataGrid-columnHeader:focus-within, .MuiDataGrid-cell:focus-within':
+              {
+                outline: 'none !important',
+              },
+          }}
+        />
+      </div>
+    </>
   );
 };

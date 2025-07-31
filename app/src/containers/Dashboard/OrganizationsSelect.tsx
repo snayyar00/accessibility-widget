@@ -6,7 +6,7 @@ import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
 import GET_USER_ORGANIZATIONS from '@/queries/organization/getUserOrganizations';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
-import { Query } from '@/generated/graphql';
+import { ChangeCurrentOrganizationMutation, Query } from '@/generated/graphql';
 import CHANGE_CURRENT_ORGANIZATION from '@/queries/user/changeCurrentOrganization';
 import getProfileQuery from '@/queries/auth/getProfile';
 import { IS_LOCAL } from '@/config/env';
@@ -27,7 +27,9 @@ const OrganizationsSelect: React.FC = () => {
   const [
     changeCurrentOrganizationMutation,
     { loading: changeOrganizationLoading },
-  ] = useMutation(CHANGE_CURRENT_ORGANIZATION);
+  ] = useMutation<ChangeCurrentOrganizationMutation>(
+    CHANGE_CURRENT_ORGANIZATION,
+  );
 
   const [getProfile, { loading: profileLoading }] =
     useLazyQuery(getProfileQuery);
@@ -42,7 +44,7 @@ const OrganizationsSelect: React.FC = () => {
         variables: { organizationId: newOrgId },
       });
 
-      if (!data) {
+      if (!data || !data.changeCurrentOrganization) {
         toast.error('Failed to change organization. Please try again.');
         return;
       }
