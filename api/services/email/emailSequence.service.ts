@@ -58,8 +58,8 @@ export class EmailSequenceService {
         return true
       }
 
-      // Generate one-click installation link
-      const installationLink = 'https://www.webability.io/installation'
+      // Extract first URL from comma-separated FRONTEND_URL
+      const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim() || 'http://localhost:3000'
 
       // Gmail-optimized logo approach
       // Gmail requires properly hosted images with specific characteristics
@@ -90,10 +90,10 @@ export class EmailSequenceService {
           logoUrl: logoUrl,
           fallbackLogoUrl: fallbackLogoUrl,
           altFallbackUrl: altFallbackUrl,
-          installationLink,
-          dashboardLink: `${process.env.FRONTEND_URL}`,
+          installationGuide: 'https://www.webability.io/installation',
+          dashboardLink: frontendUrl,
           supportLink: 'mailto:support@webability.io',
-          unsubscribeLink: `${process.env.FRONTEND_URL}/unsubscribe?email=${encodeURIComponent(userEmail)}`,
+          unsubscribeLink: `${frontendUrl}/unsubscribe?email=${encodeURIComponent(userEmail)}`,
           year: new Date().getFullYear(),
         },
       })
@@ -295,6 +295,10 @@ export class EmailSequenceService {
       // Check if user has active domains (for conditional content)
       const hasActiveDomains = await this.checkUserHasActiveDomains(user.id)
       console.log(`User ${user.id} has active domains: ${hasActiveDomains}`)
+
+      // Extract first URL from comma-separated FRONTEND_URL
+      const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim() || 'http://localhost:3000'
+
       // Generate logo URL (same robust logic as welcome email)
       const logoUrl = 'https://www.webability.io/images/logo.png'
       const fallbackLogoUrl = 'https://cdn.jsdelivr.net/gh/webability-io/assets/logo.png'
@@ -319,13 +323,13 @@ export class EmailSequenceService {
           fallbackLogoUrl: fallbackLogoUrl,
           altFallbackUrl: altFallbackUrl,
           hasActiveDomains: hasActiveDomains,
-          scannerLink: `${process.env.FRONTEND_URL}/scanner`,
-          dashboardLink: `${process.env.FRONTEND_URL}`,
-          customizeLink: `${process.env.FRONTEND_URL}/customize-widget`,
+          scannerLink: `${frontendUrl}/scanner`,
+          dashboardLink: frontendUrl,
+          customizeLink: `${frontendUrl}/customize-widget`,
           supportLink: 'mailto:support@webability.io',
-          installationLink: `${process.env.FRONTEND_URL}/installation`,
+          installationLink: `${frontendUrl}/installation`,
           installationGuide: 'https://www.webability.io/installation',
-          unsubscribeLink: `${process.env.REACT_APP_BACKEND_URL}/unsubscribe?email=${encodeURIComponent(user.email)}`,
+          unsubscribeLink: `${frontendUrl}/unsubscribe?email=${encodeURIComponent(user.email)}`,
           year: new Date().getFullYear(),
         },
       })
@@ -348,7 +352,8 @@ export class EmailSequenceService {
    */
   private static async wasEmailAlreadySent(emailLogKey: string): Promise<boolean> {
     try {
-      const trackingPath = path.join(process.cwd(), 'logs', 'sent-emails.json')
+      const logsDir = path.join(process.cwd(), 'logs')
+      const trackingPath = path.join(logsDir, 'sent-emails.json')
 
       // Check if tracking file exists
       if (!fs.existsSync(trackingPath)) {
@@ -377,7 +382,14 @@ export class EmailSequenceService {
    */
   private static async markEmailAsSent(emailLogKey: string): Promise<void> {
     try {
-      const trackingPath = path.join(process.cwd(), 'logs', 'sent-emails.json')
+      const logsDir = path.join(process.cwd(), 'logs')
+      const trackingPath = path.join(logsDir, 'sent-emails.json')
+
+      // Ensure logs directory exists
+      if (!fs.existsSync(logsDir)) {
+        await fs.promises.mkdir(logsDir, { recursive: true })
+        logger.info(`Created logs directory: ${logsDir}`)
+      }
 
       let sentEmails: string[] = []
 
