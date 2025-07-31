@@ -1,0 +1,195 @@
+<mjml>
+  <mj-head>
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+    <mj-attributes>
+      <mj-all font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif" />
+      <mj-text font-size="16px" line-height="1.6" color="#374151" />
+      <mj-button font-weight="600" border-radius="8px" />
+    </mj-attributes>
+    <mj-style>
+      .header-logo { max-width: 150px !important; }
+      .welcome-title { font-size: 28px !important; font-weight: 700 !important; color: #1f2937 !important; line-height: 1.2 !important; }
+      .section-title { font-size: 22px !important; font-weight: 600 !important; color: #1f2937 !important; margin-bottom: 16px !important; }
+      .success-section { background-color: #ecfdf5 !important; border-radius: 8px !important; padding: 24px !important; border-left: 4px solid #10b981 !important; }
+      .setup-section { background-color: #fef3c7 !important; border-radius: 8px !important; padding: 24px !important; border-left: 4px solid #f59e0b !important; }
+      .footer-text { font-size: 14px !important; color: #6b7280 !important; }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#1565C0">
+    <!-- Header -->
+    <mj-section background-color="#1565C0" padding="32px 24px">
+      <mj-column width="100%">
+        <mj-text align="center">
+          <div style="background-color: #ffffff; border-radius: 8px; padding: 12px; display: inline-block; width: 200px;">
+            <!-- Gmail-optimized logo with multiple fallbacks -->
+            <img 
+              src="{{logoUrl}}" 
+              alt="WebAbility - Making the web accessible for everyone" 
+              style="width: 150px; max-width: 150px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" 
+              width="150"
+              border="0"
+              onerror="this.onerror=null; this.src='{{fallbackLogoUrl}}'; if(this.onerror) { this.onerror=null; this.src='{{altFallbackUrl}}'; }"
+            />
+            <!-- Gmail-specific fallback using conditional comments -->
+            <!--[if mso]>
+            <img src="{{altFallbackUrl}}" alt="WebAbility Logo" style="width: 150px; height: 40px; display: block; margin: 0 auto;" width="150" height="40" />
+            <![endif]-->
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Welcome Message -->
+    <mj-section background-color="#ffffff" padding="12px 24px 32px">
+      <mj-column>
+        <mj-text css-class="welcome-title" align="center">
+          {{#if hasActiveDomains}}Your WebAbility widget is live! 🎉{{else}}Let's finish setting up your widget! 🚀{{/if}}
+        </mj-text>
+        <mj-text align="center" font-size="18px" color="#6b7280" padding="16px 0 0">
+          Hi {{name}}, it's been 24 hours since you joined WebAbility. Let's make sure your widget is working perfectly for your visitors!
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Widget Status Section (Conditional) -->
+    {{#if hasActiveDomains}}
+    <!-- Widget Live Section -->
+    <mj-section background-color="#ffffff" padding="0 24px 40px">
+      <mj-column>
+        <mj-text css-class="success-section">
+          <div style="text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 12px;">✅</div>
+            <strong style="font-size: 20px; color: #065f46;">Great! Your widget is active</strong><br><br>
+            <span style="color: #047857; font-size: 16px;">
+              We've detected that you've successfully added your domain and your WebAbility widget is protecting your website visitors.
+            </span>
+          </div>
+        </mj-text>
+
+        <mj-text css-class="section-title" align="center" padding="32px 0 16px">
+          What to Expect Next!
+        </mj-text>
+
+        <mj-text font-size="16px" color="#374151" line-height="28px" padding="0 0 32px">
+          <ul style="padding-left: 20px; text-align: left; margin: 0;">
+            <li style="margin-bottom: 12px;"><strong>Widget Visibility:</strong> Your accessibility widget is now visible on your website for all visitors</li>
+            <li style="margin-bottom: 12px;"><strong>AI-Powered Accessibility Enhancements:</strong> Automatically applies alt text, ensures screen reader compatibility, and enables features like voice navigation, font adjustments, and contrast toggles for improved usability.</li>
+            <li style="margin-bottom: 0;"><strong>Analytics Tracking:</strong> Key metrics like impressions, unique visitors, and widget interactions are being recorded to help you understand your accessibility impact</li>
+          </ul>
+        </mj-text>
+
+        <mj-text css-class="section-title" align="center" padding="0 0 20px">
+          Customize Your Widget
+        </mj-text>
+
+        <!-- Customization steps -->
+        <mj-text font-size="16px" color="#374151" line-height="28px" padding="0 0 24px">
+          <ol style="padding-left: 20px; text-align: left; margin: 0;">
+            <li style="margin-bottom: 12px;"><strong>Customize Widget Appearance:</strong> Match your brand colors and positioning to create a seamless user experience.</li>
+            <li style="margin-bottom: 12px;"><strong>Configure Accessibility Options:</strong> Enable features like screen reader support, keyboard navigation, and visual adjustments.</li>
+            <li style="margin-bottom: 0;"><strong>Test Widget Functionality:</strong> Try different accessibility settings to see how your visitors will experience your site.</li>
+          </ol>
+        </mj-text>
+
+        <mj-button 
+          background-color="#3b82f6" 
+          color="#ffffff"
+          font-size="16px"
+          padding="14px 32px"
+          href="{{customizeLink}}"
+        >
+          🎨 Customize Your Widget
+        </mj-button>
+      </mj-column>
+    </mj-section>
+    {{else}}
+    <!-- Setup Required Section -->
+    <mj-section background-color="#ffffff" padding="0 24px 40px">
+      <mj-column>
+        <mj-text css-class="setup-section">
+          <div style="text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 12px;">⚠️</div>
+            <strong style="font-size: 20px; color: #92400e;">Let's complete your setup</strong><br><br>
+            <span style="color: #a16207; font-size: 16px;">
+              We noticed you haven't added a domain yet. Let's get your website protected in just 2 minutes!
+            </span>
+          </div>
+        </mj-text>
+
+        <mj-text css-class="section-title" align="center" padding="32px 0 20px">
+          Quick Setup Guide
+        </mj-text>
+
+        <!-- Setup steps -->
+        <mj-text font-size="16px" color="#374151" line-height="28px" padding="0 0 24px">
+          <ol style="padding-left: 20px; text-align: left; margin: 0;">
+            <li style="margin-bottom: 12px;"><strong>Add Your Domain:</strong> Start by adding your website's domain to your WebAbility dashboard.</li>
+            <li style="margin-bottom: 12px;"><strong>Install the Widget:</strong> Copy and paste our simple code snippet into your website.</li>
+            <li style="margin-bottom: 0;"><strong>Go Live:</strong> Your accessibility widget will be active and protecting your visitors instantly.</li>
+          </ol>
+        </mj-text>
+
+        <mj-button 
+          background-color="#f59e0b" 
+          color="#ffffff"
+          font-size="16px"
+          padding="14px 32px"
+          href="{{installationLink}}"
+        >
+          🚀 Complete Setup Now
+        </mj-button>
+      </mj-column>
+    </mj-section>
+    {{/if}}
+
+    <!-- Visual Divider -->
+    <mj-section background-color="#ffffff" padding="0">
+      <mj-column>
+        <mj-divider border-color="#e5e7eb" border-width="1px" width="80%" padding="0"></mj-divider>
+      </mj-column>
+    </mj-section>
+
+    <!-- Support Section -->
+    <mj-section background-color="#ffffff" padding="32px 24px 40px">
+      <mj-column>
+        <mj-text css-class="section-title" align="center" padding="32px 0 20px">
+          Need Help? We're Here For You
+        </mj-text>
+        <mj-text align="center" font-size="16px" color="#6b7280" padding="0 0 20px">
+          Having any setup issues or questions about customization? Simply reply to this email and we'll help you get everything configured perfectly.
+        </mj-text>
+        <mj-button 
+          background-color="#10b981" 
+          color="#ffffff"
+          font-size="16px"
+          padding="12px 24px"
+          href="{{supportLink}}"
+        >
+          💬 Get Setup Help
+        </mj-button>
+        <mj-text align="center" font-size="14px" color="#9ca3af" padding="16px 0 0">
+          Reply to this email with any questions - we respond quickly!
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f9fafb" padding="32px 24px">
+      <mj-column>
+        <mj-text css-class="footer-text" align="center">
+          <strong>WebAbility</strong><br>
+          Making the web accessible for everyone
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" padding="16px 0 0">
+          © {{year}} WebAbility. All rights reserved.
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
+          You're receiving this as part of our onboarding series to help you succeed with accessibility.
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
+          <a href="{{unsubscribeLink}}" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
