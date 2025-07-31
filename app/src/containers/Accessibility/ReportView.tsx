@@ -2005,6 +2005,1295 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
   };
   const [currentLanguage, setCurrentLanguage] = useState<string>('');
 
+  const generateShortPDF = async (
+    reportData: {
+      score: number;
+      widgetInfo: { result: string };
+      scriptCheckResult?: string;
+      url: string;
+    },
+    currentLanguage: string
+  ): Promise<Blob> => {
+    const { jsPDF } = await import('jspdf');
+    const { isCodeCompliant } = await import('@/utils/translator');
+
+    let fontLoaded = true;
+    try {
+      // @ts-ignore
+      window.jsPDF = jsPDF;
+      // @ts-ignore
+      require('@/assets/fonts/NotoSans-normal.js');
+      // @ts-ignore
+      delete window.jsPDF;
+    } catch (e) {
+      console.error('Failed to load custom font for jsPDF:', e);
+      fontLoaded = false;
+    }
+
+    const autoTable = (await import('jspdf-autotable')).default;
+    const doc = new jsPDF();
+     if (!fontLoaded) {
+      doc.setFont('helvetica', 'normal');
+    }
+    if (!reportData.url) {
+      reportData.url = queryParams.get('domain') || '';
+    }
+
+    const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
+      await getWidgetSettings(reportData.url);
+    const WEBABILITY_SCORE_BONUS = 45;
+    const MAX_TOTAL_SCORE = 95;
+    const issues = extractIssuesFromReport(reportData);
+
+    //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
+    const baseScore = reportData.score || 0;
+    const scriptCheckResult = reportData.scriptCheckResult;
+   const hasWebAbility = scriptCheckResult === 'Web Ability';
+
+  const enhancedScore = hasWebAbility
+      ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
+      : baseScore;
+
+      
+    let status: string, message: string, statusColor: [number, number, number];
+    if (enhancedScore >= 80) {
+      status = 'Compliant';
+      message = 'Your website is highly accessible. Great job!';
+      statusColor = [22, 163, 74]; // green-600
+    } else if (enhancedScore >= 50) {
+      status = 'Partially Compliant';
+      message =
+        'Your website is partially accessible. Some improvements are needed.';
+      statusColor = [202, 138, 4]; // yellow-600
+    } else {
+      status = 'Not Compliant';
+      message = 'Your website needs significant accessibility improvements.';
+      statusColor = [220, 38, 38]; // red-600
+    }
+
+    const [
+      translatedStatus,
+      translatedMessage,
+      translatedMild,
+      translatedModerate,
+      translatedSevere,
+      translatedScore,
+      translatedIssue,
+      translatedIssueMessage,
+      translatedContext,
+      translatedFix,
+      translatedLabel,
+      translatedTotalErrors,
+      translatedIssuesDetectedByCategory,
+      translatedAccessibilityComplianceAchieved,
+      translatedWebsiteCompliant,
+      translatedComplianceStatus,
+      translatedWebAbilityProtecting,
+      translatedAutomatedFixesApplied,
+      translatedCriticalViolationsDetected,
+      translatedLegalActionWarning,
+      translatedImmediateRisks,
+      translatedPotentialLawsuits,
+      translatedCustomerLoss,
+      translatedSeoPenalties,
+      translatedBrandDamage,
+      translatedTimeSensitiveAction,
+      translatedWebAbilityAutoFix,
+      translatedInstantCompliance,
+      translatedProtectBusiness,
+      translatedAccessibilityStatement,
+      translatedWcagComplianceIssues,
+      translatedAutoFixed,
+      translatedReadyToUse,
+      translatedNeedAction,
+      translatedReviewRequired,
+      translatedCanBeFixedWithWebability,
+      translatedUseWebabilityToFix
+    ] = await translateMultipleTexts(
+      [
+        status,
+        message,
+        'Mild',
+        'Moderate',
+        'Severe',
+        'Score',
+        'Issue',
+        'Message',
+        'Context',
+        'Fix',
+        'Scan results for ',
+        'Total Errors',
+        'Issues detected by category',
+        '✓ ACCESSIBILITY COMPLIANCE ACHIEVED',
+        'Your website is now compliant with accessibility standards',
+        'COMPLIANCE STATUS:',
+        '✓ WebAbility widget is actively protecting your site',
+        '✓ Automated accessibility fixes are applied',
+        ' CRITICAL ACCESSIBILITY VIOLATIONS DETECTED',
+        'Your website may face legal action and lose customers',
+        'IMMEDIATE RISKS TO YOUR BUSINESS:',
+        '• Potential lawsuits under ADA compliance regulations',
+        '• Loss of 15% of potential customers (disabled users)',
+        '• Google SEO penalties reducing search rankings',
+        '• Damage to brand reputation and customer trust',
+        'TIME-SENSITIVE ACTION REQUIRED:',
+        '✓ WebAbility can fix most issues automatically',
+        '✓ Instant compliance improvement',
+        '✓ Protect your business from legal risks TODAY',
+        'Accessibility Statement',
+        'WCAG 2.1 AA Compliance Issues of',
+        'Auto-Fixed',
+        ' Ready to use',
+        'Need Action',
+        '⚠ Review required',
+        'Fix with AI',
+        'use webability to fix'
+      ],
+      currentLanguage
+    );
+    
+    status = translatedStatus;
+    doc.setFillColor(21, 101, 192); // dark blue background
+    doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F'); 
+
+    let logoBottomY = 0;
+
+    if (logoImage) {
+      const img = new Image();
+      let imageLoadError = false;
+      img.src = logoImage;
+
+      try {
+        await new Promise<void>((resolve, reject) => {
+          let settled = false;
+          const TIMEOUT_MS = 5000; // 5 seconds
+
+          const cleanup = () => {
+            img.onload = null;
+            img.onerror = null;
+          };
+
+          const timeoutId = setTimeout(() => {
+            if (!settled) {
+              settled = true;
+              cleanup();
+              imageLoadError = true;
+              reject(new Error('Logo image load timed out'));
+            }
+          }, TIMEOUT_MS);
+
+          img.onload = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
+            cleanup();
+            resolve();
+          };
+          img.onerror = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
+            cleanup();
+            imageLoadError = true;
+            reject(new Error('Logo image failed to load'));
+          };
+        });
+      } catch (err) {
+        // Log the error for debugging, but continue PDF generation
+        // eslint-disable-next-line no-console
+        console.warn('Logo image could not be loaded for PDF:', err);
+        logoBottomY = 0;
+        imageLoadError = true;
+      }
+
+      if (!imageLoadError) {
+        // Make the logo and container bigger
+        const maxWidth = 48,
+          maxHeight = 36; // increased size for a bigger logo
+        let drawWidth = img.width,
+          drawHeight = img.height;
+        const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight);
+        drawWidth *= scale;
+        drawHeight *= scale;
+
+        // Logo position
+        const logoX = 0;
+        const logoY = 3;
+
+        const padding = 14;
+        const containerX = logoX - padding;
+        // Keep the container as before, do not move it up
+        const containerYOffset = 10;
+        const containerY = logoY - padding - containerYOffset;
+        const containerW = drawWidth + 2 * padding - 10;
+        const containerH = drawHeight + 2 * padding;
+        doc.setFillColor(255, 255, 255); // white
+        doc.roundedRect(
+          containerX,
+          containerY,
+          containerW,
+          containerH,
+          4,
+          4,
+          'F',
+        );
+
+        doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
+
+        if (logoUrl) {
+          doc.link(logoX, logoY, drawWidth, drawHeight, {
+            url: logoUrl,
+            target: '_blank',
+          });
+        }
+
+        logoBottomY = Math.max(logoY + drawHeight, containerY + containerH);
+      }
+    }
+
+    const containerWidth = 170;
+    const containerHeight = 60;
+    const containerX = 105 - containerWidth / 2;
+    const containerY = (logoBottomY || 0) + 10; // 10 units gap after logo
+
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(220, 220, 220); 
+    doc.setLineWidth(0.2); 
+    doc.roundedRect(
+      containerX,
+      containerY,
+      containerWidth,
+      containerHeight,
+      4,
+      4,
+      'FD',
+    );
+
+    // Now draw the text inside the container, moved down accordingly
+    let textY = containerY + 13; 
+
+    doc.setFontSize(15);
+    doc.setTextColor(0, 0, 0);
+    // Compose the full string and measure widths
+    let  label = 'Scan results for ';
+    label = translatedLabel;
+
+    const url = `${reportData.url}`;
+    const labelWidth = doc.getTextWidth(label);
+    const urlWidth = doc.getTextWidth(url);
+    const totalWidth = labelWidth + urlWidth;
+    // Calculate starting X so the whole line is centered
+    const startX = 105 - totalWidth / 2;
+
+    doc.setFont('NotoSans_Condensed-Regular'); 
+    doc.setTextColor(51, 65, 85); // slate-800 for message
+    doc.text(label, startX, textY, { align: 'left' });
+    // Draw the URL in bold, immediately after the label, no overlap
+   
+    doc.text(url, startX + labelWidth, textY, { align: 'left' });
+    doc.setFont('NotoSans_Condensed-Regular'); 
+
+    textY += 12;
+    doc.setFontSize(20);
+    doc.setTextColor(...statusColor);
+   doc.setFont('NotoSans_Condensed-Regular'); 
+    doc.text(status, 105, textY, { align: 'center' });
+
+    message = translatedMessage;
+    textY += 9;
+    doc.setFontSize(12);
+    doc.setTextColor(51, 65, 85); 
+    doc.setFont('NotoSans_Condensed-Regular'); 
+    doc.text(message, 105, textY, { align: 'center' });
+    
+
+    textY += 9;
+    doc.setFontSize(10);
+    doc.setTextColor(51, 65, 85); // slate-800 for message
+    doc.text(`${new Date().toDateString()}`, 105, textY, { align: 'center' });
+
+    // --- END REPLACEMENT BLOCK ---
+
+    // --- ADD CIRCLES FOR TOTAL ERRORS AND PERCENTAGE ---
+    const circleY = containerY + containerHeight + 17; 
+    const circleRadius = 15;
+    const centerX = 105;
+    const gap = 40; 
+    const circle1X = centerX - circleRadius - gap / 2;
+    const circle2X = centerX + circleRadius + gap / 2;
+
+    // Circle 1: Total Errors (filled dark blue)
+    doc.setDrawColor(21, 101, 192); 
+    doc.setLineWidth(1.5);
+    doc.setFillColor(21, 101, 192); 
+    doc.circle(circle1X, circleY, circleRadius, 'FD');
+   doc.setFont('NotoSans_Condensed-Regular'); 
+    doc.setFontSize(19); 
+    doc.setTextColor(255, 255, 255); 
+
+    doc.text(`${issues.length}`, circle1X, circleY, {
+      align: 'center',
+      baseline: 'middle',
+    });
+
+    doc.setFontSize(10); 
+    doc.setTextColor(21, 101, 192); 
+    doc.setFont('NotoSans_Condensed-Regular'); 
+    doc.text(translatedTotalErrors, circle1X, circleY + circleRadius + 9, {
+      align: 'center',
+    });
+
+    doc.setDrawColor(33, 150, 243); 
+    doc.setLineWidth(1.5);
+    doc.setFillColor(33, 150, 243); 
+    doc.circle(circle2X, circleY, circleRadius, 'FD');
+   doc.setFont('NotoSans_Condensed-Regular'); 
+    doc.setFontSize(19); 
+    doc.setTextColor(255, 255, 255); 
+    const scoreText = `${Math.round(enhancedScore)}%`;
+    const scoreFontSize = 19;
+    doc.setFontSize(scoreFontSize);
+    const textHeight = scoreFontSize * 0.35;
+    doc.text(scoreText, circle2X, circleY, {
+      align: 'center',
+      baseline: 'middle',
+    });
+
+    doc.setFontSize(10); 
+    doc.setTextColor(21, 101, 192); 
+    doc.setFont('NotoSans_Condensed-Regular'); 
+    doc.text(translatedScore, circle2X, circleY + circleRadius + 9, {
+      align: 'center',
+    });
+    // --- END CIRCLES ---
+
+    // SEVERITY SUMMARY BOXES
+   
+    const yStart = circleY + circleRadius + 15;
+    const total = issues.length;
+    const counts = {
+      critical: issues.filter((i) => i.impact === 'critical').length,
+      serious: issues.filter((i) => i.impact === 'serious').length,
+      moderate: issues.filter((i) => i.impact === 'moderate').length,
+    };
+    
+    const summaryBoxes = [
+      {
+        label:  translatedSevere,
+        count: counts.critical + counts.serious,
+        color: [255, 204, 204],
+      },
+      { label: translatedModerate, count: counts.moderate, color: [187, 222, 251] },
+      {
+        label:  translatedMild,
+        count: total - (counts.critical + counts.serious + counts.moderate),
+        color: [225, 245, 254],
+      }, 
+    ];
+
+    let x = 18;
+    for (const box of summaryBoxes) {
+      // Add shadow to summary boxes
+      doc.setFillColor(245, 245, 245); // Very light gray for shadow
+      doc.roundedRect(x + 1, yStart + 1, 57, 22, 4, 4, 'F');
+
+      doc.setFillColor(box.color[0], box.color[1], box.color[2]);
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(x, yStart, 57, 22, 4, 4, 'FD');
+      doc.setTextColor(0, 0, 0); 
+      doc.setFontSize(13);
+     doc.setFont('NotoSans_Condensed-Regular'); 
+      doc.text(`${box.count}`, x + 5, yStart + 9);
+      doc.setFontSize(11);
+      doc.text(box.label, x + 5, yStart + 18);
+      x += 62;
+    }
+
+    // Function to load SVG icons from the report icons folder
+    const loadSVGIcon = async (category: string): Promise<string | null> => {
+      try {
+        let iconPath = '';
+        const normalizedCategory = category.toLowerCase();
+        
+        // Map accessibility categories to appropriate icons
+        if (normalizedCategory.includes('content') || normalizedCategory.includes('text')) {
+          iconPath = '/images/report_icons/content.svg';
+        } else if (normalizedCategory.includes('navigation') || normalizedCategory.includes('navigate') || normalizedCategory.includes('menu')) {
+          iconPath = '/images/report_icons/navigation.svg';
+        } else if (normalizedCategory.includes('form') || normalizedCategory.includes('input') || normalizedCategory.includes('button')) {
+          iconPath = '/images/report_icons/forms.svg';
+        } else if (normalizedCategory.includes('cognitive') || normalizedCategory.includes('brain') || normalizedCategory.includes('mental')) {
+          iconPath = '/images/report_icons/cognitive.svg';
+        } else if (normalizedCategory.includes('visual') || normalizedCategory.includes('blind') || normalizedCategory.includes('vision') || normalizedCategory.includes('low-vision')) {
+          iconPath = '/images/report_icons/low-vision.svg';
+        } else if (normalizedCategory.includes('mobility') || normalizedCategory.includes('motor') || normalizedCategory.includes('movement')) {
+          iconPath = '/images/report_icons/Mobility.svg';
+        } else if (normalizedCategory.includes('other') || normalizedCategory === 'others') {
+          iconPath = '/images/report_icons/others.svg';
+        } else {
+          // Default fallback for unmapped categories
+          iconPath = '/images/report_icons/others.svg';
+        }
+        
+        const response = await fetch(iconPath);
+        if (response.ok) {
+          const svgText = await response.text();
+          
+          // Convert SVG to high-resolution PNG using canvas
+          return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            // Use high resolution for crisp icons (256x256)
+            const size = 256;
+            canvas.width = size;
+            canvas.height = size;
+            
+            img.onload = () => {
+              if (ctx) {
+                // Enable smooth scaling for better quality
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                
+                // Clear canvas and draw the SVG at high resolution
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // Convert to high-quality PNG data URL
+                const pngDataUrl = canvas.toDataURL('image/png', 1.0);
+                resolve(pngDataUrl);
+              } else {
+                resolve(null);
+              }
+            };
+            
+            img.onerror = () => {
+              resolve(null);
+            };
+            
+            // Create data URL from SVG
+            const svgDataUrl = `data:image/svg+xml;base64,${btoa(svgText)}`;
+            img.src = svgDataUrl;
+          });
+        }
+      } catch (error) {
+        console.warn('Failed to load SVG icon for category:', category, error);
+      }
+      return null;
+    };
+
+    // Function to draw category icons
+    const drawCategoryIcon = (doc: any, category: string, x: number, y: number, size: number) => {
+      const iconColor = [21, 101, 192]; // Blue color for icons
+      const normalizedCategory = category.toLowerCase();
+      
+      // Enhanced category matching with multiple keyword support
+      if (normalizedCategory.includes('content') || normalizedCategory.includes('text')) {
+          // Draw content icon (document with text)
+          doc.setFillColor(...iconColor);
+          doc.setDrawColor(...iconColor);
+          doc.setLineWidth(0.3);
+          
+          // Document outline
+          doc.rect(x, y, size * 0.8, size * 1.1, 'S');
+          // Document fold
+          doc.line(x + size * 0.6, y, x + size * 0.6, y + size * 0.2);
+          doc.line(x + size * 0.6, y + size * 0.2, x + size * 0.8, y + size * 0.2);
+          // Text lines
+          doc.setLineWidth(0.2);
+          doc.line(x + size * 0.15, y + size * 0.35, x + size * 0.65, y + size * 0.35);
+          doc.line(x + size * 0.15, y + size * 0.5, x + size * 0.65, y + size * 0.5);
+          doc.line(x + size * 0.15, y + size * 0.65, x + size * 0.5, y + size * 0.65);
+          doc.line(x + size * 0.15, y + size * 0.8, x + size * 0.55, y + size * 0.8);
+          
+      } else if (normalizedCategory.includes('navigation') || normalizedCategory.includes('navigate') || normalizedCategory.includes('menu')) {
+          // Draw navigation icon (compass/arrow)
+          doc.setFillColor(...iconColor);
+          doc.setDrawColor(...iconColor);
+          doc.setLineWidth(0.4);
+          
+          // Main arrow
+          doc.line(x + size * 0.2, y + size * 0.8, x + size * 0.8, y + size * 0.2);
+          doc.line(x + size * 0.8, y + size * 0.2, x + size * 0.6, y + size * 0.4);
+          doc.line(x + size * 0.8, y + size * 0.2, x + size * 0.6, y + size * 0.2);
+          // Small arrow
+          doc.line(x + size * 0.3, y + size * 0.7, x + size * 0.7, y + size * 0.3);
+          doc.line(x + size * 0.7, y + size * 0.3, x + size * 0.55, y + size * 0.45);
+          doc.line(x + size * 0.7, y + size * 0.3, x + size * 0.55, y + size * 0.3);
+          
+      } else if (normalizedCategory.includes('form') || normalizedCategory.includes('input') || normalizedCategory.includes('button')) {
+          // Draw forms icon (form with checkboxes)
+          doc.setFillColor(...iconColor);
+          doc.setDrawColor(...iconColor);
+          doc.setLineWidth(0.3);
+          
+          // Form outline
+          doc.rect(x, y, size * 0.9, size * 1.1, 'S');
+          // Checkbox 1
+          doc.rect(x + size * 0.1, y + size * 0.2, size * 0.15, size * 0.15, 'S');
+          doc.line(x + size * 0.13, y + size * 0.28, x + size * 0.18, y + size * 0.33);
+          doc.line(x + size * 0.18, y + size * 0.33, x + size * 0.22, y + size * 0.25);
+          // Checkbox 2
+          doc.rect(x + size * 0.1, y + size * 0.45, size * 0.15, size * 0.15, 'S');
+          doc.line(x + size * 0.13, y + size * 0.53, x + size * 0.18, y + size * 0.58);
+          doc.line(x + size * 0.18, y + size * 0.58, x + size * 0.22, y + size * 0.5);
+          // Text lines
+          doc.setLineWidth(0.2);
+          doc.line(x + size * 0.3, y + size * 0.28, x + size * 0.8, y + size * 0.28);
+          doc.line(x + size * 0.3, y + size * 0.53, x + size * 0.8, y + size * 0.53);
+          doc.line(x + size * 0.3, y + size * 0.78, x + size * 0.7, y + size * 0.78);
+          
+      } else if (normalizedCategory.includes('cognitive') || normalizedCategory.includes('brain') || normalizedCategory.includes('mental')) {
+          // Draw cognitive icon (brain/mind)
+          doc.setFillColor(...iconColor);
+          doc.setDrawColor(...iconColor);
+          doc.setLineWidth(0.3);
+          
+          // Brain outline
+          doc.circle(x + size * 0.5, y + size * 0.4, size * 0.3, 'S');
+          // Brain wrinkles/patterns
+          doc.setLineWidth(0.2);
+          doc.line(x + size * 0.3, y + size * 0.35, x + size * 0.5, y + size * 0.25);
+          doc.line(x + size * 0.5, y + size * 0.45, x + size * 0.7, y + size * 0.35);
+          doc.line(x + size * 0.35, y + size * 0.5, x + size * 0.65, y + size * 0.5);
+          // Thought bubbles
+          doc.circle(x + size * 0.2, y + size * 0.8, size * 0.05, 'F');
+          doc.circle(x + size * 0.3, y + size * 0.7, size * 0.03, 'F');
+          
+      } else if (normalizedCategory.includes('visual') || normalizedCategory.includes('blind') || normalizedCategory.includes('vision') || normalizedCategory.includes('low-vision')) {
+          // Draw vision/eye icon
+          doc.setFillColor(...iconColor);
+          doc.setDrawColor(...iconColor);
+          doc.setLineWidth(0.3);
+          
+          // Eye outline
+          doc.ellipse(x + size * 0.5, y + size * 0.5, size * 0.4, size * 0.25, 'S');
+          // Pupil
+          doc.circle(x + size * 0.5, y + size * 0.5, size * 0.12, 'F');
+          // Highlight
+          doc.setFillColor(255, 255, 255);
+          doc.circle(x + size * 0.52, y + size * 0.45, size * 0.04, 'F');
+          doc.setFillColor(...iconColor);
+          
+      } else if (normalizedCategory.includes('mobility') || normalizedCategory.includes('motor') || normalizedCategory.includes('movement')) {
+          // Draw mobility/movement icon (hand/gesture)
+          doc.setFillColor(...iconColor);
+          doc.setDrawColor(...iconColor);
+          doc.setLineWidth(0.3);
+          
+          // Hand/cursor icon
+          doc.circle(x + size * 0.3, y + size * 0.3, size * 0.15, 'S');
+          doc.line(x + size * 0.3, y + size * 0.45, x + size * 0.3, y + size * 0.8);
+          doc.line(x + size * 0.15, y + size * 0.6, x + size * 0.45, y + size * 0.6);
+          // Arrows indicating movement
+          doc.setLineWidth(0.2);
+          doc.line(x + size * 0.6, y + size * 0.3, x + size * 0.8, y + size * 0.3);
+          doc.line(x + size * 0.75, y + size * 0.25, x + size * 0.8, y + size * 0.3);
+          doc.line(x + size * 0.75, y + size * 0.35, x + size * 0.8, y + size * 0.3);
+          
+      } else if (normalizedCategory.includes('other') || normalizedCategory === 'others') {
+          // Draw other icon (gear/settings)
+          doc.setFillColor(...iconColor);
+          doc.setDrawColor(...iconColor);
+          doc.setLineWidth(0.3);
+          
+          // Gear teeth
+          for (let i = 0; i < 8; i++) {
+            const angle = (i * Math.PI) / 4;
+            const x1 = x + size * 0.5 + Math.cos(angle) * size * 0.4;
+            const y1 = y + size * 0.5 + Math.sin(angle) * size * 0.4;
+            const x2 = x + size * 0.5 + Math.cos(angle) * size * 0.25;
+            const y2 = y + size * 0.5 + Math.sin(angle) * size * 0.25;
+            doc.line(x1, y1, x2, y2);
+          }
+          // Center circle
+          doc.circle(x + size * 0.5, y + size * 0.5, size * 0.15, 'S');
+          
+      } else {
+          // Draw a generic icon (circle with dots)
+          doc.setFillColor(...iconColor);
+          doc.setDrawColor(...iconColor);
+          doc.setLineWidth(0.3);
+          
+          // Main circle
+          doc.circle(x + size * 0.5, y + size * 0.5, size * 0.3, 'S');
+          // Dots
+          doc.circle(x + size * 0.3, y + size * 0.3, size * 0.08, 'F');
+          doc.circle(x + size * 0.7, y + size * 0.3, size * 0.08, 'F');
+          doc.circle(x + size * 0.5, y + size * 0.7, size * 0.08, 'F');
+      }
+    };
+
+    // Issues by Category Analysis - Clean Horizontal Bar Format
+    const categoryGroups = new Map<string, number>();
+    
+    issues.forEach(issue => {
+      // Function grouping
+      const functionName = issue.functionality || 'Unknown';
+      categoryGroups.set(functionName, (categoryGroups.get(functionName) || 0) + 1);
+      
+      // Structure grouping
+      const selector = issue.selectors?.[0]?.toLowerCase() || '';
+      let structure = 'Other';
+      
+      if (selector.includes('p') || selector.includes('h') || selector.includes('img') || selector.includes('span')) {
+        structure = 'Content';
+      } else if (selector.includes('a') || selector.includes('nav') || selector.includes('button')) {
+        structure = 'Navigation';
+      } else if (selector.includes('form') || selector.includes('input') || selector.includes('select') || selector.includes('textarea')) {
+        structure = 'Forms';
+      }
+      
+      categoryGroups.set(structure, (categoryGroups.get(structure) || 0) + 1);
+    });
+
+    // Create category data sorted by count
+    const categoryData = Array.from(categoryGroups.entries())
+      .sort((a, b) => {
+        // If one is "Other", it should come last
+        if (a[0] === 'Other' && b[0] !== 'Other') return 1;
+        if (b[0] === 'Other' && a[0] !== 'Other') return -1;
+        // Otherwise sort by count in descending order
+        return b[1] - a[1];
+      });
+
+    let nextY = yStart + 30; // Start right after summary boxes
+
+    if (categoryData.length > 0) {
+      // Section header
+      doc.setDrawColor(21, 101, 192);
+      doc.setLineWidth(0.5);
+      doc.line(30, nextY, 180, nextY);
+      
+      doc.setFontSize(14);
+      doc.setTextColor(21, 101, 192);
+      doc.setFont('NotoSans_Condensed-Regular');
+      doc.text(translatedIssuesDetectedByCategory, 105, nextY + 8, { align: 'center' });
+      let currentY = nextY + 18;
+
+      // Load all SVG icons first
+      const iconPromises = categoryData.map(async ([category]) => {
+        return { category, svgIcon: await loadSVGIcon(category) };
+      });
+      
+      const iconResults = await Promise.all(iconPromises);
+      const iconMap = new Map(iconResults.map(result => [result.category, result.svgIcon]));
+      
+      // Simple text-based layout - 3 columns, no cards
+      const itemsPerRow = 3;
+      const columnWidth = 60;
+      const rowHeight = 12;
+      const startX = 25;
+      const iconSize = 6;
+      
+      // First pass: Calculate max text width for each column
+      const columnMaxWidths = [0, 0, 0]; // For 3 columns
+      doc.setFontSize(9);
+      doc.setFont('NotoSans_Condensed-Regular');
+      
+      categoryData.forEach(([category], index) => {
+        const column = index % itemsPerRow;
+        let displayCategory = category;
+        const maxCategoryWidth = 35;
+        if (doc.getTextWidth(displayCategory) > maxCategoryWidth) {
+          while (doc.getTextWidth(displayCategory + '...') > maxCategoryWidth && displayCategory.length > 3) {
+            displayCategory = displayCategory.slice(0, -1);
+          }
+          displayCategory += '...';
+        }
+        const textWidth = doc.getTextWidth(displayCategory);
+        columnMaxWidths[column] = Math.max(columnMaxWidths[column], textWidth);
+      });
+      
+      // Second pass: Render items with aligned badges
+      categoryData.forEach(([category, count], index) => {
+        const column = index % itemsPerRow;
+        const row = Math.floor(index / itemsPerRow);
+        const x = startX + (column * columnWidth);
+        const y = currentY + (row * rowHeight);
+        
+        // Icon
+        const iconX = x;
+        const iconY = y - 2;
+        
+        const svgIcon = iconMap.get(category);
+        if (svgIcon) {
+          doc.addImage(svgIcon, 'PNG', iconX, iconY, iconSize, iconSize);
+        } else {
+          drawCategoryIcon(doc, category, iconX, iconY, iconSize);
+        }
+        
+        // Category name
+        doc.setFontSize(9);
+        doc.setTextColor(51, 51, 51);
+        doc.setFont('NotoSans_Condensed-Regular');
+        
+        let displayCategory = category;
+        const maxCategoryWidth = 35;
+        if (doc.getTextWidth(displayCategory) > maxCategoryWidth) {
+          while (doc.getTextWidth(displayCategory + '...') > maxCategoryWidth && displayCategory.length > 3) {
+            displayCategory = displayCategory.slice(0, -1);
+          }
+          displayCategory += '...';
+        }
+        doc.text(displayCategory, iconX + iconSize + 2, y + 2);
+        
+        // Count number in rounded rectangle - aligned after longest text in column
+        const countText = count.toString();
+        doc.setFontSize(8);
+        const countTextWidth = doc.getTextWidth(countText);
+        
+        const badgeWidth = countTextWidth + 6;
+        const badgeHeight = 6;
+        // Position badge just after the longest text in this column
+        const badgeX = iconX + iconSize + 2 + columnMaxWidths[column] + 4;
+        const badgeY = y - 2;
+        
+        // Rounded rectangle background
+        doc.setFillColor(21, 101, 192);
+        doc.roundedRect(badgeX, badgeY, badgeWidth, badgeHeight, 2, 2, 'F');
+        
+        // Count text in white
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('NotoSans_Condensed-Regular');
+        doc.text(countText, badgeX + (badgeWidth / 2), badgeY + (badgeHeight / 2) + 1, { align: 'center' });
+      });
+      
+      nextY = currentY + (Math.ceil(categoryData.length / itemsPerRow) * rowHeight) + 8;
+    }
+
+    // Add status section after category analysis (warning or compliance)
+    let warningY = nextY;
+    
+    if (hasWebAbility) {
+      // Compliance message for sites with WebAbility
+      const complianceHeight = 25;
+      const complianceWidth = 170;
+      const complianceX = 20;
+      
+      doc.setFillColor(34, 197, 94); // Green background
+      doc.roundedRect(complianceX, warningY, complianceWidth, complianceHeight, 4, 4, 'F');
+      
+      // Compliance title
+      doc.setFontSize(12);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('NotoSans_Condensed-Regular');
+      doc.text(translatedAccessibilityComplianceAchieved, 105, warningY + 10, { align: 'center' });
+      
+      // Compliance subtitle
+      doc.setFontSize(9);
+      doc.text(translatedWebsiteCompliant, 105, warningY + 20, { align: 'center' });
+      
+      warningY += complianceHeight + 4;
+      
+      // Single compliance status section
+      const statusHeight = 35;
+      const statusWidth = 170;
+      const statusX = 20;
+      
+      doc.setFillColor(240, 253, 244); // Light green background
+      doc.setDrawColor(34, 197, 94);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(statusX, warningY, statusWidth, statusHeight, 4, 4, 'FD');
+      
+      doc.setFontSize(9);
+      doc.setTextColor(34, 197, 94);
+      doc.text(translatedComplianceStatus, statusX + 2, warningY + 8);
+      
+      doc.setFontSize(7);
+      doc.setTextColor(75, 85, 99);
+      doc.text(translatedWebAbilityProtecting, statusX + 2, warningY + 18);
+      doc.text(translatedAutomatedFixesApplied, statusX + 2, warningY + 26);
+      
+    } else {
+      // Warning section for non-compliant sites
+      const warningHeight = 25;
+      const warningWidth = 170;
+      const warningX = 20;
+      
+      doc.setFillColor(220, 38, 38); // Red background
+      doc.roundedRect(warningX, warningY, warningWidth, warningHeight, 4, 4, 'F');
+      
+      // Warning title
+      doc.setFontSize(12);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('NotoSans_Condensed-Regular');
+      doc.text(translatedCriticalViolationsDetected, 105, warningY + 10, { align: 'center' });
+      
+      // Warning subtitle
+      doc.setFontSize(9);
+      doc.text(translatedLegalActionWarning, 105, warningY + 20, { align: 'center' });
+      
+      warningY += warningHeight + 4;
+      
+      // Two side-by-side consequence sections
+      const consequencesHeight = 45;
+      const boxWidth = 82; // Width for each box
+      const boxSpacing = 6; // Space between boxes
+      const leftBoxX = 20;
+      const rightBoxX = leftBoxX + boxWidth + boxSpacing;
+      
+      // Left box - IMMEDIATE RISKS
+      doc.setFillColor(254, 242, 242); // Light red background
+      doc.setDrawColor(220, 38, 38);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(leftBoxX, warningY, boxWidth, consequencesHeight, 4, 4, 'FD');
+      
+      doc.setFontSize(9);
+      doc.setTextColor(220, 38, 38);
+      doc.text(translatedImmediateRisks, leftBoxX + 2, warningY + 8);
+      
+      doc.setFontSize(7);
+      doc.setTextColor(75, 85, 99);
+      doc.text(translatedPotentialLawsuits, leftBoxX + 2, warningY + 16);
+      doc.text(translatedCustomerLoss, leftBoxX + 2, warningY + 24);
+      doc.text(translatedSeoPenalties, leftBoxX + 2, warningY + 32);
+      doc.text(translatedBrandDamage, leftBoxX + 2, warningY + 40);
+      
+      // Right box - TIME-SENSITIVE ACTION
+      doc.setFillColor(255, 247, 237); // Light orange background
+      doc.setDrawColor(202, 138, 4);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(rightBoxX, warningY, boxWidth, consequencesHeight, 4, 4, 'FD');
+      
+      doc.setFontSize(9);
+      doc.setTextColor(202, 138, 4);
+      doc.text(translatedTimeSensitiveAction, rightBoxX + 2, warningY + 8);
+      
+      doc.setFontSize(7);
+      doc.setTextColor(75, 85, 99);
+      doc.text(translatedWebAbilityAutoFix, rightBoxX + 2, warningY + 18);
+      doc.text(translatedInstantCompliance, rightBoxX + 2, warningY + 26);
+      doc.text(translatedProtectBusiness, rightBoxX + 2, warningY + 34);
+    }
+
+    // Footer for first page
+    if (accessibilityStatementLinkUrl) {
+      const footerY = doc.internal.pageSize.getHeight() - 10;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(33, 150, 243);
+      doc.text(translatedAccessibilityStatement, 15, footerY);
+      doc.link(15, footerY - 3, doc.getTextWidth(translatedAccessibilityStatement), 4, {
+        url: accessibilityStatementLinkUrl,
+        target: '_blank',
+      });
+    }
+
+    // Add new page for WCAG compliance issues
+    doc.addPage();
+
+    // WCAG 2.1 AA Compliance Issues Section (Second Page)
+    const wcagIssues = issues.filter(issue => {
+      const code = issue.code || '';
+      const message = issue.message || '';
+      const description = issue.description || '';
+      return code.includes('WCAG2AA') || message.includes('WCAG2AA') || description.includes('WCAG2AA');
+    });
+
+    // Function to parse WCAG codes and truncate at Guideline level
+    const parseWcagCode = (code: string): string => {
+      if (!code) return code;
+      
+      // Extract WCAG2AA, Principle, and Guideline parts only
+      const parts = code.split('.');
+      let result = '';
+      let wcagFound = false;
+      let principleFound = false;
+      
+      for (let i = 0; i < parts.length; i++) {
+        if (parts[i] === 'WCAG2AA') {
+          // Found WCAG2AA, start building result
+          result = parts[i];
+          wcagFound = true;
+        } else if (wcagFound && parts[i].startsWith('Principle')) {
+          // Found Principle after WCAG2AA, add it
+          result += '.' + parts[i];
+          principleFound = true;
+        } else if (principleFound && parts[i].startsWith('Guideline')) {
+          // Found Guideline after Principle, add it and stop here
+          result += '.' + parts[i];
+          break;
+        }
+      }
+      
+      // If no WCAG2AA, Principle, or Guideline found, return the original code up to the first comma
+      if (!result) {
+        result = code.split(',')[0];
+      }
+      
+      // Clean up and format the result
+      return result.replace('Principle', 'Principle ').replace('Guideline', 'Guideline ').replace(/_/g, '.');
+    };
+
+    // Parse all codes and group by truncated version
+    const parsedCodes = wcagIssues.map(issue => parseWcagCode(issue.code || '')).filter(Boolean);
+    
+    // Group codes and count occurrences
+    const codeGroups = parsedCodes.reduce((acc: {[key: string]: number}, code: string) => {
+      acc[code] = (acc[code] || 0) + 1;
+      return acc;
+    }, {});
+    
+    // Convert to array for display
+    const groupedWcagCodes = Object.entries(codeGroups).map(([code, count]) => ({
+      code,
+      count
+    }));
+
+    if (groupedWcagCodes.length > 0) {
+      let currentY = 30; // Start from top of second page
+      
+      // Modern section header with gradient-like effect
+      doc.setFillColor(21, 101, 192);
+      doc.roundedRect(15, currentY - 5, 180, 25, 4, 4, 'F');
+      
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('NotoSans_Condensed-Regular');
+      doc.text(`${translatedWcagComplianceIssues} ${url}`, 105, currentY + 8, { align: 'center' });
+      currentY += 30;
+      
+      // Create card data with compliance check based on WCAG codes
+      const wcagCardData = groupedWcagCodes.map((codeGroup: {code: string, count: number}) => {
+        const isFixedByWebability = isCodeCompliant(codeGroup.code);
+        return {
+          code: codeGroup.code,
+          count: codeGroup.count,
+          status: isFixedByWebability ? 'FIXED' : 'NA_FIX'
+        };
+      });
+
+      // Summary stats at the top
+      const fixedCount = wcagCardData.filter((item: {code: string, count: number, status: string}) => item.status === 'FIXED').length;
+      const manualCount = wcagCardData.filter((item: {code: string, count: number, status: string}) => item.status === 'NA_FIX').length;
+      
+      // Compact stats cards - centered
+      const statsY = currentY;
+      const cardWidth = 70;
+      const cardHeight = 18;
+      const cardSpacing = 8;
+      // Center the two cards on the page
+      const totalWidth = (cardWidth * 2) + cardSpacing;
+      const statsStartX = (210 - totalWidth) / 2; // Center on page width
+      const leftCardX = statsStartX;
+      const rightCardX = leftCardX + cardWidth + cardSpacing;
+      
+      // Fixed issues card - color and text based on hasWebAbility
+      if (hasWebAbility) {
+        // Green for sites with WebAbility (already fixed)
+        doc.setFillColor(220, 252, 231); // Light green background
+        doc.setDrawColor(34, 197, 94);
+        doc.setLineWidth(1);
+        doc.roundedRect(leftCardX, statsY, cardWidth, cardHeight, 4, 4, 'FD');
+        
+        doc.setFontSize(12);
+        doc.setTextColor(22, 163, 74);
+        doc.setFont('NotoSans_Condensed-Regular');
+        doc.text(`${fixedCount} ${translatedAutoFixed}`, leftCardX + cardWidth/2, statsY + 8, { align: 'center' });
+        
+        doc.setFontSize(7);
+        doc.setTextColor(75, 85, 99);
+        doc.setFont('NotoSans_Condensed-Regular');
+        doc.text(translatedReadyToUse, leftCardX + cardWidth/2, statsY + 16, { align: 'center' });
+      } else {
+        // Yellow for sites without WebAbility (can be fixed)
+        doc.setFillColor(254, 249, 195); // Light yellow background
+        doc.setDrawColor(202, 138, 4);
+        doc.setLineWidth(1);
+        doc.roundedRect(leftCardX, statsY, cardWidth, cardHeight, 4, 4, 'FD');
+        
+        doc.setFontSize(12);
+        doc.setTextColor(202, 138, 4);
+        doc.setFont('NotoSans_Condensed-Regular');
+        doc.text(`${fixedCount} ${translatedCanBeFixedWithWebability}`, leftCardX + cardWidth/2, statsY + 8, { align: 'center' });
+        
+        doc.setFontSize(7);
+        doc.setTextColor(75, 85, 99);
+        doc.setFont('NotoSans_Condensed-Regular');
+        doc.text(translatedUseWebabilityToFix, leftCardX + cardWidth/2, statsY + 16, { align: 'center' });
+      }
+      
+      // Manual issues card
+      doc.setFillColor(254, 242, 242); // Light red background
+      doc.setDrawColor(239, 68, 68);
+      doc.setLineWidth(1);
+      doc.roundedRect(rightCardX, statsY, cardWidth, cardHeight, 4, 4, 'FD');
+      
+      doc.setFontSize(12);
+      doc.setTextColor(220, 38, 38);
+      doc.setFont('NotoSans_Condensed-Regular');
+      doc.text(`${manualCount} ${translatedNeedAction}`, rightCardX + cardWidth/2, statsY + 8, { align: 'center' });
+      
+      doc.setFontSize(7);
+      doc.setTextColor(75, 85, 99);
+      doc.setFont('NotoSans_Condensed-Regular');
+      doc.text(translatedReviewRequired, rightCardX + cardWidth/2, statsY + 16, { align: 'center' });
+      
+      currentY = statsY + cardHeight + 10;
+      
+      // Compact issues grid layout - 3 columns with natural flow
+      const issueCardWidth = 55;
+      const issueCardHeight = 16;
+      const issueCardSpacing = 5;
+      const itemsPerRow = 3;
+      const cardsStartX = 20;
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const pageMargin = 15; // Reduced margin to fit 27 cards (9 rows × 3 cards)
+      let pageRowCount = 0; // Track rows on current page
+      
+      // Load eye SVG icon once for reuse
+      let eyeIconDataUrl: string | null = null;
+      try {
+        console.log('Loading eye SVG icon...');
+        const response = await fetch('/images/report_icons/eye.svg');
+        console.log('Eye SVG response status:', response.status);
+        if (response.ok) {
+          const svgText = await response.text();
+          console.log('Eye SVG content loaded, length:', svgText.length);
+          
+          // Convert SVG to high-resolution PNG using canvas
+          eyeIconDataUrl = await new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            // Use high resolution for crisp icons (256x256)
+            const size = 256;
+            canvas.width = size;
+            canvas.height = size;
+            
+            img.onload = () => {
+              console.log('Eye SVG image loaded successfully');
+              if (ctx) {
+                // Enable smooth scaling for better quality
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                
+                // Clear canvas and draw the SVG at high resolution
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // Convert to high-quality PNG data URL
+                const pngDataUrl = canvas.toDataURL('image/png', 1.0);
+                console.log('Eye icon converted to PNG data URL');
+                resolve(pngDataUrl);
+              } else {
+                console.warn('Canvas context not available for eye icon');
+                resolve(null);
+              }
+            };
+            
+            img.onerror = (error) => {
+              console.error('Failed to load eye SVG image:', error);
+              resolve(null);
+            };
+            
+            // Create data URL from SVG
+            const svgDataUrl = `data:image/svg+xml;base64,${btoa(svgText)}`;
+            img.src = svgDataUrl;
+          });
+        } else {
+          console.error('Failed to fetch eye SVG, status:', response.status);
+        }
+      } catch (error) {
+        console.error('Failed to load eye SVG icon:', error);
+      }
+      
+      console.log('Eye icon data URL result:', eyeIconDataUrl ? 'Loaded' : 'Failed');
+
+      wcagCardData.forEach((item: {code: string, count: number, status: string}, index: number) => {
+        const column = index % itemsPerRow;
+        const row = pageRowCount; // Use page-relative row count
+        const x = cardsStartX + (column * (issueCardWidth + issueCardSpacing));
+        const y = currentY + (row * (issueCardHeight + 4));
+        
+        // Check if we need a new page (only at start of a new row)
+        if (column === 0 && y + issueCardHeight > pageHeight - pageMargin) {
+          doc.addPage();
+          currentY = 15; // Reduced top margin for continuation pages
+          pageRowCount = 0; // Reset row count for new page
+        }
+        
+        // Recalculate y position with current page row count
+        const cardY = currentY + (pageRowCount * (issueCardHeight + 4));
+        
+        // Card background based on status and hasWebAbility
+        if (item.status === 'FIXED') {
+          if (hasWebAbility) {
+            doc.setFillColor(240, 253, 244); // Very light green
+            doc.setDrawColor(34, 197, 94);
+          } else {
+            doc.setFillColor(254, 249, 195); // Very light yellow
+            doc.setDrawColor(202, 138, 4);
+          }
+        } else {
+          doc.setFillColor(254, 242, 242); // Very light red
+          doc.setDrawColor(239, 68, 68);
+        }
+        
+        doc.setLineWidth(0.5);
+        doc.roundedRect(x, cardY, issueCardWidth, issueCardHeight, 2, 2, 'FD');
+        
+        // Status icon (smaller)
+        const iconX = x + 6;
+        const iconY = cardY + issueCardHeight/2;
+        
+        if (item.status === 'FIXED') {
+          if (hasWebAbility) {
+            // Green checkmark (smaller)
+            doc.setFillColor(34, 197, 94);
+            doc.setDrawColor(22, 163, 74);
+            doc.setLineWidth(0.3);
+            doc.circle(iconX, iconY, 2.5, 'FD');
+            
+            doc.setDrawColor(255, 255, 255);
+            doc.setLineWidth(0.8);
+            doc.line(iconX - 1.2, iconY - 0.3, iconX - 0.3, iconY + 0.8);
+            doc.line(iconX - 0.5, iconY + 1, iconX + 1.5, iconY - 1);
+          } else {
+            // Eye icon for can be fixed with WebAbility
+            if (eyeIconDataUrl) {
+              console.log('Adding eye icon to PDF at position:', iconX, iconY);
+              // Center the eye icon properly within the card
+              const iconSize = 7; // Smaller size to fit better
+              const iconOffsetX = (7 - iconSize) / 2-4; // Center horizontally
+              const iconOffsetY = (issueCardHeight - iconSize) / 2; // Center vertically
+              doc.addImage(eyeIconDataUrl, 'PNG', iconX + iconOffsetX, cardY + iconOffsetY, iconSize, iconSize);
+            } else {
+              console.log('Eye icon not available, using yellow circle fallback');
+              // Fallback to yellow circle if eye icon failed to load
+              doc.setFillColor(202, 138, 4);
+              doc.setDrawColor(161, 98, 7);
+              doc.setLineWidth(0.3);
+              doc.circle(iconX, iconY, 2.5, 'FD');
+            }
+          }
+        } else {
+          // Red X (smaller)
+          doc.setFillColor(239, 68, 68);
+          doc.setDrawColor(220, 38, 38);
+          doc.setLineWidth(0.3);
+          doc.circle(iconX, iconY, 2.5, 'FD');
+          
+          doc.setDrawColor(255, 255, 255);
+          doc.setLineWidth(0.8);
+          doc.line(iconX - 1, iconY - 1, iconX + 1, iconY + 1);
+          doc.line(iconX - 1, iconY + 1, iconX + 1, iconY - 1);
+        }
+        
+        // Count badge in top right corner - rounded rectangle with consistent size
+        const countBadgeHeight = 4;
+        const countBadgeWidth = 6; // Fixed width for consistent appearance
+        const countBadgeX = x + issueCardWidth - countBadgeWidth - 1; // Align with card border
+        const countBadgeY = cardY + 2; // Small offset from top edge
+        
+        // Count background rounded rectangle - color based on status and hasWebAbility
+        if (item.status === 'FIXED') {
+          if (hasWebAbility) {
+            doc.setFillColor(34, 197, 94); // Green background for fixed issues
+          } else {
+            doc.setFillColor(202, 138, 4); // Yellow background for can be fixed issues
+          }
+        } else {
+          doc.setFillColor(239, 68, 68); // Red background for issues needing action
+        }
+        // Draw a perfect round circle as the count badge (not a rounded rectangle)
+        const countBadgeCircleRadius = Math.max(countBadgeWidth, countBadgeHeight) / 2;
+        const countBadgeCircleX = countBadgeX + countBadgeWidth / 2;
+        const countBadgeCircleY = countBadgeY + countBadgeHeight / 2 ;
+        doc.circle(countBadgeCircleX, countBadgeCircleY, countBadgeCircleRadius, 'F');
+        
+        // Count text
+        doc.setFontSize(7); // Increased font size
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('NotoSans_Condensed-Regular');
+        doc.text(item.count.toString(), countBadgeX + countBadgeWidth/2, countBadgeY + countBadgeHeight/2 + 1, { align: 'center' });
+        
+        // Issue code text (smaller and truncated, without count since it's now in corner)
+        doc.setFontSize(6);
+        doc.setTextColor(75, 85, 99);
+        doc.setFont('NotoSans_Condensed-Regular');
+        
+        // Truncate text to fit in card (leaving space for count badge)
+        const maxWidth = issueCardWidth - 20; // Extra space for count badge
+        let displayText = item.code;
+        if (doc.getTextWidth(displayText) > maxWidth) {
+          // Truncate and add ellipsis
+          while (doc.getTextWidth(displayText + '...') > maxWidth && displayText.length > 10) {
+            displayText = displayText.slice(0, -1);
+          }
+          displayText += '...';
+        }
+        
+        // Position text properly relative to the icon
+        const textX = iconX + 8; // Keep consistent spacing from icon
+        const textY = cardY + issueCardHeight/2 + 1; // Center text vertically in card
+        doc.text(displayText, textX, textY);
+        
+        // Increment row count when we complete a row (at the last column)
+        if (column === itemsPerRow - 1) {
+          pageRowCount++;
+        }
+      });
+      
+      // Update currentY to the final position
+      currentY = currentY + ((pageRowCount + (wcagCardData.length % itemsPerRow > 0 ? 1 : 0)) * (issueCardHeight + 4)) + 20;
+      
+
+     }
+
+        // --- END CUSTOM TABLE LAYOUT ---
+        if (accessibilityStatementLinkUrl) {
+          const totalPages = (doc as any).internal.getNumberOfPages();
+          const footerY = doc.internal.pageSize.getHeight() - 10;
+          for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(33, 150, 243); // normal blue
+            doc.text(translatedAccessibilityStatement, 15, footerY);
+            doc.link(
+              15,
+              footerY - 3,
+              doc.getTextWidth(translatedAccessibilityStatement),
+              4,
+              {
+                url: accessibilityStatementLinkUrl,
+                target: '_blank',
+              },
+            );
+          }
+        }
+
+    return doc.output('blob');
+  };
+
+  // Handle short report download
+  const handleShortReportDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const pdfBlob = await generateShortPDF(results, currentLanguage);
+      const url = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'accessibility-short-report.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Short report downloaded!');
+    } catch (error) {
+      toast.error('Failed to generate the short report. Please try again.');
+      console.error('Short PDF generation error:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <>
       <div
@@ -2029,6 +3318,19 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
                     <CircularProgress size={22} sx={{ color: 'white' }} />
                   ) : (
                     'Get Free Report'
+                  )}
+                </span>
+              </button>
+              <button
+                onClick={handleShortReportDownload}
+                className="whitespace-nowrap w-full px-6 py-3 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={isDownloading}
+              >
+                <span className="flex justify-center items-center w-full">
+                  {isDownloading ? (
+                    <CircularProgress size={22} sx={{ color: 'white' }} />
+                  ) : (
+                    'Short Report'
                   )}
                 </span>
               </button>
@@ -2066,6 +3368,19 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
                 <CircularProgress size={22} sx={{ color: 'white' }} />
               ) : (
                 'Get Free Report'
+              )}
+            </span>
+          </button>
+          <button
+            onClick={handleShortReportDownload}
+            className="whitespace-nowrap w-full md:w-auto px-6 py-3 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            disabled={isDownloading}
+          >
+            <span className="flex justify-center items-center w-full">
+              {isDownloading ? (
+                <CircularProgress size={22} sx={{ color: 'white' }} />
+              ) : (
+                'Short Report'
               )}
             </span>
           </button>

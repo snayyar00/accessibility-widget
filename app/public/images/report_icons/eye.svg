@@ -1,0 +1,17 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle (golden) -->
+  <circle cx="50" cy="50" r="50" fill="#ca8a04" />
+
+  <!-- Outer eye shape -->
+  <path d="M20,50 
+           C30,20 70,20 80,50 
+           C70,80 30,80 20,50 
+           Z"
+        fill="black" />
+
+  <!-- White sclera -->
+  <circle cx="50" cy="50" r="14" fill="#FFFFFF" />
+
+  <!-- Black pupil -->
+  <circle cx="50" cy="50" r="7" fill="black" />
+</svg>
