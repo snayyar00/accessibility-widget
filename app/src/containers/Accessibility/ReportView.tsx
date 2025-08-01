@@ -550,6 +550,7 @@ const ReportView: React.FC = () => {
                         | Iterable<ReactI18NextChild>
                         | null
                         | undefined;
+                      wcag_code?: string;
                       screenshotUrl?: string;
                     },
                     index: React.Key | null | undefined,
@@ -601,6 +602,7 @@ const ReportView: React.FC = () => {
                             {issue.code}
                           </span>
                         )}
+
                       </div>
 
                       <div className="space-y-4">
@@ -3039,18 +3041,39 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     // WCAG 2.1 AA Compliance Issues Section
     const wcagIssues = issues.filter(issue => {
+      const wcagCode = issue.wcag_code || '';
       const code = issue.code || '';
       const message = issue.message || '';
       const description = issue.description || '';
-      return code.includes('WCAG2AA') || message.includes('WCAG2AA') || description.includes('WCAG2AA');
+      return wcagCode.includes('WCAG') || code.includes('WCAG2AA') || message.includes('WCAG2AA') || description.includes('WCAG2AA');
     });
 
     // Function to parse WCAG codes and truncate at Guideline level
-    const parseWcagCode = (code: string): string => {
-      if (!code) return code;
+    const parseWcagCode = (wcagCode: string, fallbackCode: string): string => {
+      // First try to use wcag_code if available
+      if (wcagCode) {
+        // Clean up the wcag_code format
+        let result = wcagCode.trim();
+        
+        // If it's in format "WCAG AA 2.2 Criteria 1.4.3", extract the criteria part
+        if (result.includes('Criteria')) {
+          const criteriaMatch = result.match(/Criteria\s+(\d+\.\d+\.\d+)/);
+          if (criteriaMatch) {
+            return `WCAG2AA.${criteriaMatch[1]}`;
+          }
+        }
+        
+        // If it's already in a good format, return as is
+        if (result.includes('WCAG')) {
+          return result;
+        }
+      }
+      
+      // Fallback to parsing the original code field
+      if (!fallbackCode) return wcagCode || '';
       
       // Extract WCAG2AA, Principle, and Guideline parts only
-      const parts = code.split('.');
+      const parts = fallbackCode.split('.');
       let result = '';
       let wcagFound = false;
       let principleFound = false;
@@ -3073,7 +3096,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       
       // If no WCAG2AA, Principle, or Guideline found, return the original code up to the first comma
       if (!result) {
-        result = code.split(',')[0];
+        result = fallbackCode.split(',')[0];
       }
       
       // Clean up and format the result
@@ -3084,7 +3107,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     const codeGroupsWithMessages: {[key: string]: {count: number, messages: string[]}} = {};
     
     wcagIssues.forEach(issue => {
-      const parsedCode = parseWcagCode(issue.code || '');
+      const parsedCode = parseWcagCode(issue.wcag_code || '', issue.code || '');
       if (parsedCode) {
         if (!codeGroupsWithMessages[parsedCode]) {
           codeGroupsWithMessages[parsedCode] = { count: 0, messages: [] };
@@ -3253,7 +3276,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         //console.log('Eye SVG response status:', response.status);
         if (response.ok) {
           const svgText = await response.text();
-         // console.log('Eye SVG content loaded, length:', svgText.length);
+          //console.log('Eye SVG content loaded, length:', svgText.length);
           
           // Convert SVG to high-resolution PNG using canvas
           eyeIconDataUrl = await new Promise((resolve) => {
@@ -3267,7 +3290,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             canvas.height = size;
             
             img.onload = () => {
-             // console.log('Eye SVG image loaded successfully');
+           //   console.log('Eye SVG image loaded successfully');
               if (ctx) {
                 // Enable smooth scaling for better quality
                 ctx.imageSmoothingEnabled = true;
@@ -3303,7 +3326,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         console.error('Failed to load eye SVG icon:', error);
       }
       
-      //console.log('Eye icon data URL result:', eyeIconDataUrl ? 'Loaded' : 'Failed');
+     // console.log('Eye icon data URL result:', eyeIconDataUrl ? 'Loaded' : 'Failed');
 
       wcagCardData.forEach((item: {code: string, count: number, message: string, status: string}, index: number) => {
         const column = index % itemsPerRow;
@@ -3390,14 +3413,14 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           } else {
             // Eye icon for can be fixed with WebAbility (very small)
             if (eyeIconDataUrl) {
-           //   console.log('Adding eye icon to PDF at position:', iconX, iconY);
+             // console.log('Adding eye icon to PDF at position:', iconX, iconY);
               // Very small eye icon in top right corner
               const iconSize = 4; // Reduced from 7 to 4
               const iconOffsetX = -iconSize/2; // Center horizontally
               const iconOffsetY = -iconSize/2; // Center vertically
               doc.addImage(eyeIconDataUrl, 'PNG', iconX + iconOffsetX, iconY + iconOffsetY, iconSize, iconSize);
             } else {
-              //console.log('Eye icon not available, using yellow circle fallback');
+            //  console.log('Eye icon not available, using yellow circle fallback');
               // Fallback to yellow circle if eye icon failed to load (very small)
               doc.setFillColor(202, 138, 4);
               doc.setDrawColor(161, 98, 7);
@@ -3688,6 +3711,7 @@ function getIssueTypeIcon(issue: {
     | Iterable<ReactI18NextChild>
     | null
     | undefined;
+  wcag_code?: string;
 }) {
   const message = issue.message?.toLowerCase() || '';
 
