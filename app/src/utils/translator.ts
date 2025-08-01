@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios from 'axios'
+import { getAuthenticationCookie } from './cookie';
 interface Issue {
   [key: string]: any;
 }
@@ -26,16 +27,59 @@ export const LANGUAGES = {
 
 export type LanguageCode = keyof typeof LANGUAGES;
 
+// WCAG codes that are considered compliant/fixed when WebAbility is active
+export const WEBABILITY_COMPLIANT_CODES = [
+  'WCAG2AA.Principle 1.Guideline 1.1',
+  'WCAG2AA.Principle 2.Guideline 2.4',
+  'WCAG2AA.Principle 1.Guideline 1.3',
+  'WCAG2AA.Principle 1.Guideline 1.3',
+  'WCAG2AA.Principle 1.Guideline 1.3',
+  'WCAG2AA.Principle 1.Guideline 1.1',
+  'WCAG2AA.Principle 2.Guideline 2.1',
+  'WCAG2AA.Principle 1.Guideline 1.4'
+] as const;
+
+/**
+ * Check if a WCAG code is considered compliant/fixed by WebAbility
+ * @param code - The WCAG code to check
+ * @returns true if the code is in the compliant list
+ */
+export const isCodeCompliant = (code: string): boolean => {
+  if (!code) return false;
+
+  // Add extra compliant codes as per instruction
+  const EXTRA_COMPLIANT_CODES = [
+    'WCAG A 2.1',
+    'WCAG2AA.1.4.3'
+  ];
+
+  const result =
+    WEBABILITY_COMPLIANT_CODES.some(compliantCode => code.startsWith(compliantCode)) ||
+    EXTRA_COMPLIANT_CODES.some(extraCode => code.startsWith(extraCode));
+
+  return result;
+};
+
 export const translateText = async (issues: Issue[], toLang: string = 'en'): Promise<Issue[]> => {
   if (!toLang || toLang.toLowerCase() === 'en') {
     return issues;
   }
 
   try {
+    const token = getAuthenticationCookie();
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
     const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/translate`, {
       issues,
       toLang,
     }, {
+        headers,
         withCredentials: true
       });
 
@@ -60,6 +104,15 @@ export const translateSingleText = async (
   }
 
   try {
+    const token = getAuthenticationCookie();
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
     const response = await axios.post(
       `${process.env.REACT_APP_BACKEND_URL}/translate-text`,
       {
@@ -67,6 +120,7 @@ export const translateSingleText = async (
         toLang,
       },
       {
+        headers,
         withCredentials: true
       }
     );
@@ -90,6 +144,15 @@ export const translateMultipleTexts = async (
   // console.log("I am called 1st ", texts);
 
   try {
+    const token = getAuthenticationCookie();
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
     const response = await axios.post(
       `${process.env.REACT_APP_BACKEND_URL}/translate-text`,
       {
@@ -97,6 +160,7 @@ export const translateMultipleTexts = async (
         toLang,
       },
       {
+        headers,
         withCredentials: true
       }
     );
