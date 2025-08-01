@@ -1,6 +1,6 @@
 import { Router } from 'express'
 
-import { handleFormSubmission, subscribeNewsletter, unsubscribeNewsletter, unsubscribe } from '../controllers/form.controller'
+import { handleFormSubmission, subscribeNewsletter, unsubscribe, unsubscribeNewsletter } from '../controllers/form.controller'
 import { requireJsonContent } from '../middlewares/contentType.middleware'
 import { emailLimiter, moderateLimiter } from '../middlewares/limiters.middleware'
 
