@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from 'graphql.macro';
 
 const checkEmailQuery = gql`
   query IsEmailAlreadyRegistered($email: String!) {
@@ -6,4 +6,4 @@ const checkEmailQuery = gql`
   }
 `;
 
-export default checkEmailQuery; 
+export default checkEmailQuery;

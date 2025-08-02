@@ -14,7 +14,7 @@ import ProgressIndicator from './ProgressIndicator';
 import { useLazyQuery } from '@apollo/client';
 import getAccessibilityStats from '@/queries/accessibility/accessibility';
 import checkDomainQuery from '@/queries/allowedSites/checkDomain.js';
-import checkEmailQuery from '@/queries/user/checkEmail.js';
+import checkEmailQuery from '@/queries/user/checkEmail';
 import { CircularProgress } from '@mui/material';
 import WebAbilityWidget from './TryWidgetBanner';
 import { toast } from 'react-toastify';

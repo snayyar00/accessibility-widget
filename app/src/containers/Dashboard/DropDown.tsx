@@ -1,18 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
-import "./DropDown.css";
+import './DropDown.css';
 import { useMutation, useQuery } from '@apollo/client';
 import deleteSite from '@/queries/sites/deleteSite';
-import { MdDelete } from "react-icons/md";
+import { MdDelete } from 'react-icons/md';
 import { toast } from 'react-toastify';
-import AddDomainModal from './AddDomainModal'
+import AddDomainModal from './AddDomainModal';
 
 interface siteDetails {
-  url: string,
-  id: number | string | null | undefined
+  url: string;
+  id: number | string | null | undefined;
 }
 
-const DropDown = ({ data, setReloadSites, selectedOption, setSelectedOption }: any) => {
-
+const DropDown = ({
+  data,
+  setReloadSites,
+  selectedOption,
+  setSelectedOption,
+}: any) => {
   // const [selectedOption, setSelectedOption] = useState<string>('Select a Domain');
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -22,19 +26,22 @@ const DropDown = ({ data, setReloadSites, selectedOption, setSelectedOption }: a
     },
     onError: (error) => {
       toast.error('There was an error while deleting the domain.');
-    }
-  })
+    },
+  });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
       }
     }
-    if (isOpen) document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isOpen])
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
 
   const handleOptionClick = (option: string) => {
     setSelectedOption(option);
@@ -43,11 +50,13 @@ const DropDown = ({ data, setReloadSites, selectedOption, setSelectedOption }: a
 
   const handleDeleteDomain = (url: string) => {
     deleteSiteMutation({ variables: { url } });
-  }
-
+  };
 
   return (
-    <div ref={dropdownRef} className="dropdown-container relative w-full text-left mt-5">
+    <div
+      ref={dropdownRef}
+      className="dropdown-container relative w-full text-left"
+    >
       <button
         type="button"
         className="dropdown-btn mr-5 inline-flex justify-between w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm focus:outline-none focus:border-blue-500"
@@ -65,36 +74,52 @@ const DropDown = ({ data, setReloadSites, selectedOption, setSelectedOption }: a
         >
           {isOpen ? (
             // Up arrow
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 15l7-7 7 7"
+            />
           ) : (
             // Down arrow
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
           )}
         </svg>
       </button>
 
       {isOpen && (
         <div className="dropdown-menu origin-top-right absolute right-0 mt-2 w-full overflow-x-auto rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-          <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-            {data && data.getUserSites.map((site: siteDetails) => (
-              <div
-                key={site.id}
-                className="dropdown-item flex justify-between w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-                role="menuitem"
-                tabIndex={0}
-                onClick={() => handleOptionClick(site.url)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    handleOptionClick(site.url);
-                  }
-                }}
-              >
-                {site.url}
-                {/* <button onClick={() => handleDeleteDomain(site.url)}>
+          <div
+            className="py-1"
+            role="menu"
+            aria-orientation="vertical"
+            aria-labelledby="options-menu"
+          >
+            {data &&
+              data.getUserSites.map((site: siteDetails) => (
+                <div
+                  key={site.id}
+                  className="dropdown-item flex justify-between w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  role="menuitem"
+                  tabIndex={0}
+                  onClick={() => handleOptionClick(site.url)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleOptionClick(site.url);
+                    }
+                  }}
+                >
+                  {site.url}
+                  {/* <button onClick={() => handleDeleteDomain(site.url)}>
                   <MdDelete color='#EC4545' size={16} />
                 </button> */}
-              </div>
-            ))}
+                </div>
+              ))}
 
             {/* <div
               key={-5}
@@ -114,12 +139,15 @@ const DropDown = ({ data, setReloadSites, selectedOption, setSelectedOption }: a
             >
               Add New Domain
             </div> */}
-
-
           </div>
         </div>
       )}
-      {showPopup && <AddDomainModal setShowPopup={setShowPopup} setReloadSites={setReloadSites} />}
+      {showPopup && (
+        <AddDomainModal
+          setShowPopup={setShowPopup}
+          setReloadSites={setReloadSites}
+        />
+      )}
     </div>
   );
 };
