@@ -295,6 +295,7 @@ export class EmailSequenceService {
       // Check if user has active domains (for conditional content)
       const hasActiveDomains = await this.checkUserHasActiveDomains(user.id)
       console.log(`User ${user.id} has active domains: ${hasActiveDomains}`)
+      console.log(`hasActiveDomains type: ${typeof hasActiveDomains}, value: ${JSON.stringify(hasActiveDomains)}`)
 
       // Extract first URL from comma-separated FRONTEND_URL
       const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim() || 'http://localhost:3000'
@@ -314,24 +315,31 @@ export class EmailSequenceService {
       }
 
       // Compile the email template
+      const templateData = {
+        name: user.name,
+        email: user.email,
+        logoUrl: logoUrl,
+        fallbackLogoUrl: fallbackLogoUrl,
+        altFallbackUrl: altFallbackUrl,
+        hasActiveDomains: hasActiveDomains,
+        scannerLink: `${frontendUrl}/scanner`,
+        dashboardLink: frontendUrl,
+        customizeLink: `${frontendUrl}/customize-widget`,
+        supportLink: 'mailto:support@webability.io',
+        installationLink: `${frontendUrl}/installation`,
+        installationGuide: 'https://www.webability.io/installation',
+        unsubscribeLink: `${frontendUrl}/unsubscribe?email=${encodeURIComponent(user.email)}`,
+        year: new Date().getFullYear(),
+      }
+      
+      console.log(`Template data for ${step.description}:`, JSON.stringify({
+        hasActiveDomains: templateData.hasActiveDomains,
+        hasActiveDomainsType: typeof templateData.hasActiveDomains
+      }))
+      
       const template = await compileEmailTemplate({
         fileName: step.template,
-        data: {
-          name: user.name,
-          email: user.email,
-          logoUrl: logoUrl,
-          fallbackLogoUrl: fallbackLogoUrl,
-          altFallbackUrl: altFallbackUrl,
-          hasActiveDomains: hasActiveDomains,
-          scannerLink: `${frontendUrl}/scanner`,
-          dashboardLink: frontendUrl,
-          customizeLink: `${frontendUrl}/customize-widget`,
-          supportLink: 'mailto:support@webability.io',
-          installationLink: `${frontendUrl}/installation`,
-          installationGuide: 'https://www.webability.io/installation',
-          unsubscribeLink: `${frontendUrl}/unsubscribe?email=${encodeURIComponent(user.email)}`,
-          year: new Date().getFullYear(),
-        },
+        data: templateData,
       })
 
       // Compile subject line for conditional content (Day 1 email has Handlebars syntax)

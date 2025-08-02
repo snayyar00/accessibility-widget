@@ -52,6 +52,19 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
       logger.warn('MJML compilation warnings:', errors)
     }
 
+    // Debug: Check if Handlebars conditionals are preserved in HTML
+    if (fileName.includes('day1FollowUp')) {
+      console.log('🔍 DEBUG: Checking Handlebars conditionals in HTML output')
+      const hasConditionals = html.includes('{{#if hasActiveDomains}}')
+      const hasElse = html.includes('{{else}}')
+      const hasEndIf = html.includes('{{/if}}')
+      console.log(`Conditionals preserved: {{#if}}: ${hasConditionals}, {{else}}: ${hasElse}, {{/if}}: ${hasEndIf}`)
+      
+      if (!hasConditionals || !hasElse || !hasEndIf) {
+        console.log('⚠️ WARNING: MJML compilation may have corrupted Handlebars syntax')
+      }
+    }
+
     // Escape all string values in data using entities
 
     const escapedData: typeof data = {}
@@ -65,6 +78,12 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
     }
 
     const template = handlebars.compile(html)
+
+    // Debug: For Day 1 email, log the template data
+    if (fileName.includes('day1FollowUp')) {
+      console.log('🔍 DEBUG: Template data being passed to Handlebars:')
+      console.log(`hasActiveDomains: ${JSON.stringify(escapedData.hasActiveDomains)} (type: ${typeof escapedData.hasActiveDomains})`)
+    }
 
     return template(escapedData)
   } catch (error) {
