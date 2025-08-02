@@ -334,9 +334,12 @@ export class EmailSequenceService {
         },
       })
 
+      // Compile subject line for conditional content (Day 1 email has Handlebars syntax)
+      const compiledSubject = step.subject.includes('{{#if') ? (hasActiveDomains ? step.subject.replace(/{{#if hasActiveDomains}}(.*?){{else}}.*?{{\/if}}/g, '$1') : step.subject.replace(/{{#if hasActiveDomains}}.*?{{else}}(.*?){{\/if}}/g, '$1')) : step.subject
+
       // Send the email
       const emailToSend = this.getEmailForSending(user.email)
-      await sendEmailWithRetries(emailToSend, template, step.subject)
+      await sendEmailWithRetries(emailToSend, template, compiledSubject)
 
       // Mark email as sent in tracking system
       const emailLogKey = `${step.subject}|${user.id}`
