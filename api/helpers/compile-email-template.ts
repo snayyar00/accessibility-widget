@@ -42,6 +42,12 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
 
     logger.info(`Successfully read MJML file from: ${usedPath}`)
 
+    // Pre-process MJML template for Handlebars conditionals before MJML compilation
+    // This is needed because MJML strips out Handlebars syntax
+    if (fileName.includes('day1FollowUp') || fileName.includes('testConditional')) {
+      mjmlContent = preprocessHandlebarsConditionals(mjmlContent, data)
+    }
+
     const { html, errors } = mjml2html(mjmlContent, {
       keepComments: false,
       beautify: false,
@@ -52,21 +58,7 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
       logger.warn('MJML compilation warnings:', errors)
     }
 
-    // Debug: Check if Handlebars conditionals are preserved in HTML
-    if (fileName.includes('day1FollowUp')) {
-      console.log('🔍 DEBUG: Checking Handlebars conditionals in HTML output')
-      const hasConditionals = html.includes('{{#if hasActiveDomains}}')
-      const hasElse = html.includes('{{else}}')
-      const hasEndIf = html.includes('{{/if}}')
-      console.log(`Conditionals preserved: {{#if}}: ${hasConditionals}, {{else}}: ${hasElse}, {{/if}}: ${hasEndIf}`)
-      
-      if (!hasConditionals || !hasElse || !hasEndIf) {
-        console.log('⚠️ WARNING: MJML compilation may have corrupted Handlebars syntax')
-      }
-    }
-
     // Escape all string values in data using entities
-
     const escapedData: typeof data = {}
 
     for (const key in data) {
@@ -79,12 +71,6 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
 
     const template = handlebars.compile(html)
 
-    // Debug: For Day 1 email, log the template data
-    if (fileName.includes('day1FollowUp')) {
-      console.log('🔍 DEBUG: Template data being passed to Handlebars:')
-      console.log(`hasActiveDomains: ${JSON.stringify(escapedData.hasActiveDomains)} (type: ${typeof escapedData.hasActiveDomains})`)
-    }
-
     return template(escapedData)
   } catch (error) {
     logger.error('Error compiling email template:', error)
@@ -94,4 +80,38 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
 
 function escapeHandlebarsExpressions(str: string): string {
   return str.replace(/{{/g, '&#123;&#123;').replace(/}}/g, '&#125;&#125;')
+}
+
+/**
+ * Preprocess MJML template to handle Handlebars conditionals
+ * This is needed because MJML strips out Handlebars syntax
+ */
+function preprocessHandlebarsConditionals(mjmlContent: string, data: any): string {
+  // Handle Day 1 email conditional sections
+  if (data.hasActiveDomains !== undefined) {
+    const hasActiveDomains = Boolean(data.hasActiveDomains)
+    
+    console.log(`🔄 Preprocessing Day 1 email conditionals: hasActiveDomains = ${hasActiveDomains}`)
+    
+    // First, process the large block conditional (lines 55-143)
+    // This needs to be processed before the inline conditional to avoid conflicts
+    const blockConditionalRegex = /^(\s*){{#if hasActiveDomains}}\s*$([\s\S]*?)^(\s*){{else}}\s*$([\s\S]*?)^(\s*){{\/if}}\s*$/gm
+    
+    mjmlContent = mjmlContent.replace(blockConditionalRegex, (match, indent1, trueBranch, indent2, falseBranch, indent3) => {
+      const selectedBranch = hasActiveDomains ? trueBranch : falseBranch
+      console.log(`Selected ${hasActiveDomains ? 'TRUE' : 'FALSE'} branch for block conditional (${trueBranch.length} vs ${falseBranch.length} chars)`)
+      return selectedBranch
+    })
+    
+    // Then process inline conditionals in text content: {{#if hasActiveDomains}}text1{{else}}text2{{/if}}
+    const inlineConditionalRegex = /{{#if hasActiveDomains}}([^{]*?){{else}}([^{]*?){{\/if}}/g
+    
+    mjmlContent = mjmlContent.replace(inlineConditionalRegex, (match, trueText, falseText) => {
+      const selectedText = hasActiveDomains ? trueText : falseText
+      console.log(`Selected inline text: "${selectedText.trim()}"`)
+      return selectedText
+    })
+  }
+  
+  return mjmlContent
 }
