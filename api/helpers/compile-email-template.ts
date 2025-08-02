@@ -15,7 +15,7 @@ type Props = {
     url?: string
     teamName?: string
     link?: string
-    [key: string]: any
+    [key: string]: unknown
   }
 }
 
@@ -86,26 +86,26 @@ function escapeHandlebarsExpressions(str: string): string {
  * Preprocess MJML template to handle Handlebars conditionals
  * This is needed because MJML strips out Handlebars syntax
  */
-function preprocessHandlebarsConditionals(mjmlContent: string, data: any): string {
+function preprocessHandlebarsConditionals(mjmlContent: string, data: Record<string, unknown>): string {
   // Handle Day 1 email conditional sections
   if (data.hasActiveDomains !== undefined) {
     const hasActiveDomains = Boolean(data.hasActiveDomains)
-    
+
     // First, process the large block conditional (lines 55-143)
     // This needs to be processed before the inline conditional to avoid conflicts
     const blockConditionalRegex = /^(\s*){{#if hasActiveDomains}}\s*$([\s\S]*?)^(\s*){{else}}\s*$([\s\S]*?)^(\s*){{\/if}}\s*$/gm
-    
-    mjmlContent = mjmlContent.replace(blockConditionalRegex, (match, indent1, trueBranch, indent2, falseBranch, indent3) => {
+
+    mjmlContent = mjmlContent.replace(blockConditionalRegex, (match, _indent1, trueBranch, _indent2, falseBranch, _indent3) => {
       return hasActiveDomains ? trueBranch : falseBranch
     })
-    
+
     // Then process inline conditionals in text content: {{#if hasActiveDomains}}text1{{else}}text2{{/if}}
     const inlineConditionalRegex = /{{#if hasActiveDomains}}([^{]*?){{else}}([^{]*?){{\/if}}/g
-    
+
     mjmlContent = mjmlContent.replace(inlineConditionalRegex, (match, trueText, falseText) => {
       return hasActiveDomains ? trueText : falseText
     })
   }
-  
+
   return mjmlContent
 }
