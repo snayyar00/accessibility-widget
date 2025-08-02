@@ -294,7 +294,6 @@ export class EmailSequenceService {
     try {
       // Check if user has active domains (for conditional content)
       const hasActiveDomains = await this.checkUserHasActiveDomains(user.id)
-      console.log(`User ${user.id} has active domains: ${hasActiveDomains}`)
 
       // Extract first URL from comma-separated FRONTEND_URL
       const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim() || 'http://localhost:3000'
