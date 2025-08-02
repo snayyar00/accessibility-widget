@@ -44,7 +44,7 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
 
     // Pre-process MJML template for Handlebars conditionals before MJML compilation
     // This is needed because MJML strips out Handlebars syntax
-    if (fileName.includes('day1FollowUp') || fileName.includes('testConditional')) {
+    if (fileName.includes('day1FollowUp')) {
       mjmlContent = preprocessHandlebarsConditionals(mjmlContent, data)
     }
 
@@ -91,25 +91,19 @@ function preprocessHandlebarsConditionals(mjmlContent: string, data: any): strin
   if (data.hasActiveDomains !== undefined) {
     const hasActiveDomains = Boolean(data.hasActiveDomains)
     
-    console.log(`🔄 Preprocessing Day 1 email conditionals: hasActiveDomains = ${hasActiveDomains}`)
-    
     // First, process the large block conditional (lines 55-143)
     // This needs to be processed before the inline conditional to avoid conflicts
     const blockConditionalRegex = /^(\s*){{#if hasActiveDomains}}\s*$([\s\S]*?)^(\s*){{else}}\s*$([\s\S]*?)^(\s*){{\/if}}\s*$/gm
     
     mjmlContent = mjmlContent.replace(blockConditionalRegex, (match, indent1, trueBranch, indent2, falseBranch, indent3) => {
-      const selectedBranch = hasActiveDomains ? trueBranch : falseBranch
-      console.log(`Selected ${hasActiveDomains ? 'TRUE' : 'FALSE'} branch for block conditional (${trueBranch.length} vs ${falseBranch.length} chars)`)
-      return selectedBranch
+      return hasActiveDomains ? trueBranch : falseBranch
     })
     
     // Then process inline conditionals in text content: {{#if hasActiveDomains}}text1{{else}}text2{{/if}}
     const inlineConditionalRegex = /{{#if hasActiveDomains}}([^{]*?){{else}}([^{]*?){{\/if}}/g
     
     mjmlContent = mjmlContent.replace(inlineConditionalRegex, (match, trueText, falseText) => {
-      const selectedText = hasActiveDomains ? trueText : falseText
-      console.log(`Selected inline text: "${selectedText.trim()}"`)
-      return selectedText
+      return hasActiveDomains ? trueText : falseText
     })
   }
   
