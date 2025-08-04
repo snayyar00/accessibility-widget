@@ -72,7 +72,7 @@ export async function updateUserNotificationSettings(
   }
 }
 
-export async function getUserNotificationSettingsService(userId: number): Promise<any> {
+export async function getUserNotificationSettingsService(userId: number): Promise<unknown> {
   try {
     const notification = await findUserNotificationByUserId(userId)
     if (!notification) {

@@ -52,7 +52,7 @@ async function registerUser(email: string, password: string, name: string, organ
       return new ApolloError('Your account is not yet verify')
     }
 
-    let newUserId: number | undefined;
+    let newUserId: number | undefined
 
     await database.transaction(async (trx) => {
       const passwordHashed = await generatePassword(password)
@@ -70,7 +70,7 @@ async function registerUser(email: string, password: string, name: string, organ
         throw new ApolloError('Failed to create user.')
       }
 
-      newUserId = userId;
+      newUserId = userId
 
       // Create user_notifications record with onboarding emails enabled (within transaction)
       try {

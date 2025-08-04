@@ -3,7 +3,7 @@ import path from 'path'
 
 import { EMAIL_SEQUENCES, EmailSequenceStep } from '../../config/emailSequences.config'
 import compileEmailTemplate from '../../helpers/compile-email-template'
-import { checkOnboardingEmailsEnabled } from '../../repository/user.repository'
+import { checkOnboardingEmailsEnabled, UserProfile } from '../../repository/user.repository'
 import { getUsersRegisteredOnDate } from '../../repository/user.repository'
 import { sendEmailWithRetries } from '../../services/email/email.service'
 import logger from '../../utils/logger'
@@ -290,7 +290,7 @@ export class EmailSequenceService {
   /**
    * Send a specific sequence email to a user
    */
-  private static async sendSequenceEmail(user: any, step: EmailSequenceStep): Promise<void> {
+  private static async sendSequenceEmail(user: UserProfile, step: EmailSequenceStep): Promise<void> {
     try {
       // Check if user has active domains (for conditional content)
       const hasActiveDomains = await this.checkUserHasActiveDomains(user.id)

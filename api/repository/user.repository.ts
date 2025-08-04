@@ -111,11 +111,11 @@ export async function activeUser(id: number): Promise<number> {
 }
 
 // USER NOTIFICATIONS
-export async function findUserNotificationByUserId(user_id: number): Promise<any> {
+export async function findUserNotificationByUserId(user_id: number): Promise<unknown> {
   return database('user_notifications').where({ user_id }).first()
 }
 
-export async function insertUserNotification(user_id: number, trx?: any): Promise<any> {
+export async function insertUserNotification(user_id: number, trx?: Knex.Transaction): Promise<unknown> {
   const query = database('user_notifications').insert({ user_id })
   return trx ? query.transacting(trx) : query
 }
@@ -132,7 +132,7 @@ export async function updateUserNotificationFlags(
   return database('user_notifications').where({ user_id }).update(flags)
 }
 
-export async function getUserNotificationSettings(user_id: number): Promise<any> {
+export async function getUserNotificationSettings(user_id: number): Promise<unknown> {
   return database('user_notifications').where({ user_id }).first()
 }
 
@@ -157,7 +157,7 @@ export async function setOnboardingEmailsFlag(user_id: number, enabled: boolean)
     const updatedRows = await database('user_notifications')
       .where({ user_id })
       .update({ onboarding_emails_flag: enabled ? 1 : 0 })
-    
+
     return updatedRows > 0
   } catch (error) {
     console.error('Error setting onboarding emails flag:', error)

@@ -113,12 +113,12 @@ export async function unsubscribe(req: Request, res: Response) {
               <p>Email parameter is required.</p>
             </body>
           </html>
-        `)
+    `)
     }
 
     // Find user by email
     const user = await findUser({ email })
-    
+
     if (!user) {
       return res.status(404).send(`
           <html>
