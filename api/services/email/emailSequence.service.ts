@@ -3,7 +3,7 @@ import path from 'path'
 
 import { EMAIL_SEQUENCES, EmailSequenceStep } from '../../config/emailSequences.config'
 import compileEmailTemplate from '../../helpers/compile-email-template'
-import { isSubscribedToNewsletter } from '../../repository/newsletter_subscribers.repository'
+import { checkOnboardingEmailsEnabled, UserProfile } from '../../repository/user.repository'
 import { getUsersRegisteredOnDate } from '../../repository/user.repository'
 import { sendEmailWithRetries } from '../../services/email/email.service'
 import logger from '../../utils/logger'
@@ -42,10 +42,10 @@ export class EmailSequenceService {
    */
   static async sendWelcomeEmail(userEmail: string, userName: string, userId: number): Promise<boolean> {
     try {
-      // Check if user is subscribed to newsletter
-      const isSubscribed = await isSubscribedToNewsletter(userEmail)
-      if (!isSubscribed) {
-        logger.info(`Skipping welcome email for user ${userId} - not subscribed to newsletter`)
+      // Check if user has onboarding emails enabled
+      const isOnboardingEnabled = await checkOnboardingEmailsEnabled(userId)
+      if (!isOnboardingEnabled) {
+        logger.info(`Skipping welcome email for user ${userId} - onboarding emails disabled`)
         return false
       }
 
@@ -153,10 +153,10 @@ export class EmailSequenceService {
         // Process each user for this step
         for (const user of users) {
           try {
-            // Check if user is subscribed to newsletter
-            const isSubscribed = await isSubscribedToNewsletter(user.email)
-            if (!isSubscribed) {
-              logger.info(`   Skipping user ${user.id} (${user.email}) - not subscribed to newsletter`)
+            // Check if user has onboarding emails enabled
+            const isOnboardingEnabled = await checkOnboardingEmailsEnabled(user.id)
+            if (!isOnboardingEnabled) {
+              logger.info(`   Skipping user ${user.id} (${user.email}) - onboarding emails disabled`)
               continue
             }
 
@@ -211,10 +211,10 @@ export class EmailSequenceService {
         return
       }
 
-      // Check if user is subscribed to newsletter
-      const isSubscribed = await isSubscribedToNewsletter(user.email)
-      if (!isSubscribed) {
-        logger.info(`Skipping email sequence for user ${user.id} - not subscribed to newsletter`)
+      // Check if user has onboarding emails enabled
+      const isOnboardingEnabled = await checkOnboardingEmailsEnabled(user.id)
+      if (!isOnboardingEnabled) {
+        logger.info(`Skipping email sequence for user ${user.id} - onboarding emails disabled`)
         return
       }
 
@@ -290,7 +290,7 @@ export class EmailSequenceService {
   /**
    * Send a specific sequence email to a user
    */
-  private static async sendSequenceEmail(user: any, step: EmailSequenceStep): Promise<void> {
+  private static async sendSequenceEmail(user: UserProfile, step: EmailSequenceStep): Promise<void> {
     try {
       // Check if user has active domains (for conditional content)
       const hasActiveDomains = await this.checkUserHasActiveDomains(user.id)

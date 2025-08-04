@@ -7,7 +7,7 @@ import { generatePassword } from '../../helpers/hashing.helper'
 import { sign } from '../../helpers/jwt.helper'
 import { addNewsletterSub } from '../../repository/newsletter_subscribers.repository'
 import { Organization } from '../../repository/organization.repository'
-import { createUser, findUser, updateUser } from '../../repository/user.repository'
+import { createUser, findUser, insertUserNotification, updateUser } from '../../repository/user.repository'
 import EmailSequenceService from '../../services/email/emailSequence.service'
 import { ApolloError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
@@ -52,6 +52,8 @@ async function registerUser(email: string, password: string, name: string, organ
       return new ApolloError('Your account is not yet verify')
     }
 
+    let newUserId: number | undefined
+
     await database.transaction(async (trx) => {
       const passwordHashed = await generatePassword(password)
 
@@ -62,40 +64,55 @@ async function registerUser(email: string, password: string, name: string, organ
         password_changed_at: dayjs().utc().format('YYYY-MM-DD HH:mm:ss'),
       }
 
-      const newUserId = await createUser(userData, trx)
+      const userId = await createUser(userData, trx)
 
-      // Auto-subscribe new users to newsletter and send welcome email
-      if (newUserId && typeof newUserId === 'number') {
-        try {
-          // Subscribe to newsletter
-          await addNewsletterSub(email)
-          logger.info(`Auto-subscribed new user to newsletter: ${email}`)
-
-          // Send Day 0 welcome email immediately
-          const welcomeEmailSent = await EmailSequenceService.sendWelcomeEmail(email, name, newUserId)
-          if (welcomeEmailSent) {
-            logger.info(`Welcome email sent successfully to new user: ${email}`)
-          } else {
-            logger.warn(`Welcome email failed to send to new user: ${email}`)
-          }
-        } catch (error) {
-          logger.error(`Failed to auto-subscribe user to newsletter or send welcome email: ${email}`, error)
-          // Don't fail registration if newsletter subscription or welcome email fails
-        }
-      }
-
-      if (typeof newUserId !== 'number') {
+      if (typeof userId !== 'number') {
         throw new ApolloError('Failed to create user.')
       }
 
-      const ids = await addUserToOrganization(newUserId, organization.id, ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE, trx)
+      newUserId = userId
+
+      // Create user_notifications record with onboarding emails enabled (within transaction)
+      try {
+        await insertUserNotification(userId, trx)
+        logger.info(`Created user_notifications record for user: ${email}`)
+      } catch (error) {
+        logger.error(`Failed to create user_notifications: ${email}`, error)
+        throw error // Fail the transaction if user_notifications creation fails
+      }
+
+      const ids = await addUserToOrganization(userId, organization.id, ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE, trx)
 
       if (!Array.isArray(ids) || ids.length === 0) {
         throw new ApolloError('Failed to add user to organization.')
       }
 
-      await updateUser(newUserId, { current_organization_id: organization.id }, trx)
+      await updateUser(userId, { current_organization_id: organization.id }, trx)
     })
+
+    // Send welcome email after transaction completes successfully
+    if (newUserId) {
+      try {
+        const welcomeEmailSent = await EmailSequenceService.sendWelcomeEmail(email, name, newUserId)
+        if (welcomeEmailSent) {
+          logger.info(`Welcome email sent successfully to new user: ${email}`)
+        } else {
+          logger.warn(`Welcome email failed to send to new user: ${email}`)
+        }
+
+        // Also subscribe to general newsletter for backwards compatibility
+        try {
+          await addNewsletterSub(email)
+          logger.info(`Added user to newsletter: ${email}`)
+        } catch (error) {
+          logger.warn(`Failed to add user to newsletter: ${email}`, error)
+          // Don't fail registration if newsletter subscription fails
+        }
+      } catch (error) {
+        logger.error(`Failed to send welcome email: ${email}`, error)
+        // Don't fail registration if welcome email fails
+      }
+    }
 
     const token = sign({ email, name })
 

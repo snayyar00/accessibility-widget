@@ -48,6 +48,7 @@ export async function updateUserNotificationSettings(
     monthly_report_flag?: boolean
     new_domain_flag?: boolean
     issue_reported_flag?: boolean
+    onboarding_emails_flag?: boolean
   },
 ): Promise<{ success: boolean; message: string }> {
   try {
@@ -73,7 +74,7 @@ export async function updateUserNotificationSettings(
   }
 }
 
-export async function getUserNotificationSettingsService(userId: number): Promise<any> {
+export async function getUserNotificationSettingsService(userId: number): Promise<unknown> {
   try {
     const notification = await findUserNotificationByUserId(userId)
 
@@ -92,6 +93,7 @@ export async function getUserNotificationSettingsService(userId: number): Promis
         monthly_report_flag: false,
         new_domain_flag: false,
         issue_reported_flag: false,
+        onboarding_emails_flag: true, // Default to enabled for new users
       }
     )
   } catch (error) {
@@ -101,6 +103,7 @@ export async function getUserNotificationSettingsService(userId: number): Promis
       monthly_report_flag: false,
       new_domain_flag: false,
       issue_reported_flag: false,
+      onboarding_emails_flag: true, // Default to enabled for new users
     }
   }
 }

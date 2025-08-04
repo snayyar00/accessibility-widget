@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 
 import { addNewsletterSub, unsubscribeFromNewsletter } from '../repository/newsletter_subscribers.repository'
+import { findUser, setOnboardingEmailsFlag } from '../repository/user.repository'
 import { sendMail } from '../services/email/email.service'
 import { emailValidation } from '../validations/email.validation'
 
@@ -112,17 +113,39 @@ export async function unsubscribe(req: Request, res: Response) {
               <p>Email parameter is required.</p>
             </body>
           </html>
+    `)
+    }
+
+    // Find user by email
+    const user = await findUser({ email })
+
+    if (!user) {
+      return res.status(404).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+              <h2 style="color: #ffc107;">Email Not Found</h2>
+              <p>The email address was not found in our system.</p>
+              <p style="color: #666;">Email: ${email}</p>
+              <p style="margin-top: 30px;">
+                <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
+              </p>
+            </body>
+          </html>
         `)
     }
 
-    const success = await unsubscribeFromNewsletter(email)
+    // Disable onboarding emails for this user
+    const success = await setOnboardingEmailsFlag(user.id, false)
+
+    // Also unsubscribe from general newsletter for complete unsubscribe
+    await unsubscribeFromNewsletter(email)
 
     if (success) {
       res.status(200).send(`
           <html>
             <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
               <h2 style="color: #28a745;">✓ Successfully Unsubscribed</h2>
-              <p>You have been successfully unsubscribed from the WebAbility newsletter.</p>
+              <p>You have been successfully unsubscribed from WebAbility onboarding emails.</p>
               <p style="color: #666;">Email: ${email}</p>
               <p style="margin-top: 30px;">
                 <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
@@ -131,12 +154,11 @@ export async function unsubscribe(req: Request, res: Response) {
           </html>
         `)
     } else {
-      res.status(404).send(`
+      res.status(500).send(`
           <html>
             <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
-              <h2 style="color: #ffc107;">Email Not Found</h2>
-              <p>The email address was not found in our newsletter subscribers.</p>
-              <p style="color: #666;">Email: ${email}</p>
+              <h2 style="color: #dc3545;">Error</h2>
+              <p>An error occurred while processing your unsubscribe request.</p>
               <p style="margin-top: 30px;">
                 <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
               </p>

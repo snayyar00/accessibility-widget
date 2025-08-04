@@ -111,12 +111,13 @@ export async function activeUser(id: number): Promise<number> {
 }
 
 // USER NOTIFICATIONS
-export async function findUserNotificationByUserId(user_id: number): Promise<any> {
+export async function findUserNotificationByUserId(user_id: number): Promise<unknown> {
   return database('user_notifications').where({ user_id }).first()
 }
 
-export async function insertUserNotification(user_id: number): Promise<any> {
-  return database('user_notifications').insert({ user_id })
+export async function insertUserNotification(user_id: number, trx?: Knex.Transaction): Promise<unknown> {
+  const query = database('user_notifications').insert({ user_id })
+  return trx ? query.transacting(trx) : query
 }
 
 export async function updateUserNotificationFlags(
@@ -125,13 +126,43 @@ export async function updateUserNotificationFlags(
     monthly_report_flag?: boolean
     new_domain_flag?: boolean
     issue_reported_flag?: boolean
+    onboarding_emails_flag?: boolean
   },
 ): Promise<number> {
   return database('user_notifications').where({ user_id }).update(flags)
 }
 
-export async function getUserNotificationSettings(user_id: number): Promise<any> {
+export async function getUserNotificationSettings(user_id: number): Promise<unknown> {
   return database('user_notifications').where({ user_id }).first()
+}
+
+/**
+ * Check if a user has onboarding emails enabled
+ */
+export async function checkOnboardingEmailsEnabled(user_id: number): Promise<boolean> {
+  try {
+    const result = await database('user_notifications').where({ user_id }).first()
+    return !!result && !!result.onboarding_emails_flag
+  } catch (error) {
+    console.error('Error checking onboarding emails flag:', error)
+    return false // Default to false on error to avoid sending unwanted emails
+  }
+}
+
+/**
+ * Set onboarding emails flag for a user
+ */
+export async function setOnboardingEmailsFlag(user_id: number, enabled: boolean): Promise<boolean> {
+  try {
+    const updatedRows = await database('user_notifications')
+      .where({ user_id })
+      .update({ onboarding_emails_flag: enabled ? 1 : 0 })
+
+    return updatedRows > 0
+  } catch (error) {
+    console.error('Error setting onboarding emails flag:', error)
+    return false
+  }
 }
 
 /**
