@@ -11,6 +11,7 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           impact
           description
           help
+          wcag_code
           screenshotUrl
         }
         notices {
@@ -20,6 +21,7 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           impact
           description
           help
+          wcag_code
           screenshotUrl
         }
         warnings {
@@ -29,6 +31,7 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           impact
           description
           help
+          wcag_code
           screenshotUrl
         }
       }
@@ -40,6 +43,7 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           selectors
           description
           recommended_action
+          wcag_code
           screenshotUrl
         }
         notices {
@@ -49,6 +53,7 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           selectors
           description
           recommended_action
+          wcag_code
           screenshotUrl
         }
         warnings {
@@ -58,24 +63,25 @@ const FETCH_REPORT_BY_R2_KEY = gql`
           selectors
           description
           recommended_action
+          wcag_code
           screenshotUrl
         }
       }
       score
       totalElements
       siteImg
-
       ByFunctions {
-            FunctionalityName
-            Errors {
-              code
-              message
-              context
-              selectors
-              description
-              recommended_action
-              screenshotUrl
-            } 
+        FunctionalityName
+        Errors {
+          code
+          message
+          context
+          selectors
+          description
+          recommended_action
+          wcag_code
+          screenshotUrl
+        }
       }
       scriptCheckResult
       techStack {
@@ -113,5 +119,3 @@ const FETCH_REPORT_BY_R2_KEY = gql`
     }
   }
 `;
-
-export default FETCH_REPORT_BY_R2_KEY;

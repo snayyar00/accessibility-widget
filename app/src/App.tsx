@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { ApolloProvider } from '@apollo/client';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
+import { Toaster } from 'sonner';
 import { useSelector } from 'react-redux';
 
 import Auth from '@/containers/Auth/Auth';
@@ -47,6 +48,7 @@ const App: React.FC<props> = ({ options }) => {
       <BrowserRouter>
         <GlobalLoader />
         <ToastContainer />
+        <Toaster />
 
         <GlobalReportPolling />
 

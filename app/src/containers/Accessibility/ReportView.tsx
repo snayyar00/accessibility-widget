@@ -188,7 +188,7 @@ const ReportView: React.FC = () => {
   // Always call hooks at the top
   useEffect(() => {
     if (r2_key) {
-      fetchReport({ variables: { r2_key: adjustedKey } })
+      fetchReport({ variables: { r2Key: adjustedKey } })
         .then(({ data }) => {
           const report = data.fetchReportByR2Key;
           if (report) {

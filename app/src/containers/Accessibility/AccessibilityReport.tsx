@@ -2998,7 +2998,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             setDownloadingRow(row.r2_key);
                             try {
                               // Fetch the report for the clicked row and wait for the response
-                              const { data: fetchedReportData } = await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
+                              const { data: fetchedReportData } = await fetchReportByR2Key({ variables: { r2Key: row.r2_key } });
                               if (fetchedReportData && fetchedReportData.fetchReportByR2Key) {
                                 fetchedReportData.fetchReportByR2Key.url = row.url;
                                 const pdfBlob = await generatePDF(fetchedReportData.fetchReportByR2Key,currentLanguage);
@@ -3036,7 +3036,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             setDownloadingRow(row.r2_key);
                             try {
                               // Fetch the report for the clicked row and wait for the response
-                              const { data: fetchedReportData } = await fetchReportByR2Key({ variables: { r2_key: row.r2_key } });
+                              const { data: fetchedReportData } = await fetchReportByR2Key({ variables: { r2Key: row.r2_key } });
                               if (fetchedReportData && fetchedReportData.fetchReportByR2Key) {
                                 fetchedReportData.fetchReportByR2Key.url = row.url;
                                 const pdfBlob = await generateShortPDF(fetchedReportData.fetchReportByR2Key, currentLanguage);
