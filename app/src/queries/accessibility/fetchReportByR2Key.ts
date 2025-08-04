@@ -119,3 +119,5 @@ const FETCH_REPORT_BY_R2_KEY = gql`
     }
   }
 `;
+
+export default FETCH_REPORT_BY_R2_KEY;
