@@ -41,6 +41,7 @@ export const UserSchema = `#graphql
     monthly_report_flag: Boolean!
     new_domain_flag: Boolean!
     issue_reported_flag: Boolean!
+    onboarding_emails_flag: Boolean!
   }
 
   extend type Query {
@@ -68,7 +69,7 @@ export const UserSchema = `#graphql
 
     updateProfile(name: String, company: String, position: String): Boolean! @rateLimit(limit: 20, duration: 3600, message: "Too many profile update requests. Please try again later.")
 
-    updateNotificationSettings(monthly_report_flag: Boolean, new_domain_flag: Boolean, issue_reported_flag: Boolean): Boolean!
+    updateNotificationSettings(monthly_report_flag: Boolean, new_domain_flag: Boolean, issue_reported_flag: Boolean, onboarding_emails_flag: Boolean): Boolean!
       @rateLimit(limit: 10, duration: 3600, message: "Too many notification settings updates. Please try again later.")
 
     logout: Boolean!
