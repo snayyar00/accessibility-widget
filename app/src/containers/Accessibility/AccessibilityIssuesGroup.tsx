@@ -11,7 +11,6 @@ type ErrorDetail = {
   message: string;
   recommended_action: string;
   selectors: string[];
-  wcag_code?: string;
   __typename: string;
 };
 

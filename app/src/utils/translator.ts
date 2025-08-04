@@ -47,16 +47,14 @@ export const WEBABILITY_COMPLIANT_CODES = [
 export const isCodeCompliant = (code: string): boolean => {
   if (!code) return false;
 
-  // Add extra compliant codes as per instruction
-  const EXTRA_COMPLIANT_CODES = [
-    'WCAG A 2.1',
-    'WCAG2AA.1.4.3'
-  ];
-
-  const result =
-    WEBABILITY_COMPLIANT_CODES.some(compliantCode => code.startsWith(compliantCode)) ||
-    EXTRA_COMPLIANT_CODES.some(extraCode => code.startsWith(extraCode));
-
+  
+  const result = WEBABILITY_COMPLIANT_CODES.some(compliantCode => {
+    // Check if the input code starts with the compliant code
+    // This handles cases like "WCAG2AA.Principle 1.Guideline 1.1.1.1" matching "WCAG2AA.Principle 1.Guideline 1.1"
+    const matches = code.startsWith(compliantCode);
+    return matches;
+  });
+  
   return result;
 };
 
