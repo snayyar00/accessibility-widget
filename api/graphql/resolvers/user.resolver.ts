@@ -12,6 +12,7 @@ import { getOrganizationById } from '../../services/organization/organization.se
 import { getUserOrganization } from '../../services/organization/organization_users.service'
 import { deleteUser } from '../../services/user/delete-user.service'
 import { getUserNotificationSettingsService, updateProfile, updateUserNotificationSettings } from '../../services/user/update-user.service'
+import { changeCurrentOrganization } from '../../services/user/update-user.service'
 import { isEmailAlreadyRegistered } from '../../services/user/user.service'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
@@ -104,14 +105,19 @@ const resolvers = {
 
     updateProfile: combineResolvers(allowedOrganization, isAuthenticated, (_, { name, company, position }, { user }) => updateProfile(user.id, name, company, position)),
 
-    updateNotificationSettings: combineResolvers(allowedOrganization, isAuthenticated, async (_, { monthly_report_flag, new_domain_flag, issue_reported_flag }, { user }) => {
+    updateNotificationSettings: combineResolvers(allowedOrganization, isAuthenticated, async (_, { monthly_report_flag, new_domain_flag, issue_reported_flag, onboarding_emails_flag }, { user }) => {
       const result = await updateUserNotificationSettings(user.id, {
         monthly_report_flag,
         new_domain_flag,
         issue_reported_flag,
+        onboarding_emails_flag,
       })
 
       return result.success
+    }),
+
+    changeCurrentOrganization: combineResolvers(allowedOrganization, isAuthenticated, async (_, { organizationId, userId }, { user }) => {
+      return await changeCurrentOrganization(user, organizationId, userId)
     }),
   },
 }

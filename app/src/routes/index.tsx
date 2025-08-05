@@ -7,6 +7,7 @@ import { MdOutlineGavel } from 'react-icons/md';
 import { FiFile } from 'react-icons/fi';
 import ReportView from '@/containers/Accessibility/ReportView';
 import StatementGenerator from '@/containers/StatementGenerator/StatementGenerator';
+import Users from '@/containers/Users';
 import ProofOfEffortToolkit from '@/containers/ProofOfEffortToolkit/ProofOfEffortToolkit';
 
 const routes = [
@@ -78,6 +79,13 @@ const routes = [
     name: 'Report View',
     exact: true,
     component: ReportView,
+    isSidebar: false,
+  },
+  {
+    path: '/users',
+    name: 'Users',
+    exact: true,
+    component: Users,
     isSidebar: false,
   },
 ];

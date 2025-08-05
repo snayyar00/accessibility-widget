@@ -11,11 +11,20 @@
     @apply no-underline;
     color: theme('colors.primary');
   }
-  html, body {
+  html,
+  body {
     @apply m-0 p-0 relative;
   }
 
-  h1, h2, h3, h4, h5, h6, ul, li, p {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  ul,
+  li,
+  p {
     @apply m-0 p-0;
   }
 }
@@ -66,7 +75,12 @@
     border-color: rgba(255, 255, 255, 0.2);
   }
 
-  .plan-wrapper .name, .plan-wrapper .desc, .plan-wrapper .price, .plan-wrapper .unit, .plan-wrapper .feature-text, .plan-wrapper .get-started-btn {
+  .plan-wrapper .name,
+  .plan-wrapper .desc,
+  .plan-wrapper .price,
+  .plan-wrapper .unit,
+  .plan-wrapper .feature-text,
+  .plan-wrapper .get-started-btn {
     color: theme('colors.white');
   }
 
@@ -78,7 +92,8 @@
     border-color: rgba(255, 255, 255, 0.2);
   }
 
-  .plan-wrapper .feature-item svg circle, .plan-wrapper .feature-item svg path {
+  .plan-wrapper .feature-item svg circle,
+  .plan-wrapper .feature-item svg path {
     stroke: #8dead2;
   }
 

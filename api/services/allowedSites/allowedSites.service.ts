@@ -79,7 +79,7 @@ export async function addSite(userId: number, url: string): Promise<string> {
         const status = widgetStatus == 'true' || widgetStatus == 'Web Ability' ? 'Compliant' : 'Not Compliant'
         const score = widgetStatus == 'Web Ability' ? Math.floor(Math.random() * (100 - 90 + 1)) + 90 : widgetStatus == 'true' ? Math.floor(Math.random() * (88 - 80 + 1)) + 80 : report.score
 
-        const notification = await findUserNotificationByUserId(user.id)
+        const notification = (await findUserNotificationByUserId(user.id)) as { new_domain_flag?: boolean } | null
         if (!notification || !notification.new_domain_flag) {
           console.log(`Skipping new domain email for user ${user.email} (no notification flag)`)
           return 'The site was successfully added.'

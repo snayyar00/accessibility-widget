@@ -9,8 +9,6 @@ import routes from '@/routes';
 import Dashboard from '@/containers/Dashboard';
 import Installation from '@/containers/Installation/Installation';
 import Teams from '@/containers/Teams';
-import Sidebar from './Sidebar';
-import Topbar from './Topbar';
 import SiteDetail from '@/containers/SiteDetail';
 import AccessibilityWidgetPage from '@/containers/Teams/editWidget';
 import ProofOfEffortToolkit from '@/containers/ProofOfEffortToolkit/ProofOfEffortToolkit';
@@ -19,6 +17,8 @@ import { RootState } from '@/config/store';
 import { SITE_SELECTOR_TEXT } from '@/constants';
 import { getAuthenticationCookie } from '@/utils/cookie';
 import { setSelectedDomain } from '@/features/report/reportSlice';
+import Topbar from './Topbar';
+import Sidebar from './Sidebar';
 
 type Props = {
   signout: () => void;
@@ -137,10 +137,10 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
     if (domainData) {
       try {
         if (window.location.pathname.startsWith('/domain-plans/')) {
-          const id = data.getUserSites.filter(
+          const { id } = data.getUserSites.filter(
             (site: siteDetails) => site.url === selectedOption,
-          )[0]['id'];
-          history.push('/domain-plans/' + id);
+          )[0];
+          history.push(`/domain-plans/${id}`);
         }
       } catch (error) {
         console.log('error', error);
@@ -157,7 +157,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
           const id = data.getUserSites.filter(
             (site: siteDetails) => site.id === match,
           )[0];
-          setSelectedOption(id['url']);
+          setSelectedOption(id.url);
         }
       } catch (error) {
         console.log('error', error);

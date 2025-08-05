@@ -1,0 +1,221 @@
+<mjml>
+  <mj-head>
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+    <mj-attributes>
+      <mj-all font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif" />
+      <mj-text font-size="16px" line-height="1.6" color="#374151" />
+      <mj-button font-weight="600" border-radius="8px" />
+    </mj-attributes>
+    <mj-style>
+      .header-logo { max-width: 150px !important; }
+      .welcome-title { font-size: 32px !important; font-weight: 700 !important; color: #1f2937 !important; line-height: 1.2 !important; }
+      .section-title { font-size: 24px !important; font-weight: 600 !important; color: #1f2937 !important; margin-bottom: 16px !important; }
+      .checklist-item { display: flex !important; align-items: flex-start !important; margin-bottom: 12px !important; }
+      .checklist-icon { color: #10b981 !important; font-weight: bold !important; margin-right: 8px !important; }
+      .support-section { background-color: #f9fafb !important; border-radius: 8px !important; padding: 24px !important; }
+      .footer-text { font-size: 14px !important; color: #6b7280 !important; }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#1565C0">
+    <!-- Header -->
+    <mj-section background-color="#1565C0" padding="32px 24px">
+      <mj-column width="100%">
+        <mj-text align="center">
+          <div style="background-color: #ffffff; border-radius: 8px; padding: 12px; display: inline-block; width: 200px;">
+            <!-- Primary logo with multiple fallbacks for Gmail compatibility -->
+            <img 
+              src="{{logoUrl}}" 
+              alt="WebAbility - Making the web accessible for everyone" 
+              style="width: 150px; max-width: 150px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" 
+              width="150"
+              border="0"
+              onerror="this.onerror=null; this.src='{{fallbackLogoUrl}}'; if(this.onerror) { this.onerror=null; this.src='{{altFallbackUrl}}'; }"
+            />
+            <!-- Gmail-specific fallback using conditional comments -->
+            <!--[if mso]>
+            <img src="{{altFallbackUrl}}" alt="WebAbility Logo" style="width: 150px; height: 40px; display: block; margin: 0 auto;" width="150" height="40" />
+            <![endif]-->
+          </div>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Hero Image Section -->
+    <mj-section background-color="#ffffff" padding="0">
+      <mj-column>
+        <mj-image 
+          width="500px" 
+          src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsection_1_right.bf6223d4.png&w=750&q=75"
+          alt="WebAbility Hero"
+        />
+      </mj-column>
+    </mj-section>
+
+    <!-- Welcome Message -->
+    <mj-section background-color="#ffffff" padding="12px 24px 32px">
+      <mj-column>
+        <mj-text css-class="welcome-title" align="center">
+          Welcome to WebAbility, {{name}}! 🎉
+        </mj-text>
+        <mj-text align="center" font-size="18px" color="#6b7280" padding="16px 0 0">
+          Thank you for signing up! Your account has been successfully created, and you're now part of our community dedicated to making the web accessible for everyone.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Quick Start Section -->
+    <mj-section background-color="#ffffff" padding="0 24px 40px">
+      <mj-column>
+        <mj-text css-class="section-title" align="center" padding="0 0 20px">
+          What's Next: Getting Started with WebAbility
+        </mj-text>
+        <mj-text align="center" font-size="18px" color="#6b7280" padding="0 0 20px">
+          Follow these simple steps to get your website accessibility-ready:
+        </mj-text>
+        
+        <mj-button 
+          background-color="#3b82f6" 
+          color="#ffffff"
+          font-size="16px"
+          padding="14px 32px"
+          href="{{installationGuide}}"
+        >
+          🚀 Widget Installation Guides
+        </mj-button>
+        <mj-text align="center" font-size="14px" color="#6b7280" padding="12px 0 0">
+          <strong>Installation & Integrations</strong><br>
+          Find the right installation guide for your website, whether it's custom-built, on a popular CMS, or website building platform.
+        </mj-text>
+        
+        <!-- Visual Divider -->
+        <mj-divider border-color="#3b82f6" border-width="2px" width="100px" padding="32px 0 16px"></mj-divider>
+      </mj-column>
+    </mj-section>
+
+    <!-- What's Next Section -->
+    <mj-section background-color="#f8fafc" padding="40px 24px">
+      <mj-column>
+        <mj-text css-class="section-title" align="center">
+          What's Next: Getting Started with WebAbility
+        </mj-text>
+        
+        <!-- Checklist Items -->
+        <mj-text padding="0 0 16px">
+          <div class="checklist-item">
+            <span class="checklist-icon">✅</span>
+            <div>
+              <strong>Install the WebAbility Widget:</strong> Add the accessibility widget to your site using the one-click installation link above.
+            </div>
+          </div>
+        </mj-text>
+        
+        <mj-text padding="0 0 16px">
+          <div class="checklist-item">
+            <span class="checklist-icon">📊</span>
+            <div>
+              <strong>Review Your First Accessibility Audit:</strong> Access your dashboard to view the initial audit report and identify areas for improvement.
+            </div>
+          </div>
+        </mj-text>
+        
+        <mj-text padding="0 0 16px">
+          <div class="checklist-item">
+            <span class="checklist-icon">🎨</span>
+            <div>
+              <strong>Customize Widget Appearance:</strong> Adjust the widget's design to match your site's branding and user experience preferences.
+            </div>
+          </div>
+        </mj-text>
+        
+        <mj-text padding="0 0 16px">
+          <div class="checklist-item">
+            <span class="checklist-icon">🔄</span>
+            <div>
+              <strong>Monitor Continuously:</strong> After the initial audit, WebAbility continues to scan and remediate your website every month, helping you maintain your site's accessibility.
+            </div>
+          </div>
+        </mj-text>
+        
+        <mj-text padding="0 0 0">
+          <div class="checklist-item">
+            <span class="checklist-icon">📚</span>
+            <div>
+              <strong>Explore Accessibility Resources:</strong> Familiarize yourself with accessibility best practices and guidelines to enhance your site's inclusivity.
+            </div>
+          </div>
+        </mj-text>
+        
+        <!-- Visual Divider -->
+        <mj-divider border-color="#10b981" border-width="2px" width="100px" padding="32px 0 16px"></mj-divider>
+      </mj-column>
+    </mj-section>
+
+    <!-- Quick Links -->
+    <mj-section background-color="#ffffff" padding="40px 24px">
+      <mj-column>
+        <mj-text css-class="section-title" align="center">
+          Quick Links
+        </mj-text>
+        <mj-button 
+          background-color="#ffffff" 
+          color="#3b82f6"
+          border="2px solid #3b82f6"
+          font-size="16px"
+          padding="12px 24px"
+          href="{{dashboardLink}}"
+        >
+        >
+          📈 View Dashboard
+        </mj-button>
+        
+        <!-- Visual Divider -->
+        <mj-divider border-color="#3b82f6" border-width="2px" width="100px" padding="32px 0 16px"></mj-divider>
+      </mj-column>
+    </mj-section>
+
+    <!-- Support Section -->
+    <mj-section background-color="#ffffff" padding="0 24px 40px">
+      <mj-column>
+        <mj-text css-class="support-section">
+          <div style="text-align: center;">
+            <strong style="font-size: 18px; color: #1f2937;">Need Help Getting Started?</strong><br>
+            <span style="color: #6b7280; font-size: 16px;">
+              We're here to help! Our support team is ready to assist you with any questions about setting up WebAbility or improving your site's accessibility.
+            </span>
+          </div>
+        </mj-text>
+        <mj-button 
+          background-color="#10b981" 
+          color="#ffffff"
+          font-size="16px"
+          padding="12px 24px"
+          href="{{supportLink}}"
+        >
+        >
+          💬 Contact Support
+        </mj-button>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f9fafb" padding="32px 24px">
+      <mj-column>
+        <mj-text css-class="footer-text" align="center">
+          <strong>WebAbility</strong><br>
+          Making the web accessible for everyone
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" padding="16px 0 0">
+          Questions? Reply to this email or visit our help center.<br>
+          © {{year}} WebAbility. All rights reserved.
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
+          You're receiving this email because you signed up for WebAbility.<br>
+          This is part of our welcome series to help you get started.
+        </mj-text>
+        <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
+          <a href="{{unsubscribeLink}}" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
