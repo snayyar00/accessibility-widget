@@ -126,5 +126,85 @@ async function sendEmailWithRetries(
   }
 }
 
-export { sendEmailWithRetries, sendMail, sendMailMultiple }
+async function sendScheduledEmail(to: string, subject: string, html: string, scheduledAt: Date, attachments?: EmailAttachment[]): Promise<{ success: boolean; messageId?: string; batchId?: string }> {
+  if (!to || to.trim() === '') {
+    console.error('Recipient email address is missing or empty.')
+    return { success: false }
+  }
+
+  try {
+    // Initialize Brevo API client
+    const brevoClient = new TransactionalEmailsApi()
+
+    // Correctly set the API key using two arguments
+    brevoClient.setApiKey(TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY as string)
+
+    // Create the email content
+    const sendSmtpEmail = new SendSmtpEmail()
+    sendSmtpEmail.to = [{ email: to }]
+    sendSmtpEmail.sender = { email: process.env.EMAIL_FROM || 'your-email@domain.com' }
+    sendSmtpEmail.subject = subject
+    sendSmtpEmail.htmlContent = html
+    sendSmtpEmail.scheduledAt = scheduledAt // Brevo expects Date object, not string
+
+    // Add attachments if provided
+    if (attachments && attachments.length > 0) {
+      sendSmtpEmail.attachment = attachments.map((att) => ({
+        content: att.content.toString('base64'),
+        name: att.name,
+      }))
+    }
+
+    const response = await brevoClient.sendTransacEmail(sendSmtpEmail)
+
+    // Check if email was scheduled successfully
+    if (response?.body?.messageId) {
+      console.log('Email scheduled successfully:', response.body.messageId)
+      return {
+        success: true,
+        messageId: response.body.messageId,
+        // Note: batchId may not be available in all Brevo responses
+      }
+    }
+    console.error('Failed to schedule email: no messageId in response')
+    return { success: false }
+  } catch (error) {
+    console.error('Error scheduling email:', error)
+    return { success: false }
+  }
+}
+
+async function cancelScheduledEmail(messageId: string): Promise<boolean> {
+  try {
+    // Initialize Brevo API client
+    const brevoClient = new TransactionalEmailsApi()
+
+    // Set the API key
+    brevoClient.setApiKey(TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY as string)
+
+    // Cancel the scheduled email using DELETE request
+    // Note: This might need to be implemented differently based on Brevo SDK version
+    // For now, we'll use a fetch request to the API endpoint
+    const response = await fetch(`https://api.brevo.com/v3/smtp/email/${messageId}`, {
+      method: 'DELETE',
+      headers: {
+        'api-key': process.env.BREVO_API_KEY as string,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (response.ok) {
+      console.log('Scheduled email cancelled successfully:', messageId)
+      return true
+    } else {
+      console.error('Failed to cancel scheduled email:', response.status, response.statusText)
+      return false
+    }
+  } catch (error) {
+    console.error('Error cancelling scheduled email:', error)
+    return false
+  }
+}
+
+export { cancelScheduledEmail, sendEmailWithRetries, sendMail, sendMailMultiple, sendScheduledEmail }
 export type { EmailAttachment }
