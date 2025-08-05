@@ -1,6 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaChevronDown, FaSearch, FaCheck, FaMagic, FaExpand, FaCompress, FaEnvelope, FaTimes, FaSpinner } from "react-icons/fa";
-import { FaRegCopy } from "react-icons/fa6";
+import {
+  FaChevronDown,
+  FaSearch,
+  FaCheck,
+  FaMagic,
+  FaExpand,
+  FaCompress,
+  FaEnvelope,
+  FaTimes,
+  FaSpinner,
+} from 'react-icons/fa';
+import { FaRegCopy } from 'react-icons/fa6';
 import { useMutation } from '@apollo/client';
 import { gql } from '@apollo/client';
 import { CircularProgress } from '@mui/material';
@@ -65,7 +75,11 @@ const languages = [
   { code: 'no', name: 'Norsk', englishName: 'Norwegian' },
   { code: 'pl', name: 'Polski', englishName: 'Polish' },
   { code: 'pt', name: 'Português', englishName: 'Portuguese' },
-  { code: 'pt-br', name: 'Português (Brasil)', englishName: 'Portuguese (Brazil)' },
+  {
+    code: 'pt-br',
+    name: 'Português (Brasil)',
+    englishName: 'Portuguese (Brazil)',
+  },
   { code: 'ro', name: 'Română', englishName: 'Romanian' },
   { code: 'ru', name: 'Русский', englishName: 'Russian' },
   { code: 'sk', name: 'Slovenčina', englishName: 'Slovak' },
@@ -133,7 +147,8 @@ export default function CodeContainer({ codeString }: CodeProps) {
   const formattedCodeString = `<script src="https://widget.webability.io/widget.min.js" data-asw-position="${position}" data-asw-lang="${language}" data-custom-attribute="very-long-attribute-to-test-scrolling-functionality" defer></script>`;
 
   const validateEmail = (email: string) => {
-    const emailRegex = new RegExp(`/^${email}$/`);
+    const emailRegex =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
     return emailRegex.test(email);
   };

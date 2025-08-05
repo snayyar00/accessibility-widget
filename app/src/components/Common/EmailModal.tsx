@@ -1,14 +1,14 @@
-import React, { useState } from 'react'
-import { MdClose, MdEmail } from 'react-icons/md'
+import React, { useState } from 'react';
+import { MdClose, MdEmail } from 'react-icons/md';
 import { CircularProgress } from '@mui/material';
 
 interface EmailModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (email: string) => void
-  isLoading?: boolean
-  title?: string
-  description?: string
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (email: string) => void;
+  isLoading?: boolean;
+  title?: string;
+  description?: string;
 }
 
 const EmailModal: React.FC<EmailModalProps> = ({
@@ -17,41 +17,42 @@ const EmailModal: React.FC<EmailModalProps> = ({
   onSubmit,
   isLoading = false,
   title = 'Send via Email',
-  description = 'Enter the email address where you would like to send the proof of effort toolkit.'
+  description = 'Enter the email address where you would like to send the proof of effort toolkit.',
 }) => {
-  const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError('');
 
     // Basic email validation
-    const emailRegex = new RegExp(`/^${email}$/`);
+    const emailRegex =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
     if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address')
-      return
+      setError('Please enter a valid email address');
+      return;
     }
 
-    onSubmit(email)
-  }
+    onSubmit(email);
+  };
 
   const handleClose = () => {
-    setEmail('')
-    setError('')
-    onClose()
-  }
+    setEmail('');
+    setError('');
+    onClose();
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black bg-opacity-50"
         onClick={handleClose}
       />
-      
+
       {/* Modal */}
       <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         {/* Header */}
@@ -72,10 +73,13 @@ const EmailModal: React.FC<EmailModalProps> = ({
         {/* Content */}
         <div className="p-6">
           <p className="text-gray-600 mb-6">{description}</p>
-          
+
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Email Address
               </label>
               <input
@@ -90,9 +94,7 @@ const EmailModal: React.FC<EmailModalProps> = ({
                 disabled={isLoading}
                 required
               />
-              {error && (
-                <p className="mt-1 text-sm text-red-600">{error}</p>
-              )}
+              {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
             </div>
 
             {/* Buttons */}
@@ -116,8 +118,7 @@ const EmailModal: React.FC<EmailModalProps> = ({
               >
                 {isLoading ? (
                   <>
-                      <CircularProgress size={16} style={{ color: 'white' }} />
-
+                    <CircularProgress size={16} style={{ color: 'white' }} />
                     Sending...
                   </>
                 ) : (
@@ -132,7 +133,7 @@ const EmailModal: React.FC<EmailModalProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default EmailModal 
+export default EmailModal;
