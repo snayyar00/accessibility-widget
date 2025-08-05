@@ -2,6 +2,7 @@ import { combineResolvers } from 'graphql-resolvers'
 import { isAuthenticated } from './authorization.resolver'
 import { sendWidgetInstallationInstructions } from '../../services/widget/widget-installation.service'
 import logger from '../../utils/logger'
+import { emailValidation } from '../../validations/email.validation'
 
 interface SendWidgetInstallationArgs {
   email: string
@@ -23,9 +24,9 @@ const widgetResolvers = {
         }
 
         // Validate email format
-        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+        const emailValidationResult = emailValidation(email)
 
-        if (!emailRegex.test(email)) {
+        if (Array.isArray(emailValidationResult) && emailValidationResult.length > 0) {
           throw new Error('Invalid email format')
         }
 

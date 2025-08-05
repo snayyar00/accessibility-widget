@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { sendMail, EmailAttachment } from '../services/email/email.service'
 import compileEmailTemplate from '../helpers/compile-email-template'
+import { emailValidation } from '../validations/email.validation'
 
 interface SendToolkitEmailRequest {
   email: string
@@ -23,8 +24,9 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
     }
 
     // Validate email format
-    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
-    if (!emailRegex.test(email)) {
+    const emailValidationResult = emailValidation(email)
+
+    if (Array.isArray(emailValidationResult) && emailValidationResult.length > 0) {
       return res.status(400).json({
         success: false,
         message: 'Invalid email format',
