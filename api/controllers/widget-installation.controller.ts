@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { sendWidgetInstallationInstructions } from '../services/widget/widget-installation.service'
 import logger from '../utils/logger'
+import { emailValidation } from '../validations/email.validation'
 
 interface SendWidgetInstallationRequest {
   email: string
@@ -23,11 +24,12 @@ export const sendWidgetInstallationInstructionsController = async (req: Request,
     }
 
     // Validate email format
-    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
-    if (!emailRegex.test(email)) {
+    const emailValidationResult = emailValidation(email)
+
+    if (Array.isArray(emailValidationResult) && emailValidationResult.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid email format',
+        message: 'Invalid email format',
       })
     }
 
