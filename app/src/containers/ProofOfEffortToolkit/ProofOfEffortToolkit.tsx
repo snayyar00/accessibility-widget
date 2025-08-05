@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { MdFileDownload, MdEmail, MdKeyboardArrowDown, MdKeyboardArrowUp, MdVisibility } from 'react-icons/md';
+import {
+  MdFileDownload,
+  MdEmail,
+  MdKeyboardArrowDown,
+  MdKeyboardArrowUp,
+  MdVisibility,
+} from 'react-icons/md';
 import { FiFile } from 'react-icons/fi';
 import { useLazyQuery, useMutation } from '@apollo/client';
 import { useHistory } from 'react-router-dom';
@@ -9,7 +15,11 @@ import FETCH_ACCESSIBILITY_REPORT_KEYS from '@/queries/accessibility/fetchAccess
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
 import { SEND_PROOF_OF_EFFORT_TOOLKIT } from '@/queries/proofOfEffort/sendToolkit';
 import { RootState } from '@/config/store';
-import { translateText, translateMultipleTexts, deduplicateIssuesByMessage } from '@/utils/translator';
+import {
+  translateText,
+  translateMultipleTexts,
+  deduplicateIssuesByMessage,
+} from '@/utils/translator';
 import getWidgetSettings from '@/utils/getWidgetSettings';
 import EmailModal from '@/components/Common/EmailModal';
 import { CircularProgress } from '@mui/material';
@@ -24,10 +34,10 @@ interface Document {
 
 // Helper function to map issue severity based on message and code
 function mapIssueToImpact(message: string, code: any) {
-  if (!message && !code) return 'moderate'
+  if (!message && !code) return 'moderate';
 
-  const lowerMsg = (message || '').toLowerCase()
-  const lowerCode = (code || '').toLowerCase()
+  const lowerMsg = (message || '').toLowerCase();
+  const lowerCode = (code || '').toLowerCase();
 
   // Critical issues
   if (
@@ -37,7 +47,7 @@ function mapIssueToImpact(message: string, code: any) {
     (lowerMsg.includes('aria hidden') && lowerMsg.includes('focusable')) ||
     lowerMsg.includes('links must be distinguishable')
   ) {
-    return 'critical'
+    return 'critical';
   }
 
   // Serious issues
@@ -47,68 +57,75 @@ function mapIssueToImpact(message: string, code: any) {
     lowerMsg.includes('labels or instructions') ||
     lowerMsg.includes('error identification')
   ) {
-    return 'serious'
+    return 'serious';
   }
 
-  return 'moderate'
+  return 'moderate';
 }
 
 // Helper function to extract issues from report data (proper structure)
 const extractIssuesFromReport = (report: any) => {
-  const issues: any[] = []
+  const issues: any[] = [];
 
   // Check if we have the new data structure with top-level ByFunctions
   if (report?.ByFunctions && Array.isArray(report.ByFunctions)) {
-    report.ByFunctions.forEach((funcGroup: { FunctionalityName: any; Errors: any[]; }) => {
-      if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
-        funcGroup.Errors.forEach(error => {
-          const impact = mapIssueToImpact(error.message, error.code)
+    report.ByFunctions.forEach(
+      (funcGroup: { FunctionalityName: any; Errors: any[] }) => {
+        if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
+          funcGroup.Errors.forEach((error) => {
+            const impact = mapIssueToImpact(error.message, error.code);
 
-          issues.push({
-            ...error,
-            impact,
-            source: error.__typename === 'htmlCsOutput' ? 'HTML_CS' : 'AXE Core',
-            functionality: funcGroup.FunctionalityName
-          })
-        })
-      }
-    })
+            issues.push({
+              ...error,
+              impact,
+              source:
+                error.__typename === 'htmlCsOutput' ? 'HTML_CS' : 'AXE Core',
+              functionality: funcGroup.FunctionalityName,
+            });
+          });
+        }
+      },
+    );
   }
 
   // Try the axe structure
   if (report?.axe?.ByFunction && Array.isArray(report.axe.ByFunction)) {
-    report.axe.ByFunction.forEach((funcGroup: { FunctionalityName: any; Errors: any[]; }) => {
-      if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
-        funcGroup.Errors.forEach(error => {
-          const impact = mapIssueToImpact(error.message, error.code)
+    report.axe.ByFunction.forEach(
+      (funcGroup: { FunctionalityName: any; Errors: any[] }) => {
+        if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
+          funcGroup.Errors.forEach((error) => {
+            const impact = mapIssueToImpact(error.message, error.code);
 
-          issues.push({
-            ...error,
-            impact,
-            source: 'AXE Core',
-            functionality: funcGroup.FunctionalityName
-          })
-        })
-      }
-    })
+            issues.push({
+              ...error,
+              impact,
+              source: 'AXE Core',
+              functionality: funcGroup.FunctionalityName,
+            });
+          });
+        }
+      },
+    );
   }
 
   // Try the htmlcs structure
   if (report?.htmlcs?.ByFunction && Array.isArray(report.htmlcs.ByFunction)) {
-    report.htmlcs.ByFunction.forEach((funcGroup: { FunctionalityName: any; Errors: any[]; }) => {
-      if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
-        funcGroup.Errors.forEach(error => {
-          const impact = mapIssueToImpact(error.message, error.code)
+    report.htmlcs.ByFunction.forEach(
+      (funcGroup: { FunctionalityName: any; Errors: any[] }) => {
+        if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
+          funcGroup.Errors.forEach((error) => {
+            const impact = mapIssueToImpact(error.message, error.code);
 
-          issues.push({
-            ...error,
-            impact,
-            source: 'HTML_CS',
-            functionality: funcGroup.FunctionalityName
-          })
-        })
-      }
-    })
+            issues.push({
+              ...error,
+              impact,
+              source: 'HTML_CS',
+              functionality: funcGroup.FunctionalityName,
+            });
+          });
+        }
+      },
+    );
   }
 
   return issues;
@@ -118,7 +135,7 @@ const extractIssuesFromReport = (report: any) => {
 const generateIntroToToolkitPDF = async (): Promise<Blob> => {
   try {
     const { jsPDF } = await import('jspdf');
-    
+
     // Load custom font
     let fontLoaded = true;
     try {
@@ -134,7 +151,7 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     }
 
     const doc = new jsPDF();
-    
+
     if (!fontLoaded) {
       doc.setFont('helvetica', 'normal');
     }
@@ -143,7 +160,7 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 20;
-    const contentWidth = pageWidth - (margin * 2);
+    const contentWidth = pageWidth - margin * 2;
 
     // Helper function to check if we need a page break
     const checkPageBreak = (requiredHeight: number, currentY: number) => {
@@ -165,7 +182,7 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
 
     // Header content
     let currentY = 25;
-    
+
     // Main title
     doc.setFontSize(24);
     doc.setTextColor(255, 255, 255);
@@ -174,8 +191,10 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     } else {
       doc.setFont('helvetica', 'bold');
     }
-    doc.text('Intro to the Proof of Effort Toolkit', pageWidth / 2, currentY, { align: 'center' });
-    
+    doc.text('Intro to the Proof of Effort Toolkit', pageWidth / 2, currentY, {
+      align: 'center',
+    });
+
     // Date
     currentY += 12;
     doc.setFontSize(10);
@@ -183,31 +202,36 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     if (fontLoaded) {
       doc.setFont('NotoSans_Condensed-Regular', 'normal');
     }
-    doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    })}`, pageWidth / 2, currentY, { align: 'center' });
+    doc.text(
+      `Generated: ${new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })}`,
+      pageWidth / 2,
+      currentY,
+      { align: 'center' },
+    );
 
     // Main content area
     currentY = 80;
     doc.setTextColor(51, 65, 85);
-    
+
     // Introduction paragraphs (condensed)
     const introText = [
-      'You\'ve taken steps to make your website accessible. The proof of effort toolkit compiles key documentation that showcases your commitment to accessibility. If your website\'s accessibility is ever challenged (i.e. you receive a demand letter), you\'ll have evidence to demonstrate your efforts and respond with confidence.',
-      'The proof of effort toolkit provides documentation that will help you draft a response to generic claims regarding alleged accessibility barriers. A generic claim is a broad, unspecific assertion about your website\'s accessibility, often without concrete evidence or a clear connection to your website.',
-      'Please note that WebAbility.io does not offer or provide legal advice or counseling and the information contained in this document or in the toolkit documents should not be taken as such. WebAbility.io encourages you to seek firm legal advice based on your specific circumstances.'
+      "You've taken steps to make your website accessible. The proof of effort toolkit compiles key documentation that showcases your commitment to accessibility. If your website's accessibility is ever challenged (i.e. you receive a demand letter), you'll have evidence to demonstrate your efforts and respond with confidence.",
+      "The proof of effort toolkit provides documentation that will help you draft a response to generic claims regarding alleged accessibility barriers. A generic claim is a broad, unspecific assertion about your website's accessibility, often without concrete evidence or a clear connection to your website.",
+      'Please note that WebAbility.io does not offer or provide legal advice or counseling and the information contained in this document or in the toolkit documents should not be taken as such. WebAbility.io encourages you to seek firm legal advice based on your specific circumstances.',
     ];
-    
+
     doc.setFontSize(11);
     if (fontLoaded) {
       doc.setFont('NotoSans_Condensed-Regular', 'normal');
     } else {
       doc.setFont('helvetica', 'normal');
     }
-    
-    introText.forEach(paragraph => {
+
+    introText.forEach((paragraph) => {
       const lines = doc.splitTextToSize(paragraph, contentWidth);
       lines.forEach((line: string) => {
         doc.text(line, margin, currentY);
@@ -225,9 +249,9 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     } else {
       doc.setFont('helvetica', 'bold');
     }
-    doc.text('What\'s in the toolkit?', margin, currentY);
+    doc.text("What's in the toolkit?", margin, currentY);
     currentY += 8;
-    
+
     doc.setFontSize(11);
     doc.setTextColor(51, 65, 85);
     if (fontLoaded) {
@@ -241,31 +265,37 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     const toolkitItems = [
       {
         title: '● Last monthly audit report:',
-        description: 'A professional automated accessibility audit with code examples and plain-language explanations of how your website meets essential requirements at the WCAG 2.1 AA level.'
+        description:
+          'A professional automated accessibility audit with code examples and plain-language explanations of how your website meets essential requirements at the WCAG 2.1 AA level.',
       },
       {
-        subtitle: '○ For additional reports, view your audit history in the Customer Portal.',
-        subsubtitle: '○ To produce a current audit report go to https://webability.io/accessscan and scan your website.'
+        subtitle:
+          '○ For additional reports, view your audit history in the Customer Portal.',
+        subsubtitle:
+          '○ To produce a current audit report go to https://app.webability.io/scanner and scan your website.',
       },
       {
         title: '● Remediation report:',
-        description: 'An in-depth breakdown of the accessibility fixes applied to maintain your website\'s accessibility status. (Not available for the Micro/Standard plan)'
+        description:
+          "An in-depth breakdown of the accessibility fixes applied to maintain your website's accessibility status. (Not available for the Micro/Standard plan)",
       },
       {
         title: '● Accessibility statement:',
-        description: 'Your built-in accessibility statement shows your efforts to comply with the ADA in adherence to WCAG, and can be accessed by users at any time.'
+        description:
+          'Your built-in accessibility statement shows your efforts to comply with the ADA in adherence to WCAG, and can be accessed by users at any time.',
       },
       {
-        title: '● AccessWidget latest invoice:',
-        description: 'Proof that you paid to make your website more accessible. Invoices are also available under Billing and Payments in the Customer Portal.'
-      }
+        title: '● Webability Widget latest invoice:',
+        description:
+          'Proof that you paid to make your website more accessible. Invoices are also available under Billing and Payments in the Customer Portal.',
+      },
     ];
 
     toolkitItems.forEach((item) => {
       if (item.title) {
         // Check if we need a page break
         currentY = checkPageBreak(20, currentY);
-        
+
         // Item title
         doc.setFontSize(11);
         doc.setTextColor(37, 99, 235);
@@ -276,11 +306,14 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
         }
         doc.text(item.title, margin, currentY);
         currentY += 6;
-        
+
         // Item description
         doc.setFontSize(10);
         doc.setTextColor(51, 65, 85);
-        const itemLines = doc.splitTextToSize(item.description, contentWidth - 10);
+        const itemLines = doc.splitTextToSize(
+          item.description,
+          contentWidth - 10,
+        );
         itemLines.forEach((line: string) => {
           doc.text(line, margin + 10, currentY);
           currentY += 4;
@@ -289,13 +322,13 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
       } else if (item.subtitle) {
         // Check if we need a page break
         currentY = checkPageBreak(12, currentY);
-        
+
         // Subtitle
         doc.setFontSize(10);
         doc.setTextColor(100, 116, 139);
         doc.text(item.subtitle, margin + 10, currentY);
         currentY += 4;
-        
+
         if (item.subsubtitle) {
           doc.text(item.subsubtitle, margin + 10, currentY);
           currentY += 4;
@@ -308,29 +341,39 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     currentY = checkPageBreak(15, currentY);
     doc.setFillColor(254, 249, 195);
     doc.roundedRect(margin - 3, currentY - 3, contentWidth + 6, 15, 2, 2, 'F');
-    
+
     doc.setFontSize(10);
     doc.setTextColor(51, 65, 85);
-    doc.text('Note: There are excluded issues that are not identified or remediated by accessWidget. See Excluded issues', margin, currentY + 3);
+    doc.text(
+      'Note: There are excluded issues that are not identified or remediated by Webability Widget. See Excluded issues',
+      margin,
+      currentY + 3,
+    );
 
     // Footer for first page
     const footerY = pageHeight - 20;
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.3);
     doc.line(margin, footerY, pageWidth - margin, footerY);
-    
+
     doc.setFontSize(8);
     doc.setTextColor(100, 116, 139);
     if (fontLoaded) {
       doc.setFont('NotoSans_Condensed-Regular', 'normal');
     }
-    doc.text('WebAbility.io - Making the web accessible for everyone - www.webability.io', margin, footerY + 6);
-    doc.text('Page 1 of 2', pageWidth - margin, footerY + 6, { align: 'right' });
+    doc.text(
+      'WebAbility.io - Making the web accessible for everyone - www.webability.io',
+      margin,
+      footerY + 6,
+    );
+    doc.text('Page 1 of 2', pageWidth - margin, footerY + 6, {
+      align: 'right',
+    });
 
     // PAGE 2: How to use the toolkit
     doc.addPage();
     currentY = 25;
-    
+
     // Page header
     doc.setFontSize(18);
     doc.setTextColor(37, 99, 235);
@@ -341,14 +384,14 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     }
     doc.text('How to use the toolkit', margin, currentY);
     currentY += 12;
-    
+
     const howToUseText = [
       'The combination of documents provided in the toolkit helps to provide proof of your effort to make your website more accessible for generic claims alleging accessibility barriers.',
       'The documents can be sent to your lawyer to prompt the plaintiff to properly review the claim and point out specific alleged barriers to accessibility.',
-      'If you\'re on the Micro plan, upgrade to benefit from the full Litigation Support Package, including a dedicated accessibility expert, by contacting support@webability.io.',
-      'For other plans, learn how to use the full Litigation Support Package by visiting our documentation or contacting our support team.'
+      "If you're on the Micro plan, upgrade to benefit from the full Litigation Support Package, including a dedicated accessibility expert, by contacting support@webability.io.",
+      'For other plans, learn how to use the full Litigation Support Package by visiting our documentation or contacting our support team.',
     ];
-    
+
     doc.setFontSize(11);
     doc.setTextColor(51, 65, 85);
     if (fontLoaded) {
@@ -356,8 +399,8 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     } else {
       doc.setFont('helvetica', 'normal');
     }
-    
-    howToUseText.forEach(paragraph => {
+
+    howToUseText.forEach((paragraph) => {
       currentY = checkPageBreak(20, currentY);
       const lines = doc.splitTextToSize(paragraph, contentWidth);
       lines.forEach((line: string) => {
@@ -385,7 +428,7 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
       'Regularly update your accessibility reports and statements.',
       'Maintain records of all accessibility improvements made.',
       'Consider implementing a regular accessibility audit schedule.',
-      'Document any accessibility training provided to your team.'
+      'Document any accessibility training provided to your team.',
     ];
 
     doc.setFontSize(10);
@@ -407,14 +450,20 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.3);
     doc.line(margin, footerY2, pageWidth - margin, footerY2);
-    
+
     doc.setFontSize(8);
     doc.setTextColor(100, 116, 139);
     if (fontLoaded) {
       doc.setFont('NotoSans_Condensed-Regular', 'normal');
     }
-    doc.text('WebAbility.io - Making the web accessible for everyone - www.webability.io', margin, footerY2 + 6);
-    doc.text('Page 2 of 2', pageWidth - margin, footerY2 + 6, { align: 'right' });
+    doc.text(
+      'WebAbility.io - Making the web accessible for everyone - www.webability.io',
+      margin,
+      footerY2 + 6,
+    );
+    doc.text('Page 2 of 2', pageWidth - margin, footerY2 + 6, {
+      align: 'right',
+    });
 
     return doc.output('blob');
   } catch (error) {
@@ -426,7 +475,7 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
 // Helper function to get issue colors based on impact and WebAbility status
 const getIssueColors = (issue: any, hasWebAbility: boolean) => {
   const impact = issue.impact || 'minor';
-  
+
   if (hasWebAbility) {
     // Green colors for WebAbility-enabled sites
     return {
@@ -434,7 +483,7 @@ const getIssueColors = (issue: any, hasWebAbility: boolean) => {
       textColor: [22, 163, 74], // green-600
     };
   }
-  
+
   // Regular colors based on impact
   switch (impact) {
     case 'critical':
@@ -478,7 +527,9 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
 }
 
 // Helper function to get image dimensions from base64
-function getImageDimensions(base64Data: string): Promise<{ width: number; height: number }> {
+function getImageDimensions(
+  base64Data: string,
+): Promise<{ width: number; height: number }> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -497,16 +548,24 @@ const ProofOfEffortToolkit: React.FC = () => {
   const [isProcessingReport, setIsProcessingReport] = useState(false);
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
   const history = useHistory();
-  
+
   // Redux state
-  const currentDomain = useSelector((state: RootState) => state.report.selectedDomain);
-  
+  const currentDomain = useSelector(
+    (state: RootState) => state.report.selectedDomain,
+  );
+
   // GraphQL queries
-  const [fetchReportKeys, { loading: loadingReportKeys }] = useLazyQuery(FETCH_ACCESSIBILITY_REPORT_KEYS);
-  const [fetchReportByR2Key, { loading: loadingReport }] = useLazyQuery(FETCH_REPORT_BY_R2_KEY);
+  const [fetchReportKeys, { loading: loadingReportKeys }] = useLazyQuery(
+    FETCH_ACCESSIBILITY_REPORT_KEYS,
+  );
+  const [fetchReportByR2Key, { loading: loadingReport }] = useLazyQuery(
+    FETCH_REPORT_BY_R2_KEY,
+  );
 
   // GraphQL mutations
-  const [sendToolkitEmail, { loading: sendingEmail }] = useMutation(SEND_PROOF_OF_EFFORT_TOOLKIT);
+  const [sendToolkitEmail, { loading: sendingEmail }] = useMutation(
+    SEND_PROOF_OF_EFFORT_TOOLKIT,
+  );
 
   // Email modal state
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -515,7 +574,11 @@ const ProofOfEffortToolkit: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([
     {
       name: 'Intro to the toolkit',
-      creationDate: new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }),
+      creationDate: new Date().toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
       type: 'internal',
     },
     {
@@ -533,7 +596,9 @@ const ProofOfEffortToolkit: React.FC = () => {
 
   const handleSendViaEmail = () => {
     if (!currentDomain) {
-      toast.error('No domain selected. Please select a domain from the sidebar.');
+      toast.error(
+        'No domain selected. Please select a domain from the sidebar.',
+      );
       return;
     }
     setIsEmailModalOpen(true);
@@ -541,7 +606,9 @@ const ProofOfEffortToolkit: React.FC = () => {
 
   const handleEmailSubmit = async (email: string) => {
     if (!currentDomain) {
-      toast.error('No domain selected. Please select a domain from the sidebar.');
+      toast.error(
+        'No domain selected. Please select a domain from the sidebar.',
+      );
       return;
     }
 
@@ -550,32 +617,41 @@ const ProofOfEffortToolkit: React.FC = () => {
 
     let loadingToastId: string | number | undefined;
     try {
-    //  console.log('Starting handleEmailSubmit...');
-      loadingToastId = toast.loading('Generating toolkit and sending email... This may take a moment.');
+      //  console.log('Starting handleEmailSubmit...');
+      loadingToastId = toast.loading(
+        'Generating toolkit and sending email... This may take a moment.',
+      );
 
-     // console.log('Step 1: Importing JSZip...');
+      // console.log('Step 1: Importing JSZip...');
       const JSZip = (await import('jszip')).default;
       const zip = new JSZip();
 
       const latestReport = await fetchLatestReport(currentDomain);
       //console.log('Latest report fetched:', latestReport ? 'success' : 'null');
-      
+
       // Check if there's a valid report before proceeding
-      if (!latestReport || !latestReport.r2_key || typeof latestReport.r2_key !== 'string' || latestReport.r2_key.trim() === '') {
+      if (
+        !latestReport ||
+        !latestReport.r2_key ||
+        typeof latestReport.r2_key !== 'string' ||
+        latestReport.r2_key.trim() === ''
+      ) {
         toast.dismiss(loadingToastId);
-        toast.error('No report available for this domain. Please generate a report first before sending the toolkit.');
+        toast.error(
+          'No report available for this domain. Please generate a report first before sending the toolkit.',
+        );
         return;
       }
-      
+
       let reportDataForPdfs: any = null;
 
       // console.log('Step 3: Fetching report data by R2 key...');
       try {
         const { data } = await fetchReportByR2Key({
-          variables: { r2_key: latestReport.r2_key }
+          variables: { r2_key: latestReport.r2_key },
         });
         reportDataForPdfs = data?.fetchReportByR2Key;
-      //  console.log('Report data fetched:', reportDataForPdfs ? 'success' : 'null');
+        //  console.log('Report data fetched:', reportDataForPdfs ? 'success' : 'null');
       } catch (error) {
         console.error('Error fetching report data:', error);
         toast.dismiss(loadingToastId);
@@ -583,14 +659,18 @@ const ProofOfEffortToolkit: React.FC = () => {
         return;
       }
 
-    //  console.log('Step 4: Generating PDFs...');
+      //  console.log('Step 4: Generating PDFs...');
       // Generate intro PDF
       const introPdf = await generateIntroToToolkitPDF();
       zip.file('Introduction to Proof of Effort Toolkit.pdf', introPdf);
 
       // Generate monthly audit report PDF
       try {
-        const monthlyPdf = await generateAccessibilityStatementPDF(reportDataForPdfs, 'en', currentDomain);
+        const monthlyPdf = await generateAccessibilityStatementPDF(
+          reportDataForPdfs,
+          'en',
+          currentDomain,
+        );
         zip.file('Monthly audit report.pdf', monthlyPdf);
       } catch (error) {
         console.error('Error generating monthly audit report PDF:', error);
@@ -614,10 +694,10 @@ const ProofOfEffortToolkit: React.FC = () => {
         return;
       }
 
-     // console.log('Step 5: Creating zip file...');
+      // console.log('Step 5: Creating zip file...');
       const zipBlob = await zip.generateAsync({ type: 'blob' });
-      
-    //  console.log('Step 6: Converting to base64...');
+
+      //  console.log('Step 6: Converting to base64...');
       const base64 = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = () => {
@@ -627,12 +707,12 @@ const ProofOfEffortToolkit: React.FC = () => {
         reader.readAsDataURL(zipBlob);
       });
 
-   //   console.log('Step 7: Getting report date...');
-      const reportDate = latestReport?.created_at 
+      //   console.log('Step 7: Getting report date...');
+      const reportDate = latestReport?.created_at
         ? new Date(latestReport.created_at).toLocaleDateString()
         : new Date().toLocaleDateString();
 
-    //  console.log('Step 8: Sending email via GraphQL...');
+      //  console.log('Step 8: Sending email via GraphQL...');
       // Send email via GraphQL mutation
       const { data } = await sendToolkitEmail({
         variables: {
@@ -640,13 +720,13 @@ const ProofOfEffortToolkit: React.FC = () => {
             email,
             domain: currentDomain,
             zipFileBase64: base64,
-            reportDate
-          }
-        }
+            reportDate,
+          },
+        },
       });
 
       toast.dismiss(loadingToastId);
-      
+
       if (data?.sendProofOfEffortToolkit?.success === true) {
         toast.success('Proof of effort toolkit sent successfully!');
         // Add a small delay before closing the modal to ensure toast is visible
@@ -654,13 +734,16 @@ const ProofOfEffortToolkit: React.FC = () => {
           setIsEmailModalOpen(false);
         }, 100);
       } else {
-        toast.error(data?.sendProofOfEffortToolkit?.message || 'Failed to send toolkit');
+        toast.error(
+          data?.sendProofOfEffortToolkit?.message || 'Failed to send toolkit',
+        );
       }
     } catch (error: any) {
       //console.log('Error caught in handleEmailSubmit');
       toast.dismiss(loadingToastId);
       // Simplify error logging to prevent circular references
-      const errorMessage = error?.message || error?.toString() || 'Unknown error';
+      const errorMessage =
+        error?.message || error?.toString() || 'Unknown error';
       console.error('Error sending toolkit via email:', errorMessage);
       toast.error('Failed to send toolkit via email');
     } finally {
@@ -673,9 +756,9 @@ const ProofOfEffortToolkit: React.FC = () => {
   const fetchLatestReport = async (domain: string) => {
     try {
       const { data: reportKeysData } = await fetchReportKeys({
-        variables: { url: domain }
+        variables: { url: domain },
       });
-      
+
       if (reportKeysData?.fetchAccessibilityReportFromR2?.length > 0) {
         // Get the most recent report (they should be sorted by created_at)
         const latestReport = reportKeysData.fetchAccessibilityReportFromR2[0];
@@ -694,30 +777,30 @@ const ProofOfEffortToolkit: React.FC = () => {
       if (currentDomain) {
         try {
           const latestReport = await fetchLatestReport(currentDomain);
-          
-          setDocuments(prevDocuments => 
-            prevDocuments.map(doc => {
+
+          setDocuments((prevDocuments) =>
+            prevDocuments.map((doc) => {
               if (doc.type === 'monthly-report') {
                 if (latestReport && latestReport.created_at) {
                   const dateObj = new Date(Number(latestReport.created_at));
-                  const formattedDate = dateObj.toLocaleDateString(undefined, { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  const formattedDate = dateObj.toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
                   });
                   return {
                     ...doc,
-                    creationDate: formattedDate
+                    creationDate: formattedDate,
                   };
                 } else {
                   return {
                     ...doc,
-                    creationDate: 'No report available'
+                    creationDate: 'No report available',
                   };
                 }
               }
               return doc;
-            })
+            }),
           );
         } catch (error) {
           console.error('Error updating document dates:', error);
@@ -733,8 +816,12 @@ const ProofOfEffortToolkit: React.FC = () => {
   const generateReportPDF = async (reportData: any, domain: string) => {
     try {
       // Generate the full accessibility report PDF
-      const pdfBlob = await generateAccessibilityStatementPDF(reportData, 'en', domain); // Using English as default language
-      
+      const pdfBlob = await generateAccessibilityStatementPDF(
+        reportData,
+        'en',
+        domain,
+      ); // Using English as default language
+
       // Download the PDF
       const url = URL.createObjectURL(pdfBlob);
       const link = window.document.createElement('a');
@@ -744,30 +831,31 @@ const ProofOfEffortToolkit: React.FC = () => {
       link.click();
       window.document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast.error('Failed to generate PDF report');
     }
   };
 
-
-
   // Function to generate PDF and open it for viewing (using full accessibility report)
   const viewReportPDF = async (reportData: any, domain: string) => {
     try {
       // Generate the full accessibility report PDF
-      const pdfBlob = await generateAccessibilityStatementPDF(reportData, 'en', domain); // Using English as default language
-      
+      const pdfBlob = await generateAccessibilityStatementPDF(
+        reportData,
+        'en',
+        domain,
+      ); // Using English as default language
+
       // Open the PDF in a new window/tab for viewing
       const url = URL.createObjectURL(pdfBlob);
       const newWindow = window.open(url, '_blank');
-      
+
       // Clean up the URL after a delay to allow the PDF to load
       setTimeout(() => {
         URL.revokeObjectURL(url);
       }, 10000); // 10 seconds should be enough for the PDF to load
-      
+
       // If popup was blocked, offer download as fallback
       if (!newWindow) {
         toast.error('Popup blocked. PDF will be downloaded instead.');
@@ -779,7 +867,6 @@ const ProofOfEffortToolkit: React.FC = () => {
         window.document.body.removeChild(link);
         URL.revokeObjectURL(url);
       }
-      
     } catch (error) {
       console.error('Error generating PDF for viewing:', error);
       toast.error('Failed to generate PDF for viewing');
@@ -787,10 +874,12 @@ const ProofOfEffortToolkit: React.FC = () => {
   };
 
   // Function to generate and view accessibility statement PDF (using same format as download)
-  const generateAndViewAccessibilityStatementPDF = async (type?: number): Promise<Blob | void> => {
+  const generateAndViewAccessibilityStatementPDF = async (
+    type?: number,
+  ): Promise<Blob | void> => {
     try {
       const { jsPDF } = await import('jspdf');
-      
+
       // Load custom font
       let fontLoaded = true;
       try {
@@ -806,7 +895,7 @@ const ProofOfEffortToolkit: React.FC = () => {
       }
 
       const doc = new jsPDF();
-      
+
       if (!fontLoaded) {
         doc.setFont('helvetica', 'normal');
       }
@@ -815,14 +904,14 @@ const ProofOfEffortToolkit: React.FC = () => {
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 25;
-      const contentWidth = pageWidth - (margin * 2);
+      const contentWidth = pageWidth - margin * 2;
 
       // Clean white background
       doc.setFillColor(255, 255, 255);
       doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
       let currentY = 30;
-      
+
       // Header section with exact positioning
       // Main title - large, bold blue font
       doc.setFontSize(28);
@@ -833,9 +922,9 @@ const ProofOfEffortToolkit: React.FC = () => {
         doc.setFont('helvetica', 'bold');
       }
       doc.text('Accessibility Statement', margin, currentY);
-      
+
       currentY += 10;
-      
+
       // Domain and date information with proper spacing
       doc.setFontSize(14);
       doc.setTextColor(51, 65, 85);
@@ -844,22 +933,22 @@ const ProofOfEffortToolkit: React.FC = () => {
       } else {
         doc.setFont('helvetica', 'normal');
       }
-      
+
       // Domain name
       const domainName = currentDomain || 'webability.io';
       doc.text(domainName, margin, currentY);
-      
+
       // Vertical line separator with exact positioning
       const domainWidth = doc.getTextWidth(domainName);
-     
+
       // Date with proper spacing
-      const dateText = new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      const dateText = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       });
       doc.text(dateText, margin + domainWidth + 15, currentY);
-      
+
       // "Issued by" section in top-right with exact positioning (bold)
       const issuedByText = 'Issued by';
       const issuedByWidth = doc.getTextWidth(issuedByText);
@@ -871,16 +960,19 @@ const ProofOfEffortToolkit: React.FC = () => {
         doc.setFont('helvetica', 'bold');
       }
       doc.text(issuedByText, pageWidth - margin - issuedByWidth - 24, 30);
-      
+
       // WebAbility.io logo in top-right with improved positioning
       try {
         const logoImage = '/images/logo.png';
         const img = new Image();
         img.src = logoImage;
-        
+
         // Wait for image to load to get proper dimensions
         await new Promise<void>((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Logo load timeout')), 3000);
+          const timeout = setTimeout(
+            () => reject(new Error('Logo load timeout')),
+            3000,
+          );
           img.onload = () => {
             clearTimeout(timeout);
             resolve();
@@ -890,24 +982,24 @@ const ProofOfEffortToolkit: React.FC = () => {
             reject(new Error('Logo load failed'));
           };
         });
-        
+
         // Calculate proper dimensions while maintaining aspect ratio
         const maxWidth = 45;
         const maxHeight = 35;
         const aspectRatio = img.width / img.height;
-        
+
         let drawWidth = maxWidth;
         let drawHeight = maxWidth / aspectRatio;
-        
+
         if (drawHeight > maxHeight) {
           drawHeight = maxHeight;
           drawWidth = maxHeight * aspectRatio;
         }
-        
+
         // Position logo in top-right corner with exact positioning
         const logoX = pageWidth - margin - drawWidth;
         const logoY = 35;
-        
+
         doc.addImage(logoImage, 'PNG', logoX, logoY, drawWidth, drawHeight);
       } catch (e) {
         // If logo fails, fall back to text with exact positioning
@@ -920,7 +1012,6 @@ const ProofOfEffortToolkit: React.FC = () => {
         }
         doc.text('WebAbility.io', pageWidth - margin, 40, { align: 'right' });
       }
-      
 
       // Add a horizontal line below the header section
       doc.setDrawColor(226, 232, 240); // light gray
@@ -928,7 +1019,7 @@ const ProofOfEffortToolkit: React.FC = () => {
       doc.line(margin, currentY + 8, pageWidth - margin, currentY + 8);
       // Main content section with proper spacing
       currentY += 25;
-      
+
       // Compliance status section header
       doc.setFontSize(18);
       doc.setTextColor(0, 0, 0);
@@ -938,9 +1029,9 @@ const ProofOfEffortToolkit: React.FC = () => {
         doc.setFont('helvetica', 'bold');
       }
       doc.text('Compliance status', margin, currentY);
-      
+
       currentY += 15;
-      
+
       // Compliance status content with exact formatting
       doc.setFontSize(12);
       doc.setTextColor(0, 0, 0);
@@ -949,15 +1040,15 @@ const ProofOfEffortToolkit: React.FC = () => {
       } else {
         doc.setFont('helvetica', 'normal');
       }
-      
+
       const complianceText = [
         'We firmly believe that the internet should be available and accessible to anyone and are committed to providing a website that is accessible to the broadest possible audience, regardless of ability.',
-        'To fulfill this, we aim to adhere as strictly as possible to the World Wide Web Consortium\'s (W3C) Web Content Accessibility Guidelines 2.1 (WCAG 2.1) at the AA level. These guidelines explain how to make web content accessible to people with a wide array of disabilities. Complying with those guidelines helps us ensure that the website is accessible to blind people, people with motor impairments, visual impairment, cognitive disabilities, and more.',
-        'This website utilizes various technologies that are meant to make it as accessible as possible at all times. We utilize an accessibility interface that allows persons with specific disabilities to adjust the website\'s UI (user interface) and design it to their personal needs.',
-        'Additionally, the website utilizes an AI-based application that runs in the background and optimizes its accessibility level constantly. This application remediates the website\'s HTML, adapts its functionality and behavior for screen-readers used by blind users, and for keyboard functions used by individuals with motor impairments.',
-        'If you\'ve found a malfunction or have ideas for improvement, we\'ll be happy to hear from you. You can reach out to the website\'s operators by using the following email: support@webability.io'
+        "To fulfill this, we aim to adhere as strictly as possible to the World Wide Web Consortium's (W3C) Web Content Accessibility Guidelines 2.1 (WCAG 2.1) at the AA level. These guidelines explain how to make web content accessible to people with a wide array of disabilities. Complying with those guidelines helps us ensure that the website is accessible to blind people, people with motor impairments, visual impairment, cognitive disabilities, and more.",
+        "This website utilizes various technologies that are meant to make it as accessible as possible at all times. We utilize an accessibility interface that allows persons with specific disabilities to adjust the website's UI (user interface) and design it to their personal needs.",
+        "Additionally, the website utilizes an AI-based application that runs in the background and optimizes its accessibility level constantly. This application remediates the website's HTML, adapts its functionality and behavior for screen-readers used by blind users, and for keyboard functions used by individuals with motor impairments.",
+        "If you've found a malfunction or have ideas for improvement, we'll be happy to hear from you. You can reach out to the website's operators by using the following email: support@webability.io",
       ];
-      
+
       complianceText.forEach((paragraph, index) => {
         const lines = doc.splitTextToSize(paragraph, contentWidth);
         lines.forEach((line: string) => {
@@ -965,7 +1056,7 @@ const ProofOfEffortToolkit: React.FC = () => {
           currentY += 6;
         });
         // Add proper spacing between paragraphs
-        currentY += (index < complianceText.length - 1) ? 4 : 0;
+        currentY += index < complianceText.length - 1 ? 4 : 0;
       });
 
       // Footer with exact positioning
@@ -973,53 +1064,54 @@ const ProofOfEffortToolkit: React.FC = () => {
       doc.setDrawColor(226, 232, 240);
       doc.setLineWidth(0.3);
       doc.line(margin, footerY, pageWidth - margin, footerY);
-      
+
       doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
       if (fontLoaded) {
         doc.setFont('NotoSans_Condensed-Regular', 'normal');
       }
-      doc.text('WebAbility.io - Making the web accessible for everyone - www.webability.io', margin, footerY + 10);
+      doc.text(
+        'WebAbility.io - Making the web accessible for everyone - www.webability.io',
+        margin,
+        footerY + 10,
+      );
 
-      if(type==1)
-      {
-            // Generate blob and open in new tab
-            const pdfBlob = doc.output('blob');
-            const url = URL.createObjectURL(pdfBlob);
-            const newWindow = window.open(url, '_blank');
-            
-            // Clean up the URL after a delay
-            setTimeout(() => {
-              URL.revokeObjectURL(url);
-            }, 10000);
-            
-            // If popup was blocked, offer download as fallback
-            if (!newWindow) {
-              toast.error('Popup blocked. PDF will be downloaded instead.');
-              const link = window.document.createElement('a');
-              link.href = url;
-              link.download = 'WebAbility-Accessibility-Statement.pdf';
-              window.document.body.appendChild(link);
-              link.click();
-              window.document.body.removeChild(link);
-              URL.revokeObjectURL(url);
-            }   
-            return;
-     }
-     else if(type==2)
-     {
-       doc.save('WebAbility-Accessibility-Statement.pdf');
-       return;
-     }
-     else if(type==3)
-     {
-       return doc.output('blob');
-     }
-     
-     return;
-      
+      if (type == 1) {
+        // Generate blob and open in new tab
+        const pdfBlob = doc.output('blob');
+        const url = URL.createObjectURL(pdfBlob);
+        const newWindow = window.open(url, '_blank');
+
+        // Clean up the URL after a delay
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+        }, 10000);
+
+        // If popup was blocked, offer download as fallback
+        if (!newWindow) {
+          toast.error('Popup blocked. PDF will be downloaded instead.');
+          const link = window.document.createElement('a');
+          link.href = url;
+          link.download = 'WebAbility-Accessibility-Statement.pdf';
+          window.document.body.appendChild(link);
+          link.click();
+          window.document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+        return;
+      } else if (type == 2) {
+        doc.save('WebAbility-Accessibility-Statement.pdf');
+        return;
+      } else if (type == 3) {
+        return doc.output('blob');
+      }
+
+      return;
     } catch (error) {
-      console.error('Error generating accessibility statement PDF for viewing:', error);
+      console.error(
+        'Error generating accessibility statement PDF for viewing:',
+        error,
+      );
       toast.error('Failed to generate accessibility statement PDF');
       return;
     }
@@ -1028,7 +1120,9 @@ const ProofOfEffortToolkit: React.FC = () => {
   // Function to download all documents as a zip file
   const handleDownloadZip = async () => {
     if (!currentDomain) {
-      toast.error('No domain selected. Please select a domain from the sidebar.');
+      toast.error(
+        'No domain selected. Please select a domain from the sidebar.',
+      );
       return;
     }
 
@@ -1037,18 +1131,25 @@ const ProofOfEffortToolkit: React.FC = () => {
 
     try {
       toast.loading('Generating complete toolkit... This may take a moment.');
-      
+
       // Check if there's a valid report before proceeding
       const latestReport = await fetchLatestReport(currentDomain);
-      if (!latestReport || !latestReport.r2_key || typeof latestReport.r2_key !== 'string' || latestReport.r2_key.trim() === '') {
+      if (
+        !latestReport ||
+        !latestReport.r2_key ||
+        typeof latestReport.r2_key !== 'string' ||
+        latestReport.r2_key.trim() === ''
+      ) {
         toast.dismiss();
-        toast.error('No report available for this domain. Please generate a report first before downloading the toolkit.');
+        toast.error(
+          'No report available for this domain. Please generate a report first before downloading the toolkit.',
+        );
         return;
       }
-      
+
       // Generate all 3 PDFs
       const pdfs: { [key: string]: Blob } = {};
-      
+
       // 1. Generate Intro to Toolkit PDF
       try {
         pdfs['1-Intro-to-Toolkit.pdf'] = await generateIntroToToolkitPDF();
@@ -1058,209 +1159,217 @@ const ProofOfEffortToolkit: React.FC = () => {
         return;
       }
 
-              // 2. Generate Accessibility Statement PDF
-              try {
-                const { jsPDF } = await import('jspdf');
-                
-                // Load custom font
-                let fontLoaded = true;
-                try {
-                  // @ts-ignore
-                  window.jsPDF = jsPDF;
-                  // @ts-ignore
-                  require('@/assets/fonts/NotoSans-normal.js');
-                  // @ts-ignore
-                  delete window.jsPDF;
-                } catch (e) {
-                  console.error('Failed to load custom font for jsPDF:', e);
-                  fontLoaded = false;
-                }
-          
-                const doc = new jsPDF();
-                
-                if (!fontLoaded) {
-                  doc.setFont('helvetica', 'normal');
-                }
-          
-                // Page dimensions
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight();
-                const margin = 25;
-                const contentWidth = pageWidth - (margin * 2);
-          
-                // Clean white background
-                doc.setFillColor(255, 255, 255);
-                doc.rect(0, 0, pageWidth, pageHeight, 'F');
-          
-                let currentY = 30;
-                
-                // Header section with exact positioning
-                // Main title - large, bold blue font
-                doc.setFontSize(28);
-                doc.setTextColor(37, 99, 235);
-                if (fontLoaded) {
-                  doc.setFont('NotoSans_Condensed-Regular', 'bold');
-                } else {
-                  doc.setFont('helvetica', 'bold');
-                }
-                doc.text('Accessibility Statement', margin, currentY);
-                
-                currentY += 10;
-                
-                // Domain and date information with proper spacing
-                doc.setFontSize(14);
-                doc.setTextColor(51, 65, 85);
-                if (fontLoaded) {
-                  doc.setFont('NotoSans_Condensed-Regular', 'normal');
-                } else {
-                  doc.setFont('helvetica', 'normal');
-                }
-                
-                // Domain name
-                const domainName = currentDomain || 'webability.io';
-                doc.text(domainName, margin, currentY);
-                
-                // Vertical line separator with exact positioning
-                const domainWidth = doc.getTextWidth(domainName);
-               
-                // Date with proper spacing
-                const dateText = new Date().toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                });
-                doc.text(dateText, margin + domainWidth + 15, currentY);
-                
-                // "Issued by" section in top-right with exact positioning (bold)
-                const issuedByText = 'Issued by';
-                const issuedByWidth = doc.getTextWidth(issuedByText);
-                doc.setFontSize(11);
-                doc.setTextColor(51, 65, 85);
-                if (fontLoaded) {
-                  doc.setFont('NotoSans_Condensed-Regular', 'bold');
-                } else {
-                  doc.setFont('helvetica', 'bold');
-                }
-                doc.text(issuedByText, pageWidth - margin - issuedByWidth - 24, 30);
-                
-                // WebAbility.io logo in top-right with improved positioning
-                try {
-                  const logoImage = '/images/logo.png';
-                  const img = new Image();
-                  img.src = logoImage;
-                  
-                  // Wait for image to load to get proper dimensions
-                  await new Promise<void>((resolve, reject) => {
-                    const timeout = setTimeout(() => reject(new Error('Logo load timeout')), 3000);
-                    img.onload = () => {
-                      clearTimeout(timeout);
-                      resolve();
-                    };
-                    img.onerror = () => {
-                      clearTimeout(timeout);
-                      reject(new Error('Logo load failed'));
-                    };
-                  });
-                  
-                  // Calculate proper dimensions while maintaining aspect ratio
-                  const maxWidth = 45;
-                  const maxHeight = 35;
-                  const aspectRatio = img.width / img.height;
-                  
-                  let drawWidth = maxWidth;
-                  let drawHeight = maxWidth / aspectRatio;
-                  
-                  if (drawHeight > maxHeight) {
-                    drawHeight = maxHeight;
-                    drawWidth = maxHeight * aspectRatio;
-                  }
-                  
-                  // Position logo in top-right corner with exact positioning
-                  const logoX = pageWidth - margin - drawWidth;
-                  const logoY = 35;
-                  
-                  doc.addImage(logoImage, 'PNG', logoX, logoY, drawWidth, drawHeight);
-                } catch (e) {
-                  // If logo fails, fall back to text with exact positioning
-                  doc.setFontSize(14);
-                  doc.setTextColor(37, 99, 235);
-                  if (fontLoaded) {
-                    doc.setFont('NotoSans_Condensed-Regular', 'bold');
-                  } else {
-                    doc.setFont('helvetica', 'bold');
-                  }
-                  doc.text('WebAbility.io', pageWidth - margin, 40, { align: 'right' });
-                }
-                
-          
-                // Add a horizontal line below the header section
-                doc.setDrawColor(226, 232, 240); // light gray
-                doc.setLineWidth(0.7);
-                doc.line(margin, currentY + 8, pageWidth - margin, currentY + 8);
-                // Main content section with proper spacing
-                currentY += 25;
-                
-                // Compliance status section header
-                doc.setFontSize(18);
-                doc.setTextColor(0, 0, 0);
-                if (fontLoaded) {
-                  doc.setFont('NotoSans_Condensed-Regular', 'bold');
-                } else {
-                  doc.setFont('helvetica', 'bold');
-                }
-                doc.text('Compliance status', margin, currentY);
-                
-                currentY += 15;
-                
-                // Compliance status content with exact formatting
-                doc.setFontSize(12);
-                doc.setTextColor(0, 0, 0);
-                if (fontLoaded) {
-                  doc.setFont('NotoSans_Condensed-Regular', 'normal');
-                } else {
-                  doc.setFont('helvetica', 'normal');
-                }
-                
-                const complianceText = [
-                  'We firmly believe that the internet should be available and accessible to anyone and are committed to providing a website that is accessible to the broadest possible audience, regardless of ability.',
-                  'To fulfill this, we aim to adhere as strictly as possible to the World Wide Web Consortium\'s (W3C) Web Content Accessibility Guidelines 2.1 (WCAG 2.1) at the AA level. These guidelines explain how to make web content accessible to people with a wide array of disabilities. Complying with those guidelines helps us ensure that the website is accessible to blind people, people with motor impairments, visual impairment, cognitive disabilities, and more.',
-                  'This website utilizes various technologies that are meant to make it as accessible as possible at all times. We utilize an accessibility interface that allows persons with specific disabilities to adjust the website\'s UI (user interface) and design it to their personal needs.',
-                  'Additionally, the website utilizes an AI-based application that runs in the background and optimizes its accessibility level constantly. This application remediates the website\'s HTML, adapts its functionality and behavior for screen-readers used by blind users, and for keyboard functions used by individuals with motor impairments.',
-                  'If you\'ve found a malfunction or have ideas for improvement, we\'ll be happy to hear from you. You can reach out to the website\'s operators by using the following email: support@webability.io'
-                ];
-                
-                complianceText.forEach((paragraph, index) => {
-                  const lines = doc.splitTextToSize(paragraph, contentWidth);
-                  lines.forEach((line: string) => {
-                    doc.text(line, margin, currentY);
-                    currentY += 6;
-                  });
-                  // Add proper spacing between paragraphs
-                  currentY += (index < complianceText.length - 1) ? 4 : 0;
-                });
-          
-                // Footer with exact positioning
-                const footerY = pageHeight - 25;
-                doc.setDrawColor(226, 232, 240);
-                doc.setLineWidth(0.3);
-                doc.line(margin, footerY, pageWidth - margin, footerY);
-                
-                doc.setFontSize(9);
-                doc.setTextColor(100, 116, 139);
-                if (fontLoaded) {
-                  doc.setFont('NotoSans_Condensed-Regular', 'normal');
-                }
-                doc.text('WebAbility.io - Making the web accessible for everyone - www.webability.io', margin, footerY + 10);
-          
-                const statementBlob = await generateAndViewAccessibilityStatementPDF(3);
-                if (statementBlob) {
-                  pdfs['2-Accessibility-Statement.pdf'] = statementBlob;
-                } else {
-                  throw new Error('Failed to generate accessibility statement PDF');
-                }
+      // 2. Generate Accessibility Statement PDF
+      try {
+        const { jsPDF } = await import('jspdf');
 
-              } catch (error) {
-        console.error('Error generating accessibility statement PDF for zip:', error);
+        // Load custom font
+        let fontLoaded = true;
+        try {
+          // @ts-ignore
+          window.jsPDF = jsPDF;
+          // @ts-ignore
+          require('@/assets/fonts/NotoSans-normal.js');
+          // @ts-ignore
+          delete window.jsPDF;
+        } catch (e) {
+          console.error('Failed to load custom font for jsPDF:', e);
+          fontLoaded = false;
+        }
+
+        const doc = new jsPDF();
+
+        if (!fontLoaded) {
+          doc.setFont('helvetica', 'normal');
+        }
+
+        // Page dimensions
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 25;
+        const contentWidth = pageWidth - margin * 2;
+
+        // Clean white background
+        doc.setFillColor(255, 255, 255);
+        doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+        let currentY = 30;
+
+        // Header section with exact positioning
+        // Main title - large, bold blue font
+        doc.setFontSize(28);
+        doc.setTextColor(37, 99, 235);
+        if (fontLoaded) {
+          doc.setFont('NotoSans_Condensed-Regular', 'bold');
+        } else {
+          doc.setFont('helvetica', 'bold');
+        }
+        doc.text('Accessibility Statement', margin, currentY);
+
+        currentY += 10;
+
+        // Domain and date information with proper spacing
+        doc.setFontSize(14);
+        doc.setTextColor(51, 65, 85);
+        if (fontLoaded) {
+          doc.setFont('NotoSans_Condensed-Regular', 'normal');
+        } else {
+          doc.setFont('helvetica', 'normal');
+        }
+
+        // Domain name
+        const domainName = currentDomain || 'webability.io';
+        doc.text(domainName, margin, currentY);
+
+        // Vertical line separator with exact positioning
+        const domainWidth = doc.getTextWidth(domainName);
+
+        // Date with proper spacing
+        const dateText = new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+        doc.text(dateText, margin + domainWidth + 15, currentY);
+
+        // "Issued by" section in top-right with exact positioning (bold)
+        const issuedByText = 'Issued by';
+        const issuedByWidth = doc.getTextWidth(issuedByText);
+        doc.setFontSize(11);
+        doc.setTextColor(51, 65, 85);
+        if (fontLoaded) {
+          doc.setFont('NotoSans_Condensed-Regular', 'bold');
+        } else {
+          doc.setFont('helvetica', 'bold');
+        }
+        doc.text(issuedByText, pageWidth - margin - issuedByWidth - 24, 30);
+
+        // WebAbility.io logo in top-right with improved positioning
+        try {
+          const logoImage = '/images/logo.png';
+          const img = new Image();
+          img.src = logoImage;
+
+          // Wait for image to load to get proper dimensions
+          await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(
+              () => reject(new Error('Logo load timeout')),
+              3000,
+            );
+            img.onload = () => {
+              clearTimeout(timeout);
+              resolve();
+            };
+            img.onerror = () => {
+              clearTimeout(timeout);
+              reject(new Error('Logo load failed'));
+            };
+          });
+
+          // Calculate proper dimensions while maintaining aspect ratio
+          const maxWidth = 45;
+          const maxHeight = 35;
+          const aspectRatio = img.width / img.height;
+
+          let drawWidth = maxWidth;
+          let drawHeight = maxWidth / aspectRatio;
+
+          if (drawHeight > maxHeight) {
+            drawHeight = maxHeight;
+            drawWidth = maxHeight * aspectRatio;
+          }
+
+          // Position logo in top-right corner with exact positioning
+          const logoX = pageWidth - margin - drawWidth;
+          const logoY = 35;
+
+          doc.addImage(logoImage, 'PNG', logoX, logoY, drawWidth, drawHeight);
+        } catch (e) {
+          // If logo fails, fall back to text with exact positioning
+          doc.setFontSize(14);
+          doc.setTextColor(37, 99, 235);
+          if (fontLoaded) {
+            doc.setFont('NotoSans_Condensed-Regular', 'bold');
+          } else {
+            doc.setFont('helvetica', 'bold');
+          }
+          doc.text('WebAbility.io', pageWidth - margin, 40, { align: 'right' });
+        }
+
+        // Add a horizontal line below the header section
+        doc.setDrawColor(226, 232, 240); // light gray
+        doc.setLineWidth(0.7);
+        doc.line(margin, currentY + 8, pageWidth - margin, currentY + 8);
+        // Main content section with proper spacing
+        currentY += 25;
+
+        // Compliance status section header
+        doc.setFontSize(18);
+        doc.setTextColor(0, 0, 0);
+        if (fontLoaded) {
+          doc.setFont('NotoSans_Condensed-Regular', 'bold');
+        } else {
+          doc.setFont('helvetica', 'bold');
+        }
+        doc.text('Compliance status', margin, currentY);
+
+        currentY += 15;
+
+        // Compliance status content with exact formatting
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        if (fontLoaded) {
+          doc.setFont('NotoSans_Condensed-Regular', 'normal');
+        } else {
+          doc.setFont('helvetica', 'normal');
+        }
+
+        const complianceText = [
+          'We firmly believe that the internet should be available and accessible to anyone and are committed to providing a website that is accessible to the broadest possible audience, regardless of ability.',
+          "To fulfill this, we aim to adhere as strictly as possible to the World Wide Web Consortium's (W3C) Web Content Accessibility Guidelines 2.1 (WCAG 2.1) at the AA level. These guidelines explain how to make web content accessible to people with a wide array of disabilities. Complying with those guidelines helps us ensure that the website is accessible to blind people, people with motor impairments, visual impairment, cognitive disabilities, and more.",
+          "This website utilizes various technologies that are meant to make it as accessible as possible at all times. We utilize an accessibility interface that allows persons with specific disabilities to adjust the website's UI (user interface) and design it to their personal needs.",
+          "Additionally, the website utilizes an AI-based application that runs in the background and optimizes its accessibility level constantly. This application remediates the website's HTML, adapts its functionality and behavior for screen-readers used by blind users, and for keyboard functions used by individuals with motor impairments.",
+          "If you've found a malfunction or have ideas for improvement, we'll be happy to hear from you. You can reach out to the website's operators by using the following email: support@webability.io",
+        ];
+
+        complianceText.forEach((paragraph, index) => {
+          const lines = doc.splitTextToSize(paragraph, contentWidth);
+          lines.forEach((line: string) => {
+            doc.text(line, margin, currentY);
+            currentY += 6;
+          });
+          // Add proper spacing between paragraphs
+          currentY += index < complianceText.length - 1 ? 4 : 0;
+        });
+
+        // Footer with exact positioning
+        const footerY = pageHeight - 25;
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.3);
+        doc.line(margin, footerY, pageWidth - margin, footerY);
+
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        if (fontLoaded) {
+          doc.setFont('NotoSans_Condensed-Regular', 'normal');
+        }
+        doc.text(
+          'WebAbility.io - Making the web accessible for everyone - www.webability.io',
+          margin,
+          footerY + 10,
+        );
+
+        const statementBlob = await generateAndViewAccessibilityStatementPDF(3);
+        if (statementBlob) {
+          pdfs['2-Accessibility-Statement.pdf'] = statementBlob;
+        } else {
+          throw new Error('Failed to generate accessibility statement PDF');
+        }
+      } catch (error) {
+        console.error(
+          'Error generating accessibility statement PDF for zip:',
+          error,
+        );
         toast.error('Failed to generate accessibility statement PDF');
         return;
       }
@@ -1269,11 +1378,15 @@ const ProofOfEffortToolkit: React.FC = () => {
       try {
         // Fetch the full report data
         const { data: fullReportData } = await fetchReportByR2Key({
-          variables: { r2_key: latestReport.r2_key }
+          variables: { r2_key: latestReport.r2_key },
         });
-        
+
         if (fullReportData?.fetchReportByR2Key) {
-          const reportPdfBlob = await generateAccessibilityStatementPDF(fullReportData.fetchReportByR2Key, 'en', currentDomain);
+          const reportPdfBlob = await generateAccessibilityStatementPDF(
+            fullReportData.fetchReportByR2Key,
+            'en',
+            currentDomain,
+          );
           pdfs['3-Monthly-Audit-Report.pdf'] = reportPdfBlob;
         } else {
           // If no report data available, create a placeholder PDF
@@ -1284,12 +1397,23 @@ const ProofOfEffortToolkit: React.FC = () => {
           placeholderDoc.text('Monthly Audit Report', 20, 30);
           placeholderDoc.setFontSize(14);
           placeholderDoc.setTextColor(51, 65, 85);
-          placeholderDoc.text('No audit report available for this domain.', 20, 50);
-          placeholderDoc.text('Please go to the Scanner page to generate a report.', 20, 65);
+          placeholderDoc.text(
+            'No audit report available for this domain.',
+            20,
+            50,
+          );
+          placeholderDoc.text(
+            'Please go to the Scanner page to generate a report.',
+            20,
+            65,
+          );
           pdfs['3-Monthly-Audit-Report.pdf'] = placeholderDoc.output('blob');
         }
       } catch (error) {
-        console.error('Error generating monthly audit report PDF for zip:', error);
+        console.error(
+          'Error generating monthly audit report PDF for zip:',
+          error,
+        );
         // Create a placeholder PDF for the error case
         const { jsPDF } = await import('jspdf');
         const errorDoc = new jsPDF();
@@ -1298,7 +1422,11 @@ const ProofOfEffortToolkit: React.FC = () => {
         errorDoc.text('Monthly Audit Report', 20, 30);
         errorDoc.setFontSize(14);
         errorDoc.setTextColor(51, 65, 85);
-        errorDoc.text('Error generating report. Please try again later.', 20, 50);
+        errorDoc.text(
+          'Error generating report. Please try again later.',
+          20,
+          50,
+        );
         pdfs['3-Monthly-Audit-Report.pdf'] = errorDoc.output('blob');
       }
 
@@ -1318,7 +1446,9 @@ const ProofOfEffortToolkit: React.FC = () => {
       const url = URL.createObjectURL(zipBlob);
       const link = window.document.createElement('a');
       link.href = url;
-      link.download = `WebAbility-Proof-of-Effort-Toolkit-${currentDomain}-${new Date().toISOString().split('T')[0]}.zip`;
+      link.download = `WebAbility-Proof-of-Effort-Toolkit-${currentDomain}-${
+        new Date().toISOString().split('T')[0]
+      }.zip`;
       window.document.body.appendChild(link);
       link.click();
       window.document.body.removeChild(link);
@@ -1326,7 +1456,6 @@ const ProofOfEffortToolkit: React.FC = () => {
 
       toast.dismiss();
       toast.success('Complete toolkit downloaded successfully!');
-      
     } catch (error) {
       toast.dismiss();
       console.error('Error creating zip file:', error);
@@ -1353,37 +1482,40 @@ const ProofOfEffortToolkit: React.FC = () => {
         toast.error('No domain selected');
         return;
       }
-      
+
       if (isProcessingReport) {
         return; // Prevent multiple simultaneous requests
       }
-      
+
       try {
         setIsProcessingReport(true);
         // Show loading state
         toast.loading('Fetching report data...');
-        
+
         const latestReport = await fetchLatestReport(currentDomain);
-        
+
         if (latestReport && latestReport.r2_key) {
           // Fetch the full report data
           const { data: fullReportData } = await fetchReportByR2Key({
-            variables: { r2_key: latestReport.r2_key }
+            variables: { r2_key: latestReport.r2_key },
           });
-          
+
           if (fullReportData?.fetchReportByR2Key) {
             toast.dismiss(); // Remove loading toast
-            
+
             // Debug logging for view function too
             // console.log('View Report - GraphQL Data Debug:');
             // console.log('Full report data keys:', Object.keys(fullReportData.fetchReportByR2Key));
             // console.log('Report data sample:', fullReportData.fetchReportByR2Key);
-            
+
             toast.loading('Generating PDF...');
-            
+
             // Generate the PDF for viewing
-            await viewReportPDF(fullReportData.fetchReportByR2Key, currentDomain);
-            
+            await viewReportPDF(
+              fullReportData.fetchReportByR2Key,
+              currentDomain,
+            );
+
             toast.dismiss(); // Remove loading toast
             toast.success('PDF report opened in new tab!');
           } else {
@@ -1393,7 +1525,9 @@ const ProofOfEffortToolkit: React.FC = () => {
         } else {
           toast.dismiss();
           // Show popup when no report found
-          toast.error('No report found for this domain. Please go to the Scanner page to generate a report.');
+          toast.error(
+            'No report found for this domain. Please go to the Scanner page to generate a report.',
+          );
         }
       } catch (error) {
         toast.dismiss();
@@ -1406,18 +1540,18 @@ const ProofOfEffortToolkit: React.FC = () => {
       // Generate and display the intro to toolkit PDF
       try {
         //toast.loading('Generating intro PDF...');
-        
+
         const pdfBlob = await generateIntroToToolkitPDF();
-        
+
         // Open the PDF in a new window/tab for viewing
         const url = URL.createObjectURL(pdfBlob);
         const newWindow = window.open(url, '_blank');
-        
+
         // Clean up the URL after a delay
         setTimeout(() => {
           URL.revokeObjectURL(url);
         }, 10000);
-        
+
         // If popup was blocked, offer download as fallback
         if (!newWindow) {
           toast.error('Popup blocked. PDF will be downloaded instead.');
@@ -1429,7 +1563,7 @@ const ProofOfEffortToolkit: React.FC = () => {
           window.document.body.removeChild(link);
           URL.revokeObjectURL(url);
         }
-        
+
         toast.dismiss();
         toast.success('Intro PDF opened in new tab!');
       } catch (error) {
@@ -1439,7 +1573,7 @@ const ProofOfEffortToolkit: React.FC = () => {
       }
     } else {
       // TODO: Implement view functionality for other documents
-    //  console.log('View document clicked:', document.name);
+      //  console.log('View document clicked:', document.name);
     }
   };
 
@@ -1458,9 +1592,11 @@ const ProofOfEffortToolkit: React.FC = () => {
       return null;
     }
   }
-  
+
   // Add this helper function to get image dimensions from base64
-  function getImageDimensions(base64Data: string): Promise<{ width: number; height: number }> {
+  function getImageDimensions(
+    base64Data: string,
+  ): Promise<{ width: number; height: number }> {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
@@ -1473,11 +1609,11 @@ const ProofOfEffortToolkit: React.FC = () => {
       img.src = base64Data;
     });
   }
-  
+
   const generateAccessibilityStatementPDF = async (
     reportData: any, // Using any to allow flexible report structure
     currentLanguage: string,
-    domain?: string
+    domain?: string,
   ): Promise<Blob> => {
     const { jsPDF } = await import('jspdf');
 
@@ -1494,14 +1630,13 @@ const ProofOfEffortToolkit: React.FC = () => {
       fontLoaded = false;
     }
 
-
     const autoTable = (await import('jspdf-autotable')).default;
     const doc = new jsPDF();
-     if (!fontLoaded) {
+    if (!fontLoaded) {
       doc.setFont('helvetica', 'normal');
     }
     if (!reportData.url) {
-      reportData.url = domain || "";
+      reportData.url = domain || '';
     }
 
     const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
@@ -1509,7 +1644,6 @@ const ProofOfEffortToolkit: React.FC = () => {
     const WEBABILITY_SCORE_BONUS = 45;
     const MAX_TOTAL_SCORE = 95;
     const issues = extractIssuesFromReport(reportData);
-    
 
     //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
     const baseScore = reportData.score || 0;
@@ -1519,7 +1653,6 @@ const ProofOfEffortToolkit: React.FC = () => {
       ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
       : baseScore;
 
-      
     let status: string, message: string, statusColor: [number, number, number];
     if (enhancedScore >= 80) {
       status = 'Compliant';
@@ -1547,7 +1680,7 @@ const ProofOfEffortToolkit: React.FC = () => {
       translatedContext,
       translatedFix,
       translatedLabel,
-      translatedTotalErrors
+      translatedTotalErrors,
     ] = await translateMultipleTexts(
       [
         status,
@@ -1561,17 +1694,16 @@ const ProofOfEffortToolkit: React.FC = () => {
         'Context',
         'Fix',
         'Scan results for ',
-        'Total Errors'
+        'Total Errors',
       ],
-      currentLanguage
+      currentLanguage,
     );
-    
+
     status = translatedStatus;
     doc.setFillColor(21, 101, 192); // dark blue background
-    doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F'); 
+    doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F');
 
     let logoBottomY = 0;
-
 
     if (logoImage) {
       const img = new Image();
@@ -1672,8 +1804,8 @@ const ProofOfEffortToolkit: React.FC = () => {
     const containerY = (logoBottomY || 0) + 10; // 10 units gap after logo
 
     doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(220, 220, 220); 
-    doc.setLineWidth(0.2); 
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.2);
     doc.roundedRect(
       containerX,
       containerY,
@@ -1685,12 +1817,12 @@ const ProofOfEffortToolkit: React.FC = () => {
     );
 
     // Now draw the text inside the container, moved down accordingly
-    let textY = containerY + 13; 
+    let textY = containerY + 13;
 
     doc.setFontSize(18);
     doc.setTextColor(0, 0, 0);
     // Compose the full string and measure widths
-    let  label = 'Scan results for ';
+    let label = 'Scan results for ';
     label = translatedLabel;
 
     const url = `${reportData.url}`;
@@ -1700,83 +1832,82 @@ const ProofOfEffortToolkit: React.FC = () => {
     // Calculate starting X so the whole line is centered
     const startX = 105 - totalWidth / 2;
 
-    doc.setFont('NotoSans_Condensed-Regular'); 
+    doc.setFont('NotoSans_Condensed-Regular');
     doc.setTextColor(51, 65, 85); // slate-800 for message
     doc.text(label, startX, textY, { align: 'left' });
     // Draw the URL in bold, immediately after the label, no overlap
-   
+
     doc.text(url, startX + labelWidth, textY, { align: 'left' });
-    doc.setFont('NotoSans_Condensed-Regular'); 
+    doc.setFont('NotoSans_Condensed-Regular');
 
     textY += 12;
     doc.setFontSize(24);
     doc.setTextColor(...statusColor);
-   doc.setFont('NotoSans_Condensed-Regular'); 
+    doc.setFont('NotoSans_Condensed-Regular');
     doc.text(status, 105, textY, { align: 'center' });
 
     message = translatedMessage;
     textY += 9;
     doc.setFontSize(14);
-    doc.setTextColor(51, 65, 85); 
-    doc.setFont('NotoSans_Condensed-Regular'); 
+    doc.setTextColor(51, 65, 85);
+    doc.setFont('NotoSans_Condensed-Regular');
     doc.text(message, 105, textY, { align: 'center' });
-    
 
     textY += 9;
     doc.setFontSize(12);
     doc.setTextColor(51, 65, 85); // slate-800 for message
     // Use report date if available, otherwise use current date
-    const reportDate = reportData.created_at 
-      ? new Date(Number(reportData.created_at)).toLocaleDateString(undefined, { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+    const reportDate = reportData.created_at
+      ? new Date(Number(reportData.created_at)).toLocaleDateString(undefined, {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
         })
-      : new Date().toLocaleDateString(undefined, { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+      : new Date().toLocaleDateString(undefined, {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
         });
     doc.text(reportDate, 105, textY, { align: 'center' });
 
     // --- END REPLACEMENT BLOCK ---
 
     // --- ADD CIRCLES FOR TOTAL ERRORS AND PERCENTAGE ---
-    const circleY = containerY + containerHeight + 25; 
+    const circleY = containerY + containerHeight + 25;
     const circleRadius = 15;
     const centerX = 105;
-    const gap = 40; 
+    const gap = 40;
     const circle1X = centerX - circleRadius - gap / 2;
     const circle2X = centerX + circleRadius + gap / 2;
 
     // Circle 1: Total Errors (filled dark blue)
-    doc.setDrawColor(21, 101, 192); 
+    doc.setDrawColor(21, 101, 192);
     doc.setLineWidth(1.5);
-    doc.setFillColor(21, 101, 192); 
+    doc.setFillColor(21, 101, 192);
     doc.circle(circle1X, circleY, circleRadius, 'FD');
-   doc.setFont('NotoSans_Condensed-Regular'); 
-    doc.setFontSize(22); 
-    doc.setTextColor(255, 255, 255); 
+    doc.setFont('NotoSans_Condensed-Regular');
+    doc.setFontSize(22);
+    doc.setTextColor(255, 255, 255);
 
     doc.text(`${issues.length}`, circle1X, circleY, {
       align: 'center',
       baseline: 'middle',
     });
 
-    doc.setFontSize(12); 
-    doc.setTextColor(21, 101, 192); 
-    doc.setFont('NotoSans_Condensed-Regular'); 
+    doc.setFontSize(12);
+    doc.setTextColor(21, 101, 192);
+    doc.setFont('NotoSans_Condensed-Regular');
     doc.text(translatedTotalErrors, circle1X, circleY + circleRadius + 9, {
       align: 'center',
     });
 
-    doc.setDrawColor(33, 150, 243); 
+    doc.setDrawColor(33, 150, 243);
     doc.setLineWidth(1.5);
-    doc.setFillColor(33, 150, 243); 
+    doc.setFillColor(33, 150, 243);
     doc.circle(circle2X, circleY, circleRadius, 'FD');
-   doc.setFont('NotoSans_Condensed-Regular'); 
-    doc.setFontSize(22); 
-    doc.setTextColor(255, 255, 255); 
+    doc.setFont('NotoSans_Condensed-Regular');
+    doc.setFontSize(22);
+    doc.setTextColor(255, 255, 255);
     const scoreText = `${Math.round(enhancedScore)}%`;
     const scoreFontSize = 22;
     doc.setFontSize(scoreFontSize);
@@ -1786,16 +1917,16 @@ const ProofOfEffortToolkit: React.FC = () => {
       baseline: 'middle',
     });
 
-    doc.setFontSize(12); 
-    doc.setTextColor(21, 101, 192); 
-    doc.setFont('NotoSans_Condensed-Regular'); 
+    doc.setFontSize(12);
+    doc.setTextColor(21, 101, 192);
+    doc.setFont('NotoSans_Condensed-Regular');
     doc.text(translatedScore, circle2X, circleY + circleRadius + 9, {
       align: 'center',
     });
     // --- END CIRCLES ---
 
     // SEVERITY SUMMARY BOXES
-   
+
     const yStart = circleY + circleRadius + 30;
     const total = issues.length;
     const counts = {
@@ -1806,36 +1937,39 @@ const ProofOfEffortToolkit: React.FC = () => {
     // Use blue shades for all summary boxes
     const summaryBoxes = [
       {
-        label:  translatedSevere,
+        label: translatedSevere,
         count: counts.critical + counts.serious,
         color: [255, 204, 204],
       },
-      { label: translatedModerate, count: counts.moderate, color: [187, 222, 251] },
       {
-        label:  translatedMild,
+        label: translatedModerate,
+        count: counts.moderate,
+        color: [187, 222, 251],
+      },
+      {
+        label: translatedMild,
         count: total - (counts.critical + counts.serious + counts.moderate),
         color: [225, 245, 254],
-      }, 
+      },
     ];
 
     let x = 20;
     for (const box of summaryBoxes) {
       doc.setFillColor(box.color[0], box.color[1], box.color[2]);
       doc.roundedRect(x, yStart, 55, 20, 3, 3, 'F');
-      doc.setTextColor(0, 0, 0); 
+      doc.setTextColor(0, 0, 0);
       doc.setFontSize(14);
-     doc.setFont('NotoSans_Condensed-Regular'); 
+      doc.setFont('NotoSans_Condensed-Regular');
       doc.text(`${box.count}`, x + 4, yStart + 8);
       doc.setFontSize(12);
       doc.text(box.label, x + 4, yStart + 16);
       x += 60;
     }
 
-  
     const yTable = yStart + 40;
 
     const pageHeight = doc.internal.pageSize.getHeight();
-    const footerHeight = 15; 
+    const footerHeight = 15;
 
     // Helper to ensure array
     const toArray = (val: any) => (Array.isArray(val) ? val : val ? [val] : []);
@@ -1844,7 +1978,10 @@ const ProofOfEffortToolkit: React.FC = () => {
     let tableBody: any[] = [];
     const FilteredIssues = await deduplicateIssuesByMessage(issues);
 
-    const translatedIssues = await translateText(FilteredIssues, currentLanguage);
+    const translatedIssues = await translateText(
+      FilteredIssues,
+      currentLanguage,
+    );
 
     // After fetching base64
     for (const issue of translatedIssues) {
@@ -1866,7 +2003,6 @@ const ProofOfEffortToolkit: React.FC = () => {
             fontSize: 16,
             halign: 'center',
             cellPadding: 8,
-
           },
         },
         {
@@ -1892,12 +2028,12 @@ const ProofOfEffortToolkit: React.FC = () => {
             textColor: getIssueColors(issue, hasWebAbility).textColor,
             halign: 'left',
             cellPadding: 10,
-            fillColor: getIssueColors(issue, hasWebAbility).cellFillColor, 
+            fillColor: getIssueColors(issue, hasWebAbility).cellFillColor,
             font: 'NotoSans_Condensed-Regular',
             minCellHeight: 30,
           },
         },
-        
+
         {
           content: `${issue.message || ''}`,
           colSpan: 2,
@@ -1906,7 +2042,7 @@ const ProofOfEffortToolkit: React.FC = () => {
             textColor: getIssueColors(issue, hasWebAbility).textColor,
             halign: 'left',
             cellPadding: 10,
-            fillColor: getIssueColors(issue, hasWebAbility).cellFillColor, 
+            fillColor: getIssueColors(issue, hasWebAbility).cellFillColor,
             font: 'NotoSans_Condensed-Regular',
             minCellHeight: 30,
           },
@@ -1918,12 +2054,12 @@ const ProofOfEffortToolkit: React.FC = () => {
         const dimensions = await getImageDimensions(issue.screenshotBase64);
         let drawWidth = dimensions.width;
         let drawHeight = dimensions.height;
-        
+
         // Scale down if image is too large for PDF
         const maxWidth = 120;
         const maxHeight = 80;
         const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight, 1);
-        
+
         const screenshotWidth = drawWidth * scale;
         const screenshotHeight = drawHeight * scale;
 
@@ -1933,7 +2069,6 @@ const ProofOfEffortToolkit: React.FC = () => {
             content: 'Screenshot',
             colSpan: 4,
             styles: {
-             
               fontSize: 14,
               textColor: [30, 41, 59],
               halign: 'center',
@@ -1943,7 +2078,7 @@ const ProofOfEffortToolkit: React.FC = () => {
             },
           } as any,
         ]);
-        
+
         // Add the screenshot image row
         tableBody.push([
           {
@@ -1988,7 +2123,7 @@ const ProofOfEffortToolkit: React.FC = () => {
         contexts.forEach((ctx, index) => {
           // Combined code block with index number
           const combinedContent = `${index + 1}. ${ctx}`;
-          
+
           tableBody.push([
             {
               content: combinedContent,
@@ -2004,10 +2139,13 @@ const ProofOfEffortToolkit: React.FC = () => {
                 valign: 'top',
                 cellPadding: 8,
                 lineWidth: 0,
-                minCellHeight: Math.max(20, Math.ceil(combinedContent.length / 50) * 6), // Dynamic height based on content
+                minCellHeight: Math.max(
+                  20,
+                  Math.ceil(combinedContent.length / 50) * 6,
+                ), // Dynamic height based on content
                 overflow: 'linebreak',
               },
-              
+
               _isCodeBlock: true,
               _originalContent: combinedContent, // Store original content for height calculation
               _indexNumber: index + 1, // Store index for potential special formatting
@@ -2103,7 +2241,7 @@ const ProofOfEffortToolkit: React.FC = () => {
       },
       // Enhanced page break handling
       rowPageBreak: 'avoid',
-      
+
       // Custom table styling
       tableLineColor: [226, 232, 240], // Light gray border
       tableLineWidth: 0.5, // Thin border
@@ -2112,37 +2250,38 @@ const ProofOfEffortToolkit: React.FC = () => {
         lineWidth: 0, // No cell borders
         cellPadding: 8,
       },
-      
+
       // Check before drawing each cell to prevent page breaks in code blocks
       willDrawCell: (data: any) => {
         if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
           const pageHeight = doc.internal.pageSize.getHeight();
           const currentY = data.cursor.y;
           const bottomMargin = 25; // Space needed at bottom of page
-          
+
           // Calculate actual text height for more accurate estimation
           const fullText = (data.cell.raw as any).content || '';
           const indexNumber = (data.cell.raw as any)._indexNumber;
-          
+
           // Calculate the actual content that will be displayed
           const indexPrefix = `${indexNumber}`;
           const indexWidth = doc.getTextWidth(indexPrefix) + 16; // Index section width
           const codeContent = fullText.substring(`${indexNumber}. `.length);
-          
+
           // Calculate available width for code content
           const availableWidth = data.cell.width - 16 - indexWidth; // Cell padding + index width
-          
+
           doc.setFont('NotoSans_Condensed-Regular', 'normal');
           doc.setFontSize(12);
           const lines = doc.splitTextToSize(codeContent, availableWidth);
-          
+
           // More accurate height calculation
           const lineHeight = 4; // Line spacing
           const topPadding = 8; // Top padding
           const bottomPadding = 4; // Bottom padding
-          const textHeight = (lines.length * lineHeight) + topPadding + bottomPadding;
+          const textHeight =
+            lines.length * lineHeight + topPadding + bottomPadding;
           const estimatedHeight = Math.max(textHeight, 30); // Minimum height of 30
-          
+
           // If the code block won't fit on current page, force a page break
           if (currentY + estimatedHeight > pageHeight - bottomMargin) {
             return false; // This will trigger a page break
@@ -2150,97 +2289,113 @@ const ProofOfEffortToolkit: React.FC = () => {
         }
         return true;
       },
-      
+
       didDrawCell: (data: any) => {
         // Check if this cell is marked as a code block
         if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
           const { x, y, width, height } = data.cell;
-          
+
           const padding = 2;
           const cornerRadius = 4;
           const indexNumber = (data.cell.raw as any)._indexNumber;
-          
+
           // Calculate index section width
           doc.setFont('NotoSans_Condensed-Regular', 'normal');
           doc.setFontSize(14);
           const indexPrefix = `${indexNumber}`;
           const indexWidth = doc.getTextWidth(indexPrefix) + 8; // Extra padding for the index section
-          
+
           // Draw the overall rounded rectangle background (darker blue)
           doc.setDrawColor(100, 116, 139); // slate-500 border
           doc.setLineWidth(0.5);
           doc.setFillColor(15, 23, 42); // slate-900 background (darker blue)
-          
+
           doc.roundedRect(
             x + padding,
             y + padding,
-            width - (padding * 2),
-            height - (padding * 2),
+            width - padding * 2,
+            height - padding * 2,
             cornerRadius,
             cornerRadius,
-            'FD' // Fill and Draw
+            'FD', // Fill and Draw
           );
-          
+
           // Draw the lighter blue section for the index number (left side)
           doc.setFillColor(51, 65, 85); // slate-700 (lighter blue than the main background)
           doc.roundedRect(
             x + padding,
             y + padding,
             indexWidth,
-            height - (padding * 2),
+            height - padding * 2,
             cornerRadius,
             cornerRadius,
-            'F' // Fill only
+            'F', // Fill only
           );
-          
+
           // Fix the right side of the index section to not be rounded
           doc.setFillColor(51, 65, 85); // slate-700
           doc.rect(
             x + padding + indexWidth - cornerRadius,
             y + padding,
             cornerRadius,
-            height - (padding * 2),
-            'F'
+            height - padding * 2,
+            'F',
           );
-          
+
           // Now draw the text - both in white
           doc.setTextColor(255, 255, 255); // white text for both sections
-          
+
           // Draw the index number in the lighter blue section (top-left aligned)
           const indexTextX = x + padding + 4; // Small padding from left edge
           const textY = y + padding + 8; // Same as code content top alignment
           doc.text(indexPrefix, indexTextX, textY);
-          
+
           // Draw the code content in the darker blue section
           const fullText = (data.cell.raw as any).content;
           const codeContent = fullText.substring(`${indexNumber}. `.length);
           const codeTextX = x + padding + indexWidth + 4;
-          const availableWidth = width - (padding * 2) - indexWidth - 8;
-          
+          const availableWidth = width - padding * 2 - indexWidth - 8;
+
           // Split code content into lines
           const lines = doc.splitTextToSize(codeContent, availableWidth);
           let codeTextY = y + padding + 8;
-          
+
           lines.forEach((line: string) => {
             doc.text(line, codeTextX, codeTextY);
             codeTextY += 4; // Line spacing
           });
         }
-        
+
         // Add bottom border only to header rows (Issue/Message rows)
-        if (data.cell.raw && data.cell.raw.styles && data.cell.raw.styles.fontStyle === 'bold' && data.cell.raw.styles.fontSize === 16) {
+        if (
+          data.cell.raw &&
+          data.cell.raw.styles &&
+          data.cell.raw.styles.fontStyle === 'bold' &&
+          data.cell.raw.styles.fontSize === 16
+        ) {
           const { x, y, width, height } = data.cell;
           doc.setDrawColor(226, 232, 240); // Light gray
           doc.setLineWidth(0.5);
           doc.line(x, y + height, x + width, y + height); // Bottom border
         }
-        if (data.cell.raw && data.cell.raw._isScreenshot && data.cell.raw._screenshotBase64) {
+        if (
+          data.cell.raw &&
+          data.cell.raw._isScreenshot &&
+          data.cell.raw._screenshotBase64
+        ) {
           const { x, y, width, height } = data.cell;
           const imgWidth = data.cell.raw._screenshotWidth || 80;
           const imgHeight = data.cell.raw._screenshotHeight || 80;
           const imgX = x + (width - imgWidth) / 2;
           const imgY = y + (height - imgHeight) / 2;
-          data.doc.addImage(data.cell.raw._screenshotBase64, 'PNG', imgX, imgY, imgWidth, imgHeight);
+          data.doc.addImage(
+            data.cell.raw._screenshotBase64,
+            'PNG',
+            imgX,
+            imgY,
+            imgWidth,
+            imgHeight,
+          );
         }
         // if (data.cell.raw && data.cell.raw._isScreenshot) {
         //   // console.log('didDrawCell for screenshot', data.cell.raw._screenshotBase64 ? 'has base64' : 'no base64');
@@ -2277,10 +2432,9 @@ const ProofOfEffortToolkit: React.FC = () => {
   const handleDownloadDocument = async (document: Document) => {
     if (document.type === 'statement') {
       // Generate and download the accessibility statement PDF (simple version without report data)
-  try{
-  await generateAndViewAccessibilityStatementPDF(2);
-  }
-      catch (error) {
+      try {
+        await generateAndViewAccessibilityStatementPDF(2);
+      } catch (error) {
         console.error('Error generating accessibility statement PDF:', error);
         toast.error('Failed to generate accessibility statement PDF');
       }
@@ -2289,33 +2443,35 @@ const ProofOfEffortToolkit: React.FC = () => {
         toast.error('No domain selected');
         return;
       }
-      
+
       if (isProcessingReport) {
         return; // Prevent multiple simultaneous requests
       }
-      
+
       try {
         setIsProcessingReport(true);
         // Show loading state
         toast.loading('Fetching report data...');
-        
+
         const latestReport = await fetchLatestReport(currentDomain);
-        
+
         if (latestReport && latestReport.r2_key) {
           // Fetch the full report data
           const { data: fullReportData } = await fetchReportByR2Key({
-            variables: { r2_key: latestReport.r2_key }
+            variables: { r2_key: latestReport.r2_key },
           });
-          
+
           if (fullReportData?.fetchReportByR2Key) {
             toast.dismiss(); // Remove loading toast
-            
-        
+
             toast.loading('Generating PDF...');
-            
+
             // Generate and download the PDF
-            await generateReportPDF(fullReportData.fetchReportByR2Key, currentDomain);
-            
+            await generateReportPDF(
+              fullReportData.fetchReportByR2Key,
+              currentDomain,
+            );
+
             toast.dismiss(); // Remove loading toast
             toast.success('PDF generated successfully!');
           } else {
@@ -2325,7 +2481,9 @@ const ProofOfEffortToolkit: React.FC = () => {
         } else {
           toast.dismiss();
           // Show popup when no report found
-          toast.error('No report found for this domain. Please go to the Scanner page to generate a report.');
+          toast.error(
+            'No report found for this domain. Please go to the Scanner page to generate a report.',
+          );
         }
       } catch (error) {
         toast.dismiss();
@@ -2338,9 +2496,9 @@ const ProofOfEffortToolkit: React.FC = () => {
       // Generate and download the intro to toolkit PDF
       try {
         //toast.loading('Generating intro PDF...');
-        
+
         const pdfBlob = await generateIntroToToolkitPDF();
-        
+
         // Download the PDF
         const url = URL.createObjectURL(pdfBlob);
         const link = window.document.createElement('a');
@@ -2350,7 +2508,7 @@ const ProofOfEffortToolkit: React.FC = () => {
         link.click();
         window.document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        
+
         toast.dismiss();
         toast.success('Intro PDF downloaded successfully!');
       } catch (error) {
@@ -2360,7 +2518,7 @@ const ProofOfEffortToolkit: React.FC = () => {
       }
     } else {
       // TODO: Implement download functionality for other documents
-     // console.log('Download document clicked:', document.name);
+      // console.log('Download document clicked:', document.name);
     }
   };
 
@@ -2371,26 +2529,31 @@ const ProofOfEffortToolkit: React.FC = () => {
           {/* Header Section */}
           <div className="sm:p-4 p-8 border-b border-gray-200">
             <div className="text-gray-600 text-sm mb-4">
-              You've taken steps to make your website accessible. The proof of effort toolkit compiles key documentation that showcases your commitment to accessibility. If your website's accessibility is ever challenged (i.e. you receive a demand letter), you'll have evidence to demonstrate your efforts and respond with confidence.
+              You've taken steps to make your website accessible. The proof of
+              effort toolkit compiles key documentation that showcases your
+              commitment to accessibility. If your website's accessibility is
+              ever challenged (i.e. you receive a demand letter), you'll have
+              evidence to demonstrate your efforts and respond with confidence.
             </div>
-            
+
             <div className="sm:flex-col sm:gap-4 flex items-start gap-6">
               <div className="bg-blue-50 p-4 rounded-lg">
                 <FiFile className="w-8 h-8 text-blue-600" />
               </div>
-              
+
               <div className="flex-1">
                 <h1 className="sm:text-xl text-2xl font-medium text-gray-900 mb-2">
                   Proof of effort toolkit
                 </h1>
                 <p className="text-gray-600 sm:mb-4 mb-6">
-                  Get a zip file with documentation to help you and your legal team.
+                  Get a zip file with documentation to help you and your legal
+                  team.
                 </p>
-                
+
                 <div className="text-sm text-gray-500 sm:mb-4 mb-6">
                   {documents.length} Documents
                 </div>
-                
+
                 <div className="sm:flex-col sm:gap-2 flex gap-3">
                   <button
                     onClick={handleSendViaEmail}
@@ -2403,8 +2566,8 @@ const ProofOfEffortToolkit: React.FC = () => {
                   >
                     {isEmailSending ? (
                       <>
-                      <CircularProgress size={16} />
-                      Sending...
+                        <CircularProgress size={16} />
+                        Sending...
                       </>
                     ) : (
                       <>
@@ -2413,7 +2576,7 @@ const ProofOfEffortToolkit: React.FC = () => {
                       </>
                     )}
                   </button>
-                  
+
                   <button
                     onClick={handleDownloadZip}
                     disabled={isDownloadingZip || isEmailSending}
@@ -2425,8 +2588,10 @@ const ProofOfEffortToolkit: React.FC = () => {
                   >
                     {isDownloadingZip ? (
                       <>
-                      <CircularProgress size={16} style={{ color: 'white' }} />
-                      
+                        <CircularProgress
+                          size={16}
+                          style={{ color: 'white' }}
+                        />
                         Downloading...
                       </>
                     ) : (
@@ -2440,7 +2605,7 @@ const ProofOfEffortToolkit: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           {/* View Files Section */}
           <div className="border-b border-gray-200">
             <button
@@ -2454,7 +2619,7 @@ const ProofOfEffortToolkit: React.FC = () => {
                 <MdKeyboardArrowDown className="w-5 h-5 text-gray-500" />
               )}
             </button>
-            
+
             {viewFilesExpanded && (
               <div className="sm:px-4 sm:pb-4 px-6 pb-6">
                 {/* Table Header */}
@@ -2463,53 +2628,77 @@ const ProofOfEffortToolkit: React.FC = () => {
                   <div className="col-span-4">Creation Date</div>
                   <div className="col-span-2"></div>
                 </div>
-                
+
                 {/* Document Rows */}
                 {documents.map((document, index) => (
-                                     <div key={index} className="sm:block sm:p-3 sm:border sm:border-gray-200 sm:rounded-lg sm:mb-3 grid grid-cols-12 gap-4 py-4 border-b border-gray-100 last:border-b-0">
-                     <div className="sm:col-span-12 sm:mb-2 col-span-6 flex items-center gap-3">
-                       <FiFile className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                       <span className="text-gray-900">{document.name}</span>
-                       {document.type === 'monthly-report' && isProcessingReport && (
-                         <span className="text-xs text-blue-600 italic">Processing...</span>
-                       )}
-                     </div>
+                  <div
+                    key={index}
+                    className="sm:block sm:p-3 sm:border sm:border-gray-200 sm:rounded-lg sm:mb-3 grid grid-cols-12 gap-4 py-4 border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="sm:col-span-12 sm:mb-2 col-span-6 flex items-center gap-3">
+                      <FiFile className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-gray-900">{document.name}</span>
+                      {document.type === 'monthly-report' &&
+                        isProcessingReport && (
+                          <span className="text-xs text-blue-600 italic">
+                            Processing...
+                          </span>
+                        )}
+                    </div>
                     <div className="sm:col-span-12 sm:mb-2 sm:text-sm col-span-4 flex items-center text-gray-600">
-                      <span className="sm:inline sm:font-medium sm:text-gray-700 sm:mr-2 hidden">Creation Date:</span>
+                      <span className="sm:inline sm:font-medium sm:text-gray-700 sm:mr-2 hidden">
+                        Creation Date:
+                      </span>
                       {document.creationDate}
                     </div>
-                                         <div className="sm:col-span-12 sm:justify-start col-span-2 flex items-center justify-end gap-2">
-                       <button
-                         onClick={() => handleViewDocument(document)}
-                         className={`p-2 transition-colors ${
-                           (document.type === 'monthly-report' && isProcessingReport) || isDownloadingZip || isEmailSending
-                             ? 'text-gray-300 cursor-not-allowed'
-                             : 'text-gray-400 hover:text-gray-600'
-                         }`}
-                         title={
-                           document.type === 'monthly-report' 
-                             ? 'View PDF report' 
-                             : document.type === 'statement' 
-                               ? 'View accessibility statement PDF'
-                               : 'View document'
-                         }
-                         disabled={(document.type === 'monthly-report' && isProcessingReport) || isDownloadingZip || isEmailSending}
-                       >
-                         <MdVisibility className="w-4 h-4" />
-                       </button>
-                       <button
-                         onClick={() => handleDownloadDocument(document)}
-                         className={`p-2 transition-colors ${
-                           (document.type === 'monthly-report' && isProcessingReport) || isDownloadingZip || isEmailSending
-                             ? 'text-gray-300 cursor-not-allowed'
-                             : 'text-gray-400 hover:text-gray-600'
-                         }`}
-                         title="Download document"
-                         disabled={(document.type === 'monthly-report' && isProcessingReport) || isDownloadingZip || isEmailSending}
-                       >
-                         <MdFileDownload className="w-4 h-4" />
-                       </button>
-                     </div>
+                    <div className="sm:col-span-12 sm:justify-start col-span-2 flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleViewDocument(document)}
+                        className={`p-2 transition-colors ${
+                          (document.type === 'monthly-report' &&
+                            isProcessingReport) ||
+                          isDownloadingZip ||
+                          isEmailSending
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                        title={
+                          document.type === 'monthly-report'
+                            ? 'View PDF report'
+                            : document.type === 'statement'
+                            ? 'View accessibility statement PDF'
+                            : 'View document'
+                        }
+                        disabled={
+                          (document.type === 'monthly-report' &&
+                            isProcessingReport) ||
+                          isDownloadingZip ||
+                          isEmailSending
+                        }
+                      >
+                        <MdVisibility className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDownloadDocument(document)}
+                        className={`p-2 transition-colors ${
+                          (document.type === 'monthly-report' &&
+                            isProcessingReport) ||
+                          isDownloadingZip ||
+                          isEmailSending
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                        title="Download document"
+                        disabled={
+                          (document.type === 'monthly-report' &&
+                            isProcessingReport) ||
+                          isDownloadingZip ||
+                          isEmailSending
+                        }
+                      >
+                        <MdFileDownload className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
