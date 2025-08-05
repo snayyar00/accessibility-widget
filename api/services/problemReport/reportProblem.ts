@@ -41,7 +41,7 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
       console.log(`User not found for site ${site_url}, skipping notification check`)
     }
     if (user) {
-      const notification = await findUserNotificationByUserId(user.id)
+      const notification = (await findUserNotificationByUserId(user.id)) as { issue_reported_flag?: boolean } | null
       if (!notification || !notification.issue_reported_flag) {
         console.log(`Skipping issue report email for user ${user.email} (no notification flag)`)
         return 'Problem reported successfully (notification skipped)'

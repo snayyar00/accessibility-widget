@@ -11,6 +11,7 @@ import { initializeSentry } from './config/sentry.config'
 import { ALLOWED_OPERATIONS, ALLOWED_ORIGINS, configureServer, PORT } from './config/server.config'
 import { createGraphQLContext } from './graphql/context'
 import { createGraphQLServer } from './graphql/server'
+import scheduleEmailSequences from './jobs/emailSequence'
 import scheduleMonthlyEmails from './jobs/monthlyEmail'
 import { dynamicCors } from './middlewares/cors.middleware'
 import { expressErrorMiddleware } from './middlewares/expressError.middleware'
@@ -28,6 +29,7 @@ const httpServer = createServer(app)
 
 configureServer(app)
 scheduleMonthlyEmails()
+scheduleEmailSequences()
 
 app.use(configureMorgan())
 app.use(requestTimingMiddleware)

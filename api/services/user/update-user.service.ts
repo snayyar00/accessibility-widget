@@ -1,9 +1,11 @@
-import { findUser, findUserNotificationByUserId, getUserNotificationSettings, insertUserNotification, updateUser, updateUserNotificationFlags } from '../../repository/user.repository'
-import { ApolloError } from '../../utils/graphql-errors.helper'
+import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
+import { findUser, findUserNotificationByUserId, getUserNotificationSettings, insertUserNotification, updateUser, updateUserNotificationFlags, UserProfile } from '../../repository/user.repository'
+import { ApolloError, ForbiddenError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
 import { createMultipleValidationErrors, createValidationError, getValidationErrorCode } from '../../utils/validation-errors.helper'
 import { profileUpdateValidation } from '../../validations/authenticate.validation'
+import { getUserOrganization } from '../organization/organization_users.service'
 
 export async function updateProfile(id: number, name: string, company: string, position: string): Promise<true | ApolloError> {
   try {
@@ -46,6 +48,7 @@ export async function updateUserNotificationSettings(
     monthly_report_flag?: boolean
     new_domain_flag?: boolean
     issue_reported_flag?: boolean
+    onboarding_emails_flag?: boolean
   },
 ): Promise<{ success: boolean; message: string }> {
   try {
@@ -71,9 +74,10 @@ export async function updateUserNotificationSettings(
   }
 }
 
-export async function getUserNotificationSettingsService(userId: number): Promise<any> {
+export async function getUserNotificationSettingsService(userId: number): Promise<unknown> {
   try {
     const notification = await findUserNotificationByUserId(userId)
+
     if (!notification) {
       try {
         await insertUserNotification(userId)
@@ -83,19 +87,65 @@ export async function getUserNotificationSettingsService(userId: number): Promis
       }
     }
     const settings = await getUserNotificationSettings(userId)
+
     return (
       settings || {
         monthly_report_flag: false,
         new_domain_flag: false,
         issue_reported_flag: false,
+        onboarding_emails_flag: true, // Default to enabled for new users
       }
     )
   } catch (error) {
     console.error('Error getting notification settings:', error)
+
     return {
       monthly_report_flag: false,
       new_domain_flag: false,
       issue_reported_flag: false,
+      onboarding_emails_flag: true, // Default to enabled for new users
     }
+  }
+}
+
+export async function changeCurrentOrganization(initiator: UserProfile, targetOrganizationId: number, userId?: number): Promise<true | ApolloError> {
+  try {
+    if (!initiator.current_organization_id) {
+      throw new ForbiddenError('Current organization not found')
+    }
+
+    await checkRoleInOrganization(initiator.id, initiator.current_organization_id)
+    await checkRoleInOrganization(initiator.id, targetOrganizationId)
+
+    if (userId && userId !== initiator.id) {
+      const targetUser = await getUserOrganization(userId, targetOrganizationId)
+
+      if (!targetUser) {
+        throw new ForbiddenError('Target user does not belong to the target organization')
+      }
+
+      await updateUser(userId, { current_organization_id: targetOrganizationId })
+    } else {
+      await updateUser(initiator.id, { current_organization_id: targetOrganizationId })
+    }
+
+    return true
+  } catch (error) {
+    logger.error(error)
+    throw new ForbiddenError('Failed to change current organization')
+  }
+}
+
+async function checkRoleInOrganization(userId: number, organizationId: number) {
+  const orgUser = await getUserOrganization(userId, organizationId)
+
+  if (!orgUser) {
+    throw new ForbiddenError('User does not belong to the organization')
+  }
+
+  const isAllowed = ORGANIZATION_MANAGEMENT_ROLES.includes(orgUser.role as (typeof ORGANIZATION_MANAGEMENT_ROLES)[number])
+
+  if (!isAllowed) {
+    throw new ForbiddenError('User must be owner or admin of the organization to switch organization')
   }
 }

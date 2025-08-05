@@ -28,18 +28,18 @@ export default gql`
             source
           }
           axe {
-            errors { message context selectors impact description help wcag_code screenshotUrl }
-            notices { message context selectors impact description help wcag_code screenshotUrl }
-            warnings { message context selectors impact description help wcag_code screenshotUrl }
+            errors { message context selectors impact description help screenshotUrl }
+            notices { message context selectors impact description help screenshotUrl }
+            warnings { message context selectors impact description help screenshotUrl }
           }
           htmlcs {
-            errors { code message context selectors description recommended_action wcag_code screenshotUrl }
-            notices { code message context selectors description recommended_action wcag_code screenshotUrl }
-            warnings { code message context selectors description recommended_action wcag_code screenshotUrl }
+            errors { code message context selectors description recommended_action screenshotUrl }
+            notices { code message context selectors description recommended_action screenshotUrl }
+            warnings { code message context selectors description recommended_action screenshotUrl }
           }
           ByFunctions {
             FunctionalityName
-            Errors { code message context selectors description recommended_action wcag_code screenshotUrl }
+            Errors { code message context selectors description recommended_action screenshotUrl }
           }
           scriptCheckResult
           issues {

@@ -28,13 +28,14 @@ const GET_USER_NOTIFICATION_SETTINGS = gql`
       monthly_report_flag
       new_domain_flag
       issue_reported_flag
+      onboarding_emails_flag
     }
   }
 `;
 
 const UPDATE_NOTIFICATION_SETTINGS = gql`
-  mutation UpdateNotificationSettings($monthly_report_flag: Boolean, $new_domain_flag: Boolean, $issue_reported_flag: Boolean) {
-    updateNotificationSettings(monthly_report_flag: $monthly_report_flag, new_domain_flag: $new_domain_flag, issue_reported_flag: $issue_reported_flag)
+  mutation UpdateNotificationSettings($monthly_report_flag: Boolean, $new_domain_flag: Boolean, $issue_reported_flag: Boolean, $onboarding_emails_flag: Boolean) {
+    updateNotificationSettings(monthly_report_flag: $monthly_report_flag, new_domain_flag: $new_domain_flag, issue_reported_flag: $issue_reported_flag, onboarding_emails_flag: $onboarding_emails_flag)
   }
 `;
 
@@ -66,6 +67,7 @@ const Topbar: React.FC<Props> = ({ signout }) => {
     monthly_report_flag: false,
     new_domain_flag: false,
     issue_reported_flag: false,
+    onboarding_emails_flag: true,
   });
 
   useEffect(() => {
@@ -261,6 +263,23 @@ const Topbar: React.FC<Props> = ({ signout }) => {
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
                     notificationSettings.issue_reported_flag ? "translate-x-5" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex-1 pr-4">
+                  <p className="text-sm font-medium text-sapphire-blue">Onboarding Emails</p>
+                  <p className="text-xs text-gray-500">Receive helpful emails to get started</p>
+                </div>
+                <button
+                  onClick={(e) => handleNotificationToggle('onboarding_emails_flag', e)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    notificationSettings.onboarding_emails_flag ? "bg-green-500 focus:ring-green-500" : "bg-gray-300 focus:ring-gray-300"
+                  }`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                    notificationSettings.onboarding_emails_flag ? "translate-x-5" : "translate-x-0.5"
                   }`} />
                 </button>
               </div>

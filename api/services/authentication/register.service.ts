@@ -6,7 +6,8 @@ import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE } from '
 import { generatePassword } from '../../helpers/hashing.helper'
 import { sign } from '../../helpers/jwt.helper'
 import { Organization } from '../../repository/organization.repository'
-import { createUser, findUser, updateUser } from '../../repository/user.repository'
+import { createUser, findUser, insertUserNotification, updateUser } from '../../repository/user.repository'
+import EmailSequenceService from '../../services/email/emailSequence.service'
 import { ApolloError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
@@ -50,6 +51,8 @@ async function registerUser(email: string, password: string, name: string, organ
       return new ApolloError('Your account is not yet verify')
     }
 
+    let newUserId: number | undefined
+
     await database.transaction(async (trx) => {
       const passwordHashed = await generatePassword(password)
 
@@ -60,20 +63,56 @@ async function registerUser(email: string, password: string, name: string, organ
         password_changed_at: dayjs().utc().format('YYYY-MM-DD HH:mm:ss'),
       }
 
-      const newUserId = await createUser(userData, trx)
+      const userId = await createUser(userData, trx)
 
-      if (typeof newUserId !== 'number') {
+      if (typeof userId !== 'number') {
         throw new ApolloError('Failed to create user.')
       }
 
-      const ids = await addUserToOrganization(newUserId, organization.id, ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE, trx)
+      newUserId = userId
+
+      // Create user_notifications record with onboarding emails enabled (within transaction)
+      try {
+        await insertUserNotification(userId, trx)
+        logger.info(`Created user_notifications record for user: ${email}`)
+      } catch (error) {
+        logger.error(`Failed to create user_notifications: ${email}`, error)
+        throw error // Fail the transaction if user_notifications creation fails
+      }
+
+      const ids = await addUserToOrganization(userId, organization.id, ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE, trx)
 
       if (!Array.isArray(ids) || ids.length === 0) {
         throw new ApolloError('Failed to add user to organization.')
       }
 
-      await updateUser(newUserId, { current_organization_id: organization.id }, trx)
+      await updateUser(userId, { current_organization_id: organization.id }, trx)
     })
+
+    // Send welcome email and schedule email sequence after transaction completes successfully
+    if (newUserId) {
+      try {
+        const welcomeEmailSent = await EmailSequenceService.sendWelcomeEmail(email, name, newUserId)
+        if (welcomeEmailSent) {
+          logger.info(`Welcome email sent successfully to new user: ${email}`)
+        } else {
+          logger.warn(`Welcome email failed to send to new user: ${email}`)
+        }
+
+        // Schedule the complete email sequence using 24-hour intervals
+        try {
+          const registrationTime = new Date()
+          const schedulingResult = await EmailSequenceService.scheduleEmailSequenceForUser(email, name, newUserId, registrationTime)
+          logger.info(`Email sequence scheduled for user: ${email} - ${schedulingResult.scheduled} emails scheduled, ${schedulingResult.failed} failed`)
+        } catch (error) {
+          logger.error(`Failed to schedule email sequence for user: ${email}`, error)
+          // Don't fail registration if email scheduling fails
+        }
+      } catch (error) {
+        logger.error(`Failed to send welcome email: ${email}`, error)
+        // Don't fail registration if welcome email fails
+      }
+    }
 
     const token = sign({ email, name })
 

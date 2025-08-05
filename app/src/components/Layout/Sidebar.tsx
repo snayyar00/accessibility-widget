@@ -1,8 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { ReactComponent as DashboardIcon } from '@/assets/images/svg/dashboard.svg';
-import { ReactComponent as UserIcon } from '@/assets/images/svg/user.svg';
 import { HiOutlineGlobeAlt } from 'react-icons/hi';
 import type { RootState } from '@/config/store';
 import { toggleSidebar } from '@/features/admin/sidebar';
@@ -11,6 +9,8 @@ import routes from '@/routes';
 import Dropdown from '@/containers/Dashboard/DropDown';
 import { GoGear } from 'react-icons/go';
 import { GrInstallOption } from 'react-icons/gr';
+import OrganizationsSelect from '@/containers/Dashboard/OrganizationsSelect';
+import { UserIcon } from 'lucide-react';
 
 const Sidebar = ({
   options,
@@ -19,8 +19,10 @@ const Sidebar = ({
   setSelectedOption,
 }: any) => {
   const dispatch = useDispatch();
-  const { t } = useTranslation();
+
   const { isOpen } = useSelector((state: RootState) => state.sidebar);
+
+  const { data: userData } = useSelector((state: RootState) => state.user);
   const organization = useSelector(
     (state: RootState) => state.organization.data,
   );
@@ -39,12 +41,13 @@ const Sidebar = ({
         />
       )}
       <div
-        className={`h-screen flex min-w-fit flex-col sm:fixed sm:bg-white sm:transition-all sm:duration-[400ms] 
-  ${isOpen ? 'sm:left-0 sm:z-[50]' : 'sm:-left-full sm:z-[50]'}`}
+        className={`h-screen flex w-[250px] flex-col sm:fixed sm:bg-white sm:transition-all sm:duration-[400ms] ${
+          isOpen ? 'sm:left-0 sm:z-[50]' : 'sm:-left-full sm:z-[50]'
+        }`}
       >
         <a
           href="/"
-          className="flex h-[81px] items-center px-4 border-b border-r border-solid border-gray"
+          className="flex h-[81px] flex-none items-center px-4 border-b border-r border-solid border-gray"
         >
           {organization?.logo_url ? (
             <img
@@ -59,7 +62,9 @@ const Sidebar = ({
         </a>
 
         <div className="flex-grow min-w-[250px] sm:w-[20%] md:w-[18%] lg:w-[15%] transition-all duration-300">
-          <div className="mb-2 w-full pl-6 border-l-2 border-transparent flex items-center">
+          <div className="px-3 py-5 space-y-3 max-w-full">
+            <OrganizationsSelect />
+
             <Dropdown
               data={options}
               setReloadSites={setReloadSites}
@@ -174,6 +179,28 @@ const Sidebar = ({
                   </NavLink>
                 </li>
               ))}
+
+            {userData.isAdminOrOwner && (
+              <li key="/users" className="h-[60px] flex items-center">
+                <NavLink
+                  to="/users"
+                  activeClassName="active"
+                  onClick={closeSidebar}
+                  className="w-full h-full flex items-center px-2 border-l-2 border-transparent [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200 [&.active>.menu-icon>svg_*[fill]]:fill-primary [&.active>.menu-icon>svg_*[stroke]]:stroke-primary"
+                >
+                  <div className="menu-icon flex items-center justify-center w-12 h-6">
+                    <UserIcon
+                      className="menu-icon text-white-blue transition-colors duration-200"
+                      size={25}
+                      aria-label="User navigation icon"
+                    />
+                  </div>
+                  <span className="menu-text text-lg text-white-blue ml-4">
+                    Users
+                  </span>
+                </NavLink>
+              </li>
+            )}
           </ul>
         </div>
       </div>
