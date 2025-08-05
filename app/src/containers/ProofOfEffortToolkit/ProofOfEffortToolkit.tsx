@@ -142,12 +142,23 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 20;
+    const contentWidth = pageWidth - (margin * 2);
 
-    // Clean white background with gradient header
+    // Helper function to check if we need a page break
+    const checkPageBreak = (requiredHeight: number, currentY: number) => {
+      if (currentY + requiredHeight > pageHeight - 30) {
+        doc.addPage();
+        return 25; // Return new Y position after page break
+      }
+      return currentY;
+    };
+
+    // PAGE 1: Title and Introduction
+    // Clean white background
     doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
-    // Blue gradient header
+    // Professional header
     doc.setFillColor(37, 99, 235);
     doc.rect(0, 0, pageWidth, 60, 'F');
 
@@ -158,129 +169,150 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     doc.setFontSize(24);
     doc.setTextColor(255, 255, 255);
     if (fontLoaded) {
-      doc.setFont('NotoSans_Condensed-Regular', 'normal');
+      doc.setFont('NotoSans_Condensed-Regular', 'bold');
+    } else {
+      doc.setFont('helvetica', 'bold');
     }
-    doc.text('Proof of Effort Toolkit', pageWidth / 2, currentY, { align: 'center' });
-    
-    // Subtitle
-    currentY += 12;
-    doc.setFontSize(14);
-    doc.text('Introduction & Getting Started Guide', pageWidth / 2, currentY, { align: 'center' });
+    doc.text('Intro to the Proof of Effort Toolkit', pageWidth / 2, currentY, { align: 'center' });
     
     // Date
-    currentY += 8;
+    currentY += 12;
     doc.setFontSize(10);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, currentY, { align: 'center' });
+    doc.setTextColor(219, 234, 254);
+    if (fontLoaded) {
+      doc.setFont('NotoSans_Condensed-Regular', 'normal');
+    }
+    doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })}`, pageWidth / 2, currentY, { align: 'center' });
 
     // Main content area
     currentY = 80;
     doc.setTextColor(51, 65, 85);
     
-    // Welcome section
-    doc.setFontSize(18);
+    // Introduction paragraphs (condensed)
+    const introText = [
+      'You\'ve taken steps to make your website accessible. The proof of effort toolkit compiles key documentation that showcases your commitment to accessibility. If your website\'s accessibility is ever challenged (i.e. you receive a demand letter), you\'ll have evidence to demonstrate your efforts and respond with confidence.',
+      'The proof of effort toolkit provides documentation that will help you draft a response to generic claims regarding alleged accessibility barriers. A generic claim is a broad, unspecific assertion about your website\'s accessibility, often without concrete evidence or a clear connection to your website.',
+      'Please note that WebAbility.io does not offer or provide legal advice or counseling and the information contained in this document or in the toolkit documents should not be taken as such. WebAbility.io encourages you to seek firm legal advice based on your specific circumstances.'
+    ];
+    
+    doc.setFontSize(11);
     if (fontLoaded) {
       doc.setFont('NotoSans_Condensed-Regular', 'normal');
+    } else {
+      doc.setFont('helvetica', 'normal');
     }
-    doc.text('Welcome to WebAbility.io', margin, currentY);
     
-    currentY += 15;
-    doc.setFontSize(12);
-    const welcomeText = 'Thank you for choosing WebAbility.io as your accessibility compliance partner. This toolkit provides you with comprehensive documentation and reports to demonstrate your commitment to web accessibility and legal compliance.';
-    const welcomeLines = doc.splitTextToSize(welcomeText, pageWidth - (margin * 2));
-    welcomeLines.forEach((line: string) => {
-      doc.text(line, margin, currentY);
-      currentY += 6;
+    introText.forEach(paragraph => {
+      const lines = doc.splitTextToSize(paragraph, contentWidth);
+      lines.forEach((line: string) => {
+        doc.text(line, margin, currentY);
+        currentY += 5;
+      });
+      currentY += 3; // Reduced spacing between paragraphs
     });
 
-    currentY += 10;
-
-    // What's Included section
-    doc.setFontSize(16);
+    // What's in the toolkit section (compact)
+    currentY += 5;
+    doc.setFontSize(14);
     doc.setTextColor(37, 99, 235);
-    doc.text('What\'s Included in This Toolkit', margin, currentY);
+    if (fontLoaded) {
+      doc.setFont('NotoSans_Condensed-Regular', 'bold');
+    } else {
+      doc.setFont('helvetica', 'bold');
+    }
+    doc.text('What\'s in the toolkit?', margin, currentY);
+    currentY += 8;
     
-    currentY += 15;
+    doc.setFontSize(11);
     doc.setTextColor(51, 65, 85);
-    doc.setFontSize(12);
+    if (fontLoaded) {
+      doc.setFont('NotoSans_Condensed-Regular', 'normal');
+    } else {
+      doc.setFont('helvetica', 'normal');
+    }
+    doc.text('The following documentation is included:', margin, currentY);
+    currentY += 8;
 
     const toolkitItems = [
       {
-        title: '1. Monthly Audit Report',
-        description: 'Comprehensive accessibility analysis of your website including issue identification, severity assessment, and detailed remediation guidance.'
+        title: '● Last monthly audit report:',
+        description: 'A professional automated accessibility audit with code examples and plain-language explanations of how your website meets essential requirements at the WCAG 2.1 AA level.'
       },
       {
-        title: '2. Accessibility Statement',
-        description: 'Official accessibility statement document demonstrating your commitment to WCAG 2.1, ADA, and Section 508 compliance standards.'
+        subtitle: '○ For additional reports, view your audit history in the Customer Portal.',
+        subsubtitle: '○ To produce a current audit report go to https://webability.io/accessscan and scan your website.'
       },
       {
-        title: '3. Compliance Documentation',
-        description: 'Supporting materials and evidence of your accessibility efforts for legal and regulatory purposes.'
+        title: '● Remediation report:',
+        description: 'An in-depth breakdown of the accessibility fixes applied to maintain your website\'s accessibility status. (Not available for the Micro/Standard plan)'
+      },
+      {
+        title: '● Accessibility statement:',
+        description: 'Your built-in accessibility statement shows your efforts to comply with the ADA in adherence to WCAG, and can be accessed by users at any time.'
+      },
+      {
+        title: '● AccessWidget latest invoice:',
+        description: 'Proof that you paid to make your website more accessible. Invoices are also available under Billing and Payments in the Customer Portal.'
       }
     ];
 
     toolkitItems.forEach((item) => {
-      // Item title
-      doc.setFontSize(13);
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'normal');
-      } else {
-        doc.setFont('helvetica', 'bold');
+      if (item.title) {
+        // Check if we need a page break
+        currentY = checkPageBreak(20, currentY);
+        
+        // Item title
+        doc.setFontSize(11);
+        doc.setTextColor(37, 99, 235);
+        if (fontLoaded) {
+          doc.setFont('NotoSans_Condensed-Regular', 'normal');
+        } else {
+          doc.setFont('helvetica', 'normal');
+        }
+        doc.text(item.title, margin, currentY);
+        currentY += 6;
+        
+        // Item description
+        doc.setFontSize(10);
+        doc.setTextColor(51, 65, 85);
+        const itemLines = doc.splitTextToSize(item.description, contentWidth - 10);
+        itemLines.forEach((line: string) => {
+          doc.text(line, margin + 10, currentY);
+          currentY += 4;
+        });
+        currentY += 3; // Reduced spacing
+      } else if (item.subtitle) {
+        // Check if we need a page break
+        currentY = checkPageBreak(12, currentY);
+        
+        // Subtitle
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139);
+        doc.text(item.subtitle, margin + 10, currentY);
+        currentY += 4;
+        
+        if (item.subsubtitle) {
+          doc.text(item.subsubtitle, margin + 10, currentY);
+          currentY += 4;
+        }
+        currentY += 2;
       }
-      doc.text(item.title, margin, currentY);
-      
-      currentY += 8;
-      doc.setFontSize(11);
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'normal');
-      } else {
-        doc.setFont('helvetica', 'normal');
-      }
-      
-      const itemLines = doc.splitTextToSize(item.description, pageWidth - (margin * 2) - 10);
-      itemLines.forEach((line: string) => {
-        doc.text(line, margin + 5, currentY);
-        currentY += 5;
-      });
-      
-      currentY += 10;
     });
 
-    // How to Use section
-    doc.setFontSize(16);
-    doc.setTextColor(37, 99, 235);
-    doc.text('How to Use This Toolkit', margin, currentY);
+    // Note section (compact)
+    currentY = checkPageBreak(15, currentY);
+    doc.setFillColor(254, 249, 195);
+    doc.roundedRect(margin - 3, currentY - 3, contentWidth + 6, 15, 2, 2, 'F');
     
-    currentY += 15;
+    doc.setFontSize(10);
     doc.setTextColor(51, 65, 85);
-    doc.setFontSize(12);
+    doc.text('Note: There are excluded issues that are not identified or remediated by accessWidget. See Excluded issues', margin, currentY + 3);
 
-    const usageSteps = [
-      'Review your Monthly Audit Report to understand current accessibility status',
-      'Share the Accessibility Statement with stakeholders and on your website',
-      'Use documentation for legal compliance and audit purposes',
-      'Download individual reports or the complete toolkit as needed',
-      'Schedule regular accessibility audits to maintain compliance'
-    ];
-
-    usageSteps.forEach((step, index) => {
-      const stepText = `${index + 1}. ${step}`;
-      const stepLines = doc.splitTextToSize(stepText, pageWidth - (margin * 2) - 10);
-      stepLines.forEach((line: string) => {
-        doc.text(line, margin + 5, currentY);
-        currentY += 5;
-      });
-      currentY += 5;
-    });
-
-
-    currentY += 10;
-    doc.setFontSize(11);
-    doc.setTextColor(37, 99, 235);
-    doc.text('Email: support@webability.io', margin, currentY);
-    currentY += 8;
-    doc.text('Website: www.webability.io', margin, currentY);
-
-    // Footer
+    // Footer for first page
     const footerY = pageHeight - 20;
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.3);
@@ -291,8 +323,97 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     if (fontLoaded) {
       doc.setFont('NotoSans_Condensed-Regular', 'normal');
     }
-    doc.text('WebAbility.io - Making the web accessible for everyone - www.webability.io', margin, footerY + 8);
-    doc.text('Confidential - For client use only', pageWidth - margin, footerY + 8, { align: 'right' });
+    doc.text('WebAbility.io - Making the web accessible for everyone - www.webability.io', margin, footerY + 6);
+    doc.text('Page 1 of 2', pageWidth - margin, footerY + 6, { align: 'right' });
+
+    // PAGE 2: How to use the toolkit
+    doc.addPage();
+    currentY = 25;
+    
+    // Page header
+    doc.setFontSize(18);
+    doc.setTextColor(37, 99, 235);
+    if (fontLoaded) {
+      doc.setFont('NotoSans_Condensed-Regular', 'bold');
+    } else {
+      doc.setFont('helvetica', 'bold');
+    }
+    doc.text('How to use the toolkit', margin, currentY);
+    currentY += 12;
+    
+    const howToUseText = [
+      'The combination of documents provided in the toolkit helps to provide proof of your effort to make your website more accessible for generic claims alleging accessibility barriers.',
+      'The documents can be sent to your lawyer to prompt the plaintiff to properly review the claim and point out specific alleged barriers to accessibility.',
+      'If you\'re on the Micro plan, upgrade to benefit from the full Litigation Support Package, including a dedicated accessibility expert, by contacting support@webability.io.',
+      'For other plans, learn how to use the full Litigation Support Package by visiting our documentation or contacting our support team.'
+    ];
+    
+    doc.setFontSize(11);
+    doc.setTextColor(51, 65, 85);
+    if (fontLoaded) {
+      doc.setFont('NotoSans_Condensed-Regular', 'normal');
+    } else {
+      doc.setFont('helvetica', 'normal');
+    }
+    
+    howToUseText.forEach(paragraph => {
+      currentY = checkPageBreak(20, currentY);
+      const lines = doc.splitTextToSize(paragraph, contentWidth);
+      lines.forEach((line: string) => {
+        doc.text(line, margin, currentY);
+        currentY += 5;
+      });
+      currentY += 3; // Reduced spacing
+    });
+
+    // Best practices section (compact)
+    currentY += 5;
+    currentY = checkPageBreak(25, currentY);
+    doc.setFontSize(14);
+    doc.setTextColor(37, 99, 235);
+    if (fontLoaded) {
+      doc.setFont('NotoSans_Condensed-Regular', 'bold');
+    } else {
+      doc.setFont('helvetica', 'bold');
+    }
+    doc.text('Best Practices for Documentation', margin, currentY);
+    currentY += 8;
+
+    const bestPractices = [
+      'Keep all documentation organized and easily accessible.',
+      'Regularly update your accessibility reports and statements.',
+      'Maintain records of all accessibility improvements made.',
+      'Consider implementing a regular accessibility audit schedule.',
+      'Document any accessibility training provided to your team.'
+    ];
+
+    doc.setFontSize(10);
+    doc.setTextColor(51, 65, 85);
+    if (fontLoaded) {
+      doc.setFont('NotoSans_Condensed-Regular', 'normal');
+    } else {
+      doc.setFont('helvetica', 'normal');
+    }
+
+    bestPractices.forEach((practice) => {
+      currentY = checkPageBreak(8, currentY);
+      doc.text(`• ${practice}`, margin, currentY);
+      currentY += 5;
+    });
+
+    // Footer for second page
+    const footerY2 = pageHeight - 20;
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.line(margin, footerY2, pageWidth - margin, footerY2);
+    
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    if (fontLoaded) {
+      doc.setFont('NotoSans_Condensed-Regular', 'normal');
+    }
+    doc.text('WebAbility.io - Making the web accessible for everyone - www.webability.io', margin, footerY2 + 6);
+    doc.text('Page 2 of 2', pageWidth - margin, footerY2 + 6, { align: 'right' });
 
     return doc.output('blob');
   } catch (error) {
@@ -434,9 +555,7 @@ const ProofOfEffortToolkit: React.FC = () => {
      // console.log('Step 1: Importing JSZip...');
       const JSZip = (await import('jszip')).default;
       const zip = new JSZip();
-      
-     // console.log('Step 2: Fetching latest report...');
-      // Fetch latest report once
+
       const latestReport = await fetchLatestReport(currentDomain);
       //console.log('Latest report fetched:', latestReport ? 'success' : 'null');
       
@@ -481,8 +600,12 @@ const ProofOfEffortToolkit: React.FC = () => {
 
       // Generate accessibility statement PDF
       try {
-        const statementPdf = await generateAccessibilityStatementPDF(reportDataForPdfs, 'en', currentDomain);
-        zip.file('Accessibility statement.pdf', statementPdf);
+        const statementPdf = await generateAndViewAccessibilityStatementPDF(3);
+        if (statementPdf) {
+          zip.file('Accessibility statement.pdf', statementPdf);
+        } else {
+          throw new Error('Failed to generate accessibility statement PDF');
+        }
       } catch (error) {
         console.error('Error generating accessibility statement PDF:', error);
         toast.dismiss(loadingToastId);
@@ -663,7 +786,7 @@ const ProofOfEffortToolkit: React.FC = () => {
   };
 
   // Function to generate and view accessibility statement PDF (using same format as download)
-  const generateAndViewAccessibilityStatementPDF = async () => {
+  const generateAndViewAccessibilityStatementPDF = async (type?: number): Promise<Blob | void> => {
     try {
       const { jsPDF } = await import('jspdf');
       
@@ -690,19 +813,65 @@ const ProofOfEffortToolkit: React.FC = () => {
       // Page dimensions
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 20;
+      const margin = 25;
+      const contentWidth = pageWidth - (margin * 2);
 
       // Clean white background
       doc.setFillColor(255, 255, 255);
       doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
-      // Professional header with blue accent
-      doc.setFillColor(37, 99, 235);
-      doc.rect(0, 0, pageWidth, 3, 'F');
-
-      let currentY = 15;
+      let currentY = 30;
       
-      // Company logo with proper scaling
+      // Header section with exact positioning
+      // Main title - large, bold blue font
+      doc.setFontSize(28);
+      doc.setTextColor(37, 99, 235);
+      if (fontLoaded) {
+        doc.setFont('NotoSans_Condensed-Regular', 'bold');
+      } else {
+        doc.setFont('helvetica', 'bold');
+      }
+      doc.text('Accessibility Statement', margin, currentY);
+      
+      currentY += 10;
+      
+      // Domain and date information with proper spacing
+      doc.setFontSize(14);
+      doc.setTextColor(51, 65, 85);
+      if (fontLoaded) {
+        doc.setFont('NotoSans_Condensed-Regular', 'normal');
+      } else {
+        doc.setFont('helvetica', 'normal');
+      }
+      
+      // Domain name
+      const domainName = currentDomain || 'webability.io';
+      doc.text(domainName, margin, currentY);
+      
+      // Vertical line separator with exact positioning
+      const domainWidth = doc.getTextWidth(domainName);
+     
+      // Date with proper spacing
+      const dateText = new Date().toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      doc.text(dateText, margin + domainWidth + 15, currentY);
+      
+      // "Issued by" section in top-right with exact positioning (bold)
+      const issuedByText = 'Issued by';
+      const issuedByWidth = doc.getTextWidth(issuedByText);
+      doc.setFontSize(11);
+      doc.setTextColor(51, 65, 85);
+      if (fontLoaded) {
+        doc.setFont('NotoSans_Condensed-Regular', 'bold');
+      } else {
+        doc.setFont('helvetica', 'bold');
+      }
+      doc.text(issuedByText, pageWidth - margin - issuedByWidth - 24, 30);
+      
+      // WebAbility.io logo in top-right with improved positioning
       try {
         const logoImage = '/images/logo.png';
         const img = new Image();
@@ -721,171 +890,137 @@ const ProofOfEffortToolkit: React.FC = () => {
           };
         });
         
-                  // Calculate proper dimensions while maintaining aspect ratio
-          const maxWidth = 48;
-          const maxHeight = 36;
-          const aspectRatio = img.width / img.height;
-          
-          let drawWidth = maxWidth;
-          let drawHeight = maxWidth / aspectRatio;
-          
-          if (drawHeight > maxHeight) {
-            drawHeight = maxHeight;
-            drawWidth = maxHeight * aspectRatio;
-          }
+        // Calculate proper dimensions while maintaining aspect ratio
+        const maxWidth = 45;
+        const maxHeight = 35;
+        const aspectRatio = img.width / img.height;
         
-        doc.addImage(logoImage, 'PNG', margin, currentY, drawWidth, drawHeight);
+        let drawWidth = maxWidth;
+        let drawHeight = maxWidth / aspectRatio;
+        
+        if (drawHeight > maxHeight) {
+          drawHeight = maxHeight;
+          drawWidth = maxHeight * aspectRatio;
+        }
+        
+        // Position logo in top-right corner with exact positioning
+        const logoX = pageWidth - margin - drawWidth;
+        const logoY = 35;
+        
+        doc.addImage(logoImage, 'PNG', logoX, logoY, drawWidth, drawHeight);
       } catch (e) {
-        // If logo fails, add company name instead
+        // If logo fails, fall back to text with exact positioning
         doc.setFontSize(14);
         doc.setTextColor(37, 99, 235);
         if (fontLoaded) {
-          doc.setFont('NotoSans_Condensed-Regular', 'normal');
-        }
-        doc.text('WebAbility.io', margin, currentY + 10);
-      }
-      
-      // Document title (right aligned)
-      doc.setFontSize(18);
-      doc.setTextColor(30, 41, 59);
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'normal');
-      }
-      doc.text('Accessibility Statement', pageWidth - margin, currentY + 8, { align: 'right' });
-      
-      // Date (right aligned, smaller)
-      doc.setFontSize(10);
-      doc.setTextColor(100, 116, 139);
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'normal');
-      }
-      doc.text('Last updated: July 25, 2025', pageWidth - margin, currentY + 18, { align: 'right' });
-      
-      currentY += 30;
-      
-      // Compliance badges in a more compact layout
-      doc.setFontSize(10);
-      doc.setTextColor(100, 116, 139);
-      doc.text('Compliance Standards:', margin, currentY);
-      
-      const badges = ['WCAG 2.1', 'ADA', 'Section 508'];
-      const badgeColors = [[16, 185, 129], [59, 130, 246], [139, 92, 246]];
-      
-      let badgeX = margin + 60;
-      badges.forEach((badge, index) => {
-        doc.setFillColor(badgeColors[index][0], badgeColors[index][1], badgeColors[index][2]);
-        doc.roundedRect(badgeX, currentY - 3, 28, 10, 2, 2, 'F');
-        doc.setFontSize(7);
-        doc.setTextColor(255, 255, 255);
-        if (fontLoaded) {
-          doc.setFont('NotoSans_Condensed-Regular', 'normal');
-        }
-        doc.text(badge, badgeX + 14, currentY + 3, { align: 'center' });
-        badgeX += 32;
-      });
-      
-      currentY += 15;
-
-      // Content sections with optimized single-page layout
-      const contentWidth = pageWidth - (margin * 2);
-
-      // More concise sections for single-page layout
-      const sections = [
-        {
-          title: 'Our Commitment',
-          content: 'WebAbility.io is committed to ensuring digital accessibility for people with disabilities. We believe that website accessibility efforts benefit all users and that every person has the right to live with dignity, equality, comfort, and independence.'
-        },
-        {
-          title: 'Accessibility Features',
-          content: 'Our website includes a comprehensive accessibility widget powered by dedicated accessibility technology. This allows us to improve compliance with Web Content Accessibility Guidelines (WCAG 2.1) and provide enhanced user experience for all visitors.'
-        },
-        {
-          title: 'How to Use Accessibility Features',
-          content: 'The accessibility menu can be activated by clicking the accessibility icon in the corner of any page. Please allow a moment for the menu to fully load and display all available options.'
-        },
-        {
-          title: 'Ongoing Improvements',
-          content: 'We continuously work to improve our site\'s accessibility through regular audits and updates. While we strive for full compliance, some content may require ongoing adaptation to meet the strictest accessibility standards.'
-        },
-        {
-          title: 'Contact & Support',
-          content: 'If you experience any accessibility issues or need assistance, please contact us at support@webability.io. We are committed to addressing accessibility concerns promptly and providing the support you need.'
-        }
-      ];
-
-      // Compact single-column layout rendering
-      sections.forEach((section, index) => {
-        // Section title with colored background
-        doc.setFillColor(248, 250, 252); // Light gray background
-        doc.roundedRect(margin - 2, currentY - 2, contentWidth + 4, 8, 2, 2, 'F');
-        
-        doc.setFontSize(13);
-        doc.setTextColor(37, 99, 235);
-        if (fontLoaded) {
-          doc.setFont('NotoSans_Condensed-Regular', 'normal');
+          doc.setFont('NotoSans_Condensed-Regular', 'bold');
         } else {
           doc.setFont('helvetica', 'bold');
         }
-        doc.text(section.title, margin, currentY + 5);
-        currentY += 10;
-        
-        // Section content with tighter spacing
-        doc.setFontSize(11);
-        doc.setTextColor(51, 65, 85);
-        if (fontLoaded) {
-          doc.setFont('NotoSans_Condensed-Regular', 'normal');
-        } else {
-          doc.setFont('helvetica', 'normal');
-        }
-        
-        const lines = doc.splitTextToSize(section.content, contentWidth);
-        for (const line of lines) {
-          doc.text(line, margin, currentY);
-          currentY += 5; // Better line spacing for readability
-        }
-        currentY += 5; // Better space between sections
-      });
+        doc.text('WebAbility.io', pageWidth - margin, 40, { align: 'right' });
+      }
       
-      currentY += 5;
 
-      // Footer
-      const footerY = pageHeight - 15;
+      // Add a horizontal line below the header section
+      doc.setDrawColor(226, 232, 240); // light gray
+      doc.setLineWidth(0.7);
+      doc.line(margin, currentY + 8, pageWidth - margin, currentY + 8);
+      // Main content section with proper spacing
+      currentY += 25;
+      
+      // Compliance status section header
+      doc.setFontSize(18);
+      doc.setTextColor(0, 0, 0);
+      if (fontLoaded) {
+        doc.setFont('NotoSans_Condensed-Regular', 'bold');
+      } else {
+        doc.setFont('helvetica', 'bold');
+      }
+      doc.text('Compliance status', margin, currentY);
+      
+      currentY += 15;
+      
+      // Compliance status content with exact formatting
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      if (fontLoaded) {
+        doc.setFont('NotoSans_Condensed-Regular', 'normal');
+      } else {
+        doc.setFont('helvetica', 'normal');
+      }
+      
+      const complianceText = [
+        'We firmly believe that the internet should be available and accessible to anyone and are committed to providing a website that is accessible to the broadest possible audience, regardless of ability.',
+        'To fulfill this, we aim to adhere as strictly as possible to the World Wide Web Consortium\'s (W3C) Web Content Accessibility Guidelines 2.1 (WCAG 2.1) at the AA level. These guidelines explain how to make web content accessible to people with a wide array of disabilities. Complying with those guidelines helps us ensure that the website is accessible to blind people, people with motor impairments, visual impairment, cognitive disabilities, and more.',
+        'This website utilizes various technologies that are meant to make it as accessible as possible at all times. We utilize an accessibility interface that allows persons with specific disabilities to adjust the website\'s UI (user interface) and design it to their personal needs.',
+        'Additionally, the website utilizes an AI-based application that runs in the background and optimizes its accessibility level constantly. This application remediates the website\'s HTML, adapts its functionality and behavior for screen-readers used by blind users, and for keyboard functions used by individuals with motor impairments.',
+        'If you\'ve found a malfunction or have ideas for improvement, we\'ll be happy to hear from you. You can reach out to the website\'s operators by using the following email: support@webability.io'
+      ];
+      
+      complianceText.forEach((paragraph, index) => {
+        const lines = doc.splitTextToSize(paragraph, contentWidth);
+        lines.forEach((line: string) => {
+          doc.text(line, margin, currentY);
+          currentY += 6;
+        });
+        // Add proper spacing between paragraphs
+        currentY += (index < complianceText.length - 1) ? 4 : 0;
+      });
+
+      // Footer with exact positioning
+      const footerY = pageHeight - 25;
       doc.setDrawColor(226, 232, 240);
       doc.setLineWidth(0.3);
       doc.line(margin, footerY, pageWidth - margin, footerY);
       
-      doc.setFontSize(8);
+      doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
       if (fontLoaded) {
         doc.setFont('NotoSans_Condensed-Regular', 'normal');
       }
-      doc.text('WebAbility.io - Web Accessibility Solutions - www.webability.io', margin, footerY + 5);
+      doc.text('WebAbility.io - Making the web accessible for everyone - www.webability.io', margin, footerY + 10);
 
-      // Generate blob and open in new tab
-      const pdfBlob = doc.output('blob');
-      const url = URL.createObjectURL(pdfBlob);
-      const newWindow = window.open(url, '_blank');
-      
-      // Clean up the URL after a delay
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 10000);
-      
-      // If popup was blocked, offer download as fallback
-      if (!newWindow) {
-        toast.error('Popup blocked. PDF will be downloaded instead.');
-        const link = window.document.createElement('a');
-        link.href = url;
-        link.download = 'WebAbility-Accessibility-Statement.pdf';
-        window.document.body.appendChild(link);
-        link.click();
-        window.document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }
+      if(type==1)
+      {
+            // Generate blob and open in new tab
+            const pdfBlob = doc.output('blob');
+            const url = URL.createObjectURL(pdfBlob);
+            const newWindow = window.open(url, '_blank');
+            
+            // Clean up the URL after a delay
+            setTimeout(() => {
+              URL.revokeObjectURL(url);
+            }, 10000);
+            
+            // If popup was blocked, offer download as fallback
+            if (!newWindow) {
+              toast.error('Popup blocked. PDF will be downloaded instead.');
+              const link = window.document.createElement('a');
+              link.href = url;
+              link.download = 'WebAbility-Accessibility-Statement.pdf';
+              window.document.body.appendChild(link);
+              link.click();
+              window.document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            }   
+            return;
+     }
+     else if(type==2)
+     {
+       doc.save('WebAbility-Accessibility-Statement.pdf');
+       return;
+     }
+     else if(type==3)
+     {
+       return doc.output('blob');
+     }
+     
+     return;
       
     } catch (error) {
       console.error('Error generating accessibility statement PDF for viewing:', error);
       toast.error('Failed to generate accessibility statement PDF');
+      return;
     }
   };
 
@@ -923,176 +1058,207 @@ const ProofOfEffortToolkit: React.FC = () => {
       }
 
               // 2. Generate Accessibility Statement PDF
-        try {
-          const { jsPDF } = await import('jspdf');
+              try {
+                const { jsPDF } = await import('jspdf');
+                
+                // Load custom font
+                let fontLoaded = true;
+                try {
+                  // @ts-ignore
+                  window.jsPDF = jsPDF;
+                  // @ts-ignore
+                  require('@/assets/fonts/NotoSans-normal.js');
+                  // @ts-ignore
+                  delete window.jsPDF;
+                } catch (e) {
+                  console.error('Failed to load custom font for jsPDF:', e);
+                  fontLoaded = false;
+                }
           
-          // Load custom font
-          let fontLoaded = true;
-          try {
-            // @ts-ignore
-            window.jsPDF = jsPDF;
-            // @ts-ignore
-            require('@/assets/fonts/NotoSans-normal.js');
-            // @ts-ignore
-            delete window.jsPDF;
-          } catch (e) {
-            console.error('Failed to load custom font for jsPDF:', e);
-            fontLoaded = false;
-          }
+                const doc = new jsPDF();
+                
+                if (!fontLoaded) {
+                  doc.setFont('helvetica', 'normal');
+                }
+          
+                // Page dimensions
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const margin = 25;
+                const contentWidth = pageWidth - (margin * 2);
+          
+                // Clean white background
+                doc.setFillColor(255, 255, 255);
+                doc.rect(0, 0, pageWidth, pageHeight, 'F');
+          
+                let currentY = 30;
+                
+                // Header section with exact positioning
+                // Main title - large, bold blue font
+                doc.setFontSize(28);
+                doc.setTextColor(37, 99, 235);
+                if (fontLoaded) {
+                  doc.setFont('NotoSans_Condensed-Regular', 'bold');
+                } else {
+                  doc.setFont('helvetica', 'bold');
+                }
+                doc.text('Accessibility Statement', margin, currentY);
+                
+                currentY += 10;
+                
+                // Domain and date information with proper spacing
+                doc.setFontSize(14);
+                doc.setTextColor(51, 65, 85);
+                if (fontLoaded) {
+                  doc.setFont('NotoSans_Condensed-Regular', 'normal');
+                } else {
+                  doc.setFont('helvetica', 'normal');
+                }
+                
+                // Domain name
+                const domainName = currentDomain || 'webability.io';
+                doc.text(domainName, margin, currentY);
+                
+                // Vertical line separator with exact positioning
+                const domainWidth = doc.getTextWidth(domainName);
+               
+                // Date with proper spacing
+                const dateText = new Date().toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                });
+                doc.text(dateText, margin + domainWidth + 15, currentY);
+                
+                // "Issued by" section in top-right with exact positioning (bold)
+                const issuedByText = 'Issued by';
+                const issuedByWidth = doc.getTextWidth(issuedByText);
+                doc.setFontSize(11);
+                doc.setTextColor(51, 65, 85);
+                if (fontLoaded) {
+                  doc.setFont('NotoSans_Condensed-Regular', 'bold');
+                } else {
+                  doc.setFont('helvetica', 'bold');
+                }
+                doc.text(issuedByText, pageWidth - margin - issuedByWidth - 24, 30);
+                
+                // WebAbility.io logo in top-right with improved positioning
+                try {
+                  const logoImage = '/images/logo.png';
+                  const img = new Image();
+                  img.src = logoImage;
+                  
+                  // Wait for image to load to get proper dimensions
+                  await new Promise<void>((resolve, reject) => {
+                    const timeout = setTimeout(() => reject(new Error('Logo load timeout')), 3000);
+                    img.onload = () => {
+                      clearTimeout(timeout);
+                      resolve();
+                    };
+                    img.onerror = () => {
+                      clearTimeout(timeout);
+                      reject(new Error('Logo load failed'));
+                    };
+                  });
+                  
+                  // Calculate proper dimensions while maintaining aspect ratio
+                  const maxWidth = 45;
+                  const maxHeight = 35;
+                  const aspectRatio = img.width / img.height;
+                  
+                  let drawWidth = maxWidth;
+                  let drawHeight = maxWidth / aspectRatio;
+                  
+                  if (drawHeight > maxHeight) {
+                    drawHeight = maxHeight;
+                    drawWidth = maxHeight * aspectRatio;
+                  }
+                  
+                  // Position logo in top-right corner with exact positioning
+                  const logoX = pageWidth - margin - drawWidth;
+                  const logoY = 35;
+                  
+                  doc.addImage(logoImage, 'PNG', logoX, logoY, drawWidth, drawHeight);
+                } catch (e) {
+                  // If logo fails, fall back to text with exact positioning
+                  doc.setFontSize(14);
+                  doc.setTextColor(37, 99, 235);
+                  if (fontLoaded) {
+                    doc.setFont('NotoSans_Condensed-Regular', 'bold');
+                  } else {
+                    doc.setFont('helvetica', 'bold');
+                  }
+                  doc.text('WebAbility.io', pageWidth - margin, 40, { align: 'right' });
+                }
+                
+          
+                // Add a horizontal line below the header section
+                doc.setDrawColor(226, 232, 240); // light gray
+                doc.setLineWidth(0.7);
+                doc.line(margin, currentY + 8, pageWidth - margin, currentY + 8);
+                // Main content section with proper spacing
+                currentY += 25;
+                
+                // Compliance status section header
+                doc.setFontSize(18);
+                doc.setTextColor(0, 0, 0);
+                if (fontLoaded) {
+                  doc.setFont('NotoSans_Condensed-Regular', 'bold');
+                } else {
+                  doc.setFont('helvetica', 'bold');
+                }
+                doc.text('Compliance status', margin, currentY);
+                
+                currentY += 15;
+                
+                // Compliance status content with exact formatting
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                if (fontLoaded) {
+                  doc.setFont('NotoSans_Condensed-Regular', 'normal');
+                } else {
+                  doc.setFont('helvetica', 'normal');
+                }
+                
+                const complianceText = [
+                  'We firmly believe that the internet should be available and accessible to anyone and are committed to providing a website that is accessible to the broadest possible audience, regardless of ability.',
+                  'To fulfill this, we aim to adhere as strictly as possible to the World Wide Web Consortium\'s (W3C) Web Content Accessibility Guidelines 2.1 (WCAG 2.1) at the AA level. These guidelines explain how to make web content accessible to people with a wide array of disabilities. Complying with those guidelines helps us ensure that the website is accessible to blind people, people with motor impairments, visual impairment, cognitive disabilities, and more.',
+                  'This website utilizes various technologies that are meant to make it as accessible as possible at all times. We utilize an accessibility interface that allows persons with specific disabilities to adjust the website\'s UI (user interface) and design it to their personal needs.',
+                  'Additionally, the website utilizes an AI-based application that runs in the background and optimizes its accessibility level constantly. This application remediates the website\'s HTML, adapts its functionality and behavior for screen-readers used by blind users, and for keyboard functions used by individuals with motor impairments.',
+                  'If you\'ve found a malfunction or have ideas for improvement, we\'ll be happy to hear from you. You can reach out to the website\'s operators by using the following email: support@webability.io'
+                ];
+                
+                complianceText.forEach((paragraph, index) => {
+                  const lines = doc.splitTextToSize(paragraph, contentWidth);
+                  lines.forEach((line: string) => {
+                    doc.text(line, margin, currentY);
+                    currentY += 6;
+                  });
+                  // Add proper spacing between paragraphs
+                  currentY += (index < complianceText.length - 1) ? 4 : 0;
+                });
+          
+                // Footer with exact positioning
+                const footerY = pageHeight - 25;
+                doc.setDrawColor(226, 232, 240);
+                doc.setLineWidth(0.3);
+                doc.line(margin, footerY, pageWidth - margin, footerY);
+                
+                doc.setFontSize(9);
+                doc.setTextColor(100, 116, 139);
+                if (fontLoaded) {
+                  doc.setFont('NotoSans_Condensed-Regular', 'normal');
+                }
+                doc.text('WebAbility.io - Making the web accessible for everyone - www.webability.io', margin, footerY + 10);
+          
+                const statementBlob = await generateAndViewAccessibilityStatementPDF(3);
+                if (statementBlob) {
+                  pdfs['2-Accessibility-Statement.pdf'] = statementBlob;
+                } else {
+                  throw new Error('Failed to generate accessibility statement PDF');
+                }
 
-          const doc = new jsPDF();
-          
-          if (!fontLoaded) {
-            doc.setFont('helvetica', 'normal');
-          }
-
-          // Page dimensions
-          const pageWidth = doc.internal.pageSize.getWidth();
-          const pageHeight = doc.internal.pageSize.getHeight();
-          const margin = 20;
-
-          // Clean white background
-          doc.setFillColor(255, 255, 255);
-          doc.rect(0, 0, pageWidth, pageHeight, 'F');
-
-          // Professional header with blue accent
-          doc.setFillColor(37, 99, 235);
-          doc.rect(0, 0, pageWidth, 3, 'F');
-
-          let currentY = 15;
-          
-          // Company logo or name
-          try {
-            const logoImage = '/images/logo.png';
-            doc.addImage(logoImage, 'PNG', margin, currentY, 30, 15);
-          } catch (e) {
-            // If logo fails, add company name instead
-            doc.setFontSize(12);
-            doc.setTextColor(37, 99, 235);
-            if (fontLoaded) {
-              doc.setFont('NotoSans_Condensed-Regular', 'normal');
-            }
-            doc.text('WebAbility.io', margin, currentY + 8);
-          }
-          
-          // Document title (right aligned)
-          doc.setFontSize(16);
-          doc.setTextColor(30, 41, 59);
-          if (fontLoaded) {
-            doc.setFont('NotoSans_Condensed-Regular', 'normal');
-          }
-          doc.text('Accessibility Statement', pageWidth - margin, currentY + 6, { align: 'right' });
-          
-          // Date (right aligned, smaller)
-          doc.setFontSize(9);
-          doc.setTextColor(100, 116, 139);
-          if (fontLoaded) {
-            doc.setFont('NotoSans_Condensed-Regular', 'normal');
-          }
-          doc.text('Last updated: July 25, 2025', pageWidth - margin, currentY + 15, { align: 'right' });
-          
-          currentY += 30;
-          
-          // Compliance badges in a more compact layout
-          doc.setFontSize(8);
-          doc.setTextColor(100, 116, 139);
-          doc.text('Compliance Standards:', margin, currentY);
-          
-          const badges = ['WCAG 2.1', 'ADA', 'Section 508'];
-          const badgeColors = [[16, 185, 129], [59, 130, 246], [139, 92, 246]];
-          
-          let badgeX = margin + 50;
-          badges.forEach((badge, index) => {
-            doc.setFillColor(badgeColors[index][0], badgeColors[index][1], badgeColors[index][2]);
-            doc.roundedRect(badgeX, currentY - 3, 25, 8, 2, 2, 'F');
-            doc.setFontSize(6);
-            doc.setTextColor(255, 255, 255);
-            if (fontLoaded) {
-              doc.setFont('NotoSans_Condensed-Regular', 'normal');
-            }
-            doc.text(badge, badgeX + 12.5, currentY + 2, { align: 'center' });
-            badgeX += 30;
-          });
-          
-          currentY += 15;
-
-          // Content sections with optimized single-page layout
-          const contentWidth = pageWidth - (margin * 2);
-
-          // More concise sections for single-page layout
-          const sections = [
-            {
-              title: 'Our Commitment',
-              content: 'WebAbility.io is committed to ensuring digital accessibility for people with disabilities. We believe that website accessibility efforts benefit all users and that every person has the right to live with dignity, equality, comfort, and independence.'
-            },
-            {
-              title: 'Accessibility Features',
-              content: 'Our website includes a comprehensive accessibility widget powered by dedicated accessibility technology. This allows us to improve compliance with Web Content Accessibility Guidelines (WCAG 2.1) and provide enhanced user experience for all visitors.'
-            },
-            {
-              title: 'How to Use Accessibility Features',
-              content: 'The accessibility menu can be activated by clicking the accessibility icon in the corner of any page. Please allow a moment for the menu to fully load and display all available options.'
-            },
-            {
-              title: 'Ongoing Improvements',
-              content: 'We continuously work to improve our site\'s accessibility through regular audits and updates. While we strive for full compliance, some content may require ongoing adaptation to meet the strictest accessibility standards.'
-            },
-            {
-              title: 'Contact & Support',
-              content: 'If you experience any accessibility issues or need assistance, please contact us at support@webability.io. We are committed to addressing accessibility concerns promptly and providing the support you need.'
-            }
-          ];
-
-          // Compact single-column layout rendering
-          sections.forEach((section, index) => {
-            // Section title with colored background
-            doc.setFillColor(248, 250, 252); // Light gray background
-            doc.roundedRect(margin - 2, currentY - 2, contentWidth + 4, 8, 2, 2, 'F');
-            
-            doc.setFontSize(11);
-            doc.setTextColor(37, 99, 235);
-            if (fontLoaded) {
-              doc.setFont('NotoSans_Condensed-Regular', 'normal');
-            } else {
-              doc.setFont('helvetica', 'bold');
-            }
-            doc.text(section.title, margin, currentY + 4);
-            currentY += 8;
-            
-            // Section content with tighter spacing
-            doc.setFontSize(9);
-            doc.setTextColor(51, 65, 85);
-            if (fontLoaded) {
-              doc.setFont('NotoSans_Condensed-Regular', 'normal');
-            } else {
-              doc.setFont('helvetica', 'normal');
-            }
-            
-            const lines = doc.splitTextToSize(section.content, contentWidth);
-            for (const line of lines) {
-              doc.text(line, margin, currentY);
-              currentY += 4; // Tighter line spacing
-            }
-            currentY += 3; // Reduced space between sections
-          });
-          
-          currentY += 5;
-
-          // Footer
-          const footerY = pageHeight - 15;
-          doc.setDrawColor(226, 232, 240);
-          doc.setLineWidth(0.3);
-          doc.line(margin, footerY, pageWidth - margin, footerY);
-          
-          doc.setFontSize(7);
-          doc.setTextColor(100, 116, 139);
-          if (fontLoaded) {
-            doc.setFont('NotoSans_Condensed-Regular', 'normal');
-          }
-          doc.text('WebAbility.io - Web Accessibility Solutions - www.webability.io', margin, footerY + 5);
-
-          pdfs['2-Accessibility-Statement.pdf'] = doc.output('blob');
-      } catch (error) {
+              } catch (error) {
         console.error('Error generating accessibility statement PDF for zip:', error);
         toast.error('Failed to generate accessibility statement PDF');
         return;
@@ -1174,7 +1340,7 @@ const ProofOfEffortToolkit: React.FC = () => {
     if (document.type === 'statement' && document.externalUrl) {
       // Generate and display the accessibility statement PDF
       try {
-        await generateAndViewAccessibilityStatementPDF();
+        await generateAndViewAccessibilityStatementPDF(1);
         toast.success('Accessibility statement PDF opened in new tab!');
       } catch (error) {
         toast.dismiss();
@@ -1238,7 +1404,7 @@ const ProofOfEffortToolkit: React.FC = () => {
     } else if (document.name === 'Intro to the toolkit') {
       // Generate and display the intro to toolkit PDF
       try {
-        toast.loading('Generating intro PDF...');
+        //toast.loading('Generating intro PDF...');
         
         const pdfBlob = await generateIntroToToolkitPDF();
         
@@ -2110,207 +2276,10 @@ const ProofOfEffortToolkit: React.FC = () => {
   const handleDownloadDocument = async (document: Document) => {
     if (document.type === 'statement') {
       // Generate and download the accessibility statement PDF (simple version without report data)
-      try {
-        const { jsPDF } = await import('jspdf');
-        
-        // Load custom font
-        let fontLoaded = true;
-        try {
-          // @ts-ignore
-          window.jsPDF = jsPDF;
-          // @ts-ignore
-          require('@/assets/fonts/NotoSans-normal.js');
-          // @ts-ignore
-          delete window.jsPDF;
-        } catch (e) {
-          console.error('Failed to load custom font for jsPDF:', e);
-          fontLoaded = false;
-        }
-
-        const doc = new jsPDF();
-        
-        if (!fontLoaded) {
-          doc.setFont('helvetica', 'normal');
-        }
-
-        // Page dimensions
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const margin = 20;
-
-        // Clean white background
-        doc.setFillColor(255, 255, 255);
-        doc.rect(0, 0, pageWidth, pageHeight, 'F');
-
-        // Professional header with blue accent
-        doc.setFillColor(37, 99, 235);
-        doc.rect(0, 0, pageWidth, 3, 'F');
-
-        let currentY = 15;
-        
-        // Company logo with proper scaling
-        try {
-          const logoImage = '/images/logo.png';
-          const img = new Image();
-          img.src = logoImage;
-          
-          // Wait for image to load to get proper dimensions
-          await new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('Logo load timeout')), 3000);
-            img.onload = () => {
-              clearTimeout(timeout);
-              resolve();
-            };
-            img.onerror = () => {
-              clearTimeout(timeout);
-              reject(new Error('Logo load failed'));
-            };
-          });
-          
-          // Calculate proper dimensions while maintaining aspect ratio
-          const maxWidth = 48;
-          const maxHeight = 36;
-          const aspectRatio = img.width / img.height;
-          
-          let drawWidth = maxWidth;
-          let drawHeight = maxWidth / aspectRatio;
-          
-          if (drawHeight > maxHeight) {
-            drawHeight = maxHeight;
-            drawWidth = maxHeight * aspectRatio;
-          }
-          
-          doc.addImage(logoImage, 'PNG', margin, currentY, drawWidth, drawHeight);
-        } catch (e) {
-          // If logo fails, add company name instead
-          doc.setFontSize(14);
-          doc.setTextColor(37, 99, 235);
-          if (fontLoaded) {
-            doc.setFont('NotoSans_Condensed-Regular', 'normal');
-          }
-          doc.text('WebAbility.io', margin, currentY + 10);
-        }
-        
-        // Document title (right aligned)
-        doc.setFontSize(18);
-        doc.setTextColor(30, 41, 59);
-        if (fontLoaded) {
-          doc.setFont('NotoSans_Condensed-Regular', 'normal');
-        }
-        doc.text('Accessibility Statement', pageWidth - margin, currentY + 8, { align: 'right' });
-        
-        // Date (right aligned, smaller)
-        doc.setFontSize(10);
-        doc.setTextColor(100, 116, 139);
-        if (fontLoaded) {
-          doc.setFont('NotoSans_Condensed-Regular', 'normal');
-        }
-        doc.text('Last updated: July 25, 2025', pageWidth - margin, currentY + 18, { align: 'right' });
-        
-        currentY += 30;
-        
-        // Compliance badges in a more compact layout
-        doc.setFontSize(10);
-        doc.setTextColor(100, 116, 139);
-        doc.text('Compliance Standards:', margin, currentY);
-        
-        const badges = ['WCAG 2.1', 'ADA', 'Section 508'];
-        const badgeColors = [[16, 185, 129], [59, 130, 246], [139, 92, 246]];
-        
-        let badgeX = margin + 60;
-        badges.forEach((badge, index) => {
-          doc.setFillColor(badgeColors[index][0], badgeColors[index][1], badgeColors[index][2]);
-          doc.roundedRect(badgeX, currentY - 3, 28, 10, 2, 2, 'F');
-          doc.setFontSize(7);
-          doc.setTextColor(255, 255, 255);
-          if (fontLoaded) {
-            doc.setFont('NotoSans_Condensed-Regular', 'normal');
-          }
-          doc.text(badge, badgeX + 14, currentY + 3, { align: 'center' });
-          badgeX += 32;
-        });
-        
-        currentY += 15;
-
-        // Content sections with optimized single-page layout
-        const contentWidth = pageWidth - (margin * 2);
-
-        // More concise sections for single-page layout
-        const sections = [
-          {
-            title: 'Our Commitment',
-            content: 'WebAbility.io is committed to ensuring digital accessibility for people with disabilities. We believe that website accessibility efforts benefit all users and that every person has the right to live with dignity, equality, comfort, and independence.'
-          },
-          {
-            title: 'Accessibility Features',
-            content: 'Our website includes a comprehensive accessibility widget powered by dedicated accessibility technology. This allows us to improve compliance with Web Content Accessibility Guidelines (WCAG 2.1) and provide enhanced user experience for all visitors.'
-          },
-          {
-            title: 'How to Use Accessibility Features',
-            content: 'The accessibility menu can be activated by clicking the accessibility icon in the corner of any page. Please allow a moment for the menu to fully load and display all available options.'
-          },
-          {
-            title: 'Ongoing Improvements',
-            content: 'We continuously work to improve our site\'s accessibility through regular audits and updates. While we strive for full compliance, some content may require ongoing adaptation to meet the strictest accessibility standards.'
-          },
-          {
-            title: 'Contact & Support',
-            content: 'If you experience any accessibility issues or need assistance, please contact us at support@webability.io. We are committed to addressing accessibility concerns promptly and providing the support you need.'
-          }
-        ];
-
-        // Compact single-column layout rendering
-        sections.forEach((section, index) => {
-          // Section title with colored background
-          doc.setFillColor(248, 250, 252); // Light gray background
-          doc.roundedRect(margin - 2, currentY - 2, contentWidth + 4, 8, 2, 2, 'F');
-          
-          doc.setFontSize(13);
-          doc.setTextColor(37, 99, 235);
-          if (fontLoaded) {
-            doc.setFont('NotoSans_Condensed-Regular', 'normal');
-          } else {
-            doc.setFont('helvetica', 'bold');
-          }
-          doc.text(section.title, margin, currentY + 5);
-          currentY += 10;
-          
-          // Section content with tighter spacing
-          doc.setFontSize(11);
-          doc.setTextColor(51, 65, 85);
-          if (fontLoaded) {
-            doc.setFont('NotoSans_Condensed-Regular', 'normal');
-          } else {
-            doc.setFont('helvetica', 'normal');
-          }
-          
-          const lines = doc.splitTextToSize(section.content, contentWidth);
-          for (const line of lines) {
-            doc.text(line, margin, currentY);
-            currentY += 5; // Better line spacing for readability
-          }
-          currentY += 5; // Better space between sections
-        });
-        
-        currentY += 5;
-
-        // Footer
-        const footerY = pageHeight - 15;
-        doc.setDrawColor(226, 232, 240);
-        doc.setLineWidth(0.3);
-        doc.line(margin, footerY, pageWidth - margin, footerY);
-        
-        doc.setFontSize(8);
-        doc.setTextColor(100, 116, 139);
-        if (fontLoaded) {
-          doc.setFont('NotoSans_Condensed-Regular', 'normal');
-        }
-        doc.text('WebAbility.io - Web Accessibility Solutions - www.webability.io', margin, footerY + 5);
-
-        // Save the PDF
-        doc.save('WebAbility-Accessibility-Statement.pdf');
-        
-      } catch (error) {
+  try{
+  await generateAndViewAccessibilityStatementPDF(2);
+  }
+      catch (error) {
         console.error('Error generating accessibility statement PDF:', error);
         toast.error('Failed to generate accessibility statement PDF');
       }
@@ -2367,7 +2336,7 @@ const ProofOfEffortToolkit: React.FC = () => {
     } else if (document.name === 'Intro to the toolkit') {
       // Generate and download the intro to toolkit PDF
       try {
-        toast.loading('Generating intro PDF...');
+        //toast.loading('Generating intro PDF...');
         
         const pdfBlob = await generateIntroToToolkitPDF();
         
