@@ -2297,39 +2297,18 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
     // WCAG 2.1 AA Compliance Issues Section
     const wcagIssues = issues.filter(issue => {
-      const wcagCode = issue.wcag_code || '';
       const code = issue.code || '';
       const message = issue.message || '';
       const description = issue.description || '';
-      return wcagCode.includes('WCAG') || code.includes('WCAG2AA') || message.includes('WCAG2AA') || description.includes('WCAG2AA');
+      return code.includes('WCAG2AA') || message.includes('WCAG2AA') || description.includes('WCAG2AA');
     });
 
     // Function to parse WCAG codes and truncate at Guideline level
-    const parseWcagCode = (wcagCode: string, fallbackCode: string): string => {
-      // First try to use wcag_code if available
-      if (wcagCode) {
-        // Clean up the wcag_code format
-        let result = wcagCode.trim();
-        
-        // If it's in format "WCAG AA 2.2 Criteria 1.4.3", extract the criteria part
-        if (result.includes('Criteria')) {
-          const criteriaMatch = result.match(/Criteria\s+(\d+\.\d+\.\d+)/);
-          if (criteriaMatch) {
-            return `WCAG2AA.${criteriaMatch[1]}`;
-          }
-        }
-        
-        // If it's already in a good format, return as is
-        if (result.includes('WCAG')) {
-          return result;
-        }
-      }
-      
-      // Fallback to parsing the original code field
-      if (!fallbackCode) return wcagCode || '';
+    const parseWcagCode = (code: string): string => {
+      if (!code) return code;
       
       // Extract WCAG2AA, Principle, and Guideline parts only
-      const parts = fallbackCode.split('.');
+      const parts = code.split('.');
       let result = '';
       let wcagFound = false;
       let principleFound = false;
@@ -2352,7 +2331,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       
       // If no WCAG2AA, Principle, or Guideline found, return the original code up to the first comma
       if (!result) {
-        result = fallbackCode.split(',')[0];
+        result = code.split(',')[0];
       }
       
       // Clean up and format the result
@@ -2363,7 +2342,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     const codeGroupsWithMessages: {[key: string]: {count: number, messages: string[]}} = {};
     
     wcagIssues.forEach(issue => {
-      const parsedCode = parseWcagCode(issue.wcag_code || '', issue.code || '');
+      const parsedCode = parseWcagCode(issue.code || '');
       if (parsedCode) {
         if (!codeGroupsWithMessages[parsedCode]) {
           codeGroupsWithMessages[parsedCode] = { count: 0, messages: [] };

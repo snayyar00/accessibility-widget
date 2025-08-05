@@ -27,7 +27,6 @@ interface ProcessedIssue {
     merged_from: number
     partial?: boolean
   }
-  wcag_code?: string
   screenshotUrl?: string
 }
 
@@ -190,7 +189,7 @@ async function processBatch(batchId: string, issues: ProcessedIssue[], retryCoun
         description: enhancement.description || generateDetailedFallbackDescription(originalIssue),
         recommended_action: enhancement.recommended_action || generateDetailedFallbackAction(originalIssue),
         affected_disabilities: enhancement.affected_disabilities || generateFallbackDisabilities(originalIssue),
-        wcag_code: enhancement.wcag_code || originalIssue.wcag_code || extractWCAGCode(originalIssue.code) || 'N/A',
+        wcag_code: enhancement.wcag_code || extractWCAGCode(originalIssue.code) || 'N/A',
       }
     })
 
@@ -212,7 +211,7 @@ async function processBatch(batchId: string, issues: ProcessedIssue[], retryCoun
       description: generateDetailedFallbackDescription(issue),
       recommended_action: generateDetailedFallbackAction(issue),
       affected_disabilities: generateFallbackDisabilities(issue),
-      wcag_code: issue.wcag_code || extractWCAGCode(issue.code) || 'N/A',
+      wcag_code: extractWCAGCode(issue.code) || 'N/A',
     }))
 
     return {

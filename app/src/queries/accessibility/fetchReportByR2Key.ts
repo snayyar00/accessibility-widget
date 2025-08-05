@@ -1,6 +1,6 @@
 import { gql } from 'graphql.macro';
 
-export default gql`
+const FETCH_REPORT_BY_R2_KEY = gql`
   query fetchReportByR2Key($r2_key: String!) {
     fetchReportByR2Key(r2_key: $r2_key) {
       axe {
@@ -11,7 +11,6 @@ export default gql`
           impact
           description
           help
-          wcag_code
           screenshotUrl
         }
         notices {
@@ -21,7 +20,6 @@ export default gql`
           impact
           description
           help
-          wcag_code
           screenshotUrl
         }
         warnings {
@@ -31,7 +29,6 @@ export default gql`
           impact
           description
           help
-          wcag_code
           screenshotUrl
         }
       }
@@ -43,7 +40,6 @@ export default gql`
           selectors
           description
           recommended_action
-          wcag_code
           screenshotUrl
         }
         notices {
@@ -53,7 +49,6 @@ export default gql`
           selectors
           description
           recommended_action
-          wcag_code
           screenshotUrl
         }
         warnings {
@@ -63,25 +58,24 @@ export default gql`
           selectors
           description
           recommended_action
-          wcag_code
           screenshotUrl
         }
       }
       score
       totalElements
       siteImg
+
       ByFunctions {
-        FunctionalityName
-        Errors {
-          code
-          message
-          context
-          selectors
-          description
-          recommended_action
-          wcag_code
-          screenshotUrl
-        }
+            FunctionalityName
+            Errors {
+              code
+              message
+              context
+              selectors
+              description
+              recommended_action
+              screenshotUrl
+            } 
       }
       scriptCheckResult
       techStack {
@@ -119,3 +113,5 @@ export default gql`
     }
   }
 `;
+
+export default FETCH_REPORT_BY_R2_KEY;

@@ -11,10 +11,12 @@ import Installation from '@/containers/Installation/Installation';
 import Teams from '@/containers/Teams';
 import SiteDetail from '@/containers/SiteDetail';
 import AccessibilityWidgetPage from '@/containers/Teams/editWidget';
-import { useSelector } from 'react-redux';
+import ProofOfEffortToolkit from '@/containers/ProofOfEffortToolkit/ProofOfEffortToolkit';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/config/store';
 import { SITE_SELECTOR_TEXT } from '@/constants';
 import { getAuthenticationCookie } from '@/utils/cookie';
+import { setSelectedDomain } from '@/features/report/reportSlice';
 import Topbar from './Topbar';
 import Sidebar from './Sidebar';
 
@@ -37,6 +39,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
     (state: RootState) => state.user,
   );
   const [customerData, setCustomerData] = useState(null);
+  const dispatch = useDispatch();
 
   const customerCheck = async () => {
     const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
@@ -162,6 +165,15 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
     }
   }, [window.location.pathname]);
 
+  // Sync selectedOption with Redux selectedDomain
+  useEffect(() => {
+    if (selectedOption && selectedOption !== SITE_SELECTOR_TEXT && selectedOption !== 'Add a new Domain') {
+      dispatch(setSelectedDomain(selectedOption));
+    } else {
+      dispatch(setSelectedDomain(null));
+    }
+  }, [selectedOption, dispatch]);
+
   return (
     <div className="flex">
       <Sidebar
@@ -231,6 +243,12 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
                 />
               )}
               key="/customize-widget"
+              exact={false}
+            />
+            <Route
+              path="/proof-of-effort-toolkit"
+              component={ProofOfEffortToolkit}
+              key="/proof-of-effort-toolkit"
               exact={false}
             />
             <Redirect from="*" to="/dashboard" />

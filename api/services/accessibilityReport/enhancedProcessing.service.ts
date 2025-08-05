@@ -321,7 +321,6 @@ function createEnhancedByFunctions(enhancedResults: any): any[] {
           selectors: issue.selectors || [],
           confidence_score: issue.confidence_score || 0,
           template_info: issue.template_info,
-          wcag_code: issue.wcag_code,
           screenshotUrl: issue.screenshotUrl,
         }))
         .map((issue) => {
