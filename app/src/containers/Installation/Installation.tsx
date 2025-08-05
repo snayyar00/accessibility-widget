@@ -182,7 +182,7 @@ export default function Installation({ domain }: any) {
           className="w-full lg:w-72 flex-shrink-0 bg-gradient-to-br from-white via-blue-50/20 to-white rounded-2xl shadow-xl shadow-blue-500/10 p-4 sm:p-6 overflow-y-auto ring-1 ring-blue-100/50"
           aria-labelledby="impact-heading"
         >
-          <div className="space-y-6 max-w-xs mx-auto">
+          <div className="space-y-6 w-full lg:max-w-xs lg:mx-auto">
             <div className="text-center mb-8">
                              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mb-4 shadow-lg shadow-blue-500/25 ring-4 ring-blue-100/50">
                                    <svg className="w-8 h-8 text-white drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
