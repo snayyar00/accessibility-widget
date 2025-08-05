@@ -27,7 +27,7 @@ const EmailModal: React.FC<EmailModalProps> = ({
     setError('')
 
     // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const emailRegex = new RegExp(`/^${email}$/`);
     if (!emailRegex.test(email)) {
       setError('Please enter a valid email address')
       return

@@ -18,16 +18,16 @@ export const sendWidgetInstallationInstructionsController = async (req: Request,
     if (!email || !code || !position || !language || !languageName) {
       return res.status(400).json({
         success: false,
-        error: 'All fields are required: email, code, position, language, languageName'
+        error: 'All fields are required: email, code, position, language, languageName',
       })
     }
 
     // Validate email format
-    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+    const emailRegex = new RegExp(`/^${email}$/`)
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid email format'
+        error: 'Invalid email format',
       })
     }
 
@@ -37,21 +37,20 @@ export const sendWidgetInstallationInstructionsController = async (req: Request,
       code,
       position,
       language,
-      languageName
+      languageName,
     })
 
     logger.info(`Widget installation instructions sent to ${email}`)
 
     res.json({
       success: true,
-      message: 'Installation instructions sent successfully'
+      message: 'Installation instructions sent successfully',
     })
-
   } catch (error) {
     logger.error('Error in sendWidgetInstallationInstructionsController:', error)
     res.status(500).json({
       success: false,
-      error: 'Failed to send installation instructions'
+      error: 'Failed to send installation instructions',
     })
   }
-} 
+}

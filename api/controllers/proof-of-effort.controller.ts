@@ -23,11 +23,11 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
     }
 
     // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const emailRegex = new RegExp(`/^${email}$/`)
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid email format'
+        message: 'Invalid email format',
       })
     }
 
@@ -49,13 +49,37 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
       data: templateVariables
     })
 
-    // Convert base64 zip file to buffer
-    const zipBuffer = Buffer.from(zipFileBase64, 'base64')
+    // Validate and convert base64 zip file to buffer
+    let zipBuffer: Buffer
+    try {
+      // Check if the string is valid base64 format
+      if (!zipFileBase64.match(/^[A-Za-z0-9+/]*={0,2}$/)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid base64 format for zip file',
+        })
+      }
+
+      zipBuffer = Buffer.from(zipFileBase64, 'base64')
+
+      // Check if the conversion resulted in a valid buffer with content
+      if (zipBuffer.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or empty zip file data',
+        })
+      }
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid base64 zip file format',
+      })
+    }
 
     // Prepare email attachment
     const attachment: EmailAttachment = {
       content: zipBuffer,
-      name: `${domain}-proof-of-effort-toolkit.zip`
+      name: `${domain}-proof-of-effort-toolkit.zip`,
     }
 
     // Send the email
@@ -81,7 +105,7 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
     console.error('Error sending proof of effort toolkit:', error)
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error',
     })
   }
-} 
+}
