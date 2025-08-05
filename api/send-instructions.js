@@ -42,7 +42,7 @@ app.post('/api/send-instructions', async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL_FROM || 'noreply@webability.io',
       to: email,
-      subject: subject || '🚀 Your WebAbility Widget Installation Instructions',
+      subject: subject || 'Your WebAbility Widget Installation Instructions',
       html: html,
       // Optional: Add text version for email clients that don't support HTML
       text: `
@@ -72,7 +72,7 @@ For support, contact: support@webability.io
     // const msg = {
     //   to: email,
     //   from: process.env.EMAIL_FROM || 'noreply@webability.io',
-    //   subject: subject || '🚀 Your WebAbility Widget Installation Instructions',
+    //   subject: subject || 'Your WebAbility Widget Installation Instructions',
     //   html: html,
     //   text: mailOptions.text
     // };

@@ -31,7 +31,7 @@ export async function sendWidgetInstallationInstructions(data: WidgetInstallatio
     // Send the email
     await sendMail(
       email,
-      '🚀 Your WebAbility Widget Installation Instructions',
+      'Your WebAbility Widget Installation Instructions',
       template
     )
 
