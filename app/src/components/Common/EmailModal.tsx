@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { MdClose, MdEmail } from 'react-icons/md'
+import { CircularProgress } from '@mui/material';
 
 interface EmailModalProps {
   isOpen: boolean
@@ -115,7 +116,8 @@ const EmailModal: React.FC<EmailModalProps> = ({
               >
                 {isLoading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <CircularProgress size={16} style={{ color: 'white' }} />
+
                     Sending...
                   </>
                 ) : (

@@ -12,6 +12,7 @@ import { RootState } from '@/config/store';
 import { translateText, translateMultipleTexts, deduplicateIssuesByMessage } from '@/utils/translator';
 import getWidgetSettings from '@/utils/getWidgetSettings';
 import EmailModal from '@/components/Common/EmailModal';
+import { CircularProgress } from '@mui/material';
 
 interface Document {
   name: string;
@@ -2364,33 +2365,33 @@ const ProofOfEffortToolkit: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 sm:p-4 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           {/* Header Section */}
-          <div className="p-8 border-b border-gray-200">
+          <div className="sm:p-4 p-8 border-b border-gray-200">
             <div className="text-gray-600 text-sm mb-4">
               You've taken steps to make your website accessible. The proof of effort toolkit compiles key documentation that showcases your commitment to accessibility. If your website's accessibility is ever challenged (i.e. you receive a demand letter), you'll have evidence to demonstrate your efforts and respond with confidence.
             </div>
             
-            <div className="flex items-start gap-6">
+            <div className="sm:flex-col sm:gap-4 flex items-start gap-6">
               <div className="bg-blue-50 p-4 rounded-lg">
                 <FiFile className="w-8 h-8 text-blue-600" />
               </div>
               
               <div className="flex-1">
-                <h1 className="text-2xl font-medium text-gray-900 mb-2">
+                <h1 className="sm:text-xl text-2xl font-medium text-gray-900 mb-2">
                   Proof of effort toolkit
                 </h1>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 sm:mb-4 mb-6">
                   Get a zip file with documentation to help you and your legal team.
                 </p>
                 
-                <div className="text-sm text-gray-500 mb-6">
+                <div className="text-sm text-gray-500 sm:mb-4 mb-6">
                   {documents.length} Documents
                 </div>
                 
-                <div className="flex gap-3">
+                <div className="sm:flex-col sm:gap-2 flex gap-3">
                   <button
                     onClick={handleSendViaEmail}
                     disabled={isDownloadingZip || isEmailSending}
@@ -2402,8 +2403,8 @@ const ProofOfEffortToolkit: React.FC = () => {
                   >
                     {isEmailSending ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                        Sending...
+                      <CircularProgress size={16} />
+                      Sending...
                       </>
                     ) : (
                       <>
@@ -2424,7 +2425,8 @@ const ProofOfEffortToolkit: React.FC = () => {
                   >
                     {isDownloadingZip ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <CircularProgress size={16} style={{ color: 'white' }} />
+                      
                         Downloading...
                       </>
                     ) : (
@@ -2443,7 +2445,7 @@ const ProofOfEffortToolkit: React.FC = () => {
           <div className="border-b border-gray-200">
             <button
               onClick={() => setViewFilesExpanded(!viewFilesExpanded)}
-              className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center justify-between sm:p-4 p-6 text-left hover:bg-gray-50 transition-colors"
             >
               <span className="text-gray-700 font-medium">View files</span>
               {viewFilesExpanded ? (
@@ -2454,9 +2456,9 @@ const ProofOfEffortToolkit: React.FC = () => {
             </button>
             
             {viewFilesExpanded && (
-              <div className="px-6 pb-6">
+              <div className="sm:px-4 sm:pb-4 px-6 pb-6">
                 {/* Table Header */}
-                <div className="grid grid-cols-12 gap-4 py-3 text-sm font-medium text-gray-500 border-b border-gray-200">
+                <div className="sm:hidden grid grid-cols-12 gap-4 py-3 text-sm font-medium text-gray-500 border-b border-gray-200">
                   <div className="col-span-6">Document</div>
                   <div className="col-span-4">Creation Date</div>
                   <div className="col-span-2"></div>
@@ -2464,18 +2466,19 @@ const ProofOfEffortToolkit: React.FC = () => {
                 
                 {/* Document Rows */}
                 {documents.map((document, index) => (
-                                     <div key={index} className="grid grid-cols-12 gap-4 py-4 border-b border-gray-100 last:border-b-0">
-                     <div className="col-span-6 flex items-center gap-3">
+                                     <div key={index} className="sm:block sm:p-3 sm:border sm:border-gray-200 sm:rounded-lg sm:mb-3 grid grid-cols-12 gap-4 py-4 border-b border-gray-100 last:border-b-0">
+                     <div className="sm:col-span-12 sm:mb-2 col-span-6 flex items-center gap-3">
                        <FiFile className="w-4 h-4 text-gray-400 flex-shrink-0" />
                        <span className="text-gray-900">{document.name}</span>
                        {document.type === 'monthly-report' && isProcessingReport && (
                          <span className="text-xs text-blue-600 italic">Processing...</span>
                        )}
                      </div>
-                    <div className="col-span-4 flex items-center text-gray-600">
+                    <div className="sm:col-span-12 sm:mb-2 sm:text-sm col-span-4 flex items-center text-gray-600">
+                      <span className="sm:inline sm:font-medium sm:text-gray-700 sm:mr-2 hidden">Creation Date:</span>
                       {document.creationDate}
                     </div>
-                                         <div className="col-span-2 flex items-center justify-end gap-2">
+                                         <div className="sm:col-span-12 sm:justify-start col-span-2 flex items-center justify-end gap-2">
                        <button
                          onClick={() => handleViewDocument(document)}
                          className={`p-2 transition-colors ${
