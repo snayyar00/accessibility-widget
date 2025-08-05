@@ -8,6 +8,7 @@ import { TranslationSchema } from './schemas/translation.schema'
 import { UniqueTokenSchema } from './schemas/uniqueToken.schema'
 import { UniqueVisitorSchema } from './schemas/uniqueVisitor.schema'
 import { UserSchema } from './schemas/user.schema'
+import { widgetTypeDefs } from './schemas/widget.schema'
 
 const rootSchema = `
   scalar Date
@@ -28,4 +29,4 @@ const rootSchema = `
 `
 
 // eslint-disable-next-line import/no-anonymous-default-export
-export default [rootSchema, UserSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, UniqueTokenSchema, SitesPlanSchema, reportProblemSchema, OrganizationSchema, TranslationSchema]
+export default [rootSchema, UserSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, UniqueTokenSchema, SitesPlanSchema, reportProblemSchema, OrganizationSchema, TranslationSchema, widgetTypeDefs]

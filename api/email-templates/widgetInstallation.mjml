@@ -1,0 +1,171 @@
+<mjml>
+  <mj-head>
+    <mj-title>WebAbility Widget Installation Instructions</mj-title>
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+    <mj-attributes>
+      <mj-all font-family="Inter, Arial, sans-serif" />
+    </mj-attributes>
+  </mj-head>
+  
+  <mj-body background-color="#f8fafc">
+    <!-- Header Section -->
+
+    <!-- Main Content -->
+    <mj-section background-color="#fff" padding="40px 30px">
+      <mj-column>
+        <!-- Header -->
+        <mj-text font-size="32px" font-weight="700" color="#1a202c" align="center" padding-bottom="10px">
+           WebAbility Widget
+        </mj-text>
+        <mj-text font-size="18px" color="#4a5568" align="center" padding-bottom="30px">
+          Your installation instructions are ready!
+        </mj-text>
+
+        <!-- Installation Code Section -->
+        <mj-text font-size="24px" font-weight="600" color="#2d3748" padding-bottom="15px">
+          📋 Installation Code
+        </mj-text>
+        <mj-text font-size="16px" color="#4a5568" line-height="24px" padding-bottom="20px">
+          Copy and paste this code into your website's HTML, just before the closing <code style="background-color: #f7fafc; padding: 2px 6px; border-radius: 4px; font-family: 'Monaco', 'Menlo', monospace;">&lt;/body&gt;</code> tag:
+        </mj-text>
+        
+        <!-- Code Block -->
+        <mj-section background-color="#2d3748" border-radius="8px" padding="20px" margin="0">
+          <mj-column>
+            <mj-text font-size="14px" color="#a0aec0" font-weight="500" padding-bottom="10px">
+              Installation Code
+            </mj-text>
+            <mj-text font-size="14px" color="#e2e8f0" font-family="'Monaco', 'Menlo', 'Ubuntu Mono', monospace" line-height="20px" padding="0">
+              {{code}}
+            </mj-text>
+          </mj-column>
+        </mj-section>
+
+        <!-- Configuration Info -->
+        <mj-section background-color="#ebf8ff" border-radius="8px" padding="20px" margin="20px 0">
+          <mj-column>
+            <mj-text font-size="20px" font-weight="600" color="#2c5282" padding-bottom="15px">
+              📋 Your Configuration
+            </mj-text>
+            <mj-table>
+              <tr>
+                <td style="padding: 12px; background: white; border-radius: 6px; border: 1px solid #bee3f8; width: 50%;">
+                  <div style="font-size: 12px; color: #4a5568; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Position</div>
+                  <div style="font-size: 14px; color: #2d3748; font-weight: 600;">{{position}}</div>
+                </td>
+                <td style="padding: 12px; background: white; border-radius: 6px; border: 1px solid #bee3f8; width: 50%;">
+                  <div style="font-size: 12px; color: #4a5568; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Language</div>
+                  <div style="font-size: 14px; color: #2d3748; font-weight: 600;">{{languageName}}</div>
+                </td>
+              </tr>
+            </mj-table>
+          </mj-column>
+        </mj-section>
+
+        <!-- Step-by-Step Instructions -->
+        <mj-text font-size="24px" font-weight="600" color="#2d3748" padding-bottom="15px">
+          📝 Step-by-Step Installation
+        </mj-text>
+        
+        <mj-section background-color="#f7fafc" border-radius="8px" padding="20px" margin="0">
+          <mj-column>
+            <!-- Step 1 -->
+            <mj-table>
+              <tr>
+                <td style="width: 40px; vertical-align: top; padding-right: 15px;">
+                  <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">1</div>
+                </td>
+                <td style="vertical-align: top;">
+                  <div style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 5px;">Access Your Website Files</div>
+                  <div style="font-size: 14px; color: #4a5568;">Open your website's HTML file or content management system editor.</div>
+                </td>
+              </tr>
+            </mj-table>
+            
+            <mj-divider border-color="#e2e8f0" padding="15px 0" />
+            
+            <!-- Step 2 -->
+            <mj-table>
+              <tr>
+                <td style="width: 40px; vertical-align: top; padding-right: 15px;">
+                  <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">2</div>
+                </td>
+                <td style="vertical-align: top;">
+                  <div style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 5px;">Locate the Body Tag</div>
+                  <div style="font-size: 14px; color: #4a5568;">Find the closing <code style="background-color: #edf2f7; padding: 2px 6px; border-radius: 4px; font-family: 'Monaco', 'Menlo', monospace;">&lt;/body&gt;</code> tag in your HTML document.</div>
+                </td>
+              </tr>
+            </mj-table>
+            
+            <mj-divider border-color="#e2e8f0" padding="15px 0" />
+            
+            <!-- Step 3 -->
+            <mj-table>
+              <tr>
+                <td style="width: 40px; vertical-align: top; padding-right: 15px;">
+                  <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">3</div>
+                </td>
+                <td style="vertical-align: top;">
+                  <div style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 5px;">Paste the Code</div>
+                  <div style="font-size: 14px; color: #4a5568;">Insert the installation code just before the <code style="background-color: #edf2f7; padding: 2px 6px; border-radius: 4px; font-family: 'Monaco', 'Menlo', monospace;">&lt;/body&gt;</code> tag.</div>
+                </td>
+              </tr>
+            </mj-table>
+            
+            <mj-divider border-color="#e2e8f0" padding="15px 0" />
+            
+            <!-- Step 4 -->
+            <mj-table>
+              <tr>
+                <td style="width: 40px; vertical-align: top; padding-right: 15px;">
+                  <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">4</div>
+                </td>
+                <td style="vertical-align: top;">
+                  <div style="font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 5px;">Save and Test</div>
+                  <div style="font-size: 14px; color: #4a5568;">Save your changes and refresh your website to see the widget in action.</div>
+                </td>
+              </tr>
+            </mj-table>
+          </mj-column>
+        </mj-section>
+
+        <!-- Pro Tip -->
+        <mj-section background-color="#fef5e7" border-radius="8px" padding="20px" margin="20px 0">
+          <mj-column>
+            <mj-text font-size="18px" font-weight="600" color="#c05621" padding-bottom="8px">
+              💡 Pro Tip
+            </mj-text>
+            <mj-text font-size="14px" color="#744210" line-height="20px">
+              The widget will automatically appear on your website once the code is properly installed. You can customize the position and language settings by modifying the data attributes in the script tag.
+            </mj-text>
+          </mj-column>
+        </mj-section>
+
+        <!-- Need Help Section -->
+        <mj-text font-size="24px" font-weight="600" color="#2d3748" padding-bottom="15px">
+           Need Help?
+        </mj-text>
+        <mj-text font-size="16px" color="#4a5568" line-height="24px" padding-bottom="30px">
+          If you encounter any issues during installation or have questions about the widget features, our support team is here to help!
+        </mj-text>
+
+        <!-- Call to Action Button -->
+        <mj-button background-color="#06adef" border-radius="50px" color="white" font-size="16px" href="mailto:support@webability.io" padding="15px 30px">
+          Contact Support
+        </mj-button>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f7fafc" padding="30px">
+      <mj-column>
+        <mj-text font-size="16px" color="#4a5568" align="center" padding-bottom="15px">
+          Thank you for choosing WebAbility Widget!
+        </mj-text>
+        <mj-text font-size="14px" color="#718096" align="center">
+          Making the web accessible for everyone
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml> 
