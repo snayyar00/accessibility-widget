@@ -4,29 +4,37 @@ import EmailSequenceService from '../services/email/emailSequence.service'
 import logger from '../utils/logger'
 
 /**
- * Daily email sequence processor
- * Runs every day at 9:00 AM to send sequence emails to users
+ * Email sequence fallback processor
+ * Runs periodically to handle any failed or missed scheduled emails
+ * This is now a lightweight fallback system since emails are scheduled at registration
  */
 const processEmailSequences = async () => {
   try {
-    logger.info('Starting daily email sequence processing...')
+    logger.info('Starting email sequence fallback processing...')
+
+    // Handle any failed scheduled emails and retry them
+    await EmailSequenceService.handleFailedScheduledEmails()
+
+    // Handle deferred emails (Day 7+) that couldn't be scheduled via Brevo
     await EmailSequenceService.processDailyEmailSequence()
-    logger.info('Daily email sequence processing completed.')
+
+    logger.info('Email sequence fallback processing completed')
   } catch (error) {
-    logger.error('Error in daily email sequence processing:', error)
+    logger.error('Error in email sequence fallback processing:', error)
   }
 }
 
 /**
- * Schedule the email sequence job to run daily at 9:00 AM
+ * Schedule the email sequence fallback job
+ * Reduced frequency since emails are now scheduled at registration time
  */
 const scheduleEmailSequences = () => {
-  // Production: Run daily at 9:00 AM UTC for global consistency
-  // This ensures emails are sent at the same absolute time regardless of server location
+  // Run every 6 hours instead of daily since we're now using Brevo scheduling
+  // This is just for monitoring and handling any edge cases
   cron.schedule(
-    '0 9 * * *',
+    '0 */6 * * *',
     async () => {
-      console.log('Running daily email sequence job at 9:00 AM UTC...')
+      console.log('Running email sequence fallback check...')
       await processEmailSequences()
     },
     {
@@ -34,7 +42,7 @@ const scheduleEmailSequences = () => {
     },
   )
 
-  logger.info('Email sequence job scheduled to run daily at 9:00 AM UTC')
+  logger.info('Email sequence fallback job scheduled to run every 6 hours')
 }
 
 export { processEmailSequences, scheduleEmailSequences }

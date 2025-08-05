@@ -5,7 +5,6 @@ import database from '../../config/database.config'
 import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { generatePassword } from '../../helpers/hashing.helper'
 import { sign } from '../../helpers/jwt.helper'
-import { addNewsletterSub } from '../../repository/newsletter_subscribers.repository'
 import { Organization } from '../../repository/organization.repository'
 import { createUser, findUser, insertUserNotification, updateUser } from '../../repository/user.repository'
 import EmailSequenceService from '../../services/email/emailSequence.service'
@@ -90,7 +89,7 @@ async function registerUser(email: string, password: string, name: string, organ
       await updateUser(userId, { current_organization_id: organization.id }, trx)
     })
 
-    // Send welcome email after transaction completes successfully
+    // Send welcome email and schedule email sequence after transaction completes successfully
     if (newUserId) {
       try {
         const welcomeEmailSent = await EmailSequenceService.sendWelcomeEmail(email, name, newUserId)
@@ -100,13 +99,14 @@ async function registerUser(email: string, password: string, name: string, organ
           logger.warn(`Welcome email failed to send to new user: ${email}`)
         }
 
-        // Also subscribe to general newsletter for backwards compatibility
+        // Schedule the complete email sequence using 24-hour intervals
         try {
-          await addNewsletterSub(email)
-          logger.info(`Added user to newsletter: ${email}`)
+          const registrationTime = new Date()
+          const schedulingResult = await EmailSequenceService.scheduleEmailSequenceForUser(email, name, newUserId, registrationTime)
+          logger.info(`Email sequence scheduled for user: ${email} - ${schedulingResult.scheduled} emails scheduled, ${schedulingResult.failed} failed`)
         } catch (error) {
-          logger.warn(`Failed to add user to newsletter: ${email}`, error)
-          // Don't fail registration if newsletter subscription fails
+          logger.error(`Failed to schedule email sequence for user: ${email}`, error)
+          // Don't fail registration if email scheduling fails
         }
       } catch (error) {
         logger.error(`Failed to send welcome email: ${email}`, error)
