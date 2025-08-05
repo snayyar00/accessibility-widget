@@ -18,7 +18,7 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
     if (!email || !domain || !zipFileBase64) {
       return res.status(400).json({
         success: false,
-        message: 'Email, domain, and zip file are required'
+        message: 'Email, domain, and zip file are required',
       })
     }
 
@@ -39,14 +39,14 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
       generatedDate: new Date().toLocaleDateString(undefined, {
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
-      })
+        day: 'numeric',
+      }),
     }
 
     // Compile the email template
     const emailHtml = await compileEmailTemplate({
       fileName: 'proofOfEffortToolkit.mjml',
-      data: templateVariables
+      data: templateVariables,
     })
 
     // Validate and convert base64 zip file to buffer
@@ -83,22 +83,17 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
     }
 
     // Send the email
-    const emailSent = await sendMail(
-      email,
-      `Your Proof of Effort Toolkit for ${domain}`,
-      emailHtml,
-      [attachment]
-    )
+    const emailSent = await sendMail(email, `Your Proof of Effort Toolkit for ${domain}`, emailHtml, [attachment])
 
     if (emailSent) {
       res.status(200).json({
         success: true,
-        message: 'Proof of effort toolkit sent successfully'
+        message: 'Proof of effort toolkit sent successfully',
       })
     } else {
       res.status(500).json({
         success: false,
-        message: 'Failed to send email'
+        message: 'Failed to send email',
       })
     }
   } catch (error) {
