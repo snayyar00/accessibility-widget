@@ -130,7 +130,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
     setIsExpanded(!isExpanded);
   };
 
-  const formattedCodeString = `<script src="https://widget.webability.io/widget.min.js" data-asw-position="${position}" data-asw-lang="${language}" data-custom-attribute="very-long-attribute-to-test-scrolling-functionality" defer></script>`;
+  const formattedCodeString = `<script src="https://widget.webability.io/widget.min.js" data-asw-position="${position}" data-asw-lang="${language}"defer></script>`;
 
   const validateEmail = (email: string) => {
     const emailRegex = new RegExp(`/^${email}$/`);
