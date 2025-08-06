@@ -68,6 +68,7 @@ export const AccessibilitySchema = `#graphql
     impact: String
     description: String
     help: String
+    wcag_code: String
     confidence_score: Int
     template_info: TemplateInfo
     processing_metadata: ProcessingMetadata
@@ -81,6 +82,7 @@ export const AccessibilitySchema = `#graphql
     selectors: [String]
     description: String
     recommended_action: String
+    wcag_code: String
     confidence_score: Int
     template_info: TemplateInfo
     processing_metadata: ProcessingMetadata
