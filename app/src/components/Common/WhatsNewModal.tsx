@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -57,6 +57,8 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
   const { isModalOpen, lastSeenDate } = useSelector(
     (state: RootState) => state.whatsNew,
   );
+  const [isClosing, setIsClosing] = useState(false);
+  const [isLaunching, setIsLaunching] = useState(false);
 
   // Auto-show logic for when user logs in
   useEffect(() => {
@@ -73,26 +75,137 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
     return undefined;
   }, [autoShow, lastSeenDate, dispatch]);
 
+  // Launch animation effect
+  useEffect(() => {
+    if (isModalOpen && !isClosing) {
+      // Small delay to ensure initial state is set before animation
+      const animationTimer = setTimeout(() => {
+        setIsLaunching(true);
+      }, 10);
+
+      // Reset launching state after animation completes
+      const resetTimer = setTimeout(() => {
+        setIsLaunching(false);
+      }, 810);
+
+      return () => {
+        clearTimeout(animationTimer);
+        clearTimeout(resetTimer);
+      };
+    }
+    return undefined;
+  }, [isModalOpen, isClosing]);
+
   const handleClose = () => {
-    const latestDate = getLatestNewsDate();
-    dispatch(markUpdatesAsSeen(latestDate));
+    setIsClosing(true);
+    // Delay the actual close to allow animation to complete
+    setTimeout(() => {
+      const latestDate = getLatestNewsDate();
+      dispatch(markUpdatesAsSeen(latestDate));
+      setIsClosing(false);
+    }, 300);
   };
 
-  if (!isModalOpen) return null;
+  if (!isModalOpen && !isClosing) return null;
+
+  // Determine if we should show the modal
+  const shouldShowModal = isModalOpen || isClosing;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-500 ease-out ${
+        isClosing ? 'opacity-0' : 'opacity-100'
+      }`}
       data-modal="whats-new"
     >
+      {/* CSS Animations */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+          
+          @keyframes growFromCenter {
+            0% {
+              opacity: 0;
+              transform: scale(0) rotate(0deg);
+            }
+            50% {
+              opacity: 0.8;
+              transform: scale(0.7) rotate(0deg);
+            }
+            100% {
+              opacity: 1;
+              transform: scale(1) rotate(0deg);
+            }
+          }
+          
+          @keyframes shrinkToCenter {
+            0% {
+              opacity: 1;
+              transform: scale(1) rotate(0deg);
+            }
+            50% {
+              opacity: 0.8;
+              transform: scale(0.7) rotate(0deg);
+            }
+            100% {
+              opacity: 0;
+              transform: scale(0) rotate(0deg);
+            }
+          }
+        `,
+        }}
+      />
       {/* Blurred Backdrop */}
       <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+        className={`absolute inset-0 backdrop-blur-sm transition-all duration-500 ease-out ${
+          isClosing ? 'bg-black/0' : 'bg-black/30'
+        }`}
         onClick={handleClose}
       />
 
+      {/* Rocket Trail Effect */}
+      {isLaunching && (
+        <div
+          className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-screen bg-gradient-to-b from-orange-400 via-yellow-400 to-transparent opacity-60"
+          style={{
+            animation: 'rocketTrail 0.8s ease-out forwards',
+            transformOrigin: 'center top',
+          }}
+        />
+      )}
+
+      {/* Rocket Particles */}
+      {isLaunching && (
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-yellow-400 rounded-full"
+              style={{
+                left: `${20 + i * 10}%`,
+                top: '0%',
+                animation: `rocketParticle 0.8s ease-out ${i * 0.1}s forwards`,
+                transform: 'translateY(0)',
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[85vh] overflow-hidden border border-gray-100 transform transition-all duration-300 ease-out animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-4">
+      <div
+        className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[85vh] overflow-hidden border border-gray-100 transform`}
+        style={{
+          animation: isLaunching
+            ? 'growFromCenter 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards'
+            : isClosing
+            ? 'shrinkToCenter 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards'
+            : undefined,
+          // Simple state management - modal is visible when not animating
+          transform: !isLaunching && !isClosing ? 'scale(1)' : undefined,
+          opacity: !isLaunching && !isClosing ? 1 : undefined,
+        }}
+      >
         {/* Header with blue background */}
         <div className="bg-blue-600 text-white p-6 relative overflow-hidden">
           {/* Subtle pattern overlay for better text clarity */}
@@ -149,13 +262,6 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
                     {item.description}
                   </p>
                 </div>
-
-                {/* Divider with gradient (except for last item) */}
-                {index < newsData.length - 1 && (
-                  <div className="mt-6 flex justify-center">
-                    <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
-                  </div>
-                )}
               </div>
             ))}
           </div>
