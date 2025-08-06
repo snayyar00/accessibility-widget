@@ -11,6 +11,7 @@ interface axeOutput {
   impact: string
   description: string
   help: string
+  wcag_code?: string
   screenshotUrl?: string
 }
 
@@ -19,6 +20,7 @@ interface htmlcsOutput {
   message: string
   context: string[]
   selectors: string[]
+  wcag_code?: string
   screenshotUrl?: string
 }
 
@@ -48,6 +50,7 @@ interface finalOutput {
 interface Error {
   'Error Guideline'?: string
   code?: string
+  wcag_code?: string
   description?: string | string[]
   message?: string | string[]
   context?: string | string[]
@@ -60,6 +63,30 @@ interface HumanFunctionality {
   Errors: Error[]
 }
 
+function parseWcagCode(issue: any): string | undefined {
+  // Check if the new API response contains WCAG data
+  if (issue.wcagCriteria && issue.wcagLevel && issue.wcagVersion) {
+    const criteria = Array.isArray(issue.wcagCriteria) ? issue.wcagCriteria[0] : issue.wcagCriteria;
+    return `WCAG ${issue.wcagLevel} ${issue.wcagVersion} Criteria ${criteria}`;
+  }
+  
+  // Fallback: try to extract from existing code field
+  if (issue.code && issue.code.includes('WCAG')) {
+    return issue.code;
+  }
+  
+  // Try to extract WCAG criteria from the code field and construct the format
+  if (issue.code) {
+    const wcagMatch = issue.code.match(/(\d+\.\d+\.\d+)/);
+    if (wcagMatch) {
+      // Default to WCAG 2.2 AA if we can't determine the level and version
+      return `WCAG AA 2.2 Criteria ${wcagMatch[1]}`;
+    }
+  }
+  
+  return undefined;
+}
+
 function createAxeArrayObj(message: string, issue: any) {
   const obj: axeOutput = {
     message,
@@ -68,6 +95,7 @@ function createAxeArrayObj(message: string, issue: any) {
     impact: issue.runnerExtras.impact,
     description: issue.runnerExtras.description,
     help: issue.runnerExtras.help,
+    wcag_code: parseWcagCode(issue),
     screenshotUrl: issue.screenshotUrl || undefined,
   }
   if (obj.screenshotUrl) {
@@ -81,6 +109,7 @@ function createHtmlcsArrayObj(issue: any) {
     message: issue.message,
     context: [issue.context],
     selectors: [issue.selector],
+    wcag_code: parseWcagCode(issue),
     screenshotUrl: issue.screenshotUrl || undefined,
   }
   if (obj.screenshotUrl) {
