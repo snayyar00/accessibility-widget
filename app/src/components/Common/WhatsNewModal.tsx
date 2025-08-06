@@ -24,7 +24,7 @@ const newsData: NewsItem[] = [
   {
     id: '1',
     type: 'App',
-    date: '2025.07.20',
+    date: '2025.07.21',
     title: 'Notification Settings Added',
     description:
       'Customize alerts for reports, new domains, issues, and onboarding help.',
@@ -63,18 +63,9 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
     if (autoShow) {
       const latestDate = getLatestNewsDate();
       if (lastSeenDate !== latestDate) {
-        // Small delay to ensure the app is fully loaded
+        // Simple delay to ensure the app is fully loaded, then open modal
         const timer = setTimeout(() => {
-          dispatch(closeModal()); // Ensure modal is closed first
-          setTimeout(() => {
-            const modalElement = document.querySelector(
-              '[data-modal="whats-new"]',
-            );
-            if (!modalElement) {
-              // Only open if modal doesn't exist or isn't visible
-              dispatch(openModal());
-            }
-          }, 100);
+          dispatch(openModal());
         }, 1500);
         return () => clearTimeout(timer);
       }

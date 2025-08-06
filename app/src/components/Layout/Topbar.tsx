@@ -5,9 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Compass } from 'lucide-react';
 import { FiBell } from 'react-icons/fi';
 import { FaRocket } from 'react-icons/fa6';
-import WhatsNewModal, {
-  getLatestNewsDate,
-} from '@/components/Common/WhatsNewModal';
+import WhatsNewModal from '@/components/Common/WhatsNewModal';
 import {
   openModal,
   selectLastSeenDate,
@@ -119,18 +117,7 @@ const Topbar: React.FC<Props> = ({ signout }) => {
   // Tour guidance hook
   const { resetAndStartTour, hasCurrentPageTour } = useTourGuidance();
 
-  // Auto-show What's New modal on component mount if user hasn't seen latest updates
-  useEffect(() => {
-    const latestDate = getLatestNewsDate();
-    if (lastSeenDate !== latestDate) {
-      // Small delay to ensure everything is loaded
-      const timer = setTimeout(() => {
-        dispath(openModal());
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [dispath, lastSeenDate]);
+  // Auto-show logic is handled entirely by WhatsNewModal component
 
   useEffect(() => {
     document.addEventListener('click', handleClickOutside);
