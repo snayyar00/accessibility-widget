@@ -13,6 +13,7 @@ const store = configureStore({
 store.subscribe(() => {
   saveState({
     report: store.getState().report,
+    whatsNew: store.getState().whatsNew,
     // Add other slices here if you want to persist more
   });
 });
