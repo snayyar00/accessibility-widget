@@ -9,6 +9,7 @@ interface RawIssue {
   runner: 'axe' | 'htmlcs'
   impact?: string
   help?: string
+  wcag_code?: string
   screenshotUrl?: string
 }
 
@@ -27,6 +28,7 @@ interface ProcessedIssue extends RawIssue {
     partial?: boolean
     runner_agreement?: boolean
   }
+  wcag_code?: string
   screenshotUrl?: string
 }
 
@@ -479,6 +481,7 @@ export function convertPa11yToRawIssues(pa11yOutput: any): RawIssue[] {
             runner: 'axe',
             impact: issue.impact,
             help: issue.help,
+            wcag_code: issue.wcag_code,
             screenshotUrl: issue.screenshotUrl || undefined,
           })
         })
@@ -501,6 +504,7 @@ export function convertPa11yToRawIssues(pa11yOutput: any): RawIssue[] {
             selectors: Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors].filter(Boolean),
             type: type.slice(0, -1) as 'error' | 'warning' | 'notice', // Remove 's'
             runner: 'htmlcs',
+            wcag_code: issue.wcag_code,
             screenshotUrl: issue.screenshotUrl || undefined,
           })
         })
@@ -545,6 +549,7 @@ export function convertToOriginalFormat(processedIssues: ProcessedIssue[]): any 
     if (issue.impact) convertedIssue.impact = issue.impact
     if (issue.help) convertedIssue.help = issue.help
     if (issue.screenshotUrl) convertedIssue.screenshotUrl = issue.screenshotUrl
+    if (issue.wcag_code) convertedIssue.wcag_code = issue.wcag_code // Add wcag_code
 
     // Use bracket notation to avoid TypeScript indexing issues
     const targetArray = (result as any)[targetRunner][targetType] as any[]
