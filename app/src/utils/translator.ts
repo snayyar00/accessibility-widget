@@ -1,9 +1,8 @@
-import axios from 'axios'
+import axios from 'axios';
 import { getAuthenticationCookie } from './cookie';
 interface Issue {
   [key: string]: any;
 }
-
 
 export const LANGUAGES = {
   // en: { code: 'en', name: 'English', nativeName: 'English' },
@@ -21,8 +20,7 @@ export const LANGUAGES = {
   pl: { code: 'pl', name: 'Polish', nativeName: 'Polski' },
   ru: { code: 'ru', name: 'Russian', nativeName: 'Русский' },
   vi: { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
-  tr: { code: 'tr', name: 'Turkish', nativeName: 'Türkçe' }
-
+  tr: { code: 'tr', name: 'Turkish', nativeName: 'Türkçe' },
 } as const;
 
 export type LanguageCode = keyof typeof LANGUAGES;
@@ -36,7 +34,7 @@ export const WEBABILITY_COMPLIANT_CODES = [
   'WCAG2AA.Principle 1.Guideline 1.3',
   'WCAG2AA.Principle 1.Guideline 1.1',
   'WCAG2AA.Principle 2.Guideline 2.1',
-  'WCAG2AA.Principle 1.Guideline 1.4'
+  'WCAG2AA.Principle 1.Guideline 1.4',
 ] as const;
 
 /**
@@ -49,18 +47,104 @@ export const isCodeCompliant = (code: string): boolean => {
 
   // Add extra compliant codes as per instruction
   const EXTRA_COMPLIANT_CODES = [
-    'WCAG A 2.1',
-    'WCAG2AA.1.4.3'
+    'WCAG2AA.1.1.1',
+    'WCAG2AA.1.2.1',
+    'WCAG2AA.1.2.2',
+    'WCAG2AA.1.2.3',
+    'WCAG2AA.1.2.4',
+    'WCAG2AA.1.2.5',
+    'WCAG2AA.1.3.1',
+    'WCAG2AA.1.3.2',
+    'WCAG2AA.1.3.3',
+    'WCAG2AA.1.3.4',
+    'WCAG2AA.1.3.5',
+    'WCAG2AA.1.3.6',
+    'WCAG2AA.1.4.1',
+    'WCAG2AA.1.4.2',
+    'WCAG2AA.1.4.3',
+    'WCAG2AA.1.4.4',
+    'WCAG2AA.1.4.5',
+    'WCAG2AA.1.4.6',
+    'WCAG2AA.1.4.8',
+    'WCAG2AA.1.4.9',
+    'WCAG2AA.1.4.10',
+    'WCAG2AA.1.4.11',
+    'WCAG2AA.1.4.12',
+    'WCAG2AA.1.4.13',
+    'WCAG2AA.2.1.1',
+    'WCAG2AA.2.1.2',
+    'WCAG2AA.2.1.4',
+    'WCAG2AA.2.2.1',
+    'WCAG2AA.2.2.2',
+    'WCAG2AA.2.2.3',
+    'WCAG2AA.2.2.4',
+    'WCAG2AA.2.2.5',
+    'WCAG2AA.2.2.6',
+    'WCAG2AA.2.3.1',
+    'WCAG2AA.2.3.2',
+    'WCAG2AA.2.3.3',
+    'WCAG2AA.2.4.1',
+    'WCAG2AA.2.4.2',
+    'WCAG2AA.2.4.3',
+    'WCAG2AA.2.4.4',
+    'WCAG2AA.2.4.5',
+    'WCAG2AA.2.4.6',
+    'WCAG2AA.2.4.7',
+    'WCAG2AA.2.4.8',
+    'WCAG2AA.2.4.9',
+    'WCAG2AA.2.4.10',
+    'WCAG2AA.2.4.11',
+    'WCAG2AA.2.4.12',
+    'WCAG2AA.2.4.13',
+    'WCAG2AA.2.5.1',
+    'WCAG2AA.2.5.2',
+    'WCAG2AA.2.5.3',
+    'WCAG2AA.2.5.4',
+    'WCAG2AA.2.5.5',
+    'WCAG2AA.2.5.6',
+    'WCAG2AA.3.1.1',
+    'WCAG2AA.3.1.2',
+    'WCAG2AA.3.1.3',
+    'WCAG2AA.3.1.4',
+    'WCAG2AA.3.1.5',
+    'WCAG2AA.3.1.6',
+    'WCAG2AA.3.2.1',
+    'WCAG2AA.3.2.2',
+    'WCAG2AA.3.2.3',
+    'WCAG2AA.3.2.4',
+    'WCAG2AA.3.2.5',
+    'WCAG2AA.3.2.6',
+    'WCAG2AA.3.3.1',
+    'WCAG2AA.3.3.2',
+    'WCAG2AA.3.3.3',
+    'WCAG2AA.3.3.4',
+    'WCAG2AA.3.3.5',
+    'WCAG2AA.3.3.6',
+    'WCAG2AA.4.1.1',
+    'WCAG2AA.4.1.2',
+    'WCAG2AA.4.1.3',
+    'WCAG2AA.2.4.11',
+    'WCAG2AA.2.4.12',
+    'WCAG2AA.2.4.13',
+    'WCAG2AA.2.5.7',
+    'WCAG2AA.2.5.8',
+    'WCAG2AA.3.2.6',
+    'WCAG2AA.3.3.7',
+    'WCAG2AA.3.3.8',
   ];
 
   const result =
-    WEBABILITY_COMPLIANT_CODES.some(compliantCode => code.startsWith(compliantCode)) ||
-    EXTRA_COMPLIANT_CODES.some(extraCode => code.startsWith(extraCode));
+    WEBABILITY_COMPLIANT_CODES.some((compliantCode) =>
+      code.startsWith(compliantCode),
+    ) || EXTRA_COMPLIANT_CODES.some((extraCode) => code.startsWith(extraCode));
 
   return result;
 };
 
-export const translateText = async (issues: Issue[], toLang: string = 'en'): Promise<Issue[]> => {
+export const translateText = async (
+  issues: Issue[],
+  toLang: string = 'en',
+): Promise<Issue[]> => {
   if (!toLang || toLang.toLowerCase() === 'en') {
     return issues;
   }
@@ -75,13 +159,17 @@ export const translateText = async (issues: Issue[], toLang: string = 'en'): Pro
       headers.Authorization = `Bearer ${token}`;
     }
 
-    const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/translate`, {
-      issues,
-      toLang,
-    }, {
+    const response = await axios.post(
+      `${process.env.REACT_APP_BACKEND_URL}/translate`,
+      {
+        issues,
+        toLang,
+      },
+      {
         headers,
-        withCredentials: true
-      });
+        withCredentials: true,
+      },
+    );
 
     return response.data;
   } catch (err: any) {
@@ -90,12 +178,9 @@ export const translateText = async (issues: Issue[], toLang: string = 'en'): Pro
   }
 };
 
-
-
-
 export const translateSingleText = async (
   text: string,
-  toLang: string = 'en'
+  toLang: string = 'en',
 ): Promise<string> => {
   if (!text) return '';
 
@@ -121,8 +206,8 @@ export const translateSingleText = async (
       },
       {
         headers,
-        withCredentials: true
-      }
+        withCredentials: true,
+      },
     );
     // The backend returns an array of issues, so we extract the translated 'code' field
     return response.data?.[0]?.code || text;
@@ -134,7 +219,7 @@ export const translateSingleText = async (
 
 export const translateMultipleTexts = async (
   texts: string[],
-  toLang: string = 'en'
+  toLang: string = 'en',
 ): Promise<string[]> => {
   if (!Array.isArray(texts) || texts.length === 0) return [];
   if (!toLang || toLang.toLowerCase() === 'en') {
@@ -156,20 +241,20 @@ export const translateMultipleTexts = async (
     const response = await axios.post(
       `${process.env.REACT_APP_BACKEND_URL}/translate-text`,
       {
-        issues: texts.map(text => ({ code: text })),
+        issues: texts.map((text) => ({ code: text })),
         toLang,
       },
       {
         headers,
-        withCredentials: true
-      }
+        withCredentials: true,
+      },
     );
 
     // console.log("I am called 2nd ", texts);
 
     if (Array.isArray(response.data)) {
       return response.data.map((item: any, idx: number) =>
-        typeof item?.code === 'string' ? item.code : texts[idx]
+        typeof item?.code === 'string' ? item.code : texts[idx],
       );
     }
 
@@ -190,13 +275,17 @@ export function deduplicateIssuesByMessage(issues: Issue[]): Issue[] {
 
   for (const issue of issues) {
     const msg = issue.message;
-    const contextCount = Array.isArray(issue.contexts) ? issue.contexts.length : 0;
+    const contextCount = Array.isArray(issue.contexts)
+      ? issue.contexts.length
+      : 0;
 
     if (!messageMap.has(msg)) {
       messageMap.set(msg, issue);
     } else {
       const existing = messageMap.get(msg)!;
-      const existingContextCount = Array.isArray(existing.contexts) ? existing.contexts.length : 0;
+      const existingContextCount = Array.isArray(existing.contexts)
+        ? existing.contexts.length
+        : 0;
       if (contextCount > existingContextCount) {
         messageMap.set(msg, issue);
       }
