@@ -10,6 +10,7 @@ import uniqueTokenResolver from './resolvers/uniqueToken.resolver'
 import uniqueVisitorResolves from './resolvers/uniqueVisitor.resolver'
 import userResolves from './resolvers/user.resolver'
 import widgetResolvers from './resolvers/widget.resolver'
+import domainAnalysisResolves from './resolvers/domainAnalysis.resolver'
 
 // eslint-disable-next-line import/no-anonymous-default-export
-export default [userResolves, allowedSitesResolves, uniqueVisitorResolves, impressionResolves, accessibilityResolves, sitePlanResolves, problemReportResolves, organizationResolver, translationResolves, uniqueTokenResolver, proofOfEffortResolves,widgetResolvers]
+export default [userResolves, allowedSitesResolves, uniqueVisitorResolves, impressionResolves, accessibilityResolves, sitePlanResolves, problemReportResolves, organizationResolver, translationResolves, uniqueTokenResolver, proofOfEffortResolves, widgetResolvers, domainAnalysisResolves]
