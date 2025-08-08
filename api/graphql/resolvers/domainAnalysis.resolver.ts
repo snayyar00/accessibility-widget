@@ -5,7 +5,7 @@ import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 const resolvers = {
   Query: {
-    analyzeDomain: combineResolvers(allowedOrganization, isAuthenticated, async (_, { domain }, { user }) => {
+    analyzeDomain: combineResolvers(isAuthenticated, allowedOrganization, async (_, { domain }, { user }) => {
       const result = await analyzeDomain(domain)
       return result
     }),
