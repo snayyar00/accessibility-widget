@@ -24,7 +24,7 @@ const newsData: NewsItem[] = [
   {
     id: '1',
     type: 'App',
-    date: '2024.06.11',
+    date: '2025.08.08',
     title: 'AI Insights – Modern Attention Heatmap',
     description:
       'AI-powered heatmaps revealing where visitors focus, click, and engage most on your landing pages.',
