@@ -24,13 +24,21 @@ const newsData: NewsItem[] = [
   {
     id: '1',
     type: 'App',
+    date: '2024.06.11',
+    title: 'AI Insights – Modern Attention Heatmap',
+    description:
+      'AI-powered heatmaps revealing where visitors focus, click, and engage most on your landing pages.',
+  },
+  {
+    id: '2',
+    type: 'App',
     date: '2025.07.21',
     title: 'Notification Settings Added',
     description:
       'Customize alerts for reports, new domains, issues, and onboarding help.',
   },
   {
-    id: '2',
+    id: '3',
     type: 'App',
     date: '2025.07.25',
     title: 'Prospect Report Launched',
@@ -38,7 +46,7 @@ const newsData: NewsItem[] = [
       'View a short, easy-to-read version of the full prospect report.',
   },
   {
-    id: '3',
+    id: '4',
     type: 'App',
     date: '2025.8.01',
     title: 'Proof of Effort Toolkit Added',
