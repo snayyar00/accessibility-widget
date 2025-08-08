@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -57,6 +57,8 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
   const { isModalOpen, lastSeenDate } = useSelector(
     (state: RootState) => state.whatsNew,
   );
+  const [isClosing, setIsClosing] = useState(false);
+  const [isLaunching, setIsLaunching] = useState(false);
 
   // Auto-show logic for when user logs in
   useEffect(() => {
@@ -73,73 +75,193 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
     return undefined;
   }, [autoShow, lastSeenDate, dispatch]);
 
+  // Launch animation effect
+  useEffect(() => {
+    if (isModalOpen && !isClosing) {
+      // Small delay to ensure initial state is set before animation
+      const animationTimer = setTimeout(() => {
+        setIsLaunching(true);
+      }, 10);
+
+      // Reset launching state after animation completes
+      const resetTimer = setTimeout(() => {
+        setIsLaunching(false);
+      }, 810);
+
+      return () => {
+        clearTimeout(animationTimer);
+        clearTimeout(resetTimer);
+      };
+    }
+    return undefined;
+  }, [isModalOpen, isClosing]);
+
   const handleClose = () => {
-    const latestDate = getLatestNewsDate();
-    dispatch(markUpdatesAsSeen(latestDate));
+    setIsClosing(true);
+    // Delay the actual close to allow animation to complete
+    setTimeout(() => {
+      const latestDate = getLatestNewsDate();
+      dispatch(markUpdatesAsSeen(latestDate));
+      setIsClosing(false);
+    }, 300);
   };
 
-  if (!isModalOpen) return null;
+  if (!isModalOpen && !isClosing) return null;
+
+  // Determine if we should show the modal
+  const shouldShowModal = isModalOpen || isClosing;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-500 ease-out ${
+        isClosing ? 'opacity-0' : 'opacity-100'
+      }`}
       data-modal="whats-new"
     >
-      {/* Backdrop */}
+      {/* CSS Animations */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+          
+          @keyframes growFromCenter {
+            0% {
+              opacity: 0;
+              transform: scale(0) rotate(0deg);
+            }
+            50% {
+              opacity: 0.8;
+              transform: scale(0.7) rotate(0deg);
+            }
+            100% {
+              opacity: 1;
+              transform: scale(1) rotate(0deg);
+            }
+          }
+          
+          @keyframes shrinkToCenter {
+            0% {
+              opacity: 1;
+              transform: scale(1) rotate(0deg);
+            }
+            50% {
+              opacity: 0.8;
+              transform: scale(0.7) rotate(0deg);
+            }
+            100% {
+              opacity: 0;
+              transform: scale(0) rotate(0deg);
+            }
+          }
+        `,
+        }}
+      />
+      {/* Blurred Backdrop */}
       <div
-        className="absolute inset-0 bg-black bg-opacity-50"
+        className={`absolute inset-0 backdrop-blur-sm transition-all duration-500 ease-out ${
+          isClosing ? 'bg-black/0' : 'bg-black/30'
+        }`}
         onClick={handleClose}
       />
 
+      {/* Rocket Trail Effect */}
+      {isLaunching && (
+        <div
+          className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-screen bg-gradient-to-b from-orange-400 via-yellow-400 to-transparent opacity-60"
+          style={{
+            animation: 'rocketTrail 0.8s ease-out forwards',
+            transformOrigin: 'center top',
+          }}
+        />
+      )}
+
+      {/* Rocket Particles */}
+      {isLaunching && (
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-yellow-400 rounded-full"
+              style={{
+                left: `${20 + i * 10}%`,
+                top: '0%',
+                animation: `rocketParticle 0.8s ease-out ${i * 0.1}s forwards`,
+                transform: 'translateY(0)',
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Modal */}
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[80vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
-            News & <span className="text-blue-500">Updates</span>
-          </h2>
-          <button
-            onClick={handleClose}
-            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-            aria-label="Close modal"
-          >
-            <X size={20} />
-          </button>
+      <div
+        className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[85vh] overflow-hidden border border-gray-100 transform`}
+        style={{
+          animation: isLaunching
+            ? 'growFromCenter 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards'
+            : isClosing
+            ? 'shrinkToCenter 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards'
+            : undefined,
+          // Simple state management - modal is visible when not animating
+          transform: !isLaunching && !isClosing ? 'scale(1)' : undefined,
+          opacity: !isLaunching && !isClosing ? 1 : undefined,
+        }}
+      >
+        {/* Header with blue background */}
+        <div className="bg-blue-600 text-white p-6 relative overflow-hidden">
+          {/* Subtle pattern overlay for better text clarity */}
+          <div className="absolute inset-0 bg-black/5"></div>
+          <div className="relative flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white drop-shadow-sm">
+                What's <span className="text-blue-100 drop-shadow-sm">New</span>
+              </h2>
+              <p className="text-white/90 text-sm mt-1 font-medium drop-shadow-sm">
+                Stay updated with our latest features
+              </p>
+            </div>
+            <button
+              onClick={handleClose}
+              className="p-2 text-white hover:text-white hover:bg-white/20 rounded-full transition-all duration-200 drop-shadow-sm"
+              aria-label="Close modal"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-96">
+        <div className="p-6 overflow-y-auto max-h-[calc(85vh-120px)]">
           <div className="space-y-6">
             {newsData.map((item, index) => (
-              <div key={item.id} className="relative">
-                {/* Date and Type Badge */}
-                <div className="flex items-center gap-2 mb-2">
-                  <span
-                    className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full ${
-                      item.type === 'Plugins'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-green-100 text-green-800'
-                    }`}
-                  >
-                    {item.type}
-                  </span>
-                  <span className="text-sm text-gray-500">{item.date}</span>
+              <div key={item.id} className="relative group">
+                {/* Card container with hover effects */}
+                <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300 group-hover:transform group-hover:scale-[1.02]">
+                  {/* Date and Type Badge */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <span
+                      className={`inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full shadow-sm ${
+                        item.type === 'Plugins'
+                          ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                          : 'bg-green-100 text-green-700 border border-green-200'
+                      }`}
+                    >
+                      {item.type}
+                    </span>
+                    <span className="text-sm text-gray-500 font-medium">
+                      {item.date}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-lg font-bold text-gray-900 mb-3 leading-tight">
+                    {item.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    {item.description}
+                  </p>
                 </div>
-
-                {/* Title */}
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {item.title}
-                </h3>
-
-                {/* Description */}
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  {item.description}
-                </p>
-
-                {/* Divider (except for last item) */}
-                {index < newsData.length - 1 && (
-                  <div className="mt-6 border-b border-gray-200" />
-                )}
               </div>
             ))}
           </div>
