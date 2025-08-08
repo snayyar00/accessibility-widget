@@ -486,7 +486,7 @@ export class EmailSequenceService {
           supportLink: 'mailto:support@webability.io',
           installationLink: `${frontendUrl}/installation`,
           installationGuide: 'https://www.webability.io/installation',
-          unsubscribeLink: `${frontendUrl}/unsubscribe?email=${encodeURIComponent(user.email)}`,
+          unsubscribeLink: `${process.env.REACT_APP_BACKEND_URL}/unsubscribe?email=${encodeURIComponent(user.email)}`,
           year: new Date().getFullYear(),
         },
       })
@@ -547,7 +547,7 @@ export class EmailSequenceService {
           supportLink: 'mailto:support@webability.io',
           installationLink: `${frontendUrl}/installation`,
           installationGuide: 'https://www.webability.io/installation',
-          unsubscribeLink: `${frontendUrl}/unsubscribe?email=${encodeURIComponent(userEmail)}`,
+          unsubscribeLink: `${process.env.REACT_APP_BACKEND_URL}/unsubscribe?email=${encodeURIComponent(userEmail)}`,
           year: new Date().getFullYear(),
         },
       })
