@@ -1,6 +1,7 @@
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { normalizeDomain } from '../../utils/domain.utils'
+import axios from 'axios'
 
 export interface DomainAnalysisResult {
   url: string
@@ -34,25 +35,21 @@ export async function analyzeDomain(domain: string): Promise<DomainAnalysisResul
     // Call the external analysis API
     const apiUrl = `${process.env.AI_HEATMAP_SCANNER_API}/analyze`
 
-    // Create FormData for multipart/form-data request
-    const formData = new FormData()
+    // Create form data using URLSearchParams (natively available in Node.js)
+    const formData = new URLSearchParams()
     formData.append('url', normalizedDomain)
     formData.append('include_legend', 'false')
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
+    // Make request with axios (includes timeout and better error handling)
+    const response = await axios.post(apiUrl, formData.toString(), {
       headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
         Accept: 'application/json',
       },
-      body: formData,
+      timeout: 200000, // 200 second timeout
     })
 
-    if (!response.ok) {
-      logger.error(`Domain analysis API failed with status: ${response.status}`)
-      throw new Error(`Analysis API returned status: ${response.status}`)
-    }
-
-    const analysisData = (await response.json()) as any
+    const analysisData = response.data
 
     logger.info(`Domain analysis completed for: ${normalizedDomain}`)
 
@@ -69,6 +66,13 @@ export async function analyzeDomain(domain: string): Promise<DomainAnalysisResul
     }
   } catch (error) {
     logger.error('Domain analysis failed:', error)
+
+    // Handle axios errors specifically
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status || 'unknown'
+      const responseData = error.response?.data || error.message
+      logger.error(`Domain analysis API failed with status: ${status} body: ${JSON.stringify(responseData)}`)
+    }
 
     return {
       url: domain,
