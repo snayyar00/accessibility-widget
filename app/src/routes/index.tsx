@@ -3,12 +3,13 @@ import Accessibility from '@/containers/Accessibility/Accessibility';
 import { MdBugReport } from 'react-icons/md';
 import ProblemReport from '@/containers/ProblemReport/ProblemReport';
 import { TbReportSearch } from 'react-icons/tb';
-import { MdOutlineGavel } from 'react-icons/md';
+import { MdOutlineGavel, MdOutlineInsights } from 'react-icons/md';
 import { FiFile } from 'react-icons/fi';
 import ReportView from '@/containers/Accessibility/ReportView';
 import StatementGenerator from '@/containers/StatementGenerator/StatementGenerator';
 import Users from '@/containers/Users';
 import ProofOfEffortToolkit from '@/containers/ProofOfEffortToolkit/ProofOfEffortToolkit';
+import AIInsights from '@/containers/AIInsights/AIInsights';
 
 const routes = [
   {
@@ -70,6 +71,20 @@ const routes = [
         className="menu-icon text-white-blue transition-colors duration-200"
         size={25}
         aria-label="Proof of Effort Toolkit navigation icon"
+      />
+    ),
+    isSidebar: true,
+  },
+  {
+    path: '/ai-insights',
+    name: 'AI Insights',
+    exact: true,
+    component: AIInsights,
+    icon: (
+      <MdOutlineInsights
+        className="menu-icon text-white-blue transition-colors duration-200"
+        size={25}
+        aria-label="AI Insights navigation icon"
       />
     ),
     isSidebar: true,
