@@ -16,6 +16,7 @@ function createAxeArrayObj(message: string, issue: any) {
     impact: issue.impact || 'moderate',
     description: issue.description || '',
     help: issue.recommended_action || '',
+    wcag_code: issue.wcag_code,
     screenshotUrl: issue.screenshotUrl || undefined,
   }
   return obj
@@ -26,6 +27,7 @@ function createHtmlcsArrayObj(issue: any) {
     message: issue.message || '',
     context: Array.isArray(issue.context) ? issue.context : [issue.context],
     selectors: Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors],
+    wcag_code: issue.wcag_code,
     screenshotUrl: issue.screenshotUrl || undefined,
   }
   return obj
@@ -34,6 +36,7 @@ function createHtmlcsArrayObj(issue: any) {
 interface Error {
   ErrorGuideline?: string
   code?: string
+  wcag_code?: string
   description?: string | string[]
   message?: string | string[]
   context?: string | string[]
@@ -57,6 +60,7 @@ export interface htmlcsOutput {
   selectors?: string[]
   description?: string
   recommended_action?: string
+  wcag_code?: string
   screenshotUrl?: string
 }
 interface axeOutput {
@@ -66,6 +70,7 @@ interface axeOutput {
   impact: string
   description: string
   help: string
+  wcag_code?: string
   screenshotUrl?: string
 }
 

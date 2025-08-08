@@ -11,6 +11,7 @@ export default gql`
           impact
           description
           help
+          wcag_code
           screenshotUrl
         }
         notices {
@@ -20,6 +21,7 @@ export default gql`
           impact
           description
           help
+          wcag_code
           screenshotUrl
         }
         warnings {
@@ -29,6 +31,7 @@ export default gql`
           impact
           description
           help
+          wcag_code
           screenshotUrl
         }
       }
@@ -40,6 +43,7 @@ export default gql`
           selectors
           description
           recommended_action
+          wcag_code
           screenshotUrl
         }
         notices {
@@ -49,6 +53,7 @@ export default gql`
           selectors
           description
           recommended_action
+          wcag_code
           screenshotUrl
         }
         warnings {
@@ -58,6 +63,7 @@ export default gql`
           selectors
           description
           recommended_action
+          wcag_code
           screenshotUrl
         }
       }
@@ -74,6 +80,7 @@ export default gql`
               selectors
               description
               recommended_action
+              wcag_code
               screenshotUrl
             } 
       }
