@@ -44,6 +44,12 @@ export class EmailSequenceService {
    */
   static async sendWelcomeEmail(userEmail: string, userName: string, userId: number): Promise<boolean> {
     try {
+      // Email sequence kill switch for staging
+      if (process.env.DISABLE_EMAIL_SEQUENCE === 'true') {
+        logger.info(`Email sequence disabled via DISABLE_EMAIL_SEQUENCE env var - skipping welcome email for user ${userId}`)
+        return true // Return true to not break the registration flow
+      }
+
       // Check if user has onboarding emails enabled
       const isOnboardingEnabled = await checkOnboardingEmailsEnabled(userId)
       if (!isOnboardingEnabled) {
@@ -121,6 +127,12 @@ export class EmailSequenceService {
    */
   static async processDailyEmailSequence(): Promise<void> {
     try {
+      // Email sequence kill switch for staging
+      if (process.env.DISABLE_EMAIL_SEQUENCE === 'true') {
+        logger.info(`Email sequence disabled via DISABLE_EMAIL_SEQUENCE env var - skipping daily processing`)
+        return
+      }
+
       logger.info('🚀 Starting enhanced daily email sequence processing')
 
       // Get all sequence steps (exclude Day 0 which is handled by welcome email)
@@ -200,6 +212,12 @@ export class EmailSequenceService {
    */
   static async scheduleEmailSequenceForUser(userEmail: string, userName: string, userId: number, registrationTime: Date = new Date()): Promise<{ scheduled: number; failed: number; deferred: number }> {
     try {
+      // Email sequence kill switch for staging
+      if (process.env.DISABLE_EMAIL_SEQUENCE === 'true') {
+        logger.info(`Email sequence disabled via DISABLE_EMAIL_SEQUENCE env var - skipping scheduling for user ${userId}`)
+        return { scheduled: 0, failed: 0, deferred: 0 }
+      }
+
       // Check if user has onboarding emails enabled
       const isOnboardingEnabled = await checkOnboardingEmailsEnabled(userId)
       if (!isOnboardingEnabled) {
