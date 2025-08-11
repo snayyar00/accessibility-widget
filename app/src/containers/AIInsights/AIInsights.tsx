@@ -208,7 +208,7 @@ const AIInsights: React.FC = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-r from-blue-500 to-blue-600 rounded-3xl mb-4 sm:mb-8 shadow-xl">
               <FiBarChart className="w-8 h-8 sm:w-12 sm:h-12 text-white" />
             </div>
-            <div className="flex items-center justify-center gap-3 sm:gap-4">
+            <div className="flex flex-col-reverse md:flex-row items-center justify-center gap-3 sm:gap-4">
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold bg-gradient-to-r from-gray-900 via-blue-600 to-blue-700 bg-clip-text text-transparent mb-3 sm:mb-5 leading-tight">
                 AI Heatmap Insights
               </h1>
