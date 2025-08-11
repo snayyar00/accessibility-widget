@@ -80,6 +80,7 @@ const routes = [
     name: 'AI Insights',
     exact: true,
     component: AIInsights,
+    beta: true,
     icon: (
       <MdOutlineInsights
         className="menu-icon text-white-blue transition-colors duration-200"
