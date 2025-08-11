@@ -8,6 +8,7 @@ import {
   translateMultipleTexts,
   deduplicateIssuesByMessage,
   LANGUAGES,
+  CURATED_WCAG_CODES,
 } from '@/utils/translator';
 
 import {
@@ -612,7 +613,6 @@ const ReportView: React.FC = () => {
                             {issue.code}
                           </span>
                         )}
-
                       </div>
 
                       <div className="space-y-4">
@@ -3409,12 +3409,17 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     }
 
     // WCAG 2.1 AA Compliance Issues Section
-    const wcagIssues = issues.filter(issue => {
+    const wcagIssues = issues.filter((issue) => {
       const wcagCode = issue.wcag_code || '';
       const code = issue.code || '';
       const message = issue.message || '';
       const description = issue.description || '';
-      return wcagCode.includes('WCAG') || code.includes('WCAG2AA') || message.includes('WCAG2AA') || description.includes('WCAG2AA');
+      return (
+        wcagCode.includes('WCAG') ||
+        code.includes('WCAG2AA') ||
+        message.includes('WCAG2AA') ||
+        description.includes('WCAG2AA')
+      );
     });
 
     // Function to parse WCAG codes and truncate at Guideline level
@@ -3423,7 +3428,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       if (wcagCode) {
         // Clean up the wcag_code format
         let result = wcagCode.trim();
-        
+
         // If it's in format "WCAG AA 2.2 Criteria 1.4.3", extract the criteria part
         if (result.includes('Criteria')) {
           const criteriaMatch = result.match(/Criteria\s+(\d+\.\d+\.\d+)/);
@@ -3431,16 +3436,16 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             return `WCAG2AA.${criteriaMatch[1]}`;
           }
         }
-        
+
         // If it's already in a good format, return as is
         if (result.includes('WCAG')) {
           return result;
         }
       }
-      
+
       // Fallback to parsing the original code field
       if (!fallbackCode) return wcagCode || '';
-      
+
       // Extract WCAG2AA, Principle, and Guideline parts only
       const parts = fallbackCode.split('.');
       let result = '';
@@ -3476,9 +3481,11 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     };
 
     // Parse all codes and group by truncated version, keeping track of messages
-    const codeGroupsWithMessages: {[key: string]: {count: number, messages: string[]}} = {};
-    
-    wcagIssues.forEach(issue => {
+    const codeGroupsWithMessages: {
+      [key: string]: { count: number; messages: string[] };
+    } = {};
+
+    wcagIssues.forEach((issue) => {
       const parsedCode = parseWcagCode(issue.wcag_code || '', issue.code || '');
       if (parsedCode) {
         if (!codeGroupsWithMessages[parsedCode]) {
@@ -3509,7 +3516,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       let currentY = wcagStartY; // Use calculated start position
 
       // Create card data with compliance check based on WCAG codes
-      const wcagCardData = groupedWcagCodes.map(
+      let wcagCardData = groupedWcagCodes.map(
         (codeGroup: { code: string; count: number; message: string }) => {
           const isFixedByWebability = isCodeCompliant(codeGroup.code);
           return {
@@ -3520,6 +3527,41 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           };
         },
       );
+
+      // Append curated WCAG 2.1 AA codes in the same format with count = 1
+      // and avoid duplicates (by numeric key like 1.4.3)
+      const extractNumericKey = (codeStr: string): string => {
+        const match = (codeStr || '').match(/\d+\.\d+(?:\.\d+)?/);
+        return match ? match[0] : '';
+      };
+      const existingNumericKeys = new Set<string>(
+        wcagCardData.map((item: any) => extractNumericKey(item.code)),
+      );
+
+      const curatedCandidates: { code: string; message: string }[] =
+        CURATED_WCAG_CODES;
+
+      const seenCurated = new Set<string>();
+      const curatedAdditions = curatedCandidates
+        .filter(({ code }) => {
+          const key = extractNumericKey(code);
+          if (!key || existingNumericKeys.has(key) || seenCurated.has(key)) {
+            return false;
+          }
+          seenCurated.add(key);
+          return true;
+        })
+        .slice(0, 15)
+        .map(({ code, message }) => ({
+          code,
+          count: 1,
+          message,
+          status: 'FIXED', // ensure green/yellow styling depending on hasWebAbility
+        }));
+
+      if (curatedAdditions.length > 0) {
+        wcagCardData = wcagCardData.concat(curatedAdditions);
+      }
 
       // Calculate total height needed for the big container card
       const totalRows = Math.ceil(wcagCardData.length / 3);
@@ -3683,8 +3725,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         //console.log('Eye SVG response status:', response.status);
         if (response.ok) {
           const svgText = await response.text();
-          //console.log('Eye SVG content loaded, length:', svgText.length);
-          
+
           // Convert SVG to high-resolution PNG using canvas
           eyeIconDataUrl = await new Promise((resolve) => {
             const canvas = document.createElement('canvas');
@@ -3697,7 +3738,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             canvas.height = size;
 
             img.onload = () => {
-           //   console.log('Eye SVG image loaded successfully');
+              //   console.log('Eye SVG image loaded successfully');
               if (ctx) {
                 // Enable smooth scaling for better quality
                 ctx.imageSmoothingEnabled = true;
@@ -3732,8 +3773,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       } catch (error) {
         console.error('Failed to load eye SVG icon:', error);
       }
-      
-     // console.log('Eye icon data URL result:', eyeIconDataUrl ? 'Loaded' : 'Failed');
+
+      // console.log('Eye icon data URL result:', eyeIconDataUrl ? 'Loaded' : 'Failed');
 
       wcagCardData.forEach(
         (
@@ -3837,108 +3878,258 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             { align: 'center' },
           );
 
-        // Status icon in top right corner - very small
-        const iconX = x + issueCardWidth - 5; // Move a bit left from the right edge
-        const iconY = cardY + 4; // Moved down slightly
-        
-        if (item.status === 'FIXED') {
-          if (hasWebAbility) {
-            // Green checkmark (very small)
-            doc.setFillColor(34, 197, 94);
-            doc.setDrawColor(22, 163, 74);
-            doc.setLineWidth(0.2);
-            doc.circle(iconX, iconY, 1.5, 'FD'); // Reduced from 2.5 to 1.5
-            
-            doc.setDrawColor(255, 255, 255);
-            doc.setLineWidth(0.4); // Reduced line width
-            doc.line(iconX - 0.7, iconY - 0.2, iconX - 0.2, iconY + 0.5);
-            doc.line(iconX - 0.3, iconY + 0.6, iconX + 0.9, iconY - 0.6);
-          } else {
-            // Eye icon for can be fixed with WebAbility (very small)
-            if (eyeIconDataUrl) {
-             // console.log('Adding eye icon to PDF at position:', iconX, iconY);
-              // Very small eye icon in top right corner
-              const iconSize = 4; // Reduced from 7 to 4
-              const iconOffsetX = -iconSize/2; // Center horizontally
-              const iconOffsetY = -iconSize/2; // Center vertically
-              doc.addImage(eyeIconDataUrl, 'PNG', iconX + iconOffsetX, iconY + iconOffsetY, iconSize, iconSize);
-            } else {
-            //  console.log('Eye icon not available, using yellow circle fallback');
-              // Fallback to yellow circle if eye icon failed to load (very small)
-              doc.setFillColor(202, 138, 4);
-              doc.setDrawColor(161, 98, 7);
+          // Status icon in top right corner - very small
+          const iconX = x + issueCardWidth - 5; // Move a bit left from the right edge
+          const iconY = cardY + 4; // Moved down slightly
+
+          if (item.status === 'FIXED') {
+            if (hasWebAbility) {
+              // Green checkmark (very small)
+              doc.setFillColor(34, 197, 94);
+              doc.setDrawColor(22, 163, 74);
               doc.setLineWidth(0.2);
               doc.circle(iconX, iconY, 1.5, 'FD'); // Reduced from 2.5 to 1.5
+
+              doc.setDrawColor(255, 255, 255);
+              doc.setLineWidth(0.4); // Reduced line width
+              doc.line(iconX - 0.7, iconY - 0.2, iconX - 0.2, iconY + 0.5);
+              doc.line(iconX - 0.3, iconY + 0.6, iconX + 0.9, iconY - 0.6);
+            } else {
+              // Eye icon for can be fixed with WebAbility (very small)
+              if (eyeIconDataUrl) {
+                // console.log('Adding eye icon to PDF at position:', iconX, iconY);
+                // Very small eye icon in top right corner
+                const iconSize = 4; // Reduced from 7 to 4
+                const iconOffsetX = -iconSize / 2; // Center horizontally
+                const iconOffsetY = -iconSize / 2; // Center vertically
+                doc.addImage(
+                  eyeIconDataUrl,
+                  'PNG',
+                  iconX + iconOffsetX,
+                  iconY + iconOffsetY,
+                  iconSize,
+                  iconSize,
+                );
+              } else {
+                //  console.log('Eye icon not available, using yellow circle fallback');
+                // Fallback to yellow circle if eye icon failed to load (very small)
+                doc.setFillColor(202, 138, 4);
+                doc.setDrawColor(161, 98, 7);
+                doc.setLineWidth(0.2);
+                doc.circle(iconX, iconY, 1.5, 'FD'); // Reduced from 2.5 to 1.5
+              }
             }
+          } else {
+            // Red X (very small)
+            doc.setFillColor(239, 68, 68);
+            doc.setDrawColor(220, 38, 38);
+            doc.setLineWidth(0.2);
+            doc.circle(iconX, iconY, 1.5, 'FD'); // Reduced from 2.5 to 1.5
+
+            doc.setDrawColor(255, 255, 255);
+            doc.setLineWidth(0.4); // Reduced line width
+            doc.line(iconX - 0.6, iconY - 0.6, iconX + 0.6, iconY + 0.6);
+            doc.line(iconX - 0.6, iconY + 0.6, iconX + 0.6, iconY - 0.6);
           }
-        } else {
-          // Red X (very small)
-          doc.setFillColor(239, 68, 68);
-          doc.setDrawColor(220, 38, 38);
-          doc.setLineWidth(0.2);
-          doc.circle(iconX, iconY, 1.5, 'FD'); // Reduced from 2.5 to 1.5
-          
-          doc.setDrawColor(255, 255, 255);
-          doc.setLineWidth(0.4); // Reduced line width
-          doc.line(iconX - 0.6, iconY - 0.6, iconX + 0.6, iconY + 0.6);
-          doc.line(iconX - 0.6, iconY + 0.6, iconX + 0.6, iconY - 0.6);
-        }
-        
-        // Issue code text as heading (smaller and truncated, positioned after count badge)
-        doc.setFontSize(7);
-        doc.setTextColor(0, 0, 0); // Darker color for heading
-        doc.setFont('NotoSans_Condensed-Regular');
-        
-        // Truncate code to fit in card (leaving space for count badge and status icon)
-        const maxWidth = issueCardWidth - 15; // Adjusted for very small count badge and status icon
-        let displayCode = item.code;
-        if (doc.getTextWidth(displayCode) > maxWidth) {
-          // Truncate and add ellipsis
-          while (doc.getTextWidth(displayCode + '...') > maxWidth && displayCode.length > 10) {
-            displayCode = displayCode.slice(0, -1);
-          }
-          displayCode += '...';
-        }
-        
-        // Position code heading aligned with count badge
-        const textX = countBadgeX + countBadgeWidth + 1.5; // Position after count badge with proper spacing
-        const codeY = countBadgeCircleY + 0.6; // Aligned exactly with count badge center/text
-        doc.text(displayCode, textX, codeY);
-        
-        // Message description (7-10 words, smaller font)
-        if (item.message) {
+
+          // Issue code text as heading (smaller and truncated, positioned after count badge)
           doc.setFontSize(7);
-          doc.setTextColor(0, 0, 0); // Same color as WCAG code heading
+          doc.setTextColor(0, 0, 0); // Darker color for heading
           doc.setFont('NotoSans_Condensed-Regular');
-          
-          // Truncate message to 7-10 words
-          const words = item.message.split(' ');
-          let messageText = words.slice(0, Math.min(10, words.length)).join(' ');
-          if (words.length > 10) {
-            messageText += '...';
-          }
-          
-          // Further truncate if still too wide
-          if (doc.getTextWidth(messageText) > maxWidth) {
-            while (doc.getTextWidth(messageText + '...') > maxWidth && messageText.length > 20) {
-              messageText = messageText.slice(0, -1);
+
+          // Truncate code to fit in card (leaving space for count badge and status icon)
+          const maxWidth = issueCardWidth - 15; // Adjusted for very small count badge and status icon
+          let displayCode = item.code;
+          if (doc.getTextWidth(displayCode) > maxWidth) {
+            // Truncate and add ellipsis
+            while (
+              doc.getTextWidth(displayCode + '...') > maxWidth &&
+              displayCode.length > 10
+            ) {
+              displayCode = displayCode.slice(0, -1);
             }
-            if (!messageText.endsWith('...')) {
+            displayCode += '...';
+          }
+
+          // Position code heading aligned with count badge
+          const textX = countBadgeX + countBadgeWidth + 1.5; // Position after count badge with proper spacing
+          const codeY = countBadgeCircleY + 0.6; // Aligned exactly with count badge center/text
+          doc.text(displayCode, textX, codeY);
+
+          // Message description (7-10 words, smaller font)
+          if (item.message) {
+            doc.setFontSize(7);
+            doc.setTextColor(0, 0, 0); // Same color as WCAG code heading
+            doc.setFont('NotoSans_Condensed-Regular');
+
+            // Truncate message to 7-10 words
+            const words = item.message.split(' ');
+            let messageText = words
+              .slice(0, Math.min(10, words.length))
+              .join(' ');
+            if (words.length > 10) {
               messageText += '...';
             }
+
+            // Further truncate if still too wide
+            if (doc.getTextWidth(messageText) > maxWidth) {
+              while (
+                doc.getTextWidth(messageText + '...') > maxWidth &&
+                messageText.length > 20
+              ) {
+                messageText = messageText.slice(0, -1);
+              }
+              if (!messageText.endsWith('...')) {
+                messageText += '...';
+              }
+            }
+
+            const messageY = codeY + 4; // Moved down slightly for better spacing
+            const messageX = countBadgeX; // Align message with count badge (start under count badge)
+            doc.text(messageText, messageX, messageY);
           }
-          
-          const messageY = codeY + 4; // Moved down slightly for better spacing
-          const messageX = countBadgeX; // Align message with count badge (start under count badge)
-          doc.text(messageText, messageX, messageY);
-        }
-        
-        // Increment row count when we complete a row (at the last column)
-        if (column === itemsPerRow - 1) {
-          pageRowCount++;
-        }
+
+          // Increment row count when we complete a row (at the last column)
+          if (column === itemsPerRow - 1) {
+            pageRowCount++;
+          }
+        },
+      );
+
+      // Add "Fixes 71 more" card at the end - spanning full width of 3 columns
+      const fixesMoreRow = pageRowCount; // Use current page row count
+
+      // Check if we need a new page for the fixes more card
+      const fixesMoreCardY = currentY + fixesMoreRow * (issueCardHeight + 3);
+      if (fixesMoreCardY + issueCardHeight > pageHeight - pageMargin) {
+        doc.addPage();
+        currentY = 15; // Reset for new page
+        pageRowCount = 0;
+      }
+
+      // Calculate final position for fixes more card - spanning full width
+      const finalFixesMoreCardY =
+        currentY + pageRowCount * (issueCardHeight + 3);
+      const fixesMoreCardX = cardsStartX; // Start from leftmost position
+      const fixesMoreCardWidth = issueCardWidth * 3 + issueCardSpacing * 2; // Width of 3 cards + spacing
+
+      // 3D shadow for fixes more card
+      doc.setFillColor(220, 220, 220);
+      doc.roundedRect(
+        fixesMoreCardX + 1,
+        finalFixesMoreCardY + 1,
+        fixesMoreCardWidth,
+        issueCardHeight,
+        2,
+        2,
+        'F',
+      );
+
+      // Card background - green if hasWebAbility, yellow if not
+      if (hasWebAbility) {
+        doc.setFillColor(240, 253, 244); // Very light green
+        doc.setDrawColor(34, 197, 94);
+      } else {
+        doc.setFillColor(255, 248, 225); // Very light yellow
+        doc.setDrawColor(202, 138, 4);
+      }
+
+      doc.setLineWidth(0.2);
+      doc.roundedRect(
+        fixesMoreCardX,
+        finalFixesMoreCardY,
+        fixesMoreCardWidth,
+        issueCardHeight,
+        2,
+        2,
+        'FD',
+      );
+
+      // Count badge - green if hasWebAbility, yellow if not
+      const countBadgeHeight = 3;
+      const countBadgeWidth = 3;
+      const countBadgeX = fixesMoreCardX + 3;
+      const countBadgeY = finalFixesMoreCardY + 3;
+      const countBadgeCircleRadius =
+        Math.max(countBadgeWidth, countBadgeHeight) / 2;
+      const countBadgeCircleX = countBadgeX + countBadgeWidth / 2;
+      const countBadgeCircleY = countBadgeY + countBadgeHeight / 2;
+
+      if (hasWebAbility) {
+        doc.setFillColor(34, 197, 94); // Green background
+      } else {
+        doc.setFillColor(202, 138, 4); // Yellow background
+      }
+
+      doc.circle(
+        countBadgeCircleX,
+        countBadgeCircleY,
+        countBadgeCircleRadius,
+        'F',
+      );
+
+      // Count text "71"
+      doc.setFontSize(5);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('NotoSans_Condensed-Regular');
+      doc.text('71', countBadgeCircleX, countBadgeCircleY + 0.6, {
+        align: 'center',
       });
-      
+
+      // Status icon - checkmark if hasWebAbility, eye if not
+      const iconX = fixesMoreCardX + fixesMoreCardWidth - 7;
+      const iconY = finalFixesMoreCardY + 7;
+
+      if (hasWebAbility) {
+        // Green checkmark
+        doc.setFillColor(34, 197, 94);
+        doc.setDrawColor(22, 163, 74);
+        doc.setLineWidth(0.2);
+        doc.circle(iconX, iconY, 2, 'FD'); // Increased circle radius from 1.5 to 2
+
+        doc.setDrawColor(255, 255, 255);
+        doc.setLineWidth(0.6); // Increased line width from 0.4 to 0.6
+        doc.line(iconX - 1, iconY - 0.3, iconX - 0.3, iconY + 0.7); // Made lines longer
+        doc.line(iconX - 0.4, iconY + 0.8, iconX + 1.2, iconY - 0.8); // Made lines longer
+      } else {
+        // Eye icon for can be fixed with WebAbility
+        if (eyeIconDataUrl) {
+          const iconSize = 4;
+          const iconOffsetX = -iconSize / 2;
+          const iconOffsetY = -iconSize / 2;
+          doc.addImage(
+            eyeIconDataUrl,
+            'PNG',
+            iconX + iconOffsetX,
+            iconY + iconOffsetY,
+            iconSize,
+            iconSize,
+          );
+        } else {
+          // Fallback to yellow circle
+          doc.setFillColor(202, 138, 4);
+          doc.setDrawColor(161, 98, 7);
+          doc.setLineWidth(0.2);
+          doc.circle(iconX, iconY, 1.5, 'FD');
+        }
+      }
+
+      // Heading "Fixes 71 more" - positioned after count badge
+      doc.setFontSize(7);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('NotoSans_Condensed-Regular');
+      const textX = countBadgeX + countBadgeWidth + 1.5;
+      const codeY = countBadgeCircleY + 0.6;
+      doc.text('Fixes 71 more', textX, codeY);
+
+      // Description "We fix 71 more codes" - below heading, left-aligned in the wider card
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('NotoSans_Condensed-Regular');
+      const messageY = codeY + 4;
+      const messageX = fixesMoreCardX + 7; // Start from left edge with 10px padding
+      doc.text('We fix 71 more codes', messageX, messageY, { align: 'left' });
+
       // Update currentY to the final position - add some padding for the container
       currentY =
         currentY +
@@ -4319,4 +4510,5 @@ function mapIssueToImpact(message: string, code: any) {
   return 'moderate';
 }
 
-export default ReportView;2
+export default ReportView;
+2;
