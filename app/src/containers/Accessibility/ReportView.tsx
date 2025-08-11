@@ -3996,6 +3996,140 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         },
       );
 
+      // Add "Fixes 71 more" card at the end - spanning full width of 3 columns
+      const fixesMoreRow = pageRowCount; // Use current page row count
+
+      // Check if we need a new page for the fixes more card
+      const fixesMoreCardY = currentY + fixesMoreRow * (issueCardHeight + 3);
+      if (fixesMoreCardY + issueCardHeight > pageHeight - pageMargin) {
+        doc.addPage();
+        currentY = 15; // Reset for new page
+        pageRowCount = 0;
+      }
+
+      // Calculate final position for fixes more card - spanning full width
+      const finalFixesMoreCardY =
+        currentY + pageRowCount * (issueCardHeight + 3);
+      const fixesMoreCardX = cardsStartX; // Start from leftmost position
+      const fixesMoreCardWidth = issueCardWidth * 3 + issueCardSpacing * 2; // Width of 3 cards + spacing
+
+      // 3D shadow for fixes more card
+      doc.setFillColor(220, 220, 220);
+      doc.roundedRect(
+        fixesMoreCardX + 1,
+        finalFixesMoreCardY + 1,
+        fixesMoreCardWidth,
+        issueCardHeight,
+        2,
+        2,
+        'F',
+      );
+
+      // Card background - green if hasWebAbility, yellow if not
+      if (hasWebAbility) {
+        doc.setFillColor(240, 253, 244); // Very light green
+        doc.setDrawColor(34, 197, 94);
+      } else {
+        doc.setFillColor(255, 248, 225); // Very light yellow
+        doc.setDrawColor(202, 138, 4);
+      }
+
+      doc.setLineWidth(0.2);
+      doc.roundedRect(
+        fixesMoreCardX,
+        finalFixesMoreCardY,
+        fixesMoreCardWidth,
+        issueCardHeight,
+        2,
+        2,
+        'FD',
+      );
+
+      // Count badge - green if hasWebAbility, yellow if not
+      const countBadgeHeight = 3;
+      const countBadgeWidth = 3;
+      const countBadgeX = fixesMoreCardX + 3;
+      const countBadgeY = finalFixesMoreCardY + 3;
+      const countBadgeCircleRadius =
+        Math.max(countBadgeWidth, countBadgeHeight) / 2;
+      const countBadgeCircleX = countBadgeX + countBadgeWidth / 2;
+      const countBadgeCircleY = countBadgeY + countBadgeHeight / 2;
+
+      if (hasWebAbility) {
+        doc.setFillColor(34, 197, 94); // Green background
+      } else {
+        doc.setFillColor(202, 138, 4); // Yellow background
+      }
+
+      doc.circle(
+        countBadgeCircleX,
+        countBadgeCircleY,
+        countBadgeCircleRadius,
+        'F',
+      );
+
+      // Count text "71"
+      doc.setFontSize(5);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('NotoSans_Condensed-Regular');
+      doc.text('71', countBadgeCircleX, countBadgeCircleY + 0.6, {
+        align: 'center',
+      });
+
+      // Status icon - checkmark if hasWebAbility, eye if not
+      const iconX = fixesMoreCardX + fixesMoreCardWidth - 7;
+      const iconY = finalFixesMoreCardY + 7;
+
+      if (hasWebAbility) {
+        // Green checkmark
+        doc.setFillColor(34, 197, 94);
+        doc.setDrawColor(22, 163, 74);
+        doc.setLineWidth(0.2);
+        doc.circle(iconX, iconY, 2, 'FD'); // Increased circle radius from 1.5 to 2
+
+        doc.setDrawColor(255, 255, 255);
+        doc.setLineWidth(0.6); // Increased line width from 0.4 to 0.6
+        doc.line(iconX - 1, iconY - 0.3, iconX - 0.3, iconY + 0.7); // Made lines longer
+        doc.line(iconX - 0.4, iconY + 0.8, iconX + 1.2, iconY - 0.8); // Made lines longer
+      } else {
+        // Eye icon for can be fixed with WebAbility
+        if (eyeIconDataUrl) {
+          const iconSize = 4;
+          const iconOffsetX = -iconSize / 2;
+          const iconOffsetY = -iconSize / 2;
+          doc.addImage(
+            eyeIconDataUrl,
+            'PNG',
+            iconX + iconOffsetX,
+            iconY + iconOffsetY,
+            iconSize,
+            iconSize,
+          );
+        } else {
+          // Fallback to yellow circle
+          doc.setFillColor(202, 138, 4);
+          doc.setDrawColor(161, 98, 7);
+          doc.setLineWidth(0.2);
+          doc.circle(iconX, iconY, 1.5, 'FD');
+        }
+      }
+
+      // Heading "Fixes 71 more" - positioned after count badge
+      doc.setFontSize(7);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('NotoSans_Condensed-Regular');
+      const textX = countBadgeX + countBadgeWidth + 1.5;
+      const codeY = countBadgeCircleY + 0.6;
+      doc.text('Fixes 71 more', textX, codeY);
+
+      // Description "We fix 71 more codes" - below heading, left-aligned in the wider card
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('NotoSans_Condensed-Regular');
+      const messageY = codeY + 4;
+      const messageX = fixesMoreCardX + 7; // Start from left edge with 10px padding
+      doc.text('We fix 71 more codes', messageX, messageY, { align: 'left' });
+
       // Update currentY to the final position - add some padding for the container
       currentY =
         currentY +
