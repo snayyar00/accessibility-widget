@@ -23,6 +23,7 @@ import {
   LANGUAGES,
   deduplicateIssuesByMessage,
   isCodeCompliant,
+  CURATED_WCAG_CODES,
 } from '@/utils/translator';
 
 import {
@@ -2691,12 +2692,17 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
 
     // WCAG 2.1 AA Compliance Issues Section
-    const wcagIssues = issues.filter(issue => {
+    const wcagIssues = issues.filter((issue) => {
       const wcagCode = issue.wcag_code || '';
       const code = issue.code || '';
       const message = issue.message || '';
       const description = issue.description || '';
-      return wcagCode.includes('WCAG') || code.includes('WCAG2AA') || message.includes('WCAG2AA') || description.includes('WCAG2AA');
+      return (
+        wcagCode.includes('WCAG') ||
+        code.includes('WCAG2AA') ||
+        message.includes('WCAG2AA') ||
+        description.includes('WCAG2AA')
+      );
     });
 
     // Function to parse WCAG codes and truncate at Guideline level
@@ -2705,7 +2711,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       if (wcagCode) {
         // Clean up the wcag_code format
         let result = wcagCode.trim();
-        
+
         // If it's in format "WCAG AA 2.2 Criteria 1.4.3", extract the criteria part
         if (result.includes('Criteria')) {
           const criteriaMatch = result.match(/Criteria\s+(\d+\.\d+\.\d+)/);
@@ -2713,16 +2719,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             return `WCAG2AA.${criteriaMatch[1]}`;
           }
         }
-        
+
         // If it's already in a good format, return as is
         if (result.includes('WCAG')) {
           return result;
         }
       }
-      
+
       // Fallback to parsing the original code field
       if (!fallbackCode) return wcagCode || '';
-      
+
       // Extract WCAG2AA, Principle, and Guideline parts only
       const parts = fallbackCode.split('.');
       let result = '';
@@ -2758,9 +2764,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     };
 
     // Parse all codes and group by truncated version, keeping track of messages
-    const codeGroupsWithMessages: {[key: string]: {count: number, messages: string[]}} = {};
-    
-    wcagIssues.forEach(issue => {
+    const codeGroupsWithMessages: {
+      [key: string]: { count: number; messages: string[] };
+    } = {};
+
+    wcagIssues.forEach((issue) => {
       const parsedCode = parseWcagCode(issue.wcag_code || '', issue.code || '');
       if (parsedCode) {
         if (!codeGroupsWithMessages[parsedCode]) {
@@ -2791,7 +2799,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       let currentY = wcagStartY; // Use calculated start position
 
       // Create card data with compliance check based on WCAG codes
-      const wcagCardData = groupedWcagCodes.map(
+      let wcagCardData = groupedWcagCodes.map(
         (codeGroup: { code: string; count: number; message: string }) => {
           const isFixedByWebability = isCodeCompliant(codeGroup.code);
           return {
@@ -2802,6 +2810,41 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           };
         },
       );
+
+      // Append curated WCAG 2.1 AA codes in the same format with count = 1
+      // and avoid duplicates (by numeric key like 1.4.3)
+      const extractNumericKey = (codeStr: string): string => {
+        const match = (codeStr || '').match(/\d+\.\d+(?:\.\d+)?/);
+        return match ? match[0] : '';
+      };
+      const existingNumericKeys = new Set<string>(
+        wcagCardData.map((item: any) => extractNumericKey(item.code)),
+      );
+
+      const curatedCandidates: { code: string; message: string }[] =
+        CURATED_WCAG_CODES;
+
+      const seenCurated = new Set<string>();
+      const curatedAdditions = curatedCandidates
+        .filter(({ code }) => {
+          const key = extractNumericKey(code);
+          if (!key || existingNumericKeys.has(key) || seenCurated.has(key)) {
+            return false;
+          }
+          seenCurated.add(key);
+          return true;
+        })
+        .slice(0, 15)
+        .map(({ code, message }) => ({
+          code,
+          count: 1,
+          message,
+          status: 'FIXED', // ensure green/yellow styling depending on hasWebAbility
+        }));
+
+      if (curatedAdditions.length > 0) {
+        wcagCardData = wcagCardData.concat(curatedAdditions);
+      }
 
       // Calculate total height needed for the big container card
       const totalRows = Math.ceil(wcagCardData.length / 3);
