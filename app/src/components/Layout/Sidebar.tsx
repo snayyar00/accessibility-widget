@@ -173,8 +173,13 @@ const Sidebar = ({
                     <div className="menu-icon flex items-center justify-center w-12 h-6">
                       {route.icon}
                     </div>
-                    <span className="menu-text text-center text-lg text-white-blue ml-4">
+                    <span className="menu-text text-center text-lg text-white-blue ml-4 flex items-center gap-2">
                       {route.name}
+                      {route.beta && (
+                        <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-700 px-3 py-1 text-xs sm:text-sm font-semibold ring-1 ring-inset ring-blue-300">
+                          Beta
+                        </span>
+                      )}
                     </span>
                   </NavLink>
                 </li>
