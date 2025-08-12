@@ -247,12 +247,18 @@ export class EmailSequenceService {
           // Calculate exact send time: registration time + step.day days
           const scheduledTime = new Date(registrationTime.getTime() + step.day * 24 * 60 * 60 * 1000)
 
-          // Check if this email was already scheduled (duplicate prevention)
+          // Check if this email was already scheduled or sent (duplicate prevention)
           const emailLogKey = `${step.subject}|${userId}`
           const alreadySent = await this.wasEmailAlreadySent(emailLogKey)
+          const alreadyScheduled = await ScheduledEmailTracker.isEmailAlreadyScheduled(userId, step.subject)
 
           if (alreadySent) {
-            logger.info(`   Email already scheduled/sent: ${step.description} for user ${userId}`)
+            logger.info(`   Email already sent: ${step.description} for user ${userId}`)
+            continue
+          }
+
+          if (alreadyScheduled) {
+            logger.info(`   Email already scheduled: ${step.description} for user ${userId}`)
             continue
           }
 
@@ -261,8 +267,8 @@ export class EmailSequenceService {
 
           if (emailScheduled) {
             scheduledCount++
-            // Mark as "sent" in our legacy tracking system to prevent duplicates
-            await this.markEmailAsSent(emailLogKey)
+            // NOTE: Do NOT mark as "sent" for scheduled emails - only track in scheduled-emails.json
+            // They will be marked as sent when actually delivered (handled by delivery webhooks or cron)
             logger.info(`   ✅ Scheduled via Brevo: ${step.description} for ${scheduledTime.toISOString()}`)
           } else {
             failedCount++
