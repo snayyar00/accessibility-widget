@@ -184,6 +184,7 @@ const Topbar: React.FC<Props> = ({ signout }) => {
               onClick={() =>
                 setIsShowNotificationSettings(!isShowNotificationSettings)
               }
+              title="Notification Settings"
             >
               <FiBell
                 className={`w-6 h-6 transition-colors duration-200 ${
