@@ -311,17 +311,17 @@ export class EmailSequenceService {
 
   /**
    * Handle failed scheduled emails and retry them
-   * This checks for emails that should have been sent but failed scheduling
+   * Enhanced to also handle users who toggled onboarding emails off/on
    */
   static async handleFailedScheduledEmails(): Promise<void> {
     try {
-      logger.info('🔍 Checking for failed scheduled emails...')
+      logger.info('🔍 Checking for failed scheduled emails and email sequence gaps...')
 
-      // Check for emails that should have been sent in the past 3 days but failed scheduling
+      // Check for emails that should have been sent in the past 7 days
       const currentDate = new Date()
 
-      // Get users registered 1-3 days ago who might have failed scheduling
-      for (let daysBack = 1; daysBack <= 3; daysBack++) {
+      // Check users from the last 7 days for missing emails (covers flag toggle scenarios)
+      for (let daysBack = 1; daysBack <= 7; daysBack++) {
         const targetDate = new Date(currentDate.getTime() - daysBack * 24 * 60 * 60 * 1000)
         const dateString = targetDate.toISOString().split('T')[0]
 
@@ -329,7 +329,7 @@ export class EmailSequenceService {
 
         if (users.length === 0) continue
 
-        logger.info(`🔍 Checking ${users.length} users registered on ${dateString} for failed Day ${daysBack} emails`)
+        logger.info(`🔍 Checking ${users.length} users registered on ${dateString} for missing Day ${daysBack} emails`)
 
         // Find the email step for this day
         const step = EMAIL_SEQUENCES.ONBOARDING.steps.find((s) => s.day === daysBack)
@@ -337,7 +337,7 @@ export class EmailSequenceService {
 
         for (const user of users) {
           try {
-            // Check if user has onboarding emails enabled
+            // Check if user currently has onboarding emails enabled
             const isOnboardingEnabled = await checkOnboardingEmailsEnabled(user.id)
             if (!isOnboardingEnabled) continue
 
@@ -346,25 +346,97 @@ export class EmailSequenceService {
             const alreadySent = await this.wasEmailAlreadySent(emailLogKey)
 
             if (!alreadySent) {
-              logger.info(`   🔄 Retrying failed Day ${daysBack} email for user ${user.id}: ${step.description}`)
+              logger.info(`   🔄 Sending missing Day ${daysBack} email for user ${user.id}: ${step.description}`)
 
-              // Try to send the email immediately since scheduling failed
+              // Send the email immediately since it was missed
               await this.sendSequenceEmail(user, step)
 
               // Mark as sent to prevent future retries
               await this.markEmailAsSent(emailLogKey)
 
-              logger.info(`   ✅ Successfully sent retry email to user ${user.id}`)
+              logger.info(`   ✅ Successfully sent missing email to user ${user.id}`)
             }
           } catch (error) {
-            logger.error(`   ❌ Failed to retry email for user ${user.id}:`, error)
+            logger.error(`   ❌ Failed to process user ${user.id} for ${step.description}:`, error)
           }
         }
       }
 
-      logger.info('✅ Failed scheduled emails check completed')
+      logger.info('✅ Failed scheduled emails and gap recovery completed')
     } catch (error) {
       logger.error('❌ Error handling failed scheduled emails:', error)
+    }
+  }
+
+  /**
+   * Recovery mechanism for users who re-enable onboarding emails
+   * This detects and sends any missed emails when the flag is turned back on
+   */
+  static async recoverMissedEmailsForUser(userId: number): Promise<{ recovered: number; details: string[] }> {
+    try {
+      logger.info(`🔄 Starting email recovery for user ${userId}`)
+
+      // Check if user has onboarding emails enabled
+      const isOnboardingEnabled = await checkOnboardingEmailsEnabled(userId)
+      if (!isOnboardingEnabled) {
+        logger.info(`User ${userId} has onboarding emails disabled - skipping recovery`)
+        return { recovered: 0, details: ['Onboarding emails disabled'] }
+      }
+
+      // Get user details
+      const { getUserbyId } = await import('../../repository/user.repository')
+      const user = await getUserbyId(userId)
+
+      if (!user) {
+        logger.info(`User ${userId} not found`)
+        return { recovered: 0, details: ['User not found'] }
+      }
+
+      // Calculate days since registration
+      const registrationDate = new Date(user.created_at)
+      const currentDate = new Date()
+      const daysSinceRegistration = Math.floor((currentDate.getTime() - registrationDate.getTime()) / (1000 * 60 * 60 * 24))
+
+      logger.info(`User ${userId} registered ${daysSinceRegistration} days ago`)
+
+      // Get all sequence steps that should have been sent by now
+      const allSteps = EMAIL_SEQUENCES.ONBOARDING.steps
+      const dueSteps = allSteps.filter((step) => step.day <= daysSinceRegistration)
+
+      let recoveredCount = 0
+      const recoveryDetails: string[] = []
+
+      // Check each step to see if it was sent
+      for (const step of dueSteps) {
+        const emailLogKey = `${step.subject}|${userId}`
+        const alreadySent = await this.wasEmailAlreadySent(emailLogKey)
+
+        if (!alreadySent) {
+          try {
+            logger.info(`   📧 Recovering missed email: ${step.description} (Day ${step.day})`)
+
+            // Send the missed email immediately
+            await this.sendSequenceEmail(user, step)
+
+            recoveredCount++
+            recoveryDetails.push(`Sent: ${step.description} (Day ${step.day})`)
+
+            // Small delay between emails
+            await new Promise((resolve) => setTimeout(resolve, 1000))
+          } catch (error) {
+            logger.error(`   ❌ Failed to recover ${step.description}:`, error)
+            recoveryDetails.push(`Failed: ${step.description} (Day ${step.day}) - ${error.message}`)
+          }
+        } else {
+          recoveryDetails.push(`Already sent: ${step.description} (Day ${step.day})`)
+        }
+      }
+
+      logger.info(`📊 Email recovery completed for user ${userId}: ${recoveredCount} emails recovered`)
+      return { recovered: recoveredCount, details: recoveryDetails }
+    } catch (error) {
+      logger.error(`❌ Error in email recovery for user ${userId}:`, error)
+      return { recovered: 0, details: [`Error: ${error.message}`] }
     }
   }
 
