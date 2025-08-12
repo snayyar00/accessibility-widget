@@ -161,6 +161,27 @@ export class ScheduledEmailTracker {
   }
 
   /**
+   * Get cancelled emails for a user (for recovery purposes)
+   */
+  static async getCancelledEmailsForUser(userId: number): Promise<ScheduledEmailRecord[]> {
+    try {
+      const trackingPath = this.getTrackingFilePath()
+
+      if (!fs.existsSync(trackingPath)) {
+        return []
+      }
+
+      const trackingContent = await fs.promises.readFile(trackingPath, 'utf8')
+      const scheduledEmails: ScheduledEmailRecord[] = JSON.parse(trackingContent)
+
+      return scheduledEmails.filter((email) => email.userId === userId && email.status === 'cancelled')
+    } catch (error) {
+      logger.error('Error getting cancelled emails for user:', error)
+      return []
+    }
+  }
+
+  /**
    * Clean up old email records (optional maintenance)
    */
   static async cleanupOldRecords(daysOld = 90): Promise<void> {
