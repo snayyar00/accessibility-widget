@@ -86,18 +86,18 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
   // Launch animation effect
   useEffect(() => {
     if (isModalOpen && !isClosing) {
-      // Small delay to ensure initial state is set before animation
-      const animationTimer = setTimeout(() => {
+      // Small delay to ensure initial state is rendered before starting animation
+      const startTimer = setTimeout(() => {
         setIsLaunching(true);
-      }, 10);
+      }, 1000);
 
       // Reset launching state after animation completes
       const resetTimer = setTimeout(() => {
         setIsLaunching(false);
-      }, 810);
+      }, 1220); // 10ms delay + 1200ms animation
 
       return () => {
-        clearTimeout(animationTimer);
+        clearTimeout(startTimer);
         clearTimeout(resetTimer);
       };
     }
@@ -126,43 +126,6 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
       }`}
       data-modal="whats-new"
     >
-      {/* CSS Animations */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-          
-          @keyframes growFromCenter {
-            0% {
-              opacity: 0;
-              transform: scale(0) rotate(0deg);
-            }
-            50% {
-              opacity: 0.8;
-              transform: scale(0.7) rotate(0deg);
-            }
-            100% {
-              opacity: 1;
-              transform: scale(1) rotate(0deg);
-            }
-          }
-          
-          @keyframes shrinkToCenter {
-            0% {
-              opacity: 1;
-              transform: scale(1) rotate(0deg);
-            }
-            50% {
-              opacity: 0.8;
-              transform: scale(0.7) rotate(0deg);
-            }
-            100% {
-              opacity: 0;
-              transform: scale(0) rotate(0deg);
-            }
-          }
-        `,
-        }}
-      />
       {/* Blurred Backdrop */}
       <div
         className={`absolute inset-0 backdrop-blur-sm transition-all duration-500 ease-out ${
@@ -173,13 +136,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
 
       {/* Rocket Trail Effect */}
       {isLaunching && (
-        <div
-          className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-screen bg-gradient-to-b from-orange-400 via-yellow-400 to-transparent opacity-60"
-          style={{
-            animation: 'rocketTrail 0.8s ease-out forwards',
-            transformOrigin: 'center top',
-          }}
-        />
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-screen bg-gradient-to-b from-orange-400 via-yellow-400 to-transparent opacity-60 animate-pulse duration-[1200ms]" />
       )}
 
       {/* Rocket Particles */}
@@ -188,12 +145,12 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
           {[...Array(8)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-1 h-1 bg-yellow-400 rounded-full"
+              className={`absolute w-1 h-1 bg-yellow-400 rounded-full animate-bounce`}
               style={{
                 left: `${20 + i * 10}%`,
                 top: '0%',
-                animation: `rocketParticle 0.8s ease-out ${i * 0.1}s forwards`,
-                transform: 'translateY(0)',
+                animationDelay: `${i * 0.15}s`,
+                animationDuration: '1.2s',
               }}
             />
           ))}
@@ -202,17 +159,15 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
 
       {/* Modal */}
       <div
-        className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[85vh] overflow-hidden border border-gray-100 transform`}
-        style={{
-          animation: isLaunching
-            ? 'growFromCenter 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards'
+        className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[85vh] overflow-hidden border border-gray-100 transform transition-all ${
+          isLaunching
+            ? 'duration-[1200ms] ease-out scale-100 opacity-100'
             : isClosing
-            ? 'shrinkToCenter 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards'
-            : undefined,
-          // Simple state management - modal is visible when not animating
-          transform: !isLaunching && !isClosing ? 'scale(1)' : undefined,
-          opacity: !isLaunching && !isClosing ? 1 : undefined,
-        }}
+            ? 'duration-300 ease-in scale-95 opacity-0'
+            : !isLaunching && !isClosing
+            ? 'scale-100 opacity-100'
+            : 'scale-0 opacity-0'
+        }`}
       >
         {/* Header with blue background */}
         <div className="bg-blue-600 text-white p-6 relative overflow-hidden">
