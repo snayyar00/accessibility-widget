@@ -34,7 +34,9 @@ export async function checkCustomer(req: Request, res: Response) {
         maxSites = nonCustomCodes.length
       }
     }
-
+    else{
+      maxSites = 9999;
+    }
     // Check if customer exists
     if (customers.data.length > 0) {
       customer = customers.data[0]

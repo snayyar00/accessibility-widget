@@ -311,7 +311,12 @@ const DomainTable: React.FC<DomainTableProps> = ({
         setAppSumoCount(customerData.appSumoCount);
       }
       if (customerData.codeCount) {
-        setCodeCount(customerData.codeCount * 2);
+        if(customerData.codeCount == 9999){
+          setCodeCount(Infinity);
+        }
+        else{
+          setCodeCount(customerData.codeCount * 2);
+        }
       }
       if (customerData.isCustomer == true && customerData.card) {
         setIsStripeCustomer(true);
