@@ -10,7 +10,7 @@ import type { RootState } from '@/config/store';
 
 interface NewsItem {
   id: string;
-  type: 'Plugins' | 'App';
+  type: 'Widget' | 'App';
   date: string;
   title: string;
   description: string;
@@ -23,14 +23,30 @@ interface WhatsNewModalProps {
 const newsData: NewsItem[] = [
   {
     id: '1',
+    type: 'Widget',
+    date: '2025.08.12',
+    title: 'Motor Impaired Profile',
+    description:
+      'New accessibility mode enabling full website navigation using just the keyboard, with helpful voice guidance.',
+  },
+  {
+    id: '2',
+    type: 'Widget',
+    date: '2025.08.10',
+    title: 'Move Widget Anywhere ',
+    description:
+      'Freely adjust the widgets position in any direction for a perfectly tailored layout.',
+  },
+  {
+    id: '3',
     type: 'App',
     date: '2025.08.08',
-    title: 'AI Insights – Modern Attention Heatmap',
+    title: 'AI Insights Modern Attention Heatmap',
     description:
       'AI-powered heatmaps revealing where visitors focus, click, and engage most on your landing pages.',
   },
   {
-    id: '2',
+    id: '4',
     type: 'App',
     date: '2025.07.21',
     title: 'Notification Settings Added',
@@ -38,7 +54,7 @@ const newsData: NewsItem[] = [
       'Customize alerts for reports, new domains, issues, and onboarding help.',
   },
   {
-    id: '3',
+    id: '5',
     type: 'App',
     date: '2025.07.25',
     title: 'Prospect Report Launched',
@@ -46,7 +62,7 @@ const newsData: NewsItem[] = [
       'View a short, easy-to-read version of the full prospect report.',
   },
   {
-    id: '4',
+    id: '6',
     type: 'App',
     date: '2025.8.01',
     title: 'Proof of Effort Toolkit Added',
@@ -203,7 +219,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
                   <div className="flex items-center gap-3 mb-3">
                     <span
                       className={`inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full shadow-sm ${
-                        item.type === 'Plugins'
+                        item.type === 'Widget'
                           ? 'bg-blue-100 text-blue-700 border border-blue-200'
                           : 'bg-green-100 text-green-700 border border-green-200'
                       }`}
