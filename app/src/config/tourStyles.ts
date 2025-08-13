@@ -11,11 +11,16 @@ export const defaultTourStyles = {
   tooltip: {
     borderRadius: '8px',
     fontSize: '14px',
-    maxWidth: '400px',
+    // Prevent overflow on small screens
+    maxWidth: 'min(400px, calc(100vw - 24px))',
+    width: 'auto',
     filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
+    boxSizing: 'border-box' as const,
   },
   tooltipContainer: {
     textAlign: 'left' as const,
+    maxWidth: '100%',
+    overflowWrap: 'anywhere' as const,
   },
   buttonNext: {
     backgroundColor: '#0080FF', // Use theme primary color
@@ -35,4 +40,4 @@ export const defaultTourStyles = {
   floater: {
     filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))',
   },
-}; 
+};

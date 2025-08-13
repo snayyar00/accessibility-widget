@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import Joyride, { CallBackProps, STATUS, ACTIONS, Step, Placement } from 'react-joyride';
+import Joyride, {
+  CallBackProps,
+  STATUS,
+  ACTIONS,
+  Step,
+  Placement,
+} from 'react-joyride';
 
 interface TourGuideProps {
   /** Array of tour steps to display */
@@ -54,9 +60,12 @@ const TourGuide: React.FC<TourGuideProps> = ({
       if (event.detail.tourKey === tourKey) {
         // Reset completion status and start tour
         localStorage.removeItem(`${tourKey}_completed`);
-        
+
         // Use startStep if provided, otherwise use initialStepIndex
-        const stepIndex = event.detail.startStep !== undefined ? event.detail.startStep : initialStepIndex;
+        const stepIndex =
+          event.detail.startStep !== undefined
+            ? event.detail.startStep
+            : initialStepIndex;
         setTourStepIndex(stepIndex);
         setRunTour(true);
       }
@@ -82,11 +91,16 @@ const TourGuide: React.FC<TourGuideProps> = ({
     tooltip: {
       borderRadius: '8px',
       fontSize: '14px',
-      maxWidth: '400px',
+      // Keep tooltip within viewport width
+      maxWidth: 'min(400px, calc(100vw - 24px))',
+      width: 'auto',
       filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
+      boxSizing: 'border-box' as const,
     },
     tooltipContainer: {
       textAlign: 'left' as const,
+      maxWidth: '100%',
+      overflowWrap: 'anywhere' as const,
     },
     buttonNext: {
       backgroundColor: '#0080FF', // Use theme primary color
@@ -123,7 +137,7 @@ const TourGuide: React.FC<TourGuideProps> = ({
   // Handle tour callback
   const handleTourCallback = (data: CallBackProps) => {
     const { status, type, index, action } = data;
-    
+
     // Handle close button (X) click
     if (action === ACTIONS.CLOSE) {
       // Mark tour as completed and stop the tour
@@ -131,31 +145,31 @@ const TourGuide: React.FC<TourGuideProps> = ({
       setRunTour(false);
       setWaitingForModal(false);
       setWaitingForPayment(false);
-      
+
       // Call completion callback if provided
       if (onTourComplete) {
         onTourComplete();
       }
       return;
     }
-    
+
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       // Mark tour as completed (same behavior for both finish and skip)
       localStorage.setItem(`${tourKey}_completed`, 'true');
       setRunTour(false);
       setWaitingForModal(false);
       setWaitingForPayment(false);
-      
+
       // Call completion callback if provided (same for both finish and skip)
       if (onTourComplete) {
         onTourComplete();
       }
       return;
     }
-    
+
     if (type === 'step:after') {
       let nextIndex;
-      
+
       // Check if user clicked the back button
       if (action === 'prev') {
         nextIndex = index - 1;
@@ -167,28 +181,33 @@ const TourGuide: React.FC<TourGuideProps> = ({
         // Default behavior for next button
         nextIndex = index + 1;
       }
-      
+
       // If we've reached the last step, finish the tour
       if (nextIndex >= steps.length) {
         localStorage.setItem(`${tourKey}_completed`, 'true');
         setRunTour(false);
         setWaitingForModal(false);
         setWaitingForPayment(false);
-        
+
         if (onTourComplete) {
           onTourComplete();
         }
         return;
       }
-      
+
       // Only apply special state-based logic if currentState is provided (add-domain tour) and moving forward
-      if (action !== 'prev' && currentState && (currentState.hasOwnProperty('isModalOpen') || currentState.hasOwnProperty('isPaymentView'))) {
+      if (
+        action !== 'prev' &&
+        currentState &&
+        (currentState.hasOwnProperty('isModalOpen') ||
+          currentState.hasOwnProperty('isPaymentView'))
+      ) {
         // If we're at step 0 (banner) and next would be step 1 (modal), wait for modal to open
         if (index === 0 && !currentState.isModalOpen) {
           setWaitingForModal(true);
           setRunTour(false);
           return;
-        } 
+        }
         // If we're at step 4 (skip trial button) and next would be step 5 (coupon input), wait for payment view
         else if (index === 4 && !currentState.isPaymentView) {
           setWaitingForPayment(true);
@@ -196,7 +215,7 @@ const TourGuide: React.FC<TourGuideProps> = ({
           return;
         }
       }
-      
+
       // Normal progression for all tours or when conditions are met
       setTourStepIndex(nextIndex);
     }
@@ -218,21 +237,24 @@ const TourGuide: React.FC<TourGuideProps> = ({
     if (waitingForPayment && currentState.isPaymentView) {
       // Payment view opened, wait for coupon input to be available
       setWaitingForPayment(false);
-      
+
       const checkAndStartPaymentTour = () => {
         const couponInput = document.querySelector('.coupon-input-section');
         const planSelection = document.querySelector('.plan-selection-area');
-        
+
         if (couponInput && planSelection) {
           setRunTour(true);
           setTourStepIndex(5); // Start at step 5 (coupon input)
           console.log('Payment tour starting at step 5 - elements ready');
         } else {
-          console.log('Payment elements not ready, retrying...', { couponInput: !!couponInput, planSelection: !!planSelection });
+          console.log('Payment elements not ready, retrying...', {
+            couponInput: !!couponInput,
+            planSelection: !!planSelection,
+          });
           setTimeout(checkAndStartPaymentTour, 100);
         }
       };
-      
+
       // Start checking immediately, no delay
       checkAndStartPaymentTour();
     }
@@ -245,7 +267,7 @@ const TourGuide: React.FC<TourGuideProps> = ({
       const timer = setTimeout(() => {
         setRunTour(true);
       }, startDelay);
-      
+
       return () => clearTimeout(timer);
     }
     return () => {};
@@ -271,4 +293,4 @@ const TourGuide: React.FC<TourGuideProps> = ({
   );
 };
 
-export default TourGuide; 
+export default TourGuide;
