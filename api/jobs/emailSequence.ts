@@ -1,5 +1,6 @@
 import cron from 'node-cron'
 
+import EmailDeliveryStatusService from '../services/email/emailDeliveryStatus.service'
 import EmailSequenceService from '../services/email/emailSequence.service'
 import logger from '../utils/logger'
 
@@ -11,6 +12,9 @@ import logger from '../utils/logger'
 const processEmailSequences = async () => {
   try {
     logger.info('Starting email sequence fallback processing...')
+
+    // Check delivery status of scheduled emails and update tracking
+    await EmailDeliveryStatusService.syncDeliveryStatus()
 
     // Handle any failed scheduled emails and retry them
     await EmailSequenceService.handleFailedScheduledEmails()
@@ -29,8 +33,25 @@ const processEmailSequences = async () => {
  * Reduced frequency since emails are now scheduled at registration time
  */
 const scheduleEmailSequences = () => {
-  // Run every 6 hours instead of daily since we're now using Brevo scheduling
-  // This is just for monitoring and handling any edge cases
+  // Run delivery status checks every 30 minutes
+  // This ensures sent-emails.json is updated promptly when emails are delivered
+  cron.schedule(
+    '*/30 * * * *',
+    async () => {
+      console.log('Running email delivery status check...')
+      try {
+        await EmailDeliveryStatusService.syncDeliveryStatus()
+      } catch (error) {
+        logger.error('Error in delivery status check:', error)
+      }
+    },
+    {
+      timezone: 'UTC',
+    },
+  )
+
+  // Run full email sequence fallback every 6 hours
+  // This handles missed emails and processes Day 7+ emails
   cron.schedule(
     '0 */6 * * *',
     async () => {
@@ -42,6 +63,7 @@ const scheduleEmailSequences = () => {
     },
   )
 
+  logger.info('Email delivery status check scheduled to run every 30 minutes')
   logger.info('Email sequence fallback job scheduled to run every 6 hours')
 }
 

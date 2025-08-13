@@ -161,6 +161,111 @@ export class ScheduledEmailTracker {
   }
 
   /**
+   * Get cancelled emails for a user (for recovery purposes)
+   */
+  static async getCancelledEmailsForUser(userId: number): Promise<ScheduledEmailRecord[]> {
+    try {
+      const trackingPath = this.getTrackingFilePath()
+
+      if (!fs.existsSync(trackingPath)) {
+        return []
+      }
+
+      const trackingContent = await fs.promises.readFile(trackingPath, 'utf8')
+      const scheduledEmails: ScheduledEmailRecord[] = JSON.parse(trackingContent)
+
+      return scheduledEmails.filter((email) => email.userId === userId && email.status === 'cancelled')
+    } catch (error) {
+      logger.error('Error getting cancelled emails for user:', error)
+      return []
+    }
+  }
+
+  /**
+   * Check if an email is already scheduled for a user (duplicate prevention)
+   */
+  static async isEmailAlreadyScheduled(userId: number, emailType: string): Promise<boolean> {
+    try {
+      const trackingPath = this.getTrackingFilePath()
+
+      if (!fs.existsSync(trackingPath)) {
+        return false
+      }
+
+      const trackingContent = await fs.promises.readFile(trackingPath, 'utf8')
+      const scheduledEmails: ScheduledEmailRecord[] = JSON.parse(trackingContent)
+
+      // Check if there's an active scheduled email (not cancelled)
+      return scheduledEmails.some((email) => email.userId === userId && email.emailType === emailType && email.status !== 'cancelled')
+    } catch (error) {
+      logger.error('Error checking if email is already scheduled:', error)
+      return false
+    }
+  }
+
+  /**
+   * Check if an email is already scheduled for a user on a specific date (prevents same-day duplicates)
+   */
+  static async isEmailScheduledForDate(userId: number, emailType: string, targetDate: Date): Promise<boolean> {
+    try {
+      const trackingPath = this.getTrackingFilePath()
+
+      if (!fs.existsSync(trackingPath)) {
+        return false
+      }
+
+      const trackingContent = await fs.promises.readFile(trackingPath, 'utf8')
+      const scheduledEmails: ScheduledEmailRecord[] = JSON.parse(trackingContent)
+
+      // Check if there's a scheduled email for the same user, email type, and date
+      return scheduledEmails.some((email) => {
+        if (email.userId !== userId || email.emailType !== emailType || email.status === 'cancelled') {
+          return false
+        }
+
+        // Compare dates (ignore time)
+        const emailDate = new Date(email.scheduledAt)
+        const targetDateOnly = new Date(targetDate)
+
+        // Set time to 00:00:00 for date-only comparison
+        emailDate.setHours(0, 0, 0, 0)
+        targetDateOnly.setHours(0, 0, 0, 0)
+
+        return emailDate.getTime() === targetDateOnly.getTime()
+      })
+    } catch (error) {
+      logger.error('Error checking if email is scheduled for date:', error)
+      return false
+    }
+  }
+
+  /**
+   * Mark an email as failed in the tracking system
+   */
+  static async markEmailAsFailed(messageId: string): Promise<void> {
+    try {
+      const trackingPath = this.getTrackingFilePath()
+
+      if (!fs.existsSync(trackingPath)) {
+        return
+      }
+
+      const trackingContent = await fs.promises.readFile(trackingPath, 'utf8')
+      const scheduledEmails: ScheduledEmailRecord[] = JSON.parse(trackingContent)
+
+      // Find and update the email record
+      const emailRecord = scheduledEmails.find((email) => email.messageId === messageId)
+      if (emailRecord) {
+        emailRecord.status = 'failed'
+        await fs.promises.writeFile(trackingPath, JSON.stringify(scheduledEmails, null, 2), 'utf8')
+        logger.info(`Marked email as failed: ${messageId}`)
+      }
+    } catch (error) {
+      logger.error('Error marking email as failed:', error)
+    }
+  }
+
+  /**
    * Clean up old email records (optional maintenance)
    */
   static async cleanupOldRecords(daysOld = 90): Promise<void> {

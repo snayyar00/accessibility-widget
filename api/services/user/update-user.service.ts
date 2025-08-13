@@ -1,5 +1,5 @@
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
-import { findUser, findUserNotificationByUserId, getUserNotificationSettings, insertUserNotification, updateUser, updateUserNotificationFlags, UserProfile } from '../../repository/user.repository'
+import { checkOnboardingEmailsEnabled, findUser, findUserNotificationByUserId, getUserNotificationSettings, insertUserNotification, updateUser, updateUserNotificationFlags, UserProfile } from '../../repository/user.repository'
 import { ApolloError, ForbiddenError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
@@ -52,9 +52,49 @@ export async function updateUserNotificationSettings(
   },
 ): Promise<{ success: boolean; message: string }> {
   try {
+    // Check current onboarding email status before updating
+    const currentOnboardingStatus = flags.onboarding_emails_flag !== undefined ? await checkOnboardingEmailsEnabled(userId) : null
+
     const updatedRows = await updateUserNotificationFlags(userId, flags)
 
     if (updatedRows > 0) {
+      // Handle onboarding email preference changes
+      if (flags.onboarding_emails_flag !== undefined && currentOnboardingStatus !== null) {
+        try {
+          // Import EmailSequenceService for email management
+          const { default: EmailSequenceService } = await import('../email/emailSequence.service')
+
+          if (flags.onboarding_emails_flag === true && currentOnboardingStatus === false) {
+            // User re-enabled onboarding emails - trigger recovery
+            console.log(`User ${userId} re-enabled onboarding emails - triggering recovery...`)
+
+            // Trigger email recovery in the background (don't wait for completion)
+            EmailSequenceService.recoverMissedEmailsForUser(userId)
+              .then((result) => {
+                console.log(`Email recovery completed for user ${userId}:`, result)
+              })
+              .catch((error) => {
+                console.error(`Email recovery failed for user ${userId}:`, error)
+              })
+          } else if (flags.onboarding_emails_flag === false && currentOnboardingStatus === true) {
+            // User disabled onboarding emails - cancel scheduled emails
+            console.log(`User ${userId} disabled onboarding emails - cancelling scheduled emails...`)
+
+            // Cancel scheduled emails in the background
+            EmailSequenceService.cancelScheduledEmailsForUser(userId)
+              .then((cancelledCount) => {
+                console.log(`Cancelled ${cancelledCount} scheduled emails for user ${userId}`)
+              })
+              .catch((error) => {
+                console.error(`Failed to cancel scheduled emails for user ${userId}:`, error)
+              })
+          }
+        } catch (error) {
+          console.error(`Failed to handle email preference change for user ${userId}:`, error)
+          // Don't fail the settings update if email handling fails
+        }
+      }
+
       return {
         success: true,
         message: 'Notification settings updated successfully',
