@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -65,23 +66,51 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
   const { isModalOpen, lastSeenDate } = useSelector(
     (state: RootState) => state.whatsNew,
   );
+  const location = useLocation();
   const [isClosing, setIsClosing] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
 
   // Auto-show logic for when user logs in
   useEffect(() => {
-    if (autoShow) {
-      const latestDate = getLatestNewsDate();
-      if (lastSeenDate !== latestDate) {
-        // Simple delay to ensure the app is fully loaded, then open modal
-        const timer = setTimeout(() => {
-          dispatch(openModal());
-        }, 1500);
-        return () => clearTimeout(timer);
+    if (!autoShow) return;
+    const latestDate = getLatestNewsDate();
+    if (lastSeenDate === latestDate) return;
+
+    const isOnDashboard =
+      location.pathname === '/' || location.pathname === '/dashboard';
+    let cleanup: (() => void) | undefined;
+
+    // If dashboard tour is due (not completed) and we're on dashboard, wait for completion
+    try {
+      const dashboardTourCompleted =
+        localStorage.getItem('dashboard_tour_completed') === 'true';
+      if (isOnDashboard && !dashboardTourCompleted) {
+        const handleTourCompleted = (e: Event) => {
+          const detail = (e as CustomEvent).detail as { tourKey?: string };
+          if (detail?.tourKey === 'dashboard_tour') {
+            // Open modal shortly after tour finishes
+            setTimeout(() => dispatch(openModal()), 800);
+          }
+        };
+        window.addEventListener(
+          'tourCompleted',
+          handleTourCompleted as EventListener,
+        );
+        cleanup = () =>
+          window.removeEventListener(
+            'tourCompleted',
+            handleTourCompleted as EventListener,
+          );
+        return cleanup;
       }
-    }
-    return undefined;
-  }, [autoShow, lastSeenDate, dispatch]);
+    } catch {}
+
+    const timer = setTimeout(() => {
+      dispatch(openModal());
+    }, 1500);
+    cleanup = () => clearTimeout(timer);
+    return cleanup;
+  }, [autoShow, lastSeenDate, dispatch, location.pathname]);
 
   // Launch animation effect
   useEffect(() => {

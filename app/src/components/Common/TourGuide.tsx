@@ -146,6 +146,12 @@ const TourGuide: React.FC<TourGuideProps> = ({
       setWaitingForModal(false);
       setWaitingForPayment(false);
 
+      // Notify listeners that this tour has completed
+      try {
+        const event = new CustomEvent('tourCompleted', { detail: { tourKey } });
+        window.dispatchEvent(event);
+      } catch {}
+
       // Call completion callback if provided
       if (onTourComplete) {
         onTourComplete();
@@ -159,6 +165,12 @@ const TourGuide: React.FC<TourGuideProps> = ({
       setRunTour(false);
       setWaitingForModal(false);
       setWaitingForPayment(false);
+
+      // Notify listeners that this tour has completed
+      try {
+        const event = new CustomEvent('tourCompleted', { detail: { tourKey } });
+        window.dispatchEvent(event);
+      } catch {}
 
       // Call completion callback if provided (same for both finish and skip)
       if (onTourComplete) {
@@ -188,6 +200,14 @@ const TourGuide: React.FC<TourGuideProps> = ({
         setRunTour(false);
         setWaitingForModal(false);
         setWaitingForPayment(false);
+
+        // Notify listeners that this tour has completed
+        try {
+          const event = new CustomEvent('tourCompleted', {
+            detail: { tourKey },
+          });
+          window.dispatchEvent(event);
+        } catch {}
 
         if (onTourComplete) {
           onTourComplete();
