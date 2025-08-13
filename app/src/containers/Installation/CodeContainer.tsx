@@ -344,6 +344,10 @@ export default function CodeContainer({ codeString }: CodeProps) {
             <label className="block text-sm font-semibold text-gray-800 tracking-wide">
               Icon Type
             </label>
+            <p className="text-xs text-gray-600  pl-1">
+              You can switch between our widget icon and non-intrusive text
+              icon.
+            </p>
             <div className="relative">
               <select
                 value={iconType}
@@ -360,9 +364,6 @@ export default function CodeContainer({ codeString }: CodeProps) {
                 <FaChevronDown className="w-4 h-4 text-gray-500" />
               </div>
             </div>
-            <p className="text-xs text-gray-600 pt-2 pl-1">
-              This will change the icon of the widget.
-            </p>
           </div>
         </div>
       </div>
