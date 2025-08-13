@@ -1,5 +1,5 @@
-import React from 'react'
-import { Step, Placement } from "react-joyride"
+import React from 'react';
+import { Step, Placement } from 'react-joyride';
 
 // Dashboard Tour Steps
 export const dashboardTourSteps: Step[] = [
@@ -7,8 +7,13 @@ export const dashboardTourSteps: Step[] = [
     target: '.dashboard-welcome-banner',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Welcome to WebAbility Dashboard! 🎉</h3>
-        <p>This is your central hub for managing accessibility compliance. Let's take a quick tour to get you started!</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Welcome to WebAbility Dashboard! 🎉
+        </h3>
+        <p>
+          This is your central hub for managing accessibility compliance. Let's
+          take a quick tour to get you started!
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -19,7 +24,10 @@ export const dashboardTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Get Compliant 🚀</h3>
-        <p>Click here to add new domains and start making your websites accessible. This is where you'll manage all your sites.</p>
+        <p>
+          Click here to add new domains and start making your websites
+          accessible. This is where you'll manage all your sites.
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -28,7 +36,9 @@ export const dashboardTourSteps: Step[] = [
     target: '.app-sumo-button',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Get Started with your App Sumo Sites 🚀</h3>
+        <h3 className="text-lg font-semibold mb-2">
+          Get Started with your App Sumo Sites 🚀
+        </h3>
         <p>Click here to add new domains and redeem your App Sumo sites.</p>
       </div>
     ),
@@ -39,7 +49,11 @@ export const dashboardTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Analytics Overview 📊</h3>
-        <p>Here you can see key metrics including impressions, unique visitors, and widget interactions. These help you understand your accessibility widget's impact.</p>
+        <p>
+          Here you can see key metrics including impressions, unique visitors,
+          and widget interactions. These help you understand your accessibility
+          widget's impact.
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -49,7 +63,11 @@ export const dashboardTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Detailed Analytics 📈</h3>
-        <p>Dive deeper into your accessibility data with detailed charts and insights. Track your progress over time and see how your accessibility improvements are performing.</p>
+        <p>
+          Dive deeper into your accessibility data with detailed charts and
+          insights. Track your progress over time and see how your accessibility
+          improvements are performing.
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -63,8 +81,13 @@ export const addDomainTourSteps: Step[] = [
     target: '.add-domain-banner',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Welcome to Domain Management! 🎉</h3>
-        <p>Let's add your first domain to start making your website accessible. Click the "Get Compliant Now" button to begin!</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Welcome to Domain Management! 🎉
+        </h3>
+        <p>
+          Let's add your first domain to start making your website accessible.
+          Click the "Get Compliant Now" button to begin!
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -76,7 +99,10 @@ export const addDomainTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Enter Your Domain 🌐</h3>
-        <p>Type your website's domain name here (e.g., example.com). This is the website you want to make accessible.</p>
+        <p>
+          Type your website's domain name here (e.g., example.com). This is the
+          website you want to make accessible.
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -87,8 +113,13 @@ export const addDomainTourSteps: Step[] = [
     target: '.trial-buttons-section',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Choose Your Trial Option 🎯</h3>
-        <p>You have three options: 30-day trial with card, 15-day trial without card, or skip trial and buy directly. Choose what works best for you!</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Choose Your Trial Option 🎯
+        </h3>
+        <p>
+          You have three options: 30-day trial with card, 15-day trial without
+          card, or skip trial and buy directly. Choose what works best for you!
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -100,7 +131,10 @@ export const addDomainTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">AppSumo Customers 💰</h3>
-        <p>If you have an AppSumo coupon, click "Skip trial & buy" and you'll be able to enter your coupon code in the next step!</p>
+        <p>
+          If you have an AppSumo coupon, click "Skip trial & buy" and you'll be
+          able to enter your coupon code in the next step!
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -112,7 +146,10 @@ export const addDomainTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Skip Trial & Buy 🚀</h3>
-        <p>Click this button to proceed directly to plan selection. Perfect for AppSumo customers or if you're ready to purchase immediately!</p>
+        <p>
+          Click this button to proceed directly to plan selection. Perfect for
+          AppSumo customers or if you're ready to purchase immediately!
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -123,8 +160,13 @@ export const addDomainTourSteps: Step[] = [
     target: '.coupon-input-section',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Enter Your Coupon Code 🎫</h3>
-        <p>If you have an AppSumo coupon or any discount code, enter it here and click "Apply Coupon" to get your discount!</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Enter Your Coupon Code 🎫
+        </h3>
+        <p>
+          If you have an AppSumo coupon or any discount code, enter it here and
+          click "Apply Coupon" to get your discount!
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -136,7 +178,10 @@ export const addDomainTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Choose Your Plan 📋</h3>
-        <p>Select the plan that best fits your needs. The pricing will automatically adjust based on any coupons you've applied.</p>
+        <p>
+          Select the plan that best fits your needs. The pricing will
+          automatically adjust based on any coupons you've applied.
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -146,9 +191,9 @@ export const addDomainTourSteps: Step[] = [
       offset: 20,
       styles: {
         floater: {
-          filter: 'drop-shadow(0 0 3px rgba(0, 0, 0, 0.5))'
-        }
-      }
+          filter: 'drop-shadow(0 0 3px rgba(0, 0, 0, 0.5))',
+        },
+      },
     },
   },
   // Step 8: Final checkout
@@ -156,8 +201,13 @@ export const addDomainTourSteps: Step[] = [
     target: '.checkout-button',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Complete Your Purchase 💳</h3>
-        <p>Click "Checkout" to proceed to Stripe's secure payment page. After payment, you'll return here with your domain activated!</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Complete Your Purchase 💳
+        </h3>
+        <p>
+          Click "Checkout" to proceed to Stripe's secure payment page. After
+          payment, you'll return here with your domain activated!
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -171,8 +221,13 @@ export const installationTourSteps: Step[] = [
     target: '.installation-welcome-banner',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Welcome to Widget Installation! 🎉</h3>
-        <p>This page will help you install the WebAbility widget on your website. Let's walk through the process step by step!</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Welcome to Widget Installation! 🎉
+        </h3>
+        <p>
+          This page will help you install the WebAbility widget on your website.
+          Let's walk through the process step by step!
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -183,7 +238,10 @@ export const installationTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Installation Guide 📖</h3>
-        <p>Click here to access our comprehensive installation guide with platform-specific instructions for WordPress, Shopify, and more!</p>
+        <p>
+          Click here to access our comprehensive installation guide with
+          platform-specific instructions for WordPress, Shopify, and more!
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -193,7 +251,11 @@ export const installationTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Customize Your Widget ⚙️</h3>
-        <p>Choose where the accessibility widget appears on your site and select the language. These settings will be reflected in your installation code.</p>
+        <p>
+          Choose where the accessibility widget appears on your site and select
+          the language. These settings will be reflected in your installation
+          code.
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -202,8 +264,13 @@ export const installationTourSteps: Step[] = [
     target: '.installation-instructions',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Installation Instructions 📋</h3>
-        <p>For best results, paste the installation code right before the closing &lt;/body&gt; tag on your website. This ensures optimal performance.</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Installation Instructions 📋
+        </h3>
+        <p>
+          For best results, paste the installation code right before the closing
+          &lt;/body&gt; tag on your website. This ensures optimal performance.
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -212,8 +279,14 @@ export const installationTourSteps: Step[] = [
     target: '.installation-code-block',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Your Installation Code 💻</h3>
-        <p>This is your personalized installation code. It includes your selected position and language settings. Copy this code to install on your website.</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Your Installation Code 💻
+        </h3>
+        <p>
+          This is your personalized installation code. It includes your selected
+          position and language settings. Copy this code to install on your
+          website.
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -223,7 +296,11 @@ export const installationTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Copy to Clipboard 📋</h3>
-        <p>Click this button to copy the installation code to your clipboard. Then paste it into your website's HTML before the closing &lt;/body&gt; tag.</p>
+        <p>
+          Click this button to copy the installation code to your clipboard.
+          Then paste it into your website's HTML before the closing
+          &lt;/body&gt; tag.
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -233,7 +310,10 @@ export const installationTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Expand Code View 🔍</h3>
-        <p>Use this button to expand or compress the code view for better readability when working with longer code snippets.</p>
+        <p>
+          Use this button to expand or compress the code view for better
+          readability when working with longer code snippets.
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -246,8 +326,13 @@ export const accessibilityTourSteps: Step[] = [
     target: '.accessibility-page-header',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Welcome to Accessibility Scanner! 🎉</h3>
-        <p>This powerful tool helps you evaluate your website's accessibility compliance in seconds. Let's explore how to use it!</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Welcome to Accessibility Scanner! 🎉
+        </h3>
+        <p>
+          This powerful tool helps you evaluate your website's accessibility
+          compliance in seconds. Let's explore how to use it!
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -257,8 +342,14 @@ export const accessibilityTourSteps: Step[] = [
     target: '.search-bar-container',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Select Or Enter Your Domain 🌐</h3>
-        <p>Type any website domain here to scan for accessibility issues. You can test your own website by selecting it from the dropdown or any other website for WCAG compliance.</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Select Or Enter Your Domain 🌐
+        </h3>
+        <p>
+          Type any website domain here to scan for accessibility issues. You can
+          test your own website by selecting it from the dropdown or any other
+          website for WCAG compliance.
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -268,7 +359,10 @@ export const accessibilityTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Start Free Scan 🚀</h3>
-        <p>Click this button to begin the accessibility analysis. Our AI-powered scanner will check for WCAG 2.1 compliance issues across the website.</p>
+        <p>
+          Click this button to begin the accessibility analysis. Our AI-powered
+          scanner will check for WCAG 2.1 compliance issues across the website.
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -278,7 +372,13 @@ export const accessibilityTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Audit History Table 🔍</h3>
-        <p>This section provides a table of audit reports for the selected domain, organized by the date and time of the scan. It includes information on the compliance status and accessibility score for each report, allowing for easy tracking and review of the domain’s accessibility performance over time.</p>
+        <p>
+          This section provides a table of audit reports for the selected
+          domain, organized by the date and time of the scan. It includes
+          information on the compliance status and accessibility score for each
+          report, allowing for easy tracking and review of the domain’s
+          accessibility performance over time.
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -287,8 +387,15 @@ export const accessibilityTourSteps: Step[] = [
     target: '.print-report-button',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">View or Download Report 📄</h3>
-        <p>Click the View button for the respective row to open the report in a new tab. Click the Download button to save the accessibility report as a PDF, which you can then share with your team or use for compliance documentation.</p>
+        <h3 className="text-lg font-semibold mb-2">
+          View or Download Report 📄
+        </h3>
+        <p>
+          Click the View button for the respective row to open the report in a
+          new tab. Click the Download button to save the accessibility report as
+          a PDF, which you can then share with your team or use for compliance
+          documentation.
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -301,8 +408,13 @@ export const reportsTourSteps: Step[] = [
     target: '.reports-page-header',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Welcome to Problem Reports! 🎉</h3>
-        <p>This page helps you manage and track issues reported across all your websites. Let's explore the features available!</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Welcome to Problem Reports! 🎉
+        </h3>
+        <p>
+          This page helps you manage and track issues reported across all your
+          websites. Let's explore the features available!
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -313,7 +425,11 @@ export const reportsTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Filter Reports 🔍</h3>
-        <p>Use this filter to view specific types of problems. You can filter by all problems, site bugs, or accessibility issues to focus on what needs attention.</p>
+        <p>
+          Use this filter to view specific types of problems. You can filter by
+          all problems, site bugs, or accessibility issues to focus on what
+          needs attention.
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -323,7 +439,11 @@ export const reportsTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Search by Site URL 🌐</h3>
-        <p>Enter a website URL here to find all problems reported for that specific site. This helps you quickly locate issues for particular domains.</p>
+        <p>
+          Enter a website URL here to find all problems reported for that
+          specific site. This helps you quickly locate issues for particular
+          domains.
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -336,8 +456,14 @@ export const customizeWidgetTourSteps: Step[] = [
     target: '.customize-widget-header',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Welcome to Widget Customization! 🎨</h3>
-        <p>This powerful interface lets you fully customize your accessibility widget's appearance and features. Let's explore all the customization options available!</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Welcome to Widget Customization! 🎨
+        </h3>
+        <p>
+          This powerful interface lets you fully customize your accessibility
+          widget's appearance and features. Let's explore all the customization
+          options available!
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -348,7 +474,10 @@ export const customizeWidgetTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Select Your Domain 🌐</h3>
-        <p>First, choose which website you want to customize the widget for. Each domain can have its own unique widget settings and appearance.</p>
+        <p>
+          First, choose which website you want to customize the widget for. Each
+          domain can have its own unique widget settings and appearance.
+        </p>
       </div>
     ),
     placement: 'bottom' as Placement,
@@ -358,15 +487,38 @@ export const customizeWidgetTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Live Widget Preview 👀</h3>
-        <p className="mb-3">Watch your changes come to life in real-time! This preview shows exactly how your accessibility widget will look and function on your website. Here's what you can see:</p>
+        <p className="mb-3">
+          Watch your changes come to life in real-time! This preview shows
+          exactly how your accessibility widget will look and function on your
+          website. Here's what you can see:
+        </p>
         <ul className="text-sm space-y-2">
-          <li><strong>🎨 Header Section:</strong> Widget title with customizable background, text colors, and control buttons</li>
-          <li><strong>🔧 Accessibility Features:</strong> All enabled accessibility tools like screen reader, contrast options, and font adjustments</li>
-          <li><strong>🎯 Interactive Elements:</strong> Buttons, dropdowns, and toggles that respond to your customization changes</li>
-          <li><strong>📱 Real-time Updates:</strong> Colors, fonts, and features update instantly as you make changes</li>
-          <li><strong>🖼️ Logo Display:</strong> Your custom logo appears exactly as it will on your website</li>
+          <li>
+            <strong>🎨 Header Section:</strong> Widget title with customizable
+            background, text colors, and control buttons
+          </li>
+          <li>
+            <strong>🔧 Accessibility Features:</strong> All enabled
+            accessibility tools like screen reader, contrast options, and font
+            adjustments
+          </li>
+          <li>
+            <strong>🎯 Interactive Elements:</strong> Buttons, dropdowns, and
+            toggles that respond to your customization changes
+          </li>
+          <li>
+            <strong>📱 Real-time Updates:</strong> Colors, fonts, and features
+            update instantly as you make changes
+          </li>
+          <li>
+            <strong>🖼️ Logo Display:</strong> Your custom logo appears exactly
+            as it will on your website
+          </li>
         </ul>
-        <p className="mt-3 text-sm text-gray-600">Try making changes in the customization panel to see them reflected here!</p>
+        <p className="mt-3 text-sm text-gray-600">
+          Try making changes in the customization panel to see them reflected
+          here!
+        </p>
       </div>
     ),
     placement: 'right' as Placement,
@@ -375,16 +527,38 @@ export const customizeWidgetTourSteps: Step[] = [
     target: '.widget-customization-section',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Customization Controls ⚙️</h3>
-        <p className="mb-3">This panel contains all the tools you need to personalize your widget. Here's what you can customize:</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Customization Controls ⚙️
+        </h3>
+        <p className="mb-3">
+          This panel contains all the tools you need to personalize your widget.
+          Here's what you can customize:
+        </p>
         <ul className="text-sm space-y-2">
-          <li><strong>🎨 Color Customization:</strong> Match your brand colors by customizing header, footer, button, and menu colors</li>
-          <li><strong>📸 Logo Upload:</strong> Add your company logo via file upload or URL to maintain brand consistency</li>
-          <li><strong>🔗 Logo & Statement Links:</strong> Set custom URLs for your logo and accessibility statement links</li>
-          <li><strong>📝 Typography:</strong> Choose from web-safe fonts to match your site's typography</li>
-          <li><strong>🔧 Feature Toggles:</strong> Enable/disable specific accessibility features based on your needs</li>
+          <li>
+            <strong>🎨 Color Customization:</strong> Match your brand colors by
+            customizing header, footer, button, and menu colors
+          </li>
+          <li>
+            <strong>📸 Logo Upload:</strong> Add your company logo via file
+            upload or URL to maintain brand consistency
+          </li>
+          <li>
+            <strong>🔗 Logo & Statement Links:</strong> Set custom URLs for your
+            logo and accessibility statement links
+          </li>
+          <li>
+            <strong>📝 Typography:</strong> Choose from web-safe fonts to match
+            your site's typography
+          </li>
+          <li>
+            <strong>🔧 Feature Toggles:</strong> Enable/disable specific
+            accessibility features based on your needs
+          </li>
         </ul>
-        <p className="mt-3 text-sm text-gray-600">Scroll through this panel to explore all customization options!</p>
+        <p className="mt-3 text-sm text-gray-600">
+          Scroll through this panel to explore all customization options!
+        </p>
       </div>
     ),
     placement: 'right' as Placement,
@@ -394,7 +568,11 @@ export const customizeWidgetTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Save Your Changes 💾</h3>
-        <p>Your Changes get saved automatically. However you can manually save your customizations as well! You can also reset everything back to default settings if you want to start over.</p>
+        <p>
+          Your Changes get saved automatically. However you can manually save
+          your customizations as well! You can also reset everything back to
+          default settings if you want to start over.
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -407,8 +585,14 @@ export const statementGeneratorTourSteps: Step[] = [
     target: '.statement-generator-wrapper',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Welcome to AI Statement Generator! 🎉</h3>
-        <p>Create professional, WCAG 2.1 AA compliant accessibility statements in 42+ languages using our advanced AI engine. Let's walk through the process!</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Welcome to AI Statement Generator! 🎉
+        </h3>
+        <p>
+          Create professional, WCAG 2.1 AA compliant accessibility statements in
+          42+ languages using our advanced AI engine. Let's walk through the
+          process!
+        </p>
       </div>
     ),
     placement: 'center' as Placement,
@@ -418,8 +602,14 @@ export const statementGeneratorTourSteps: Step[] = [
     target: '.company-form-section',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Company Information Form 📝</h3>
-        <p>Fill in your company details here. All fields marked with * are required to generate a comprehensive accessibility statement customized for your organization.</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Company Information Form 📝
+        </h3>
+        <p>
+          Fill in your company details here. All fields marked with * are
+          required to generate a comprehensive accessibility statement
+          customized for your organization.
+        </p>
       </div>
     ),
     placement: 'right' as Placement,
@@ -429,7 +619,11 @@ export const statementGeneratorTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Choose Your Language 🌐</h3>
-        <p>Select from 42+ available languages! Use the search feature to quickly find your language. Each language shows both native and English names for easy identification.</p>
+        <p>
+          Select from 42+ available languages! Use the search feature to quickly
+          find your language. Each language shows both native and English names
+          for easy identification.
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -439,7 +633,11 @@ export const statementGeneratorTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Generate AI Statement 🚀</h3>
-        <p>Click this button to create your professional accessibility statement. Our AI will generate industry-standard, legally compliant content based on your information.</p>
+        <p>
+          Click this button to create your professional accessibility statement.
+          Our AI will generate industry-standard, legally compliant content
+          based on your information.
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -448,8 +646,14 @@ export const statementGeneratorTourSteps: Step[] = [
     target: '.statement-preview-section',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Statement Preview & Export 📄</h3>
-        <p>Your generated statement appears here with format options (Markdown, HTML, Plain Text). You can copy to clipboard or download in your preferred format.</p>
+        <h3 className="text-lg font-semibold mb-2">
+          Statement Preview & Export 📄
+        </h3>
+        <p>
+          Your generated statement appears here with format options (Markdown,
+          HTML, Plain Text). You can copy to clipboard or download in your
+          preferred format.
+        </p>
       </div>
     ),
     placement: 'left' as Placement,
@@ -459,7 +663,11 @@ export const statementGeneratorTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">AI Assistant 🤖</h3>
-        <p>Use the AI Assistant to analyze your statement and get suggestions for improvements. It provides feedback on completeness, compliance, and best practices.</p>
+        <p>
+          Use the AI Assistant to analyze your statement and get suggestions for
+          improvements. It provides feedback on completeness, compliance, and
+          best practices.
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -469,7 +677,116 @@ export const statementGeneratorTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Statement Features ✨</h3>
-        <p>Every generated statement includes WCAG 2.1 AA compliance, multi-language support, industry-standard content, and strategic backlinks for SEO optimization.</p>
+        <p>
+          Every generated statement includes WCAG 2.1 AA compliance,
+          multi-language support, industry-standard content, and strategic
+          backlinks for SEO optimization.
+        </p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+];
+
+// Proof of Effort Toolkit Tour Steps
+export const proofOfEffortTourSteps: Step[] = [
+  {
+    target: '.poe-title',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">
+          Welcome to the Proof of Effort Toolkit 🎉
+        </h3>
+        <p>
+          This page lets you compile and share key documentation that
+          demonstrates your accessibility efforts. Let's take a quick tour.
+        </p>
+      </div>
+    ),
+    placement: 'bottom' as Placement,
+    disableBeacon: true,
+  },
+  {
+    target: '.poe-documents-count',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Included Documents 📄</h3>
+        <p>
+          Here you can see how many documents are included: an intro guide, your
+          latest monthly audit report, and your accessibility statement.
+        </p>
+      </div>
+    ),
+    placement: 'bottom' as Placement,
+  },
+  {
+    target: '.poe-send-email-button',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Send via Email ✉️</h3>
+        <p>
+          Send the full toolkit to any email address. We’ll generate all PDFs
+          and deliver them in a single zip.
+        </p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+  {
+    target: '.poe-download-zip-button',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Download Zip ⬇️</h3>
+        <p>
+          Prefer to keep a local copy? Download the complete toolkit as a zip
+          file.
+        </p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+  {
+    target: '.poe-view-files-toggle',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">View Files 👀</h3>
+        <p>
+          Expand this section to view each document. From here you can preview
+          or download items individually.
+        </p>
+      </div>
+    ),
+    placement: 'bottom' as Placement,
+  },
+  {
+    target: '.poe-documents-list',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Documents List 🗂️</h3>
+        <p>
+          Each row shows the document name and creation date. Use the action
+          buttons to preview or download.
+        </p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+  {
+    target: '.poe-view-button',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Preview PDF 🔎</h3>
+        <p>Open the selected document in a new tab for review.</p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+  {
+    target: '.poe-download-button',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Download PDF 💾</h3>
+        <p>Download an individual document as a PDF for your records.</p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -485,6 +802,7 @@ export const allTourSteps = {
   reports: reportsTourSteps,
   customizeWidget: customizeWidgetTourSteps,
   statementGenerator: statementGeneratorTourSteps,
+  proofOfEffort: proofOfEffortTourSteps,
 };
 
 // Tour keys mapping for localStorage management
@@ -496,6 +814,7 @@ export const tourKeys = {
   reports: 'reports_tour',
   customizeWidget: 'customize_widget_tour',
   statementGenerator: 'statement_generator_tour',
+  proofOfEffort: 'proof_of_effort_tour',
 } as const;
 
 // Helper function to get tour steps by key
@@ -504,7 +823,9 @@ export const getTourStepsByKey = (key: keyof typeof allTourSteps): Step[] => {
 };
 
 // Helper function to get tour key by route path
-export const getTourKeyByRoute = (pathname: string): keyof typeof tourKeys | null => {
+export const getTourKeyByRoute = (
+  pathname: string,
+): keyof typeof tourKeys | null => {
   if (pathname === '/dashboard' || pathname === '/') {
     return 'dashboard';
   } else if (pathname === '/add-domain') {
@@ -519,6 +840,8 @@ export const getTourKeyByRoute = (pathname: string): keyof typeof tourKeys | nul
     return 'customizeWidget';
   } else if (pathname === '/statement-generator') {
     return 'statementGenerator';
+  } else if (pathname === '/proof-of-effort-toolkit') {
+    return 'proofOfEffort';
   }
   return null;
 };

@@ -23,6 +23,9 @@ import {
 import getWidgetSettings from '@/utils/getWidgetSettings';
 import EmailModal from '@/components/Common/EmailModal';
 import { CircularProgress } from '@mui/material';
+import TourGuide from '@/components/Common/TourGuide';
+import { defaultTourStyles } from '@/config/tourStyles';
+import { proofOfEffortTourSteps, tourKeys } from '@/constants/toursteps';
 
 interface Document {
   name: string;
@@ -593,6 +596,26 @@ const ProofOfEffortToolkit: React.FC = () => {
       externalUrl: 'https://www.webability.io/statement',
     },
   ]);
+
+  // Expand files list automatically when the tour starts so all targets exist
+  useEffect(() => {
+    const handleStartTour = (event: any) => {
+      if (event?.detail?.tourKey === tourKeys.proofOfEffort) {
+        setViewFilesExpanded(true);
+      }
+    };
+    window.addEventListener('startTour', handleStartTour);
+    return () => window.removeEventListener('startTour', handleStartTour);
+  }, []);
+
+  // Auto-expand if this tour hasn't been completed yet (covers auto-start)
+  useEffect(() => {
+    const completed =
+      localStorage.getItem(`${tourKeys.proofOfEffort}_completed`) === 'true';
+    if (!completed) {
+      setViewFilesExpanded(true);
+    }
+  }, []);
 
   const handleSendViaEmail = () => {
     if (!currentDomain) {
@@ -2524,6 +2547,15 @@ const ProofOfEffortToolkit: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 sm:p-4 p-6">
+      <TourGuide
+        steps={proofOfEffortTourSteps}
+        tourKey={tourKeys.proofOfEffort}
+        autoStart={true}
+        onTourComplete={() => {
+          // noop for now
+        }}
+        customStyles={defaultTourStyles}
+      />
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           {/* Header Section */}
@@ -2542,7 +2574,7 @@ const ProofOfEffortToolkit: React.FC = () => {
               </div>
 
               <div className="flex-1">
-                <h1 className="sm:text-xl text-2xl font-medium text-gray-900 mb-2">
+                <h1 className="poe-title sm:text-xl text-2xl font-medium text-gray-900 mb-2">
                   Proof of effort toolkit
                 </h1>
                 <p className="text-gray-600 sm:mb-4 mb-6">
@@ -2550,19 +2582,19 @@ const ProofOfEffortToolkit: React.FC = () => {
                   team.
                 </p>
 
-                <div className="text-sm text-gray-500 sm:mb-4 mb-6">
+                <div className="poe-documents-count text-sm text-gray-500 sm:mb-4 mb-6">
                   {documents.length} Documents
                 </div>
 
                 <div className="sm:flex-col sm:gap-2 flex gap-3">
                   <button
-                    onClick={handleSendViaEmail}
-                    disabled={isDownloadingZip || isEmailSending}
-                    className={`inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md transition-colors ${
+                    className={`poe-send-email-button inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md transition-colors ${
                       isDownloadingZip || isEmailSending
                         ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
                         : 'text-gray-700 bg-white hover:bg-gray-50'
                     }`}
+                    onClick={handleSendViaEmail}
+                    disabled={isDownloadingZip || isEmailSending}
                   >
                     {isEmailSending ? (
                       <>
@@ -2578,13 +2610,13 @@ const ProofOfEffortToolkit: React.FC = () => {
                   </button>
 
                   <button
-                    onClick={handleDownloadZip}
-                    disabled={isDownloadingZip || isEmailSending}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
+                    className={`poe-download-zip-button inline-flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
                       isDownloadingZip || isEmailSending
                         ? 'bg-blue-400 text-white cursor-not-allowed'
                         : 'bg-blue-600 text-white hover:bg-blue-700'
                     }`}
+                    onClick={handleDownloadZip}
+                    disabled={isDownloadingZip || isEmailSending}
                   >
                     {isDownloadingZip ? (
                       <>
@@ -2610,7 +2642,7 @@ const ProofOfEffortToolkit: React.FC = () => {
           <div className="border-b border-gray-200">
             <button
               onClick={() => setViewFilesExpanded(!viewFilesExpanded)}
-              className="w-full flex items-center justify-between sm:p-4 p-6 text-left hover:bg-gray-50 transition-colors"
+              className="poe-view-files-toggle w-full flex items-center justify-between sm:p-4 p-6 text-left hover:bg-gray-50 transition-colors"
             >
               <span className="text-gray-700 font-medium">View files</span>
               {viewFilesExpanded ? (
@@ -2621,7 +2653,7 @@ const ProofOfEffortToolkit: React.FC = () => {
             </button>
 
             {viewFilesExpanded && (
-              <div className="sm:px-4 sm:pb-4 px-6 pb-6">
+              <div className="poe-documents-list sm:px-4 sm:pb-4 px-6 pb-6">
                 {/* Table Header */}
                 <div className="sm:hidden grid grid-cols-12 gap-4 py-3 text-sm font-medium text-gray-500 border-b border-gray-200">
                   <div className="col-span-6">Document</div>
@@ -2654,7 +2686,7 @@ const ProofOfEffortToolkit: React.FC = () => {
                     <div className="sm:col-span-12 sm:justify-start col-span-2 flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleViewDocument(document)}
-                        className={`p-2 transition-colors ${
+                        className={`poe-view-button p-2 transition-colors ${
                           (document.type === 'monthly-report' &&
                             isProcessingReport) ||
                           isDownloadingZip ||
@@ -2680,7 +2712,7 @@ const ProofOfEffortToolkit: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleDownloadDocument(document)}
-                        className={`p-2 transition-colors ${
+                        className={`poe-download-button p-2 transition-colors ${
                           (document.type === 'monthly-report' &&
                             isProcessingReport) ||
                           isDownloadingZip ||

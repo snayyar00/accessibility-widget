@@ -16,6 +16,8 @@ const getTourKeyFromRoute = (pathname: string): string | null => {
     return 'customize_widget_tour';
   } else if (pathname === '/statement-generator') {
     return 'statement_generator_tour';
+  } else if (pathname === '/proof-of-effort-toolkit') {
+    return 'proof_of_effort_tour';
   }
   return null;
 };
@@ -23,17 +25,18 @@ const getTourKeyFromRoute = (pathname: string): string | null => {
 // All tour keys for reset functionality
 const ALL_TOUR_KEYS = [
   'dashboard_tour_completed',
-  'add_domain_unified_tour_completed', 
+  'add_domain_unified_tour_completed',
   'installation_tour_completed',
   'accessibility_tour_completed',
   'reports_tour_completed',
   'customize_widget_tour_completed',
-  'statement_generator_tour_completed'
+  'statement_generator_tour_completed',
+  'proof_of_effort_tour_completed',
 ];
 
 export const useTourGuidance = () => {
   const location = useLocation();
-  
+
   // Get current page's tour key
   const getCurrentTourKey = (): string | null => {
     return getTourKeyFromRoute(location.pathname);
@@ -41,7 +44,7 @@ export const useTourGuidance = () => {
 
   // Reset all tour statuses
   const resetAllTours = () => {
-    ALL_TOUR_KEYS.forEach(key => {
+    ALL_TOUR_KEYS.forEach((key) => {
       localStorage.removeItem(key);
     });
   };
@@ -51,8 +54,8 @@ export const useTourGuidance = () => {
     const tourKey = getCurrentTourKey();
     if (tourKey) {
       // Dispatch custom event that TourGuide components can listen to
-      const event = new CustomEvent('startTour', { 
-        detail: { tourKey } 
+      const event = new CustomEvent('startTour', {
+        detail: { tourKey },
       });
       window.dispatchEvent(event);
     }
@@ -75,6 +78,6 @@ export const useTourGuidance = () => {
   return {
     resetAndStartTour,
     hasCurrentPageTour,
-    getCurrentTourKey
+    getCurrentTourKey,
   };
-}; 
+};
