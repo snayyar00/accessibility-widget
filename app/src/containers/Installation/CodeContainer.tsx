@@ -378,8 +378,10 @@ export default function CodeContainer({ codeString }: CodeProps) {
             Installation Snippet
           </h4>
           <p className="text-sm text-gray-600 font-medium">
-            Paste before closing {'</body>'} tag
+            Paste before closing {'</body>'} tag <br />
+            Note: To enable new features, please copy and paste this updated script tag to your website.
           </p>
+          
         </div>
 
         <div
