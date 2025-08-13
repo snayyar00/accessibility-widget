@@ -102,6 +102,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
   const [copySuccess, setCopySuccess] = useState(false);
   const [position, setPosition] = useState('bottom-left');
   const [language, setLanguage] = useState('en');
+  const [iconType, setIconType] = useState<'full' | 'compact'>('full');
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -144,7 +145,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
     setIsExpanded(!isExpanded);
   };
 
-  const formattedCodeString = `<script src="https://widget.webability.io/widget.min.js" data-asw-position="${position}" data-asw-lang="${language}"defer></script>`;
+  const formattedCodeString = `<script src="https://widget.webability.io/widget.min.js" data-asw-position="${position}" data-asw-lang="${language}" data-asw-icon-type="${iconType}" defer></script>`;
 
   const validateEmail = (email: string) => {
     const emailRegex =
@@ -236,7 +237,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
           </div>
         </div>
 
-        <div className="widget-customization-options grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="widget-customization-options grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Position Selector */}
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-800 tracking-wide">
@@ -336,6 +337,33 @@ export default function CodeContainer({ codeString }: CodeProps) {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Icon Customization */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-800 tracking-wide">
+              Icon Type
+            </label>
+            <p className="text-xs text-gray-600  pl-1">
+              You can switch between our widget icon and non-intrusive text
+              icon.
+            </p>
+            <div className="relative">
+              <select
+                value={iconType}
+                onChange={(e) =>
+                  setIconType(e.target.value as 'full' | 'compact')
+                }
+                className="w-full px-4 py-3 pr-10 border border-blue-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 text-sm bg-white/80 text-gray-900 hover:border-blue-300 transition-all duration-200 shadow-sm hover:shadow-md backdrop-blur-sm font-medium appearance-none"
+                aria-label="Select icon customization"
+              >
+                <option value="full">Full</option>
+                <option value="compact">Compact</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <FaChevronDown className="w-4 h-4 text-gray-500" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
