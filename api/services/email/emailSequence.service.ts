@@ -182,6 +182,14 @@ export class EmailSequenceService {
               continue
             }
 
+            // Check if email is already scheduled for today (prevents duplicates with Brevo scheduled emails)
+            const isScheduledToday = await ScheduledEmailTracker.isEmailScheduledForDate(user.id, step.description, currentDateUTC)
+
+            if (isScheduledToday) {
+              logger.info(`   Email already scheduled for today for user ${user.id} - ${step.description}`)
+              continue
+            }
+
             // Send the email using the legacy method (direct send)
             logger.info(`   📤 Sending ${step.description} to ${user.email} (User ${user.id})`)
             await this.sendSequenceEmail(user, step)
