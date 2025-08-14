@@ -200,7 +200,7 @@ export async function updateUserSentEmails(user_id: number, sentEmails: Record<s
     const updatedRows = await database('user_notifications')
       .where({ user_id })
       .update({ sent_emails: JSON.stringify(sentEmails) })
-    
+
     return updatedRows > 0
   } catch (error) {
     console.error('Error updating user sent emails:', error)
@@ -213,10 +213,8 @@ export async function updateUserSentEmails(user_id: number, sentEmails: Record<s
  */
 export async function resetUserEmailTracking(user_id: number): Promise<boolean> {
   try {
-    const updatedRows = await database('user_notifications')
-      .where({ user_id })
-      .update({ sent_emails: null })
-    
+    const updatedRows = await database('user_notifications').where({ user_id }).update({ sent_emails: null })
+
     return updatedRows > 0
   } catch (error) {
     console.error('Error resetting user email tracking:', error)
