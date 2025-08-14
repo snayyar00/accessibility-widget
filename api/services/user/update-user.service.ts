@@ -77,17 +77,9 @@ export async function updateUserNotificationSettings(
                 console.error(`Email recovery failed for user ${userId}:`, error)
               })
           } else if (flags.onboarding_emails_flag === false && currentOnboardingStatus === true) {
-            // User disabled onboarding emails - cancel scheduled emails
-            console.log(`User ${userId} disabled onboarding emails - cancelling scheduled emails...`)
-
-            // Cancel scheduled emails in the background
-            EmailSequenceService.cancelScheduledEmailsForUser(userId)
-              .then((cancelledCount) => {
-                console.log(`Cancelled ${cancelledCount} scheduled emails for user ${userId}`)
-              })
-              .catch((error) => {
-                console.error(`Failed to cancel scheduled emails for user ${userId}:`, error)
-              })
+            // User disabled onboarding emails
+            console.log(`User ${userId} disabled onboarding emails`)
+            // Note: No need to cancel scheduled emails since we use immediate sending
           }
         } catch (error) {
           console.error(`Failed to handle email preference change for user ${userId}:`, error)

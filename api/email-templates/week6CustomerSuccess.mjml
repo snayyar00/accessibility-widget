@@ -117,7 +117,7 @@
           📅 Want a Quick Chat?
         </mj-text>
         <mj-text align="center" font-size="16px" color="#6b7280" padding="0 0 20px">
-          Sometimes a 15-minute conversation is worth a dozen emails. If you'd like personalized guidance on your accessibility strategy, we're happy to schedule a brief call.
+          Sometimes a conversation is worth a dozen emails. If you'd like personalized guidance on your accessibility strategy, we're happy to schedule a brief call.
         </mj-text>
         
         <mj-button 
@@ -125,9 +125,9 @@
           color="#ffffff"
           font-size="16px"
           padding="12px 24px"
-          href="https://calendly.com/webability/15min"
+          href="https://calendly.com/webability-support/30min"
         >
-          📞 Schedule 15-Minute Call
+          📞 Schedule 30-Minute Call
         </mj-button>
         <mj-text align="center" font-size="14px" color="#9ca3af" padding="16px 0 0">
           Or simply reply to this email with your questions and feedback!
@@ -149,7 +149,7 @@
           Your success is our success. We're here to help you every step of the way!
         </mj-text>
         <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
-          <a href="mailto:support@webability.io?subject=Unsubscribe%20Request" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+          <a href="{{unsubscribeLink}}" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
         </mj-text>
       </mj-column>
     </mj-section>
