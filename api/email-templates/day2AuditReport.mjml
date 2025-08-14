@@ -144,7 +144,7 @@
           You're receiving this as part of our onboarding series. More helpful tips coming your way!
         </mj-text>
         <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
-          <a href="mailto:support@webability.io?subject=Unsubscribe%20Request" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+          <a href="{{unsubscribeLink}}" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
         </mj-text>
       </mj-column>
     </mj-section>

@@ -4,26 +4,21 @@ import path from 'path'
 import { EMAIL_SEQUENCES, EmailSequenceStep } from '../../config/emailSequences.config'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import { checkOnboardingEmailsEnabled, UserProfile } from '../../repository/user.repository'
-import { getUsersRegisteredOnDate } from '../../repository/user.repository'
-import { sendEmailWithRetries, sendScheduledEmail } from '../../services/email/email.service'
-import ScheduledEmailTracker, { ScheduledEmailRecord } from '../../services/email/scheduledEmailTracker.service'
+import { sendEmailWithRetries } from '../../services/email/email.service'
 import logger from '../../utils/logger'
 
 /**
- * Email Sequence Service - Production Ready
+ * Email Sequence Service - Immediate Sending with Database Tracking
  *
  * This service handles the automated email sequence for new user onboarding.
  *
  * PRODUCTION FLOW:
  * - Day 0: Welcome email sent immediately on registration
- * - Days 1-90: Sequence emails scheduled at registration time using Brevo scheduling
- * - Emails sent at 24-hour intervals from registration time
- * - Only subscribed users receive emails
- * - Scheduled emails can be cancelled when users unsubscribe
- *
- * TESTING UTILITIES:
- * - Testing methods are clearly separated and marked
- * - Use for development/testing purposes only
+ * - Days 1-90: Emails sent immediately by cron job with gap enforcement
+ * - All emails tracked in database JSON column (user_notifications.sent_emails)
+ * - Only users registered on/after August 14, 2025 receive sequence emails
+ * - Proper gap enforcement ensures correct timing between emails
+ * - No volatile file tracking - everything persisted in database
  */
 
 export class EmailSequenceService {
@@ -59,9 +54,8 @@ export class EmailSequenceService {
 
       const welcomeStep = EMAIL_SEQUENCES.ONBOARDING.steps[0] // Day 0 email
 
-      // Check if email was already sent using log-based tracking
-      const emailLogKey = `${welcomeStep.subject}|${userId}`
-      if (await this.wasEmailAlreadySent(emailLogKey)) {
+      // Check if email was already sent using database tracking
+      if (await this.wasEmailAlreadySent(userId, welcomeStep.day)) {
         logger.info(`Welcome email already sent to user ${userId}`)
         return true
       }
@@ -111,7 +105,7 @@ export class EmailSequenceService {
       await sendEmailWithRetries(emailToSend, template, welcomeStep.subject)
 
       // Mark email as sent in tracking system
-      await this.markEmailAsSent(emailLogKey)
+      await this.markEmailAsSent(userId, welcomeStep.day)
       logger.info(`Welcome email sent successfully to user ${userId}`)
 
       return true
@@ -123,7 +117,7 @@ export class EmailSequenceService {
 
   /**
    * Enhanced daily email sequence processing (Production)
-   * Now handles BOTH deferred emails (Day 7+) AND failed immediate emails
+   * Now uses database tracking with gap enforcement for new users only
    */
   static async processDailyEmailSequence(): Promise<void> {
     try {
@@ -138,71 +132,49 @@ export class EmailSequenceService {
       // Get all sequence steps (exclude Day 0 which is handled by welcome email)
       const sequenceSteps = EMAIL_SEQUENCES.ONBOARDING.steps.filter((step) => step.day > 0)
 
-      // Use UTC date to ensure consistent behavior regardless of server timezone
-      const currentDateUTC = new Date()
-      currentDateUTC.setUTCHours(0, 0, 0, 0)
       let totalEmailsSent = 0
       let totalUsersProcessed = 0
 
-      // Process each sequence step to find users who should receive emails today
-      for (const step of sequenceSteps) {
-        // Calculate the registration date for users who should receive this email today
-        const targetRegistrationDate = new Date(currentDateUTC)
-        targetRegistrationDate.setUTCDate(currentDateUTC.getUTCDate() - step.day)
-        const dateString = targetRegistrationDate.toISOString().split('T')[0] // YYYY-MM-DD format
+      // Get users registered on or after August 14, 2025 (new users only)
+      const cutoffDate = new Date('2025-08-14')
+      cutoffDate.setHours(0, 0, 0, 0)
+      const { getUsersRegisteredOnDate } = await import('../../repository/user.repository')
 
-        logger.info(`📅 Processing ${step.description} (Day ${step.day}) for users registered on ${dateString}`)
+      // Check users from the cutoff date onward
+      const cutoffString = cutoffDate.toISOString().split('T')[0]
+      const todayUsers = await getUsersRegisteredOnDate(cutoffString)
 
-        // Get users registered on the target date
-        const users = await getUsersRegisteredOnDate(dateString)
+      logger.info(`Found ${todayUsers.length} users registered today`)
 
-        if (users.length === 0) {
-          logger.info(`   No users found registered on ${dateString}`)
+      for (const user of todayUsers) {
+        totalUsersProcessed++
+
+        // Check if user has onboarding emails enabled
+        const isOnboardingEnabled = await checkOnboardingEmailsEnabled(user.id)
+        if (!isOnboardingEnabled) {
+          logger.info(`Skipping user ${user.id} - onboarding emails disabled`)
           continue
         }
 
-        logger.info(`   Found ${users.length} users registered on ${dateString}`)
+        const registrationDate = new Date(user.created_at)
 
-        // Process each user for this step
-        for (const user of users) {
-          try {
-            // Check if user has onboarding emails enabled
-            const isOnboardingEnabled = await checkOnboardingEmailsEnabled(user.id)
-            if (!isOnboardingEnabled) {
-              logger.info(`   Skipping user ${user.id} (${user.email}) - onboarding emails disabled`)
-              continue
+        // Process each sequence step for this user
+        for (const step of sequenceSteps) {
+          const shouldSend = await this.shouldSendEmail(user.id, step.day, registrationDate)
+
+          if (shouldSend.should) {
+            try {
+              await this.sendSequenceEmail(user, step)
+              await this.markEmailAsSent(user.id, step.day)
+              totalEmailsSent++
+              logger.info(`✅ Sent Day ${step.day} email to user ${user.id}: ${step.description}`)
+            } catch (error) {
+              logger.error(`❌ Failed to send Day ${step.day} email to user ${user.id}:`, error)
             }
-
-            // Check if email was already sent
-            const emailLogKey = `${step.subject}|${user.id}`
-            const alreadySent = await this.wasEmailAlreadySent(emailLogKey)
-
-            if (alreadySent) {
-              logger.info(`   Email already sent to user ${user.id} - ${step.description}`)
-              continue
-            }
-
-            // Check if email is already scheduled for today (prevents duplicates with Brevo scheduled emails)
-            const isScheduledToday = await ScheduledEmailTracker.isEmailScheduledForDate(user.id, step.description, currentDateUTC)
-
-            if (isScheduledToday) {
-              logger.info(`   Email already scheduled for today for user ${user.id} - ${step.description}`)
-              continue
-            }
-
-            // Send the email using the legacy method (direct send)
-            logger.info(`   📤 Sending ${step.description} to ${user.email} (User ${user.id})`)
-            await this.sendSequenceEmail(user, step)
-            totalEmailsSent++
-
-            // Small delay between emails to avoid overwhelming the email service
-            await new Promise((resolve) => setTimeout(resolve, 500))
-          } catch (error) {
-            logger.error(`   ❌ Failed to process user ${user.id} for ${step.description}:`, error)
+          } else {
+            logger.info(`⏭️  Skipping Day ${step.day} for user ${user.id}: ${shouldSend.reason}`)
           }
         }
-
-        totalUsersProcessed += users.length
       }
 
       logger.info(`📊 Enhanced daily email sequence processing completed:`)
@@ -214,201 +186,13 @@ export class EmailSequenceService {
   }
 
   /**
-   * Schedule email sequence emails upon user registration (Production)
-   * HYBRID APPROACH: Schedules Days 1-3 immediately (within Brevo's 72-hour limit)
-   * Days 7+ will be handled by the enhanced cron job system
+   * Recovery mechanism for users who re-enable onboarding emails
+   * Only applies to users registered on or after August 14, 2025, with proper gap enforcement
    */
-  static async scheduleEmailSequenceForUser(userEmail: string, userName: string, userId: number, registrationTime: Date = new Date()): Promise<{ scheduled: number; failed: number; deferred: number }> {
-    try {
-      // Email sequence kill switch for staging
-      if (process.env.DISABLE_EMAIL_SEQUENCE === 'true') {
-        logger.info(`Email sequence disabled via DISABLE_EMAIL_SEQUENCE env var - skipping scheduling for user ${userId}`)
-        return { scheduled: 0, failed: 0, deferred: 0 }
-      }
-
-      // Check if user has onboarding emails enabled
-      const isOnboardingEnabled = await checkOnboardingEmailsEnabled(userId)
-      if (!isOnboardingEnabled) {
-        logger.info(`Skipping email sequence scheduling for user ${userId} - onboarding emails disabled`)
-        return { scheduled: 0, failed: 0, deferred: 0 }
-      }
-
-      // Get all sequence steps (exclude Day 0 which is handled by welcome email)
-      const sequenceSteps = EMAIL_SEQUENCES.ONBOARDING.steps.filter((step) => step.day > 0)
-
-      // Split steps based on Brevo's 72-hour scheduling limit
-      const BREVO_SCHEDULING_LIMIT_HOURS = 72
-      const immediateSteps = sequenceSteps.filter((step) => step.day * 24 <= BREVO_SCHEDULING_LIMIT_HOURS)
-      const deferredSteps = sequenceSteps.filter((step) => step.day * 24 > BREVO_SCHEDULING_LIMIT_HOURS)
-
-      let scheduledCount = 0
-      let failedCount = 0
-      const deferredCount = deferredSteps.length
-
-      logger.info(`📅 Scheduling emails for user ${userId}:`)
-      logger.info(`   📤 Immediate (Brevo): ${immediateSteps.length} emails (Days ${immediateSteps.map((s) => s.day).join(', ')})`)
-      logger.info(`   ⏰ Deferred (Cron): ${deferredSteps.length} emails (Days ${deferredSteps.map((s) => s.day).join(', ')})`)
-
-      // Schedule immediate emails (Days 1-3) using Brevo scheduling
-      for (const step of immediateSteps) {
-        try {
-          // Calculate exact send time: registration time + step.day days
-          const scheduledTime = new Date(registrationTime.getTime() + step.day * 24 * 60 * 60 * 1000)
-
-          // Check if this email was already scheduled or sent (duplicate prevention)
-          const emailLogKey = `${step.subject}|${userId}`
-          const alreadySent = await this.wasEmailAlreadySent(emailLogKey)
-          const alreadyScheduled = await ScheduledEmailTracker.isEmailAlreadyScheduled(userId, step.subject)
-
-          if (alreadySent) {
-            logger.info(`   Email already sent: ${step.description} for user ${userId}`)
-            continue
-          }
-
-          if (alreadyScheduled) {
-            logger.info(`   Email already scheduled: ${step.description} for user ${userId}`)
-            continue
-          }
-
-          // Generate and schedule the email via Brevo
-          const emailScheduled = await this.scheduleSequenceEmail(userEmail, userName, userId, step, scheduledTime)
-
-          if (emailScheduled) {
-            scheduledCount++
-            // NOTE: Do NOT mark as "sent" for scheduled emails - only track in scheduled-emails.json
-            // They will be marked as sent when actually delivered (handled by delivery webhooks or cron)
-            logger.info(`   ✅ Scheduled via Brevo: ${step.description} for ${scheduledTime.toISOString()}`)
-          } else {
-            failedCount++
-            logger.error(`   ❌ Failed to schedule via Brevo: ${step.description} for user ${userId}`)
-          }
-
-          // Small delay between scheduling requests to avoid rate limiting
-          await new Promise((resolve) => setTimeout(resolve, 200))
-        } catch (error) {
-          failedCount++
-          logger.error(`   ❌ Error scheduling ${step.description} for user ${userId}:`, error)
-        }
-      }
-
-      // Log deferred emails (will be handled by cron job)
-      for (const step of deferredSteps) {
-        logger.info(`   ⏰ Deferred for cron job: ${step.description} (Day ${step.day})`)
-      }
-
-      logger.info(`📊 Email sequence scheduling completed for user ${userId}:`)
-      logger.info(`   📤 Scheduled (Brevo): ${scheduledCount}`)
-      logger.info(`   ❌ Failed: ${failedCount}`)
-      logger.info(`   ⏰ Deferred (Cron): ${deferredCount}`)
-
-      return { scheduled: scheduledCount, failed: failedCount, deferred: deferredCount }
-    } catch (error) {
-      logger.error(`❌ Error scheduling email sequence for user ${userId}:`, error)
-      return { scheduled: 0, failed: 0, deferred: 0 }
-    }
-  }
-
-  /**
-   * Cancel all scheduled emails for a user (when they unsubscribe)
-   */
-  static async cancelScheduledEmailsForUser(userId: number): Promise<number> {
-    try {
-      logger.info(`🚫 Cancelling all scheduled emails for user ${userId}`)
-      const cancelledCount = await ScheduledEmailTracker.cancelUserScheduledEmails(userId)
-      logger.info(`📊 Cancelled ${cancelledCount} scheduled emails for user ${userId}`)
-      return cancelledCount
-    } catch (error) {
-      logger.error(`❌ Error cancelling scheduled emails for user ${userId}:`, error)
-      return 0
-    }
-  }
-
-  /**
-   * Handle failed scheduled emails and retry them
-   * Enhanced to detect email sequence gaps of unlimited length
-   */
-  static async handleFailedScheduledEmails(): Promise<void> {
-    try {
-      logger.info('🔍 Checking for failed scheduled emails and email sequence gaps...')
-
-      const currentDate = new Date()
-      const maxSequenceDays = Math.max(...EMAIL_SEQUENCES.ONBOARDING.steps.map((s) => s.day))
-
-      // Check all users who could potentially have missing emails
-      // We'll look back up to the maximum sequence day length to catch all possible gaps
-      for (let daysBack = 1; daysBack <= maxSequenceDays; daysBack++) {
-        const targetDate = new Date(currentDate.getTime() - daysBack * 24 * 60 * 60 * 1000)
-        const dateString = targetDate.toISOString().split('T')[0]
-
-        const users = await getUsersRegisteredOnDate(dateString)
-
-        if (users.length === 0) continue
-
-        // For each user registered on this date, check ALL missing emails, not just the day that matches daysBack
-        for (const user of users) {
-          try {
-            // Check if user currently has onboarding emails enabled
-            const isOnboardingEnabled = await checkOnboardingEmailsEnabled(user.id)
-            if (!isOnboardingEnabled) continue
-
-            // Calculate days since this user's registration
-            const userRegistrationDate = new Date(user.created_at)
-            const daysSinceUserRegistration = Math.floor((currentDate.getTime() - userRegistrationDate.getTime()) / (1000 * 60 * 60 * 24))
-
-            // Get all sequence steps that should have been sent to this user by now
-            const dueSteps = EMAIL_SEQUENCES.ONBOARDING.steps.filter((step) => step.day <= daysSinceUserRegistration)
-            let userHasMissingEmails = false
-
-            // Check each step to see if it was sent
-            for (const step of dueSteps) {
-              const emailLogKey = `${step.subject}|${user.id}`
-              const alreadySent = await this.wasEmailAlreadySent(emailLogKey)
-
-              if (!alreadySent) {
-                if (!userHasMissingEmails) {
-                  logger.info(`🔍 User ${user.id} registered ${daysSinceUserRegistration} days ago has missing emails - starting recovery`)
-                  userHasMissingEmails = true
-                }
-
-                logger.info(`   🔄 Sending missing Day ${step.day} email for user ${user.id}: ${step.description}`)
-
-                try {
-                  // Send the email immediately since it was missed
-                  await this.sendSequenceEmail(user, step)
-
-                  // Mark as sent to prevent future retries
-                  await this.markEmailAsSent(emailLogKey)
-
-                  logger.info(`   ✅ Successfully sent missing email to user ${user.id}`)
-
-                  // Small delay between emails for the same user
-                  await new Promise((resolve) => setTimeout(resolve, 500))
-                } catch (emailError) {
-                  logger.error(`   ❌ Failed to send ${step.description} to user ${user.id}:`, emailError)
-                }
-              }
-            }
-
-            if (userHasMissingEmails) {
-              // Add a longer delay between processing different users
-              await new Promise((resolve) => setTimeout(resolve, 1000))
-            }
-          } catch (error) {
-            logger.error(`   ❌ Failed to process user ${user.id}:`, error)
-          }
-        }
-      }
-
-      logger.info('✅ Failed scheduled emails and gap recovery completed')
-    } catch (error) {
-      logger.error('❌ Error handling failed scheduled emails:', error)
-    }
-  }
 
   /**
    * Recovery mechanism for users who re-enable onboarding emails
-   * This detects and sends any missed emails when the flag is turned back on
-   * Enhanced to handle cancelled scheduled emails
+   * Only applies to users registered today and beyond, with proper gap enforcement
    */
   static async recoverMissedEmailsForUser(userId: number): Promise<{ recovered: number; details: string[] }> {
     try {
@@ -430,74 +214,45 @@ export class EmailSequenceService {
         return { recovered: 0, details: ['User not found'] }
       }
 
-      // Calculate days since registration
       const registrationDate = new Date(user.created_at)
-      const currentDate = new Date()
-      const daysSinceRegistration = Math.floor((currentDate.getTime() - registrationDate.getTime()) / (1000 * 60 * 60 * 24))
 
+      // Check if user registered on or after August 14, 2025 (new users only)
+      const cutoffDate = new Date('2025-08-14')
+      cutoffDate.setHours(0, 0, 0, 0)
+      const regDate = new Date(registrationDate)
+      regDate.setHours(0, 0, 0, 0)
+
+      if (regDate < cutoffDate) {
+        logger.info(`User ${userId} registered before August 14, 2025 - recovery only applies to new users`)
+        return { recovered: 0, details: ['Recovery only applies to users registered on or after August 14, 2025'] }
+      }
+
+      const daysSinceRegistration = this.calculateDaysSinceRegistration(registrationDate)
       logger.info(`User ${userId} registered ${daysSinceRegistration} days ago`)
 
-      // Get cancelled scheduled emails for this user
-      const cancelledEmails = await ScheduledEmailTracker.getCancelledEmailsForUser(userId)
-
-      // Get all sequence steps that should have been sent by now OR were previously cancelled
+      // Get all sequence steps
       const allSteps = EMAIL_SEQUENCES.ONBOARDING.steps
-      const dueSteps = allSteps.filter((step) => step.day <= daysSinceRegistration)
-
-      // Add cancelled emails that might not be "due" yet but were previously scheduled
-      const cancelledSteps = allSteps.filter((step) => cancelledEmails.some((cancelled: ScheduledEmailRecord) => cancelled.sequenceDay === step.day))
-
-      // Combine and deduplicate steps
-      const stepsToRecover = [...new Set([...dueSteps, ...cancelledSteps])]
-
       let recoveredCount = 0
       const recoveryDetails: string[] = []
 
-      // Check each step to see if it was sent
-      for (const step of stepsToRecover) {
-        const emailLogKey = `${step.subject}|${userId}`
-        const alreadySent = await this.wasEmailAlreadySent(emailLogKey)
+      // Check each step to see if it should be sent (with gap enforcement)
+      for (const step of allSteps) {
+        const shouldSend = await this.shouldSendEmail(userId, step.day, registrationDate)
 
-        if (!alreadySent) {
+        if (shouldSend.should) {
           try {
-            // Determine if this email should be sent immediately or scheduled
-            const shouldSendImmediately = step.day <= daysSinceRegistration
-            const isWithinSchedulingLimit = step.day * 24 <= 72 // Brevo's 72-hour limit
-
-            if (shouldSendImmediately) {
-              // Email is overdue - send immediately
-              logger.info(`   📧 Sending overdue email immediately: ${step.description} (Day ${step.day})`)
-              await this.sendSequenceEmail(user, step)
-              recoveryDetails.push(`Sent immediately: ${step.description} (Day ${step.day})`)
-            } else if (isWithinSchedulingLimit) {
-              // Email is not due yet but was cancelled - re-schedule it
-              const scheduledTime = new Date(registrationDate)
-              scheduledTime.setDate(scheduledTime.getDate() + step.day)
-
-              logger.info(`   📅 Re-scheduling cancelled email: ${step.description} (Day ${step.day}) for ${scheduledTime.toISOString()}`)
-              const scheduled = await this.scheduleSequenceEmail(user.email, user.name || user.email, userId, step, scheduledTime)
-
-              if (scheduled) {
-                recoveryDetails.push(`Re-scheduled: ${step.description} (Day ${step.day}) for ${scheduledTime.toDateString()}`)
-              } else {
-                recoveryDetails.push(`Failed to re-schedule: ${step.description} (Day ${step.day})`)
-              }
-            } else {
-              // Email is beyond Brevo's scheduling limit - will be handled by cron job
-              logger.info(`   ⏰ Cancelled email beyond scheduling limit: ${step.description} (Day ${step.day}) - will be handled by cron job`)
-              recoveryDetails.push(`Deferred to cron: ${step.description} (Day ${step.day})`)
-            }
-
+            logger.info(`   📧 Sending missing email: ${step.description} (Day ${step.day})`)
+            await this.sendSequenceEmail(user, step)
+            await this.markEmailAsSent(userId, step.day)
             recoveredCount++
-
-            // Small delay between processing emails
-            await new Promise((resolve) => setTimeout(resolve, 500))
+            recoveryDetails.push(`Sent: ${step.description} (Day ${step.day})`)
           } catch (error) {
-            logger.error(`   ❌ Failed to recover ${step.description}:`, error)
+            logger.error(`   ❌ Failed to send ${step.description}:`, error)
             recoveryDetails.push(`Failed: ${step.description} (Day ${step.day}) - ${error.message}`)
           }
         } else {
-          recoveryDetails.push(`Already sent: ${step.description} (Day ${step.day})`)
+          logger.info(`   ⏭️  Skipping ${step.description} (Day ${step.day}): ${shouldSend.reason}`)
+          recoveryDetails.push(`Skipped: ${step.description} (Day ${step.day}) - ${shouldSend.reason}`)
         }
       }
 
@@ -550,8 +305,7 @@ export class EmailSequenceService {
       const allEmailsSent: EmailSequenceStep[] = []
 
       for (const step of sequenceSteps) {
-        const emailLogKey = `${step.subject}|${user.id}`
-        const alreadySent = await this.wasEmailAlreadySent(emailLogKey)
+        const alreadySent = await this.wasEmailAlreadySent(user.id, step.day)
 
         if (alreadySent) {
           allEmailsSent.push(step)
@@ -658,8 +412,7 @@ export class EmailSequenceService {
       await sendEmailWithRetries(emailToSend, template, compiledSubject)
 
       // Mark email as sent in tracking system
-      const emailLogKey = `${step.subject}|${user.id}`
-      await this.markEmailAsSent(emailLogKey)
+      await this.markEmailAsSent(user.id, step.day)
       logger.info(`Email sent successfully: ${step.description} to user ${user.id}`)
     } catch (error) {
       logger.error(`Failed to send ${step.description} email to user ${user.id}:`, error)
@@ -667,142 +420,78 @@ export class EmailSequenceService {
   }
 
   /**
-   * Schedule a specific sequence email for a user using Brevo scheduling
+   * Check if email was already sent using database JSON tracking
    */
-  private static async scheduleSequenceEmail(userEmail: string, userName: string, userId: number, step: EmailSequenceStep, scheduledTime: Date): Promise<boolean> {
+  private static async wasEmailAlreadySent(userId: number, sequenceDay: number): Promise<boolean> {
     try {
-      // Check if user has active domains (for conditional content)
-      const hasActiveDomains = await this.checkUserHasActiveDomains(userId)
+      const { getUserSentEmails } = await import('../../repository/user.repository')
+      const sentEmails = await getUserSentEmails(userId)
 
-      // Extract first URL from comma-separated FRONTEND_URL
-      const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim() || 'http://localhost:3000'
+      if (!sentEmails) return false
 
-      // Generate logo URL (same robust logic as welcome email)
-      const logoUrl = 'https://www.webability.io/images/logo.png'
-      const fallbackLogoUrl = 'https://cdn.jsdelivr.net/gh/webability-io/assets/logo.png'
-      const altFallbackUrl = 'https://via.placeholder.com/150x40/1565C0/FFFFFF?text=WebAbility'
-
-      try {
-        const logoPath = path.join(process.cwd(), 'email-templates', 'logo.png')
-        const _logoBuffer = await fs.promises.readFile(logoPath)
-        logger.info(`Logo setup for ${step.description} - Primary: ${logoUrl}`)
-      } catch (logoError) {
-        logger.warn(`Logo file issue for ${step.description}, using hosted URLs only:`, logoError.message)
-      }
-
-      // Compile the email template
-      const template = await compileEmailTemplate({
-        fileName: step.template,
-        data: {
-          name: userName,
-          email: userEmail,
-          logoUrl: logoUrl,
-          fallbackLogoUrl: fallbackLogoUrl,
-          altFallbackUrl: altFallbackUrl,
-          hasActiveDomains: hasActiveDomains,
-          scannerLink: `${frontendUrl}/scanner`,
-          dashboardLink: frontendUrl,
-          customizeLink: `${frontendUrl}/customize-widget`,
-          supportLink: 'mailto:support@webability.io',
-          installationLink: `${frontendUrl}/installation`,
-          installationGuide: 'https://www.webability.io/installation',
-          unsubscribeLink: `${process.env.REACT_APP_BACKEND_URL}/unsubscribe?email=${encodeURIComponent(userEmail)}`,
-          year: new Date().getFullYear(),
-        },
-      })
-
-      // Compile subject line for conditional content (Day 1 email has Handlebars syntax)
-      const compiledSubject = step.subject.includes('{{#if') ? (hasActiveDomains ? step.subject.replace(/{{#if hasActiveDomains}}(.*?){{else}}.*?{{\/if}}/g, '$1') : step.subject.replace(/{{#if hasActiveDomains}}.*?{{else}}(.*?){{\/if}}/g, '$1')) : step.subject
-
-      // Schedule the email using Brevo
-      const result = await sendScheduledEmail(userEmail, compiledSubject, template, scheduledTime)
-
-      if (result.success && result.messageId) {
-        // Track the scheduled email for potential cancellation
-        await ScheduledEmailTracker.addScheduledEmail({
-          userId,
-          emailType: step.description,
-          messageId: result.messageId,
-          batchId: result.batchId || '', // Provide fallback if batchId not available
-          scheduledAt: scheduledTime.toISOString(),
-          userEmail,
-          sequenceDay: step.day,
-        })
-
-        logger.info(`Scheduled email successfully: ${step.description} for user ${userId} at ${scheduledTime.toISOString()}`)
-        return true
-      } else {
-        logger.error(`Failed to schedule ${step.description} email for user ${userId}`)
-        return false
-      }
+      return sentEmails[sequenceDay.toString()] !== undefined
     } catch (error) {
-      logger.error(`Failed to schedule ${step.description} email for user ${userId}:`, error)
+      logger.error('Error checking if email was sent:', error)
       return false
     }
   }
 
   /**
-   * Check if email was already sent using simple JSON tracking
+   * Mark an email as sent in database tracking system
    */
-  private static async wasEmailAlreadySent(emailLogKey: string): Promise<boolean> {
+  private static async markEmailAsSent(userId: number, sequenceDay: number): Promise<void> {
     try {
-      const logsDir = path.join(process.cwd(), 'logs')
-      const trackingPath = path.join(logsDir, 'sent-emails.json')
+      const { getUserSentEmails, updateUserSentEmails } = await import('../../repository/user.repository')
 
-      // Check if tracking file exists
-      if (!fs.existsSync(trackingPath)) {
-        return false
-      }
+      const sentEmails = (await getUserSentEmails(userId)) || {}
+      sentEmails[sequenceDay.toString()] = new Date().toISOString()
 
-      // Read the tracking file
-      const trackingContent = await fs.promises.readFile(trackingPath, 'utf8')
-      const sentEmails = JSON.parse(trackingContent)
-
-      const wasAlreadySent = sentEmails.includes(emailLogKey)
-
-      if (wasAlreadySent) {
-        logger.info(`Email already sent - found in tracking: ${emailLogKey}`)
-      }
-
-      return wasAlreadySent
+      await updateUserSentEmails(userId, sentEmails)
+      logger.info(`Marked email as sent: Day ${sequenceDay} for user ${userId}`)
     } catch (error) {
-      logger.error('Error checking email send status:', error)
-      return false // Default to false on error to allow sending
+      logger.error('Error marking email as sent:', error)
     }
   }
 
   /**
-   * Mark an email as sent in our tracking system
+   * Calculate days since registration for gap enforcement
    */
-  private static async markEmailAsSent(emailLogKey: string): Promise<void> {
+  private static calculateDaysSinceRegistration(registrationDate: Date): number {
+    const currentDate = new Date()
+    const timeDiff = currentDate.getTime() - registrationDate.getTime()
+    return Math.floor(timeDiff / (1000 * 60 * 60 * 24))
+  }
+
+  /**
+   * Check if user should receive email (new users only + gap enforcement)
+   */
+  private static async shouldSendEmail(userId: number, sequenceDay: number, registrationDate: Date): Promise<{ should: boolean; reason: string }> {
     try {
-      const logsDir = path.join(process.cwd(), 'logs')
-      const trackingPath = path.join(logsDir, 'sent-emails.json')
+      // Check if user registered on or after August 14, 2025 (new users only)
+      const cutoffDate = new Date('2025-08-14')
+      cutoffDate.setHours(0, 0, 0, 0)
+      const regDate = new Date(registrationDate)
+      regDate.setHours(0, 0, 0, 0)
 
-      // Ensure logs directory exists
-      if (!fs.existsSync(logsDir)) {
-        await fs.promises.mkdir(logsDir, { recursive: true })
-        logger.info(`Created logs directory: ${logsDir}`)
+      if (regDate < cutoffDate) {
+        return { should: false, reason: 'Only applies to users registered on or after August 14, 2025' }
       }
 
-      let sentEmails: string[] = []
-
-      // Read existing tracking data if file exists
-      if (fs.existsSync(trackingPath)) {
-        const trackingContent = await fs.promises.readFile(trackingPath, 'utf8')
-        sentEmails = JSON.parse(trackingContent)
+      // Check if email already sent
+      if (await this.wasEmailAlreadySent(userId, sequenceDay)) {
+        return { should: false, reason: 'Email already sent' }
       }
 
-      // Add the new email key if not already present
-      if (!sentEmails.includes(emailLogKey)) {
-        sentEmails.push(emailLogKey)
-
-        // Write back to file
-        await fs.promises.writeFile(trackingPath, JSON.stringify(sentEmails, null, 2), 'utf8')
-        logger.info(`Marked email as sent: ${emailLogKey}`)
+      // Check gap enforcement
+      const daysSinceRegistration = this.calculateDaysSinceRegistration(registrationDate)
+      if (daysSinceRegistration < sequenceDay) {
+        return { should: false, reason: `Gap not met: ${daysSinceRegistration} days < ${sequenceDay} days required` }
       }
+
+      return { should: true, reason: 'Ready to send' }
     } catch (error) {
-      logger.error('Error marking email as sent:', error)
+      logger.error('Error checking if should send email:', error)
+      return { should: false, reason: 'Error occurred' }
     }
   }
 
@@ -895,23 +584,11 @@ export class EmailSequenceService {
    */
   static async resetEmailTrackingForUser(userId: number): Promise<void> {
     try {
-      const trackingPath = path.join(process.cwd(), 'logs', 'sent-emails.json')
-
-      if (!fs.existsSync(trackingPath)) {
-        logger.info('No email tracking file found to reset')
-        return
-      }
-
-      const trackingContent = await fs.promises.readFile(trackingPath, 'utf8')
-      const sentEmails = JSON.parse(trackingContent)
-
-      // Remove all entries for this user
-      const filteredEmails = sentEmails.filter((emailKey: string) => !emailKey.endsWith(`|${userId}`))
-
-      await fs.promises.writeFile(trackingPath, JSON.stringify(filteredEmails, null, 2), 'utf8')
-      logger.info(`Reset email tracking for user ${userId}. Removed ${sentEmails.length - filteredEmails.length} entries.`)
+      const { resetUserEmailTracking } = await import('../../repository/user.repository')
+      await resetUserEmailTracking(userId)
+      logger.info(`🔄 Reset email tracking for user ${userId}`)
     } catch (error) {
-      logger.error('Error resetting email tracking:', error)
+      logger.error(`Error resetting email tracking for user ${userId}:`, error)
     }
   }
 
@@ -926,8 +603,7 @@ export class EmailSequenceService {
       const pendingEmails: string[] = []
 
       for (const step of sequenceSteps) {
-        const emailLogKey = `${step.subject}|${userId}`
-        const alreadySent = await this.wasEmailAlreadySent(emailLogKey)
+        const alreadySent = await this.wasEmailAlreadySent(userId, step.day)
 
         if (alreadySent) {
           sentCount++
@@ -946,29 +622,6 @@ export class EmailSequenceService {
       return { sent: 0, total: 0, pending: [] }
     }
   }
-}
-
-// Type interfaces for better type safety (prefixed with _ to indicate intentionally unused for now)
-interface _EmailSequenceStatus {
-  sent: number
-  total: number
-  pending: string[]
-}
-
-interface _ScheduleEmailSequenceResult {
-  scheduled: number
-  failed: number
-  deferred: number
-}
-
-interface _ScheduledEmail {
-  userId: number
-  emailType: string
-  messageId: string
-  batchId: string
-  scheduledAt: string
-  userEmail: string
-  sequenceDay: number
 }
 
 export default EmailSequenceService

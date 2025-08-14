@@ -3,7 +3,6 @@ import { Request, Response } from 'express'
 import { addNewsletterSub, unsubscribeFromNewsletter } from '../repository/newsletter_subscribers.repository'
 import { findUser, setOnboardingEmailsFlag } from '../repository/user.repository'
 import { sendMail } from '../services/email/email.service'
-import EmailSequenceService from '../services/email/emailSequence.service'
 import { emailValidation } from '../validations/email.validation'
 
 export async function handleFormSubmission(req: Request, res: Response) {
@@ -137,15 +136,9 @@ export async function unsubscribe(req: Request, res: Response) {
 
     // Disable onboarding emails for this user
     const success = await setOnboardingEmailsFlag(user.id, false)
+    console.log(`Disabled onboarding emails for user ${user.id}`)
 
-    // Cancel all scheduled emails for this user
-    try {
-      const cancelledCount = await EmailSequenceService.cancelScheduledEmailsForUser(user.id)
-      console.log(`Cancelled ${cancelledCount} scheduled emails for user ${user.id}`)
-    } catch (cancelError) {
-      console.error('Error cancelling scheduled emails:', cancelError)
-      // Don't fail the unsubscribe process if cancellation fails
-    }
+    // Note: No need to cancel scheduled emails since we use immediate sending
 
     // Also unsubscribe from general newsletter for complete unsubscribe
     await unsubscribeFromNewsletter(email)

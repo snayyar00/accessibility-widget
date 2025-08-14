@@ -89,7 +89,8 @@ async function registerUser(email: string, password: string, name: string, organ
       await updateUser(userId, { current_organization_id: organization.id }, trx)
     })
 
-    // Send welcome email and schedule email sequence after transaction completes successfully
+    // Send welcome email after transaction completes successfully
+    // The email sequence will be handled by the daily cron job
     if (newUserId) {
       try {
         const welcomeEmailSent = await EmailSequenceService.sendWelcomeEmail(email, name, newUserId)
@@ -97,16 +98,6 @@ async function registerUser(email: string, password: string, name: string, organ
           logger.info(`Welcome email sent successfully to new user: ${email}`)
         } else {
           logger.warn(`Welcome email failed to send to new user: ${email}`)
-        }
-
-        // Schedule the complete email sequence using 24-hour intervals
-        try {
-          const registrationTime = new Date()
-          const schedulingResult = await EmailSequenceService.scheduleEmailSequenceForUser(email, name, newUserId, registrationTime)
-          logger.info(`Email sequence scheduled for user: ${email} - ${schedulingResult.scheduled} emails scheduled, ${schedulingResult.failed} failed`)
-        } catch (error) {
-          logger.error(`Failed to schedule email sequence for user: ${email}`, error)
-          // Don't fail registration if email scheduling fails
         }
       } catch (error) {
         logger.error(`Failed to send welcome email: ${email}`, error)

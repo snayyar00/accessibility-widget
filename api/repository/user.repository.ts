@@ -178,3 +178,46 @@ export async function getUsersRegisteredOnDate(date: string): Promise<UserProfil
 export async function getLatestRegisteredUser(): Promise<UserProfile | null> {
   return database(TABLE).orderBy('created_at', 'desc').first()
 }
+
+/**
+ * Get user's sent emails from database JSON column
+ */
+export async function getUserSentEmails(user_id: number): Promise<Record<string, string> | null> {
+  try {
+    const result = await database('user_notifications').where({ user_id }).first('sent_emails')
+    return result?.sent_emails || null
+  } catch (error) {
+    console.error('Error getting user sent emails:', error)
+    return null
+  }
+}
+
+/**
+ * Update user's sent emails in database JSON column
+ */
+export async function updateUserSentEmails(user_id: number, sentEmails: Record<string, string>): Promise<boolean> {
+  try {
+    const updatedRows = await database('user_notifications')
+      .where({ user_id })
+      .update({ sent_emails: JSON.stringify(sentEmails) })
+
+    return updatedRows > 0
+  } catch (error) {
+    console.error('Error updating user sent emails:', error)
+    return false
+  }
+}
+
+/**
+ * MIGRATION UTILITY: Reset user's email tracking (for testing/recovery)
+ */
+export async function resetUserEmailTracking(user_id: number): Promise<boolean> {
+  try {
+    const updatedRows = await database('user_notifications').where({ user_id }).update({ sent_emails: null })
+
+    return updatedRows > 0
+  } catch (error) {
+    console.error('Error resetting user email tracking:', error)
+    return false
+  }
+}
