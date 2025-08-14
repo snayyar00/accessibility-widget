@@ -3,7 +3,7 @@ import path from 'path'
 
 import { EMAIL_SEQUENCES, EmailSequenceStep } from '../../config/emailSequences.config'
 import compileEmailTemplate from '../../helpers/compile-email-template'
-import { checkOnboardingEmailsEnabled, UserProfile } from '../../repository/user.repository'
+import { checkOnboardingEmailsEnabled, getUserbyId, getUsersRegisteredOnDate, UserProfile } from '../../repository/user.repository'
 import { sendEmailWithRetries } from '../../services/email/email.service'
 import logger from '../../utils/logger'
 
@@ -138,15 +138,39 @@ export class EmailSequenceService {
       // Get users registered on or after August 14, 2025 (new users only)
       const cutoffDate = new Date('2025-08-14')
       cutoffDate.setHours(0, 0, 0, 0)
-      const { getUsersRegisteredOnDate } = await import('../../repository/user.repository')
+      const currentDate = new Date()
 
-      // Check users from the cutoff date onward
-      const cutoffString = cutoffDate.toISOString().split('T')[0]
-      const todayUsers = await getUsersRegisteredOnDate(cutoffString)
+      // For daily processing, we check users who might have emails due today
+      // We need to check multiple registration dates based on email sequence days
+      const emailSequenceDays = EMAIL_SEQUENCES.ONBOARDING.steps.map((step) => step.day).filter((day) => day > 0)
+      const _maxSequenceDay = Math.max(...emailSequenceDays)
 
-      logger.info(`Found ${todayUsers.length} users registered today`)
+      let allEligibleUsers: UserProfile[] = []
 
-      for (const user of todayUsers) {
+      // Check users registered on dates that could have emails due today
+      for (const sequenceDay of emailSequenceDays) {
+        const targetRegistrationDate = new Date(currentDate)
+        targetRegistrationDate.setDate(currentDate.getDate() - sequenceDay)
+
+        // Only check dates on or after the cutoff
+        if (targetRegistrationDate >= cutoffDate) {
+          const dateString = targetRegistrationDate.toISOString().split('T')[0]
+          const usersFromDate = await getUsersRegisteredOnDate(dateString)
+
+          if (usersFromDate.length > 0) {
+            logger.info(`Found ${usersFromDate.length} users registered on ${dateString} (Day ${sequenceDay} emails due)`)
+            allEligibleUsers = allEligibleUsers.concat(usersFromDate)
+          }
+        }
+      }
+
+      // Remove duplicates (users might appear multiple times if they have multiple emails due)
+      const uniqueUsers = allEligibleUsers.filter((user, index, self) => index === self.findIndex((u) => u.id === user.id))
+
+      logger.info(`Found ${uniqueUsers.length} unique users with potential emails due today`)
+      logger.info(`Total user instances across all dates: ${allEligibleUsers.length}`)
+
+      for (const user of uniqueUsers) {
         totalUsersProcessed++
 
         // Check if user has onboarding emails enabled
@@ -180,6 +204,7 @@ export class EmailSequenceService {
       logger.info(`📊 Enhanced daily email sequence processing completed:`)
       logger.info(`   📧 Total emails sent: ${totalEmailsSent}`)
       logger.info(`   👥 Total users processed: ${totalUsersProcessed}`)
+      logger.info(`   📅 Checked users with emails potentially due today`)
     } catch (error) {
       logger.error('❌ Error in enhanced daily email sequence processing:', error)
     }
@@ -206,7 +231,6 @@ export class EmailSequenceService {
       }
 
       // Get user details
-      const { getUserbyId } = await import('../../repository/user.repository')
       const user = await getUserbyId(userId)
 
       if (!user) {
@@ -275,7 +299,6 @@ export class EmailSequenceService {
   static async processEmailSequenceForUser(userId: number): Promise<void> {
     try {
       // Get the specific user
-      const { getUserbyId } = await import('../../repository/user.repository')
       const user = await getUserbyId(userId)
 
       if (!user) {
