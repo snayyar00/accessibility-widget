@@ -158,7 +158,17 @@ export async function setOnboardingEmailsFlag(user_id: number, enabled: boolean)
       .where({ user_id })
       .update({ onboarding_emails_flag: enabled ? 1 : 0 })
 
-    return updatedRows > 0
+    if (updatedRows > 0) {
+      return true
+    }
+
+    // If no rows were updated, insert the record with the onboarding flag
+    await database('user_notifications')
+      .insert({ user_id, onboarding_emails_flag: enabled ? 1 : 0 })
+      .onConflict('user_id')
+      .merge({ onboarding_emails_flag: enabled ? 1 : 0 })
+
+    return true
   } catch (error) {
     console.error('Error setting onboarding emails flag:', error)
     return false
@@ -177,4 +187,64 @@ export async function getUsersRegisteredOnDate(date: string): Promise<UserProfil
  */
 export async function getLatestRegisteredUser(): Promise<UserProfile | null> {
   return database(TABLE).orderBy('created_at', 'desc').first()
+}
+
+/**
+ * Get user's sent emails from database JSON column
+ */
+export async function getUserSentEmails(user_id: number): Promise<Record<string, string> | null> {
+  try {
+    const result = await database('user_notifications').where({ user_id }).first('sent_emails')
+    return result?.sent_emails || null
+  } catch (error) {
+    console.error('Error getting user sent emails:', error)
+    return null
+  }
+}
+
+/**
+ * Update user's sent emails in database JSON column
+ */
+export async function updateUserSentEmails(user_id: number, sentEmails: Record<string, string>): Promise<boolean> {
+  try {
+    const updatedRows = await database('user_notifications')
+      .where({ user_id })
+      .update({ sent_emails: JSON.stringify(sentEmails) })
+
+    if (updatedRows > 0) {
+      return true
+    }
+
+    // If no rows were updated, insert or upsert the record
+    await database('user_notifications')
+      .insert({ user_id, sent_emails: JSON.stringify(sentEmails) })
+      .onConflict('user_id')
+      .merge({ sent_emails: JSON.stringify(sentEmails) })
+
+    return true
+  } catch (error) {
+    console.error('Error updating user sent emails:', error)
+    return false
+  }
+}
+
+/**
+ * MIGRATION UTILITY: Reset user's email tracking (for testing/recovery)
+ */
+export async function resetUserEmailTracking(user_id: number): Promise<boolean> {
+  try {
+    const updatedRows = await database('user_notifications').where({ user_id }).update({ sent_emails: null })
+
+    if (updatedRows > 0) {
+      return true
+    }
+
+    // If no rows were updated, insert the record with null sent_emails
+    await database('user_notifications').insert({ user_id, sent_emails: null }).onConflict('user_id').merge({ sent_emails: null })
+
+    return true
+  } catch (error) {
+    console.error('Error resetting user email tracking:', error)
+    return false
+  }
 }
