@@ -392,9 +392,6 @@ Return ONLY a valid JSON object with the same structure, with all values profess
 - Regular third-party vendor accessibility reviews
 - Proactive identification and resolution of accessibility barriers
 - User feedback integration into our development process`,
-      additionalResources: 'Additional Accessibility Resources',
-      resourcesIntro:
-        'For more information about web accessibility, please visit:',
       aboutStatement: 'About This Statement',
       statementGenerated: 'This statement was created on',
       aiGenerator: 'AI-powered accessibility statement generator',
@@ -944,24 +941,10 @@ ${t.limitationsIntro} ${data.websiteUrl}, ${t.limitationsText}
 **${t.whatWereDoing}**
 ${t.whatWeDoList}
 
-## ${t.additionalResources}
-
-${t.resourcesIntro}
-- [${data.widgetBrandName || 'WebAbility.io'} Accessibility Resources](${
-      data.widgetBrandUrl || 'https://webability.io'
-    }/resources)
-- [Web Accessibility Initiative (WAI)](https://www.w3.org/WAI/)
-- [WebAIM (Web Accessibility In Mind)](https://webaim.org/)
-- [Deque University](https://dequeuniversity.com/)
-
 ## ${t.compliance}
-${t.statementGenerated} ${currentDate} using [${
-      data.widgetBrandName || 'WebAbility.io'
-    }'s ${t.aiGenerator}](${
-      data.widgetBrandUrl || 'https://webability.io'
-    }/statement-generator) and manual accessibility assessment tools. ${
-      t.lastReviewed
-    } ${lastReviewDate}.
+${data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io' ? 
+    `${t.statementGenerated} ${currentDate} using professional accessibility assessment tools. ${t.lastReviewed} ${lastReviewDate}.` : 
+    `${t.statementGenerated} ${currentDate} using [${data.widgetBrandName || 'WebAbility.io'}'s ${t.aiGenerator}](https://app.webability.io/statement-generator) and manual accessibility assessment tools. ${t.lastReviewed} ${lastReviewDate}.`}
 
 **${t.complianceStatus}**
 - WCAG 2.1 AA: ✅ Fully Compliant
@@ -981,11 +964,9 @@ ${t.approvedBy}
 
 ### ${t.aboutStatement}
 
-*${t.statementGenerated} [${
-      data.widgetBrandName || 'WebAbility.io'
-    }'s Professional ${t.aiGenerator}](${
-      data.widgetBrandUrl || 'https://webability.io'
-    }/statement-generator) ${currentDate}. This statement reflects our current accessibility features and our ongoing commitment to digital inclusion.*
+${data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io' ? 
+    `*${t.statementGenerated} ${currentDate}. This statement reflects our current accessibility features and our ongoing commitment to digital inclusion.*` : 
+    `*${t.statementGenerated} [${data.widgetBrandName || 'WebAbility.io'}'s Professional ${t.aiGenerator}](https://app.webability.io/statement-generator) ${currentDate}. This statement reflects our current accessibility features and our ongoing commitment to digital inclusion.*`}
 
 **${t.statementDetails}**
 - **Language:** ${languageName} (${data.language.toUpperCase()})
@@ -999,9 +980,9 @@ ${t.approvedBy}
       day: 'numeric',
     })}
 
-**${t.poweredBy} [${data.widgetBrandName || 'WebAbility.io'}](${
-      data.widgetBrandUrl || 'https://webability.io'
-    }) - ${t.makingWebAccessible}**`;
+${data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io' ? 
+    `**${t.poweredBy} [${data.widgetBrandName}](${data.widgetBrandUrl || data.websiteUrl}) - ${t.makingWebAccessible}**` : 
+    `**${t.poweredBy} [${data.widgetBrandName || 'WebAbility.io'}](${data.widgetBrandUrl || 'https://webability.io'}) - ${t.makingWebAccessible}**`}`;
   };
 
   const convertToFormat = (
