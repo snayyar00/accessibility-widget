@@ -1,6 +1,5 @@
 import { combineResolvers } from 'graphql-resolvers'
 
-import { GraphQLContext } from '../../graphql/types'
 import { normalizeEmail } from '../../helpers/string.helper'
 import { changePasswordUser } from '../../services/authentication/change-password.service'
 import { forgotPasswordUser } from '../../services/authentication/forgot-password.service'
@@ -71,13 +70,13 @@ const resolvers = {
     hasOrganization: (parent: { current_organization_id?: number }) => Boolean(parent.current_organization_id),
   },
   Mutation: {
-    register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name }: Register, { organization }: GraphQLContext) => {
+    register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name }: Register, { organization }) => {
       const result = await registerUser(normalizeEmail(email), password, name, organization)
 
       return result
     }),
 
-    login: combineResolvers(allowedOrganization, async (_: unknown, { email, password }: Login, { organization }: GraphQLContext) => {
+    login: combineResolvers(allowedOrganization, async (_: unknown, { email, password }: Login, { organization }) => {
       const result = await loginUser(normalizeEmail(email), password, organization)
 
       return result
@@ -87,7 +86,7 @@ const resolvers = {
       return true
     }),
 
-    forgotPassword: combineResolvers(allowedOrganization, async (_: unknown, { email }: ForgotPassword, { organization }: GraphQLContext) => forgotPasswordUser(normalizeEmail(email), organization)),
+    forgotPassword: combineResolvers(allowedOrganization, async (_: unknown, { email }: ForgotPassword, { organization }) => forgotPasswordUser(normalizeEmail(email), organization)),
 
     changePassword: combineResolvers(allowedOrganization, isAuthenticated, (_, { currentPassword, newPassword }, { user }) => changePasswordUser(user.id, currentPassword, newPassword)),
 

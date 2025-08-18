@@ -17,6 +17,9 @@ export const TABLES = {
   cancelFeedback: 'cancel_feedback',
   organizations: 'organizations',
   organization_users: 'organization_users',
+  workspaces: 'workspaces',
+  workspace_users: 'workspace_users',
+  workspace_invitations: 'workspace_invitations',
 }
 
 export const DEFAULT_LIMIT = 25
