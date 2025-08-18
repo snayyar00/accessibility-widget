@@ -24,7 +24,7 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
     }
 
     const problem = {
-      site_url,
+      // site_url,
       issue_type: issue_type as 'bug' | 'accessibility',
       description,
       reporter_email,

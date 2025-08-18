@@ -35,7 +35,7 @@ const routes = [
   },
   {
     path: '/problem-reports',
-    name: 'Issues',
+    name: 'Problem reported',
     exact: true,
     component: ProblemReport,
     icon: (
