@@ -591,7 +591,11 @@ const ProofOfEffortToolkit: React.FC = () => {
     },
     {
       name: 'Accessibility statement',
-      creationDate: 'Jan 7, 2022',
+      creationDate: new Date().toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
       type: 'statement',
       externalUrl: 'https://www.webability.io/statement',
     },
