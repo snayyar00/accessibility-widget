@@ -237,7 +237,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
           </div>
         </div>
 
-        <div className="widget-customization-options grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="widget-customization-options grid grid-cols-1 ">
           {/* Position Selector */}
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-800 tracking-wide">
@@ -348,21 +348,75 @@ export default function CodeContainer({ codeString }: CodeProps) {
               You can switch between our widget icon and non-intrusive text
               icon.
             </p>
-            <div className="relative">
-              <select
-                value={iconType}
-                onChange={(e) =>
-                  setIconType(e.target.value as 'full' | 'compact')
-                }
-                className="w-full px-4 py-3 pr-10 border border-blue-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 text-sm bg-white/80 text-gray-900 hover:border-blue-300 transition-all duration-200 shadow-sm hover:shadow-md backdrop-blur-sm font-medium appearance-none"
-                aria-label="Select icon customization"
+            <div className="flex gap-4">
+              {/* Full Widget Option */}
+              <button
+                type="button"
+                onClick={() => setIconType('full')}
+                className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-40 ${
+                  iconType === 'full'
+                    ? 'border-blue-500 bg-blue-50/50'
+                    : 'border-gray-200 hover:border-blue-300 bg-white/80'
+                }`}
+                aria-label="Select full widget icon"
               >
-                <option value="full">Full</option>
-                <option value="compact">Compact</option>
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <FaChevronDown className="w-4 h-4 text-gray-500" />
-              </div>
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="w-12 h-12 flex items-center justify-center">
+                    <img
+                      src="/images/svg/full_widget_icon.svg"
+                      alt="Full Widget Icon"
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.visibility =
+                          'hidden';
+                      }}
+                    />
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    Full Widget
+                  </span>
+                </div>
+                {iconType === 'full' && (
+                  <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                    <FaCheck className="w-2.5 h-2.5 text-white" />
+                  </div>
+                )}
+              </button>
+
+              {/* Compact Widget Option */}
+              <button
+                type="button"
+                onClick={() => setIconType('compact')}
+                className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-40 ${
+                  iconType === 'compact'
+                    ? 'border-blue-500 bg-blue-50/50'
+                    : 'border-gray-200 hover:border-blue-300 bg-white/80'
+                }`}
+                aria-label="Select compact widget icon"
+              >
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="w-16 h-8 flex items-center justify-center">
+                    <div
+                      className="w-16 h-4 flex items-center justify-center"
+                      style={{ backgroundColor: '#195AFF' }}
+                    >
+                      <span className="text-white text-[5px] font whitespace-nowrap">
+                        Site Accessibility
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    Compact Widget
+                  </span>
+                </div>
+                {iconType === 'compact' && (
+                  <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                    <FaCheck className="w-2.5 h-2.5 text-white" />
+                  </div>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -379,9 +433,9 @@ export default function CodeContainer({ codeString }: CodeProps) {
           </h4>
           <p className="text-sm text-gray-600 font-medium">
             Paste before closing {'</body>'} tag <br />
-            Note: To enable new features, please copy and paste this updated script tag to your website.
+            Note: To enable new features, please copy and paste this updated
+            script tag to your website.
           </p>
-          
         </div>
 
         <div
