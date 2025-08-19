@@ -237,7 +237,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
           </div>
         </div>
 
-        <div className="widget-customization-options grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="widget-customization-options grid grid-cols-1 ">
           {/* Position Selector */}
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-800 tracking-wide">
@@ -351,6 +351,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
             <div className="flex gap-4">
               {/* Full Widget Option */}
               <button
+                type="button"
                 onClick={() => setIconType('full')}
                 className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-40 ${
                   iconType === 'full'
@@ -364,7 +365,13 @@ export default function CodeContainer({ codeString }: CodeProps) {
                     <img
                       src="/images/svg/full_widget_icon.svg"
                       alt="Full Widget Icon"
+                      width={48}
+                      height={48}
                       className="w-full h-full object-contain"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.visibility =
+                          'hidden';
+                      }}
                     />
                   </div>
                   <span className="text-sm font-medium text-gray-900">
@@ -380,6 +387,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
 
               {/* Compact Widget Option */}
               <button
+                type="button"
                 onClick={() => setIconType('compact')}
                 className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-40 ${
                   iconType === 'compact'
