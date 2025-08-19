@@ -9,7 +9,7 @@ export function graphqlTimeoutMiddleware(req: Request, res: Response, next: Next
   let timeout = 70000
 
   if (body && body.query && body.query.includes('getAccessibilityReport')) {
-    timeout = 120000 // 2 minutes for accessibility report
+    timeout = 180000 // 3 minutes for accessibility report
   }
 
   req.setTimeout(timeout)
