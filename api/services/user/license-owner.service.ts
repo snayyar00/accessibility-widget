@@ -2,9 +2,20 @@ import { findUser, updateUser, UserProfile } from '../../repository/user.reposit
 import formatDateDB from '../../utils/format-date-db'
 
 /**
- * Get license owner information for a user
+ * Type for license owner information - only contains necessary fields
  */
-export async function getLicenseOwnerInfo(userId: number): Promise<UserProfile | null> {
+export type LicenseOwnerInfo = {
+  id: number
+  name: string
+  license_owner_email?: string
+  phone_number?: string
+}
+
+/**
+ * Get license owner information for a user
+ * Returns only the necessary fields to prevent PII leakage
+ */
+export async function getLicenseOwnerInfo(userId: number): Promise<LicenseOwnerInfo | null> {
   try {
     const user = await findUser({ id: userId })
 
@@ -12,7 +23,14 @@ export async function getLicenseOwnerInfo(userId: number): Promise<UserProfile |
       throw new Error('User not found')
     }
 
-    return user
+    // Return only the necessary license owner fields
+    // This prevents returning sensitive user data like email, password, etc.
+    return {
+      id: user.id!,
+      name: user.name!,
+      license_owner_email: user.license_owner_email,
+      phone_number: user.phone_number,
+    }
   } catch (error) {
     console.error('Error getting license owner info:', error)
     throw new Error('Failed to get license owner information')
@@ -45,12 +63,8 @@ export async function updateLicenseOwnerInfo(userId: number, name?: string, lice
     // Add updated_at timestamp using the project's date formatter
     updateData.updated_at = formatDateDB()
 
-    console.log('Updating user with data:', { userId, updateData })
-
     // Update user and check if rows were affected
     const affectedRows = await updateUser(userId, updateData)
-
-    console.log('Update result - affected rows:', affectedRows)
 
     if (affectedRows === 0) {
       return {
