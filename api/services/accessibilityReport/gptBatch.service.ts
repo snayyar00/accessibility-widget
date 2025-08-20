@@ -71,7 +71,8 @@ const GPT_FUNCTION_SCHEMA = {
               },
               recommended_action: {
                 type: 'string',
-                description: 'Specific actionable steps to fix the issue',
+                description:
+                  'When I give you a website accessibility issue, generate a clear, user-friendly fix for it. Keep the fix step-by-step, use simple non-technical words, and add practical examples (like black text on a white background). Avoid technical terms or ratios so that even a non-technical website owner can understand and apply the solution.',
               },
               wcag_code: {
                 type: 'string',
@@ -156,7 +157,7 @@ async function processBatch(batchId: string, issues: ProcessedIssue[], retryCoun
     const prompt = createQualityBatchPrompt(issues)
 
     const completion = await openai.chat.completions.create({
-      model: 'google/gemini-2.5-flash-preview-05-20', // Quality model
+      model: process.env.QUALITY_MODEL_NAME as string, // Quality model
       messages: [
         {
           role: 'system',
