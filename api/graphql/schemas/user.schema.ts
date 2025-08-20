@@ -22,6 +22,8 @@ export const UserSchema = `#graphql
     currentOrganization: Organization
     currentOrganizationUser: OrganizationUser
     hasOrganization: Boolean!
+    license_owner_email: String
+    phone_number: String
   }
 
   type ChangePasswordPayload {
@@ -48,6 +50,7 @@ export const UserSchema = `#graphql
     profileUser: User! @rateLimit(limit: 30, duration: 60, message: "Too many profile requests. Please try again later.")
     isEmailAlreadyRegistered(email: String!): Boolean! @rateLimit(limit: 5, duration: 60, message: "Too many email check attempts. Please try again later.")
     getUserNotificationSettings: NotificationSettings! @rateLimit(limit: 30, duration: 60, message: "Too many notification settings requests. Please try again later.")
+    getLicenseOwnerInfo: User! @rateLimit(limit: 30, duration: 60, message: "Too many license owner info requests. Please try again later.")
   }
 
   extend type Mutation {
@@ -71,6 +74,8 @@ export const UserSchema = `#graphql
 
     updateNotificationSettings(monthly_report_flag: Boolean, new_domain_flag: Boolean, issue_reported_flag: Boolean, onboarding_emails_flag: Boolean): Boolean!
       @rateLimit(limit: 10, duration: 3600, message: "Too many notification settings updates. Please try again later.")
+
+    updateLicenseOwnerInfo(name: String, license_owner_email: String, phone_number: String): Boolean! @rateLimit(limit: 20, duration: 3600, message: "Too many license owner info updates. Please try again later.")
 
     changeCurrentOrganization(organizationId: Int!, userId: Int): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many organization change requests. Please try again later.")
 
