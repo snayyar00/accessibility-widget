@@ -146,20 +146,18 @@ export async function changeCurrentOrganization(initiator: UserProfile, targetOr
       throw new ForbiddenError('Current organization not found')
     }
 
-    await checkRoleInOrganization(initiator.id, initiator.current_organization_id)
-    await checkRoleInOrganization(initiator.id, targetOrganizationId)
+    const targetUserId = userId || initiator.id
+    const switchingOtherUser = userId && userId !== initiator.id
 
-    if (userId && userId !== initiator.id) {
-      const targetUser = await getUserOrganization(userId, targetOrganizationId)
+    await checkCanSwitchOrganization(initiator, targetUserId, targetOrganizationId, switchingOtherUser)
+    await updateUser(targetUserId, { current_organization_id: targetOrganizationId })
 
-      if (!targetUser) {
-        throw new ForbiddenError('Target user does not belong to the target organization')
-      }
-
-      await updateUser(userId, { current_organization_id: targetOrganizationId })
-    } else {
-      await updateUser(initiator.id, { current_organization_id: targetOrganizationId })
-    }
+    logger.info({
+      message: 'Organization switched',
+      initiatorId: initiator.id,
+      targetUserId,
+      targetOrganizationId,
+    })
 
     return true
   } catch (error) {
@@ -168,16 +166,25 @@ export async function changeCurrentOrganization(initiator: UserProfile, targetOr
   }
 }
 
-async function checkRoleInOrganization(userId: number, organizationId: number) {
-  const orgUser = await getUserOrganization(userId, organizationId)
+async function checkCanSwitchOrganization(initiator: UserProfile, targetUserId: number, targetOrganizationId: number, requireAdmin = false) {
+  const targetOrgUser = await getUserOrganization(targetUserId, targetOrganizationId)
 
-  if (!orgUser) {
-    throw new ForbiddenError('User does not belong to the organization')
+  if (!targetOrgUser) {
+    throw new ForbiddenError('Target user does not belong to the organization')
   }
 
-  const isAllowed = ORGANIZATION_MANAGEMENT_ROLES.includes(orgUser.role as (typeof ORGANIZATION_MANAGEMENT_ROLES)[number])
+  if (requireAdmin) {
+    const initiatorOrg = await getUserOrganization(initiator.id, targetOrganizationId)
+    const isAllowed = initiatorOrg && ORGANIZATION_MANAGEMENT_ROLES.includes(initiatorOrg.role as (typeof ORGANIZATION_MANAGEMENT_ROLES)[number])
 
-  if (!isAllowed) {
-    throw new ForbiddenError('User must be owner or admin of the organization to switch organization')
+    if (!isAllowed) {
+      throw new ForbiddenError('Must be owner/admin to switch for other users')
+    }
+  } else {
+    const selfOrg = await getUserOrganization(initiator.id, targetOrganizationId)
+
+    if (!selfOrg) {
+      throw new ForbiddenError('User does not belong to the target organization')
+    }
   }
 }

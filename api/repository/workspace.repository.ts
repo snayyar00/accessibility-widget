@@ -16,6 +16,7 @@ export type Workspace = {
 }
 
 type GetAllWorkspace = {
+  organizationId?: number
   workspaceId?: number
   userId?: number
 }
@@ -83,12 +84,14 @@ export async function updateWorkspace(workspaceId: number, data: Workspace, tran
  * Function to get all workspace
  *
  */
-export async function getAllWorkspace({ workspaceId, userId }: GetAllWorkspace): Promise<GetAllWorkspaceResponse[]> {
+export async function getAllWorkspace({ workspaceId, userId, organizationId }: GetAllWorkspace): Promise<GetAllWorkspaceResponse[]> {
   const condition: Condition = {
     [workspaceUsersColumns.status]: 'active',
   }
+
   if (workspaceId) condition[workspaceUsersColumns.workspaceId] = workspaceId
   if (userId) condition[workspaceUsersColumns.userId] = userId
+  if (organizationId) condition[workspacesColumns.organizationId] = organizationId
 
   return database(TABLE).join(TABLES.workspace_users, workspacesColumns.id, workspaceUsersColumns.workspaceId).where(condition)
 }

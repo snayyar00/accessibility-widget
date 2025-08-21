@@ -37,7 +37,8 @@ type CreateWorkspaceResponse = {
  *
  */
 export async function getAllWorkspaces(user: UserProfile): Promise<GetAllWorkspaceResponse[]> {
-  const allWorkspaces = await getAllWorkspace({ userId: user.id })
+  const allWorkspaces = await getAllWorkspace({ userId: user.id, organizationId: user.current_organization_id })
+
   return allWorkspaces
 }
 
@@ -196,14 +197,10 @@ export async function deleteWorkspace(user: UserProfile, workspaceId: number): P
     throw new ApolloError('Only owner or admin can delete the workspace')
   }
 
-  const workspace = await getWorkspace({ id: workspaceId })
+  const workspace = await getWorkspace({ id: workspaceId, organization_id: user.current_organization_id })
 
   if (!workspace) {
     throw new ApolloError('Workspace not found')
-  }
-
-  if (workspace.organization_id !== Number(user.current_organization_id)) {
-    throw new ApolloError('You cannot delete workspace from another organization')
   }
 
   await deleteWorkspaceById(workspaceId)
@@ -236,13 +233,9 @@ export async function updateWorkspace(user: UserProfile, workspaceId: number, da
     throw new ApolloError('Only owner or admin can update the workspace')
   }
 
-  const workspace = await getWorkspace({ id: workspaceId })
+  const workspace = await getWorkspace({ id: workspaceId, organization_id: user.current_organization_id })
   if (!workspace) {
     throw new ApolloError('Workspace not found')
-  }
-
-  if (workspace.organization_id !== Number(user.current_organization_id)) {
-    throw new ApolloError('You cannot update workspace from another organization')
   }
 
   const { id, organization_id, created_at, updated_at, ...rawUpdateData } = data
@@ -274,7 +267,7 @@ export async function updateWorkspace(user: UserProfile, workspaceId: number, da
 
   await updateWorkspaceRepo(workspaceId, finalUpdateData)
 
-  const updated = await getWorkspace({ id: workspaceId })
+  const updated = await getWorkspace({ id: workspaceId, organization_id: user.current_organization_id })
 
   if (!updated) {
     throw new ApolloError('Workspace not found after update')

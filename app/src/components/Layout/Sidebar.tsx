@@ -11,6 +11,7 @@ import { GoGear } from 'react-icons/go';
 import { GrInstallOption } from 'react-icons/gr';
 import OrganizationsSelect from '@/containers/Dashboard/OrganizationsSelect';
 import { UserIcon } from 'lucide-react';
+import WorkspacesSelect from '@/containers/Dashboard/WorkspacesSelect';
 
 const Sidebar = ({
   options,
@@ -64,6 +65,8 @@ const Sidebar = ({
         <div className="flex-grow min-w-[250px] sm:w-[20%] md:w-[18%] lg:w-[15%] transition-all duration-300">
           <div className="px-3 py-5 space-y-3 max-w-full">
             <OrganizationsSelect />
+
+            <WorkspacesSelect />
 
             <Dropdown
               data={options}

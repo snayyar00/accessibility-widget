@@ -19,6 +19,7 @@ export const UserSchema = `#graphql
     avatarUrl: String
     invitationToken: String
     current_organization_id: Int
+    current_workspace_id: Int
     currentOrganization: Organization
     currentOrganizationUser: OrganizationUser
     hasOrganization: Boolean!

@@ -28,7 +28,7 @@ export const WorkspaceSchema = `#graphql
     id: ID!
     name: String!
     alias: String!
-    # organizationId: ID!
+    organization_id: ID!
     # createdAt: String!
     # updatedAt: String!
     # deletedAt: String
@@ -69,11 +69,11 @@ export const WorkspaceSchema = `#graphql
 #     role: WorkspaceUserRole!
 #   }
 
-#   extend type Query {
-#     workspaces: [Workspace!]!
-#     getWorkspaceDetail(alias: String!): [WorkspaceMember!]!
-#     verifyWorkspaceInvitationToken(invitationToken: String!): VerifyWorkspaceInvitationResponse!
-#   }
+  extend type Query {
+    getUserWorkspaces: [Workspace!]! @rateLimit(limit: 30, duration: 60, message: "Too many workspaces list requests. Please try again later.")
+    # getWorkspaceDetail(alias: String!): [WorkspaceMember!]!
+    # verifyWorkspaceInvitationToken(invitationToken: String!): VerifyWorkspaceInvitationResponse!
+  }
 
   extend type Mutation {
     createWorkspace(name: String!): Workspace! @rateLimit(limit: 5, duration: 60, message: "Too many add workspaces. Please try again later.")
