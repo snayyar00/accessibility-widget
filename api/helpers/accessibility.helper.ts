@@ -66,25 +66,25 @@ interface HumanFunctionality {
 function parseWcagCode(issue: any): string | undefined {
   // Check if the new API response contains WCAG data
   if (issue.wcagCriteria && issue.wcagLevel && issue.wcagVersion) {
-    const criteria = Array.isArray(issue.wcagCriteria) ? issue.wcagCriteria[0] : issue.wcagCriteria;
-    return `WCAG ${issue.wcagLevel} ${issue.wcagVersion} Criteria ${criteria}`;
+    const criteria = Array.isArray(issue.wcagCriteria) ? issue.wcagCriteria[0] : issue.wcagCriteria
+    return `WCAG ${issue.wcagLevel} ${issue.wcagVersion} Criteria ${criteria}`
   }
-  
+
   // Fallback: try to extract from existing code field
   if (issue.code && issue.code.includes('WCAG')) {
-    return issue.code;
+    return issue.code
   }
-  
+
   // Try to extract WCAG criteria from the code field and construct the format
   if (issue.code) {
-    const wcagMatch = issue.code.match(/(\d+\.\d+\.\d+)/);
+    const wcagMatch = issue.code.match(/(\d+\.\d+\.\d+)/)
     if (wcagMatch) {
       // Default to WCAG 2.2 AA if we can't determine the level and version
-      return `WCAG AA 2.2 Criteria ${wcagMatch[1]}`;
+      return `WCAG AA 2.2 Criteria ${wcagMatch[1]}`
     }
   }
-  
-  return undefined;
+
+  return undefined
 }
 
 function createAxeArrayObj(message: string, issue: any) {
@@ -166,7 +166,13 @@ export async function getAccessibilityInformationPally(domain: string) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ url: domain }),
+      body: JSON.stringify({
+        url: domain,
+        viewport: [1366, 768],
+        timeout: 240,
+        level: 'AA',
+        use_cache: false,
+      }),
     })
 
     // Check if the response is successful
