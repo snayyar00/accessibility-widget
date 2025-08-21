@@ -33,7 +33,7 @@ const newsData: NewsItem[] = [
     id: '2',
     type: 'Widget',
     date: '2025.08.10',
-    title: 'Move Widget Anywhere ',
+    title: 'Move Widget Anywhere',
     description:
       'Freely adjust the widgets position in any direction for a perfectly tailored layout.',
   },
