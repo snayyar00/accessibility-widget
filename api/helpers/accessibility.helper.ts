@@ -182,7 +182,7 @@ export async function getAccessibilityInformationPally(domain: string) {
           viewport: [1366, 768],
           timeout: 240,
           level: 'AA',
-          use_cache: false,
+          use_cache: true,
         }),
       })
 
