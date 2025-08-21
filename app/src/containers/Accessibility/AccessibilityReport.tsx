@@ -774,13 +774,109 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       x += 60;
     }
 
-    const yTable = yStart + 40;
+    let yTable = yStart + 40;
 
     const pageHeight = doc.internal.pageSize.getHeight();
     const footerHeight = 15;
 
     // Helper to ensure array
     const toArray = (val: any) => (Array.isArray(val) ? val : val ? [val] : []);
+
+    // Helper: estimate heights to keep Issue + Message + Fix(es) together on one page
+    const getColumnWidths = () => [38, 38, 50, 45];
+    const sumColumnsWidth = (startIndex: number, span: number) => {
+      const widths = getColumnWidths();
+      return widths
+        .slice(startIndex, startIndex + span)
+        .reduce((a, b) => a + b, 0);
+    };
+    const getLineHeight = (fontSize: number) => {
+      const factor =
+        typeof (doc as any).getLineHeightFactor === 'function'
+          ? (doc as any).getLineHeightFactor()
+          : 1.15;
+      return Math.max(4, fontSize * factor);
+    };
+    const estimateCellHeight = (
+      text: string,
+      availableWidth: number,
+      fontSize: number,
+      paddingTop: number,
+      paddingBottom: number,
+    ) => {
+      const content = String(text || '');
+      const safeWidth = Math.max(5, availableWidth);
+      const lines = doc.splitTextToSize(content, safeWidth);
+      const lineHeight = getLineHeight(fontSize);
+      const textHeight = Math.max(lineHeight, lines.length * lineHeight);
+      return textHeight + paddingTop + paddingBottom;
+    };
+    const estimateIssueFixGroupHeight = (
+      issue: any,
+      headerLeftText: string,
+      headerRightText: string,
+      fixesList: string[],
+    ) => {
+      // Row: Header (two cells, colSpan 2 each)
+      const headerLeftWidth = sumColumnsWidth(0, 2) - 16; // padding 8 + 8
+      const headerRightWidth = sumColumnsWidth(2, 2) - 16;
+      const headerLeftH = estimateCellHeight(
+        headerLeftText,
+        headerLeftWidth,
+        14,
+        8,
+        8,
+      );
+      const headerRightH = estimateCellHeight(
+        headerRightText,
+        headerRightWidth,
+        14,
+        8,
+        8,
+      );
+      const headerRowH = Math.max(headerLeftH, headerRightH);
+
+      // Row: Issue + Message (two cells)
+      const issueLeftText = issue.code ? `${issue.code} (${issue.impact})` : '';
+      const issueRightText = issue.message || '';
+      const issueLeftWidth = sumColumnsWidth(0, 2) - 20; // padding 10 + 10
+      const issueRightWidth = sumColumnsWidth(2, 2) - 20;
+      const issueLeftH = Math.max(
+        30,
+        estimateCellHeight(issueLeftText, issueLeftWidth, 12, 10, 10),
+      );
+      const issueRightH = Math.max(
+        30,
+        estimateCellHeight(issueRightText, issueRightWidth, 12, 10, 10),
+      );
+      const issueRowH = Math.max(issueLeftH, issueRightH);
+
+      // Row: Fix heading (if any)
+      let fixesBlockH = 0;
+      const filtered = fixesList.filter(Boolean);
+      if (filtered.length > 0) {
+        const fixHeadingWidth = sumColumnsWidth(0, 4) - 10; // padding 5 + 5
+        const fixHeadingH = estimateCellHeight(
+          'Fix',
+          fixHeadingWidth,
+          11,
+          5,
+          5,
+        );
+        fixesBlockH += fixHeadingH;
+        // Each fix row
+        const fixRowWidth = sumColumnsWidth(0, 4) - 16; // padding 8 + 8
+        filtered.forEach((fix) => {
+          const text = `${fix}`; // number prefix height impact negligible in estimate
+          const h = estimateCellHeight(text, fixRowWidth, 11, 10, 10);
+          fixesBlockH += Math.max(22, h); // ensure reasonable min
+        });
+        // Spacer rows between fixes
+        fixesBlockH += Math.max(0, filtered.length - 1) * 6;
+      }
+
+      return headerRowH + issueRowH + fixesBlockH;
+    };
 
     // Build the rows
     let tableBody: any[] = [];
@@ -799,12 +895,173 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       }
     }
 
-    for (const issue of translatedIssues) {
+    let fitToPage = false;
+
+    for (const [index, issue] of translatedIssues.entries()) {
+      // Add page break before each issue (except the first one)
+      if (fitToPage) {
+        autoTable(doc, {
+          startY: yTable,
+          margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
+          head: [],
+          body: tableBody,
+          theme: 'plain',
+          columnStyles: {
+            0: { cellWidth: 38 },
+            1: { cellWidth: 38 },
+            2: { cellWidth: 50 },
+            3: { cellWidth: 45 },
+          },
+          rowPageBreak: 'auto',
+          tableLineColor: [226, 232, 240],
+          tableLineWidth: 0.5,
+          styles: {
+            lineColor: [255, 255, 255],
+            lineWidth: 0,
+            cellPadding: 8,
+          },
+          willDrawCell: (data: any) => {
+            if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
+              const pageHeight = doc.internal.pageSize.getHeight();
+              const currentY = data.cursor.y;
+              const bottomMargin = 25;
+              const fullText = (data.cell.raw as any).content || '';
+              const indexNumber = (data.cell.raw as any)._indexNumber;
+              const indexPrefix = `${indexNumber}`;
+              const indexWidth = doc.getTextWidth(indexPrefix) + 16;
+              const codeContent = fullText.substring(`${indexNumber}. `.length);
+              const availableWidth = data.cell.width - 16 - indexWidth;
+              doc.setFont('NotoSans_Condensed-Regular', 'normal');
+              doc.setFontSize(10);
+              const lines = doc.splitTextToSize(codeContent, availableWidth);
+              const lineHeight = 4;
+              const topPadding = 8;
+              const bottomPadding = 4;
+              const textHeight =
+                lines.length * lineHeight + topPadding + bottomPadding;
+              const estimatedHeight = Math.max(textHeight, 30);
+              if (currentY + estimatedHeight > pageHeight - bottomMargin) {
+                return false;
+              }
+            }
+            return true;
+          },
+          didDrawCell: (data: any) => {
+            if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
+              const { x, y, width, height } = data.cell;
+              const padding = 2;
+              const cornerRadius = 4;
+              const indexNumber = (data.cell.raw as any)._indexNumber;
+              doc.setFont('NotoSans_Condensed-Regular', 'normal');
+              doc.setFontSize(12);
+              const indexPrefix = `${indexNumber}`;
+              const indexWidth = doc.getTextWidth(indexPrefix) + 8;
+              doc.setDrawColor(100, 116, 139);
+              doc.setLineWidth(0.5);
+              doc.setFillColor(15, 23, 42);
+              doc.roundedRect(
+                x + padding,
+                y + padding,
+                width - padding * 2,
+                height - padding * 2,
+                cornerRadius,
+                cornerRadius,
+                'FD',
+              );
+              doc.setFillColor(51, 65, 85);
+              doc.roundedRect(
+                x + padding,
+                y + padding,
+                indexWidth,
+                height - padding * 2,
+                cornerRadius,
+                cornerRadius,
+                'F',
+              );
+              doc.setFillColor(51, 65, 85);
+              doc.rect(
+                x + padding + indexWidth - cornerRadius,
+                y + padding,
+                cornerRadius,
+                height - padding * 2,
+                'F',
+              );
+              doc.setTextColor(255, 255, 255);
+              const indexTextX = x + padding + 4;
+              const textY = y + padding + 8;
+              doc.text(indexPrefix, indexTextX, textY);
+              const fullText = (data.cell.raw as any).content;
+              const codeContent = fullText.substring(`${indexNumber}. `.length);
+              const codeTextX = x + padding + indexWidth + 4;
+              const availableWidth = width - padding * 2 - indexWidth - 8;
+              const lines = doc.splitTextToSize(codeContent, availableWidth);
+              let codeTextY = y + padding + 8;
+              lines.forEach((line: string) => {
+                doc.text(line, codeTextX, codeTextY);
+                codeTextY += 4;
+              });
+            }
+            if (
+              data.cell.raw &&
+              data.cell.raw.styles &&
+              data.cell.raw.styles.fontStyle === 'bold' &&
+              data.cell.raw.styles.fontSize === 14
+            ) {
+              const { x, y, width, height } = data.cell;
+              doc.setDrawColor(226, 232, 240);
+              doc.setLineWidth(0.5);
+              doc.line(x, y + height, x + width, y + height);
+            }
+            if (
+              data.cell.raw &&
+              data.cell.raw._isScreenshot &&
+              data.cell.raw._screenshotBase64
+            ) {
+              const { x, y, width, height } = data.cell;
+              const imgWidth = data.cell.raw._screenshotWidth || 80;
+              const imgHeight = data.cell.raw._screenshotHeight || 80;
+              const imgX = x + (width - imgWidth) / 2;
+              const imgY = y + (height - imgHeight) / 2;
+              data.doc.addImage(
+                data.cell.raw._screenshotBase64,
+                'PNG',
+                imgX,
+                imgY,
+                imgWidth,
+                imgHeight,
+              );
+            }
+          },
+        });
+
+        // Start a new page and reset tableBody
+        doc.addPage();
+        tableBody = [];
+        yTable = 10; // Standard top margin for new page
+      }
+
+      // Prepare Fix(es) list for height estimation and rows
+      const fixes = toArray(issue.recommended_action);
+      const filteredFixes = fixes.filter(Boolean);
+
+      // Estimate group height (Issue header + Issue row + Fixes block) to avoid page breaks inside
+      const groupHeightEstimate = estimateIssueFixGroupHeight(
+        issue,
+        translatedIssue,
+        translatedIssueMessage,
+        filteredFixes as any,
+      );
+
+      // Build group table body for this issue (Issue header + Issue row + Fixes)
+      const groupBody: any[] = [];
       // Add header row for each issue with beautiful styling
-      tableBody.push([
+      groupBody.push([
         {
           content: translatedIssue,
           colSpan: 2,
+          pageBreak: 'avoid', // Keep issue header with its content
+          _isIssueFixGroupStart: true,
+          _groupHeight: groupHeightEstimate,
           styles: {
             fillColor: [255, 255, 255], // white background
             textColor: [0, 0, 0], // black text
@@ -816,6 +1073,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         {
           content: translatedIssueMessage,
           colSpan: 2,
+          pageBreak: 'avoid', // Keep issue header with its content
           styles: {
             fillColor: [255, 255, 255], // matching white background
             textColor: [0, 0, 0], // black text
@@ -827,10 +1085,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       ]);
 
       // Row 1: Issue + Message with elegant code block styling
-      tableBody.push([
+      groupBody.push([
         {
           content: `${issue.code ? `${issue.code} (${issue.impact})` : ''}`,
           colSpan: 2,
+          pageBreak: 'avoid', // Keep with header
           styles: {
             fontSize: 12,
             textColor: getIssueColors(issue, hasWebAbility).textColor,
@@ -845,6 +1104,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         {
           content: `${issue.message || ''}`,
           colSpan: 2,
+          pageBreak: 'avoid', // Keep with header
           styles: {
             fontSize: 12,
             textColor: getIssueColors(issue, hasWebAbility).textColor,
@@ -856,6 +1116,100 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           },
         },
       ]);
+
+      // Row 3: Fix(es) - display heading first, then each fix in its own white back container with spacing
+      if (filteredFixes.length > 0) {
+        // Heading row for Fix - ensure it stays with at least first fix
+        groupBody.push([
+          {
+            content: translatedFix,
+            colSpan: 4,
+            pageBreak: 'avoid', // Keep fix heading with first fix item
+            styles: {
+              fontSize: 11,
+              textColor: [0, 0, 0], // black text
+              halign: 'left',
+              cellPadding: 5,
+              fillColor: [255, 255, 255], // white background
+              lineWidth: 0,
+              font: 'NotoSans_Condensed-Regular',
+            },
+          },
+        ]);
+        // Each fix in its own row/container, with white background and spacing
+        filteredFixes.forEach((fix, fixIdx) => {
+          groupBody.push([
+            {
+              content: `${fixIdx + 1}. ${fix}`,
+              colSpan: 4,
+              pageBreak: fixIdx === 0 ? 'avoid' : 'auto', // First fix must stay with heading
+              styles: {
+                fontSize: 11,
+                textColor: [0, 0, 0], // black text
+                halign: 'left',
+                cellPadding: { top: 10, right: 8, bottom: 10, left: 8 }, // more vertical space for separation
+                fillColor: [255, 255, 255], // white background for back container
+                lineWidth: 0,
+                font: 'NotoSans_Condensed-Regular',
+              },
+            },
+          ]);
+          // Add a spacer row after each fix except the last
+          if (fixIdx < filteredFixes.length - 1) {
+            groupBody.push([
+              {
+                content: '',
+                colSpan: 4,
+                styles: {
+                  cellPadding: 0,
+                  fillColor: [255, 255, 255],
+                  lineWidth: 0,
+                  minCellHeight: 6, // vertical space between containers
+                },
+              },
+            ]);
+          }
+        });
+      }
+
+      // If the group does not fit, move to a new page before drawing it
+      const availableBottom = pageHeight - footerHeight;
+      if (yTable + groupHeightEstimate > availableBottom) {
+        doc.addPage();
+        yTable = 10;
+      }
+
+      // Draw the group table for Issue + Message + Fix(es)
+      autoTable(doc, {
+        startY: yTable,
+        margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
+        head: [],
+        body: groupBody,
+        theme: 'plain',
+        columnStyles: {
+          0: { cellWidth: 38 },
+          1: { cellWidth: 38 },
+          2: { cellWidth: 50 },
+          3: { cellWidth: 45 },
+        },
+        rowPageBreak: 'avoid',
+        tableLineColor: [226, 232, 240],
+        tableLineWidth: 0.5,
+        styles: {
+          lineColor: [255, 255, 255],
+          lineWidth: 0,
+          cellPadding: 8,
+        },
+      });
+      // update Y after group
+      const lastTable: any =
+        (doc as any).lastAutoTable || (doc as any).autoTable?.previous || null;
+      if (lastTable && lastTable.finalY) {
+        yTable = lastTable.finalY + 2;
+      }
+
+      // After-group: build additional rows (screenshot + contexts) in a separate table
+      const afterBody: any[] = [];
       // If screenshotBase64 is available, add a row with the image
       if (issue.screenshotBase64) {
         // Get actual image dimensions from base64 data
@@ -872,10 +1226,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         const screenshotHeight = drawHeight * scale;
 
         // Add a heading row for the screenshot
-        tableBody.push([
+        afterBody.push([
           {
             content: 'Screenshot',
             colSpan: 4,
+            pageBreak: 'avoid', // Keep screenshot with issue
             styles: {
               fontSize: 12,
               textColor: [30, 41, 59],
@@ -888,10 +1243,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         ]);
 
         // Add the screenshot image row
-        tableBody.push([
+        afterBody.push([
           {
             content: '',
             colSpan: 4,
+            pageBreak: 'avoid', // Keep screenshot with its heading
             styles: {
               halign: 'center',
               valign: 'middle',
@@ -912,11 +1268,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       const contexts = toArray(issue.context).filter(Boolean);
 
       if (contexts.length > 0) {
-        // Heading: "Context:"
-        tableBody.push([
+        // Heading: "Context:" - ensure it stays with at least first context
+        afterBody.push([
           {
             content: translatedContext,
             colSpan: 4,
+            pageBreak: 'avoid', // Keep context heading with first context item
             styles: {
               fontSize: 11,
               textColor: [0, 0, 0],
@@ -932,11 +1289,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           // Combined code block with index number
           const combinedContent = `${index + 1}. ${ctx}`;
 
-          tableBody.push([
+          afterBody.push([
             {
               content: combinedContent,
               colSpan: 4,
-              pageBreak: 'avoid',
+              pageBreak: index === 0 ? 'avoid' : 'auto', // First context must stay with heading
               rowSpan: 1,
               styles: {
                 font: 'NotoSans_Condensed-Regular',
@@ -962,7 +1319,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
           // Spacer row after each block (except the last)
           if (index < contexts.length - 1) {
-            tableBody.push([
+            afterBody.push([
               {
                 content: '',
                 colSpan: 4,
@@ -978,238 +1335,141 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         });
       }
 
-      // Row 3: Fix(es) - display heading first, then each fix in its own white back container with spacing
-      const fixes = toArray(issue.recommended_action);
-      if (fixes.length > 0 && fixes.some((f) => !!f)) {
-        // Heading row for Fix
-        tableBody.push([
-          {
-            content: translatedFix,
-            colSpan: 4,
-            styles: {
-              fontSize: 11,
-              textColor: [0, 0, 0], // black text
-              halign: 'left',
-              cellPadding: 5,
-              fillColor: [255, 255, 255], // white background
-              lineWidth: 0,
-              font: 'NotoSans_Condensed-Regular',
-            },
+      if (afterBody.length > 0) {
+        autoTable(doc, {
+          startY: yTable,
+          margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
+          head: [],
+          body: afterBody,
+          theme: 'plain',
+          columnStyles: {
+            0: { cellWidth: 38 },
+            1: { cellWidth: 38 },
+            2: { cellWidth: 50 },
+            3: { cellWidth: 45 },
           },
-        ]);
-        // Each fix in its own row/container, with white background and spacing
-        const filteredFixes = fixes.filter(Boolean);
-        filteredFixes.forEach((fix, fixIdx) => {
-          tableBody.push([
-            {
-              content: `${fixIdx + 1}. ${fix}`,
-              colSpan: 4,
-              styles: {
-                fontSize: 11,
-                textColor: [0, 0, 0], // black text
-                halign: 'left',
-                cellPadding: { top: 10, right: 8, bottom: 10, left: 8 }, // more vertical space for separation
-                fillColor: [255, 255, 255], // white background for back container
-                lineWidth: 0,
-                font: 'NotoSans_Condensed-Regular',
-              },
-            },
-          ]);
-          // Add a spacer row after each fix except the last
-          if (fixIdx < filteredFixes.length - 1) {
-            tableBody.push([
-              {
-                content: '',
-                colSpan: 4,
-                styles: {
-                  cellPadding: 0,
-                  fillColor: [255, 255, 255],
-                  lineWidth: 0,
-                  minCellHeight: 6, // vertical space between containers
-                },
-              },
-            ]);
-          }
+          rowPageBreak: 'avoid',
+          tableLineColor: [226, 232, 240],
+          tableLineWidth: 0.5,
+          styles: {
+            lineColor: [255, 255, 255],
+            lineWidth: 0,
+            cellPadding: 8,
+          },
+          // Keep code block and screenshot hooks for this table
+          willDrawCell: (data: any) => {
+            if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
+              const pageHeight2 = doc.internal.pageSize.getHeight();
+              const currentY2 = data.cursor.y;
+              const bottomMargin2 = 25;
+              const fullText = (data.cell.raw as any).content || '';
+              const indexNumber = (data.cell.raw as any)._indexNumber;
+              const indexPrefix = `${indexNumber}`;
+              const indexWidth = doc.getTextWidth(indexPrefix) + 16;
+              const codeContent = fullText.substring(`${indexNumber}. `.length);
+              const availableWidth = data.cell.width - 16 - indexWidth;
+              doc.setFont('NotoSans_Condensed-Regular', 'normal');
+              doc.setFontSize(10);
+              const lines = doc.splitTextToSize(codeContent, availableWidth);
+              const lineHeight = 4;
+              const topPadding = 8;
+              const bottomPadding = 4;
+              const textHeight =
+                lines.length * lineHeight + topPadding + bottomPadding;
+              const estimatedHeight = Math.max(textHeight, 30);
+              if (currentY2 + estimatedHeight > pageHeight2 - bottomMargin2) {
+                return false;
+              }
+            }
+            return true;
+          },
+          didDrawCell: (data: any) => {
+            if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
+              const { x, y, width, height } = data.cell;
+              const padding = 2;
+              const cornerRadius = 4;
+              const indexNumber = (data.cell.raw as any)._indexNumber;
+              doc.setFont('NotoSans_Condensed-Regular', 'normal');
+              doc.setFontSize(12);
+              const indexPrefix = `${indexNumber}`;
+              const indexWidth = doc.getTextWidth(indexPrefix) + 8;
+              doc.setDrawColor(100, 116, 139);
+              doc.setLineWidth(0.5);
+              doc.setFillColor(15, 23, 42);
+              doc.roundedRect(
+                x + padding,
+                y + padding,
+                width - padding * 2,
+                height - padding * 2,
+                cornerRadius,
+                cornerRadius,
+                'FD',
+              );
+              doc.setFillColor(51, 65, 85);
+              doc.roundedRect(
+                x + padding,
+                y + padding,
+                indexWidth,
+                height - padding * 2,
+                cornerRadius,
+                cornerRadius,
+                'F',
+              );
+              doc.setFillColor(51, 65, 85);
+              doc.rect(
+                x + padding + indexWidth - cornerRadius,
+                y + padding,
+                cornerRadius,
+                height - padding * 2,
+                'F',
+              );
+              doc.setTextColor(255, 255, 255);
+              const indexTextX = x + padding + 4;
+              const textY = y + padding + 8;
+              doc.text(indexPrefix, indexTextX, textY);
+              const fullText = (data.cell.raw as any).content;
+              const codeContent = fullText.substring(`${indexNumber}. `.length);
+              const codeTextX = x + padding + indexWidth + 4;
+              const availableWidth = width - padding * 2 - indexWidth - 8;
+              const lines = doc.splitTextToSize(codeContent, availableWidth);
+              let codeTextY = y + padding + 8;
+              lines.forEach((line: string) => {
+                doc.text(line, codeTextX, codeTextY);
+                codeTextY += 4;
+              });
+            }
+            if (
+              data.cell.raw &&
+              data.cell.raw._isScreenshot &&
+              data.cell.raw._screenshotBase64
+            ) {
+              const { x, y, width, height } = data.cell;
+              const imgWidth = data.cell.raw._screenshotWidth || 80;
+              const imgHeight = data.cell.raw._screenshotHeight || 80;
+              const imgX = x + (width - imgWidth) / 2;
+              const imgY = y + (height - imgHeight) / 2;
+              data.doc.addImage(
+                data.cell.raw._screenshotBase64,
+                'PNG',
+                imgX,
+                imgY,
+                imgWidth,
+                imgHeight,
+              );
+            }
+          },
         });
+        const lastTable2: any =
+          (doc as any).lastAutoTable ||
+          (doc as any).autoTable?.previous ||
+          null;
+        if (lastTable2 && lastTable2.finalY) {
+          yTable = lastTable2.finalY + 2;
+        }
       }
     }
 
-    // No global table header, since each issue has its own header row
-    autoTable(doc, {
-      startY: yTable,
-      margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
-      head: [],
-      body: tableBody,
-      theme: 'plain',
-      columnStyles: {
-        0: { cellWidth: 38 },
-        1: { cellWidth: 38 },
-        2: { cellWidth: 50 },
-        3: { cellWidth: 45 },
-      },
-      // Enhanced page break handling
-      rowPageBreak: 'avoid',
-
-      // Custom table styling
-      tableLineColor: [226, 232, 240], // Light gray border
-      tableLineWidth: 0.5, // Thin border
-      styles: {
-        lineColor: [255, 255, 255], // White (invisible) line color for cells
-        lineWidth: 0, // No cell borders
-        cellPadding: 8,
-      },
-
-      // Check before drawing each cell to prevent page breaks in code blocks
-      willDrawCell: (data: any) => {
-        if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
-          const pageHeight = doc.internal.pageSize.getHeight();
-          const currentY = data.cursor.y;
-          const bottomMargin = 25; // Space needed at bottom of page
-
-          // Calculate actual text height for more accurate estimation
-          const fullText = (data.cell.raw as any).content || '';
-          const indexNumber = (data.cell.raw as any)._indexNumber;
-
-          // Calculate the actual content that will be displayed
-          const indexPrefix = `${indexNumber}`;
-          const indexWidth = doc.getTextWidth(indexPrefix) + 16; // Index section width
-          const codeContent = fullText.substring(`${indexNumber}. `.length);
-
-          // Calculate available width for code content
-          const availableWidth = data.cell.width - 16 - indexWidth; // Cell padding + index width
-
-          doc.setFont('NotoSans_Condensed-Regular', 'normal');
-          doc.setFontSize(10);
-          const lines = doc.splitTextToSize(codeContent, availableWidth);
-
-          // More accurate height calculation
-          const lineHeight = 4; // Line spacing
-          const topPadding = 8; // Top padding
-          const bottomPadding = 4; // Bottom padding
-          const textHeight =
-            lines.length * lineHeight + topPadding + bottomPadding;
-          const estimatedHeight = Math.max(textHeight, 30); // Minimum height of 30
-
-          // If the code block won't fit on current page, force a page break
-          if (currentY + estimatedHeight > pageHeight - bottomMargin) {
-            return false; // This will trigger a page break
-          }
-        }
-        return true;
-      },
-
-      didDrawCell: (data: any) => {
-        // Check if this cell is marked as a code block
-        if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
-          const { x, y, width, height } = data.cell;
-
-          const padding = 2;
-          const cornerRadius = 4;
-          const indexNumber = (data.cell.raw as any)._indexNumber;
-
-          // Calculate index section width
-          doc.setFont('NotoSans_Condensed-Regular', 'normal');
-          doc.setFontSize(12);
-          const indexPrefix = `${indexNumber}`;
-          const indexWidth = doc.getTextWidth(indexPrefix) + 8; // Extra padding for the index section
-
-          // Draw the overall rounded rectangle background (darker blue)
-          doc.setDrawColor(100, 116, 139); // slate-500 border
-          doc.setLineWidth(0.5);
-          doc.setFillColor(15, 23, 42); // slate-900 background (darker blue)
-
-          doc.roundedRect(
-            x + padding,
-            y + padding,
-            width - padding * 2,
-            height - padding * 2,
-            cornerRadius,
-            cornerRadius,
-            'FD', // Fill and Draw
-          );
-
-          // Draw the lighter blue section for the index number (left side)
-          doc.setFillColor(51, 65, 85); // slate-700 (lighter blue than the main background)
-          doc.roundedRect(
-            x + padding,
-            y + padding,
-            indexWidth,
-            height - padding * 2,
-            cornerRadius,
-            cornerRadius,
-            'F', // Fill only
-          );
-
-          // Fix the right side of the index section to not be rounded
-          doc.setFillColor(51, 65, 85); // slate-700
-          doc.rect(
-            x + padding + indexWidth - cornerRadius,
-            y + padding,
-            cornerRadius,
-            height - padding * 2,
-            'F',
-          );
-
-          // Now draw the text - both in white
-          doc.setTextColor(255, 255, 255); // white text for both sections
-
-          // Draw the index number in the lighter blue section (top-left aligned)
-          const indexTextX = x + padding + 4; // Small padding from left edge
-          const textY = y + padding + 8; // Same as code content top alignment
-          doc.text(indexPrefix, indexTextX, textY);
-
-          // Draw the code content in the darker blue section
-          const fullText = (data.cell.raw as any).content;
-          const codeContent = fullText.substring(`${indexNumber}. `.length);
-          const codeTextX = x + padding + indexWidth + 4;
-          const availableWidth = width - padding * 2 - indexWidth - 8;
-
-          // Split code content into lines
-          const lines = doc.splitTextToSize(codeContent, availableWidth);
-          let codeTextY = y + padding + 8;
-
-          lines.forEach((line: string) => {
-            doc.text(line, codeTextX, codeTextY);
-            codeTextY += 4; // Line spacing
-          });
-        }
-
-        // Add bottom border only to header rows (Issue/Message rows)
-        if (
-          data.cell.raw &&
-          data.cell.raw.styles &&
-          data.cell.raw.styles.fontStyle === 'bold' &&
-          data.cell.raw.styles.fontSize === 14
-        ) {
-          const { x, y, width, height } = data.cell;
-          doc.setDrawColor(226, 232, 240); // Light gray
-          doc.setLineWidth(0.5);
-          doc.line(x, y + height, x + width, y + height); // Bottom border
-        }
-        if (
-          data.cell.raw &&
-          data.cell.raw._isScreenshot &&
-          data.cell.raw._screenshotBase64
-        ) {
-          const { x, y, width, height } = data.cell;
-          const imgWidth = data.cell.raw._screenshotWidth || 80;
-          const imgHeight = data.cell.raw._screenshotHeight || 80;
-          const imgX = x + (width - imgWidth) / 2;
-          const imgY = y + (height - imgHeight) / 2;
-          data.doc.addImage(
-            data.cell.raw._screenshotBase64,
-            'PNG',
-            imgX,
-            imgY,
-            imgWidth,
-            imgHeight,
-          );
-        }
-        // if (data.cell.raw && data.cell.raw._isScreenshot) {
-        //   // console.log('didDrawCell for screenshot', data.cell.raw._screenshotBase64 ? 'has base64' : 'no base64');
-        // }
-      },
-    });
+    // No aggregated table rendering here; each issue is rendered above
 
     // --- END CUSTOM TABLE LAYOUT ---
     if (accessibilityStatementLinkUrl) {
