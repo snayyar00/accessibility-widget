@@ -159,29 +159,63 @@ export async function getAccessibilityInformationPally(domain: string) {
 
   const apiUrl = `${process.env.SCANNER_SERVER_URL}/scan`
   let results
-  try {
-    console.log('Using scanner API')
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        url: domain,
-        viewport: [1366, 768],
-        timeout: 240,
-        level: 'AA',
-        use_cache: false,
-      }),
-    })
 
-    // Check if the response is successful
-    if (!response.ok) {
-      throw new Error(`Failed to fetch screenshot. Status: ${response.status}`)
+  // Helper function to check if response is empty
+  const isEmptyResponse = (data: any) => {
+    return !data || !data.issues || !Array.isArray(data.issues) || data.issues.length === 0 || (data.issues.length === 1 && !data.issues[0].runner)
+  }
+
+  // Helper function to make scanner API request with retries
+  const makeScannerAPIRequest = async (retryCount = 0): Promise<any> => {
+    const maxRetries = 2
+    const delay = 1000 * (retryCount + 1) // Exponential backoff: 1s, 2s, 3s
+
+    try {
+      console.log(`Using scanner API (attempt ${retryCount + 1}/${maxRetries + 1})`)
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: domain,
+          viewport: [1366, 768],
+          timeout: 240,
+          level: 'AA',
+          use_cache: true,
+        }),
+      })
+
+      // Check if the response is successful
+      if (!response.ok) {
+        throw new Error(`Failed to fetch screenshot. Status: ${response.status}`)
+      }
+
+      // Parse and return the response JSON
+      const data = await response.json()
+
+      // Check if response is empty
+      if (isEmptyResponse(data)) {
+        throw new Error('Empty response from main API')
+      }
+
+      return data
+    } catch (error) {
+      console.error(`Scanner API attempt ${retryCount + 1} failed:`, error)
+
+      if (retryCount < maxRetries) {
+        console.log(`Retrying scanner API in ${delay}ms... (attempt ${retryCount + 2}/${maxRetries + 1})`)
+        await new Promise((resolve) => setTimeout(resolve, delay))
+        return makeScannerAPIRequest(retryCount + 1)
+      }
+
+      throw error // Re-throw if max retries reached
     }
+  }
 
-    // Parse and return the response JSON
-    results = await response.json()
+  try {
+    // Try scanner API with retries first
+    results = await makeScannerAPIRequest()
 
     // Log all screenshotUrls found in the issues array
     if (results && typeof results === 'object' && results !== null && 'issues' in results && Array.isArray((results as any).issues)) {
@@ -192,7 +226,7 @@ export async function getAccessibilityInformationPally(domain: string) {
       })
     }
   } catch (error) {
-    console.error('pally API Error', error)
+    console.error('All scanner API attempts failed, switching to fallback API:', error)
     const apiUrl2 = `${process.env.FALLBACK_PA11Y_SERVER_URL}/test`
     try {
       console.log('Using fallback pally API')
