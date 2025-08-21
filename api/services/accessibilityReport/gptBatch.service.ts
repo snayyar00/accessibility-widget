@@ -191,7 +191,7 @@ async function processBatch(batchId: string, issues: ProcessedIssue[], retryCoun
         description: enhancement.description || generateDetailedFallbackDescription(originalIssue),
         recommended_action: enhancement.recommended_action || generateDetailedFallbackAction(originalIssue),
         affected_disabilities: enhancement.affected_disabilities || generateFallbackDisabilities(originalIssue),
-        wcag_code: enhancement.wcag_code || originalIssue.wcag_code || extractWCAGCode(originalIssue.code) || 'N/A',
+        wcag_code: originalIssue.wcag_code || extractWCAGCode(originalIssue.code) || 'N/A',
       }
     })
 
