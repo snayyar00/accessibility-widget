@@ -40,17 +40,7 @@ function createJob(): string {
 
 async function processAccessibilityReportJob(jobId: string, url: string) {
   try {
-    const accessibilityReport = await fetchAccessibilityReport(url)
-
-    // Use tech stack from accessibility report if available, otherwise fetch from API
-    let techStack = accessibilityReport.techStack
-    if (!techStack) {
-      console.log('🔧 No tech stack found in accessibility report, fetching from tech stack API as fallback')
-      techStack = await fetchTechStackFromAPI(url)
-    } else {
-      console.log('🔧 Using tech stack from accessibility report scanner API')
-    }
-
+    const [accessibilityReport, techStack] = await Promise.all([fetchAccessibilityReport(url), fetchTechStackFromAPI(url)])
     const result = {
       ...accessibilityReport,
       techStack,
@@ -163,16 +153,7 @@ const resolvers = {
       }
 
       try {
-        const accessibilityReport = await fetchAccessibilityReport(url)
-
-        // Use tech stack from accessibility report if available, otherwise fetch from API
-        let techStack = accessibilityReport.techStack
-        if (!techStack) {
-          console.log('🔧 No tech stack found in accessibility report, fetching from tech stack API as fallback')
-          techStack = await fetchTechStackFromAPI(url)
-        } else {
-          console.log('🔧 Using tech stack from accessibility report scanner API')
-        }
+        const [accessibilityReport, techStack] = await Promise.all([fetchAccessibilityReport(url), fetchTechStackFromAPI(url)])
 
         return {
           ...accessibilityReport,
