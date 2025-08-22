@@ -45,6 +45,7 @@ interface finalOutput {
     notices: htmlcsOutput[]
     warnings: htmlcsOutput[]
   }
+  techStack?: any
 }
 
 interface Error {
@@ -302,6 +303,73 @@ export async function getAccessibilityInformationPally(domain: string) {
     })
   }
 
+  // Extract screenshots from API response and store in siteImg
+  if (results && typeof results === 'object' && results !== null) {
+    // Check for screenshots array
+    if ('screenshots' in results && Array.isArray((results as any).screenshots)) {
+      const screenshots = (results as any).screenshots
+      if (screenshots.length > 0) {
+        // Store the first screenshot URL in siteImg, or join multiple URLs with comma
+        output.siteImg = screenshots.length === 1 ? screenshots[0] : screenshots.join(',')
+        console.log(`📸 Extracted ${screenshots.length} screenshot(s) and stored in siteImg:`, output.siteImg)
+      }
+    }
+    // Also check for siteImg field as fallback
+    else if ('siteImg' in results && (results as any).siteImg) {
+      output.siteImg = (results as any).siteImg
+      console.log(`📸 Using siteImg from API response:`, output.siteImg)
+    }
+    // Check for any other potential screenshot fields
+    else if ('screenshot' in results && (results as any).screenshot) {
+      output.siteImg = (results as any).screenshot
+      console.log(`📸 Using screenshot from API response:`, output.siteImg)
+    }
+  }
+
+  // Extract tech stack from API response if available
+  if (results && typeof results === 'object' && results !== null) {
+    if ('techStack' in results && (results as any).techStack) {
+      output.techStack = (results as any).techStack
+      console.log('🔧 Extracted techStack from scanner API response')
+    } else if ('tech_stack' in results && (results as any).tech_stack) {
+      output.techStack = (results as any).tech_stack
+      console.log('🔧 Extracted tech_stack from scanner API response')
+    } else if ('technology_stack' in results && (results as any).technology_stack) {
+      output.techStack = (results as any).technology_stack
+      console.log('🔧 Extracted technology_stack from scanner API response')
+    }
+    //  else {
+    //   // Add dummy tech stack for testing when no tech stack is found in API response
+    //   ;(results as any).techStack = {
+    //     technologies: ['React', 'TypeScript', 'Node.js', 'Express'],
+    //     categorizedTechnologies: [
+    //       {
+    //         category: 'Frontend',
+    //         technologies: ['React', 'TypeScript'],
+    //       },
+    //       {
+    //         category: 'Backend',
+    //         technologies: ['Node.js', 'Express'],
+    //       },
+    //     ],
+    //     confidence: 'high',
+    //     accessibilityContext: {
+    //       platform: 'Web Application',
+    //       platform_type: 'SPA',
+    //       has_cms: false,
+    //       has_ecommerce: false,
+    //       has_framework: true,
+    //       is_spa: true,
+    //     },
+    //     analyzedUrl: domain,
+    //     analyzedAt: new Date().toISOString(),
+    //     source: 'dummy_data',
+    //   }
+    //   output.techStack = (results as any).techStack
+    //   console.log('🔧 Added dummy techStack for testing')
+    // }
+  }
+
   // Get preprocessing configuration
   const config = getPreprocessingConfig()
 
@@ -334,9 +402,11 @@ export async function getAccessibilityInformationPally(domain: string) {
         ByFunctions: enhancedResult.ByFunctions, // Preserve enhanced ByFunctions
         score: calculateAccessibilityScore(output.axe), // enhancedResult.score ||
         totalElements: output.totalElements,
+        siteImg: output.siteImg, // Preserve screenshots
         processing_stats: enhancedResult.processing_stats,
         // Preserve original htmlcs for ByFunctions processing
         _originalHtmlcs: originalOutput.htmlcs,
+        techStack: output.techStack, // Include tech stack from scanner API
       }
 
       console.log('📦 Final output debug:')

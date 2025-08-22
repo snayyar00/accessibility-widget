@@ -89,6 +89,7 @@ interface ResultWithOriginal {
   }
   scriptCheckResult?: string
   issues?: any[] // Array of extracted issues
+  techStack?: any
   issuesByFunction?: { [key: string]: any[] } // Grouped issues by functionality
   functionalityNames?: string[] // List of functionality names
   totalStats?: {
@@ -268,12 +269,13 @@ export const fetchAccessibilityReport = async (url: string) => {
         throw new Error('Failed to fetch accessibility report for all URL variations')
       }
 
-      // console.log('result from getAccessibilityInformationPally:', result.score, result.totalElements, result.ByFunctions)
-      const siteImg = await fetchSitePreview(formattedUrl)
-      if (result && siteImg) {
-        result.siteImg = siteImg
+      if (!result.siteImg) {
+        console.log('result from getAccessibilityInformationPally:', result.score, result.totalElements, result.ByFunctions)
+        const siteImg = await fetchSitePreview(formattedUrl)
+        if (result && siteImg) {
+          result.siteImg = siteImg
+        }
       }
-
       const scriptCheckResult = await checkScript(url)
       if (result && scriptCheckResult) {
         result.scriptCheckResult = scriptCheckResult
