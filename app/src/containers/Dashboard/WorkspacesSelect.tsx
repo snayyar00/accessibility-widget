@@ -2,16 +2,18 @@ import React from 'react';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import { useLazyQuery, useQuery } from '@apollo/client';
+import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
 import GET_USER_WORKSPACES from '@/queries/workspace/getUserWorkspaces';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
-import { Query } from '@/generated/graphql';
-// import { setProfileUser } from '@/features/auth/user';
+import { ChangeCurrentWorkspaceMutation, Query } from '@/generated/graphql';
+import { setProfileUser } from '@/features/auth/user';
 import { toast } from 'react-toastify';
+import CHANGE_CURRENT_WORKSPACE from '@/queries/user/changeCurrentWorkspace';
+import getProfileQuery from '@/queries/auth/getProfile';
 
 const WorkspacesSelect: React.FC = () => {
-  //   const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const { data: userData } = useSelector((state: RootState) => state.user);
 
   const skipWorkspacesQuery = !userData || !userData.currentOrganization;
@@ -24,30 +26,71 @@ const WorkspacesSelect: React.FC = () => {
     },
   );
 
+  const [changeCurrentWorkspaceMutation, { loading: changeWorkspaceLoading }] =
+    useMutation<ChangeCurrentWorkspaceMutation>(CHANGE_CURRENT_WORKSPACE);
+
+  const [getProfile, { loading: profileLoading }] =
+    useLazyQuery(getProfileQuery);
+
   const workspaces = workspacesData?.getUserWorkspaces || [];
 
   const handleChange = async (event: SelectChangeEvent) => {
-    const newWorkspaceId = Number(event.target.value);
-    // Здесь можно реализовать смену текущего workspace в redux или вызвать mutation
-    // Например:
-    // dispatch(setCurrentWorkspace(newWorkspaceId));
-    toast.success('Workspace changed!');
+    const value = event.target.value;
+    const newWorkspaceId = value === 'none' ? null : Number(value);
+
+    try {
+      const { data } = await changeCurrentWorkspaceMutation({
+        variables: { workspaceId: newWorkspaceId },
+      });
+
+      if (!data || !data.changeCurrentWorkspace) {
+        toast.error('Failed to change workspace. Please try again.');
+        return;
+      }
+
+      const profileResult = await getProfile();
+      const profileUser = profileResult?.data?.profileUser;
+
+      if (profileUser) {
+        dispatch(
+          setProfileUser({
+            data: profileUser,
+            loading: profileLoading,
+          }),
+        );
+
+        toast.success('Workspace changed successfully!');
+      } else {
+        toast.error('Failed to update user profile after workspace change.');
+      }
+    } catch (error) {
+      toast.error('Failed to change workspace. Please try again.');
+    }
   };
 
   if (!workspaces.length) return null;
 
+  const empty = {
+    value: 'none',
+    label: 'Without workspace',
+  };
+
   return (
     <FormControl fullWidth>
       <Select
-        disabled={workspacesLoading}
+        disabled={workspacesLoading || changeWorkspaceLoading || profileLoading}
         size="small"
-        value="4"
-        label={'123'}
-        // value={userData.currentWorkspace?.id || ''}
-        // label={userData.currentWorkspace?.name}
+        value={
+          userData?.currentOrganizationUser?.currentWorkspace?.id || empty.value
+        }
+        label={
+          userData?.currentOrganizationUser?.currentWorkspace?.name ||
+          empty.label
+        }
         onChange={handleChange}
         className="[&>fieldset>legend>span]:hidden"
       >
+        <MenuItem value={empty.value}>{empty.label}</MenuItem>
         {workspaces.map(({ id, name }) => (
           <MenuItem key={id} value={id}>
             {name}

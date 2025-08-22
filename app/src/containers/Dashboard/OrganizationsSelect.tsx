@@ -18,8 +18,7 @@ const OrganizationsSelect: React.FC = () => {
   const dispatch = useDispatch();
   const { data: userData } = useSelector((state: RootState) => state.user);
 
-  const skipOrganizationsQuery =
-    !userData || !userData.currentOrganization || !userData.isAdminOrOwner;
+  const skipOrganizationsQuery = !userData || !userData.currentOrganization;
 
   const { data: organizationsData, loading: organizationsLoading } =
     useQuery<Query>(GET_USER_ORGANIZATIONS, { skip: skipOrganizationsQuery });
@@ -83,7 +82,7 @@ const OrganizationsSelect: React.FC = () => {
     }
   };
 
-  if (!organizations.length) return null;
+  if (!organizations.length || organizations.length === 1) return null;
 
   return (
     <FormControl fullWidth>

@@ -19,7 +19,6 @@ export const UserSchema = `#graphql
     avatarUrl: String
     invitationToken: String
     current_organization_id: Int
-    current_workspace_id: Int
     currentOrganization: Organization
     currentOrganizationUser: OrganizationUser
     hasOrganization: Boolean!
@@ -74,6 +73,8 @@ export const UserSchema = `#graphql
       @rateLimit(limit: 10, duration: 3600, message: "Too many notification settings updates. Please try again later.")
 
     changeCurrentOrganization(organizationId: Int!, userId: Int): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many organization change requests. Please try again later.")
+
+    changeCurrentWorkspace(workspaceId: Int, userId: Int): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many workspace change requests. Please try again later.")
 
     logout: Boolean!
   }

@@ -14,6 +14,7 @@ export const OrganizationSchema = `#graphql
     id: ID
     user_id: Int!
     organization_id: Int!
+    current_workspace_id: Int
     role: String
     status: String
     created_at: Date
@@ -21,6 +22,8 @@ export const OrganizationSchema = `#graphql
     user: User!
     organizations: [Organization!]!
     currentOrganization: Organization
+    currentWorkspace: Workspace
+    hasWorkspace: Boolean!
   }
 
   extend type Query {

@@ -29,6 +29,12 @@ export default gql`
         status
         created_at
         updated_at
+        current_workspace_id
+        currentWorkspace {
+          id
+          name
+          alias
+        }
       }
     }
   }

@@ -2,6 +2,7 @@ import { Knex } from 'knex'
 
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
+import { updateOrganizationUserByOrganizationAndUserId } from './organization_user.repository'
 import { createWorkspaceUser, WorkspaceUser, workspaceUsersColumns } from './workspace_users.repository'
 
 export type Workspace = {
@@ -25,7 +26,7 @@ type NewWorkspaceAndMember = {
   name?: string
   alias?: string
   organization_id?: number
-  userid?: number
+  user_id?: number
 }
 
 export type GetAllWorkspaceResponse = WorkspaceUser & Workspace
@@ -105,14 +106,16 @@ export async function getWorkspace(searchData: Workspace): Promise<Workspace> {
   return database(TABLE).where(searchData).first()
 }
 
-export async function createNewWorkspaceAndMember({ name, alias, organization_id, userid }: NewWorkspaceAndMember): Promise<number | Error> {
+export async function createNewWorkspaceAndMember({ name, alias, organization_id, user_id }: NewWorkspaceAndMember): Promise<number | Error> {
   let transaction
 
   try {
     transaction = await database.transaction()
-    const [workspaceId] = await insertWorkspace({ name, alias, organization_id, created_by: userid }, transaction)
+    const [workspaceId] = await insertWorkspace({ name, alias, organization_id, created_by: user_id }, transaction)
 
-    await createWorkspaceUser({ user_id: userid, workspace_id: workspaceId, role: 'owner', status: 'active' }, transaction)
+    await createWorkspaceUser({ user_id: user_id, workspace_id: workspaceId, role: 'owner', status: 'active' }, transaction)
+    await updateOrganizationUserByOrganizationAndUserId(organization_id, user_id, { current_workspace_id: workspaceId }, transaction)
+
     await transaction.commit()
 
     return workspaceId

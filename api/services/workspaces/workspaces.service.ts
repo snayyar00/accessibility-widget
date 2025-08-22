@@ -28,6 +28,7 @@ type CreateWorkspaceResponse = {
   id: Promise<number | Error>
   name: string
   alias: string
+  organization_id: number
 }
 
 /**
@@ -66,7 +67,6 @@ export async function findWorkspaceByAlias(alias: string): Promise<FindWorkspace
  *
  * @param User          user             User who create workspace
  * @param string        workspaceName    Name of new workspace
- * @param Organization  organization     Organization where workspace will be created
  */
 export async function createWorkspace(user: UserProfile, workspaceName: string): Promise<CreateWorkspaceResponse> {
   const validateResult = validateCreateWorkspace({ name: workspaceName })
@@ -93,10 +93,11 @@ export async function createWorkspace(user: UserProfile, workspaceName: string):
     throw new ApolloError('Workspace exist')
   }
 
-  const workspaceId = createNewWorkspaceAndMember({ name: workspaceName, alias, organization_id: user.current_organization_id, userid: user.id })
+  const workspaceId = createNewWorkspaceAndMember({ name: workspaceName, alias, organization_id: user.current_organization_id, user_id: user.id })
 
   return {
     id: workspaceId,
+    organization_id: user.current_organization_id,
     name: workspaceName,
     alias,
   }
