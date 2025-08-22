@@ -35,7 +35,7 @@ import {
   Shield,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import autoTable, { __createTable, __drawTable } from 'jspdf-autotable';
 import { ReactI18NextChild } from 'react-i18next';
 import { toast } from 'sonner';
 import TechStack from './TechStack';
@@ -1234,11 +1234,14 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     reportData: {
       score: number;
       widgetInfo: { result: string };
+      scriptCheckResult?: string;
       url: string;
     },
     currentLanguage: string,
   ): Promise<Blob> => {
     const { jsPDF } = await import('jspdf');
+    const { isCodeCompliant } = await import('@/utils/translator');
+
     let fontLoaded = true;
     try {
       // @ts-ignore
@@ -1251,12 +1254,12 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       console.error('Failed to load custom font for jsPDF:', e);
       fontLoaded = false;
     }
+
     const autoTable = (await import('jspdf-autotable')).default;
     const doc = new jsPDF();
     if (!fontLoaded) {
       doc.setFont('helvetica', 'normal');
     }
-
     if (!reportData.url) {
       reportData.url = queryParams.get('domain') || '';
     }
@@ -1269,7 +1272,9 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
     const baseScore = reportData.score || 0;
-    const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility';
+    const scriptCheckResult = reportData.scriptCheckResult;
+    const hasWebAbility = scriptCheckResult === 'Web Ability';
+
     const enhancedScore = hasWebAbility
       ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
       : baseScore;
@@ -1303,6 +1308,32 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       translatedFix,
       translatedLabel,
       translatedTotalErrors,
+      translatedIssuesDetectedByCategory,
+      translatedAccessibilityComplianceAchieved,
+      translatedWebsiteCompliant,
+      translatedComplianceStatus,
+      translatedWebAbilityProtecting,
+      translatedAutomatedFixesApplied,
+      translatedCriticalViolationsDetected,
+      translatedLegalActionWarning,
+      translatedImmediateRisks,
+      translatedPotentialLawsuits,
+      translatedCustomerLoss,
+      translatedSeoPenalties,
+      translatedBrandDamage,
+      translatedTimeSensitiveAction,
+      translatedWebAbilityAutoFix,
+      translatedInstantCompliance,
+      translatedProtectBusiness,
+      translatedAccessibilityStatement,
+      translatedWcagComplianceIssues,
+      translatedAutoFixed,
+      translatedReadyToUse,
+      translatedNeedAction,
+      translatedReviewRequired,
+      translatedCanBeFixedWithWebability,
+      translatedUseWebabilityToFix,
+      translatedCriticalComplianceGaps,
     ] = await translateMultipleTexts(
       [
         status,
@@ -1317,6 +1348,32 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         'Fix',
         'Scan results for ',
         'Total Errors',
+        'Issues detected by category',
+        '✓ ACCESSIBILITY COMPLIANCE ACHIEVED',
+        'Your website is now compliant with accessibility standards',
+        'COMPLIANCE STATUS:',
+        '✓ WebAbility widget is actively protecting your site',
+        '✓ Automated accessibility fixes are applied',
+        ' CRITICAL ACCESSIBILITY VIOLATIONS DETECTED',
+        'Your website may face legal action and lose customers',
+        'IMMEDIATE RISKS TO YOUR BUSINESS:',
+        '• Potential lawsuits under ADA compliance regulations',
+        '• Loss of 15% of potential customers (disabled users)',
+        '• Google SEO penalties reducing search rankings',
+        '• Damage to brand reputation and customer trust',
+        'TIME-SENSITIVE ACTION REQUIRED:',
+        '✓ WebAbility can fix most issues automatically',
+        '✓ Instant compliance improvement',
+        '✓ Protect your business from legal risks TODAY',
+        'Accessibility Statement',
+        'WCAG 2.1 AA Compliance Issues for',
+        'Auto-Fixed',
+        ' Ready to use',
+        'Need Action',
+        '⚠ Review required',
+        'Fix with AI',
+        'use webability to fix',
+        'Critical compliance gaps exposing your business to legal action',
       ],
       currentLanguage,
     );
@@ -1483,7 +1540,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     // --- END REPLACEMENT BLOCK ---
 
     // --- ADD CIRCLES FOR TOTAL ERRORS AND PERCENTAGE ---
-    const circleY = containerY + containerHeight + 25;
+    const circleY = containerY + containerHeight + 17;
     const circleRadius = 15;
     const centerX = 105;
     const gap = 40;
@@ -1537,14 +1594,14 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     // SEVERITY SUMMARY BOXES
 
-    const yStart = circleY + circleRadius + 30;
+    const yStart = circleY + circleRadius + 15;
     const total = issues.length;
     const counts = {
       critical: issues.filter((i) => i.impact === 'critical').length,
       serious: issues.filter((i) => i.impact === 'serious').length,
       moderate: issues.filter((i) => i.impact === 'moderate').length,
     };
-    // Use blue shades for all summary boxes
+
     const summaryBoxes = [
       {
         label: translatedSevere,
@@ -1563,26 +1620,862 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       },
     ];
 
-    let x = 20;
+    let x = 18;
     for (const box of summaryBoxes) {
+      // Add shadow to summary boxes
+      doc.setFillColor(245, 245, 245); // Very light gray for shadow
+      doc.roundedRect(x + 1, yStart + 1, 57, 22, 4, 4, 'F');
+
       doc.setFillColor(box.color[0], box.color[1], box.color[2]);
-      doc.roundedRect(x, yStart, 55, 20, 3, 3, 'F');
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(x, yStart, 57, 22, 4, 4, 'FD');
       doc.setTextColor(0, 0, 0);
-      doc.setFontSize(12);
+      doc.setFontSize(13);
       doc.setFont('NotoSans_Condensed-Regular');
-      doc.text(`${box.count}`, x + 4, yStart + 8);
-      doc.setFontSize(10);
-      doc.text(box.label, x + 4, yStart + 16);
-      x += 60;
+      doc.text(`${box.count}`, x + 5, yStart + 9);
+      doc.setFontSize(11);
+      doc.text(box.label, x + 5, yStart + 18);
+      x += 62;
     }
 
-    const yTable = yStart + 40;
+    // Function to load SVG icons from the report icons folder
+    const loadSVGIcon = async (category: string): Promise<string | null> => {
+      try {
+        let iconPath = '';
+        const normalizedCategory = category.toLowerCase();
+
+        // Map accessibility categories to appropriate icons
+        if (
+          normalizedCategory.includes('content') ||
+          normalizedCategory.includes('text')
+        ) {
+          iconPath = '/images/report_icons/content.svg';
+        } else if (
+          normalizedCategory.includes('navigation') ||
+          normalizedCategory.includes('navigate') ||
+          normalizedCategory.includes('menu')
+        ) {
+          iconPath = '/images/report_icons/navigation.svg';
+        } else if (
+          normalizedCategory.includes('form') ||
+          normalizedCategory.includes('input') ||
+          normalizedCategory.includes('button')
+        ) {
+          iconPath = '/images/report_icons/forms.svg';
+        } else if (
+          normalizedCategory.includes('cognitive') ||
+          normalizedCategory.includes('brain') ||
+          normalizedCategory.includes('mental')
+        ) {
+          iconPath = '/images/report_icons/cognitive.svg';
+        } else if (
+          normalizedCategory.includes('visual') ||
+          normalizedCategory.includes('blind') ||
+          normalizedCategory.includes('vision') ||
+          normalizedCategory.includes('low-vision')
+        ) {
+          iconPath = '/images/report_icons/low-vision.svg';
+        } else if (
+          normalizedCategory.includes('mobility') ||
+          normalizedCategory.includes('motor') ||
+          normalizedCategory.includes('movement')
+        ) {
+          iconPath = '/images/report_icons/Mobility.svg';
+        } else if (
+          normalizedCategory.includes('other') ||
+          normalizedCategory === 'others'
+        ) {
+          iconPath = '/images/report_icons/others.svg';
+        } else {
+          // Default fallback for unmapped categories
+          iconPath = '/images/report_icons/others.svg';
+        }
+
+        const response = await fetch(iconPath);
+        if (response.ok) {
+          const svgText = await response.text();
+
+          // Convert SVG to high-resolution PNG using canvas
+          return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+
+            // Use high resolution for crisp icons (256x256)
+            const size = 256;
+            canvas.width = size;
+            canvas.height = size;
+
+            img.onload = () => {
+              if (ctx) {
+                // Enable smooth scaling for better quality
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+
+                // Clear canvas and draw the SVG at high resolution
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                // Convert to high-quality PNG data URL
+                const pngDataUrl = canvas.toDataURL('image/png', 1.0);
+                resolve(pngDataUrl);
+              } else {
+                resolve(null);
+              }
+            };
+
+            img.onerror = () => {
+              resolve(null);
+            };
+
+            // Create data URL from SVG
+            const svgDataUrl = `data:image/svg+xml;base64,${btoa(svgText)}`;
+            img.src = svgDataUrl;
+          });
+        }
+      } catch (error) {
+        console.warn('Failed to load SVG icon for category:', category, error);
+      }
+      return null;
+    };
+
+    // Function to draw category icons
+    const drawCategoryIcon = (
+      doc: any,
+      category: string,
+      x: number,
+      y: number,
+      size: number,
+    ) => {
+      const iconColor = [21, 101, 192]; // Blue color for icons
+      const normalizedCategory = category.toLowerCase();
+
+      // Enhanced category matching with multiple keyword support
+      if (
+        normalizedCategory.includes('content') ||
+        normalizedCategory.includes('text')
+      ) {
+        // Draw content icon (document with text)
+        doc.setFillColor(...iconColor);
+        doc.setDrawColor(...iconColor);
+        doc.setLineWidth(0.3);
+
+        // Document outline
+        doc.rect(x, y, size * 0.8, size * 1.1, 'S');
+        // Document fold
+        doc.line(x + size * 0.6, y, x + size * 0.6, y + size * 0.2);
+        doc.line(
+          x + size * 0.6,
+          y + size * 0.2,
+          x + size * 0.8,
+          y + size * 0.2,
+        );
+        // Text lines
+        doc.setLineWidth(0.2);
+        doc.line(
+          x + size * 0.15,
+          y + size * 0.35,
+          x + size * 0.65,
+          y + size * 0.35,
+        );
+        doc.line(
+          x + size * 0.15,
+          y + size * 0.5,
+          x + size * 0.65,
+          y + size * 0.5,
+        );
+        doc.line(
+          x + size * 0.15,
+          y + size * 0.65,
+          x + size * 0.5,
+          y + size * 0.65,
+        );
+        doc.line(
+          x + size * 0.15,
+          y + size * 0.8,
+          x + size * 0.55,
+          y + size * 0.8,
+        );
+      } else if (
+        normalizedCategory.includes('navigation') ||
+        normalizedCategory.includes('navigate') ||
+        normalizedCategory.includes('menu')
+      ) {
+        // Draw navigation icon (compass/arrow)
+        doc.setFillColor(...iconColor);
+        doc.setDrawColor(...iconColor);
+        doc.setLineWidth(0.4);
+
+        // Main arrow
+        doc.line(
+          x + size * 0.2,
+          y + size * 0.8,
+          x + size * 0.8,
+          y + size * 0.2,
+        );
+        doc.line(
+          x + size * 0.8,
+          y + size * 0.2,
+          x + size * 0.6,
+          y + size * 0.4,
+        );
+        doc.line(
+          x + size * 0.8,
+          y + size * 0.2,
+          x + size * 0.6,
+          y + size * 0.2,
+        );
+        // Small arrow
+        doc.line(
+          x + size * 0.3,
+          y + size * 0.7,
+          x + size * 0.7,
+          y + size * 0.3,
+        );
+        doc.line(
+          x + size * 0.7,
+          y + size * 0.3,
+          x + size * 0.55,
+          y + size * 0.45,
+        );
+        doc.line(
+          x + size * 0.7,
+          y + size * 0.3,
+          x + size * 0.55,
+          y + size * 0.3,
+        );
+      } else if (
+        normalizedCategory.includes('form') ||
+        normalizedCategory.includes('input') ||
+        normalizedCategory.includes('button')
+      ) {
+        // Draw forms icon (form with checkboxes)
+        doc.setFillColor(...iconColor);
+        doc.setDrawColor(...iconColor);
+        doc.setLineWidth(0.3);
+
+        // Form outline
+        doc.rect(x, y, size * 0.9, size * 1.1, 'S');
+        // Checkbox 1
+        doc.rect(x + size * 0.1, y + size * 0.2, size * 0.15, size * 0.15, 'S');
+        doc.line(
+          x + size * 0.13,
+          y + size * 0.28,
+          x + size * 0.18,
+          y + size * 0.33,
+        );
+        doc.line(
+          x + size * 0.18,
+          y + size * 0.33,
+          x + size * 0.22,
+          y + size * 0.25,
+        );
+        // Checkbox 2
+        doc.rect(
+          x + size * 0.1,
+          y + size * 0.45,
+          size * 0.15,
+          size * 0.15,
+          'S',
+        );
+        doc.line(
+          x + size * 0.13,
+          y + size * 0.53,
+          x + size * 0.18,
+          y + size * 0.58,
+        );
+        doc.line(
+          x + size * 0.18,
+          y + size * 0.58,
+          x + size * 0.22,
+          y + size * 0.5,
+        );
+        // Text lines
+        doc.setLineWidth(0.2);
+        doc.line(
+          x + size * 0.3,
+          y + size * 0.28,
+          x + size * 0.8,
+          y + size * 0.28,
+        );
+        doc.line(
+          x + size * 0.3,
+          y + size * 0.53,
+          x + size * 0.8,
+          y + size * 0.53,
+        );
+        doc.line(
+          x + size * 0.3,
+          y + size * 0.78,
+          x + size * 0.7,
+          y + size * 0.78,
+        );
+      } else if (
+        normalizedCategory.includes('cognitive') ||
+        normalizedCategory.includes('brain') ||
+        normalizedCategory.includes('mental')
+      ) {
+        // Draw cognitive icon (brain/mind)
+        doc.setFillColor(...iconColor);
+        doc.setDrawColor(...iconColor);
+        doc.setLineWidth(0.3);
+
+        // Brain outline
+        doc.circle(x + size * 0.5, y + size * 0.4, size * 0.3, 'S');
+        // Brain wrinkles/patterns
+        doc.setLineWidth(0.2);
+        doc.line(
+          x + size * 0.3,
+          y + size * 0.35,
+          x + size * 0.5,
+          y + size * 0.25,
+        );
+        doc.line(
+          x + size * 0.5,
+          y + size * 0.45,
+          x + size * 0.7,
+          y + size * 0.35,
+        );
+        doc.line(
+          x + size * 0.35,
+          y + size * 0.5,
+          x + size * 0.65,
+          y + size * 0.5,
+        );
+        // Thought bubbles
+        doc.circle(x + size * 0.2, y + size * 0.8, size * 0.05, 'F');
+        doc.circle(x + size * 0.3, y + size * 0.7, size * 0.03, 'F');
+      } else if (
+        normalizedCategory.includes('visual') ||
+        normalizedCategory.includes('blind') ||
+        normalizedCategory.includes('vision') ||
+        normalizedCategory.includes('low-vision')
+      ) {
+        // Draw vision/eye icon
+        doc.setFillColor(...iconColor);
+        doc.setDrawColor(...iconColor);
+        doc.setLineWidth(0.3);
+
+        // Eye outline
+        doc.ellipse(
+          x + size * 0.5,
+          y + size * 0.5,
+          size * 0.4,
+          size * 0.25,
+          'S',
+        );
+        // Pupil
+        doc.circle(x + size * 0.5, y + size * 0.5, size * 0.12, 'F');
+        // Highlight
+        doc.setFillColor(255, 255, 255);
+        doc.circle(x + size * 0.52, y + size * 0.45, size * 0.04, 'F');
+        doc.setFillColor(...iconColor);
+      } else if (
+        normalizedCategory.includes('mobility') ||
+        normalizedCategory.includes('motor') ||
+        normalizedCategory.includes('movement')
+      ) {
+        // Draw mobility/movement icon (hand/gesture)
+        doc.setFillColor(...iconColor);
+        doc.setDrawColor(...iconColor);
+        doc.setLineWidth(0.3);
+
+        // Hand/cursor icon
+        doc.circle(x + size * 0.3, y + size * 0.3, size * 0.15, 'S');
+        doc.line(
+          x + size * 0.3,
+          y + size * 0.45,
+          x + size * 0.3,
+          y + size * 0.8,
+        );
+        doc.line(
+          x + size * 0.15,
+          y + size * 0.6,
+          x + size * 0.45,
+          y + size * 0.6,
+        );
+        // Arrows indicating movement
+        doc.setLineWidth(0.2);
+        doc.line(
+          x + size * 0.6,
+          y + size * 0.3,
+          x + size * 0.8,
+          y + size * 0.3,
+        );
+        doc.line(
+          x + size * 0.75,
+          y + size * 0.25,
+          x + size * 0.8,
+          y + size * 0.3,
+        );
+        doc.line(
+          x + size * 0.75,
+          y + size * 0.35,
+          x + size * 0.8,
+          y + size * 0.3,
+        );
+      } else if (
+        normalizedCategory.includes('other') ||
+        normalizedCategory === 'others'
+      ) {
+        // Draw other icon (gear/settings)
+        doc.setFillColor(...iconColor);
+        doc.setDrawColor(...iconColor);
+        doc.setLineWidth(0.3);
+
+        // Gear teeth
+        for (let i = 0; i < 8; i++) {
+          const angle = (i * Math.PI) / 4;
+          const x1 = x + size * 0.5 + Math.cos(angle) * size * 0.4;
+          const y1 = y + size * 0.5 + Math.sin(angle) * size * 0.4;
+          const x2 = x + size * 0.5 + Math.cos(angle) * size * 0.25;
+          const y2 = y + size * 0.5 + Math.sin(angle) * size * 0.25;
+          doc.line(x1, y1, x2, y2);
+        }
+        // Center circle
+        doc.circle(x + size * 0.5, y + size * 0.5, size * 0.15, 'S');
+      } else {
+        // Draw a generic icon (circle with dots)
+        doc.setFillColor(...iconColor);
+        doc.setDrawColor(...iconColor);
+        doc.setLineWidth(0.3);
+
+        // Main circle
+        doc.circle(x + size * 0.5, y + size * 0.5, size * 0.3, 'S');
+        // Dots
+        doc.circle(x + size * 0.3, y + size * 0.3, size * 0.08, 'F');
+        doc.circle(x + size * 0.7, y + size * 0.3, size * 0.08, 'F');
+        doc.circle(x + size * 0.5, y + size * 0.7, size * 0.08, 'F');
+      }
+    };
+
+    // Issues by Category Analysis - Card Layout with Progress Bars
+    const categoryGroups = new Map<string, number>();
+
+    // First, collect all raw functionality and structure data like the original
+    const rawCategories = new Map<string, number>();
+
+    issues.forEach((issue) => {
+      // Function grouping (like original)
+      const functionName = issue.functionality || 'Unknown';
+      rawCategories.set(
+        functionName,
+        (rawCategories.get(functionName) || 0) + 1,
+      );
+
+      // Structure grouping (like original)
+      const selector = issue.selectors?.[0]?.toLowerCase() || '';
+      let structure = 'Other';
+
+      if (
+        selector.includes('p') ||
+        selector.includes('h') ||
+        selector.includes('img') ||
+        selector.includes('span')
+      ) {
+        structure = 'Content';
+      } else if (
+        selector.includes('a') ||
+        selector.includes('nav') ||
+        selector.includes('button')
+      ) {
+        structure = 'Navigation';
+      } else if (
+        selector.includes('form') ||
+        selector.includes('input') ||
+        selector.includes('select') ||
+        selector.includes('textarea')
+      ) {
+        structure = 'Forms';
+      }
+
+      rawCategories.set(structure, (rawCategories.get(structure) || 0) + 1);
+    });
+
+    // Now map the raw categories to our 6 predefined categories
+    rawCategories.forEach((count, rawCategory) => {
+      const lowerCategory = rawCategory.toLowerCase();
+      let mappedCategory = 'Other';
+
+      // Map based on category name
+      if (lowerCategory.includes('content') || rawCategory === 'Content') {
+        mappedCategory = 'Content';
+      } else if (
+        lowerCategory.includes('navigation') ||
+        rawCategory === 'Navigation' ||
+        rawCategory === 'Forms'
+      ) {
+        mappedCategory = 'Navigation';
+      } else if (
+        lowerCategory.includes('cognitive') ||
+        lowerCategory.includes('brain') ||
+        lowerCategory.includes('mental')
+      ) {
+        mappedCategory = 'Cognitive';
+      } else if (
+        lowerCategory.includes('vision') ||
+        lowerCategory.includes('visual') ||
+        lowerCategory.includes('contrast') ||
+        lowerCategory.includes('color')
+      ) {
+        mappedCategory = 'Low Vision';
+      } else if (
+        lowerCategory.includes('mobility') ||
+        lowerCategory.includes('motor') ||
+        lowerCategory.includes('keyboard')
+      ) {
+        mappedCategory = 'Mobility';
+      }
+
+      // Add to final category groups
+      categoryGroups.set(
+        mappedCategory,
+        (categoryGroups.get(mappedCategory) || 0) + count,
+      );
+    });
+
+    // Create category data sorted by count
+    const categoryData = Array.from(categoryGroups.entries()).sort((a, b) => {
+      // If one is "Other", it should come last
+      if (a[0] === 'Other' && b[0] !== 'Other') return 1;
+      if (b[0] === 'Other' && a[0] !== 'Other') return -1;
+      // Otherwise sort by count in descending order
+      return b[1] - a[1];
+    });
+
+    let nextY = yStart + 30; // Start right after summary boxes
+
+    if (categoryData.length > 0) {
+      // Section header
+      doc.setDrawColor(21, 101, 192);
+      doc.setLineWidth(0.5);
+      doc.line(30, nextY, 180, nextY);
+
+      doc.setFontSize(14);
+      doc.setTextColor(21, 101, 192);
+      doc.setFont('NotoSans_Condensed-Regular');
+      doc.text(translatedIssuesDetectedByCategory, 105, nextY + 8, {
+        align: 'center',
+      });
+      let currentY = nextY + 18;
+
+      // Define category colors to match the display image
+      const categoryColors = new Map<string, [number, number, number]>([
+        ['Content', [33, 150, 243]], // Blue 500
+        ['Cognitive', [25, 118, 210]], // Blue 700
+        ['Low Vision', [30, 136, 229]], // Blue 600 (darker, not too light)
+        ['Navigation', [21, 101, 192]], // Blue 800
+        ['Mobility', [66, 165, 245]], // Blue 400 (mid blue, not too light)
+        ['Other', [120, 144, 156]], // Blue Grey 700 (neutral, not light blue)
+        ['Forms', [2, 119, 189]], // Blue 700 (darker)
+      ]);
+
+      // Card layout - 3 columns, 2 rows to match the image exactly
+      const itemsPerRow = 3;
+      const cardWidth = 58; // Increased width
+      const cardHeight = 40; // Increased height
+      const cardSpacing = 3; // Reduced spacing
+      const startX = 12; // Adjusted start position
+      const totalIssues = issues.length;
+
+      // Ensure we have exactly these 6 categories in the right order
+      const predefinedCategories = [
+        'Content',
+        'Cognitive',
+        'Low Vision',
+        'Navigation',
+        'Mobility',
+        'Other',
+      ];
+      const orderedCategoryData: [string, number][] = [];
+
+      // Add categories in the predefined order if they exist
+      predefinedCategories.forEach((category) => {
+        const found = categoryData.find(([cat]) => cat === category);
+        if (found) {
+          orderedCategoryData.push(found);
+        } else {
+          // Add with 0 count if category doesn't exist
+          orderedCategoryData.push([category, 0]);
+        }
+      });
+
+      // Load all SVG icons first
+      const iconPromises = orderedCategoryData.map(async ([category]) => {
+        return { category, svgIcon: await loadSVGIcon(category) };
+      });
+
+      const iconResults = await Promise.all(iconPromises);
+      const iconMap = new Map(
+        iconResults.map((result) => [result.category, result.svgIcon]),
+      );
+
+      orderedCategoryData.forEach(([category, count], index) => {
+        const column = index % itemsPerRow;
+        const row = Math.floor(index / itemsPerRow);
+        const x = startX + column * (cardWidth + cardSpacing);
+        const y = currentY + row * (cardHeight + 6);
+
+        // Calculate percentage
+        const percentage = totalIssues > 0 ? (count / totalIssues) * 100 : 0;
+        const categoryColor = categoryColors.get(category) || [107, 114, 128];
+
+        // Card background - clean white with subtle shadow
+        doc.setFillColor(250, 250, 250); // Very light shadow
+        doc.roundedRect(x + 0.5, y + 0.5, cardWidth, cardHeight, 2, 2, 'F');
+
+        doc.setFillColor(255, 255, 255); // Clean white background
+        doc.setDrawColor(230, 230, 230); // Light border
+        doc.setLineWidth(0.3);
+        doc.roundedRect(x, y, cardWidth, cardHeight, 2, 2, 'FD');
+
+        // Category icon in colored rounded square - top left
+        const iconSize = 10;
+        const iconX = x + 4;
+        const iconY = y + 4;
+
+        // Colored rounded square background for icon
+        doc.setFillColor(...categoryColor);
+        doc.roundedRect(iconX, iconY, iconSize, iconSize, 2, 2, 'F');
+
+        // Add white icon
+        const svgIcon = iconMap.get(category);
+        if (svgIcon) {
+          // Add the SVG icon in white (smaller)
+          const svgSize = iconSize - 4; // Make SVG smaller
+          const svgOffset = (iconSize - svgSize) / 2; // Center the smaller SVG
+          doc.addImage(
+            svgIcon,
+            'PNG',
+            iconX + svgOffset,
+            iconY + svgOffset,
+            svgSize,
+            svgSize,
+          );
+        } else {
+          // Draw simple white icon shapes
+          doc.setFillColor(255, 255, 255);
+          doc.setDrawColor(255, 255, 255);
+          doc.setLineWidth(0.4);
+
+          if (category === 'Content') {
+            // Simple document icon
+            doc.rect(iconX + 2.5, iconY + 2, iconSize - 5, iconSize - 4, 'FD');
+            doc.setLineWidth(0.2);
+            doc.line(iconX + 3.5, iconY + 4, iconX + 6.5, iconY + 4);
+            doc.line(iconX + 3.5, iconY + 5.5, iconX + 6.5, iconY + 5.5);
+          } else if (category === 'Cognitive') {
+            // Simple brain/puzzle piece
+            doc.circle(iconX + iconSize / 2, iconY + iconSize / 2, 2.5, 'FD');
+          } else if (category === 'Low Vision') {
+            // Simple eye icon
+            doc.ellipse(
+              iconX + iconSize / 2,
+              iconY + iconSize / 2,
+              3,
+              1.5,
+              'FD',
+            );
+            doc.circle(iconX + iconSize / 2, iconY + iconSize / 2, 1, 'F');
+          } else if (category === 'Navigation') {
+            // Simple arrow
+            doc.setLineWidth(0.6);
+            doc.line(iconX + 2, iconY + 6, iconX + 6, iconY + 2);
+            doc.line(iconX + 6, iconY + 2, iconX + 5, iconY + 3.5);
+            doc.line(iconX + 6, iconY + 2, iconX + 4.5, iconY + 3);
+          } else if (category === 'Mobility') {
+            // Simple person icon
+            doc.circle(iconX + iconSize / 2, iconY + 3, 1, 'F');
+            doc.rect(iconX + iconSize / 2 - 0.5, iconY + 4.5, 1, 3, 'F');
+          } else {
+            // Simple gear/other icon
+            doc.circle(iconX + iconSize / 2, iconY + iconSize / 2, 2, 'FD');
+          }
+        }
+
+        // Category name (below icon, clean)
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('NotoSans_Condensed-Regular');
+        const categoryX = x + 4;
+        const categoryY = y + 20;
+        doc.text(category, categoryX, categoryY);
+
+        // Get category text width to align count with it
+        const categoryWidth = doc.getTextWidth(category);
+
+        // Count number (right-aligned with category name in round rect)
+        doc.setFontSize(8);
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('NotoSans_Condensed-Regular');
+        const countText = count.toString();
+        const countWidth = doc.getTextWidth(countText);
+
+        // Round rectangle background for count
+        const rectPadding = 3;
+        const rectWidth = countWidth + rectPadding * 2;
+        const rectHeight = 5.5;
+        const rectX = x + cardWidth - rectWidth - 4; // Right-aligned with card
+        const rectY = categoryY - rectHeight + 1.5;
+        doc.setFillColor(80, 80, 80); // Dark gray for better contrast
+        doc.roundedRect(rectX, rectY, rectWidth, rectHeight, 2.5, 2.5, 'F');
+
+        // Count text
+        doc.text(countText, rectX + rectPadding, categoryY - 0.5);
+
+        // Progress bar at bottom
+        const progressBarWidth = cardWidth - 6;
+        const progressBarHeight = 3;
+        const progressBarX = x + 3;
+        const progressBarY = y + cardHeight - 9;
+
+        // Progress bar background
+        doc.setFillColor(240, 240, 240);
+        doc.roundedRect(
+          progressBarX,
+          progressBarY,
+          progressBarWidth,
+          progressBarHeight,
+          1.5,
+          1.5,
+          'F',
+        );
+
+        // Progress bar fill
+        const fillWidth = (progressBarWidth * percentage) / 100;
+        if (fillWidth > 1) {
+          doc.setFillColor(...categoryColor);
+          doc.roundedRect(
+            progressBarX,
+            progressBarY,
+            fillWidth,
+            progressBarHeight,
+            1.5,
+            1.5,
+            'F',
+          );
+        }
+
+        // Percentage text
+        doc.setFontSize(7);
+        doc.setTextColor(120, 120, 120);
+        doc.setFont('NotoSans_Condensed-Regular');
+        doc.text(
+          `${percentage.toFixed(1)}% of total issues`,
+          x + 3,
+          y + cardHeight - 3,
+        );
+      });
+
+      // Calculate the actual Y position after all cards are drawn
+      const totalRows = Math.ceil(orderedCategoryData.length / itemsPerRow);
+      nextY = currentY + totalRows * (cardHeight + 6) + 15; // Added more spacing
+    }
+
+    let yTable = yStart + 40;
 
     const pageHeight = doc.internal.pageSize.getHeight();
     const footerHeight = 15;
 
     // Helper to ensure array
     const toArray = (val: any) => (Array.isArray(val) ? val : val ? [val] : []);
+
+    // Helper: estimate heights to keep Issue + Message + Fix(es) together on one page
+    const getColumnWidths = () => [38, 38, 50, 45];
+    const sumColumnsWidth = (startIndex: number, span: number) => {
+      const widths = getColumnWidths();
+      return widths
+        .slice(startIndex, startIndex + span)
+        .reduce((a, b) => a + b, 0);
+    };
+    const getLineHeight = (fontSize: number) => {
+      const factor =
+        typeof (doc as any).getLineHeightFactor === 'function'
+          ? (doc as any).getLineHeightFactor()
+          : 1.15;
+      return Math.max(4, fontSize * factor);
+    };
+    const estimateCellHeight = (
+      text: string,
+      availableWidth: number,
+      fontSize: number,
+      paddingTop: number,
+      paddingBottom: number,
+    ) => {
+      const content = String(text || '');
+      const safeWidth = Math.max(5, availableWidth);
+      const lines = doc.splitTextToSize(content, safeWidth);
+      const lineHeight = getLineHeight(fontSize);
+      const textHeight = Math.max(lineHeight, lines.length * lineHeight);
+      return textHeight + paddingTop + paddingBottom;
+    };
+    const estimateIssueFixGroupHeight = (
+      issue: any,
+      headerLeftText: string,
+      headerRightText: string,
+      fixesList: string[],
+    ) => {
+      // Row: Header (two cells, colSpan 2 each)
+      const headerLeftWidth = sumColumnsWidth(0, 2) - 16; // padding 8 + 8
+      const headerRightWidth = sumColumnsWidth(2, 2) - 16;
+      const headerLeftH = estimateCellHeight(
+        headerLeftText,
+        headerLeftWidth,
+        14,
+        8,
+        8,
+      );
+      const headerRightH = estimateCellHeight(
+        headerRightText,
+        headerRightWidth,
+        14,
+        8,
+        8,
+      );
+      const headerRowH = Math.max(headerLeftH, headerRightH);
+
+      // Row: Issue + Message (two cells)
+      const issueLeftText = issue.code ? `${issue.code} (${issue.impact})` : '';
+      const issueRightText = issue.message || '';
+      const issueLeftWidth = sumColumnsWidth(0, 2) - 20; // padding 10 + 10
+      const issueRightWidth = sumColumnsWidth(2, 2) - 20;
+      const issueLeftH = Math.max(
+        30,
+        estimateCellHeight(issueLeftText, issueLeftWidth, 12, 10, 10),
+      );
+      const issueRightH = Math.max(
+        30,
+        estimateCellHeight(issueRightText, issueRightWidth, 12, 10, 10),
+      );
+      const issueRowH = Math.max(issueLeftH, issueRightH);
+
+      // Row: Fix heading (if any)
+      let fixesBlockH = 0;
+      const filtered = fixesList.filter(Boolean);
+      if (filtered.length > 0) {
+        const fixHeadingWidth = sumColumnsWidth(0, 4) - 10; // padding 5 + 5
+        const fixHeadingH = estimateCellHeight(
+          'Fix',
+          fixHeadingWidth,
+          11,
+          5,
+          5,
+        );
+        fixesBlockH += fixHeadingH;
+        // Each fix row
+        const fixRowWidth = sumColumnsWidth(0, 4) - 16; // padding 8 + 8
+        filtered.forEach((fix) => {
+          const text = `${fix}`; // number prefix height impact negligible in estimate
+          const h = estimateCellHeight(text, fixRowWidth, 11, 10, 10);
+          fixesBlockH += Math.max(22, h); // ensure reasonable min
+        });
+        // Spacer rows between fixes
+        fixesBlockH += Math.max(0, filtered.length - 1) * 6;
+      }
+
+      return headerRowH + issueRowH + fixesBlockH;
+    };
 
     // Build the rows
     let tableBody: any[] = [];
@@ -1601,12 +2494,173 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       }
     }
 
-    for (const issue of translatedIssues) {
+    let fitToPage = false;
+
+    for (const [index, issue] of translatedIssues.entries()) {
+      // Add page break before each issue (except the first one)
+      if (fitToPage) {
+        autoTable(doc, {
+          startY: yTable,
+          margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
+          head: [],
+          body: tableBody,
+          theme: 'plain',
+          columnStyles: {
+            0: { cellWidth: 38 },
+            1: { cellWidth: 38 },
+            2: { cellWidth: 50 },
+            3: { cellWidth: 45 },
+          },
+          rowPageBreak: 'auto',
+          tableLineColor: [226, 232, 240],
+          tableLineWidth: 0.5,
+          styles: {
+            lineColor: [255, 255, 255],
+            lineWidth: 0,
+            cellPadding: 8,
+          },
+          willDrawCell: (data: any) => {
+            if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
+              const pageHeight = doc.internal.pageSize.getHeight();
+              const currentY = data.cursor.y;
+              const bottomMargin = 25;
+              const fullText = (data.cell.raw as any).content || '';
+              const indexNumber = (data.cell.raw as any)._indexNumber;
+              const indexPrefix = `${indexNumber}`;
+              const indexWidth = doc.getTextWidth(indexPrefix) + 16;
+              const codeContent = fullText.substring(`${indexNumber}. `.length);
+              const availableWidth = data.cell.width - 16 - indexWidth;
+              doc.setFont('NotoSans_Condensed-Regular', 'normal');
+              doc.setFontSize(10);
+              const lines = doc.splitTextToSize(codeContent, availableWidth);
+              const lineHeight = 4;
+              const topPadding = 8;
+              const bottomPadding = 4;
+              const textHeight =
+                lines.length * lineHeight + topPadding + bottomPadding;
+              const estimatedHeight = Math.max(textHeight, 30);
+              if (currentY + estimatedHeight > pageHeight - bottomMargin) {
+                return false;
+              }
+            }
+            return true;
+          },
+          didDrawCell: (data: any) => {
+            if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
+              const { x, y, width, height } = data.cell;
+              const padding = 2;
+              const cornerRadius = 4;
+              const indexNumber = (data.cell.raw as any)._indexNumber;
+              doc.setFont('NotoSans_Condensed-Regular', 'normal');
+              doc.setFontSize(12);
+              const indexPrefix = `${indexNumber}`;
+              const indexWidth = doc.getTextWidth(indexPrefix) + 8;
+              doc.setDrawColor(100, 116, 139);
+              doc.setLineWidth(0.5);
+              doc.setFillColor(15, 23, 42);
+              doc.roundedRect(
+                x + padding,
+                y + padding,
+                width - padding * 2,
+                height - padding * 2,
+                cornerRadius,
+                cornerRadius,
+                'FD',
+              );
+              doc.setFillColor(51, 65, 85);
+              doc.roundedRect(
+                x + padding,
+                y + padding,
+                indexWidth,
+                height - padding * 2,
+                cornerRadius,
+                cornerRadius,
+                'F',
+              );
+              doc.setFillColor(51, 65, 85);
+              doc.rect(
+                x + padding + indexWidth - cornerRadius,
+                y + padding,
+                cornerRadius,
+                height - padding * 2,
+                'F',
+              );
+              doc.setTextColor(255, 255, 255);
+              const indexTextX = x + padding + 4;
+              const textY = y + padding + 8;
+              doc.text(indexPrefix, indexTextX, textY);
+              const fullText = (data.cell.raw as any).content;
+              const codeContent = fullText.substring(`${indexNumber}. `.length);
+              const codeTextX = x + padding + indexWidth + 4;
+              const availableWidth = width - padding * 2 - indexWidth - 8;
+              const lines = doc.splitTextToSize(codeContent, availableWidth);
+              let codeTextY = y + padding + 8;
+              lines.forEach((line: string) => {
+                doc.text(line, codeTextX, codeTextY);
+                codeTextY += 4;
+              });
+            }
+            if (
+              data.cell.raw &&
+              data.cell.raw.styles &&
+              data.cell.raw.styles.fontStyle === 'bold' &&
+              data.cell.raw.styles.fontSize === 14
+            ) {
+              const { x, y, width, height } = data.cell;
+              doc.setDrawColor(226, 232, 240);
+              doc.setLineWidth(0.5);
+              doc.line(x, y + height, x + width, y + height);
+            }
+            if (
+              data.cell.raw &&
+              data.cell.raw._isScreenshot &&
+              data.cell.raw._screenshotBase64
+            ) {
+              const { x, y, width, height } = data.cell;
+              const imgWidth = data.cell.raw._screenshotWidth || 80;
+              const imgHeight = data.cell.raw._screenshotHeight || 80;
+              const imgX = x + (width - imgWidth) / 2;
+              const imgY = y + (height - imgHeight) / 2;
+              data.doc.addImage(
+                data.cell.raw._screenshotBase64,
+                'PNG',
+                imgX,
+                imgY,
+                imgWidth,
+                imgHeight,
+              );
+            }
+          },
+        });
+
+        // Start a new page and reset tableBody
+        doc.addPage();
+        tableBody = [];
+        yTable = 10; // Standard top margin for new page
+      }
+
+      // Prepare Fix(es) list for height estimation and rows
+      const fixes = toArray(issue.recommended_action);
+      const filteredFixes = fixes.filter(Boolean);
+
+      // Estimate group height (Issue header + Issue row + Fixes block) to avoid page breaks inside
+      const groupHeightEstimate = estimateIssueFixGroupHeight(
+        issue,
+        translatedIssue,
+        translatedIssueMessage,
+        filteredFixes as any,
+      );
+
+      // Build group table body for this issue (Issue header + Issue row + Fixes)
+      const groupBody: any[] = [];
       // Add header row for each issue with beautiful styling
-      tableBody.push([
+      groupBody.push([
         {
           content: translatedIssue,
           colSpan: 2,
+          pageBreak: 'avoid', // Keep issue header with its content
+          _isIssueFixGroupStart: true,
+          _groupHeight: groupHeightEstimate,
           styles: {
             fillColor: [255, 255, 255], // white background
             textColor: [0, 0, 0], // black text
@@ -1618,6 +2672,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         {
           content: translatedIssueMessage,
           colSpan: 2,
+          pageBreak: 'avoid', // Keep issue header with its content
           styles: {
             fillColor: [255, 255, 255], // matching white background
             textColor: [0, 0, 0], // black text
@@ -1629,13 +2684,14 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
       ]);
 
       // Row 1: Issue + Message with elegant code block styling
-      tableBody.push([
+      groupBody.push([
         {
           content: `${issue.code ? `${issue.code} (${issue.impact})` : ''}`,
           colSpan: 2,
+          pageBreak: 'avoid', // Keep with header
           styles: {
             fontSize: 12,
-            textColor: [30, 41, 59], // dark navy text
+            textColor: [30, 41, 59],
             halign: 'left',
             cellPadding: 10,
             fillColor:
@@ -1654,9 +2710,10 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         {
           content: `${issue.message || ''}`,
           colSpan: 2,
+          pageBreak: 'avoid', // Keep with header
           styles: {
             fontSize: 12,
-            textColor: [30, 41, 59], // dark navy text
+            textColor: [30, 41, 59],
             halign: 'left',
             cellPadding: 10,
             fillColor:
@@ -1672,6 +2729,263 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           },
         },
       ]);
+
+      // Row 3: Fix(es) - display heading first, then each fix in its own white back container with spacing
+      if (filteredFixes.length > 0) {
+        // Heading row for Fix - ensure it stays with at least first fix
+        groupBody.push([
+          {
+            content: translatedFix,
+            colSpan: 4,
+            pageBreak: 'avoid', // Keep fix heading with first fix item
+            styles: {
+              fontSize: 11,
+              textColor: [0, 0, 0], // black text
+              halign: 'left',
+              cellPadding: 5,
+              fillColor: [255, 255, 255], // white background
+              lineWidth: 0,
+              font: 'NotoSans_Condensed-Regular',
+            },
+          },
+        ]);
+        // Each fix in its own row/container, with white background and spacing
+        filteredFixes.forEach((fix, fixIdx) => {
+          groupBody.push([
+            {
+              content: `${fixIdx + 1}. ${fix}`,
+              colSpan: 4,
+              pageBreak: fixIdx === 0 ? 'avoid' : 'auto', // First fix must stay with heading
+              styles: {
+                fontSize: 11,
+                textColor: [0, 0, 0], // black text
+                halign: 'left',
+                cellPadding: { top: 10, right: 8, bottom: 10, left: 8 }, // more vertical space for separation
+                fillColor: [255, 255, 255], // white background for back container
+                lineWidth: 0,
+                font: 'NotoSans_Condensed-Regular',
+              },
+            },
+          ]);
+          // Add a spacer row after each fix except the last
+          if (fixIdx < filteredFixes.length - 1) {
+            groupBody.push([
+              {
+                content: '',
+                colSpan: 4,
+                styles: {
+                  cellPadding: 0,
+                  fillColor: [255, 255, 255],
+                  lineWidth: 0,
+                  minCellHeight: 6, // vertical space between containers
+                },
+              },
+            ]);
+          }
+        });
+      }
+
+      // Append Context rows to the same group so Fix and Context never split
+      const groupContexts = toArray(issue.context).filter(Boolean);
+      if (groupContexts.length > 0) {
+        groupBody.push([
+          {
+            content: translatedContext,
+            colSpan: 4,
+            pageBreak: 'avoid',
+            styles: {
+              fontSize: 11,
+              textColor: [0, 0, 0],
+              halign: 'left',
+              cellPadding: 5,
+              fillColor: [255, 255, 255],
+              lineWidth: 0,
+            },
+          },
+        ]);
+
+        groupContexts.forEach((ctx, index) => {
+          const combinedContent = `${index + 1}. ${ctx}`;
+          groupBody.push([
+            {
+              content: combinedContent,
+              colSpan: 4,
+              pageBreak: index === 0 ? 'avoid' : 'auto',
+              rowSpan: 1,
+              styles: {
+                font: 'NotoSans_Condensed-Regular',
+                fontSize: 10,
+                textColor: [255, 255, 255],
+                fillColor: [255, 255, 255],
+                halign: 'left',
+                valign: 'top',
+                cellPadding: 8,
+                lineWidth: 0,
+                minCellHeight: Math.max(
+                  20,
+                  Math.ceil(combinedContent.length / 50) * 6,
+                ),
+                overflow: 'linebreak',
+              },
+              _isCodeBlock: true,
+              _originalContent: combinedContent,
+              _indexNumber: index + 1,
+            } as any,
+          ]);
+          if (index < groupContexts.length - 1) {
+            groupBody.push([
+              {
+                content: '',
+                colSpan: 4,
+                styles: {
+                  fillColor: [255, 255, 255],
+                  cellPadding: 0,
+                  lineWidth: 0,
+                  minCellHeight: 8,
+                },
+              },
+            ]);
+          }
+        });
+      }
+
+      // Build options for this group's table
+      const groupOptions: any = {
+        startY: yTable,
+        margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
+        head: [],
+        body: groupBody,
+        theme: 'plain',
+        columnStyles: {
+          0: { cellWidth: 38 },
+          1: { cellWidth: 38 },
+          2: { cellWidth: 50 },
+          3: { cellWidth: 45 },
+        },
+        rowPageBreak: 'avoid',
+        tableLineColor: [226, 232, 240],
+        tableLineWidth: 0.5,
+        styles: {
+          lineColor: [255, 255, 255],
+          lineWidth: 0,
+          cellPadding: 8,
+        },
+        willDrawCell: (data: any) => {
+          if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
+            const pageH = doc.internal.pageSize.getHeight();
+            const curY = data.cursor.y;
+            const bottom = 25;
+            const fullText = (data.cell.raw as any).content || '';
+            const indexNumber = (data.cell.raw as any)._indexNumber;
+            const indexPrefix = `${indexNumber}`;
+            const indexWidth = doc.getTextWidth(indexPrefix) + 16;
+            const codeContent = fullText.substring(`${indexNumber}. `.length);
+            const availableWidth = data.cell.width - 16 - indexWidth;
+            doc.setFont('NotoSans_Condensed-Regular', 'normal');
+            doc.setFontSize(10);
+            const lines = doc.splitTextToSize(codeContent, availableWidth);
+            const lineH = 4;
+            const topPad = 8;
+            const bottomPad = 4;
+            const textH = lines.length * lineH + topPad + bottomPad;
+            const estH = Math.max(textH, 30);
+            if (curY + estH > pageH - bottom) return false;
+          }
+          return true;
+        },
+        didDrawCell: (data: any) => {
+          if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
+            const { x, y, width, height } = data.cell;
+            const padding = 2;
+            const cornerRadius = 4;
+            const indexNumber = (data.cell.raw as any)._indexNumber;
+            doc.setFont('NotoSans_Condensed-Regular', 'normal');
+            doc.setFontSize(12);
+            const indexPrefix = `${indexNumber}`;
+            const indexWidth = doc.getTextWidth(indexPrefix) + 8;
+            doc.setDrawColor(100, 116, 139);
+            doc.setLineWidth(0.5);
+            doc.setFillColor(15, 23, 42);
+            doc.roundedRect(
+              x + padding,
+              y + padding,
+              width - padding * 2,
+              height - padding * 2,
+              cornerRadius,
+              cornerRadius,
+              'FD',
+            );
+            doc.setFillColor(51, 65, 85);
+            doc.roundedRect(
+              x + padding,
+              y + padding,
+              indexWidth,
+              height - padding * 2,
+              cornerRadius,
+              cornerRadius,
+              'F',
+            );
+            doc.setFillColor(51, 65, 85);
+            doc.rect(
+              x + padding + indexWidth - cornerRadius,
+              y + padding,
+              cornerRadius,
+              height - padding * 2,
+              'F',
+            );
+            doc.setTextColor(255, 255, 255);
+            const indexTextX = x + padding + 4;
+            const textY = y + padding + 8;
+            doc.text(indexPrefix, indexTextX, textY);
+            const fullText = (data.cell.raw as any).content;
+            const codeContent = fullText.substring(`${indexNumber}. `.length);
+            const codeTextX = x + padding + indexWidth + 4;
+            const availW = width - padding * 2 - indexWidth - 8;
+            const lines = doc.splitTextToSize(codeContent, availW);
+            let codeTextY = y + padding + 8;
+            lines.forEach((line: string) => {
+              doc.text(line, codeTextX, codeTextY);
+              codeTextY += 4;
+            });
+          }
+        },
+      };
+
+      // Use internal measurement to avoid overestimation before drawing
+      try {
+        const previewTable: any = __createTable(doc as any, groupOptions);
+        const bodyHeight = previewTable.body
+          ? previewTable.body.reduce(
+              (sum: number, row: any) =>
+                sum + row.getMaxCellHeight(previewTable.columns),
+              0,
+            )
+          : 0;
+        const availableBottom = pageHeight - footerHeight;
+        if (yTable + bodyHeight > availableBottom) {
+          doc.addPage();
+          yTable = 10;
+          groupOptions.startY = yTable;
+        }
+        const tableToDraw: any = __createTable(doc as any, groupOptions);
+        __drawTable(doc as any, tableToDraw);
+        if (tableToDraw && tableToDraw.finalY) {
+          yTable = tableToDraw.finalY + 2;
+        }
+      } catch {
+        // Fallback to standard draw if internals are unavailable
+        autoTable(doc, groupOptions);
+        const lastTable: any =
+          (doc as any).lastAutoTable ||
+          (doc as any).autoTable?.previous ||
+          null;
+        if (lastTable && lastTable.finalY) {
+          yTable = lastTable.finalY + 2;
+        }
+      }
+
+      // After-group: build additional rows (screenshot + contexts) in a separate table
+      const afterBody: any[] = [];
       // If screenshotBase64 is available, add a row with the image
       if (issue.screenshotBase64) {
         // Get actual image dimensions from base64 data
@@ -1688,10 +3002,11 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         const screenshotHeight = drawHeight * scale;
 
         // Add a heading row for the screenshot
-        tableBody.push([
+        afterBody.push([
           {
             content: 'Screenshot',
             colSpan: 4,
+            pageBreak: 'avoid', // Keep screenshot with issue
             styles: {
               fontSize: 12,
               textColor: [30, 41, 59],
@@ -1704,10 +3019,11 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         ]);
 
         // Add the screenshot image row
-        tableBody.push([
+        afterBody.push([
           {
             content: '',
             colSpan: 4,
+            pageBreak: 'avoid', // Keep screenshot with its heading
             styles: {
               halign: 'center',
               valign: 'middle',
@@ -1724,15 +3040,16 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         ]);
       }
 
-      // Contexts block (styled like code snapshots with numbers and black rounded boxes)
-      const contexts = toArray(issue.context).filter(Boolean);
+      // Contexts block already appended to groupBody above; skip rebuilding here
+      const contextsAfter: any[] = [];
 
-      if (contexts.length > 0) {
-        // Heading: "Context:"
-        tableBody.push([
+      if (false && contextsAfter.length > 0) {
+        // Heading: "Context:" - ensure it stays with at least first context
+        afterBody.push([
           {
             content: translatedContext,
             colSpan: 4,
+            pageBreak: 'avoid', // Keep context heading with first context item
             styles: {
               fontSize: 11,
               textColor: [0, 0, 0],
@@ -1744,15 +3061,15 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           },
         ]);
 
-        contexts.forEach((ctx, index) => {
+        contextsAfter.forEach((ctx, index) => {
           // Combined code block with index number
           const combinedContent = `${index + 1}. ${ctx}`;
 
-          tableBody.push([
+          afterBody.push([
             {
               content: combinedContent,
               colSpan: 4,
-              pageBreak: 'avoid',
+              pageBreak: index === 0 ? 'avoid' : 'auto', // First context must stay with heading
               rowSpan: 1,
               styles: {
                 font: 'NotoSans_Condensed-Regular',
@@ -1777,8 +3094,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           ]);
 
           // Spacer row after each block (except the last)
-          if (index < contexts.length - 1) {
-            tableBody.push([
+          if (index < contextsAfter.length - 1) {
+            afterBody.push([
               {
                 content: '',
                 colSpan: 4,
@@ -1794,238 +3111,141 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         });
       }
 
-      // Row 3: Fix(es) - display heading first, then each fix in its own white back container with spacing
-      const fixes = toArray(issue.recommended_action);
-      if (fixes.length > 0 && fixes.some((f) => !!f)) {
-        // Heading row for Fix
-        tableBody.push([
-          {
-            content: translatedFix,
-            colSpan: 4,
-            styles: {
-              fontSize: 11,
-              textColor: [0, 0, 0], // black text
-              halign: 'left',
-              cellPadding: 5,
-              fillColor: [255, 255, 255], // white background
-              lineWidth: 0,
-              font: 'NotoSans_Condensed-Regular',
-            },
+      if (afterBody.length > 0) {
+        autoTable(doc, {
+          startY: yTable,
+          margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
+          head: [],
+          body: afterBody,
+          theme: 'plain',
+          columnStyles: {
+            0: { cellWidth: 38 },
+            1: { cellWidth: 38 },
+            2: { cellWidth: 50 },
+            3: { cellWidth: 45 },
           },
-        ]);
-        // Each fix in its own row/container, with white background and spacing
-        const filteredFixes = fixes.filter(Boolean);
-        filteredFixes.forEach((fix, fixIdx) => {
-          tableBody.push([
-            {
-              content: `${fixIdx + 1}. ${fix}`,
-              colSpan: 4,
-              styles: {
-                fontSize: 11,
-                textColor: [0, 0, 0], // black text
-                halign: 'left',
-                cellPadding: { top: 10, right: 8, bottom: 10, left: 8 }, // more vertical space for separation
-                fillColor: [255, 255, 255], // white background for back container
-                lineWidth: 0,
-                font: 'NotoSans_Condensed-Regular',
-              },
-            },
-          ]);
-          // Add a spacer row after each fix except the last
-          if (fixIdx < filteredFixes.length - 1) {
-            tableBody.push([
-              {
-                content: '',
-                colSpan: 4,
-                styles: {
-                  cellPadding: 0,
-                  fillColor: [255, 255, 255],
-                  lineWidth: 0,
-                  minCellHeight: 6, // vertical space between containers
-                },
-              },
-            ]);
-          }
+          rowPageBreak: 'avoid',
+          tableLineColor: [226, 232, 240],
+          tableLineWidth: 0.5,
+          styles: {
+            lineColor: [255, 255, 255],
+            lineWidth: 0,
+            cellPadding: 8,
+          },
+          // Keep code block and screenshot hooks for this table
+          willDrawCell: (data: any) => {
+            if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
+              const pageHeight2 = doc.internal.pageSize.getHeight();
+              const currentY2 = data.cursor.y;
+              const bottomMargin2 = 25;
+              const fullText = (data.cell.raw as any).content || '';
+              const indexNumber = (data.cell.raw as any)._indexNumber;
+              const indexPrefix = `${indexNumber}`;
+              const indexWidth = doc.getTextWidth(indexPrefix) + 16;
+              const codeContent = fullText.substring(`${indexNumber}. `.length);
+              const availableWidth = data.cell.width - 16 - indexWidth;
+              doc.setFont('NotoSans_Condensed-Regular', 'normal');
+              doc.setFontSize(10);
+              const lines = doc.splitTextToSize(codeContent, availableWidth);
+              const lineHeight = 4;
+              const topPadding = 8;
+              const bottomPadding = 4;
+              const textHeight =
+                lines.length * lineHeight + topPadding + bottomPadding;
+              const estimatedHeight = Math.max(textHeight, 30);
+              if (currentY2 + estimatedHeight > pageHeight2 - bottomMargin2) {
+                return false;
+              }
+            }
+            return true;
+          },
+          didDrawCell: (data: any) => {
+            if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
+              const { x, y, width, height } = data.cell;
+              const padding = 2;
+              const cornerRadius = 4;
+              const indexNumber = (data.cell.raw as any)._indexNumber;
+              doc.setFont('NotoSans_Condensed-Regular', 'normal');
+              doc.setFontSize(12);
+              const indexPrefix = `${indexNumber}`;
+              const indexWidth = doc.getTextWidth(indexPrefix) + 8;
+              doc.setDrawColor(100, 116, 139);
+              doc.setLineWidth(0.5);
+              doc.setFillColor(15, 23, 42);
+              doc.roundedRect(
+                x + padding,
+                y + padding,
+                width - padding * 2,
+                height - padding * 2,
+                cornerRadius,
+                cornerRadius,
+                'FD',
+              );
+              doc.setFillColor(51, 65, 85);
+              doc.roundedRect(
+                x + padding,
+                y + padding,
+                indexWidth,
+                height - padding * 2,
+                cornerRadius,
+                cornerRadius,
+                'F',
+              );
+              doc.setFillColor(51, 65, 85);
+              doc.rect(
+                x + padding + indexWidth - cornerRadius,
+                y + padding,
+                cornerRadius,
+                height - padding * 2,
+                'F',
+              );
+              doc.setTextColor(255, 255, 255);
+              const indexTextX = x + padding + 4;
+              const textY = y + padding + 8;
+              doc.text(indexPrefix, indexTextX, textY);
+              const fullText = (data.cell.raw as any).content;
+              const codeContent = fullText.substring(`${indexNumber}. `.length);
+              const codeTextX = x + padding + indexWidth + 4;
+              const availableWidth = width - padding * 2 - indexWidth - 8;
+              const lines = doc.splitTextToSize(codeContent, availableWidth);
+              let codeTextY = y + padding + 8;
+              lines.forEach((line: string) => {
+                doc.text(line, codeTextX, codeTextY);
+                codeTextY += 4;
+              });
+            }
+            if (
+              data.cell.raw &&
+              data.cell.raw._isScreenshot &&
+              data.cell.raw._screenshotBase64
+            ) {
+              const { x, y, width, height } = data.cell;
+              const imgWidth = data.cell.raw._screenshotWidth || 80;
+              const imgHeight = data.cell.raw._screenshotHeight || 80;
+              const imgX = x + (width - imgWidth) / 2;
+              const imgY = y + (height - imgHeight) / 2;
+              data.doc.addImage(
+                data.cell.raw._screenshotBase64,
+                'PNG',
+                imgX,
+                imgY,
+                imgWidth,
+                imgHeight,
+              );
+            }
+          },
         });
+        const lastTable2: any =
+          (doc as any).lastAutoTable ||
+          (doc as any).autoTable?.previous ||
+          null;
+        if (lastTable2 && lastTable2.finalY) {
+          yTable = lastTable2.finalY + 2;
+        }
       }
     }
 
-    // No global table header, since each issue has its own header row
-    autoTable(doc, {
-      startY: yTable,
-      margin: { left: 15, right: 15, top: 0, bottom: footerHeight },
-      head: [],
-      body: tableBody,
-      theme: 'plain',
-      columnStyles: {
-        0: { cellWidth: 38 },
-        1: { cellWidth: 38 },
-        2: { cellWidth: 50 },
-        3: { cellWidth: 45 },
-      },
-      // Enhanced page break handling
-      rowPageBreak: 'avoid',
-
-      // Custom table styling
-      tableLineColor: [226, 232, 240], // Light gray border
-      tableLineWidth: 0.5, // Thin border
-      styles: {
-        lineColor: [255, 255, 255], // White (invisible) line color for cells
-        lineWidth: 0, // No cell borders
-        cellPadding: 8,
-      },
-
-      // Check before drawing each cell to prevent page breaks in code blocks
-      willDrawCell: (data: any) => {
-        if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
-          const pageHeight = doc.internal.pageSize.getHeight();
-          const currentY = data.cursor.y;
-          const bottomMargin = 25; // Space needed at bottom of page
-
-          // Calculate actual text height for more accurate estimation
-          const fullText = (data.cell.raw as any).content || '';
-          const indexNumber = (data.cell.raw as any)._indexNumber;
-
-          // Calculate the actual content that will be displayed
-          const indexPrefix = `${indexNumber}`;
-          const indexWidth = doc.getTextWidth(indexPrefix) + 16; // Index section width
-          const codeContent = fullText.substring(`${indexNumber}. `.length);
-
-          // Calculate available width for code content
-          const availableWidth = data.cell.width - 16 - indexWidth; // Cell padding + index width
-
-          doc.setFont('NotoSans_Condensed-Regular', 'normal');
-          doc.setFontSize(10);
-          const lines = doc.splitTextToSize(codeContent, availableWidth);
-
-          // More accurate height calculation
-          const lineHeight = 4; // Line spacing
-          const topPadding = 8; // Top padding
-          const bottomPadding = 4; // Bottom padding
-          const textHeight =
-            lines.length * lineHeight + topPadding + bottomPadding;
-          const estimatedHeight = Math.max(textHeight, 30); // Minimum height of 30
-
-          // If the code block won't fit on current page, force a page break
-          if (currentY + estimatedHeight > pageHeight - bottomMargin) {
-            return false; // This will trigger a page break
-          }
-        }
-        return true;
-      },
-
-      didDrawCell: (data: any) => {
-        // Check if this cell is marked as a code block
-        if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
-          const { x, y, width, height } = data.cell;
-
-          const padding = 2;
-          const cornerRadius = 4;
-          const indexNumber = (data.cell.raw as any)._indexNumber;
-
-          // Calculate index section width
-          doc.setFont('NotoSans_Condensed-Regular', 'normal');
-          doc.setFontSize(12);
-          const indexPrefix = `${indexNumber}`;
-          const indexWidth = doc.getTextWidth(indexPrefix) + 8; // Extra padding for the index section
-
-          // Draw the overall rounded rectangle background (darker blue)
-          doc.setDrawColor(100, 116, 139); // slate-500 border
-          doc.setLineWidth(0.5);
-          doc.setFillColor(15, 23, 42); // slate-900 background (darker blue)
-
-          doc.roundedRect(
-            x + padding,
-            y + padding,
-            width - padding * 2,
-            height - padding * 2,
-            cornerRadius,
-            cornerRadius,
-            'FD', // Fill and Draw
-          );
-
-          // Draw the lighter blue section for the index number (left side)
-          doc.setFillColor(51, 65, 85); // slate-700 (lighter blue than the main background)
-          doc.roundedRect(
-            x + padding,
-            y + padding,
-            indexWidth,
-            height - padding * 2,
-            cornerRadius,
-            cornerRadius,
-            'F', // Fill only
-          );
-
-          // Fix the right side of the index section to not be rounded
-          doc.setFillColor(51, 65, 85); // slate-700
-          doc.rect(
-            x + padding + indexWidth - cornerRadius,
-            y + padding,
-            cornerRadius,
-            height - padding * 2,
-            'F',
-          );
-
-          // Now draw the text - both in white
-          doc.setTextColor(255, 255, 255); // white text for both sections
-
-          // Draw the index number in the lighter blue section (top-left aligned)
-          const indexTextX = x + padding + 4; // Small padding from left edge
-          const textY = y + padding + 8; // Same as code content top alignment
-          doc.text(indexPrefix, indexTextX, textY);
-
-          // Draw the code content in the darker blue section
-          const fullText = (data.cell.raw as any).content;
-          const codeContent = fullText.substring(`${indexNumber}. `.length);
-          const codeTextX = x + padding + indexWidth + 4;
-          const availableWidth = width - padding * 2 - indexWidth - 8;
-
-          // Split code content into lines
-          const lines = doc.splitTextToSize(codeContent, availableWidth);
-          let codeTextY = y + padding + 8;
-
-          lines.forEach((line: string) => {
-            doc.text(line, codeTextX, codeTextY);
-            codeTextY += 4; // Line spacing
-          });
-        }
-
-        // Add bottom border only to header rows (Issue/Message rows)
-        if (
-          data.cell.raw &&
-          data.cell.raw.styles &&
-          data.cell.raw.styles.fontStyle === 'bold' &&
-          data.cell.raw.styles.fontSize === 14
-        ) {
-          const { x, y, width, height } = data.cell;
-          doc.setDrawColor(226, 232, 240); // Light gray
-          doc.setLineWidth(0.5);
-          doc.line(x, y + height, x + width, y + height); // Bottom border
-        }
-        if (
-          data.cell.raw &&
-          data.cell.raw._isScreenshot &&
-          data.cell.raw._screenshotBase64
-        ) {
-          const { x, y, width, height } = data.cell;
-          const imgWidth = data.cell.raw._screenshotWidth || 80;
-          const imgHeight = data.cell.raw._screenshotHeight || 80;
-          const imgX = x + (width - imgWidth) / 2;
-          const imgY = y + (height - imgHeight) / 2;
-          data.doc.addImage(
-            data.cell.raw._screenshotBase64,
-            'PNG',
-            imgX,
-            imgY,
-            imgWidth,
-            imgHeight,
-          );
-        }
-        if (data.cell.raw && data.cell.raw._isScreenshot) {
-          //   console.log('didDrawCell for screenshot', data.cell.raw._screenshotBase64 ? 'has base64' : 'no base64');
-        }
-      },
-    });
+    // No aggregated table rendering here; each issue is rendered above
 
     // --- END CUSTOM TABLE LAYOUT ---
     if (accessibilityStatementLinkUrl) {
@@ -2052,6 +3272,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
     return doc.output('blob');
   };
+
   const [currentLanguage, setCurrentLanguage] = useState<string>('');
 
   const generateShortPDF = async (
