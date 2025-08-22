@@ -260,15 +260,13 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
                 {/* Card container with hover effects */}
                 <div
                   className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300 group-hover:transform group-hover:scale-[1.02] cursor-pointer"
-                  onClick={() =>
-                    window.open(item.link, '_blank', 'noopener,noreferrer')
-                  }
+                  onClick={() => window.open(item.link, '_blank')}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      window.open(item.link, '_blank', 'noopener,noreferrer');
+                      window.open(item.link, '_blank');
                     }
                   }}
                   aria-label={`Click to learn more about ${item.title}`}
