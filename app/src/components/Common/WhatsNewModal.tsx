@@ -15,6 +15,7 @@ interface NewsItem {
   date: string;
   title: string;
   description: string;
+  link: string;
 }
 
 interface WhatsNewModalProps {
@@ -25,50 +26,64 @@ const newsData: NewsItem[] = [
   {
     id: '1',
     type: 'Widget',
+    date: '2025.08.20',
+    title: 'Navigation by Structure',
+    description:
+      'Navigate websites by heading structure, landmarks, and semantic elements for better accessibility.',
+    link: 'https://www.webability.io/',
+  },
+  {
+    id: '2',
+    type: 'App',
+    date: '2025.8.19',
+    title: 'License owner info',
+    description: 'View and manage license ownership details',
+    link: '/license-owner-info',
+  },
+  {
+    id: '3',
+    type: 'Widget',
     date: '2025.08.12',
     title: 'Motor Impaired Profile',
     description:
       'New accessibility mode enabling full website navigation using just the keyboard, with helpful voice guidance.',
+    link: 'https://www.webability.io/',
   },
   {
-    id: '2',
+    id: '4',
     type: 'Widget',
     date: '2025.08.10',
     title: 'Move Widget Anywhere',
     description:
       'Freely adjust the widgets position in any direction for a perfectly tailored layout.',
+    link: 'https://www.webability.io/',
   },
   {
-    id: '3',
+    id: '5',
     type: 'App',
     date: '2025.08.08',
     title: 'AI Insights Modern Attention Heatmap',
     description:
       'AI-powered heatmaps revealing where visitors focus, click, and engage most on your landing pages.',
+    link: '/ai-insights',
   },
   {
-    id: '4',
-    type: 'App',
-    date: '2025.07.21',
-    title: 'Notification Settings Added',
-    description:
-      'Customize alerts for reports, new domains, issues, and onboarding help.',
-  },
-  {
-    id: '5',
+    id: '6',
     type: 'App',
     date: '2025.07.25',
     title: 'Prospect Report Launched',
     description:
       'View a short, easy-to-read version of the full prospect report.',
+    link: '/scanner',
   },
   {
-    id: '6',
+    id: '7',
     type: 'App',
     date: '2025.8.01',
     title: 'Proof of Effort Toolkit Added',
     description:
       'Download, view, or send a ZIP file containing all 3 accessibility PDFs.',
+    link: '/proof-of-effort',
   },
 ];
 
@@ -243,7 +258,19 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
             {newsData.map((item, index) => (
               <div key={item.id} className="relative group">
                 {/* Card container with hover effects */}
-                <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300 group-hover:transform group-hover:scale-[1.02]">
+                <div
+                  className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300 group-hover:transform group-hover:scale-[1.02] cursor-pointer"
+                  onClick={() => window.open(item.link, '_blank')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      window.open(item.link, '_blank');
+                    }
+                  }}
+                  aria-label={`Click to learn more about ${item.title}`}
+                >
                   {/* Date and Type Badge */}
                   <div className="flex items-center gap-3 mb-3">
                     <span
