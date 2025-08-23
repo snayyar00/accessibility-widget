@@ -42,6 +42,7 @@ import TechStack from './TechStack';
 import { CircularProgress } from '@mui/material';
 import getProfileQuery from '@/queries/auth/getProfile';
 import getWidgetSettings from '@/utils/getWidgetSettings';
+import { FloatingChatbot } from './FloatingChatbot'; // Adjust path as needed
 
 // Add this array near the top of the file
 const accessibilityFacts = [
@@ -191,6 +192,21 @@ const ReportView: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(true);
   // Fact rotation state
   const [factIndex, setFactIndex] = useState(0);
+  const [chatbotReady, setChatbotReady] = useState(false);
+
+  // Add this useEffect to check if chatbot is ready
+  useEffect(() => {
+    // Check every 500ms if the global function is available
+    const checkInterval = setInterval(() => {
+      if (typeof window.submitAccessibilityIssue === 'function') {
+        setChatbotReady(true);
+        clearInterval(checkInterval);
+      }
+    }, 500);
+
+    // Clean up the interval
+    return () => clearInterval(checkInterval);
+  }, []);
 
   // Always call hooks at the top
   useEffect(() => {
@@ -376,6 +392,12 @@ const ReportView: React.FC = () => {
 
   return (
     <div className="bg-report-blue text-foreground min-h-screen pt-20 pb-20 px-4 sm:px-8 md:px-16 lg:pr-28 lg:pl-28">
+      {/* Add chatbot ready indicator */}
+    {!chatbotReady && (
+      <div className="fixed bottom-5 left-5 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded z-10">
+        AI Assistant initializing...
+      </div>
+    )}
       <div className="absolute top-4 left-4 sm:left-8 lg:left-10 z-20">
         <button
           onClick={handleBackToDashboard}
@@ -577,8 +599,57 @@ const ReportView: React.FC = () => {
                               'Accessibility Issue'}
                           </h2>
                         </div>
-                      </div>
+                        <div className="flex-shrink-0 flex gap-3">
+                          {/* View Evidence Button */}
+                          {issue.screenshotUrl && (
+                            <button
+                              type="button"
+                              className="view-affected-element-button"
+                              aria-label="View screenshot evidence"
+                              onClick={() =>
+                                window.open(
+                                  issue.screenshotUrl,
+                                  '_blank',
+                                  'noopener,noreferrer',
+                                )
+                              }
+                              tabIndex={0}
+                              title="Click to view screenshot evidence"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View Affected Element
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              const issueDetails = `I need help fixing this accessibility issue:
 
+Issue: ${issue.message || issue.help || 'Accessibility Issue'}
+Element: ${
+                                Array.isArray(issue.context)
+                                  ? issue.context[0]
+                                  : issue.context || 'Unknown element'
+                              }
+WCAG: ${issue.code || 'N/A'}`;
+
+                              if (
+                                typeof window.submitAccessibilityIssue ===
+                                'function'
+                              ) {
+                                window.submitAccessibilityIssue(issueDetails);
+                              } else {
+                                toast.error(
+                                  'AI assistant is initializing. Please try again.',
+                                );
+                              }
+                            }}
+                            className="fix-with-ai-button"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                            Fix with AI
+                          </button>
+                        </div>
+                      </div>
                       <div className="flex flex-wrap gap-2 mb-4">
                         <span
                           className={`text-xs font-medium px-2 py-1 rounded-md ${
@@ -658,32 +729,6 @@ const ReportView: React.FC = () => {
                           </div>
                         )}
                       </div>
-
-                      {issue.screenshotUrl && (
-                        <div className="my-6 sm:my-8 flex flex-col items-center">
-                          <button
-                            type="button"
-                            className="flex items-center gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 border-2 border-blue-500 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 group"
-                            aria-label="View screenshot evidence"
-                            onClick={() =>
-                              window.open(
-                                issue.screenshotUrl,
-                                '_blank',
-                                'noopener,noreferrer',
-                              )
-                            }
-                            tabIndex={0}
-                            title="Click to view screenshot evidence"
-                          >
-                            <span className="flex items-center justify-center bg-white rounded-full p-2 shadow group-hover:scale-110 transition-transform">
-                              <Eye className="w-6 h-6 text-blue-600 group-hover:text-blue-800 transition-colors" />
-                            </span>
-                            <span className="text-base sm:text-lg font-bold text-white tracking-tight drop-shadow">
-                              View Evidence
-                            </span>
-                          </button>
-                        </div>
-                      )}
                     </div>
                   ),
                 )}
@@ -744,6 +789,12 @@ const ReportView: React.FC = () => {
           </motion.div>
         )}
       </div>
+      <FloatingChatbot 
+      scanResults={{...report, url: fullUrl}} 
+      onScanStart={() => {}} // Not needed in report view
+      onScanComplete={() => {}} // Not needed in report view
+      isScanning={false}
+    />
     </div>
   );
 };
