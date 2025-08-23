@@ -102,6 +102,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
   const [copySuccess, setCopySuccess] = useState(false);
   const [position, setPosition] = useState('bottom-left');
   const [language, setLanguage] = useState('en');
+  const [iconType, setIconType] = useState<'full' | 'compact'>('full');
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -144,7 +145,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
     setIsExpanded(!isExpanded);
   };
 
-  const formattedCodeString = `<script src="https://widget.webability.io/widget.min.js" data-asw-position="${position}" data-asw-lang="${language}"defer></script>`;
+  const formattedCodeString = `<script src="https://widget.webability.io/widget.min.js" data-asw-position="${position}" data-asw-lang="${language}" data-asw-icon-type="${iconType}" defer></script>`;
 
   const validateEmail = (email: string) => {
     const emailRegex =
@@ -236,7 +237,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="widget-customization-options grid grid-cols-1 ">
           {/* Position Selector */}
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-800 tracking-wide">
@@ -337,12 +338,93 @@ export default function CodeContainer({ codeString }: CodeProps) {
               </div>
             )}
           </div>
+
+          {/* Icon Customization */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-800 tracking-wide">
+              Icon Type
+            </label>
+            <p className="text-xs text-gray-600  pl-1">
+              You can switch between our widget icon and non-intrusive text
+              icon.
+            </p>
+            <div className="flex gap-4">
+              {/* Full Widget Option */}
+              <button
+                type="button"
+                onClick={() => setIconType('full')}
+                className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-40 ${
+                  iconType === 'full'
+                    ? 'border-blue-500 bg-blue-50/50'
+                    : 'border-gray-200 hover:border-blue-300 bg-white/80'
+                }`}
+                aria-label="Select full widget icon"
+              >
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="w-12 h-12 flex items-center justify-center">
+                    <img
+                      src="/images/svg/full_widget_icon.svg"
+                      alt="Full Widget Icon"
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.visibility =
+                          'hidden';
+                      }}
+                    />
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    Full Widget
+                  </span>
+                </div>
+                {iconType === 'full' && (
+                  <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                    <FaCheck className="w-2.5 h-2.5 text-white" />
+                  </div>
+                )}
+              </button>
+
+              {/* Compact Widget Option */}
+              <button
+                type="button"
+                onClick={() => setIconType('compact')}
+                className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-40 ${
+                  iconType === 'compact'
+                    ? 'border-blue-500 bg-blue-50/50'
+                    : 'border-gray-200 hover:border-blue-300 bg-white/80'
+                }`}
+                aria-label="Select compact widget icon"
+              >
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="w-16 h-8 flex items-center justify-center">
+                    <div
+                      className="w-16 h-4 flex items-center justify-center"
+                      style={{ backgroundColor: '#195AFF' }}
+                    >
+                      <span className="text-white text-[5px] font whitespace-nowrap">
+                        Site Accessibility
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    Compact Widget
+                  </span>
+                </div>
+                {iconType === 'compact' && (
+                  <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                    <FaCheck className="w-2.5 h-2.5 text-white" />
+                  </div>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Installation Snippet */}
       <div className="flex-1 min-h-0 flex flex-col">
-        <div className="p-4 bg-gradient-to-r from-white to-blue-50/30 flex-shrink-0">
+        <div className="installation-instructions p-4 bg-gradient-to-r from-white to-blue-50/30 flex-shrink-0">
           <h4 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2">
             <span className="w-5 h-5 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-sm ring-2 ring-green-100">
               <span className="text-white text-xs font-bold">✓</span>
@@ -350,7 +432,9 @@ export default function CodeContainer({ codeString }: CodeProps) {
             Installation Snippet
           </h4>
           <p className="text-sm text-gray-600 font-medium">
-            Paste before closing {'</body>'} tag
+            Paste before closing {'</body>'} tag <br />
+            Note: To enable new features, please copy and paste this updated
+            script tag to your website.
           </p>
         </div>
 
@@ -359,7 +443,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
             isExpanded ? 'max-h-none' : 'max-h-[100px]'
           } flex flex-col`}
         >
-          <div className="bg-gray-900 rounded-xl border border-gray-700 p-4 hover:border-gray-600 hover:shadow-lg transition-all duration-300 flex-1 min-h-[80px] ${isExpanded ? 'max-h-none' : 'max-h-[80px]'} flex flex-col shadow-sm ring-1 ring-gray-800/50">
+          <div className="installation-code-block bg-gray-900 rounded-xl border border-gray-700 p-4 hover:border-gray-600 hover:shadow-lg transition-all duration-300 flex-1 min-h-[80px] ${isExpanded ? 'max-h-none' : 'max-h-[80px]'} flex flex-col shadow-sm ring-1 ring-gray-800/50">
             {/* Code content */}
             <div
               className={`flex-1 min-h-[60px] ${
@@ -387,12 +471,12 @@ export default function CodeContainer({ codeString }: CodeProps) {
         <div className="p-4 bg-gradient-to-r from-white to-blue-50/30 flex-shrink-0 border-t border-blue-100/60">
           <div className="flex flex-row gap-3 justify-center items-center">
             <button
-              onClick={copyToClipboard}
-              className={`py-4 px-6 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-3 text-base focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-lg transform hover:scale-[1.02] active:scale-[0.98] ${
+              className={`copy-code-button py-4 px-6 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-3 text-base focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-lg transform hover:scale-[1.02] active:scale-[0.98] ${
                 copySuccess
                   ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-green-500/25 focus:ring-green-500 ring-2 ring-green-100'
                   : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-blue-500/25 focus:ring-blue-500'
               }`}
+              onClick={copyToClipboard}
               aria-label={
                 copySuccess
                   ? 'Code copied successfully'
@@ -424,7 +508,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
             <div className="flex-1 flex justify-end">
               <button
                 onClick={toggleExpand}
-                className="py-4 px-6 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-400 border border-blue-700 font-bold text-base flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
+                className="expand-code-button py-4 px-6 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-400 border border-blue-700 font-bold text-base flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
                 aria-label={
                   isExpanded ? 'Collapse code view' : 'Expand code view'
                 }

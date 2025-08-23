@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   FiActivity,
   FiBarChart,
@@ -27,6 +27,38 @@ const AIInsights: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [domainInput, setDomainInput] = useState('');
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+
+  const categoriesRef = useRef<HTMLDivElement | null>(null);
+  const imageRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (analysisResult && analysisResult.status === 'success') {
+      categoriesRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+  }, [analysisResult]);
+
+  useEffect(() => {
+    if (selectedCategory && getSelectedHeatmapUrl()) {
+      imageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedCategory]);
+
+  // Auto-select first category if none is selected but categories are available
+  useEffect(() => {
+    if (
+      !selectedCategory &&
+      analysisResult &&
+      analysisResult.status === 'success'
+    ) {
+      const availableCategories = getAvailableCategories();
+      if (availableCategories.length > 0) {
+        setSelectedCategory(availableCategories[0].id);
+      }
+    }
+  }, [analysisResult, selectedCategory]);
 
   const [analyzeDomain, { loading: analysisLoading, error: analysisError }] =
     useLazyQuery(ANALYZE_DOMAIN, {
@@ -111,17 +143,60 @@ const AIInsights: React.FC = () => {
     const heatmapData = getHeatmapData();
     if (!heatmapData) return [];
 
-    return Object.keys(heatmapData.urls)
-      .map((categoryId) => ({
-        id: categoryId,
-        name: categoryId
-          .split('_')
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' '),
-        url: heatmapData.urls[categoryId],
-        style: heatmapData.styles[categoryId],
-      }))
-      .filter((category) => category.url); // Only show categories with URLs
+    // Define the allowed categories with their new headings and descriptions
+    const categoryMeta: Record<
+      string,
+      { heading: string; description: string; icon: string }
+    > = {
+      conversion_focus: {
+        heading: 'Conversion Impact Heatmap',
+        description:
+          'Shows which buttons or links people click the most, so you can see whats working and get more sales or sign-ups.',
+        icon: '',
+      },
+      customer_journey: {
+        heading: 'Interaction Flow Heatmap',
+        description:
+          'Shows the path people take through your website where they start, where they click, and where they leave so you can make it easier for them to find what they need.',
+        icon: '',
+      },
+      roi_detailed: {
+        heading: 'Precision ROI Heatmap',
+        description:
+          'Shows exactly which parts of your page are making you money, using a very detailed scan that highlights whats worth keeping and whats not.',
+        icon: '',
+      },
+    };
+
+    // Get all available category IDs from the heatmap data
+    const availableCategoryIds = Object.keys(heatmapData.urls);
+
+    return availableCategoryIds
+      .map((categoryId) => {
+        // Check if this category has metadata defined
+        const meta = categoryMeta[categoryId];
+        if (!meta) return null;
+
+        const url = heatmapData.urls[categoryId];
+        const style = heatmapData.styles[categoryId];
+
+        // Only return if we have both url and style
+        if (!url || !style) return null;
+
+        return {
+          id: categoryId,
+          name: meta.heading,
+          heading: meta.heading,
+          description: meta.description,
+          icon: meta.icon,
+          url: url,
+          style: style,
+        };
+      })
+      .filter(
+        (category): category is NonNullable<typeof category> =>
+          category !== null,
+      );
   };
 
   return (
@@ -133,9 +208,14 @@ const AIInsights: React.FC = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-r from-blue-500 to-blue-600 rounded-3xl mb-4 sm:mb-8 shadow-xl">
               <FiBarChart className="w-8 h-8 sm:w-12 sm:h-12 text-white" />
             </div>
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold bg-gradient-to-r from-gray-900 via-blue-600 to-blue-700 bg-clip-text text-transparent mb-3 sm:mb-5 leading-tight">
-              AI Heatmap Insights
-            </h1>
+            <div className="flex flex-col-reverse md:flex-row items-center justify-center gap-3 sm:gap-4">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold bg-gradient-to-r from-gray-900 via-blue-600 to-blue-700 bg-clip-text text-transparent mb-3 sm:mb-5 leading-tight">
+                AI Heatmap Insights
+              </h1>
+              <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-700 px-5 py-2 text-base sm:text-lg font-semibold ring-1 ring-inset ring-blue-300">
+                Beta
+              </span>
+            </div>
             <p className="text-gray-600 text-base sm:text-xl max-w-2xl mx-auto leading-relaxed px-2 sm:px-0">
               Discover actionable insights with our advanced AI-powered heatmap
               analysis. Select different heatmap types to understand user
@@ -163,7 +243,7 @@ const AIInsights: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-4 sm:space-y-8">
-                <div className="flex flex-col space-y-4 sm:space-y-6">
+                <div className="flex flex-col space-y-4 sm:space-y-6 pt-6">
                   <div className="w-full">
                     <div className="relative">
                       <input
@@ -245,7 +325,7 @@ const AIInsights: React.FC = () => {
                       </div>
                       <div className="flex flex-col sm:flex-row lg:flex-row lg:items-center gap-3 sm:gap-5 text-sm sm:text-base text-green-700">
                         <div className="flex items-center gap-2">
-                          <FiClock className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <FiClock className="w-12 h-12 md:w-6 md:h-6" />
                           <span>
                             Analyzed on{' '}
                             {new Date(
@@ -254,7 +334,7 @@ const AIInsights: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <FiActivity className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <FiActivity className="w-12 h-12 md:w-6 md:h-6" />
                           <span>
                             Processing time:{' '}
                             {analysisResult.insights?.data?.processing_time?.toFixed(
@@ -267,20 +347,19 @@ const AIInsights: React.FC = () => {
                     </div>
                   </div>
                   {/* Available Heatmap Categories */}
-                  <div className="bg-white rounded-xl p-5 sm:p-7 shadow-lg transform hover:scale-[1.01] transition-all duration-300 border-0">
+                  <div
+                    ref={categoriesRef}
+                    className="bg-white rounded-xl p-5 sm:p-7 shadow-lg transform hover:scale-[1.01] transition-all duration-300 border-0"
+                  >
                     <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
                       Available Heatmap Categories
                     </h3>
-                    <div className="flex flex-wrap gap-3 sm:gap-4">
+                    <div className="flex flex-wrap gap-3 sm:gap-4  sm:justify-center">
                       {getAvailableCategories().map((category) => (
                         <button
                           key={category.id}
-                          onClick={() =>
-                            setSelectedCategory(
-                              category.id as 'click' | 'scroll' | 'attention',
-                            )
-                          }
-                          className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg font-medium transition-all duration-200 text-xs sm:text-base ${
+                          onClick={() => setSelectedCategory(category.id)}
+                          className={` sm:w-full px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg font-medium transition-all duration-200 text-xs sm:text-base ${
                             selectedCategory === category.id
                               ? 'bg-blue-500 text-white shadow-lg transform scale-105'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-800'
@@ -293,7 +372,10 @@ const AIInsights: React.FC = () => {
                   </div>
                   {/* Selected Heatmap Display */}
                   {selectedCategory && getSelectedHeatmapUrl() && (
-                    <div className="bg-white rounded-xl overflow-hidden shadow-2xl transform hover:scale-[1.01] transition-all duration-300 border-0">
+                    <div
+                      ref={imageRef}
+                      className="bg-white rounded-xl overflow-hidden shadow-2xl transform hover:scale-[1.01] transition-all duration-300 border-0"
+                    >
                       <div className="p-5 sm:p-7 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-blue-100">
                         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">
                           <div className="flex items-center gap-2 sm:gap-3 lg:gap-3">
@@ -309,7 +391,11 @@ const AIInsights: React.FC = () => {
                                 }
                               </h3>
                               <p className="text-gray-600 text-sm sm:text-base">
-                                {getSelectedHeatmapStyle()}
+                                {
+                                  getAvailableCategories().find(
+                                    (cat) => cat.id === selectedCategory,
+                                  )?.description
+                                }
                               </p>
                             </div>
                           </div>

@@ -74,10 +74,18 @@ export function validateCreateSubscription(data: CreateSubscriptionInfo): true |
     cardTrial: { type: 'boolean', optional: true },
     promoCode: {
       type: 'array',
-      items: [
-        { type: 'string', min: 1, max: 32 },
-        { type: 'number', integer: true, positive: true },
-      ],
+      items: {
+        type: 'any',
+        custom: (value: any) => {
+          if (typeof value === 'string') {
+            return (value.length >= 1 && value.length <= 32) || 'String must be between 1 and 32 characters'
+          }
+          if (typeof value === 'number') {
+            return (Number.isInteger(value) && value > 0) || 'Number must be a positive integer'
+          }
+          return 'Must be either a string or a positive number'
+        },
+      },
       optional: true,
       max: 10,
     },
@@ -111,10 +119,18 @@ export function validateCreateCheckoutSession(data: CreateCheckoutSessionInfo): 
     cardTrial: { type: 'boolean', optional: true },
     promoCode: {
       type: 'array',
-      items: [
-        { type: 'string', min: 1, max: 32 },
-        { type: 'number', integer: true, positive: true },
-      ],
+      items: {
+        type: 'any',
+        custom: (value: any) => {
+          if (typeof value === 'string') {
+            return (value.length >= 1 && value.length <= 32) || 'String must be between 1 and 32 characters'
+          }
+          if (typeof value === 'number') {
+            return (Number.isInteger(value) && value > 0) || 'Number must be a positive integer'
+          }
+          return 'Must be either a string or a positive number'
+        },
+      },
       optional: true,
       max: 10,
     },

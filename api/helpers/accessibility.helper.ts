@@ -45,6 +45,7 @@ interface finalOutput {
     notices: htmlcsOutput[]
     warnings: htmlcsOutput[]
   }
+  techStack?: any
 }
 
 interface Error {
@@ -66,25 +67,25 @@ interface HumanFunctionality {
 function parseWcagCode(issue: any): string | undefined {
   // Check if the new API response contains WCAG data
   if (issue.wcagCriteria && issue.wcagLevel && issue.wcagVersion) {
-    const criteria = Array.isArray(issue.wcagCriteria) ? issue.wcagCriteria[0] : issue.wcagCriteria;
-    return `WCAG ${issue.wcagLevel} ${issue.wcagVersion} Criteria ${criteria}`;
+    const criteria = Array.isArray(issue.wcagCriteria) ? issue.wcagCriteria[0] : issue.wcagCriteria
+    return `WCAG ${issue.wcagLevel} ${issue.wcagVersion} Criteria ${criteria}`
   }
-  
+
   // Fallback: try to extract from existing code field
   if (issue.code && issue.code.includes('WCAG')) {
-    return issue.code;
+    return issue.code
   }
-  
+
   // Try to extract WCAG criteria from the code field and construct the format
   if (issue.code) {
-    const wcagMatch = issue.code.match(/(\d+\.\d+\.\d+)/);
+    const wcagMatch = issue.code.match(/(\d+\.\d+\.\d+)/)
     if (wcagMatch) {
       // Default to WCAG 2.2 AA if we can't determine the level and version
-      return `WCAG AA 2.2 Criteria ${wcagMatch[1]}`;
+      return `WCAG AA 2.2 Criteria ${wcagMatch[1]}`
     }
   }
-  
-  return undefined;
+
+  return undefined
 }
 
 function createAxeArrayObj(message: string, issue: any) {
@@ -159,23 +160,63 @@ export async function getAccessibilityInformationPally(domain: string) {
 
   const apiUrl = `${process.env.SCANNER_SERVER_URL}/scan`
   let results
-  try {
-    console.log('Using scanner API')
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ url: domain }),
-    })
 
-    // Check if the response is successful
-    if (!response.ok) {
-      throw new Error(`Failed to fetch screenshot. Status: ${response.status}`)
+  // Helper function to check if response is empty
+  const isEmptyResponse = (data: any) => {
+    return !data || !data.issues || !Array.isArray(data.issues) || data.issues.length === 0 || (data.issues.length === 1 && !data.issues[0].runner)
+  }
+
+  // Helper function to make scanner API request with retries
+  const makeScannerAPIRequest = async (retryCount = 0): Promise<any> => {
+    const maxRetries = 2
+    const delay = 1000 * (retryCount + 1) // Exponential backoff: 1s, 2s, 3s
+
+    try {
+      console.log(`Using scanner API (attempt ${retryCount + 1}/${maxRetries + 1})`)
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: domain,
+          viewport: [1366, 768],
+          timeout: 240,
+          level: 'AA',
+          use_cache: true,
+        }),
+      })
+
+      // Check if the response is successful
+      if (!response.ok) {
+        throw new Error(`Failed to fetch screenshot. Status: ${response.status}`)
+      }
+
+      // Parse and return the response JSON
+      const data = await response.json()
+
+      // Check if response is empty
+      if (isEmptyResponse(data)) {
+        throw new Error('Empty response from main API')
+      }
+
+      return data
+    } catch (error) {
+      console.error(`Scanner API attempt ${retryCount + 1} failed:`, error)
+
+      if (retryCount < maxRetries) {
+        console.log(`Retrying scanner API in ${delay}ms... (attempt ${retryCount + 2}/${maxRetries + 1})`)
+        await new Promise((resolve) => setTimeout(resolve, delay))
+        return makeScannerAPIRequest(retryCount + 1)
+      }
+
+      throw error // Re-throw if max retries reached
     }
+  }
 
-    // Parse and return the response JSON
-    results = await response.json()
+  try {
+    // Try scanner API with retries first
+    results = await makeScannerAPIRequest()
 
     // Log all screenshotUrls found in the issues array
     if (results && typeof results === 'object' && results !== null && 'issues' in results && Array.isArray((results as any).issues)) {
@@ -186,7 +227,7 @@ export async function getAccessibilityInformationPally(domain: string) {
       })
     }
   } catch (error) {
-    console.error('pally API Error', error)
+    console.error('All scanner API attempts failed, switching to fallback API:', error)
     const apiUrl2 = `${process.env.FALLBACK_PA11Y_SERVER_URL}/test`
     try {
       console.log('Using fallback pally API')
@@ -262,6 +303,73 @@ export async function getAccessibilityInformationPally(domain: string) {
     })
   }
 
+  // Extract screenshots from API response and store in siteImg
+  if (results && typeof results === 'object' && results !== null) {
+    // Check for screenshots array
+    if ('screenshots' in results && Array.isArray((results as any).screenshots)) {
+      const screenshots = (results as any).screenshots
+      if (screenshots.length > 0) {
+        // Store the first screenshot URL in siteImg, or join multiple URLs with comma
+        output.siteImg = screenshots.length === 1 ? screenshots[0] : screenshots.join(',')
+        console.log(`📸 Extracted ${screenshots.length} screenshot(s) and stored in siteImg:`, output.siteImg)
+      }
+    }
+    // Also check for siteImg field as fallback
+    else if ('siteImg' in results && (results as any).siteImg) {
+      output.siteImg = (results as any).siteImg
+      console.log(`📸 Using siteImg from API response:`, output.siteImg)
+    }
+    // Check for any other potential screenshot fields
+    else if ('screenshot' in results && (results as any).screenshot) {
+      output.siteImg = (results as any).screenshot
+      console.log(`📸 Using screenshot from API response:`, output.siteImg)
+    }
+  }
+
+  // Extract tech stack from API response if available
+  if (results && typeof results === 'object' && results !== null) {
+    if ('techStack' in results && (results as any).techStack) {
+      output.techStack = (results as any).techStack
+      console.log('🔧 Extracted techStack from scanner API response')
+    } else if ('tech_stack' in results && (results as any).tech_stack) {
+      output.techStack = (results as any).tech_stack
+      console.log('🔧 Extracted tech_stack from scanner API response')
+    } else if ('technology_stack' in results && (results as any).technology_stack) {
+      output.techStack = (results as any).technology_stack
+      console.log('🔧 Extracted technology_stack from scanner API response')
+    }
+    //  else {
+    //   // Add dummy tech stack for testing when no tech stack is found in API response
+    //   ;(results as any).techStack = {
+    //     technologies: ['React', 'TypeScript', 'Node.js', 'Express'],
+    //     categorizedTechnologies: [
+    //       {
+    //         category: 'Frontend',
+    //         technologies: ['React', 'TypeScript'],
+    //       },
+    //       {
+    //         category: 'Backend',
+    //         technologies: ['Node.js', 'Express'],
+    //       },
+    //     ],
+    //     confidence: 'high',
+    //     accessibilityContext: {
+    //       platform: 'Web Application',
+    //       platform_type: 'SPA',
+    //       has_cms: false,
+    //       has_ecommerce: false,
+    //       has_framework: true,
+    //       is_spa: true,
+    //     },
+    //     analyzedUrl: domain,
+    //     analyzedAt: new Date().toISOString(),
+    //     source: 'dummy_data',
+    //   }
+    //   output.techStack = (results as any).techStack
+    //   console.log('🔧 Added dummy techStack for testing')
+    // }
+  }
+
   // Get preprocessing configuration
   const config = getPreprocessingConfig()
 
@@ -294,9 +402,11 @@ export async function getAccessibilityInformationPally(domain: string) {
         ByFunctions: enhancedResult.ByFunctions, // Preserve enhanced ByFunctions
         score: calculateAccessibilityScore(output.axe), // enhancedResult.score ||
         totalElements: output.totalElements,
+        siteImg: output.siteImg, // Preserve screenshots
         processing_stats: enhancedResult.processing_stats,
         // Preserve original htmlcs for ByFunctions processing
         _originalHtmlcs: originalOutput.htmlcs,
+        techStack: output.techStack, // Include tech stack from scanner API
       }
 
       console.log('📦 Final output debug:')

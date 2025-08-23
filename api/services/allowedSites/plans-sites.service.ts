@@ -95,17 +95,19 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
         is_trial: paymentMethodToken === 'Trial' ? 1 : 0,
         expired_at: expiry,
       }
-      const sitePlanId = await insertSitePlan(dataUserPlan as any)
-      let sitePermissionData
 
-      if (product.type === 'small' || product.type === 'medium' || product.type === 'large') {
-        sitePermissionData = PERMISSION_SITE_PLAN[product.type as keyof typeof PERMISSION_SITE_PLAN].map((permission: string) => ({
-          allowed_site_id: siteId,
-          sites_plan_id: sitePlanId[0],
-          permission,
-        }))
-      }
-      await insertMultiSitePermission(sitePermissionData)
+      const sitePlanId = await insertSitePlan(dataUserPlan as any)
+
+      // let sitePermissionData
+
+      // if (product.type === 'small' || product.type === 'medium' || product.type === 'large') {
+      //   sitePermissionData = PERMISSION_SITE_PLAN[product.type as keyof typeof PERMISSION_SITE_PLAN].map((permission: string) => ({
+      //     allowed_site_id: siteId,
+      //     sites_plan_id: sitePlanId[0],
+      //     permission,
+      //   }))
+      // }
+      // await insertMultiSitePermission(sitePermissionData)
     }
     return true
   } catch (error) {
