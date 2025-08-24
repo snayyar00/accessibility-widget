@@ -2,7 +2,12 @@ import React from 'react';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
+import {
+  useApolloClient,
+  useLazyQuery,
+  useMutation,
+  useQuery,
+} from '@apollo/client';
 import GET_USER_ORGANIZATIONS from '@/queries/organization/getUserOrganizations';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
@@ -13,9 +18,11 @@ import { IS_LOCAL } from '@/config/env';
 import { toast } from 'react-toastify';
 import { redirectToUserOrganization } from '@/helpers/redirectToOrganization';
 import { setProfileUser } from '@/features/auth/user';
+import GET_USER_WORKSPACES from '@/queries/workspace/getUserWorkspaces';
 
 const OrganizationsSelect: React.FC = () => {
   const dispatch = useDispatch();
+  const client = useApolloClient();
   const { data: userData } = useSelector((state: RootState) => state.user);
 
   const skipOrganizationsQuery = !userData || !userData.currentOrganization;
@@ -61,6 +68,10 @@ const OrganizationsSelect: React.FC = () => {
           if (redirected) return;
         }
       }
+
+      await client.refetchQueries({
+        include: [GET_USER_WORKSPACES],
+      });
 
       const profileResult = await getProfile();
       const profileUser = profileResult?.data?.profileUser;

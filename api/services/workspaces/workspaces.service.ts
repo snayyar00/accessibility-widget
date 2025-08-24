@@ -1,27 +1,30 @@
 import dayjs from 'dayjs'
+import { Knex } from 'knex'
 
+import database from '../../config/database.config'
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
+import { WORKSPACE_INVITATION_STATUS_PENDING, WORKSPACE_USER_STATUS_ACTIVE } from '../../constants/workspace.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import generateRandomKey from '../../helpers/genarateRandomkey'
 import { normalizeEmail, stringToSlug } from '../../helpers/string.helper'
 import { findUser } from '../../repository/user.repository'
 import { UserProfile } from '../../repository/user.repository'
 import { createNewWorkspaceAndMember, deleteWorkspaceById, getAllWorkspace, GetAllWorkspaceResponse, getWorkspace, updateWorkspace as updateWorkspaceRepo, Workspace } from '../../repository/workspace.repository'
-import { createWorkspaceInvitation, VALID_PERIOD_DAYS } from '../../repository/workspace_invitations.repository'
-import { createMemberAndInviteToken, getListWorkspaceMemberByAliasWorkspace } from '../../repository/workspace_users.repository'
+import { createWorkspaceInvitation, deleteWorkspaceInvitations, getWorkspaceInvitation, VALID_PERIOD_DAYS } from '../../repository/workspace_invitations.repository'
+import { createMemberAndInviteToken, deleteWorkspaceUsers, getListWorkspaceMemberByAliasWorkspace, getWorkspaceUser } from '../../repository/workspace_users.repository'
+import { canManageOrganization } from '../../utils/access.helper'
 import formatDateDB from '../../utils/format-date-db'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
-import { validateCreateWorkspace, validateUpdateWorkspace } from '../../validations/workspace.validation'
+import { validateCreateWorkspace, validateInviteWorkspaceMember, validateUpdateWorkspace } from '../../validations/workspace.validation'
 import { sendMail } from '../email/email.service'
 import { getUserOrganization } from '../organization/organization_users.service'
 
 type FindWorkspaceByAliasResponse = {
-  userName: string
-  userId: number
-  email: string
+  user_name: string
+  user_id: number
+  user_email: string
   status: string
-  isOwner: boolean
 }
 
 type CreateWorkspaceResponse = {
@@ -40,7 +43,98 @@ type CreateWorkspaceResponse = {
 export async function getAllWorkspaces(user: UserProfile): Promise<GetAllWorkspaceResponse[]> {
   const allWorkspaces = await getAllWorkspace({ userId: user.id, organizationId: user.current_organization_id })
 
-  return allWorkspaces
+  const uniqueWorkspaces = allWorkspaces.reduce((acc: GetAllWorkspaceResponse[], current) => {
+    const existingWorkspace = acc.find((ws) => ws.id === current.id)
+
+    if (!existingWorkspace) {
+      acc.push(current)
+    }
+
+    return acc
+  }, [])
+
+  return uniqueWorkspaces
+}
+
+/**
+ * Function to get all workspaces for a specific organization
+ * Only organization owner can see all workspaces
+ *
+ * @param organizationId Organization ID to get workspaces for
+ * @param user User requesting the workspaces
+ * @returns Array of workspaces belonging to the organization
+ */
+export async function getOrganizationWorkspaces(organizationId: number, user: UserProfile): Promise<Workspace[]> {
+  if (!organizationId) {
+    throw new ValidationError('Organization ID is required')
+  }
+
+  if (!user) {
+    throw new ValidationError('User is required')
+  }
+
+  const userOrganization = await getUserOrganization(user.id, organizationId)
+
+  if (!userOrganization) {
+    throw new ValidationError('User is not a member of this organization')
+  }
+
+  if (!canManageOrganization(userOrganization.role)) {
+    throw new ValidationError('Only organization owner and admin can view all workspaces')
+  }
+
+  const workspaces = await getAllWorkspace({ organizationId })
+
+  const uniqueWorkspaces = workspaces.reduce((acc: Workspace[], current) => {
+    const existingWorkspace = acc.find((ws) => ws.id === current.id)
+
+    if (!existingWorkspace) acc.push(current)
+
+    return acc
+  }, [])
+
+  return uniqueWorkspaces
+}
+
+/**
+ * Function to get all members of a workspace
+ * Only organization owner and admin can see all workspace members
+ *
+ * @param workspaceId ID of the workspace to get members for
+ * @param user User requesting the workspace members
+ * @returns Array of workspace members
+ */
+export async function getWorkspaceMembers(workspaceId: number, user?: UserProfile): Promise<GetAllWorkspaceResponse[]> {
+  if (!workspaceId) {
+    throw new ValidationError('Workspace ID is required')
+  }
+
+  if (!user.current_organization_id) {
+    throw new ValidationError('No current organization selected')
+  }
+
+  const userOrganization = await getUserOrganization(user.id, user.current_organization_id)
+
+  if (!userOrganization) {
+    throw new ValidationError('User is not a member of this organization')
+  }
+
+  if (!canManageOrganization(userOrganization.role)) {
+    throw new ValidationError('Only organization owner and admin can view workspace members')
+  }
+
+  const members = await getAllWorkspace({ workspaceId })
+
+  const uniqueMembers = members.reduce((acc: GetAllWorkspaceResponse[], current) => {
+    const existingMember = acc.find((m) => m.user_id === current.user_id)
+
+    if (!existingMember) {
+      acc.push(current)
+    }
+    return acc
+  }, [])
+
+  return uniqueMembers
 }
 
 /**
@@ -53,12 +147,21 @@ export async function getAllWorkspaces(user: UserProfile): Promise<GetAllWorkspa
 export async function findWorkspaceByAlias(alias: string): Promise<FindWorkspaceByAliasResponse[]> {
   const members = await getListWorkspaceMemberByAliasWorkspace({ alias })
 
-  return members.map((member) => ({
-    userName: member.userName,
-    userId: member.userId,
-    email: member.email,
+  const uniqueMembers = members.reduce((acc: typeof members, member) => {
+    const existingMember = acc.find((m) => m.userId === member.userId)
+
+    if (!existingMember) {
+      acc.push(member)
+    }
+
+    return acc
+  }, [])
+
+  return uniqueMembers.map((member) => ({
+    user_id: member.userId,
+    user_name: member.userName,
+    user_email: member.email,
     status: member.status,
-    isOwner: member.userId === member.owner,
   }))
 }
 
@@ -80,10 +183,10 @@ export async function createWorkspace(user: UserProfile, workspaceName: string):
   }
 
   const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isAllowed = orgUser && ORGANIZATION_MANAGEMENT_ROLES.includes(orgUser.role as (typeof ORGANIZATION_MANAGEMENT_ROLES)[number])
+  const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
   if (!isAllowed) {
-    throw new ApolloError('Only owner or admin can create the workspace')
+    throw new ApolloError('Only organization owner or admin can create the workspace')
   }
 
   const alias = stringToSlug(workspaceName)
@@ -108,74 +211,156 @@ export async function createWorkspace(user: UserProfile, workspaceName: string):
  *
  * @param User   user         User who create invitation
  * @param string alias        alias of workspace you want to invite to join
- * @param string inviteeEmail Email of who you want to send invitation to
+ * @param string invitee_email Email of who you want to send invitation to
  * @param string role         Role for the invited user (optional, defaults to 'member')
  */
-export async function inviteWorkspaceMember(user: UserProfile, alias: string, inviteeEmail: string, role: string = 'member'): Promise<FindWorkspaceByAliasResponse> {
+export async function inviteWorkspaceMember(user: UserProfile, alias: string, invitee_email: string, role: string = 'member', allowedFrontendUrl: string): Promise<FindWorkspaceByAliasResponse> {
+  const validateResult = validateInviteWorkspaceMember({ email: invitee_email, alias, role })
+
+  if (Array.isArray(validateResult) && validateResult.length) {
+    throw new ValidationError(validateResult.map((it) => it.message).join(','))
+  }
+
+  if (!user.current_organization_id) {
+    throw new ApolloError('No current organization selected')
+  }
+
+  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
+  const isAllowed = orgUser && canManageOrganization(orgUser.role)
+
+  if (!isAllowed) {
+    throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can create the workspace`)
+  }
+
+  let transaction: Knex.Transaction
+
   try {
+    transaction = await database.transaction()
+
     const workspace = await getWorkspace({ alias })
 
     if (!workspace) {
       throw new ApolloError('Workspace not found')
     }
 
-    if (user.email === inviteeEmail) {
+    if (user.email === invitee_email) {
       throw new ApolloError("Can't invite yourself")
     }
 
-    const member = await findUser({ email: inviteeEmail })
+    const existingInvitations = await getWorkspaceInvitation({
+      email: invitee_email,
+      workspace_id: workspace.id,
+    })
+
+    const pendingInvitation = existingInvitations.find((inv) => inv.status === WORKSPACE_INVITATION_STATUS_PENDING)
+
+    if (pendingInvitation) {
+      const isExpired = new Date(pendingInvitation.valid_until) < new Date()
+
+      if (!isExpired) {
+        throw new ApolloError('User already has a pending invitation for this workspace')
+      }
+    }
+
+    await deleteWorkspaceInvitations(
+      {
+        email: invitee_email,
+        workspace_id: workspace.id,
+      },
+      transaction,
+    )
+
+    const member = await findUser({ email: invitee_email })
+
+    if (member) {
+      const existingWorkspaceUser = await getWorkspaceUser({
+        user_id: member.id,
+        workspace_id: workspace.id,
+      })
+
+      if (existingWorkspaceUser) {
+        if (existingWorkspaceUser.status === WORKSPACE_USER_STATUS_ACTIVE) {
+          throw new ApolloError('User is already an active member of this workspace')
+        }
+
+        await deleteWorkspaceUsers(
+          {
+            user_id: member.id,
+            workspace_id: workspace.id,
+          },
+          transaction,
+        )
+      }
+    }
 
     const token = await generateRandomKey()
-    const subject = 'Workspace invitation'
 
     const template = await compileEmailTemplate({
       fileName: 'inviteWorkspaceMember.mjml',
       data: {
         workspaceName: workspace.name,
-        url: `${process.env.FRONTEND_URL}/workspaces/invitation/${token}`,
+        url: `${allowedFrontendUrl}/workspaces/invitation/${token}`,
       },
     })
 
-    const queries: (Promise<boolean> | Promise<number[]>)[] = [sendMail(normalizeEmail(inviteeEmail), subject, template)]
-
     if (member) {
-      queries.push(
-        createMemberAndInviteToken({
-          email: inviteeEmail,
+      await createMemberAndInviteToken(
+        {
+          organization_id: workspace.organization_id,
+          workspace_id: workspace.id,
+          user_id: user.id,
+          member_id: member.id,
+          email: invitee_email,
           token,
-          workspaceId: workspace.id,
-          organizationId: workspace.organization_id,
-          memberId: member.id,
-          userId: user.id,
           role,
-        }),
+        },
+        transaction,
       )
     } else {
-      queries.push(
-        createWorkspaceInvitation({
-          email: inviteeEmail,
+      await createWorkspaceInvitation(
+        {
+          email: invitee_email,
           token,
           invited_by: user.id,
           workspace_id: workspace.id,
           organization_id: workspace.organization_id,
           role,
           valid_until: formatDateDB(dayjs().add(VALID_PERIOD_DAYS, 'day')),
-          status: 'pending',
-        }),
+          status: WORKSPACE_INVITATION_STATUS_PENDING,
+        },
+        transaction,
       )
     }
 
-    await Promise.all<boolean | number[]>(queries)
+    await transaction.commit()
+
+    try {
+      await sendMail(normalizeEmail(invitee_email), 'Workspace invitation', template)
+    } catch (emailError) {
+      logger.error('Failed to send invitation email:', {
+        error: emailError,
+        workspace_alias: alias,
+        invitee_email,
+        inviter_id: user.id,
+      })
+    }
 
     return {
-      userName: member?.name || '',
-      userId: member?.id || 0,
-      email: member?.email || inviteeEmail,
-      status: 'pending',
-      isOwner: false,
+      user_id: member?.id || 0,
+      user_name: member?.name || '',
+      user_email: member?.email || invitee_email,
+      status: WORKSPACE_INVITATION_STATUS_PENDING,
     }
   } catch (error) {
-    logger.error(error)
+    await transaction.rollback()
+
+    logger.error('Failed to invite workspace member:', {
+      error,
+      workspace_alias: alias,
+      invitee_email,
+      inviter_id: user.id,
+    })
+
     throw new ApolloError(error)
   }
 }
@@ -183,28 +368,28 @@ export async function inviteWorkspaceMember(user: UserProfile, alias: string, in
 /**
  * Function to delete workspace
  * @param user User who wants to delete workspace
- * @param workspaceId ID of the workspace to delete
+ * @param workspace_id ID of the workspace to delete
  * @returns true if deleted
  */
-export async function deleteWorkspace(user: UserProfile, workspaceId: number): Promise<boolean> {
+export async function deleteWorkspace(user: UserProfile, workspace_id: number): Promise<boolean> {
   if (!user.current_organization_id) {
     throw new ApolloError('No current organization selected')
   }
 
   const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isAllowed = orgUser && ORGANIZATION_MANAGEMENT_ROLES.includes(orgUser.role as (typeof ORGANIZATION_MANAGEMENT_ROLES)[number])
+  const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
   if (!isAllowed) {
-    throw new ApolloError('Only owner or admin can delete the workspace')
+    throw new ApolloError('Only organization owner or admin can delete the workspace')
   }
 
-  const workspace = await getWorkspace({ id: workspaceId, organization_id: user.current_organization_id })
+  const workspace = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
 
   if (!workspace) {
     throw new ApolloError('Workspace not found')
   }
 
-  await deleteWorkspaceById(workspaceId)
+  await deleteWorkspaceById(workspace_id)
 
   return true
 }
@@ -212,11 +397,11 @@ export async function deleteWorkspace(user: UserProfile, workspaceId: number): P
 /**
  * Function to update workspace
  * @param user User who wants to update workspace
- * @param workspaceId ID of the workspace to update
+ * @param workspace_id ID of the workspace to update
  * @param data Object with fields to update
  * @returns updated workspace
  */
-export async function updateWorkspace(user: UserProfile, workspaceId: number, data: Partial<Workspace>): Promise<Workspace> {
+export async function updateWorkspace(user: UserProfile, workspace_id: number, data: Partial<Workspace>): Promise<Workspace> {
   const validateResult = validateUpdateWorkspace(data)
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -228,13 +413,13 @@ export async function updateWorkspace(user: UserProfile, workspaceId: number, da
   }
 
   const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isAllowed = orgUser && ORGANIZATION_MANAGEMENT_ROLES.includes(orgUser.role as (typeof ORGANIZATION_MANAGEMENT_ROLES)[number])
+  const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
   if (!isAllowed) {
-    throw new ApolloError('Only owner or admin can update the workspace')
+    throw new ApolloError('Only organization owner or admin can update the workspace')
   }
 
-  const workspace = await getWorkspace({ id: workspaceId, organization_id: user.current_organization_id })
+  const workspace = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
   if (!workspace) {
     throw new ApolloError('Workspace not found')
   }
@@ -266,9 +451,9 @@ export async function updateWorkspace(user: UserProfile, workspaceId: number, da
     finalUpdateData = { ...finalUpdateData, alias }
   }
 
-  await updateWorkspaceRepo(workspaceId, finalUpdateData)
+  await updateWorkspaceRepo(workspace_id, finalUpdateData)
 
-  const updated = await getWorkspace({ id: workspaceId, organization_id: user.current_organization_id })
+  const updated = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
 
   if (!updated) {
     throw new ApolloError('Workspace not found after update')

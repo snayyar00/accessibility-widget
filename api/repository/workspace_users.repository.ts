@@ -3,6 +3,7 @@ import { Knex } from 'knex'
 
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
+import { WORKSPACE_INVITATION_STATUS_PENDING, WORKSPACE_USER_STATUS_PENDING, WorkspaceUserStatus } from '../constants/workspace.constant'
 import formatDateDB from '../utils/format-date-db'
 import { usersColumns } from './user.repository'
 import { workspacesColumns } from './workspace.repository'
@@ -14,7 +15,7 @@ export type WorkspaceUser = {
   user_id?: number
   workspace_id?: number
   role?: string
-  status?: 'pending' | 'active' | 'inactive' | 'decline'
+  status?: WorkspaceUserStatus
   created_at?: string
   updated_at?: string
   deleted_at?: string
@@ -22,13 +23,13 @@ export type WorkspaceUser = {
 }
 
 type MemberAndInviteToken = {
-  userId: number
-  workspaceId?: number
-  memberId?: number
+  user_id: number
+  workspace_id?: number
+  member_id?: number
   email?: string
   token?: string
   role?: string
-  organizationId?: number
+  organization_id?: number
 }
 
 type Alias = {
@@ -80,30 +81,43 @@ export async function createWorkspaceUser(data: WorkspaceUser, transaction: Knex
   return query.transacting(transaction)
 }
 
-export async function createMemberAndInviteToken({ userId, workspaceId, memberId, email, token, role, organizationId }: MemberAndInviteToken): Promise<boolean> {
-  let transaction
+export async function createMemberAndInviteToken({ user_id, workspace_id, member_id, email, token, role, organization_id }: MemberAndInviteToken, transaction: Knex.Transaction): Promise<boolean> {
   try {
-    transaction = await database.transaction()
     await createWorkspaceInvitation(
       {
         email,
-        invited_by: userId,
-        workspace_id: workspaceId,
-        organization_id: organizationId,
+        invited_by: user_id,
+        workspace_id: workspace_id,
+        organization_id: organization_id,
         role,
         valid_until: formatDateDB(dayjs().add(VALID_PERIOD_DAYS, 'day')),
-        status: 'pending',
+        status: WORKSPACE_INVITATION_STATUS_PENDING,
         token,
       },
       transaction,
     )
-    await createWorkspaceUser({ user_id: memberId, workspace_id: workspaceId, role, status: 'pending', invitation_token: token }, transaction)
-    await transaction.commit()
+
+    await createWorkspaceUser({ user_id: member_id, workspace_id, role, status: WORKSPACE_USER_STATUS_PENDING, invitation_token: token }, transaction)
+
     return true
   } catch (error) {
-    transaction.rollback()
     throw new Error(error)
   }
+}
+
+export async function getWorkspaceUser(condition: Partial<WorkspaceUser>): Promise<WorkspaceUser | null> {
+  const result = await database(TABLE).where(condition).first()
+  return result || null
+}
+
+export async function deleteWorkspaceUsers(condition: Partial<WorkspaceUser>, transaction: Knex.Transaction = null): Promise<number> {
+  const query = database(TABLE).where(condition).del()
+
+  if (transaction) {
+    return query.transacting(transaction)
+  }
+
+  return query
 }
 
 export async function updateWorkspaceUser(condition: WorkspaceUser, data: WorkspaceUser): Promise<number> {

@@ -4,6 +4,7 @@ import { GraphQLContext } from '../../graphql/types'
 import { Organization } from '../../repository/organization.repository'
 import { addOrganization, addUserToOrganizationByEmail, CreateOrganizationInput, editOrganization, getOrganizationByDomainService, getOrganizationById, getOrganizations, removeOrganization, removeUserFromOrganization } from '../../services/organization/organization.service'
 import { getOrganizationUsers } from '../../services/organization/organization_users.service'
+import { getOrganizationWorkspaces } from '../../services/workspaces/workspaces.service'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
@@ -16,6 +17,10 @@ const organizationResolver = {
     }),
 
     getOrganizationUsers: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, __: unknown, { user }) => getOrganizationUsers(user)),
+
+    getOrganizationWorkspaces: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, __: unknown, { user }) => {
+      return await getOrganizationWorkspaces(user.current_organization_id, user)
+    }),
 
     getOrganizationByDomain: combineResolvers(allowedOrganization, async (_: unknown, __: unknown, { clientDomain }: GraphQLContext): Promise<Organization | null | ValidationError> => {
       const org = await getOrganizationByDomainService(clientDomain)

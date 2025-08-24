@@ -2,6 +2,7 @@ import { Knex } from 'knex'
 
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
+import { WorkspaceInvitationStatus, WorkspaceUserRole } from '../constants/workspace.constant'
 import { usersColumns } from './user.repository'
 import { workspacesColumns } from './workspace.repository'
 
@@ -11,17 +12,18 @@ type WorkspaceInvitation = {
   workspace_id?: number
   organization_id?: number
   role?: string
-  status: 'pending' | 'accepted' | 'declined' | 'expired'
+  status: WorkspaceInvitationStatus
   token?: string
   valid_until?: string
   created_at?: string
 }
 
 export type GetDetailWorkspaceInvitation = {
-  owner: string
-  workspaceName: string
-  until: string
-  status: string
+  workspace_name: string
+  invited_by: string
+  status: WorkspaceInvitationStatus
+  role: WorkspaceUserRole
+  valid_until: string
 }
 
 const TABLE = TABLES.workspace_invitations
@@ -47,22 +49,22 @@ export const workspaceInvitationsColumns = {
  */
 export async function createWorkspaceInvitation(data: WorkspaceInvitation, transaction: Knex.Transaction = null): Promise<number[]> {
   const query = database(TABLE).insert(data)
+
   if (!transaction) {
     return query
   }
+
   return query.transacting(transaction)
 }
 
-export async function getWorkspaceInvitation(condition: WorkspaceInvitation): Promise<WorkspaceInvitation[]> {
+export async function getWorkspaceInvitation(condition: Partial<WorkspaceInvitation>): Promise<WorkspaceInvitation[]> {
   return database(TABLE).where(condition)
 }
 
 /**
- * Function to get workspace invitation by email, workspaceId and inviteUserId.
+ * Function to get workspace invitation details by token.
  *
- * @param string email        Email this invitation send to
- * @param int    workspaceId  Id of workspace related to this invitation
- * @param int    inviteUserId Id of user who create the invitation
+ * @param string token Token of the workspace invitation
  */
 export async function getDetailWorkspaceInvitation(token: string): Promise<GetDetailWorkspaceInvitation[]> {
   return database(TABLE)
@@ -72,13 +74,26 @@ export async function getDetailWorkspaceInvitation(token: string): Promise<GetDe
     .join(TABLES.users, usersColumns.id, workspaceInvitationsColumns.invitedBy)
     .where({ [workspaceInvitationsColumns.token]: token })
     .select({
-      owner: usersColumns.email,
-      workspaceName: workspacesColumns.name,
-      until: workspaceInvitationsColumns.validUntil,
+      workspace_name: workspacesColumns.name,
+      invited_by: usersColumns.email,
       status: workspaceInvitationsColumns.status,
+      role: workspaceInvitationsColumns.role,
+      valid_until: workspaceInvitationsColumns.validUntil,
     })
 }
 
 export async function updateWorkspaceInvitationByToken(token: string, data: WorkspaceInvitation): Promise<number> {
   return database(TABLE).where({ token }).update(data)
+}
+
+export async function deleteWorkspaceInvitations(condition: Partial<WorkspaceInvitation>, transaction: Knex.Transaction = null): Promise<boolean> {
+  const query = database(TABLE).where(condition).del()
+
+  if (transaction) {
+    const result = await query.transacting(transaction)
+    return result > 0
+  }
+
+  const result = await query
+  return result > 0
 }

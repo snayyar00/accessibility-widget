@@ -19,6 +19,7 @@ import { GlobalLoader } from '@/containers/Root/GlobalLoader';
 import { useFavicon } from '@/hooks/useFavicon';
 import ReportView from './containers/Accessibility/ReportView';
 import { RootState } from './config/store';
+import AcceptInvitation from '@/containers/Workspaces/AcceptInvitation';
 
 type props = {
   options: string[];
@@ -59,6 +60,10 @@ const App: React.FC<props> = ({ options }) => {
 
           <Route path="/auth-redirect" component={AuthRedirect} />
           <Route path="/verify-email" component={VerifyEmail} />
+          <Route
+            path="/workspaces/invitation/:invitationToken"
+            component={AcceptInvitation}
+          />
           <Route path="/reports/:r2_key" component={ReportView} exact />
 
           <PrivateRoute render={() => <AdminLayout options={options} />} />

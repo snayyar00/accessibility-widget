@@ -1,8 +1,9 @@
 import { Knex } from 'knex'
 
-import { ORGANIZATION_MANAGEMENT_ROLES, OrganizationUserRole, OrganizationUserStatus } from '../../constants/organization.constant'
+import { OrganizationUserRole, OrganizationUserStatus } from '../../constants/organization.constant'
 import { deleteOrganizationUser, getOrganizationUser, getOrganizationUsersByUserId, getOrganizationUsersWithUserInfo, insertOrganizationUser, OrganizationUser } from '../../repository/organization_user.repository'
 import { UserProfile } from '../../repository/user.repository'
+import { canManageOrganization } from '../../utils/access.helper'
 import logger from '../../utils/logger'
 
 export async function addUserToOrganization(user_id: number, organization_id: number, role: OrganizationUserRole = 'member', status: OrganizationUserStatus = 'active', trx?: Knex.Transaction): Promise<number[]> {
@@ -55,7 +56,7 @@ export async function getOrganizationUsers(user: UserProfile) {
 
   const orgUser = await getUserOrganization(userId, organizationId)
 
-  if (!orgUser || !ORGANIZATION_MANAGEMENT_ROLES.includes(orgUser.role as (typeof ORGANIZATION_MANAGEMENT_ROLES)[number])) {
+  if (!orgUser || !canManageOrganization(orgUser.role)) {
     logger.warn('getOrganizationUsers: No permission to view organization users', { userId, organizationId, orgUser })
     return []
   }
@@ -63,7 +64,7 @@ export async function getOrganizationUsers(user: UserProfile) {
   const users = await getOrganizationUsersWithUserInfo(organizationId)
 
   const myOrgs = await getOrganizationsByUserId(userId)
-  const allowedOrgIds = myOrgs.filter((o) => ORGANIZATION_MANAGEMENT_ROLES.includes(o.role as (typeof ORGANIZATION_MANAGEMENT_ROLES)[number])).map((o) => o.organization_id)
+  const allowedOrgIds = myOrgs.filter((o) => canManageOrganization(o.role)).map((o) => o.organization_id)
 
   return users.map((user) => ({
     ...user,

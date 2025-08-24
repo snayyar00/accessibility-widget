@@ -51,7 +51,13 @@ type Documents = {
     "\n  query IsEmailAlreadyRegistered($email: String!) {\n    isEmailAlreadyRegistered(email: $email)\n  }\n": typeof types.IsEmailAlreadyRegisteredDocument,
     "\n  mutation deleteAccount {\n    deleteAccount\n  }\n": typeof types.DeleteAccountDocument,
     "\n  mutation UpdateProfile($name: String, $company: String, $position: String) {\n    updateProfile(name: $name, company: $company, position: $position)\n  }\n": typeof types.UpdateProfileDocument,
+    "\n  mutation CreateWorkspace($name: String!) {\n    createWorkspace(name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": typeof types.CreateWorkspaceDocument,
+    "\n  mutation DeleteWorkspace($id: ID!) {\n    deleteWorkspace(id: $id)\n  }\n": typeof types.DeleteWorkspaceDocument,
+    "\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n": typeof types.GetOrganizationWorkspacesDocument,
     "\n  query getUserWorkspaces {\n    getUserWorkspaces {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": typeof types.GetUserWorkspacesDocument,
+    "\n  mutation InviteMember($type: JoinWorkspaceType!, $token: String!) {\n    joinWorkspace(type: $type, token: $token)\n  }\n": typeof types.InviteMemberDocument,
+    "\n  mutation UpdateWorkspace($id: ID!, $name: String) {\n    updateWorkspace(id: $id, name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": typeof types.UpdateWorkspaceDocument,
+    "\n  query VerifyInvitationToken($invitationToken: String!) {\n    verifyWorkspaceInvitationToken(invitationToken: $invitationToken) {\n      workspace_name\n      invited_by\n    }\n  }\n": typeof types.VerifyInvitationTokenDocument,
 };
 const documents: Documents = {
     "\n  query getAccessibilityReport($url: String!) {\n    getAccessibilityReport(url: $url) {\n      axe {\n        errors {\n          message\n          context\n          selectors\n          impact\n          description\n          help\n          wcag_code\n          screenshotUrl\n        }\n        notices {\n          message\n          context\n          selectors\n          impact\n          description\n          help\n          wcag_code\n          screenshotUrl\n        }\n        warnings {\n          message\n          context\n          selectors\n          impact\n          description\n          help\n          wcag_code\n          screenshotUrl\n        }\n      }\n      htmlcs {\n        errors {\n          code\n          message\n          context\n          selectors\n          description\n          recommended_action\n          wcag_code\n          screenshotUrl\n        }\n        notices {\n          code\n          message\n          context\n          selectors\n          description\n          recommended_action\n          wcag_code\n          screenshotUrl\n        }\n        warnings {\n          code\n          message\n          context\n          selectors\n          description\n          recommended_action\n          wcag_code\n          screenshotUrl\n        }\n      }\n      score\n      totalElements\n      siteImg\n\n      ByFunctions {\n            FunctionalityName\n            Errors {\n              code\n              message\n              context\n              selectors\n              description\n              recommended_action\n              wcag_code\n              screenshotUrl\n            } \n      }\n      scriptCheckResult\n      techStack {\n        technologies\n        categorizedTechnologies {\n          category\n          technologies\n        }\n        confidence\n        accessibilityContext {\n          platform\n          platform_type\n          has_cms\n          has_ecommerce\n          has_framework\n          is_spa\n        }\n        analyzedUrl\n        analyzedAt\n        source\n      }\n      issues {\n        functionality\n        impact\n        message\n        context\n        selectors\n        description\n        recommended_action\n        screenshotUrl\n      }\n      issuesByFunction\n      functionalityNames\n      totalStats\n    }\n  }\n": types.GetAccessibilityReportDocument,
@@ -91,7 +97,13 @@ const documents: Documents = {
     "\n  query IsEmailAlreadyRegistered($email: String!) {\n    isEmailAlreadyRegistered(email: $email)\n  }\n": types.IsEmailAlreadyRegisteredDocument,
     "\n  mutation deleteAccount {\n    deleteAccount\n  }\n": types.DeleteAccountDocument,
     "\n  mutation UpdateProfile($name: String, $company: String, $position: String) {\n    updateProfile(name: $name, company: $company, position: $position)\n  }\n": types.UpdateProfileDocument,
+    "\n  mutation CreateWorkspace($name: String!) {\n    createWorkspace(name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": types.CreateWorkspaceDocument,
+    "\n  mutation DeleteWorkspace($id: ID!) {\n    deleteWorkspace(id: $id)\n  }\n": types.DeleteWorkspaceDocument,
+    "\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n": types.GetOrganizationWorkspacesDocument,
     "\n  query getUserWorkspaces {\n    getUserWorkspaces {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": types.GetUserWorkspacesDocument,
+    "\n  mutation InviteMember($type: JoinWorkspaceType!, $token: String!) {\n    joinWorkspace(type: $type, token: $token)\n  }\n": types.InviteMemberDocument,
+    "\n  mutation UpdateWorkspace($id: ID!, $name: String) {\n    updateWorkspace(id: $id, name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": types.UpdateWorkspaceDocument,
+    "\n  query VerifyInvitationToken($invitationToken: String!) {\n    verifyWorkspaceInvitationToken(invitationToken: $invitationToken) {\n      workspace_name\n      invited_by\n    }\n  }\n": types.VerifyInvitationTokenDocument,
 };
 
 /**
@@ -259,7 +271,31 @@ export function graphql(source: "\n  mutation UpdateProfile($name: String, $comp
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  mutation CreateWorkspace($name: String!) {\n    createWorkspace(name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"): (typeof documents)["\n  mutation CreateWorkspace($name: String!) {\n    createWorkspace(name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation DeleteWorkspace($id: ID!) {\n    deleteWorkspace(id: $id)\n  }\n"): (typeof documents)["\n  mutation DeleteWorkspace($id: ID!) {\n    deleteWorkspace(id: $id)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  query getUserWorkspaces {\n    getUserWorkspaces {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"): (typeof documents)["\n  query getUserWorkspaces {\n    getUserWorkspaces {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation InviteMember($type: JoinWorkspaceType!, $token: String!) {\n    joinWorkspace(type: $type, token: $token)\n  }\n"): (typeof documents)["\n  mutation InviteMember($type: JoinWorkspaceType!, $token: String!) {\n    joinWorkspace(type: $type, token: $token)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateWorkspace($id: ID!, $name: String) {\n    updateWorkspace(id: $id, name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateWorkspace($id: ID!, $name: String) {\n    updateWorkspace(id: $id, name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query VerifyInvitationToken($invitationToken: String!) {\n    verifyWorkspaceInvitationToken(invitationToken: $invitationToken) {\n      workspace_name\n      invited_by\n    }\n  }\n"): (typeof documents)["\n  query VerifyInvitationToken($invitationToken: String!) {\n    verifyWorkspaceInvitationToken(invitationToken: $invitationToken) {\n      workspace_name\n      invited_by\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

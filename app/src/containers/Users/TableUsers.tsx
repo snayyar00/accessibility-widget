@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Chip } from '@mui/material';
-import { ChangeOrganizationSelect } from './ChangeOrganizationSelect';
-import { AddUserToOrganization } from './AddUserToOrganization';
-import { DeleteUserFromOrganization } from './DeleteUserFromOrganization';
 import { useLazyQuery } from '@apollo/client';
 import GET_ORGANIZATION_USERS from '@/queries/organization/getOrganizationUsers';
 import { Query } from '@/generated/graphql';
+import { ChangeOrganizationSelect } from './ChangeOrganizationSelect';
+import { AddUserToOrganization } from './AddUserToOrganization';
+import { DeleteUserFromOrganization } from './DeleteUserFromOrganization';
 
 type TableUsersProps = {
   organizationId: number;

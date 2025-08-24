@@ -21,7 +21,6 @@ const WorkspacesSelect: React.FC = () => {
   const { data: workspacesData, loading: workspacesLoading } = useQuery<Query>(
     GET_USER_WORKSPACES,
     {
-      variables: { organizationId: userData?.currentOrganization?.id },
       skip: skipWorkspacesQuery,
     },
   );
@@ -35,7 +34,7 @@ const WorkspacesSelect: React.FC = () => {
   const workspaces = workspacesData?.getUserWorkspaces || [];
 
   const handleChange = async (event: SelectChangeEvent) => {
-    const value = event.target.value;
+    const { value } = event.target;
     const newWorkspaceId = value === 'none' ? null : Number(value);
 
     try {
@@ -72,7 +71,7 @@ const WorkspacesSelect: React.FC = () => {
 
   const empty = {
     value: 'none',
-    label: 'Without workspace',
+    label: 'My Workspace',
   };
 
   return (
