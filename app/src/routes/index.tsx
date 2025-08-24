@@ -11,6 +11,8 @@ import Users from '@/containers/Users';
 import ProofOfEffortToolkit from '@/containers/ProofOfEffortToolkit/ProofOfEffortToolkit';
 import AIInsights from '@/containers/AIInsights/AIInsights';
 import Workspaces from '@/containers/Workspaces';
+import LicenseOwnerInfo from '@/containers/LicenseOwnerInfo';
+import { HiOutlineUser } from 'react-icons/hi';
 
 const routes = [
   {
@@ -19,6 +21,20 @@ const routes = [
     exact: false,
     component: Profile,
     isSidebar: false,
+  },
+  {
+    path: '/license-owner-info',
+    name: 'License Owner',
+    exact: true,
+    component: LicenseOwnerInfo,
+    icon: (
+      <HiOutlineUser
+        className="menu-icon text-white-blue transition-colors duration-200"
+        size={25}
+        aria-label="License Owner Info navigation icon"
+      />
+    ),
+    isSidebar: true,
   },
   {
     path: '/scanner',

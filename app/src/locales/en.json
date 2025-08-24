@@ -20,7 +20,8 @@
       "forgot_password": "Reset Password - WebAbility.io Account Recovery",
       "reset_password": "Create New Password - WebAbility.io Security",
       "new_document": "New Document",
-      "teams": "Teams"
+      "teams": "Teams",
+      "license_owner_info": "License Owner Info"
     },
     "label": {
       "remember_label": "Remember me",
@@ -54,6 +55,20 @@
       "member": "member",
       "avatar": "Profile Picture",
       "continue": "Continue"
+    },
+    "license_owner": {
+      "title": "License owner info",
+      "description": "This information is used in the accessibility statement and for sending account notifications based on your preferences in account settings.",
+      "owner_name": "Name",
+      "owner_email": "Email",
+      "phone_number": "Phone number",
+      "save_changes": "Save Changes",
+      "saving": "Saving...",
+      "save_success": "License owner information saved successfully!",
+      "save_error": "Failed to save license owner information. Please try again.",
+      "enter_owner_name": "Enter website owner's name",
+      "enter_owner_email": "Enter website owner's email",
+      "enter_phone_number": "Enter phone number"
     },
     "validation": {
       "require_name": "Name is required",

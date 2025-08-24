@@ -12,6 +12,7 @@ import { resendEmailAction, verifyEmail } from '../../services/authentication/ve
 import { getOrganizationById } from '../../services/organization/organization.service'
 import { getUserOrganization } from '../../services/organization/organization_users.service'
 import { deleteUser } from '../../services/user/delete-user.service'
+import { getLicenseOwnerInfo, updateLicenseOwnerInfo } from '../../services/user/license-owner.service'
 import { getUserNotificationSettingsService, updateProfile, updateUserNotificationSettings } from '../../services/user/update-user.service'
 import { changeCurrentOrganization, changeCurrentWorkspace } from '../../services/user/update-user.service'
 import { isEmailAlreadyRegistered } from '../../services/user/user.service'
@@ -50,6 +51,10 @@ const resolvers = {
 
     getUserNotificationSettings: combineResolvers(allowedOrganization, isAuthenticated, async (_, __, { user }) => {
       return await getUserNotificationSettingsService(user.id)
+    }),
+
+    getLicenseOwnerInfo: combineResolvers(allowedOrganization, isAuthenticated, async (_, __, { user }) => {
+      return await getLicenseOwnerInfo(user.id)
     }),
   },
   User: {
@@ -130,6 +135,11 @@ const resolvers = {
         onboarding_emails_flag,
       })
 
+      return result.success
+    }),
+
+    updateLicenseOwnerInfo: combineResolvers(allowedOrganization, isAuthenticated, async (_, { name, license_owner_email, phone_number }, { user }) => {
+      const result = await updateLicenseOwnerInfo(user.id, name, license_owner_email, phone_number)
       return result.success
     }),
 
