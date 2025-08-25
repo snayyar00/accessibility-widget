@@ -489,12 +489,12 @@ I'll help you scan and fix your website in minutes.
               </svg>
               Accessibility Helper
               {getCurrentDomain() && (
-                <span className="text-xs bg-blue-500 px-2 py-1 rounded-full ml-2">
+                <span className="text-xs bg-blue-500 px-2 py-1 rounded-full">
                   {getCurrentDomain()}
                 </span>
               )}
             </h3>
-            <div className="flex items-center gap-2 mr-3">
+            <div className="flex items-center">
               <button 
                 onClick={() => setShowScanInput(!showScanInput)}
                 className="p-2 hover:bg-blue-850 rounded-full transition-colors cursor-pointer"
