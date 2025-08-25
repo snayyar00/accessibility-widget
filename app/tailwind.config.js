@@ -21,6 +21,7 @@ module.exports = {
       'blue-600': '#2463eb',
       'blue-700': '#1c4ed9',
       'blue-800': '#031239',
+      'blue-850': '#1e40af',
       'blue-900': '#1e398a',
       'report-blue': '#1c3ca6',
       'white-blue': '#97A0C3',
@@ -50,6 +51,7 @@ module.exports = {
       'gray-element': '#e2e8f0',
       'gray-50': '#f9fafb',
       'gray-100': '#f3f4f6',
+      'gray-200': '#e5e7eb',
       'gray-300': '#d1d5db',
       'gray-400': '#9ca3af',
       'gray-500': '#6b7280',
@@ -153,5 +155,5 @@ module.exports = {
       xxl: '2560px',
     }
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 }

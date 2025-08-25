@@ -117,7 +117,7 @@
   background-color: #000000;
   color: white;
   padding: 0.375rem 0.75rem;
-  border-radius: 0.375rem;
+  border-radius: 0.500rem;
   font-size: 0.875rem;
   font-weight: 500;
   height: 2.25rem; /* Fixed height */
@@ -134,4 +134,48 @@
   /* Ensure consistent positioning */
   position: relative;
   z-index: 10;
+}
+
+.fix-with-ai-button:hover {
+  background-color: #2d2d2d;
+}
+
+.fix-with-ai-button svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.view-affected-element-button {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem; /* 1.5px */
+  background-color: #000000;
+  color: white;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.500rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  height: 2.25rem; /* Fixed height */
+  width: 13rem; /* Fixed width */
+  min-width: 13rem; /* Ensure minimum width */
+  max-width: 13rem; /* Ensure maximum width */
+  flex-shrink: 0; /* Prevent shrinking */
+  justify-content: center;
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: visible; /* Allow content to overflow if needed */
+  transition-property: background-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  /* Ensure consistent positioning */
+  position: relative;
+  z-index: 10;
+}
+
+.view-affected-element-button:hover {
+  background-color: #2d2d2d;
+}
+
+.view-affected-element-button svg {
+  width: 1rem;
+  height: 1rem;
 }
