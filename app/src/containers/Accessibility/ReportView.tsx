@@ -630,7 +630,7 @@ Element: ${
                                   ? issue.context[0]
                                   : issue.context || 'Unknown element'
                               }
-WCAG: ${issue.message || 'N/A'}`;
+WCAG: ${issue.code || issue.message || 'N/A'}`;
 
                               if (
                                 typeof window.submitAccessibilityIssue ===
