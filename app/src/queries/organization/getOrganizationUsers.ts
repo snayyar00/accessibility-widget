@@ -24,6 +24,10 @@ export default gql`
         id
         name
       }
+      workspaces {
+        name
+        alias
+      }
     }
   }
 `;

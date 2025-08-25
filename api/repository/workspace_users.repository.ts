@@ -3,9 +3,11 @@ import { Knex } from 'knex'
 
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
-import { WORKSPACE_INVITATION_STATUS_PENDING, WORKSPACE_USER_STATUS_PENDING, WorkspaceUserStatus } from '../constants/workspace.constant'
+import { ORGANIZATION_USER_STATUS_PENDING } from '../constants/organization.constant'
+import { WORKSPACE_INVITATION_STATUS_PENDING, WORKSPACE_USER_STATUS_PENDING, WorkspaceUserRole, WorkspaceUserStatus } from '../constants/workspace.constant'
+import { addUserToOrganization, getUserOrganization } from '../services/organization/organization_users.service'
 import formatDateDB from '../utils/format-date-db'
-import { usersColumns } from './user.repository'
+import { updateUser, usersColumns } from './user.repository'
 import { workspacesColumns } from './workspace.repository'
 import { createWorkspaceInvitation, VALID_PERIOD_DAYS } from './workspace_invitations.repository'
 
@@ -14,7 +16,7 @@ const TABLE = TABLES.workspace_users
 export type WorkspaceUser = {
   user_id?: number
   workspace_id?: number
-  role?: string
+  role?: WorkspaceUserRole
   status?: WorkspaceUserStatus
   created_at?: string
   updated_at?: string
@@ -28,7 +30,7 @@ type MemberAndInviteToken = {
   member_id?: number
   email?: string
   token?: string
-  role?: string
+  role?: WorkspaceUserRole
   organization_id?: number
 }
 
@@ -37,11 +39,10 @@ type Alias = {
 }
 
 type GetListWorkspaceMemberByAliasWorkspaceResponse = {
-  userName: string
-  userId: number
+  user_name: string
+  user_id: number
   email: string
-  status: string
-  owner: number
+  status: WorkspaceUserStatus
 }
 
 export const workspaceUsersColumns = {
@@ -63,11 +64,10 @@ export async function getListWorkspaceMemberByAliasWorkspace({ alias }: Alias): 
     })
     .join(TABLES.users, workspaceUsersColumns.userId, usersColumns.id)
     .select({
-      userName: usersColumns.name,
-      userId: usersColumns.id,
+      user_name: usersColumns.name,
+      user_id: usersColumns.id,
       email: usersColumns.email,
       status: workspaceUsersColumns.status,
-      owner: workspacesColumns.createdBy,
     })
 }
 
@@ -83,6 +83,13 @@ export async function createWorkspaceUser(data: WorkspaceUser, transaction: Knex
 
 export async function createMemberAndInviteToken({ user_id, workspace_id, member_id, email, token, role, organization_id }: MemberAndInviteToken, transaction: Knex.Transaction): Promise<boolean> {
   try {
+    const existing = await getUserOrganization(member_id, organization_id)
+
+    if (!existing) {
+      await addUserToOrganization(member_id, organization_id, role, ORGANIZATION_USER_STATUS_PENDING, transaction)
+    }
+
+    await updateUser(member_id, { current_organization_id: organization_id }, transaction)
     await createWorkspaceInvitation(
       {
         email,
@@ -120,6 +127,28 @@ export async function deleteWorkspaceUsers(condition: Partial<WorkspaceUser>, tr
   return query
 }
 
-export async function updateWorkspaceUser(condition: WorkspaceUser, data: WorkspaceUser): Promise<number> {
-  return database(TABLE).where(condition).update(data)
+export async function deleteWorkspaceUsersByOrganization(userId: number, organizationId: number, transaction: Knex.Transaction = null): Promise<number> {
+  const query = database(TABLE)
+    .join(TABLES.workspaces, workspaceUsersColumns.workspaceId, workspacesColumns.id)
+    .where({
+      [workspaceUsersColumns.userId]: userId,
+      [workspacesColumns.organizationId]: organizationId,
+    })
+    .del()
+
+  if (transaction) {
+    return query.transacting(transaction)
+  }
+
+  return query
+}
+
+export async function updateWorkspaceUser(condition: WorkspaceUser, data: WorkspaceUser, transaction: Knex.Transaction = null): Promise<number> {
+  const query = database(TABLE).where(condition).update(data)
+
+  if (transaction) {
+    return query.transacting(transaction)
+  }
+
+  return query
 }

@@ -1,9 +1,10 @@
 import { combineResolvers } from 'graphql-resolvers'
 
+import { OrganizationUserRole } from '../../constants/organization.constant'
 import { GraphQLContext } from '../../graphql/types'
 import { Organization } from '../../repository/organization.repository'
 import { addOrganization, addUserToOrganizationByEmail, CreateOrganizationInput, editOrganization, getOrganizationByDomainService, getOrganizationById, getOrganizations, removeOrganization, removeUserFromOrganization } from '../../services/organization/organization.service'
-import { getOrganizationUsers } from '../../services/organization/organization_users.service'
+import { changeOrganizationUserRole, getOrganizationUsers } from '../../services/organization/organization_users.service'
 import { getOrganizationWorkspaces } from '../../services/workspaces/workspaces.service'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
@@ -78,6 +79,16 @@ const organizationResolver = {
     removeUserFromOrganization: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { userId: number }, { user }): Promise<boolean | ValidationError> => {
       try {
         await removeUserFromOrganization(user, args.userId)
+
+        return true
+      } catch (err) {
+        return err
+      }
+    }),
+
+    changeOrganizationUserRole: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { userId: number; role: OrganizationUserRole }, { user }): Promise<boolean | ValidationError> => {
+      try {
+        await changeOrganizationUserRole(user, args.userId, args.role)
 
         return true
       } catch (err) {

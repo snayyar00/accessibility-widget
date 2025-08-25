@@ -1,9 +1,10 @@
 import { Knex } from 'knex'
 
-import { OrganizationUserRole, OrganizationUserStatus } from '../../constants/organization.constant'
-import { deleteOrganizationUser, getOrganizationUser, getOrganizationUsersByUserId, getOrganizationUsersWithUserInfo, insertOrganizationUser, OrganizationUser } from '../../repository/organization_user.repository'
+import { ORGANIZATION_USER_ROLE_OWNER, OrganizationUserRole, OrganizationUserStatus } from '../../constants/organization.constant'
+import { deleteOrganizationUser, getOrganizationUser, getOrganizationUsersByUserId, getOrganizationUsersWithUserInfo, insertOrganizationUser, OrganizationUser, updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
 import { UserProfile } from '../../repository/user.repository'
 import { canManageOrganization } from '../../utils/access.helper'
+import { ApolloError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 
 export async function addUserToOrganization(user_id: number, organization_id: number, role: OrganizationUserRole = 'member', status: OrganizationUserStatus = 'active', trx?: Knex.Transaction): Promise<number[]> {
@@ -71,4 +72,52 @@ export async function getOrganizationUsers(user: UserProfile) {
     organizations: user.organizations.filter((org) => allowedOrgIds.includes(org.id)),
     currentOrganization: user.currentOrganization && allowedOrgIds.includes(user.currentOrganization.id) ? user.currentOrganization : null,
   }))
+}
+
+export async function changeOrganizationUserRole(initiator: UserProfile, targetUserId: number, newRole: OrganizationUserRole): Promise<boolean> {
+  const organizationId = initiator.current_organization_id
+
+  if (!organizationId) {
+    throw new ApolloError('No current organization selected')
+  }
+
+  const initiatorOrgUser = await getUserOrganization(initiator.id, organizationId)
+  const isAllowed = initiatorOrgUser && canManageOrganization(initiatorOrgUser.role)
+
+  if (!isAllowed) {
+    throw new ApolloError('Only owner or admin can change user roles')
+  }
+
+  if (initiator.id === targetUserId) {
+    throw new ApolloError('You cannot change your own role')
+  }
+
+  const targetOrgUser = await getUserOrganization(targetUserId, organizationId)
+
+  if (!targetOrgUser) {
+    throw new ApolloError('User not found in organization')
+  }
+
+  if (targetOrgUser.role === ORGANIZATION_USER_ROLE_OWNER && initiatorOrgUser.role !== ORGANIZATION_USER_ROLE_OWNER) {
+    throw new ApolloError('Only owner can change owner role')
+  }
+
+  if (newRole === ORGANIZATION_USER_ROLE_OWNER && initiatorOrgUser.role !== ORGANIZATION_USER_ROLE_OWNER) {
+    throw new ApolloError('Only owner can assign owner role')
+  }
+
+  try {
+    const updatedRows = await updateOrganizationUserByOrganizationAndUserId(organizationId, targetUserId, { role: newRole })
+
+    if (updatedRows === 0) {
+      throw new ApolloError('Failed to update user role')
+    }
+
+    logger.info(`User ${initiator.id} changed role of user ${targetUserId} to ${newRole} in organization ${organizationId}`)
+
+    return true
+  } catch (error) {
+    logger.error('Error changing organization user role:', error)
+    throw error
+  }
 }

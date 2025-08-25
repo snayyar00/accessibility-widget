@@ -5,6 +5,7 @@ import { useLazyQuery } from '@apollo/client';
 import GET_ORGANIZATION_USERS from '@/queries/organization/getOrganizationUsers';
 import { Query } from '@/generated/graphql';
 import { ChangeOrganizationSelect } from './ChangeOrganizationSelect';
+import { ChangeOrganizationUserRole } from './ChangeOrganizationUserRole';
 import { AddUserToOrganization } from './AddUserToOrganization';
 import { DeleteUserFromOrganization } from './DeleteUserFromOrganization';
 
@@ -39,7 +40,9 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
         currentOrganization: row.currentOrganization?.name ?? '',
         currentOrganizationId: row.currentOrganization?.id ?? '',
         organizations: row.organizations ?? [],
+        workspaces: row.workspaces ?? [],
         role: row?.role ?? '',
+        status: row?.status ?? '',
         updated_at: row?.updated_at ?? '',
       })),
     [users],
@@ -88,6 +91,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       width: 150,
       renderCell: (params) => (
         <Chip
+          key={`account-status-${params.row.id}`}
           label={params.value ? 'Verified' : 'Unverified'}
           color={params.value ? 'success' : 'error'}
           size="small"
@@ -103,10 +107,12 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
         const organizations = params.row.organizations || [];
         const value = params.row.currentOrganizationId;
         const rowUserId = params.row.id || null;
+        const NonActive = params.row?.status !== 'active';
 
         if (!value) {
           return (
             <Chip
+              key={`no-access-${params.row.id}`}
               label="No access"
               color="warning"
               size="small"
@@ -117,7 +123,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
 
         return (
           <ChangeOrganizationSelect
-            disabled={rowUserId === userId}
+            disabled={rowUserId === userId || NonActive}
             initialValue={value}
             organizations={organizations}
             userId={rowUserId}
@@ -126,29 +132,34 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       },
     },
     {
-      field: 'role',
-      headerName: 'Role',
-      width: 100,
+      field: 'status',
+      headerName: 'Org Status',
+      width: 140,
       renderCell: (params) => {
         let chipStyle = {};
+        let label = params.value;
 
         switch ((params.value || '').toLowerCase()) {
-          case 'admin':
-            chipStyle = { backgroundColor: '#f87171', color: '#fff' };
+          case 'active':
+            chipStyle = { backgroundColor: '#22c55e', color: '#fff' };
             break;
-          case 'owner':
-            chipStyle = { backgroundColor: '#4ade80', color: '#fff' };
+          case 'invited':
+            chipStyle = { backgroundColor: '#3b82f6', color: '#fff' };
             break;
-          case 'member':
-            chipStyle = { backgroundColor: '#2563eb', color: '#fff' };
+          case 'pending':
+            chipStyle = { backgroundColor: '#f59e0b', color: '#fff' };
+            break;
+          case 'removed':
+            chipStyle = { backgroundColor: '#ef4444', color: '#fff' };
             break;
           default:
-            chipStyle = {};
+            chipStyle = { backgroundColor: '#6b7280', color: '#fff' };
         }
 
         return (
           <Chip
-            label={params.value}
+            key={`org-status-${params.row.id}`}
+            label={label}
             size="small"
             variant="filled"
             sx={{ textTransform: 'capitalize', ...chipStyle }}
@@ -157,17 +168,89 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       },
     },
     {
-      field: 'updated_at',
-      headerName: 'Updated At',
-      width: 200,
+      field: 'role',
+      headerName: 'Org Role',
+      width: 140,
+      renderCell: (params) => {
+        const rowUserId = params.row.id;
+        const isSelf = rowUserId === userId;
+
+        return (
+          <ChangeOrganizationUserRole
+            disabled={isSelf}
+            initialValue={params.value}
+            userId={rowUserId}
+            onRoleChanged={refetch}
+          />
+        );
+      },
+    },
+    {
+      field: 'workspaces',
+      headerName: 'Workspaces',
+      width: 250,
       align: 'right',
       headerAlign: 'right',
-      valueFormatter: (params) => {
-        if (!params.value) return '';
+      renderCell: (params) => {
+        const workspaces = params.row.workspaces || [];
 
-        const date = new Date(params.value);
+        if (workspaces.length === 0) {
+          return (
+            <div key={`workspaces-empty-${params.row.id}`}>
+              <Chip
+                label="No workspaces"
+                size="small"
+                variant="filled"
+                sx={{
+                  fontSize: '0.75rem',
+                  height: '20px',
+                }}
+              />
+            </div>
+          );
+        }
 
-        return date.toLocaleString();
+        return (
+          <div
+            key={`workspaces-container-${params.row.id}`}
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '4px',
+              justifyContent: 'flex-end',
+            }}
+          >
+            {workspaces.slice(0, 3).map((workspace: any, index: number) => (
+              <Chip
+                key={
+                  workspace.id
+                    ? `workspace-${workspace.id}`
+                    : `workspace-${params.row.id}-${index}`
+                }
+                label={workspace.name}
+                size="small"
+                variant="outlined"
+                sx={{
+                  fontSize: '0.75rem',
+                  height: '20px',
+                  maxWidth: '110px',
+                }}
+              />
+            ))}
+            {workspaces.length > 3 && (
+              <Chip
+                key={`workspaces-more-${params.row.id}`}
+                label={`+${workspaces.length - 3}`}
+                size="small"
+                variant="outlined"
+                sx={{
+                  fontSize: '0.75rem',
+                  height: '20px',
+                }}
+              />
+            )}
+          </div>
+        );
       },
     },
     {

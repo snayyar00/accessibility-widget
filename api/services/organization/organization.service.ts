@@ -5,6 +5,8 @@ import { objectToString } from '../../helpers/string.helper'
 import { createOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization, updateOrganization } from '../../repository/organization.repository'
 import { findUser } from '../../repository/user.repository'
 import { updateUser, UserProfile } from '../../repository/user.repository'
+import { deleteWorkspaceInvitations } from '../../repository/workspace_invitations.repository'
+import { deleteWorkspaceUsersByOrganization } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
@@ -283,6 +285,15 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
 
       await updateUser(userId, { current_organization_id: newOrgId }, trx)
     }
+
+    await deleteWorkspaceUsersByOrganization(userId, organizationId, trx)
+
+    if (targetUser && targetUser.email) {
+      await deleteWorkspaceInvitations({ email: targetUser.email, organization_id: organizationId }, trx)
+    }
+
+    // Also remove invitations created by this user in this organization
+    await deleteWorkspaceInvitations({ invited_by: userId, organization_id: organizationId }, trx)
 
     const result = await removeUserFromOrganizationService(target.id, trx)
 

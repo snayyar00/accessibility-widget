@@ -94,7 +94,7 @@ export async function getAllWorkspace({ workspaceId, userId, organizationId }: G
   if (userId) condition[workspaceUsersColumns.userId] = userId
   if (organizationId) condition[workspacesColumns.organizationId] = organizationId
 
-  return database(TABLE).join(TABLES.workspace_users, workspacesColumns.id, workspaceUsersColumns.workspaceId).where(condition)
+  return database(TABLE).join(TABLES.workspace_users, workspacesColumns.id, workspaceUsersColumns.workspaceId).where(condition).select('workspaces.*', 'workspace_users.*', 'workspaces.id as id')
 }
 
 /**

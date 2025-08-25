@@ -11,7 +11,7 @@ type WorkspaceInvitation = {
   invited_by?: number
   workspace_id?: number
   organization_id?: number
-  role?: string
+  role?: WorkspaceUserRole
   status: WorkspaceInvitationStatus
   token?: string
   valid_until?: string
@@ -24,6 +24,9 @@ export type GetDetailWorkspaceInvitation = {
   status: WorkspaceInvitationStatus
   role: WorkspaceUserRole
   valid_until: string
+  organization_id?: number
+  workspace_id?: number
+  token?: string
 }
 
 const TABLE = TABLES.workspace_invitations
@@ -79,11 +82,20 @@ export async function getDetailWorkspaceInvitation(token: string): Promise<GetDe
       status: workspaceInvitationsColumns.status,
       role: workspaceInvitationsColumns.role,
       valid_until: workspaceInvitationsColumns.validUntil,
+      organization_id: workspaceInvitationsColumns.organizationId,
+      workspace_id: workspaceInvitationsColumns.workspaceId,
+      token: workspaceInvitationsColumns.token,
     })
 }
 
-export async function updateWorkspaceInvitationByToken(token: string, data: WorkspaceInvitation): Promise<number> {
-  return database(TABLE).where({ token }).update(data)
+export async function updateWorkspaceInvitationByToken(token: string, data: WorkspaceInvitation, transaction: Knex.Transaction = null): Promise<number> {
+  const query = database(TABLE).where({ token }).update(data)
+
+  if (transaction) {
+    return query.transacting(transaction)
+  }
+
+  return query
 }
 
 export async function deleteWorkspaceInvitations(condition: Partial<WorkspaceInvitation>, transaction: Knex.Transaction = null): Promise<boolean> {

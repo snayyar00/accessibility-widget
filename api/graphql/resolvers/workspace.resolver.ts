@@ -32,7 +32,7 @@ type JoinWorkspaceInput = {
 const resolvers = {
   Query: {
     getUserWorkspaces: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, __: unknown, { user }) => getAllWorkspaces(user)),
-    verifyWorkspaceInvitationToken: combineResolvers(allowedOrganization, (_: unknown, { invitationToken }: Token): Promise<GetDetailWorkspaceInvitation> => verifyInvitationToken(invitationToken)),
+    verifyWorkspaceInvitationToken: combineResolvers(allowedOrganization, (_: unknown, { invitationToken }: Token, { user }): Promise<GetDetailWorkspaceInvitation> => verifyInvitationToken(invitationToken, user)),
   },
 
   Mutation: {

@@ -34,8 +34,9 @@ type Documents = {
     "\n  query fetchDashboardQuery($url: String!, $startDate: String!, $endDate: String!) {\n    getSiteVisitorsByURL(url: $url) {\n        count\n      }\n    \n    getImpressionsByURLAndDate(url: $url, startDate: $startDate, endDate: $endDate){\n        impressions{\n            widget_opened,\n            widget_closed,\n            createdAt,\n            id,\n            site_id,\n            profileCounts\n        }\n    }\n\n    getEngagementRates(url: $url, startDate: $startDate, endDate: $endDate){\n      totalEngagements,\n      totalImpressions\n      engagementRate,\n      date\n    }\n  }\n": typeof types.FetchDashboardQueryDocument,
     "\n  query AnalyzeDomain($domain: String!) {\n    analyzeDomain(domain: $domain) {\n      url\n      status\n      insights\n      error\n      timestamp\n    }\n  }\n": typeof types.AnalyzeDomainDocument,
     "\n  mutation AddUserToOrganizationByEmail($email: String!) {\n    addUserToOrganizationByEmail(email: $email)\n  }\n": typeof types.AddUserToOrganizationByEmailDocument,
+    "\n  mutation ChangeOrganizationUserRole($userId: Int!, $role: String!) {\n    changeOrganizationUserRole(userId: $userId, role: $role)\n  }\n": typeof types.ChangeOrganizationUserRoleDocument,
     "\n  query GetOrganizationByDomain {\n    getOrganizationByDomain {\n      id\n      name\n      domain\n      favicon\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n": typeof types.GetOrganizationByDomainDocument,
-    "\n  query GetOrganizationUsers {\n    getOrganizationUsers {\n      id\n      user_id\n      organization_id\n      role\n      status\n      updated_at\n      user {\n        id\n        name\n        email\n        current_organization_id\n        isActive\n      }\n      organizations {\n        id\n        name\n      }\n      currentOrganization {\n        id\n        name\n      }\n    }\n  }\n": typeof types.GetOrganizationUsersDocument,
+    "\n  query GetOrganizationUsers {\n    getOrganizationUsers {\n      id\n      user_id\n      organization_id\n      role\n      status\n      updated_at\n      user {\n        id\n        name\n        email\n        current_organization_id\n        isActive\n      }\n      organizations {\n        id\n        name\n      }\n      currentOrganization {\n        id\n        name\n      }\n      workspaces {\n        id\n        name\n        alias\n      }\n    }\n  }\n": typeof types.GetOrganizationUsersDocument,
     "\n  query getUserOrganizations {\n    getUserOrganizations {\n      id\n      name\n      domain\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n": typeof types.GetUserOrganizationsDocument,
     "\n  mutation RemoveUserFromOrganization($userId: Int!) {\n    removeUserFromOrganization(userId: $userId)\n  }\n": typeof types.RemoveUserFromOrganizationDocument,
     "\n  mutation SendProofOfEffortToolkit($input: SendToolkitInput!) {\n    sendProofOfEffortToolkit(input: $input) {\n      success\n      message\n    }\n  }\n": typeof types.SendProofOfEffortToolkitDocument,
@@ -50,6 +51,8 @@ type Documents = {
     "\n  mutation ChangeCurrentWorkspace($workspaceId: Int, $userId: Int) {\n    changeCurrentWorkspace(workspaceId: $workspaceId, userId: $userId)\n  }\n": typeof types.ChangeCurrentWorkspaceDocument,
     "\n  query IsEmailAlreadyRegistered($email: String!) {\n    isEmailAlreadyRegistered(email: $email)\n  }\n": typeof types.IsEmailAlreadyRegisteredDocument,
     "\n  mutation deleteAccount {\n    deleteAccount\n  }\n": typeof types.DeleteAccountDocument,
+    "\n  query GetLicenseOwnerInfo {\n    getLicenseOwnerInfo {\n      id\n      name\n      license_owner_email\n      phone_number\n    }\n  }\n": typeof types.GetLicenseOwnerInfoDocument,
+    "\n  mutation UpdateLicenseOwnerInfo(\n    $name: String\n    $license_owner_email: String\n    $phone_number: String\n  ) {\n    updateLicenseOwnerInfo(\n      name: $name\n      license_owner_email: $license_owner_email\n      phone_number: $phone_number\n    )\n  }\n": typeof types.UpdateLicenseOwnerInfoDocument,
     "\n  mutation UpdateProfile($name: String, $company: String, $position: String) {\n    updateProfile(name: $name, company: $company, position: $position)\n  }\n": typeof types.UpdateProfileDocument,
     "\n  mutation CreateWorkspace($name: String!) {\n    createWorkspace(name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": typeof types.CreateWorkspaceDocument,
     "\n  mutation DeleteWorkspace($id: ID!) {\n    deleteWorkspace(id: $id)\n  }\n": typeof types.DeleteWorkspaceDocument,
@@ -80,8 +83,9 @@ const documents: Documents = {
     "\n  query fetchDashboardQuery($url: String!, $startDate: String!, $endDate: String!) {\n    getSiteVisitorsByURL(url: $url) {\n        count\n      }\n    \n    getImpressionsByURLAndDate(url: $url, startDate: $startDate, endDate: $endDate){\n        impressions{\n            widget_opened,\n            widget_closed,\n            createdAt,\n            id,\n            site_id,\n            profileCounts\n        }\n    }\n\n    getEngagementRates(url: $url, startDate: $startDate, endDate: $endDate){\n      totalEngagements,\n      totalImpressions\n      engagementRate,\n      date\n    }\n  }\n": types.FetchDashboardQueryDocument,
     "\n  query AnalyzeDomain($domain: String!) {\n    analyzeDomain(domain: $domain) {\n      url\n      status\n      insights\n      error\n      timestamp\n    }\n  }\n": types.AnalyzeDomainDocument,
     "\n  mutation AddUserToOrganizationByEmail($email: String!) {\n    addUserToOrganizationByEmail(email: $email)\n  }\n": types.AddUserToOrganizationByEmailDocument,
+    "\n  mutation ChangeOrganizationUserRole($userId: Int!, $role: String!) {\n    changeOrganizationUserRole(userId: $userId, role: $role)\n  }\n": types.ChangeOrganizationUserRoleDocument,
     "\n  query GetOrganizationByDomain {\n    getOrganizationByDomain {\n      id\n      name\n      domain\n      favicon\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n": types.GetOrganizationByDomainDocument,
-    "\n  query GetOrganizationUsers {\n    getOrganizationUsers {\n      id\n      user_id\n      organization_id\n      role\n      status\n      updated_at\n      user {\n        id\n        name\n        email\n        current_organization_id\n        isActive\n      }\n      organizations {\n        id\n        name\n      }\n      currentOrganization {\n        id\n        name\n      }\n    }\n  }\n": types.GetOrganizationUsersDocument,
+    "\n  query GetOrganizationUsers {\n    getOrganizationUsers {\n      id\n      user_id\n      organization_id\n      role\n      status\n      updated_at\n      user {\n        id\n        name\n        email\n        current_organization_id\n        isActive\n      }\n      organizations {\n        id\n        name\n      }\n      currentOrganization {\n        id\n        name\n      }\n      workspaces {\n        id\n        name\n        alias\n      }\n    }\n  }\n": types.GetOrganizationUsersDocument,
     "\n  query getUserOrganizations {\n    getUserOrganizations {\n      id\n      name\n      domain\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n": types.GetUserOrganizationsDocument,
     "\n  mutation RemoveUserFromOrganization($userId: Int!) {\n    removeUserFromOrganization(userId: $userId)\n  }\n": types.RemoveUserFromOrganizationDocument,
     "\n  mutation SendProofOfEffortToolkit($input: SendToolkitInput!) {\n    sendProofOfEffortToolkit(input: $input) {\n      success\n      message\n    }\n  }\n": types.SendProofOfEffortToolkitDocument,
@@ -96,6 +100,8 @@ const documents: Documents = {
     "\n  mutation ChangeCurrentWorkspace($workspaceId: Int, $userId: Int) {\n    changeCurrentWorkspace(workspaceId: $workspaceId, userId: $userId)\n  }\n": types.ChangeCurrentWorkspaceDocument,
     "\n  query IsEmailAlreadyRegistered($email: String!) {\n    isEmailAlreadyRegistered(email: $email)\n  }\n": types.IsEmailAlreadyRegisteredDocument,
     "\n  mutation deleteAccount {\n    deleteAccount\n  }\n": types.DeleteAccountDocument,
+    "\n  query GetLicenseOwnerInfo {\n    getLicenseOwnerInfo {\n      id\n      name\n      license_owner_email\n      phone_number\n    }\n  }\n": types.GetLicenseOwnerInfoDocument,
+    "\n  mutation UpdateLicenseOwnerInfo(\n    $name: String\n    $license_owner_email: String\n    $phone_number: String\n  ) {\n    updateLicenseOwnerInfo(\n      name: $name\n      license_owner_email: $license_owner_email\n      phone_number: $phone_number\n    )\n  }\n": types.UpdateLicenseOwnerInfoDocument,
     "\n  mutation UpdateProfile($name: String, $company: String, $position: String) {\n    updateProfile(name: $name, company: $company, position: $position)\n  }\n": types.UpdateProfileDocument,
     "\n  mutation CreateWorkspace($name: String!) {\n    createWorkspace(name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": types.CreateWorkspaceDocument,
     "\n  mutation DeleteWorkspace($id: ID!) {\n    deleteWorkspace(id: $id)\n  }\n": types.DeleteWorkspaceDocument,
@@ -203,11 +209,15 @@ export function graphql(source: "\n  mutation AddUserToOrganizationByEmail($emai
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  mutation ChangeOrganizationUserRole($userId: Int!, $role: String!) {\n    changeOrganizationUserRole(userId: $userId, role: $role)\n  }\n"): (typeof documents)["\n  mutation ChangeOrganizationUserRole($userId: Int!, $role: String!) {\n    changeOrganizationUserRole(userId: $userId, role: $role)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  query GetOrganizationByDomain {\n    getOrganizationByDomain {\n      id\n      name\n      domain\n      favicon\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n"): (typeof documents)["\n  query GetOrganizationByDomain {\n    getOrganizationByDomain {\n      id\n      name\n      domain\n      favicon\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query GetOrganizationUsers {\n    getOrganizationUsers {\n      id\n      user_id\n      organization_id\n      role\n      status\n      updated_at\n      user {\n        id\n        name\n        email\n        current_organization_id\n        isActive\n      }\n      organizations {\n        id\n        name\n      }\n      currentOrganization {\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetOrganizationUsers {\n    getOrganizationUsers {\n      id\n      user_id\n      organization_id\n      role\n      status\n      updated_at\n      user {\n        id\n        name\n        email\n        current_organization_id\n        isActive\n      }\n      organizations {\n        id\n        name\n      }\n      currentOrganization {\n        id\n        name\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query GetOrganizationUsers {\n    getOrganizationUsers {\n      id\n      user_id\n      organization_id\n      role\n      status\n      updated_at\n      user {\n        id\n        name\n        email\n        current_organization_id\n        isActive\n      }\n      organizations {\n        id\n        name\n      }\n      currentOrganization {\n        id\n        name\n      }\n      workspaces {\n        id\n        name\n        alias\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetOrganizationUsers {\n    getOrganizationUsers {\n      id\n      user_id\n      organization_id\n      role\n      status\n      updated_at\n      user {\n        id\n        name\n        email\n        current_organization_id\n        isActive\n      }\n      organizations {\n        id\n        name\n      }\n      currentOrganization {\n        id\n        name\n      }\n      workspaces {\n        id\n        name\n        alias\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -264,6 +274,14 @@ export function graphql(source: "\n  query IsEmailAlreadyRegistered($email: Stri
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation deleteAccount {\n    deleteAccount\n  }\n"): (typeof documents)["\n  mutation deleteAccount {\n    deleteAccount\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetLicenseOwnerInfo {\n    getLicenseOwnerInfo {\n      id\n      name\n      license_owner_email\n      phone_number\n    }\n  }\n"): (typeof documents)["\n  query GetLicenseOwnerInfo {\n    getLicenseOwnerInfo {\n      id\n      name\n      license_owner_email\n      phone_number\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateLicenseOwnerInfo(\n    $name: String\n    $license_owner_email: String\n    $phone_number: String\n  ) {\n    updateLicenseOwnerInfo(\n      name: $name\n      license_owner_email: $license_owner_email\n      phone_number: $phone_number\n    )\n  }\n"): (typeof documents)["\n  mutation UpdateLicenseOwnerInfo(\n    $name: String\n    $license_owner_email: String\n    $phone_number: String\n  ) {\n    updateLicenseOwnerInfo(\n      name: $name\n      license_owner_email: $license_owner_email\n      phone_number: $phone_number\n    )\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

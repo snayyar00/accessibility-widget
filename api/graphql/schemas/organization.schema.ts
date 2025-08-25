@@ -23,6 +23,7 @@ export const OrganizationSchema = `#graphql
     organizations: [Organization!]!
     currentOrganization: Organization
     currentWorkspace: Workspace
+    workspaces: [Workspace!]!
     hasWorkspace: Boolean!
   }
 
@@ -39,5 +40,6 @@ export const OrganizationSchema = `#graphql
     removeOrganization(id: ID!): Boolean @rateLimit(limit: 5, duration: 60, message: "Too many remove attempts. Please try again later.")
     addUserToOrganizationByEmail(email: String!): Boolean @rateLimit(limit: 30, duration: 60, message: "Too many add user attempts. Please try again later.")
     removeUserFromOrganization(userId: Int!): Boolean @rateLimit(limit: 30, duration: 60, message: "Too many remove user attempts. Please try again later.")
+    changeOrganizationUserRole(userId: Int!, role: String!): Boolean @rateLimit(limit: 20, duration: 60, message: "Too many role change attempts. Please try again later.")
   }
 `

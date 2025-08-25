@@ -3,7 +3,7 @@ import { Knex } from 'knex'
 
 import database from '../../config/database.config'
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
-import { WORKSPACE_INVITATION_STATUS_PENDING, WORKSPACE_USER_STATUS_ACTIVE } from '../../constants/workspace.constant'
+import { WORKSPACE_INVITATION_STATUS_PENDING, WORKSPACE_USER_STATUS_ACTIVE, WorkspaceUserRole } from '../../constants/workspace.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import generateRandomKey from '../../helpers/genarateRandomkey'
 import { normalizeEmail, stringToSlug } from '../../helpers/string.helper'
@@ -35,10 +35,10 @@ type CreateWorkspaceResponse = {
 }
 
 /**
- * Function to get all workspace
+ * Function to get all workspaces for current user
  *
- * @param User user User who execute this function
- *
+ * @param UserProfile user User who execute this function
+ * @returns Promise<GetAllWorkspaceResponse[]> Array of user's workspaces
  */
 export async function getAllWorkspaces(user: UserProfile): Promise<GetAllWorkspaceResponse[]> {
   const allWorkspaces = await getAllWorkspace({ userId: user.id, organizationId: user.current_organization_id })
@@ -60,9 +60,9 @@ export async function getAllWorkspaces(user: UserProfile): Promise<GetAllWorkspa
  * Function to get all workspaces for a specific organization
  * Only organization owner can see all workspaces
  *
- * @param organizationId Organization ID to get workspaces for
- * @param user User requesting the workspaces
- * @returns Array of workspaces belonging to the organization
+ * @param number organizationId Organization ID to get workspaces for
+ * @param UserProfile user User requesting the workspaces
+ * @returns Promise<Workspace[]> Array of workspaces belonging to the organization
  */
 export async function getOrganizationWorkspaces(organizationId: number, user: UserProfile): Promise<Workspace[]> {
   if (!organizationId) {
@@ -100,9 +100,9 @@ export async function getOrganizationWorkspaces(organizationId: number, user: Us
  * Function to get all members of a workspace
  * Only organization owner and admin can see all workspace members
  *
- * @param workspaceId ID of the workspace to get members for
- * @param user User requesting the workspace members
- * @returns Array of workspace members
+ * @param number workspaceId ID of the workspace to get members for
+ * @param UserProfile user User requesting the workspace members
+ * @returns Promise<GetAllWorkspaceResponse[]> Array of workspace members
  */
 export async function getWorkspaceMembers(workspaceId: number, user?: UserProfile): Promise<GetAllWorkspaceResponse[]> {
   if (!workspaceId) {
@@ -138,17 +138,16 @@ export async function getWorkspaceMembers(workspaceId: number, user?: UserProfil
 }
 
 /**
- * Function to get workspace by alias
+ * Function to get workspace members by alias
  *
- * @param User user   User who execute this function
- * @param string alias Alias of workspace want to get
- *
+ * @param string alias Alias of workspace to get members for
+ * @returns Promise<FindWorkspaceByAliasResponse[]> Array of workspace members with user info and status
  */
 export async function findWorkspaceByAlias(alias: string): Promise<FindWorkspaceByAliasResponse[]> {
   const members = await getListWorkspaceMemberByAliasWorkspace({ alias })
 
   const uniqueMembers = members.reduce((acc: typeof members, member) => {
-    const existingMember = acc.find((m) => m.userId === member.userId)
+    const existingMember = acc.find((m) => m.user_id === member.user_id)
 
     if (!existingMember) {
       acc.push(member)
@@ -158,8 +157,8 @@ export async function findWorkspaceByAlias(alias: string): Promise<FindWorkspace
   }, [])
 
   return uniqueMembers.map((member) => ({
-    user_id: member.userId,
-    user_name: member.userName,
+    user_id: member.user_id,
+    user_name: member.user_name,
     user_email: member.email,
     status: member.status,
   }))
@@ -168,8 +167,9 @@ export async function findWorkspaceByAlias(alias: string): Promise<FindWorkspace
 /**
  * Function to create workspace
  *
- * @param User          user             User who create workspace
- * @param string        workspaceName    Name of new workspace
+ * @param UserProfile user User who creates workspace
+ * @param string workspaceName Name of new workspace
+ * @returns Promise<CreateWorkspaceResponse> Created workspace info
  */
 export async function createWorkspace(user: UserProfile, workspaceName: string): Promise<CreateWorkspaceResponse> {
   const validateResult = validateCreateWorkspace({ name: workspaceName })
@@ -209,12 +209,14 @@ export async function createWorkspace(user: UserProfile, workspaceName: string):
 /**
  * Function to invite workspace member
  *
- * @param User   user         User who create invitation
- * @param string alias        alias of workspace you want to invite to join
+ * @param UserProfile user User who creates invitation
+ * @param string alias Alias of workspace you want to invite to join
  * @param string invitee_email Email of who you want to send invitation to
- * @param string role         Role for the invited user (optional, defaults to 'member')
+ * @param WorkspaceUserRole role Role for the invited user (optional, defaults to 'member')
+ * @param string allowedFrontendUrl Frontend URL for invitation link
+ * @returns Promise<FindWorkspaceByAliasResponse> Created invitation info
  */
-export async function inviteWorkspaceMember(user: UserProfile, alias: string, invitee_email: string, role: string = 'member', allowedFrontendUrl: string): Promise<FindWorkspaceByAliasResponse> {
+export async function inviteWorkspaceMember(user: UserProfile, alias: string, invitee_email: string, role: WorkspaceUserRole = 'member', allowedFrontendUrl: string): Promise<FindWorkspaceByAliasResponse> {
   const validateResult = validateInviteWorkspaceMember({ email: invitee_email, alias, role })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -367,9 +369,9 @@ export async function inviteWorkspaceMember(user: UserProfile, alias: string, in
 
 /**
  * Function to delete workspace
- * @param user User who wants to delete workspace
- * @param workspace_id ID of the workspace to delete
- * @returns true if deleted
+ * @param UserProfile user User who wants to delete workspace
+ * @param number workspace_id ID of the workspace to delete
+ * @returns Promise<boolean> True if workspace was deleted successfully
  */
 export async function deleteWorkspace(user: UserProfile, workspace_id: number): Promise<boolean> {
   if (!user.current_organization_id) {
@@ -396,10 +398,10 @@ export async function deleteWorkspace(user: UserProfile, workspace_id: number): 
 
 /**
  * Function to update workspace
- * @param user User who wants to update workspace
- * @param workspace_id ID of the workspace to update
- * @param data Object with fields to update
- * @returns updated workspace
+ * @param UserProfile user User who wants to update workspace
+ * @param number workspace_id ID of the workspace to update
+ * @param Partial<Workspace> data Object with fields to update
+ * @returns Promise<Workspace> Updated workspace
  */
 export async function updateWorkspace(user: UserProfile, workspace_id: number, data: Partial<Workspace>): Promise<Workspace> {
   const validateResult = validateUpdateWorkspace(data)
