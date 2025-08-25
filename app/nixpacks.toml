@@ -1,5 +1,6 @@
 [variables]
 CI = 'false'
+NODE_OPTIONS = '--max-old-space-size=8192'
 
 [phases.setup]
 nixPkgs = ["nodejs_18", "curl", "wget", "nano"]
