@@ -43,7 +43,7 @@ const styles = {
   inputForm: 'p-4 border-t border-gray-200 bg-white',
   inputContainer: 'flex items-center gap-3',
   inputField: 'flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all',
-  sendButton: 'bg-blue-600 hover:bg-blue-700 transition-all duration-200 text-white rounded-xl w-12 h-12 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md',
+  sendButton: 'bg-blue-600 hover:bg-blue-700 transition-all duration-0 text-white rounded-xl w-12 h-12 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md',
   sendIcon: 'w-5 h-5'
 };
 
