@@ -1,27 +1,22 @@
-import { Request, Response } from 'express'
-import { streamText } from 'ai'
 import { openai } from '@ai-sdk/openai'
+import { streamText } from 'ai'
+import { Request, Response } from 'express'
 
 export async function handleChatRequest(req: Request, res: Response) {
   try {
-    const { messages, techStack, scanResults, fullScanData, userProgress } = req.body;
+    const { messages, techStack, scanResults, fullScanData, userProgress } = req.body
 
     // Check for platform in multiple locations (handle both direct and nested structures)
-    const platform = techStack?.platform || 
-                    techStack?.data?.platform ||
-                    techStack?.data?.accessibility_context?.platform || 
-                    techStack?.accessibilityContext?.platform || 
-                    fullScanData?.platform || 
-                    'Unknown';
+    const platform = techStack?.platform || techStack?.data?.platform || techStack?.data?.accessibility_context?.platform || techStack?.accessibilityContext?.platform || fullScanData?.platform || 'Unknown'
 
     // Don't require platform for initial messages without scan data
-    const hasScanData = techStack || scanResults || fullScanData?.isLiveScanData;
-    
+    const hasScanData = techStack || scanResults || fullScanData?.isLiveScanData
+
     if (hasScanData && platform === 'Unknown') {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Platform is missing from tech stack data.',
-        details: process.env.NODE_ENV === 'development' ? { techStack, fullScanData } : undefined
-      });
+        details: process.env.NODE_ENV === 'development' ? { techStack, fullScanData } : undefined,
+      })
     }
 
     // Smart context-aware prompt without hardcoded rules
@@ -48,15 +43,19 @@ When users ask you to scan a website or mention a URL, you should:
 - Accessible websites typically see 23% increase in conversion rates
 - Better accessibility improves SEO rankings and user experience for everyone
 
-${fullScanData?.canPerformScans ? `
+${
+  fullScanData?.canPerformScans
+    ? `
 ✅ SCAN STATUS: ACTIVE - You have full scanning capabilities enabled
 - You can scan any website in real-time
 - You have access to accessibility analysis tools
 - You can detect platforms, issues, and WebAbility widgets
 - Always offer to scan websites when users mention URLs
-` : ''}
+`
+    : ''
+}
 
-CONTEXT PROVIDED:`;
+CONTEXT PROVIDED:`
 
     if (techStack?.accessibilityContext?.platform) {
       systemPrompt += `
@@ -65,20 +64,20 @@ CONTEXT PROVIDED:`;
 - Has E-commerce: ${techStack.accessibilityContext.has_ecommerce ? 'Yes' : 'No'}
 - Has Framework: ${techStack.accessibilityContext.has_framework ? 'Yes' : 'No'}
 - Is SPA: ${techStack.accessibilityContext.is_spa ? 'Yes' : 'No'}
-- Technologies: ${techStack.technologies?.join(', ') || 'Unknown'}`;
-      
+- Technologies: ${techStack.technologies?.join(', ') || 'Unknown'}`
+
       // Add confidence and AI analysis info
       if (techStack.confidenceScores) {
         systemPrompt += `
 - Platform Detection Confidence: ${techStack.confidenceScores.platform}%
 - CMS Detection Confidence: ${techStack.confidenceScores.cms}%
-- E-commerce Detection Confidence: ${techStack.confidenceScores.ecommerce}%`;
+- E-commerce Detection Confidence: ${techStack.confidenceScores.ecommerce}%`
       }
-      
+
       if (techStack.aiAnalysis?.used) {
         systemPrompt += `
 - AI Analysis Used: Yes (${techStack.aiAnalysis.model})
-- AI Analysis Confidence: ${techStack.aiAnalysis.confidence}%`;
+- AI Analysis Confidence: ${techStack.aiAnalysis.confidence}%`
       }
     }
 
@@ -86,29 +85,29 @@ CONTEXT PROVIDED:`;
       systemPrompt += `
 - Latest Scan Score: ${scanResults.score}%
 - Issues Found: ${scanResults.ByFunctions?.reduce((count: number, func: any) => count + (func.Errors?.length || 0), 0) || 0}
-- Website URL: ${scanResults.url || fullScanData?.url || 'Unknown'}`;
+- Website URL: ${scanResults.url || fullScanData?.url || 'Unknown'}`
     }
 
     // Add detailed accessibility issues context
     if (fullScanData?.accessibilityIssues && fullScanData.accessibilityIssues.length > 0) {
       systemPrompt += `
 
-ACCESSIBILITY ISSUES FOUND (${fullScanData.issueCounts?.total || fullScanData.accessibilityIssues.length} total):`;
-      
+ACCESSIBILITY ISSUES FOUND (${fullScanData.issueCounts?.total || fullScanData.accessibilityIssues.length} total):`
+
       fullScanData.accessibilityIssues.forEach((func: any, index: number) => {
         if (func.Errors && func.Errors.length > 0) {
-          systemPrompt += `\n\n**Function ${index + 1}: ${func.Function}**`;
+          systemPrompt += `\n\n**Function ${index + 1}: ${func.Function}**`
           func.Errors.forEach((error: any, errorIndex: number) => {
-            systemPrompt += `\n${errorIndex + 1}. **${error.Code}**: ${error.Message}`;
+            systemPrompt += `\n${errorIndex + 1}. **${error.Code}**: ${error.Message}`
             if (error.Context) {
-              systemPrompt += `\n   - Context: ${error.Context}`;
+              systemPrompt += `\n   - Context: ${error.Context}`
             }
             if (error.Selector) {
-              systemPrompt += `\n   - CSS Selector: ${error.Selector}`;
+              systemPrompt += `\n   - CSS Selector: ${error.Selector}`
             }
-          });
+          })
         }
-      });
+      })
     }
 
     // Add widget information
@@ -118,7 +117,7 @@ ACCESSIBILITY ISSUES FOUND (${fullScanData.issueCounts?.total || fullScanData.ac
 WEBABILITY WIDGET STATUS:
 - Widget Detected: ${fullScanData.widgetInfo.result === 'WebAbility' ? 'YES ✅' : 'NO ❌'}
 - Score Boost: ${fullScanData.hasWebAbilityWidget ? '+45 points' : 'No boost available'}
-- Enhanced Score: ${fullScanData.enhancedScore}% (from base ${fullScanData.baseScore}%)`;
+- Enhanced Score: ${fullScanData.enhancedScore}% (from base ${fullScanData.baseScore}%)`
     }
 
     // Add user progress context
@@ -130,7 +129,7 @@ USER PROGRESS:
 - Current Step: ${userProgress.currentStep}
 - Last Scanned URL: ${userProgress.lastScannedUrl || 'None'}
 - Preferred Platform: ${userProgress.preferredPlatform || 'Unknown'}
-- Issues Discussed: ${userProgress.issuesDiscussed?.length || 0}`;
+- Issues Discussed: ${userProgress.issuesDiscussed?.length || 0}`
     }
 
     systemPrompt += `
@@ -212,32 +211,31 @@ Let me guide you to fix this in your ${platform} admin by updating the CSS for t
 EXAMPLE BAD RESPONSE (NEVER DO THIS):
 "You have keyboard shortcut issues. You'll need to review any custom keyboard shortcuts implemented on your site."
 
-Focus on helping them navigate their specific platform and fix the exact accessibility issues using the specific CSS selectors and contexts provided in the scan data. If the scan data doesn't provide specific contexts, request a more detailed scan instead of giving generic advice.`;
+Focus on helping them navigate their specific platform and fix the exact accessibility issues using the specific CSS selectors and contexts provided in the scan data. If the scan data doesn't provide specific contexts, request a more detailed scan instead of giving generic advice.`
 
     // Set headers for streaming
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Connection', 'keep-alive')
 
     // Generate streaming response
     const result = await streamText({
       model: openai('gpt-4o'),
       messages,
       system: systemPrompt,
-    });
+    })
 
     // Handle the streaming response
     for await (const chunk of result.textStream) {
-      res.write(chunk);
+      res.write(chunk)
     }
-    
-    res.end();
 
+    res.end()
   } catch (error) {
-    console.error('Chat API error:', error);
-    res.status(500).json({ 
+    console.error('Chat API error:', error)
+    res.status(500).json({
       error: 'An error occurred during your request.',
-      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
-    });
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined,
+    })
   }
 }
