@@ -76,11 +76,11 @@ export async function getOrganizationWorkspaces(organizationId: number, user: Us
   const userOrganization = await getUserOrganization(user.id, organizationId)
 
   if (!userOrganization) {
-    throw new ValidationError('User is not a member of this organization')
+    return []
   }
 
   if (!canManageOrganization(userOrganization.role)) {
-    throw new ValidationError('Only organization owner and admin can view all workspaces')
+    return []
   }
 
   const workspaces = await getAllWorkspace({ organizationId })
@@ -110,17 +110,17 @@ export async function getWorkspaceMembers(workspaceId: number, user?: UserProfil
   }
 
   if (!user.current_organization_id) {
-    throw new ValidationError('No current organization selected')
+    return []
   }
 
   const userOrganization = await getUserOrganization(user.id, user.current_organization_id)
 
   if (!userOrganization) {
-    throw new ValidationError('User is not a member of this organization')
+    return []
   }
 
   if (!canManageOrganization(userOrganization.role)) {
-    throw new ValidationError('Only organization owner and admin can view workspace members')
+    return []
   }
 
   const members = await getAllWorkspace({ workspaceId })
@@ -190,11 +190,15 @@ export async function createWorkspace(user: UserProfile, workspaceName: string):
   }
 
   const alias = stringToSlug(workspaceName)
-  const workspace = await getWorkspace({ alias, organization_id: user.current_organization_id })
 
-  if (workspace) {
-    throw new ApolloError('Workspace exist')
+  const existingWorkspace = await getWorkspace({ alias })
+
+  if (existingWorkspace) {
+    logger.error('Workspace already exists, throwing error:', existingWorkspace)
+    throw new ApolloError(`Workspace with alias "${alias}" already exists`)
   }
+
+  logger.info('No existing workspace found, proceeding with creation')
 
   const workspaceId = createNewWorkspaceAndMember({ name: workspaceName, alias, organization_id: user.current_organization_id, user_id: user.id })
 
@@ -257,7 +261,7 @@ export async function inviteWorkspaceMember(user: UserProfile, alias: string, in
     const pendingInvitation = existingInvitations.find((inv) => inv.status === WORKSPACE_INVITATION_STATUS_PENDING)
 
     if (pendingInvitation) {
-      const isExpired = new Date(pendingInvitation.valid_until) < new Date()
+      const isExpired = dayjs().isAfter(pendingInvitation.valid_until)
 
       if (!isExpired) {
         throw new ApolloError('User already has a pending invitation for this workspace')
@@ -440,13 +444,10 @@ export async function updateWorkspace(user: UserProfile, workspace_id: number, d
     const alias = stringToSlug(cleanedData.name as string)
 
     if (alias !== workspace.alias) {
-      const existingWorkspace = await getWorkspace({
-        alias,
-        organization_id: user.current_organization_id,
-      })
+      const existingWorkspace = await getWorkspace({ alias })
 
       if (existingWorkspace) {
-        throw new ValidationError('Workspace alias already exists in organization')
+        throw new ValidationError('Workspace with this name already exists')
       }
     }
 

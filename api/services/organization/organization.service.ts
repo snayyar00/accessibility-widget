@@ -12,7 +12,6 @@ import { normalizeDomain } from '../../utils/domain.utils'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
 import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
-import { emailValidation } from '../../validations/email.validation'
 import { validateAddOrganization, validateEditOrganization, validateGetOrganizationByDomain, validateRemoveOrganization } from '../../validations/organization.validation'
 import { addUserToOrganization, getOrganizationsByUserId, getUserOrganization, removeUserFromOrganization as removeUserFromOrganizationService } from './organization_users.service'
 export interface CreateOrganizationInput {
@@ -198,41 +197,6 @@ export async function getOrganizationByDomainService(domain: string): Promise<Or
     logger.error('Error fetching organization by domain:', error)
     throw error
   }
-}
-
-export async function addUserToOrganizationByEmail(initiator: UserProfile, email: string): Promise<number[]> {
-  const validateResult = emailValidation(email)
-
-  if (Array.isArray(validateResult) && validateResult.length) {
-    throw new ValidationError(validateResult.map((it) => it.message).join(','))
-  }
-
-  const organizationId = initiator.current_organization_id
-
-  if (!organizationId) {
-    throw new ApolloError('No current organization selected')
-  }
-
-  const orgUser = await getUserOrganization(initiator.id, organizationId)
-  const isAllowed = orgUser && canManageOrganization(orgUser.role)
-
-  if (!isAllowed) {
-    throw new ForbiddenError('Only owner or admin can add users to the organization')
-  }
-
-  const user = await findUser({ email })
-
-  if (!user) {
-    throw new ValidationError('User with this email not found')
-  }
-
-  const existing = await getUserOrganization(user.id, organizationId)
-
-  if (existing) {
-    throw new ValidationError('User is already a member of this organization')
-  }
-
-  return await addUserToOrganization(user.id, organizationId)
 }
 
 export async function removeUserFromOrganization(initiator: UserProfile, userId: number): Promise<number> {

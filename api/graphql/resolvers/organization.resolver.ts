@@ -3,7 +3,7 @@ import { combineResolvers } from 'graphql-resolvers'
 import { OrganizationUserRole } from '../../constants/organization.constant'
 import { GraphQLContext } from '../../graphql/types'
 import { Organization } from '../../repository/organization.repository'
-import { addOrganization, addUserToOrganizationByEmail, CreateOrganizationInput, editOrganization, getOrganizationByDomainService, getOrganizationById, getOrganizations, removeOrganization, removeUserFromOrganization } from '../../services/organization/organization.service'
+import { addOrganization, CreateOrganizationInput, editOrganization, getOrganizationByDomainService, getOrganizationById, getOrganizations, removeOrganization, removeUserFromOrganization } from '../../services/organization/organization.service'
 import { changeOrganizationUserRole, getOrganizationUsers } from '../../services/organization/organization_users.service'
 import { getOrganizationWorkspaces } from '../../services/workspaces/workspaces.service'
 import { ValidationError } from '../../utils/graphql-errors.helper'
@@ -64,16 +64,6 @@ const organizationResolver = {
       if (maybeDeleted instanceof Error) return maybeDeleted
 
       return !!maybeDeleted
-    }),
-
-    addUserToOrganizationByEmail: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { email: string }, { user }): Promise<boolean | ValidationError> => {
-      try {
-        await addUserToOrganizationByEmail(user, args.email)
-
-        return true
-      } catch (err) {
-        return err
-      }
     }),
 
     removeUserFromOrganization: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { userId: number }, { user }): Promise<boolean | ValidationError> => {

@@ -38,7 +38,7 @@ const resolvers = {
   Mutation: {
     createWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { name }: WorkspaceInput, { user }) => createWorkspace(user, name)),
     inviteWorkspaceMember: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { email, alias, role }: InviteWorkspaceMemberInput, { user, allowedFrontendUrl }) => inviteWorkspaceMember(user, alias, email, role, allowedFrontendUrl)),
-    joinWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { token, type }: JoinWorkspaceInput) => acceptInvitation(token, type)),
+    joinWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { token, type }: JoinWorkspaceInput, { user }) => acceptInvitation(token, type, user)),
     deleteWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { id }: WorkspaceInput, { user }) => deleteWorkspace(user, id)),
     updateWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, data: WorkspaceInput, { user }) => updateWorkspace(user, data.id, data)),
   },

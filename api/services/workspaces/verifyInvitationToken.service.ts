@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 import database from '../../config/database.config'
 import { ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { WORKSPACE_INVITATION_STATUS_PENDING, WORKSPACE_USER_STATUS_PENDING } from '../../constants/workspace.constant'
@@ -16,7 +18,11 @@ export async function verifyInvitationToken(token: string, user: UserProfile): P
       throw new ApolloError('Token not valid')
     }
 
-    await updateOrganizationUserByOrganizationAndUserId(workspaceInvitation.organization_id, user.id, { status: ORGANIZATION_USER_STATUS_ACTIVE, role: workspaceInvitation.role }, trx)
+    if (dayjs().isAfter(workspaceInvitation.valid_until)) {
+      throw new ApolloError('Invitation token has expired')
+    }
+
+    await updateOrganizationUserByOrganizationAndUserId(workspaceInvitation.organization_id, user.id, { status: ORGANIZATION_USER_STATUS_ACTIVE }, trx)
 
     const existingWorkspaceUser = await getWorkspaceUser({
       user_id: user.id,

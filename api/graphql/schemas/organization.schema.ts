@@ -38,7 +38,6 @@ export const OrganizationSchema = `#graphql
     addOrganization(name: String!, domain: String!, logo_url: String, settings: JSON): Organization @rateLimit(limit: 5, duration: 60, message: "Too many add attempts. Please try again later.")
     editOrganization(id: ID!, name: String, domain: String, logo_url: String, settings: JSON): Organization @rateLimit(limit: 10, duration: 60, message: "Too many edit attempts. Please try again later.")
     removeOrganization(id: ID!): Boolean @rateLimit(limit: 5, duration: 60, message: "Too many remove attempts. Please try again later.")
-    addUserToOrganizationByEmail(email: String!): Boolean @rateLimit(limit: 30, duration: 60, message: "Too many add user attempts. Please try again later.")
     removeUserFromOrganization(userId: Int!): Boolean @rateLimit(limit: 30, duration: 60, message: "Too many remove user attempts. Please try again later.")
     changeOrganizationUserRole(userId: Int!, role: String!): Boolean @rateLimit(limit: 20, duration: 60, message: "Too many role change attempts. Please try again later.")
   }

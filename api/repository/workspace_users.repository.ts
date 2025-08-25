@@ -3,7 +3,7 @@ import { Knex } from 'knex'
 
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
-import { ORGANIZATION_USER_STATUS_PENDING } from '../constants/organization.constant'
+import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_PENDING } from '../constants/organization.constant'
 import { WORKSPACE_INVITATION_STATUS_PENDING, WORKSPACE_USER_STATUS_PENDING, WorkspaceUserRole, WorkspaceUserStatus } from '../constants/workspace.constant'
 import { addUserToOrganization, getUserOrganization } from '../services/organization/organization_users.service'
 import formatDateDB from '../utils/format-date-db'
@@ -86,7 +86,7 @@ export async function createMemberAndInviteToken({ user_id, workspace_id, member
     const existing = await getUserOrganization(member_id, organization_id)
 
     if (!existing) {
-      await addUserToOrganization(member_id, organization_id, role, ORGANIZATION_USER_STATUS_PENDING, transaction)
+      await addUserToOrganization(member_id, organization_id, ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_PENDING, transaction)
     }
 
     await updateUser(member_id, { current_organization_id: organization_id }, transaction)
