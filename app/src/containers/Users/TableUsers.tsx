@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Chip } from '@mui/material';
-import { useLazyQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import GET_ORGANIZATION_USERS from '@/queries/organization/getOrganizationUsers';
 import { Query } from '@/generated/graphql';
 import { ChangeOrganizationSelect } from './ChangeOrganizationSelect';
 import { ChangeOrganizationUserRole } from './ChangeOrganizationUserRole';
-import { AddUserToOrganization } from './AddUserToOrganization';
 import { DeleteUserFromOrganization } from './DeleteUserFromOrganization';
+import { InviteWorkspaceMember } from '@/components/Invite/InviteWorkspaceMember';
 
 type TableUsersProps = {
   organizationId: number;
@@ -17,15 +17,9 @@ type TableUsersProps = {
 export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
   const [pageSize, setPageSize] = React.useState<number>(50);
 
-  const [getUsers, { data, loading, error, refetch }] = useLazyQuery<Query>(
+  const { data, loading, error, refetch } = useQuery<Query>(
     GET_ORGANIZATION_USERS,
   );
-
-  React.useEffect(() => {
-    if (organizationId) {
-      getUsers();
-    }
-  }, [organizationId]);
 
   const users = data?.getOrganizationUsers || [];
 
@@ -91,7 +85,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       width: 150,
       renderCell: (params) => (
         <Chip
-          key={`account-status-${params.row.id}`}
+          key={`account-status-${params.row.id}-${params.row.number}`}
           label={params.value ? 'Verified' : 'Unverified'}
           color={params.value ? 'success' : 'error'}
           size="small"
@@ -112,7 +106,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
         if (!value) {
           return (
             <Chip
-              key={`no-access-${params.row.id}`}
+              key={`no-access-${params.row.id}-${params.row.number}`}
               label="No access"
               color="warning"
               size="small"
@@ -158,7 +152,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
 
         return (
           <Chip
-            key={`org-status-${params.row.id}`}
+            key={`org-status-${params.row.id}-${params.row.number}`}
             label={label}
             size="small"
             variant="filled"
@@ -196,7 +190,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
 
         if (workspaces.length === 0) {
           return (
-            <div key={`workspaces-empty-${params.row.id}`}>
+            <div key={`workspaces-empty-${params.row.id}-${params.row.number}`}>
               <Chip
                 label="No workspaces"
                 size="small"
@@ -212,7 +206,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
 
         return (
           <div
-            key={`workspaces-container-${params.row.id}`}
+            key={`workspaces-container-${params.row.id}-${params.row.number}`}
             style={{
               display: 'flex',
               flexWrap: 'wrap',
@@ -239,7 +233,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
             ))}
             {workspaces.length > 3 && (
               <Chip
-                key={`workspaces-more-${params.row.id}`}
+                key={`workspaces-more-${params.row.id}-${params.row.number}`}
                 label={`+${workspaces.length - 3}`}
                 size="small"
                 variant="outlined"
@@ -256,7 +250,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
     {
       field: 'actions',
       headerName: '',
-      width: 60,
+      width: 105,
       align: 'right',
       headerAlign: 'right',
       sortable: false,
@@ -265,14 +259,27 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       renderCell: (params) => {
         const rowUserId = params.row.id;
         const rowOwner = params.row.role === 'owner';
+        const userEmail = params.row.email;
+        const userWorkspaces = params.row.workspaces || [];
 
         return (
-          <DeleteUserFromOrganization
-            disabled={rowUserId === userId || rowOwner}
-            userId={rowUserId}
-            organizationId={organizationId}
-            onUserDeleted={refetch}
-          />
+          <div className="flex">
+            {rowUserId !== userId && (
+              <InviteWorkspaceMember
+                userEmail={userEmail}
+                userWorkspaces={userWorkspaces}
+                onUserInvited={refetch}
+                buttonText=""
+                buttonSize="medium"
+              />
+            )}
+            <DeleteUserFromOrganization
+              disabled={rowUserId === userId || rowOwner}
+              userId={rowUserId}
+              organizationId={organizationId}
+              onUserDeleted={refetch}
+            />
+          </div>
         );
       },
     },
@@ -281,10 +288,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
   return (
     <>
       <div className="static mb-5 top-[15px] right-[17px] lg:absolute lg:mb-0">
-        <AddUserToOrganization
-          onUserAdded={refetch}
-          organizationId={organizationId}
-        />
+        <InviteWorkspaceMember onUserInvited={refetch} />
       </div>
 
       <div className="h-[calc(100vh-310px)]">

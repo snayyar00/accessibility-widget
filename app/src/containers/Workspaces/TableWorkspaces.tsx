@@ -2,7 +2,7 @@ import * as React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Avatar, AvatarGroup, Tooltip } from '@mui/material';
 
-import { useLazyQuery } from '@apollo/client';
+import { useLazyQuery, useQuery } from '@apollo/client';
 import GET_ORGANIZATION_WORKSPACES from '@/queries/workspace/getOrganizationWorkspaces';
 import { Query } from '@/generated/graphql';
 import { CreateWorkspace } from './CreateWorkspace';
@@ -10,24 +10,15 @@ import { EditWorkspace } from './EditWorkspace';
 import { DeleteWorkspace } from './DeleteWorkspace';
 
 type TableWorkspacesProps = {
-  organizationId: number;
   onUpdate: () => void;
 };
 
-export const TableWorkspaces = ({
-  organizationId,
-  onUpdate,
-}: TableWorkspacesProps) => {
+export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
   const [pageSize, setPageSize] = React.useState<number>(50);
 
-  const [getWorkspaces, { data, loading, error, refetch }] =
-    useLazyQuery<Query>(GET_ORGANIZATION_WORKSPACES);
-
-  React.useEffect(() => {
-    if (organizationId) {
-      getWorkspaces();
-    }
-  }, [organizationId]);
+  const { data, loading, error, refetch } = useQuery<Query>(
+    GET_ORGANIZATION_WORKSPACES,
+  );
 
   const workspaces = data?.getOrganizationWorkspaces || [];
 
@@ -77,9 +68,9 @@ export const TableWorkspaces = ({
 
         return (
           <AvatarGroup max={4}>
-            {members.map((member: any) => (
+            {members.map((member: any, memberIndex: number) => (
               <Tooltip
-                key={member.id}
+                key={`${params.row.id}-member-${member.id}-${memberIndex}`}
                 title={`${member.user?.name || 'Unknown'} (${member.role})`}
               >
                 <Avatar

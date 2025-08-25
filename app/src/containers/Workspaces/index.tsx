@@ -50,10 +50,7 @@ const Workspaces: React.FC = () => {
       </h1>
 
       {userData.current_organization_id && (
-        <TableWorkspaces
-          organizationId={userData.current_organization_id}
-          onUpdate={handleUpdate}
-        />
+        <TableWorkspaces onUpdate={handleUpdate} />
       )}
     </section>
   );
