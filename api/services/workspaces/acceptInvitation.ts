@@ -15,9 +15,11 @@ export async function acceptInvitation(token: string, type: 'accept' | 'decline'
     await updateWorkspaceInvitationByToken(token, { status: invitationStatus }, trx)
     await updateWorkspaceUser({ invitation_token: token }, { status: userStatus }, trx)
 
-    const [workspaceInvitation] = await getDetailWorkspaceInvitation(token)
+    if (type === 'accept') {
+      const [workspaceInvitation] = await getDetailWorkspaceInvitation(token)
 
-    await updateOrganizationUserByOrganizationAndUserId(workspaceInvitation.organization_id, user.id, { current_workspace_id: workspaceInvitation.workspace_id }, trx)
+      await updateOrganizationUserByOrganizationAndUserId(workspaceInvitation.organization_id, user.id, { current_workspace_id: workspaceInvitation.workspace_id }, trx)
+    }
 
     await trx.commit()
 

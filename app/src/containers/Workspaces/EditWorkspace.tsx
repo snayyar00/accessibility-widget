@@ -7,32 +7,91 @@ import {
   DialogActions,
   IconButton,
   TextField,
+  Box,
 } from '@mui/material';
-import { useMutation, useApolloClient } from '@apollo/client';
+import { useMutation } from '@apollo/client';
 import UPDATE_WORKSPACE from '@/queries/workspace/updateWorkspace';
 import { toast } from 'react-toastify';
 import EditIcon from '@mui/icons-material/Edit';
-import { UpdateWorkspaceMutation, Workspace } from '@/generated/graphql';
+import { UpdateWorkspaceMutation, Workspace, Site } from '@/generated/graphql';
+import WorkspaceDomainsSelect from './WorkspaceDomainsSelect';
 
 type EditWorkspaceProps = {
   workspace: Workspace;
   onWorkspaceUpdated?: () => void;
   disabled?: boolean;
+  userSites: Site[];
+  userSitesLoading: boolean;
+};
+
+const arraysEqual = (a: string[], b: string[]): boolean => {
+  return a.length === b.length && a.every((val, i) => val === b[i]);
+};
+
+const getDomainIds = (workspace: Workspace): string[] => {
+  return workspace.domains?.map((domain) => String(domain.id)) || [];
 };
 
 export const EditWorkspace: React.FC<EditWorkspaceProps> = ({
   workspace,
   onWorkspaceUpdated,
   disabled,
+  userSites,
+  userSitesLoading,
 }) => {
   const [open, setOpen] = React.useState(false);
-  const [editedWorkspace, setEditedWorkspace] = React.useState(workspace);
+  const [workspaceName, setWorkspaceName] = React.useState(workspace.name);
+  const [selectedDomainIds, setSelectedDomainIds] = React.useState<string[]>(
+    [],
+  );
 
   const [updateWorkspace, { loading }] =
     useMutation<UpdateWorkspaceMutation>(UPDATE_WORKSPACE);
 
+  // Combine user sites with workspace domains to ensure all domains are available
+  // This solves the issue where domains added by other users are not visible
+  // in the select dropdown for the current user
+  const allAvailableSites = React.useMemo(() => {
+    const siteMap = new Map<string, Site>();
+
+    // Add user's sites
+    userSites.forEach((site) => {
+      siteMap.set(String(site.id), site);
+    });
+
+    // Add workspace domains that might not be in user's sites
+    workspace.domains?.forEach((domain) => {
+      if (!siteMap.has(String(domain.id))) {
+        siteMap.set(String(domain.id), {
+          __typename: 'Site',
+          id: Number(domain.id),
+          url: domain.url,
+          createAt: null,
+          expiredAt: null,
+          trial: null,
+          updatedAt: null,
+          user_id: null,
+        } as Site);
+      }
+    });
+
+    return Array.from(siteMap.values());
+  }, [userSites, workspace.domains]);
+
+  // Initialize form state when workspace changes
+  React.useEffect(() => {
+    setWorkspaceName(workspace.name);
+    setSelectedDomainIds(getDomainIds(workspace));
+  }, [workspace]);
+
+  const resetForm = React.useCallback(() => {
+    setWorkspaceName(workspace.name);
+    setSelectedDomainIds(getDomainIds(workspace));
+  }, [workspace]);
+
   const handleOpen = () => {
     setOpen(true);
+    resetForm();
   };
 
   const handleClose = () => {
@@ -40,44 +99,75 @@ export const EditWorkspace: React.FC<EditWorkspaceProps> = ({
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedWorkspace({ ...editedWorkspace, name: e.target.value });
+    setWorkspaceName(e.target.value);
+  };
+
+  const validateAndGetChanges = () => {
+    const trimmedName = workspaceName.trim();
+
+    if (!trimmedName) {
+      toast.error('Workspace name cannot be empty');
+      return null;
+    }
+
+    const hasNameChanged = trimmedName !== workspace.name;
+    const currentDomainIds = getDomainIds(workspace).sort();
+    const hasDomainsChanged = !arraysEqual(
+      selectedDomainIds.sort(),
+      currentDomainIds,
+    );
+
+    if (!hasNameChanged && !hasDomainsChanged) {
+      return { hasChanges: false, updateMessage: [] };
+    }
+
+    const variables: Record<string, any> = { id: String(workspace.id) };
+    const updateMessage: string[] = [];
+
+    if (hasNameChanged) {
+      variables.name = trimmedName;
+      updateMessage.push('name');
+    }
+
+    if (hasDomainsChanged) {
+      variables.allowedSiteIds = selectedDomainIds;
+      updateMessage.push('domains');
+    }
+
+    return { hasChanges: true, variables, updateMessage };
   };
 
   const handleUpdate = async () => {
-    if (!editedWorkspace.name.trim()) {
-      toast.error('Workspace name cannot be empty');
-      return;
-    }
+    const validation = validateAndGetChanges();
 
-    if (editedWorkspace.name.trim() === workspace.name) {
+    if (!validation) return;
+
+    if (!validation.hasChanges) {
       handleClose();
       return;
     }
 
     try {
       const { errors, data } = await updateWorkspace({
-        variables: {
-          id: String(workspace.id),
-          name: editedWorkspace.name.trim(),
-        },
+        variables: validation.variables,
       });
 
       if (errors?.length) {
         errors.forEach((err) =>
           toast.error(err.message || 'Failed to update workspace.'),
         );
-
         return;
       }
 
-      if (!data || !data.updateWorkspace) {
+      if (!data?.updateWorkspace) {
         toast.error('Failed to update workspace.');
-
         return;
       }
 
       toast.success(
-        `Workspace "${editedWorkspace.name.trim()}" updated successfully!`,
+        `Workspace ${validation.updateMessage.join(
+          ' and ',
+        )} updated successfully!`,
       );
 
       handleClose();
@@ -86,6 +176,8 @@ export const EditWorkspace: React.FC<EditWorkspaceProps> = ({
       toast.error(e?.message || 'Failed to update workspace.');
     }
   };
+
+  const isUpdateDisabled = loading || !workspaceName.trim();
 
   return (
     <>
@@ -105,12 +197,23 @@ export const EditWorkspace: React.FC<EditWorkspaceProps> = ({
           <TextField
             label="Workspace Name"
             fullWidth
-            value={editedWorkspace.name}
+            value={workspaceName}
             onChange={handleNameChange}
             autoFocus
             margin="normal"
             disabled={loading}
           />
+
+          <Box sx={{ mt: 2 }}>
+            <WorkspaceDomainsSelect
+              workspaceId={String(workspace.id)}
+              value={selectedDomainIds}
+              onChange={setSelectedDomainIds}
+              disabled={loading}
+              userSites={allAvailableSites}
+              loading={userSitesLoading}
+            />
+          </Box>
         </DialogContent>
 
         <DialogActions>
@@ -129,7 +232,7 @@ export const EditWorkspace: React.FC<EditWorkspaceProps> = ({
             onClick={handleUpdate}
             variant="contained"
             color="primary"
-            disabled={loading || !editedWorkspace.name.trim()}
+            disabled={isUpdateDisabled}
           >
             Update
           </Button>

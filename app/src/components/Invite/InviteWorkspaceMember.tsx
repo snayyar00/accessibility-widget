@@ -14,26 +14,29 @@ import {
   IconButton,
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation } from '@apollo/client';
 import INVITE_WORKSPACE_MEMBER from '@/queries/workspace/inviteWorkspaceMember';
-import GET_ORGANIZATION_WORKSPACES from '@/queries/workspace/getOrganizationWorkspaces';
 import { toast } from 'react-toastify';
-import { Query, WorkspaceUserRole } from '@/generated/graphql';
+import { Workspace, WorkspaceUserRole } from '@/generated/graphql';
 
 interface InviteWorkspaceMemberProps {
   onUserInvited?: () => void;
   userEmail?: string;
-  userWorkspaces?: Array<{ id: number; name: string; alias?: string }>;
-  buttonText?: string;
-  buttonSize?: 'small' | 'medium' | 'large';
+  userWorkspaces?: Workspace[];
+  buttonSize?: 'medium' | 'large';
+  allWorkspaces?: Workspace[];
+  workspacesLoading?: boolean;
+  preSelectedWorkspace?: string;
 }
 
 export const InviteWorkspaceMember: React.FC<InviteWorkspaceMemberProps> = ({
   onUserInvited,
   userEmail = '',
   userWorkspaces = [],
-  buttonText = 'Invite User',
   buttonSize = 'large',
+  allWorkspaces = [],
+  workspacesLoading = false,
+  preSelectedWorkspace,
 }) => {
   const [open, setOpen] = React.useState(false);
   const [email, setEmail] = React.useState(userEmail);
@@ -42,26 +45,14 @@ export const InviteWorkspaceMember: React.FC<InviteWorkspaceMemberProps> = ({
     WorkspaceUserRole.Member,
   );
 
-  const { data: workspacesData, loading: workspacesLoading } = useQuery<Query>(
-    GET_ORGANIZATION_WORKSPACES,
-  );
-
   const [inviteWorkspaceMember, { loading: inviteLoading }] = useMutation(
     INVITE_WORKSPACE_MEMBER,
   );
 
-  const allWorkspaces = workspacesData?.getOrganizationWorkspaces || [];
-
   const isUserInWorkspace = (workspace: any, userWorkspaces: any[]) => {
     return userWorkspaces.some((userWorkspace) => {
-      const sameId = userWorkspace.id === Number(workspace.id);
-      const sameName = userWorkspace.name === workspace.name;
-      const sameAlias =
-        userWorkspace.alias &&
-        workspace.alias &&
-        userWorkspace.alias === workspace.alias;
-
-      return sameId || sameName || sameAlias;
+      // Use only alias for comparison as it is unique
+      return userWorkspace.alias === workspace.alias;
     });
   };
 
@@ -71,6 +62,9 @@ export const InviteWorkspaceMember: React.FC<InviteWorkspaceMemberProps> = ({
 
   const handleOpen = () => {
     setEmail(userEmail);
+    if (preSelectedWorkspace) {
+      setSelectedWorkspace(preSelectedWorkspace);
+    }
     setOpen(true);
   };
 
@@ -138,14 +132,14 @@ export const InviteWorkspaceMember: React.FC<InviteWorkspaceMemberProps> = ({
 
   return (
     <>
-      {buttonText ? (
+      {buttonSize === 'large' ? (
         <Button
           size={buttonSize}
           variant="contained"
           color="primary"
           onClick={handleOpen}
         >
-          {buttonText}
+          Invite User
         </Button>
       ) : (
         <IconButton size={buttonSize} color="primary" onClick={handleOpen}>

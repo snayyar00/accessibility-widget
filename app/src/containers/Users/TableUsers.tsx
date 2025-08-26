@@ -3,6 +3,7 @@ import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Chip } from '@mui/material';
 import { useQuery } from '@apollo/client';
 import GET_ORGANIZATION_USERS from '@/queries/organization/getOrganizationUsers';
+import GET_ORGANIZATION_WORKSPACES from '@/queries/workspace/getOrganizationWorkspaces';
 import { Query } from '@/generated/graphql';
 import { ChangeOrganizationSelect } from './ChangeOrganizationSelect';
 import { ChangeOrganizationUserRole } from './ChangeOrganizationUserRole';
@@ -21,7 +22,12 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
     GET_ORGANIZATION_USERS,
   );
 
+  const { data: workspacesData, loading: workspacesLoading } = useQuery<Query>(
+    GET_ORGANIZATION_WORKSPACES,
+  );
+
   const users = data?.getOrganizationUsers || [];
+  const allWorkspaces = workspacesData?.getOrganizationWorkspaces || [];
 
   const rows = React.useMemo(
     () =>
@@ -49,7 +55,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       field: 'name',
       headerName: 'Name',
       width: 220,
-      minWidth: 220,
+      minWidth: 160,
       flex: 1,
       renderCell: (params) => {
         const rowUserId = params.row.id;
@@ -59,14 +65,14 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
           name += ' (you)';
         }
 
-        return name;
+        return <span className="truncate">{name}</span>;
       },
     },
     {
       field: 'email',
       headerName: 'Email',
       width: 280,
-      minWidth: 280,
+      minWidth: 200,
       flex: 1,
       renderCell: (params) => {
         const rowUserId = params.row.id;
@@ -76,7 +82,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
           email += ' (you)';
         }
 
-        return email;
+        return <span className="truncate">{email}</span>;
       },
     },
     {
@@ -92,6 +98,71 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
           variant="filled"
         />
       ),
+    },
+    {
+      field: 'workspaces',
+      headerName: 'Workspaces',
+      width: 250,
+      renderCell: (params) => {
+        const workspaces = params.row.workspaces || [];
+
+        if (workspaces.length === 0) {
+          return (
+            <div key={`workspaces-empty-${params.row.id}-${params.row.number}`}>
+              <Chip
+                label="No workspaces"
+                size="small"
+                variant="filled"
+                sx={{
+                  fontSize: '0.75rem',
+                  height: '20px',
+                }}
+              />
+            </div>
+          );
+        }
+
+        return (
+          <div
+            key={`workspaces-container-${params.row.id}-${params.row.number}`}
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '4px',
+            }}
+          >
+            {workspaces.slice(0, 3).map((workspace: any, index: number) => (
+              <Chip
+                key={
+                  workspace.id
+                    ? `workspace-${workspace.id}`
+                    : `workspace-${params.row.id}-${index}`
+                }
+                label={workspace.name}
+                size="small"
+                variant="outlined"
+                sx={{
+                  fontSize: '0.75rem',
+                  height: '20px',
+                  maxWidth: '110px',
+                }}
+              />
+            ))}
+            {workspaces.length > 3 && (
+              <Chip
+                key={`workspaces-more-${params.row.id}-${params.row.number}`}
+                label={`+${workspaces.length - 3}`}
+                size="small"
+                variant="outlined"
+                sx={{
+                  fontSize: '0.75rem',
+                  height: '20px',
+                }}
+              />
+            )}
+          </div>
+        );
+      },
     },
     {
       field: 'currentOrganization',
@@ -179,74 +250,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
         );
       },
     },
-    {
-      field: 'workspaces',
-      headerName: 'Workspaces',
-      width: 250,
-      align: 'right',
-      headerAlign: 'right',
-      renderCell: (params) => {
-        const workspaces = params.row.workspaces || [];
 
-        if (workspaces.length === 0) {
-          return (
-            <div key={`workspaces-empty-${params.row.id}-${params.row.number}`}>
-              <Chip
-                label="No workspaces"
-                size="small"
-                variant="filled"
-                sx={{
-                  fontSize: '0.75rem',
-                  height: '20px',
-                }}
-              />
-            </div>
-          );
-        }
-
-        return (
-          <div
-            key={`workspaces-container-${params.row.id}-${params.row.number}`}
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '4px',
-              justifyContent: 'flex-end',
-            }}
-          >
-            {workspaces.slice(0, 3).map((workspace: any, index: number) => (
-              <Chip
-                key={
-                  workspace.id
-                    ? `workspace-${workspace.id}`
-                    : `workspace-${params.row.id}-${index}`
-                }
-                label={workspace.name}
-                size="small"
-                variant="outlined"
-                sx={{
-                  fontSize: '0.75rem',
-                  height: '20px',
-                  maxWidth: '110px',
-                }}
-              />
-            ))}
-            {workspaces.length > 3 && (
-              <Chip
-                key={`workspaces-more-${params.row.id}-${params.row.number}`}
-                label={`+${workspaces.length - 3}`}
-                size="small"
-                variant="outlined"
-                sx={{
-                  fontSize: '0.75rem',
-                  height: '20px',
-                }}
-              />
-            )}
-          </div>
-        );
-      },
-    },
     {
       field: 'actions',
       headerName: '',
@@ -269,8 +273,9 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
                 userEmail={userEmail}
                 userWorkspaces={userWorkspaces}
                 onUserInvited={refetch}
-                buttonText=""
                 buttonSize="medium"
+                allWorkspaces={allWorkspaces}
+                workspacesLoading={workspacesLoading}
               />
             )}
             <DeleteUserFromOrganization
@@ -288,7 +293,11 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
   return (
     <>
       <div className="static mb-5 top-[15px] right-[17px] lg:absolute lg:mb-0">
-        <InviteWorkspaceMember onUserInvited={refetch} />
+        <InviteWorkspaceMember
+          onUserInvited={refetch}
+          allWorkspaces={allWorkspaces}
+          workspacesLoading={workspacesLoading}
+        />
       </div>
 
       <div className="h-[calc(100vh-310px)]">

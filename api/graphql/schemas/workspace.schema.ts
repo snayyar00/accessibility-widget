@@ -30,6 +30,12 @@ export const WorkspaceSchema = `#graphql
     alias: String!
     organization_id: ID!
     members: [WorkspaceUser!]!
+    domains: [AllowedSite!]!
+  }
+
+  type AllowedSite {
+    id: ID!
+    url: String!
   }
 
   type WorkspaceUser {
@@ -60,13 +66,13 @@ export const WorkspaceSchema = `#graphql
 
   extend type Query {
     getUserWorkspaces: [Workspace!]! @rateLimit(limit: 30, duration: 60, message: "Too many workspaces list requests. Please try again later.")
-    verifyWorkspaceInvitationToken(invitationToken: String!): VerifyWorkspaceInvitationResponse!
+    verifyWorkspaceInvitationToken(invitationToken: String!): VerifyWorkspaceInvitationResponse! @rateLimit(limit: 30, duration: 60, message: "Too many verifyWorkspaceInvitationToken requests. Please try again later.")
   }
 
   extend type Mutation {
     createWorkspace(name: String!): Workspace! @rateLimit(limit: 5, duration: 60, message: "Too many add workspace. Please try again later.")
     deleteWorkspace(id: ID!): Boolean! @rateLimit(limit: 5, duration: 60, message: "Too many delete workspace. Please try again later.")
-    updateWorkspace(id: ID!, name: String): Workspace! @rateLimit(limit: 30, duration: 60, message: "Too many update workspace. Please try again later.")
+    updateWorkspace(id: ID!, name: String, allowedSiteIds: [ID!]): Workspace! @rateLimit(limit: 30, duration: 60, message: "Too many update workspace. Please try again later.")
     inviteWorkspaceMember(email: String!, alias: String!, role: WorkspaceUserRole!): WorkspaceInvitation! @rateLimit(limit: 30, duration: 60, message: "Too many invitations. Please try again later.")
     joinWorkspace(type: JoinWorkspaceType!, token: String!): Boolean! @rateLimit(limit: 5, duration: 60, message: "Too many join workspace. Please try again later.")
   }

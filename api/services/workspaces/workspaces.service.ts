@@ -10,6 +10,7 @@ import { normalizeEmail, stringToSlug } from '../../helpers/string.helper'
 import { findUser } from '../../repository/user.repository'
 import { UserProfile } from '../../repository/user.repository'
 import { createNewWorkspaceAndMember, deleteWorkspaceById, getAllWorkspace, GetAllWorkspaceResponse, getWorkspace, updateWorkspace as updateWorkspaceRepo, Workspace } from '../../repository/workspace.repository'
+import { setWorkspaceDomains } from '../../repository/workspace_allowed_sites.repository'
 import { createWorkspaceInvitation, deleteWorkspaceInvitations, getWorkspaceInvitation, VALID_PERIOD_DAYS } from '../../repository/workspace_invitations.repository'
 import { createMemberAndInviteToken, deleteWorkspaceUsers, getListWorkspaceMemberByAliasWorkspace, getWorkspaceUser } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
@@ -407,7 +408,11 @@ export async function deleteWorkspace(user: UserProfile, workspace_id: number): 
  * @param Partial<Workspace> data Object with fields to update
  * @returns Promise<Workspace> Updated workspace
  */
-export async function updateWorkspace(user: UserProfile, workspace_id: number, data: Partial<Workspace>): Promise<Workspace> {
+type UpdateWorkspaceData = Partial<Workspace> & {
+  allowedSiteIds?: number[]
+}
+
+export async function updateWorkspace(user: UserProfile, workspace_id: number, data: UpdateWorkspaceData): Promise<Workspace> {
   const validateResult = validateUpdateWorkspace(data)
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -430,11 +435,11 @@ export async function updateWorkspace(user: UserProfile, workspace_id: number, d
     throw new ApolloError('Workspace not found')
   }
 
-  const { id, organization_id, created_at, updated_at, ...rawUpdateData } = data
+  const { id, organization_id, created_at, updated_at, allowedSiteIds, ...rawUpdateData } = data
 
   const cleanedData = Object.fromEntries(Object.entries(rawUpdateData).filter(([_, value]) => value !== undefined && value !== null))
 
-  if (Object.keys(cleanedData).length === 0) {
+  if (Object.keys(cleanedData).length === 0 && !allowedSiteIds) {
     throw new ValidationError('No data provided for update')
   }
 
@@ -454,7 +459,13 @@ export async function updateWorkspace(user: UserProfile, workspace_id: number, d
     finalUpdateData = { ...finalUpdateData, alias }
   }
 
-  await updateWorkspaceRepo(workspace_id, finalUpdateData)
+  if (Object.keys(finalUpdateData).length > 0) {
+    await updateWorkspaceRepo(workspace_id, finalUpdateData)
+  }
+
+  if (allowedSiteIds !== undefined) {
+    await setWorkspaceDomains(workspace_id, allowedSiteIds)
+  }
 
   const updated = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
 

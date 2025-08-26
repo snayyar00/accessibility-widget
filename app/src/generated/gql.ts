@@ -55,11 +55,11 @@ type Documents = {
     "\n  mutation UpdateProfile($name: String, $company: String, $position: String) {\n    updateProfile(name: $name, company: $company, position: $position)\n  }\n": typeof types.UpdateProfileDocument,
     "\n  mutation CreateWorkspace($name: String!) {\n    createWorkspace(name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": typeof types.CreateWorkspaceDocument,
     "\n  mutation DeleteWorkspace($id: ID!) {\n    deleteWorkspace(id: $id)\n  }\n": typeof types.DeleteWorkspaceDocument,
-    "\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n": typeof types.GetOrganizationWorkspacesDocument,
+    "\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      domains {\n        id\n        url\n      }\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n": typeof types.GetOrganizationWorkspacesDocument,
     "\n  query getUserWorkspaces {\n    getUserWorkspaces {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": typeof types.GetUserWorkspacesDocument,
     "\n  mutation InviteWorkspaceMember(\n    $email: String!\n    $alias: String!\n    $role: WorkspaceUserRole!\n  ) {\n    inviteWorkspaceMember(email: $email, alias: $alias, role: $role) {\n      user_id\n      user_name\n      user_email\n      status\n    }\n  }\n": typeof types.InviteWorkspaceMemberDocument,
     "\n  mutation InviteMember($type: JoinWorkspaceType!, $token: String!) {\n    joinWorkspace(type: $type, token: $token)\n  }\n": typeof types.InviteMemberDocument,
-    "\n  mutation UpdateWorkspace($id: ID!, $name: String) {\n    updateWorkspace(id: $id, name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": typeof types.UpdateWorkspaceDocument,
+    "\n  mutation UpdateWorkspace($id: ID!, $name: String, $allowedSiteIds: [ID!]) {\n    updateWorkspace(id: $id, name: $name, allowedSiteIds: $allowedSiteIds) {\n      id\n      name\n      alias\n      organization_id\n      domains {\n        id\n        url\n      }\n    }\n  }\n": typeof types.UpdateWorkspaceDocument,
     "\n  query VerifyInvitationToken($invitationToken: String!) {\n    verifyWorkspaceInvitationToken(invitationToken: $invitationToken) {\n      workspace_name\n      invited_by\n    }\n  }\n": typeof types.VerifyInvitationTokenDocument,
 };
 const documents: Documents = {
@@ -104,11 +104,11 @@ const documents: Documents = {
     "\n  mutation UpdateProfile($name: String, $company: String, $position: String) {\n    updateProfile(name: $name, company: $company, position: $position)\n  }\n": types.UpdateProfileDocument,
     "\n  mutation CreateWorkspace($name: String!) {\n    createWorkspace(name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": types.CreateWorkspaceDocument,
     "\n  mutation DeleteWorkspace($id: ID!) {\n    deleteWorkspace(id: $id)\n  }\n": types.DeleteWorkspaceDocument,
-    "\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n": types.GetOrganizationWorkspacesDocument,
+    "\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      domains {\n        id\n        url\n      }\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n": types.GetOrganizationWorkspacesDocument,
     "\n  query getUserWorkspaces {\n    getUserWorkspaces {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": types.GetUserWorkspacesDocument,
     "\n  mutation InviteWorkspaceMember(\n    $email: String!\n    $alias: String!\n    $role: WorkspaceUserRole!\n  ) {\n    inviteWorkspaceMember(email: $email, alias: $alias, role: $role) {\n      user_id\n      user_name\n      user_email\n      status\n    }\n  }\n": types.InviteWorkspaceMemberDocument,
     "\n  mutation InviteMember($type: JoinWorkspaceType!, $token: String!) {\n    joinWorkspace(type: $type, token: $token)\n  }\n": types.InviteMemberDocument,
-    "\n  mutation UpdateWorkspace($id: ID!, $name: String) {\n    updateWorkspace(id: $id, name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": types.UpdateWorkspaceDocument,
+    "\n  mutation UpdateWorkspace($id: ID!, $name: String, $allowedSiteIds: [ID!]) {\n    updateWorkspace(id: $id, name: $name, allowedSiteIds: $allowedSiteIds) {\n      id\n      name\n      alias\n      organization_id\n      domains {\n        id\n        url\n      }\n    }\n  }\n": types.UpdateWorkspaceDocument,
     "\n  query VerifyInvitationToken($invitationToken: String!) {\n    verifyWorkspaceInvitationToken(invitationToken: $invitationToken) {\n      workspace_name\n      invited_by\n    }\n  }\n": types.VerifyInvitationTokenDocument,
 };
 
@@ -293,7 +293,7 @@ export function graphql(source: "\n  mutation DeleteWorkspace($id: ID!) {\n    d
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      domains {\n        id\n        url\n      }\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      domains {\n        id\n        url\n      }\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -309,7 +309,7 @@ export function graphql(source: "\n  mutation InviteMember($type: JoinWorkspaceT
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation UpdateWorkspace($id: ID!, $name: String) {\n    updateWorkspace(id: $id, name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateWorkspace($id: ID!, $name: String) {\n    updateWorkspace(id: $id, name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"];
+export function graphql(source: "\n  mutation UpdateWorkspace($id: ID!, $name: String, $allowedSiteIds: [ID!]) {\n    updateWorkspace(id: $id, name: $name, allowedSiteIds: $allowedSiteIds) {\n      id\n      name\n      alias\n      organization_id\n      domains {\n        id\n        url\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateWorkspace($id: ID!, $name: String, $allowedSiteIds: [ID!]) {\n    updateWorkspace(id: $id, name: $name, allowedSiteIds: $allowedSiteIds) {\n      id\n      name\n      alias\n      organization_id\n      domains {\n        id\n        url\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

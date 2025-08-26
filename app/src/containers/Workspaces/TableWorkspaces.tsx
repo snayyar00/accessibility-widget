@@ -4,10 +4,12 @@ import { Avatar, AvatarGroup, Tooltip } from '@mui/material';
 
 import { useLazyQuery, useQuery } from '@apollo/client';
 import GET_ORGANIZATION_WORKSPACES from '@/queries/workspace/getOrganizationWorkspaces';
+import GET_USER_SITES from '@/queries/sites/getSites';
 import { Query } from '@/generated/graphql';
 import { CreateWorkspace } from './CreateWorkspace';
 import { EditWorkspace } from './EditWorkspace';
 import { DeleteWorkspace } from './DeleteWorkspace';
+import { InviteWorkspaceMember } from '@/components/Invite/InviteWorkspaceMember';
 
 type TableWorkspacesProps = {
   onUpdate: () => void;
@@ -20,7 +22,13 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
     GET_ORGANIZATION_WORKSPACES,
   );
 
+  const { data: userSitesData, loading: userSitesLoading } =
+    useQuery<Query>(GET_USER_SITES);
+
   const workspaces = data?.getOrganizationWorkspaces || [];
+  const userSites = (userSitesData?.getUserSites || []).filter(
+    (site): site is NonNullable<typeof site> => site !== null,
+  );
 
   const rows = React.useMemo(
     () =>
@@ -28,8 +36,10 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
         number: idx + 1,
         id: workspace.id,
         name: workspace.name ?? '',
+        alias: workspace.alias ?? '',
         membersCount: workspace.members?.length ?? 0,
         members: workspace.members ?? [],
+        domains: workspace.domains ?? [],
       })),
     [workspaces],
   );
@@ -46,35 +56,49 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
       width: 60,
     },
     {
+      field: 'alias',
+      headerName: 'Alias',
+      width: 150,
+      minWidth: 120,
+      flex: 1,
+      renderCell: (params) => <span className="truncate">{params.value}</span>,
+    },
+    {
       field: 'name',
       headerName: 'Workspace Name',
       width: 220,
       minWidth: 220,
       flex: 1,
+      renderCell: (params) => <span className="truncate">{params.value}</span>,
     },
     {
       field: 'membersCount',
-      headerName: 'Count',
-      width: 100,
+      headerName: '',
+      width: 40,
       align: 'center',
       headerAlign: 'center',
+      renderCell: (params) => <>({params.value})</>,
     },
     {
       field: 'members',
       headerName: 'Members',
-      width: 250,
+      width: 150,
       renderCell: (params) => {
         const members = params.value || [];
 
         return (
-          <AvatarGroup max={4}>
+          <AvatarGroup
+            sx={{
+              '.MuiAvatar-root': { width: 24, height: 24, fontSize: '0.75rem' },
+            }}
+            max={6}
+          >
             {members.map((member: any, memberIndex: number) => (
               <Tooltip
                 key={`${params.row.id}-member-${member.id}-${memberIndex}`}
                 title={`${member.user?.name || 'Unknown'} (${member.role})`}
               >
                 <Avatar
-                  sx={{ width: 24, height: 24, fontSize: '0.75rem' }}
                   src={member.user?.avatarUrl}
                   alt={member.user?.name || 'User'}
                 >
@@ -89,7 +113,7 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
     {
       field: 'actions',
       headerName: '',
-      width: 120,
+      width: 150,
       align: 'right',
       headerAlign: 'right',
       sortable: false,
@@ -97,9 +121,18 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
       disableColumnMenu: true,
       renderCell: (params) => (
         <div style={{ display: 'flex', gap: 4 }}>
+          <InviteWorkspaceMember
+            preSelectedWorkspace={params.row.id}
+            onUserInvited={handleUpdate}
+            buttonSize="medium"
+            allWorkspaces={workspaces}
+            workspacesLoading={loading}
+          />
           <EditWorkspace
             workspace={params.row}
             onWorkspaceUpdated={handleUpdate}
+            userSites={userSites}
+            userSitesLoading={userSitesLoading}
           />
           <DeleteWorkspace
             workspace={params.row}

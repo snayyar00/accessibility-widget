@@ -6,6 +6,10 @@ export default gql`
       id
       name
       alias
+      domains {
+        id
+        url
+      }
       members {
         id
         user_id
