@@ -1,0 +1,162 @@
+.chatbotContainer {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.chatbotButton {
+  background-color: #000000;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  padding: 12px;
+  min-width: 80px;
+  min-height: 80px;
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.buttonContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.chatbotWindow {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chatHeader {
+  padding: 24px;
+  background-color: #000000;
+  color: white;
+}
+
+.chatHeader h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.chatHeader p {
+  margin: 8px 0 0;
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.messagesContainer {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: #f8f9fa;
+}
+
+.message {
+  max-width: 85%;
+  padding: 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.userMessage {
+  align-self: flex-end;
+  background-color: #4B9CFF;
+  color: white;
+}
+
+.aiMessage {
+  align-self: flex-start;
+  background-color: white;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.inputForm {
+  padding: 20px;
+  background-color: white;
+  border-top: 1px solid #eaeaea;
+  display: flex;
+  gap: 12px;
+}
+
+.inputField {
+  flex: 1;
+  padding: 16px 24px;
+  border: 1px solid #eaeaea;
+  border-radius: 100px;
+  font-size: 16px;
+  outline: none;
+  background-color: #f8f9fa;
+}
+
+.inputField::placeholder {
+  color: #9ca3af;
+}
+
+.sendButton {
+  padding: 12px 32px;
+  background-color: #4B9CFF;
+  color: white;
+  border: none;
+  border-radius: 100px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.closeButton {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  background-color: #000;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+@media (min-width: 640px) {
+  .chatbotWindow {
+    position: absolute;
+    bottom: 90px;
+    right: 0;
+    width: 400px;
+    height: 600px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .closeButton {
+    position: static;
+    width: auto;
+    height: auto;
+    background: none;
+    font-size: 20px;
+  }
+} 
