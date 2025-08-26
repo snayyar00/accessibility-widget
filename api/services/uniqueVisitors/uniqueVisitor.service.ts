@@ -1,5 +1,5 @@
 import { UserProfile } from '../../repository/user.repository'
-import { findVisitorByURL, insertVisitor } from '../../repository/visitors.repository'
+import { findVisitorByURL, insertVisitor } from '../../repository/visitors.clickhouse.repository'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
