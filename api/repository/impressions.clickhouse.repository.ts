@@ -42,8 +42,8 @@ export async function findImpressionsURLDate(user_id: number, site_url: string, 
     const formattedStartDate = formatDateForClickHouse(startDate)
     const formattedEndDate = formatDateForClickHouse(endDate)
 
-    // Then query ClickHouse impressions table
-    const query = `
+    // Query ClickHouse impressions table
+    const clickhouseQuery = `
       SELECT 
         id,
         site_id,
@@ -59,18 +59,38 @@ export async function findImpressionsURLDate(user_id: number, site_url: string, 
       ORDER BY created_at DESC
     `
 
-    const result = await clickhouseClient.query({
-      query,
+    const clickhouseResult = await clickhouseClient.query({
+      query: clickhouseQuery,
       query_params: {
         site_id: site.id,
       },
     })
 
-    const data = (await result.json()) as { data: impressionsProps[] }
+    const clickhouseData = (await clickhouseResult.json()) as { data: impressionsProps[] }
+    const clickhouseImpressions = clickhouseData.data || []
 
-    console.log(`✅ ClickHouse SUCCESS: Retrieved ${data.data.length} impressions for site_id ${site.id} (${site_url})`)
+    console.log(`✅ ClickHouse SUCCESS: Retrieved ${clickhouseImpressions.length} impressions for site_id ${site.id} (${site_url})`)
 
-    return data.data
+    // If CLICKHOUSE_FLAG is true, also fetch from MySQL for comparison
+    if (process.env.CLICKHOUSE_FLAG === 'true') {
+      try {
+        // Import MySQL repository dynamically to avoid circular dependencies
+        const { findImpressionsURLDate: findMySQLImpressions } = await import('./impressions.repository')
+
+        const mysqlImpressions = await findMySQLImpressions(user_id, site_url, startDate, endDate)
+
+        console.log(`✅ MySQL SUCCESS: Retrieved ${mysqlImpressions.length} impressions for comparison`)
+
+        // Return both datasets with source identification
+        return [...clickhouseImpressions.map((imp: impressionsProps) => ({ ...imp, source: 'clickhouse' })), ...mysqlImpressions.map((imp: impressionsProps) => ({ ...imp, source: 'mysql' }))]
+      } catch (mysqlError) {
+        console.log(`⚠️ MySQL fallback failed, returning ClickHouse data only: ${mysqlError.message}`)
+        return clickhouseImpressions.map((imp: impressionsProps) => ({ ...imp, source: 'clickhouse' }))
+      }
+    }
+
+    // Return ClickHouse data only
+    return clickhouseImpressions.map((imp) => ({ ...imp, source: 'clickhouse' }))
   } catch (error) {
     logger.error('Error finding impressions by URL and date:', error)
     throw error
@@ -94,8 +114,8 @@ export async function findEngagementURLDate(user_id: number, site_url: string, s
     const formattedStartDate = formatDateForClickHouse(startDate)
     const formattedEndDate = formatDateForClickHouse(endDate)
 
-    // Then query ClickHouse impressions table
-    const query = `
+    // Query ClickHouse impressions table
+    const clickhouseQuery = `
       SELECT 
         toDate(created_at) as date,
         COUNT(*) as totalImpressions,
@@ -108,18 +128,19 @@ export async function findEngagementURLDate(user_id: number, site_url: string, s
       ORDER BY date ASC
     `
 
-    const result = await clickhouseClient.query({
-      query,
+    const clickhouseResult = await clickhouseClient.query({
+      query: clickhouseQuery,
       query_params: {
         site_id: site.id,
       },
     })
 
-    const data = (await result.json()) as { data: Array<{ date: string; totalImpressions: number; engagedImpressions: number }> }
+    const clickhouseData = (await clickhouseResult.json()) as { data: Array<{ date: string; totalImpressions: number; engagedImpressions: number }> }
+    const clickhouseEngagement = clickhouseData.data || []
 
-    console.log(`✅ ClickHouse SUCCESS: Retrieved engagement data for site_id ${site.id} (${site_url}) - ${data.data.length} days`)
+    console.log(`✅ ClickHouse SUCCESS: Retrieved engagement data for site_id ${site.id} (${site_url}) - ${clickhouseEngagement.length} days`)
 
-    const engagementRates = data.data.map((result) => {
+    const clickhouseEngagementRates = clickhouseEngagement.map((result) => {
       const engagementRate = (Number(result.engagedImpressions) / Number(result.totalImpressions)) * 100
 
       return {
@@ -127,10 +148,36 @@ export async function findEngagementURLDate(user_id: number, site_url: string, s
         engagementRate,
         totalEngagements: result.engagedImpressions,
         totalImpressions: result.totalImpressions,
+        source: 'clickhouse',
       }
     })
 
-    return engagementRates
+    // If CLICKHOUSE_FLAG is true, also fetch from MySQL for comparison
+    if (process.env.CLICKHOUSE_FLAG === 'true') {
+      try {
+        // Import MySQL repository dynamically to avoid circular dependencies
+        const { findEngagementURLDate: findMySQLEngagement } = await import('./impressions.repository')
+
+        const mysqlEngagement = await findMySQLEngagement(user_id, site_url, startDate, endDate)
+
+        console.log(`✅ MySQL SUCCESS: Retrieved engagement data for comparison - ${mysqlEngagement.length} days`)
+
+        // Add source identification to MySQL data
+        const mysqlEngagementWithSource = mysqlEngagement.map((item) => ({
+          ...item,
+          source: 'mysql',
+        }))
+
+        // Return both datasets
+        return [...clickhouseEngagementRates, ...mysqlEngagementWithSource]
+      } catch (mysqlError) {
+        console.log(`⚠️ MySQL fallback failed, returning ClickHouse data only: ${mysqlError.message}`)
+        return clickhouseEngagementRates
+      }
+    }
+
+    // Return ClickHouse data only
+    return clickhouseEngagementRates
   } catch (error) {
     logger.error('Error finding engagement data:', error)
     throw error
