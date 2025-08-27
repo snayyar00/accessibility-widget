@@ -21,6 +21,7 @@ type WorkspaceInvitation = {
 export type GetDetailWorkspaceInvitation = {
   workspace_name: string
   invited_by: string
+  email: string
   status: WorkspaceInvitationStatus
   role: WorkspaceUserRole
   valid_until: string
@@ -65,20 +66,20 @@ export async function getWorkspaceInvitation(condition: Partial<WorkspaceInvitat
 }
 
 /**
- * Function to get workspace invitation details by token.
+ * Function to get workspace invitation details with user information
  *
- * @param string token Token of the workspace invitation
+ * @param condition Filter conditions for workspace invitations
  */
-export async function getDetailWorkspaceInvitation(token: string): Promise<GetDetailWorkspaceInvitation[]> {
-  return database(TABLE)
+export async function getDetailWorkspaceInvitations(condition: { token?: string; workspaceId?: number }): Promise<GetDetailWorkspaceInvitation[]> {
+  const query = database(TABLE)
     .join(TABLES.workspaces, function joinOn() {
       this.on(workspacesColumns.id, '=', workspaceInvitationsColumns.workspaceId)
     })
     .join(TABLES.users, usersColumns.id, workspaceInvitationsColumns.invitedBy)
-    .where({ [workspaceInvitationsColumns.token]: token })
     .select({
       workspace_name: workspacesColumns.name,
       invited_by: usersColumns.email,
+      email: workspaceInvitationsColumns.email,
       status: workspaceInvitationsColumns.status,
       role: workspaceInvitationsColumns.role,
       valid_until: workspaceInvitationsColumns.validUntil,
@@ -86,6 +87,16 @@ export async function getDetailWorkspaceInvitation(token: string): Promise<GetDe
       workspace_id: workspaceInvitationsColumns.workspaceId,
       token: workspaceInvitationsColumns.token,
     })
+
+  if (condition.token) {
+    query.where({ [workspaceInvitationsColumns.token]: condition.token })
+  }
+
+  if (condition.workspaceId) {
+    query.where({ [workspaceInvitationsColumns.workspaceId]: condition.workspaceId })
+  }
+
+  return query
 }
 
 export async function updateWorkspaceInvitationByToken(token: string, data: WorkspaceInvitation, transaction: Knex.Transaction = null): Promise<number> {

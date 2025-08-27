@@ -8,7 +8,7 @@ import { GetDetailWorkspaceInvitation } from '../../repository/workspace_invitat
 import { acceptInvitation } from '../../services/workspaces/acceptInvitation'
 import { verifyInvitationToken } from '../../services/workspaces/verifyInvitationToken.service'
 import { getWorkspaceDomainsService } from '../../services/workspaces/workspaceDomains.service'
-import { createWorkspace, deleteWorkspace, getAllWorkspaces, getWorkspaceMembers, inviteWorkspaceMember, updateWorkspace } from '../../services/workspaces/workspaces.service'
+import { changeWorkspaceMemberRole, createWorkspace, deleteWorkspace, getAllWorkspaces, getWorkspaceByAlias, getWorkspaceInvitationsByAlias, getWorkspaceMembers, getWorkspaceMembersByAlias, inviteWorkspaceMember, updateWorkspace } from '../../services/workspaces/workspaces.service'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 type Token = {
@@ -32,15 +32,25 @@ type JoinWorkspaceInput = {
   type: 'accept' | 'decline'
 }
 
+type ChangeWorkspaceMemberRoleInput = {
+  alias: string
+  userId: string
+  role: WorkspaceUserRole
+}
+
 const resolvers = {
   Query: {
     getUserWorkspaces: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, __: unknown, { user }) => getAllWorkspaces(user)),
+    getWorkspaceByAlias: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { alias }: { alias: string }, { user }) => getWorkspaceByAlias(alias, user)),
+    getWorkspaceMembersByAlias: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { alias }: { alias: string }, { user }) => getWorkspaceMembersByAlias(alias, user)),
+    getWorkspaceInvitationsByAlias: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { alias }: { alias: string }, { user }) => getWorkspaceInvitationsByAlias(alias, user)),
     verifyWorkspaceInvitationToken: combineResolvers(allowedOrganization, (_: unknown, { invitationToken }: Token, { user }): Promise<GetDetailWorkspaceInvitation> => verifyInvitationToken(invitationToken, user)),
   },
 
   Mutation: {
     createWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { name }: { name: string }, { user }) => createWorkspace(user, name)),
     inviteWorkspaceMember: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { email, alias, role }: InviteWorkspaceMemberInput, { user, allowedFrontendUrl }) => inviteWorkspaceMember(user, alias, email, role, allowedFrontendUrl)),
+    changeWorkspaceMemberRole: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { alias, userId, role }: ChangeWorkspaceMemberRoleInput, { user }) => changeWorkspaceMemberRole(user, alias, userId, role)),
     joinWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { token, type }: JoinWorkspaceInput, { user }) => acceptInvitation(token, type, user)),
     deleteWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { id }: { id: number }, { user }) => deleteWorkspace(user, id)),
     updateWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, data: WorkspaceInput, { user }) => updateWorkspace(user, data.id, data)),

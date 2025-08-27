@@ -126,6 +126,45 @@ export async function createNewWorkspaceAndMember({ name, alias, organization_id
 }
 
 /**
+ * Function to get workspace members with user details
+ */
+export async function getWorkspaceMembers({ workspaceId, userId, organizationId }: GetAllWorkspace): Promise<GetAllWorkspaceResponse[]> {
+  const query = database(TABLE)
+    .join('workspace_users', 'workspaces.id', 'workspace_users.workspace_id')
+    .join('users', 'workspace_users.user_id', 'users.id')
+    .select(
+      'workspace_users.id',
+      'workspace_users.user_id',
+      'workspace_users.workspace_id',
+      'workspace_users.role',
+      'workspace_users.status',
+      'workspace_users.created_at',
+      'workspace_users.updated_at',
+      database.raw(`JSON_OBJECT(
+        'id', users.id,
+        'name', users.name,
+        'email', users.email,
+        'avatarUrl', users.avatar_url
+      ) as user`),
+    )
+
+  const condition: Condition = {}
+
+  if (workspaceId) condition[workspacesColumns.id] = workspaceId
+  if (organizationId) condition[workspacesColumns.organizationId] = organizationId
+
+  if (Object.keys(condition).length > 0) {
+    query.where(condition)
+  }
+
+  if (userId) {
+    query.join('workspace_users as wu2', 'workspaces.id', 'wu2.workspace_id').where('wu2.user_id', userId)
+  }
+
+  return query.orderBy('workspace_users.updated_at', 'desc')
+}
+
+/**
  * Delete workspace by id
  * @param id - workspace id
  * @param transaction - optional transaction

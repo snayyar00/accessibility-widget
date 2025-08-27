@@ -100,6 +100,7 @@ export const DeleteWorkspace: React.FC<DeleteWorkspaceProps> = ({
             onClick={handleDelete}
             color="error"
             variant="contained"
+            disableElevation
             disabled={loading}
           >
             Delete

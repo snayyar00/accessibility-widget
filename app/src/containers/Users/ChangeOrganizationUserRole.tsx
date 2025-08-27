@@ -3,6 +3,7 @@ import { Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import { useMutation } from '@apollo/client';
 import { toast } from 'react-toastify';
 import CHANGE_ORGANIZATION_USER_ROLE from '@/queries/organization/changeOrganizationUserRole';
+import { OrganizationUserRole } from '@/generated/graphql';
 
 type ChangeOrganizationUserRoleProps = {
   initialValue: string;
@@ -12,10 +13,10 @@ type ChangeOrganizationUserRoleProps = {
 };
 
 const ROLE_OPTIONS = [
-  { value: 'owner', label: 'Owner' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'member', label: 'Member' },
-];
+  { value: OrganizationUserRole.Owner, label: 'Owner' },
+  { value: OrganizationUserRole.Admin, label: 'Admin' },
+  { value: OrganizationUserRole.Member, label: 'Member' },
+] as const;
 
 export const ChangeOrganizationUserRole: React.FC<
   ChangeOrganizationUserRoleProps
@@ -74,9 +75,19 @@ export const ChangeOrganizationUserRole: React.FC<
       value={selected}
       size="small"
       onChange={handleChange}
+      sx={{
+        fontSize: '0.875rem',
+        height: '36px',
+      }}
     >
       {ROLE_OPTIONS.map((option) => (
-        <MenuItem key={option.value} value={option.value}>
+        <MenuItem
+          sx={{
+            fontSize: '0.875rem',
+          }}
+          key={option.value}
+          value={option.value}
+        >
           {option.label}
         </MenuItem>
       ))}

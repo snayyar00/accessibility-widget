@@ -42,28 +42,28 @@ const Sidebar = ({
         />
       )}
       <div
-        className={`h-screen flex w-[250px] flex-col sm:fixed sm:bg-white sm:transition-all sm:duration-[400ms] ${
+        className={`h-[100dvh] sticky top-0 flex w-[250px] flex-col sm:fixed sm:bg-white sm:transition-all sm:duration-[400ms] ${
           isOpen ? 'sm:left-0 sm:z-[50]' : 'sm:-left-full sm:z-[50]'
         }`}
       >
-        <a
-          href="/"
-          className="flex h-[81px] flex-none items-center px-4 border-b border-r border-solid border-gray"
-        >
-          {organization?.logo_url ? (
-            <img
-              width={198}
-              height={47}
-              src={organization.logo_url}
-              alt={organization.name}
-            />
-          ) : (
-            <LogoIcon />
-          )}
-        </a>
+        <div className="flex-none">
+          <a
+            href="/"
+            className="flex h-[81px] flex-none items-center px-4 border-b border-r border-solid border-gray"
+          >
+            {organization?.logo_url ? (
+              <img
+                width={198}
+                height={47}
+                src={organization.logo_url}
+                alt={organization.name}
+              />
+            ) : (
+              <LogoIcon />
+            )}
+          </a>
 
-        <div className="flex-grow min-w-[250px] sm:w-[20%] md:w-[18%] lg:w-[15%] transition-all duration-300">
-          <div className="px-3 py-5 space-y-3 max-w-full">
+          <div className="px-3 py-5 space-y-3 border-b border-solid border-gray">
             <OrganizationsSelect />
             <WorkspacesSelect />
 
@@ -74,7 +74,9 @@ const Sidebar = ({
               setSelectedOption={setSelectedOption}
             />
           </div>
+        </div>
 
+        <div className="flex-grow overflow-y-auto no-scrollbar pb-5">
           <ul className="p-0 space-y-1">
             <li key="/dashboard" className="h-[60px] flex items-center">
               <NavLink

@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Chip } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import GET_ORGANIZATION_USERS from '@/queries/organization/getOrganizationUsers';
 import GET_ORGANIZATION_WORKSPACES from '@/queries/workspace/getOrganizationWorkspaces';
-import { Query } from '@/generated/graphql';
+import { Query, OrganizationUserStatus } from '@/generated/graphql';
 import { ChangeOrganizationSelect } from './ChangeOrganizationSelect';
 import { ChangeOrganizationUserRole } from './ChangeOrganizationUserRole';
 import { DeleteUserFromOrganization } from './DeleteUserFromOrganization';
@@ -14,6 +15,25 @@ type TableUsersProps = {
   organizationId: number;
   userId: number;
 };
+
+const STATUS_STYLES = {
+  [OrganizationUserStatus.Active]: {
+    backgroundColor: '#22c55e',
+    color: '#fff',
+  },
+  [OrganizationUserStatus.Invited]: {
+    backgroundColor: '#3b82f6',
+    color: '#fff',
+  },
+  [OrganizationUserStatus.Pending]: {
+    backgroundColor: '#f59e0b',
+    color: '#fff',
+  },
+  [OrganizationUserStatus.Removed]: {
+    backgroundColor: '#ef4444',
+    color: '#fff',
+  },
+} as const;
 
 export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
   const [pageSize, setPageSize] = React.useState<number>(50);
@@ -132,21 +152,30 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
             }}
           >
             {workspaces.slice(0, 3).map((workspace: any, index: number) => (
-              <Chip
+              <Link
                 key={
                   workspace.id
-                    ? `workspace-${workspace.id}`
-                    : `workspace-${params.row.id}-${index}`
+                    ? `workspace-link-${workspace.id}`
+                    : `workspace-link-${params.row.id}-${index}`
                 }
-                label={workspace.name}
-                size="small"
-                variant="outlined"
-                sx={{
-                  fontSize: '0.75rem',
-                  height: '20px',
-                  maxWidth: '110px',
-                }}
-              />
+                to={`/workspaces/${workspace.alias}`}
+                style={{ textDecoration: 'none' }}
+              >
+                <Chip
+                  label={workspace.name}
+                  size="small"
+                  variant="outlined"
+                  clickable
+                  sx={{
+                    fontSize: '0.75rem',
+                    height: '20px',
+                    maxWidth: '110px',
+                    '&:hover': {
+                      backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                    },
+                  }}
+                />
+              </Link>
             ))}
             {workspaces.length > 3 && (
               <Chip
@@ -201,30 +230,16 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       headerName: 'Org Status',
       width: 140,
       renderCell: (params) => {
-        let chipStyle = {};
-        let label = params.value;
-
-        switch ((params.value || '').toLowerCase()) {
-          case 'active':
-            chipStyle = { backgroundColor: '#22c55e', color: '#fff' };
-            break;
-          case 'invited':
-            chipStyle = { backgroundColor: '#3b82f6', color: '#fff' };
-            break;
-          case 'pending':
-            chipStyle = { backgroundColor: '#f59e0b', color: '#fff' };
-            break;
-          case 'removed':
-            chipStyle = { backgroundColor: '#ef4444', color: '#fff' };
-            break;
-          default:
-            chipStyle = { backgroundColor: '#6b7280', color: '#fff' };
-        }
+        const status = params.value as OrganizationUserStatus;
+        const chipStyle = STATUS_STYLES[status] || {
+          backgroundColor: '#6b7280',
+          color: '#fff',
+        };
 
         return (
           <Chip
             key={`org-status-${params.row.id}-${params.row.number}`}
-            label={label}
+            label={status}
             size="small"
             variant="filled"
             sx={{ textTransform: 'capitalize', ...chipStyle }}

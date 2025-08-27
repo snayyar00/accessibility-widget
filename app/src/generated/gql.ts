@@ -33,7 +33,7 @@ type Documents = {
     "\n  mutation VerifyToken($token: String!) {\n    verify(token: $token)\n  }\n": typeof types.VerifyTokenDocument,
     "\n  query fetchDashboardQuery($url: String!, $startDate: String!, $endDate: String!) {\n    getSiteVisitorsByURL(url: $url) {\n        count\n      }\n    \n    getImpressionsByURLAndDate(url: $url, startDate: $startDate, endDate: $endDate){\n        impressions{\n            widget_opened,\n            widget_closed,\n            createdAt,\n            id,\n            site_id,\n            profileCounts\n        }\n    }\n\n    getEngagementRates(url: $url, startDate: $startDate, endDate: $endDate){\n      totalEngagements,\n      totalImpressions\n      engagementRate,\n      date\n    }\n  }\n": typeof types.FetchDashboardQueryDocument,
     "\n  query AnalyzeDomain($domain: String!) {\n    analyzeDomain(domain: $domain) {\n      url\n      status\n      insights\n      error\n      timestamp\n    }\n  }\n": typeof types.AnalyzeDomainDocument,
-    "\n  mutation ChangeOrganizationUserRole($userId: Int!, $role: String!) {\n    changeOrganizationUserRole(userId: $userId, role: $role)\n  }\n": typeof types.ChangeOrganizationUserRoleDocument,
+    "\n  mutation ChangeOrganizationUserRole(\n    $userId: Int!\n    $role: OrganizationUserRole!\n  ) {\n    changeOrganizationUserRole(userId: $userId, role: $role)\n  }\n": typeof types.ChangeOrganizationUserRoleDocument,
     "\n  query GetOrganizationByDomain {\n    getOrganizationByDomain {\n      id\n      name\n      domain\n      favicon\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n": typeof types.GetOrganizationByDomainDocument,
     "\n  query GetOrganizationUsers {\n    getOrganizationUsers {\n      id\n      user_id\n      organization_id\n      role\n      status\n      updated_at\n      user {\n        id\n        name\n        email\n        current_organization_id\n        isActive\n      }\n      organizations {\n        id\n        name\n      }\n      currentOrganization {\n        id\n        name\n      }\n      workspaces {\n        name\n        alias\n      }\n    }\n  }\n": typeof types.GetOrganizationUsersDocument,
     "\n  query getUserOrganizations {\n    getUserOrganizations {\n      id\n      name\n      domain\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n": typeof types.GetUserOrganizationsDocument,
@@ -53,10 +53,14 @@ type Documents = {
     "\n  query GetLicenseOwnerInfo {\n    getLicenseOwnerInfo {\n      id\n      name\n      license_owner_email\n      phone_number\n    }\n  }\n": typeof types.GetLicenseOwnerInfoDocument,
     "\n  mutation UpdateLicenseOwnerInfo(\n    $name: String\n    $license_owner_email: String\n    $phone_number: String\n  ) {\n    updateLicenseOwnerInfo(\n      name: $name\n      license_owner_email: $license_owner_email\n      phone_number: $phone_number\n    )\n  }\n": typeof types.UpdateLicenseOwnerInfoDocument,
     "\n  mutation UpdateProfile($name: String, $company: String, $position: String) {\n    updateProfile(name: $name, company: $company, position: $position)\n  }\n": typeof types.UpdateProfileDocument,
+    "\n  mutation ChangeWorkspaceMemberRole($alias: String!, $userId: ID!, $role: WorkspaceUserRole!) {\n    changeWorkspaceMemberRole(alias: $alias, userId: $userId, role: $role)\n  }\n": typeof types.ChangeWorkspaceMemberRoleDocument,
     "\n  mutation CreateWorkspace($name: String!) {\n    createWorkspace(name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": typeof types.CreateWorkspaceDocument,
     "\n  mutation DeleteWorkspace($id: ID!) {\n    deleteWorkspace(id: $id)\n  }\n": typeof types.DeleteWorkspaceDocument,
     "\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      domains {\n        id\n        url\n      }\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n": typeof types.GetOrganizationWorkspacesDocument,
     "\n  query getUserWorkspaces {\n    getUserWorkspaces {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": typeof types.GetUserWorkspacesDocument,
+    "\n  query GetWorkspaceByAlias($alias: String!) {\n    getWorkspaceByAlias(alias: $alias) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": typeof types.GetWorkspaceByAliasDocument,
+    "\n  query GetWorkspaceInvitationsByAlias($alias: String!) {\n    getWorkspaceInvitationsByAlias(alias: $alias) {\n      workspace_name\n      invited_by\n      email\n      status\n      role\n      valid_until\n      organization_id\n      workspace_id\n      token\n    }\n  }\n": typeof types.GetWorkspaceInvitationsByAliasDocument,
+    "\n  query GetWorkspaceMembersByAlias($alias: String!) {\n    getWorkspaceMembersByAlias(alias: $alias) {\n      id\n      user_id\n      workspace_id\n      role\n      status\n      created_at\n      updated_at\n      user {\n        id\n        name\n        email\n        avatarUrl\n      }\n    }\n  }\n": typeof types.GetWorkspaceMembersByAliasDocument,
     "\n  mutation InviteWorkspaceMember(\n    $email: String!\n    $alias: String!\n    $role: WorkspaceUserRole!\n  ) {\n    inviteWorkspaceMember(email: $email, alias: $alias, role: $role) {\n      user_id\n      user_name\n      user_email\n      status\n    }\n  }\n": typeof types.InviteWorkspaceMemberDocument,
     "\n  mutation InviteMember($type: JoinWorkspaceType!, $token: String!) {\n    joinWorkspace(type: $type, token: $token)\n  }\n": typeof types.InviteMemberDocument,
     "\n  mutation UpdateWorkspace($id: ID!, $name: String, $allowedSiteIds: [ID!]) {\n    updateWorkspace(id: $id, name: $name, allowedSiteIds: $allowedSiteIds) {\n      id\n      name\n      alias\n      organization_id\n      domains {\n        id\n        url\n      }\n    }\n  }\n": typeof types.UpdateWorkspaceDocument,
@@ -82,7 +86,7 @@ const documents: Documents = {
     "\n  mutation VerifyToken($token: String!) {\n    verify(token: $token)\n  }\n": types.VerifyTokenDocument,
     "\n  query fetchDashboardQuery($url: String!, $startDate: String!, $endDate: String!) {\n    getSiteVisitorsByURL(url: $url) {\n        count\n      }\n    \n    getImpressionsByURLAndDate(url: $url, startDate: $startDate, endDate: $endDate){\n        impressions{\n            widget_opened,\n            widget_closed,\n            createdAt,\n            id,\n            site_id,\n            profileCounts\n        }\n    }\n\n    getEngagementRates(url: $url, startDate: $startDate, endDate: $endDate){\n      totalEngagements,\n      totalImpressions\n      engagementRate,\n      date\n    }\n  }\n": types.FetchDashboardQueryDocument,
     "\n  query AnalyzeDomain($domain: String!) {\n    analyzeDomain(domain: $domain) {\n      url\n      status\n      insights\n      error\n      timestamp\n    }\n  }\n": types.AnalyzeDomainDocument,
-    "\n  mutation ChangeOrganizationUserRole($userId: Int!, $role: String!) {\n    changeOrganizationUserRole(userId: $userId, role: $role)\n  }\n": types.ChangeOrganizationUserRoleDocument,
+    "\n  mutation ChangeOrganizationUserRole(\n    $userId: Int!\n    $role: OrganizationUserRole!\n  ) {\n    changeOrganizationUserRole(userId: $userId, role: $role)\n  }\n": types.ChangeOrganizationUserRoleDocument,
     "\n  query GetOrganizationByDomain {\n    getOrganizationByDomain {\n      id\n      name\n      domain\n      favicon\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n": types.GetOrganizationByDomainDocument,
     "\n  query GetOrganizationUsers {\n    getOrganizationUsers {\n      id\n      user_id\n      organization_id\n      role\n      status\n      updated_at\n      user {\n        id\n        name\n        email\n        current_organization_id\n        isActive\n      }\n      organizations {\n        id\n        name\n      }\n      currentOrganization {\n        id\n        name\n      }\n      workspaces {\n        name\n        alias\n      }\n    }\n  }\n": types.GetOrganizationUsersDocument,
     "\n  query getUserOrganizations {\n    getUserOrganizations {\n      id\n      name\n      domain\n      logo_url\n      settings\n      created_at\n      updated_at\n    }\n  }\n": types.GetUserOrganizationsDocument,
@@ -102,10 +106,14 @@ const documents: Documents = {
     "\n  query GetLicenseOwnerInfo {\n    getLicenseOwnerInfo {\n      id\n      name\n      license_owner_email\n      phone_number\n    }\n  }\n": types.GetLicenseOwnerInfoDocument,
     "\n  mutation UpdateLicenseOwnerInfo(\n    $name: String\n    $license_owner_email: String\n    $phone_number: String\n  ) {\n    updateLicenseOwnerInfo(\n      name: $name\n      license_owner_email: $license_owner_email\n      phone_number: $phone_number\n    )\n  }\n": types.UpdateLicenseOwnerInfoDocument,
     "\n  mutation UpdateProfile($name: String, $company: String, $position: String) {\n    updateProfile(name: $name, company: $company, position: $position)\n  }\n": types.UpdateProfileDocument,
+    "\n  mutation ChangeWorkspaceMemberRole($alias: String!, $userId: ID!, $role: WorkspaceUserRole!) {\n    changeWorkspaceMemberRole(alias: $alias, userId: $userId, role: $role)\n  }\n": types.ChangeWorkspaceMemberRoleDocument,
     "\n  mutation CreateWorkspace($name: String!) {\n    createWorkspace(name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": types.CreateWorkspaceDocument,
     "\n  mutation DeleteWorkspace($id: ID!) {\n    deleteWorkspace(id: $id)\n  }\n": types.DeleteWorkspaceDocument,
     "\n  query GetOrganizationWorkspaces {\n    getOrganizationWorkspaces {\n      id\n      name\n      alias\n      domains {\n        id\n        url\n      }\n      members {\n        id\n        user_id\n        workspace_id\n        role\n        status\n        created_at\n        updated_at\n        user {\n          id\n          name\n          email\n          avatarUrl\n        }\n      }\n    }\n  }\n": types.GetOrganizationWorkspacesDocument,
     "\n  query getUserWorkspaces {\n    getUserWorkspaces {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": types.GetUserWorkspacesDocument,
+    "\n  query GetWorkspaceByAlias($alias: String!) {\n    getWorkspaceByAlias(alias: $alias) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": types.GetWorkspaceByAliasDocument,
+    "\n  query GetWorkspaceInvitationsByAlias($alias: String!) {\n    getWorkspaceInvitationsByAlias(alias: $alias) {\n      workspace_name\n      invited_by\n      email\n      status\n      role\n      valid_until\n      organization_id\n      workspace_id\n      token\n    }\n  }\n": types.GetWorkspaceInvitationsByAliasDocument,
+    "\n  query GetWorkspaceMembersByAlias($alias: String!) {\n    getWorkspaceMembersByAlias(alias: $alias) {\n      id\n      user_id\n      workspace_id\n      role\n      status\n      created_at\n      updated_at\n      user {\n        id\n        name\n        email\n        avatarUrl\n      }\n    }\n  }\n": types.GetWorkspaceMembersByAliasDocument,
     "\n  mutation InviteWorkspaceMember(\n    $email: String!\n    $alias: String!\n    $role: WorkspaceUserRole!\n  ) {\n    inviteWorkspaceMember(email: $email, alias: $alias, role: $role) {\n      user_id\n      user_name\n      user_email\n      status\n    }\n  }\n": types.InviteWorkspaceMemberDocument,
     "\n  mutation InviteMember($type: JoinWorkspaceType!, $token: String!) {\n    joinWorkspace(type: $type, token: $token)\n  }\n": types.InviteMemberDocument,
     "\n  mutation UpdateWorkspace($id: ID!, $name: String, $allowedSiteIds: [ID!]) {\n    updateWorkspace(id: $id, name: $name, allowedSiteIds: $allowedSiteIds) {\n      id\n      name\n      alias\n      organization_id\n      domains {\n        id\n        url\n      }\n    }\n  }\n": types.UpdateWorkspaceDocument,
@@ -205,7 +213,7 @@ export function graphql(source: "\n  query AnalyzeDomain($domain: String!) {\n  
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation ChangeOrganizationUserRole($userId: Int!, $role: String!) {\n    changeOrganizationUserRole(userId: $userId, role: $role)\n  }\n"): (typeof documents)["\n  mutation ChangeOrganizationUserRole($userId: Int!, $role: String!) {\n    changeOrganizationUserRole(userId: $userId, role: $role)\n  }\n"];
+export function graphql(source: "\n  mutation ChangeOrganizationUserRole(\n    $userId: Int!\n    $role: OrganizationUserRole!\n  ) {\n    changeOrganizationUserRole(userId: $userId, role: $role)\n  }\n"): (typeof documents)["\n  mutation ChangeOrganizationUserRole(\n    $userId: Int!\n    $role: OrganizationUserRole!\n  ) {\n    changeOrganizationUserRole(userId: $userId, role: $role)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -285,6 +293,10 @@ export function graphql(source: "\n  mutation UpdateProfile($name: String, $comp
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  mutation ChangeWorkspaceMemberRole($alias: String!, $userId: ID!, $role: WorkspaceUserRole!) {\n    changeWorkspaceMemberRole(alias: $alias, userId: $userId, role: $role)\n  }\n"): (typeof documents)["\n  mutation ChangeWorkspaceMemberRole($alias: String!, $userId: ID!, $role: WorkspaceUserRole!) {\n    changeWorkspaceMemberRole(alias: $alias, userId: $userId, role: $role)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  mutation CreateWorkspace($name: String!) {\n    createWorkspace(name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"): (typeof documents)["\n  mutation CreateWorkspace($name: String!) {\n    createWorkspace(name: $name) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -298,6 +310,18 @@ export function graphql(source: "\n  query GetOrganizationWorkspaces {\n    getO
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query getUserWorkspaces {\n    getUserWorkspaces {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"): (typeof documents)["\n  query getUserWorkspaces {\n    getUserWorkspaces {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetWorkspaceByAlias($alias: String!) {\n    getWorkspaceByAlias(alias: $alias) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"): (typeof documents)["\n  query GetWorkspaceByAlias($alias: String!) {\n    getWorkspaceByAlias(alias: $alias) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetWorkspaceInvitationsByAlias($alias: String!) {\n    getWorkspaceInvitationsByAlias(alias: $alias) {\n      workspace_name\n      invited_by\n      email\n      status\n      role\n      valid_until\n      organization_id\n      workspace_id\n      token\n    }\n  }\n"): (typeof documents)["\n  query GetWorkspaceInvitationsByAlias($alias: String!) {\n    getWorkspaceInvitationsByAlias(alias: $alias) {\n      workspace_name\n      invited_by\n      email\n      status\n      role\n      valid_until\n      organization_id\n      workspace_id\n      token\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetWorkspaceMembersByAlias($alias: String!) {\n    getWorkspaceMembersByAlias(alias: $alias) {\n      id\n      user_id\n      workspace_id\n      role\n      status\n      created_at\n      updated_at\n      user {\n        id\n        name\n        email\n        avatarUrl\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetWorkspaceMembersByAlias($alias: String!) {\n    getWorkspaceMembersByAlias(alias: $alias) {\n      id\n      user_id\n      workspace_id\n      role\n      status\n      created_at\n      updated_at\n      user {\n        id\n        name\n        email\n        avatarUrl\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

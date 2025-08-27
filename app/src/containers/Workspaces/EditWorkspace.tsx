@@ -233,6 +233,7 @@ export const EditWorkspace: React.FC<EditWorkspaceProps> = ({
             variant="contained"
             color="primary"
             disabled={isUpdateDisabled}
+            disableElevation
           >
             Update
           </Button>

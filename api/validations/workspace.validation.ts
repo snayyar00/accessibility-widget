@@ -46,3 +46,15 @@ export function validateInviteWorkspaceMember(input: { email: string; alias: str
 
   return validator.validate(input, schema)
 }
+
+export function validateChangeWorkspaceMemberRole(input: { alias: string; userId: number; role: string }): true | ValidationError[] | Promise<true | ValidationError[]> {
+  const validator = new Validator()
+
+  const schema = {
+    alias: { type: 'string', min: 2, max: 255, messages: { string: 'Workspace alias must be a string', stringMin: 'Workspace alias is too short', stringMax: 'Workspace alias is too long' } },
+    userId: { type: 'number', positive: true, integer: true, messages: { number: 'User ID must be a number', numberPositive: 'User ID must be positive', numberInteger: 'User ID must be an integer' } },
+    role: { type: 'enum', values: WORKSPACE_ALL_ROLES, messages: { enum: `Role must be one of: ${WORKSPACE_ALL_ROLES.join(', ')}` } },
+  }
+
+  return validator.validate(input, schema)
+}

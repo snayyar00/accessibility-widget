@@ -19,6 +19,7 @@ import { getAuthenticationCookie } from '@/utils/cookie';
 import { setSelectedDomain } from '@/features/report/reportSlice';
 import Topbar from './Topbar';
 import Sidebar from './Sidebar';
+import { WorkspaceMembers } from '@/containers/Workspaces/members';
 
 type Props = {
   signout: () => void;
@@ -167,7 +168,11 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
 
   // Sync selectedOption with Redux selectedDomain
   useEffect(() => {
-    if (selectedOption && selectedOption !== SITE_SELECTOR_TEXT && selectedOption !== 'Add a new Domain') {
+    if (
+      selectedOption &&
+      selectedOption !== SITE_SELECTOR_TEXT &&
+      selectedOption !== 'Add a new Domain'
+    ) {
       dispatch(setSelectedDomain(selectedOption));
     } else {
       dispatch(setSelectedDomain(null));
@@ -249,6 +254,12 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
               path="/proof-of-effort-toolkit"
               component={ProofOfEffortToolkit}
               key="/proof-of-effort-toolkit"
+              exact={false}
+            />
+            <Route
+              path="/workspaces/:alias"
+              component={WorkspaceMembers}
+              key="/workspace-members"
               exact={false}
             />
             <Redirect from="*" to="/dashboard" />

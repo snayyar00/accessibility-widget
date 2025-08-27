@@ -18,9 +18,6 @@ import { IS_LOCAL } from '@/config/env';
 import { toast } from 'react-toastify';
 import { redirectToUserOrganization } from '@/helpers/redirectToOrganization';
 import { setProfileUser } from '@/features/auth/user';
-import GET_USER_WORKSPACES from '@/queries/workspace/getUserWorkspaces';
-import GET_ORGANIZATION_WORKSPACES from '@/queries/workspace/getOrganizationWorkspaces';
-import GET_ORGANIZATION_USERS from '@/queries/organization/getOrganizationUsers';
 
 const OrganizationsSelect: React.FC = () => {
   const dispatch = useDispatch();
@@ -72,11 +69,7 @@ const OrganizationsSelect: React.FC = () => {
       }
 
       await client.refetchQueries({
-        include: [
-          GET_ORGANIZATION_USERS,
-          GET_ORGANIZATION_WORKSPACES,
-          GET_USER_WORKSPACES,
-        ],
+        include: 'active',
       });
 
       const profileResult = await getProfile();

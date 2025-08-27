@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { Avatar, AvatarGroup, Tooltip } from '@mui/material';
+import { Avatar, AvatarGroup, Tooltip, Chip, IconButton } from '@mui/material';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import { Link } from 'react-router-dom';
 
-import { useLazyQuery, useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import GET_ORGANIZATION_WORKSPACES from '@/queries/workspace/getOrganizationWorkspaces';
 import GET_USER_SITES from '@/queries/sites/getSites';
 import { Query } from '@/generated/graphql';
@@ -39,6 +41,7 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
         alias: workspace.alias ?? '',
         membersCount: workspace.members?.length ?? 0,
         members: workspace.members ?? [],
+        domainsCount: workspace.domains?.length ?? 0,
         domains: workspace.domains ?? [],
       })),
     [workspaces],
@@ -72,11 +75,92 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
       renderCell: (params) => <span className="truncate">{params.value}</span>,
     },
     {
+      field: 'domainsCount',
+      headerName: '',
+      width: 40,
+      align: 'center',
+      headerAlign: 'center',
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      renderCell: (params) => <>({params.value})</>,
+    },
+    {
+      field: 'domains',
+      headerName: 'Domains',
+      width: 250,
+      minWidth: 250,
+      flex: 1,
+      renderCell: (params) => {
+        const domains = params.row.domains || [];
+
+        if (domains.length === 0) {
+          return (
+            <div key={`domains-empty-${params.row.id}-${params.row.number}`}>
+              <Chip
+                label="No domains"
+                size="small"
+                variant="filled"
+                sx={{
+                  fontSize: '0.75rem',
+                  height: '20px',
+                }}
+              />
+            </div>
+          );
+        }
+
+        return (
+          <div
+            key={`domains-container-${params.row.id}-${params.row.number}`}
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '4px',
+            }}
+          >
+            {domains.slice(0, 3).map((domain: any, index: number) => (
+              <Chip
+                key={
+                  domain.id
+                    ? `domain-${domain.id}`
+                    : `domain-${params.row.id}-${index}`
+                }
+                label={domain.url}
+                size="small"
+                variant="outlined"
+                sx={{
+                  fontSize: '0.75rem',
+                  height: '20px',
+                  maxWidth: '110px',
+                }}
+              />
+            ))}
+            {domains.length > 3 && (
+              <Chip
+                key={`domains-more-${params.row.id}-${params.row.number}`}
+                label={`+${domains.length - 3}`}
+                size="small"
+                variant="outlined"
+                sx={{
+                  fontSize: '0.75rem',
+                  height: '20px',
+                }}
+              />
+            )}
+          </div>
+        );
+      },
+    },
+    {
       field: 'membersCount',
       headerName: '',
       width: 40,
       align: 'center',
       headerAlign: 'center',
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
       renderCell: (params) => <>({params.value})</>,
     },
     {
@@ -113,7 +197,7 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
     {
       field: 'actions',
       headerName: '',
-      width: 150,
+      width: 190,
       align: 'right',
       headerAlign: 'right',
       sortable: false,
@@ -122,12 +206,20 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
       renderCell: (params) => (
         <div style={{ display: 'flex', gap: 4 }}>
           <InviteWorkspaceMember
+            disableSelect
             preSelectedWorkspace={params.row.id}
             onUserInvited={handleUpdate}
             buttonSize="medium"
             allWorkspaces={workspaces}
             workspacesLoading={loading}
           />
+
+          <Link to={`/workspaces/${params.row.alias}`}>
+            <IconButton size="medium" color="primary">
+              <VisibilityIcon fontSize="inherit" />
+            </IconButton>
+          </Link>
+
           <EditWorkspace
             workspace={params.row}
             onWorkspaceUpdated={handleUpdate}

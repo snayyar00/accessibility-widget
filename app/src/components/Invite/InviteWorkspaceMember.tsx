@@ -27,6 +27,7 @@ interface InviteWorkspaceMemberProps {
   allWorkspaces?: Workspace[];
   workspacesLoading?: boolean;
   preSelectedWorkspace?: string;
+  disableSelect?: boolean;
 }
 
 export const InviteWorkspaceMember: React.FC<InviteWorkspaceMemberProps> = ({
@@ -37,6 +38,7 @@ export const InviteWorkspaceMember: React.FC<InviteWorkspaceMemberProps> = ({
   allWorkspaces = [],
   workspacesLoading = false,
   preSelectedWorkspace,
+  disableSelect = false,
 }) => {
   const [open, setOpen] = React.useState(false);
   const [email, setEmail] = React.useState(userEmail);
@@ -51,7 +53,6 @@ export const InviteWorkspaceMember: React.FC<InviteWorkspaceMemberProps> = ({
 
   const isUserInWorkspace = (workspace: any, userWorkspaces: any[]) => {
     return userWorkspaces.some((userWorkspace) => {
-      // Use only alias for comparison as it is unique
       return userWorkspace.alias === workspace.alias;
     });
   };
@@ -138,6 +139,7 @@ export const InviteWorkspaceMember: React.FC<InviteWorkspaceMemberProps> = ({
           variant="contained"
           color="primary"
           onClick={handleOpen}
+          disableElevation
         >
           Invite User
         </Button>
@@ -166,7 +168,7 @@ export const InviteWorkspaceMember: React.FC<InviteWorkspaceMemberProps> = ({
               value={selectedWorkspace}
               onChange={handleWorkspaceChange}
               label="Workspace"
-              disabled={workspacesLoading}
+              disabled={workspacesLoading || disableSelect}
             >
               {availableWorkspaces.map((workspace) => (
                 <MenuItem key={workspace.id} value={workspace.id.toString()}>
@@ -205,6 +207,7 @@ export const InviteWorkspaceMember: React.FC<InviteWorkspaceMemberProps> = ({
             onClick={handleSave}
             variant="contained"
             color="primary"
+            disableElevation
             disabled={
               !email || !selectedWorkspace || inviteLoading || workspacesLoading
             }

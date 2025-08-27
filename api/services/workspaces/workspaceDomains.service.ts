@@ -21,13 +21,14 @@ export async function getWorkspaceDomainsService(workspaceId: number, user: User
   const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
   if (!isAllowed) {
-    throw new ApolloError('Only organization owner or admin can view workspace domains')
+    return []
   }
 
   // Check if workspace exists and belongs to user's organization
   const workspace = await getWorkspace({ id: workspaceId, organization_id: user.current_organization_id })
+
   if (!workspace) {
-    throw new ApolloError('Workspace not found or access denied')
+    return []
   }
 
   return await getWorkspaceDomains(workspaceId)

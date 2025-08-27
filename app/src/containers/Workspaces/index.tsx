@@ -46,7 +46,7 @@ const Workspaces: React.FC = () => {
   return (
     <section className="p-2 md:p-4 relative">
       <h1 className="text-3xl font-bold text-gray-900 md:text-4xl mb-8 hidden lg:block lg:pr-[300px]">
-        Organization Workspaces
+        Workspaces
       </h1>
 
       {userData.current_organization_id && (

@@ -7,7 +7,7 @@ import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_PENDING } from 
 import { WORKSPACE_INVITATION_STATUS_PENDING, WORKSPACE_USER_STATUS_PENDING, WorkspaceUserRole, WorkspaceUserStatus } from '../constants/workspace.constant'
 import { addUserToOrganization, getUserOrganization } from '../services/organization/organization_users.service'
 import formatDateDB from '../utils/format-date-db'
-import { updateUser, usersColumns } from './user.repository'
+import { updateUser } from './user.repository'
 import { workspacesColumns } from './workspace.repository'
 import { createWorkspaceInvitation, VALID_PERIOD_DAYS } from './workspace_invitations.repository'
 
@@ -34,17 +34,6 @@ type MemberAndInviteToken = {
   organization_id?: number
 }
 
-type Alias = {
-  alias: string
-}
-
-type GetListWorkspaceMemberByAliasWorkspaceResponse = {
-  user_name: string
-  user_id: number
-  email: string
-  status: WorkspaceUserStatus
-}
-
 export const workspaceUsersColumns = {
   userId: 'workspace_users.user_id',
   workspaceId: 'workspace_users.workspace_id',
@@ -54,21 +43,6 @@ export const workspaceUsersColumns = {
   updatedAt: 'workspace_users.updated_at',
   deletedAt: 'workspace_users.deleted_at',
   invitationToken: 'workspace_users.invitation_token',
-}
-
-export async function getListWorkspaceMemberByAliasWorkspace({ alias }: Alias): Promise<GetListWorkspaceMemberByAliasWorkspaceResponse[]> {
-  return database(TABLES.workspaces)
-    .join(TABLE, workspacesColumns.id, workspaceUsersColumns.workspaceId)
-    .whereIn(workspaceUsersColumns.workspaceId, function subQuery() {
-      this.select('id').from(TABLES.workspaces).where({ alias })
-    })
-    .join(TABLES.users, workspaceUsersColumns.userId, usersColumns.id)
-    .select({
-      user_name: usersColumns.name,
-      user_id: usersColumns.id,
-      email: usersColumns.email,
-      status: workspaceUsersColumns.status,
-    })
 }
 
 export async function createWorkspaceUser(data: WorkspaceUser, transaction: Knex.Transaction = null): Promise<number[]> {

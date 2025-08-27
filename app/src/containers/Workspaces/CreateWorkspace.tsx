@@ -74,6 +74,7 @@ export const CreateWorkspace: React.FC<CreateWorkspaceProps> = ({
         variant="contained"
         color="primary"
         onClick={handleOpen}
+        disableElevation
       >
         Create Workspace
       </Button>
@@ -107,6 +108,7 @@ export const CreateWorkspace: React.FC<CreateWorkspaceProps> = ({
             onClick={handleSave}
             variant="contained"
             color="primary"
+            disableElevation
             disabled={!name.trim() || createLoading}
           >
             Create

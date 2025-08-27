@@ -1,4 +1,17 @@
 export const OrganizationSchema = `#graphql
+  enum OrganizationUserRole {
+    owner
+    admin
+    member
+  }
+
+  enum OrganizationUserStatus {
+    active
+    invited
+    pending
+    removed
+  }
+
   type Organization {
     id: ID!
     name: String!
@@ -15,8 +28,8 @@ export const OrganizationSchema = `#graphql
     user_id: Int!
     organization_id: Int!
     current_workspace_id: Int
-    role: String
-    status: String
+    role: OrganizationUserRole
+    status: OrganizationUserStatus
     created_at: Date
     updated_at: Date
     user: User!
@@ -39,6 +52,6 @@ export const OrganizationSchema = `#graphql
     editOrganization(id: ID!, name: String, domain: String, logo_url: String, settings: JSON): Organization @rateLimit(limit: 10, duration: 60, message: "Too many edit attempts. Please try again later.")
     removeOrganization(id: ID!): Boolean @rateLimit(limit: 5, duration: 60, message: "Too many remove attempts. Please try again later.")
     removeUserFromOrganization(userId: Int!): Boolean @rateLimit(limit: 30, duration: 60, message: "Too many remove user attempts. Please try again later.")
-    changeOrganizationUserRole(userId: Int!, role: String!): Boolean @rateLimit(limit: 20, duration: 60, message: "Too many role change attempts. Please try again later.")
+    changeOrganizationUserRole(userId: Int!, role: OrganizationUserRole!): Boolean @rateLimit(limit: 20, duration: 60, message: "Too many role change attempts. Please try again later.")
   }
 `
