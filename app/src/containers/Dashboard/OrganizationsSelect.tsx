@@ -13,7 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import { ChangeCurrentOrganizationMutation, Query } from '@/generated/graphql';
 import CHANGE_CURRENT_ORGANIZATION from '@/queries/user/changeCurrentOrganization';
-import getProfileQuery from '@/queries/auth/getProfile';
+import GET_PROFILE from '@/queries/auth/getProfile';
 import { IS_LOCAL } from '@/config/env';
 import { toast } from 'react-toastify';
 import { redirectToUserOrganization } from '@/helpers/redirectToOrganization';
@@ -36,8 +36,7 @@ const OrganizationsSelect: React.FC = () => {
     CHANGE_CURRENT_ORGANIZATION,
   );
 
-  const [getProfile, { loading: profileLoading }] =
-    useLazyQuery(getProfileQuery);
+  const [getProfile, { loading: profileLoading }] = useLazyQuery(GET_PROFILE);
 
   const organizations = organizationsData?.getUserOrganizations || [];
 

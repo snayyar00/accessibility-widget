@@ -103,7 +103,7 @@ export const InviteWorkspaceMember: React.FC<InviteWorkspaceMemberProps> = ({
       const { errors, data } = await inviteWorkspaceMember({
         variables: {
           email,
-          alias: selectedWorkspaceData.alias,
+          workspaceId: selectedWorkspaceData.id,
           role,
         },
       });
@@ -129,7 +129,7 @@ export const InviteWorkspaceMember: React.FC<InviteWorkspaceMemberProps> = ({
     }
   };
 
-  if (!availableWorkspaces?.length) return null;
+  if (!availableWorkspaces?.length && !workspacesLoading) return null;
 
   return (
     <>

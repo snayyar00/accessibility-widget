@@ -10,14 +10,17 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Link from '@mui/material/Link';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { useApolloClient, useQuery } from '@apollo/client';
+import { useApolloClient, useLazyQuery, useQuery } from '@apollo/client';
 import { Query } from '@/generated/graphql';
 import GET_WORKSPACE_BY_ALIAS from '@/queries/workspace/getWorkspaceByAlias';
 import { TableMembers } from './TableMembers';
 import { TableInvites } from './TableInvites';
 import { RootState } from '@/config/store';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { InviteWorkspaceMember } from '@/components/Invite/InviteWorkspaceMember';
+import GET_USER_WORKSPACES from '@/queries/workspace/getUserWorkspaces';
+import GET_PROFILE from '@/queries/auth/getProfile';
+import { setProfileUser } from '@/features/auth/user';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -26,12 +29,15 @@ interface TabPanelProps {
 }
 
 export const WorkspaceMembers = () => {
+  const dispatch = useDispatch();
   const history = useHistory();
   const { alias } = useParams<{ alias: string }>();
   const client = useApolloClient();
 
   const [value, setValue] = React.useState(0);
   const { data: userData } = useSelector((state: RootState) => state.user);
+
+  const [getProfile, { loading: profileLoading }] = useLazyQuery(GET_PROFILE);
 
   const { data: workspaceData, loading: workspaceLoading } = useQuery<Query>(
     GET_WORKSPACE_BY_ALIAS,
@@ -55,10 +61,28 @@ export const WorkspaceMembers = () => {
     history.goBack();
   };
 
-  const handleUpdate = () => {
+  const handleInvitedUpdate = () => {
     client.refetchQueries({
       include: 'active',
     });
+  };
+
+  const handleTableUpdate = async () => {
+    await client.refetchQueries({
+      include: [GET_USER_WORKSPACES],
+    });
+
+    const profileResult = await getProfile();
+    const profileUser = profileResult?.data?.profileUser;
+
+    if (profileUser) {
+      dispatch(
+        setProfileUser({
+          data: profileUser,
+          loading: profileLoading,
+        }),
+      );
+    }
   };
 
   return (
@@ -102,7 +126,7 @@ export const WorkspaceMembers = () => {
           <InviteWorkspaceMember
             disableSelect
             preSelectedWorkspace={workspace?.id}
-            onUserInvited={handleUpdate}
+            onUserInvited={handleInvitedUpdate}
             workspacesLoading={workspaceLoading}
             allWorkspaces={workspace ? [workspace] : []}
           />
@@ -115,17 +139,17 @@ export const WorkspaceMembers = () => {
           onChange={handleChange}
           aria-label="basic tabs example"
         >
-          <Tab label="Invites" {...a11yProps(0)} />
-          <Tab label="Members" {...a11yProps(1)} />
+          <Tab label="Members" {...a11yProps(0)} />
+          <Tab label="Invites" {...a11yProps(1)} />
         </Tabs>
       </div>
 
       <TabPanel value={value} index={0}>
-        <TableInvites alias={alias} />
+        <TableMembers onUpdate={handleTableUpdate} alias={alias} />
       </TabPanel>
 
       <TabPanel value={value} index={1}>
-        <TableMembers alias={alias} />
+        <TableInvites onUpdate={handleTableUpdate} alias={alias} />
       </TabPanel>
     </section>
   );

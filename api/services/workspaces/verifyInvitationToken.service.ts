@@ -20,9 +20,16 @@ export async function verifyInvitationToken(token: string, user: UserProfile): P
 
     if (dayjs().isAfter(workspaceInvitation.valid_until)) {
       await updateWorkspaceInvitationByToken(token, { status: WORKSPACE_INVITATION_STATUS_EXPIRED }, trx)
-      await updateWorkspaceUser({ invitation_token: token }, { status: WORKSPACE_USER_STATUS_INACTIVE }, trx)
+
+      if (workspaceInvitation.status === WORKSPACE_INVITATION_STATUS_PENDING) {
+        await updateWorkspaceUser({ invitation_token: token }, { status: WORKSPACE_USER_STATUS_INACTIVE }, trx)
+      }
 
       throw new ApolloError('Invitation token has expired')
+    }
+
+    if (workspaceInvitation.email !== user.email) {
+      throw new ApolloError('This invitation is not for your email address')
     }
 
     await updateOrganizationUserByOrganizationAndUserId(workspaceInvitation.organization_id, user.id, { status: ORGANIZATION_USER_STATUS_ACTIVE }, trx)

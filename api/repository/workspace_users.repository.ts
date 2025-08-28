@@ -14,6 +14,7 @@ import { createWorkspaceInvitation, VALID_PERIOD_DAYS } from './workspace_invita
 const TABLE = TABLES.workspace_users
 
 export type WorkspaceUser = {
+  id?: number
   user_id?: number
   workspace_id?: number
   role?: WorkspaceUserRole

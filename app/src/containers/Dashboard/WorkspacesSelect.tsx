@@ -10,7 +10,7 @@ import { ChangeCurrentWorkspaceMutation, Query } from '@/generated/graphql';
 import { setProfileUser } from '@/features/auth/user';
 import { toast } from 'react-toastify';
 import CHANGE_CURRENT_WORKSPACE from '@/queries/user/changeCurrentWorkspace';
-import getProfileQuery from '@/queries/auth/getProfile';
+import GET_PROFILE from '@/queries/auth/getProfile';
 
 const WorkspacesSelect: React.FC = () => {
   const dispatch = useDispatch();
@@ -28,8 +28,7 @@ const WorkspacesSelect: React.FC = () => {
   const [changeCurrentWorkspaceMutation, { loading: changeWorkspaceLoading }] =
     useMutation<ChangeCurrentWorkspaceMutation>(CHANGE_CURRENT_WORKSPACE);
 
-  const [getProfile, { loading: profileLoading }] =
-    useLazyQuery(getProfileQuery);
+  const [getProfile, { loading: profileLoading }] = useLazyQuery(GET_PROFILE);
 
   const workspaces = workspacesData?.getUserWorkspaces || [];
 

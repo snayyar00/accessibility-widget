@@ -3,10 +3,14 @@ import { gql } from 'graphql.macro';
 export default gql`
   mutation InviteWorkspaceMember(
     $email: String!
-    $alias: String!
+    $workspaceId: ID!
     $role: WorkspaceUserRole!
   ) {
-    inviteWorkspaceMember(email: $email, alias: $alias, role: $role) {
+    inviteWorkspaceMember(
+      email: $email
+      workspaceId: $workspaceId
+      role: $role
+    ) {
       user_id
       user_name
       user_email

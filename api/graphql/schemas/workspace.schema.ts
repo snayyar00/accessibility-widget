@@ -65,6 +65,7 @@ export const WorkspaceSchema = `#graphql
   }
 
   type WorkspaceInvitationDetails {
+    id: ID
     workspace_name: String!
     invited_by: String!
     email: String!
@@ -74,6 +75,7 @@ export const WorkspaceSchema = `#graphql
     organization_id: ID
     workspace_id: ID
     token: String
+    created_at: Date
   }
 
   extend type Query {
@@ -88,8 +90,10 @@ export const WorkspaceSchema = `#graphql
     createWorkspace(name: String!): Workspace! @rateLimit(limit: 5, duration: 60, message: "Too many add workspace. Please try again later.")
     deleteWorkspace(id: ID!): Boolean! @rateLimit(limit: 5, duration: 60, message: "Too many delete workspace. Please try again later.")
     updateWorkspace(id: ID!, name: String, allowedSiteIds: [ID!]): Workspace! @rateLimit(limit: 30, duration: 60, message: "Too many update workspace. Please try again later.")
-    inviteWorkspaceMember(email: String!, alias: String!, role: WorkspaceUserRole!): WorkspaceInvitation! @rateLimit(limit: 30, duration: 60, message: "Too many invitations. Please try again later.")
-    changeWorkspaceMemberRole(alias: String!, userId: ID!, role: WorkspaceUserRole!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many role change requests. Please try again later.")
+    inviteWorkspaceMember(workspaceId: ID!, email: String!, role: WorkspaceUserRole!): WorkspaceInvitation! @rateLimit(limit: 30, duration: 60, message: "Too many invitations. Please try again later.")
+    changeWorkspaceMemberRole(id: ID!, role: WorkspaceUserRole!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many role change requests. Please try again later.")
+    removeWorkspaceMember(id: ID!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many remove member requests. Please try again later.")
+    removeWorkspaceInvitation(id: ID!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many remove invitation requests. Please try again later.")
     joinWorkspace(type: JoinWorkspaceType!, token: String!): Boolean! @rateLimit(limit: 5, duration: 60, message: "Too many join workspace. Please try again later.")
   }
 `

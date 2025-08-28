@@ -1,19 +1,20 @@
 import * as React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { Chip, IconButton } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { useQuery } from '@apollo/client';
+import { Chip } from '@mui/material';
+import { useApolloClient, useQuery } from '@apollo/client';
 import GET_WORKSPACE_MEMBERS_BY_ALIAS from '@/queries/workspace/getWorkspaceMembersByAlias';
+
 import {
   Query,
   WorkspaceUserStatus,
   WorkspaceUserRole,
 } from '@/generated/graphql';
 import { RoleSelector } from './RoleSelector';
+import { RemoveWorkspaceMember } from './RemoveWorkspaceMember';
 
 type TableMembersProps = {
-  onUpdate?: () => void;
   alias: string;
+  onUpdate: () => void;
 };
 
 const STATUS_STYLES = {
@@ -23,7 +24,8 @@ const STATUS_STYLES = {
   [WorkspaceUserStatus.Decline]: { backgroundColor: '#dc2626', color: '#fff' },
 } as const;
 
-export const TableMembers = ({ onUpdate, alias }: TableMembersProps) => {
+export const TableMembers = ({ alias, onUpdate }: TableMembersProps) => {
+  const client = useApolloClient();
   const [pageSize, setPageSize] = React.useState<number>(50);
 
   const { data, loading, error, refetch } = useQuery<Query>(
@@ -56,12 +58,7 @@ export const TableMembers = ({ onUpdate, alias }: TableMembersProps) => {
 
   const handleUpdate = () => {
     refetch();
-    onUpdate?.();
-  };
-
-  const handleDeleteMember = async (memberId: string) => {
-    // TODO: Implement delete member mutation
-    console.log('Delete member', memberId);
+    onUpdate();
   };
 
   const columns: GridColDef[] = [
@@ -119,14 +116,15 @@ export const TableMembers = ({ onUpdate, alias }: TableMembersProps) => {
       width: 140,
       renderCell: (params) => {
         const currentRole = params.value as WorkspaceUserRole;
-        const memberId = params.row.id;
-        const userId = params.row.user_id;
 
         return (
           <RoleSelector
+            disabled={
+              params.row.status === WorkspaceUserStatus.Inactive ||
+              params.row.status === WorkspaceUserStatus.Decline
+            }
             initialRole={currentRole}
-            userId={userId}
-            alias={alias}
+            workspaceUserId={params.row.id}
             onRoleChanged={handleUpdate}
           />
         );
@@ -143,16 +141,17 @@ export const TableMembers = ({ onUpdate, alias }: TableMembersProps) => {
       filterable: false,
       disableColumnMenu: true,
       renderCell: (params) => {
-        const memberId = params.row.id;
+        const userId = params.row.user_id;
+        const memberName = params.row.name;
+        const memberEmail = params.row.email;
 
         return (
-          <IconButton
-            size="medium"
-            color="error"
-            onClick={() => handleDeleteMember(memberId)}
-          >
-            <DeleteIcon fontSize="inherit" />
-          </IconButton>
+          <RemoveWorkspaceMember
+            workspaceUserId={params.row.id}
+            memberName={memberName}
+            memberEmail={memberEmail}
+            onMemberRemoved={handleUpdate}
+          />
         );
       },
     },

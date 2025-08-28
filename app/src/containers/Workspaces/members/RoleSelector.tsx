@@ -15,8 +15,7 @@ import CHANGE_WORKSPACE_MEMBER_ROLE from '@/queries/workspace/changeWorkspaceMem
 
 type RoleSelectorProps = {
   initialRole: WorkspaceUserRole;
-  userId: number;
-  alias: string;
+  workspaceUserId: number;
   disabled?: boolean;
   onRoleChanged?: () => void;
 };
@@ -29,8 +28,7 @@ const ROLE_OPTIONS = [
 
 export const RoleSelector = ({
   initialRole,
-  userId,
-  alias,
+  workspaceUserId,
   disabled = false,
   onRoleChanged,
 }: RoleSelectorProps) => {
@@ -53,16 +51,15 @@ export const RoleSelector = ({
       return;
     }
 
-    if (!alias) {
-      toast.error('Workspace alias is required');
+    if (!workspaceUserId) {
+      toast.error('Workspace user ID is required');
       return;
     }
 
     try {
       const { errors, data } = await changeWorkspaceMemberRole({
         variables: {
-          alias,
-          userId: userId.toString(),
+          id: workspaceUserId,
           role: newRole,
         },
       });

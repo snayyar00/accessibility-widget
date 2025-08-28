@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Route, RouteProps, useHistory } from 'react-router-dom';
 import { RootState } from '@/config/store';
 
-import getProfileQuery from '@/queries/auth/getProfile';
+import GET_PROFILE from '@/queries/auth/getProfile';
 
 import { setProfileUser } from '@/features/auth/user';
 import { CircularProgress } from '@mui/material';
@@ -20,7 +20,7 @@ const PrivateRoute: React.FC<Props> = ({ render }) => {
   const history = useHistory();
 
   const [getProfile, { data: userProfile, loading: loadingUserProfile }] =
-    useLazyQuery(getProfileQuery);
+    useLazyQuery(GET_PROFILE);
   const { data } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {

@@ -7,6 +7,7 @@ import { usersColumns } from './user.repository'
 import { workspacesColumns } from './workspace.repository'
 
 type WorkspaceInvitation = {
+  id?: number
   email?: string
   invited_by?: number
   workspace_id?: number
@@ -19,6 +20,7 @@ type WorkspaceInvitation = {
 }
 
 export type GetDetailWorkspaceInvitation = {
+  id?: number
   workspace_name: string
   invited_by: string
   email: string
@@ -28,6 +30,7 @@ export type GetDetailWorkspaceInvitation = {
   organization_id?: number
   workspace_id?: number
   token?: string
+  created_at?: string
 }
 
 const TABLE = TABLES.workspace_invitations
@@ -35,6 +38,7 @@ const TABLE = TABLES.workspace_invitations
 export const VALID_PERIOD_DAYS = 14
 
 export const workspaceInvitationsColumns = {
+  id: 'workspace_invitations.id',
   email: 'workspace_invitations.email',
   workspaceId: 'workspace_invitations.workspace_id',
   organizationId: 'workspace_invitations.organization_id',
@@ -43,6 +47,7 @@ export const workspaceInvitationsColumns = {
   validUntil: 'workspace_invitations.valid_until',
   invitedBy: 'workspace_invitations.invited_by',
   status: 'workspace_invitations.status',
+  createdAt: 'workspace_invitations.created_at',
 }
 
 /**
@@ -77,6 +82,7 @@ export async function getDetailWorkspaceInvitations(condition: { token?: string;
     })
     .join(TABLES.users, usersColumns.id, workspaceInvitationsColumns.invitedBy)
     .select({
+      id: workspaceInvitationsColumns.id,
       workspace_name: workspacesColumns.name,
       invited_by: usersColumns.email,
       email: workspaceInvitationsColumns.email,
@@ -86,6 +92,7 @@ export async function getDetailWorkspaceInvitations(condition: { token?: string;
       organization_id: workspaceInvitationsColumns.organizationId,
       workspace_id: workspaceInvitationsColumns.workspaceId,
       token: workspaceInvitationsColumns.token,
+      created_at: workspaceInvitationsColumns.createdAt,
     })
 
   if (condition.token) {
@@ -95,6 +102,8 @@ export async function getDetailWorkspaceInvitations(condition: { token?: string;
   if (condition.workspaceId) {
     query.where({ [workspaceInvitationsColumns.workspaceId]: condition.workspaceId })
   }
+
+  query.orderBy(workspaceInvitationsColumns.createdAt, 'desc')
 
   return query
 }

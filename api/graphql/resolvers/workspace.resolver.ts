@@ -8,7 +8,20 @@ import { GetDetailWorkspaceInvitation } from '../../repository/workspace_invitat
 import { acceptInvitation } from '../../services/workspaces/acceptInvitation'
 import { verifyInvitationToken } from '../../services/workspaces/verifyInvitationToken.service'
 import { getWorkspaceDomainsService } from '../../services/workspaces/workspaceDomains.service'
-import { changeWorkspaceMemberRole, createWorkspace, deleteWorkspace, getAllWorkspaces, getWorkspaceByAlias, getWorkspaceInvitationsByAlias, getWorkspaceMembers, getWorkspaceMembersByAlias, inviteWorkspaceMember, updateWorkspace } from '../../services/workspaces/workspaces.service'
+import {
+  changeWorkspaceMemberRole,
+  createWorkspace,
+  deleteWorkspace,
+  getAllWorkspaces,
+  getWorkspaceByAlias,
+  getWorkspaceInvitationsByAlias,
+  getWorkspaceMembers,
+  getWorkspaceMembersByAlias,
+  inviteWorkspaceMember,
+  removeWorkspaceInvitation,
+  removeWorkspaceMember,
+  updateWorkspace,
+} from '../../services/workspaces/workspaces.service'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 type Token = {
@@ -22,8 +35,8 @@ type WorkspaceInput = {
 }
 
 type InviteWorkspaceMemberInput = {
+  workspaceId: string
   email: string
-  alias: string
   role: WorkspaceUserRole
 }
 
@@ -33,9 +46,16 @@ type JoinWorkspaceInput = {
 }
 
 type ChangeWorkspaceMemberRoleInput = {
-  alias: string
-  userId: string
+  id: string
   role: WorkspaceUserRole
+}
+
+type RemoveWorkspaceMemberInput = {
+  id: string
+}
+
+type RemoveWorkspaceInvitationInput = {
+  id: string
 }
 
 const resolvers = {
@@ -49,8 +69,10 @@ const resolvers = {
 
   Mutation: {
     createWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { name }: { name: string }, { user }) => createWorkspace(user, name)),
-    inviteWorkspaceMember: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { email, alias, role }: InviteWorkspaceMemberInput, { user, allowedFrontendUrl }) => inviteWorkspaceMember(user, alias, email, role, allowedFrontendUrl)),
-    changeWorkspaceMemberRole: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { alias, userId, role }: ChangeWorkspaceMemberRoleInput, { user }) => changeWorkspaceMemberRole(user, alias, userId, role)),
+    inviteWorkspaceMember: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { workspaceId, email, role }: InviteWorkspaceMemberInput, { user, allowedFrontendUrl }) => inviteWorkspaceMember(user, parseInt(workspaceId, 10), email, role, allowedFrontendUrl)),
+    changeWorkspaceMemberRole: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { id, role }: ChangeWorkspaceMemberRoleInput, { user }) => changeWorkspaceMemberRole(user, parseInt(id, 10), role)),
+    removeWorkspaceMember: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { id }: RemoveWorkspaceMemberInput, { user }) => removeWorkspaceMember(user, parseInt(id, 10))),
+    removeWorkspaceInvitation: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { id }: RemoveWorkspaceInvitationInput, { user }) => removeWorkspaceInvitation(user, parseInt(id, 10))),
     joinWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { token, type }: JoinWorkspaceInput, { user }) => acceptInvitation(token, type, user)),
     deleteWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { id }: { id: number }, { user }) => deleteWorkspace(user, id)),
     updateWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, data: WorkspaceInput, { user }) => updateWorkspace(user, data.id, data)),

@@ -3,7 +3,7 @@ import { useTranslation, Trans } from 'react-i18next';
 import { useParams, useHistory } from 'react-router-dom';
 import { useQuery, useLazyQuery, useMutation } from '@apollo/client';
 import verifyTokenQuery from '@/queries/workspace/verifyInviteToken';
-import getProfileQuery from '@/queries/auth/getProfile';
+import GET_PROFILE from '@/queries/auth/getProfile';
 import joinTeamQuery from '@/queries/workspace/joinWorkspace';
 import Logo from '@/components/Common/Logo';
 import Button from '@/components/Common/Button';
@@ -33,7 +33,7 @@ const AcceptInvitation: React.FC = () => {
     data: userInfo,
     error: getProfileError,
     loading: getProfileLoading,
-  } = useQuery(getProfileQuery);
+  } = useQuery(GET_PROFILE);
 
   const [joinWorkspace] = useMutation<InviteMemberMutation>(joinTeamQuery);
 

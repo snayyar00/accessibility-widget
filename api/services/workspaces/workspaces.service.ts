@@ -3,21 +3,22 @@ import { Knex } from 'knex'
 
 import database from '../../config/database.config'
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
-import { WORKSPACE_INVITATION_STATUS_PENDING, WORKSPACE_USER_STATUS_ACTIVE, WorkspaceUserRole } from '../../constants/workspace.constant'
+import { WORKSPACE_INVITATION_STATUS_ACCEPTED, WORKSPACE_INVITATION_STATUS_PENDING, WORKSPACE_USER_STATUS_ACTIVE, WORKSPACE_USER_STATUS_DECLINE, WORKSPACE_USER_STATUS_INACTIVE, WORKSPACE_USER_STATUS_PENDING, WorkspaceUserRole } from '../../constants/workspace.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import generateRandomKey from '../../helpers/genarateRandomkey'
 import { normalizeEmail, stringToSlug } from '../../helpers/string.helper'
+import { updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
 import { findUser } from '../../repository/user.repository'
 import { UserProfile } from '../../repository/user.repository'
 import { createNewWorkspaceAndMember, deleteWorkspaceById, getAllWorkspace, GetAllWorkspaceResponse, getWorkspace, getWorkspaceMembers as getWorkspaceMembersRepo, updateWorkspace as updateWorkspaceRepo, Workspace } from '../../repository/workspace.repository'
 import { setWorkspaceDomains } from '../../repository/workspace_allowed_sites.repository'
-import { createWorkspaceInvitation, deleteWorkspaceInvitations, GetDetailWorkspaceInvitation, getDetailWorkspaceInvitations, getWorkspaceInvitation, VALID_PERIOD_DAYS } from '../../repository/workspace_invitations.repository'
+import { createWorkspaceInvitation, deleteWorkspaceInvitations, GetDetailWorkspaceInvitation, getDetailWorkspaceInvitations, getWorkspaceInvitation, updateWorkspaceInvitationByToken, VALID_PERIOD_DAYS } from '../../repository/workspace_invitations.repository'
 import { createMemberAndInviteToken, deleteWorkspaceUsers, getWorkspaceUser, updateWorkspaceUser } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import formatDateDB from '../../utils/format-date-db'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
-import { validateChangeWorkspaceMemberRole, validateCreateWorkspace, validateInviteWorkspaceMember, validateUpdateWorkspace } from '../../validations/workspace.validation'
+import { validateChangeWorkspaceMemberRole, validateCreateWorkspace, validateInviteWorkspaceMember, validateRemoveWorkspaceInvitation, validateRemoveWorkspaceMember, validateUpdateWorkspace } from '../../validations/workspace.validation'
 import { sendMail } from '../email/email.service'
 import { getUserOrganization } from '../organization/organization_users.service'
 
@@ -271,8 +272,6 @@ export async function createWorkspace(user: UserProfile, workspaceName: string):
     throw new ApolloError(`Workspace with alias "${alias}" already exists`)
   }
 
-  logger.info('No existing workspace found, proceeding with creation')
-
   const workspaceId = createNewWorkspaceAndMember({ name: workspaceName, alias, organization_id: user.current_organization_id, user_id: user.id })
 
   return {
@@ -287,14 +286,14 @@ export async function createWorkspace(user: UserProfile, workspaceName: string):
  * Function to invite workspace member
  *
  * @param UserProfile user User who creates invitation
- * @param string alias Alias of workspace you want to invite to join
+ * @param number workspaceId ID of workspace to invite to
  * @param string invitee_email Email of who you want to send invitation to
  * @param WorkspaceUserRole role Role for the invited user (optional, defaults to 'member')
  * @param string allowedFrontendUrl Frontend URL for invitation link
  * @returns Promise<InviteWorkspaceMemberResponse> Created invitation info
  */
-export async function inviteWorkspaceMember(user: UserProfile, alias: string, invitee_email: string, role: WorkspaceUserRole = 'member', allowedFrontendUrl: string): Promise<InviteWorkspaceMemberResponse> {
-  const validateResult = validateInviteWorkspaceMember({ email: invitee_email, alias, role })
+export async function inviteWorkspaceMember(user: UserProfile, workspaceId: number, invitee_email: string, role: WorkspaceUserRole = 'member', allowedFrontendUrl: string): Promise<InviteWorkspaceMemberResponse> {
+  const validateResult = validateInviteWorkspaceMember({ workspaceId, email: invitee_email, role })
 
   if (Array.isArray(validateResult) && validateResult.length) {
     throw new ValidationError(validateResult.map((it) => it.message).join(','))
@@ -316,7 +315,7 @@ export async function inviteWorkspaceMember(user: UserProfile, alias: string, in
   try {
     transaction = await database.transaction()
 
-    const workspace = await getWorkspace({ alias })
+    const workspace = await getWorkspace({ id: workspaceId, organization_id: user.current_organization_id })
 
     if (!workspace) {
       throw new ApolloError('Workspace not found')
@@ -415,10 +414,11 @@ export async function inviteWorkspaceMember(user: UserProfile, alias: string, in
 
     try {
       await sendMail(normalizeEmail(invitee_email), 'Workspace invitation', template)
+      console.log('Invitation Token', token)
     } catch (emailError) {
       logger.error('Failed to send invitation email:', {
         error: emailError,
-        workspace_alias: alias,
+        workspace_id: workspaceId,
         invitee_email,
         inviter_id: user.id,
       })
@@ -435,7 +435,7 @@ export async function inviteWorkspaceMember(user: UserProfile, alias: string, in
 
     logger.error('Failed to invite workspace member:', {
       error,
-      workspace_alias: alias,
+      workspace_id: workspaceId,
       invitee_email,
       inviter_id: user.id,
     })
@@ -551,19 +551,12 @@ export async function updateWorkspace(user: UserProfile, workspace_id: number, d
 /**
  * Function to change workspace member role
  * @param UserProfile user User who wants to change member role
- * @param string alias Alias of the workspace
- * @param string userId ID of the user whose role to change (will be converted to number)
+ * @param number id ID of the workspace user record
  * @param WorkspaceUserRole role New role for the user
  * @returns Promise<boolean> True if role was changed successfully
  */
-export async function changeWorkspaceMemberRole(user: UserProfile, alias: string, userId: string, role: WorkspaceUserRole): Promise<boolean> {
-  const userIdNumber = parseInt(userId, 10)
-
-  if (isNaN(userIdNumber)) {
-    throw new ValidationError('User ID must be a valid number')
-  }
-
-  const validateResult = validateChangeWorkspaceMemberRole({ alias, userId: userIdNumber, role })
+export async function changeWorkspaceMemberRole(user: UserProfile, id: number, role: WorkspaceUserRole): Promise<boolean> {
+  const validateResult = validateChangeWorkspaceMemberRole({ id, role })
 
   if (Array.isArray(validateResult) && validateResult.length) {
     throw new ValidationError(validateResult.map((it) => it.message).join(','))
@@ -580,22 +573,226 @@ export async function changeWorkspaceMemberRole(user: UserProfile, alias: string
     throw new ApolloError('Only organization owner or admin can change workspace member roles')
   }
 
-  const workspace = await getWorkspace({ alias, organization_id: user.current_organization_id })
-
-  if (!workspace) {
-    throw new ApolloError('Workspace not found')
-  }
-
-  const workspaceMember = await getWorkspaceUser({
-    user_id: userIdNumber,
-    workspace_id: workspace.id,
-  })
+  const workspaceMember = await getWorkspaceUser({ id })
 
   if (!workspaceMember) {
     throw new ApolloError('Workspace member not found')
   }
 
-  await updateWorkspaceUser({ user_id: userIdNumber, workspace_id: workspace.id }, { role })
+  const workspace = await getWorkspace({ id: workspaceMember.workspace_id, organization_id: user.current_organization_id })
 
-  return true
+  if (!workspace) {
+    throw new ApolloError('Workspace not found or access denied')
+  }
+
+  if (workspaceMember.status === WORKSPACE_USER_STATUS_INACTIVE || workspaceMember.status === WORKSPACE_USER_STATUS_DECLINE) {
+    throw new ApolloError(`Role cannot be changed for members with status ${WORKSPACE_USER_STATUS_DECLINE} or ${WORKSPACE_USER_STATUS_INACTIVE}`)
+  }
+
+  let transaction: Knex.Transaction
+
+  try {
+    transaction = await database.transaction()
+
+    await updateWorkspaceUser({ user_id: workspaceMember.user_id, workspace_id: workspace.id }, { role }, transaction)
+
+    if (workspaceMember.status === WORKSPACE_USER_STATUS_PENDING && workspaceMember.invitation_token) {
+      const [workspaceInvitation] = await getDetailWorkspaceInvitations({ token: workspaceMember.invitation_token })
+
+      if (workspaceInvitation) {
+        await updateWorkspaceInvitationByToken(workspaceMember.invitation_token, { role, status: WORKSPACE_USER_STATUS_PENDING }, transaction)
+      }
+    }
+
+    await transaction.commit()
+
+    return true
+  } catch (error) {
+    await transaction.rollback()
+
+    logger.error('Failed to change workspace member role:', {
+      error,
+      workspace_id: workspace.id,
+      user_id: workspaceMember.user_id,
+      new_role: role,
+      changer_id: user.id,
+    })
+
+    throw new ApolloError(error)
+  }
+}
+
+/**
+ * Function to remove workspace member
+ * @param UserProfile user User who wants to remove member
+ * @param string alias Alias of the workspace
+ * @param string userId ID of the user to remove (will be converted to number)
+ * @returns Promise<boolean> True if member was removed successfully
+ */
+export async function removeWorkspaceMember(user: UserProfile, id: number): Promise<boolean> {
+  const validateResult = validateRemoveWorkspaceMember({ id })
+
+  if (Array.isArray(validateResult) && validateResult.length) {
+    throw new ValidationError(validateResult.map((it) => it.message).join(','))
+  }
+
+  if (!user.current_organization_id) {
+    throw new ApolloError('No current organization selected')
+  }
+
+  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
+  const isAllowed = orgUser && canManageOrganization(orgUser.role)
+
+  if (!isAllowed) {
+    throw new ApolloError('Only organization owner or admin can remove workspace members')
+  }
+
+  const workspaceMember = await getWorkspaceUser({ id })
+
+  if (!workspaceMember) {
+    throw new ApolloError('Workspace member not found')
+  }
+
+  const workspace = await getWorkspace({ id: workspaceMember.workspace_id, organization_id: user.current_organization_id })
+
+  if (!workspace) {
+    throw new ApolloError('Workspace not found')
+  }
+
+  const allMembers = await getWorkspaceMembersRepo({ workspaceId: workspace.id })
+  const activeMembers = allMembers.filter((member) => member.status === WORKSPACE_USER_STATUS_ACTIVE)
+
+  if (activeMembers.length === 1 && workspaceMember.status === WORKSPACE_USER_STATUS_ACTIVE) {
+    throw new ApolloError('Cannot remove the last active member from workspace')
+  }
+
+  let transaction: Knex.Transaction
+
+  try {
+    transaction = await database.transaction()
+
+    await deleteWorkspaceUsers(
+      {
+        user_id: workspaceMember.user_id,
+        workspace_id: workspace.id,
+      },
+      transaction,
+    )
+
+    if (workspaceMember.invitation_token) {
+      await deleteWorkspaceInvitations(
+        {
+          token: workspaceMember.invitation_token,
+        },
+        transaction,
+      )
+    }
+
+    const removedUserOrganization = await getUserOrganization(workspaceMember.user_id, user.current_organization_id)
+
+    if (removedUserOrganization && Number(removedUserOrganization.current_workspace_id) === Number(workspace.id)) {
+      await updateOrganizationUserByOrganizationAndUserId(user.current_organization_id, workspaceMember.user_id, { current_workspace_id: null }, transaction)
+    }
+
+    await transaction.commit()
+
+    logger.info('Successfully removed workspace member:', {
+      workspace_id: workspace.id,
+      removed_user_id: workspaceMember.user_id,
+      removed_by: user.id,
+    })
+
+    return true
+  } catch (error) {
+    await transaction.rollback()
+
+    logger.error('Failed to remove workspace member:', {
+      error,
+      workspace_id: workspace.id,
+      user_id: workspaceMember.user_id,
+      remover_id: user.id,
+    })
+
+    throw new ApolloError(error)
+  }
+}
+
+/**
+ * Function to remove workspace invitation
+ * @param UserProfile user User who wants to remove invitation
+ * @param number id ID of the invitation to remove
+ * @returns Promise<boolean> True if invitation was removed successfully
+ */
+export async function removeWorkspaceInvitation(user: UserProfile, id: number): Promise<boolean> {
+  const validateResult = validateRemoveWorkspaceInvitation({ id })
+
+  if (Array.isArray(validateResult) && validateResult.length) {
+    throw new ValidationError(validateResult.map((it) => it.message).join(','))
+  }
+
+  if (!user.current_organization_id) {
+    throw new ApolloError('No current organization selected')
+  }
+
+  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
+  const isAllowed = orgUser && canManageOrganization(orgUser.role)
+
+  if (!isAllowed) {
+    throw new ApolloError('Only organization owner or admin can remove workspace invitations')
+  }
+
+  const [invitation] = await getWorkspaceInvitation({ id })
+
+  if (!invitation) {
+    throw new ApolloError('Invitation not found')
+  }
+
+  const workspace = await getWorkspace({ id: invitation.workspace_id, organization_id: user.current_organization_id })
+
+  if (!workspace) {
+    throw new ApolloError('Workspace not found or access denied')
+  }
+
+  let transaction: Knex.Transaction
+
+  try {
+    transaction = await database.transaction()
+
+    await deleteWorkspaceInvitations(
+      {
+        id,
+      },
+      transaction,
+    )
+
+    if (invitation.token && invitation.status !== WORKSPACE_INVITATION_STATUS_ACCEPTED) {
+      await deleteWorkspaceUsers(
+        {
+          invitation_token: invitation.token,
+        },
+        transaction,
+      )
+    }
+
+    await transaction.commit()
+
+    logger.info('Successfully removed workspace invitation:', {
+      workspace_id: workspace.id,
+      invitation_id: id,
+      removed_by: user.id,
+    })
+
+    return true
+  } catch (error) {
+    await transaction.rollback()
+
+    logger.error('Failed to remove workspace invitation:', {
+      error,
+      workspace_id: workspace.id,
+      invitation_id: id,
+      remover_id: user.id,
+    })
+
+    throw new ApolloError(error)
+  }
 }

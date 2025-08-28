@@ -3,7 +3,7 @@ import { TableWorkspaces } from '@/containers/Workspaces/TableWorkspaces';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Redirect } from 'react-router-dom';
-import getProfileQuery from '@/queries/auth/getProfile';
+import GET_PROFILE from '@/queries/auth/getProfile';
 import { useApolloClient, useLazyQuery } from '@apollo/client';
 import { toast } from 'react-toastify';
 import { setProfileUser } from '@/features/auth/user';
@@ -14,8 +14,7 @@ const Workspaces: React.FC = () => {
   const { data: userData } = useSelector((state: RootState) => state.user);
   const client = useApolloClient();
 
-  const [getProfile, { loading: profileLoading }] =
-    useLazyQuery(getProfileQuery);
+  const [getProfile, { loading: profileLoading }] = useLazyQuery(GET_PROFILE);
 
   if (!userData.isAdminOrOwner) {
     return <Redirect to="/" />;
