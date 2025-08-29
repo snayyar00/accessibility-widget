@@ -67,7 +67,7 @@ const OrganizationsSelect: React.FC = () => {
         }
       }
 
-      await client.refetchQueries({
+      client.refetchQueries({
         include: 'active',
       });
 

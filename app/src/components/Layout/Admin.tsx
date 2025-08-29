@@ -116,7 +116,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
         setSelectedOption(data.getUserSites[0].url);
         setDomainData(data.getUserSites[0]);
       } else {
-        setSelectedOption('Add a new Domain');
+        setSelectedOption('No domains available');
         setDomainData(null);
       }
     }
@@ -168,11 +168,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
 
   // Sync selectedOption with Redux selectedDomain
   useEffect(() => {
-    if (
-      selectedOption &&
-      selectedOption !== SITE_SELECTOR_TEXT &&
-      selectedOption !== 'Add a new Domain'
-    ) {
+    if (selectedOption && selectedOption !== SITE_SELECTOR_TEXT) {
       dispatch(setSelectedDomain(selectedOption));
     } else {
       dispatch(setSelectedDomain(null));

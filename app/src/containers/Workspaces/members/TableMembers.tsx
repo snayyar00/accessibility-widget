@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Chip } from '@mui/material';
-import { useApolloClient, useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import GET_WORKSPACE_MEMBERS_BY_ALIAS from '@/queries/workspace/getWorkspaceMembersByAlias';
 
 import {
@@ -27,7 +27,6 @@ const STATUS_STYLES = {
 } as const;
 
 export const TableMembers = ({ alias, onUpdate }: TableMembersProps) => {
-  const client = useApolloClient();
   const [pageSize, setPageSize] = React.useState<number>(50);
 
   const { data, loading, error, refetch } = useQuery<Query>(

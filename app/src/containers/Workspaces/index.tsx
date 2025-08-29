@@ -8,6 +8,7 @@ import { useApolloClient, useLazyQuery } from '@apollo/client';
 import { toast } from 'react-toastify';
 import { setProfileUser } from '@/features/auth/user';
 import GET_USER_WORKSPACES from '@/queries/workspace/getUserWorkspaces';
+import GET_USER_SITES from '@/queries/sites/getSites';
 
 const Workspaces: React.FC = () => {
   const dispatch = useDispatch();
@@ -22,8 +23,8 @@ const Workspaces: React.FC = () => {
 
   const handleUpdate = async () => {
     try {
-      await client.refetchQueries({
-        include: [GET_USER_WORKSPACES],
+      client.refetchQueries({
+        include: [GET_USER_WORKSPACES, GET_USER_SITES],
       });
 
       const profileResult = await getProfile();

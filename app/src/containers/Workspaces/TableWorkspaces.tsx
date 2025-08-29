@@ -6,8 +6,8 @@ import { Link } from 'react-router-dom';
 
 import { useQuery } from '@apollo/client';
 import GET_ORGANIZATION_WORKSPACES from '@/queries/workspace/getOrganizationWorkspaces';
-import GET_USER_SITES from '@/queries/sites/getSites';
-import { Query } from '@/generated/graphql';
+import GET_ALL_USER_SITES from '@/queries/sites/getAllUserSites';
+import { Query, WorkspaceUser, AllowedSite } from '@/generated/graphql';
 import { CreateWorkspace } from './CreateWorkspace';
 import { EditWorkspace } from './EditWorkspace';
 import { DeleteWorkspace } from './DeleteWorkspace';
@@ -24,11 +24,12 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
     GET_ORGANIZATION_WORKSPACES,
   );
 
-  const { data: userSitesData, loading: userSitesLoading } =
-    useQuery<Query>(GET_USER_SITES);
+  const { data: allUserSitesData, loading: allUserSitesLoading } =
+    useQuery<Query>(GET_ALL_USER_SITES);
 
   const workspaces = data?.getOrganizationWorkspaces || [];
-  const userSites = (userSitesData?.getUserSites || []).filter(
+
+  const allUserSites = (allUserSitesData?.getAllUserSites || []).filter(
     (site): site is NonNullable<typeof site> => site !== null,
   );
 
@@ -92,7 +93,7 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
       minWidth: 250,
       flex: 1,
       renderCell: (params) => {
-        const domains = params.row.domains || [];
+        const domains = (params.row.domains as AllowedSite[]) || [];
 
         if (domains.length === 0) {
           return (
@@ -119,7 +120,7 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
               gap: '4px',
             }}
           >
-            {domains.slice(0, 3).map((domain: any, index: number) => (
+            {domains.slice(0, 3).map((domain, index: number) => (
               <Chip
                 key={
                   domain.id
@@ -168,7 +169,7 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
       headerName: 'Members',
       width: 150,
       renderCell: (params) => {
-        const members = params.value || [];
+        const members = (params.value as WorkspaceUser[]) || [];
 
         return (
           <AvatarGroup
@@ -177,13 +178,13 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
             }}
             max={6}
           >
-            {members.map((member: any, memberIndex: number) => (
+            {members.map((member, memberIndex: number) => (
               <Tooltip
                 key={`${params.row.id}-member-${member.id}-${memberIndex}`}
                 title={`${member.user?.name || 'Unknown'} (${member.role})`}
               >
                 <Avatar
-                  src={member.user?.avatarUrl}
+                  src={member.user?.avatarUrl || undefined}
                   alt={member.user?.name || 'User'}
                 >
                   {(member.user?.name || 'U').charAt(0).toUpperCase()}
@@ -223,8 +224,8 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
           <EditWorkspace
             workspace={params.row}
             onWorkspaceUpdated={handleUpdate}
-            userSites={userSites}
-            userSitesLoading={userSitesLoading}
+            userSites={allUserSites}
+            userSitesLoading={allUserSitesLoading}
           />
           <DeleteWorkspace
             workspace={params.row}

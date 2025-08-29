@@ -39,7 +39,7 @@ export async function getSiteVisitorsByURL(url: string, user: UserProfile) {
   const domain = normalizeDomain(url)
 
   try {
-    const userSites = await findUserSites(user.id)
+    const userSites = await findUserSites(user)
     const userSiteIds = userSites.map((site) => site.id)
 
     const visitors = await findVisitorByURL(domain)

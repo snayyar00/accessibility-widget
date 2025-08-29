@@ -48,9 +48,7 @@ export const EditWorkspace: React.FC<EditWorkspaceProps> = ({
   const [updateWorkspace, { loading }] =
     useMutation<UpdateWorkspaceMutation>(UPDATE_WORKSPACE);
 
-  // Combine user sites with workspace domains to ensure all domains are available
-  // This solves the issue where domains added by other users are not visible
-  // in the select dropdown for the current user
+  // Combine user sites with workspace domains
   const allAvailableSites = React.useMemo(() => {
     const siteMap = new Map<string, Site>();
 
@@ -206,7 +204,6 @@ export const EditWorkspace: React.FC<EditWorkspaceProps> = ({
 
           <Box sx={{ mt: 2 }}>
             <WorkspaceDomainsSelect
-              workspaceId={String(workspace.id)}
               value={selectedDomainIds}
               onChange={setSelectedDomainIds}
               disabled={loading}

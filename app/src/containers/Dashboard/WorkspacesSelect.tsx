@@ -2,8 +2,14 @@ import React from 'react';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
+import {
+  useApolloClient,
+  useLazyQuery,
+  useMutation,
+  useQuery,
+} from '@apollo/client';
 import GET_USER_WORKSPACES from '@/queries/workspace/getUserWorkspaces';
+import GET_USER_SITES from '@/queries/sites/getSites';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import { ChangeCurrentWorkspaceMutation, Query } from '@/generated/graphql';
@@ -15,6 +21,7 @@ import GET_PROFILE from '@/queries/auth/getProfile';
 const WorkspacesSelect: React.FC = () => {
   const dispatch = useDispatch();
   const { data: userData } = useSelector((state: RootState) => state.user);
+  const client = useApolloClient();
 
   const skipWorkspacesQuery = !userData || !userData.currentOrganization;
 
@@ -45,6 +52,10 @@ const WorkspacesSelect: React.FC = () => {
         toast.error('Failed to change workspace. Please try again.');
         return;
       }
+
+      client.refetchQueries({
+        include: [GET_USER_SITES],
+      });
 
       const profileResult = await getProfile();
       const profileUser = profileResult?.data?.profileUser;

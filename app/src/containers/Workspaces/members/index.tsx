@@ -20,6 +20,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { InviteWorkspaceMember } from '@/components/Invite/InviteWorkspaceMember';
 import GET_USER_WORKSPACES from '@/queries/workspace/getUserWorkspaces';
 import GET_PROFILE from '@/queries/auth/getProfile';
+import GET_USER_SITES from '@/queries/sites/getSites';
 import { setProfileUser } from '@/features/auth/user';
 
 interface TabPanelProps {
@@ -68,8 +69,8 @@ export const WorkspaceMembers = () => {
   };
 
   const handleTableUpdate = async () => {
-    await client.refetchQueries({
-      include: [GET_USER_WORKSPACES],
+    client.refetchQueries({
+      include: [GET_USER_WORKSPACES, GET_USER_SITES],
     });
 
     const profileResult = await getProfile();

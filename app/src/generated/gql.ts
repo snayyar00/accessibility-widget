@@ -43,6 +43,7 @@ type Documents = {
     "\n  mutation UpdateSitesPlan($sitesPlanId: Int!, $planName: String!, $billingType: BillingType!) {\n    updateSitesPlan(sitesPlanId: $sitesPlanId, planName: $planName, billingType: $billingType)\n  }\n": typeof types.UpdateSitesPlanDocument,
     "\n  mutation addSite($url: String!) {\n    addSite(url:$url)\n  }\n": typeof types.AddSiteDocument,
     "\n  mutation deleteSite($url: String!) {\n    deleteSite(url:$url)\n  }\n": typeof types.DeleteSiteDocument,
+    "\n  query GetAllUserSites {\n    getAllUserSites {\n      id\n      user_id\n      url\n      createAt\n      updatedAt\n      expiredAt\n      trial\n    }\n  }\n": typeof types.GetAllUserSitesDocument,
     "\n  query GetUserSites {\n    getUserSites{\n      url,\n      id,\n      expiredAt,\n      trial\n    }\n  }\n": typeof types.GetUserSitesDocument,
     "\n  mutation updateSite($url: String!, $siteId: Int!) {\n    changeURL(newURL:$url, siteId: $siteId)\n  }\n": typeof types.UpdateSiteDocument,
     "\n  mutation TranslateStatement(\n    $content: String!\n    $targetLanguage: String!\n    $languageCode: String!\n    $context: String\n  ) {\n    translateStatement(\n      content: $content\n      targetLanguage: $targetLanguage\n      languageCode: $languageCode\n      context: $context\n    ) {\n      success\n      translatedContent\n      error\n      languageCode\n    }\n  }\n": typeof types.TranslateStatementDocument,
@@ -99,6 +100,7 @@ const documents: Documents = {
     "\n  mutation UpdateSitesPlan($sitesPlanId: Int!, $planName: String!, $billingType: BillingType!) {\n    updateSitesPlan(sitesPlanId: $sitesPlanId, planName: $planName, billingType: $billingType)\n  }\n": types.UpdateSitesPlanDocument,
     "\n  mutation addSite($url: String!) {\n    addSite(url:$url)\n  }\n": types.AddSiteDocument,
     "\n  mutation deleteSite($url: String!) {\n    deleteSite(url:$url)\n  }\n": types.DeleteSiteDocument,
+    "\n  query GetAllUserSites {\n    getAllUserSites {\n      id\n      user_id\n      url\n      createAt\n      updatedAt\n      expiredAt\n      trial\n    }\n  }\n": types.GetAllUserSitesDocument,
     "\n  query GetUserSites {\n    getUserSites{\n      url,\n      id,\n      expiredAt,\n      trial\n    }\n  }\n": types.GetUserSitesDocument,
     "\n  mutation updateSite($url: String!, $siteId: Int!) {\n    changeURL(newURL:$url, siteId: $siteId)\n  }\n": types.UpdateSiteDocument,
     "\n  mutation TranslateStatement(\n    $content: String!\n    $targetLanguage: String!\n    $languageCode: String!\n    $context: String\n  ) {\n    translateStatement(\n      content: $content\n      targetLanguage: $targetLanguage\n      languageCode: $languageCode\n      context: $context\n    ) {\n      success\n      translatedContent\n      error\n      languageCode\n    }\n  }\n": types.TranslateStatementDocument,
@@ -256,6 +258,10 @@ export function graphql(source: "\n  mutation addSite($url: String!) {\n    addS
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation deleteSite($url: String!) {\n    deleteSite(url:$url)\n  }\n"): (typeof documents)["\n  mutation deleteSite($url: String!) {\n    deleteSite(url:$url)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetAllUserSites {\n    getAllUserSites {\n      id\n      user_id\n      url\n      createAt\n      updatedAt\n      expiredAt\n      trial\n    }\n  }\n"): (typeof documents)["\n  query GetAllUserSites {\n    getAllUserSites {\n      id\n      user_id\n      url\n      createAt\n      updatedAt\n      expiredAt\n      trial\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -5,7 +5,9 @@ import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 const resolvers = {
   Query: {
-    getUserSites: combineResolvers(allowedOrganization, isAuthenticated, (_, t, { user }) => findUserSites(user.id)),
+    getUserSites: combineResolvers(allowedOrganization, isAuthenticated, (_, t, { user }) => findUserSites(user)),
+
+    getAllUserSites: combineResolvers(allowedOrganization, isAuthenticated, (_, t, { user }) => findUserSites(user, true)),
 
     isDomainAlreadyAdded: combineResolvers(allowedOrganization, (_, { url }) => isDomainAlreadyAdded(url)),
   },

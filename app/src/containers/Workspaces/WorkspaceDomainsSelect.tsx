@@ -40,7 +40,6 @@ const getItemStyles = (
 });
 
 interface WorkspaceDomainsSelectProps {
-  workspaceId: string;
   value: string[];
   onChange: (siteIds: string[]) => void;
   disabled?: boolean;
@@ -49,7 +48,6 @@ interface WorkspaceDomainsSelectProps {
 }
 
 export default function WorkspaceDomainsSelect({
-  workspaceId,
   value,
   onChange,
   disabled = false,
