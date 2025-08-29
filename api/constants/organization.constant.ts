@@ -1,6 +1,6 @@
 export const ORGANIZATION_USER_ROLE_OWNER = 'owner'
-export const ORGANIZATION_USER_ROLE_MEMBER = 'member'
 export const ORGANIZATION_USER_ROLE_ADMIN = 'admin'
+export const ORGANIZATION_USER_ROLE_MEMBER = 'member'
 
 export const ORGANIZATION_USER_STATUS_ACTIVE = 'active'
 export const ORGANIZATION_USER_STATUS_INVITED = 'invited'

@@ -4,6 +4,7 @@ import { comparePassword } from '../../helpers/hashing.helper'
 import { sign } from '../../helpers/jwt.helper'
 import { incrementFailedAttempts, isAccountLocked, lockAccount, resetFailedAttempts } from '../../repository/failed_login_attempts.repository'
 import { Organization } from '../../repository/organization.repository'
+import { updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
 import { findUser, findUserNotificationByUserId, insertUserNotification, updateUser } from '../../repository/user.repository'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
 import { ApolloError, AuthenticationError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
@@ -62,10 +63,12 @@ export async function loginUser(email: string, password: string, organization: O
     return new AuthenticationError('Invalid email or password')
   }
 
-  let userOrganization
+  let userOrganization: Organization
 
   if (user.current_organization_id) {
     userOrganization = await getOrganizationById(user.current_organization_id, user)
+
+    await updateOrganizationUserByOrganizationAndUserId(userOrganization.id, user.id, { status: ORGANIZATION_USER_STATUS_ACTIVE })
     await resetFailedAttempts(user.id)
   } else {
     await database.transaction(async (trx) => {

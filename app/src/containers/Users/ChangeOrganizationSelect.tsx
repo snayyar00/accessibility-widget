@@ -59,11 +59,21 @@ export const ChangeOrganizationSelect: React.FC<
       disabled={disabled || changeOrganizationLoading}
       value={selected}
       size="small"
-      sx={{ minWidth: 150 }}
       onChange={handleChange}
+      sx={{
+        minWidth: 120,
+        fontSize: '0.875rem',
+        height: '36px',
+      }}
     >
       {organizations.map((org: Organization) => (
-        <MenuItem key={org.id} value={org.id}>
+        <MenuItem
+          sx={{
+            fontSize: '0.875rem',
+          }}
+          key={org.id}
+          value={org.id}
+        >
           {org.name}
         </MenuItem>
       ))}

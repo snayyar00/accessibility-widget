@@ -1,8 +1,8 @@
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '../../constants/billing.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
-import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findSitesByUserId, insertSite, IUserSites, updateAllowedSiteURL } from '../../repository/sites_allowed.repository'
-import { getSitePlanBySiteId } from '../../repository/sites_plans.repository'
-import { findUserNotificationByUserId, getUserbyId } from '../../repository/user.repository'
+import { getOrganizationUser } from '../../repository/organization_user.repository'
+import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findUserSitesWithPlans, insertSite, IUserSites, updateAllowedSiteURL } from '../../repository/sites_allowed.repository'
+import { findUserNotificationByUserId, getUserbyId, UserProfile } from '../../repository/user.repository'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
@@ -27,10 +27,10 @@ export async function checkScript(url: string) {
   const responseData = await response.json()
 
   // Access the result and respond accordingly
-  if ((responseData as any).result === 'WebAbility') {
+  if ((responseData as { result: string }).result === 'WebAbility') {
     return 'Web Ability'
   }
-  if ((responseData as any).result != 'Not Found') {
+  if ((responseData as { result: string }).result != 'Not Found') {
     return 'true'
   }
   return 'false'
@@ -130,23 +130,21 @@ export async function addSite(userId: number, url: string): Promise<string> {
  *
  */
 
-export async function findUserSites(userId: number): Promise<IUserSites[]> {
+export async function findUserSites(user: UserProfile, ignoreWorkspace = false): Promise<IUserSites[]> {
   try {
-    const sites = await findSitesByUserId(userId)
+    let currentWorkspaceId: number | null = null
 
-    const result = await Promise.all(
-      sites.map(async (site) => {
-        const data = await getSitePlanBySiteId(site.id)
+    if (!ignoreWorkspace) {
+      // Get workspace info if user has organization
+      if (user.current_organization_id) {
+        const organizationUser = await getOrganizationUser(user.id, user.current_organization_id)
+        currentWorkspaceId = organizationUser?.current_workspace_id || null
+      }
+    }
 
-        return {
-          ...site,
-          expiredAt: data?.expiredAt,
-          trial: data?.isTrial,
-        }
-      }),
-    )
+    const sites = await findUserSitesWithPlans(user.id, ignoreWorkspace ? null : user.current_organization_id, ignoreWorkspace ? null : currentWorkspaceId)
 
-    return result
+    return sites
   } catch (e) {
     logger.error(e)
     throw e

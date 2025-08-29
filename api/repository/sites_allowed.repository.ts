@@ -34,6 +34,35 @@ export async function findSitesByUserId(id: number): Promise<IUserSites[]> {
   return database(TABLE).where({ [siteColumns.user_id]: id })
 }
 
+/**
+ * Find user sites with workspace support and site plans in a single optimized query
+ * @param userId - User ID
+ * @param organizationId - Organization ID (optional)
+ * @param currentWorkspaceId - Current workspace ID (optional)
+ * @returns Promise<IUserSites[]> - Sites with plan information
+ */
+export async function findUserSitesWithPlans(userId: number, organizationId?: number, currentWorkspaceId?: number | null): Promise<IUserSites[]> {
+  let query = database(TABLE)
+
+  if (organizationId && currentWorkspaceId) {
+    // User is in a workspace - get workspace sites
+    query = query.join('workspace_allowed_sites', 'workspace_allowed_sites.allowed_site_id', 'allowed_sites.id').where('workspace_allowed_sites.workspace_id', currentWorkspaceId)
+  } else {
+    // User is not in workspace - get personal sites
+    query = query.where('allowed_sites.user_id', userId)
+  }
+
+  // Get sites first, then join with latest plan info
+  const sites = await query
+    .leftJoin('sites_plans', function () {
+      this.on('sites_plans.allowed_site_id', '=', 'allowed_sites.id').andOn('sites_plans.id', '=', database.raw('(SELECT MAX(sp2.id) FROM sites_plans sp2 WHERE sp2.allowed_site_id = allowed_sites.id)'))
+    })
+    .select('allowed_sites.id', 'allowed_sites.user_id', 'allowed_sites.url', 'allowed_sites.created_at as createAt', 'allowed_sites.updated_at as updatedAt', 'sites_plans.expired_at as expiredAt', 'sites_plans.is_trial as trial')
+    .distinct()
+
+  return sites
+}
+
 export async function findSiteById(id: number): Promise<FindAllowedSitesProps> {
   return database(TABLE)
     .where({ [siteColumns.id]: id })

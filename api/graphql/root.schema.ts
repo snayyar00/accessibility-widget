@@ -1,16 +1,17 @@
 import { AccessibilitySchema } from './schemas/accessibilityReport.schema'
 import { AllowedSitesSchema } from './schemas/allowedSites.schema'
+import { DomainAnalysisSchema } from './schemas/domainAnalysis.schema'
 import { ImpressionsSchema } from './schemas/impressions.schema'
 import { OrganizationSchema } from './schemas/organization.schema'
+import proofOfEffortSchema from './schemas/proofOfEffort.schema'
 import { reportProblemSchema } from './schemas/reportProblem.schema'
 import { SitesPlanSchema } from './schemas/sitesPlan.schema'
 import { TranslationSchema } from './schemas/translation.schema'
 import { UniqueTokenSchema } from './schemas/uniqueToken.schema'
 import { UniqueVisitorSchema } from './schemas/uniqueVisitor.schema'
 import { UserSchema } from './schemas/user.schema'
-import proofOfEffortSchema from './schemas/proofOfEffort.schema'
 import { widgetTypeDefs } from './schemas/widget.schema'
-import { DomainAnalysisSchema } from './schemas/domainAnalysis.schema'
+import { WorkspaceSchema } from './schemas/workspace.schema'
 
 const rootSchema = `
   scalar Date
@@ -31,4 +32,4 @@ const rootSchema = `
 `
 
 // eslint-disable-next-line import/no-anonymous-default-export
-export default [rootSchema, UserSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, UniqueTokenSchema, SitesPlanSchema, reportProblemSchema, OrganizationSchema, TranslationSchema, proofOfEffortSchema, widgetTypeDefs, DomainAnalysisSchema]
+export default [rootSchema, UserSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, UniqueTokenSchema, SitesPlanSchema, reportProblemSchema, OrganizationSchema, TranslationSchema, proofOfEffortSchema, widgetTypeDefs, DomainAnalysisSchema, WorkspaceSchema]

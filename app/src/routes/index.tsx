@@ -10,6 +10,7 @@ import StatementGenerator from '@/containers/StatementGenerator/StatementGenerat
 import Users from '@/containers/Users';
 import ProofOfEffortToolkit from '@/containers/ProofOfEffortToolkit/ProofOfEffortToolkit';
 import AIInsights from '@/containers/AIInsights/AIInsights';
+import Workspaces from '@/containers/Workspaces';
 import LicenseOwnerInfo from '@/containers/LicenseOwnerInfo';
 import { HiOutlineUser } from 'react-icons/hi';
 
@@ -111,6 +112,13 @@ const routes = [
     name: 'Report View',
     exact: true,
     component: ReportView,
+    isSidebar: false,
+  },
+  {
+    path: '/workspaces',
+    name: 'Workspaces',
+    exact: true,
+    component: Workspaces,
     isSidebar: false,
   },
   {

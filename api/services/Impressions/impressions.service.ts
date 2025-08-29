@@ -1,5 +1,5 @@
-import { findEngagementURLDate, findImpressionsURLDate, insertImpressionURL, updateImpressionProfileCount, updateImpressions } from '../../repository/impressions.repository'
-import { findVisitorByIp } from '../../repository/visitors.repository'
+import { findEngagementURLDate, findImpressionsURLDate, insertImpressionURL, updateImpressionProfileCount, updateImpressions } from '../../repository/impressions.clickhouse.repository'
+import { findVisitorByIp } from '../../repository/visitors.clickhouse.repository'
 import { getRootDomain, normalizeDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'

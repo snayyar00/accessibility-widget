@@ -11,11 +11,11 @@
     <mj-section background-color="#fff">
       <mj-column>
         <mj-text font-size="30px" align="center">
-          Team Invitation
+          Workspace Invitation
         </mj-text>
         <mj-text font-size="18px" align="center" color="#555" line-height="30px"
           >
-          You have been invited to join team "{{teamName}}"
+          You have been invited to join workspace "{{workspaceName}}"
         </mj-text
         >
         <mj-button
@@ -27,19 +27,6 @@
         >
           Join
         </mj-button>
-        <mj-divider border-color="#06adef" width="100px"></mj-divider>
-        <mj-social icon-size="30px" mode="horizontal">
-          <mj-social-element name="facebook" href="https://jslancer.com/">
-          </mj-social-element>
-          <mj-social-element
-            name="google"
-            href="https://jslancer.com/"
-            padding="0 20px"
-          >
-          </mj-social-element>
-          <mj-social-element name="twitter" href="https://jslancer.com/">
-          </mj-social-element>
-        </mj-social>
       </mj-column>
     </mj-section>
   </mj-body>

@@ -1,5 +1,7 @@
-import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
+import { updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
 import { checkOnboardingEmailsEnabled, findUser, findUserNotificationByUserId, getUserNotificationSettings, insertUserNotification, updateUser, updateUserNotificationFlags, UserProfile } from '../../repository/user.repository'
+import { getWorkspace } from '../../repository/workspace.repository'
+import { canManageOrganization } from '../../utils/access.helper'
 import { ApolloError, ForbiddenError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
@@ -146,20 +148,18 @@ export async function changeCurrentOrganization(initiator: UserProfile, targetOr
       throw new ForbiddenError('Current organization not found')
     }
 
-    await checkRoleInOrganization(initiator.id, initiator.current_organization_id)
-    await checkRoleInOrganization(initiator.id, targetOrganizationId)
+    const targetUserId = userId || initiator.id
+    const switchingOtherUser = userId && userId !== initiator.id
 
-    if (userId && userId !== initiator.id) {
-      const targetUser = await getUserOrganization(userId, targetOrganizationId)
+    await checkCanSwitchEntity(initiator, targetUserId, targetOrganizationId, switchingOtherUser)
+    await updateUser(targetUserId, { current_organization_id: targetOrganizationId })
 
-      if (!targetUser) {
-        throw new ForbiddenError('Target user does not belong to the target organization')
-      }
-
-      await updateUser(userId, { current_organization_id: targetOrganizationId })
-    } else {
-      await updateUser(initiator.id, { current_organization_id: targetOrganizationId })
-    }
+    logger.info({
+      message: 'Organization switched',
+      initiatorId: initiator.id,
+      targetUserId,
+      targetOrganizationId,
+    })
 
     return true
   } catch (error) {
@@ -168,16 +168,64 @@ export async function changeCurrentOrganization(initiator: UserProfile, targetOr
   }
 }
 
-async function checkRoleInOrganization(userId: number, organizationId: number) {
-  const orgUser = await getUserOrganization(userId, organizationId)
+export async function changeCurrentWorkspace(initiator: UserProfile, targetWorkspaceId: number | null, userId?: number): Promise<true | ApolloError> {
+  try {
+    if (!initiator.current_organization_id) {
+      throw new ForbiddenError('Current organization not found')
+    }
 
-  if (!orgUser) {
-    throw new ForbiddenError('User does not belong to the organization')
+    const targetUserId = userId || initiator.id
+    const switchingOtherUser = userId && userId !== initiator.id
+
+    await checkCanSwitchEntity(initiator, targetUserId, initiator.current_organization_id, switchingOtherUser)
+
+    if (targetWorkspaceId) {
+      const workspace = await getWorkspace({
+        id: targetWorkspaceId,
+        organization_id: initiator.current_organization_id,
+      })
+
+      if (!workspace) {
+        throw new ForbiddenError('Workspace not found or does not belong to organization')
+      }
+    }
+
+    await updateOrganizationUserByOrganizationAndUserId(initiator.current_organization_id, targetUserId, { current_workspace_id: targetWorkspaceId })
+
+    logger.info({
+      message: 'Workspace switched',
+      initiatorId: initiator.id,
+      targetUserId,
+      targetWorkspaceId,
+      organizationId: initiator.current_organization_id,
+    })
+
+    return true
+  } catch (error) {
+    logger.error(error)
+    throw new ForbiddenError('Failed to change current workspace')
+  }
+}
+
+async function checkCanSwitchEntity(initiator: UserProfile, targetUserId: number, targetOrganizationId: number, requireAdmin = false) {
+  const targetOrgUser = await getUserOrganization(targetUserId, targetOrganizationId)
+
+  if (!targetOrgUser) {
+    throw new ForbiddenError('Target user does not belong to the organization')
   }
 
-  const isAllowed = ORGANIZATION_MANAGEMENT_ROLES.includes(orgUser.role as (typeof ORGANIZATION_MANAGEMENT_ROLES)[number])
+  if (requireAdmin) {
+    const initiatorOrg = await getUserOrganization(initiator.id, targetOrganizationId)
+    const isAllowed = initiatorOrg && canManageOrganization(initiatorOrg.role)
 
-  if (!isAllowed) {
-    throw new ForbiddenError('User must be owner or admin of the organization to switch organization')
+    if (!isAllowed) {
+      throw new ForbiddenError('Must be owner/admin to switch for other users')
+    }
+  } else {
+    const selfOrg = await getUserOrganization(initiator.id, targetOrganizationId)
+
+    if (!selfOrg) {
+      throw new ForbiddenError('User does not belong to the target organization')
+    }
   }
 }
