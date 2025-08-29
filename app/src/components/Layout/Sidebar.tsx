@@ -42,7 +42,7 @@ const Sidebar = ({
         />
       )}
       <div
-        className={`h-[100dvh] sticky top-0 flex w-[250px] flex-col sm:fixed sm:bg-white sm:transition-all sm:duration-[400ms] ${
+        className={`h-[100dvh] sticky top-0 flex w-[250px] flex-none flex-col sm:fixed sm:bg-white sm:transition-all sm:duration-[400ms] ${
           isOpen ? 'sm:left-0 sm:z-[50]' : 'sm:-left-full sm:z-[50]'
         }`}
       >
