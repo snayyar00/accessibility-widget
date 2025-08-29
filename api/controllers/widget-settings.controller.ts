@@ -4,15 +4,15 @@ import { findSiteByURL } from '../repository/sites_allowed.repository'
 import { addWidgetSettings, getWidgetSettingsBySiteId } from '../repository/widget_settings.repository'
 
 export async function updateSiteWidgetSettings(req: Request, res: Response) {
-  const { user } = req as any
+  // const { user } = req as any
   const { settings, site_url } = req.body
 
   try {
     const site = await findSiteByURL(site_url)
 
-    if (!site || site.user_id !== user.id) {
-      return res.status(403).json({ error: 'User does not own this site' })
-    }
+    // if (!site || site.user_id !== user.id) {
+    //   return res.status(403).json({ error: 'User does not own this site' })
+    // }
 
     await addWidgetSettings({
       site_url,
@@ -29,15 +29,15 @@ export async function updateSiteWidgetSettings(req: Request, res: Response) {
 }
 
 export async function getSiteWidgetSettings(req: Request, res: Response) {
-  const { user } = req as any
+  // const { user } = req as any
   const { site_url } = req.body
 
   try {
     const site = await findSiteByURL(site_url)
 
-    if (site?.user_id !== user.id) {
-      return res.status(403).json({ error: 'User does not own this site' })
-    }
+    // if (site?.user_id !== user.id) {
+    //   return res.status(403).json({ error: 'User does not own this site' })
+    // }
 
     const widgetSettings = await getWidgetSettingsBySiteId(site?.id)
     const response = widgetSettings?.settings || {}
