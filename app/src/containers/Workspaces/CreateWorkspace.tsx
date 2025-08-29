@@ -8,64 +8,62 @@ import {
   TextField,
 } from '@mui/material';
 import { useMutation } from '@apollo/client';
-import ADD_USER_TO_ORGANIZATION from '@/queries/organization/addUserToOrganization';
+import CREATE_WORKSPACE from '@/queries/workspace/createWorkspace';
 import { toast } from 'react-toastify';
-import { AddUserToOrganizationByEmailMutation } from '@/generated/graphql';
+import { CreateWorkspaceMutation } from '@/generated/graphql';
 
-interface AddUserToOrganizationProps {
-  organizationId: number;
-  onUserAdded?: () => void;
+interface CreateWorkspaceProps {
+  onWorkspaceCreated?: () => void;
 }
 
-export const AddUserToOrganization: React.FC<AddUserToOrganizationProps> = ({
-  organizationId,
-  onUserAdded,
+export const CreateWorkspace: React.FC<CreateWorkspaceProps> = ({
+  onWorkspaceCreated,
 }) => {
   const [open, setOpen] = React.useState(false);
-  const [email, setEmail] = React.useState('');
+  const [name, setName] = React.useState('');
 
-  const [addUserToOrganization, { loading: addLoading }] =
-    useMutation<AddUserToOrganizationByEmailMutation>(ADD_USER_TO_ORGANIZATION);
+  const [createWorkspace, { loading: createLoading }] =
+    useMutation<CreateWorkspaceMutation>(CREATE_WORKSPACE);
 
   const handleOpen = () => setOpen(true);
 
   const handleClose = () => {
     setOpen(false);
-    setEmail('');
+    setName('');
   };
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
   };
 
   const handleSave = async () => {
-    if (!email) return;
+    if (!name.trim()) return;
 
     try {
-      const { errors, data } = await addUserToOrganization({
-        variables: { organizationId, email },
+      const { errors, data } = await createWorkspace({
+        variables: { name: name.trim() },
       });
 
       if (errors?.length) {
         errors.forEach((err) =>
-          toast.error(err.message || 'Failed to add user.'),
+          toast.error(err.message || 'Failed to create workspace.'),
         );
 
         return;
       }
 
-      const isSuccess = data?.addUserToOrganizationByEmail;
+      const workspace = data?.createWorkspace;
 
-      if (isSuccess) {
-        toast.success('User added to organization!');
+      if (workspace) {
+        toast.success(`Workspace "${workspace.name}" created successfully!`);
 
         handleClose();
-        onUserAdded?.();
+        onWorkspaceCreated?.();
       } else {
-        toast.error('Failed to add user.');
+        toast.error('Failed to create workspace.');
       }
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to add user.');
+      toast.error(e?.message || 'Failed to create workspace.');
     }
   };
 
@@ -76,19 +74,20 @@ export const AddUserToOrganization: React.FC<AddUserToOrganizationProps> = ({
         variant="contained"
         color="primary"
         onClick={handleOpen}
+        disableElevation
       >
-        Add user to organization
+        Create Workspace
       </Button>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Add user to organization</DialogTitle>
+        <DialogTitle>Create Workspace</DialogTitle>
 
         <DialogContent>
           <TextField
-            label="User email"
+            label="Workspace name"
             fullWidth
-            value={email}
-            onChange={handleEmailChange}
+            value={name}
+            onChange={handleNameChange}
             autoFocus
             margin="normal"
           />
@@ -109,9 +108,10 @@ export const AddUserToOrganization: React.FC<AddUserToOrganizationProps> = ({
             onClick={handleSave}
             variant="contained"
             color="primary"
-            disabled={!email || addLoading}
+            disableElevation
+            disabled={!name.trim() || createLoading}
           >
-            Save
+            Create
           </Button>
         </DialogActions>
       </Dialog>

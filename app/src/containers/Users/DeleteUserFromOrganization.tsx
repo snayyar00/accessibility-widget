@@ -97,6 +97,7 @@ export const DeleteUserFromOrganization: React.FC<
             color="error"
             variant="contained"
             disabled={loading}
+            disableElevation
           >
             Remove
           </Button>

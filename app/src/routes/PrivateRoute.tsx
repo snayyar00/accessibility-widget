@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { useLazyQuery } from '@apollo/client';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, RouteProps } from 'react-router-dom';
+import { Route, RouteProps, useHistory } from 'react-router-dom';
 import { RootState } from '@/config/store';
 
-import getProfileQuery from '@/queries/auth/getProfile';
+import GET_PROFILE from '@/queries/auth/getProfile';
 
 import { setProfileUser } from '@/features/auth/user';
 import { CircularProgress } from '@mui/material';
@@ -17,9 +17,10 @@ type Props = {
 
 const PrivateRoute: React.FC<Props> = ({ render }) => {
   const dispatch = useDispatch();
+  const history = useHistory();
 
   const [getProfile, { data: userProfile, loading: loadingUserProfile }] =
-    useLazyQuery(getProfileQuery);
+    useLazyQuery(GET_PROFILE);
   const { data } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
@@ -36,6 +37,14 @@ const PrivateRoute: React.FC<Props> = ({ render }) => {
         const redirected = redirectToUserOrganization(domain);
 
         if (redirected) return;
+      }
+
+      if (userProfile?.profileUser?.invitationToken) {
+        history.push(
+          `/workspaces/invitation/${userProfile.profileUser.invitationToken}`,
+        );
+
+        return;
       }
 
       dispatch(

@@ -117,7 +117,7 @@
   background-color: #000000;
   color: white;
   padding: 0.375rem 0.75rem;
-  border-radius: 0.500rem;
+  border-radius: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
   height: 2.25rem; /* Fixed height */
@@ -152,7 +152,7 @@
   background-color: #000000;
   color: white;
   padding: 0.375rem 0.75rem;
-  border-radius: 0.500rem;
+  border-radius: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
   height: 2.25rem; /* Fixed height */
@@ -178,4 +178,13 @@
 .view-affected-element-button svg {
   width: 1rem;
   height: 1rem;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

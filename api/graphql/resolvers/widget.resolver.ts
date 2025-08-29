@@ -1,8 +1,9 @@
 import { combineResolvers } from 'graphql-resolvers'
-import { isAuthenticated } from './authorization.resolver'
+
 import { sendWidgetInstallationInstructions } from '../../services/widget/widget-installation.service'
 import logger from '../../utils/logger'
 import { emailValidation } from '../../validations/email.validation'
+import { isAuthenticated } from './authorization.resolver'
 
 interface SendWidgetInstallationArgs {
   email: string

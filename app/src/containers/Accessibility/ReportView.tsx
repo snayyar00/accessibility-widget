@@ -40,7 +40,7 @@ import { ReactI18NextChild } from 'react-i18next';
 import { toast } from 'sonner';
 import TechStack from './TechStack';
 import { CircularProgress } from '@mui/material';
-import getProfileQuery from '@/queries/auth/getProfile';
+import GET_PROFILE from '@/queries/auth/getProfile';
 import getWidgetSettings from '@/utils/getWidgetSettings';
 import { FloatingChatbot } from './FloatingChatbot'; // Adjust path as needed
 
@@ -186,7 +186,7 @@ const ReportView: React.FC = () => {
     data: userInfo,
     error: getProfileError,
     loading: getProfileLoading,
-  } = useQuery(getProfileQuery);
+  } = useQuery(GET_PROFILE);
 
   // Processing state management
   const [isProcessing, setIsProcessing] = useState(true);
@@ -393,11 +393,11 @@ const ReportView: React.FC = () => {
   return (
     <div className="bg-report-blue text-foreground min-h-screen pt-20 pb-20 px-4 sm:px-8 md:px-16 lg:pr-28 lg:pl-28">
       {/* Add chatbot ready indicator */}
-    {!chatbotReady && (
-      <div className="fixed bottom-5 left-5 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded z-10">
-        AI Assistant initializing...
-      </div>
-    )}
+      {!chatbotReady && (
+        <div className="fixed bottom-5 left-5 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded z-10">
+          AI Assistant initializing...
+        </div>
+      )}
       <div className="absolute top-4 left-4 sm:left-8 lg:left-10 z-20">
         <button
           onClick={handleBackToDashboard}
@@ -789,12 +789,12 @@ WCAG: ${issue.code || issue.message || 'N/A'}`;
           </motion.div>
         )}
       </div>
-      <FloatingChatbot 
-      scanResults={{...report, url: fullUrl}} 
-      onScanStart={() => {}} // Not needed in report view
-      onScanComplete={() => {}} // Not needed in report view
-      isScanning={false}
-    />
+      <FloatingChatbot
+        scanResults={{ ...report, url: fullUrl }}
+        onScanStart={() => {}} // Not needed in report view
+        onScanComplete={() => {}} // Not needed in report view
+        isScanning={false}
+      />
     </div>
   );
 };

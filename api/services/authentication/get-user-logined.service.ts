@@ -1,7 +1,9 @@
 import dayjs from 'dayjs'
 
+import { WORKSPACE_INVITATION_STATUS_PENDING } from '../../constants/workspace.constant'
 import { verify } from '../../helpers/jwt.helper'
 import { findUser } from '../../repository/user.repository'
+import { getWorkspaceInvitation } from '../../repository/workspace_invitations.repository'
 
 export type UserLoginedResponse = {
   id: number
@@ -12,6 +14,7 @@ export type UserLoginedResponse = {
   company: string
   avatarUrl: string
   current_organization_id: number | null
+  invitationToken: string | null
 }
 
 export default async function getUserLogined(bearerToken: string | null): Promise<UserLoginedResponse | null> {
@@ -23,6 +26,7 @@ export default async function getUserLogined(bearerToken: string | null): Promis
         const { user, iat } = verifyToken
 
         const userInfo = await findUser({ email: user.email })
+        const [invitationToken] = await getWorkspaceInvitation({ email: user.email, status: WORKSPACE_INVITATION_STATUS_PENDING })
 
         if (userInfo.password_changed_at && iat && iat * 1000 < dayjs.utc(userInfo.password_changed_at).valueOf()) {
           return null
@@ -37,6 +41,7 @@ export default async function getUserLogined(bearerToken: string | null): Promis
           company: userInfo.company,
           avatarUrl: userInfo.avatar_url,
           current_organization_id: userInfo.current_organization_id || null,
+          invitationToken: invitationToken ? invitationToken.token : null,
         }
       }
     } catch {

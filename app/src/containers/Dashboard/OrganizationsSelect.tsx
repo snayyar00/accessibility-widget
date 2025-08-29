@@ -2,13 +2,18 @@ import React from 'react';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
+import {
+  useApolloClient,
+  useLazyQuery,
+  useMutation,
+  useQuery,
+} from '@apollo/client';
 import GET_USER_ORGANIZATIONS from '@/queries/organization/getUserOrganizations';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import { ChangeCurrentOrganizationMutation, Query } from '@/generated/graphql';
 import CHANGE_CURRENT_ORGANIZATION from '@/queries/user/changeCurrentOrganization';
-import getProfileQuery from '@/queries/auth/getProfile';
+import GET_PROFILE from '@/queries/auth/getProfile';
 import { IS_LOCAL } from '@/config/env';
 import { toast } from 'react-toastify';
 import { redirectToUserOrganization } from '@/helpers/redirectToOrganization';
@@ -16,10 +21,10 @@ import { setProfileUser } from '@/features/auth/user';
 
 const OrganizationsSelect: React.FC = () => {
   const dispatch = useDispatch();
+  const client = useApolloClient();
   const { data: userData } = useSelector((state: RootState) => state.user);
 
-  const skipOrganizationsQuery =
-    !userData || !userData.currentOrganization || !userData.isAdminOrOwner;
+  const skipOrganizationsQuery = !userData || !userData.currentOrganization;
 
   const { data: organizationsData, loading: organizationsLoading } =
     useQuery<Query>(GET_USER_ORGANIZATIONS, { skip: skipOrganizationsQuery });
@@ -31,8 +36,7 @@ const OrganizationsSelect: React.FC = () => {
     CHANGE_CURRENT_ORGANIZATION,
   );
 
-  const [getProfile, { loading: profileLoading }] =
-    useLazyQuery(getProfileQuery);
+  const [getProfile, { loading: profileLoading }] = useLazyQuery(GET_PROFILE);
 
   const organizations = organizationsData?.getUserOrganizations || [];
 
@@ -63,6 +67,10 @@ const OrganizationsSelect: React.FC = () => {
         }
       }
 
+      client.refetchQueries({
+        include: 'active',
+      });
+
       const profileResult = await getProfile();
       const profileUser = profileResult?.data?.profileUser;
 
@@ -83,7 +91,7 @@ const OrganizationsSelect: React.FC = () => {
     }
   };
 
-  if (!organizations.length) return null;
+  if (!organizations.length || organizations.length === 1) return null;
 
   return (
     <FormControl fullWidth>

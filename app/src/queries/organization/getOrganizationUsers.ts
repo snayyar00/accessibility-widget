@@ -9,6 +9,7 @@ export default gql`
       role
       status
       updated_at
+      invitationId
       user {
         id
         name
@@ -23,6 +24,10 @@ export default gql`
       currentOrganization {
         id
         name
+      }
+      workspaces {
+        name
+        alias
       }
     }
   }
