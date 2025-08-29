@@ -22,6 +22,7 @@ type WorkspaceInvitation = {
 export type GetDetailWorkspaceInvitation = {
   id?: number
   workspace_name: string
+  workspace_alias?: string
   invited_by: string
   email: string
   status: WorkspaceInvitationStatus
@@ -128,4 +129,27 @@ export async function deleteWorkspaceInvitations(condition: Partial<WorkspaceInv
 
   const result = await query
   return result > 0
+}
+
+export async function getOrganizationInvitations(organizationId: number): Promise<GetDetailWorkspaceInvitation[]> {
+  const query = database(TABLE)
+    .leftJoin(TABLES.users, usersColumns.id, workspaceInvitationsColumns.invitedBy)
+    .leftJoin(TABLES.workspaces, workspacesColumns.id, workspaceInvitationsColumns.workspaceId)
+    .where(workspaceInvitationsColumns.organizationId, organizationId)
+    .select([
+      workspaceInvitationsColumns.id,
+      workspaceInvitationsColumns.email,
+      workspaceInvitationsColumns.status,
+      workspaceInvitationsColumns.role,
+      workspaceInvitationsColumns.token,
+      workspaceInvitationsColumns.validUntil,
+      workspaceInvitationsColumns.createdAt,
+      workspaceInvitationsColumns.organizationId,
+      workspaceInvitationsColumns.workspaceId,
+      `${usersColumns.name} as invited_by`,
+      `${workspacesColumns.name} as workspace_name`,
+      `${workspacesColumns.alias} as workspace_alias`,
+    ])
+
+  return await query
 }

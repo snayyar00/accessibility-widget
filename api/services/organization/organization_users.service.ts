@@ -1,8 +1,10 @@
 import { Knex } from 'knex'
 
-import { ORGANIZATION_USER_ROLE_OWNER, OrganizationUserRole, OrganizationUserStatus } from '../../constants/organization.constant'
+import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_INVITED, OrganizationUserRole, OrganizationUserStatus } from '../../constants/organization.constant'
+import { WORKSPACE_INVITATION_STATUS_PENDING } from '../../constants/workspace.constant'
 import { deleteOrganizationUser, getOrganizationUser, getOrganizationUsersByUserId, getOrganizationUsersWithUserInfo, insertOrganizationUser, OrganizationUser, updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
 import { UserProfile } from '../../repository/user.repository'
+import { GetDetailWorkspaceInvitation, getOrganizationInvitations } from '../../repository/workspace_invitations.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { ApolloError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
@@ -63,15 +65,22 @@ export async function getOrganizationUsers(user: UserProfile) {
   }
 
   const users = await getOrganizationUsersWithUserInfo(organizationId)
-
   const myOrgs = await getOrganizationsByUserId(userId)
   const allowedOrgIds = myOrgs.filter((o) => canManageOrganization(o.role)).map((o) => o.organization_id)
 
-  return users.map((user) => ({
+  const existingUsers = users.map((user) => ({
     ...user,
     organizations: user.organizations.filter((org) => allowedOrgIds.includes(org.id)),
     currentOrganization: user.currentOrganization && allowedOrgIds.includes(user.currentOrganization.id) ? user.currentOrganization : null,
   }))
+
+  const invitations = await getOrganizationInvitations(organizationId)
+  const existingEmails = new Set(existingUsers.map((user) => user.user.email))
+  const pendingInvitations = invitations.filter((invitation) => invitation.status === WORKSPACE_INVITATION_STATUS_PENDING)
+
+  const invitedUsers = await createInvitedUsersFromInvitations(pendingInvitations, organizationId, existingEmails)
+
+  return [...invitedUsers, ...existingUsers]
 }
 
 export async function changeOrganizationUserRole(initiator: UserProfile, targetUserId: number, newRole: OrganizationUserRole): Promise<boolean> {
@@ -120,4 +129,53 @@ export async function changeOrganizationUserRole(initiator: UserProfile, targetU
     logger.error('Error changing organization user role:', error)
     throw error
   }
+}
+
+async function createInvitedUsersFromInvitations(invitations: GetDetailWorkspaceInvitation[], organizationId: number, existingEmails: Set<string>) {
+  return invitations
+    .filter((invitation) => !existingEmails.has(invitation.email))
+    .reduce((acc, invitation) => {
+      // Group by email to avoid duplicates from multiple workspace invitations
+      let existingInvite = acc.find((u) => u.user.email === invitation.email)
+
+      if (!existingInvite) {
+        // Simple virtual IDs for invited users - use acc.length for unique sequential IDs
+        const virtualUserId = -(acc.length + 1000) // -1000, -1001, -1002, etc.
+        const virtualOrgUserId = `invited-${acc.length}-${invitation.email.replace(/[^a-zA-Z0-9]/g, '-')}`
+
+        existingInvite = {
+          id: virtualOrgUserId,
+          user_id: virtualUserId,
+          organization_id: organizationId,
+          role: ORGANIZATION_USER_ROLE_MEMBER,
+          status: ORGANIZATION_USER_STATUS_INVITED,
+          created_at: invitation.created_at,
+          updated_at: null,
+          current_workspace_id: null,
+          organizations: [],
+          workspaces: [],
+          invitationId: invitation.id,
+          user: {
+            id: virtualUserId,
+            email: invitation.email,
+            name: invitation.email.split('@')[0],
+            current_organization_id: null,
+            isActive: false,
+          },
+          currentOrganization: null,
+        }
+
+        acc.push(existingInvite)
+      }
+
+      if (invitation.workspace_name && invitation.workspace_id) {
+        existingInvite.workspaces.push({
+          id: invitation.workspace_id,
+          name: invitation.workspace_name,
+          alias: invitation.workspace_alias,
+        })
+      }
+
+      return acc
+    }, [])
 }

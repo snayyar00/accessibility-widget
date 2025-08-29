@@ -9,72 +9,63 @@ import {
   Typography,
 } from '@mui/material';
 import { useMutation } from '@apollo/client';
-import REMOVE_WORKSPACE_MEMBER from '@/queries/workspace/removeWorkspaceMember';
+import REMOVE_ALL_USER_INVITATIONS from '@/queries/workspace/removeAllUserInvitations';
 import { toast } from 'react-toastify';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { RemoveWorkspaceMemberMutation } from '@/generated/graphql';
 
-type RemoveWorkspaceMemberProps = {
-  workspaceUserId: number;
-  memberName?: string;
-  memberEmail?: string;
-  onMemberRemoved?: () => void;
+type RemoveAllUserInvitationsProps = {
+  email: string;
+  onInvitationRemoved?: () => void;
   disabled?: boolean;
 };
 
-export const RemoveWorkspaceMember: React.FC<RemoveWorkspaceMemberProps> = ({
-  workspaceUserId,
-  memberName,
-  memberEmail,
-  onMemberRemoved,
-  disabled,
-}) => {
+export const RemoveAllUserInvitations: React.FC<
+  RemoveAllUserInvitationsProps
+> = ({ email, onInvitationRemoved, disabled }) => {
   const [open, setOpen] = React.useState(false);
 
-  const [removeWorkspaceMember, { loading }] =
-    useMutation<RemoveWorkspaceMemberMutation>(REMOVE_WORKSPACE_MEMBER);
+  const [removeAllUserInvitations, { loading }] = useMutation(
+    REMOVE_ALL_USER_INVITATIONS,
+  );
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   const handleRemove = async () => {
     try {
-      const { errors, data } = await removeWorkspaceMember({
-        variables: { id: workspaceUserId },
+      const { errors, data } = await removeAllUserInvitations({
+        variables: { email },
       });
 
       if (errors?.length) {
         errors.forEach((err) =>
-          toast.error(err.message || 'Failed to remove member.'),
+          toast.error(err.message || 'Failed to remove invitations.'),
         );
 
         return;
       }
 
-      if (!data || !data.removeWorkspaceMember) {
-        toast.error('Failed to remove member.');
+      if (!data || !data.removeAllUserInvitations) {
+        toast.error('Failed to remove invitation.');
         return;
       }
 
-      toast.success(
-        `Member "${memberName || memberEmail || 'User'}" removed successfully!`,
-      );
+      toast.success('Invitation removed successfully!');
 
       handleClose();
-      onMemberRemoved?.();
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to remove member.');
+      onInvitationRemoved?.();
+    } catch (error) {
+      console.error('Error removing invitations:', error);
+      toast.error('Failed to remove invitation.');
     }
   };
-
-  const displayName = memberName || memberEmail || 'this member';
 
   return (
     <>
       <IconButton
         color="error"
         onClick={handleOpen}
-        aria-label="remove member"
+        aria-label="remove invitation"
         size="medium"
         disabled={disabled}
       >
@@ -82,12 +73,12 @@ export const RemoveWorkspaceMember: React.FC<RemoveWorkspaceMemberProps> = ({
       </IconButton>
 
       <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
-        <DialogTitle>Remove member</DialogTitle>
+        <DialogTitle>Remove invitation</DialogTitle>
 
         <DialogContent>
           <Typography>
-            Are you sure you want to remove <strong>{displayName}</strong> from
-            this workspace? This action cannot be undone.
+            Are you sure you want to remove the invitation for{' '}
+            <strong>{email}</strong>? This action cannot be undone.
           </Typography>
         </DialogContent>
 

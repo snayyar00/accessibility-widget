@@ -62,8 +62,6 @@ export const RemoveWorkspaceInvitation: React.FC<
     }
   };
 
-  const displayEmail = inviteeEmail || 'this invitation';
-
   return (
     <>
       <IconButton
@@ -81,8 +79,8 @@ export const RemoveWorkspaceInvitation: React.FC<
 
         <DialogContent>
           <Typography>
-            Are you sure you want to remove the invitation? This action cannot
-            be undone.
+            Are you sure you want to remove the invitation for{' '}
+            <strong>{inviteeEmail}</strong>? This action cannot be undone.
           </Typography>
         </DialogContent>
 

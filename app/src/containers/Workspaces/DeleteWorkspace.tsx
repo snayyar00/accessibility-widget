@@ -80,9 +80,9 @@ export const DeleteWorkspace: React.FC<DeleteWorkspaceProps> = ({
 
         <DialogContent>
           <Typography>
-            Are you sure you want to delete workspace &quot;
-            {workspace.name || 'this workspace'}&quot;? This action cannot be
-            undone.
+            Are you sure you want to delete workspace{' '}
+            <strong>{workspace.name || 'this workspace'}</strong> ? This action
+            cannot be undone.
           </Typography>
         </DialogContent>
 

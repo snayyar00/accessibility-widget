@@ -32,6 +32,7 @@ export const OrganizationSchema = `#graphql
     status: OrganizationUserStatus
     created_at: Date
     updated_at: Date
+    invitationId: Int
     user: User!
     organizations: [Organization!]!
     currentOrganization: Organization

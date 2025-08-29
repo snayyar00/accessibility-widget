@@ -11,6 +11,7 @@ import {
 } from '@/generated/graphql';
 import { RoleSelector } from './RoleSelector';
 import { RemoveWorkspaceMember } from './RemoveWorkspaceMember';
+import { RemoveWorkspaceInvitation } from './RemoveWorkspaceInvitation';
 
 type TableMembersProps = {
   alias: string;
@@ -22,6 +23,7 @@ const STATUS_STYLES = {
   [WorkspaceUserStatus.Pending]: { backgroundColor: '#f59e0b', color: '#fff' },
   [WorkspaceUserStatus.Inactive]: { backgroundColor: '#ef4444', color: '#fff' },
   [WorkspaceUserStatus.Decline]: { backgroundColor: '#dc2626', color: '#fff' },
+  invited: { backgroundColor: '#3b82f6', color: '#fff' },
 } as const;
 
 export const TableMembers = ({ alias, onUpdate }: TableMembersProps) => {
@@ -40,19 +42,25 @@ export const TableMembers = ({ alias, onUpdate }: TableMembersProps) => {
 
   const rows = React.useMemo(
     () =>
-      members.map((member, idx) => ({
-        number: idx + 1,
-        id: member.id,
-        user_id: member.user_id,
-        workspace_id: member.workspace_id,
-        email: member.user?.email ?? '',
-        name: member.user?.name ?? '',
-        role: member.role ?? '',
-        status: member.status ?? '',
-        created_at: member.created_at ?? '',
-        updated_at: member.updated_at ?? '',
-        avatarUrl: member.user?.avatarUrl ?? '',
-      })),
+      members.map((member, idx) => {
+        const isInvitedUser = member.user_id < 0;
+
+        return {
+          number: idx + 1,
+          id: member.id,
+          user_id: isInvitedUser ? '—' : member.user_id,
+          workspace_id: member.workspace_id,
+          email: member.user?.email ?? '',
+          name: isInvitedUser ? '—' : member.user?.name ?? '',
+          role: member.role ?? '',
+          status: isInvitedUser ? 'invited' : member.status ?? '',
+          created_at: member.created_at ?? '',
+          updated_at: member.updated_at ?? '',
+          avatarUrl: member.user?.avatarUrl ?? '',
+          isInvitedUser,
+          invitationId: member.invitationId,
+        };
+      }),
     [members],
   );
 
@@ -93,7 +101,7 @@ export const TableMembers = ({ alias, onUpdate }: TableMembersProps) => {
       headerName: 'Status',
       width: 120,
       renderCell: (params) => {
-        const status = params.value as WorkspaceUserStatus;
+        const status = params.value as WorkspaceUserStatus | 'invited';
         const chipStyle = STATUS_STYLES[status] || {
           backgroundColor: '#6b7280',
           color: '#fff',
@@ -116,6 +124,11 @@ export const TableMembers = ({ alias, onUpdate }: TableMembersProps) => {
       width: 140,
       renderCell: (params) => {
         const currentRole = params.value as WorkspaceUserRole;
+        const isInvited = params.row.isInvitedUser;
+
+        if (isInvited) {
+          return <span>—</span>;
+        }
 
         return (
           <RoleSelector
@@ -141,9 +154,19 @@ export const TableMembers = ({ alias, onUpdate }: TableMembersProps) => {
       filterable: false,
       disableColumnMenu: true,
       renderCell: (params) => {
-        const userId = params.row.user_id;
         const memberName = params.row.name;
         const memberEmail = params.row.email;
+        const isInvited = params.row.isInvitedUser;
+
+        if (isInvited) {
+          return (
+            <RemoveWorkspaceInvitation
+              invitationId={params.row.invitationId}
+              inviteeEmail={memberEmail}
+              onInvitationRemoved={handleUpdate}
+            />
+          );
+        }
 
         return (
           <RemoveWorkspaceMember

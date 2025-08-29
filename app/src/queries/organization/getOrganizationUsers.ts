@@ -9,6 +9,7 @@ export default gql`
       role
       status
       updated_at
+      invitationId
       user {
         id
         name

@@ -36,6 +36,16 @@ type CreateWorkspaceResponse = {
   organization_id: number
 }
 
+type WorkspaceMemberWithUser = GetAllWorkspaceResponse & {
+  user?: {
+    id?: number
+    name?: string
+    email?: string
+    avatarUrl?: string
+  }
+  email?: string
+}
+
 /**
  * Function to get all workspaces for current user
  *
@@ -163,6 +173,30 @@ export async function getWorkspaceByAlias(alias: string, user: UserProfile): Pro
 }
 
 /**
+ * Helper function to get existing member emails
+ * @param GetAllWorkspaceResponse[] members Array of workspace members
+ * @returns Set<string> Set of existing emails
+ */
+function getExistingMemberEmails(members: GetAllWorkspaceResponse[]): Set<string> {
+  return new Set(members.map((member) => extractMemberEmail(member as WorkspaceMemberWithUser)).filter(Boolean) as string[])
+}
+
+/**
+ * Helper function to validate workspace access permissions
+ * @param UserProfile user User requesting access
+ * @returns Promise<boolean> True if user has access
+ */
+async function validateWorkspaceAccess(user: UserProfile): Promise<boolean> {
+  if (!user.current_organization_id) {
+    return false
+  }
+
+  const userOrganization = await getUserOrganization(user.id, user.current_organization_id)
+
+  return !!(userOrganization && canManageOrganization(userOrganization.role))
+}
+
+/**
  * Function to get all members of a workspace by alias
  * Only organization owner and admin can see all workspace members
  *
@@ -175,29 +209,26 @@ export async function getWorkspaceMembersByAlias(alias: string, user: UserProfil
     throw new ValidationError('Workspace alias is required')
   }
 
-  if (!user.current_organization_id) {
-    return []
-  }
+  const hasAccess = await validateWorkspaceAccess(user)
 
-  const userOrganization = await getUserOrganization(user.id, user.current_organization_id)
-
-  if (!userOrganization) {
-    return []
-  }
-
-  if (!canManageOrganization(userOrganization.role)) {
+  if (!hasAccess) {
     return []
   }
 
   const workspace = await getWorkspace({ alias, organization_id: user.current_organization_id })
-
   if (!workspace) {
     return []
   }
 
   const members = await getWorkspaceMembersRepo({ workspaceId: workspace.id })
+  const existingEmails = getExistingMemberEmails(members)
 
-  return members
+  const invitations = await getDetailWorkspaceInvitations({ workspaceId: workspace.id })
+  const pendingInvitations = invitations.filter((invitation) => invitation.status === WORKSPACE_INVITATION_STATUS_PENDING)
+
+  const invitedMembers = createVirtualUsersFromInvitations(pendingInvitations, existingEmails, workspace)
+
+  return [...invitedMembers, ...members]
 }
 
 /**
@@ -795,4 +826,137 @@ export async function removeWorkspaceInvitation(user: UserProfile, id: number): 
 
     throw new ApolloError(error)
   }
+}
+
+/**
+ * Function to remove all workspace invitations for a user by email
+ * @param UserProfile user User who wants to remove invitations
+ * @param string email Email of the user whose invitations should be removed
+ * @returns Promise<boolean> True if invitations were removed successfully
+ */
+export async function removeAllUserInvitations(user: UserProfile, email: string): Promise<boolean> {
+  if (!user.current_organization_id) {
+    throw new ApolloError('No current organization selected')
+  }
+
+  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
+  const isAllowed = orgUser && canManageOrganization(orgUser.role)
+
+  if (!isAllowed) {
+    throw new ApolloError('Only organization owner or admin can remove workspace invitations')
+  }
+
+  let transaction: Knex.Transaction
+
+  try {
+    transaction = await database.transaction()
+
+    // Get all invitations for this email in this organization
+    const invitations = await getWorkspaceInvitation({
+      email,
+      organization_id: user.current_organization_id,
+    })
+
+    if (invitations.length === 0) {
+      await transaction.rollback()
+      throw new ApolloError('No invitations found for this email')
+    }
+
+    // Remove all invitations
+    const result = await deleteWorkspaceInvitations(
+      {
+        email,
+        organization_id: user.current_organization_id,
+      },
+      transaction,
+    )
+
+    if (!result) {
+      await transaction.rollback()
+      throw new ApolloError('Failed to remove invitations')
+    }
+
+    // Remove associated workspace users for tokens that were not accepted
+    for (const invitation of invitations) {
+      if (invitation.token && invitation.status !== WORKSPACE_INVITATION_STATUS_ACCEPTED) {
+        await deleteWorkspaceUsers(
+          {
+            invitation_token: invitation.token,
+          },
+          transaction,
+        )
+      }
+    }
+
+    await transaction.commit()
+
+    logger.info('Successfully removed all workspace invitations for user:', {
+      email,
+      organization_id: user.current_organization_id,
+      removed_by: user.id,
+      count: invitations.length,
+    })
+
+    return true
+  } catch (error) {
+    await transaction.rollback()
+
+    logger.error('Failed to remove all workspace invitations:', {
+      error,
+      email,
+      organization_id: user.current_organization_id,
+      remover_id: user.id,
+    })
+
+    throw new ApolloError(error)
+  }
+}
+
+/**
+ * Helper function to extract email from workspace member record
+ * @param WorkspaceMemberWithUser member Member record with user field
+ * @returns string | undefined Email of the member
+ */
+function extractMemberEmail(member: WorkspaceMemberWithUser): string | undefined {
+  return member.user?.email || member.email
+}
+
+/**
+ * Helper function to create virtual users from workspace invitations
+ * @param GetDetailWorkspaceInvitation[] invitations Array of workspace invitations
+ * @param Set<string> existingEmails Set of existing member emails to filter out
+ * @param Workspace workspace Workspace object for context
+ * @returns GetAllWorkspaceResponse[] Array of virtual users
+ */
+function createVirtualUsersFromInvitations(invitations: GetDetailWorkspaceInvitation[], existingEmails: Set<string>, workspace: Workspace): (GetAllWorkspaceResponse & WorkspaceMemberWithUser)[] {
+  return invitations
+    .filter((invitation) => !existingEmails.has(invitation.email))
+    .map((invitation, idx) => {
+      const virtualUserId = -(idx + 1000)
+
+      return {
+        id: virtualUserId,
+        user_id: virtualUserId,
+        workspace_id: workspace.id,
+        role: invitation.role,
+        status: WORKSPACE_USER_STATUS_PENDING,
+        created_at: invitation.created_at || new Date().toISOString(),
+        updated_at: null as string | null,
+        deleted_at: null as string | null,
+        invitation_token: invitation.token,
+        email: invitation.email,
+        name: invitation.email.split('@')[0],
+        isActive: false,
+        organization_id: workspace.organization_id,
+        alias: workspace.alias,
+        invitationId: invitation.id,
+        user: {
+          id: virtualUserId,
+          email: invitation.email,
+          name: invitation.email.split('@')[0],
+          current_organization_id: null as number | null,
+          isActive: false,
+        },
+      }
+    })
 }

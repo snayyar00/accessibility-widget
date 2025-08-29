@@ -46,7 +46,8 @@ export const WorkspaceSchema = `#graphql
     status: String!
     created_at: Date
     updated_at: Date
-    user: User!
+    invitationId: Int
+    user: User
   }
 
   type WorkspaceInvitation {
@@ -94,6 +95,7 @@ export const WorkspaceSchema = `#graphql
     changeWorkspaceMemberRole(id: ID!, role: WorkspaceUserRole!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many role change requests. Please try again later.")
     removeWorkspaceMember(id: ID!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many remove member requests. Please try again later.")
     removeWorkspaceInvitation(id: ID!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many remove invitation requests. Please try again later.")
+    removeAllUserInvitations(email: String!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many remove invitation requests. Please try again later.")
     joinWorkspace(type: JoinWorkspaceType!, token: String!): Boolean! @rateLimit(limit: 5, duration: 60, message: "Too many join workspace. Please try again later.")
   }
 `

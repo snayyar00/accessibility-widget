@@ -5,11 +5,16 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import GET_ORGANIZATION_USERS from '@/queries/organization/getOrganizationUsers';
 import GET_ORGANIZATION_WORKSPACES from '@/queries/workspace/getOrganizationWorkspaces';
-import { Query, OrganizationUserStatus } from '@/generated/graphql';
+import {
+  Query,
+  OrganizationUserStatus,
+  OrganizationUserRole,
+} from '@/generated/graphql';
 import { ChangeOrganizationSelect } from './ChangeOrganizationSelect';
 import { ChangeOrganizationUserRole } from './ChangeOrganizationUserRole';
 import { DeleteUserFromOrganization } from './DeleteUserFromOrganization';
 import { InviteWorkspaceMember } from '@/components/Invite/InviteWorkspaceMember';
+import { RemoveAllUserInvitations } from '@/components/Invite/RemoveAllUserInvitations';
 
 type TableUsersProps = {
   organizationId: number;
@@ -64,13 +69,27 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
         role: row?.role ?? '',
         status: row?.status ?? '',
         updated_at: row?.updated_at ?? '',
+        invitationId: row?.invitationId ?? null,
       })),
     [users],
   );
 
   const columns: GridColDef[] = [
     { field: 'number', headerName: '№', width: 60 },
-    { field: 'id', headerName: 'User ID', width: 100 },
+    {
+      field: 'id',
+      headerName: 'User ID',
+      width: 100,
+      renderCell: (params) => {
+        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+
+        if (isInvited) {
+          return <span>—</span>;
+        }
+
+        return params.value;
+      },
+    },
     {
       field: 'name',
       headerName: 'Name',
@@ -79,7 +98,13 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       flex: 1,
       renderCell: (params) => {
         const rowUserId = params.row.id;
+        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+
         let name = params.value;
+
+        if (isInvited) {
+          return <span>—</span>;
+        }
 
         if (rowUserId === userId) {
           name += ' (you)';
@@ -109,15 +134,23 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       field: 'isActive',
       headerName: 'Account',
       width: 150,
-      renderCell: (params) => (
-        <Chip
-          key={`account-status-${params.row.id}-${params.row.number}`}
-          label={params.value ? 'Verified' : 'Unverified'}
-          color={params.value ? 'success' : 'error'}
-          size="small"
-          variant="filled"
-        />
-      ),
+      renderCell: (params) => {
+        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+
+        if (isInvited) {
+          return <span>—</span>;
+        }
+
+        return (
+          <Chip
+            key={`account-status-${params.row.id}-${params.row.number}`}
+            label={params.value ? 'Verified' : 'Unverified'}
+            color={params.value ? 'success' : 'error'}
+            size="small"
+            variant="filled"
+          />
+        );
+      },
     },
     {
       field: 'workspaces',
@@ -201,7 +234,12 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
         const organizations = params.row.organizations || [];
         const value = params.row.currentOrganizationId;
         const rowUserId = params.row.id || null;
-        const NonActive = params.row?.status !== 'active';
+        const NonActive = params.row?.status !== OrganizationUserStatus.Active;
+        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+
+        if (isInvited) {
+          return <span>—</span>;
+        }
 
         if (!value) {
           return (
@@ -254,6 +292,11 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       renderCell: (params) => {
         const rowUserId = params.row.id;
         const isSelf = rowUserId === userId;
+        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+
+        if (isInvited) {
+          return <span>—</span>;
+        }
 
         return (
           <ChangeOrganizationUserRole
@@ -277,9 +320,10 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       disableColumnMenu: true,
       renderCell: (params) => {
         const rowUserId = params.row.id;
-        const rowOwner = params.row.role === 'owner';
+        const rowOwner = params.row.role === OrganizationUserRole.Owner;
         const userEmail = params.row.email;
         const userWorkspaces = params.row.workspaces || [];
+        const isInvited = params.row.status === OrganizationUserStatus.Invited;
 
         return (
           <div className="flex">
@@ -293,12 +337,19 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
                 workspacesLoading={workspacesLoading}
               />
             )}
-            <DeleteUserFromOrganization
-              disabled={rowUserId === userId || rowOwner}
-              userId={rowUserId}
-              organizationId={organizationId}
-              onUserDeleted={refetch}
-            />
+            {isInvited ? (
+              <RemoveAllUserInvitations
+                email={userEmail}
+                onInvitationRemoved={refetch}
+              />
+            ) : (
+              <DeleteUserFromOrganization
+                disabled={rowUserId === userId || rowOwner}
+                userId={rowUserId}
+                organizationId={organizationId}
+                onUserDeleted={refetch}
+              />
+            )}
           </div>
         );
       },

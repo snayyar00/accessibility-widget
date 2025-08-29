@@ -2,7 +2,7 @@ import { combineResolvers } from 'graphql-resolvers'
 
 import { WorkspaceUserRole } from '../../constants/workspace.constant'
 import { GraphQLContext } from '../../graphql/types'
-import { findUser } from '../../repository/user.repository'
+import { findUser, UserProfile } from '../../repository/user.repository'
 import { WorkspaceWithDomains } from '../../repository/workspace_allowed_sites.repository'
 import { GetDetailWorkspaceInvitation } from '../../repository/workspace_invitations.repository'
 import { acceptInvitation } from '../../services/workspaces/acceptInvitation'
@@ -18,6 +18,7 @@ import {
   getWorkspaceMembers,
   getWorkspaceMembersByAlias,
   inviteWorkspaceMember,
+  removeAllUserInvitations,
   removeWorkspaceInvitation,
   removeWorkspaceMember,
   updateWorkspace,
@@ -58,6 +59,10 @@ type RemoveWorkspaceInvitationInput = {
   id: string
 }
 
+type RemoveAllUserInvitationsInput = {
+  email: string
+}
+
 const resolvers = {
   Query: {
     getUserWorkspaces: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, __: unknown, { user }) => getAllWorkspaces(user)),
@@ -73,6 +78,7 @@ const resolvers = {
     changeWorkspaceMemberRole: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { id, role }: ChangeWorkspaceMemberRoleInput, { user }) => changeWorkspaceMemberRole(user, parseInt(id, 10), role)),
     removeWorkspaceMember: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { id }: RemoveWorkspaceMemberInput, { user }) => removeWorkspaceMember(user, parseInt(id, 10))),
     removeWorkspaceInvitation: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { id }: RemoveWorkspaceInvitationInput, { user }) => removeWorkspaceInvitation(user, parseInt(id, 10))),
+    removeAllUserInvitations: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { email }: RemoveAllUserInvitationsInput, { user }) => removeAllUserInvitations(user, email)),
     joinWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { token, type }: JoinWorkspaceInput, { user }) => acceptInvitation(token, type, user)),
     deleteWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { id }: { id: number }, { user }) => deleteWorkspace(user, id)),
     updateWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, data: WorkspaceInput, { user }) => updateWorkspace(user, data.id, data)),
@@ -107,8 +113,13 @@ const resolvers = {
   },
 
   WorkspaceUser: {
-    user: async (parent: { user_id?: number }) => {
+    user: async (parent: { user_id?: number; user?: UserProfile }) => {
+      if (parent.user) {
+        return parent.user
+      }
+
       if (!parent.user_id) return null
+
       return await findUser({ id: parent.user_id })
     },
   },

@@ -3,6 +3,7 @@ import { Knex } from 'knex'
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
 import { OrganizationUserRole, OrganizationUserStatus } from '../constants/organization.constant'
+import { WORKSPACE_USER_STATUS_ACTIVE, WORKSPACE_USER_STATUS_PENDING } from '../constants/workspace.constant'
 import { logger } from '../utils/logger'
 import { Organization } from './organization.repository'
 import { UserProfile } from './user.repository'
@@ -94,7 +95,7 @@ type WorkspaceByUser = {
 function getOrganizationWorkspacesByUserIds(userIds: number[], organization_id: number): Promise<WorkspaceByUser[]> {
   return database('workspace_users')
     .whereIn('user_id', userIds)
-    .where('workspace_users.status', 'active')
+    .whereIn('workspace_users.status', [WORKSPACE_USER_STATUS_ACTIVE, WORKSPACE_USER_STATUS_PENDING])
     .join('workspaces', 'workspace_users.workspace_id', 'workspaces.id')
     .where('workspaces.organization_id', organization_id)
     .select(['workspace_users.user_id', 'workspaces.id as workspace_id', 'workspaces.name as workspace_name', 'workspaces.alias as workspace_alias'])
