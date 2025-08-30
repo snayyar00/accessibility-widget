@@ -116,7 +116,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
         setSelectedOption(data.getUserSites[0].url);
         setDomainData(data.getUserSites[0]);
       } else {
-        setSelectedOption('No domains available');
+        setSelectedOption('Add a new Domain');
         setDomainData(null);
       }
     }
