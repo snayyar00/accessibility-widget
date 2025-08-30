@@ -6,12 +6,12 @@ import type { RootState } from '@/config/store';
 import { toggleSidebar } from '@/features/admin/sidebar';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import routes from '@/routes';
-import DomainsSelect from '@/containers/Dashboard/DomainsSelect';
 import { GoGear } from 'react-icons/go';
 import { GrInstallOption } from 'react-icons/gr';
 import OrganizationsSelect from '@/containers/Dashboard/OrganizationsSelect';
 import { Folders, UserIcon } from 'lucide-react';
 import WorkspacesSelect from '@/containers/Dashboard/WorkspacesSelect';
+import Dropdown from '../../containers/Dashboard/DropDown';
 
 const Sidebar = ({
   options,
@@ -67,7 +67,7 @@ const Sidebar = ({
             <OrganizationsSelect />
             <WorkspacesSelect />
 
-            <DomainsSelect
+            <Dropdown
               data={options}
               setReloadSites={setReloadSites}
               selectedOption={selectedOption}
