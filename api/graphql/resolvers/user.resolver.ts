@@ -15,6 +15,7 @@ import { getUserNotificationSettingsService, updateProfile, updateUserNotificati
 import { changeCurrentOrganization } from '../../services/user/update-user.service'
 import { getLicenseOwnerInfo, updateLicenseOwnerInfo } from '../../services/user/license-owner.service'
 import { isEmailAlreadyRegistered } from '../../services/user/user.service'
+import creditService from '../../services/user/credit.service'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 type Register = {
@@ -55,6 +56,10 @@ const resolvers = {
     getLicenseOwnerInfo: combineResolvers(allowedOrganization, isAuthenticated, async (_, __, { user }) => {
       return await getLicenseOwnerInfo(user.id)
     }),
+
+    getUserCredits: combineResolvers(allowedOrganization, isAuthenticated, async (_, __, { user }) => {
+      return await creditService.getUserCredits(user.id)
+    }),
   },
   User: {
     currentOrganization: async (parent: { current_organization_id?: number; id?: number }) => {
@@ -74,6 +79,15 @@ const resolvers = {
     },
 
     hasOrganization: (parent: { current_organization_id?: number }) => Boolean(parent.current_organization_id),
+
+    emailCredits: async (parent: { id?: number }) => {
+      if (!parent.id) return 25; // Default for new users
+      try {
+        return await creditService.getUserCredits(parent.id);
+      } catch (error) {
+        return 25; // Fallback to default
+      }
+    },
   },
   Mutation: {
     register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name }: Register, { organization }: GraphQLContext) => {

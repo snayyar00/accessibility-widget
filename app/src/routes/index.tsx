@@ -5,13 +5,18 @@ import ProblemReport from '@/containers/ProblemReport/ProblemReport';
 import { TbReportSearch } from 'react-icons/tb';
 import { MdOutlineGavel, MdOutlineInsights } from 'react-icons/md';
 import { FiFile } from 'react-icons/fi';
+import { HiSearch } from 'react-icons/hi';
 import ReportView from '@/containers/Accessibility/ReportView';
 import StatementGenerator from '@/containers/StatementGenerator/StatementGenerator';
 import Users from '@/containers/Users';
 import ProofOfEffortToolkit from '@/containers/ProofOfEffortToolkit/ProofOfEffortToolkit';
 import AIInsights from '@/containers/AIInsights/AIInsights';
+<<<<<<< Updated upstream
 import LicenseOwnerInfo from '@/containers/LicenseOwnerInfo';
 import { HiOutlineUser } from 'react-icons/hi';
+=======
+import LeadFinderSimple from '@/containers/LeadFinder/LeadFinderSimple';
+>>>>>>> Stashed changes
 
 const routes = [
   {
@@ -87,6 +92,20 @@ const routes = [
         className="menu-icon text-white-blue transition-colors duration-200"
         size={25}
         aria-label="Proof of Effort Toolkit navigation icon"
+      />
+    ),
+    isSidebar: true,
+  },
+  {
+    path: '/lead-finder',
+    name: 'Lead Finder Pro',
+    exact: true,
+    component: LeadFinderSimple,
+    icon: (
+      <HiSearch
+        className="menu-icon text-white-blue transition-colors duration-200"
+        size={25}
+        aria-label="Lead Finder Pro navigation icon"
       />
     ),
     isSidebar: true,

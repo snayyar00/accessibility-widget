@@ -22,6 +22,7 @@ export const UserSchema = `#graphql
     currentOrganization: Organization
     currentOrganizationUser: OrganizationUser
     hasOrganization: Boolean!
+    emailCredits: Int!
   }
 
   type LicenseOwnerInfo {
@@ -56,6 +57,7 @@ export const UserSchema = `#graphql
     isEmailAlreadyRegistered(email: String!): Boolean! @rateLimit(limit: 5, duration: 60, message: "Too many email check attempts. Please try again later.")
     getUserNotificationSettings: NotificationSettings! @rateLimit(limit: 30, duration: 60, message: "Too many notification settings requests. Please try again later.")
     getLicenseOwnerInfo: LicenseOwnerInfo! @rateLimit(limit: 30, duration: 60, message: "Too many license owner info requests. Please try again later.")
+    getUserCredits: Int! @rateLimit(limit: 60, duration: 60, message: "Too many credit requests. Please try again later.")
   }
 
   extend type Mutation {
