@@ -28,7 +28,7 @@ const AuthAdsArea: React.FC = () => {
         >
           <div>
             <div className="max-w-[70%] block mx-auto my-0 mt-16 text-center">
-              <img src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsection_1_right.bf6223d4.png&w=750&q=75" alt="Graphic showing increase in accessibility score" className="mx-auto my-0 max-w-full" />
+              <img src="https://www.webability.io/images/section_1_right.png" alt="Graphic showing increase in accessibility score" className="mx-auto my-0 max-w-full" />
               <h4 className="font-bold text-[26px] leading-[36px] text-center tracking-[0.5px] text-white mt-[82px] mb-[12px]">
                 {t('Advertisement.ad1_title')}
               </h4>
