@@ -903,7 +903,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                 {/* Right Column (Image) */}
                 <div className="hidden xl:py-4 xl:col-span-5 xl:flex items-center justify-center">
                   <img
-                    src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsection_1_right.bf6223d4.png&w=750&q=75"
+                    src="https://www.webability.io/images/section_1_right.png"
                     alt="Graphic showing increase in accessibility score"
                     className="max-w-full max-h-full object-contain"
                   />
@@ -942,7 +942,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                   {/* Right Column (Image) */}
                   <div className="hidden xl:py-4 xl:col-span-7 xl:flex items-center justify-center">
                     <img
-                      src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsection_1_right.bf6223d4.png&w=750&q=75"
+                      src="https://www.webability.io/images/section_1_right.png"
                       alt="Graphic showing increase in accessibility score"
                       className="max-w-full max-h-full object-contain"
                     />
