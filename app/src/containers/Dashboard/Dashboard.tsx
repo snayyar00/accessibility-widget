@@ -428,7 +428,7 @@ const Dashboard: React.FC<any> = ({
                   {/* Right Column (Image) */}
                   <div className="hidden xl:flex xl:col-span-5 items-center justify-center p-6">
                     <img
-                      src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsection_1_right.bf6223d4.png&w=750&q=75"
+                      src="https://www.webability.io/images/section_1_right.png"
                       alt="Graphic showing increase in accessibility score"
                       className="max-w-full max-h-full object-contain"
                     />
