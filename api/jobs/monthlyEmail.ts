@@ -30,8 +30,8 @@ const sendMonthlyEmails = async () => {
     const sitePlans = await getActiveSitesPlan()
     const year = new Date().getFullYear()
 
-    // Limit concurrency to 10 tasks at a time
-    const limit = pLimit(10)
+    // Limit concurrency to 2 tasks at a time
+    const limit = pLimit(2)
 
     await Promise.allSettled(
       sitePlans.map((sitePlan: sitePlan) =>

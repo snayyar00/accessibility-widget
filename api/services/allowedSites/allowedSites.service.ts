@@ -79,6 +79,11 @@ export async function addSite(userId: number, url: string): Promise<string> {
         const status = widgetStatus == 'true' || widgetStatus == 'Web Ability' ? 'Compliant' : 'Not Compliant'
         const score = widgetStatus == 'Web Ability' ? Math.floor(Math.random() * (100 - 90 + 1)) + 90 : widgetStatus == 'true' ? Math.floor(Math.random() * (88 - 80 + 1)) + 80 : report.score
 
+        // Calculate total counts from both AXE and HTML_CS
+        const errorsCount = (report?.axe?.errors?.length || 0) + (report?.htmlcs?.errors?.length || 0)
+        const warningsCount = (report?.axe?.warnings?.length || 0) + (report?.htmlcs?.warnings?.length || 0)
+        const noticesCount = (report?.axe?.notices?.length || 0) + (report?.htmlcs?.notices?.length || 0)
+
         const notification = (await findUserNotificationByUserId(user.id)) as { new_domain_flag?: boolean } | null
         if (!notification || !notification.new_domain_flag) {
           console.log(`Skipping new domain email for user ${user.email} (no notification flag)`)
@@ -92,9 +97,9 @@ export async function addSite(userId: number, url: string): Promise<string> {
             statusImage: report?.siteImg,
             statusDescription: report?.score > 89 ? 'You achieved exceptionally high compliance status!' : 'Your Site may not comply with WCAG 2.1 AA.',
             score,
-            errorsCount: report?.htmlcs?.errors?.length,
-            warningsCount: report?.htmlcs?.warnings?.length,
-            noticesCount: report?.htmlcs?.notices?.length,
+            errorsCount: errorsCount,
+            warningsCount: warningsCount,
+            noticesCount: noticesCount,
             reportLink: 'https://app.webability.io/accessibility-test',
             year,
           },
