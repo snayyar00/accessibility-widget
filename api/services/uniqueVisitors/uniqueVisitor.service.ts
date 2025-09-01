@@ -1,6 +1,8 @@
 import { UserProfile } from '../../repository/user.repository'
-import { findVisitorByURL, insertVisitor } from '../../repository/visitors.clickhouse.repository'
+import { findVisitorByURL as findVisitorByURLClickHouse, insertVisitor as insertVisitorClickHouse } from '../../repository/visitors.clickhouse.repository'
+import { findVisitorByURL as findVisitorByURLSQL, insertVisitor as insertVisitorSQL } from '../../repository/visitors.repository'
 import { normalizeDomain } from '../../utils/domain.utils'
+import { isClickHouseDisabled, getCurrentDatabaseType } from '../../utils/database.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateGetSiteVisitorsByURL } from '../../validations/uniqueVisitor.validation'
@@ -19,7 +21,9 @@ export async function addNewVisitor(ipAddress: string, siteId: number): Promise<
       site_id: siteId,
     }
 
-    const response = await insertVisitor(data)
+    const response = isClickHouseDisabled() ? await insertVisitorSQL(data) : await insertVisitorClickHouse(data)
+
+    logger.info(`Using ${getCurrentDatabaseType()} for visitor insertion`)
 
     return response
   } catch (error) {
@@ -42,7 +46,10 @@ export async function getSiteVisitorsByURL(url: string, user: UserProfile) {
     const userSites = await findUserSites(user)
     const userSiteIds = userSites.map((site) => site.id)
 
-    const visitors = await findVisitorByURL(domain)
+    const visitors = isClickHouseDisabled() ? await findVisitorByURLSQL(domain) : await findVisitorByURLClickHouse(domain)
+
+    logger.info(`Using ${getCurrentDatabaseType()} for visitor lookup`)
+
     const filteredVisitors = visitors.filter((v: any) => userSiteIds.includes(v.siteId))
 
     return { visitors: filteredVisitors, count: filteredVisitors.length }
