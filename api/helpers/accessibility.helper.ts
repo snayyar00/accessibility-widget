@@ -143,7 +143,7 @@ function calculateAccessibilityScore(issues: { errors: axeOutput[]; warnings: ax
   return Math.min(Math.floor(score), maxScore)
 }
 
-export async function getAccessibilityInformationPally(domain: string) {
+export async function getAccessibilityInformationPally(domain: string, useCache?: boolean) {
   const output: finalOutput = {
     axe: {
       errors: [],
@@ -172,7 +172,8 @@ export async function getAccessibilityInformationPally(domain: string) {
     const delay = 1000 * (retryCount + 1) // Exponential backoff: 1s, 2s, 3s
 
     try {
-      console.log(`Using scanner API (attempt ${retryCount + 1}/${maxRetries + 1})`)
+      const cacheStatus = useCache !== undefined ? useCache : true
+      console.log(`Using scanner API (attempt ${retryCount + 1}/${maxRetries + 1})${cacheStatus ? ' - Fast scan with cache enabled' : ' - Fresh scan without cache'}`)
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -183,7 +184,7 @@ export async function getAccessibilityInformationPally(domain: string) {
           viewport: [1366, 768],
           timeout: 240,
           level: 'AA',
-          use_cache: true,
+          use_cache: useCache !== undefined ? useCache : true,
         }),
       })
 

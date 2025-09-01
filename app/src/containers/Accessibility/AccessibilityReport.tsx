@@ -160,6 +160,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
   const [showLangTooltip, setShowLangTooltip] = useState(false);
+  const [useCache, setUseCache] = useState<boolean>(true);
   // Combine options for existing sites and a custom "Enter a new domain" option
   const siteOptions = useMemo(
     () =>
@@ -275,7 +276,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     dispatch(setSelectedDomain(validDomain));
     try {
       const { data } = await startJobQuery({
-        variables: { url: encodeURIComponent(validDomain) },
+        variables: {
+          url: encodeURIComponent(validDomain),
+          use_cache: useCache,
+        },
       });
       if (
         data &&
@@ -4776,7 +4780,34 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   }}
                 />
               </div>
+
+              <div className="relative w-full md:flex-1 min-w-0 md:min-w-[160px] md:max-w-[180px]">
+                <select
+                  value={useCache ? 'cached' : 'fresh'}
+                  onChange={(e) => setUseCache(e.target.value === 'cached')}
+                  className="appearance-none bg-white border border-gray-300 rounded-md px-2 py-2 pr-6 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[38px] w-full"
+                >
+                  <option value="cached">Faster (use saved data)</option>
+                  <option value="fresh">Slower (do full scan)</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <svg
+                    className="w-3 h-3 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </div>
             </div>
+
             <div className="flex justify-center mt-4 w-full">
               <button
                 type="button"
