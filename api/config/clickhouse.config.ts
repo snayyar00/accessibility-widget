@@ -1,4 +1,5 @@
 import { createClient } from '@clickhouse/client'
+import { isClickHouseDisabled } from '../utils/database.utils'
 
 // ClickHouse connection configuration
 const getClickHouseConfig = () => {
@@ -13,6 +14,11 @@ const clickhouseClient = createClient(getClickHouseConfig())
 
 // Startup function to check and create tables if they don't exist
 const initializeClickHouseTables = async () => {
+  if (isClickHouseDisabled()) {
+    console.log('🚫 ClickHouse is disabled via CLICKHOUSE_DISABLE_FLAG environment variable')
+    return
+  }
+
   try {
     console.log('🔍 Checking ClickHouse tables...')
 
