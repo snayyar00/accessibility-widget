@@ -9,6 +9,7 @@ import {
   deduplicateIssuesByMessage,
   LANGUAGES,
   CURATED_WCAG_CODES,
+  isCodeCompliant,
 } from '@/utils/translator';
 
 import {
@@ -257,7 +258,9 @@ const ReportView: React.FC = () => {
   const report = data?.fetchReportByR2Key || {};
   //console.log("Report data:", report);
 
-  const issues = report.issues || [];
+  // Use extractIssuesFromReport to get issues with wcag_code
+  const issues = extractIssuesFromReport(report);
+
   const totalStats = report.totalStats || {};
   const issuesByFunction = report.issuesByFunction || {};
   const functionalityNames = report.functionalityNames || [];
@@ -591,15 +594,27 @@ const ReportView: React.FC = () => {
                       className="border rounded-lg bg-white p-4 sm:p-5 shadow-sm flex flex-col h-full"
                     >
                       <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-2 flex-1 pr-2 sm:pr-4 overflow-hidden">
-                          {getIssueTypeIcon(issue)}
-                          <h2 className="text-base sm:text-lg font-semibold truncate">
-                            {issue.message ||
-                              issue.help ||
-                              'Accessibility Issue'}
-                          </h2>
+                        <div className="flex flex-col xl:flex-row xl:items-center gap-2 flex-1 pr-2 sm:pr-4 overflow-hidden">
+                          <div className="flex items-center gap-2">
+                            {getIssueTypeIcon(issue)}
+                            <h2 className="text-base sm:text-lg font-semibold truncate">
+                              {issue.message ||
+                                issue.help ||
+                                'Accessibility Issue'}
+                            </h2>
+                          </div>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-1 min-w-0">
+                            {issue.wcag_code &&
+                              isCodeCompliant(issue.wcag_code) && (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full w-fit flex-shrink-0">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Fixed by WebAbility
+                                </span>
+                              )}
+                          </div>
                         </div>
-                        <div className="flex-shrink-0 flex gap-3">
+                        {/* Desktop buttons - shown on desktop only */}
+                        <div className="hidden md:flex flex-shrink-0 gap-3">
                           {/* View Evidence Button */}
                           {issue.screenshotUrl && (
                             <button
@@ -727,6 +742,58 @@ WCAG: ${issue.code || issue.message || 'N/A'}`;
                               {issue.recommended_action}
                             </p>
                           </div>
+                        )}
+                      </div>
+
+                      {/* Mobile buttons - shown only on mobile at the bottom */}
+                      <div className="flex flex-col md:hidden gap-3 mt-4 pt-4 border-t border-gray-200">
+                        <button
+                          onClick={() => {
+                            const issueDetails = `I need help fixing this accessibility issue:
+
+Issue: ${issue.message || issue.help || 'Accessibility Issue'}
+Element: ${
+                              Array.isArray(issue.context)
+                                ? issue.context[0]
+                                : issue.context || 'Unknown element'
+                            }
+WCAG: ${issue.code || issue.message || 'N/A'}`;
+
+                            if (
+                              typeof window.submitAccessibilityIssue ===
+                              'function'
+                            ) {
+                              window.submitAccessibilityIssue(issueDetails);
+                            } else {
+                              toast.error(
+                                'AI assistant is initializing. Please try again.',
+                              );
+                            }
+                          }}
+                          className="fix-with-ai-button"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          Fix with AI
+                        </button>
+                        {/* View Evidence Button */}
+                        {issue.screenshotUrl && (
+                          <button
+                            type="button"
+                            className="view-affected-element-button"
+                            aria-label="View screenshot evidence"
+                            onClick={() =>
+                              window.open(
+                                issue.screenshotUrl,
+                                '_blank',
+                                'noopener,noreferrer',
+                              )
+                            }
+                            tabIndex={0}
+                            title="Click to view screenshot evidence"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View Affected Element
+                          </button>
                         )}
                       </div>
                     </div>
@@ -5478,7 +5545,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             <p className={`${textColor}/80`}>{message}</p>
           </div>
           {/* Mobile controls below text */}
-          <div className="block md:hidden w-full">
+          <div className="block xl:hidden w-full">
             <div className="w-full flex flex-col gap-3 pt-4">
               <button
                 onClick={handleDownloadSubmit}
@@ -5539,10 +5606,10 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           </div>
         </div>
         {/* Desktop controls to the right */}
-        <div className="hidden md:flex relative mr-0 md:mr-4 flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4 w-full md:w-auto pt-4 md:pt-0">
+        <div className="hidden xl:flex relative mr-0 xl:mr-4 flex-col xl:flex-row items-stretch xl:items-center gap-3 xl:gap-4 w-full xl:w-auto pt-4 xl:pt-0">
           <button
             onClick={handleDownloadSubmit}
-            className="whitespace-nowrap w-full md:w-auto px-6 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="whitespace-nowrap w-full xl:w-auto px-6 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={isDownloading}
           >
             <span className="flex justify-center items-center w-full">
@@ -5555,7 +5622,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
           </button>
           <button
             onClick={handleShortReportDownload}
-            className="whitespace-nowrap w-full md:w-auto px-6 py-3 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="whitespace-nowrap w-full xl:w-auto px-6 py-3 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={isDownloading}
           >
             <span className="flex justify-center items-center w-full">
@@ -5566,11 +5633,11 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               )}
             </span>
           </button>
-          <div className="relative w-full md:w-auto">
+          <div className="relative w-full xl:w-auto">
             <select
               value={currentLanguage}
               onChange={(e) => setCurrentLanguage(e.target.value)}
-              className="appearance-none w-full md:w-auto bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
+              className="appearance-none w-full xl:w-auto bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
             >
               <option value="en">English</option>
               {Object.values(LANGUAGES).map((language) => (
@@ -5602,6 +5669,63 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 };
 
 // Helper function to get issue category icon
+// Helper function to parse WCAG codes similar to PDF generation
+function parseWcagCode(wcagCode: string, fallbackCode: string): string {
+  // First try to use wcag_code if available
+  if (wcagCode) {
+    // Clean up the wcag_code format
+    let result = wcagCode.trim();
+
+    // If it's in format "WCAG AA 2.2 Criteria 1.4.3", extract the criteria part
+    if (result.includes('Criteria')) {
+      const criteriaMatch = result.match(/Criteria\s+(\d+\.\d+\.\d+)/);
+      if (criteriaMatch) {
+        return `WCAG2AA.${criteriaMatch[1]}`;
+      }
+    }
+
+    // If it's already in a good format, return as is
+    if (result.includes('WCAG')) {
+      return result;
+    }
+  }
+
+  // Fallback to parsing the original code field
+  if (!fallbackCode) return wcagCode || '';
+
+  // Extract WCAG2AA, Principle, and Guideline parts only
+  const parts = fallbackCode.split('.');
+  let result = '';
+  let wcagFound = false;
+  let principleFound = false;
+
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i] === 'WCAG2AA') {
+      // Found WCAG2AA, start building result
+      result = parts[i];
+      wcagFound = true;
+    } else if (wcagFound && parts[i].startsWith('Principle')) {
+      // Found Principle after WCAG2AA, add it
+      result += '.' + parts[i];
+      principleFound = true;
+    } else if (principleFound && parts[i].startsWith('Guideline')) {
+      // Found Guideline after Principle, add it and stop here
+      result += '.' + parts[i];
+      break;
+    }
+  }
+
+  // If no WCAG2AA, Principle, or Guideline found, return the original code up to the first comma
+  if (!result) {
+    const commaIndex = fallbackCode.indexOf(',');
+    return commaIndex > 0
+      ? fallbackCode.substring(0, commaIndex)
+      : fallbackCode;
+  }
+
+  return result;
+}
+
 function getIssueTypeIcon(issue: {
   message: any;
   help?: any;
