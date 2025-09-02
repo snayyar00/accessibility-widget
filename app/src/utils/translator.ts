@@ -131,7 +131,6 @@ export const isCodeCompliant = (code: string): boolean => {
     'WCAG2AA.3.2.6',
     'WCAG2AA.3.3.7',
     'WCAG2AA.3.3.8',
-    'WCAG AA 2.1 Criteria undefined',
   ];
 
   const result =
