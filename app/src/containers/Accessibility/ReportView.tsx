@@ -738,7 +738,7 @@ WCAG: ${issue.code || issue.message || 'N/A'}`;
                             <h3 className="text-xs sm:text-sm font-semibold mb-2">
                               Suggested Fix
                             </h3>
-                            <p className="text-gray-600 text-xs sm:text-base">
+                            <p className="text-gray-600 text-xs sm:text-base break-words whitespace-pre-wrap overflow-hidden">
                               {issue.recommended_action}
                             </p>
                           </div>
