@@ -6,7 +6,13 @@ export default gql`
       url,
       id,
       expiredAt,
-      trial
+      trial,
+      monitor_enabled,
+      status,
+      monitor_priority,
+      last_monitor_check,
+      is_currently_down,
+      monitor_consecutive_fails
     }
   }
 `;

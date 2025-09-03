@@ -7,6 +7,12 @@ export const AllowedSitesSchema = `#graphql
     createAt: String
     expiredAt: String
     trial: Int
+    monitor_enabled: Boolean
+    status: String
+    monitor_priority: Int
+    last_monitor_check: String
+    is_currently_down: Int
+    monitor_consecutive_fails: Int
   }
 
   extend type Query {
@@ -19,5 +25,6 @@ export const AllowedSitesSchema = `#graphql
     addSite(url: String!): String! @rateLimit(limit: 5, duration: 60, message: "Too many site additions. Please try again later.")
     deleteSite(url: String!): Int! @rateLimit(limit: 10, duration: 60, message: "Too many site deletions. Please try again later.")
     changeURL(newURL: String!, siteId: Int!): String @rateLimit(limit: 10, duration: 60, message: "Too many URL changes. Please try again later.")
+    toggleSiteMonitoring(siteId: Int!, enabled: Boolean!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many monitoring toggle attempts. Please try again later.")
   }
 `

@@ -2,6 +2,7 @@ import { Router } from 'express'
 
 import chatRoutes from './chat.routes'
 import formRoutes from './form.routes'
+import monitoringRoutes from './monitoring.routes'
 import proofOfEffortRoutes from './proof-of-effort.routes'
 import reportsRoutes from './reports.routes'
 import stripeRoutes from './stripe.routes'
@@ -17,5 +18,6 @@ router.use(reportsRoutes)
 router.use(formRoutes)
 router.use(proofOfEffortRoutes)
 router.use(chatRoutes)
+router.use(monitoringRoutes)
 
 export default router

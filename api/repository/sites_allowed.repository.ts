@@ -57,15 +57,29 @@ export async function findUserSitesWithPlans(userId: number, organizationId?: nu
     .leftJoin('sites_plans', function () {
       this.on('sites_plans.allowed_site_id', '=', 'allowed_sites.id').andOn('sites_plans.id', '=', database.raw('(SELECT MAX(sp2.id) FROM sites_plans sp2 WHERE sp2.allowed_site_id = allowed_sites.id)'))
     })
-    .select('allowed_sites.id', 'allowed_sites.user_id', 'allowed_sites.url', 'allowed_sites.created_at as createAt', 'allowed_sites.updated_at as updatedAt', 'sites_plans.expired_at as expiredAt', 'sites_plans.is_trial as trial')
+    .select(
+      'allowed_sites.id', 
+      'allowed_sites.user_id', 
+      'allowed_sites.url', 
+      'allowed_sites.created_at as createAt', 
+      'allowed_sites.updated_at as updatedAt', 
+      'sites_plans.expired_at as expiredAt', 
+      'sites_plans.is_trial as trial',
+      'allowed_sites.monitor_enabled',
+      'allowed_sites.status',
+      'allowed_sites.monitor_priority',
+      'allowed_sites.last_monitor_check',
+      'allowed_sites.is_currently_down',
+      'allowed_sites.monitor_consecutive_fails'
+    )
     .distinct()
 
   return sites
 }
 
-export async function findSiteById(id: number): Promise<FindAllowedSitesProps> {
+export async function findSiteById(id: number): Promise<any> {
   return database(TABLE)
-    .where({ [siteColumns.id]: id })
+    .where({ id })
     .first()
 }
 
