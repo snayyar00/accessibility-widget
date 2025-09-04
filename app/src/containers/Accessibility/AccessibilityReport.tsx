@@ -3,6 +3,7 @@ import './Accessibility.css'; // Ensure your CSS file includes styles for the ac
 import { AiFillCloseCircle } from 'react-icons/ai';
 import { FaGaugeSimpleHigh } from 'react-icons/fa6';
 import { FaUniversalAccess, FaCheckCircle, FaCircle } from 'react-icons/fa';
+import { Zap, RefreshCw, BarChart3, ChevronDown, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import getAccessibilityStats from '@/queries/accessibility/accessibility';
 import SAVE_ACCESSIBILITY_REPORT from '@/queries/accessibility/saveAccessibilityReport';
@@ -160,6 +161,66 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
   const [showLangTooltip, setShowLangTooltip] = useState(false);
+  const [scanType, setScanType] = useState<'cached' | 'fresh' | 'full-report'>(
+    'cached',
+  );
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  type ScanTypeOption = {
+    value: 'cached' | 'fresh' | 'full-report';
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    disabled?: boolean;
+  };
+
+  const scanTypeOptions: ScanTypeOption[] = [
+    {
+      value: 'cached' as const,
+      label: 'Faster (Use saved data)',
+      icon: Zap,
+      color: 'text-yellow-500',
+    },
+    {
+      value: 'fresh' as const,
+      label: 'Slower (Do full scan)',
+      icon: RefreshCw,
+      color: 'text-blue-500',
+    },
+    {
+      value: 'full-report' as const,
+      label: 'Full site scan (Detailed analysis)',
+      icon: Settings,
+      color: 'text-green-500',
+      disabled: true,
+    },
+  ];
+
+  const selectedScanType = scanTypeOptions.find(
+    (option) => option.value === scanType,
+  );
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
   // Combine options for existing sites and a custom "Enter a new domain" option
   const siteOptions = useMemo(
     () =>
@@ -275,7 +336,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     dispatch(setSelectedDomain(validDomain));
     try {
       const { data } = await startJobQuery({
-        variables: { url: encodeURIComponent(validDomain) },
+        variables: {
+          url: encodeURIComponent(validDomain),
+          use_cache: scanType === 'cached' || scanType === 'full-report',
+        },
       });
       if (
         data &&
@@ -4776,7 +4840,76 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   }}
                 />
               </div>
+
+              <div
+                ref={dropdownRef}
+                className="relative w-full md:flex-1 min-w-0 md:min-w-[220px] md:max-w-[270px]"
+              >
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 pr-8 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[38px] flex items-center justify-between"
+                >
+                  <div className="flex items-center space-x-2">
+                    {selectedScanType && (
+                      <>
+                        <selectedScanType.icon
+                          className={`w-4 h-4 ${selectedScanType.color}`}
+                        />
+                        <span>{selectedScanType.label}</span>
+                      </>
+                    )}
+                  </div>
+                  <ChevronDown
+                    className={`w-3 h-3 text-gray-400 transition-transform ${
+                      isDropdownOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                    {scanTypeOptions.map((option) => {
+                      const IconComponent = option.icon;
+                      const isDisabled = option.disabled;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          disabled={isDisabled}
+                          onClick={() => {
+                            if (!isDisabled) {
+                              setScanType(option.value);
+                              setIsDropdownOpen(false);
+                            }
+                          }}
+                          className={`w-full px-3 py-2 text-xs font-medium text-left flex items-center space-x-2 ${
+                            isDisabled
+                              ? 'text-gray-400 cursor-not-allowed opacity-50'
+                              : scanType === option.value
+                              ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <IconComponent
+                            className={`w-4 h-4 ${
+                              isDisabled ? 'text-gray-400' : option.color
+                            }`}
+                          />
+                          <span>{option.label}</span>
+                          {isDisabled && (
+                            <span className="ml-auto text-xs text-gray-400">
+                              (Coming Soon)
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
+
             <div className="flex justify-center mt-4 w-full">
               <button
                 type="button"

@@ -238,7 +238,7 @@ function mergeIssuesToOutput(issues: any[]): {
   return output
 }
 
-export const fetchAccessibilityReport = async (url: string) => {
+export const fetchAccessibilityReport = async (url: string, useCache?: boolean) => {
   try {
     if (!url || typeof url !== 'string' || url.trim() === '') {
       console.error('Invalid URL passed to fetchAccessibilityReport:', url)
@@ -249,14 +249,14 @@ export const fetchAccessibilityReport = async (url: string) => {
       // Format URL with www prefix for initial scan
       const formattedUrl = formatUrlForScan(url)
       console.log('Formatted URL for scan:', formattedUrl)
-      let result: ResultWithOriginal = await getAccessibilityInformationPally(formattedUrl)
+      let result: ResultWithOriginal = await getAccessibilityInformationPally(formattedUrl, useCache)
 
       // If initial attempt fails, try variations
       if (!result) {
         const retryUrls = getRetryUrls(url)
         for (const retryUrl of retryUrls) {
           try {
-            result = await getAccessibilityInformationPally(retryUrl)
+            result = await getAccessibilityInformationPally(retryUrl, useCache)
             if (result) break
           } catch (retryError) {
             console.error(`Error with retry URL ${retryUrl}:`, retryError.message)
@@ -412,7 +412,7 @@ export const fetchAccessibilityReport = async (url: string) => {
           url = `https://${url.replace('https://www.', '').replace('http://www.', '')}`
         }
 
-        const result: ResultWithOriginal = await getAccessibilityInformationPally(url)
+        const result: ResultWithOriginal = await getAccessibilityInformationPally(url, useCache)
         const output = mergeIssuesToOutput(result.issues)
         result.axe = output.axe
         result.htmlcs = output.htmlcs

@@ -45,7 +45,7 @@
       <mj-column>
         <mj-image 
           width="500px" 
-          src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsection_1_right.bf6223d4.png&w=750&q=75"
+          src="https://www.webability.io/images/section_1_right.png"
           alt="WebAbility Hero"
         />
       </mj-column>

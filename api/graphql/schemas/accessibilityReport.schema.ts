@@ -218,7 +218,7 @@ export const AccessibilitySchema = `#graphql
     getAccessibilityReport(url: String!): Report @rateLimit(limit: 3, duration: 60, message: "Too many requests. Please try again in a minute.")
     fetchAccessibilityReportFromR2(url: String!, created_at: String, updated_at: String): [AccessibilityReportTableRow!]! @rateLimit(limit: 60, duration: 60, message: "Too many R2 report requests. Please try again later.")
     fetchReportByR2Key(r2_key: String!): Report @rateLimit(limit: 20, duration: 60, message: "Too many R2 key report requests. Please try again later.")
-    startAccessibilityReportJob(url: String!): AccessibilityJobResponse!
+    startAccessibilityReportJob(url: String!, use_cache: Boolean): AccessibilityJobResponse!
     getAccessibilityReportByJobId(jobId: String!): AccessibilityJobStatusResponse!
   }
 

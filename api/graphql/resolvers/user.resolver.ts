@@ -127,12 +127,13 @@ const resolvers = {
 
     updateProfile: combineResolvers(allowedOrganization, isAuthenticated, (_, { name, company, position }, { user }) => updateProfile(user.id, name, company, position)),
 
-    updateNotificationSettings: combineResolvers(allowedOrganization, isAuthenticated, async (_, { monthly_report_flag, new_domain_flag, issue_reported_flag, onboarding_emails_flag }, { user }) => {
+    updateNotificationSettings: combineResolvers(allowedOrganization, isAuthenticated, async (_, { monthly_report_flag, new_domain_flag, issue_reported_flag, onboarding_emails_flag, monitoring_alert_flag }, { user }) => {
       const result = await updateUserNotificationSettings(user.id, {
         monthly_report_flag,
         new_domain_flag,
         issue_reported_flag,
         onboarding_emails_flag,
+        monitoring_alert_flag,
       })
 
       return result.success

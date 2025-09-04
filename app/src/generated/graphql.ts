@@ -201,6 +201,7 @@ export type Mutation = {
   saveAccessibilityReport: SaveReportResponse;
   sendProofOfEffortToolkit: SendToolkitResponse;
   sendWidgetInstallationInstructions: WidgetInstallationResponse;
+  toggleSiteMonitoring: Scalars['Boolean']['output'];
   translateStatement: TranslationResponse;
   updateImpressionProfileCounts: ImpressionUpdateResponse;
   updateLicenseOwnerInfo: Scalars['Boolean']['output'];
@@ -401,6 +402,12 @@ export type MutationSendWidgetInstallationInstructionsArgs = {
 };
 
 
+export type MutationToggleSiteMonitoringArgs = {
+  enabled: Scalars['Boolean']['input'];
+  siteId: Scalars['Int']['input'];
+};
+
+
 export type MutationTranslateStatementArgs = {
   content: Scalars['String']['input'];
   context?: InputMaybe<Scalars['String']['input']>;
@@ -424,6 +431,7 @@ export type MutationUpdateLicenseOwnerInfoArgs = {
 
 export type MutationUpdateNotificationSettingsArgs = {
   issue_reported_flag?: InputMaybe<Scalars['Boolean']['input']>;
+  monitoring_alert_flag?: InputMaybe<Scalars['Boolean']['input']>;
   monthly_report_flag?: InputMaybe<Scalars['Boolean']['input']>;
   new_domain_flag?: InputMaybe<Scalars['Boolean']['input']>;
   onboarding_emails_flag?: InputMaybe<Scalars['Boolean']['input']>;
@@ -458,6 +466,7 @@ export type MutationVerifyArgs = {
 export type NotificationSettings = {
   __typename?: 'NotificationSettings';
   issue_reported_flag: Scalars['Boolean']['output'];
+  monitoring_alert_flag: Scalars['Boolean']['output'];
   monthly_report_flag: Scalars['Boolean']['output'];
   new_domain_flag: Scalars['Boolean']['output'];
   onboarding_emails_flag: Scalars['Boolean']['output'];
@@ -736,6 +745,12 @@ export type Site = {
   createAt?: Maybe<Scalars['String']['output']>;
   expiredAt?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['Int']['output']>;
+  is_currently_down?: Maybe<Scalars['Int']['output']>;
+  last_monitor_check?: Maybe<Scalars['String']['output']>;
+  monitor_consecutive_fails?: Maybe<Scalars['Int']['output']>;
+  monitor_enabled?: Maybe<Scalars['Boolean']['output']>;
+  monitor_priority?: Maybe<Scalars['Int']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
   trial?: Maybe<Scalars['Int']['output']>;
   updatedAt?: Maybe<Scalars['String']['output']>;
   url?: Maybe<Scalars['String']['output']>;
@@ -1205,7 +1220,15 @@ export type GetAllUserSitesQuery = { __typename?: 'Query', getAllUserSites?: Arr
 export type GetUserSitesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetUserSitesQuery = { __typename?: 'Query', getUserSites?: Array<{ __typename?: 'Site', url?: string | null, id?: number | null, expiredAt?: string | null, trial?: number | null } | null> | null };
+export type GetUserSitesQuery = { __typename?: 'Query', getUserSites?: Array<{ __typename?: 'Site', url?: string | null, id?: number | null, expiredAt?: string | null, trial?: number | null, monitor_enabled?: boolean | null, status?: string | null, monitor_priority?: number | null, last_monitor_check?: string | null, is_currently_down?: number | null, monitor_consecutive_fails?: number | null } | null> | null };
+
+export type ToggleSiteMonitoringMutationVariables = Exact<{
+  siteId: Scalars['Int']['input'];
+  enabled: Scalars['Boolean']['input'];
+}>;
+
+
+export type ToggleSiteMonitoringMutation = { __typename?: 'Mutation', toggleSiteMonitoring: boolean };
 
 export type UpdateSiteMutationVariables = Exact<{
   url: Scalars['String']['input'];
@@ -1414,7 +1437,8 @@ export const UpdateSitesPlanDocument = {"kind":"Document","definitions":[{"kind"
 export const AddSiteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"addSite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"url"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"addSite"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"url"},"value":{"kind":"Variable","name":{"kind":"Name","value":"url"}}}]}]}}]} as unknown as DocumentNode<AddSiteMutation, AddSiteMutationVariables>;
 export const DeleteSiteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"deleteSite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"url"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteSite"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"url"},"value":{"kind":"Variable","name":{"kind":"Name","value":"url"}}}]}]}}]} as unknown as DocumentNode<DeleteSiteMutation, DeleteSiteMutationVariables>;
 export const GetAllUserSitesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetAllUserSites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getAllUserSites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"user_id"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"createAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"expiredAt"}},{"kind":"Field","name":{"kind":"Name","value":"trial"}}]}}]}}]} as unknown as DocumentNode<GetAllUserSitesQuery, GetAllUserSitesQueryVariables>;
-export const GetUserSitesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetUserSites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getUserSites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"expiredAt"}},{"kind":"Field","name":{"kind":"Name","value":"trial"}}]}}]}}]} as unknown as DocumentNode<GetUserSitesQuery, GetUserSitesQueryVariables>;
+export const GetUserSitesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetUserSites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getUserSites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"expiredAt"}},{"kind":"Field","name":{"kind":"Name","value":"trial"}},{"kind":"Field","name":{"kind":"Name","value":"monitor_enabled"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"monitor_priority"}},{"kind":"Field","name":{"kind":"Name","value":"last_monitor_check"}},{"kind":"Field","name":{"kind":"Name","value":"is_currently_down"}},{"kind":"Field","name":{"kind":"Name","value":"monitor_consecutive_fails"}}]}}]}}]} as unknown as DocumentNode<GetUserSitesQuery, GetUserSitesQueryVariables>;
+export const ToggleSiteMonitoringDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ToggleSiteMonitoring"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"siteId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"enabled"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"toggleSiteMonitoring"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"siteId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"siteId"}}},{"kind":"Argument","name":{"kind":"Name","value":"enabled"},"value":{"kind":"Variable","name":{"kind":"Name","value":"enabled"}}}]}]}}]} as unknown as DocumentNode<ToggleSiteMonitoringMutation, ToggleSiteMonitoringMutationVariables>;
 export const UpdateSiteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"updateSite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"url"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"siteId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"changeURL"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"newURL"},"value":{"kind":"Variable","name":{"kind":"Name","value":"url"}}},{"kind":"Argument","name":{"kind":"Name","value":"siteId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"siteId"}}}]}]}}]} as unknown as DocumentNode<UpdateSiteMutation, UpdateSiteMutationVariables>;
 export const TranslateStatementDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"TranslateStatement"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"content"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"targetLanguage"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"languageCode"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"context"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"translateStatement"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"content"},"value":{"kind":"Variable","name":{"kind":"Name","value":"content"}}},{"kind":"Argument","name":{"kind":"Name","value":"targetLanguage"},"value":{"kind":"Variable","name":{"kind":"Name","value":"targetLanguage"}}},{"kind":"Argument","name":{"kind":"Name","value":"languageCode"},"value":{"kind":"Variable","name":{"kind":"Name","value":"languageCode"}}},{"kind":"Argument","name":{"kind":"Name","value":"context"},"value":{"kind":"Variable","name":{"kind":"Name","value":"context"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"translatedContent"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"languageCode"}}]}}]}}]} as unknown as DocumentNode<TranslateStatementMutation, TranslateStatementMutationVariables>;
 export const ChangeCurrentOrganizationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ChangeCurrentOrganization"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"organizationId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"userId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"changeCurrentOrganization"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"organizationId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"organizationId"}}},{"kind":"Argument","name":{"kind":"Name","value":"userId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"userId"}}}]}]}}]} as unknown as DocumentNode<ChangeCurrentOrganizationMutation, ChangeCurrentOrganizationMutationVariables>;

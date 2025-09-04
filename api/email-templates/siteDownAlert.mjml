@@ -1,0 +1,76 @@
+<mjml>
+  <mj-body background-color="#f1f1f1">
+    <mj-section background-color="#fff">
+      <mj-column>
+        <mj-image
+          width="150px"
+          src="https://www.webability.io/images/logo.png"
+          alt="WebAbility"
+          align="center"
+          padding="20px 0"
+        ></mj-image>
+      </mj-column>
+    </mj-section>
+    
+    <mj-section background-color="#fff">
+      <mj-column>
+        <mj-text font-size="30px" align="center" color="#DC2626">
+          🔴 Website Down Alert
+        </mj-text>
+        
+        <mj-text font-size="18px" align="center" color="#555" line-height="30px">
+          Hi {{name}}! We detected that your website is currently experiencing issues.
+        </mj-text>
+        
+        <mj-divider border-color="#DC2626" width="100px" border-width="2px"></mj-divider>
+        
+        <mj-text font-size="16px" color="#333" line-height="24px">
+          <strong>Website:</strong> {{url}}<br/>
+          <strong>Status Code:</strong> {{status_code}}<br/>
+          <strong>Error:</strong> {{error}}<br/>
+          <strong>Response Time:</strong> {{response_time}}ms<br/>
+          <strong>Detected At:</strong> {{checked_at}}
+        </mj-text>
+        
+        <mj-text font-size="14px" color="#666" line-height="22px">
+          We're monitoring your site and will notify you when it comes back online. 
+          If this is unexpected, you may want to check with your hosting provider or review recent changes to your website.
+        </mj-text>
+        
+        <mj-button
+          background-color="#06adef"
+          border-radius="50px"
+          color="white"
+          font-size="15px"
+          href="https://www.webability.io/dashboard"
+        >
+          View Dashboard
+        </mj-button>
+        
+        <mj-divider border-color="#e0e0e0" width="100%"></mj-divider>
+        
+        <mj-text font-size="12px" align="center" color="#999">
+          You're receiving this because monitoring is enabled for this website.<br/>
+          To manage your notification preferences, visit your dashboard settings.
+        </mj-text>
+        
+        <mj-text font-size="12px" align="center" color="#999" padding="10px 0">
+          <a href="{{unsubscribeLink}}" style="color: #6b7280; text-decoration: underline;">Unsubscribe from monitoring alerts</a>
+        </mj-text>
+        
+        <mj-social icon-size="30px" mode="horizontal">
+          <mj-social-element name="facebook" href="https://www.facebook.com/webability">
+          </mj-social-element>
+          <mj-social-element
+            name="twitter"
+            href="https://twitter.com/webability"
+            padding="0 20px"
+          >
+          </mj-social-element>
+          <mj-social-element name="linkedin" href="https://www.linkedin.com/company/webability">
+          </mj-social-element>
+        </mj-social>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
