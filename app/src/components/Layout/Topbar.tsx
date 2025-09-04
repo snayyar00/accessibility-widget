@@ -322,35 +322,6 @@ const Topbar: React.FC<Props> = ({
                     className="rounded-lg"
                   />
                 </div>
-
-                {/* <div className="flex items-center justify-between">
-                  <div className="flex-1 pr-4">
-                    <p className="text-sm font-medium text-sapphire-blue">
-                      Monitoring Alerts
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Get notified when sites go down or recover
-                    </p>
-                  </div>
-                  <button
-                    onClick={(e) =>
-                      handleNotificationToggle('monitoring_alert_flag', e)
-                    }
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                      notificationSettings.monitoring_alert_flag
-                        ? 'bg-green-500 focus:ring-green-500'
-                        : 'bg-gray-300 focus:ring-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
-                        notificationSettings.monitoring_alert_flag
-                          ? 'translate-x-5'
-                          : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
-                </div> */}
               </div>
             </div>
           </div>
