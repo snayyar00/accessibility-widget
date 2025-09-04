@@ -10,6 +10,8 @@ import { Headset } from 'lucide-react';
 import { HiOutlinePlay } from 'react-icons/hi';
 
 import Dropdown from '@/containers/Dashboard/DropDown';
+import WorkspacesSelect from '@/containers/Dashboard/WorkspacesSelect';
+import OrganizationsSelect from '@/containers/Dashboard/OrganizationsSelect';
 import WhatsNewModal from '@/components/Common/WhatsNewModal';
 import {
   openModal,
@@ -240,28 +242,49 @@ const Topbar: React.FC<Props> = ({
             </button>
           </div>
 
-          {/* Right side - Site selector and user actions */}
+          {/* Right side - Selectors and user actions */}
           <div className="bg-white rounded-lg px-3 md:px-3 lg:px-4 py-2 shadow-sm border border-gray-200 flex w-auto shrink-0 flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 lg:gap-0 space-y-2 md:space-y-0 md:space-x-4 sm:w-full  sm:items-center sm:justify-between">
-            {/* Site Selector */}
-            <div className="w-full md:w-auto">
-              {options &&
-              setReloadSites &&
-              selectedOption &&
-              setSelectedOption ? (
-                <Dropdown
-                  data={options}
-                  setReloadSites={setReloadSites}
-                  selectedOption={selectedOption}
-                  setSelectedOption={setSelectedOption}
-                />
-              ) : (
-                <div className="flex items-center space-x-2 bg-[#D4E6EF] px-3 py-2 rounded-lg">
-                  <span className="text-sm font-medium text-[#559EC1]">
-                    Select a site
-                  </span>
-                  <FiChevronDown className="w-4 h-4 text-[#559EC1]" />
+            {/* Selectors Container */}
+            <div className="flex flex-col md:flex-row gap-2 md:gap-3 w-full md:w-auto">
+              {/* Organization/Domain Selector - Only for admin users */}
+              {data?.isAdminOrOwner && (
+                <div className="w-full md:w-auto min-w-[200px]">
+                  <div className="bg-gray-50 rounded-lg border border-gray-200">
+                    <OrganizationsSelect />
+                  </div>
                 </div>
               )}
+
+              {/* Workspace Selector - Only for admin users */}
+              {data?.isAdminOrOwner && (
+                <div className="w-full md:w-auto min-w-[150px]">
+                  <div className="bg-gray-50 rounded-lg border border-gray-200">
+                    <WorkspacesSelect />
+                  </div>
+                </div>
+              )}
+
+              {/* Site Selector */}
+              <div className="w-full md:w-auto">
+                {options &&
+                setReloadSites &&
+                selectedOption &&
+                setSelectedOption ? (
+                  <Dropdown
+                    data={options}
+                    setReloadSites={setReloadSites}
+                    selectedOption={selectedOption}
+                    setSelectedOption={setSelectedOption}
+                  />
+                ) : (
+                  <div className="flex items-center space-x-2 bg-[#D4E6EF] px-3 py-2 rounded-lg">
+                    <span className="text-sm font-medium text-[#559EC1]">
+                      Select a site
+                    </span>
+                    <FiChevronDown className="w-4 h-4 text-[#559EC1]" />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Action Icons */}

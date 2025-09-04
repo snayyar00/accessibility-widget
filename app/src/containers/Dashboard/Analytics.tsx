@@ -334,7 +334,7 @@ export default function AnalyticsDashboard({
   return (
     <div>
       {/* Grouped top metrics card to match Figma: single card with separators */}
-      <div className="bg-white rounded-2xl shadow p-2 md:p-3 border border-gray-100 h-auto md:h-auto md:min-h-0 lg:h-[120px] lg:min-h-[120px]">
+      <div className="analytics-metrics-card bg-white rounded-2xl shadow p-2 md:p-3 border border-gray-100 h-auto md:h-auto md:min-h-0 lg:h-[120px] lg:min-h-[120px]">
         <div
           className="flex flex-row sm:flex-col md:flex-col lg:flex-row items-stretch divide-x sm:divide-x-0 sm:divide-y md:divide-y lg:divide-y-0 lg:divide-x md:h-full divide-[#B4D8DA]"
           style={
@@ -368,7 +368,7 @@ export default function AnalyticsDashboard({
       >
         {Object.keys(profileCounts).length ? (
           <button
-            className="bg-[#559EC1] hover:brightness-110 text-white py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#559EC1]"
+            className="show-more-metrics-button bg-[#559EC1] hover:brightness-110 text-white py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#559EC1]"
             onClick={() => setShowMoreMetrics(!showMoreMetrics)}
           >
             {showMoreMetrics ? 'Show Less' : 'Show More'}
@@ -382,7 +382,7 @@ export default function AnalyticsDashboard({
           ))}
         </div>
       )}
-      <div className="grid gap-4 md:grid-cols-2 pt-4">
+      <div className="analytics-charts-section grid gap-4 md:grid-cols-2 pt-4">
         <ChartCard
           title="Engagement"
           data={data.engagement}

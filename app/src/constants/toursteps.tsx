@@ -45,14 +45,14 @@ export const dashboardTourSteps: Step[] = [
     placement: 'top' as Placement,
   },
   {
-    target: '.analytics-cards',
+    target: '.analytics-metrics-card',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Analytics Overview 📊</h3>
+        <h3 className="text-lg font-semibold mb-2">Key Metrics Overview 📊</h3>
         <p>
-          Here you can see key metrics including impressions, unique visitors,
-          and widget interactions. These help you understand your accessibility
-          widget's impact.
+          Here you can see your most important metrics: impressions, unique
+          visitors, and widget interactions. These help you understand your
+          accessibility widget's impact on your website.
         </p>
       </div>
     ),
@@ -62,15 +62,32 @@ export const dashboardTourSteps: Step[] = [
     target: '.analytics-dashboard',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Detailed Analytics 📈</h3>
+        <h3 className="text-lg font-semibold mb-2">Analytics Dashboard 📈</h3>
         <p>
-          Dive deeper into your accessibility data with detailed charts and
-          insights. Track your progress over time and see how your accessibility
-          improvements are performing.
+          View detailed engagement and impression trends over time. Use the time
+          range selector to switch between weekly, monthly, and yearly views.
+          This is your complete analytics dashboard where you can track
+          engagement rates, impressions, and detailed accessibility metrics.
         </p>
       </div>
     ),
     placement: 'top' as Placement,
+  },
+  {
+    target: 'body',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Tour Complete! 🎉</h3>
+        <p>
+          You're all set! You now know how to navigate your WebAbility
+          dashboard. Start by adding domains, monitor your analytics, and make
+          your websites accessible to everyone. Need help? Check out our
+          documentation or contact support.
+        </p>
+      </div>
+    ),
+    placement: 'center' as Placement,
+    disableBeacon: true,
   },
 ];
 

@@ -521,6 +521,85 @@ const Sidebar = ({
                     </span>
                   )}
                 </NavLink>
+
+                {/* Admin Controls - Only visible for admin/owner roles */}
+                {userData?.isAdminOrOwner && (
+                  <>
+                    {/* Users Management */}
+                    <NavLink
+                      to="/users"
+                      onClick={closeSidebar}
+                      className={`flex items-center rounded-lg transition-all duration-200 ${
+                        isActiveRoute('/users')
+                          ? isCollapsed
+                            ? 'w-10 h-10 bg-[#D4E6EF]  text-[#559EC1] font-medium justify-center mx-auto'
+                            : 'space-x-3 px-3 py-2 bg-[#D4E6EF]  text-[#559EC1] font-medium'
+                          : isCollapsed
+                          ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                          : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <div className="w-6 h-6 flex items-center justify-center">
+                        <UserIcon
+                          size={24}
+                          className={
+                            isActiveRoute('/users')
+                              ? 'text-[#559EC1]'
+                              : 'text-[#656565]'
+                          }
+                        />
+                      </div>
+                      {!isCollapsed && (
+                        <span
+                          className={`text-sm ${
+                            isActiveRoute('/users')
+                              ? 'text-[#559EC1]'
+                              : 'text-[#656565]'
+                          }`}
+                        >
+                          Users
+                        </span>
+                      )}
+                    </NavLink>
+
+                    {/* Workspaces Management */}
+                    <NavLink
+                      to="/workspaces"
+                      onClick={closeSidebar}
+                      className={`flex items-center rounded-lg transition-all duration-200 ${
+                        isActiveRoute('/workspaces')
+                          ? isCollapsed
+                            ? 'w-10 h-10 bg-[#D4E6EF]  text-[#559EC1] font-medium justify-center mx-auto'
+                            : 'space-x-3 px-3 py-2 bg-[#D4E6EF]  text-[#559EC1] font-medium'
+                          : isCollapsed
+                          ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                          : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <div className="w-6 h-6 flex items-center justify-center">
+                        <Folders
+                          size={24}
+                          className={
+                            isActiveRoute('/workspaces')
+                              ? 'text-[#559EC1]'
+                              : 'text-[#656565]'
+                          }
+                        />
+                      </div>
+                      {!isCollapsed && (
+                        <span
+                          className={`text-sm ${
+                            isActiveRoute('/workspaces')
+                              ? 'text-[#559EC1]'
+                              : 'text-[#656565]'
+                          }`}
+                        >
+                          Workspaces
+                        </span>
+                      )}
+                    </NavLink>
+                  </>
+                )}
               </nav>
             </div>
 
@@ -779,6 +858,55 @@ const Sidebar = ({
                     />
                   </div>
                 </NavLink>
+
+                {/* Admin Controls - Only visible for admin/owner roles */}
+                {userData?.isAdminOrOwner && (
+                  <>
+                    {/* Users Management */}
+                    <NavLink
+                      to="/users"
+                      onClick={closeSidebar}
+                      className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
+                        isActiveRoute('/users')
+                          ? 'bg-[#D4E6EF]  text-[#559EC1] font-medium'
+                          : 'text-black hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <div className="w-6 h-6 flex items-center justify-center">
+                        <UserIcon
+                          size={24}
+                          className={
+                            isActiveRoute('/users')
+                              ? 'text-[#559EC1]'
+                              : 'text-[#656565]'
+                          }
+                        />
+                      </div>
+                    </NavLink>
+
+                    {/* Workspaces Management */}
+                    <NavLink
+                      to="/workspaces"
+                      onClick={closeSidebar}
+                      className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
+                        isActiveRoute('/workspaces')
+                          ? 'bg-[#D4E6EF]  text-[#559EC1] font-medium'
+                          : 'text-black hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <div className="w-6 h-6 flex items-center justify-center">
+                        <Folders
+                          size={24}
+                          className={
+                            isActiveRoute('/workspaces')
+                              ? 'text-[#559EC1]'
+                              : 'text-[#656565]'
+                          }
+                        />
+                      </div>
+                    </NavLink>
+                  </>
+                )}
               </nav>
             </div>
 
