@@ -140,15 +140,14 @@ export async function unsubscribe(req: Request, res: Response) {
     // Handle different types of unsubscribe
     if (type === 'monitoring') {
       // Disable monitoring alerts
-      success = await updateUserNotificationFlags(user.id, {
+      const updated = await updateUserNotificationFlags(user.id, {
         monitoring_alert_flag: false
       })
-      console.log(`Disabled monitoring alerts for user ${user.id}`)
+      success = updated > 0
       message = 'You have been successfully unsubscribed from WebAbility monitoring alerts.<br/>You will no longer receive email notifications when your websites go down or come back online.'
     } else {
       // Default: Disable onboarding emails
       success = await setOnboardingEmailsFlag(user.id, false)
-      console.log(`Disabled onboarding emails for user ${user.id}`)
       
       // Also unsubscribe from general newsletter for complete unsubscribe
       await unsubscribeFromNewsletter(email)

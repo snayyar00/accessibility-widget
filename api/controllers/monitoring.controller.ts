@@ -1,6 +1,5 @@
 import { Request, Response } from 'express'
-// Using simplified service for testing
-import { processMonitoringBatch, MonitoringBatch } from '../services/monitoring/monitoring-simple.service'
+import { processMonitoringBatch, MonitoringBatch } from '../services/monitoring/monitoring.service'
 import logger from '../utils/logger'
 
 /**

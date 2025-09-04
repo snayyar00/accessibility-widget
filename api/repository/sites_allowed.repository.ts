@@ -125,7 +125,6 @@ export async function insertSite(data: allowedSites): Promise<FindAllowedSitesPr
 
       return insertedSite
     } catch (error) {
-      console.error('insertSite transaction error:', error)
       return `insert failed: ${error.message}`
     }
   })
@@ -200,10 +199,8 @@ export async function deleteSiteWithRelatedRecords(url: string, user_id: number)
       // Delete the main site record within the same transaction
       const deletedCount = await trx(TABLE).where({ user_id, url }).del()
 
-      console.log(`Deleted site: ${url} (${deletedCount} records)`)
       return deletedCount
     } catch (error) {
-      console.error('Error in deleteSiteWithRelatedRecords for %s:', url, error)
       throw error
     }
   })
@@ -219,4 +216,12 @@ export async function updateAllowedSiteURL(site_id: number, url: string, user_id
   return database(TABLE).where({ 'allowed_sites.user_id': user_id, 'allowed_sites.id': site_id }).update({
     url,
   })
+}
+
+export async function toggleSiteMonitoring(site_id: number, enabled: boolean, user_id: number): Promise<boolean> {
+  const updated = await database(TABLE)
+    .where({ id: site_id, user_id })
+    .update({ monitor_enabled: enabled })
+  
+  return updated > 0
 }
