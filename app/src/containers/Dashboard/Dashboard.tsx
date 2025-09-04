@@ -414,22 +414,23 @@ const Dashboard: React.FC<any> = ({
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex flex-col flex-wrap lg:flex-row items-center justify-center md:justify-start gap-3 pt-4">
+                    <div className="flex flex-col flex-wrap lg:flex-row items-center justify-center gap-3 pt-4">
                       <button
-                        className="px-6 py-4 h-14 text-blue-900 text-lg font-medium rounded-2xl bg-blue-100 hover:bg-blue-200 border-0 transition-all duration-300 cursor-pointer"
+                        className="w-full sm:w-48 md:w-64 px-6 py-4 h-14 text-blue-900 text-lg font-medium rounded-2xl bg-blue-100 hover:bg-blue-200 border-0 transition-all duration-300 cursor-pointer"
                         onClick={handleRedirect}
                       >
                         Get compliant
                       </button>
 
                       <button
-                        className="px-6 py-4 h-14 text-white text-lg font-medium rounded-2xl bg-slate-800 hover:bg-slate-700 border-2 border-blue-400/50 transition-all duration-300 shadow-lg shadow-blue-400/20 hover:shadow-blue-400/30 cursor-pointer"
+                        className="w-full sm:w-48 md:w-64 lg:w-64 flex justify-center px-6 py-4 h-14 text-white text-lg font-medium rounded-2xl bg-slate-800 hover:bg-slate-700 border-2 border-blue-400/50 transition-all duration-300 shadow-lg shadow-blue-400/20 hover:shadow-blue-400/30 cursor-pointer"
+                        style={{ alignItems: 'center' }}
                         onClick={handleRedirect}
                       >
-                        <span className="md:hidden lg:hidden">Appsumo</span>
-                        <span className="hidden md:inline">Redeem Appsumo</span>
+                        <span className=" lg:hidden">Appsumo</span>
+                        <span className="hidden lg:inline">Redeem Appsumo</span>
                       </button>
-                    </div>
+                    </div>  
                   </div>
                 </div>
               </div>

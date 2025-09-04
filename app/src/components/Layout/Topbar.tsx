@@ -323,7 +323,7 @@ const Topbar: React.FC<Props> = ({
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
+                {/* <div className="flex items-center justify-between">
                   <div className="flex-1 pr-4">
                     <p className="text-sm font-medium text-sapphire-blue">
                       Monitoring Alerts
@@ -350,7 +350,7 @@ const Topbar: React.FC<Props> = ({
                       }`}
                     />
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
