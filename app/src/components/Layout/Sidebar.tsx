@@ -20,12 +20,15 @@ import {
   Sparkles,
   Accessibility,
 } from 'lucide-react';
+import { LuCircleDollarSign } from 'react-icons/lu';
 import { HiOutlineUser } from 'react-icons/hi';
 import { PiNotebookBold, PiBookOpenBold } from 'react-icons/pi';
 import { MdLightbulbOutline } from 'react-icons/md';
 import WorkspacesSelect from '@/containers/Dashboard/WorkspacesSelect';
 import Dropdown from '../../containers/Dashboard/DropDown';
 import { useState, useEffect } from 'react';
+import { handleBilling } from '@/containers/Profile/BillingPortalLink';
+import { CircularProgress } from '@mui/material';
 
 const Sidebar = ({
   options,
@@ -37,6 +40,7 @@ const Sidebar = ({
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+  const [billingClicked, setBillingClicked] = useState(false);
 
   const { isOpen } = useSelector((state: RootState) => state.sidebar);
   const history = useHistory();
@@ -63,6 +67,7 @@ const Sidebar = ({
   }, []);
 
   const { data: userData } = useSelector((state: RootState) => state.user);
+  const { data: user } = useSelector((state: RootState) => state.user);
 
   // Helper function to check if a route is active
   const isActiveRoute = (path: string) => {
@@ -102,6 +107,10 @@ const Sidebar = ({
     setIsCollapsed(true);
   }
 
+  const handleBillingClick = async () => {
+    await handleBilling(setBillingClicked, user?.email);
+  };
+
   return (
     <>
       {isOpen && (
@@ -119,12 +128,14 @@ const Sidebar = ({
         } ${
           isOpen ? 'sm:left-0 sm:z-[50]' : 'sm:-left-full sm:z-[50]'
         } transition-all duration-300 ${
-          isCollapsed ? 'px-2 py-4 pl-4' : 'p-0 pl-6'
+          isCollapsed
+            ? 'px-2 py-4 pl-4 sm:px-0 sm:py-0 sm:pl-0'
+            : 'p-0 pl-6 sm:p-0 sm:pl-0'
         }`}
       >
         {/* Sidebar Card - Only show in expanded mode */}
         {!isCollapsed ? (
-          <div className="flex-grow bg-white rounded-2xl overflow-hidden p-2">
+          <div className="flex-grow bg-white rounded-2xl overflow-hidden p-2 flex flex-col">
             {/* Add new domain button */}
             <div className="p-4">
               <button
@@ -139,7 +150,7 @@ const Sidebar = ({
             </div>
 
             {/* Navigation Section */}
-            <div className="flex-grow px-4 pb-4">
+            <div className="flex-grow px-4">
               <nav className="space-y-0.5">
                 {/* Dashboard */}
                 <NavLink
@@ -512,6 +523,26 @@ const Sidebar = ({
                 </NavLink>
               </nav>
             </div>
+
+            {/* Billing Button - Always at the end */}
+            <div className="px-4 pb-4 mt-auto">
+              <button
+                onClick={handleBillingClick}
+                disabled={billingClicked}
+                className="w-full bg-white border border-[#559EC1] rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md py-3 px-4 space-x-3 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <LuCircleDollarSign size={24} className="text-[#94BFFF]" />
+                </div>
+                <span className="text-sm font-medium text-[#656565]">
+                  {billingClicked ? (
+                    <CircularProgress size={16} sx={{ color: '#94BFFF' }} />
+                  ) : (
+                    'Billing'
+                  )}
+                </span>
+              </button>
+            </div>
           </div>
         ) : (
           /* Collapsed Mode - Direct navigation without card */
@@ -749,6 +780,23 @@ const Sidebar = ({
                   </div>
                 </NavLink>
               </nav>
+            </div>
+
+            {/* Billing Button - Collapsed - Always at the end */}
+            <div className="pb-4 mt-auto">
+              <button
+                onClick={handleBillingClick}
+                disabled={billingClicked}
+                className="w-12 h-12 bg-white border border-[#C5D9E0] rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md mx-auto hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="w-6 h-6 flex items-center justify-center">
+                  {billingClicked ? (
+                    <CircularProgress size={16} sx={{ color: '#94BFFF' }} />
+                  ) : (
+                    <LuCircleDollarSign size={24} className="text-[#94BFFF]" />
+                  )}
+                </div>
+              </button>
             </div>
           </div>
         )}

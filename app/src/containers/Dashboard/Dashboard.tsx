@@ -14,6 +14,7 @@ import { defaultTourStyles } from '@/config/tourStyles';
 import { dashboardTourSteps, tourKeys } from '@/constants/toursteps';
 import getDomainStatus from '@/utils/getDomainStatus';
 import applyStatusClass from '@/utils/applyStatusClass';
+import dashboardImage from '@/assets/images/dashboard_image.png';
 
 interface ChartData {
   date: string;
@@ -66,6 +67,7 @@ const Dashboard: React.FC<any> = ({
   const closeModal = () => setIsModalOpen(false);
   const [paymentView, setPaymentView] = useState(false);
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
+  const [isSmallScreen, setIsSmallScreen] = useState<boolean>(false);
   const history = useHistory();
 
   const handleRedirect = () => {
@@ -186,6 +188,21 @@ const Dashboard: React.FC<any> = ({
       });
     }
   }, [domain, startDate, endDate, loadDashboard]);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth < 640); // 640px is Tailwind's sm breakpoint
+    };
+
+    // Check on mount
+    checkScreenSize();
+
+    // Add event listener
+    window.addEventListener('resize', checkScreenSize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   useEffect(() => {
     if (data) {
@@ -373,68 +390,45 @@ const Dashboard: React.FC<any> = ({
           <div className="w-full py-4">
             <div className="flex flex-col items-center justify-center w-full mb-4 px-4">
               <div className="w-full mb-3 flex">
-                <div className="dashboard-welcome-banner w-full grid grid-cols-1 lg:grid-cols-2 text-white rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 bg-gradient-to-br from-[#05203B] via-[#0A3E66] to-[#00B7C2] min-h-[260px] sm:min-h-[300px] md:min-h-[360px]">
+                <div
+                  className="dashboard-welcome-banner w-full grid grid-cols-1 lg:grid-cols-2 text-white rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 min-h-[320px] sm:min-h-[380px] md:min-h-[450px] lg:min-h-[500px]"
+                  style={{
+                    backgroundImage: `url(${dashboardImage})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: isSmallScreen
+                      ? 'center left'
+                      : 'center right',
+                    backgroundRepeat: 'no-repeat',
+                  }}
+                >
                   {/* Left Column - Content */}
                   <div className="px-6 sm:px-8 md:px-10 py-8 md:py-10 h-full flex flex-col justify-center items-center md:items-start space-y-4 md:space-y-6 text-center md:text-left">
-                    <div className="space-y-6">
+                    <div className="space-y-6 md:pr-96 lg:pr-0">
                       <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl  leading-tight tracking-tight">
                         Design for Everyone
                       </h1>
-                      <p className="text-base sm:text-lg md:text-xl font-normal leading-relaxed opacity-90 max-w-md">
+                      <p className="text-base sm:text-xs md:text-xs lg:text-xl  font-normal leading-relaxed opacity-90 max-w-md md:max-w-20">
                         Achieve seamless ADA & WCAG compliance effortlessly with
                         WebAbility
                       </p>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex flex-row flex-wrap items-center justify-center md:justify-start gap-3 pt-4">
+                    <div className="flex flex-col flex-wrap lg:flex-row items-center justify-center md:justify-start gap-3 pt-4">
                       <button
-                        className="get-compliant-button px-5 py-2 sm:px-6 sm:py-2.5 text-white text-sm sm:text-base md:text-lg rounded-full bg-white/15 hover:bg-white/25 border border-white/30 backdrop-blur-sm transition-all duration-300 shadow-lg"
+                        className="px-6 py-4 h-14 text-blue-900 text-lg font-medium rounded-2xl bg-blue-100 hover:bg-blue-200 border-0 transition-all duration-300 cursor-pointer"
                         onClick={handleRedirect}
                       >
                         Get compliant
                       </button>
 
                       <button
-                        className="app-sumo-button px-5 py-2 sm:px-6 sm:py-2.5 text-white/90 text-sm sm:text-base md:text-lg rounded-full bg-transparent hover:bg-white/10 border border-white/30 backdrop-blur-sm transition-all duration-300 shadow-lg"
+                        className="px-6 py-4 h-14 text-white text-lg font-medium rounded-2xl bg-slate-800 hover:bg-slate-700 border-2 border-blue-400/50 transition-all duration-300 shadow-lg shadow-blue-400/20 hover:shadow-blue-400/30 cursor-pointer"
                         onClick={handleRedirect}
                       >
-                        Redeem AppSumo
+                        <span className="md:hidden lg:hidden">Appsumo</span>
+                        <span className="hidden md:inline">Redeem Appsumo</span>
                       </button>
-                    </div>
-                  </div>
-
-                  {/* Right Column - Feature Cards */}
-                  <div className="relative px-6 md:px-10 py-6 md:py-10 mt-6 lg:mt-0 h-full flex flex-col justify-center items-center overflow-hidden">
-                    <div className="w-full max-w-md space-y-4">
-                      <div className="rounded-2xl p-4 sm:p-6 bg-gradient-to-b from-white/90 to-white/70 text-gray-900 shadow-xl backdrop-blur-md border border-white/60">
-                        <h3 className="text-xl font-semibold">
-                          Adaptive AI Enhancements
-                        </h3>
-                        <p className="mt-2 text-sm text-gray-700">
-                          Auto-adjust text size, contrast, and navigation for
-                          all users.
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl p-4 sm:p-6 bg-gradient-to-b from-white/90 to-white/70 text-gray-900 shadow-xl backdrop-blur-md border border-white/60">
-                        <h3 className="text-xl font-semibold">
-                          One Click Setup
-                        </h3>
-                        <p className="mt-2 text-sm text-gray-700">
-                          Get up and running in minutes, backed by fast expert
-                          support.
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl p-4 sm:p-6 opacity-80 bg-gradient-to-b from-white/80 to-white/60 text-gray-900 shadow-lg backdrop-blur-md border border-white/50">
-                        <h3 className="text-lg font-semibold">
-                          Brand Friendly Customization
-                        </h3>
-                        <p className="mt-2 text-sm text-gray-700">
-                          Match your brand with flexible, accessible styles.
-                        </p>
-                      </div>
                     </div>
                   </div>
                 </div>

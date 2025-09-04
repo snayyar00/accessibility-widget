@@ -237,7 +237,7 @@ const Topbar: React.FC<Props> = ({
           </div>
 
           {/* Right side - Site selector and user actions */}
-          <div className="bg-white rounded-lg px-3 md:px-3 lg:px-4 py-2 shadow-sm border border-gray-200 flex w-auto shrink-0 flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 lg:gap-0 space-y-2 md:space-y-0 md:space-x-4">
+          <div className="bg-white rounded-lg px-3 md:px-3 lg:px-4 py-2 shadow-sm border border-gray-200 flex w-auto shrink-0 flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 lg:gap-0 space-y-2 md:space-y-0 md:space-x-4 sm:w-full  sm:items-center sm:justify-between">
             {/* Site Selector */}
             <div className="w-full md:w-auto">
               {options &&
@@ -261,7 +261,7 @@ const Topbar: React.FC<Props> = ({
             </div>
 
             {/* Action Icons */}
-            <div className="flex items-center flex-wrap md:flex-wrap lg:flex-nowrap gap-2 md:gap-3 lg:gap-0 lg:space-x-3">
+            <div className="flex items-center flex-wrap md:flex-wrap lg:flex-nowrap gap-2 md:gap-3 lg:gap-0 lg:space-x-3 sm:w-full sm:justify-evenly md:justify-end">
               {/* Start Tour Button */}
               {hasCurrentPageTour() && (
                 <button
@@ -309,9 +309,9 @@ const Topbar: React.FC<Props> = ({
               <div
                 onClick={() => setIsShowMenu(!isShowMenu)}
                 ref={profileRef}
-                className="flex items-center cursor-pointer"
+                className="flex items-center justify-center cursor-pointer"
               >
-                <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-300">
+                <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-300 flex items-center justify-center">
                   <InitialAvatar
                     name={name || 'User'}
                     size={40}
