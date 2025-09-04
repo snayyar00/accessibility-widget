@@ -59,14 +59,14 @@ const DropDown = ({
     >
       <button
         type="button"
-        className="dropdown-btn mr-5 inline-flex justify-between w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm focus:outline-none focus:border-blue-500"
+        className="dropdown-btn mr-5 inline-flex justify-between w-full rounded-lg bg-[#D4E6EF] px-3 py-2 text-sm font-medium text-[#8E95AD] focus:outline-none focus:ring-2 focus:ring-[#559EC1] focus:ring-opacity-50"
         onClick={() => setIsOpen(!isOpen)}
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
         {selectedOption}
         <svg
-          className="h-5 w-5"
+          className="h-4 w-4 text-[#484848]"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"

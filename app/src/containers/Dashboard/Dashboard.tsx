@@ -349,7 +349,7 @@ const Dashboard: React.FC<any> = ({
         </>
       ) : (
         <>
-          {domainData ? (
+          {/* {domainData ? (
             <div className="flex gap-3">
               <p
                 className={`p-1.5 text-xs font-semibold rounded w-fit whitespace-no-wrap ${statusClass}`}
@@ -368,86 +368,74 @@ const Dashboard: React.FC<any> = ({
             </div>
           ) : (
             <p>-</p>
-          )}
+          )} */}
 
-          <div className="container py-4">
-            <div className="flex flex-col items-center justify-center w-full mb-8 pl-0 pr-3">
-              <div className="w-full mb-6 flex">
-                <div
-                  className="dashboard-welcome-banner w-full grid grid-cols-1 lg:grid-cols-12 text-white rounded-xl overflow-hidden shadow-2xl transform hover:scale-[1.01] transition-transform duration-300"
-                  style={{ backgroundColor: 'rgb(0 51 237)' }}
-                >
-                  {/* Left Column */}
-                  <div className="col-span-full xl:col-span-7 px-6 py-6 flex flex-col justify-center space-y-4">
-                    <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight">
-                      Empower Every Visitor with Inclusive Design
-                    </h1>
-                    <p className="text-base lg:text-lg">
-                      Achieve seamless ADA & WCAG compliance effortlessly with
-                      WebAbility's AI-driven accessibility toolkit.
-                    </p>
+          <div className="w-full py-4">
+            <div className="flex flex-col items-center justify-center w-full mb-4 px-4">
+              <div className="w-full mb-3 flex">
+                <div className="dashboard-welcome-banner w-full grid grid-cols-1 lg:grid-cols-2 text-white rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 bg-gradient-to-br from-[#05203B] via-[#0A3E66] to-[#00B7C2] min-h-[260px] sm:min-h-[300px] md:min-h-[360px]">
+                  {/* Left Column - Content */}
+                  <div className="px-6 sm:px-8 md:px-10 py-8 md:py-10 h-full flex flex-col justify-center items-center md:items-start space-y-4 md:space-y-6 text-center md:text-left">
+                    <div className="space-y-6">
+                      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl  leading-tight tracking-tight">
+                        Design for Everyone
+                      </h1>
+                      <p className="text-base sm:text-lg md:text-xl font-normal leading-relaxed opacity-90 max-w-md">
+                        Achieve seamless ADA & WCAG compliance effortlessly with
+                        WebAbility
+                      </p>
+                    </div>
 
-                    {/* Features Card */}
-                    <div className="bg-white/10 p-4 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {[
-                        {
-                          title: 'Comprehensive Standards',
-                          desc: 'Fully aligned with ADA, WCAG, and international guidelines.',
-                        },
-                        {
-                          title: 'Instant One-Click Setup',
-                          desc: 'Get up and running in minutes, backed by fast expert support.',
-                        },
-                        {
-                          title: 'Adaptive AI Enhancements',
-                          desc: 'Auto-adjust text size, contrast, and navigation for all users.',
-                        },
-                        {
-                          title: 'Brand-Friendly Customization',
-                          desc: "Style the widget to perfectly match your site's look and feel.",
-                        },
-                      ].map((item) => (
-                        <div
-                          key={item.title}
-                          className="flex items-start space-x-2"
-                        >
-                          <div className="flex-shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                            <FaCheckCircle className="text-white w-5 h-5" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-sm">
-                              {item.title}
-                            </h3>
-                            <p className="text-xs">{item.desc}</p>
-                          </div>
-                        </div>
-                      ))}
+                    {/* Action Buttons */}
+                    <div className="flex flex-row flex-wrap items-center justify-center md:justify-start gap-3 pt-4">
+                      <button
+                        className="get-compliant-button px-5 py-2 sm:px-6 sm:py-2.5 text-white text-sm sm:text-base md:text-lg rounded-full bg-white/15 hover:bg-white/25 border border-white/30 backdrop-blur-sm transition-all duration-300 shadow-lg"
+                        onClick={handleRedirect}
+                      >
+                        Get compliant
+                      </button>
+
+                      <button
+                        className="app-sumo-button px-5 py-2 sm:px-6 sm:py-2.5 text-white/90 text-sm sm:text-base md:text-lg rounded-full bg-transparent hover:bg-white/10 border border-white/30 backdrop-blur-sm transition-all duration-300 shadow-lg"
+                        onClick={handleRedirect}
+                      >
+                        Redeem AppSumo
+                      </button>
                     </div>
                   </div>
 
-                  {/* Right Column (Image) */}
-                  <div className="hidden xl:flex xl:col-span-5 items-center justify-center p-6">
-                    <img
-                      src="https://www.webability.io/images/section_1_right.png"
-                      alt="Graphic showing increase in accessibility score"
-                      className="max-w-full max-h-full object-contain"
-                    />
-                  </div>
-                  {/* Call‑to‑Action Buttons */}
-                  <div className="col-span-full bg-white/5 py-4 flex flex-row sm:flex-col gap-8 justify-center px-6">
-                    <button
-                      className="get-compliant-button flex-1 py-4 text-white font-bold text-xl rounded-xl bg-primary hover:bg-sapphire-blue transition-colors duration-300"
-                      onClick={handleRedirect}
-                    >
-                      Get Compliant
-                    </button>
+                  {/* Right Column - Feature Cards */}
+                  <div className="relative px-6 md:px-10 py-6 md:py-10 mt-6 lg:mt-0 h-full flex flex-col justify-center items-center overflow-hidden">
+                    <div className="w-full max-w-md space-y-4">
+                      <div className="rounded-2xl p-4 sm:p-6 bg-gradient-to-b from-white/90 to-white/70 text-gray-900 shadow-xl backdrop-blur-md border border-white/60">
+                        <h3 className="text-xl font-semibold">
+                          Adaptive AI Enhancements
+                        </h3>
+                        <p className="mt-2 text-sm text-gray-700">
+                          Auto-adjust text size, contrast, and navigation for
+                          all users.
+                        </p>
+                      </div>
 
-                    <button
-                      className="app-sumo-button flex-1 py-4 text-black font-bold text-xl rounded-xl bg-[#ffbc00] hover:bg-yellow-600 transition-colors duration-300"
-                      onClick={handleRedirect}
-                    >
-                      Redeem App Sumo
-                    </button>
+                      <div className="rounded-2xl p-4 sm:p-6 bg-gradient-to-b from-white/90 to-white/70 text-gray-900 shadow-xl backdrop-blur-md border border-white/60">
+                        <h3 className="text-xl font-semibold">
+                          One Click Setup
+                        </h3>
+                        <p className="mt-2 text-sm text-gray-700">
+                          Get up and running in minutes, backed by fast expert
+                          support.
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl p-4 sm:p-6 opacity-80 bg-gradient-to-b from-white/80 to-white/60 text-gray-900 shadow-lg backdrop-blur-md border border-white/50">
+                        <h3 className="text-lg font-semibold">
+                          Brand Friendly Customization
+                        </h3>
+                        <p className="mt-2 text-sm text-gray-700">
+                          Match your brand with flexible, accessible styles.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

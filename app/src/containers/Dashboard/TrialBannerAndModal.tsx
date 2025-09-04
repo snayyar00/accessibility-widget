@@ -192,17 +192,17 @@ const TrialBannerAndModal: React.FC<any> = ({
     }
   };
 
-  useEffect(() => {
-    const params = new URLSearchParams(search);
-    if (params.get('open-modal') === 'true') {
-      openModal();
-      params.delete('open-modal');
-      const newSearch = params.toString();
-      const newUrl =
-        window.location.pathname + (newSearch ? '?' + newSearch : '');
-      window.history.replaceState(null, '', newUrl);
-    }
-  }, [search]);
+  // useEffect(() => {
+  //   const params = new URLSearchParams(search);
+  //   if (params.get('open-modal') === 'true') {
+  //     openModal();
+  //     params.delete('open-modal');
+  //     const newSearch = params.toString();
+  //     const newUrl =
+  //       window.location.pathname + (newSearch ? '?' + newSearch : '');
+  //     window.history.replaceState(null, '', newUrl);
+  //   }
+  // }, [search]);
 
   useEffect(() => {
     if (addedDomain?.url !== '' && paymentView !== true) {

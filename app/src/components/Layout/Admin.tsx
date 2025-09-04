@@ -176,15 +176,24 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
   }, [selectedOption, dispatch]);
 
   return (
-    <div className="flex">
-      <Sidebar
+    <div className="flex flex-col h-screen bg-gray-50 overflow-x-hidden">
+      {/* Header spans full width above everything */}
+      <Topbar
+        signout={signout}
         options={data}
         setReloadSites={setReloadSites}
         selectedOption={selectedOption}
         setSelectedOption={setSelectedOption}
       />
-      <div className="flex flex-col flex-grow">
-        <Topbar signout={signout} />
+
+      {/* Main content area with sidebar and content */}
+      <div className="flex flex-grow">
+        <Sidebar
+          options={data}
+          setReloadSites={setReloadSites}
+          selectedOption={selectedOption}
+          setSelectedOption={setSelectedOption}
+        />
         <div className="flex-grow bg-body overflow-y-auto px-[15px] py-[32px] sm:min-h-[calc(100vh_-_64px)]">
           <Switch>
             {routes.map((route) => (

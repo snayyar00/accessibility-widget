@@ -5,7 +5,7 @@
 @layer base {
   * {
     @apply not-italic box-border tracking-[0.5px];
-    font-family: theme('fontFamily.inter');
+    font-family: theme('fontFamily.polysans-tria');
   }
   a {
     @apply no-underline;

@@ -1,16 +1,14 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    "./src/**/*.{js,jsx,ts,tsx}",
-  ],
+  content: ['./src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     colors: {
-      'transparent': 'transparent',
-      'primary': '#0080FF',
+      transparent: 'transparent',
+      primary: '#0080FF',
       'regular-primary': '#F4FAFF',
       'light-primary': '#369AFE',
       'semi-primary': '#2196F3',
-      'white': '#FFFFFF',
+      white: '#FFFFFF',
       'light-blue': '#2291FF',
       'sapphire-blue': '#242F57',
       'blue-50': '#eff6ff',
@@ -29,16 +27,16 @@ module.exports = {
       'light-gray': '#FAFCFE',
       'light-grey': '#BFC7E0',
       'light-white-gray': '#DCE9F7',
-      'red': '#FA5087',
+      red: '#FA5087',
       'red-50': '#fef2f2',
       'red-100': '#ffe4e3',
       'red-200': '#fecaca',
       'red-500': '#ef4444',
-      'red-600':  '#dc2626',
+      'red-600': '#dc2626',
       'red-700': '#b91c1b',
       'red-800': '#991b1b',
       'red-not-compliant': '#fff2f2',
-      'green': '#1FD0A3',
+      green: '#1FD0A3',
       'green-50': '#effdf4',
       'green-100': '#dcfce7',
       'green-200': '#bbf7d0',
@@ -47,7 +45,7 @@ module.exports = {
       'green-500': '#22c55e',
       'green-600': '#16a34a',
       'green-compliant': '#edfcf3',
-      'gray': '#ECEFF8',
+      gray: '#ECEFF8',
       'gray-element': '#e2e8f0',
       'gray-50': '#f9fafb',
       'gray-100': '#f3f4f6',
@@ -57,8 +55,8 @@ module.exports = {
       'gray-500': '#6b7280',
       'gray-600': '#475569',
       'gray-900': '#101827',
-      'body': '#F4F7FC',
-      'black': '#000000',
+      body: '#D4E6EF',
+      black: '#000000',
       'indigo-600': '#4f46e5',
       'indigo-800': '#3730a3',
       'dark-grey': '#eaedf7',
@@ -76,14 +74,15 @@ module.exports = {
     },
     fontFamily: {
       inter: ['Inter', 'sans-serif'],
+      'polysans-tria': ['PolySans Tria', 'sans-serif'],
     },
     extend: {
-      'transitionTimingFunction': {
-        'only-ease': 'cubic-bezier(0.25, 0.1, 0.25, 1.0)'
+      transitionTimingFunction: {
+        'only-ease': 'cubic-bezier(0.25, 0.1, 0.25, 1.0)',
       },
-      'boxShadow': {
-        'xxl': '0px 2px 4px rgba(28, 41, 90, 0.0367952)',
-        'xsl': '0px 4px 8px rgba(28, 41, 90, 0.0367952)'
+      boxShadow: {
+        xxl: '0px 2px 4px rgba(28, 41, 90, 0.0367952)',
+        xsl: '0px 4px 8px rgba(28, 41, 90, 0.0367952)',
       },
       animation: {
         pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
@@ -120,16 +119,16 @@ module.exports = {
           '100%': { width: '100%' },
         },
         fadeIn: {
-          '0%': { 
+          '0%': {
             opacity: '0',
-            transform: 'translateY(20px)'
+            transform: 'translateY(20px)',
           },
-          '100%': { 
+          '100%': {
             opacity: '1',
-            transform: 'translateY(0)'
+            transform: 'translateY(0)',
           },
         },
-      }
+      },
     },
     keyframes: {
       loading: {
@@ -142,18 +141,18 @@ module.exports = {
       completed: {
         '0%': { width: '80%' },
         '100%': { width: '100%' },
-      }
+      },
     },
     screens: {
-      'ms':'320px',
-      'mm':'375px',
-      'ml':'425px',
-      'md':'768px',
-      'sm': {'max': '768px'},
+      ms: '320px',
+      mm: '375px',
+      ml: '425px',
+      md: '768px',
+      sm: { max: '768px' },
       lg: '1024px',
       xl: '1440px',
       xxl: '2560px',
-    }
+    },
   },
-  plugins: [require("tailwindcss-animate")],
-}
+  plugins: [require('tailwindcss-animate')],
+};
