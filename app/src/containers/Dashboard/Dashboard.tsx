@@ -15,6 +15,7 @@ import { dashboardTourSteps, tourKeys } from '@/constants/toursteps';
 import getDomainStatus from '@/utils/getDomainStatus';
 import applyStatusClass from '@/utils/applyStatusClass';
 import dashboardImage from '@/assets/images/dashboard_image.png';
+import { getColors } from '@/config/colors';
 
 interface ChartData {
   date: string;
@@ -51,6 +52,9 @@ const Dashboard: React.FC<any> = ({
 }: any) => {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.dashboard') });
+
+  // Get colors configuration
+  const colors = getColors();
   // const [startDate, setStartDate] = useState<string>();
   // const [endDate, setEndDate] = useState<string>();
   const [impressions, setImpressions] = useState<number>(0);
@@ -391,7 +395,7 @@ const Dashboard: React.FC<any> = ({
             <div className="flex flex-col items-center justify-center w-full mb-4 px-4">
               <div className="w-full mb-3 flex">
                 <div
-                  className="dashboard-welcome-banner w-full grid grid-cols-1 lg:grid-cols-2 text-white rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 min-h-[320px] sm:min-h-[380px] md:min-h-[450px] lg:min-h-[500px]"
+                  className="dashboard-welcome-banner w-full grid grid-cols-1 lg:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 min-h-[320px] sm:min-h-[380px] md:min-h-[450px] lg:min-h-[500px]"
                   style={{
                     backgroundImage: `url(${dashboardImage})`,
                     backgroundSize: 'cover',
@@ -399,6 +403,7 @@ const Dashboard: React.FC<any> = ({
                       ? 'center left'
                       : 'center right',
                     backgroundRepeat: 'no-repeat',
+                    color: colors.dashboard.welcomeBannerText,
                   }}
                 >
                   {/* Left Column - Content */}

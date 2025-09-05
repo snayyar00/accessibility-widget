@@ -20,6 +20,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts';
+import { getColors } from '@/config/colors';
 
 // Helper to format large numbers like 3500 -> 3.5k, 500000 -> 500k
 const formatCompactNumber = (num: number | string) => {
@@ -39,39 +40,61 @@ const MetricCard: React.FC<{
   value: Number;
   change: string;
   icon: React.ReactNode;
-}> = ({ title, value, change, icon }) => (
-  <div className="bg-white rounded-lg shadow p-4">
-    <div className="flex items-center justify-between mb-2">
-      <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-      {icon}
-    </div>
-    <div className="text-2xl font-bold">
-      {formatCompactNumber(value as unknown as number)}
-    </div>
-    <p
-      className={`text-xs ${
-        change.startsWith('+') ? 'text-green-500' : 'text-red-500'
-      }`}
+}> = ({ title, value, change, icon }) => {
+  const colors = getColors();
+
+  return (
+    <div
+      className="rounded-lg shadow p-4"
+      style={{ backgroundColor: colors.dashboard.analyticsCardBackground }}
     >
-      {change}
-    </p>
-  </div>
-);
+      <div className="flex items-center justify-between mb-2">
+        <h3
+          className="text-sm font-medium"
+          style={{ color: colors.dashboard.metricCardText }}
+        >
+          {title}
+        </h3>
+        {icon}
+      </div>
+      <div className="text-2xl font-bold">
+        {formatCompactNumber(value as unknown as number)}
+      </div>
+      <p
+        className={`text-xs ${
+          change.startsWith('+') ? 'text-green-500' : 'text-red-500'
+        }`}
+      >
+        {change}
+      </p>
+    </div>
+  );
+};
 
 // Inline metric used inside the grouped card to match the Figma design
 const InlineMetric: React.FC<{
   title: string;
   value: number | string;
-}> = ({ title, value }) => (
-  <div className="flex-1 flex flex-col gap-1 py-4 px-6">
-    <span className="text-gray-600 text-base md:text-lg font-medium">
-      {title}
-    </span>
-    <span className="text-[#8BAAD8] text-4xl md:text-5xl  leading-none tracking-tight">
-      {formatCompactNumber(value)}
-    </span>
-  </div>
-);
+}> = ({ title, value }) => {
+  const colors = getColors();
+
+  return (
+    <div className="flex-1 flex flex-col gap-1 py-4 px-6">
+      <span
+        className="text-base md:text-lg font-medium"
+        style={{ color: colors.dashboard.metricCardText }}
+      >
+        {title}
+      </span>
+      <span
+        className="text-4xl md:text-5xl leading-none tracking-tight"
+        style={{ color: colors.dashboard.metricCardValue }}
+      >
+        {formatCompactNumber(value)}
+      </span>
+    </div>
+  );
+};
 
 const ChartCard: React.FC<{
   title: string;
@@ -90,6 +113,7 @@ const ChartCard: React.FC<{
   onChangeTimeRange,
   compareLabel = 'than last week',
 }) => {
+  const colors = getColors();
   // Custom tooltip to match the dark bubble style with a value and change percentage
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -108,14 +132,19 @@ const ChartCard: React.FC<{
           <div
             className="rounded-xl px-4 py-3"
             style={{
-              background: '#0B4B66',
+              background: colors.dashboard.chartTooltipBackground,
               color: 'white',
               boxShadow: '0 12px 28px rgba(11,75,102,0.25)',
               minWidth: 160,
             }}
           >
             <div className="flex items-center gap-2 text-white text-sm font-semibold">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#117EA6]">
+              <span
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: colors.dashboard.chartTooltipUserIcon,
+                }}
+              >
                 <FaUser className="h-3.5 w-3.5" />
               </span>
               <span className="text-base font-semibold">
@@ -139,7 +168,7 @@ const ChartCard: React.FC<{
               height: 0,
               borderLeft: '8px solid transparent',
               borderRight: '8px solid transparent',
-              borderTop: '8px solid #0B4B66',
+              borderTop: `8px solid ${colors.dashboard.chartTooltipBackground}`,
               margin: '0 auto',
             }}
           />
@@ -150,16 +179,36 @@ const ChartCard: React.FC<{
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 border border-[#BAE6FD]">
+    <div
+      className="rounded-lg shadow p-4 border"
+      style={{
+        backgroundColor: colors.dashboard.analyticsCardBackground,
+        borderColor: colors.dashboard.analyticsCardBorder,
+      }}
+    >
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h3 className="text-lg font-semibold text-gray-700">{title}</h3>
-          {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+          <h3
+            className="text-lg font-semibold"
+            style={{ color: colors.dashboard.metricCardText }}
+          >
+            {title}
+          </h3>
+          {subtitle && (
+            <p
+              className="text-xs"
+              style={{ color: colors.dashboard.metricCardText }}
+            >
+              {subtitle}
+            </p>
+          )}
         </div>
         {timeRange && onChangeTimeRange && (
           <select
-            className="bg-[#559EC1] border border-gray-300 text-white py-1.5 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#559EC1] text-sm appearance-none bg-no-repeat pr-6"
+            className="border border-gray-300 py-1.5 px-3 rounded-lg focus:outline-none text-sm appearance-none bg-no-repeat pr-6"
             style={{
+              backgroundColor: colors.dashboard.analyticsSelectBackground,
+              color: colors.dashboard.analyticsSelectText,
               backgroundImage:
                 "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23A7CAFF' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e\")",
               backgroundSize: '12px 12px',
@@ -182,15 +231,26 @@ const ChartCard: React.FC<{
           >
             <defs>
               <linearGradient id="primaryGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6DBBBE" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#6DBBBE" stopOpacity={0} />
+                <stop
+                  offset="5%"
+                  stopColor={colors.dashboard.chartGradientStart}
+                  stopOpacity={0.25}
+                />
+                <stop
+                  offset="95%"
+                  stopColor={colors.dashboard.chartGradientEnd}
+                  stopOpacity={0}
+                />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} stroke="#e5e7eb" />
+            <CartesianGrid
+              vertical={false}
+              stroke={colors.dashboard.chartGridColor}
+            />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 12, fill: '#6b7280' }}
-              axisLine={{ stroke: '#e5e7eb' }}
+              tick={{ fontSize: 12, fill: colors.dashboard.chartAxisColor }}
+              axisLine={{ stroke: colors.dashboard.chartGridColor }}
               tickLine={false}
               tickFormatter={(value) => {
                 const date = new Date(value);
@@ -201,8 +261,8 @@ const ChartCard: React.FC<{
               }}
             />
             <YAxis
-              tick={{ fontSize: 12, fill: '#6b7280' }}
-              axisLine={{ stroke: '#e5e7eb' }}
+              tick={{ fontSize: 12, fill: colors.dashboard.chartAxisColor }}
+              axisLine={{ stroke: colors.dashboard.chartGridColor }}
               tickLine={false}
               domain={[0, 4]}
               ticks={[0, 1, 2, 3, 4]}
@@ -216,11 +276,15 @@ const ChartCard: React.FC<{
             <Area
               type="monotone"
               dataKey={dataKey}
-              stroke="#36D1FF"
+              stroke={colors.dashboard.chartStroke}
               strokeWidth={3}
               fillOpacity={1}
               fill="url(#primaryGradient)"
-              activeDot={{ r: 6, fill: '#0B4B66', strokeWidth: 0 }}
+              activeDot={{
+                r: 6,
+                fill: colors.dashboard.chartActiveDot,
+                strokeWidth: 0,
+              }}
               dot={false}
               style={{
                 filter: 'drop-shadow(0px 6px 12px rgba(54, 209, 255, 0.3))',
@@ -246,6 +310,7 @@ export default function AnalyticsDashboard({
   setTimeRange,
   profileCounts,
 }: any) {
+  const colors = getColors();
   // Filter data based on time range
   const filterData = (range: 'week' | 'month' | 'year') => {
     // const days = range === 'week' ? 7 : range === 'month' ? 30 : 365;
@@ -287,25 +352,40 @@ export default function AnalyticsDashboard({
       title: 'Impressions',
       value: impressionCount,
       change: '',
-      icon: <FaEye className="h-6 w-6" style={{ color: '#559EC1' }} />,
+      icon: (
+        <FaEye
+          className="h-6 w-6"
+          style={{ color: colors.dashboard.analyticsIconColor }}
+        />
+      ),
     },
     {
       title: 'Unique visitor',
       value: visitorCount,
       change: '',
-      icon: <FaUser className="h-6 w-6" style={{ color: '#559EC1' }} />,
+      icon: (
+        <FaUser
+          className="h-6 w-6"
+          style={{ color: colors.dashboard.analyticsIconColor }}
+        />
+      ),
     },
     {
       title: 'Widget opened',
       value: widgetOpenCount,
       change: '',
-      icon: <FaMousePointer className="h-6 w-6" style={{ color: '#559EC1' }} />,
+      icon: (
+        <FaMousePointer
+          className="h-6 w-6"
+          style={{ color: colors.dashboard.analyticsIconColor }}
+        />
+      ),
     },
   ];
 
   const additionalMetrics = Object.entries(profileCounts).map(
     ([key, value]) => {
-      const iconStyle = { color: '#559EC1' } as const;
+      const iconStyle = { color: colors.dashboard.analyticsIconColor } as const;
       const icons: { [key: string]: JSX.Element } = {
         adhd: <FaBrain className="h-6 w-6" style={iconStyle} />,
         blind: <FaEyeSlash className="h-6 w-6" style={iconStyle} />,
@@ -334,13 +414,19 @@ export default function AnalyticsDashboard({
   return (
     <div>
       {/* Grouped top metrics card to match Figma: single card with separators */}
-      <div className="analytics-metrics-card bg-white rounded-2xl shadow p-2 md:p-3 border border-gray-100 h-auto md:h-auto md:min-h-0 lg:h-[120px] lg:min-h-[120px]">
+      <div
+        className="analytics-metrics-card rounded-2xl shadow p-2 md:p-3 border h-auto md:h-auto md:min-h-0 lg:h-[120px] lg:min-h-[120px]"
+        style={{
+          backgroundColor: colors.dashboard.analyticsCardBackground,
+          borderColor: colors.dashboard.analyticsCardBorder,
+        }}
+      >
         <div
-          className="flex flex-row sm:flex-col md:flex-col lg:flex-row items-stretch divide-x sm:divide-x-0 sm:divide-y md:divide-y lg:divide-y-0 lg:divide-x md:h-full divide-[#B4D8DA]"
+          className="flex flex-row sm:flex-col md:flex-col lg:flex-row items-stretch divide-x sm:divide-x-0 sm:divide-y md:divide-y lg:divide-y-0 lg:divide-x md:h-full"
           style={
             {
               '--tw-divide-opacity': '1',
-              '--tw-divide-color': '#B4D8DA',
+              '--tw-divide-color': colors.dashboard.analyticsDivider,
             } as React.CSSProperties
           }
         >
@@ -368,7 +454,11 @@ export default function AnalyticsDashboard({
       >
         {Object.keys(profileCounts).length ? (
           <button
-            className="show-more-metrics-button bg-[#559EC1] hover:brightness-110 text-white py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#559EC1]"
+            className="show-more-metrics-button hover:brightness-110 py-2 px-4 rounded-lg focus:outline-none"
+            style={{
+              backgroundColor: colors.dashboard.showMoreButtonBackground,
+              color: colors.dashboard.showMoreButtonText,
+            }}
             onClick={() => setShowMoreMetrics(!showMoreMetrics)}
           >
             {showMoreMetrics ? 'Show Less' : 'Show More'}

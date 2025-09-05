@@ -29,6 +29,7 @@ import Dropdown from '../../containers/Dashboard/DropDown';
 import { useState, useEffect } from 'react';
 import { handleBilling } from '@/containers/Profile/BillingPortalLink';
 import { CircularProgress } from '@mui/material';
+import { getColors } from '@/config/colors';
 
 const Sidebar = ({
   options,
@@ -41,6 +42,9 @@ const Sidebar = ({
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [billingClicked, setBillingClicked] = useState(false);
+
+  // Get colors configuration
+  const colors = getColors();
 
   const { isOpen } = useSelector((state: RootState) => state.sidebar);
   const history = useHistory();
@@ -111,6 +115,38 @@ const Sidebar = ({
     await handleBilling(setBillingClicked, user?.email);
   };
 
+  // Helper function to get navigation item styles
+  const getNavItemStyles = (isActive: boolean) => {
+    if (isActive) {
+      return {
+        className: isCollapsed
+          ? 'w-10 h-10 font-medium justify-center mx-auto'
+          : 'space-x-3 px-3 py-2 font-medium',
+        style: {
+          backgroundColor: colors.sidebar.activeItemBackground,
+          color: colors.sidebar.activeItemText,
+        },
+      };
+    } else {
+      return {
+        className: isCollapsed
+          ? 'w-10 h-10 justify-center mx-auto'
+          : 'space-x-3 px-3 py-2',
+        style: {
+          color: colors.sidebar.inactiveItemText,
+          ':hover': {
+            backgroundColor: colors.sidebar.hoverBackground,
+          },
+        },
+      };
+    }
+  };
+
+  // Helper function to get icon styles
+  const getIconStyles = (isActive: boolean) => ({
+    color: isActive ? colors.sidebar.activeIconColor : colors.sidebar.iconColor,
+  });
+
   return (
     <>
       {isOpen && (
@@ -123,7 +159,7 @@ const Sidebar = ({
       <div
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={`h-[100dvh] sticky top-0 flex flex-none flex-col sm:fixed sm:transition-all sm:duration-[400ms] bg-[#D4E6EF] ${
+        className={`h-[100dvh] sticky top-0 flex flex-none flex-col sm:fixed sm:transition-all sm:duration-[400ms] ${
           isCollapsed ? 'w-[96px]' : 'w-[280px]'
         } ${
           isOpen ? 'sm:left-0 sm:z-[50]' : 'sm:-left-full sm:z-[50]'
@@ -132,20 +168,32 @@ const Sidebar = ({
             ? 'px-2 py-4 pl-4 sm:px-0 sm:py-0 sm:pl-0'
             : 'p-0 pl-6 sm:p-0 sm:pl-0'
         }`}
+        style={{ backgroundColor: colors.sidebar.background }}
       >
         {/* Sidebar Card - Only show in expanded mode */}
         {!isCollapsed ? (
-          <div className="flex-grow bg-white rounded-2xl overflow-hidden p-2 flex flex-col">
+          <div
+            className="flex-grow rounded-2xl overflow-hidden p-2 flex flex-col"
+            style={{ backgroundColor: colors.sidebar.cardBackground }}
+          >
             {/* Add new domain button */}
             <div className="p-4">
               <button
                 onClick={handleRedirect}
-                className="bg-[#000000] hover:bg-[#000000] text-white font-medium rounded-lg flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md w-full py-2 px-4 space-x-2"
+                className="font-medium rounded-lg flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md w-full py-2 px-4 space-x-2"
+                style={{
+                  backgroundColor: colors.sidebar.addButtonBackground,
+                  color: colors.sidebar.addButtonText,
+                }}
               >
                 <span className="text-sm whitespace-nowrap">
                   Add new domain
                 </span>
-                <Plus size={18} className="text-[#559EC1] flex-shrink-0" />
+                <Plus
+                  size={18}
+                  className="flex-shrink-0"
+                  style={{ color: colors.sidebar.addButtonIcon }}
+                />
               </button>
             </div>
 
@@ -157,32 +205,24 @@ const Sidebar = ({
                   to="/dashboard"
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
-                    isActiveRoute('/dashboard')
-                      ? isCollapsed
-                        ? 'w-10 h-10 bg-[#D4E6EF]  text-[#559EC1] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#D4E6EF]  text-[#559EC1] font-medium'
-                      : isCollapsed
-                      ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                      : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                    getNavItemStyles(isActiveRoute('/dashboard')).className
                   }`}
+                  style={getNavItemStyles(isActiveRoute('/dashboard')).style}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
                     <BiBarChartAlt2
                       size={24}
-                      className={
-                        isActiveRoute('/dashboard')
-                          ? 'text-[#559EC1]'
-                          : 'text-[#656565]'
-                      }
+                      style={getIconStyles(isActiveRoute('/dashboard'))}
                     />
                   </div>
                   {!isCollapsed && (
                     <span
-                      className={`text-sm ${
-                        isActiveRoute('/dashboard')
-                          ? 'text-[#559EC1]'
-                          : 'text-[#656565]'
-                      }`}
+                      className="text-sm"
+                      style={{
+                        color: isActiveRoute('/dashboard')
+                          ? colors.sidebar.activeItemText
+                          : colors.sidebar.inactiveItemText,
+                      }}
                     >
                       Dashboard
                     </span>
@@ -194,32 +234,27 @@ const Sidebar = ({
                   to="/customize-widget"
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
-                    isActiveRoute('/customize-widget')
-                      ? isCollapsed
-                        ? 'w-10 h-10 bg-[#D4E6EF]  text-[#559EC1] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#D4E6EF]  text-[#559EC1] font-medium'
-                      : isCollapsed
-                      ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                      : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                    getNavItemStyles(isActiveRoute('/customize-widget'))
+                      .className
                   }`}
+                  style={
+                    getNavItemStyles(isActiveRoute('/customize-widget')).style
+                  }
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
                     <Pencil
                       size={24}
-                      className={
-                        isActiveRoute('/customize-widget')
-                          ? 'text-[#559EC1]'
-                          : 'text-[#656565]'
-                      }
+                      style={getIconStyles(isActiveRoute('/customize-widget'))}
                     />
                   </div>
                   {!isCollapsed && (
                     <span
-                      className={`text-sm ${
-                        isActiveRoute('/customize-widget')
-                          ? 'text-[#559EC1]'
-                          : 'text-[#656565]'
-                      }`}
+                      className="text-sm"
+                      style={{
+                        color: isActiveRoute('/customize-widget')
+                          ? colors.sidebar.activeItemText
+                          : colors.sidebar.inactiveItemText,
+                      }}
                     >
                       Customization
                     </span>
@@ -231,32 +266,24 @@ const Sidebar = ({
                   to="/installation"
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
-                    isActiveRoute('/installation')
-                      ? isCollapsed
-                        ? 'w-10 h-10 bg-[#D4E6EF]  text-[#559EC1] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#D4E6EF]  text-[#559EC1] font-medium'
-                      : isCollapsed
-                      ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                      : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                    getNavItemStyles(isActiveRoute('/installation')).className
                   }`}
+                  style={getNavItemStyles(isActiveRoute('/installation')).style}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
                     <RiStackLine
                       size={24}
-                      className={
-                        isActiveRoute('/installation')
-                          ? 'text-[#559EC1]'
-                          : 'text-[#656565]'
-                      }
+                      style={getIconStyles(isActiveRoute('/installation'))}
                     />
                   </div>
                   {!isCollapsed && (
                     <span
-                      className={`text-sm ${
-                        isActiveRoute('/installation')
-                          ? 'text-[#559EC1]'
-                          : 'text-[#656565]'
-                      }`}
+                      className="text-sm"
+                      style={{
+                        color: isActiveRoute('/installation')
+                          ? colors.sidebar.activeItemText
+                          : colors.sidebar.inactiveItemText,
+                      }}
                     >
                       Installation
                     </span>
