@@ -17,6 +17,8 @@ import { CircularProgress } from '@mui/material';
 
 interface CodeProps {
   codeString: string;
+  shouldOpenCustomization?: boolean;
+  onCustomizationOpened?: () => void;
 }
 
 const SEND_WIDGET_INSTALLATION = gql`
@@ -98,7 +100,11 @@ const languages = [
   { code: 'ca', name: 'Català', englishName: 'Catalan' },
 ];
 
-export default function CodeContainer({ codeString }: CodeProps) {
+export default function CodeContainer({
+  codeString,
+  shouldOpenCustomization,
+  onCustomizationOpened,
+}: CodeProps) {
   const [copySuccess, setCopySuccess] = useState(false);
   const [position, setPosition] = useState('bottom-left');
   const [language, setLanguage] = useState('en');
@@ -243,11 +249,19 @@ export default function CodeContainer({ codeString }: CodeProps) {
 
   const [showCustomization, setShowCustomization] = useState(false);
 
+  // Handle opening customization menu for tour
+  useEffect(() => {
+    if (shouldOpenCustomization && !showCustomization) {
+      setShowCustomization(true);
+      onCustomizationOpened?.();
+    }
+  }, [shouldOpenCustomization, showCustomization, onCustomizationOpened]);
+
   return (
     <div className="w-full bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
       {/* Customization Section - Hidden by default, matches Figma */}
       {showCustomization && (
-        <div className="p-4 border-b border-gray-100 bg-gray-50">
+        <div className="p-4 border-b border-gray-100 bg-gray-50 widget-customization-options">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h- rounded-lg flex items-center justify-center">
               <FaMagic className="w-4 h-4" style={{ color: '#205A76' }} />
@@ -422,7 +436,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
       )}
 
       {/* Installation Snippet - Matches Figma exactly */}
-      <div className="p-4">
+      <div className="p-4 installation-instructions">
         <div className="mb-3">
           <h4 className="text-sm font-semibold text-gray-900 mb-1">
             Installation snippet
@@ -434,7 +448,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
 
         {/* Code Block with integrated Copy Button */}
         <div
-          className="rounded-lg p-8 mb-4 relative min-h-[160px]"
+          className="rounded-lg p-8 mb-4 relative min-h-[160px] installation-code-block"
           style={{ backgroundColor: '#DEE9EE' }}
         >
           <code
@@ -447,7 +461,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
           {/* Copy Button in bottom left corner of the code box */}
           <button
             onClick={copyToClipboard}
-            className={`absolute bottom-3 left-3 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-white font-medium text-sm transition-all duration-200 ${
+            className={`absolute bottom-3 left-3 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-white font-medium text-sm transition-all duration-200 copy-code-button ${
               copySuccess
                 ? 'bg-green-600 hover:bg-green-700'
                 : 'hover:opacity-80'
@@ -486,7 +500,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
           {/* Customize Button */}
           <button
             onClick={() => setShowCustomization(!showCustomization)}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-[#559EC1] hover:bg-[#e6f3fa] text-[#559EC1] rounded-lg font-medium transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-[#559EC1] hover:bg-[#e6f3fa] text-[#559EC1] rounded-lg font-medium transition-colors customize-widget-button"
           >
             <FaMagic className="w-4 h-4" />
             {showCustomization ? 'Hide Options' : 'Customize'}

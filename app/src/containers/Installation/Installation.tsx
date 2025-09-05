@@ -18,10 +18,23 @@ export default function Installation({ domain }: any) {
   }
 
   const [codeString] = useState(getCodeString(domain || 'default'));
+  const [shouldOpenCustomization, setShouldOpenCustomization] = useState(false);
 
   // Handle tour completion
   const handleTourComplete = () => {
     console.log('Installation tour completed!');
+  };
+
+  // Handle tour step changes
+  const handleTourStepChange = (data: any) => {
+    // Open customization menu when tour reaches the customize button step
+    if (data.step?.target === '.customize-widget-button') {
+      setShouldOpenCustomization(true);
+      // Add a small delay to ensure the customization menu is rendered
+      setTimeout(() => {
+        // The tour will continue automatically after the element is available
+      }, 200);
+    }
   };
 
   interface StatCardProps {
@@ -120,13 +133,18 @@ export default function Installation({ domain }: any) {
         autoStart={true}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}
+        onStepChange={handleTourStepChange}
       />
 
       <div>
         <div className="w-full mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
           {/* Code Container */}
-          <div className="w-full">
-            <CodeContainer codeString={codeString} />
+          <div className="w-full installation-welcome-banner">
+            <CodeContainer
+              codeString={codeString}
+              shouldOpenCustomization={shouldOpenCustomization}
+              onCustomizationOpened={() => setShouldOpenCustomization(false)}
+            />
           </div>
 
           {/* Installation guide section - Light blue background */}
@@ -156,7 +174,7 @@ export default function Installation({ domain }: any) {
                       href="https://www.webability.io/installation"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full md:w-auto bg-[#559EC1] hover:bg-[#4682a0] text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base flex items-center justify-center gap-2 transition-colors"
+                      className="w-full md:w-auto bg-[#559EC1] hover:bg-[#4682a0] text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base flex items-center justify-center gap-2 transition-colors installation-guide-link"
                     >
                       <span>View all guides</span>
                     </a>

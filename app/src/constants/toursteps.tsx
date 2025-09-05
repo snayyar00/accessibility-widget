@@ -264,18 +264,34 @@ export const installationTourSteps: Step[] = [
     placement: 'bottom' as Placement,
   },
   {
-    target: '.widget-customization-options',
+    target: '.customize-widget-button',
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Customize Your Widget ⚙️</h3>
         <p>
-          Choose where the accessibility widget appears on your site and select
-          the language. These settings will be reflected in your installation
-          code.
+          This button opens customization options where you can choose where the
+          accessibility widget appears on your site and select the language.
+          These settings will be reflected in your installation code.
+        </p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+  {
+    target: '.widget-customization-options',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Widget Settings ⚙️</h3>
+        <p>
+          Here you can customize your widget's position, language, and icon
+          type. These settings will automatically update your installation code
+          below.
         </p>
       </div>
     ),
     placement: 'bottom' as Placement,
+    disableBeacon: true,
+    hideCloseButton: false,
   },
   {
     target: '.installation-instructions',
@@ -323,17 +339,20 @@ export const installationTourSteps: Step[] = [
     placement: 'top' as Placement,
   },
   {
-    target: '.expand-code-button',
+    target: 'body',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Expand Code View 🔍</h3>
+        <h3 className="text-lg font-semibold mb-2">Tour Complete! 🎉</h3>
         <p>
-          Use this button to expand or compress the code view for better
-          readability when working with longer code snippets.
+          You're all set! You now know how to install the WebAbility widget on
+          your website. The customization options allow you to tailor the widget
+          to your needs, and the installation code is ready to be added to your
+          website. Need help? Check out our documentation or contact support.
         </p>
       </div>
     ),
-    placement: 'top' as Placement,
+    placement: 'center' as Placement,
+    disableBeacon: true,
   },
 ];
 
