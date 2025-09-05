@@ -5,6 +5,10 @@ import { useTranslation } from 'react-i18next';
 import TourGuide from '@/components/Common/TourGuide';
 import { defaultTourStyles } from '@/config/tourStyles';
 import { installationTourSteps, tourKeys } from '@/constants/toursteps';
+import { FaWordpressSimple } from 'react-icons/fa6';
+import { FaWebflow } from 'react-icons/fa6';
+import { FaWix } from 'react-icons/fa';
+import { FaShopify } from 'react-icons/fa';
 
 export default function Installation({ domain }: any) {
   const { t } = useTranslation();
@@ -20,6 +24,94 @@ export default function Installation({ domain }: any) {
     console.log('Installation tour completed!');
   };
 
+  interface StatCardProps {
+    title: string;
+    subtitle?: string;
+    description?: string;
+    className?: string;
+    size?: 'small' | 'medium' | 'large';
+    hasGlow?: boolean;
+    titleColor?: string;
+    subtitleColor?: string;
+    textColor?: string;
+  }
+
+  function StatCard({
+    title,
+    subtitle,
+    description,
+    className,
+    size = 'medium',
+    hasGlow = false,
+    titleColor,
+    subtitleColor,
+    textColor,
+  }: StatCardProps) {
+    const baseClasses =
+      'relative overflow-hidden rounded-2xl border bg-gradient-to-b from-[#205A76]/95 to-[#358E98]/95 backdrop-blur-md transition-all duration-300 hover:from-[#28667d]/100 hover:to-[#358E98]/100';
+    const sizeClasses =
+      size === 'large' ? 'p-6 sm:p-8 md:p-10 lg:p-12' : 'p-4 sm:p-6 md:p-8';
+    const cardClassName = `${baseClasses} ${sizeClasses} ${className || ''}`;
+
+    return (
+      <div className={cardClassName} style={{ borderColor: '#234858' }}>
+        {/* Light overlay for better visibility */}
+        <div className="absolute inset-0 bg-white/5 rounded-2xl"></div>
+        <div className="relative z-10 h-full flex flex-col">
+          <div>
+            <h3
+              className={`font-bold text-white leading-tight ${
+                size === 'large'
+                  ? 'text-2xl sm:text-3xl md:text-4xl lg:text-4xl mb-4 sm:mb-6'
+                  : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-3 sm:mb-4'
+              }`}
+              style={titleColor ? { color: titleColor } : undefined}
+            >
+              {title}
+            </h3>
+            {subtitle && (
+              <p
+                className={`font-medium ${
+                  size === 'large'
+                    ? 'text-base sm:text-lg md:text-xl lg:text-2xl mb-1 sm:mb-2'
+                    : 'text-sm sm:text-base md:text-lg mb-1'
+                }`}
+                style={{ color: subtitleColor || '#26627a' }}
+              >
+                {subtitle}
+              </p>
+            )}
+            {description && (
+              <p
+                className={`text-white/80 leading-relaxed ${
+                  size === 'large'
+                    ? 'text-base sm:text-lg md:text-xl'
+                    : 'text-sm sm:text-base'
+                }`}
+                style={textColor ? { color: textColor } : undefined}
+              >
+                {description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {hasGlow && (
+          <>
+            <div
+              className="absolute top-1/2 right-0 w-16 sm:w-24 md:w-32 h-16 sm:h-24 md:h-32 rounded-full blur-2xl opacity-80"
+              style={{ backgroundColor: '#28667d' }}
+            />
+            <div
+              className="absolute top-1/2 right-2 sm:right-4 w-8 sm:w-12 md:w-16 h-8 sm:h-12 md:h-16 rounded-full blur-xl opacity-60"
+              style={{ backgroundColor: '#183c4c' }}
+            />
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <>
       <TourGuide
@@ -30,83 +122,91 @@ export default function Installation({ domain }: any) {
         customStyles={defaultTourStyles}
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50 flex flex-col overflow-hidden">
-        <div className="flex-1 max-w-none mx-0 px-3 sm:px-4 py-4 flex flex-col lg:flex-row gap-6 sm:gap-8 min-h-0">
-          {/* Main Content Column */}
-          <main
-            className="flex-1 flex flex-col min-h-0"
-            role="main"
-            aria-label="Accessibility installation guide"
-          >
-            {/* Enhanced Header Section */}
-            <header className="installation-welcome-banner bg-gradient-to-br from-white via-blue-50/20 to-white rounded-2xl shadow-xl shadow-blue-500/10 p-6 sm:p-8 mb-6 flex-shrink-0 ring-1 ring-blue-100/50">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-                <div className="flex items-start gap-4">
-                  <div
-                    className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25 ring-4 ring-blue-100/50"
-                    role="img"
-                    aria-label="Lightning bolt accessibility icon"
-                  >
-                    <svg
-                      className="w-8 h-8 text-white drop-shadow-sm"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                  </div>
+      <div>
+        <div className="w-full mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+          {/* Code Container */}
+          <div className="w-full">
+            <CodeContainer codeString={codeString} />
+          </div>
 
+          {/* Installation guide section - Light blue background */}
+          <div className="w-full py-4 sm:py-8">
+            {/* Main card container */}
+            <div
+              className="rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8 max-w-full overflow-hidden"
+              style={{ backgroundColor: '#e6f0f4' }}
+            >
+              {/* Header section */}
+              <div className="mb-6 sm:mb-8">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                  {/* Title and description */}
                   <div className="flex-1">
-                    <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-2 leading-tight">
-                      AI-Driven Accessibility, Simplified
-                    </h1>
-
-                    <p className="text-gray-700 text-base sm:text-lg leading-relaxed font-medium">
-                      Automatic, ongoing remediation powered by cutting-edge AI.
-                      Achieve{' '}
-                      <span className="font-bold text-blue-600">
-                        WCAG 2.1 AA compliance
-                      </span>{' '}
-                      in minutes, mitigate legal risk, and unlock the{' '}
-                      <span className="font-bold text-green-600">
-                        $13 trillion disability market
-                      </span>
-                      .
+                    <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-2 leading-tight">
+                      Installation guide
+                    </h2>
+                    <p className="text-gray-600 text-sm sm:text-base md:text-lg">
+                      Step by step guides to install the widget
                     </p>
                   </div>
-                </div>
 
-                <div className="flex-shrink-0">
-                  <a
-                    href="https://www.webability.io/installation"
-                    className="installation-guide-link group inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 focus:ring-4 focus:ring-blue-200 focus:outline-none transition-all duration-300 text-sm transform hover:scale-105 active:scale-95"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Open complete accessibility installation guide in new tab"
-                  >
-                    <svg
-                      className="w-5 h-5 mr-2 drop-shadow-sm"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
+                  {/* View all guides button */}
+                  {/* View all guides button */}
+                  <div className="flex justify-end md:justify-start">
+                    <a
+                      href="https://www.webability.io/installation"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full md:w-auto bg-[#559EC1] hover:bg-[#4682a0] text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base flex items-center justify-center gap-2 transition-colors"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                      />
-                    </svg>
-                    Implementation Guide
+                      <span>View all guides</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Platform cards */}
+              <div className="space-y-3 sm:space-y-4">
+                {/* WordPress Card */}
+                <a
+                  href="https://www.webability.io/installation/how-to-install-webability-wordpress"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  <div className="flex items-center justify-between gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
+                        <FaWordpressSimple
+                          className="w-10 h-10"
+                          style={{ color: '#205A76' }}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3
+                          className="text-xs sm:text-sm md:text-base lg:text-lg font-medium text-gray-900 transition-colors leading-tight"
+                          style={{ color: 'inherit' }}
+                          onMouseEnter={(e) =>
+                            ((e.target as HTMLElement).style.color = '#205A76')
+                          }
+                          onMouseLeave={(e) =>
+                            ((e.target as HTMLElement).style.color = 'inherit')
+                          }
+                        >
+                          Step by step guides to install the widget on a
+                          WordPress website
+                        </h3>
+                      </div>
+                    </div>
                     <svg
-                      className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-200"
+                      className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-colors flex-shrink-0"
+                      style={{ color: '#205A76' }}
+                      onMouseEnter={(e) =>
+                        ((e.target as HTMLElement).style.color = '#1a4a5f')
+                      }
+                      onMouseLeave={(e) =>
+                        ((e.target as HTMLElement).style.color = '#205A76')
+                      }
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -118,285 +218,263 @@ export default function Installation({ domain }: any) {
                         d="M9 5l7 7-7 7"
                       />
                     </svg>
-                  </a>
-                </div>
-              </div>
-            </header>
+                  </div>
+                </a>
 
-            {/* Enhanced Features Row */}
-            <section
-              className="mb-6 flex-shrink-0"
-              aria-labelledby="features-heading"
-            >
-              <h2 id="features-heading" className="sr-only">
-                Key Features
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                <div className="group flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-br from-white via-blue-50/30 to-white shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/15 transition-all duration-300 focus-within:ring-2 focus-within:ring-blue-500 transform hover:scale-[1.02]">
-                  <div
-                    className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/25 group-hover:shadow-xl group-hover:shadow-blue-500/30 transition-all duration-300"
-                    role="img"
-                    aria-label="Lightning bolt speed icon"
-                  >
-                    <svg
-                      className="w-6 h-6 text-white drop-shadow-sm"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-base sm:text-lg mb-1">
-                      Easy Setup, Immediate Results
-                    </h3>
-                    <p className="text-blue-600 text-sm font-semibold">
-                      Compliance in 48 hours
-                    </p>
-                  </div>
-                </div>
-
-                <div className="group flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-br from-white via-green-50/30 to-white shadow-lg shadow-green-500/10 hover:shadow-xl hover:shadow-green-500/15 transition-all duration-300 focus-within:ring-2 focus-within:ring-green-500 transform hover:scale-[1.02]">
-                  <div
-                    className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-green-500/25 group-hover:shadow-xl group-hover:shadow-green-500/30 transition-all duration-300"
-                    role="img"
-                    aria-label="Checkmark compliance icon"
-                  >
-                    <svg
-                      className="w-6 h-6 text-white drop-shadow-sm"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-base sm:text-lg mb-1">
-                      Legal Protection
-                    </h3>
-                    <p className="text-green-600 text-sm font-semibold">
-                      Mitigate ADA lawsuits
-                    </p>
-                  </div>
-                </div>
-
-                <div className="group flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-br from-white via-purple-50/30 to-white shadow-lg shadow-purple-500/10 hover:shadow-xl hover:shadow-purple-500/15 transition-all duration-300 focus-within:ring-2 focus-within:ring-purple-500 transform hover:scale-[1.02] sm:col-span-2 lg:col-span-1">
-                  <div
-                    className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/25 group-hover:shadow-xl group-hover:shadow-purple-500/30 transition-all duration-300"
-                    role="img"
-                    aria-label="Universal compatibility icon"
-                  >
-                    <svg
-                      className="w-6 h-6 text-blue-600 drop-shadow-sm"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-base sm:text-lg mb-1">
-                      Universal Compatibility
-                    </h3>
-                    <p className="text-purple-600 text-sm font-semibold">
-                      Any CMS or site builder
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Enhanced Installation Section */}
-            <section
-              className="flex-shrink-0"
-              aria-labelledby="installation-heading"
-            >
-              <div className="mb-6">
-                <h2
-                  id="installation-heading"
-                  className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3"
+                {/* Webflow Card */}
+                <a
+                  href="https://www.webability.io/installation/how-to-install-webability-on-a-webflow-website"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
                 >
-                  Deploy Enterprise-Grade Accessibility in Minutes
-                </h2>
-                <p className="text-gray-600 text-base sm:text-lg max-w-4xl leading-relaxed font-medium">
-                  Install our AI-powered accessibility solution with one line of
-                  code. Join industry leaders protecting their brands while
-                  serving the world's largest minority market.
-                </p>
-              </div>
+                  <div className="flex items-center justify-between gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
+                        <FaWebflow
+                          className="w-10 h-10"
+                          style={{ color: '#205A76' }}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3
+                          className="text-xs sm:text-sm md:text-base lg:text-lg font-medium text-gray-900 transition-colors leading-tight"
+                          style={{ color: 'inherit' }}
+                          onMouseEnter={(e) =>
+                            ((e.target as HTMLElement).style.color = '#205A76')
+                          }
+                          onMouseLeave={(e) =>
+                            ((e.target as HTMLElement).style.color = 'inherit')
+                          }
+                        >
+                          Step by step guides to install the widget on a Webflow
+                          website
+                        </h3>
+                      </div>
+                    </div>
+                    <svg
+                      className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5"
+                      style={{ color: '#205A76' }}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </a>
 
-              <div className="flex justify-center">
-                <CodeContainer codeString={codeString} />
-              </div>
-            </section>
-          </main>
+                {/* Wix Card */}
+                <a
+                  href="https://www.webability.io/installation/how-to-install-webability-on-a-wix-website"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  <div className="flex items-center justify-between gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
+                        <FaWix
+                          className="w-10 h-10"
+                          style={{ color: '#205A76' }}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3
+                          className="text-xs sm:text-sm md:text-base lg:text-lg font-medium text-gray-900 transition-colors leading-tight"
+                          style={{ color: 'inherit' }}
+                          onMouseEnter={(e) =>
+                            ((e.target as HTMLElement).style.color = '#205A76')
+                          }
+                          onMouseLeave={(e) =>
+                            ((e.target as HTMLElement).style.color = 'inherit')
+                          }
+                        >
+                          Step by step guides to install the widget on WIX
+                          website
+                        </h3>
+                      </div>
+                    </div>
+                    <svg
+                      className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5"
+                      style={{ color: '#205A76' }}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </a>
 
-          {/* Enhanced Facts Sidebar */}
-          <aside
-            className="w-full lg:w-72 flex-shrink-0 bg-gradient-to-br from-white via-blue-50/20 to-white rounded-2xl shadow-xl shadow-blue-500/10 p-4 sm:p-6 overflow-y-auto ring-1 ring-blue-100/50"
-            aria-labelledby="impact-heading"
-          >
-            <div className="space-y-6 w-full lg:max-w-xs lg:mx-auto">
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mb-4 shadow-lg shadow-blue-500/25 ring-4 ring-blue-100/50">
-                  <svg
-                    className="w-8 h-8 text-white drop-shadow-sm"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                {/* Shopify Card */}
+                <a
+                  href="https://www.webability.io/installation/how-to-install-webability-on-a-shopify-website"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  <div className="flex items-center justify-between gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
+                        <FaShopify
+                          className="w-10 h-10"
+                          style={{ color: '#205A76' }}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3
+                          className="text-xs sm:text-sm md:text-base lg:text-lg font-medium text-gray-900 transition-colors leading-tight"
+                          style={{ color: 'inherit' }}
+                          onMouseEnter={(e) =>
+                            ((e.target as HTMLElement).style.color = '#205A76')
+                          }
+                          onMouseLeave={(e) =>
+                            ((e.target as HTMLElement).style.color = 'inherit')
+                          }
+                        >
+                          Step by step guides to install the widget on a Shopify
+                          store
+                        </h3>
+                      </div>
+                    </div>
+                    <svg
+                      className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-colors flex-shrink-0"
+                      style={{ color: '#205A76' }}
+                      onMouseEnter={(e) =>
+                        ((e.target as HTMLElement).style.color = '#1a4a5f')
+                      }
+                      onMouseLeave={(e) =>
+                        ((e.target as HTMLElement).style.color = '#205A76')
+                      }
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Section with Dark Blue Background */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-[#235a75] to-[#224452]">
+            {/* Background horizontal streaks */}
+            <div className="absolute inset-0 opacity-20">
+              <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#26627a] to-transparent"></div>
+              <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#234858] to-transparent"></div>
+              <div className="absolute top-3/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#26627a] to-transparent"></div>
+            </div>
+
+            <div className="relative z-10 p-4 sm:p-6 md:p-8 lg:p-12 xl:p-16">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 h-full">
+                {/* Main feature card - left side, spans 2 rows */}
+                <div className="lg:col-span-1 flex items-center mb-6 lg:mb-0">
+                  <StatCard
+                    title="Built for Scale, Chosen by the Best."
+                    subtitle="Reasons why Leading Brands Choose AI Accessibility"
+                    size="large"
+                    className="h-full w-full"
+                    titleColor="#ffffff"
+                    subtitleColor="#99DCFB"
+                    textColor="#99DCFB"
+                  />
+                </div>
+
+                {/* Right side - responsive grid layout */}
+                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 auto-rows-fr">
+                  {/* Top row */}
+                  <div className="h-48 sm:h-52 md:h-56 lg:h-60">
+                    <StatCard
+                      title="48 Hours"
+                      subtitle="Time to compliance"
+                      description="AI remediation delivers immediate result"
+                      size="medium"
+                      hasGlow={true}
+                      className="h-full"
+                      titleColor="#99DCFB"
+                      subtitleColor="#99DCFB"
+                      textColor="#99DCFB"
                     />
-                  </svg>
-                </div>
-                <h3
-                  id="impact-heading"
-                  className="text-xl sm:text-2xl font-bold text-gray-900 mb-3"
-                >
-                  Why Leading Brands Choose AI Accessibility
-                </h3>
-              </div>
+                  </div>
+                  <div className="h-48 sm:h-52 md:h-56 lg:h-60">
+                    <StatCard
+                      title="99.7%"
+                      subtitle="Legal risk reduction"
+                      description="Automatic WCAG 2.1 AA compliance protection"
+                      size="medium"
+                      className="h-full"
+                      titleColor="#99DCFB"
+                      subtitleColor="#99DCFB"
+                      textColor="#99DCFB"
+                    />
+                  </div>
 
-              <div className="space-y-5">
-                <div className="group p-5 bg-gradient-to-br from-blue-50 to-blue-100/80 rounded-2xl hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 transform hover:scale-[1.02]">
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
-                      <svg
-                        className="w-6 h-6 text-white drop-shadow-sm"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="text-3xl font-black text-blue-600 drop-shadow-sm">
-                      48hrs
-                    </div>
+                  {/* Middle row */}
+                  <div className="h-48 sm:h-52 md:h-56 lg:h-60">
+                    <StatCard
+                      title="2.3X"
+                      subtitle="Revenue increase potential"
+                      description="Accessible sites convert better to all users"
+                      size="medium"
+                      hasGlow={true}
+                      className="h-full"
+                      titleColor="#99DCFB"
+                      subtitleColor="#99DCFB"
+                      textColor="#99DCFB"
+                    />
                   </div>
-                  <div className="text-sm sm:text-base text-gray-900 font-bold mb-1">
-                    Time to compliance
+                  <div className="h-48 sm:h-52 md:h-56 lg:h-60">
+                    <StatCard
+                      title="98%"
+                      subtitle="Websites fail accessibility tests"
+                      description="Gain competitive advantage with compliance"
+                      size="medium"
+                      className="h-full"
+                      titleColor="#99DCFB"
+                      subtitleColor="#99DCFB"
+                      textColor="#99DCFB"
+                    />
                   </div>
-                  <div className="text-xs sm:text-sm text-gray-700 font-semibold">
-                    AI remediation delivers immediate results
-                  </div>
-                </div>
 
-                <div className="group p-5 bg-gradient-to-br from-green-50 to-green-100/80 rounded-2xl hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 transform hover:scale-[1.02]">
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/25">
-                      <svg
-                        className="w-6 h-6 text-white drop-shadow-sm"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="text-3xl font-black text-green-600 drop-shadow-sm">
-                      99.7%
-                    </div>
+                  {/* Bottom row - spans 2 columns on md+ screens */}
+                  <div className="md:col-span-2 h-48 sm:h-52 md:h-56 lg:h-60">
+                    <StatCard
+                      title="$13 Trillion"
+                      subtitle="Global disability market value"
+                      description="World's largest underserved consumer segment"
+                      size="medium"
+                      hasGlow={true}
+                      className="h-full"
+                      titleColor="#99DCFB"
+                      subtitleColor="#99DCFB"
+                      textColor="#99DCFB"
+                    />
                   </div>
-                  <div className="text-sm sm:text-base text-gray-900 font-bold mb-1">
-                    Legal risk reduction
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-700 font-semibold">
-                    Automatic WCAG 2.1 AA compliance protection
-                  </div>
-                </div>
-
-                <div className="group p-5 bg-gradient-to-br from-cyan-50 to-cyan-100/80 rounded-2xl hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 transform hover:scale-[1.02]">
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/25">
-                      <svg
-                        className="w-12 h-12 drop-shadow-sm"
-                        fill="none"
-                        stroke="#06b6d4"
-                        style={{ color: '#06b6d4' }}
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="text-3xl font-black text-cyan-600 drop-shadow-sm">
-                      98%
-                    </div>
-                  </div>
-                  <div className="text-sm sm:text-base text-gray-900 font-bold mb-1">
-                    Websites fail accessibility tests
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-700 font-semibold">
-                    Gain competitive advantage with compliance
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 p-6 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 rounded-2xl text-white shadow-2xl shadow-blue-500/25 ring-1 ring-blue-400/20">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center ring-2 ring-white/30">
-                    <svg
-                      className="w-6 h-6 text-white drop-shadow-sm"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                      />
-                    </svg>
-                  </div>
-                  <div className="text-base sm:text-lg font-bold drop-shadow-sm">
-                    Welcome to Enterprise Accessibility
-                  </div>
-                </div>
-                <div className="text-sm text-blue-100 text-center font-semibold leading-relaxed">
-                  Join leading brands protecting their digital assets with
-                  AI-powered accessibility solutions
                 </div>
               </div>
             </div>
-          </aside>
+          </div>
         </div>
       </div>
     </>
