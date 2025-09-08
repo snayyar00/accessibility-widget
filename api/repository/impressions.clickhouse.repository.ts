@@ -2,6 +2,7 @@ import clickhouseClient from '../config/clickhouse.config'
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
 import logger from '../utils/logger'
+import { findImpressionsURLDate as findMySQLImpressions, findEngagementURLDate as findMySQLEngagement } from './impressions.repository'
 
 const TABLE = TABLES.impressions
 
@@ -25,9 +26,48 @@ type impressionsProps = {
   profileCounts?: any
 }
 
+// Helper function to avoid double database lookup
+async function findMySQLImpressionsWithSiteId(site_id: number, startDate: Date, endDate: Date): Promise<impressionsProps[]> {
+  const result = await database(TABLE).select(impressionsColumns).where({ site_id }).andWhere(impressionsColumns.created_at, '>=', startDate).andWhere(impressionsColumns.created_at, '<=', endDate).orderBy(impressionsColumns.created_at, 'desc')
+
+  return result
+}
+
+// Helper function for engagement data to avoid double database lookup
+async function findMySQLEngagementWithSiteId(site_id: number, startDate: string, endDate: string) {
+  const results = await database('impressions')
+    .select([
+      database.raw('DATE(impressions.created_at) as date'),
+      database.raw('COUNT(*) as totalImpressions'),
+      database.raw(`
+        COUNT(CASE WHEN impressions.widget_opened = true OR impressions.widget_closed = true THEN 1 ELSE NULL END) as engagedImpressions
+      `),
+    ])
+    .whereBetween('impressions.created_at', [startDate, endDate])
+    .andWhere({ 'impressions.site_id': site_id })
+    .groupByRaw('DATE(impressions.created_at)')
+    .orderBy('date', 'asc')
+
+  const engagementRates = results.map((result: any) => {
+    // Convert the UTC date to the desired time zone
+    const localDate = new Date(`${result.date}Z`) // Assuming result.date is in 'YYYY-MM-DD' format
+
+    const engagementRate = (Number(result.engagedImpressions) / Number(result.totalImpressions)) * 100
+
+    return {
+      date: localDate.toISOString().split('T')[0],
+      engagementRate,
+      totalEngagements: result.engagedImpressions,
+      totalImpressions: result.totalImpressions,
+    }
+  })
+
+  return engagementRates
+}
+
 export async function findImpressionsURLDate(user_id: number, site_url: string, startDate: Date, endDate: Date): Promise<impressionsProps[]> {
   try {
-    // First, get the site_id from MySQL allowed_sites table
+    // First, get the site_id from MySQL allowed_sites table (single lookup)
     const site = await database(TABLES.allowed_sites).select('id').where({ url: site_url, user_id }).first()
 
     if (!site) {
@@ -42,7 +82,81 @@ export async function findImpressionsURLDate(user_id: number, site_url: string, 
     const formattedStartDate = formatDateForClickHouse(startDate)
     const formattedEndDate = formatDateForClickHouse(endDate)
 
-    // Query ClickHouse impressions table
+    // If CLICKHOUSE_FLAG is true, fetch from both ClickHouse and MySQL in parallel
+    if (process.env.CLICKHOUSE_FLAG === 'true') {
+      try {
+        // Prepare ClickHouse query
+        const clickhouseQuery = `
+          SELECT 
+            id,
+            site_id,
+            visitor_id,
+            widget_opened,
+            widget_closed,
+            created_at as createdAt,
+            profileCounts
+          FROM impressions
+          WHERE site_id = {site_id:Int32}
+            AND created_at >= '${formattedStartDate}'
+            AND created_at <= '${formattedEndDate}'
+          ORDER BY created_at DESC
+        `
+
+        // Start both queries in parallel with static imports
+        const [clickhouseResult, mysqlImpressions] = await Promise.all([
+          clickhouseClient.query({
+            query: clickhouseQuery,
+            query_params: {
+              site_id: site.id,
+            },
+          }),
+          // Use static import - pass site.id to avoid double lookup
+          findMySQLImpressionsWithSiteId(site.id, startDate, endDate),
+        ])
+
+        const clickhouseData = (await clickhouseResult.json()) as { data: impressionsProps[] }
+        const clickhouseImpressions = clickhouseData.data || []
+
+        console.log(`✅ ClickHouse SUCCESS: Retrieved ${clickhouseImpressions.length} impressions for site_id ${site.id} (${site_url})`)
+        console.log(`✅ MySQL SUCCESS: Retrieved ${mysqlImpressions.length} impressions for comparison`)
+
+        // Return both datasets with source identification
+        return [...clickhouseImpressions.map((imp: impressionsProps) => ({ ...imp, source: 'clickhouse' })), ...mysqlImpressions.map((imp: impressionsProps) => ({ ...imp, source: 'mysql' }))]
+      } catch (mysqlError) {
+        console.log(`⚠️ MySQL parallel fetch failed, falling back to ClickHouse only: ${mysqlError.message}`)
+
+        // Fallback to ClickHouse only if parallel fetch fails
+        const clickhouseQuery = `
+          SELECT 
+            id,
+            site_id,
+            visitor_id,
+            widget_opened,
+            widget_closed,
+            created_at as createdAt,
+            profileCounts
+          FROM impressions
+          WHERE site_id = {site_id:Int32}
+            AND created_at >= '${formattedStartDate}'
+            AND created_at <= '${formattedEndDate}'
+          ORDER BY created_at DESC
+        `
+
+        const clickhouseResult = await clickhouseClient.query({
+          query: clickhouseQuery,
+          query_params: {
+            site_id: site.id,
+          },
+        })
+
+        const clickhouseData = (await clickhouseResult.json()) as { data: impressionsProps[] }
+        const clickhouseImpressions = clickhouseData.data || []
+
+        return clickhouseImpressions.map((imp: impressionsProps) => ({ ...imp, source: 'clickhouse' }))
+      }
+    }
+
+    // Return ClickHouse data only when CLICKHOUSE_FLAG is not true
     const clickhouseQuery = `
       SELECT 
         id,
@@ -69,27 +183,6 @@ export async function findImpressionsURLDate(user_id: number, site_url: string, 
     const clickhouseData = (await clickhouseResult.json()) as { data: impressionsProps[] }
     const clickhouseImpressions = clickhouseData.data || []
 
-    console.log(`✅ ClickHouse SUCCESS: Retrieved ${clickhouseImpressions.length} impressions for site_id ${site.id} (${site_url})`)
-
-    // If CLICKHOUSE_FLAG is true, also fetch from MySQL for comparison
-    if (process.env.CLICKHOUSE_FLAG === 'true') {
-      try {
-        // Import MySQL repository dynamically to avoid circular dependencies
-        const { findImpressionsURLDate: findMySQLImpressions } = await import('./impressions.repository')
-
-        const mysqlImpressions = await findMySQLImpressions(user_id, site_url, startDate, endDate)
-
-        console.log(`✅ MySQL SUCCESS: Retrieved ${mysqlImpressions.length} impressions for comparison`)
-
-        // Return both datasets with source identification
-        return [...clickhouseImpressions.map((imp: impressionsProps) => ({ ...imp, source: 'clickhouse' })), ...mysqlImpressions.map((imp: impressionsProps) => ({ ...imp, source: 'mysql' }))]
-      } catch (mysqlError) {
-        console.log(`⚠️ MySQL fallback failed, returning ClickHouse data only: ${mysqlError.message}`)
-        return clickhouseImpressions.map((imp: impressionsProps) => ({ ...imp, source: 'clickhouse' }))
-      }
-    }
-
-    // Return ClickHouse data only
     return clickhouseImpressions.map((imp) => ({ ...imp, source: 'clickhouse' }))
   } catch (error) {
     logger.error('Error finding impressions by URL and date:', error)
@@ -99,7 +192,7 @@ export async function findImpressionsURLDate(user_id: number, site_url: string, 
 
 export async function findEngagementURLDate(user_id: number, site_url: string, startDate: string, endDate: string) {
   try {
-    // First, get the site_id from MySQL allowed_sites table
+    // First, get the site_id from MySQL allowed_sites table (single lookup)
     const site = await database(TABLES.allowed_sites).select('id').where({ url: site_url, user_id }).first()
 
     if (!site) {
@@ -114,7 +207,105 @@ export async function findEngagementURLDate(user_id: number, site_url: string, s
     const formattedStartDate = formatDateForClickHouse(startDate)
     const formattedEndDate = formatDateForClickHouse(endDate)
 
-    // Query ClickHouse impressions table
+    // If CLICKHOUSE_FLAG is true, fetch from both ClickHouse and MySQL in parallel
+    if (process.env.CLICKHOUSE_FLAG === 'true') {
+      try {
+        // Prepare ClickHouse query
+        const clickhouseQuery = `
+          SELECT 
+            toDate(created_at) as date,
+            COUNT(*) as totalImpressions,
+            countIf(widget_opened = 1 OR widget_closed = 1) as engagedImpressions
+          FROM impressions
+          WHERE created_at >= '${formattedStartDate}'
+            AND created_at <= '${formattedEndDate}'
+            AND site_id = {site_id:Int32}
+          GROUP BY toDate(created_at)
+          ORDER BY date ASC
+        `
+
+        // Start both queries in parallel with static imports
+        const [clickhouseResult, mysqlEngagement] = await Promise.all([
+          clickhouseClient.query({
+            query: clickhouseQuery,
+            query_params: {
+              site_id: site.id,
+            },
+          }),
+          // Use static import - pass site.id to avoid double lookup
+          findMySQLEngagementWithSiteId(site.id, startDate, endDate),
+        ])
+
+        const clickhouseData = (await clickhouseResult.json()) as { data: Array<{ date: string; totalImpressions: number; engagedImpressions: number }> }
+        const clickhouseEngagement = clickhouseData.data || []
+
+        console.log(`✅ ClickHouse SUCCESS: Retrieved engagement data for site_id ${site.id} (${site_url}) - ${clickhouseEngagement.length} days`)
+        console.log(`✅ MySQL SUCCESS: Retrieved engagement data for comparison - ${mysqlEngagement.length} days`)
+
+        const clickhouseEngagementRates = clickhouseEngagement.map((result) => {
+          const engagementRate = (Number(result.engagedImpressions) / Number(result.totalImpressions)) * 100
+
+          return {
+            date: result.date,
+            engagementRate,
+            totalEngagements: result.engagedImpressions,
+            totalImpressions: result.totalImpressions,
+            source: 'clickhouse',
+          }
+        })
+
+        // Add source identification to MySQL data
+        const mysqlEngagementWithSource = mysqlEngagement.map((item) => ({
+          ...item,
+          source: 'mysql',
+        }))
+
+        // Return both datasets
+        return [...clickhouseEngagementRates, ...mysqlEngagementWithSource]
+      } catch (mysqlError) {
+        console.log(`⚠️ MySQL parallel fetch failed, falling back to ClickHouse only: ${mysqlError.message}`)
+
+        // Fallback to ClickHouse only if parallel fetch fails
+        const clickhouseQuery = `
+          SELECT 
+            toDate(created_at) as date,
+            COUNT(*) as totalImpressions,
+            countIf(widget_opened = 1 OR widget_closed = 1) as engagedImpressions
+          FROM impressions
+          WHERE created_at >= '${formattedStartDate}'
+            AND created_at <= '${formattedEndDate}'
+            AND site_id = {site_id:Int32}
+          GROUP BY toDate(created_at)
+          ORDER BY date ASC
+        `
+
+        const clickhouseResult = await clickhouseClient.query({
+          query: clickhouseQuery,
+          query_params: {
+            site_id: site.id,
+          },
+        })
+
+        const clickhouseData = (await clickhouseResult.json()) as { data: Array<{ date: string; totalImpressions: number; engagedImpressions: number }> }
+        const clickhouseEngagement = clickhouseData.data || []
+
+        const clickhouseEngagementRates = clickhouseEngagement.map((result) => {
+          const engagementRate = (Number(result.engagedImpressions) / Number(result.totalImpressions)) * 100
+
+          return {
+            date: result.date,
+            engagementRate,
+            totalEngagements: result.engagedImpressions,
+            totalImpressions: result.totalImpressions,
+            source: 'clickhouse',
+          }
+        })
+
+        return clickhouseEngagementRates
+      }
+    }
+
+    // Return ClickHouse data only when CLICKHOUSE_FLAG is not true
     const clickhouseQuery = `
       SELECT 
         toDate(created_at) as date,
@@ -138,8 +329,6 @@ export async function findEngagementURLDate(user_id: number, site_url: string, s
     const clickhouseData = (await clickhouseResult.json()) as { data: Array<{ date: string; totalImpressions: number; engagedImpressions: number }> }
     const clickhouseEngagement = clickhouseData.data || []
 
-    console.log(`✅ ClickHouse SUCCESS: Retrieved engagement data for site_id ${site.id} (${site_url}) - ${clickhouseEngagement.length} days`)
-
     const clickhouseEngagementRates = clickhouseEngagement.map((result) => {
       const engagementRate = (Number(result.engagedImpressions) / Number(result.totalImpressions)) * 100
 
@@ -152,31 +341,6 @@ export async function findEngagementURLDate(user_id: number, site_url: string, s
       }
     })
 
-    // If CLICKHOUSE_FLAG is true, also fetch from MySQL for comparison
-    if (process.env.CLICKHOUSE_FLAG === 'true') {
-      try {
-        // Import MySQL repository dynamically to avoid circular dependencies
-        const { findEngagementURLDate: findMySQLEngagement } = await import('./impressions.repository')
-
-        const mysqlEngagement = await findMySQLEngagement(user_id, site_url, startDate, endDate)
-
-        console.log(`✅ MySQL SUCCESS: Retrieved engagement data for comparison - ${mysqlEngagement.length} days`)
-
-        // Add source identification to MySQL data
-        const mysqlEngagementWithSource = mysqlEngagement.map((item) => ({
-          ...item,
-          source: 'mysql',
-        }))
-
-        // Return both datasets
-        return [...clickhouseEngagementRates, ...mysqlEngagementWithSource]
-      } catch (mysqlError) {
-        console.log(`⚠️ MySQL fallback failed, returning ClickHouse data only: ${mysqlError.message}`)
-        return clickhouseEngagementRates
-      }
-    }
-
-    // Return ClickHouse data only
     return clickhouseEngagementRates
   } catch (error) {
     logger.error('Error finding engagement data:', error)

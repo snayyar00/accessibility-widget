@@ -11,8 +11,8 @@ const getClickHouseConfig = () => {
       max_open_connections: 10,
       request_timeout: 30000,
       compression: {
-        response: true,
-        request: true,
+        response: false,
+        request: false,
       },
       keep_alive: {
         enabled: true,
