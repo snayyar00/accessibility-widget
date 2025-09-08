@@ -29,7 +29,9 @@ import {
 
 import {
   getRootDomain,
+  getFullDomain,
   isValidRootDomainFormat,
+  isValidFullDomainFormat,
   isIpAddress,
 } from '@/utils/domainUtils';
 import AccordionDetails, {
@@ -312,11 +314,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   }, [selectedDomainFromRedux, siteOptions]);
 
   const handleSubmit = async () => {
-    const sanitizedDomain = getRootDomain(domain);
+    const sanitizedDomain = getFullDomain(domain);
     if (
       sanitizedDomain !== 'localhost' &&
       !isIpAddress(sanitizedDomain) &&
-      !isValidRootDomainFormat(sanitizedDomain)
+      !isValidFullDomainFormat(sanitizedDomain)
     ) {
       if (isMounted.current) {
         setDomain(currentDomain);
