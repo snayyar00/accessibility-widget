@@ -65,3 +65,30 @@ export async function allowedOrganization(req: Request, res: Response, next: Nex
   ;(req as any).organization = organization
   next()
 }
+
+export async function authenticateApiKey(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization || ''
+  const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+
+  if (!bearerToken) {
+    logAuthenticationFailure(req, res, 'API key missing from Authorization header', 'API_KEY_MISSING')
+    return res.status(401).json({
+      error: 'API key required',
+      message: 'Please provide API key in Authorization header as Bearer token',
+    })
+  }
+
+  const expectedApiKey = process.env.GET_SITE_ROUTE_API_KEY
+
+  if (!expectedApiKey) {
+    logAuthenticationFailure(req, res, 'API key not configured on server', 'API_KEY_NOT_CONFIGURED', 500)
+    return res.status(500).json({ error: 'Server configuration error' })
+  }
+
+  if (bearerToken !== expectedApiKey) {
+    logAuthenticationFailure(req, res, 'Invalid API key provided', 'API_KEY_INVALID')
+    return res.status(401).json({ error: 'Invalid API key' })
+  }
+
+  next()
+}
