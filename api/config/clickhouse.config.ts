@@ -1,15 +1,34 @@
 import { createClient } from '@clickhouse/client'
 import { isClickHouseDisabled } from '../utils/database.utils'
 
-// ClickHouse connection configuration
+// ClickHouse connection configuration with performance optimizations
 const getClickHouseConfig = () => {
   if (process.env.CLICKHOUSE_URL) {
     console.log('🔗 Using ClickHouse connection string from CLICKHOUSE_URL')
-    return { url: process.env.CLICKHOUSE_URL }
+    return {
+      url: process.env.CLICKHOUSE_URL,
+      // Connection pooling and performance settings
+      max_open_connections: 10,
+      request_timeout: 30000,
+      compression: {
+        response: true,
+        request: true,
+      },
+      keep_alive: {
+        enabled: true,
+        socket_keep_alive_initial_delay_millis: 0,
+      },
+      // Retry configuration
+      retry_on_failure: {
+        max_attempts: 3,
+        initial_interval_millis: 1000,
+        max_interval_millis: 10000,
+      },
+    }
   }
 }
 
-// Create ClickHouse client
+// Create ClickHouse client with optimized configuration
 const clickhouseClient = createClient(getClickHouseConfig())
 
 // Startup function to check and create tables if they don't exist
