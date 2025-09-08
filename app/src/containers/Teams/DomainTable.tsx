@@ -4,9 +4,10 @@ import { FaTrash, FaCheck, FaTimes, FaCog } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
-import { CircularProgress } from '@mui/material';
+import { CircularProgress, Tooltip } from '@mui/material';
 import deleteSite from '@/queries/sites/deleteSite';
 import updateSite from '@/queries/sites/updateSite';
+import toggleSiteMonitoring from '@/queries/sites/toggleSiteMonitoring';
 import isValidDomain from '@/utils/verifyDomain';
 import ConfirmDeleteSiteModal from './DeleteWarningModal';
 import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
@@ -21,6 +22,11 @@ export interface Domain {
   expiredAt: string;
   status: string;
   trial: number;
+  monitor_enabled?: boolean;
+  monitor_priority?: number;
+  last_monitor_check?: string;
+  is_currently_down?: number;
+  monitor_consecutive_fails?: number;
 }
 
 interface DomainTableProps {
@@ -55,6 +61,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [expiryDays, setExpiryDays] = useState(-1);
   const selectedDomain = useRef<Domain | null>(null);
   const [showActivateModal, setShowActivateModal] = useState(false);
+  // Local state for monitoring toggles (temporary until DB is updated)
+  const [monitoringStates, setMonitoringStates] = useState<{ [key: number]: boolean }>({});
 
   const [deleteSiteMutation] = useMutation(deleteSite, {
     onCompleted: (response) => {
@@ -78,6 +86,18 @@ const DomainTable: React.FC<DomainTableProps> = ({
     onError: (error) => {
       toast.error(
         `There was an error while editing the domain name. ${error.message}`,
+      );
+    },
+  });
+
+  const [toggleMonitoringMutation] = useMutation(toggleSiteMonitoring, {
+    onCompleted: () => {
+      setReloadSites(true);
+      toast.success('Monitoring settings updated successfully.');
+    },
+    onError: (error) => {
+      toast.error(
+        `Failed to update monitoring settings. ${error.message}`,
       );
     },
   });
@@ -147,6 +167,21 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const handleCancel = () => {
     setEditingId(null);
     setTempDomain('');
+  };
+
+  const handleMonitoringToggle = async (siteId: number, currentValue: boolean) => {
+    try {
+      // Update local state immediately for visual feedback
+      setMonitoringStates(prev => ({ ...prev, [siteId]: !currentValue }));
+      
+      await toggleMonitoringMutation({
+        variables: { siteId, enabled: !currentValue },
+      });
+    } catch (error) {
+      console.error('Error toggling monitoring:', error);
+      // Revert on error
+      setMonitoringStates(prev => ({ ...prev, [siteId]: currentValue }));
+    }
   };
 
   const handleSave = async (id: number) => {
@@ -348,27 +383,71 @@ const DomainTable: React.FC<DomainTableProps> = ({
       />
 
       <div className="container mx-auto px-4 py-8">
-        <h2 className="text-3xl font-semibold mb-6">Added Domains</h2>
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">Domain Management</h2>
+          <p className="text-gray-500 mt-2">Monitor and manage your website domains</p>
+        </div>
+        
         {/* Desktop Table */}
         <div className="hidden lg:block">
-          <table className="min-w-full bg-white rounded-lg shadow-md overflow-hidden">
-            <thead>
-              <tr>
-                <th className="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                  Domain
-                </th>
-                <th className="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                  Expires
-                </th>
-                <th className="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-right text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                  Actions
-                </th>
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+            <table className="min-w-full">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                <tr>
+                  <th className="py-5 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <Tooltip title="Website domain URL that you want to monitor" placement="top">
+                      <div className="flex items-center space-x-1 cursor-help">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                        </svg>
+                        <span>Domain</span>
+                      </div>
+                    </Tooltip>
+                  </th>
+                  <th className="py-5 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <Tooltip title="Current subscription plan and trial status" placement="top">
+                      <div className="flex items-center space-x-1 cursor-help">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        <span>Plan</span>
+                      </div>
+                    </Tooltip>
+                  </th>
+                  <th className="py-5 px-6 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <Tooltip title="Enable or disable uptime monitoring for this domain" placement="top">
+                      <div className="flex items-center justify-center space-x-1 cursor-help">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <span>Monitor</span>
+                      </div>
+                    </Tooltip>
+                  </th>
+                  <th className="py-5 px-6 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <Tooltip title="Current uptime status of your domain" placement="top">
+                      <div className="flex items-center justify-center space-x-1 cursor-help">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Status</span>
+                      </div>
+                    </Tooltip>
+                  </th>
+                  <th className="py-5 px-6 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <Tooltip title="Available actions for this domain" placement="top">
+                      <div className="flex items-center justify-end space-x-1 cursor-help">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        </svg>
+                        <span>Actions</span>
+                      </div>
+                    </Tooltip>
+                  </th>
               </tr>
-            </thead>
-            <tbody>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
               {domains.map((domain) => {
                 const isEditing = editingId === domain.id;
                 const domainStatus = getDomainStatus(
@@ -380,132 +459,256 @@ const DomainTable: React.FC<DomainTableProps> = ({
                 return (
                   <tr
                     key={domain.id}
-                    className="hover:bg-gray-50 transition-colors duration-200"
+                    className="group hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent transition-all duration-300"
                   >
-                    <td className="py-4 px-4 border-b border-gray-200">
+                    <td className="py-5 px-6 whitespace-nowrap">
                       {isEditing ? (
                         <input
                           type="text"
-                          className="border p-2 rounded bg-gray-100 text-lg font-medium w-full"
+                          aria-label="Edit domain URL"
+                          className="border-2 border-gray-200 px-4 py-2 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                           value={tempDomain}
                           onChange={(e) => setTempDomain(e.target.value)}
+                          autoFocus
                         />
                       ) : (
-                        domain.url
+                        <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                          {domain.url}
+                        </div>
                       )}
                     </td>
-                    <td className="py-4 px-4 border-b border-gray-200">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${applyStatusClass(
-                          domain.url,
-                          domain.expiredAt,
-                          domain.trial,
-                          appSumoDomains,
-                        )}`}
+                    <td className="py-5 px-6 whitespace-nowrap">
+                      <Tooltip 
+                        title={
+                          domainStatus === 'Life Time' ? 'Lifetime license - Never expires' :
+                          domainStatus === 'Active' ? 'Subscription is active' :
+                          domainStatus === 'Trial' ? `Trial period ends on ${domain?.expiredAt ? new Date(Number.parseInt(domain.expiredAt)).toLocaleDateString() : 'N/A'}` :
+                          domainStatus === 'Trial Expired' ? 'Trial period has ended - Please activate' :
+                          domainStatus === 'Expiring' ? 'Subscription is expiring soon' :
+                          'Subscription has expired'
+                        } 
+                        placement="top"
                       >
-                        {domainStatus}
-                      </span>
+                        <span
+                          className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all duration-200 cursor-help ${applyStatusClass(
+                            domain.url,
+                            domain.expiredAt,
+                            domain.trial,
+                            appSumoDomains,
+                          )}`}
+                        >
+                          <span className="relative flex h-2 w-2 mr-2">
+                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                              domainStatus === 'Life Time' ? 'bg-green-400' : 
+                              domainStatus === 'Trial' ? 'bg-yellow-400' : 
+                              'bg-blue-400'
+                            }`}></span>
+                            <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                              domainStatus === 'Life Time' ? 'bg-green-500' : 
+                              domainStatus === 'Trial' ? 'bg-yellow-500' : 
+                              'bg-blue-500'
+                            }`}></span>
+                          </span>
+                          {domainStatus}
+                          {domainStatus === 'Trial' && domain?.expiredAt && (
+                            <span className="ml-1.5 opacity-75">
+                              • {new Date(
+                                Number.parseInt(domain.expiredAt),
+                              ).toLocaleDateString()}
+                            </span>
+                          )}
+                        </span>
+                      </Tooltip>
                     </td>
-                    <td className="py-4 px-4 border-b border-gray-200">
-                      {domainStatus == 'Life Time'
-                        ? null
-                        : domain?.expiredAt
-                        ? new Date(
-                            Number.parseInt(domain.expiredAt),
-                          ).toLocaleDateString()
-                        : 'N/A'}
+                    <td className="py-5 px-6 whitespace-nowrap text-center">
+                      <Tooltip title={(monitoringStates[domain.id] ?? domain.monitor_enabled) ? 'Click to disable monitoring' : 'Click to enable monitoring'} placement="top">
+                        <button
+                          onClick={() => handleMonitoringToggle(domain.id, monitoringStates[domain.id] ?? domain.monitor_enabled ?? false)}
+                          role="switch"
+                          aria-checked={(monitoringStates[domain.id] ?? domain.monitor_enabled) ?? false}
+                          aria-label={`Toggle monitoring for ${domain.url}`}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 ${
+                            (monitoringStates[domain.id] ?? domain.monitor_enabled)
+                              ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:ring-blue-500 shadow-lg shadow-blue-500/25'
+                              : 'bg-gray-200 hover:bg-gray-300 focus:ring-gray-300'
+                          }`}
+                          disabled={isEditing}
+                        >
+                          <span className="sr-only">
+                            {(monitoringStates[domain.id] ?? domain.monitor_enabled) 
+                              ? 'Monitoring is enabled' 
+                              : 'Monitoring is disabled'}
+                          </span>
+                          <span
+                            aria-hidden="true"
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-all duration-300 ${
+                              (monitoringStates[domain.id] ?? domain.monitor_enabled)
+                                ? 'translate-x-6'
+                                : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </Tooltip>
                     </td>
-                    <td className="py-4 px-4 border-b border-gray-200">
+                    <td className="py-5 px-6 whitespace-nowrap text-center">
+                      {(monitoringStates[domain.id] ?? domain.monitor_enabled) ? (
+                        domain.is_currently_down !== null && domain.is_currently_down !== undefined ? (
+                          <div className="flex items-center justify-center">
+                            {domain.is_currently_down === 0 ? (
+                              <Tooltip title={`Website is responding normally${domain.last_monitor_check ? ` - Last checked: ${new Date(domain.last_monitor_check).toLocaleString()}` : ''}`} placement="top">
+                                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 shadow-sm cursor-help">
+                                  <span className="relative flex h-2 w-2 mr-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                  </span>
+                                  Online
+                                </span>
+                              </Tooltip>
+                            ) : domain.is_currently_down === 1 ? (
+                              <Tooltip title={`Website is not responding${domain.last_monitor_check ? ` - Last checked: ${new Date(domain.last_monitor_check).toLocaleString()}` : ''}`} placement="top">
+                                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-red-50 to-pink-50 text-red-700 border border-red-200 shadow-sm cursor-help">
+                                  <span className="relative flex h-2 w-2 mr-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                  </span>
+                                  Offline
+                                </span>
+                              </Tooltip>
+                            ) : (
+                              <Tooltip title="Status check in progress" placement="top">
+                                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 cursor-help">
+                                  <svg className="animate-spin -ml-0.5 mr-2 h-3 w-3 text-gray-400" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  Checking...
+                                </span>
+                              </Tooltip>
+                            )}
+                          </div>
+                        ) : (
+                          <Tooltip title="Waiting for first monitoring check" placement="top">
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200 cursor-help">
+                              <svg className="mr-2 h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Awaiting data
+                            </span>
+                          </Tooltip>
+                        )
+                      ) : (
+                        <Tooltip title="Monitoring is disabled for this domain" placement="top">
+                          <span className="text-xs text-gray-400 italic cursor-help">Monitor off</span>
+                        </Tooltip>
+                      )}
+                    </td>
+                    <td className="py-5 px-6 whitespace-nowrap text-right text-sm font-medium">
                       {isEditing ? (
                         <div className="flex justify-end items-center space-x-2">
-                          <button
-                            onClick={() => handleSave(domain.id)}
-                            className="p-2 text-green-600 hover:text-green-800"
-                            disabled={editLoading}
-                          >
-                            {editLoading ? (
-                              <CircularProgress size={20} />
-                            ) : (
-                              <FaCheck />
-                            )}
-                          </button>
-                          <button
-                            onClick={handleCancel}
-                            className="p-2 text-red-600 hover:text-red-800"
-                            disabled={editLoading}
-                          >
-                            <FaTimes />
-                          </button>
+                          <Tooltip title="Save changes" placement="top">
+                            <button
+                              onClick={() => handleSave(domain.id)}
+                              className="inline-flex items-center p-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 focus:outline-none focus:ring-4 focus:ring-green-500/20 transition-all duration-200 shadow-lg shadow-green-500/25"
+                              disabled={editLoading}
+                            >
+                              {editLoading ? (
+                                <CircularProgress size={16} />
+                              ) : (
+                                <FaCheck className="w-4 h-4" />
+                              )}
+                            </button>
+                          </Tooltip>
+                          <Tooltip title="Cancel editing" placement="top">
+                            <button
+                              onClick={handleCancel}
+                              className="inline-flex items-center p-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-500/20 transition-all duration-200 shadow-lg shadow-gray-500/25"
+                              disabled={editLoading}
+                            >
+                              <FaTimes className="w-4 h-4" />
+                            </button>
+                          </Tooltip>
                         </div>
                       ) : (
-                        // Desktop action buttons (all in one row)
-                        <div className="flex justify-end items-center space-x-2">
-                          {domainStatus !== 'Active' &&
-                            domainStatus !== 'Life Time' &&
-                            domainStatus !== 'Expiring' && (
-                              <>
-                                {activePlan !== '' && tierPlan ? (
+                        <div className="flex justify-end items-center gap-2">
+                          {/* Conditionally show Activate/Buy button for non-active domains */}
+                          {domainStatus === 'Trial' || domainStatus === 'Trial Expired' ? (
+                            <>
+                              {activePlan !== '' && tierPlan ? (
+                                <Tooltip title="Activate your subscription for this domain" placement="top">
                                   <button
                                     disabled={billingLoading}
                                     onClick={() => handleSubscription(domain)}
-                                    type="submit"
-                                    // className="p-2 text-white text-center rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] transition duration-300 w-fit"
-                                    className="p-2 bg-primary text-white rounded-md text-sm flex items-center justify-center hover:bg-[#1D4ED8] transition-colors duration-200"
+                                    type="button"
+                                    aria-label={`Activate subscription for ${domain.url}`}
+                                    className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 text-xs font-semibold rounded-lg hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                   >
-                                    {billingLoading
-                                      ? 'Please Wait...'
-                                      : 'Activate'}
+                                    {billingLoading ? 'Processing...' : 'Activate'}
                                   </button>
-                                ) : appSumoCount < codeCount ? (
+                                </Tooltip>
+                              ) : appSumoCount < codeCount ? (
+                                <Tooltip title="Activate domain with promo code" placement="top">
                                   <button
-                                    onClick={() => {
-                                      handleOpenActivateModal(domain);
-                                    }}
-                                    type="submit"
-                                    className="p-2 bg-green text-white rounded-md text-sm flex items-center justify-center hover:bg-green-600 transition-colors duration-200"
+                                    onClick={() => handleOpenActivateModal(domain)}
+                                    type="button"
+                                    aria-label={`Open activation modal for ${domain.url}`}
+                                    className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 text-xs font-semibold rounded-lg hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
                                   >
                                     Activate
                                   </button>
-                                ) : (
+                                </Tooltip>
+                              ) : (
+                                <Tooltip title="Purchase a license for this domain" placement="top">
                                   <button
                                     onClick={() => {
                                       setPaymentView(true);
                                       openModal();
                                       setOptionalDomain(domain.url);
                                     }}
-                                    type="submit"
-                                    // className="p-2 text-white text-center rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] transition duration-300 w-fit"
-                                    className="p-2 bg-green text-white rounded-md text-sm flex items-center justify-center hover:bg-green-600 transition-colors duration-200"
+                                    type="button"
+                                    aria-label={`Buy license for ${domain.url}`}
+                                    className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 text-xs font-semibold rounded-lg hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
                                   >
                                     Buy License
                                   </button>
-                                )}
-                              </>
-                            )}
-                          <button
-                            onClick={() => handleEdit(domain)}
-                            className="p-2 bg-[#2563EB] text-white rounded-md text-sm flex items-center justify-center hover:bg-[#1D4ED8] transition-colors duration-200"
-                          >
-                            <FaCog className="mr-2" /> Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              setDeleteSiteID(domain.id);
-                              setDeleteSiteStatus(domainStatus);
-                              setShowModal(true);
-                            }}
-                            className="p-2 bg-[#1E40AF] text-white rounded-md text-sm flex items-center justify-center hover:bg-[#1E3A8A] transition-colors duration-200"
-                          >
-                            <FaTrash className="mr-2" /> Delete
-                          </button>
+                                </Tooltip>
+                              )}
+                            </>
+                          ) : null}
+                          <Tooltip title="Edit domain settings" placement="top">
+                            <button
+                              onClick={() => handleEdit(domain)}
+                              type="button"
+                              aria-label={`Edit domain ${domain.url}`}
+                              className="inline-flex items-center px-3 py-1.5 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                            >
+                              <FaCog className="w-3.5 h-3.5 mr-1" />
+                              Edit
+                            </button>
+                          </Tooltip>
+                          <Tooltip title="Delete this domain from your account" placement="top">
+                            <button
+                              onClick={() => {
+                                setDeleteSiteID(domain.id);
+                                setDeleteSiteStatus(domainStatus);
+                                setShowModal(true);
+                              }}
+                              type="button"
+                              aria-label={`Delete domain ${domain.url}`}
+                              className="inline-flex items-center px-3 py-1.5 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                            >
+                              <FaTrash className="w-3.5 h-3.5 mr-1" />
+                              Delete
+                            </button>
+                          </Tooltip>
                         </div>
                       )}
                     </td>
                   </tr>
                 );
               })}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
         {/* Mobile Grid */}
         <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -550,21 +753,18 @@ const DomainTable: React.FC<DomainTableProps> = ({
                         )}`}
                       >
                         {domainStatus}
+                        {domainStatus === 'Trial' && domain?.expiredAt && (
+                          <span className="ml-1">
+                            • {new Date(
+                              Number.parseInt(domain.expiredAt),
+                            ).toLocaleDateString()}
+                          </span>
+                        )}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4">
-                  <p className="text-sm text-gray-600">
-                    Expires:{' '}
-                    {domain.expiredAt
-                      ? new Date(
-                          Number.parseInt(domain.expiredAt),
-                        ).toLocaleDateString()
-                      : 'N/A'}
-                  </p>
-                </div>
                 {isEditing ? (
                   <div className="p-4 bg-gray-50 flex justify-end items-center space-x-2">
                     <button

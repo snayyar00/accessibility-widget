@@ -51,6 +51,7 @@ export async function updateUserNotificationSettings(
     new_domain_flag?: boolean
     issue_reported_flag?: boolean
     onboarding_emails_flag?: boolean
+    monitoring_alert_flag?: boolean
   },
 ): Promise<{ success: boolean; message: string }> {
   try {

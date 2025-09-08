@@ -51,6 +51,7 @@ export type UserProfile = {
   password_changed_at?: string
   license_owner_email?: string
   phone_number?: string
+  monitoring_alert_flag?: boolean
 }
 
 type GetUserByIdAndJoinUserTokenResponse = UserProfile & UserToken
@@ -100,6 +101,10 @@ export async function getUserbyId(id: number): Promise<UserProfile> {
   return database(TABLE).where({ id }).first()
 }
 
+export async function findUserById(id: number): Promise<UserProfile> {
+  return getUserbyId(id)
+}
+
 export async function getUserByIdAndJoinUserToken(id: number, type: 'verify_email' | 'forgot_password' | 'team_invitation_email'): Promise<GetUserByIdAndJoinUserTokenResponse> {
   const users = Object.values(usersColumns)
   const userToken = Object.values(userTokenColumns)
@@ -131,6 +136,7 @@ export async function updateUserNotificationFlags(
     new_domain_flag?: boolean
     issue_reported_flag?: boolean
     onboarding_emails_flag?: boolean
+    monitoring_alert_flag?: boolean
   },
 ): Promise<number> {
   return database('user_notifications').where({ user_id }).update(flags)

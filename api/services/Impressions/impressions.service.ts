@@ -1,6 +1,21 @@
-import { findEngagementURLDate, findImpressionsURLDate, insertImpressionURL, updateImpressionProfileCount, updateImpressions } from '../../repository/impressions.clickhouse.repository'
-import { findVisitorByIp } from '../../repository/visitors.clickhouse.repository'
+import {
+  findEngagementURLDate as findEngagementURLDateClickHouse,
+  findImpressionsURLDate as findImpressionsURLDateClickHouse,
+  insertImpressionURL as insertImpressionURLClickHouse,
+  updateImpressionProfileCount as updateImpressionProfileCountClickHouse,
+  updateImpressions as updateImpressionsClickHouse,
+} from '../../repository/impressions.clickhouse.repository'
+import {
+  findEngagementURLDate as findEngagementURLDateSQL,
+  findImpressionsURLDate as findImpressionsURLDateSQL,
+  insertImpressionURL as insertImpressionURLSQL,
+  updateImpressionProfileCount as updateImpressionProfileCountSQL,
+  updateImpressions as updateImpressionsSQL,
+} from '../../repository/impressions.repository'
+import { findVisitorByIp as findVisitorByIpClickHouse } from '../../repository/visitors.clickhouse.repository'
+import { findVisitorByIp as findVisitorByIpSQL } from '../../repository/visitors.repository'
 import { getRootDomain, normalizeDomain } from '../../utils/domain.utils'
+import { isClickHouseDisabled, getCurrentDatabaseType } from '../../utils/database.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateAddImpressionsURL, validateAddInteraction, validateAddProfileCount, validateFindImpressionsByURLAndDate, validateGetEngagementRates } from '../../validations/impression.validation'
@@ -16,14 +31,16 @@ export async function addImpressionsURL(ipAddress: string, url: string) {
   const domain = getRootDomain(url)
 
   try {
-    const visitor = await findVisitorByIp(ipAddress)
+    const visitor = isClickHouseDisabled() ? await findVisitorByIpSQL(ipAddress) : await findVisitorByIpClickHouse(ipAddress)
 
     if (visitor) {
       const data = {
         visitor_id: visitor.id,
       }
 
-      const response = await insertImpressionURL(data, domain)
+      const response = isClickHouseDisabled() ? await insertImpressionURLSQL(data, domain) : await insertImpressionURLClickHouse(data, domain)
+
+      logger.info(`Using ${getCurrentDatabaseType()} for impression insertion`)
       return response
     }
     const site = await findSite(domain)
@@ -34,7 +51,7 @@ export async function addImpressionsURL(ipAddress: string, url: string) {
 
     await addNewVisitor(ipAddress, site.id)
 
-    const visitorSecond = await findVisitorByIp(ipAddress)
+    const visitorSecond = isClickHouseDisabled() ? await findVisitorByIpSQL(ipAddress) : await findVisitorByIpClickHouse(ipAddress)
 
     if (!visitorSecond) {
       throw new Error('Visitor not found after creation')
@@ -44,7 +61,9 @@ export async function addImpressionsURL(ipAddress: string, url: string) {
       visitor_id: visitorSecond.id,
     }
 
-    const response = await insertImpressionURL(data, domain)
+    const response = isClickHouseDisabled() ? await insertImpressionURLSQL(data, domain) : await insertImpressionURLClickHouse(data, domain)
+
+    logger.info(`Using ${getCurrentDatabaseType()} for impression insertion after visitor creation`)
 
     return response
   } catch (error) {
@@ -63,7 +82,9 @@ export async function findImpressionsByURLAndDate(userId: number, url: string, s
   const domain = normalizeDomain(url)
 
   try {
-    const impressions = await findImpressionsURLDate(userId, domain, startDate, endDate)
+    const impressions = isClickHouseDisabled() ? await findImpressionsURLDateSQL(userId, domain, startDate, endDate) : await findImpressionsURLDateClickHouse(userId, domain, startDate, endDate)
+
+    logger.info(`Using ${getCurrentDatabaseType()} for impressions lookup by URL and date`)
 
     return { impressions, count: impressions.length }
   } catch (e) {
@@ -90,7 +111,10 @@ export async function addInteraction(impressionId: number, interaction: string) 
       throw new Error('Invalid interaction type. Only "widgetClosed" or "widgetOpened" are acceptable.')
     }
 
-    return await updateImpressions(impressionId, interaction)
+    const result = isClickHouseDisabled() ? await updateImpressionsSQL(impressionId, interaction) : await updateImpressionsClickHouse(impressionId, interaction)
+
+    logger.info(`Using ${getCurrentDatabaseType()} for impression interaction update`)
+    return result
   } catch (e) {
     logger.error(e)
     throw e
@@ -108,7 +132,9 @@ export async function addProfileCount(impressionId: number, profileCount: any): 
   }
 
   try {
-    const updatedRows = await updateImpressionProfileCount(impressionId, profileCount)
+    const updatedRows = isClickHouseDisabled() ? await updateImpressionProfileCountSQL(impressionId, profileCount) : await updateImpressionProfileCountClickHouse(impressionId, profileCount)
+
+    logger.info(`Using ${getCurrentDatabaseType()} for profile count update`)
 
     if (updatedRows > 0) {
       return {
@@ -141,7 +167,9 @@ export async function getEngagementRates(userId: number, url: string, startDate:
   const domain = normalizeDomain(url)
 
   try {
-    const impressions = await findEngagementURLDate(userId, domain, startDate, endDate)
+    const impressions = isClickHouseDisabled() ? await findEngagementURLDateSQL(userId, domain, startDate, endDate) : await findEngagementURLDateClickHouse(userId, domain, startDate, endDate)
+
+    logger.info(`Using ${getCurrentDatabaseType()} for engagement rates lookup`)
     return impressions
   } catch (e) {
     logger.error(e)

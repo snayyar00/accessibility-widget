@@ -1,6 +1,7 @@
 import { combineResolvers } from 'graphql-resolvers'
 
 import { addSite, changeURL, deleteSite, findUserSites, isDomainAlreadyAdded } from '../../services/allowedSites/allowedSites.service'
+import { toggleSiteMonitoring } from '../../repository/sites_allowed.repository'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 const resolvers = {
@@ -17,6 +18,10 @@ const resolvers = {
     changeURL: combineResolvers(allowedOrganization, isAuthenticated, (_, { newURL, siteId }, { user }) => changeURL(siteId, user.id, newURL)),
 
     deleteSite: combineResolvers(allowedOrganization, isAuthenticated, (_, { url }, { user }) => deleteSite(user.id, url)),
+
+    toggleSiteMonitoring: combineResolvers(allowedOrganization, isAuthenticated, async (_, { siteId, enabled }, { user }) => {
+      return toggleSiteMonitoring(siteId, enabled, user.id)
+    }),
   },
 }
 

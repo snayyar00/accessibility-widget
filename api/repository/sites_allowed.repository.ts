@@ -57,15 +57,29 @@ export async function findUserSitesWithPlans(userId: number, organizationId?: nu
     .leftJoin('sites_plans', function () {
       this.on('sites_plans.allowed_site_id', '=', 'allowed_sites.id').andOn('sites_plans.id', '=', database.raw('(SELECT MAX(sp2.id) FROM sites_plans sp2 WHERE sp2.allowed_site_id = allowed_sites.id)'))
     })
-    .select('allowed_sites.id', 'allowed_sites.user_id', 'allowed_sites.url', 'allowed_sites.created_at as createAt', 'allowed_sites.updated_at as updatedAt', 'sites_plans.expired_at as expiredAt', 'sites_plans.is_trial as trial')
+    .select(
+      'allowed_sites.id', 
+      'allowed_sites.user_id', 
+      'allowed_sites.url', 
+      'allowed_sites.created_at as createAt', 
+      'allowed_sites.updated_at as updatedAt', 
+      'sites_plans.expired_at as expiredAt', 
+      'sites_plans.is_trial as trial',
+      'allowed_sites.monitor_enabled',
+      'allowed_sites.status',
+      'allowed_sites.monitor_priority',
+      'allowed_sites.last_monitor_check',
+      'allowed_sites.is_currently_down',
+      'allowed_sites.monitor_consecutive_fails'
+    )
     .distinct()
 
   return sites
 }
 
-export async function findSiteById(id: number): Promise<FindAllowedSitesProps> {
+export async function findSiteById(id: number): Promise<any> {
   return database(TABLE)
-    .where({ [siteColumns.id]: id })
+    .where({ id })
     .first()
 }
 
@@ -111,7 +125,6 @@ export async function insertSite(data: allowedSites): Promise<FindAllowedSitesPr
 
       return insertedSite
     } catch (error) {
-      console.error('insertSite transaction error:', error)
       return `insert failed: ${error.message}`
     }
   })
@@ -186,10 +199,8 @@ export async function deleteSiteWithRelatedRecords(url: string, user_id: number)
       // Delete the main site record within the same transaction
       const deletedCount = await trx(TABLE).where({ user_id, url }).del()
 
-      console.log(`Deleted site: ${url} (${deletedCount} records)`)
       return deletedCount
     } catch (error) {
-      console.error('Error in deleteSiteWithRelatedRecords for %s:', url, error)
       throw error
     }
   })
@@ -205,4 +216,12 @@ export async function updateAllowedSiteURL(site_id: number, url: string, user_id
   return database(TABLE).where({ 'allowed_sites.user_id': user_id, 'allowed_sites.id': site_id }).update({
     url,
   })
+}
+
+export async function toggleSiteMonitoring(site_id: number, enabled: boolean, user_id: number): Promise<boolean> {
+  const updated = await database(TABLE)
+    .where({ id: site_id, user_id })
+    .update({ monitor_enabled: enabled })
+  
+  return updated > 0
 }

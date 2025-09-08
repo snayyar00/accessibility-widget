@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 
 import { addNewsletterSub, unsubscribeFromNewsletter } from '../repository/newsletter_subscribers.repository'
-import { findUser, setOnboardingEmailsFlag } from '../repository/user.repository'
+import { findUser, setOnboardingEmailsFlag, updateUserNotificationFlags } from '../repository/user.repository'
 import { sendMail } from '../services/email/email.service'
 import { emailValidation } from '../validations/email.validation'
 
@@ -103,7 +103,7 @@ export async function unsubscribeNewsletter(req: Request, res: Response) {
 
 export async function unsubscribe(req: Request, res: Response) {
   try {
-    const { email } = req.query
+    const { email, type } = req.query
 
     if (!email || typeof email !== 'string') {
       return res.status(400).send(`
@@ -134,22 +134,36 @@ export async function unsubscribe(req: Request, res: Response) {
         `)
     }
 
-    // Disable onboarding emails for this user
-    const success = await setOnboardingEmailsFlag(user.id, false)
-    console.log(`Disabled onboarding emails for user ${user.id}`)
+    let success = false
+    let message = ''
 
-    // Note: No need to cancel scheduled emails since we use immediate sending
-
-    // Also unsubscribe from general newsletter for complete unsubscribe
-    await unsubscribeFromNewsletter(email)
+    // Handle different types of unsubscribe
+    if (type === 'monitoring') {
+      // Disable monitoring alerts
+      const updated = await updateUserNotificationFlags(user.id, {
+        monitoring_alert_flag: false
+      })
+      success = updated > 0
+      message = 'You have been successfully unsubscribed from WebAbility monitoring alerts.<br/>You will no longer receive email notifications when your websites go down or come back online.'
+    } else {
+      // Default: Disable onboarding emails
+      success = await setOnboardingEmailsFlag(user.id, false)
+      
+      // Also unsubscribe from general newsletter for complete unsubscribe
+      await unsubscribeFromNewsletter(email)
+      message = 'You have been successfully unsubscribed from WebAbility onboarding emails.'
+    }
 
     if (success) {
       res.status(200).send(`
           <html>
             <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
               <h2 style="color: #28a745;">✓ Successfully Unsubscribed</h2>
-              <p>You have been successfully unsubscribed from WebAbility onboarding emails.</p>
+              <p>${message}</p>
               <p style="color: #666;">Email: ${email}</p>
+              <p style="margin-top: 20px; color: #666; font-size: 14px;">
+                You can re-enable notifications anytime from your dashboard settings.
+              </p>
               <p style="margin-top: 30px;">
                 <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
               </p>
