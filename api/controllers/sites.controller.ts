@@ -4,7 +4,7 @@ import { findSiteByURL } from '../repository/sites_allowed.repository'
 
 /**
  * Find if domain URL is added using query parameter
- * Endpoint: GET /api/sites/search?url=example.com
+ * Endpoint: GET /get-site?url=example.com
  */
 export async function searchSiteByURL(req: Request, res: Response): Promise<Response> {
   try {
