@@ -546,7 +546,9 @@ const TrialBannerAndModal: React.FC<any> = ({
                   </h1>
                   <p>
                     Streamline web accessibility with WebAbilityWidget, the #1
-                    web accessibility, WCAG and ADA compliance solution
+                    web accessibility, WCAG and ADA compliance solution. Please
+                    add only the root domain. We will manage the subdomains on
+                    our end.
                   </p>
                   <div className="form-group">
                     <input
