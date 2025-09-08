@@ -108,7 +108,7 @@ export function getFullDomain(
   let cleanedInput = urlOrHostname.replace(/^(https?:\/\/)?(www\.)?/, '');
   const parts = cleanedInput.split(/[\/?#]/);
   cleanedInput = parts[0];
-
+  cleanedInput = cleanedInput.replace(/:\d+$/, '');
   if (isIpAddress(cleanedInput)) {
     return cleanedInput;
   }
