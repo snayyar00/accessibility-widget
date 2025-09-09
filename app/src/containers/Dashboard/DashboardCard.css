@@ -5,9 +5,8 @@
   display: flex;
   flex-direction: column;
   width: 300px;
-  height:7.5rem;
+  height: 7.5rem;
   overflow: hidden;
-
 }
 
 .card-content {
@@ -22,7 +21,6 @@
   align-items: center;
   /* margin-bottom: 1rem; */
   margin-top: 0rem;
-
 }
 
 .card-title {
@@ -40,15 +38,13 @@
 .card-body {
   display: flex;
   align-items: center;
-  justify-content: start;
-
+  justify-content: flex-start;
 }
 
 .card-count {
   font-size: 2rem;
   font-weight: bold;
   margin-right: 0.5rem;
-
 }
 
 .card-count-type {
@@ -59,7 +55,7 @@
 
 .card-footer {
   display: flex;
-  justify-content: start;
+  justify-content: flex-start;
 }
 
 .increment-button {
@@ -111,10 +107,8 @@
 } */
 @media (max-width: 640px) {
   .dashboard-card {
-
-   width: 100%; /* Full width on small screens */
+    width: 100%; /* Full width on small screens */
     /* margin: 10px; */
-
   }
 }
 
@@ -122,8 +116,7 @@
   .dashboard-card {
     max-width: 100%; /* Adjust width for medium screens */
     /* margin: 10px; */
-     /* Adjust margin for medium screens */
-
+    /* Adjust margin for medium screens */
   }
 }
 

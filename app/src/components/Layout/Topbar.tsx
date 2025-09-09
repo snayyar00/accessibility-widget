@@ -284,7 +284,7 @@ const Topbar: React.FC<Props> = ({
                     setSelectedOption={setSelectedOption}
                   />
                 ) : (
-                  <div className="flex items-center space-x-2 bg-[#D4E6EF] px-3 py-2 rounded-lg">
+                  <div className="flex items-center space-x-2 bg-[#DEE9EE] px-3 py-2 rounded-lg">
                     <span className="text-sm font-medium text-[#559EC1]">
                       Select a site
                     </span>

@@ -151,7 +151,7 @@ export default function Installation({ domain }: any) {
         onStepChange={handleTourStepChange}
       />
 
-      <div style={{ backgroundColor: colors.installation.pageBackground }}>
+      <div>
         <div className="w-full mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
           {/* Code Container */}
           <div className="w-full installation-welcome-banner">

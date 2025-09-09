@@ -150,8 +150,10 @@ export interface ColorPalette {
   backgrounds: {
     body: string;
     card: string;
+    cardLight: string;
     modal: string;
     overlay: string;
+    iconContainer: string;
   };
 
   // Border Colors
@@ -159,6 +161,13 @@ export interface ColorPalette {
     light: string;
     medium: string;
     dark: string;
+    card: string;
+    scanHistory: string;
+  };
+
+  // Line Colors
+  lines: {
+    light: string;
   };
 }
 
@@ -171,7 +180,7 @@ export const defaultColors: ColorPalette = {
 
   // Header/Navigation Colors
   header: {
-    background: '#D4E6EF',
+    background: '#e4ebfc',
     logoColor: '#559EC1',
     logoSecondary: '#205A76',
     textColor: '#333333',
@@ -184,9 +193,9 @@ export const defaultColors: ColorPalette = {
 
   // Sidebar Colors
   sidebar: {
-    background: '#D4E6EF',
+    background: '#e4ebfc',
     cardBackground: '#ffffff',
-    activeItemBackground: '#D4E6EF',
+    activeItemBackground: '#e4ebfc',
     activeItemText: '#559EC1',
     inactiveItemText: '#656565',
     iconColor: '#656565',
@@ -199,7 +208,7 @@ export const defaultColors: ColorPalette = {
 
   // Dashboard Colors
   dashboard: {
-    background: '#D4E6EF',
+    background: '#e4ebfc',
     cardBackground: '#f4f7fc',
     cardBorder: '#7b6f6f',
     welcomeBannerBackground:
@@ -233,7 +242,7 @@ export const defaultColors: ColorPalette = {
   // Installation Page Colors
   installation: {
     pageBackground: '#ffffff',
-    sectionBackground: '#e6f0f4',
+    sectionBackground: '#e8ebfa',
     cardBackground: '#ffffff',
     cardBorder: '#e5e7eb',
     buttonBackground: '#559EC1',
@@ -307,10 +316,12 @@ export const defaultColors: ColorPalette = {
 
   // Background Colors
   backgrounds: {
-    body: '#D4E6EF',
+    body: '#e4ebfc',
     card: '#ffffff',
+    cardLight: '#F9FBFB',
     modal: '#ffffff',
     overlay: 'rgba(0, 0, 0, 0.5)',
+    iconContainer: '#CCCCCC',
   },
 
   // Border Colors
@@ -318,6 +329,13 @@ export const defaultColors: ColorPalette = {
     light: '#f3f4f6',
     medium: '#d1d5db',
     dark: '#9ca3af',
+    card: '#BED2DB',
+    scanHistory: '#C5D9E0',
+  },
+
+  // Line Colors
+  lines: {
+    light: '#BED2DB',
   },
 };
 
