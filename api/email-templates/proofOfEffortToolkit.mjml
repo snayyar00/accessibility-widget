@@ -1,11 +1,28 @@
 <mjml>
   <mj-head>
-    <mj-preview>Your Proof of Effort Toolkit for {{domain}}</mj-preview>
+    <mj-preview>Your Proof of Effort Toolkit for {{ domain }}</mj-preview>
     <mj-style inline="inline">
-      .card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; text-align: center; } 
-      .status-icon { font-size: 50px; margin-bottom: 10px; } 
-      .btn-primary { background-color: #007bff; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px; display: inline-block; }
-      .btn-primary:hover { background-color: #0056b3; }
+      .card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+      }
+      .status-icon {
+        font-size: 50px;
+        margin-bottom: 10px;
+      }
+      .btn-primary {
+        background-color: #007bff;
+        color: #ffffff;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        display: inline-block;
+      }
+      .btn-primary:hover {
+        background-color: #0056b3;
+      }
       .image-shadow {
         box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
         border-radius: 8px;
@@ -16,40 +33,30 @@
     <!-- Header -->
     <mj-section background-color="#f8f8f8" padding="20px">
       <mj-column>
-        <mj-text font-size="20px" font-weight="bold" color="#007bff" align="center"> 
-          Proof of Effort Toolkit 
-        </mj-text>
-        <mj-text font-size="16px" color="#666666" align="center"> 
-          Your accessibility compliance documentation for {{domain}} 
-        </mj-text>
+        <mj-text font-size="20px" font-weight="bold" color="#007bff" align="center"> Proof of Effort Toolkit </mj-text>
+        <mj-text font-size="16px" color="#666666" align="center"> Your accessibility compliance documentation for {{ domain }} </mj-text>
       </mj-column>
     </mj-section>
 
     <!-- Main Content -->
     <mj-section background-color="#ffffff" padding="20px">
       <mj-column>
-        <mj-text font-size="18px" font-weight="bold" color="#007bff" align="center"> 
-          Your Toolkit is Ready! 
-        </mj-text>
-        <mj-text font-size="16px" color="#333333" align="center"> 
-          We've prepared your complete Proof of Effort Toolkit containing all the necessary documentation to demonstrate your commitment to web accessibility compliance.
-        </mj-text>
+        <mj-text font-size="18px" font-weight="bold" color="#007bff" align="center"> Your Toolkit is Ready! </mj-text>
+        <mj-text font-size="16px" color="#333333" align="center"> We've prepared your complete Proof of Effort Toolkit containing all the necessary documentation to demonstrate your commitment to web accessibility compliance. </mj-text>
       </mj-column>
     </mj-section>
 
     <!-- What's Included -->
     <mj-section background-color="#f8f8f8" padding="20px">
       <mj-column>
-        <mj-text font-size="18px" font-weight="bold" color="#007bff" align="center">
-          What's Included in Your Toolkit
-        </mj-text>
+        <mj-text font-size="18px" font-weight="bold" color="#007bff" align="center"> What's Included in Your Toolkit </mj-text>
         <mj-text font-size="14px" color="#666666">
           <strong>1. Intro to the Toolkit</strong><br />
           A comprehensive guide explaining how to use your proof of effort documentation effectively.<br /><br />
-          
+
           <strong>2. Monthly Audit Report</strong><br />
-          Your latest accessibility audit report dated {{reportDate}}, showing current compliance status and identified issues.<br /><br />
-          
+          Your latest accessibility audit report dated {{ reportDate }}, showing current compliance status and identified issues.<br /><br />
+
           <strong>3. Accessibility Statement</strong><br />
           A professionally formatted accessibility statement for your website that meets WCAG 2.1 and ADA requirements.
         </mj-text>
@@ -59,11 +66,9 @@
     <!-- Download Section -->
     <mj-section background-color="#ffffff" padding="20px">
       <mj-column>
-        <mj-text font-size="16px" color="#333333" align="center">
-          Your toolkit has been attached to this email as a ZIP file containing all three PDF documents.
-        </mj-text>
+        <mj-text font-size="16px" color="#333333" align="center"> Your toolkit has been attached to this email as a ZIP file containing all three PDF documents. </mj-text>
         <mj-text font-size="14px" color="#666666" align="center">
-          File name: <strong>{{domain}}-proof-of-effort-toolkit.zip</strong>
+          File name: <strong>{{ domain }}-proof-of-effort-toolkit.zip</strong>
         </mj-text>
       </mj-column>
     </mj-section>
@@ -71,9 +76,7 @@
     <!-- Next Steps -->
     <mj-section background-color="#f8f8f8" padding="20px">
       <mj-column>
-        <mj-text font-size="18px" font-weight="bold" color="#007bff" align="center"> 
-          Next Steps 
-        </mj-text>
+        <mj-text font-size="18px" font-weight="bold" color="#007bff" align="center"> Next Steps </mj-text>
         <mj-text font-size="14px" color="#666666">
           1. <strong>Download and extract</strong> the ZIP file to access your documents<br />
           2. <strong>Review the audit report</strong> to understand your current compliance status<br />
@@ -87,26 +90,18 @@
     <!-- Call-to-Action -->
     <mj-section background-color="#007bff" padding="20px">
       <mj-column>
-        <mj-text font-size="18px" font-weight="bold" color="#ffffff" align="center"> 
-          Need Help? 
-        </mj-text>
-        <mj-text font-size="14px" color="#ffffff" align="center">
-          If you have any questions about your toolkit or need assistance with accessibility compliance, 
-          don't hesitate to reach out to our support team.
-        </mj-text>
+        <mj-text font-size="18px" font-weight="bold" color="#ffffff" align="center"> Need Help? </mj-text>
+        <mj-text font-size="14px" color="#ffffff" align="center"> If you have any questions about your toolkit or need assistance with accessibility compliance, don't hesitate to reach out to our support team. </mj-text>
       </mj-column>
     </mj-section>
 
     <!-- Footer -->
     <mj-section background-color="#f8f8f8" padding="20px">
       <mj-column>
-        <mj-text font-size="12px" color="#666666" align="center"> 
-          © {{year}} Web Ability. All Rights Reserved. 
-        </mj-text>
-        <mj-text font-size="12px" color="#666666" align="center">
-          This toolkit was generated on {{generatedDate}} for {{domain}}
-        </mj-text>
+        <mj-text font-size="12px" color="#666666" align="center"> © {{ year }} Web Ability. All Rights Reserved. </mj-text>
+        <mj-text font-size="12px" color="#666666" align="center"> This toolkit was generated on {{ generatedDate }} for {{ domain }} </mj-text>
+        <mj-text font-size="12px" color="#666666" align="center"> This email was generated by a user of the Web Ability platform </mj-text>
       </mj-column>
     </mj-section>
   </mj-body>
-</mjml> 
+</mjml>
