@@ -9,6 +9,8 @@ import { fetchAccessibilityReport } from '../services/accessibilityReport/access
 import { checkScript } from '../services/allowedSites/allowedSites.service'
 import { EmailAttachment, sendEmailWithRetries } from '../services/email/email.service'
 import { generateAccessibilityReportPDF } from '../utils/pdfGenerator'
+import logger from '../utils/logger'
+import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../utils/secure-unsubscribe.utils'
 
 interface sitePlan {
   id: any
@@ -51,10 +53,24 @@ const sendMonthlyEmails = async () => {
               console.log(`Skipping monthly report for user ${user.email} (no notification flag)`)
               return
             }
-            const widgetStatus = await checkScript(site?.url)
+            let widgetStatus: string
+            let status: string
+            let score: number
 
-            const status = widgetStatus === 'true' || widgetStatus === 'Web Ability' ? 'Compliant' : 'Not Compliant'
-            const score = widgetStatus === 'Web Ability' ? Math.floor(Math.random() * (100 - 90 + 1)) + 90 : widgetStatus === 'true' ? Math.floor(Math.random() * (88 - 80 + 1)) + 80 : report.score
+            try {
+              widgetStatus = await checkScript(site?.url)
+              status = widgetStatus === 'true' || widgetStatus === 'Web Ability' ? 'Compliant' : 'Not Compliant'
+              score = widgetStatus === 'Web Ability' ? Math.floor(Math.random() * (100 - 90 + 1)) + 90 : widgetStatus === 'true' ? Math.floor(Math.random() * (88 - 80 + 1)) + 80 : report.score
+            } catch (error) {
+              logger.warn(`Failed to check script for domain ${site?.url}:`, error)
+              // Fallback to default values when checkScript fails
+              widgetStatus = 'false'
+              status = 'Not Compliant'
+              score = report.score
+            }
+
+            // Generate secure unsubscribe link for monthly reports
+            const unsubscribeLink = generateSecureUnsubscribeLink(user.email, getUnsubscribeTypeForEmail('monthly'), user.id)
 
             const template = await compileEmailTemplate({
               fileName: 'accessReport.mjml',
@@ -68,6 +84,7 @@ const sendMonthlyEmails = async () => {
                 warningsCount: report.htmlcs.warnings.length,
                 noticesCount: report.htmlcs.notices.length,
                 reportLink: 'https://app.webability.io/accessibility-test',
+                unsubscribeLink,
                 year,
               },
             })

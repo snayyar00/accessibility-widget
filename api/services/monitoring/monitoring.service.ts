@@ -4,6 +4,7 @@ import { findSiteById } from '../../repository/sites_allowed.repository'
 import { findUserById, findUserNotificationByUserId } from '../../repository/user.repository'
 import logger from '../../utils/logger'
 import database from '../../config/database.config'
+import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 
 export interface MonitoringResult {
   site_id: number
@@ -46,26 +47,26 @@ export async function processMonitoringBatch(batch: MonitoringBatch): Promise<vo
 async function processSingleMonitoringResult(result: MonitoringResult): Promise<void> {
   const currentStatus = result.is_down ? 'down' : 'up'
   const lastStatus = lastStatusMap.get(result.site_id)
-  
+
   // Update the in-memory status
   lastStatusMap.set(result.site_id, currentStatus)
-  
+
   // Update database with numeric status (0 = up, 1 = down)
   try {
     await database('allowed_sites')
       .where('id', result.site_id)
       .update({
-        is_currently_down: result.is_down ? 1 : 0,  // 0=up, 1=down
+        is_currently_down: result.is_down ? 1 : 0, // 0=up, 1=down
         last_monitor_check: result.checked_at,
       })
   } catch (error) {
     logger.error(`Failed to update monitoring status for site ${result.site_id}:`, error)
   }
-  
+
   // Check if status changed
   if (lastStatus && lastStatus !== currentStatus) {
     logger.info(`Status change detected for site ${result.site_id}: ${lastStatus} -> ${currentStatus}`)
-    
+
     // Send notification
     await sendStatusChangeNotification(result, lastStatus, currentStatus)
   } else if (!lastStatus) {
@@ -76,11 +77,7 @@ async function processSingleMonitoringResult(result: MonitoringResult): Promise<
 /**
  * Send email notification for status change
  */
-async function sendStatusChangeNotification(
-  result: MonitoringResult,
-  lastStatus: string,
-  currentStatus: string
-): Promise<void> {
+async function sendStatusChangeNotification(result: MonitoringResult, lastStatus: string, currentStatus: string): Promise<void> {
   try {
     // Get site details
     const site = await findSiteById(result.site_id)
@@ -88,16 +85,16 @@ async function sendStatusChangeNotification(
       logger.error(`Site ${result.site_id} not found or has no user`)
       return
     }
-    
+
     // Get user details
     const user = await findUserById(site.user_id)
     if (!user) {
       logger.error(`User ${site.user_id} not found`)
       return
     }
-    
+
     // Check if user has monitoring alerts enabled
-    const userNotifications = await findUserNotificationByUserId(site.user_id) as { monitoring_alert_flag?: boolean } | null
+    const userNotifications = (await findUserNotificationByUserId(site.user_id)) as { monitoring_alert_flag?: boolean } | null
     if (userNotifications && userNotifications.monitoring_alert_flag === false) {
       logger.info(`User ${user.id} has monitoring alerts disabled, skipping email`)
       return
@@ -109,7 +106,7 @@ async function sendStatusChangeNotification(
 
     // Compile and send email
     const templateName = currentStatus === 'down' ? 'siteDownAlert.mjml' : 'siteUpRecovery.mjml'
-    
+
     const emailData = {
       name: userName,
       url: result.url || site.url,
@@ -119,7 +116,7 @@ async function sendStatusChangeNotification(
       checked_at: new Date(result.checked_at).toLocaleString(),
       last_status: lastStatus,
       current_status: currentStatus,
-      unsubscribeLink: `${process.env.REACT_APP_BACKEND_URL}/unsubscribe?email=${encodeURIComponent(userEmail)}&type=monitoring`,
+      unsubscribeLink: generateSecureUnsubscribeLink(userEmail, getUnsubscribeTypeForEmail('monitoring'), user.id),
     }
 
     const emailHtml = await compileEmailTemplate({
@@ -127,12 +124,10 @@ async function sendStatusChangeNotification(
       data: emailData,
     })
 
-    const subject = currentStatus === 'down' 
-      ? `🔴 WebAbility Alert: ${result.url} is DOWN`
-      : `✅ WebAbility Recovery: ${result.url} is back UP`
+    const subject = currentStatus === 'down' ? `🔴 WebAbility Alert: ${result.url} is DOWN` : `✅ WebAbility Recovery: ${result.url} is back UP`
 
     const emailSent = await sendMail(userEmail, subject, emailHtml)
-    
+
     if (emailSent) {
       logger.info(`✅ Email sent to ${userEmail} for site ${result.url}`)
     } else {
