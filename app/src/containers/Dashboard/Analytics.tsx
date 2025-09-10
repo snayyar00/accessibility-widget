@@ -20,7 +20,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts';
-import { getColors } from '@/config/colors';
+import { baseColors } from '@/config/colors';
 
 // Helper to format large numbers like 3500 -> 3.5k, 500000 -> 500k
 const formatCompactNumber = (num: number | string) => {
@@ -41,17 +41,17 @@ const MetricCard: React.FC<{
   change: string;
   icon: React.ReactNode;
 }> = ({ title, value, change, icon }) => {
-  const colors = getColors();
+  // Using baseColors directly
 
   return (
     <div
       className="rounded-lg shadow p-4"
-      style={{ backgroundColor: colors.dashboard.analyticsCardBackground }}
+      style={{ backgroundColor: baseColors.white }}
     >
       <div className="flex items-center justify-between mb-2">
         <h3
           className="text-sm font-medium"
-          style={{ color: colors.dashboard.metricCardText }}
+          style={{ color: baseColors.grayText }}
         >
           {title}
         </h3>
@@ -76,19 +76,19 @@ const InlineMetric: React.FC<{
   title: string;
   value: number | string;
 }> = ({ title, value }) => {
-  const colors = getColors();
+  // Using baseColors directly
 
   return (
     <div className="flex-1 flex flex-col gap-1 py-4 px-6">
       <span
         className="text-base md:text-lg font-medium"
-        style={{ color: colors.dashboard.metricCardText }}
+        style={{ color: baseColors.grayText }}
       >
         {title}
       </span>
       <span
         className="text-4xl md:text-5xl leading-none tracking-tight"
-        style={{ color: colors.dashboard.metricCardValue }}
+        style={{ color: baseColors.brandNumbers }}
       >
         {formatCompactNumber(value)}
       </span>
@@ -113,7 +113,7 @@ const ChartCard: React.FC<{
   onChangeTimeRange,
   compareLabel = 'than last week',
 }) => {
-  const colors = getColors();
+  // Using baseColors directly
   // Custom tooltip to match the dark bubble style with a value and change percentage
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -132,7 +132,7 @@ const ChartCard: React.FC<{
           <div
             className="rounded-xl px-4 py-3"
             style={{
-              background: colors.dashboard.chartTooltipBackground,
+              background: baseColors.blueTooltip,
               color: 'white',
               boxShadow: '0 12px 28px rgba(11,75,102,0.25)',
               minWidth: 160,
@@ -142,7 +142,7 @@ const ChartCard: React.FC<{
               <span
                 className="inline-flex h-6 w-6 items-center justify-center rounded-full"
                 style={{
-                  backgroundColor: colors.dashboard.chartTooltipUserIcon,
+                  backgroundColor: baseColors.blueTooltipUser,
                 }}
               >
                 <FaUser className="h-3.5 w-3.5" />
@@ -168,7 +168,7 @@ const ChartCard: React.FC<{
               height: 0,
               borderLeft: '8px solid transparent',
               borderRight: '8px solid transparent',
-              borderTop: `8px solid ${colors.dashboard.chartTooltipBackground}`,
+              borderTop: `8px solid ${baseColors.blueTooltip}`,
               margin: '0 auto',
             }}
           />
@@ -182,23 +182,20 @@ const ChartCard: React.FC<{
     <div
       className="rounded-lg shadow p-4 border"
       style={{
-        backgroundColor: colors.dashboard.analyticsCardBackground,
-        borderColor: colors.dashboard.analyticsCardBorder,
+        backgroundColor: baseColors.white,
+        borderColor: baseColors.grayCard,
       }}
     >
       <div className="flex items-center justify-between mb-2">
         <div>
           <h3
             className="text-lg font-semibold"
-            style={{ color: colors.dashboard.metricCardText }}
+            style={{ color: baseColors.grayText }}
           >
             {title}
           </h3>
           {subtitle && (
-            <p
-              className="text-xs"
-              style={{ color: colors.dashboard.metricCardText }}
-            >
+            <p className="text-xs" style={{ color: baseColors.grayText }}>
               {subtitle}
             </p>
           )}
@@ -207,8 +204,8 @@ const ChartCard: React.FC<{
           <select
             className="border border-gray-300 py-1.5 px-3 rounded-lg focus:outline-none text-sm appearance-none bg-no-repeat pr-6"
             style={{
-              backgroundColor: colors.dashboard.analyticsSelectBackground,
-              color: colors.dashboard.analyticsSelectText,
+              backgroundColor: baseColors.brandPrimary,
+              color: baseColors.white,
               backgroundImage:
                 "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23A7CAFF' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e\")",
               backgroundSize: '12px 12px',
@@ -233,24 +230,21 @@ const ChartCard: React.FC<{
               <linearGradient id="primaryGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor={colors.dashboard.chartGradientStart}
+                  stopColor={baseColors.brandNumbers}
                   stopOpacity={0.25}
                 />
                 <stop
                   offset="95%"
-                  stopColor={colors.dashboard.chartGradientEnd}
+                  stopColor={baseColors.brandNumbers}
                   stopOpacity={0}
                 />
               </linearGradient>
             </defs>
-            <CartesianGrid
-              vertical={false}
-              stroke={colors.dashboard.chartGridColor}
-            />
+            <CartesianGrid vertical={false} stroke={baseColors.grayGrid} />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 12, fill: colors.dashboard.chartAxisColor }}
-              axisLine={{ stroke: colors.dashboard.chartGridColor }}
+              tick={{ fontSize: 12, fill: baseColors.grayText }}
+              axisLine={{ stroke: baseColors.grayGrid }}
               tickLine={false}
               tickFormatter={(value) => {
                 const date = new Date(value);
@@ -261,8 +255,8 @@ const ChartCard: React.FC<{
               }}
             />
             <YAxis
-              tick={{ fontSize: 12, fill: colors.dashboard.chartAxisColor }}
-              axisLine={{ stroke: colors.dashboard.chartGridColor }}
+              tick={{ fontSize: 12, fill: baseColors.grayText }}
+              axisLine={{ stroke: baseColors.grayGrid }}
               tickLine={false}
               domain={[0, 4]}
               ticks={[0, 1, 2, 3, 4]}
@@ -276,18 +270,18 @@ const ChartCard: React.FC<{
             <Area
               type="monotone"
               dataKey={dataKey}
-              stroke={colors.dashboard.chartStroke}
+              stroke={baseColors.brandNumbers}
               strokeWidth={3}
               fillOpacity={1}
               fill="url(#primaryGradient)"
               activeDot={{
                 r: 6,
-                fill: colors.dashboard.chartActiveDot,
+                fill: baseColors.brandNumbers,
                 strokeWidth: 0,
               }}
               dot={false}
               style={{
-                filter: 'drop-shadow(0px 6px 12px rgba(54, 209, 255, 0.3))',
+                filter: 'drop-shadow(0px 6px 12px rgba(68, 90, 231, 0.3))',
               }}
             />
           </AreaChart>
@@ -310,7 +304,7 @@ export default function AnalyticsDashboard({
   setTimeRange,
   profileCounts,
 }: any) {
-  const colors = getColors();
+  // Using baseColors directly
   // Filter data based on time range
   const filterData = (range: 'week' | 'month' | 'year') => {
     // const days = range === 'week' ? 7 : range === 'month' ? 30 : 365;
@@ -353,10 +347,7 @@ export default function AnalyticsDashboard({
       value: impressionCount,
       change: '',
       icon: (
-        <FaEye
-          className="h-6 w-6"
-          style={{ color: colors.dashboard.analyticsIconColor }}
-        />
+        <FaEye className="h-6 w-6" style={{ color: baseColors.brandPrimary }} />
       ),
     },
     {
@@ -366,7 +357,7 @@ export default function AnalyticsDashboard({
       icon: (
         <FaUser
           className="h-6 w-6"
-          style={{ color: colors.dashboard.analyticsIconColor }}
+          style={{ color: baseColors.brandPrimary }}
         />
       ),
     },
@@ -377,7 +368,7 @@ export default function AnalyticsDashboard({
       icon: (
         <FaMousePointer
           className="h-6 w-6"
-          style={{ color: colors.dashboard.analyticsIconColor }}
+          style={{ color: baseColors.brandPrimary }}
         />
       ),
     },
@@ -385,7 +376,7 @@ export default function AnalyticsDashboard({
 
   const additionalMetrics = Object.entries(profileCounts).map(
     ([key, value]) => {
-      const iconStyle = { color: colors.dashboard.analyticsIconColor } as const;
+      const iconStyle = { color: baseColors.brandPrimary } as const;
       const icons: { [key: string]: JSX.Element } = {
         adhd: <FaBrain className="h-6 w-6" style={iconStyle} />,
         blind: <FaEyeSlash className="h-6 w-6" style={iconStyle} />,
@@ -417,8 +408,8 @@ export default function AnalyticsDashboard({
       <div
         className="analytics-metrics-card rounded-2xl shadow p-2 md:p-3 border h-auto md:h-auto md:min-h-0 lg:h-[120px] lg:min-h-[120px]"
         style={{
-          backgroundColor: colors.dashboard.analyticsCardBackground,
-          borderColor: colors.dashboard.analyticsCardBorder,
+          backgroundColor: baseColors.white,
+          borderColor: baseColors.grayCard,
         }}
       >
         <div
@@ -426,7 +417,7 @@ export default function AnalyticsDashboard({
           style={
             {
               '--tw-divide-opacity': '1',
-              '--tw-divide-color': colors.dashboard.analyticsDivider,
+              '--tw-divide-color': baseColors.blueDivider,
             } as React.CSSProperties
           }
         >
@@ -456,8 +447,8 @@ export default function AnalyticsDashboard({
           <button
             className="show-more-metrics-button hover:brightness-110 py-2 px-4 rounded-lg focus:outline-none"
             style={{
-              backgroundColor: colors.dashboard.showMoreButtonBackground,
-              color: colors.dashboard.showMoreButtonText,
+              backgroundColor: baseColors.brandPrimary,
+              color: baseColors.white,
             }}
             onClick={() => setShowMoreMetrics(!showMoreMetrics)}
           >

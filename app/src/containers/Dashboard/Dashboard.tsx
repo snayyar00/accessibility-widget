@@ -15,7 +15,7 @@ import { dashboardTourSteps, tourKeys } from '@/constants/toursteps';
 import getDomainStatus from '@/utils/getDomainStatus';
 import applyStatusClass from '@/utils/applyStatusClass';
 import dashboardImage from '@/assets/images/dashboard_image.png';
-import { getColors } from '@/config/colors';
+import { baseColors } from '@/config/colors';
 
 interface ChartData {
   date: string;
@@ -54,7 +54,7 @@ const Dashboard: React.FC<any> = ({
   useDocumentHeader({ title: t('Common.title.dashboard') });
 
   // Get colors configuration
-  const colors = getColors();
+  // Using baseColors directly
   // const [startDate, setStartDate] = useState<string>();
   // const [endDate, setEndDate] = useState<string>();
   const [impressions, setImpressions] = useState<number>(0);
@@ -403,7 +403,7 @@ const Dashboard: React.FC<any> = ({
                       ? 'center left'
                       : 'center right',
                     backgroundRepeat: 'no-repeat',
-                    color: colors.dashboard.welcomeBannerText,
+                    color: baseColors.white,
                   }}
                 >
                   {/* Left Column - Content */}

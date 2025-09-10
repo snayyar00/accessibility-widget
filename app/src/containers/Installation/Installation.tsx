@@ -9,14 +9,13 @@ import { FaWordpressSimple } from 'react-icons/fa6';
 import { FaWebflow } from 'react-icons/fa6';
 import { FaWix } from 'react-icons/fa';
 import { FaShopify } from 'react-icons/fa';
-import { getColors } from '@/config/colors';
+import { baseColors } from '@/config/colors';
 
 export default function Installation({ domain }: any) {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.installation') });
 
-  // Get colors configuration
-  const colors = getColors();
+  // Using baseColors directly
 
   function getCodeString(uniqueToken: string): string {
     return `<script src="https://widget.webability.io/widget.min.js" data-asw-token="${uniqueToken}" defer></script>`;
@@ -75,8 +74,8 @@ export default function Installation({ domain }: any) {
       <div
         className={cardClassName}
         style={{
-          borderColor: colors.installation.statsCardAccent,
-          background: colors.installation.statsCardBackground,
+          borderColor: baseColors.blueAccent,
+          background: baseColors.statsCardGradient,
         }}
       >
         {/* Light overlay for better visibility */}
@@ -89,7 +88,7 @@ export default function Installation({ domain }: any) {
                   ? 'text-2xl sm:text-3xl md:text-4xl lg:text-4xl mb-4 sm:mb-6'
                   : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-3 sm:mb-4'
               }`}
-              style={{ color: titleColor || colors.installation.statsCardText }}
+              style={{ color: titleColor || baseColors.blueStats }}
             >
               {title}
             </h3>
@@ -101,7 +100,7 @@ export default function Installation({ domain }: any) {
                     : 'text-sm sm:text-base md:text-lg mb-1'
                 }`}
                 style={{
-                  color: subtitleColor || colors.installation.statsCardText,
+                  color: subtitleColor || baseColors.blueStats,
                 }}
               >
                 {subtitle}
@@ -115,7 +114,7 @@ export default function Installation({ domain }: any) {
                     : 'text-sm sm:text-base'
                 }`}
                 style={{
-                  color: textColor || colors.installation.statsCardText,
+                  color: textColor || baseColors.blueStats,
                 }}
               >
                 {description}
@@ -153,6 +152,13 @@ export default function Installation({ domain }: any) {
 
       <div>
         <div className="w-full mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+          {/* Installation Page Heading */}
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900">
+              Installation
+            </h1>
+          </div>
+
           {/* Code Container */}
           <div className="w-full installation-welcome-banner">
             <CodeContainer
@@ -166,8 +172,11 @@ export default function Installation({ domain }: any) {
           <div className="w-full py-4 sm:py-8">
             {/* Main card container */}
             <div
-              className="rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8 max-w-full overflow-hidden"
-              style={{ backgroundColor: colors.installation.sectionBackground }}
+              className="rounded-2xl shadow-sm border p-4 sm:p-6 lg:p-8 max-w-full overflow-hidden"
+              style={{
+                backgroundColor: '#ecf0fd',
+                borderColor: '#A2ADF3',
+              }}
             >
               {/* Header section */}
               <div className="mb-6 sm:mb-8">
@@ -191,16 +200,16 @@ export default function Installation({ domain }: any) {
                       rel="noopener noreferrer"
                       className="w-full md:w-auto px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base flex items-center justify-center gap-2 transition-colors installation-guide-link"
                       style={{
-                        backgroundColor: colors.installation.buttonBackground,
-                        color: colors.installation.buttonText,
+                        backgroundColor: baseColors.brandPrimary,
+                        color: baseColors.white,
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor =
-                          colors.installation.buttonHover;
+                          baseColors.brandPrimaryHover;
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor =
-                          colors.installation.buttonBackground;
+                          baseColors.brandPrimary;
                       }}
                     >
                       <span>View all guides</span>
@@ -216,9 +225,10 @@ export default function Installation({ domain }: any) {
                   href="https://www.webability.io/installation/how-to-install-webability-wordpress"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="border border-gray-200 rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
+                  className="border rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
                   style={{
-                    backgroundColor: colors.installation.cardBackground,
+                    backgroundColor: baseColors.white,
+                    borderColor: '#A2ADF3',
                     textDecoration: 'none',
                     color: 'inherit',
                   }}
@@ -228,7 +238,7 @@ export default function Installation({ domain }: any) {
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
                         <FaWordpressSimple
                           className="w-10 h-10"
-                          style={{ color: colors.installation.iconColor }}
+                          style={{ color: '#3343AD' }}
                         />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -237,7 +247,7 @@ export default function Installation({ domain }: any) {
                           style={{ color: 'inherit' }}
                           onMouseEnter={(e) =>
                             ((e.target as HTMLElement).style.color =
-                              colors.installation.linkHover)
+                              baseColors.blueDark)
                           }
                           onMouseLeave={(e) =>
                             ((e.target as HTMLElement).style.color = 'inherit')
@@ -250,12 +260,12 @@ export default function Installation({ domain }: any) {
                     </div>
                     <svg
                       className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-colors flex-shrink-0"
-                      style={{ color: colors.installation.linkColor }}
+                      style={{ color: '#3343AD' }}
                       onMouseEnter={(e) =>
-                        ((e.target as HTMLElement).style.color = '#1a4a5f')
+                        ((e.target as HTMLElement).style.color = '#2a3a9a')
                       }
                       onMouseLeave={(e) =>
-                        ((e.target as HTMLElement).style.color = '#205A76')
+                        ((e.target as HTMLElement).style.color = '#3343AD')
                       }
                       fill="none"
                       stroke="currentColor"
@@ -276,15 +286,19 @@ export default function Installation({ domain }: any) {
                   href="https://www.webability.io/installation/how-to-install-webability-on-a-webflow-website"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
-                  style={{ textDecoration: 'none', color: 'inherit' }}
+                  className="bg-white border rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
+                  style={{
+                    borderColor: '#A2ADF3',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                  }}
                 >
                   <div className="flex items-center justify-between gap-2 sm:gap-3">
                     <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
                         <FaWebflow
                           className="w-10 h-10"
-                          style={{ color: colors.installation.iconColor }}
+                          style={{ color: '#3343AD' }}
                         />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -293,7 +307,7 @@ export default function Installation({ domain }: any) {
                           style={{ color: 'inherit' }}
                           onMouseEnter={(e) =>
                             ((e.target as HTMLElement).style.color =
-                              colors.installation.linkHover)
+                              baseColors.blueDark)
                           }
                           onMouseLeave={(e) =>
                             ((e.target as HTMLElement).style.color = 'inherit')
@@ -306,7 +320,7 @@ export default function Installation({ domain }: any) {
                     </div>
                     <svg
                       className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5"
-                      style={{ color: colors.installation.linkColor }}
+                      style={{ color: '#3343AD' }}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -326,15 +340,19 @@ export default function Installation({ domain }: any) {
                   href="https://www.webability.io/installation/how-to-install-webability-on-a-wix-website"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
-                  style={{ textDecoration: 'none', color: 'inherit' }}
+                  className="bg-white border rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
+                  style={{
+                    borderColor: '#A2ADF3',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                  }}
                 >
                   <div className="flex items-center justify-between gap-2 sm:gap-3">
                     <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
                         <FaWix
                           className="w-10 h-10"
-                          style={{ color: colors.installation.iconColor }}
+                          style={{ color: '#3343AD' }}
                         />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -343,7 +361,7 @@ export default function Installation({ domain }: any) {
                           style={{ color: 'inherit' }}
                           onMouseEnter={(e) =>
                             ((e.target as HTMLElement).style.color =
-                              colors.installation.linkHover)
+                              baseColors.blueDark)
                           }
                           onMouseLeave={(e) =>
                             ((e.target as HTMLElement).style.color = 'inherit')
@@ -356,7 +374,7 @@ export default function Installation({ domain }: any) {
                     </div>
                     <svg
                       className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5"
-                      style={{ color: colors.installation.linkColor }}
+                      style={{ color: '#3343AD' }}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -376,15 +394,19 @@ export default function Installation({ domain }: any) {
                   href="https://www.webability.io/installation/how-to-install-webability-on-a-shopify-website"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
-                  style={{ textDecoration: 'none', color: 'inherit' }}
+                  className="bg-white border rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
+                  style={{
+                    borderColor: '#A2ADF3',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                  }}
                 >
                   <div className="flex items-center justify-between gap-2 sm:gap-3">
                     <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
                         <FaShopify
                           className="w-10 h-10"
-                          style={{ color: colors.installation.iconColor }}
+                          style={{ color: '#3343AD' }}
                         />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -393,7 +415,7 @@ export default function Installation({ domain }: any) {
                           style={{ color: 'inherit' }}
                           onMouseEnter={(e) =>
                             ((e.target as HTMLElement).style.color =
-                              colors.installation.linkHover)
+                              baseColors.blueDark)
                           }
                           onMouseLeave={(e) =>
                             ((e.target as HTMLElement).style.color = 'inherit')
@@ -406,12 +428,12 @@ export default function Installation({ domain }: any) {
                     </div>
                     <svg
                       className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-colors flex-shrink-0"
-                      style={{ color: colors.installation.linkColor }}
+                      style={{ color: '#3343AD' }}
                       onMouseEnter={(e) =>
-                        ((e.target as HTMLElement).style.color = '#1a4a5f')
+                        ((e.target as HTMLElement).style.color = '#2a3a9a')
                       }
                       onMouseLeave={(e) =>
-                        ((e.target as HTMLElement).style.color = '#205A76')
+                        ((e.target as HTMLElement).style.color = '#3343AD')
                       }
                       fill="none"
                       stroke="currentColor"
@@ -434,7 +456,7 @@ export default function Installation({ domain }: any) {
           <div
             className="relative overflow-hidden rounded-2xl"
             style={{
-              background: `linear-gradient(to bottom, ${colors.installation.statsCardGradientFrom}, ${colors.installation.statsCardGradientTo})`,
+              background: `linear-gradient(to bottom, #11163A, #445AE7)`,
             }}
           >
             {/* Background horizontal streaks */}
@@ -442,19 +464,19 @@ export default function Installation({ domain }: any) {
               <div
                 className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent to-transparent"
                 style={{
-                  background: `linear-gradient(to right, transparent, ${colors.installation.statsCardAccent}, transparent)`,
+                  background: `linear-gradient(to right, transparent, ${baseColors.blueAccent}, transparent)`,
                 }}
               ></div>
               <div
                 className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent to-transparent"
                 style={{
-                  background: `linear-gradient(to right, transparent, ${colors.installation.statsCardAccent}, transparent)`,
+                  background: `linear-gradient(to right, transparent, ${baseColors.blueAccent}, transparent)`,
                 }}
               ></div>
               <div
                 className="absolute top-3/4 left-0 w-full h-px bg-gradient-to-r from-transparent to-transparent"
                 style={{
-                  background: `linear-gradient(to right, transparent, ${colors.installation.statsCardAccent}, transparent)`,
+                  background: `linear-gradient(to right, transparent, ${baseColors.blueAccent}, transparent)`,
                 }}
               ></div>
             </div>
@@ -469,8 +491,8 @@ export default function Installation({ domain }: any) {
                     size="large"
                     className="h-full w-full"
                     titleColor="#ffffff"
-                    subtitleColor="#99DCFB"
-                    textColor="#99DCFB"
+                    subtitleColor="#ffffff"
+                    textColor="#ffffff"
                   />
                 </div>
 
@@ -483,11 +505,11 @@ export default function Installation({ domain }: any) {
                       subtitle="Time to compliance"
                       description="AI remediation delivers immediate result"
                       size="medium"
-                      hasGlow={true}
+                      hasGlow={false}
                       className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
+                      titleColor="#ffffff"
+                      subtitleColor="#ffffff"
+                      textColor="#ffffff"
                     />
                   </div>
                   <div className="h-48 sm:h-52 md:h-56 lg:h-60">
@@ -497,9 +519,9 @@ export default function Installation({ domain }: any) {
                       description="Automatic WCAG 2.1 AA compliance protection"
                       size="medium"
                       className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
+                      titleColor="#ffffff"
+                      subtitleColor="#ffffff"
+                      textColor="#ffffff"
                     />
                   </div>
 
@@ -510,11 +532,11 @@ export default function Installation({ domain }: any) {
                       subtitle="Revenue increase potential"
                       description="Accessible sites convert better to all users"
                       size="medium"
-                      hasGlow={true}
+                      hasGlow={false}
                       className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
+                      titleColor="#ffffff"
+                      subtitleColor="#ffffff"
+                      textColor="#ffffff"
                     />
                   </div>
                   <div className="h-48 sm:h-52 md:h-56 lg:h-60">
@@ -524,9 +546,9 @@ export default function Installation({ domain }: any) {
                       description="Gain competitive advantage with compliance"
                       size="medium"
                       className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
+                      titleColor="#ffffff"
+                      subtitleColor="#ffffff"
+                      textColor="#ffffff"
                     />
                   </div>
 
@@ -537,11 +559,11 @@ export default function Installation({ domain }: any) {
                       subtitle="Global disability market value"
                       description="World's largest underserved consumer segment"
                       size="medium"
-                      hasGlow={true}
+                      hasGlow={false}
                       className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
+                      titleColor="#ffffff"
+                      subtitleColor="#ffffff"
+                      textColor="#ffffff"
                     />
                   </div>
                 </div>

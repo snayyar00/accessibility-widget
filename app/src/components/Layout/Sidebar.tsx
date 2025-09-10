@@ -29,7 +29,7 @@ import Dropdown from '../../containers/Dashboard/DropDown';
 import { useState, useEffect } from 'react';
 import { handleBilling } from '@/containers/Profile/BillingPortalLink';
 import { CircularProgress } from '@mui/material';
-import { getColors } from '@/config/colors';
+import { baseColors } from '@/config/colors';
 
 const Sidebar = ({
   options,
@@ -44,7 +44,7 @@ const Sidebar = ({
   const [billingClicked, setBillingClicked] = useState(false);
 
   // Get colors configuration
-  const colors = getColors();
+  // Using baseColors directly
 
   const { isOpen } = useSelector((state: RootState) => state.sidebar);
   const history = useHistory();
@@ -123,8 +123,8 @@ const Sidebar = ({
           ? 'w-10 h-10 font-medium justify-center mx-auto'
           : 'space-x-3 px-3 py-2 font-medium',
         style: {
-          backgroundColor: colors.sidebar.activeItemBackground,
-          color: colors.sidebar.activeItemText,
+          backgroundColor: baseColors.blueLight,
+          color: baseColors.brandPrimary,
         },
       };
     } else {
@@ -133,9 +133,9 @@ const Sidebar = ({
           ? 'w-10 h-10 justify-center mx-auto'
           : 'space-x-3 px-3 py-2',
         style: {
-          color: colors.sidebar.inactiveItemText,
+          color: baseColors.grayMedium,
           ':hover': {
-            backgroundColor: colors.sidebar.hoverBackground,
+            backgroundColor: baseColors.grayLight,
           },
         },
       };
@@ -144,7 +144,7 @@ const Sidebar = ({
 
   // Helper function to get icon styles
   const getIconStyles = (isActive: boolean) => ({
-    color: isActive ? colors.sidebar.activeIconColor : colors.sidebar.iconColor,
+    color: isActive ? baseColors.brandPrimary : baseColors.grayMedium,
   });
 
   return (
@@ -168,13 +168,13 @@ const Sidebar = ({
             ? 'px-2 py-4 pl-4 sm:px-0 sm:py-0 sm:pl-0'
             : 'p-0 pl-6 sm:p-0 sm:pl-0'
         }`}
-        style={{ backgroundColor: colors.sidebar.background }}
+        style={{ backgroundColor: baseColors.blueLight }}
       >
         {/* Sidebar Card - Only show in expanded mode */}
         {!isCollapsed ? (
           <div
             className="flex-grow rounded-2xl overflow-hidden p-2 flex flex-col"
-            style={{ backgroundColor: colors.sidebar.cardBackground }}
+            style={{ backgroundColor: baseColors.white }}
           >
             {/* Add new domain button */}
             <div className="p-4">
@@ -182,8 +182,8 @@ const Sidebar = ({
                 onClick={handleRedirect}
                 className="font-medium rounded-lg flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md w-full py-2 px-4 space-x-2"
                 style={{
-                  backgroundColor: colors.sidebar.addButtonBackground,
-                  color: colors.sidebar.addButtonText,
+                  backgroundColor: baseColors.black,
+                  color: baseColors.white,
                 }}
               >
                 <span className="text-sm whitespace-nowrap">
@@ -192,7 +192,7 @@ const Sidebar = ({
                 <Plus
                   size={18}
                   className="flex-shrink-0"
-                  style={{ color: colors.sidebar.addButtonIcon }}
+                  style={{ color: baseColors.white }}
                 />
               </button>
             </div>
@@ -220,8 +220,8 @@ const Sidebar = ({
                       className="text-sm"
                       style={{
                         color: isActiveRoute('/dashboard')
-                          ? colors.sidebar.activeItemText
-                          : colors.sidebar.inactiveItemText,
+                          ? baseColors.brandPrimary
+                          : baseColors.grayMedium,
                       }}
                     >
                       Dashboard
@@ -252,8 +252,8 @@ const Sidebar = ({
                       className="text-sm"
                       style={{
                         color: isActiveRoute('/customize-widget')
-                          ? colors.sidebar.activeItemText
-                          : colors.sidebar.inactiveItemText,
+                          ? baseColors.brandPrimary
+                          : baseColors.grayMedium,
                       }}
                     >
                       Customization
@@ -281,8 +281,8 @@ const Sidebar = ({
                       className="text-sm"
                       style={{
                         color: isActiveRoute('/installation')
-                          ? colors.sidebar.activeItemText
-                          : colors.sidebar.inactiveItemText,
+                          ? baseColors.brandPrimary
+                          : baseColors.grayMedium,
                       }}
                     >
                       Installation
@@ -297,8 +297,8 @@ const Sidebar = ({
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/add-domain')
                       ? isCollapsed
-                        ? 'w-10 h-10 bg-[#DEE9EE]  text-[#559EC1] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
                       ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -309,7 +309,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/add-domain')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -318,7 +318,7 @@ const Sidebar = ({
                     <span
                       className={`text-sm ${
                         isActiveRoute('/add-domain')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -334,8 +334,8 @@ const Sidebar = ({
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/scanner')
                       ? isCollapsed
-                        ? 'w-10 h-10 bg-[#DEE9EE]  text-[#559EC1] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
                       ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -346,7 +346,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/scanner')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -355,7 +355,7 @@ const Sidebar = ({
                     <span
                       className={`text-sm ${
                         isActiveRoute('/scanner')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -371,8 +371,8 @@ const Sidebar = ({
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/problem-reports')
                       ? isCollapsed
-                        ? 'w-10 h-10 bg-[#DEE9EE]  text-[#559EC1] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
                       ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -383,7 +383,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/problem-reports')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -392,7 +392,7 @@ const Sidebar = ({
                     <span
                       className={`text-sm ${
                         isActiveRoute('/problem-reports')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -408,8 +408,8 @@ const Sidebar = ({
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/statement-generator')
                       ? isCollapsed
-                        ? 'w-10 h-10 bg-[#DEE9EE]  text-[#559EC1] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
                       ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -420,7 +420,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/statement-generator')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -429,7 +429,7 @@ const Sidebar = ({
                     <span
                       className={`text-sm ${
                         isActiveRoute('/statement-generator')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -445,8 +445,8 @@ const Sidebar = ({
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/proof-of-effort-toolkit')
                       ? isCollapsed
-                        ? 'w-10 h-10 bg-[#DEE9EE]  text-[#559EC1] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
                       ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -457,7 +457,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/proof-of-effort-toolkit')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -466,7 +466,7 @@ const Sidebar = ({
                     <span
                       className={`text-sm ${
                         isActiveRoute('/proof-of-effort-toolkit')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -482,8 +482,8 @@ const Sidebar = ({
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/ai-insights')
                       ? isCollapsed
-                        ? 'w-10 h-10 bg-[#DEE9EE]  text-[#559EC1] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
                       ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -494,7 +494,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/ai-insights')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -503,7 +503,7 @@ const Sidebar = ({
                     <span
                       className={`text-sm ${
                         isActiveRoute('/ai-insights')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -519,8 +519,8 @@ const Sidebar = ({
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/license-owner-info')
                       ? isCollapsed
-                        ? 'w-10 h-10 bg-[#DEE9EE]  text-[#559EC1] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
                       ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -531,7 +531,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/license-owner-info')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -540,7 +540,7 @@ const Sidebar = ({
                     <span
                       className={`text-sm ${
                         isActiveRoute('/license-owner-info')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -559,8 +559,8 @@ const Sidebar = ({
                       className={`flex items-center rounded-lg transition-all duration-200 ${
                         isActiveRoute('/users')
                           ? isCollapsed
-                            ? 'w-10 h-10 bg-[#DEE9EE]  text-[#559EC1] font-medium justify-center mx-auto'
-                            : 'space-x-3 px-3 py-2 bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                            ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                            : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                           : isCollapsed
                           ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                           : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -571,7 +571,7 @@ const Sidebar = ({
                           size={24}
                           className={
                             isActiveRoute('/users')
-                              ? 'text-[#559EC1]'
+                              ? 'text-[#445AE7]'
                               : 'text-[#656565]'
                           }
                         />
@@ -580,7 +580,7 @@ const Sidebar = ({
                         <span
                           className={`text-sm ${
                             isActiveRoute('/users')
-                              ? 'text-[#559EC1]'
+                              ? 'text-[#445AE7]'
                               : 'text-[#656565]'
                           }`}
                         >
@@ -596,8 +596,8 @@ const Sidebar = ({
                       className={`flex items-center rounded-lg transition-all duration-200 ${
                         isActiveRoute('/workspaces')
                           ? isCollapsed
-                            ? 'w-10 h-10 bg-[#DEE9EE]  text-[#559EC1] font-medium justify-center mx-auto'
-                            : 'space-x-3 px-3 py-2 bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                            ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                            : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                           : isCollapsed
                           ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                           : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -608,7 +608,7 @@ const Sidebar = ({
                           size={24}
                           className={
                             isActiveRoute('/workspaces')
-                              ? 'text-[#559EC1]'
+                              ? 'text-[#445AE7]'
                               : 'text-[#656565]'
                           }
                         />
@@ -617,7 +617,7 @@ const Sidebar = ({
                         <span
                           className={`text-sm ${
                             isActiveRoute('/workspaces')
-                              ? 'text-[#559EC1]'
+                              ? 'text-[#445AE7]'
                               : 'text-[#656565]'
                           }`}
                         >
@@ -635,7 +635,7 @@ const Sidebar = ({
               <button
                 onClick={handleBillingClick}
                 disabled={billingClicked}
-                className="w-full bg-white border border-[#559EC1] rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md py-3 px-4 space-x-3 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-white border border-[#445AE7] rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md py-3 px-4 space-x-3 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="w-6 h-6 flex items-center justify-center">
                   <LuCircleDollarSign size={24} className="text-[#94BFFF]" />
@@ -659,7 +659,7 @@ const Sidebar = ({
                 onClick={handleRedirect}
                 className="bg-[#000000] hover:bg-[#000000] text-white font-medium rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md w-12 h-12 mx-auto"
               >
-                <Plus size={24} className="text-[#559EC1]" />
+                <Plus size={24} className="text-white" />
               </button>
             </div>
 
@@ -672,7 +672,7 @@ const Sidebar = ({
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/dashboard')
-                      ? 'bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -681,7 +681,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/dashboard')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -694,7 +694,7 @@ const Sidebar = ({
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/customize-widget')
-                      ? 'bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -703,7 +703,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/customize-widget')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -716,7 +716,7 @@ const Sidebar = ({
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/installation')
-                      ? 'bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -725,7 +725,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/installation')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -738,7 +738,7 @@ const Sidebar = ({
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/add-domain')
-                      ? 'bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -747,7 +747,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/add-domain')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -760,7 +760,7 @@ const Sidebar = ({
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/scanner')
-                      ? 'bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -769,7 +769,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/scanner')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -782,7 +782,7 @@ const Sidebar = ({
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/problem-reports')
-                      ? 'bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -791,7 +791,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/problem-reports')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -804,7 +804,7 @@ const Sidebar = ({
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/statement-generator')
-                      ? 'bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -813,7 +813,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/statement-generator')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -826,7 +826,7 @@ const Sidebar = ({
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/proof-of-effort-toolkit')
-                      ? 'bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -835,7 +835,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/proof-of-effort-toolkit')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -848,7 +848,7 @@ const Sidebar = ({
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/ai-insights')
-                      ? 'bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -857,7 +857,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/ai-insights')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -870,7 +870,7 @@ const Sidebar = ({
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/license-owner-info')
-                      ? 'bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -879,7 +879,7 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/license-owner-info')
-                          ? 'text-[#559EC1]'
+                          ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
                     />
@@ -895,7 +895,7 @@ const Sidebar = ({
                       onClick={closeSidebar}
                       className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                         isActiveRoute('/users')
-                          ? 'bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                          ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
                           : 'text-black hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
@@ -904,7 +904,7 @@ const Sidebar = ({
                           size={24}
                           className={
                             isActiveRoute('/users')
-                              ? 'text-[#559EC1]'
+                              ? 'text-[#445AE7]'
                               : 'text-[#656565]'
                           }
                         />
@@ -917,7 +917,7 @@ const Sidebar = ({
                       onClick={closeSidebar}
                       className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                         isActiveRoute('/workspaces')
-                          ? 'bg-[#DEE9EE]  text-[#559EC1] font-medium'
+                          ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
                           : 'text-black hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
@@ -926,7 +926,7 @@ const Sidebar = ({
                           size={24}
                           className={
                             isActiveRoute('/workspaces')
-                              ? 'text-[#559EC1]'
+                              ? 'text-[#445AE7]'
                               : 'text-[#656565]'
                           }
                         />

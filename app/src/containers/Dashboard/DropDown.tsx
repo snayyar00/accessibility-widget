@@ -60,7 +60,7 @@ const DropDown = ({
     >
       <button
         type="button"
-        className="dropdown-btn mr-5 inline-flex items-center justify-between w-full rounded-lg bg-[#DEE9EE] px-3 py-2 text-sm font-medium text-[#8E95AD] focus:outline-none focus:ring-2 focus:ring-[#559EC1] focus:ring-opacity-50"
+        className="dropdown-btn mr-5 inline-flex items-center justify-between w-full rounded-lg bg-[#D0D5F9] px-3 py-2 text-sm font-medium text-[#445AE7] focus:outline-none focus:ring-2 focus:ring-[#445AE7] focus:ring-opacity-50"
         onClick={() => setIsOpen(!isOpen)}
         aria-haspopup="true"
         aria-expanded={isOpen}
@@ -76,7 +76,7 @@ const DropDown = ({
           <span className="truncate">{selectedOption}</span>
         </div>
         <svg
-          className="h-4 w-4 text-[#484848] flex-shrink-0 ml-2"
+          className="h-4 w-4 text-[#445AE7] flex-shrink-0 ml-2"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"

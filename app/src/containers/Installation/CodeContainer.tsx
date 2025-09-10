@@ -258,7 +258,10 @@ export default function CodeContainer({
   }, [shouldOpenCustomization, showCustomization, onCustomizationOpened]);
 
   return (
-    <div className="w-full bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+    <div
+      className="w-full bg-white rounded-2xl overflow-hidden border shadow-sm"
+      style={{ borderColor: '#A2ADF3' }}
+    >
       {/* Customization Section - Hidden by default, matches Figma */}
       {showCustomization && (
         <div className="p-4 border-b border-gray-100 bg-gray-50 widget-customization-options">
@@ -449,11 +452,11 @@ export default function CodeContainer({
         {/* Code Block with integrated Copy Button */}
         <div
           className="rounded-lg p-8 mb-4 relative min-h-[160px] installation-code-block"
-          style={{ backgroundColor: '#DEE9EE' }}
+          style={{ backgroundColor: '#D0D5F9' }}
         >
           <code
             className="text-sm lg:text-base font-mono break-all pb-16 block"
-            style={{ color: '#153A4A' }}
+            style={{ color: '#3343AD' }}
           >
             {formattedCodeString}
           </code>
@@ -466,7 +469,7 @@ export default function CodeContainer({
                 ? 'bg-green-600 hover:bg-green-700'
                 : 'hover:opacity-80'
             }`}
-            style={{ backgroundColor: copySuccess ? undefined : '#205A76' }}
+            style={{ backgroundColor: copySuccess ? undefined : '#3343AD' }}
           >
             {copySuccess ? (
               <>
@@ -489,7 +492,7 @@ export default function CodeContainer({
             <>
               <button
                 onClick={() => setShowEmailModal(true)}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-[#559EC1] hover:bg-[#e6f3fa] text-[#559EC1] rounded-lg font-medium transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-[#445AE7] hover:bg-[#e6f3fa] text-[#445AE7] rounded-lg font-medium transition-colors"
               >
                 <FaEnvelope className="w-4 h-4" />
                 Send Instructions
@@ -500,7 +503,7 @@ export default function CodeContainer({
           {/* Customize Button */}
           <button
             onClick={() => setShowCustomization(!showCustomization)}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-[#559EC1] hover:bg-[#e6f3fa] text-[#559EC1] rounded-lg font-medium transition-colors customize-widget-button"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-[#445AE7] hover:bg-[#e6f3fa] text-[#445AE7] rounded-lg font-medium transition-colors customize-widget-button"
           >
             <FaMagic className="w-4 h-4" />
             {showCustomization ? 'Hide Options' : 'Customize'}
@@ -515,10 +518,10 @@ export default function CodeContainer({
           <button
             className="text-sm font-medium hover:underline transition-all"
             style={{
-              color: '#4488A9',
+              color: '#445AE7',
             }}
-            onMouseOver={(e) => (e.currentTarget.style.color = '#336b85')}
-            onMouseOut={(e) => (e.currentTarget.style.color = '#4488A9')}
+            onMouseOver={(e) => (e.currentTarget.style.color = '#3a4bc7')}
+            onMouseOut={(e) => (e.currentTarget.style.color = '#445AE7')}
           >
             Contact Support
           </button>
@@ -540,7 +543,7 @@ export default function CodeContainer({
             <div
               className="p-8 text-white relative overflow-hidden"
               style={{
-                background: 'linear-gradient(135deg, #559EC1 0%, #4A8BB5 100%)',
+                background: 'linear-gradient(135deg, #445AE7 0%, #4A8BB5 100%)',
               }}
             >
               {/* Decorative background pattern */}
@@ -597,7 +600,7 @@ export default function CodeContainer({
                         className={`w-full px-5 py-4 border-2 rounded-xl focus:outline-none transition-all duration-200 text-gray-800 font-medium placeholder-gray-400 ${
                           emailError
                             ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100'
-                            : 'border-gray-200 focus:border-[#559EC1] focus:ring-4 focus:ring-[#559EC1]/20'
+                            : 'border-gray-200 focus:border-[#445AE7] focus:ring-4 focus:ring-[#445AE7]/20'
                         }`}
                         disabled={isSending}
                         style={{
@@ -627,7 +630,7 @@ export default function CodeContainer({
                     <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-3 text-base">
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: '#559EC1' }}
+                        style={{ backgroundColor: '#445AE7' }}
                       >
                         <FaMagic className="w-4 h-4 text-white" />
                       </div>
@@ -637,28 +640,28 @@ export default function CodeContainer({
                       <li className="flex items-center gap-3">
                         <div
                           className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: '#559EC1' }}
+                          style={{ backgroundColor: '#445AE7' }}
                         ></div>
                         Complete installation code
                       </li>
                       <li className="flex items-center gap-3">
                         <div
                           className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: '#559EC1' }}
+                          style={{ backgroundColor: '#445AE7' }}
                         ></div>
                         Step-by-step setup instructions
                       </li>
                       <li className="flex items-center gap-3">
                         <div
                           className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: '#559EC1' }}
+                          style={{ backgroundColor: '#445AE7' }}
                         ></div>
                         Configuration options
                       </li>
                       <li className="flex items-center gap-3">
                         <div
                           className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: '#559EC1' }}
+                          style={{ backgroundColor: '#445AE7' }}
                         ></div>
                         Troubleshooting tips
                       </li>
@@ -673,7 +676,7 @@ export default function CodeContainer({
                       background:
                         isSending || !email.trim()
                           ? '#94A3B8'
-                          : 'linear-gradient(135deg, #559EC1 0%, #4A8BB5 100%)',
+                          : 'linear-gradient(135deg, #445AE7 0%, #4A8BB5 100%)',
                       boxShadow:
                         isSending || !email.trim()
                           ? 'none'

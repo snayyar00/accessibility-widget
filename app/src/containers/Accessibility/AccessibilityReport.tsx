@@ -90,7 +90,7 @@ import {
 import getWidgetSettings from '@/utils/getWidgetSettings';
 import startAccessibilityReportJob from '@/queries/accessibility/startAccessibilityReportJob';
 import getAccessibilityReportByJobId from '@/queries/accessibility/getAccessibilityReportByJobId';
-import { getColors } from '@/config/colors';
+import { baseColors } from '@/config/colors';
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
 
@@ -110,7 +110,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.report') });
   const dispatch = useDispatch();
-  const colors = getColors();
+  // Using baseColors directly instead of getColors()
   const isGenerating = useSelector(
     (state: RootState) => state.report.isGenerating,
   );
@@ -4754,12 +4754,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       />
       <div
         className="accessibility-wrapper w-full max-w-full overflow-x-hidden"
-        style={{ backgroundColor: colors.backgrounds.body }}
+        style={{ backgroundColor: baseColors.blueLight }}
       >
         <header className="accessibility-page-header text-left self-start pl-3 sm:pl-6 w-full max-w-full">
           <h1
             className="text-4xl font-semibold mb-2"
-            style={{ color: colors.text.primary }}
+            style={{ color: baseColors.grayDark2 }}
           >
             Scan your domain
           </h1>
@@ -4769,21 +4769,21 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           <div
             className="search-bar-container my-6 p-6 rounded-xl w-full shadow-sm"
             style={{
-              backgroundColor: colors.backgrounds.card,
-              border: `1px solid ${colors.borders.card}`,
+              backgroundColor: baseColors.white,
+              border: `1px solid ${baseColors.cardBorderPurple}`,
             }}
           >
             {/* Description text */}
             <div className="mb-6 text-left">
               <p
                 className="text-2xl font-semibold"
-                style={{ color: colors.text.primary }}
+                style={{ color: baseColors.grayDark2 }}
               >
                 Scanner
               </p>
               <p
                 className="text-base mt-2"
-                style={{ color: colors.text.secondary }}
+                style={{ color: baseColors.grayText }}
               >
                 Evaluate your website's accessibility in seconds. View a history
                 of all accessibility scans. Download your reports.
@@ -4809,17 +4809,19 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       }}
                       className="appearance-none w-full px-3 py-2 pr-8 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 transition-all"
                       style={{
-                        backgroundColor: colors.forms.inputBackground,
-                        border: `1px solid ${colors.borders.card}`,
-                        color: colors.forms.inputText,
+                        backgroundColor: baseColors.white,
+                        border: `1px solid ${baseColors.cardBorderPurple}`,
+                        color: baseColors.grayDark,
                         minHeight: '50px',
                       }}
                       onFocus={(e) => {
-                        e.currentTarget.style.borderColor = colors.primary;
-                        e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.primary}20`;
+                        e.currentTarget.style.borderColor =
+                          baseColors.brandPrimary;
+                        e.currentTarget.style.boxShadow = `0 0 0 3px ${baseColors.brandPrimary}20`;
                       }}
                       onBlur={(e) => {
-                        e.currentTarget.style.borderColor = colors.borders.card;
+                        e.currentTarget.style.borderColor =
+                          baseColors.cardBorder;
                         e.currentTarget.style.boxShadow = 'none';
                       }}
                     >
@@ -4833,7 +4835,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                       <svg
                         className="w-4 h-4"
-                        style={{ color: colors.text.muted }}
+                        style={{ color: baseColors.grayMuted }}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -4901,28 +4903,28 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       ...provided,
                       borderRadius: '8px',
                       border: state.isFocused
-                        ? `2px solid ${colors.primary}`
-                        : `1px solid ${colors.borders.card}`,
+                        ? `2px solid ${baseColors.brandPrimary}`
+                        : `1px solid ${baseColors.cardBorderPurple}`,
                       minHeight: '50px',
                       fontSize: '16px',
-                      backgroundColor: colors.forms.inputBackground,
+                      backgroundColor: baseColors.white,
                       boxShadow: state.isFocused
-                        ? `0 0 0 3px ${colors.primary}20`
+                        ? `0 0 0 3px ${baseColors.brandPrimary}20`
                         : 'none',
                       '&:hover': {
                         border: state.isFocused
-                          ? `2px solid ${colors.primary}`
-                          : `1px solid ${colors.borders.card}`,
+                          ? `2px solid ${baseColors.brandPrimary}`
+                          : `1px solid ${baseColors.cardBorder}`,
                       },
                     }),
                     placeholder: (provided: any) => ({
                       ...provided,
-                      color: colors.forms.inputPlaceholder,
+                      color: baseColors.grayPlaceholder,
                       fontSize: '16px',
                     }),
                     input: (provided: any) => ({
                       ...provided,
-                      color: colors.forms.inputText,
+                      color: baseColors.grayDark,
                       fontSize: '16px',
                     }),
                   }}
@@ -4937,18 +4939,20 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className="w-full px-3 py-2 pr-8 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 transition-all flex items-center justify-between"
                     style={{
-                      backgroundColor: colors.forms.inputBackground,
-                      border: `1px solid ${colors.borders.card}`,
-                      color: colors.forms.inputText,
+                      backgroundColor: baseColors.white,
+                      border: `1px solid ${baseColors.cardBorderPurple}`,
+                      color: baseColors.grayDark,
                       minHeight: '50px',
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = colors.primary;
-                      e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.primary}20`;
+                      e.currentTarget.style.borderColor =
+                        baseColors.brandPrimary;
+                      e.currentTarget.style.boxShadow = `0 0 0 3px ${baseColors.brandPrimary}20`;
                     }}
                     onBlur={(e) => {
                       if (!isDropdownOpen) {
-                        e.currentTarget.style.borderColor = colors.borders.card;
+                        e.currentTarget.style.borderColor =
+                          baseColors.cardBorder;
                         e.currentTarget.style.boxShadow = 'none';
                       }
                     }}
@@ -4967,7 +4971,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       className={`w-4 h-4 transition-transform ${
                         isDropdownOpen ? 'rotate-180' : ''
                       }`}
-                      style={{ color: colors.text.muted }}
+                      style={{ color: baseColors.grayMuted }}
                     />
                   </button>
 
@@ -4975,8 +4979,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     <div
                       className="absolute z-10 w-full mt-1 rounded-lg shadow-lg overflow-hidden"
                       style={{
-                        backgroundColor: colors.backgrounds.card,
-                        border: `1px solid ${colors.borders.medium}`,
+                        backgroundColor: baseColors.white,
+                        border: `1px solid ${baseColors.cardBorderPurple}`,
                       }}
                     >
                       {scanTypeOptions.map((option) => {
@@ -5003,14 +5007,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             style={{
                               backgroundColor:
                                 scanType === option.value
-                                  ? colors.primary
+                                  ? baseColors.brandPrimary
                                   : 'transparent',
                               color:
                                 scanType === option.value
-                                  ? colors.text.inverse
+                                  ? baseColors.white
                                   : isDisabled
-                                  ? colors.text.muted
-                                  : colors.text.primary,
+                                  ? baseColors.grayMuted
+                                  : baseColors.grayDark2,
                             }}
                           >
                             <IconComponent
@@ -5041,17 +5045,15 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 type="button"
                 className="search-button px-8 py-3 rounded-lg font-medium text-lg whitespace-nowrap transition-all duration-200 hover:shadow-md"
                 style={{
-                  backgroundColor: colors.primaryDark,
-                  color: colors.buttons.primary.text,
+                  backgroundColor: '#3343AD',
+                  color: baseColors.white,
                   minHeight: '50px',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor =
-                    colors.buttons.primary.hover;
+                  e.currentTarget.style.backgroundColor = '#2A3690';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor =
-                    colors.buttons.primary.background;
+                  e.currentTarget.style.backgroundColor = '#3343AD';
                 }}
                 onClick={() => {
                   if (!currentLanguage || !currentLanguage.trim()) {
@@ -5083,11 +5085,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             <Card
               className="w-full"
               style={{
-                background: 'linear-gradient(135deg, #13435B 0%, #297FA8 100%)',
+                background: 'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
+
                 borderRadius: '12px',
                 padding: '16px',
                 position: 'relative',
                 minHeight: '120px',
+                border: `1px solid ${baseColors.cardBorderPurple}`,
               }}
             >
               <CardContent className="p-0">
@@ -5095,7 +5099,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   <div
                     className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                     style={{
-                      backgroundColor: colors.backgrounds.iconContainer,
+                      backgroundColor: baseColors.grayIcon,
                     }}
                   >
                     <svg
@@ -5107,18 +5111,18 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     >
                       <path
                         d="M9.75 26.25L9.75 21.75M17.25 26.25L17.25 12.75M24.75 26.25V20.25"
-                        stroke="#205A76"
+                        stroke="#222D73"
                         strokeWidth="3"
                         strokeLinecap="round"
                       />
                       <path
                         d="M32.25 8.25C32.25 10.7353 30.2353 12.75 27.75 12.75C25.2647 12.75 23.25 10.7353 23.25 8.25C23.25 5.76472 25.2647 3.75 27.75 3.75C30.2353 3.75 32.25 5.76472 32.25 8.25Z"
-                        stroke="#205A76"
+                        stroke="#222D73"
                         strokeWidth="3"
                       />
                       <path
                         d="M32.2433 16.5C32.2433 16.5 32.25 17.0093 32.25 18C32.25 24.7176 32.25 28.0763 30.1631 30.1632C28.0763 32.25 24.7175 32.25 18 32.25C11.2825 32.25 7.92373 32.25 5.83686 30.1632C3.75 28.0763 3.75 24.7176 3.75 18C3.75 11.2825 3.75 7.92377 5.83686 5.83691C7.92373 3.75005 11.2825 3.75005 18 3.75005L19.5 3.75"
-                        stroke="#205A76"
+                        stroke="#222D73"
                         strokeWidth="3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -5128,13 +5132,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   <div className="flex-1">
                     <h2
                       className="text-base sm:text-lg font-bold mb-1"
-                      style={{ color: colors.text.inverse }}
+                      style={{ color: baseColors.white }}
                     >
                       Comprehensive Analysis
                     </h2>
                     <p
                       className="text-xs sm:text-sm leading-tight"
-                      style={{ color: colors.installation.statsCardText }}
+                      style={{ color: baseColors.blueStats }}
                     >
                       Our scanner checks for WCAG 2.1 compliance across your
                       entire site.
@@ -5147,11 +5151,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             <Card
               className="w-full"
               style={{
-                background: 'linear-gradient(135deg, #13435B 0%, #297FA8 100%)',
+                background: 'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
+
                 borderRadius: '12px',
                 padding: '16px',
                 position: 'relative',
                 minHeight: '120px',
+                border: `1px solid ${baseColors.cardBorderPurple}`,
               }}
             >
               <CardContent className="p-0">
@@ -5159,7 +5165,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   <div
                     className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                     style={{
-                      backgroundColor: colors.backgrounds.iconContainer,
+                      backgroundColor: baseColors.grayIcon,
                     }}
                   >
                     <svg
@@ -5171,27 +5177,27 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     >
                       <path
                         d="M1.91699 14C1.91699 8.34315 1.91699 5.51472 3.78419 3.75736C5.65138 2 8.65658 2 14.667 2H15.8261C20.7179 2 23.1638 2 24.8624 3.19675C25.3491 3.53964 25.7811 3.94629 26.1454 4.40433C27.417 6.00301 27.417 8.30504 27.417 12.9091V16.7273C27.417 21.172 27.417 23.3944 26.7136 25.1694C25.5828 28.0229 23.1913 30.2737 20.1595 31.338C18.2736 32 15.9123 32 11.1897 32C8.49112 32 7.14182 32 6.06416 31.6217C4.33168 31.0135 2.96512 29.7274 2.31894 28.0968C1.91699 27.0825 1.91699 25.8126 1.91699 23.2727V14Z"
-                        stroke="#205A76"
+                        stroke="#222D73"
                         strokeWidth="3"
                         strokeLinejoin="round"
                       />
                       <path
                         d="M27.417 17C27.417 19.7614 25.1784 22 22.417 22C21.4183 22 20.2409 21.825 19.2699 22.0852C18.4072 22.3164 17.7333 22.9902 17.5022 23.853C17.242 24.8239 17.417 26.0013 17.417 27C17.417 29.7614 15.1784 32 12.417 32"
-                        stroke="#205A76"
+                        stroke="#222D73"
                         strokeWidth="3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       />
                       <path
                         d="M8.66699 9.5H19.167"
-                        stroke="#205A76"
+                        stroke="#222D73"
                         strokeWidth="3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       />
                       <path
                         d="M8.66699 15.5H13.167"
-                        stroke="#205A76"
+                        stroke="#222D73"
                         strokeWidth="3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -5201,13 +5207,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   <div className="flex-1">
                     <h2
                       className="text-base sm:text-lg font-bold mb-1"
-                      style={{ color: colors.text.inverse }}
+                      style={{ color: baseColors.white }}
                     >
                       Detailed Reports
                     </h2>
                     <p
                       className="text-xs sm:text-sm leading-tight"
-                      style={{ color: colors.installation.statsCardText }}
+                      style={{ color: baseColors.blueStats }}
                     >
                       Receive a full breakdown of accessibility issues and how
                       to fix them.
@@ -5220,11 +5226,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             <Card
               className="w-full"
               style={{
-                background: 'linear-gradient(135deg, #13435B 0%, #297FA8 100%)',
+                background: 'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
+
                 borderRadius: '12px',
                 padding: '16px',
                 position: 'relative',
                 minHeight: '120px',
+                border: `1px solid ${baseColors.cardBorderPurple}`,
               }}
             >
               <CardContent className="p-0">
@@ -5232,7 +5240,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   <div
                     className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                     style={{
-                      backgroundColor: colors.backgrounds.iconContainer,
+                      backgroundColor: baseColors.grayIcon,
                     }}
                   >
                     <svg
@@ -5248,25 +5256,25 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         width="34"
                         height="34"
                         rx="17"
-                        stroke="#205A76"
+                        stroke="#222D73"
                         strokeWidth="2"
                       />
                       <path
                         d="M18.3333 9.54788C17.5508 9.54788 16.8811 9.27224 16.3244 8.72097C15.7676 8.1697 15.4887 7.50621 15.4878 6.73049C15.4868 5.95476 15.7657 5.29174 16.3244 4.74141C16.883 4.19108 17.5527 3.91497 18.3333 3.9131C19.1139 3.91122 19.784 4.18732 20.3436 4.74141C20.9032 5.2955 21.1816 5.95852 21.1787 6.73049C21.1759 7.50245 20.8975 8.16595 20.3436 8.72097C19.7897 9.276 19.1196 9.55163 18.3333 9.54788ZM15.4129 32.087C14.6685 32.087 14.065 31.4863 14.065 30.7454V15.009C14.065 14.311 13.5272 13.7313 12.8298 13.6579C11.8071 13.5503 10.7724 13.4129 9.72567 13.2457C8.72348 13.0857 7.75436 12.8983 6.81829 12.6837C6.10013 12.5191 5.67286 11.7938 5.85249 11.0824L5.9063 10.8693C6.08973 10.1428 6.83481 9.70891 7.56877 9.87433C9.02474 10.2025 10.5499 10.4519 12.1443 10.6227C14.231 10.8462 16.294 10.9575 18.3333 10.9566C20.3725 10.9556 22.4355 10.8439 24.5222 10.6213C26.1166 10.4512 27.6418 10.2022 29.0977 9.87425C29.8317 9.70891 30.5768 10.1428 30.7602 10.8693L30.814 11.0824C30.9937 11.7938 30.5664 12.5191 29.8482 12.6837C28.9122 12.8983 27.943 13.0857 26.9409 13.2457C25.8941 13.4129 24.8594 13.5503 23.8367 13.6579C23.1394 13.7313 22.6015 14.311 22.6015 15.009V30.7454C22.6015 31.4863 21.998 32.087 21.2536 32.087H21.1039C20.3595 32.087 19.756 31.4863 19.756 30.7454V24.9764C19.756 24.2355 19.1525 23.6348 18.4081 23.6348H18.2584C17.514 23.6348 16.9105 24.2355 16.9105 24.9764V30.7454C16.9105 31.4863 16.3071 32.087 15.5627 32.087H15.4129Z"
-                        fill="#205A76"
+                        fill="#222D73"
                       />
                     </svg>
                   </div>
                   <div className="flex-1">
                     <h2
                       className="text-base sm:text-lg font-bold mb-1"
-                      style={{ color: colors.text.inverse }}
+                      style={{ color: baseColors.white }}
                     >
                       Improve User Experience
                     </h2>
                     <p
                       className="text-xs sm:text-sm leading-tight"
-                      style={{ color: colors.installation.statsCardText }}
+                      style={{ color: baseColors.blueStats }}
                     >
                       Make your website accessible to all users, regardless of
                       abilities.
@@ -5289,19 +5297,21 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               <div
                 className="accessibility-issues-section rounded-xl p-2 sm:p-4 md:p-6 mt-12 shadow w-full overflow-visible box-border"
                 style={{
-                  backgroundColor: colors.installation.sectionBackground,
+                  backgroundColor: '#eaecfb',
                   marginLeft: 0,
                   marginRight: 0,
-                  border: `1px solid ${colors.borders.scanHistory}`,
+                  border: `1px solid ${baseColors.cardBorderPurple}`,
                 }}
               >
                 <div
                   className="mb-6 pb-4 w-full"
-                  style={{ borderBottom: `2px solid ${colors.lines.light}` }}
+                  style={{
+                    borderBottom: `2px solid ${baseColors.cardBorderPurple}`,
+                  }}
                 >
                   <h3
                     className="text-xl sm:text-2xl font-medium"
-                    style={{ color: colors.text.primary }}
+                    style={{ color: baseColors.grayDark2 }}
                   >
                     Scan history
                   </h3>
@@ -5311,25 +5321,25 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 <div className="hidden md:grid grid-cols-4 gap-4 mb-4 px-4">
                   <div
                     className="text-sm font-medium uppercase tracking-wider"
-                    style={{ color: colors.sidebar.activeItemText }}
+                    style={{ color: baseColors.brandPrimary }}
                   >
                     Sites
                   </div>
                   <div
                     className="text-sm font-medium uppercase tracking-wider text-center"
-                    style={{ color: colors.sidebar.activeItemText }}
+                    style={{ color: baseColors.brandPrimary }}
                   >
                     Last scanned
                   </div>
                   <div
                     className="text-sm font-medium uppercase tracking-wider text-center"
-                    style={{ color: colors.sidebar.activeItemText }}
+                    style={{ color: baseColors.brandPrimary }}
                   >
                     Score
                   </div>
                   <div
                     className="text-sm font-medium uppercase tracking-wider text-center"
-                    style={{ color: colors.sidebar.activeItemText }}
+                    style={{ color: baseColors.brandPrimary }}
                   >
                     Action
                   </div>
@@ -5379,8 +5389,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         key={row.r2_key}
                         className="block md:grid md:grid-cols-4 gap-4 md:items-center p-3 sm:p-4 rounded-lg border hover:shadow-md transition-all duration-200 group relative overflow-hidden md:overflow-visible w-full"
                         style={{
-                          backgroundColor: colors.backgrounds.cardLight,
-                          borderColor: colors.borders.card,
+                          backgroundColor: baseColors.cardLight,
+                          borderColor: baseColors.cardBorder,
                         }}
                       >
                         {/* Mobile Layout */}
@@ -5411,7 +5421,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                               <div className="min-w-0 flex-1">
                                 <div
                                   className="font-medium truncate"
-                                  style={{ color: colors.text.primary }}
+                                  style={{ color: baseColors.grayDark2 }}
                                 >
                                   {row.url
                                     .replace(/^https?:\/\//, '')
@@ -5438,7 +5448,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                 style={{
                                   backgroundColor:
                                     openDropdown === row.r2_key
-                                      ? colors.backgrounds.card
+                                      ? baseColors.white
                                       : 'transparent',
                                 }}
                               >
@@ -5446,7 +5456,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   className="w-5 h-5"
                                   fill="currentColor"
                                   viewBox="0 0 20 20"
-                                  style={{ color: colors.primary }}
+                                  style={{ color: baseColors.brandPrimary }}
                                 >
                                   <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                                 </svg>
@@ -5457,8 +5467,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                 <div
                                   className="absolute top-10 w-44 sm:w-48 rounded-lg shadow-lg z-50 py-2"
                                   style={{
-                                    backgroundColor: colors.backgrounds.card,
-                                    border: `1px solid ${colors.borders.light}`,
+                                    backgroundColor: baseColors.white,
+                                    border: `1px solid ${baseColors.cardBorderPurple}`,
                                     maxWidth: 'calc(100vw - 3rem)',
                                     minWidth: '180px',
                                     right: '0',
@@ -5467,7 +5477,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                 >
                                   <button
                                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                    style={{ color: colors.text.primary }}
+                                    style={{ color: baseColors.grayDark2 }}
                                     onClick={() => {
                                       setReportUrl(
                                         `/${
@@ -5484,7 +5494,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   </button>
                                   <button
                                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                    style={{ color: colors.text.primary }}
+                                    style={{ color: baseColors.grayDark2 }}
                                     disabled={downloadingRow === row.r2_key}
                                     onClick={async () => {
                                       setOpenDropdown(null);
@@ -5536,7 +5546,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                     {downloadingRow === row.r2_key ? (
                                       <CircularProgress
                                         size={14}
-                                        sx={{ color: colors.text.primary }}
+                                        sx={{ color: baseColors.grayDark2 }}
                                       />
                                     ) : (
                                       'Download Detailed Report'
@@ -5544,7 +5554,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   </button>
                                   <button
                                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                    style={{ color: colors.text.primary }}
+                                    style={{ color: baseColors.grayDark2 }}
                                     disabled={downloadingRow === row.r2_key}
                                     onClick={async () => {
                                       setOpenDropdown(null);
@@ -5597,7 +5607,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                     {downloadingRow === row.r2_key ? (
                                       <CircularProgress
                                         size={14}
-                                        sx={{ color: colors.text.primary }}
+                                        sx={{ color: baseColors.grayDark2 }}
                                       />
                                     ) : (
                                       'Download Prospect Report'
@@ -5610,12 +5620,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
                           {/* Last Scanned */}
                           <div className="text-xs">
-                            <span style={{ color: colors.text.muted }}>
+                            <span style={{ color: baseColors.grayMuted }}>
                               LAST SCANNED
                             </span>
                             <div
                               className="text-sm mt-1"
-                              style={{ color: colors.text.muted }}
+                              style={{ color: baseColors.grayMuted }}
                             >
                               {timeAgo}
                             </div>
@@ -5623,7 +5633,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
                           {/* Accessibility Score */}
                           <div className="text-xs">
-                            <span style={{ color: colors.text.muted }}>
+                            <span style={{ color: baseColors.grayMuted }}>
                               ACCESSIBILITY SCORE
                             </span>
                             <div className="flex gap-2 sm:gap-3 mt-2">
@@ -5670,7 +5680,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                           <div className="min-w-0 flex-1">
                             <div
                               className="font-medium truncate"
-                              style={{ color: colors.text.primary }}
+                              style={{ color: baseColors.grayDark2 }}
                             >
                               {row.url
                                 .replace(/^https?:\/\//, '')
@@ -5683,7 +5693,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         <div className="hidden md:block text-center">
                           <div
                             className="text-sm"
-                            style={{ color: colors.text.muted }}
+                            style={{ color: baseColors.grayMuted }}
                           >
                             {timeAgo}
                           </div>
@@ -5722,7 +5732,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             style={{
                               backgroundColor:
                                 openDropdown === row.r2_key
-                                  ? colors.backgrounds.card
+                                  ? baseColors.white
                                   : 'transparent',
                             }}
                           >
@@ -5730,7 +5740,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                               className="w-5 h-5"
                               fill="currentColor"
                               viewBox="0 0 20 20"
-                              style={{ color: colors.primary }}
+                              style={{ color: baseColors.brandPrimary }}
                             >
                               <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                             </svg>
@@ -5741,8 +5751,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             <div
                               className="absolute top-10 w-48 rounded-lg shadow-lg z-50 py-2"
                               style={{
-                                backgroundColor: colors.backgrounds.card,
-                                border: `1px solid ${colors.borders.light}`,
+                                backgroundColor: baseColors.white,
+                                border: `1px solid ${baseColors.cardBorderPurple}`,
                                 maxWidth: 'calc(100vw - 3rem)',
                                 minWidth: '180px',
                                 right: '0',
@@ -5751,7 +5761,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             >
                               <button
                                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                style={{ color: colors.text.primary }}
+                                style={{ color: baseColors.grayDark2 }}
                                 onClick={() => {
                                   setReportUrl(
                                     `/${row.r2_key}?domain=${encodeURIComponent(
@@ -5766,7 +5776,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                               </button>
                               <button
                                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                style={{ color: colors.text.primary }}
+                                style={{ color: baseColors.grayDark2 }}
                                 disabled={downloadingRow === row.r2_key}
                                 onClick={async () => {
                                   setOpenDropdown(null);
@@ -5817,7 +5827,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                 {downloadingRow === row.r2_key ? (
                                   <CircularProgress
                                     size={14}
-                                    sx={{ color: colors.text.primary }}
+                                    sx={{ color: baseColors.grayDark2 }}
                                   />
                                 ) : (
                                   'Download Detailed Report'
@@ -5825,7 +5835,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                               </button>
                               <button
                                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                style={{ color: colors.text.primary }}
+                                style={{ color: baseColors.grayDark2 }}
                                 disabled={downloadingRow === row.r2_key}
                                 onClick={async () => {
                                   setOpenDropdown(null);
@@ -5876,7 +5886,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                 {downloadingRow === row.r2_key ? (
                                   <CircularProgress
                                     size={14}
-                                    sx={{ color: colors.text.primary }}
+                                    sx={{ color: baseColors.grayDark2 }}
                                   />
                                 ) : (
                                   'Download Prospect Report'
@@ -5903,19 +5913,21 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               <div
                 className="accessibility-issues-section rounded-xl p-2 sm:p-4 md:p-6 mt-12 shadow w-full overflow-visible box-border"
                 style={{
-                  backgroundColor: colors.installation.sectionBackground,
+                  backgroundColor: baseColors.blueSection,
                   marginLeft: 0,
                   marginRight: 0,
-                  border: `1px solid ${colors.borders.scanHistory}`,
+                  border: `1px solid ${baseColors.cardBorderPurple}`,
                 }}
               >
                 <div
                   className="mb-6 pb-4 w-full"
-                  style={{ borderBottom: `2px solid ${colors.lines.light}` }}
+                  style={{
+                    borderBottom: `2px solid ${baseColors.cardBorderPurple}`,
+                  }}
                 >
                   <h3
                     className="text-xl sm:text-2xl font-medium"
-                    style={{ color: colors.text.primary }}
+                    style={{ color: baseColors.grayDark2 }}
                   >
                     Scan history
                   </h3>
@@ -5933,7 +5945,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   <div className="text-center">
                     <h4
                       className="text-lg font-medium mb-2"
-                      style={{ color: colors.text.primary }}
+                      style={{ color: baseColors.grayDark2 }}
                     >
                       You currently have no previous scan histories
                     </h4>

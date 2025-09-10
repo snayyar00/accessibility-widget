@@ -55,7 +55,7 @@ module.exports = {
       'gray-500': '#6b7280',
       'gray-600': '#475569',
       'gray-900': '#101827',
-      body: '#e4ebfc',
+      body: '#e8f2fe',
       black: '#000000',
       'indigo-600': '#4f46e5',
       'indigo-800': '#3730a3',
