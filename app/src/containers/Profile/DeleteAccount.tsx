@@ -22,13 +22,13 @@ const DeleteAccount: React.FC<Props> = ({ closeModal, isOpen }) => {
     data: { email },
   } = useSelector((state: RootState) => state.user);
   const history = useHistory();
-  const emailRegex = new RegExp(`/^${email}$/`);
+  const emailRegex = new RegExp(`^${email}$`);
   const AccountSettingSchema = yup.object().shape({
     email: yup
       .string()
       .required('Common.validation.require_email')
       .email('Common.validation.valid_email')
-      .matches(emailRegex),
+      .matches(emailRegex, 'Email must match your account email address'),
   });
   const { register, handleSubmit, errors, watch, formState } = useForm({
     resolver: yupResolver(AccountSettingSchema),
@@ -36,14 +36,19 @@ const DeleteAccount: React.FC<Props> = ({ closeModal, isOpen }) => {
     mode: 'all',
   });
   const watchEmail = watch('email');
-  const [deleteAccountMutation] = useMutation(deleteAccountQuery);
+  const [deleteAccountMutation, { loading, error }] =
+    useMutation(deleteAccountQuery);
 
   async function onSubmit() {
-    const { data } = await deleteAccountMutation();
+    try {
+      const { data } = await deleteAccountMutation();
 
-    if (data?.deleteAccount) {
-      clearAuthenticationCookie();
-      history.replace('/auth/signin');
+      if (data?.deleteAccount) {
+        clearAuthenticationCookie();
+        history.replace('/auth/signin');
+      }
+    } catch (err) {
+      console.error('Error deleting account:', err);
     }
   }
 
@@ -57,6 +62,8 @@ const DeleteAccount: React.FC<Props> = ({ closeModal, isOpen }) => {
         email={email}
         isValid={formState.isValid && watchEmail !== ''}
         onSubmit={handleSubmit(onSubmit)}
+        loading={loading}
+        error={error}
       />
     </Portal>
   );

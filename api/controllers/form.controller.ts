@@ -4,6 +4,7 @@ import { addNewsletterSub, unsubscribeFromNewsletter } from '../repository/newsl
 import { findUser, setOnboardingEmailsFlag, updateUserNotificationFlags } from '../repository/user.repository'
 import { sendMail } from '../services/email/email.service'
 import { emailValidation } from '../validations/email.validation'
+import { verifyUnsubscribeToken } from '../utils/secure-unsubscribe.utils'
 
 export async function handleFormSubmission(req: Request, res: Response) {
   const validateResult = emailValidation(req.body.email)
@@ -141,14 +142,28 @@ export async function unsubscribe(req: Request, res: Response) {
     if (type === 'monitoring') {
       // Disable monitoring alerts
       const updated = await updateUserNotificationFlags(user.id, {
-        monitoring_alert_flag: false
+        monitoring_alert_flag: false,
       })
       success = updated > 0
       message = 'You have been successfully unsubscribed from WebAbility monitoring alerts.<br/>You will no longer receive email notifications when your websites go down or come back online.'
+    } else if (type === 'monthly') {
+      // Disable monthly reports
+      const updated = await updateUserNotificationFlags(user.id, {
+        monthly_report_flag: false,
+      })
+      success = updated > 0
+      message = 'You have been successfully unsubscribed from WebAbility monthly accessibility reports.<br/>You will no longer receive monthly accessibility reports for your websites.'
+    } else if (type === 'domain') {
+      // Disable new domain alerts
+      const updated = await updateUserNotificationFlags(user.id, {
+        new_domain_flag: false,
+      })
+      success = updated > 0
+      message = 'You have been successfully unsubscribed from WebAbility new domain alerts.<br/>You will no longer receive email notifications when new domains are added to your account.'
     } else {
       // Default: Disable onboarding emails
       success = await setOnboardingEmailsFlag(user.id, false)
-      
+
       // Also unsubscribe from general newsletter for complete unsubscribe
       await unsubscribeFromNewsletter(email)
       message = 'You have been successfully unsubscribed from WebAbility onboarding emails.'
@@ -185,6 +200,152 @@ export async function unsubscribe(req: Request, res: Response) {
     }
   } catch (error) {
     console.error('Error processing unsubscribe:', error)
+    res.status(500).send(`
+        <html>
+          <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+            <h2 style="color: #dc3545;">Error</h2>
+            <p>An error occurred while processing your unsubscribe request.</p>
+            <p style="margin-top: 30px;">
+              <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
+            </p>
+          </body>
+        </html>
+      `)
+  }
+}
+
+export async function secureUnsubscribe(req: Request, res: Response) {
+  try {
+    const { token } = req.query
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px;">
+              <h2 style="color: #dc3545;">Invalid Request</h2>
+              <p>Valid unsubscribe token is required.</p>
+              <p style="margin-top: 30px;">
+                <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
+              </p>
+            </body>
+          </html>
+    `)
+    }
+
+    // Verify and decode the token
+    const payload = verifyUnsubscribeToken(token)
+
+    if (!payload) {
+      return res.status(400).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+              <h2 style="color: #dc3545;">Invalid or Expired Token</h2>
+              <p>This unsubscribe link is invalid or has expired.</p>
+              <p style="color: #666;">Please use a recent unsubscribe link from your email.</p>
+              <p style="margin-top: 30px;">
+                <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
+              </p>
+            </body>
+          </html>
+        `)
+    }
+
+    // Find user by ID for additional security
+    const user = await findUser({ id: payload.userId })
+
+    if (!user || user.email !== payload.email) {
+      return res.status(404).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+              <h2 style="color: #ffc107;">User Not Found</h2>
+              <p>The user associated with this unsubscribe link was not found.</p>
+              <p style="margin-top: 30px;">
+                <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
+              </p>
+            </body>
+          </html>
+        `)
+    }
+
+    let success = false
+    let message = ''
+
+    // Handle different types of unsubscribe based on token payload
+    if (payload.type === 'monitoring') {
+      const updated = await updateUserNotificationFlags(user.id, {
+        monitoring_alert_flag: false,
+      })
+      success = updated > 0
+      message = 'You have been successfully unsubscribed from WebAbility monitoring alerts.<br/>You will no longer receive email notifications when your websites go down or come back online.'
+    } else if (payload.type === 'monthly') {
+      const updated = await updateUserNotificationFlags(user.id, {
+        monthly_report_flag: false,
+      })
+      success = updated > 0
+      message = 'You have been successfully unsubscribed from WebAbility monthly accessibility reports.<br/>You will no longer receive monthly accessibility reports for your websites.'
+    } else if (payload.type === 'domain') {
+      const updated = await updateUserNotificationFlags(user.id, {
+        new_domain_flag: false,
+      })
+      success = updated > 0
+      message = 'You have been successfully unsubscribed from WebAbility new domain alerts.<br/>You will no longer receive email notifications when new domains are added to your account.'
+    } else if (payload.type === 'onboarding') {
+      success = await setOnboardingEmailsFlag(user.id, false)
+
+      // Also unsubscribe from general newsletter for complete unsubscribe (consistent with old unsubscribe function)
+      await unsubscribeFromNewsletter(user.email)
+      message = 'You have been successfully unsubscribed from WebAbility onboarding emails.<br/>You will no longer receive onboarding and educational emails from us.'
+    } else if (payload.type === 'issue_reports') {
+      const updated = await updateUserNotificationFlags(user.id, {
+        issue_reported_flag: false,
+      })
+      success = updated > 0
+      message = 'You have been successfully unsubscribed from WebAbility issue report notifications.<br/>You will no longer receive email notifications when issues are reported on your websites.'
+    } else {
+      return res.status(400).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+              <h2 style="color: #dc3545;">Invalid Request</h2>
+              <p>Unsupported unsubscribe type.</p>
+              <p style="margin-top: 30px;">
+                <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
+              </p>
+            </body>
+          </html>
+        `)
+    }
+
+    if (success) {
+      res.status(200).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+              <h2 style="color: #28a745;">✓ Successfully Unsubscribed</h2>
+              <p>${message}</p>
+              <p style="color: #666;">Email: ${user.email}</p>
+              <p style="margin-top: 20px; color: #666; font-size: 14px;">
+                You can re-enable notifications anytime from your dashboard settings.
+              </p>
+              <p style="margin-top: 30px;">
+                <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
+              </p>
+            </body>
+          </html>
+        `)
+    } else {
+      res.status(500).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+              <h2 style="color: #dc3545;">Error</h2>
+              <p>An error occurred while processing your unsubscribe request.</p>
+              <p style="margin-top: 30px;">
+                <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
+              </p>
+            </body>
+          </html>
+        `)
+    }
+  } catch (error) {
+    console.error('Error processing secure unsubscribe:', error)
     res.status(500).send(`
         <html>
           <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
