@@ -291,6 +291,9 @@ export async function secureUnsubscribe(req: Request, res: Response) {
       message = 'You have been successfully unsubscribed from WebAbility new domain alerts.<br/>You will no longer receive email notifications when new domains are added to your account.'
     } else if (payload.type === 'onboarding') {
       success = await setOnboardingEmailsFlag(user.id, false)
+
+      // Also unsubscribe from general newsletter for complete unsubscribe (consistent with old unsubscribe function)
+      await unsubscribeFromNewsletter(user.email)
       message = 'You have been successfully unsubscribed from WebAbility onboarding emails.<br/>You will no longer receive onboarding and educational emails from us.'
     } else if (payload.type === 'issue_reports') {
       const updated = await updateUserNotificationFlags(user.id, {
