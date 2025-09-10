@@ -96,12 +96,6 @@ export async function addSite(userId: number, url: string): Promise<string> {
         const errorsCount = (report?.axe?.errors?.length || 0) + (report?.htmlcs?.errors?.length || 0)
         const warningsCount = (report?.axe?.warnings?.length || 0) + (report?.htmlcs?.warnings?.length || 0)
         const noticesCount = (report?.axe?.notices?.length || 0) + (report?.htmlcs?.notices?.length || 0)
-
-        console.log('Email compoenets ', {
-          noticesCount,
-          warningsCount,
-          errorsCount,
-        })
         const notification = (await findUserNotificationByUserId(user.id)) as { new_domain_flag?: boolean } | null
         if (!notification || !notification.new_domain_flag) {
           console.log(`Skipping new domain email for user ${user.email} (no notification flag)`)
