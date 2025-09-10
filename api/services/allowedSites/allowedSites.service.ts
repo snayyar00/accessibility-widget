@@ -11,6 +11,7 @@ import { validateChangeURL, validateDomain } from '../../validations/allowedSite
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service'
 import { EmailAttachment, sendEmailWithRetries } from '../email/email.service'
 import { createSitesPlan } from './plans-sites.service'
+import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 
 export async function checkScript(url: string) {
   const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${url}`
@@ -75,20 +76,40 @@ export async function addSite(userId: number, url: string): Promise<string> {
         const user = await getUserbyId(userId)
         // Check user_notifications flag for new_domain_flag
 
-        const widgetStatus = await checkScript(domain)
-        const status = widgetStatus == 'true' || widgetStatus == 'Web Ability' ? 'Compliant' : 'Not Compliant'
-        const score = widgetStatus == 'Web Ability' ? Math.floor(Math.random() * (100 - 90 + 1)) + 90 : widgetStatus == 'true' ? Math.floor(Math.random() * (88 - 80 + 1)) + 80 : report.score
+        let widgetStatus: string
+        let status: string
+        let score: number
+
+        try {
+          widgetStatus = await checkScript(domain)
+          status = widgetStatus == 'true' || widgetStatus == 'Web Ability' ? 'Compliant' : 'Not Compliant'
+          score = widgetStatus == 'Web Ability' ? Math.floor(Math.random() * (100 - 90 + 1)) + 90 : widgetStatus == 'true' ? Math.floor(Math.random() * (88 - 80 + 1)) + 80 : report.score
+        } catch (error) {
+          logger.warn(`Failed to check script for domain ${domain}:`, error)
+          // Fallback to default values when checkScript fails
+          widgetStatus = 'false'
+          status = 'Not Compliant'
+          score = report.score
+        }
 
         // Calculate total counts from both AXE and HTML_CS
         const errorsCount = (report?.axe?.errors?.length || 0) + (report?.htmlcs?.errors?.length || 0)
         const warningsCount = (report?.axe?.warnings?.length || 0) + (report?.htmlcs?.warnings?.length || 0)
         const noticesCount = (report?.axe?.notices?.length || 0) + (report?.htmlcs?.notices?.length || 0)
 
+        console.log('Email compoenets ', {
+          noticesCount,
+          warningsCount,
+          errorsCount,
+        })
         const notification = (await findUserNotificationByUserId(user.id)) as { new_domain_flag?: boolean } | null
         if (!notification || !notification.new_domain_flag) {
           console.log(`Skipping new domain email for user ${user.email} (no notification flag)`)
           return 'The site was successfully added.'
         }
+        // Generate secure unsubscribe link for new domain alerts
+        const unsubscribeLink = generateSecureUnsubscribeLink(user.email, getUnsubscribeTypeForEmail('domain'), user.id)
+
         const template = await compileEmailTemplate({
           fileName: 'accessReport.mjml',
           data: {
@@ -101,6 +122,7 @@ export async function addSite(userId: number, url: string): Promise<string> {
             warningsCount: warningsCount,
             noticesCount: noticesCount,
             reportLink: 'https://app.webability.io/accessibility-test',
+            unsubscribeLink,
             year,
           },
         })

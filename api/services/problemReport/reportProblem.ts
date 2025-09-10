@@ -6,6 +6,7 @@ import { getRootDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import { validateReportProblem } from '../../validations/reportProblem.validation'
 import { sendMail } from '../email/email.service'
+import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 
 export async function handleReportProblem(site_url: string, issue_type: string, description: string, reporter_email: string): Promise<string> {
   const validateResult = validateReportProblem({ site_url, issue_type, description, reporter_email })
@@ -56,6 +57,12 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
         year,
       },
     })
+    // Generate unsubscribe link for the domain owner (if user exists)
+    let unsubscribeLink = ''
+    if (user) {
+      unsubscribeLink = generateSecureUnsubscribeLink(user.email, getUnsubscribeTypeForEmail('issue_reports'), user.id)
+    }
+
     const template1 = await compileEmailTemplate({
       fileName: 'problemReported.mjml',
       data: {
@@ -63,6 +70,7 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
         description: problem.description,
         year,
         domain,
+        unsubscribeLink,
       },
     })
 
