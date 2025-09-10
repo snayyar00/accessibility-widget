@@ -17,6 +17,9 @@ type UnsubscribeTokenPayload = {
  * @returns Complete unsubscribe URL with secure token
  */
 export function generateSecureUnsubscribeLink(email: string, type: 'monthly' | 'domain' | 'monitoring' | 'onboarding' | 'issue_reports', userId: number): string {
+  if (!process.env.JWT_SECRET || !process.env.JWT_ISSUER) {
+    throw new Error('JWT_SECRET and JWT_ISSUER must be configured for unsubscribe links.')
+  }
   const payload: UnsubscribeTokenPayload = {
     email,
     type,
@@ -29,8 +32,11 @@ export function generateSecureUnsubscribeLink(email: string, type: 'monthly' | '
     issuer: process.env.JWT_ISSUER,
     subject: 'unsubscribe',
   })
-
-  return `${process.env.REACT_APP_BACKEND_URL}/secure-unsubscribe?token=${token}`
+  const baseUrl = process.env.REACT_APP_BACKEND_URL || process.env.BACKEND_URL
+  if (!baseUrl) {
+    throw new Error('Backend base URL must be configured for unsubscribe links.')
+  }
+  return `${baseUrl}/secure-unsubscribe?token=${encodeURIComponent(token)}`
 }
 
 /**
@@ -40,6 +46,9 @@ export function generateSecureUnsubscribeLink(email: string, type: 'monthly' | '
  */
 export function verifyUnsubscribeToken(token: string): UnsubscribeTokenPayload | null {
   try {
+    if (!process.env.JWT_SECRET || !process.env.JWT_ISSUER) {
+      throw new Error('JWT_SECRET and JWT_ISSUER must be configured for unsubscribe verification.')
+    }
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string, {
       issuer: process.env.JWT_ISSUER,
       subject: 'unsubscribe',

@@ -298,6 +298,18 @@ export async function secureUnsubscribe(req: Request, res: Response) {
       })
       success = updated > 0
       message = 'You have been successfully unsubscribed from WebAbility issue report notifications.<br/>You will no longer receive email notifications when issues are reported on your websites.'
+    } else {
+      return res.status(400).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+              <h2 style="color: #dc3545;">Invalid Request</h2>
+              <p>Unsupported unsubscribe type.</p>
+              <p style="margin-top: 30px;">
+                <a href="https://www.webability.io" style="color: #007bff;">Return to WebAbility</a>
+              </p>
+            </body>
+          </html>
+        `)
     }
 
     if (success) {
