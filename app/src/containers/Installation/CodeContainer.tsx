@@ -108,7 +108,9 @@ export default function CodeContainer({
   const [copySuccess, setCopySuccess] = useState(false);
   const [position, setPosition] = useState('bottom-left');
   const [language, setLanguage] = useState('en');
-  const [iconType, setIconType] = useState<'full' | 'compact'>('full');
+  const [iconType, setIconType] = useState<'full' | 'compact' | 'hidden'>(
+    'full',
+  );
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -375,66 +377,152 @@ export default function CodeContainer({
               )}
             </div>
 
-            {/* Icon Type */}
-            <div className="space-y-2 md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-800">
-                Icon Type
-              </label>
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setIconType('full')}
-                  className={`w-34 p-3 border-2 rounded-lg transition-all ${
-                    iconType === 'full'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex flex-col items-center space-y-2">
-                    <div className="w-12 h-12 flex items-center justify-center">
-                      <img
-                        src="/images/svg/full_widget_icon.svg"
-                        alt="Full Widget"
-                        width={48}
-                        height={48}
-                        className="w-full h-full object-contain"
-                        onError={(e) => {
-                          (
-                            e.currentTarget as HTMLImageElement
-                          ).style.visibility = 'hidden';
-                        }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">
-                      Full Widget
-                    </span>
+          {/* Icon Customization */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-800 tracking-wide">
+              Icon Type
+            </label>
+            <p className="text-xs text-gray-600  pl-1">
+              You can switch between our widget icon, non-intrusive text icon,
+              or hidden mode.
+            </p>
+            <div className="flex gap-4">
+              {/* Full Widget Option */}
+              <button
+                type="button"
+                onClick={() => setIconType('full')}
+                className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-40 ${
+                  iconType === 'full'
+                    ? 'border-blue-500 bg-blue-50/50'
+                    : 'border-gray-200 hover:border-blue-300 bg-white/80'
+                }`}
+                aria-label="Select full widget icon"
+              >
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="w-12 h-12 flex items-center justify-center">
+                    <img
+                      src="/images/svg/full_widget_icon.svg"
+                      alt="Full Widget Icon"
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.visibility =
+                          'hidden';
+                      }}
+                    />
                   </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIconType('compact')}
-                  className={`w-34 p-3 border-2 rounded-lg transition-all ${
-                    iconType === 'compact'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex flex-col items-center space-y-2">
-                    <div className="w-28 sm:w-28 h-8 flex items-center justify-center">
-                      <div className="w-28 sm:w-28 h-7 bg-blue-600 flex items-center justify-center">
-                        <span className="text-white text-xs font-medium whitespace-nowrap">
-                          Site Accessibility
-                        </span>
-                      </div>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 pt-3">
-                      Compact Widget
-                    </span>
+                  <span className="text-sm font-medium text-gray-900">
+                    Full Widget
+                  </span>
+                </div>
+                {iconType === 'full' && (
+                  <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                    <FaCheck className="w-2.5 h-2.5 text-white" />
                   </div>
-                </button>
-              </div>
+                )}
+              </button>
+
+              {/* Compact Widget Option */}
+              <button
+                type="button"
+                onClick={() => setIconType('compact')}
+                className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-40 ${
+                  iconType === 'compact'
+                    ? 'border-blue-500 bg-blue-50/50'
+                    : 'border-gray-200 hover:border-blue-300 bg-white/80'
+                }`}
+                aria-label="Select compact widget icon"
+              >
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="w-16 h-8 flex items-center justify-center">
+                    <div
+                      className="w-16 h-4 flex items-center justify-center"
+                      style={{ backgroundColor: '#195AFF' }}
+                    >
+                      <span className="text-white text-[5px] font whitespace-nowrap">
+                        Site Accessibility
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    Compact Widget
+                  </span>
+                </div>
+                {iconType === 'compact' && (
+                  <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                    <FaCheck className="w-2.5 h-2.5 text-white" />
+                  </div>
+                )}
+              </button>
+
+              {/* Hidden Widget Option */}
+              <button
+                type="button"
+                onClick={() => setIconType('hidden')}
+                className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-40 ${
+                  iconType === 'hidden'
+                    ? 'border-blue-500 bg-blue-50/50'
+                    : 'border-gray-200 hover:border-blue-300 bg-white/80'
+                }`}
+                aria-label="Select hidden widget icon"
+              >
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="w-12 h-12 flex items-center justify-center">
+                    <div
+                      className="w-20 h-8 border-2 border-dashed rounded-lg flex items-center justify-center"
+                      style={{
+                        backgroundColor: '#195AFF',
+                        borderColor: '#195AFF',
+                      }}
+                    >
+                      <span className="text-white text-xs font-medium">
+                        Button
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    Button Trigger
+                  </span>
+                </div>
+                {iconType === 'hidden' && (
+                  <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                    <FaCheck className="w-2.5 h-2.5 text-white" />
+                  </div>
+                )}
+              </button>
             </div>
           </div>
+
+          {/* Hidden Widget Information */}
+          {iconType === 'hidden' && (
+            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center mt-0.5">
+                  <span className="text-white text-xs font-bold">!</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-amber-800 mb-2">
+                    How Button Trigger Works
+                  </h4>
+                  <p className="text-sm text-amber-700 mb-3">
+                    With button trigger mode, no widget icon appears on your
+                    site. Instead, you can make any existing button or element
+                    activate the accessibility widget by adding this onclick
+                    function:
+                  </p>
+                  <div className="bg-gray-900 text-green-400 p-3 rounded font-mono text-xs overflow-x-auto">
+                    onclick="document.querySelector('.asw-menu-btn')?.click()"
+                  </div>
+                  <p className="text-sm text-amber-700 mt-2">
+                    Perfect for integrating with your existing navigation, help
+                    buttons, or any custom UI elements while maintaining full
+                    control over the user experience.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
