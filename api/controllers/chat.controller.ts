@@ -12,11 +12,21 @@ export async function handleChatRequest(req: Request, res: Response) {
     // Don't require platform for initial messages without scan data
     const hasScanData = techStack || scanResults || fullScanData?.isLiveScanData
 
+    // If platform is missing but we have scan data, use a fallback instead of throwing an error
+    let finalPlatform = platform
     if (hasScanData && platform === 'Unknown') {
-      return res.status(400).json({
-        error: 'Platform is missing from tech stack data.',
-        details: process.env.NODE_ENV === 'development' ? { techStack, fullScanData } : undefined,
-      })
+      console.warn('Platform is missing from tech stack data, using fallback platform')
+      // Use a fallback platform instead of throwing an error
+      const fallbackPlatform = 'Web Application'
+      // Update the techStack object to include the fallback platform
+      if (techStack) {
+        if (!techStack.accessibilityContext) {
+          techStack.accessibilityContext = {}
+        }
+        techStack.accessibilityContext.platform = fallbackPlatform
+        techStack.accessibilityContext.platform_type = 'Static'
+      }
+      finalPlatform = fallbackPlatform
     }
 
     // Smart context-aware prompt without hardcoded rules
@@ -206,7 +216,7 @@ EXAMPLE GOOD RESPONSE:
 
 💼 **Business Impact**: Poor contrast affects 8% of men and 0.5% of women with color vision deficiencies, plus users with low vision.
 
-Let me guide you to fix this in your ${platform} admin by updating the CSS for this specific element..."
+Let me guide you to fix this in your ${finalPlatform} admin by updating the CSS for this specific element..."
 
 EXAMPLE BAD RESPONSE (NEVER DO THIS):
 "You have keyboard shortcut issues. You'll need to review any custom keyboard shortcuts implemented on your site."
