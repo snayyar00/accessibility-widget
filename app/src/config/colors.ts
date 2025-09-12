@@ -74,6 +74,8 @@ export const baseColors = {
   cardBorder: '#BED2DB',
   cardBorderScan: '#C5D9E0',
   cardBorderPurple: '#A2ADF3',
+  cardBorderBlue: '#7383ED',
+  buttonBlue: '#3343AD',
 
   // Status Colors
   success: '#22c55e',
