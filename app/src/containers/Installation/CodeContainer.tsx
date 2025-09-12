@@ -376,6 +376,7 @@ export default function CodeContainer({
                 </div>
               )}
             </div>
+          </div>
 
           {/* Icon Customization */}
           <div className="space-y-2">
@@ -386,7 +387,7 @@ export default function CodeContainer({
               You can switch between our widget icon, non-intrusive text icon,
               or hidden mode.
             </p>
-            <div className="flex gap-4">
+            <div className="flex lg:flex-row md:flex-row sm:flex-col gap-4">
               {/* Full Widget Option */}
               <button
                 type="button"
@@ -496,25 +497,27 @@ export default function CodeContainer({
 
           {/* Hidden Widget Information */}
           {iconType === 'hidden' && (
-            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center mt-0.5">
+            <div className="mt-4 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex flex-col sm:flex-row items-start gap-3">
+                <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
                   <span className="text-white text-xs font-bold">!</span>
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-amber-800 mb-2">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-amber-800 mb-2 text-sm sm:text-base">
                     How Button Trigger Works
                   </h4>
-                  <p className="text-sm text-amber-700 mb-3">
+                  <p className="text-xs sm:text-sm text-amber-700 mb-3 leading-relaxed">
                     With button trigger mode, no widget icon appears on your
                     site. Instead, you can make any existing button or element
                     activate the accessibility widget by adding this onclick
                     function:
                   </p>
-                  <div className="bg-gray-900 text-green-400 p-3 rounded font-mono text-xs overflow-x-auto">
-                    onclick="document.querySelector('.asw-menu-btn')?.click()"
+                  <div className="bg-gray-900 text-green-400 p-2 sm:p-3 rounded font-mono text-xs sm:text-sm overflow-x-auto">
+                    <code className="whitespace-nowrap">
+                      onclick="document.querySelector('.asw-menu-btn')?.click()"
+                    </code>
                   </div>
-                  <p className="text-sm text-amber-700 mt-2">
+                  <p className="text-xs sm:text-sm text-amber-700 mt-2 leading-relaxed">
                     Perfect for integrating with your existing navigation, help
                     buttons, or any custom UI elements while maintaining full
                     control over the user experience.

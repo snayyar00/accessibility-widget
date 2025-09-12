@@ -75,6 +75,8 @@ module.exports = {
     fontFamily: {
       inter: ['Inter', 'sans-serif'],
       'polysans-tria': ['PolySans Tria', 'sans-serif'],
+      manrope: ['Manrope', 'sans-serif'],
+      'manrope-display': ['Manrope Display', 'sans-serif'],
     },
     extend: {
       transitionTimingFunction: {

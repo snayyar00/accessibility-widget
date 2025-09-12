@@ -26,7 +26,7 @@ const ProblemCard: React.FC<{ problem: Problem }> = ({ problem }) => {
 
   return (
     <div
-      className={`bg-white border border-[#7383ED] rounded-lg p-3 sm:p-4 md:p-5 transition-all duration-300 ease-in-out ${
+      className={`bg-white border border-[#A2ADF3] rounded-lg p-3 sm:p-4 md:p-5 transition-all duration-300 ease-in-out ${
         isExpanded ? 'shadow-md' : 'shadow-sm hover:shadow-md'
       }`}
       onClick={() => setIsExpanded(!isExpanded)}
@@ -42,22 +42,26 @@ const ProblemCard: React.FC<{ problem: Problem }> = ({ problem }) => {
               className="sm:w-5 sm:h-5 md:w-6 md:h-6"
             />
           </div>
-          <span className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+          <span className="text-xl sm:text-sm font-medium text-gray-900 truncate">
             {problem.site_url}
           </span>
         </div>
 
         {/* Status icon */}
-        <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
           <svg
-            className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white"
-            fill="currentColor"
-            viewBox="0 0 20 20"
+            width="21"
+            height="20"
+            viewBox="0 0 21 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              fillRule="evenodd"
-              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-              clipRule="evenodd"
+              d="M13.642 7.98312L9.375 12.2501L7.92049 10.7956M10.5 1.00012C5.52944 1.00012 1.5 5.02956 1.5 10.0001C1.5 14.9707 5.52944 19.0001 10.5 19.0001C15.4706 19.0001 19.5 14.9707 19.5 10.0001C19.5 5.02956 15.4706 1.00012 10.5 1.00012Z"
+              stroke="#445AE7"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             />
           </svg>
         </div>
@@ -70,7 +74,7 @@ const ProblemCard: React.FC<{ problem: Problem }> = ({ problem }) => {
 
       {/* Issue description */}
       <p
-        className={`text-xs sm:text-sm text-gray-700 leading-relaxed transition-all duration-300 ease-in-out ${
+        className={`text-base sm:text-sm text-gray-700 leading-relaxed transition-all duration-300 ease-in-out ${
           isExpanded ? 'line-clamp-none' : 'line-clamp-3 sm:line-clamp-4'
         }`}
       >

@@ -156,27 +156,27 @@ const ProblemReport: React.FC = () => {
         {/* Dotted pattern background */}
         <div className="absolute inset-0 bg-dotted-pattern opacity-20 -z-10"></div>
 
-        <div className="relative z-0 pt-0 pb-2 sm:pb-4 md:pb-6 px-4 sm:px-6 lg:px-8">
+        <div className="relative z-0 pl-2 pb-2 sm:pb-4 md:pb-6 px-4 sm:px-6 lg:px-8">
           <div className="w-full">
             <header className="mb-1 sm:mb-2 text-left">
-              <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-gray-900">
+              <h1 className="text-3xl sm:text-2xl md:text-3xl lg:text-4xl  text-gray-900">
                 Issues
               </h1>
             </header>
 
             {/* Search/Filter Card */}
-            <div className="bg-white rounded-lg shadow-sm border border-[#7383ED] p-3 sm:p-4 mb-3 sm:mb-4">
-              <div className="mb-3 sm:mb-4">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
+            <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-3 sm:p-4 mb-3 sm:mb-4">
+              <div className="mb-3 sm:mb-4 pl-4 pt-4">
+                <h2 className="text-2xl sm:text-xl md:text-2xl text-gray-900 mb-1 sm:mb-2">
                   Reported Problems
                 </h2>
-                <p className="text-xs sm:text-sm md:text-base text-gray-500">
+                <p className="text-base sm:text-sm md:text-base text-gray-500">
                   View and manage issues reported across your websites
                 </p>
               </div>
 
               {!loader && (
-                <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-center">
+                <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-center pl-2 pt-2 pb-4">
                   <div className="w-full lg:w-auto relative">
                     <select
                       className="w-full lg:w-auto text-xs sm:text-sm md:text-base inline-flex items-center justify-center pl-3 pr-8 py-2 sm:pl-4 sm:pr-10 sm:py-2 md:pl-5 md:pr-12 md:py-3 border border-transparent font-medium rounded-md text-white bg-[#3343AD] hover:bg-[#2a3699] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3343AD] transition-colors duration-200 appearance-none cursor-pointer"
@@ -280,7 +280,7 @@ const ProblemReport: React.FC = () => {
             </div>
 
             {/* Issues Display Card */}
-            <div className="bg-[#eaeffb] rounded-lg shadow-sm border border-[#7383ED] p-3 sm:p-4">
+            <div className="bg-[#eaeffb] rounded-lg shadow-sm border border-[#A2ADF3] p-3 sm:p-4">
               {loader ? (
                 <div className="flex justify-center py-12">
                   <CircularProgress
@@ -292,16 +292,19 @@ const ProblemReport: React.FC = () => {
               ) : (
                 <>
                   {/* Issue Summary Section */}
-                  <div className="mb-3 border-b border-gray-200 pb-2">
+                  <div className="mb-3 border-b border-gray-200 pb-2 pl-4">
                     <div className="flex justify-between items-center">
                       <div>
-                        <h3 className="text-sm font-medium text-gray-900">
+                        <h3 className="text-xl font-medium text-gray-900">
                           Active issues
                         </h3>
-                        <p className="text-lg font-semibold text-gray-900 mt-1">
+                        <p className="text-base  text-gray-900 mt-1">
                           {filteredProblems.length}
                         </p>
                       </div>
+                    </div>
+                    <div className="flex justify-center -ml-4 px-4">
+                      <div className="w-full h-0.5 bg-[#7383ED] mt-2"></div>
                     </div>
                   </div>
 
