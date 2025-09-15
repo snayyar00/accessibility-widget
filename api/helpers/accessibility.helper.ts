@@ -143,7 +143,7 @@ function calculateAccessibilityScore(issues: { errors: axeOutput[]; warnings: ax
   return Math.min(Math.floor(score), maxScore)
 }
 
-export async function getAccessibilityInformationPally(domain: string, useCache?: boolean) {
+export async function getAccessibilityInformationPally(domain: string, useCache?: boolean, fullSiteScan?: boolean) {
   const output: finalOutput = {
     axe: {
       errors: [],
@@ -173,7 +173,8 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
 
     try {
       const cacheStatus = useCache !== undefined ? useCache : true
-      console.log(`Using scanner API (attempt ${retryCount + 1}/${maxRetries + 1})${cacheStatus ? ' - Fast scan with cache enabled' : ' - Fresh scan without cache'}`)
+      const fullSiteStatus = fullSiteScan !== undefined ? fullSiteScan : false
+      console.log(`Using scanner API (attempt ${retryCount + 1}/${maxRetries + 1})${cacheStatus ? ' - Fast scan with cache enabled' : ' - Fresh scan without cache'}${fullSiteStatus ? ' - Full site scan enabled' : ' - Single page scan'}`)
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -185,6 +186,9 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
           timeout: 240,
           level: 'AA',
           use_cache: useCache !== undefined ? useCache : true,
+          full_site: fullSiteScan !== undefined ? fullSiteScan : false,
+          max_pages: 50,
+          crawl_depth: 2,
         }),
       })
 
