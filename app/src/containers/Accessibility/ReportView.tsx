@@ -413,7 +413,6 @@ const ReportView: React.FC = () => {
       <header className="text-center relative z-10 mb-10 sm:mb-14 lg:mb-16 px-2 sm:px-0">
         <h1 className="mb-4">
           <span className="block text-2xl sm:text-4xl lg:text-7xl font-extrabold text-white leading-tight tracking-tight break-words">
-            Free
             <br />
             Website{' '}
             <span className="bg-gradient-to-r from-blue-300 to-blue-100 text-transparent bg-clip-text">
@@ -5556,7 +5555,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
                   {isDownloading ? (
                     <CircularProgress size={22} sx={{ color: 'white' }} />
                   ) : (
-                    'Get Free Report'
+                    'Get Report'
                   )}
                 </span>
               </button>

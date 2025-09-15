@@ -942,9 +942,17 @@ ${t.limitationsIntro} ${data.websiteUrl}, ${t.limitationsText}
 ${t.whatWeDoList}
 
 ## ${t.compliance}
-${data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io' ? 
-    `${t.statementGenerated} ${currentDate} using professional accessibility assessment tools. ${t.lastReviewed} ${lastReviewDate}.` : 
-    `${t.statementGenerated} ${currentDate} using [${data.widgetBrandName || 'WebAbility.io'}'s ${t.aiGenerator}](https://app.webability.io/statement-generator) and manual accessibility assessment tools. ${t.lastReviewed} ${lastReviewDate}.`}
+${
+  data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io'
+    ? `${t.statementGenerated} ${currentDate} using professional accessibility assessment tools. ${t.lastReviewed} ${lastReviewDate}.`
+    : `${t.statementGenerated} ${currentDate} using [${
+        data.widgetBrandName || 'WebAbility.io'
+      }'s ${
+        t.aiGenerator
+      }](https://app.webability.io/statement-generator) and manual accessibility assessment tools. ${
+        t.lastReviewed
+      } ${lastReviewDate}.`
+}
 
 **${t.complianceStatus}**
 - WCAG 2.1 AA: ✅ Fully Compliant
@@ -964,9 +972,15 @@ ${t.approvedBy}
 
 ### ${t.aboutStatement}
 
-${data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io' ? 
-    `*${t.statementGenerated} ${currentDate}. This statement reflects our current accessibility features and our ongoing commitment to digital inclusion.*` : 
-    `*${t.statementGenerated} [${data.widgetBrandName || 'WebAbility.io'}'s Professional ${t.aiGenerator}](https://app.webability.io/statement-generator) ${currentDate}. This statement reflects our current accessibility features and our ongoing commitment to digital inclusion.*`}
+${
+  data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io'
+    ? `*${t.statementGenerated} ${currentDate}. This statement reflects our current accessibility features and our ongoing commitment to digital inclusion.*`
+    : `*${t.statementGenerated} [${
+        data.widgetBrandName || 'WebAbility.io'
+      }'s Professional ${
+        t.aiGenerator
+      }](https://app.webability.io/statement-generator) ${currentDate}. This statement reflects our current accessibility features and our ongoing commitment to digital inclusion.*`
+}
 
 **${t.statementDetails}**
 - **Language:** ${languageName} (${data.language.toUpperCase()})
@@ -980,9 +994,15 @@ ${data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io' ?
       day: 'numeric',
     })}
 
-${data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io' ? 
-    `**${t.poweredBy} [${data.widgetBrandName}](${data.widgetBrandUrl || data.websiteUrl}) - ${t.makingWebAccessible}**` : 
-    `**${t.poweredBy} [${data.widgetBrandName || 'WebAbility.io'}](${data.widgetBrandUrl || 'https://webability.io'}) - ${t.makingWebAccessible}**`}`;
+${
+  data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io'
+    ? `**${t.poweredBy} [${data.widgetBrandName}](${
+        data.widgetBrandUrl || data.websiteUrl
+      }) - ${t.makingWebAccessible}**`
+    : `**${t.poweredBy} [${data.widgetBrandName || 'WebAbility.io'}](${
+        data.widgetBrandUrl || 'https://webability.io'
+      }) - ${t.makingWebAccessible}**`
+}`;
   };
 
   const convertToFormat = (
@@ -991,41 +1011,159 @@ ${data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io' ?
   ): string => {
     switch (format) {
       case 'html':
-        const htmlContent = content
-          .replace(
-            /^# (.*$)/gm,
-            '<h1 style="color: #1f2937; font-size: 2rem; font-weight: bold; margin: 1.5rem 0;">$1</h1>',
-          )
-          .replace(
-            /^## (.*$)/gm,
-            '<h2 style="color: #374151; font-size: 1.5rem; font-weight: 600; margin: 1.25rem 0;">$1</h2>',
-          )
-          .replace(
-            /^### (.*$)/gm,
-            '<h3 style="color: #4b5563; font-size: 1.25rem; font-weight: 600; margin: 1rem 0;">$1</h3>',
-          )
-          .replace(
-            /^\*\*(.*?)\*\*/gm,
-            '<strong style="font-weight: 600;">$1</strong>',
-          )
-          .replace(/^- (.*$)/gm, '<li style="margin: 0.5rem 0;">$1</li>')
-          .replace(
-            /\n\n/g,
-            '</p><p style="margin: 1rem 0; line-height: 1.6; color: #374151;">',
-          )
-          .replace(
-            /^([^<\n].*$)/gm,
-            '<p style="margin: 1rem 0; line-height: 1.6; color: #374151;">$1</p>',
-          )
-          .replace(/<p[^>]*><\/p>/g, '')
-          .replace(/(<li[^>]*>[\s\S]*?<\/li>)/g, (match) => {
-            const listItems = match;
-            return `<ul style="margin: 1rem 0; padding-left: 1.5rem;">${listItems}</ul>`;
-          })
-          .replace(
-            /---/g,
-            '<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 2rem 0;">',
+        // Split content into lines for better processing
+        const lines = content.split('\n');
+        const processedLines: string[] = [];
+        let inList = false;
+        let listItems: string[] = [];
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const trimmedLine = line.trim();
+
+          // Handle headers
+          if (trimmedLine.startsWith('### ')) {
+            // Close any open list
+            if (inList) {
+              processedLines.push(
+                `<ul style="margin: 1rem 0; padding-left: 1.5rem;">${listItems.join(
+                  '',
+                )}</ul>`,
+              );
+              listItems = [];
+              inList = false;
+            }
+            processedLines.push(
+              `<h3 style="color: #4b5563; font-size: 1.25rem; font-weight: 600; margin: 1rem 0;">${trimmedLine.substring(
+                4,
+              )}</h3>`,
+            );
+          } else if (trimmedLine.startsWith('## ')) {
+            // Close any open list
+            if (inList) {
+              processedLines.push(
+                `<ul style="margin: 1rem 0; padding-left: 1.5rem;">${listItems.join(
+                  '',
+                )}</ul>`,
+              );
+              listItems = [];
+              inList = false;
+            }
+            processedLines.push(
+              `<h2 style="color: #374151; font-size: 1.5rem; font-weight: 600; margin: 1.25rem 0;">${trimmedLine.substring(
+                3,
+              )}</h2>`,
+            );
+          } else if (trimmedLine.startsWith('# ')) {
+            // Close any open list
+            if (inList) {
+              processedLines.push(
+                `<ul style="margin: 1rem 0; padding-left: 1.5rem;">${listItems.join(
+                  '',
+                )}</ul>`,
+              );
+              listItems = [];
+              inList = false;
+            }
+            processedLines.push(
+              `<h1 style="color: #1f2937; font-size: 2rem; font-weight: bold; margin: 1.5rem 0;">${trimmedLine.substring(
+                2,
+              )}</h1>`,
+            );
+          }
+          // Handle list items
+          else if (trimmedLine.startsWith('- ')) {
+            if (!inList) {
+              inList = true;
+            }
+            const listContent = trimmedLine
+              .substring(2)
+              .replace(
+                /\*\*(.*?)\*\*/g,
+                '<strong style="font-weight: 600;">$1</strong>',
+              )
+              .replace(
+                /\[([^\]]+)\]\(([^)]+)\)/g,
+                '<a href="$2" style="color: #0033ed; text-decoration: underline;">$1</a>',
+              );
+            listItems.push(`<li style="margin: 0.5rem 0;">${listContent}</li>`);
+          }
+          // Handle horizontal rule
+          else if (trimmedLine === '---') {
+            // Close any open list
+            if (inList) {
+              processedLines.push(
+                `<ul style="margin: 1rem 0; padding-left: 1.5rem;">${listItems.join(
+                  '',
+                )}</ul>`,
+              );
+              listItems = [];
+              inList = false;
+            }
+            processedLines.push(
+              '<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 2rem 0;">',
+            );
+          }
+          // Handle empty lines
+          else if (trimmedLine === '') {
+            // Close any open list
+            if (inList) {
+              processedLines.push(
+                `<ul style="margin: 1rem 0; padding-left: 1.5rem;">${listItems.join(
+                  '',
+                )}</ul>`,
+              );
+              listItems = [];
+              inList = false;
+            }
+            // Don't add empty paragraphs
+          }
+          // Handle regular content
+          else {
+            // Close any open list
+            if (inList) {
+              processedLines.push(
+                `<ul style="margin: 1rem 0; padding-left: 1.5rem;">${listItems.join(
+                  '',
+                )}</ul>`,
+              );
+              listItems = [];
+              inList = false;
+            }
+
+            // Process the line content
+            let processedLine = trimmedLine
+              .replace(
+                /\*\*(.*?)\*\*/g,
+                '<strong style="font-weight: 600;">$1</strong>',
+              )
+              .replace(
+                /\[([^\]]+)\]\(([^)]+)\)/g,
+                '<a href="$2" style="color: #0033ed; text-decoration: underline;">$1</a>',
+              )
+              .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+            // Only wrap in paragraph if it's not already wrapped
+            if (!processedLine.startsWith('<')) {
+              processedLines.push(
+                `<p style="margin: 1rem 0; line-height: 1.6; color: #374151;">${processedLine}</p>`,
+              );
+            } else {
+              processedLines.push(processedLine);
+            }
+          }
+        }
+
+        // Close any remaining list
+        if (inList) {
+          processedLines.push(
+            `<ul style="margin: 1rem 0; padding-left: 1.5rem;">${listItems.join(
+              '',
+            )}</ul>`,
           );
+        }
+
+        const htmlContent = processedLines.join('\n');
 
         return `<!DOCTYPE html>
 <html lang="en">

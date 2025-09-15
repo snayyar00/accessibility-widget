@@ -6,6 +6,7 @@ import compileEmailTemplate from '../../helpers/compile-email-template'
 import { checkOnboardingEmailsEnabled, getUserbyId, getUsersRegisteredOnDate, UserProfile } from '../../repository/user.repository'
 import { sendEmailWithRetries } from '../../services/email/email.service'
 import logger from '../../utils/logger'
+import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 
 /**
  * Email Sequence Service - Immediate Sending with Database Tracking
@@ -95,7 +96,7 @@ export class EmailSequenceService {
           installationGuide: 'https://www.webability.io/installation',
           dashboardLink: frontendUrl,
           supportLink: 'mailto:support@webability.io',
-          unsubscribeLink: `${process.env.REACT_APP_BACKEND_URL}/unsubscribe?email=${encodeURIComponent(userEmail)}`,
+          unsubscribeLink: generateSecureUnsubscribeLink(userEmail, 'onboarding', userId),
           year: new Date().getFullYear(),
         },
       })
@@ -422,7 +423,7 @@ export class EmailSequenceService {
           supportLink: 'mailto:support@webability.io',
           installationLink: `${frontendUrl}/installation`,
           installationGuide: 'https://www.webability.io/installation',
-          unsubscribeLink: `${process.env.REACT_APP_BACKEND_URL}/unsubscribe?email=${encodeURIComponent(user.email)}`,
+          unsubscribeLink: generateSecureUnsubscribeLink(user.email, 'onboarding', user.id),
           year: new Date().getFullYear(),
         },
       })
