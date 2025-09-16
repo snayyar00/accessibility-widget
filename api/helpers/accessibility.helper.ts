@@ -167,9 +167,9 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
 
   let results
 
-  // Helper function to check if response is empty
+  // Helper function to check if response is empty or has zero issues
   const isEmptyResponse = (data: any) => {
-    return !data || !data.issues || !Array.isArray(data.issues) || data.issues.length === 0 || (data.issues.length === 1 && !data.issues[0].runner)
+    return !data || !data.issues || !Array.isArray(data.issues) || data.issues.length === 0 || (data.issues.length === 1 && !data.issues[0].runner) || data.issues.every((issue: any) => !issue.runner || !issue.type)
   }
 
   // Helper function to make scanner API request with retries
@@ -189,8 +189,8 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
         },
         body: JSON.stringify({
           url: domain,
-          viewport: [1366, 768],
-          level: 'AA',
+          max_pages: 4,
+          crawl_depth: 1,
           use_cache: useCache !== undefined ? useCache : true,
           full_site: fullSiteScan !== undefined ? fullSiteScan : false,
         }),
