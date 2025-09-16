@@ -19,11 +19,11 @@ export class BrowserbaseService {
   constructor() {
     this.apiKey = process.env.BROWSERBASE_API_KEY || ''
     this.projectId = process.env.BROWSERBASE_PROJECT_ID || ''
-    console.log('[BROWSERBASE] Initializing service...')
-    console.log('[BROWSERBASE] API Key found:', !!this.apiKey)
-    console.log('[BROWSERBASE] Project ID found:', !!this.projectId)
-    console.log('[BROWSERBASE] API Key preview:', this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'No API key')
-    console.log('[BROWSERBASE] Project ID:', this.projectId)
+    // console.log('[BROWSERBASE] Initializing service...')
+    // console.log('[BROWSERBASE] API Key found:', !!this.apiKey)
+    // console.log('[BROWSERBASE] Project ID found:', !!this.projectId)
+    // console.log('[BROWSERBASE] API Key preview:', this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'No API key')
+    // console.log('[BROWSERBASE] Project ID:', this.projectId)
 
     if (!this.apiKey) {
       console.error('[BROWSERBASE] No API key found in environment variables')
@@ -39,25 +39,25 @@ export class BrowserbaseService {
       apiKey: this.apiKey,
     })
 
-    console.log('[BROWSERBASE] Service initialized successfully with SDK')
+    //  console.log('[BROWSERBASE] Service initialized successfully with SDK')
   }
 
   async scrapeUrl(url: string): Promise<ScrapeResult> {
     let sessionId: string | null = null
 
     try {
-      console.log(`[BROWSERBASE] Scraping URL: ${url}`)
-      console.log(`[BROWSERBASE] Using API key: ${this.apiKey.substring(0, 10)}...`)
+      // console.log(`[BROWSERBASE] Scraping URL: ${url}`)
+      // console.log(`[BROWSERBASE] Using API key: ${this.apiKey.substring(0, 10)}...`)
 
       // Create a new session
-      console.log(`[BROWSERBASE] Creating new session...`)
+      //  console.log(`[BROWSERBASE] Creating new session...`)
       const session = await this.browserbase.sessions.create({
         projectId: this.projectId,
       })
 
       sessionId = session.id
-      console.log(`[BROWSERBASE] Session created: ${sessionId}`)
-      console.log(`[BROWSERBASE] Session object:`, JSON.stringify(session, null, 2))
+      // console.log(`[BROWSERBASE] Session created: ${sessionId}`)
+      // console.log(`[BROWSERBASE] Session object:`, JSON.stringify(session, null, 2))
 
       // Check for various possible WebSocket endpoint properties
       const sessionAny = session as any
@@ -66,44 +66,44 @@ export class BrowserbaseService {
       // If no direct WebSocket endpoint, try to construct it from connectUrl
       if (!wsEndpoint && sessionAny.connectUrl) {
         const connectUrl = sessionAny.connectUrl
-        console.log(`[BROWSERBASE] Found connectUrl: ${connectUrl}`)
-        console.log(`[BROWSERBASE] connectUrl type:`, typeof connectUrl)
+        // console.log(`[BROWSERBASE] Found connectUrl: ${connectUrl}`)
+        // console.log(`[BROWSERBASE] connectUrl type:`, typeof connectUrl)
 
         // Try different approaches to construct the WebSocket endpoint
         if (connectUrl && typeof connectUrl === 'string') {
           if (connectUrl.startsWith('wss://')) {
             // Approach 1: Direct use of connectUrl
             wsEndpoint = connectUrl
-            console.log(`[BROWSERBASE] Using connectUrl directly as WebSocket endpoint: ${wsEndpoint}`)
+            //  console.log(`[BROWSERBASE] Using connectUrl directly as WebSocket endpoint: ${wsEndpoint}`)
           } else if (connectUrl.startsWith('ws://')) {
             // Approach 2: Convert ws:// to wss://
             wsEndpoint = connectUrl.replace('ws://', 'wss://')
-            console.log(`[BROWSERBASE] Converted ws:// to wss://: ${wsEndpoint}`)
+            //  console.log(`[BROWSERBASE] Converted ws:// to wss://: ${wsEndpoint}`)
           } else {
             // Approach 3: Try to construct from session ID
             const sessionIdFromUrl = connectUrl.split('/').pop()
             wsEndpoint = `wss://connect.browserbase.com/sessions/${sessionIdFromUrl}`
-            console.log(`[BROWSERBASE] Constructed WebSocket endpoint from session ID: ${wsEndpoint}`)
+            // console.log(`[BROWSERBASE] Constructed WebSocket endpoint from session ID: ${wsEndpoint}`)
           }
         }
       }
 
-      console.log(`[BROWSERBASE] Available session properties:`, Object.keys(session))
-      console.log(`[BROWSERBASE] WebSocket endpoint found: ${wsEndpoint}`)
+      // console.log(`[BROWSERBASE] Available session properties:`, Object.keys(session))
+      // console.log(`[BROWSERBASE] WebSocket endpoint found: ${wsEndpoint}`)
 
       let finalWsEndpoint = wsEndpoint
 
       if (!wsEndpoint) {
         console.error(`[BROWSERBASE] No WebSocket endpoint found. Available properties:`, Object.keys(session))
-        console.log(`[BROWSERBASE] Full session object:`, session)
+        //  console.log(`[BROWSERBASE] Full session object:`, session)
 
         // Try to get the session details again after a short wait
-        console.log(`[BROWSERBASE] Waiting for session to be ready...`)
+        //  console.log(`[BROWSERBASE] Waiting for session to be ready...`)
         await new Promise((resolve) => setTimeout(resolve, 3000))
 
         try {
           const sessionDetails = await this.browserbase.sessions.retrieve(sessionId)
-          console.log(`[BROWSERBASE] Session details after wait:`, JSON.stringify(sessionDetails, null, 2))
+          //   console.log(`[BROWSERBASE] Session details after wait:`, JSON.stringify(sessionDetails, null, 2))
 
           const sessionDetailsAny = sessionDetails as any
           let wsEndpointRetry = sessionDetailsAny.webSocketDebuggerUrl || sessionDetailsAny.browserWSEndpoint || sessionDetailsAny.wsUrl || sessionDetailsAny.websocketUrl || sessionDetailsAny.browserUrl || sessionDetailsAny.endpoint
@@ -111,25 +111,25 @@ export class BrowserbaseService {
           // If no direct WebSocket endpoint, try to construct it from connectUrl
           if (!wsEndpointRetry && sessionDetailsAny.connectUrl) {
             const connectUrl = sessionDetailsAny.connectUrl
-            console.log(`[BROWSERBASE] Found connectUrl in retry: ${connectUrl}`)
+            //   console.log(`[BROWSERBASE] Found connectUrl in retry: ${connectUrl}`)
 
             if (connectUrl && typeof connectUrl === 'string') {
               if (connectUrl.startsWith('wss://')) {
                 wsEndpointRetry = connectUrl
-                console.log(`[BROWSERBASE] Using connectUrl directly in retry: ${wsEndpointRetry}`)
+                //   console.log(`[BROWSERBASE] Using connectUrl directly in retry: ${wsEndpointRetry}`)
               } else if (connectUrl.startsWith('ws://')) {
                 wsEndpointRetry = connectUrl.replace('ws://', 'wss://')
-                console.log(`[BROWSERBASE] Converted ws:// to wss:// in retry: ${wsEndpointRetry}`)
+                //   console.log(`[BROWSERBASE] Converted ws:// to wss:// in retry: ${wsEndpointRetry}`)
               } else {
                 const sessionIdFromUrl = connectUrl.split('/').pop()
                 wsEndpointRetry = `wss://connect.browserbase.com/sessions/${sessionIdFromUrl}`
-                console.log(`[BROWSERBASE] Constructed WebSocket endpoint in retry: ${wsEndpointRetry}`)
+                //  console.log(`[BROWSERBASE] Constructed WebSocket endpoint in retry: ${wsEndpointRetry}`)
               }
             }
           }
 
           if (wsEndpointRetry) {
-            console.log(`[BROWSERBASE] WebSocket endpoint found after retry: ${wsEndpointRetry}`)
+            //   console.log(`[BROWSERBASE] WebSocket endpoint found after retry: ${wsEndpointRetry}`)
             finalWsEndpoint = wsEndpointRetry
           } else {
             throw new Error('No WebSocket endpoint found even after retry. Available properties: ' + Object.keys(sessionDetails).join(', '))
@@ -138,7 +138,7 @@ export class BrowserbaseService {
           console.error(`[BROWSERBASE] Retry failed:`, retryError)
 
           // Final fallback: try to get session details via REST API
-          console.log(`[BROWSERBASE] Trying REST API fallback to get session details...`)
+          //  console.log(`[BROWSERBASE] Trying REST API fallback to get session details...`)
           try {
             const restResponse = await fetch(`https://api.browserbase.com/v1/sessions/${sessionId}`, {
               method: 'GET',
@@ -149,7 +149,7 @@ export class BrowserbaseService {
 
             if (restResponse.ok) {
               const restSessionData = await restResponse.json()
-              console.log(`[BROWSERBASE] REST API session data:`, JSON.stringify(restSessionData, null, 2))
+              //   console.log(`[BROWSERBASE] REST API session data:`, JSON.stringify(restSessionData, null, 2))
 
               const restSessionDataAny = restSessionData as any
               let restWsEndpoint = restSessionDataAny.webSocketDebuggerUrl || restSessionDataAny.browserWSEndpoint || restSessionDataAny.wsUrl || restSessionDataAny.websocketUrl || restSessionDataAny.browserUrl || restSessionDataAny.endpoint
@@ -157,25 +157,25 @@ export class BrowserbaseService {
               // If no direct WebSocket endpoint, try to construct it from connectUrl
               if (!restWsEndpoint && restSessionDataAny.connectUrl) {
                 const connectUrl = restSessionDataAny.connectUrl
-                console.log(`[BROWSERBASE] Found connectUrl in REST API: ${connectUrl}`)
+                //  console.log(`[BROWSERBASE] Found connectUrl in REST API: ${connectUrl}`)
 
                 if (connectUrl && typeof connectUrl === 'string') {
                   if (connectUrl.startsWith('wss://')) {
                     restWsEndpoint = connectUrl
-                    console.log(`[BROWSERBASE] Using connectUrl directly via REST API: ${restWsEndpoint}`)
+                    //    console.log(`[BROWSERBASE] Using connectUrl directly via REST API: ${restWsEndpoint}`)
                   } else if (connectUrl.startsWith('ws://')) {
                     restWsEndpoint = connectUrl.replace('ws://', 'wss://')
-                    console.log(`[BROWSERBASE] Converted ws:// to wss:// via REST API: ${restWsEndpoint}`)
+                    //   console.log(`[BROWSERBASE] Converted ws:// to wss:// via REST API: ${restWsEndpoint}`)
                   } else {
                     const sessionIdFromUrl = connectUrl.split('/').pop()
                     restWsEndpoint = `wss://connect.browserbase.com/sessions/${sessionIdFromUrl}`
-                    console.log(`[BROWSERBASE] Constructed WebSocket endpoint via REST API: ${restWsEndpoint}`)
+                    //  console.log(`[BROWSERBASE] Constructed WebSocket endpoint via REST API: ${restWsEndpoint}`)
                   }
                 }
               }
 
               if (restWsEndpoint) {
-                console.log(`[BROWSERBASE] WebSocket endpoint found via REST API: ${restWsEndpoint}`)
+                //  console.log(`[BROWSERBASE] WebSocket endpoint found via REST API: ${restWsEndpoint}`)
                 finalWsEndpoint = restWsEndpoint
               } else {
                 throw new Error('No WebSocket endpoint found via REST API either. Available properties: ' + Object.keys(restSessionData).join(', '))
@@ -190,15 +190,15 @@ export class BrowserbaseService {
       }
 
       // Connect Puppeteer to the session
-      console.log(`[BROWSERBASE] Connecting Puppeteer to session...`)
-      console.log(`[BROWSERBASE] Using WebSocket endpoint: ${finalWsEndpoint}`)
+      // console.log(`[BROWSERBASE] Connecting Puppeteer to session...`)
+      // console.log(`[BROWSERBASE] Using WebSocket endpoint: ${finalWsEndpoint}`)
 
       let browser
       try {
         browser = await puppeteer.connect({
           browserWSEndpoint: finalWsEndpoint,
         })
-        console.log(`[BROWSERBASE] Successfully connected to browser via Puppeteer`)
+        //  console.log(`[BROWSERBASE] Successfully connected to browser via Puppeteer`)
       } catch (puppeteerError) {
         console.error(`[BROWSERBASE] Puppeteer connection failed:`, puppeteerError)
         console.error(`[BROWSERBASE] Puppeteer error type:`, typeof puppeteerError)
@@ -212,7 +212,7 @@ export class BrowserbaseService {
       let page
       try {
         page = await browser.newPage()
-        console.log(`[BROWSERBASE] Successfully created new page`)
+        // console.log(`[BROWSERBASE] Successfully created new page`)
       } catch (pageError) {
         console.error(`[BROWSERBASE] Failed to create new page:`, pageError)
         throw new Error(`Failed to create new page: ${pageError instanceof Error ? pageError.message : String(pageError)}`)
@@ -222,21 +222,21 @@ export class BrowserbaseService {
       try {
         await page.setViewport({ width: 1920, height: 1080 })
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-        console.log(`[BROWSERBASE] Successfully set viewport and user agent`)
+        // console.log(`[BROWSERBASE] Successfully set viewport and user agent`)
       } catch (configError) {
         console.error(`[BROWSERBASE] Failed to configure page:`, configError)
         throw new Error(`Failed to configure page: ${configError instanceof Error ? configError.message : String(configError)}`)
       }
 
       // Navigate to the URL
-      console.log(`[BROWSERBASE] Navigating to: ${url}`)
+      // console.log(`[BROWSERBASE] Navigating to: ${url}`)
       let response
       try {
         response = await page.goto(url, {
           waitUntil: 'networkidle2',
           timeout: 30000,
         })
-        console.log(`[BROWSERBASE] Navigation completed`)
+        //  console.log(`[BROWSERBASE] Navigation completed`)
       } catch (navError) {
         console.error(`[BROWSERBASE] Navigation failed:`, navError)
         throw new Error(`Failed to navigate to URL: ${navError instanceof Error ? navError.message : String(navError)}`)
@@ -246,15 +246,15 @@ export class BrowserbaseService {
         throw new Error('Failed to navigate to URL - no response received')
       }
 
-      console.log(`[BROWSERBASE] Navigation successful, status: ${response.status()}`)
+      //console.log(`[BROWSERBASE] Navigation successful, status: ${response.status()}`)
 
       // Wait a bit for any dynamic content to load
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
       // Get the rendered HTML content
-      console.log(`[BROWSERBASE] Extracting HTML content...`)
+      //console.log(`[BROWSERBASE] Extracting HTML content...`)
       const html = await page.content()
-      console.log(`[BROWSERBASE] HTML content length: ${html.length}`)
+      //console.log(`[BROWSERBASE] HTML content length: ${html.length}`)
 
       if (!html || html.length < 100) {
         console.error('[BROWSERBASE] No HTML content found')
@@ -266,16 +266,16 @@ export class BrowserbaseService {
       const title = await page.title()
       const description = await page.$eval('meta[name="description"]', (el) => el.getAttribute('content')).catch(() => '')
 
-      console.log(`[BROWSERBASE] Successfully scraped ${url} using Browserbase SDK`)
-      console.log(`[BROWSERBASE] Page title: "${title}"`)
-      console.log(`[BROWSERBASE] Page description: "${description}"`)
+      // console.log(`[BROWSERBASE] Successfully scraped ${url} using Browserbase SDK`)
+      //console.log(`[BROWSERBASE] Page title: "${title}"`)
+      //console.log(`[BROWSERBASE] Page description: "${description}"`)
 
       // Close the page and browser
       await page.close()
       await browser.close()
 
       // Update session status to release it
-      console.log(`[BROWSERBASE] Releasing session...`)
+      // console.log(`[BROWSERBASE] Releasing session...`)
       await this.browserbase.sessions.update(sessionId, {
         projectId: this.projectId,
         status: 'REQUEST_RELEASE',
@@ -291,12 +291,12 @@ export class BrowserbaseService {
         },
       }
 
-      console.log(`[BROWSERBASE] Final result:`, {
-        htmlLength: result.html.length,
-        metadata: result.metadata,
-        hasTitle: !!result.metadata.title,
-        hasDescription: !!result.metadata.description,
-      })
+      // console.log(`[BROWSERBASE] Final result:`, {
+      //   htmlLength: result.html.length,
+      //   metadata: result.metadata,
+      //   hasTitle: !!result.metadata.title,
+      //   hasDescription: !!result.metadata.description,
+      // })
 
       return result
     } catch (error) {
@@ -308,7 +308,7 @@ export class BrowserbaseService {
       // Clean up session if it was created
       if (sessionId) {
         try {
-          console.log(`[BROWSERBASE] Cleaning up session: ${sessionId}`)
+          //   console.log(`[BROWSERBASE] Cleaning up session: ${sessionId}`)
           // Note: Session cleanup is handled by the session.close() call above
         } catch (cleanupError) {
           console.warn(`[BROWSERBASE] Failed to cleanup session: ${cleanupError}`)
@@ -334,11 +334,11 @@ export class BrowserbaseService {
 
   async scrapeMarkdown(url: string): Promise<string> {
     try {
-      console.log(`[BROWSERBASE] Starting markdown scrape for: ${url}`)
+      //  console.log(`[BROWSERBASE] Starting markdown scrape for: ${url}`)
       const result = await this.scrapeUrl(url)
       const html = result.html
 
-      console.log(`[BROWSERBASE] Converting HTML to markdown, HTML length: ${html.length}`)
+      //  console.log(`[BROWSERBASE] Converting HTML to markdown, HTML length: ${html.length}`)
 
       // Simple HTML to markdown conversion
       let markdown = html
@@ -364,8 +364,8 @@ export class BrowserbaseService {
         .replace(/\n\s*\n\s*\n/g, '\n\n')
         .trim()
 
-      console.log(`[BROWSERBASE] Markdown conversion completed, markdown length: ${markdown.length}`)
-      console.log(`[BROWSERBASE] Markdown preview (first 200 chars):`, markdown.substring(0, 200))
+      // console.log(`[BROWSERBASE] Markdown conversion completed, markdown length: ${markdown.length}`)
+      // console.log(`[BROWSERBASE] Markdown preview (first 200 chars):`, markdown.substring(0, 200))
 
       return markdown
     } catch (error) {
@@ -376,16 +376,16 @@ export class BrowserbaseService {
 
   async checkFileExists(url: string): Promise<{ exists: boolean; content?: string; statusCode?: number }> {
     try {
-      console.log(`[BROWSERBASE] Checking if file exists: ${url}`)
+      //    console.log(`[BROWSERBASE] Checking if file exists: ${url}`)
       const result = await this.scrapeUrl(url)
       const exists = result.metadata.statusCode === 200
 
-      console.log(`[BROWSERBASE] File check result:`, {
-        url,
-        exists,
-        statusCode: result.metadata.statusCode,
-        contentLength: result.html.length,
-      })
+      // console.log(`[BROWSERBASE] File check result:`, {
+      //   url,
+      //   exists,
+      //   statusCode: result.metadata.statusCode,
+      //   contentLength: result.html.length,
+      // })
 
       return {
         exists,
@@ -393,7 +393,7 @@ export class BrowserbaseService {
         statusCode: result.metadata.statusCode,
       }
     } catch (error) {
-      console.log(`[BROWSERBASE] File check failed for ${url}:`, error)
+      //  console.log(`[BROWSERBASE] File check failed for ${url}:`, error)
       return {
         exists: false,
         statusCode: 404,
@@ -407,7 +407,7 @@ let serviceInstance: BrowserbaseService | null = null
 
 export function getBrowserbaseService(): BrowserbaseService {
   if (!serviceInstance) {
-    console.log('[BROWSERBASE] Creating new service instance...')
+    //  console.log('[BROWSERBASE] Creating new service instance...')
     serviceInstance = new BrowserbaseService()
   }
   return serviceInstance
