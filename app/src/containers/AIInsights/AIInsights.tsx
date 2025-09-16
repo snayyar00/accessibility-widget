@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   FiActivity,
   FiBarChart,
@@ -6,11 +6,13 @@ import {
   FiAlertCircle,
   FiClock,
 } from 'react-icons/fi';
-import { useLazyQuery, useMutation } from '@apollo/client';
+import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
 import { ANALYZE_DOMAIN } from '@/queries/domainAnalysis/analyzeDomain';
 import { ANALYZE_AI_READINESS } from '@/queries/aiReadiness/analyzeAIReadiness';
+import { GetUserSitesDocument } from '@/generated/graphql';
 import { CircularProgress } from '@mui/material';
 import { toast } from 'react-toastify';
+import Select from 'react-select/creatable';
 
 import { Search, Monitor, Loader2, Brain, Zap } from 'lucide-react';
 import {
@@ -20,12 +22,29 @@ import {
 } from '@/utils/domainUtils';
 import ControlPanel from '@/components/AIReadiness/ControlPanel';
 
+type OptionType = { value: string; label: string };
+
 const AIInsights: React.FC = () => {
   const [domainInput, setDomainInput] = useState('');
+  const [selectedOption, setSelectedOption] = useState<OptionType | null>(null);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [aiReadinessResult, setAiReadinessResult] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showResults, setShowResults] = useState(false);
+
+  // Fetch user sites for domain selector
+  const { data: sitesData, loading: sitesLoading } =
+    useQuery(GetUserSitesDocument);
+
+  // Combine options for existing sites and a custom "Enter a new domain" option
+  const siteOptions = useMemo(
+    () =>
+      sitesData?.getUserSites?.map((domain: any) => ({
+        value: domain.url,
+        label: domain.url,
+      })) || [],
+    [sitesData],
+  );
 
   const [analyzeDomain, { loading: analysisLoading, error: analysisError }] =
     useLazyQuery(ANALYZE_DOMAIN, {
@@ -43,12 +62,14 @@ const AIInsights: React.FC = () => {
   ] = useMutation(ANALYZE_AI_READINESS);
 
   const handleDomainAnalysis = async () => {
-    if (!domainInput.trim()) {
+    const domainToAnalyze = selectedOption?.value || domainInput.trim();
+
+    if (!domainToAnalyze) {
       toast.error('Please enter a domain URL');
       return;
     }
 
-    const sanitizedDomain = getRootDomain(domainInput.trim());
+    const sanitizedDomain = getRootDomain(domainToAnalyze);
 
     // Validate domain format using the same logic as the scanner page
     if (
@@ -110,6 +131,19 @@ const AIInsights: React.FC = () => {
     }
   };
 
+  const handleDomainSelect = (selected: OptionType | null) => {
+    setSelectedOption(selected);
+    if (selected) {
+      setDomainInput(selected.value);
+    }
+  };
+
+  const handleCreateOption = (inputValue: string) => {
+    const newOption = { value: inputValue, label: inputValue };
+    setSelectedOption(newOption);
+    setDomainInput(inputValue);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="w-full">
@@ -158,22 +192,95 @@ const AIInsights: React.FC = () => {
                 <div className="flex flex-col space-y-4 sm:space-y-6 pt-6">
                   <div className="w-full">
                     <div className="relative">
-                      <input
-                        type="text"
-                        value={domainInput}
-                        onChange={(e) => setDomainInput(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        placeholder="Enter your domain URL (e.g., example.com)"
-                        className="w-full px-5 sm:px-7 py-3.5 sm:py-5 text-base sm:text-lg border-0 rounded-xl focus:ring-4 focus:ring-blue-400 focus:shadow-lg outline-none transition-all duration-300 bg-gray-50 hover:bg-white placeholder:text-gray-400 shadow-md hover:shadow-lg transform hover:scale-[1.01]"
-                        disabled={isAnalyzing}
+                      <Select
+                        value={selectedOption}
+                        options={siteOptions}
+                        onChange={handleDomainSelect}
+                        onCreateOption={handleCreateOption}
+                        placeholder="Select or enter a domain"
+                        isSearchable
+                        isClearable
+                        formatCreateLabel={(inputValue: string) =>
+                          `Enter a new domain: "${inputValue}"`
+                        }
+                        classNamePrefix="react-select"
+                        className="w-full min-w-0"
+                        styles={{
+                          control: (provided: any, state: any) => ({
+                            ...provided,
+                            borderRadius: '12px',
+                            border: state.isFocused
+                              ? '0px solid #3b82f6'
+                              : '0px solid #d1d5db',
+                            minHeight: '56px',
+                            boxShadow: state.isFocused
+                              ? '0 0 0 4px rgba(59, 130, 246, 0.1)'
+                              : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                            backgroundColor: '#f9fafb',
+                            '&:hover': {
+                              backgroundColor: '#ffffff',
+                              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                              transform: 'scale(1.01)',
+                            },
+                          }),
+                          placeholder: (provided: any) => ({
+                            ...provided,
+                            color: '#9ca3af',
+                            fontSize: '16px',
+                          }),
+                          input: (provided: any) => ({
+                            ...provided,
+                            fontSize: '16px',
+                            padding: '12px 16px',
+                          }),
+                          singleValue: (provided: any) => ({
+                            ...provided,
+                            fontSize: '16px',
+                            color: '#374151',
+                          }),
+                          menu: (provided: any) => ({
+                            ...provided,
+                            position: 'relative',
+                            boxShadow: 'none',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '12px',
+                            marginTop: '8px',
+                            backgroundColor: 'white',
+                          }),
+                          menuList: (provided: any) => ({
+                            ...provided,
+                            padding: '8px',
+                            maxHeight: '200px',
+                          }),
+                          option: (provided: any, state: any) => ({
+                            ...provided,
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            margin: '2px 0',
+                            backgroundColor: state.isSelected
+                              ? '#dbeafe'
+                              : state.isFocused
+                              ? '#f3f4f6'
+                              : 'transparent',
+                            color: state.isSelected ? '#1e40af' : '#374151',
+                            '&:hover': {
+                              backgroundColor: state.isSelected
+                                ? '#dbeafe'
+                                : '#f3f4f6',
+                            },
+                          }),
+                        }}
+                        isDisabled={isAnalyzing}
                       />
-                      <div className="absolute right-4 sm:right-5 top-1/2 transform -translate-y-1/2"></div>
                     </div>
                   </div>
                   <div className="w-full">
                     <button
                       onClick={handleDomainAnalysis}
-                      disabled={isAnalyzing || !domainInput.trim()}
+                      disabled={
+                        isAnalyzing ||
+                        (!selectedOption?.value && !domainInput.trim())
+                      }
                       className="w-full px-6 sm:px-10 py-3 sm:py-5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 font-semibold text-sm sm:text-lg shadow-lg disabled:transform-none"
                     >
                       {isAnalyzing ? (
@@ -192,75 +299,6 @@ const AIInsights: React.FC = () => {
                 </div>
               </div>
             </div>
-            {/* Enhanced Analysis Results */}
-            {(analysisError ||
-              (analysisResult && analysisResult.status !== 'success')) && (
-              <div className="mx-6 sm:mx-10 lg:mx-12 mb-6 sm:mb-10">
-                <div className="bg-red-50 border border-red-200 rounded-xl p-5 sm:p-7">
-                  <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-full flex items-center justify-center">
-                      <FiAlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
-                    </div>
-                    <div>
-                      <p className="text-red-800 font-semibold text-lg sm:text-xl">
-                        Analysis Failed
-                      </p>
-                      <p className="text-red-600 text-sm sm:text-base">
-                        {'An error occurred while analyzing the domain'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {analysisResult && analysisResult.status === 'success' && (
-              <div className="border-t border-gray-100">
-                <div className="p-6 sm:p-10 lg:p-12 space-y-8 sm:space-y-10">
-                  {/* Success Header */}
-                  <div className="bg-green-100 border border-green-300 rounded-xl p-5 sm:p-7 shadow-lg">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-5">
-                      <div className="flex items-center gap-4 sm:gap-5">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-green-100 rounded-full flex items-center justify-center">
-                          <FiCheckCircle className="w-6 h-6 sm:w-7 sm:h-7 text-green-600" />
-                        </div>
-                        <div>
-                          <p className="text-green-800 font-bold text-xl sm:text-2xl">
-                            Analysis Completed Successfully
-                          </p>
-                          <p className="text-green-700 text-sm sm:text-base">
-                            Domain:{' '}
-                            <span className="font-semibold">
-                              {analysisResult.url}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col sm:flex-row lg:flex-row lg:items-center gap-3 sm:gap-5 text-sm sm:text-base text-green-700">
-                        <div className="flex items-center gap-2">
-                          <FiClock className="w-12 h-12 md:w-6 md:h-6" />
-                          <span>
-                            Analyzed on{' '}
-                            {new Date(
-                              analysisResult.timestamp,
-                            ).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <FiActivity className="w-12 h-12 md:w-6 md:h-6" />
-                          <span>
-                            Processing time:{' '}
-                            {analysisResult.insights?.data?.processing_time?.toFixed(
-                              2,
-                            )}{' '}
-                            s
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </section>
 
@@ -286,6 +324,7 @@ const AIInsights: React.FC = () => {
                     setAnalysisResult(null);
                     setAiReadinessResult(null);
                     setDomainInput('');
+                    setSelectedOption(null);
                   }}
                 />
               </div>
