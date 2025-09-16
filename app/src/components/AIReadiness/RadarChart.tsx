@@ -52,8 +52,8 @@ const RadarChart: React.FC<RadarChartProps> = ({ data, size = 300 }) => {
             x2="100%"
             y2="100%"
           >
-            <stop offset="0%" stopColor="#F97316" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#FB923C" stopOpacity="0.3" />
+            <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#60A5FA" stopOpacity="0.3" />
           </linearGradient>
           <filter id="radar-glow">
             <feGaussianBlur stdDeviation="2" result="coloredBlur" />
@@ -99,7 +99,7 @@ const RadarChart: React.FC<RadarChartProps> = ({ data, size = 300 }) => {
         <motion.polygon
           points={polygonPoints}
           fill="url(#radar-gradient)"
-          stroke="#F97316"
+          stroke="#3B82F6"
           strokeWidth="2"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -116,7 +116,7 @@ const RadarChart: React.FC<RadarChartProps> = ({ data, size = 300 }) => {
               cx={point.x}
               cy={point.y}
               r="4"
-              fill="#F97316"
+              fill="#3B82F6"
               stroke="white"
               strokeWidth="2"
               initial={{ scale: 0 }}
@@ -206,7 +206,7 @@ const RadarChart: React.FC<RadarChartProps> = ({ data, size = 300 }) => {
                 dominantBaseline="middle"
                 className={`${
                   isMobile ? 'text-[8px]' : 'text-[10px]'
-                } fill-orange-600 font-bold`}
+                } fill-blue-600 font-bold`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.1 + i * 0.05 }}
@@ -223,15 +223,15 @@ const RadarChart: React.FC<RadarChartProps> = ({ data, size = 300 }) => {
       <div className="mt-4 flex justify-center">
         <div className="inline-flex flex-row gap-4 text-xs text-gray-500 bg-white px-4 py-2 rounded shadow-sm">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-500" />
+            <div className="w-3 h-3 rounded-full bg-blue-500" />
             <span className="whitespace-nowrap">80-100%</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-400" />
+            <div className="w-3 h-3 rounded-full bg-blue-400" />
             <span className="whitespace-nowrap">60-79%</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-300" />
+            <div className="w-3 h-3 rounded-full bg-blue-300" />
             <span className="whitespace-nowrap">&lt;60%</span>
           </div>
         </div>
