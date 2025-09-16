@@ -30,7 +30,7 @@ export class AIReadinessService {
     const words = text.split(/\s+/).filter((w) => w.length > 0)
     const syllables = words.reduce((acc, word) => {
       // Simple syllable counting: count vowel groups
-      return acc + (word.match(/[aeiouAEIOU]+/g) || []).length || 1
+      return acc + ((word.match(/[aeiouAEIOU]+/g) || []).length || 1)
     }, 0)
 
     if (sentences.length === 0 || words.length === 0) return 0
@@ -149,7 +149,7 @@ export class AIReadinessService {
     const hasOgDescription = metadata?.ogDescription || metadata?.description || html.includes('og:description') || html.includes('name="description"')
 
     // Check description quality
-    const descMatch = html.match(/content="([^"]*)"/i)
+    const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i)
     const descLength = descMatch?.[1]?.length || 0
     const hasGoodDescLength = descLength >= 70 && descLength <= 160
 
