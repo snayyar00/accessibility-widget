@@ -1,0 +1,543 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Globe,
+  FileText,
+  Code,
+  Shield,
+  Search,
+  Zap,
+  Database,
+  Lock,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  AlertCircle,
+  Bot,
+  FileCode,
+  Network,
+  Info,
+  Eye,
+} from 'lucide-react';
+import ScoreChart from './ScoreChart';
+import RadarChart from './RadarChart';
+import MetricBars from './MetricBars';
+
+// AI Readiness Control Panel Component
+
+interface ControlPanelProps {
+  isAnalyzing: boolean;
+  showResults: boolean;
+  url: string;
+  analysisData?: any;
+  onReset: () => void;
+}
+
+interface CheckItem {
+  id: string;
+  label: string;
+  description: string;
+  icon: any;
+  status: 'pending' | 'checking' | 'pass' | 'fail' | 'warning';
+  score?: number;
+  details?: string;
+  recommendation?: string;
+  actionItems?: string[];
+  tooltip?: string;
+}
+
+const ControlPanel: React.FC<ControlPanelProps> = ({
+  isAnalyzing,
+  showResults,
+  url,
+  analysisData,
+  onReset,
+}) => {
+  const [combinedChecks, setCombinedChecks] = useState<CheckItem[]>([]);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  // Handle responsive screen size detection
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth < 640);
+    };
+
+    // Check on mount
+    checkScreenSize();
+
+    // Add event listener for window resize
+    window.addEventListener('resize', checkScreenSize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  const [checks, setChecks] = useState<CheckItem[]>([
+    {
+      id: 'heading-structure',
+      label: 'Heading Hierarchy',
+      description: 'H1-H6 structure',
+      icon: FileText,
+      status: 'pending',
+    },
+    {
+      id: 'readability',
+      label: 'Readability',
+      description: 'Content clarity',
+      icon: Globe,
+      status: 'pending',
+    },
+    {
+      id: 'meta-tags',
+      label: 'Metadata Quality',
+      description: 'Title, desc, author',
+      icon: FileCode,
+      status: 'pending',
+    },
+    {
+      id: 'semantic-html',
+      label: 'Semantic HTML',
+      description: 'Proper HTML5 tags',
+      icon: Code,
+      status: 'pending',
+    },
+    {
+      id: 'accessibility',
+      label: 'Accessibility',
+      description: 'Alt text & ARIA',
+      icon: Eye,
+      status: 'pending',
+    },
+    {
+      id: 'llms-txt',
+      label: 'LLMs.txt',
+      description: 'AI permissions',
+      icon: Bot,
+      status: 'pending',
+    },
+    {
+      id: 'robots-txt',
+      label: 'Robots.txt',
+      description: 'Crawler rules',
+      icon: Shield,
+      status: 'pending',
+    },
+    {
+      id: 'sitemap',
+      label: 'Sitemap',
+      description: 'Site structure',
+      icon: Network,
+      status: 'pending',
+    },
+  ]);
+
+  const [overallScore, setOverallScore] = useState(0);
+  const [currentCheckIndex, setCurrentCheckIndex] = useState(-1);
+  const [selectedCheck, setSelectedCheck] = useState<string | null>(null);
+  const [hoveredCheck, setHoveredCheck] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'chart' | 'bars'>('grid');
+
+  useEffect(() => {
+    if (analysisData && analysisData.checks && showResults) {
+      // Use real data from API
+      const mappedChecks = analysisData.checks.map((check: any) => ({
+        ...check,
+        icon: checks.find((c) => c.id === check.id)?.icon || FileText,
+        description:
+          check.details || checks.find((c) => c.id === check.id)?.description,
+      }));
+      setChecks(mappedChecks);
+      setCombinedChecks(mappedChecks); // Initialize with basic checks
+      setOverallScore(analysisData.overallScore || 0);
+      setCurrentCheckIndex(-1);
+    } else if (isAnalyzing) {
+      // Reset all checks when starting analysis
+      const resetChecks = checks.map((check) => ({
+        ...check,
+        status: 'pending' as const,
+      }));
+      setChecks(resetChecks);
+      setCombinedChecks(resetChecks); // Reset combined checks too
+      setCurrentCheckIndex(0);
+      setOverallScore(0);
+
+      // Visual animation while waiting for real results
+      const checkInterval = setInterval(() => {
+        setCurrentCheckIndex((prev) => {
+          if (prev >= checks.length - 1) {
+            clearInterval(checkInterval);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 200);
+
+      return () => clearInterval(checkInterval);
+    }
+
+    // Return undefined for the first branch to satisfy TypeScript
+    return undefined;
+  }, [isAnalyzing, showResults, analysisData]);
+
+  useEffect(() => {
+    if (
+      currentCheckIndex >= 0 &&
+      currentCheckIndex < checks.length &&
+      isAnalyzing
+    ) {
+      // Mark current as checking during animation
+      setChecks((prev) =>
+        prev.map((check, index) => {
+          if (index === currentCheckIndex) {
+            return { ...check, status: 'checking' };
+          }
+          if (index < currentCheckIndex) {
+            return { ...check, status: 'checking' };
+          }
+          return check;
+        }),
+      );
+
+      // Update combinedChecks to show the animation
+      setCombinedChecks((prev) =>
+        prev.map((check, index) => {
+          if (index === currentCheckIndex) {
+            return { ...check, status: 'checking' };
+          }
+          if (index < currentCheckIndex) {
+            return { ...check, status: 'checking' };
+          }
+          return check;
+        }),
+      );
+    }
+  }, [currentCheckIndex, checks.length, isAnalyzing]);
+
+  const getStatusIcon = (status: CheckItem['status']) => {
+    switch (status) {
+      case 'checking':
+        return <Loader2 className="w-4 h-4 text-orange-500 animate-spin" />;
+      case 'pass':
+        return <CheckCircle2 className="w-4 h-4 text-green-600" />;
+      case 'fail':
+        return <XCircle className="w-4 h-4 text-red-600" />;
+      case 'warning':
+        return <AlertCircle className="w-4 h-4 text-yellow-500" />;
+      default:
+        return <div className="w-4 h-4 rounded-full border border-gray-300" />;
+    }
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600';
+    if (score >= 60) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.5 }}
+      className="w-full max-w-6xl mx-auto"
+    >
+      {/* Header */}
+      <motion.div
+        className="text-center mb-12 pt-6"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <h2 className="text-3xl font-bold text-gray-900 mb-3">
+          AI Readiness Analysis
+        </h2>
+        <p className="text-lg text-gray-600">Single-page snapshot of {url}</p>
+
+        {showResults && (
+          <>
+            {/* View Mode Toggle - Moved above score */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="mt-6 mb-8 flex justify-center gap-4"
+            >
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  viewMode === 'grid'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Grid View
+              </button>
+              <button
+                onClick={() => setViewMode('chart')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  viewMode === 'chart'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Radar Chart
+              </button>
+              <button
+                onClick={() => setViewMode('bars')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  viewMode === 'bars'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Bar Chart
+              </button>
+            </motion.div>
+
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', delay: 0.5 }}
+              className="flex justify-center"
+            >
+              <ScoreChart score={overallScore} size={180} />
+            </motion.div>
+          </>
+        )}
+      </motion.div>
+
+      {/* Conditional rendering based on view mode */}
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 px-4 relative">
+          {combinedChecks.map((check, index) => {
+            const isActive = index === currentCheckIndex;
+
+            return (
+              <motion.div
+                key={check.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{
+                  opacity: 1,
+                  scale: isActive ? 1.05 : 1,
+                }}
+                transition={{
+                  delay: index * 0.1,
+                  scale: { type: 'spring', stiffness: 300 },
+                }}
+                className={`
+                   relative p-4 rounded-lg transition-all bg-white border border-gray-200
+                   ${isActive ? 'border-orange-300 shadow-lg' : ''}
+                   ${
+                     check.status !== 'pending' && check.status !== 'checking'
+                       ? 'cursor-pointer hover:shadow-md'
+                       : ''
+                   }
+                 `}
+                onClick={() => {
+                  if (
+                    check.status !== 'pending' &&
+                    check.status !== 'checking'
+                  ) {
+                    setSelectedCheck(
+                      selectedCheck === check.id ? null : check.id,
+                    );
+                  }
+                }}
+                onMouseEnter={() => setHoveredCheck(check.id)}
+                onMouseLeave={() => setHoveredCheck(null)}
+              >
+                <div className="relative">
+                  <div className="flex items-start justify-end mb-3">
+                    {getStatusIcon(check.status)}
+                  </div>
+
+                  <h3 className="text-sm font-medium text-gray-900 mb-1 flex items-center gap-2">
+                    {check.label}
+                    {check.tooltip && (
+                      <div className="relative inline-block">
+                        <Info className="w-3 h-3 text-gray-400 hover:text-gray-600 transition-colors" />
+                        <AnimatePresence>
+                          {hoveredCheck === check.id && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 5 }}
+                              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-50 pointer-events-none"
+                            >
+                              {check.tooltip}
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-gray-900" />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+                  </h3>
+
+                  <p className="text-xs text-gray-600">{check.description}</p>
+
+                  {check.status !== 'pending' && check.status !== 'checking' && (
+                    <>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-2"
+                      >
+                        <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
+                          <motion.div
+                            className={`
+                              h-full rounded-full
+                              ${check.status === 'pass' ? 'bg-green-500' : ''}
+                              ${
+                                check.status === 'warning'
+                                  ? 'bg-yellow-500'
+                                  : ''
+                              }
+                              ${check.status === 'fail' ? 'bg-red-500' : ''}
+                            `}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${check.score}%` }}
+                            transition={{ duration: 0.5 }}
+                          />
+                        </div>
+                      </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                        className="text-xs text-gray-400 mt-1 text-center"
+                      >
+                        Click for details
+                      </motion.div>
+                    </>
+                  )}
+                </div>
+
+                {/* Expanded Details */}
+                <AnimatePresence>
+                  {selectedCheck === check.id && check.details && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="mt-3 pt-3 border-t border-gray-200"
+                    >
+                      <div className="space-y-2">
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">
+                            Status
+                          </div>
+                          <div className="text-xs text-gray-900">
+                            {check.details}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">
+                            Recommendation
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {check.recommendation}
+                          </div>
+                          {check.actionItems && check.actionItems.length > 0 && (
+                            <ul className="mt-2 space-y-1">
+                              {check.actionItems.map(
+                                (item: string, i: number) => (
+                                  <li
+                                    key={i}
+                                    className="flex items-start gap-2 text-xs text-gray-600"
+                                  >
+                                    <span className="text-orange-500 mt-0.5">
+                                      •
+                                    </span>
+                                    <span>{item}</span>
+                                  </li>
+                                ),
+                              )}
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Radar Chart View */}
+      {viewMode === 'chart' && showResults && (
+        <div>
+          <motion.div
+            className="flex justify-center gap-10 mb-10"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Basic Analysis Chart */}
+            <div className="flex flex-col items-center">
+              <h3 className="text-lg text-gray-900 mb-4 font-medium">
+                Basic Analysis
+              </h3>
+              <RadarChart
+                data={checks
+                  .filter(
+                    (check) =>
+                      check.status !== 'pending' && check.status !== 'checking',
+                  )
+                  .slice(0, 8)
+                  .map((check) => ({
+                    label:
+                      check.label.length > 12
+                        ? check.label.substring(0, 12) + '...'
+                        : check.label,
+                    score: check.score || 0,
+                  }))}
+                size={isSmallScreen ? 250 : 350}
+              />
+              <div className="mt-4 text-center">
+                <div className="text-2xl text-gray-900">{overallScore}%</div>
+                <div className="text-sm text-gray-500">Overall Score</div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Bar Chart View */}
+      {viewMode === 'bars' && showResults && (
+        <motion.div
+          className="px-4 mb-10"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <MetricBars
+            metrics={combinedChecks
+              .filter(
+                (check) =>
+                  check.status !== 'pending' && check.status !== 'checking',
+              )
+              .map((check) => ({
+                label: check.label,
+                score: check.score || 0,
+                status: check.status as 'pass' | 'warning' | 'fail',
+                category: ['robots-txt', 'sitemap', 'llms-txt'].includes(
+                  check.id,
+                )
+                  ? 'domain'
+                  : 'page',
+                details: check.details,
+                recommendation: check.recommendation,
+                actionItems: check.actionItems,
+              }))}
+          />
+        </motion.div>
+      )}
+    </motion.div>
+  );
+};
+
+export default ControlPanel;

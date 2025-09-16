@@ -11,22 +11,27 @@ import {
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { MdOutlineInsights, MdOutlineAccessibility } from 'react-icons/md';
 import { BiAnalyse } from 'react-icons/bi';
-import { useLazyQuery } from '@apollo/client';
+import { useLazyQuery, useMutation } from '@apollo/client';
 import { ANALYZE_DOMAIN } from '@/queries/domainAnalysis/analyzeDomain';
+import { ANALYZE_AI_READINESS } from '@/queries/aiReadiness/analyzeAIReadiness';
 import { CircularProgress } from '@mui/material';
 import { toast } from 'react-toastify';
 
-import { Search, Monitor, Loader2 } from 'lucide-react';
+import { Search, Monitor, Loader2, Brain, Zap } from 'lucide-react';
 import {
   getRootDomain,
   isValidRootDomainFormat,
   isIpAddress,
 } from '@/utils/domainUtils';
+import ControlPanel from '@/components/AIReadiness/ControlPanel';
 
 const AIInsights: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [domainInput, setDomainInput] = useState('');
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [aiReadinessResult, setAiReadinessResult] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
   const categoriesRef = useRef<HTMLDivElement | null>(null);
   const imageRef = useRef<HTMLDivElement | null>(null);
@@ -82,7 +87,12 @@ const AIInsights: React.FC = () => {
       },
     });
 
-  const handleDomainAnalysis = () => {
+  const [
+    analyzeAIReadiness,
+    { loading: aiReadinessLoading, error: aiReadinessError },
+  ] = useMutation(ANALYZE_AI_READINESS);
+
+  const handleDomainAnalysis = async () => {
     if (!domainInput.trim()) {
       toast.error('Please enter a domain URL');
       return;
@@ -106,11 +116,42 @@ const AIInsights: React.FC = () => {
       return;
     }
 
-    analyzeDomain({
-      variables: {
-        domain: validDomain,
-      },
-    });
+    setIsAnalyzing(true);
+    setShowResults(false);
+    setAnalysisResult(null);
+    setAiReadinessResult(null);
+
+    try {
+      // Run both analyses in parallel
+      const [domainData, aiReadinessData] = await Promise.allSettled([
+        analyzeDomain({
+          variables: { domain: validDomain },
+        }),
+        analyzeAIReadiness({
+          variables: { url: `https://${validDomain}` },
+        }),
+      ]);
+
+      // Handle domain analysis results
+      if (domainData.status === 'fulfilled' && domainData.value.data) {
+        setAnalysisResult(domainData.value.data.analyzeDomain);
+      }
+
+      // Handle AI Readiness analysis results
+      if (
+        aiReadinessData.status === 'fulfilled' &&
+        aiReadinessData.value.data
+      ) {
+        setAiReadinessResult(aiReadinessData.value.data.analyzeAIReadiness);
+      }
+
+      setShowResults(true);
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast.error('An error occurred during analysis');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -210,7 +251,7 @@ const AIInsights: React.FC = () => {
             </div>
             <div className="flex flex-col-reverse md:flex-row items-center justify-center gap-3 sm:gap-4">
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold bg-gradient-to-r from-gray-900 via-blue-600 to-blue-700 bg-clip-text text-transparent mb-3 sm:mb-5 leading-tight">
-                AI Heatmap Insights
+                AI Heatmap & Readiness Analysis
               </h1>
               <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-700 px-5 py-2 text-base sm:text-lg font-semibold ring-1 ring-inset ring-blue-300">
                 Beta
@@ -218,8 +259,8 @@ const AIInsights: React.FC = () => {
             </div>
             <p className="text-gray-600 text-base sm:text-xl max-w-2xl mx-auto leading-relaxed px-2 sm:px-0">
               Discover actionable insights with our advanced AI-powered heatmap
-              analysis. Select different heatmap types to understand user
-              behavior and optimize your website.
+              analysis and AI readiness assessment. Select different heatmap
+              types to understand user behavior and optimize your website.
             </p>
           </div>
         </header>
@@ -237,8 +278,8 @@ const AIInsights: React.FC = () => {
                     Analyze Your Website
                   </h2>
                   <p className="text-gray-600 text-sm sm:text-lg">
-                    Get comprehensive AI-powered heatmap insights and
-                    recommendations
+                    Get comprehensive AI-powered heatmap insights, AI readiness
+                    analysis and recommendations
                   </p>
                 </div>
               </div>
@@ -253,7 +294,7 @@ const AIInsights: React.FC = () => {
                         onKeyPress={handleKeyPress}
                         placeholder="Enter your domain URL (e.g., example.com)"
                         className="w-full px-5 sm:px-7 py-3.5 sm:py-5 text-base sm:text-lg border-0 rounded-xl focus:ring-4 focus:ring-blue-400 focus:shadow-lg outline-none transition-all duration-300 bg-gray-50 hover:bg-white placeholder:text-gray-400 shadow-md hover:shadow-lg transform hover:scale-[1.01]"
-                        disabled={analysisLoading}
+                        disabled={isAnalyzing}
                       />
                       <div className="absolute right-4 sm:right-5 top-1/2 transform -translate-y-1/2"></div>
                     </div>
@@ -261,10 +302,10 @@ const AIInsights: React.FC = () => {
                   <div className="w-full">
                     <button
                       onClick={handleDomainAnalysis}
-                      disabled={analysisLoading || !domainInput.trim()}
+                      disabled={isAnalyzing || !domainInput.trim()}
                       className="w-full px-6 sm:px-10 py-3 sm:py-5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 font-semibold text-sm sm:text-lg shadow-lg disabled:transform-none"
                     >
-                      {analysisLoading ? (
+                      {isAnalyzing ? (
                         <>
                           <CircularProgress size={16} />
                           <span>Analyzing...</span>
@@ -443,6 +484,34 @@ const AIInsights: React.FC = () => {
             )}
           </div>
         </section>
+
+        {/* AI Readiness Analysis Section */}
+        {aiReadinessResult && (
+          <section className="mb-8 sm:mb-12">
+            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden transition-all duration-300 border-0">
+              <div className="p-6 sm:p-10 lg:p-12">
+                <div className="flex items-center gap-2 sm:gap-3 lg:gap-3 mb-6">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-12 lg:h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <Brain className="w-5 h-5 sm:w-6 sm:h-6 lg:w-6 lg:h-6 text-white" />
+                  </div>
+                </div>
+
+                <ControlPanel
+                  isAnalyzing={isAnalyzing}
+                  showResults={!!aiReadinessResult}
+                  url={`https://${domainInput}`}
+                  analysisData={aiReadinessResult}
+                  onReset={() => {
+                    setShowResults(false);
+                    setAnalysisResult(null);
+                    setAiReadinessResult(null);
+                    setDomainInput('');
+                  }}
+                />
+              </div>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
