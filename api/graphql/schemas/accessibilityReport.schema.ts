@@ -73,6 +73,7 @@ export const AccessibilitySchema = `#graphql
     template_info: TemplateInfo
     processing_metadata: ProcessingMetadata
     screenshotUrl: String
+    pages_affected: [String]
   }
 
   type htmlCsOutput {
@@ -87,6 +88,7 @@ export const AccessibilitySchema = `#graphql
     template_info: TemplateInfo
     processing_metadata: ProcessingMetadata
     screenshotUrl: String
+    pages_affected: [String]
   }
 
   type axeResult {
@@ -174,6 +176,7 @@ export const AccessibilitySchema = `#graphql
     description: String
     recommended_action: String
     screenshotUrl: String
+    pages_affected: [String]
   }
 
   type AccessibilityReportMeta {

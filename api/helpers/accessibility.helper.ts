@@ -13,6 +13,7 @@ interface axeOutput {
   help: string
   wcag_code?: string
   screenshotUrl?: string
+  pages_affected?: string[]
 }
 
 interface htmlcsOutput {
@@ -22,6 +23,7 @@ interface htmlcsOutput {
   selectors: string[]
   wcag_code?: string
   screenshotUrl?: string
+  pages_affected?: string[]
 }
 
 interface finalOutput {
@@ -98,6 +100,7 @@ function createAxeArrayObj(message: string, issue: any) {
     help: issue.runnerExtras.help,
     wcag_code: parseWcagCode(issue),
     screenshotUrl: issue.screenshotUrl || undefined,
+    pages_affected: issue.pages_affected || undefined,
   }
   if (obj.screenshotUrl) {
     console.log('[AXE] Parsed screenshotUrl:', obj.screenshotUrl, 'for message:', obj.message)
@@ -112,6 +115,7 @@ function createHtmlcsArrayObj(issue: any) {
     selectors: [issue.selector],
     wcag_code: parseWcagCode(issue),
     screenshotUrl: issue.screenshotUrl || undefined,
+    pages_affected: issue.pages_affected || undefined,
   }
   if (obj.screenshotUrl) {
     console.log('[HTMLCS] Parsed screenshotUrl:', obj.screenshotUrl, 'for message:', obj.message)
@@ -158,7 +162,9 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
     totalElements: 0,
   }
 
-  const apiUrl = `${process.env.SCANNER_SERVER_URL}/scan`
+  // Determine API URL based on scan type
+  const apiUrl = fullSiteScan === true ? `${process.env.SCANNER_SERVER_URL}/scan/full-site/sync` : `${process.env.SCANNER_SERVER_URL}/scan`
+
   let results
 
   // Helper function to check if response is empty
@@ -175,6 +181,7 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
       const cacheStatus = useCache !== undefined ? useCache : true
       const fullSiteStatus = fullSiteScan !== undefined ? fullSiteScan : false
       console.log(`Using scanner API (attempt ${retryCount + 1}/${maxRetries + 1})${cacheStatus ? ' - Fast scan with cache enabled' : ' - Fresh scan without cache'}${fullSiteStatus ? ' - Full site scan enabled' : ' - Single page scan'}`)
+      console.log('Scanner API URL:', apiUrl)
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -183,12 +190,9 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
         body: JSON.stringify({
           url: domain,
           viewport: [1366, 768],
-          timeout: 240,
           level: 'AA',
           use_cache: useCache !== undefined ? useCache : true,
           full_site: fullSiteScan !== undefined ? fullSiteScan : false,
-          max_pages: 50,
-          crawl_depth: 2,
         }),
       })
 
