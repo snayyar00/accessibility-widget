@@ -1,4 +1,5 @@
 import accessibilityResolves from './resolvers/accessibilityReport.resolver'
+import { aiReadinessResolvers } from './resolvers/aiReadiness.resolver'
 import allowedSitesResolves from './resolvers/allowedSites.resolver'
 import domainAnalysisResolves from './resolvers/domainAnalysis.resolver'
 import impressionResolves from './resolvers/impressions.resolver'
@@ -29,4 +30,5 @@ export default [
   widgetResolvers,
   domainAnalysisResolves,
   workspaceResolvers,
+  aiReadinessResolvers,
 ]

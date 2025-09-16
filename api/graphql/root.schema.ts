@@ -1,4 +1,5 @@
 import { AccessibilitySchema } from './schemas/accessibilityReport.schema'
+import { aiReadinessSchema } from './schemas/aiReadiness.schema'
 import { AllowedSitesSchema } from './schemas/allowedSites.schema'
 import { DomainAnalysisSchema } from './schemas/domainAnalysis.schema'
 import { ImpressionsSchema } from './schemas/impressions.schema'
@@ -32,4 +33,21 @@ const rootSchema = `
 `
 
 // eslint-disable-next-line import/no-anonymous-default-export
-export default [rootSchema, UserSchema, ImpressionsSchema, AllowedSitesSchema, UniqueVisitorSchema, AccessibilitySchema, UniqueTokenSchema, SitesPlanSchema, reportProblemSchema, OrganizationSchema, TranslationSchema, proofOfEffortSchema, widgetTypeDefs, DomainAnalysisSchema, WorkspaceSchema]
+export default [
+  rootSchema,
+  UserSchema,
+  ImpressionsSchema,
+  AllowedSitesSchema,
+  UniqueVisitorSchema,
+  AccessibilitySchema,
+  UniqueTokenSchema,
+  SitesPlanSchema,
+  reportProblemSchema,
+  OrganizationSchema,
+  TranslationSchema,
+  proofOfEffortSchema,
+  widgetTypeDefs,
+  DomainAnalysisSchema,
+  WorkspaceSchema,
+  aiReadinessSchema,
+]
