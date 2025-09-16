@@ -233,8 +233,8 @@ export class BrowserbaseService {
       let response
       try {
         response = await page.goto(url, {
-          waitUntil: 'networkidle2',
-          timeout: 30000,
+          waitUntil: 'domcontentloaded', // Changed from 'networkidle2' to 'domcontentloaded'
+          timeout: 60000, // Increased from 30000 to 60000 (60 seconds)
         })
         //  console.log(`[BROWSERBASE] Navigation completed`)
       } catch (navError) {

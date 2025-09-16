@@ -109,11 +109,27 @@ const AIInsights: React.FC = () => {
       }
 
       // Handle AI Readiness analysis results
-      if (
-        aiReadinessData.status === 'fulfilled' &&
-        aiReadinessData.value.data
-      ) {
-        setAiReadinessResult(aiReadinessData.value.data.analyzeAIReadiness);
+      if (aiReadinessData.status === 'fulfilled') {
+        if (aiReadinessData.value.data) {
+          setAiReadinessResult(aiReadinessData.value.data.analyzeAIReadiness);
+        } else if (aiReadinessData.value.errors) {
+          console.error(
+            'AI Readiness GraphQL errors:',
+            aiReadinessData.value.errors,
+          );
+          const errorMessage =
+            aiReadinessData.value.errors[0]?.message ||
+            'AI Readiness analysis failed';
+          toast.error(errorMessage);
+        }
+      } else if (aiReadinessData.status === 'rejected') {
+        console.error(
+          'AI Readiness analysis rejected:',
+          aiReadinessData.reason,
+        );
+        const errorMessage =
+          aiReadinessData.reason?.message || 'AI Readiness analysis failed';
+        toast.error(errorMessage);
       }
 
       setShowResults(true);
