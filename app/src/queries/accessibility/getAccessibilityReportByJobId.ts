@@ -28,18 +28,88 @@ export default gql`
             source
           }
           axe {
-            errors { message context selectors impact description help wcag_code screenshotUrl }
-            notices { message context selectors impact description help wcag_code screenshotUrl }
-            warnings { message context selectors impact description help wcag_code screenshotUrl }
+            errors {
+              message
+              context
+              selectors
+              impact
+              description
+              help
+              wcag_code
+              screenshotUrl
+              pages_affected
+            }
+            notices {
+              message
+              context
+              selectors
+              impact
+              description
+              help
+              wcag_code
+              screenshotUrl
+              pages_affected
+            }
+            warnings {
+              message
+              context
+              selectors
+              impact
+              description
+              help
+              wcag_code
+              screenshotUrl
+              pages_affected
+            }
           }
           htmlcs {
-            errors { code message context selectors description recommended_action wcag_code screenshotUrl }
-            notices { code message context selectors description recommended_action wcag_code screenshotUrl }
-            warnings { code message context selectors description recommended_action wcag_code screenshotUrl }
+            errors {
+              code
+              message
+              context
+              selectors
+              description
+              recommended_action
+              wcag_code
+              screenshotUrl
+              pages_affected
+            }
+            notices {
+              code
+              message
+              context
+              selectors
+              description
+              recommended_action
+              wcag_code
+              screenshotUrl
+              pages_affected
+            }
+            warnings {
+              code
+              message
+              context
+              selectors
+              description
+              recommended_action
+              wcag_code
+              screenshotUrl
+              pages_affected
+            }
           }
           ByFunctions {
             FunctionalityName
-            Errors { code message context selectors description recommended_action wcag_code screenshotUrl }
+            Errors {
+              code
+              message
+              context
+              selectors
+              description
+              recommended_action
+              wcag_code
+              screenshotUrl
+              pages_affected
+            }
           }
           scriptCheckResult
           issues {
@@ -51,6 +121,7 @@ export default gql`
             description
             recommended_action
             screenshotUrl
+            pages_affected
           }
           issuesByFunction
           functionalityNames
@@ -73,4 +144,4 @@ export default gql`
       error
     }
   }
-`; 
+`;

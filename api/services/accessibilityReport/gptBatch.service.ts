@@ -29,6 +29,7 @@ interface ProcessedIssue {
   }
   wcag_code?: string
   screenshotUrl?: string
+  pages_affected?: string[]
 }
 
 interface EnhancedIssue extends ProcessedIssue {
@@ -37,6 +38,7 @@ interface EnhancedIssue extends ProcessedIssue {
   affected_disabilities: string[]
   wcag_code: string
   screenshotUrl?: string
+  pages_affected?: string[]
 }
 
 interface BatchResult {
@@ -364,6 +366,7 @@ export function mergeBatchResults(batchResults: BatchResult[]): {
           retry_count: batch.retry_count,
         },
         screenshotUrl: issue.screenshotUrl,
+        pages_affected: issue.pages_affected,
       }
 
       result[targetRunner][targetType].push(finalIssue)
