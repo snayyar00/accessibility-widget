@@ -9,6 +9,7 @@ import {
   FaEnvelope,
   FaTimes,
   FaSpinner,
+  FaArrowsAlt,
 } from 'react-icons/fa';
 import { FaRegCopy } from 'react-icons/fa6';
 import { useMutation } from '@apollo/client';
@@ -50,6 +51,7 @@ const positions = [
 ];
 
 const languages = [
+  { code: 'auto', name: 'Auto', englishName: 'Auto (Browser Language)' },
   { code: 'en', name: 'English', englishName: 'English' },
   { code: 'ar', name: 'العربية', englishName: 'Arabic' },
   { code: 'bg', name: 'Български', englishName: 'Bulgarian' },
@@ -101,10 +103,13 @@ const languages = [
 export default function CodeContainer({ codeString }: CodeProps) {
   const [copySuccess, setCopySuccess] = useState(false);
   const [position, setPosition] = useState('bottom-left');
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState('auto');
   const [iconType, setIconType] = useState<'full' | 'compact' | 'hidden'>(
     'full',
   );
+  const [widgetSize, setWidgetSize] = useState<'s' | 'm' | 'l'>('m');
+  const [offsetX, setOffsetX] = useState(20);
+  const [offsetY, setOffsetY] = useState(20);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -147,7 +152,10 @@ export default function CodeContainer({ codeString }: CodeProps) {
     setIsExpanded(!isExpanded);
   };
 
-  const formattedCodeString = `<script src="https://widget.webability.io/widget.min.js" data-asw-position="${position}" data-asw-lang="${language}" data-asw-icon-type="${iconType}" defer></script>`;
+  const formattedCodeString =
+    iconType === 'hidden'
+      ? `<script src="https://widget.webability.io/widget.min.js" data-asw-position="${position}" data-asw-lang="${language}" data-asw-icon-type="hidden" defer></script>`
+      : `<script src="https://widget.webability.io/widget.min.js" data-asw-position="${position}-x-${offsetX}-y-${offsetY}" data-asw-lang="${language}" data-asw-icon-type="${widgetSize}-${iconType}" defer></script>`;
 
   const validateEmail = (email: string) => {
     const emailRegex =
@@ -277,9 +285,15 @@ export default function CodeContainer({ codeString }: CodeProps) {
               aria-expanded={isLanguageDropdownOpen}
             >
               <div className="flex items-center gap-3">
-                <span className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
-                  {selectedLanguage.code.toUpperCase().slice(0, 2)}
-                </span>
+                {selectedLanguage.code === 'auto' ? (
+                  <span className="w-6 h-6 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
+                    <FaMagic className="w-4 h-4 text-blue-500" />
+                  </span>
+                ) : (
+                  <span className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
+                    {selectedLanguage.code.toUpperCase().slice(0, 2)}
+                  </span>
+                )}
                 <span className="text-gray-900 font-semibold text-sm truncate">
                   {selectedLanguage.name}
                 </span>
@@ -319,9 +333,15 @@ export default function CodeContainer({ codeString }: CodeProps) {
                         aria-label={`Select ${lang.englishName} language`}
                       >
                         <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 bg-gray-200 group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-blue-600 group-hover:text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-sm">
-                            {lang.code.toUpperCase().slice(0, 2)}
-                          </span>
+                          {lang.code === 'auto' ? (
+                            <span className="w-6 h-6 bg-gray-200 group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-blue-600 group-hover:text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-sm">
+                              <FaMagic className="w-4 h-4" />
+                            </span>
+                          ) : (
+                            <span className="w-6 h-6 bg-gray-200 group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-blue-600 group-hover:text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-sm">
+                              {lang.code.toUpperCase().slice(0, 2)}
+                            </span>
+                          )}
                           <span className="text-gray-900 font-semibold truncate text-sm group-hover:text-blue-900">
                             {lang.name}
                           </span>
@@ -355,7 +375,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
               <button
                 type="button"
                 onClick={() => setIconType('full')}
-                className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-40 ${
+                className={`relative p-4 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-48 ${
                   iconType === 'full'
                     ? 'border-blue-500 bg-blue-50/50'
                     : 'border-gray-200 hover:border-blue-300 bg-white/80'
@@ -363,13 +383,13 @@ export default function CodeContainer({ codeString }: CodeProps) {
                 aria-label="Select full widget icon"
               >
                 <div className="flex flex-col items-center space-y-2">
-                  <div className="w-12 h-12 flex items-center justify-center">
+                  <div className="w-[58px] h-[58px] flex items-center justify-center">
                     <img
                       src="/images/svg/full_widget_icon.svg"
                       alt="Full Widget Icon"
                       width={48}
                       height={48}
-                      className="w-full h-full object-contain"
+                      className="object-contain"
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).style.visibility =
                           'hidden';
@@ -391,7 +411,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
               <button
                 type="button"
                 onClick={() => setIconType('compact')}
-                className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-40 ${
+                className={`relative p-4 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-48 ${
                   iconType === 'compact'
                     ? 'border-blue-500 bg-blue-50/50'
                     : 'border-gray-200 hover:border-blue-300 bg-white/80'
@@ -399,12 +419,12 @@ export default function CodeContainer({ codeString }: CodeProps) {
                 aria-label="Select compact widget icon"
               >
                 <div className="flex flex-col items-center space-y-2">
-                  <div className="w-16 h-8 flex items-center justify-center">
+                  <div className="w-[140px] h-[30px] flex items-center justify-center">
                     <div
-                      className="w-16 h-4 flex items-center justify-center"
+                      className="w-[140px] h-[30px] flex items-center justify-center"
                       style={{ backgroundColor: '#195AFF' }}
                     >
-                      <span className="text-white text-[5px] font whitespace-nowrap">
+                      <span className="text-white text-[11px] font whitespace-nowrap">
                         Site Accessibility
                       </span>
                     </div>
@@ -424,7 +444,7 @@ export default function CodeContainer({ codeString }: CodeProps) {
               <button
                 type="button"
                 onClick={() => setIconType('hidden')}
-                className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-40 ${
+                className={`relative p-4 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-48 ${
                   iconType === 'hidden'
                     ? 'border-blue-500 bg-blue-50/50'
                     : 'border-gray-200 hover:border-blue-300 bg-white/80'
@@ -489,6 +509,181 @@ export default function CodeContainer({ codeString }: CodeProps) {
           )}
         </div>
       </div>
+
+      {/* Widget Size - Hidden when icon type is hidden */}
+      {iconType !== 'hidden' && (
+        <div className="p-4 border-b border-blue-100/60 bg-gradient-to-r from-white to-blue-50/50">
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-800 tracking-wide">
+              Widget Size
+            </label>
+            <p className="text-xs text-gray-600 pl-1">
+              Choose the size of your widget icon
+            </p>
+            <div className="flex gap-3">
+              {[
+                { value: 's', label: 'Small', size: 'w-12 h-12' },
+                { value: 'm', label: 'Medium', size: 'w-[58px] h-[58px]' },
+                { value: 'l', label: 'Large', size: 'w-[68px] h-[68px]' },
+              ].map((size) => (
+                <button
+                  key={size.value}
+                  type="button"
+                  onClick={() => setWidgetSize(size.value as 's' | 'm' | 'l')}
+                  className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 flex-1 ${
+                    widgetSize === size.value
+                      ? 'border-blue-500 bg-blue-50/50'
+                      : 'border-gray-200 hover:border-blue-300 bg-white/80'
+                  }`}
+                  aria-label={`Select ${size.label} widget size`}
+                >
+                  <div className="flex flex-col items-center space-y-2">
+                    <div
+                      className={`${size.size} flex items-center justify-center`}
+                    >
+                      {iconType === 'full' ? (
+                        <img
+                          src="/images/svg/full_widget_icon.svg"
+                          alt="Full Widget Icon"
+                          width={
+                            size.value === 's'
+                              ? 48
+                              : size.value === 'm'
+                              ? 58
+                              : 68
+                          }
+                          height={
+                            size.value === 's'
+                              ? 48
+                              : size.value === 'm'
+                              ? 58
+                              : 68
+                          }
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            (
+                              e.currentTarget as HTMLImageElement
+                            ).style.visibility = 'hidden';
+                          }}
+                        />
+                      ) : iconType === 'compact' ? (
+                        <div
+                          className={`${
+                            size.value === 's'
+                              ? 'w-[120px] h-[28px]'
+                              : size.value === 'm'
+                              ? 'w-[140px] h-[30px]'
+                              : 'w-[160px] h-[32px]'
+                          } flex items-center justify-center`}
+                        >
+                          <div
+                            className={`${
+                              size.value === 's'
+                                ? 'w-[120px] h-[28px]'
+                                : size.value === 'm'
+                                ? 'w-[140px] h-[30px]'
+                                : 'w-[160px] h-[32px]'
+                            } flex items-center justify-center`}
+                            style={{ backgroundColor: '#195AFF' }}
+                          >
+                            <span
+                              className={`text-white ${
+                                size.value === 's'
+                                  ? 'text-[10px]'
+                                  : size.value === 'm'
+                                  ? 'text-[11px]'
+                                  : 'text-[12px]'
+                              } font whitespace-nowrap`}
+                            >
+                              Site Accessibility
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          className={`${
+                            size.value === 's'
+                              ? 'w-16 h-6'
+                              : size.value === 'm'
+                              ? 'w-20 h-8'
+                              : 'w-24 h-10'
+                          } border-2 border-dashed rounded-lg flex items-center justify-center`}
+                          style={{
+                            backgroundColor: '#195AFF',
+                            borderColor: '#195AFF',
+                          }}
+                        >
+                          <span
+                            className={`text-white ${
+                              size.value === 's'
+                                ? 'text-[8px]'
+                                : size.value === 'm'
+                                ? 'text-xs'
+                                : 'text-sm'
+                            } font-medium`}
+                          >
+                            Button
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-sm font-medium text-gray-900">
+                      {size.label}
+                    </span>
+                  </div>
+                  {widgetSize === size.value && (
+                    <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                      <FaCheck className="w-2.5 h-2.5 text-white" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Offset Controls - Hidden when icon type is hidden */}
+      {iconType !== 'hidden' && (
+        <div className="p-4 border-b border-blue-100/60 bg-gradient-to-r from-white to-blue-50/50">
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-800 tracking-wide">
+              Widget Offset
+            </label>
+            <p className="text-xs text-gray-600 pl-1">
+              Adjust the widget position from the corner (in pixels)
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  X Offset
+                </label>
+                <input
+                  type="number"
+                  value={offsetX}
+                  onChange={(e) => setOffsetX(parseInt(e.target.value) || 0)}
+                  className="w-full px-3 py-2 border border-blue-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 text-sm bg-white/80 text-gray-900"
+                  min="0"
+                  max="100"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Y Offset
+                </label>
+                <input
+                  type="number"
+                  value={offsetY}
+                  onChange={(e) => setOffsetY(parseInt(e.target.value) || 0)}
+                  className="w-full px-3 py-2 border border-blue-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 text-sm bg-white/80 text-gray-900"
+                  min="0"
+                  max="100"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Installation Snippet */}
       <div className="flex-1 min-h-0 flex flex-col">
