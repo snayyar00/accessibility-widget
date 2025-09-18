@@ -323,11 +323,7 @@ const AIInsights: React.FC = () => {
           <section className="mb-8 sm:mb-12">
             <div className="bg-white rounded-3xl shadow-2xl overflow-hidden transition-all duration-300 border-0">
               <div className="p-6 sm:p-10 lg:p-12">
-                <div className="flex items-center gap-2 sm:gap-3 lg:gap-3 mb-6">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-12 lg:h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <Brain className="w-5 h-5 sm:w-6 sm:h-6 lg:w-6 lg:h-6 text-white" />
-                  </div>
-                </div>
+                <div className="flex items-center gap-2 sm:gap-3 lg:gap-3 mb-6"></div>
 
                 <ControlPanel
                   isAnalyzing={isAnalyzing}
