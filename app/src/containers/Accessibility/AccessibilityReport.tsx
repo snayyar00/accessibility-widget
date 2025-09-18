@@ -3,7 +3,8 @@ import './Accessibility.css'; // Ensure your CSS file includes styles for the ac
 import { AiFillCloseCircle } from 'react-icons/ai';
 import { FaGaugeSimpleHigh } from 'react-icons/fa6';
 import { FaUniversalAccess, FaCheckCircle, FaCircle } from 'react-icons/fa';
-import { Zap, RefreshCw, BarChart3, ChevronDown, Settings } from 'lucide-react';
+import { Zap, RefreshCw, BarChart3, ChevronDown } from 'lucide-react';
+import { TbZoomScanFilled } from 'react-icons/tb';
 import { Link } from 'react-router-dom';
 import getAccessibilityStats from '@/queries/accessibility/accessibility';
 import SAVE_ACCESSIBILITY_REPORT from '@/queries/accessibility/saveAccessibilityReport';
@@ -167,18 +168,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
   const [showLangTooltip, setShowLangTooltip] = useState(false);
-  const [scanType, setScanType] = useState<'cached' | 'fresh' | 'full-report'>(
-    'cached',
-  );
+  const [scanType, setScanType] = useState<'cached' | 'fresh'>('cached');
+  const [isFullSiteScan, setIsFullSiteScan] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   type ScanTypeOption = {
-    value: 'cached' | 'fresh' | 'full-report';
+    value: 'cached' | 'fresh';
     label: string;
     icon: React.ComponentType<{ className?: string }>;
     color: string;
-    disabled?: boolean;
   };
 
   const scanTypeOptions: ScanTypeOption[] = [
@@ -193,13 +192,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       label: 'Slower (Do full scan)',
       icon: RefreshCw,
       color: 'text-blue-500',
-    },
-    {
-      value: 'full-report' as const,
-      label: 'Full site scan (Detailed analysis)',
-      icon: Settings,
-      color: 'text-green-500',
-      disabled: true,
     },
   ];
 
@@ -254,9 +246,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     if (errorToastShown.current) return;
     if (error) {
       toast.error('Failed to generate report. Please try again.');
-      errorToastShown.current = true;
-    } else if (reportKeysError) {
-      toast.error('Failed to fetch report history. Please try again.');
       errorToastShown.current = true;
     } else if (reportByR2KeyError) {
       toast.error('Failed to fetch report. Please try again.');
@@ -344,7 +333,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       const { data } = await startJobQuery({
         variables: {
           url: encodeURIComponent(validDomain),
-          use_cache: scanType === 'cached' || scanType === 'full-report',
+          use_cache: scanType === 'cached' && !isFullSiteScan,
+          full_site_scan: isFullSiteScan,
         },
       });
       if (
@@ -4933,6 +4923,31 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 />
               </div>
 
+              <div className="w-full md:flex-1 min-w-0 md:min-w-[320px] md:max-w-[400px]">
+                <div className="flex flex-col md:flex-row gap-3">
+                  {/* Dropdown for scan type options */}
+                  <div ref={dropdownRef} className="relative flex-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 pr-8 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[38px] flex items-center justify-between"
+                    >
+                      <div className="flex items-center space-x-2">
+                        {selectedScanType && (
+                          <>
+                            <selectedScanType.icon
+                              className={`w-4 h-4 ${selectedScanType.color}`}
+                            />
+                            <span>{selectedScanType.label}</span>
+                          </>
+                        )}
+                      </div>
+                      <ChevronDown
+                        className={`w-3 h-3 text-gray-400 transition-transform ${
+                          isDropdownOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
               {/* Scan Type Selector */}
               <div className="w-full lg:w-auto lg:min-w-[220px]">
                 <div ref={dropdownRef} className="relative">
@@ -4977,70 +4992,55 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     />
                   </button>
 
-                  {isDropdownOpen && (
-                    <div
-                      className="absolute z-10 w-full mt-1 rounded-lg shadow-lg overflow-hidden"
-                      style={{
-                        backgroundColor: baseColors.white,
-                        border: `1px solid ${baseColors.cardBorderPurple}`,
-                      }}
-                    >
-                      {scanTypeOptions.map((option) => {
-                        const IconComponent = option.icon;
-                        const isDisabled = option.disabled;
-                        return (
-                          <button
-                            key={option.value}
-                            type="button"
-                            disabled={isDisabled}
-                            onClick={() => {
-                              if (!isDisabled) {
+                    {isDropdownOpen && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                        {scanTypeOptions.map((option) => {
+                          const IconComponent = option.icon;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => {
                                 setScanType(option.value);
                                 setIsDropdownOpen(false);
-                              }
-                            }}
-                            className={`w-full px-3 py-2 text-sm font-medium text-left flex items-center space-x-2 transition-colors ${
-                              isDisabled
-                                ? 'opacity-50 cursor-not-allowed'
-                                : scanType === option.value
-                                ? 'hover:opacity-80'
-                                : 'hover:opacity-80'
-                            }`}
-                            style={{
-                              backgroundColor:
+                              }}
+                              className={`w-full px-3 py-2 text-xs font-medium text-left flex items-center space-x-2 ${
                                 scanType === option.value
-                                  ? baseColors.brandPrimary
-                                  : 'transparent',
-                              color:
-                                scanType === option.value
-                                  ? baseColors.white
-                                  : isDisabled
-                                  ? baseColors.grayMuted
-                                  : baseColors.grayDark2,
-                            }}
-                          >
-                            <IconComponent
-                              className={`w-4 h-4 ${
-                                isDisabled
-                                  ? 'opacity-50'
-                                  : scanType === option.value
-                                  ? ''
-                                  : option.color
+                                  ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                                  : 'text-gray-700 hover:bg-gray-50'
                               }`}
-                            />
-                            <span>{option.label}</span>
-                            {isDisabled && (
-                              <span className="ml-auto text-xs opacity-70">
-                                (Coming Soon)
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                            >
+                              <IconComponent
+                                className={`w-4 h-4 ${option.color}`}
+                              />
+                              <span>{option.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Checkbox for full site scan */}
+                  <div className="flex items-center space-x-2 p-2 border border-gray-300 rounded-md whitespace-nowrap">
+                    <TbZoomScanFilled className="w-4 h-4 text-green-500" />
+                    <label
+                      htmlFor="fullSiteScan"
+                      className="text-xs font-medium text-gray-700 cursor-pointer"
+                    >
+                      Full site scan
+                    </label>
+                    <input
+                      type="checkbox"
+                      id="fullSiteScan"
+                      checked={isFullSiteScan}
+                      onChange={(e) => setIsFullSiteScan(e.target.checked)}
+                      className="w-4 h-4 text-green-600 focus:ring-green-500"
+                    />
+                  </div>
                 </div>
               </div>
+            </div>
 
               {/* Free Scan Button */}
               <button

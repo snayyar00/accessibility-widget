@@ -73,6 +73,7 @@ export const AccessibilitySchema = `#graphql
     template_info: TemplateInfo
     processing_metadata: ProcessingMetadata
     screenshotUrl: String
+    pages_affected: [String]
   }
 
   type htmlCsOutput {
@@ -87,6 +88,7 @@ export const AccessibilitySchema = `#graphql
     template_info: TemplateInfo
     processing_metadata: ProcessingMetadata
     screenshotUrl: String
+    pages_affected: [String]
   }
 
   type axeResult {
@@ -174,6 +176,7 @@ export const AccessibilitySchema = `#graphql
     description: String
     recommended_action: String
     screenshotUrl: String
+    pages_affected: [String]
   }
 
   type AccessibilityReportMeta {
@@ -218,7 +221,7 @@ export const AccessibilitySchema = `#graphql
     getAccessibilityReport(url: String!): Report @rateLimit(limit: 3, duration: 60, message: "Too many requests. Please try again in a minute.")
     fetchAccessibilityReportFromR2(url: String!, created_at: String, updated_at: String): [AccessibilityReportTableRow!]! @rateLimit(limit: 60, duration: 60, message: "Too many R2 report requests. Please try again later.")
     fetchReportByR2Key(r2_key: String!): Report @rateLimit(limit: 20, duration: 60, message: "Too many R2 key report requests. Please try again later.")
-    startAccessibilityReportJob(url: String!, use_cache: Boolean): AccessibilityJobResponse!
+    startAccessibilityReportJob(url: String!, use_cache: Boolean, full_site_scan: Boolean): AccessibilityJobResponse!
     getAccessibilityReportByJobId(jobId: String!): AccessibilityJobStatusResponse!
   }
 

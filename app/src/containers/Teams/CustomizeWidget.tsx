@@ -413,6 +413,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
               value={selectedFont}
               onChange={(e) => setSelectedFont(e.target.value)}
             >
+              <option value="auto">Auto</option>
               <option value="'Times New Roman', serif">
                 'Times New Roman', serif
               </option>
@@ -424,7 +425,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
             </select>
             <button
               onClick={() => {
-                setSelectedFont("'Times New Roman', serif");
+                setSelectedFont('auto');
               }}
               className="px-3 py-2 sm:px-4 sm:py-2 bg-[#0948c9] text-white rounded text-sm sm:text-base"
             >

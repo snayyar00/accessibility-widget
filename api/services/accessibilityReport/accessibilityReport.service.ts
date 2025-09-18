@@ -18,6 +18,7 @@ function createAxeArrayObj(message: string, issue: any) {
     help: issue.recommended_action || '',
     wcag_code: issue.wcag_code,
     screenshotUrl: issue.screenshotUrl || undefined,
+    pages_affected: issue.pages_affected || undefined,
   }
   return obj
 }
@@ -29,6 +30,7 @@ function createHtmlcsArrayObj(issue: any) {
     selectors: Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors],
     wcag_code: issue.wcag_code,
     screenshotUrl: issue.screenshotUrl || undefined,
+    pages_affected: issue.pages_affected || undefined,
   }
   return obj
 }
@@ -62,6 +64,7 @@ export interface htmlcsOutput {
   recommended_action?: string
   wcag_code?: string
   screenshotUrl?: string
+  pages_affected?: string[]
 }
 interface axeOutput {
   message: string
@@ -72,6 +75,7 @@ interface axeOutput {
   help: string
   wcag_code?: string
   screenshotUrl?: string
+  pages_affected?: string[]
 }
 
 interface ResultWithOriginal {
@@ -151,8 +155,12 @@ function mergeIssuesToOutput(issues: any[]): {
           // Append context and selectors to existing error
           const contextToAdd = Array.isArray(issue.context) ? issue.context : issue.context ? [issue.context] : []
           const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : issue.selectors ? [issue.selectors] : []
+          const pagesToAdd = Array.isArray(issue.pages_affected) ? issue.pages_affected : issue.pages_affected ? [issue.pages_affected] : []
           output.axe.errors[errorIndex].context.push(...contextToAdd)
           output.axe.errors[errorIndex].selectors.push(...selectorToAdd)
+          if (pagesToAdd.length > 0) {
+            output.axe.errors[errorIndex].pages_affected = [...(output.axe.errors[errorIndex].pages_affected || []), ...pagesToAdd]
+          }
         }
       } else if (type === 'notice') {
         const noticeIndex = output.axe.notices.findIndex((notice: any) => notice.message === normalizedMessage)
@@ -165,8 +173,12 @@ function mergeIssuesToOutput(issues: any[]): {
         } else {
           const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context]
           const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors]
+          const pagesToAdd = Array.isArray(issue.pages_affected) ? issue.pages_affected : issue.pages_affected ? [issue.pages_affected] : []
           output.axe.notices[noticeIndex].context.push(...contextToAdd)
           output.axe.notices[noticeIndex].selectors.push(...selectorToAdd)
+          if (pagesToAdd.length > 0) {
+            output.axe.notices[noticeIndex].pages_affected = [...(output.axe.notices[noticeIndex].pages_affected || []), ...pagesToAdd]
+          }
         }
       } else if (type === 'warning') {
         const warningIndex = output.axe.warnings.findIndex((warning: any) => warning.message === normalizedMessage)
@@ -179,8 +191,12 @@ function mergeIssuesToOutput(issues: any[]): {
         } else {
           const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context]
           const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors]
+          const pagesToAdd = Array.isArray(issue.pages_affected) ? issue.pages_affected : issue.pages_affected ? [issue.pages_affected] : []
           output.axe.warnings[warningIndex].context.push(...contextToAdd)
           output.axe.warnings[warningIndex].selectors.push(...selectorToAdd)
+          if (pagesToAdd.length > 0) {
+            output.axe.warnings[warningIndex].pages_affected = [...(output.axe.warnings[warningIndex].pages_affected || []), ...pagesToAdd]
+          }
         }
       }
       output.totalElements += 1
@@ -199,8 +215,12 @@ function mergeIssuesToOutput(issues: any[]): {
         } else {
           const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context]
           const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors]
+          const pagesToAdd = Array.isArray(issue.pages_affected) ? issue.pages_affected : issue.pages_affected ? [issue.pages_affected] : []
           output.htmlcs.errors[errorIndex].context.push(...contextToAdd)
           output.htmlcs.errors[errorIndex].selectors.push(...selectorToAdd)
+          if (pagesToAdd.length > 0) {
+            output.htmlcs.errors[errorIndex].pages_affected = [...(output.htmlcs.errors[errorIndex].pages_affected || []), ...pagesToAdd]
+          }
         }
       } else if (type === 'notice') {
         const noticeIndex = output.htmlcs.notices.findIndex((notice: any) => notice.message === normalizedMessage)
@@ -214,8 +234,12 @@ function mergeIssuesToOutput(issues: any[]): {
         } else {
           const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context]
           const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors]
+          const pagesToAdd = Array.isArray(issue.pages_affected) ? issue.pages_affected : issue.pages_affected ? [issue.pages_affected] : []
           output.htmlcs.notices[noticeIndex].context.push(...contextToAdd)
           output.htmlcs.notices[noticeIndex].selectors.push(...selectorToAdd)
+          if (pagesToAdd.length > 0) {
+            output.htmlcs.notices[noticeIndex].pages_affected = [...(output.htmlcs.notices[noticeIndex].pages_affected || []), ...pagesToAdd]
+          }
         }
       } else if (type === 'warning') {
         const warningIndex = output.htmlcs.warnings.findIndex((warning: any) => warning.message === normalizedMessage)
@@ -229,8 +253,12 @@ function mergeIssuesToOutput(issues: any[]): {
         } else {
           const contextToAdd = Array.isArray(issue.context) ? issue.context : [issue.context]
           const selectorToAdd = Array.isArray(issue.selectors) ? issue.selectors : [issue.selectors]
+          const pagesToAdd = Array.isArray(issue.pages_affected) ? issue.pages_affected : issue.pages_affected ? [issue.pages_affected] : []
           output.htmlcs.warnings[warningIndex].context.push(...contextToAdd)
           output.htmlcs.warnings[warningIndex].selectors.push(...selectorToAdd)
+          if (pagesToAdd.length > 0) {
+            output.htmlcs.warnings[warningIndex].pages_affected = [...(output.htmlcs.warnings[warningIndex].pages_affected || []), ...pagesToAdd]
+          }
         }
       }
     }
@@ -238,7 +266,7 @@ function mergeIssuesToOutput(issues: any[]): {
   return output
 }
 
-export const fetchAccessibilityReport = async (url: string, useCache?: boolean) => {
+export const fetchAccessibilityReport = async (url: string, useCache?: boolean, fullSiteScan?: boolean) => {
   try {
     if (!url || typeof url !== 'string' || url.trim() === '') {
       console.error('Invalid URL passed to fetchAccessibilityReport:', url)
@@ -249,14 +277,14 @@ export const fetchAccessibilityReport = async (url: string, useCache?: boolean) 
       // Format URL with www prefix for initial scan
       const formattedUrl = formatUrlForScan(url)
       console.log('Formatted URL for scan:', formattedUrl)
-      let result: ResultWithOriginal = await getAccessibilityInformationPally(formattedUrl, useCache)
+      let result: ResultWithOriginal = await getAccessibilityInformationPally(formattedUrl, useCache, fullSiteScan)
 
       // If initial attempt fails, try variations
       if (!result) {
         const retryUrls = getRetryUrls(url)
         for (const retryUrl of retryUrls) {
           try {
-            result = await getAccessibilityInformationPally(retryUrl, useCache)
+            result = await getAccessibilityInformationPally(retryUrl, useCache, fullSiteScan)
             if (result) break
           } catch (retryError) {
             console.error(`Error with retry URL ${retryUrl}:`, retryError.message)
@@ -412,7 +440,7 @@ export const fetchAccessibilityReport = async (url: string, useCache?: boolean) 
           url = `https://${url.replace('https://www.', '').replace('http://www.', '')}`
         }
 
-        const result: ResultWithOriginal = await getAccessibilityInformationPally(url, useCache)
+        const result: ResultWithOriginal = await getAccessibilityInformationPally(url, useCache, fullSiteScan)
         const output = mergeIssuesToOutput(result.issues)
         result.axe = output.axe
         result.htmlcs = output.htmlcs
@@ -517,7 +545,7 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
   if (report?.ByFunctions && Array.isArray(report.ByFunctions)) {
     report.ByFunctions.forEach((funcGroup) => {
       if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
-        funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; screenshotUrl?: string }) => {
+        funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; screenshotUrl?: string; pages_affected?: string[] }) => {
           const impact = mapIssueToImpact(error.message, error.code)
 
           issues.push({
@@ -526,6 +554,7 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
             source: error.__typename === 'htmlCsOutput' ? 'HTML_CS' : 'AXE Core',
             functionality: funcGroup.FunctionalityName,
             screenshotUrl: error.screenshotUrl,
+            pages_affected: error.pages_affected,
           })
           if (error.screenshotUrl) {
             console.log('[extractIssuesFromReport][ByFunctions] screenshotUrl:', error.screenshotUrl, 'message:', error.message)
@@ -548,6 +577,7 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
             source: 'AXE Core',
             functionality: funcGroup.FunctionalityName,
             screenshotUrl: error.screenshotUrl,
+            pages_affected: error.pages_affected,
           })
           if (error.screenshotUrl) {
             console.log('[extractIssuesFromReport][AXE] screenshotUrl:', error.screenshotUrl, 'message:', error.message)
@@ -561,7 +591,7 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
   if (report?.htmlcs?.ByFunction && Array.isArray(report.htmlcs.ByFunction)) {
     report.htmlcs.ByFunction.forEach((funcGroup: { FunctionalityName: any; Errors: any[] }) => {
       if (funcGroup.FunctionalityName && Array.isArray(funcGroup.Errors)) {
-        funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; screenshotUrl?: string }) => {
+        funcGroup.Errors.forEach((error: { message: string; code: any; __typename: string; screenshotUrl?: string; pages_affected?: string[] }) => {
           const impact = mapIssueToImpact(error.message, error.code)
 
           issues.push({
@@ -570,6 +600,7 @@ function extractIssuesFromReport(report: ResultWithOriginal) {
             source: 'HTML_CS',
             functionality: funcGroup.FunctionalityName,
             screenshotUrl: error.screenshotUrl,
+            pages_affected: error.pages_affected,
           })
           if (error.screenshotUrl) {
             console.log('[extractIssuesFromReport][HTMLCS] screenshotUrl:', error.screenshotUrl, 'message:', error.message)
@@ -628,7 +659,7 @@ function countIssuesBySeverity(issues: any[]) {
 function groupIssuesByFunctionality(issues: any[]): { [key: string]: any[] } {
   const groupedIssues: { [key: string]: any[] } = {}
 
-  issues.forEach((issue: { functionality: string; screenshotUrl?: string }) => {
+  issues.forEach((issue: { functionality: string; screenshotUrl?: string; pages_affected?: string[] }) => {
     if (issue.functionality) {
       // Normalize functionality name to prevent duplicates like "Low Vision" and "Low vision"
       const normalizedName = issue.functionality
@@ -645,6 +676,7 @@ function groupIssuesByFunctionality(issues: any[]): { [key: string]: any[] } {
         ...issue,
         functionality: normalizedName,
         screenshotUrl: issue.screenshotUrl,
+        pages_affected: issue.pages_affected,
       }
 
       groupedIssues[normalizedName].push(normalizedIssue)
