@@ -6,6 +6,7 @@ import { CircularProgress } from '@mui/material';
 import InformationSetting from './InformationSetting';
 import PasswordSetting from './PasswordSetting';
 import BillingPortalLink from './BillingPortalLink';
+import LicenseOwnerInfo from '../LicenseOwnerInfo';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 
 const Profile: React.FC = () => {
@@ -42,6 +43,18 @@ const Profile: React.FC = () => {
             <InformationSetting user={data} />
             <PasswordSetting />
             <BillingPortalLink />
+          </div>
+
+          {/* License Owner Information Section */}
+          <div className="bg-white border border-solid border-dark-grey shadow-xxl rounded-[10px] p-6 mb-[25px] sm:px-[10px] sm:py-6">
+            <h5 className="font-bold text-[22px] leading-[30px] text-sapphire-blue mb-1">
+              {t('Common.license_owner.title') || 'License Owner Information'}
+            </h5>
+            <p className="text-[16px] leading-[26px] text-white-gray mb-[14px]">
+              {t('Common.license_owner.description') ||
+                'This information is used in the accessibility statement and for sending account notifications based on your preferences in account settings.'}
+            </p>
+            <LicenseOwnerInfo />
           </div>
         </>
       )}
