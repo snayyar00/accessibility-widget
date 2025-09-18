@@ -323,6 +323,7 @@ function createEnhancedByFunctions(enhancedResults: any): any[] {
           template_info: issue.template_info,
           wcag_code: issue.wcag_code,
           screenshotUrl: issue.screenshotUrl,
+          pages_affected: issue.pages_affected,
         }))
         .map((issue) => {
           if (issue.screenshotUrl) {

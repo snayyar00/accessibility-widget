@@ -38,9 +38,9 @@ function createJob(): string {
   return jobId
 }
 
-async function processAccessibilityReportJob(jobId: string, url: string, useCache?: boolean) {
+async function processAccessibilityReportJob(jobId: string, url: string, useCache?: boolean, fullSiteScan?: boolean) {
   try {
-    const accessibilityReport = await fetchAccessibilityReport(url, useCache)
+    const accessibilityReport = await fetchAccessibilityReport(url, useCache, fullSiteScan)
 
     // Use tech stack from accessibility report if available, otherwise fetch from API
     let techStack = accessibilityReport.techStack
@@ -125,7 +125,7 @@ type AccessibilityReportJobStatusResponse = {
 
 const resolvers = {
   Query: {
-    startAccessibilityReportJob: combineResolvers(allowedOrganization, async (_: any, { url, use_cache }: { url: string; use_cache?: boolean }) => {
+    startAccessibilityReportJob: combineResolvers(allowedOrganization, async (_: any, { url, use_cache, full_site_scan }: { url: string; use_cache?: boolean; full_site_scan?: boolean }) => {
       const validateResult = validateAccessibilityReport({ url })
 
       if (Array.isArray(validateResult) && validateResult.length) {
@@ -135,7 +135,7 @@ const resolvers = {
       const jobId = createJob()
 
       // Start processing in background
-      processAccessibilityReportJob(jobId, url, use_cache).catch(console.error)
+      processAccessibilityReportJob(jobId, url, use_cache, full_site_scan).catch(console.error)
       return { jobId }
     }),
 

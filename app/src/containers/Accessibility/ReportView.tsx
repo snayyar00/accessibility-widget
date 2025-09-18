@@ -413,7 +413,6 @@ const ReportView: React.FC = () => {
       <header className="text-center relative z-10 mb-10 sm:mb-14 lg:mb-16 px-2 sm:px-0">
         <h1 className="mb-4">
           <span className="block text-2xl sm:text-4xl lg:text-7xl font-extrabold text-white leading-tight tracking-tight break-words">
-            Free
             <br />
             Website{' '}
             <span className="bg-gradient-to-r from-blue-300 to-blue-100 text-transparent bg-clip-text">
@@ -586,6 +585,7 @@ const ReportView: React.FC = () => {
                         | undefined;
                       wcag_code?: string;
                       screenshotUrl?: string;
+                      pages_affected?: string[];
                     },
                     index: React.Key | null | undefined,
                   ) => (
@@ -743,6 +743,28 @@ WCAG: ${issue.code || issue.message || 'N/A'}`;
                             </p>
                           </div>
                         )}
+
+                        {issue.pages_affected &&
+                          issue.pages_affected.length > 0 && (
+                            <div>
+                              <h3 className="text-xs sm:text-sm font-semibold mb-2">
+                                Affected Pages
+                              </h3>
+                              <div className="space-y-2">
+                                {issue.pages_affected.map((page, pageIndex) => (
+                                  <a
+                                    key={pageIndex}
+                                    href={page}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block bg-gray-50 p-2 sm:p-3 rounded text-xs overflow-x-auto border border-gray-element text-blue-600 hover:text-blue-800 hover:bg-gray-100 transition-colors duration-200 font-mono break-all"
+                                  >
+                                    {page}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                       </div>
 
                       {/* Mobile buttons - shown only on mobile at the bottom */}
@@ -5556,7 +5578,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
                   {isDownloading ? (
                     <CircularProgress size={22} sx={{ color: 'white' }} />
                   ) : (
-                    'Get Free Report'
+                    'Get Report'
                   )}
                 </span>
               </button>

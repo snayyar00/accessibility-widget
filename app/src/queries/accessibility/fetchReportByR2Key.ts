@@ -13,6 +13,7 @@ export default gql`
           help
           wcag_code
           screenshotUrl
+          pages_affected
         }
         notices {
           message
@@ -23,6 +24,7 @@ export default gql`
           help
           wcag_code
           screenshotUrl
+          pages_affected
         }
         warnings {
           message
@@ -33,6 +35,7 @@ export default gql`
           help
           wcag_code
           screenshotUrl
+          pages_affected
         }
       }
       htmlcs {
@@ -45,6 +48,7 @@ export default gql`
           recommended_action
           wcag_code
           screenshotUrl
+          pages_affected
         }
         notices {
           code
@@ -55,6 +59,7 @@ export default gql`
           recommended_action
           wcag_code
           screenshotUrl
+          pages_affected
         }
         warnings {
           code
@@ -65,6 +70,7 @@ export default gql`
           recommended_action
           wcag_code
           screenshotUrl
+          pages_affected
         }
       }
       score
@@ -81,6 +87,7 @@ export default gql`
           recommended_action
           wcag_code
           screenshotUrl
+          pages_affected
         }
       }
       scriptCheckResult
@@ -112,6 +119,7 @@ export default gql`
         description
         recommended_action
         screenshotUrl
+        pages_affected
       }
       issuesByFunction
       functionalityNames
