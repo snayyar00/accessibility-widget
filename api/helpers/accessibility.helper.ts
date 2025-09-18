@@ -1,6 +1,9 @@
 import { getPreprocessingConfig } from '../config/preprocessing.config'
 import { readAccessibilityDescriptionFromDb } from '../services/accessibilityReport/accessibilityIssues.service'
 import { processAccessibilityIssuesWithFallback } from '../services/accessibilityReport/enhancedProcessing.service'
+import puppeteer from 'puppeteer-core'
+import { Browserbase } from '@browserbasehq/sdk'
+import fs from 'fs'
 
 // const pa11y = require('pa11y');
 
@@ -13,6 +16,7 @@ interface axeOutput {
   help: string
   wcag_code?: string
   screenshotUrl?: string
+  pages_affected?: string[]
 }
 
 interface htmlcsOutput {
@@ -22,6 +26,7 @@ interface htmlcsOutput {
   selectors: string[]
   wcag_code?: string
   screenshotUrl?: string
+  pages_affected?: string[]
 }
 
 interface finalOutput {
@@ -98,6 +103,7 @@ function createAxeArrayObj(message: string, issue: any) {
     help: issue.runnerExtras.help,
     wcag_code: parseWcagCode(issue),
     screenshotUrl: issue.screenshotUrl || undefined,
+    pages_affected: issue.pages_affected || undefined,
   }
   if (obj.screenshotUrl) {
     console.log('[AXE] Parsed screenshotUrl:', obj.screenshotUrl, 'for message:', obj.message)
@@ -112,6 +118,7 @@ function createHtmlcsArrayObj(issue: any) {
     selectors: [issue.selector],
     wcag_code: parseWcagCode(issue),
     screenshotUrl: issue.screenshotUrl || undefined,
+    pages_affected: issue.pages_affected || undefined,
   }
   if (obj.screenshotUrl) {
     console.log('[HTMLCS] Parsed screenshotUrl:', obj.screenshotUrl, 'for message:', obj.message)
@@ -143,6 +150,183 @@ function calculateAccessibilityScore(issues: { errors: axeOutput[]; warnings: ax
   return Math.min(Math.floor(score), maxScore)
 }
 
+/**
+ * Takes a screenshot of a given URL using Browserbase and puppeteer-core
+ * @param url - The URL to take a screenshot of
+ * @param options - Optional configuration for the screenshot
+ * @returns Promise<string> - Base64 encoded screenshot data
+ */
+export async function takeScreenshot(
+  url: string,
+  options: {
+    format?: 'jpeg' | 'png'
+    quality?: number
+    fullPage?: boolean
+    width?: number
+    height?: number
+  } = {},
+): Promise<string> {
+  const { format = 'jpeg', quality = 80, fullPage = false, width = 1920, height = 1080 } = options
+
+  let browser: any = null
+  let session: any = null
+
+  try {
+    console.log(`📸 Starting screenshot capture for URL: ${url}`)
+
+    // Initialize Browserbase
+    const bb = new Browserbase({
+      apiKey: process.env.BROWSERBASE_API_KEY,
+    })
+
+    // Create a new session
+    session = await bb.sessions.create({
+      projectId: process.env.BROWSERBASE_PROJECT_ID,
+    })
+
+    console.log('🔗 Connecting to remote browser...')
+
+    // Connect to the browser using puppeteer
+    browser = await puppeteer.connect({
+      browserWSEndpoint: session.connectUrl,
+    })
+
+    // Get the first page or create a new one
+    const pages = await browser.pages()
+    const page = pages[0] || (await browser.newPage())
+
+    // Set viewport size
+    await page.setViewport({ width, height })
+
+    console.log(`🌐 Navigating to: ${url}`)
+
+    // Navigate to the URL with timeout
+    await page.goto(url, {
+      waitUntil: 'networkidle2',
+      timeout: 30000,
+    })
+
+    console.log('📷 Taking screenshot using CDP...')
+
+    // Create a CDP session for faster screenshots
+    const client = await page.createCDPSession()
+
+    // Capture the screenshot using CDP
+    const { data } = await client.send('Page.captureScreenshot', {
+      format,
+      quality: format === 'jpeg' ? quality : undefined,
+      fullPage,
+    })
+
+    console.log('✅ Screenshot captured successfully')
+
+    return data
+  } catch (error) {
+    console.error('❌ Error taking screenshot:', error)
+    throw new Error(`Failed to take screenshot: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  } finally {
+    // Clean up resources
+    try {
+      if (browser) {
+        console.log('🔌 Closing browser connection...')
+        await browser.close()
+      }
+    } catch (cleanupError) {
+      console.error('⚠️ Error during cleanup:', cleanupError)
+    }
+  }
+}
+
+/**
+ * Takes a screenshot and saves it to a file
+ * @param url - The URL to take a screenshot of
+ * @param filePath - The path where to save the screenshot file
+ * @param options - Optional configuration for the screenshot
+ * @returns Promise<string> - The file path where the screenshot was saved
+ */
+export async function takeScreenshotAndSave(
+  url: string,
+  filePath: string,
+  options: {
+    format?: 'jpeg' | 'png'
+    quality?: number
+    fullPage?: boolean
+    width?: number
+    height?: number
+  } = {},
+): Promise<string> {
+  try {
+    // Take the screenshot
+    const screenshotData = await takeScreenshot(url, options)
+
+    // Convert base64 to buffer
+    const buffer = Buffer.from(screenshotData, 'base64')
+
+    // Ensure directory exists
+    const dir = filePath.substring(0, filePath.lastIndexOf('/'))
+    if (dir && !fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true })
+    }
+
+    // Write the file
+    fs.writeFileSync(filePath, buffer)
+
+    console.log(`💾 Screenshot saved to: ${filePath}`)
+
+    return filePath
+  } catch (error) {
+    console.error('❌ Error saving screenshot:', error)
+    throw new Error(`Failed to save screenshot: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+}
+
+/**
+ * Takes a screenshot with retry logic for the main accessibility function
+ * @param domain - The domain to take a screenshot of
+ * @param retryCount - Current retry count (internal use)
+ * @returns Promise<string | null> - Base64 screenshot data or null if all retries fail
+ */
+async function takeScreenshotWithRetries(domain: string, retryCount = 0): Promise<string | null> {
+  const maxRetries = 3 // 3 retries for better reliability
+  const baseDelay = 1000 // Base delay of 1 second
+  const delay = Math.min(baseDelay * Math.pow(1.5, retryCount), 8000) // Exponential backoff with cap: 1s, 1.5s, 2.25s, 3.375s, 5s, 7.5s
+
+  try {
+    console.log(`📸 Taking screenshot (attempt ${retryCount + 1}/${maxRetries + 1})...`)
+
+    // Add some randomization to avoid conflicts
+    const jitter = Math.random() * 300 // 0-300ms random jitter
+    if (retryCount > 0) {
+      console.log(`⏳ Adding ${Math.round(jitter)}ms jitter to avoid conflicts...`)
+      await new Promise((resolve) => setTimeout(resolve, jitter))
+    }
+
+    const screenshotData = await takeScreenshot(domain, {
+      format: 'jpeg',
+      quality: 80,
+      fullPage: true,
+      width: 1920,
+      height: 1080,
+    })
+
+    console.log('✅ Screenshot captured successfully')
+    return `data:image/jpeg;base64,${screenshotData}`
+  } catch (screenshotError) {
+    console.error(`❌ Screenshot attempt ${retryCount + 1} failed:`, screenshotError)
+
+    if (retryCount < maxRetries) {
+      console.log(`🔄 Retrying screenshot in ${Math.round(delay)}ms... (attempt ${retryCount + 2}/${maxRetries + 1})`)
+      console.log(`📊 Retry strategy: Exponential backoff with jitter (${Math.round(delay)}ms + random jitter)`)
+      await new Promise((resolve) => setTimeout(resolve, delay))
+      return takeScreenshotWithRetries(domain, retryCount + 1)
+    }
+
+    console.error('⚠️ All screenshot attempts failed, continuing with accessibility scan')
+    console.log(`📊 Total retry attempts: ${maxRetries + 1} (including initial attempt)`)
+    return null
+  }
+}
+
 export async function getAccessibilityInformationPally(domain: string, useCache?: boolean, fullSiteScan?: boolean) {
   const output: finalOutput = {
     axe: {
@@ -158,12 +342,20 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
     totalElements: 0,
   }
 
-  const apiUrl = `${process.env.SCANNER_SERVER_URL}/scan`
+  // Execute screenshot with retries
+  const screenshotData = await takeScreenshotWithRetries(domain)
+  if (screenshotData) {
+    output.siteImg = screenshotData
+  }
+
+  // Determine API URL based on scan type
+  const apiUrl = fullSiteScan === true ? `${process.env.SCANNER_SERVER_URL}/scan/full-site/sync` : `${process.env.SCANNER_SERVER_URL}/scan`
+
   let results
 
-  // Helper function to check if response is empty
+  // Helper function to check if response is empty or has zero issues
   const isEmptyResponse = (data: any) => {
-    return !data || !data.issues || !Array.isArray(data.issues) || data.issues.length === 0 || (data.issues.length === 1 && !data.issues[0].runner)
+    return !data || !data.issues || !Array.isArray(data.issues) || data.issues.length === 0 || (data.issues.length === 1 && !data.issues[0].runner) || data.issues.every((issue: any) => !issue.runner || !issue.type)
   }
 
   // Helper function to make scanner API request with retries
@@ -175,6 +367,7 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
       const cacheStatus = useCache !== undefined ? useCache : true
       const fullSiteStatus = fullSiteScan !== undefined ? fullSiteScan : false
       console.log(`Using scanner API (attempt ${retryCount + 1}/${maxRetries + 1})${cacheStatus ? ' - Fast scan with cache enabled' : ' - Fresh scan without cache'}${fullSiteStatus ? ' - Full site scan enabled' : ' - Single page scan'}`)
+      console.log('Scanner API URL:', apiUrl)
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -182,13 +375,10 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
         },
         body: JSON.stringify({
           url: domain,
-          viewport: [1366, 768],
-          timeout: 240,
-          level: 'AA',
+          max_pages: 4,
+          crawl_depth: 1,
           use_cache: useCache !== undefined ? useCache : true,
           full_site: fullSiteScan !== undefined ? fullSiteScan : false,
-          max_pages: 50,
-          crawl_depth: 2,
         }),
       })
 
@@ -308,15 +498,15 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
     })
   }
 
-  // Extract screenshots from API response and store in siteImg
-  if (results && typeof results === 'object' && results !== null) {
+  // Extract screenshots from API response and store in siteImg (only if we don't already have a screenshot)
+  if (results && typeof results === 'object' && results !== null && !output.siteImg) {
     // Check for screenshots array
     if ('screenshots' in results && Array.isArray((results as any).screenshots)) {
       const screenshots = (results as any).screenshots
       if (screenshots.length > 0) {
         // Store the first screenshot URL in siteImg, or join multiple URLs with comma
         output.siteImg = screenshots.length === 1 ? screenshots[0] : screenshots.join(',')
-        console.log(`📸 Extracted ${screenshots.length} screenshot(s) and stored in siteImg:`, output.siteImg)
+        console.log(`📸 Extracted ${screenshots.length} screenshot(s) from API response and stored in siteImg:`, output.siteImg)
       }
     }
     // Also check for siteImg field as fallback
@@ -329,6 +519,8 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
       output.siteImg = (results as any).screenshot
       console.log(`📸 Using screenshot from API response:`, output.siteImg)
     }
+  } else if (output.siteImg) {
+    console.log(`📸 Using pre-captured screenshot (${output.siteImg.substring(0, 50)}...)`)
   }
 
   // Extract tech stack from API response if available

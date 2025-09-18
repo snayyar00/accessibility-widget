@@ -19,8 +19,7 @@ const ScoreChart: React.FC<ScoreChartProps> = ({ score, size = 200 }) => {
   }, [score]);
 
   // Calculate stroke dash offset for the progress
-  const strokeDashoffset =
-    circumference - (animatedScore / 100) * circumference;
+  const strokeDashoffset = circumference - (score / 100) * circumference;
 
   // Determine color based on score
   const getColor = () => {

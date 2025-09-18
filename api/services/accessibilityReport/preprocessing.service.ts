@@ -11,6 +11,7 @@ interface RawIssue {
   help?: string
   wcag_code?: string
   screenshotUrl?: string
+  pages_affected?: string[]
 }
 
 interface ProcessedIssue extends RawIssue {
@@ -30,6 +31,7 @@ interface ProcessedIssue extends RawIssue {
   }
   wcag_code?: string
   screenshotUrl?: string
+  pages_affected?: string[]
 }
 
 interface GroupedIssue {
@@ -483,6 +485,7 @@ export function convertPa11yToRawIssues(pa11yOutput: any): RawIssue[] {
             help: issue.help,
             wcag_code: issue.wcag_code,
             screenshotUrl: issue.screenshotUrl || undefined,
+            pages_affected: issue.pages_affected || undefined,
           })
         })
       }
@@ -506,6 +509,7 @@ export function convertPa11yToRawIssues(pa11yOutput: any): RawIssue[] {
             runner: 'htmlcs',
             wcag_code: issue.wcag_code,
             screenshotUrl: issue.screenshotUrl || undefined,
+            pages_affected: issue.pages_affected || undefined,
           })
         })
       }
@@ -550,6 +554,7 @@ export function convertToOriginalFormat(processedIssues: ProcessedIssue[]): any 
     if (issue.help) convertedIssue.help = issue.help
     if (issue.screenshotUrl) convertedIssue.screenshotUrl = issue.screenshotUrl
     if (issue.wcag_code) convertedIssue.wcag_code = issue.wcag_code // Add wcag_code
+    if (issue.pages_affected) convertedIssue.pages_affected = issue.pages_affected // Add pages_affected
 
     // Use bracket notation to avoid TypeScript indexing issues
     const targetArray = (result as any)[targetRunner][targetType] as any[]
