@@ -474,7 +474,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               >
                 Radar Chart
               </button>
-              {heatmapData && (
+              {heatmapData && getAvailableHeatmapCategories().length > 0 && (
                 <button
                   onClick={() => setViewMode('heatmap')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -502,7 +502,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
       {/* Conditional rendering based on view mode */}
       {viewMode === 'grid' && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 px-4 relative">
+        <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-4 gap-4 mb-10 px-4 relative">
           {combinedChecks.map((check, index) => {
             const isActive = index === currentCheckIndex;
 
@@ -571,7 +571,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
                   {/* Display accessibility score for accessibility card */}
                   {check.id === 'accessibility' && accessibilityScore !== null && (
-                    <div className="mt-2 text-sm text-gray-700">
+                    <div className="mt-2 text-xs text-gray-700">
                       <div>Accessibility Score: {accessibilityScore}</div>
                     </div>
                   )}
