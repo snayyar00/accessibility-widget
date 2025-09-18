@@ -326,15 +326,15 @@ export default function CodeContainer({
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center justify-between hover:border-gray-300 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                {selectedLanguage.code === 'auto' ? (
-                  <span className="w-6 h-6 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
-                    <FaMagic className="w-4 h-4 text-blue-500" />
-                  </span>
-                ) : (
+                  {selectedLanguage.code === 'auto' ? (
+                    <span className="w-6 h-6 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
+                      <FaMagic className="w-4 h-4 text-blue-500" />
+                    </span>
+                  ) : (
                     <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
                       {selectedLanguage.code.toUpperCase().slice(0, 2)}
                     </span>
-                )}
+                  )}
                   <span className="text-gray-900 font-medium">
                     {selectedLanguage.name}
                   </span>
@@ -369,15 +369,15 @@ export default function CodeContainer({
                           className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center justify-between text-sm border-b border-gray-50 last:border-b-0"
                         >
                           <div className="flex items-center gap-3">
-                          {lang.code === 'auto' ? (
-                            <span className="w-6 h-6 bg-gray-200 group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-blue-600 group-hover:text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-sm">
-                              <FaMagic className="w-4 h-4" />
-                            </span>
-                          ) : (
+                            {lang.code === 'auto' ? (
+                              <span className="w-6 h-6 bg-gray-200 group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-blue-600 group-hover:text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-sm">
+                                <FaMagic className="w-4 h-4" />
+                              </span>
+                            ) : (
                               <span className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold">
                                 {lang.code.toUpperCase().slice(0, 2)}
                               </span>
-                          )}
+                            )}
                             <span className="text-gray-900 font-medium">
                               {lang.name}
                             </span>
@@ -547,10 +547,10 @@ export default function CodeContainer({
             </div>
           )}
         </div>
-      </div>
+      )}
 
-      {/* Widget Size - Hidden when icon type is hidden */}
-      {iconType !== 'hidden' && (
+      {/* Widget Size - Hidden when icon type is hidden or customization is not shown */}
+      {showCustomization && iconType !== 'hidden' && (
         <div className="p-4 border-b border-blue-100/60 bg-gradient-to-r from-white to-blue-50/50">
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-800 tracking-wide">
@@ -559,7 +559,7 @@ export default function CodeContainer({
             <p className="text-xs text-gray-600 pl-1">
               Choose the size of your widget icon
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-col md:flex-row gap-3">
               {[
                 { value: 's', label: 'Small', size: 'w-12 h-12' },
                 { value: 'm', label: 'Medium', size: 'w-[58px] h-[58px]' },
@@ -682,8 +682,8 @@ export default function CodeContainer({
         </div>
       )}
 
-      {/* Offset Controls - Hidden when icon type is hidden */}
-      {iconType !== 'hidden' && (
+      {/* Offset Controls - Hidden when icon type is hidden or customization is not shown */}
+      {showCustomization && iconType !== 'hidden' && (
         <div className="p-4 border-b border-blue-100/60 bg-gradient-to-r from-white to-blue-50/50">
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-800 tracking-wide">

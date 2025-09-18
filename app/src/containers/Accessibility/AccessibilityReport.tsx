@@ -4736,7 +4736,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   };
 
   return (
-    <>
+    <div>
       <TourGuide
         steps={accessibilityTourSteps}
         tourKey={tourKeys.accessibility}
@@ -4782,7 +4782,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               </p>
             </div>
 
-            {/* Single row: Language, Domain input, Scan Type, and Free Scan button */}
+            {/* Single row: Language, Domain input, Scan Type, Checkbox, and Free Scan button */}
             <div className="flex flex-col lg:flex-row items-center gap-3 w-full">
               {/* Language Selector */}
               <div className="w-full lg:w-auto lg:min-w-[140px]">
@@ -4923,31 +4923,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 />
               </div>
 
-              <div className="w-full md:flex-1 min-w-0 md:min-w-[320px] md:max-w-[400px]">
-                <div className="flex flex-col md:flex-row gap-3">
-                  {/* Dropdown for scan type options */}
-                  <div ref={dropdownRef} className="relative flex-1">
-                    <button
-                      type="button"
-                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 pr-8 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[38px] flex items-center justify-between"
-                    >
-                      <div className="flex items-center space-x-2">
-                        {selectedScanType && (
-                          <>
-                            <selectedScanType.icon
-                              className={`w-4 h-4 ${selectedScanType.color}`}
-                            />
-                            <span>{selectedScanType.label}</span>
-                          </>
-                        )}
-                      </div>
-                      <ChevronDown
-                        className={`w-3 h-3 text-gray-400 transition-transform ${
-                          isDropdownOpen ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </button>
               {/* Scan Type Selector */}
               <div className="w-full lg:w-auto lg:min-w-[220px]">
                 <div ref={dropdownRef} className="relative">
@@ -4992,1025 +4967,1051 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     />
                   </button>
 
-                    {isDropdownOpen && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                        {scanTypeOptions.map((option) => {
-                          const IconComponent = option.icon;
-                          return (
-                            <button
-                              key={option.value}
-                              type="button"
-                              onClick={() => {
-                                setScanType(option.value);
-                                setIsDropdownOpen(false);
-                              }}
-                              className={`w-full px-3 py-2 text-xs font-medium text-left flex items-center space-x-2 ${
-                                scanType === option.value
-                                  ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                                  : 'text-gray-700 hover:bg-gray-50'
-                              }`}
-                            >
-                              <IconComponent
-                                className={`w-4 h-4 ${option.color}`}
-                              />
-                              <span>{option.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Checkbox for full site scan */}
-                  <div className="flex items-center space-x-2 p-2 border border-gray-300 rounded-md whitespace-nowrap">
-                    <TbZoomScanFilled className="w-4 h-4 text-green-500" />
-                    <label
-                      htmlFor="fullSiteScan"
-                      className="text-xs font-medium text-gray-700 cursor-pointer"
-                    >
-                      Full site scan
-                    </label>
-                    <input
-                      type="checkbox"
-                      id="fullSiteScan"
-                      checked={isFullSiteScan}
-                      onChange={(e) => setIsFullSiteScan(e.target.checked)}
-                      className="w-4 h-4 text-green-600 focus:ring-green-500"
-                    />
-                  </div>
+                  {isDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                      {scanTypeOptions.map((option) => {
+                        const IconComponent = option.icon;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              setScanType(option.value);
+                              setIsDropdownOpen(false);
+                            }}
+                            className={`w-full px-3 py-2 text-xs font-medium text-left flex items-center space-x-2 ${
+                              scanType === option.value
+                                ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                                : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <IconComponent
+                              className={`w-4 h-4 ${option.color}`}
+                            />
+                            <span>{option.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
+              </div>
+
+              {/* Checkbox for full site scan */}
+              <div className="w-full lg:w-auto">
+                <div
+                  className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg whitespace-nowrap"
+                  style={{
+                    minHeight: '50px',
+                    backgroundColor: baseColors.white,
+                  }}
+                >
+                  <TbZoomScanFilled className="w-4 h-4 text-green-500" />
+                  <label
+                    htmlFor="fullSiteScan"
+                    className="text-sm font-medium text-gray-700 cursor-pointer"
+                  >
+                    Full site scan
+                  </label>
+                  <input
+                    type="checkbox"
+                    id="fullSiteScan"
+                    checked={isFullSiteScan}
+                    onChange={(e) => setIsFullSiteScan(e.target.checked)}
+                    className="w-4 h-4 text-green-600 focus:ring-green-500"
+                  />
+                </div>
+              </div>
+
+              {/* Free Scan Button */}
+              <div className="w-full lg:w-auto">
+                <button
+                  type="button"
+                  className="search-button px-8 py-3 rounded-lg font-medium text-lg whitespace-nowrap transition-all duration-200 hover:shadow-md w-full"
+                  style={{
+                    backgroundColor: '#3343AD',
+                    color: baseColors.white,
+                    minHeight: '50px',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#2A3690';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#3343AD';
+                  }}
+                  onClick={() => {
+                    if (!currentLanguage || !currentLanguage.trim()) {
+                      setShowLangTooltip(true);
+                      setTimeout(() => setShowLangTooltip(false), 2000);
+                      return;
+                    }
+                    if (domain) {
+                      handleSubmit();
+                    } else {
+                      toast.error('Please enter or select a domain!');
+                    }
+                  }}
+                  disabled={isGenerating}
+                >
+                  Free Scan
+                  {isGenerating && (
+                    <CircularProgress
+                      size={18}
+                      sx={{ color: 'white' }}
+                      className="ml-2"
+                    />
+                  )}
+                </button>
               </div>
             </div>
 
-              {/* Free Scan Button */}
-              <button
-                type="button"
-                className="search-button px-8 py-3 rounded-lg font-medium text-lg whitespace-nowrap transition-all duration-200 hover:shadow-md"
+            <div className="w-full mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              <Card
+                className="w-full"
                 style={{
-                  backgroundColor: '#3343AD',
-                  color: baseColors.white,
-                  minHeight: '50px',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#2A3690';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#3343AD';
-                }}
-                onClick={() => {
-                  if (!currentLanguage || !currentLanguage.trim()) {
-                    setShowLangTooltip(true);
-                    setTimeout(() => setShowLangTooltip(false), 2000);
-                    return;
-                  }
-                  if (domain) {
-                    handleSubmit();
-                  } else {
-                    toast.error('Please enter or select a domain!');
-                  }
-                }}
-                disabled={isGenerating}
-              >
-                Free Scan
-                {isGenerating && (
-                  <CircularProgress
-                    size={18}
-                    sx={{ color: 'white' }}
-                    className="ml-2"
-                  />
-                )}
-              </button>
-            </div>
-          </div>
+                  background:
+                    'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
 
-          <div className="w-full mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            <Card
-              className="w-full"
-              style={{
-                background: 'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
-
-                borderRadius: '12px',
-                padding: '16px',
-                position: 'relative',
-                minHeight: '120px',
-                border: `1px solid ${baseColors.cardBorderPurple}`,
-              }}
-            >
-              <CardContent className="p-0">
-                <div className="flex items-start space-x-3">
-                  <div
-                    className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
-                    style={{
-                      backgroundColor: baseColors.grayIcon,
-                    }}
-                  >
-                    <svg
-                      width="28"
-                      height="28"
-                      viewBox="0 0 36 36"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M9.75 26.25L9.75 21.75M17.25 26.25L17.25 12.75M24.75 26.25V20.25"
-                        stroke="#222D73"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                      />
-                      <path
-                        d="M32.25 8.25C32.25 10.7353 30.2353 12.75 27.75 12.75C25.2647 12.75 23.25 10.7353 23.25 8.25C23.25 5.76472 25.2647 3.75 27.75 3.75C30.2353 3.75 32.25 5.76472 32.25 8.25Z"
-                        stroke="#222D73"
-                        strokeWidth="3"
-                      />
-                      <path
-                        d="M32.2433 16.5C32.2433 16.5 32.25 17.0093 32.25 18C32.25 24.7176 32.25 28.0763 30.1631 30.1632C28.0763 32.25 24.7175 32.25 18 32.25C11.2825 32.25 7.92373 32.25 5.83686 30.1632C3.75 28.0763 3.75 24.7176 3.75 18C3.75 11.2825 3.75 7.92377 5.83686 5.83691C7.92373 3.75005 11.2825 3.75005 18 3.75005L19.5 3.75"
-                        stroke="#222D73"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h2
-                      className="text-base sm:text-lg font-bold mb-1"
-                      style={{ color: baseColors.white }}
-                    >
-                      Comprehensive Analysis
-                    </h2>
-                    <p
-                      className="text-xs sm:text-sm leading-tight"
-                      style={{ color: baseColors.blueStats }}
-                    >
-                      Our scanner checks for WCAG 2.1 compliance across your
-                      entire site.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="w-full"
-              style={{
-                background: 'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
-
-                borderRadius: '12px',
-                padding: '16px',
-                position: 'relative',
-                minHeight: '120px',
-                border: `1px solid ${baseColors.cardBorderPurple}`,
-              }}
-            >
-              <CardContent className="p-0">
-                <div className="flex items-start space-x-3">
-                  <div
-                    className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
-                    style={{
-                      backgroundColor: baseColors.grayIcon,
-                    }}
-                  >
-                    <svg
-                      width="24"
-                      height="28"
-                      viewBox="0 0 29 34"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M1.91699 14C1.91699 8.34315 1.91699 5.51472 3.78419 3.75736C5.65138 2 8.65658 2 14.667 2H15.8261C20.7179 2 23.1638 2 24.8624 3.19675C25.3491 3.53964 25.7811 3.94629 26.1454 4.40433C27.417 6.00301 27.417 8.30504 27.417 12.9091V16.7273C27.417 21.172 27.417 23.3944 26.7136 25.1694C25.5828 28.0229 23.1913 30.2737 20.1595 31.338C18.2736 32 15.9123 32 11.1897 32C8.49112 32 7.14182 32 6.06416 31.6217C4.33168 31.0135 2.96512 29.7274 2.31894 28.0968C1.91699 27.0825 1.91699 25.8126 1.91699 23.2727V14Z"
-                        stroke="#222D73"
-                        strokeWidth="3"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M27.417 17C27.417 19.7614 25.1784 22 22.417 22C21.4183 22 20.2409 21.825 19.2699 22.0852C18.4072 22.3164 17.7333 22.9902 17.5022 23.853C17.242 24.8239 17.417 26.0013 17.417 27C17.417 29.7614 15.1784 32 12.417 32"
-                        stroke="#222D73"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M8.66699 9.5H19.167"
-                        stroke="#222D73"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M8.66699 15.5H13.167"
-                        stroke="#222D73"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h2
-                      className="text-base sm:text-lg font-bold mb-1"
-                      style={{ color: baseColors.white }}
-                    >
-                      Detailed Reports
-                    </h2>
-                    <p
-                      className="text-xs sm:text-sm leading-tight"
-                      style={{ color: baseColors.blueStats }}
-                    >
-                      Receive a full breakdown of accessibility issues and how
-                      to fix them.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="w-full"
-              style={{
-                background: 'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
-
-                borderRadius: '12px',
-                padding: '16px',
-                position: 'relative',
-                minHeight: '120px',
-                border: `1px solid ${baseColors.cardBorderPurple}`,
-              }}
-            >
-              <CardContent className="p-0">
-                <div className="flex items-start space-x-3">
-                  <div
-                    className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
-                    style={{
-                      backgroundColor: baseColors.grayIcon,
-                    }}
-                  >
-                    <svg
-                      width="30"
-                      height="28"
-                      viewBox="0 0 37 36"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <rect
-                        x="1.33301"
-                        y="1"
-                        width="34"
-                        height="34"
-                        rx="17"
-                        stroke="#222D73"
-                        strokeWidth="2"
-                      />
-                      <path
-                        d="M18.3333 9.54788C17.5508 9.54788 16.8811 9.27224 16.3244 8.72097C15.7676 8.1697 15.4887 7.50621 15.4878 6.73049C15.4868 5.95476 15.7657 5.29174 16.3244 4.74141C16.883 4.19108 17.5527 3.91497 18.3333 3.9131C19.1139 3.91122 19.784 4.18732 20.3436 4.74141C20.9032 5.2955 21.1816 5.95852 21.1787 6.73049C21.1759 7.50245 20.8975 8.16595 20.3436 8.72097C19.7897 9.276 19.1196 9.55163 18.3333 9.54788ZM15.4129 32.087C14.6685 32.087 14.065 31.4863 14.065 30.7454V15.009C14.065 14.311 13.5272 13.7313 12.8298 13.6579C11.8071 13.5503 10.7724 13.4129 9.72567 13.2457C8.72348 13.0857 7.75436 12.8983 6.81829 12.6837C6.10013 12.5191 5.67286 11.7938 5.85249 11.0824L5.9063 10.8693C6.08973 10.1428 6.83481 9.70891 7.56877 9.87433C9.02474 10.2025 10.5499 10.4519 12.1443 10.6227C14.231 10.8462 16.294 10.9575 18.3333 10.9566C20.3725 10.9556 22.4355 10.8439 24.5222 10.6213C26.1166 10.4512 27.6418 10.2022 29.0977 9.87425C29.8317 9.70891 30.5768 10.1428 30.7602 10.8693L30.814 11.0824C30.9937 11.7938 30.5664 12.5191 29.8482 12.6837C28.9122 12.8983 27.943 13.0857 26.9409 13.2457C25.8941 13.4129 24.8594 13.5503 23.8367 13.6579C23.1394 13.7313 22.6015 14.311 22.6015 15.009V30.7454C22.6015 31.4863 21.998 32.087 21.2536 32.087H21.1039C20.3595 32.087 19.756 31.4863 19.756 30.7454V24.9764C19.756 24.2355 19.1525 23.6348 18.4081 23.6348H18.2584C17.514 23.6348 16.9105 24.2355 16.9105 24.9764V30.7454C16.9105 31.4863 16.3071 32.087 15.5627 32.087H15.4129Z"
-                        fill="#222D73"
-                      />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h2
-                      className="text-base sm:text-lg font-bold mb-1"
-                      style={{ color: baseColors.white }}
-                    >
-                      Improve User Experience
-                    </h2>
-                    <p
-                      className="text-xs sm:text-sm leading-tight"
-                      style={{ color: baseColors.blueStats }}
-                    >
-                      Make your website accessible to all users, regardless of
-                      abilities.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        <div className="w-full">
-          {siteOptions.some(
-            (option: any) =>
-              normalizeDomain(option.value) ===
-              normalizeDomain(selectedOption?.value ?? ''),
-          ) &&
-            enhancedScoresCalculated &&
-            processedReportKeys.length > 0 && (
-              <div
-                className="accessibility-issues-section rounded-xl p-2 sm:p-4 md:p-6 mt-12 shadow w-full overflow-visible box-border"
-                style={{
-                  backgroundColor: '#eaecfb',
-                  marginLeft: 0,
-                  marginRight: 0,
+                  borderRadius: '12px',
+                  padding: '16px',
+                  position: 'relative',
+                  minHeight: '120px',
                   border: `1px solid ${baseColors.cardBorderPurple}`,
                 }}
               >
+                <CardContent className="p-0">
+                  <div className="flex items-start space-x-3">
+                    <div
+                      className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
+                      style={{
+                        backgroundColor: baseColors.grayIcon,
+                      }}
+                    >
+                      <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 36 36"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M9.75 26.25L9.75 21.75M17.25 26.25L17.25 12.75M24.75 26.25V20.25"
+                          stroke="#222D73"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M32.25 8.25C32.25 10.7353 30.2353 12.75 27.75 12.75C25.2647 12.75 23.25 10.7353 23.25 8.25C23.25 5.76472 25.2647 3.75 27.75 3.75C30.2353 3.75 32.25 5.76472 32.25 8.25Z"
+                          stroke="#222D73"
+                          strokeWidth="3"
+                        />
+                        <path
+                          d="M32.2433 16.5C32.2433 16.5 32.25 17.0093 32.25 18C32.25 24.7176 32.25 28.0763 30.1631 30.1632C28.0763 32.25 24.7175 32.25 18 32.25C11.2825 32.25 7.92373 32.25 5.83686 30.1632C3.75 28.0763 3.75 24.7176 3.75 18C3.75 11.2825 3.75 7.92377 5.83686 5.83691C7.92373 3.75005 11.2825 3.75005 18 3.75005L19.5 3.75"
+                          stroke="#222D73"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h2
+                        className="text-base sm:text-lg font-bold mb-1"
+                        style={{ color: baseColors.white }}
+                      >
+                        Comprehensive Analysis
+                      </h2>
+                      <p
+                        className="text-xs sm:text-sm leading-tight"
+                        style={{ color: baseColors.blueStats }}
+                      >
+                        Our scanner checks for WCAG 2.1 compliance across your
+                        entire site.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="w-full"
+                style={{
+                  background:
+                    'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
+
+                  borderRadius: '12px',
+                  padding: '16px',
+                  position: 'relative',
+                  minHeight: '120px',
+                  border: `1px solid ${baseColors.cardBorderPurple}`,
+                }}
+              >
+                <CardContent className="p-0">
+                  <div className="flex items-start space-x-3">
+                    <div
+                      className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
+                      style={{
+                        backgroundColor: baseColors.grayIcon,
+                      }}
+                    >
+                      <svg
+                        width="24"
+                        height="28"
+                        viewBox="0 0 29 34"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M1.91699 14C1.91699 8.34315 1.91699 5.51472 3.78419 3.75736C5.65138 2 8.65658 2 14.667 2H15.8261C20.7179 2 23.1638 2 24.8624 3.19675C25.3491 3.53964 25.7811 3.94629 26.1454 4.40433C27.417 6.00301 27.417 8.30504 27.417 12.9091V16.7273C27.417 21.172 27.417 23.3944 26.7136 25.1694C25.5828 28.0229 23.1913 30.2737 20.1595 31.338C18.2736 32 15.9123 32 11.1897 32C8.49112 32 7.14182 32 6.06416 31.6217C4.33168 31.0135 2.96512 29.7274 2.31894 28.0968C1.91699 27.0825 1.91699 25.8126 1.91699 23.2727V14Z"
+                          stroke="#222D73"
+                          strokeWidth="3"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M27.417 17C27.417 19.7614 25.1784 22 22.417 22C21.4183 22 20.2409 21.825 19.2699 22.0852C18.4072 22.3164 17.7333 22.9902 17.5022 23.853C17.242 24.8239 17.417 26.0013 17.417 27C17.417 29.7614 15.1784 32 12.417 32"
+                          stroke="#222D73"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M8.66699 9.5H19.167"
+                          stroke="#222D73"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M8.66699 15.5H13.167"
+                          stroke="#222D73"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h2
+                        className="text-base sm:text-lg font-bold mb-1"
+                        style={{ color: baseColors.white }}
+                      >
+                        Detailed Reports
+                      </h2>
+                      <p
+                        className="text-xs sm:text-sm leading-tight"
+                        style={{ color: baseColors.blueStats }}
+                      >
+                        Receive a full breakdown of accessibility issues and how
+                        to fix them.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="w-full"
+                style={{
+                  background:
+                    'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
+
+                  borderRadius: '12px',
+                  padding: '16px',
+                  position: 'relative',
+                  minHeight: '120px',
+                  border: `1px solid ${baseColors.cardBorderPurple}`,
+                }}
+              >
+                <CardContent className="p-0">
+                  <div className="flex items-start space-x-3">
+                    <div
+                      className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
+                      style={{
+                        backgroundColor: baseColors.grayIcon,
+                      }}
+                    >
+                      <svg
+                        width="30"
+                        height="28"
+                        viewBox="0 0 37 36"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <rect
+                          x="1.33301"
+                          y="1"
+                          width="34"
+                          height="34"
+                          rx="17"
+                          stroke="#222D73"
+                          strokeWidth="2"
+                        />
+                        <path
+                          d="M18.3333 9.54788C17.5508 9.54788 16.8811 9.27224 16.3244 8.72097C15.7676 8.1697 15.4887 7.50621 15.4878 6.73049C15.4868 5.95476 15.7657 5.29174 16.3244 4.74141C16.883 4.19108 17.5527 3.91497 18.3333 3.9131C19.1139 3.91122 19.784 4.18732 20.3436 4.74141C20.9032 5.2955 21.1816 5.95852 21.1787 6.73049C21.1759 7.50245 20.8975 8.16595 20.3436 8.72097C19.7897 9.276 19.1196 9.55163 18.3333 9.54788ZM15.4129 32.087C14.6685 32.087 14.065 31.4863 14.065 30.7454V15.009C14.065 14.311 13.5272 13.7313 12.8298 13.6579C11.8071 13.5503 10.7724 13.4129 9.72567 13.2457C8.72348 13.0857 7.75436 12.8983 6.81829 12.6837C6.10013 12.5191 5.67286 11.7938 5.85249 11.0824L5.9063 10.8693C6.08973 10.1428 6.83481 9.70891 7.56877 9.87433C9.02474 10.2025 10.5499 10.4519 12.1443 10.6227C14.231 10.8462 16.294 10.9575 18.3333 10.9566C20.3725 10.9556 22.4355 10.8439 24.5222 10.6213C26.1166 10.4512 27.6418 10.2022 29.0977 9.87425C29.8317 9.70891 30.5768 10.1428 30.7602 10.8693L30.814 11.0824C30.9937 11.7938 30.5664 12.5191 29.8482 12.6837C28.9122 12.8983 27.943 13.0857 26.9409 13.2457C25.8941 13.4129 24.8594 13.5503 23.8367 13.6579C23.1394 13.7313 22.6015 14.311 22.6015 15.009V30.7454C22.6015 31.4863 21.998 32.087 21.2536 32.087H21.1039C20.3595 32.087 19.756 31.4863 19.756 30.7454V24.9764C19.756 24.2355 19.1525 23.6348 18.4081 23.6348H18.2584C17.514 23.6348 16.9105 24.2355 16.9105 24.9764V30.7454C16.9105 31.4863 16.3071 32.087 15.5627 32.087H15.4129Z"
+                          fill="#222D73"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h2
+                        className="text-base sm:text-lg font-bold mb-1"
+                        style={{ color: baseColors.white }}
+                      >
+                        Improve User Experience
+                      </h2>
+                      <p
+                        className="text-xs sm:text-sm leading-tight"
+                        style={{ color: baseColors.blueStats }}
+                      >
+                        Make your website accessible to all users, regardless of
+                        abilities.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          <div className="w-full">
+            {siteOptions.some(
+              (option: any) =>
+                normalizeDomain(option.value) ===
+                normalizeDomain(selectedOption?.value ?? ''),
+            ) &&
+              enhancedScoresCalculated &&
+              processedReportKeys.length > 0 && (
                 <div
-                  className="mb-6 pb-4 w-full"
+                  className="accessibility-issues-section rounded-xl p-2 sm:p-4 md:p-6 mt-12 shadow w-full overflow-visible box-border"
                   style={{
-                    borderBottom: `2px solid ${baseColors.cardBorderPurple}`,
+                    backgroundColor: '#eaecfb',
+                    marginLeft: 0,
+                    marginRight: 0,
+                    border: `1px solid ${baseColors.cardBorderPurple}`,
                   }}
                 >
-                  <h3
-                    className="text-xl sm:text-2xl font-medium"
-                    style={{ color: baseColors.grayDark2 }}
-                  >
-                    Scan history
-                  </h3>
-                </div>
-
-                {/* Column Headers */}
-                <div className="hidden md:grid grid-cols-4 gap-4 mb-4 px-4">
                   <div
-                    className="text-sm font-medium uppercase tracking-wider"
-                    style={{ color: baseColors.brandPrimary }}
+                    className="mb-6 pb-4 w-full"
+                    style={{
+                      borderBottom: `2px solid ${baseColors.cardBorderPurple}`,
+                    }}
                   >
-                    Sites
+                    <h3
+                      className="text-xl sm:text-2xl font-medium"
+                      style={{ color: baseColors.grayDark2 }}
+                    >
+                      Scan history
+                    </h3>
                   </div>
-                  <div
-                    className="text-sm font-medium uppercase tracking-wider text-center"
-                    style={{ color: baseColors.brandPrimary }}
-                  >
-                    Last scanned
+
+                  {/* Column Headers */}
+                  <div className="hidden md:grid grid-cols-4 gap-4 mb-4 px-4">
+                    <div
+                      className="text-sm font-medium uppercase tracking-wider"
+                      style={{ color: baseColors.brandPrimary }}
+                    >
+                      Sites
+                    </div>
+                    <div
+                      className="text-sm font-medium uppercase tracking-wider text-center"
+                      style={{ color: baseColors.brandPrimary }}
+                    >
+                      Last scanned
+                    </div>
+                    <div
+                      className="text-sm font-medium uppercase tracking-wider text-center"
+                      style={{ color: baseColors.brandPrimary }}
+                    >
+                      Score
+                    </div>
+                    <div
+                      className="text-sm font-medium uppercase tracking-wider text-center"
+                      style={{ color: baseColors.brandPrimary }}
+                    >
+                      Action
+                    </div>
                   </div>
-                  <div
-                    className="text-sm font-medium uppercase tracking-wider text-center"
-                    style={{ color: baseColors.brandPrimary }}
-                  >
-                    Score
-                  </div>
-                  <div
-                    className="text-sm font-medium uppercase tracking-wider text-center"
-                    style={{ color: baseColors.brandPrimary }}
-                  >
-                    Action
-                  </div>
-                </div>
 
-                {/* Site Cards */}
-                <div className="space-y-3 max-w-full">
-                  {processedReportKeys.map((row: any, idx: number) => {
-                    const dateObj = new Date(Number(row.created_at));
-                    const timeAgo = (() => {
-                      const now = new Date();
-                      const diffInMs = now.getTime() - dateObj.getTime();
-                      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-                      const diffInHours = Math.floor(diffInMinutes / 60);
-                      const diffInDays = Math.floor(diffInHours / 24);
+                  {/* Site Cards */}
+                  <div className="space-y-3 max-w-full">
+                    {processedReportKeys.map((row: any, idx: number) => {
+                      const dateObj = new Date(Number(row.created_at));
+                      const timeAgo = (() => {
+                        const now = new Date();
+                        const diffInMs = now.getTime() - dateObj.getTime();
+                        const diffInMinutes = Math.floor(
+                          diffInMs / (1000 * 60),
+                        );
+                        const diffInHours = Math.floor(diffInMinutes / 60);
+                        const diffInDays = Math.floor(diffInHours / 24);
 
-                      if (diffInMinutes < 60) {
-                        return `${diffInMinutes} min ago`;
-                      } else if (diffInHours < 24) {
-                        return `${diffInHours} h ago`;
-                      } else {
-                        return `${diffInDays} day${
-                          diffInDays > 1 ? 's' : ''
-                        } ago`;
-                      }
-                    })();
+                        if (diffInMinutes < 60) {
+                          return `${diffInMinutes} min ago`;
+                        } else if (diffInHours < 24) {
+                          return `${diffInHours} h ago`;
+                        } else {
+                          return `${diffInDays} day${
+                            diffInDays > 1 ? 's' : ''
+                          } ago`;
+                        }
+                      })();
 
-                    const complianceStatus = getComplianceStatus(
-                      row.enhancedScore,
-                    );
+                      const complianceStatus = getComplianceStatus(
+                        row.enhancedScore,
+                      );
 
-                    // Extract favicon from URL
-                    const getFaviconUrl = (url: string) => {
-                      try {
-                        const domain = new URL(
-                          url.startsWith('http') ? url : `https://${url}`,
-                        ).hostname;
-                        return `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
-                      } catch {
-                        return null;
-                      }
-                    };
-                    const actualScore = Math.round(row.enhancedScore || 0);
+                      // Extract favicon from URL
+                      const getFaviconUrl = (url: string) => {
+                        try {
+                          const domain = new URL(
+                            url.startsWith('http') ? url : `https://${url}`,
+                          ).hostname;
+                          return `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
+                        } catch {
+                          return null;
+                        }
+                      };
+                      const actualScore = Math.round(row.enhancedScore || 0);
 
-                    return (
-                      <div
-                        key={row.r2_key}
-                        className="block md:grid md:grid-cols-4 gap-4 md:items-center p-3 sm:p-4 rounded-lg border hover:shadow-md transition-all duration-200 group relative overflow-hidden md:overflow-visible w-full"
-                        style={{
-                          backgroundColor: baseColors.cardLight,
-                          borderColor: baseColors.cardBorder,
-                        }}
-                      >
-                        {/* Mobile Layout */}
-                        <div className="md:hidden space-y-3 w-full max-w-full overflow-hidden">
-                          {/* Site Info with 3-dots menu */}
-                          <div className="flex items-center justify-between w-full max-w-full">
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <div className="flex-shrink-0">
-                                {getFaviconUrl(row.url) ? (
-                                  <img
-                                    src={getFaviconUrl(row.url)!}
-                                    alt=""
-                                    className="w-8 h-8 rounded"
-                                    onError={(e) => {
-                                      (
-                                        e.target as HTMLImageElement
-                                      ).style.display = 'none';
-                                    }}
-                                  />
-                                ) : (
-                                  <div className="w-8 h-8 rounded bg-red-500 flex items-center justify-center">
-                                    <span className="text-white text-xs font-bold">
-                                      {row.url.charAt(0).toUpperCase()}
-                                    </span>
+                      return (
+                        <div
+                          key={row.r2_key}
+                          className="block md:grid md:grid-cols-4 gap-4 md:items-center p-3 sm:p-4 rounded-lg border hover:shadow-md transition-all duration-200 group relative overflow-hidden md:overflow-visible w-full"
+                          style={{
+                            backgroundColor: baseColors.cardLight,
+                            borderColor: baseColors.cardBorder,
+                          }}
+                        >
+                          {/* Mobile Layout */}
+                          <div className="md:hidden space-y-3 w-full max-w-full overflow-hidden">
+                            {/* Site Info with 3-dots menu */}
+                            <div className="flex items-center justify-between w-full max-w-full">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="flex-shrink-0">
+                                  {getFaviconUrl(row.url) ? (
+                                    <img
+                                      src={getFaviconUrl(row.url)!}
+                                      alt=""
+                                      className="w-8 h-8 rounded"
+                                      onError={(e) => {
+                                        (
+                                          e.target as HTMLImageElement
+                                        ).style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded bg-red-500 flex items-center justify-center">
+                                      <span className="text-white text-xs font-bold">
+                                        {row.url.charAt(0).toUpperCase()}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div
+                                    className="font-medium truncate"
+                                    style={{ color: baseColors.grayDark2 }}
+                                  >
+                                    {row.url
+                                      .replace(/^https?:\/\//, '')
+                                      .replace(/^www\./, '')}
                                   </div>
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div
-                                  className="font-medium truncate"
-                                  style={{ color: baseColors.grayDark2 }}
-                                >
-                                  {row.url
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/^www\./, '')}
                                 </div>
                               </div>
-                            </div>
 
-                            {/* Mobile 3-Dots Menu */}
-                            <div
-                              className="relative flex-shrink-0 ml-2"
-                              data-dropdown
-                            >
-                              <button
-                                className="p-1 rounded hover:bg-gray-100 transition-colors"
-                                onClick={() =>
-                                  setOpenDropdown(
-                                    openDropdown === row.r2_key
-                                      ? null
-                                      : row.r2_key,
-                                  )
-                                }
-                                aria-label={`Open actions menu for ${row.url}`}
-                                style={{
-                                  backgroundColor:
-                                    openDropdown === row.r2_key
-                                      ? baseColors.white
-                                      : 'transparent',
-                                }}
+                              {/* Mobile 3-Dots Menu */}
+                              <div
+                                className="relative flex-shrink-0 ml-2"
+                                data-dropdown
                               >
-                                <svg
-                                  className="w-5 h-5"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                  style={{ color: baseColors.brandPrimary }}
-                                >
-                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                </svg>
-                              </button>
-
-                              {/* Mobile Dropdown Menu */}
-                              {openDropdown === row.r2_key && (
-                                <div
-                                  className="absolute top-10 w-44 sm:w-48 rounded-lg shadow-lg z-50 py-2"
+                                <button
+                                  className="p-1 rounded hover:bg-gray-100 transition-colors"
+                                  onClick={() =>
+                                    setOpenDropdown(
+                                      openDropdown === row.r2_key
+                                        ? null
+                                        : row.r2_key,
+                                    )
+                                  }
+                                  aria-label={`Open actions menu for ${row.url}`}
                                   style={{
-                                    backgroundColor: baseColors.white,
-                                    border: `1px solid ${baseColors.cardBorderPurple}`,
-                                    maxWidth: 'calc(100vw - 3rem)',
-                                    minWidth: '180px',
-                                    right: '0',
-                                    left: 'auto',
+                                    backgroundColor:
+                                      openDropdown === row.r2_key
+                                        ? baseColors.white
+                                        : 'transparent',
                                   }}
                                 >
-                                  <button
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                    style={{ color: baseColors.grayDark2 }}
-                                    onClick={() => {
-                                      setReportUrl(
-                                        `/${
-                                          row.r2_key
-                                        }?domain=${encodeURIComponent(
-                                          row.url,
-                                        )}`,
-                                      );
-                                      setIsSuccessModalOpen(true);
-                                      setOpenDropdown(null);
+                                  <svg
+                                    className="w-5 h-5"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                    style={{ color: baseColors.brandPrimary }}
+                                  >
+                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                  </svg>
+                                </button>
+
+                                {/* Mobile Dropdown Menu */}
+                                {openDropdown === row.r2_key && (
+                                  <div
+                                    className="absolute top-10 w-44 sm:w-48 rounded-lg shadow-lg z-50 py-2"
+                                    style={{
+                                      backgroundColor: baseColors.white,
+                                      border: `1px solid ${baseColors.cardBorderPurple}`,
+                                      maxWidth: 'calc(100vw - 3rem)',
+                                      minWidth: '180px',
+                                      right: '0',
+                                      left: 'auto',
                                     }}
                                   >
-                                    View Report
-                                  </button>
-                                  <button
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                    style={{ color: baseColors.grayDark2 }}
-                                    disabled={downloadingRow === row.r2_key}
-                                    onClick={async () => {
-                                      setOpenDropdown(null);
-                                      setDownloadingRow(row.r2_key);
-                                      try {
-                                        const { data: fetchedReportData } =
-                                          await fetchReportByR2Key({
-                                            variables: { r2_key: row.r2_key },
-                                          });
-                                        if (
-                                          fetchedReportData &&
-                                          fetchedReportData.fetchReportByR2Key
-                                        ) {
-                                          fetchedReportData.fetchReportByR2Key.url =
-                                            row.url;
-                                          const pdfBlob = await generatePDF(
-                                            fetchedReportData.fetchReportByR2Key,
-                                            currentLanguage,
-                                          );
-                                          const url =
-                                            window.URL.createObjectURL(pdfBlob);
-                                          const link =
-                                            document.createElement('a');
-                                          link.href = url;
-                                          link.download =
-                                            'accessibility-report.pdf';
-                                          document.body.appendChild(link);
-                                          link.click();
-                                          document.body.removeChild(link);
-                                          window.URL.revokeObjectURL(url);
-                                        } else {
-                                          toast.error(
-                                            'Failed to generate PDF. Please try again.',
-                                          );
-                                        }
-                                      } catch (error) {
-                                        console.error(
-                                          'Error fetching report:',
-                                          error,
+                                    <button
+                                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                      style={{ color: baseColors.grayDark2 }}
+                                      onClick={() => {
+                                        setReportUrl(
+                                          `/${
+                                            row.r2_key
+                                          }?domain=${encodeURIComponent(
+                                            row.url,
+                                          )}`,
                                         );
-                                        toast.error(
-                                          'Failed to generate PDF. Please try again.',
-                                        );
-                                      } finally {
-                                        setDownloadingRow(null);
-                                      }
-                                    }}
-                                  >
-                                    {downloadingRow === row.r2_key ? (
-                                      <CircularProgress
-                                        size={14}
-                                        sx={{ color: baseColors.grayDark2 }}
-                                      />
-                                    ) : (
-                                      'Download Detailed Report'
-                                    )}
-                                  </button>
-                                  <button
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                    style={{ color: baseColors.grayDark2 }}
-                                    disabled={downloadingRow === row.r2_key}
-                                    onClick={async () => {
-                                      setOpenDropdown(null);
-                                      setDownloadingRow(row.r2_key);
-                                      try {
-                                        const { data: fetchedReportData } =
-                                          await fetchReportByR2Key({
-                                            variables: { r2_key: row.r2_key },
-                                          });
-                                        if (
-                                          fetchedReportData &&
-                                          fetchedReportData.fetchReportByR2Key
-                                        ) {
-                                          fetchedReportData.fetchReportByR2Key.url =
-                                            row.url;
-                                          const pdfBlob =
-                                            await generateShortPDF(
+                                        setIsSuccessModalOpen(true);
+                                        setOpenDropdown(null);
+                                      }}
+                                    >
+                                      View Report
+                                    </button>
+                                    <button
+                                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                      style={{ color: baseColors.grayDark2 }}
+                                      disabled={downloadingRow === row.r2_key}
+                                      onClick={async () => {
+                                        setOpenDropdown(null);
+                                        setDownloadingRow(row.r2_key);
+                                        try {
+                                          const { data: fetchedReportData } =
+                                            await fetchReportByR2Key({
+                                              variables: { r2_key: row.r2_key },
+                                            });
+                                          if (
+                                            fetchedReportData &&
+                                            fetchedReportData.fetchReportByR2Key
+                                          ) {
+                                            fetchedReportData.fetchReportByR2Key.url =
+                                              row.url;
+                                            const pdfBlob = await generatePDF(
                                               fetchedReportData.fetchReportByR2Key,
                                               currentLanguage,
                                             );
-                                          const url =
-                                            window.URL.createObjectURL(pdfBlob);
-                                          const link =
-                                            document.createElement('a');
-                                          link.href = url;
-                                          link.download =
-                                            'accessibility-short-report.pdf';
-                                          document.body.appendChild(link);
-                                          link.click();
-                                          document.body.removeChild(link);
-                                          window.URL.revokeObjectURL(url);
-                                        } else {
+                                            const url =
+                                              window.URL.createObjectURL(
+                                                pdfBlob,
+                                              );
+                                            const link =
+                                              document.createElement('a');
+                                            link.href = url;
+                                            link.download =
+                                              'accessibility-report.pdf';
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                            window.URL.revokeObjectURL(url);
+                                          } else {
+                                            toast.error(
+                                              'Failed to generate PDF. Please try again.',
+                                            );
+                                          }
+                                        } catch (error) {
+                                          console.error(
+                                            'Error fetching report:',
+                                            error,
+                                          );
+                                          toast.error(
+                                            'Failed to generate PDF. Please try again.',
+                                          );
+                                        } finally {
+                                          setDownloadingRow(null);
+                                        }
+                                      }}
+                                    >
+                                      {downloadingRow === row.r2_key ? (
+                                        <CircularProgress
+                                          size={14}
+                                          sx={{ color: baseColors.grayDark2 }}
+                                        />
+                                      ) : (
+                                        'Download Detailed Report'
+                                      )}
+                                    </button>
+                                    <button
+                                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                      style={{ color: baseColors.grayDark2 }}
+                                      disabled={downloadingRow === row.r2_key}
+                                      onClick={async () => {
+                                        setOpenDropdown(null);
+                                        setDownloadingRow(row.r2_key);
+                                        try {
+                                          const { data: fetchedReportData } =
+                                            await fetchReportByR2Key({
+                                              variables: { r2_key: row.r2_key },
+                                            });
+                                          if (
+                                            fetchedReportData &&
+                                            fetchedReportData.fetchReportByR2Key
+                                          ) {
+                                            fetchedReportData.fetchReportByR2Key.url =
+                                              row.url;
+                                            const pdfBlob =
+                                              await generateShortPDF(
+                                                fetchedReportData.fetchReportByR2Key,
+                                                currentLanguage,
+                                              );
+                                            const url =
+                                              window.URL.createObjectURL(
+                                                pdfBlob,
+                                              );
+                                            const link =
+                                              document.createElement('a');
+                                            link.href = url;
+                                            link.download =
+                                              'accessibility-short-report.pdf';
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                            window.URL.revokeObjectURL(url);
+                                          } else {
+                                            toast.error(
+                                              'Failed to generate short report. Please try again.',
+                                            );
+                                          }
+                                        } catch (error) {
+                                          console.error(
+                                            'Error fetching report:',
+                                            error,
+                                          );
                                           toast.error(
                                             'Failed to generate short report. Please try again.',
                                           );
+                                        } finally {
+                                          setDownloadingRow(null);
                                         }
-                                      } catch (error) {
-                                        console.error(
-                                          'Error fetching report:',
-                                          error,
-                                        );
-                                        toast.error(
-                                          'Failed to generate short report. Please try again.',
-                                        );
-                                      } finally {
-                                        setDownloadingRow(null);
-                                      }
+                                      }}
+                                    >
+                                      {downloadingRow === row.r2_key ? (
+                                        <CircularProgress
+                                          size={14}
+                                          sx={{ color: baseColors.grayDark2 }}
+                                        />
+                                      ) : (
+                                        'Download Prospect Report'
+                                      )}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Last Scanned */}
+                            <div className="text-xs">
+                              <span style={{ color: baseColors.grayMuted }}>
+                                LAST SCANNED
+                              </span>
+                              <div
+                                className="text-sm mt-1"
+                                style={{ color: baseColors.grayMuted }}
+                              >
+                                {timeAgo}
+                              </div>
+                            </div>
+
+                            {/* Accessibility Score */}
+                            <div className="text-xs">
+                              <span style={{ color: baseColors.grayMuted }}>
+                                ACCESSIBILITY SCORE
+                              </span>
+                              <div className="flex gap-2 sm:gap-3 mt-2">
+                                <div className="flex flex-col items-center">
+                                  <span
+                                    className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded text-sm sm:text-base font-semibold"
+                                    style={{
+                                      color:
+                                        actualScore >= 80
+                                          ? '#166534'
+                                          : actualScore >= 50
+                                          ? '#d97706'
+                                          : '#dc2626',
                                     }}
                                   >
-                                    {downloadingRow === row.r2_key ? (
-                                      <CircularProgress
-                                        size={14}
-                                        sx={{ color: baseColors.grayDark2 }}
-                                      />
-                                    ) : (
-                                      'Download Prospect Report'
-                                    )}
-                                  </button>
+                                    {actualScore}
+                                  </span>
                                 </div>
-                              )}
+                              </div>
                             </div>
                           </div>
 
-                          {/* Last Scanned */}
-                          <div className="text-xs">
-                            <span style={{ color: baseColors.grayMuted }}>
-                              LAST SCANNED
-                            </span>
+                          {/* Site Info - Desktop Only */}
+                          <div className="hidden md:flex items-center gap-3">
+                            <div className="flex-shrink-0">
+                              {getFaviconUrl(row.url) ? (
+                                <img
+                                  src={getFaviconUrl(row.url)!}
+                                  alt=""
+                                  className="w-8 h-8 rounded"
+                                  onError={(e) => {
+                                    (
+                                      e.target as HTMLImageElement
+                                    ).style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded bg-red-500 flex items-center justify-center">
+                                  <span className="text-white text-xs font-bold">
+                                    {row.url.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div
+                                className="font-medium truncate"
+                                style={{ color: baseColors.grayDark2 }}
+                              >
+                                {row.url
+                                  .replace(/^https?:\/\//, '')
+                                  .replace(/^www\./, '')}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Last Scanned - Desktop Only */}
+                          <div className="hidden md:block text-center">
                             <div
-                              className="text-sm mt-1"
+                              className="text-sm"
                               style={{ color: baseColors.grayMuted }}
                             >
                               {timeAgo}
                             </div>
                           </div>
 
-                          {/* Accessibility Score */}
-                          <div className="text-xs">
-                            <span style={{ color: baseColors.grayMuted }}>
-                              ACCESSIBILITY SCORE
-                            </span>
-                            <div className="flex gap-2 sm:gap-3 mt-2">
-                              <div className="flex flex-col items-center">
-                                <span
-                                  className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded text-sm sm:text-base font-semibold"
-                                  style={{
-                                    color:
-                                      actualScore >= 80
-                                        ? '#166534'
-                                        : actualScore >= 50
-                                        ? '#d97706'
-                                        : '#dc2626',
-                                  }}
-                                >
-                                  {actualScore}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Site Info - Desktop Only */}
-                        <div className="hidden md:flex items-center gap-3">
-                          <div className="flex-shrink-0">
-                            {getFaviconUrl(row.url) ? (
-                              <img
-                                src={getFaviconUrl(row.url)!}
-                                alt=""
-                                className="w-8 h-8 rounded"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display =
-                                    'none';
-                                }}
-                              />
-                            ) : (
-                              <div className="w-8 h-8 rounded bg-red-500 flex items-center justify-center">
-                                <span className="text-white text-xs font-bold">
-                                  {row.url.charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div
-                              className="font-medium truncate"
-                              style={{ color: baseColors.grayDark2 }}
-                            >
-                              {row.url
-                                .replace(/^https?:\/\//, '')
-                                .replace(/^www\./, '')}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Last Scanned - Desktop Only */}
-                        <div className="hidden md:block text-center">
-                          <div
-                            className="text-sm"
-                            style={{ color: baseColors.grayMuted }}
-                          >
-                            {timeAgo}
-                          </div>
-                        </div>
-
-                        {/* Desktop Score */}
-                        <div className="hidden md:block text-center">
-                          <span
-                            className="inline-flex items-center justify-center w-10 h-10 rounded text-sm font-semibold"
-                            style={{
-                              color:
-                                actualScore >= 80
-                                  ? '#166534'
-                                  : actualScore >= 50
-                                  ? '#d97706'
-                                  : '#dc2626',
-                            }}
-                          >
-                            {actualScore}
-                          </span>
-                        </div>
-
-                        {/* Desktop 3-Dots Menu */}
-                        <div
-                          className="hidden md:flex justify-center relative"
-                          data-dropdown
-                        >
-                          <button
-                            className="p-1 rounded hover:bg-gray-100 transition-colors"
-                            onClick={() =>
-                              setOpenDropdown(
-                                openDropdown === row.r2_key ? null : row.r2_key,
-                              )
-                            }
-                            aria-label={`Open actions menu for ${row.url}`}
-                            style={{
-                              backgroundColor:
-                                openDropdown === row.r2_key
-                                  ? baseColors.white
-                                  : 'transparent',
-                            }}
-                          >
-                            <svg
-                              className="w-5 h-5"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              style={{ color: baseColors.brandPrimary }}
-                            >
-                              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                            </svg>
-                          </button>
-
-                          {/* Desktop Dropdown Menu */}
-                          {openDropdown === row.r2_key && (
-                            <div
-                              className="absolute top-10 w-48 rounded-lg shadow-lg z-50 py-2"
+                          {/* Desktop Score */}
+                          <div className="hidden md:block text-center">
+                            <span
+                              className="inline-flex items-center justify-center w-10 h-10 rounded text-sm font-semibold"
                               style={{
-                                backgroundColor: baseColors.white,
-                                border: `1px solid ${baseColors.cardBorderPurple}`,
-                                maxWidth: 'calc(100vw - 3rem)',
-                                minWidth: '180px',
-                                right: '0',
-                                left: 'auto',
+                                color:
+                                  actualScore >= 80
+                                    ? '#166534'
+                                    : actualScore >= 50
+                                    ? '#d97706'
+                                    : '#dc2626',
                               }}
                             >
-                              <button
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                style={{ color: baseColors.grayDark2 }}
-                                onClick={() => {
-                                  setReportUrl(
-                                    `/${row.r2_key}?domain=${encodeURIComponent(
-                                      row.url,
-                                    )}`,
-                                  );
-                                  setIsSuccessModalOpen(true);
-                                  setOpenDropdown(null);
+                              {actualScore}
+                            </span>
+                          </div>
+
+                          {/* Desktop 3-Dots Menu */}
+                          <div
+                            className="hidden md:flex justify-center relative"
+                            data-dropdown
+                          >
+                            <button
+                              className="p-1 rounded hover:bg-gray-100 transition-colors"
+                              onClick={() =>
+                                setOpenDropdown(
+                                  openDropdown === row.r2_key
+                                    ? null
+                                    : row.r2_key,
+                                )
+                              }
+                              aria-label={`Open actions menu for ${row.url}`}
+                              style={{
+                                backgroundColor:
+                                  openDropdown === row.r2_key
+                                    ? baseColors.white
+                                    : 'transparent',
+                              }}
+                            >
+                              <svg
+                                className="w-5 h-5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                                style={{ color: baseColors.brandPrimary }}
+                              >
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                              </svg>
+                            </button>
+
+                            {/* Desktop Dropdown Menu */}
+                            {openDropdown === row.r2_key && (
+                              <div
+                                className="absolute top-10 w-48 rounded-lg shadow-lg z-50 py-2"
+                                style={{
+                                  backgroundColor: baseColors.white,
+                                  border: `1px solid ${baseColors.cardBorderPurple}`,
+                                  maxWidth: 'calc(100vw - 3rem)',
+                                  minWidth: '180px',
+                                  right: '0',
+                                  left: 'auto',
                                 }}
                               >
-                                View Report
-                              </button>
-                              <button
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                style={{ color: baseColors.grayDark2 }}
-                                disabled={downloadingRow === row.r2_key}
-                                onClick={async () => {
-                                  setOpenDropdown(null);
-                                  setDownloadingRow(row.r2_key);
-                                  try {
-                                    const { data: fetchedReportData } =
-                                      await fetchReportByR2Key({
-                                        variables: { r2_key: row.r2_key },
-                                      });
-                                    if (
-                                      fetchedReportData &&
-                                      fetchedReportData.fetchReportByR2Key
-                                    ) {
-                                      fetchedReportData.fetchReportByR2Key.url =
-                                        row.url;
-                                      const pdfBlob = await generatePDF(
-                                        fetchedReportData.fetchReportByR2Key,
-                                        currentLanguage,
+                                <button
+                                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                  style={{ color: baseColors.grayDark2 }}
+                                  onClick={() => {
+                                    setReportUrl(
+                                      `/${
+                                        row.r2_key
+                                      }?domain=${encodeURIComponent(row.url)}`,
+                                    );
+                                    setIsSuccessModalOpen(true);
+                                    setOpenDropdown(null);
+                                  }}
+                                >
+                                  View Report
+                                </button>
+                                <button
+                                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                  style={{ color: baseColors.grayDark2 }}
+                                  disabled={downloadingRow === row.r2_key}
+                                  onClick={async () => {
+                                    setOpenDropdown(null);
+                                    setDownloadingRow(row.r2_key);
+                                    try {
+                                      const { data: fetchedReportData } =
+                                        await fetchReportByR2Key({
+                                          variables: { r2_key: row.r2_key },
+                                        });
+                                      if (
+                                        fetchedReportData &&
+                                        fetchedReportData.fetchReportByR2Key
+                                      ) {
+                                        fetchedReportData.fetchReportByR2Key.url =
+                                          row.url;
+                                        const pdfBlob = await generatePDF(
+                                          fetchedReportData.fetchReportByR2Key,
+                                          currentLanguage,
+                                        );
+                                        const url =
+                                          window.URL.createObjectURL(pdfBlob);
+                                        const link =
+                                          document.createElement('a');
+                                        link.href = url;
+                                        link.download =
+                                          'accessibility-report.pdf';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        window.URL.revokeObjectURL(url);
+                                      } else {
+                                        toast.error(
+                                          'Failed to generate PDF. Please try again.',
+                                        );
+                                      }
+                                    } catch (error) {
+                                      console.error(
+                                        'Error fetching report:',
+                                        error,
                                       );
-                                      const url =
-                                        window.URL.createObjectURL(pdfBlob);
-                                      const link = document.createElement('a');
-                                      link.href = url;
-                                      link.download =
-                                        'accessibility-report.pdf';
-                                      document.body.appendChild(link);
-                                      link.click();
-                                      document.body.removeChild(link);
-                                      window.URL.revokeObjectURL(url);
-                                    } else {
                                       toast.error(
                                         'Failed to generate PDF. Please try again.',
                                       );
+                                    } finally {
+                                      setDownloadingRow(null);
                                     }
-                                  } catch (error) {
-                                    console.error(
-                                      'Error fetching report:',
-                                      error,
-                                    );
-                                    toast.error(
-                                      'Failed to generate PDF. Please try again.',
-                                    );
-                                  } finally {
-                                    setDownloadingRow(null);
-                                  }
-                                }}
-                              >
-                                {downloadingRow === row.r2_key ? (
-                                  <CircularProgress
-                                    size={14}
-                                    sx={{ color: baseColors.grayDark2 }}
-                                  />
-                                ) : (
-                                  'Download Detailed Report'
-                                )}
-                              </button>
-                              <button
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                style={{ color: baseColors.grayDark2 }}
-                                disabled={downloadingRow === row.r2_key}
-                                onClick={async () => {
-                                  setOpenDropdown(null);
-                                  setDownloadingRow(row.r2_key);
-                                  try {
-                                    const { data: fetchedReportData } =
-                                      await fetchReportByR2Key({
-                                        variables: { r2_key: row.r2_key },
-                                      });
-                                    if (
-                                      fetchedReportData &&
-                                      fetchedReportData.fetchReportByR2Key
-                                    ) {
-                                      fetchedReportData.fetchReportByR2Key.url =
-                                        row.url;
-                                      const pdfBlob = await generateShortPDF(
-                                        fetchedReportData.fetchReportByR2Key,
-                                        currentLanguage,
+                                  }}
+                                >
+                                  {downloadingRow === row.r2_key ? (
+                                    <CircularProgress
+                                      size={14}
+                                      sx={{ color: baseColors.grayDark2 }}
+                                    />
+                                  ) : (
+                                    'Download Detailed Report'
+                                  )}
+                                </button>
+                                <button
+                                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                  style={{ color: baseColors.grayDark2 }}
+                                  disabled={downloadingRow === row.r2_key}
+                                  onClick={async () => {
+                                    setOpenDropdown(null);
+                                    setDownloadingRow(row.r2_key);
+                                    try {
+                                      const { data: fetchedReportData } =
+                                        await fetchReportByR2Key({
+                                          variables: { r2_key: row.r2_key },
+                                        });
+                                      if (
+                                        fetchedReportData &&
+                                        fetchedReportData.fetchReportByR2Key
+                                      ) {
+                                        fetchedReportData.fetchReportByR2Key.url =
+                                          row.url;
+                                        const pdfBlob = await generateShortPDF(
+                                          fetchedReportData.fetchReportByR2Key,
+                                          currentLanguage,
+                                        );
+                                        const url =
+                                          window.URL.createObjectURL(pdfBlob);
+                                        const link =
+                                          document.createElement('a');
+                                        link.href = url;
+                                        link.download =
+                                          'accessibility-short-report.pdf';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        window.URL.revokeObjectURL(url);
+                                      } else {
+                                        toast.error(
+                                          'Failed to generate short report. Please try again.',
+                                        );
+                                      }
+                                    } catch (error) {
+                                      console.error(
+                                        'Error fetching report:',
+                                        error,
                                       );
-                                      const url =
-                                        window.URL.createObjectURL(pdfBlob);
-                                      const link = document.createElement('a');
-                                      link.href = url;
-                                      link.download =
-                                        'accessibility-short-report.pdf';
-                                      document.body.appendChild(link);
-                                      link.click();
-                                      document.body.removeChild(link);
-                                      window.URL.revokeObjectURL(url);
-                                    } else {
                                       toast.error(
                                         'Failed to generate short report. Please try again.',
                                       );
+                                    } finally {
+                                      setDownloadingRow(null);
                                     }
-                                  } catch (error) {
-                                    console.error(
-                                      'Error fetching report:',
-                                      error,
-                                    );
-                                    toast.error(
-                                      'Failed to generate short report. Please try again.',
-                                    );
-                                  } finally {
-                                    setDownloadingRow(null);
-                                  }
-                                }}
-                              >
-                                {downloadingRow === row.r2_key ? (
-                                  <CircularProgress
-                                    size={14}
-                                    sx={{ color: baseColors.grayDark2 }}
-                                  />
-                                ) : (
-                                  'Download Prospect Report'
-                                )}
-                              </button>
-                            </div>
-                          )}
+                                  }}
+                                >
+                                  {downloadingRow === row.r2_key ? (
+                                    <CircularProgress
+                                      size={14}
+                                      sx={{ color: baseColors.grayDark2 }}
+                                    />
+                                  ) : (
+                                    'Download Prospect Report'
+                                  )}
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-          {/* Empty State - Show when no scan results are available */}
-          {siteOptions.some(
-            (option: any) =>
-              normalizeDomain(option.value) ===
-              normalizeDomain(selectedOption?.value ?? ''),
-          ) &&
-            enhancedScoresCalculated &&
-            processedReportKeys.length === 0 && (
-              <div
-                className="accessibility-issues-section rounded-xl p-2 sm:p-4 md:p-6 mt-12 shadow w-full overflow-visible box-border"
-                style={{
-                  backgroundColor: baseColors.blueSection,
-                  marginLeft: 0,
-                  marginRight: 0,
-                  border: `1px solid ${baseColors.cardBorderPurple}`,
-                }}
-              >
+            {/* Empty State - Show when no scan results are available */}
+            {siteOptions.some(
+              (option: any) =>
+                normalizeDomain(option.value) ===
+                normalizeDomain(selectedOption?.value ?? ''),
+            ) &&
+              enhancedScoresCalculated &&
+              processedReportKeys.length === 0 && (
                 <div
-                  className="mb-6 pb-4 w-full"
+                  className="accessibility-issues-section rounded-xl p-2 sm:p-4 md:p-6 mt-12 shadow w-full overflow-visible box-border"
                   style={{
-                    borderBottom: `2px solid ${baseColors.cardBorderPurple}`,
+                    backgroundColor: baseColors.blueSection,
+                    marginLeft: 0,
+                    marginRight: 0,
+                    border: `1px solid ${baseColors.cardBorderPurple}`,
                   }}
                 >
-                  <h3
-                    className="text-xl sm:text-2xl font-medium"
-                    style={{ color: baseColors.grayDark2 }}
+                  <div
+                    className="mb-6 pb-4 w-full"
+                    style={{
+                      borderBottom: `2px solid ${baseColors.cardBorderPurple}`,
+                    }}
                   >
-                    Scan history
-                  </h3>
-                </div>
-
-                {/* Empty State Content */}
-                <div className="flex flex-col items-center justify-center py-12 px-4">
-                  <div className="mb-6">
-                    <img
-                      src={notFoundImage}
-                      alt="No scan results found"
-                      className="w-48 h-48 object-contain"
-                    />
-                  </div>
-                  <div className="text-center">
-                    <h4
-                      className="text-lg font-medium mb-2"
+                    <h3
+                      className="text-xl sm:text-2xl font-medium"
                       style={{ color: baseColors.grayDark2 }}
                     >
-                      You currently have no previous scan histories
-                    </h4>
+                      Scan history
+                    </h3>
+                  </div>
+
+                  {/* Empty State Content */}
+                  <div className="flex flex-col items-center justify-center py-12 px-4">
+                    <div className="mb-6">
+                      <img
+                        src={notFoundImage}
+                        alt="No scan results found"
+                        className="w-48 h-48 object-contain"
+                      />
+                    </div>
+                    <div className="text-center">
+                      <h4
+                        className="text-lg font-medium mb-2"
+                        style={{ color: baseColors.grayDark2 }}
+                      >
+                        You currently have no previous scan histories
+                      </h4>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-        </div>
+              )}
+          </div>
 
-        {/* Success Modal with link to open report */}
-        <Modal isOpen={isSuccessModalOpen}>
-          <div className="p-8 text-center relative">
-            <button
-              onClick={() => setIsSuccessModalOpen(false)}
-              className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
-              aria-label="Close modal"
-            >
-              <svg
-                className="w-5 h-5 mx-auto"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-            <div className="mb-6">
-              <FaCheckCircle size={64} color="green" className="mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                Report Generated Successfully!
-              </h2>
-              <p className="text-gray-600">
-                Your accessibility report is ready to view.
-              </p>
-            </div>
-            <div className="flex gap-4 justify-center">
-              <button
-                onClick={() => {
-                  const newTab = window.open(reportUrl, '_blank');
-                  if (newTab) newTab.focus();
-                  setIsSuccessModalOpen(false);
-                }}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                Open Report
-              </button>
+          {/* Success Modal with link to open report */}
+          <Modal isOpen={isSuccessModalOpen}>
+            <div className="p-8 text-center relative">
               <button
                 onClick={() => setIsSuccessModalOpen(false)}
-                className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
+                aria-label="Close modal"
               >
-                Close
+                <svg
+                  className="w-5 h-5 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
               </button>
+              <div className="mb-6">
+                <FaCheckCircle
+                  size={64}
+                  color="green"
+                  className="mx-auto mb-4"
+                />
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  Report Generated Successfully!
+                </h2>
+                <p className="text-gray-600">
+                  Your accessibility report is ready to view.
+                </p>
+              </div>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={() => {
+                    const newTab = window.open(reportUrl, '_blank');
+                    if (newTab) newTab.focus();
+                    setIsSuccessModalOpen(false);
+                  }}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Open Report
+                </button>
+                <button
+                  onClick={() => setIsSuccessModalOpen(false)}
+                  className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                >
+                  Close
+                </button>
+              </div>
             </div>
-          </div>
-        </Modal>
+          </Modal>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 
