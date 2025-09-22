@@ -512,43 +512,6 @@ const Sidebar = ({
                   )}
                 </NavLink>
 
-                {/* License Owner */}
-                <NavLink
-                  to="/license-owner-info"
-                  onClick={closeSidebar}
-                  className={`flex items-center rounded-lg transition-all duration-200 ${
-                    isActiveRoute('/license-owner-info')
-                      ? isCollapsed
-                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
-                      : isCollapsed
-                      ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                      : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    <HiOutlineUser
-                      size={24}
-                      className={
-                        isActiveRoute('/license-owner-info')
-                          ? 'text-[#445AE7]'
-                          : 'text-[#656565]'
-                      }
-                    />
-                  </div>
-                  {!isCollapsed && (
-                    <span
-                      className={`text-sm ${
-                        isActiveRoute('/license-owner-info')
-                          ? 'text-[#445AE7]'
-                          : 'text-[#656565]'
-                      }`}
-                    >
-                      License Owner
-                    </span>
-                  )}
-                </NavLink>
-
                 {/* Admin Controls - Only visible for admin/owner roles */}
                 {userData?.isAdminOrOwner && (
                   <>

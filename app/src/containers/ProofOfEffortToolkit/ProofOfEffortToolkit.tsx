@@ -5,6 +5,10 @@ import {
   MdKeyboardArrowDown,
   MdKeyboardArrowUp,
   MdVisibility,
+  MdArrowBack,
+  MdArrowForward,
+  MdClose,
+  MdMoreVert,
 } from 'react-icons/md';
 import { FiFile } from 'react-icons/fi';
 import { useLazyQuery, useMutation } from '@apollo/client';
@@ -516,6 +520,14 @@ const ProofOfEffortToolkit: React.FC = () => {
   const [viewFilesExpanded, setViewFilesExpanded] = useState(false);
   const [isProcessingReport, setIsProcessingReport] = useState(false);
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(
+    null,
+  );
+  const [currentDocumentIndex, setCurrentDocumentIndex] = useState(0);
+  const [pdfViewerUrl, setPdfViewerUrl] = useState<string | null>(null);
+  const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(
+    null,
+  );
   const history = useHistory();
 
   // Redux state
@@ -586,6 +598,29 @@ const ProofOfEffortToolkit: React.FC = () => {
       setViewFilesExpanded(true);
     }
   }, []);
+
+  // Cleanup PDF URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (pdfViewerUrl) {
+        URL.revokeObjectURL(pdfViewerUrl);
+      }
+    };
+  }, [pdfViewerUrl]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setOpenDropdownIndex(null);
+    };
+
+    if (openDropdownIndex !== null) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+
+    return undefined;
+  }, [openDropdownIndex]);
 
   const handleSendViaEmail = () => {
     if (!currentDomain) {
@@ -1460,29 +1495,34 @@ const ProofOfEffortToolkit: React.FC = () => {
   };
 
   const handleViewDocument = async (document: Document) => {
-    if (document.type === 'statement' && document.externalUrl) {
-      // Generate and display the accessibility statement PDF
-      try {
-        await generateAndViewAccessibilityStatementPDF(1);
-        toast.success('Accessibility statement PDF opened in new tab!');
-      } catch (error) {
-        toast.dismiss();
-        console.error('Error generating accessibility statement PDF:', error);
-        toast.error('Failed to generate accessibility statement PDF');
-      }
-    } else if (document.type === 'monthly-report') {
-      if (!currentDomain) {
-        toast.error('No domain selected');
-        return;
-      }
+    const documentIndex = documents.findIndex(
+      (doc) => doc.name === document.name,
+    );
+    setCurrentDocumentIndex(documentIndex);
+    setSelectedDocument(document);
 
-      if (isProcessingReport) {
-        return; // Prevent multiple simultaneous requests
-      }
+    try {
+      let pdfBlob: Blob;
 
-      try {
+      if (document.type === 'statement') {
+        // Generate accessibility statement PDF
+        const statementBlob = await generateAndViewAccessibilityStatementPDF(3);
+        if (!statementBlob) {
+          throw new Error('Failed to generate accessibility statement PDF');
+        }
+        pdfBlob = statementBlob;
+      } else if (document.type === 'monthly-report') {
+        // Handle monthly report viewing
+        if (!currentDomain) {
+          toast.error('No domain selected');
+          return;
+        }
+
+        if (isProcessingReport) {
+          return; // Prevent multiple simultaneous requests
+        }
+
         setIsProcessingReport(true);
-        // Show loading state
         toast.loading('Fetching report data...');
 
         const latestReport = await fetchLatestReport(currentDomain);
@@ -1495,78 +1535,90 @@ const ProofOfEffortToolkit: React.FC = () => {
 
           if (fullReportData?.fetchReportByR2Key) {
             toast.dismiss(); // Remove loading toast
-
-            // Debug logging for view function too
-            // console.log('View Report - GraphQL Data Debug:');
-            // console.log('Full report data keys:', Object.keys(fullReportData.fetchReportByR2Key));
-            // console.log('Report data sample:', fullReportData.fetchReportByR2Key);
-
             toast.loading('Generating PDF...');
 
-            // Generate the PDF for viewing
-            await viewReportPDF(
+            // Generate the PDF blob instead of opening in new tab
+            pdfBlob = await generateAccessibilityStatementPDF(
               fullReportData.fetchReportByR2Key,
+              'en',
               currentDomain,
             );
 
             toast.dismiss(); // Remove loading toast
-            toast.success('PDF report opened in new tab!');
           } else {
             toast.dismiss();
             toast.error('Failed to fetch report data');
+            setIsProcessingReport(false);
+            return;
           }
         } else {
           toast.dismiss();
-          // Show popup when no report found
           toast.error(
             'No report found for this domain. Please go to the Scanner page to generate a report.',
           );
+          setIsProcessingReport(false);
+          return;
         }
-      } catch (error) {
-        toast.dismiss();
-        console.error('Error viewing report:', error);
-        toast.error('Error viewing report. Please try again.');
-      } finally {
         setIsProcessingReport(false);
+      } else if (document.name === 'Intro to the toolkit') {
+        // Generate intro document PDF
+        toast.loading('Generating intro document...', {
+          id: 'generating-intro',
+        });
+        pdfBlob = await generateIntroToToolkitPDF();
+        toast.dismiss('generating-intro');
+      } else {
+        throw new Error('Unknown document type');
       }
-    } else if (document.name === 'Intro to the toolkit') {
-      // Generate and display the intro to toolkit PDF
-      try {
-        //toast.loading('Generating intro PDF...');
 
-        const pdfBlob = await generateIntroToToolkitPDF();
+      // Create URL for PDF viewer
+      const url = URL.createObjectURL(pdfBlob);
+      setPdfViewerUrl(url);
 
-        // Open the PDF in a new window/tab for viewing
-        const url = URL.createObjectURL(pdfBlob);
-        const newWindow = window.open(url, '_blank');
+      toast.success('Document loaded successfully!');
+    } catch (error) {
+      toast.dismiss();
+      console.error('Error viewing document:', error);
+      toast.error('Failed to load document');
+      setSelectedDocument(null);
+    }
+  };
 
-        // Clean up the URL after a delay
-        setTimeout(() => {
-          URL.revokeObjectURL(url);
-        }, 10000);
+  const handlePreviousDocument = () => {
+    if (currentDocumentIndex > 0) {
+      const prevDoc = documents[currentDocumentIndex - 1];
+      handleViewDocument(prevDoc);
+    }
+  };
 
-        // If popup was blocked, offer download as fallback
-        if (!newWindow) {
-          toast.error('Popup blocked. PDF will be downloaded instead.');
-          const link = window.document.createElement('a');
-          link.href = url;
-          link.download = 'WebAbility-Intro-to-Toolkit.pdf';
-          window.document.body.appendChild(link);
-          link.click();
-          window.document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-        }
+  const handleNextDocument = () => {
+    if (currentDocumentIndex < documents.length - 1) {
+      const nextDoc = documents[currentDocumentIndex + 1];
+      handleViewDocument(nextDoc);
+    }
+  };
 
-        toast.dismiss();
-        toast.success('Intro PDF opened in new tab!');
-      } catch (error) {
-        toast.dismiss();
-        console.error('Error viewing intro PDF:', error);
-        toast.error('Failed to open intro PDF');
-      }
-    } else {
-      // TODO: Implement view functionality for other documents
-      //  console.log('View document clicked:', document.name);
+  const handleCloseDocument = () => {
+    setSelectedDocument(null);
+    setPdfViewerUrl(null);
+    if (pdfViewerUrl) {
+      URL.revokeObjectURL(pdfViewerUrl);
+    }
+  };
+
+  const handleDropdownToggle = (index: number) => {
+    setOpenDropdownIndex(openDropdownIndex === index ? null : index);
+  };
+
+  const handleDropdownAction = (
+    document: Document,
+    action: 'view' | 'download',
+  ) => {
+    setOpenDropdownIndex(null);
+    if (action === 'view') {
+      handleViewDocument(document);
+    } else if (action === 'download') {
+      handleDownloadDocument(document);
     }
   };
 
@@ -3736,7 +3788,7 @@ const ProofOfEffortToolkit: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 sm:p-4 p-6">
+    <div className="min-h-screen overflow-x-hidden">
       <TourGuide
         steps={proofOfEffortTourSteps}
         tourKey={tourKeys.proofOfEffort}
@@ -3746,185 +3798,301 @@ const ProofOfEffortToolkit: React.FC = () => {
         }}
         customStyles={defaultTourStyles}
       />
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          {/* Header Section */}
-          <div className="sm:p-4 p-8 border-b border-gray-200">
-            <div className="text-gray-600 text-sm mb-4">
-              You've taken steps to make your website accessible. The proof of
-              effort toolkit compiles key documentation that showcases your
-              commitment to accessibility. If your website's accessibility is
-              ever challenged (i.e. you receive a demand letter), you'll have
-              evidence to demonstrate your efforts and respond with confidence.
-            </div>
 
-            <div className="sm:flex-col sm:gap-4 flex items-start gap-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <FiFile className="w-8 h-8 text-blue-600" />
-              </div>
+      <div className="p-6">
+        {/* Page Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Proof of effort toolkit
+          </h1>
+        </div>
 
-              <div className="flex-1">
-                <h1 className="poe-title sm:text-xl text-2xl font-medium text-gray-900 mb-2">
-                  Proof of effort toolkit
-                </h1>
-                <p className="text-gray-600 sm:mb-4 mb-6">
-                  Get a zip file with documentation to help you and your legal
-                  team.
-                </p>
-
-                <div className="poe-documents-count text-sm text-gray-500 sm:mb-4 mb-6">
-                  {documents.length} Documents
-                </div>
-
-                <div className="sm:flex-col sm:gap-2 flex gap-3">
-                  <button
-                    className={`poe-send-email-button inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md transition-colors ${
-                      isDownloadingZip || isEmailSending
-                        ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                        : 'text-gray-700 bg-white hover:bg-gray-50'
-                    }`}
-                    onClick={handleSendViaEmail}
-                    disabled={isDownloadingZip || isEmailSending}
-                  >
-                    {isEmailSending ? (
-                      <>
-                        <CircularProgress size={16} />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <MdEmail className="w-4 h-4" />
-                        Send via email
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    className={`poe-download-zip-button inline-flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
-                      isDownloadingZip || isEmailSending
-                        ? 'bg-blue-400 text-white cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                    }`}
-                    onClick={handleDownloadZip}
-                    disabled={isDownloadingZip || isEmailSending}
-                  >
-                    {isDownloadingZip ? (
-                      <>
-                        <CircularProgress
-                          size={16}
-                          style={{ color: 'white' }}
-                        />
-                        Downloading...
-                      </>
-                    ) : (
-                      <>
-                        <MdFileDownload className="w-4 h-4" />
-                        Download Zip
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* View Files Section */}
-          <div className="border-b border-gray-200">
-            <button
-              onClick={() => setViewFilesExpanded(!viewFilesExpanded)}
-              className="poe-view-files-toggle w-full flex items-center justify-between sm:p-4 p-6 text-left hover:bg-gray-50 transition-colors"
-            >
-              <span className="text-gray-700 font-medium">View files</span>
-              {viewFilesExpanded ? (
-                <MdKeyboardArrowUp className="w-5 h-5 text-gray-500" />
-              ) : (
-                <MdKeyboardArrowDown className="w-5 h-5 text-gray-500" />
-              )}
-            </button>
-
-            {viewFilesExpanded && (
-              <div className="poe-documents-list sm:px-4 sm:pb-4 px-6 pb-6">
-                {/* Table Header */}
-                <div className="sm:hidden grid grid-cols-12 gap-4 py-3 text-sm font-medium text-gray-500 border-b border-gray-200">
-                  <div className="col-span-6">Document</div>
-                  <div className="col-span-4">Creation Date</div>
-                  <div className="col-span-2"></div>
-                </div>
-
-                {/* Document Rows */}
-                {documents.map((document, index) => (
-                  <div
-                    key={index}
-                    className="sm:block sm:p-3 sm:border sm:border-gray-200 sm:rounded-lg sm:mb-3 grid grid-cols-12 gap-4 py-4 border-b border-gray-100 last:border-b-0"
-                  >
-                    <div className="sm:col-span-12 sm:mb-2 col-span-6 flex items-center gap-3">
-                      <FiFile className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <span className="text-gray-900">{document.name}</span>
-                      {document.type === 'monthly-report' &&
-                        isProcessingReport && (
-                          <span className="text-xs text-blue-600 italic">
-                            Processing...
-                          </span>
-                        )}
-                    </div>
-                    <div className="sm:col-span-12 sm:mb-2 sm:text-sm col-span-4 flex items-center text-gray-600">
-                      <span className="sm:inline sm:font-medium sm:text-gray-700 sm:mr-2 hidden">
-                        Creation Date:
-                      </span>
-                      {document.creationDate}
-                    </div>
-                    <div className="sm:col-span-12 sm:justify-start col-span-2 flex items-center justify-end gap-2">
+        <div className="flex lg:h-[calc(100vh-8rem)] h-auto lg:flex-row flex-col gap-6 overflow-hidden">
+          {/* Left Panel - Document Content */}
+          <div
+            className="flex-1 bg-white flex flex-col lg:min-h-0 min-h-[50vh] sm:min-h-[60vh] border-2 rounded-xl overflow-hidden"
+            style={{ borderColor: '#A2ADF3', minHeight: 0 }}
+          >
+            {selectedDocument ? (
+              <>
+                {/* Document Header */}
+                <div className="p-4 border-b border-gray-200">
+                  {/* Desktop Layout */}
+                  <div className="hidden md:flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
                       <button
-                        onClick={() => handleViewDocument(document)}
-                        className={`poe-view-button p-2 transition-colors ${
-                          (document.type === 'monthly-report' &&
-                            isProcessingReport) ||
-                          isDownloadingZip ||
-                          isEmailSending
-                            ? 'text-gray-300 cursor-not-allowed'
-                            : 'text-gray-400 hover:text-gray-600'
-                        }`}
-                        title={
-                          document.type === 'monthly-report'
-                            ? 'View PDF report'
-                            : document.type === 'statement'
-                            ? 'View accessibility statement PDF'
-                            : 'View document'
-                        }
-                        disabled={
-                          (document.type === 'monthly-report' &&
-                            isProcessingReport) ||
-                          isDownloadingZip ||
-                          isEmailSending
-                        }
+                        onClick={handlePreviousDocument}
+                        disabled={currentDocumentIndex === 0}
+                        className="p-1.5 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <MdVisibility className="w-4 h-4" />
+                        <MdArrowBack className="w-4 h-4" />
                       </button>
+                      <div className="bg-blue-50 px-3 py-1.5 rounded-lg">
+                        <h1 className="text-base font-medium text-gray-900">
+                          {selectedDocument.name}
+                        </h1>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Generated on {selectedDocument.creationDate}
+                        </p>
+                      </div>
                       <button
-                        onClick={() => handleDownloadDocument(document)}
-                        className={`poe-download-button p-2 transition-colors ${
-                          (document.type === 'monthly-report' &&
-                            isProcessingReport) ||
-                          isDownloadingZip ||
-                          isEmailSending
-                            ? 'text-gray-300 cursor-not-allowed'
-                            : 'text-gray-400 hover:text-gray-600'
-                        }`}
-                        title="Download document"
-                        disabled={
-                          (document.type === 'monthly-report' &&
-                            isProcessingReport) ||
-                          isDownloadingZip ||
-                          isEmailSending
-                        }
+                        onClick={handleNextDocument}
+                        disabled={currentDocumentIndex === documents.length - 1}
+                        className="p-1.5 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <MdFileDownload className="w-4 h-4" />
+                        <MdArrowForward className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-gray-500">
+                        {currentDocumentIndex + 1} of {documents.length}
+                      </span>
+                      <button
+                        onClick={handleCloseDocument}
+                        className="p-1.5 rounded-full hover:bg-gray-100"
+                      >
+                        <MdClose className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
-                ))}
+
+                  {/* Mobile Layout (sm and below) */}
+                  <div className="md:hidden">
+                    <div className="flex flex-col items-center gap-4 px-2">
+                      {/* Report name with close button */}
+                      <div className="bg-blue-50 px-4 py-3 rounded-lg w-full max-w-xs relative">
+                        <h1 className="text-sm font-medium text-gray-900 text-center leading-tight pr-8">
+                          {selectedDocument.name}
+                        </h1>
+                        <p className="text-xs text-gray-600 text-center mt-1 pr-8">
+                          Generated on {selectedDocument.creationDate}
+                        </p>
+                        {/* Close button in top right corner */}
+                        <button
+                          onClick={handleCloseDocument}
+                          className="absolute top-2 right-2 p-1 rounded-full bg-white hover:bg-gray-100 transition-colors shadow-sm"
+                        >
+                          <MdClose className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
+
+                      {/* Navigation arrows */}
+                      <div className="flex items-center justify-center gap-4">
+                        <button
+                          onClick={handlePreviousDocument}
+                          disabled={currentDocumentIndex === 0}
+                          className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <MdArrowBack className="w-5 h-5 text-gray-600" />
+                        </button>
+                        <button
+                          onClick={handleNextDocument}
+                          disabled={
+                            currentDocumentIndex === documents.length - 1
+                          }
+                          className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <MdArrowForward className="w-5 h-5 text-gray-600" />
+                        </button>
+                      </div>
+
+                      {/* Page info */}
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-gray-500 font-medium">
+                          {currentDocumentIndex + 1} of {documents.length}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* PDF Viewer */}
+                <div
+                  className="flex-1 overflow-hidden"
+                  style={{
+                    minHeight: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
+                  {pdfViewerUrl && (
+                    <div className="flex-1 w-full overflow-hidden">
+                      <iframe
+                        src={pdfViewerUrl}
+                        className="w-full h-full border-0"
+                        title={selectedDocument.name}
+                        style={{
+                          maxWidth: '100%',
+                          width: '100%',
+                          height: '100%',
+                          overflow: 'hidden',
+                          transform: 'scale(1)',
+                          transformOrigin: 'top left',
+                          flex: 1,
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              /* Default Content when no document is selected */
+              <div className="flex-1 flex items-center justify-center py-12">
+                <div className="text-center max-w-md mx-auto px-6">
+                  <div className="pb-8">
+                    <FiFile className="w-16 h-16 text-blue-600 mx-auto" />
+                  </div>
+                  <h2 className="text-2xl font-medium text-gray-900 mb-6">
+                    Legal Docs for Your Team
+                  </h2>
+                  <p className="text-gray-600 mb-8">
+                    The Proof of Effort Toolkit compiles key documents showing
+                    your commitment to accessibility. If your website's
+                    accessibility is ever challenged, you'll have the evidence
+                    needed to respond with confidence.
+                  </p>
+                  <div className="flex gap-3 justify-center">
+                    <button
+                      className={`poe-send-email-button inline-flex items-center gap-2 px-4 py-2 border border-[#445AE7] rounded-md transition-colors ${
+                        isDownloadingZip || isEmailSending
+                          ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                          : 'text-white bg-[#445AE7] hover:bg-[#3a4fd1]'
+                      }`}
+                      onClick={handleSendViaEmail}
+                      disabled={isDownloadingZip || isEmailSending}
+                    >
+                      {isEmailSending ? (
+                        <>
+                          <CircularProgress size={16} />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <MdEmail className="w-4 h-4" />
+                          Send via email
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <div className="poe-documents-count text-sm text-gray-500 mt-3">
+                    {documents.length} Documents
+                  </div>
+                </div>
               </div>
             )}
+          </div>
+
+          {/* Right Panel - Document List */}
+          <div
+            className="lg:w-96 w-full lg:h-auto h-auto p-6 flex flex-col border-2 rounded-xl lg:flex-shrink-0"
+            style={{ backgroundColor: '#e9ecfb', borderColor: '#A2ADF3' }}
+          >
+            {/* Document Cards */}
+            <div className="space-y-3 flex-grow">
+              {documents.map((document, index) => (
+                <div
+                  key={index}
+                  className="bg-white rounded-lg p-4 shadow-sm border-2"
+                  style={{ borderColor: '#A2ADF3' }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3 flex-1">
+                      <FiFile className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold text-gray-900">
+                          {document.name}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {document.creationDate}
+                          {document.type === 'monthly-report' &&
+                            isProcessingReport && (
+                              <span className="text-blue-600 italic ml-2">
+                                Processing...
+                              </span>
+                            )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <button
+                        className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDropdownToggle(index);
+                        }}
+                      >
+                        <MdMoreVert
+                          className="w-4 h-4"
+                          style={{ color: '#445AE7' }}
+                        />
+                      </button>
+
+                      {/* Dropdown menu */}
+                      {openDropdownIndex === index && (
+                        <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-32">
+                          <button
+                            onClick={() =>
+                              handleDropdownAction(document, 'view')
+                            }
+                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            disabled={
+                              (document.type === 'monthly-report' &&
+                                isProcessingReport) ||
+                              isDownloadingZip ||
+                              isEmailSending
+                            }
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDropdownAction(document, 'download')
+                            }
+                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            disabled={
+                              (document.type === 'monthly-report' &&
+                                isProcessingReport) ||
+                              isDownloadingZip ||
+                              isEmailSending
+                            }
+                          >
+                            Download
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Download All Button */}
+            <div className="mt-6 pt-12 border-t border-gray-200">
+              <button
+                className={`poe-download-zip-button w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-md transition-colors ${
+                  isDownloadingZip || isEmailSending
+                    ? 'bg-blue-400 cursor-not-allowed'
+                    : 'hover:bg-blue-700'
+                }`}
+                onClick={handleDownloadZip}
+                disabled={isDownloadingZip || isEmailSending}
+              >
+                {isDownloadingZip ? (
+                  <>
+                    <CircularProgress size={16} />
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <MdFileDownload className="w-4 h-4" />
+                    Download
+                  </>
+                )}
+              </button>
+              <div className="poe-documents-count text-sm text-gray-500 mt-3 text-center">
+                {documents.length} Documents
+              </div>
+            </div>
           </div>
         </div>
       </div>
