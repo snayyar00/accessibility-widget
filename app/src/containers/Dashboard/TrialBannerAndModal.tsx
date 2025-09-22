@@ -2,6 +2,7 @@ import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import { parse } from 'tldts';
 import BannerImage from '@/assets/images/WebAbility Hero3.png';
 import SingleBannerImage from '@/assets/images/WebAbilityBanner.png';
+import MySiteImage from '@/assets/images/my_site.png';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import { useMutation } from '@apollo/client';
 import addSite from '@/queries/sites/addSite';
@@ -813,112 +814,75 @@ const TrialBannerAndModal: React.FC<any> = ({
       <>
         {/* Mobile View (visible on small screens only) */}
         <div className="hidden">
-          <div className="bg-[#0133ed] text-white border border-[#7b6f6f] rounded-lg flex flex-col w-full overflow-hidden">
+          <div
+            className="text-white rounded-lg flex flex-col w-full overflow-hidden relative bg-no-repeat bg-cover bg-center min-h-[160px] sm:min-h-[180px]"
+            style={{
+              backgroundImage: `url(${MySiteImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }}
+          >
+            {/* Background Overlay for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 to-blue-600/20"></div>
+
             {/* Text & Button Section */}
-            <div className="flex flex-col p-4 flex-1">
+            <div className="flex flex-col p-4 flex-1 relative z-10">
               <div className="flex justify-between items-center">
                 <h1 className="text-lg font-semibold">
-                  Make your website accessible with WebAbility
+                  Experience WebAbility PRO free for 7 days
                 </h1>
               </div>
-              <p className="my-2 text-sm">
-                Navigate ADA & WCAG Compliance with WebAbility.io&apos;s
-                Accessibility Widget
-              </p>
               <button
-                className="mt-auto py-2 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full transition duration-300"
+                className="mt-auto py-3 px-6 text-black font-semibold rounded-xl hover:bg-gray-200 transition duration-300 shadow-lg w-full"
+                style={{
+                  backgroundColor: '#BDC3E4',
+                  border: '1px solid #A2ADF3',
+                }}
                 onClick={openModal}
               >
-                <span className="font-medium">Get Compliant Now</span>
+                <span className="font-medium">Add a domain</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* Desktop / Large Screen View (old design) */}
-        <div className="flex flex-col lg:flex-row lg:space-x-6 p-4 h-full">
+        <div className="flex flex-col lg:flex-row lg:space-x-6 py-4 h-full w-full">
           {noPlan ? (
             <div className="w-full mb-6 flex">
               <div
-                className="add-domain-banner w-full grid grid-cols-1 lg:grid-cols-12 text-white outline outline-1 rounded-xl overflow-hidden"
-                style={{ backgroundColor: 'rgb(0 51 237)' }}
+                className="add-domain-banner w-full grid grid-cols-1 lg:grid-cols-12 text-white rounded-xl overflow-hidden relative bg-no-repeat bg-cover bg-center min-h-[200px] md:min-h-[220px] lg:min-h-[240px]"
+                style={{
+                  backgroundImage: `url(${MySiteImage})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
+                }}
               >
-                {/* Left Column (Text) */}
-                <div className="col-span-full xl:col-span-7 pt-4 px-4 flex flex-col justify-center">
-                  <h1 className="text-2xl xxl:text-4xl mb-4">
-                    Make your website accessible with WebAbility
+                {/* Background Overlay for text readability */}
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 to-blue-600/20"></div>
+
+                {/* Content */}
+                <div className="col-span-full pt-4 px-4 lg:px-6 flex flex-col justify-center relative z-10">
+                  <h1 className="text-2xl lg:text-3xl xxl:text-4xl mb-12  leading-tight">
+                    Experience WebAbility PRO free for 7 days
                   </h1>
-                  <p className="mb-6 xxl:text-2xl">
-                    Navigate ADA & WCAG Compliance with WebAbility.io's
-                    Accessibility Widget
-                  </p>
-                  <ul className="hidden md:block space-y-2 mb-6 xxl:text-xl">
-                    <li>
-                      <div className="flex items-center">
-                        <FaCheckCircle className="mr-2 text-white" />
-                        <strong>ADA & WCAG Compliance</strong>
-                      </div>
-                      <ul className="ml-10 list-disc">
-                        <li className="text-white">
-                          Ensure your website meets global accessibility
-                          standards.
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <div className="flex items-center">
-                        <FaCheckCircle className="mr-2 text-white" />
-                        <strong>One-Click Installation</strong>
-                      </div>
-                      <ul className="ml-10 list-disc">
-                        <li className="text-white">
-                          Plug and play in minutes, fast customer support.
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <div className="flex items-center">
-                        <FaCheckCircle className="mr-2 text-white" />
-                        <strong>AI-Powered Adjustments</strong>
-                      </div>
-                      <ul className="ml-10 list-disc">
-                        <li className="text-white">
-                          Automatic text resizing, contrast adjustments, and
-                          more.
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <div className="flex items-center">
-                        <FaCheckCircle className="mr-2 text-white" />
-                        <strong>Customizable Interface</strong>
-                      </div>
-                      <ul className="ml-10 list-disc">
-                        <li className="text-white">
-                          Match the widget's look to your brand.
-                        </li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
 
-                {/* Right Column (Image) */}
-                <div className="hidden xl:py-4 xl:col-span-5 xl:flex items-center justify-center">
-                  <img
-                    src="https://www.webability.io/images/section_1_right.png"
-                    alt="Graphic showing increase in accessibility score"
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
-
-                {/* Full-Width Button (Spanning Both Columns) */}
-                <div className="col-span-full mb-4 flex justify-center items-center">
-                  <button
-                    className="py-3 px-2 lg:py-0 h-14 mx-4 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full transition duration-300"
-                    onClick={openModal}
-                  >
-                    <span className="font-medium">Get Compliant Now</span>
-                  </button>
+                  {/* Action Buttons */}
+                  <div className="flex gap-4 mb-2">
+                    <button
+                      className="py-3 px-6 text-black font-semibold rounded-xl hover:bg-gray-200 transition duration-300 shadow-lg"
+                      style={{
+                        backgroundColor: '#BDC3E4',
+                        border: '1px solid #A2ADF3',
+                      }}
+                      onClick={openModal}
+                    >
+                      Add a domain
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -927,36 +891,35 @@ const TrialBannerAndModal: React.FC<any> = ({
               {/* Left Side (Accessibility Banner) */}
               <div className="w-full lg:w-1/2 mb-6 lg:mb-0 flex">
                 <div
-                  className="w-full grid grid-cols-1 lg:grid-cols-12 text-white outline outline-1 rounded-xl overflow-hidden"
-                  style={{ backgroundColor: 'rgb(0 51 237)' }}
+                  className="w-full grid grid-cols-1 lg:grid-cols-12 text-white rounded-xl overflow-hidden relative bg-no-repeat bg-cover bg-center min-h-[180px] md:min-h-[200px] lg:min-h-[220px]"
+                  style={{
+                    backgroundImage: `url(${MySiteImage})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                  }}
                 >
-                  {/* Left Column (Text) */}
-                  <div className="col-span-full xl:col-span-5 pt-2 px-4 flex flex-col justify-center">
+                  {/* Background Overlay for text readability */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 to-blue-600/20"></div>
+
+                  {/* Content */}
+                  <div className="col-span-full pt-2 px-4 flex flex-col justify-center relative z-10">
                     <h1 className="text-2xl mb-4 xxl:text-4xl">
-                      Make your website accessible with WebAbility
+                      Experience WebAbility PRO free for 7 days
                     </h1>
-                    <p className="mb-6 xxl:text-2xl">
-                      Navigate ADA & WCAG Compliance with WebAbility.io's
-                      Accessibility Widget
-                    </p>
                   </div>
 
-                  {/* Right Column (Image) */}
-                  <div className="hidden xl:py-4 xl:col-span-7 xl:flex items-center justify-center">
-                    <img
-                      src="https://www.webability.io/images/section_1_right.png"
-                      alt="Graphic showing increase in accessibility score"
-                      className="max-w-full max-h-full object-contain"
-                    />
-                  </div>
-
-                  {/* Full-Width Button (Spanning Both Columns) */}
-                  <div className="col-span-full mb-4 flex justify-center items-center">
+                  {/* Full-Width Button */}
+                  <div className="col-span-full mb-4 flex justify-start items-center relative z-10">
                     <button
-                      className="py-3 px-2 lg:py-0 h-14 mx-4 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full transition duration-300"
+                      className="py-3 px-6 text-black font-semibold rounded-xl hover:bg-gray-200 transition duration-300 shadow-lg mx-4 w-auto"
+                      style={{
+                        backgroundColor: '#BDC3E4',
+                        border: '1px solid #A2ADF3',
+                      }}
                       onClick={openModal}
                     >
-                      <span className="font-medium">Get Compliant Now</span>
+                      <span className="font-medium">Add a domain</span>
                     </button>
                   </div>
                 </div>

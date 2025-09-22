@@ -16,6 +16,8 @@ import getDomainStatus from '@/utils/getDomainStatus';
 import applyStatusClass from '@/utils/applyStatusClass';
 import ActivatePlanWarningModal from './ActivatePlanWarningModal';
 import { getAuthenticationCookie } from '@/utils/cookie';
+import MobileDomainCard from './MobileDomainCard';
+import notFoundImage from '@/assets/images/not_found_image.png';
 
 export interface Domain {
   id: number;
@@ -66,6 +68,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [monitoringStates, setMonitoringStates] = useState<{
     [key: number]: boolean;
   }>({});
+
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'active' | 'disabled'>('active');
 
   const [deleteSiteMutation] = useMutation(deleteSite, {
     onCompleted: (response) => {
@@ -316,6 +322,27 @@ const DomainTable: React.FC<DomainTableProps> = ({
     }
   }, [data]);
 
+  // Filter domains based on search term and active tab
+  const filteredDomains = domains.filter((domain) => {
+    const matchesSearch = domain.url
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const domainStatus = getDomainStatus(
+      domain.url,
+      domain.expiredAt,
+      domain.trial,
+      appSumoDomains,
+    );
+    const isActive = domainStatus === 'Active' || domainStatus === 'Life Time';
+    const isDisabled = !isActive;
+
+    if (activeTab === 'active') {
+      return matchesSearch && isActive;
+    } else {
+      return matchesSearch && isDisabled;
+    }
+  });
+
   useEffect(() => {
     if (customerData) {
       if (customerData.submeta) {
@@ -393,653 +420,637 @@ const DomainTable: React.FC<DomainTableProps> = ({
         isStripeCustomer={isStripeCustomer}
       />
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-            Domain Management
-          </h2>
-          <p className="text-gray-500 mt-2">
-            Monitor and manage your website domains
-          </p>
-        </div>
+      <div
+        className="min-h-screen bg-[#eaecfb] rounded-2xl border"
+        style={{ borderColor: '#A2ADF3', borderWidth: '1px' }}
+      >
+        {/* Header Section */}
+        <div className="bg-[#eaecfb] rounded-2xl border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
+          <div className="w-full">
+            {/* Navigation Tabs and Search Bar */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 space-y-4 md:space-y-0">
+              {/* Navigation Tabs - Left */}
+              <div className="flex items-center space-x-8">
+                <button
+                  onClick={() => setActiveTab('active')}
+                  className={`font-normal text-base pb-2 transition-colors ${
+                    activeTab === 'active'
+                      ? 'text-black'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  Active sites
+                </button>
+                <button
+                  onClick={() => setActiveTab('disabled')}
+                  className={`font-normal text-base pb-2 transition-colors ${
+                    activeTab === 'disabled'
+                      ? 'text-black'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  Disabled sites
+                </button>
+              </div>
 
-        {/* Desktop Table */}
-        <div className="hidden lg:block">
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-            <table className="min-w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-                <tr>
-                  <th className="py-5 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    <Tooltip
-                      title="Website domain URL that you want to monitor"
-                      placement="top"
-                    >
-                      <div className="flex items-center space-x-1 cursor-help">
-                        <svg
-                          className="w-4 h-4 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                          />
-                        </svg>
-                        <span>Domain</span>
-                      </div>
-                    </Tooltip>
-                  </th>
-                  <th className="py-5 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    <Tooltip
-                      title="Current subscription plan and trial status"
-                      placement="top"
-                    >
-                      <div className="flex items-center space-x-1 cursor-help">
-                        <svg
-                          className="w-4 h-4 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                          />
-                        </svg>
-                        <span>Plan</span>
-                      </div>
-                    </Tooltip>
-                  </th>
-                  <th className="py-5 px-6 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    <Tooltip
-                      title="Enable or disable uptime monitoring for this domain"
-                      placement="top"
-                    >
-                      <div className="flex items-center justify-center space-x-1 cursor-help">
-                        <svg
-                          className="w-4 h-4 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                          />
-                        </svg>
-                        <span>Monitor</span>
-                      </div>
-                    </Tooltip>
-                  </th>
-                  <th className="py-5 px-6 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    <Tooltip
-                      title="Current uptime status of your domain"
-                      placement="top"
-                    >
-                      <div className="flex items-center justify-center space-x-1 cursor-help">
-                        <svg
-                          className="w-4 h-4 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        <span>Status</span>
-                      </div>
-                    </Tooltip>
-                  </th>
-                  <th className="py-5 px-6 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    <Tooltip
-                      title="Available actions for this domain"
-                      placement="top"
-                    >
-                      <div className="flex items-center justify-end space-x-1 cursor-help">
-                        <svg
-                          className="w-4 h-4 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                          />
-                        </svg>
-                        <span>Actions</span>
-                      </div>
-                    </Tooltip>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {domains.map((domain) => {
-                  const isEditing = editingId === domain.id;
-                  const domainStatus = getDomainStatus(
-                    domain.url,
-                    domain.expiredAt,
-                    domain.trial,
-                    appSumoDomains,
-                  );
-                  return (
-                    <tr
-                      key={domain.id}
-                      className="group hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent transition-all duration-300"
-                    >
-                      <td className="py-5 px-6 whitespace-nowrap">
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            aria-label="Edit domain URL"
-                            className="border-2 border-gray-200 px-4 py-2 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                            value={tempDomain}
-                            onChange={(e) => setTempDomain(e.target.value)}
-                            autoFocus
-                          />
-                        ) : (
-                          <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
-                            {domain.url}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-5 px-6 whitespace-nowrap">
-                        <Tooltip
-                          title={
-                            domainStatus === 'Life Time'
-                              ? 'Lifetime license - Never expires'
-                              : domainStatus === 'Active'
-                              ? 'Subscription is active'
-                              : domainStatus === 'Trial'
-                              ? `Trial period ends on ${
-                                  domain?.expiredAt
-                                    ? new Date(
-                                        Number.parseInt(domain.expiredAt),
-                                      ).toLocaleDateString()
-                                    : 'N/A'
-                                }`
-                              : domainStatus === 'Trial Expired'
-                              ? 'Trial period has ended - Please activate'
-                              : domainStatus === 'Expiring'
-                              ? 'Subscription is expiring soon'
-                              : 'Subscription has expired'
-                          }
-                          placement="top"
-                        >
-                          <span
-                            className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all duration-200 cursor-help ${applyStatusClass(
-                              domain.url,
-                              domain.expiredAt,
-                              domain.trial,
-                              appSumoDomains,
-                            )}`}
-                          >
-                            <span className="relative flex h-2 w-2 mr-2">
-                              <span
-                                className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                                  domainStatus === 'Life Time'
-                                    ? 'bg-green-400'
-                                    : domainStatus === 'Trial'
-                                    ? 'bg-yellow-400'
-                                    : 'bg-blue-400'
-                                }`}
-                              ></span>
-                              <span
-                                className={`relative inline-flex rounded-full h-2 w-2 ${
-                                  domainStatus === 'Life Time'
-                                    ? 'bg-green-500'
-                                    : domainStatus === 'Trial'
-                                    ? 'bg-yellow-500'
-                                    : 'bg-blue-500'
-                                }`}
-                              ></span>
-                            </span>
-                            {domainStatus}
-                            {domainStatus === 'Trial' && domain?.expiredAt && (
-                              <span className="ml-1.5 opacity-75">
-                                •{' '}
-                                {new Date(
-                                  Number.parseInt(domain.expiredAt),
-                                ).toLocaleDateString()}
-                              </span>
-                            )}
-                          </span>
-                        </Tooltip>
-                      </td>
-                      <td className="py-5 px-6 whitespace-nowrap text-center">
-                        <Tooltip
-                          title={
-                            monitoringStates[domain.id] ??
-                            domain.monitor_enabled
-                              ? 'Click to disable monitoring'
-                              : 'Click to enable monitoring'
-                          }
-                          placement="top"
-                        >
-                          <button
-                            onClick={() =>
-                              handleMonitoringToggle(
-                                domain.id,
-                                monitoringStates[domain.id] ??
-                                  domain.monitor_enabled ??
-                                  false,
-                              )
-                            }
-                            role="switch"
-                            aria-checked={
-                              monitoringStates[domain.id] ??
-                              domain.monitor_enabled ??
-                              false
-                            }
-                            aria-label={`Toggle monitoring for ${domain.url}`}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 ${
-                              monitoringStates[domain.id] ??
-                              domain.monitor_enabled
-                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:ring-blue-500 shadow-lg shadow-blue-500/25'
-                                : 'bg-gray-200 hover:bg-gray-300 focus:ring-gray-300'
-                            }`}
-                            disabled={isEditing}
-                          >
-                            <span className="sr-only">
-                              {monitoringStates[domain.id] ??
-                              domain.monitor_enabled
-                                ? 'Monitoring is enabled'
-                                : 'Monitoring is disabled'}
-                            </span>
-                            <span
-                              aria-hidden="true"
-                              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-all duration-300 ${
-                                monitoringStates[domain.id] ??
-                                domain.monitor_enabled
-                                  ? 'translate-x-6'
-                                  : 'translate-x-1'
-                              }`}
-                            />
-                          </button>
-                        </Tooltip>
-                      </td>
-                      <td className="py-5 px-6 whitespace-nowrap text-center">
-                        {monitoringStates[domain.id] ??
-                        domain.monitor_enabled ? (
-                          domain.is_currently_down !== null &&
-                          domain.is_currently_down !== undefined ? (
-                            <div className="flex items-center justify-center">
-                              {domain.is_currently_down === 0 ? (
-                                <Tooltip
-                                  title={`Website is responding normally${
-                                    domain.last_monitor_check
-                                      ? ` - Last checked: ${new Date(
-                                          domain.last_monitor_check,
-                                        ).toLocaleString()}`
-                                      : ''
-                                  }`}
-                                  placement="top"
-                                >
-                                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 shadow-sm cursor-help">
-                                    <span className="relative flex h-2 w-2 mr-2">
-                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                    </span>
-                                    Online
-                                  </span>
-                                </Tooltip>
-                              ) : domain.is_currently_down === 1 ? (
-                                <Tooltip
-                                  title={`Website is not responding${
-                                    domain.last_monitor_check
-                                      ? ` - Last checked: ${new Date(
-                                          domain.last_monitor_check,
-                                        ).toLocaleString()}`
-                                      : ''
-                                  }`}
-                                  placement="top"
-                                >
-                                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-red-50 to-pink-50 text-red-700 border border-red-200 shadow-sm cursor-help">
-                                    <span className="relative flex h-2 w-2 mr-2">
-                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                                    </span>
-                                    Offline
-                                  </span>
-                                </Tooltip>
-                              ) : (
-                                <Tooltip
-                                  title="Status check in progress"
-                                  placement="top"
-                                >
-                                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 cursor-help">
-                                    <svg
-                                      className="animate-spin -ml-0.5 mr-2 h-3 w-3 text-gray-400"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <circle
-                                        className="opacity-25"
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        stroke="currentColor"
-                                        strokeWidth="4"
-                                      ></circle>
-                                      <path
-                                        className="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                      ></path>
-                                    </svg>
-                                    Checking...
-                                  </span>
-                                </Tooltip>
-                              )}
-                            </div>
-                          ) : (
-                            <Tooltip
-                              title="Waiting for first monitoring check"
-                              placement="top"
-                            >
-                              <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200 cursor-help">
-                                <svg
-                                  className="mr-2 h-3 w-3 text-gray-400"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                  />
-                                </svg>
-                                Awaiting data
-                              </span>
-                            </Tooltip>
-                          )
-                        ) : (
-                          <Tooltip
-                            title="Monitoring is disabled for this domain"
-                            placement="top"
-                          >
-                            <span className="text-xs text-gray-400 italic cursor-help">
-                              Monitor off
-                            </span>
-                          </Tooltip>
-                        )}
-                      </td>
-                      <td className="py-5 px-6 whitespace-nowrap text-right text-sm font-medium">
-                        {isEditing ? (
-                          <div className="flex justify-end items-center space-x-2">
-                            <Tooltip title="Save changes" placement="top">
-                              <button
-                                onClick={() => handleSave(domain.id)}
-                                className="inline-flex items-center p-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 focus:outline-none focus:ring-4 focus:ring-green-500/20 transition-all duration-200 shadow-lg shadow-green-500/25"
-                                disabled={editLoading}
-                              >
-                                {editLoading ? (
-                                  <CircularProgress size={16} />
-                                ) : (
-                                  <FaCheck className="w-4 h-4" />
-                                )}
-                              </button>
-                            </Tooltip>
-                            <Tooltip title="Cancel editing" placement="top">
-                              <button
-                                onClick={handleCancel}
-                                className="inline-flex items-center p-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-500/20 transition-all duration-200 shadow-lg shadow-gray-500/25"
-                                disabled={editLoading}
-                              >
-                                <FaTimes className="w-4 h-4" />
-                              </button>
-                            </Tooltip>
-                          </div>
-                        ) : (
-                          <div className="flex justify-end items-center gap-2">
-                            {/* Conditionally show Activate/Buy button for non-active domains */}
-                            {domainStatus === 'Trial' ||
-                            domainStatus === 'Trial Expired' ? (
-                              <>
-                                {activePlan !== '' && tierPlan ? (
-                                  <Tooltip
-                                    title="Activate your subscription for this domain"
-                                    placement="top"
-                                  >
-                                    <button
-                                      disabled={billingLoading}
-                                      onClick={() => handleSubscription(domain)}
-                                      type="button"
-                                      aria-label={`Activate subscription for ${domain.url}`}
-                                      className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 text-xs font-semibold rounded-lg hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                      {billingLoading
-                                        ? 'Processing...'
-                                        : 'Activate'}
-                                    </button>
-                                  </Tooltip>
-                                ) : appSumoCount < codeCount ? (
-                                  <Tooltip
-                                    title="Activate domain with promo code"
-                                    placement="top"
-                                  >
-                                    <button
-                                      onClick={() =>
-                                        handleOpenActivateModal(domain)
-                                      }
-                                      type="button"
-                                      aria-label={`Open activation modal for ${domain.url}`}
-                                      className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 text-xs font-semibold rounded-lg hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                                    >
-                                      Activate
-                                    </button>
-                                  </Tooltip>
-                                ) : (
-                                  <Tooltip
-                                    title="Purchase a license for this domain"
-                                    placement="top"
-                                  >
-                                    <button
-                                      onClick={() => {
-                                        setPaymentView(true);
-                                        openModal();
-                                        setOptionalDomain(domain.url);
-                                      }}
-                                      type="button"
-                                      aria-label={`Buy license for ${domain.url}`}
-                                      className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 text-xs font-semibold rounded-lg hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                                    >
-                                      Buy License
-                                    </button>
-                                  </Tooltip>
-                                )}
-                              </>
-                            ) : null}
-                            <Tooltip
-                              title="Edit domain settings"
-                              placement="top"
-                            >
-                              <button
-                                onClick={() => handleEdit(domain)}
-                                type="button"
-                                aria-label={`Edit domain ${domain.url}`}
-                                className="inline-flex items-center px-3 py-1.5 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
-                              >
-                                <FaCog className="w-3.5 h-3.5 mr-1" />
-                                Edit
-                              </button>
-                            </Tooltip>
-                            <Tooltip
-                              title="Delete this domain from your account"
-                              placement="top"
-                            >
-                              <button
-                                onClick={() => {
-                                  setDeleteSiteID(domain.id);
-                                  setDeleteSiteStatus(domainStatus);
-                                  setShowModal(true);
-                                }}
-                                type="button"
-                                aria-label={`Delete domain ${domain.url}`}
-                                className="inline-flex items-center px-3 py-1.5 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
-                              >
-                                <FaTrash className="w-3.5 h-3.5 mr-1" />
-                                Delete
-                              </button>
-                            </Tooltip>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+              {/* Blue line below tabs */}
+
+              {/* Search Bar - Right */}
+              <div className="relative w-full md:w-80 md:max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="h-4 w-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  style={{ border: '1px solid #A2ADF3' }}
+                />
+              </div>
+            </div>
           </div>
         </div>
-        {/* Mobile Grid */}
-        <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {domains.map((domain) => {
-            const isEditing = editingId === domain.id;
-            const domainStatus = getDomainStatus(
-              domain.url,
-              domain.expiredAt,
-              domain.trial,
-              appSumoDomains,
-            );
-            return (
-              <div
-                key={domain.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden transform transition-transform duration-300 hover:scale-105"
-              >
-                <div className="p-4 border-b">
-                  <div className="flex flex-wrap items-center justify-between">
-                    {/* Container for the editable text */}
-                    <div className="w-full md:w-auto flex-grow">
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          className="border p-2 rounded bg-gray-100 text-lg font-medium w-full"
-                          value={tempDomain}
-                          onChange={(e) => setTempDomain(e.target.value)}
-                        />
-                      ) : (
-                        <span className="text-lg font-medium">
-                          {domain.url}
-                        </span>
-                      )}
+        <div className="flex justify-start px-4 sm:px-6 lg:px-8">
+          <div className="h-0.5 bg-[#7383ED] w-full -mt-8"></div>
+        </div>
+
+        {/* Main Content */}
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6 pr-12">
+          {/* Empty State - Desktop Only */}
+          <div className="hidden lg:block">
+            {filteredDomains.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-4">
+                {/* Empty State Image */}
+                <div className="mb-6">
+                  <img
+                    src={notFoundImage}
+                    alt="No sites found"
+                    className="w-32 h-32 object-contain"
+                  />
+                </div>
+
+                {/* Empty State Message */}
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    You currently have no sites in this list
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {activeTab === 'active'
+                      ? 'Add your first domain to get started with accessibility monitoring.'
+                      : 'No disabled sites found. Switch to Active sites to view your domains.'}
+                  </p>
+                </div>
+
+                {/* Add New Domain Button */}
+                {activeTab === 'active' && (
+                  <button
+                    onClick={() => {
+                      openModal();
+                    }}
+                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
+                  >
+                    Add new domain
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Column Headers - Desktop Only */}
+                <div className="hidden lg:block">
+                  <div className="flex items-center text-sm font-medium text-gray-700 mb-4 pr-8">
+                    <div className="flex-shrink-0 mr-3 w-6">
+                      {/* Empty space for favicon alignment */}
                     </div>
-                    {/* Status badge container */}
-                    <div className="mt-2 md:mt-0">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${applyStatusClass(
-                          domain.url,
-                          domain.expiredAt,
-                          domain.trial,
-                          appSumoDomains,
-                        )}`}
-                      >
-                        {domainStatus}
-                        {domainStatus === 'Trial' && domain?.expiredAt && (
-                          <span className="ml-1">
-                            •{' '}
-                            {new Date(
-                              Number.parseInt(domain.expiredAt),
-                            ).toLocaleDateString()}
-                          </span>
-                        )}
+                    <div className="flex-1 min-w-0 mr-4 flex items-center">
+                      <span className="uppercase" style={{ color: '#445AE7' }}>
+                        Domain
+                      </span>
+                    </div>
+                    <div className="flex-shrink-0 mr-4 w-24 flex items-center">
+                      <span className="uppercase" style={{ color: '#445AE7' }}>
+                        Plan
+                      </span>
+                    </div>
+                    <div className="flex-shrink-0 mr-4 w-32 flex items-center">
+                      <span className="uppercase" style={{ color: '#445AE7' }}>
+                        Monitor
+                      </span>
+                    </div>
+                    <div className="flex-shrink-0 mr-4 w-32 flex items-center">
+                      <span className="uppercase" style={{ color: '#445AE7' }}>
+                        Status
+                      </span>
+                    </div>
+                    <div className="flex-shrink-0 w-24 flex items-center">
+                      <span className="uppercase" style={{ color: '#445AE7' }}>
+                        Actions
                       </span>
                     </div>
                   </div>
+                  <div className="border-b border-gray-200 mb-4"></div>
                 </div>
 
-                {isEditing ? (
-                  <div className="p-4 bg-gray-50 flex justify-end items-center space-x-2">
-                    <button
-                      onClick={() => handleSave(domain.id)}
-                      className="p-2 text-white text-center rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] transition duration-300 w-full"
-                      disabled={editLoading}
-                    >
-                      {editLoading ? <CircularProgress size={18} /> : 'Save'}
-                    </button>
-                    <button
-                      onClick={handleCancel}
-                      className="p-2 text-white text-center rounded-md bg-[#DC2626] hover:bg-[#B91C1C] transition duration-300 w-full"
-                      disabled={editLoading}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    {/* Mobile actions split into two rows */}
-                    <div className="p-4 bg-gray-50 flex justify-between items-center space-x-2 mb-2">
-                      <button
-                        onClick={() => handleEdit(domain)}
-                        className="p-2 bg-[#2563EB] text-white rounded-md text-sm flex-1 flex items-center justify-center hover:bg-[#1D4ED8] transition-colors duration-200"
+                {/* Desktop Cards */}
+                <div className="hidden lg:block space-y-2">
+                  {filteredDomains.map((domain) => {
+                    const isEditing = editingId === domain.id;
+                    const domainStatus = getDomainStatus(
+                      domain.url,
+                      domain.expiredAt,
+                      domain.trial,
+                      appSumoDomains,
+                    );
+
+                    // Generate favicon URL
+                    const getFaviconUrl = (url: string) => {
+                      const domainName = url
+                        .replace(/^https?:\/\//, '')
+                        .replace(/^www\./, '');
+                      return `https://www.google.com/s2/favicons?domain=${domainName}&sz=32`;
+                    };
+
+                    // Generate last updated date (mock data for now)
+                    const getLastUpdated = () => {
+                      return new Date().toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                      });
+                    };
+
+                    // Generate traffic data (mock data for now)
+                    const getTraffic = () => {
+                      return '572K';
+                    };
+
+                    return (
+                      <div
+                        key={domain.id}
+                        className="bg-white border p-6 pr-8 hover:shadow-md transition-shadow rounded-lg min-h-[80px]"
+                        style={{ borderColor: '#A2ADF3' }}
                       >
-                        <FaCog className="mr-2" /> Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          setDeleteSiteID(domain.id);
-                          setDeleteSiteStatus(domainStatus);
-                          setShowModal(true);
-                        }}
-                        className="p-2 bg-[#1E40AF] text-white rounded-md text-sm flex-1 flex items-center justify-center hover:bg-[#1E3A8A] transition-colors duration-200"
-                      >
-                        <FaTrash className="mr-2" /> Delete
-                      </button>
-                    </div>
-                    {domainStatus !== 'Active' &&
-                      domainStatus != 'Life Time' &&
-                      domainStatus !== 'Expiring' && (
-                        <div className="p-4 bg-gray-100">
-                          {activePlan !== '' && tierPlan ? (
-                            <button
-                              disabled={billingLoading}
-                              onClick={() => handleSubscription(domain)}
-                              type="submit"
-                              className="p-2 bg-primary text-white rounded-md text-sm flex items-center justify-center hover:bg-[#1D4ED8] transition-colors duration-200"
-                            >
-                              {billingLoading ? 'Please Wait...' : 'Activate'}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setPaymentView(true);
-                                openModal();
-                                setOptionalDomain(domain.url);
+                        <div className="flex items-center">
+                          {/* Favicon */}
+                          <div className="flex-shrink-0 mr-3">
+                            <img
+                              src={getFaviconUrl(domain.url)}
+                              alt={`${domain.url} favicon`}
+                              className="w-6 h-6 rounded"
+                              onError={(e) => {
+                                // Fallback to a default icon if favicon fails to load
+                                e.currentTarget.style.display = 'none';
                               }}
-                              type="submit"
-                              className="p-2 bg-green w-full text-white rounded-md text-sm flex items-center justify-center hover:bg-green-600 transition-colors duration-200"
+                            />
+                          </div>
+
+                          {/* Domain Name */}
+                          <div className="flex-1 min-w-0 mr-4">
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                aria-label="Edit domain URL"
+                                className="border-2 border-gray-200 px-2 py-1 rounded text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                value={tempDomain}
+                                onChange={(e) => setTempDomain(e.target.value)}
+                                autoFocus
+                              />
+                            ) : (
+                              <div className="text-sm font-medium text-gray-900 truncate">
+                                {domain.url}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Plan Status */}
+                          <div className="flex-shrink-0 mr-4 w-24">
+                            <Tooltip
+                              title={
+                                domainStatus === 'Life Time'
+                                  ? 'Lifetime license - Never expires'
+                                  : domainStatus === 'Active'
+                                  ? 'Subscription is active'
+                                  : domainStatus === 'Trial'
+                                  ? `Trial period ends on ${
+                                      domain?.expiredAt
+                                        ? new Date(
+                                            Number.parseInt(domain.expiredAt),
+                                          ).toLocaleDateString()
+                                        : 'N/A'
+                                    }`
+                                  : domainStatus === 'Trial Expired'
+                                  ? 'Trial period has ended - Please activate'
+                                  : domainStatus === 'Expiring'
+                                  ? 'Subscription is expiring soon'
+                                  : 'Subscription has expired'
+                              }
+                              placement="top"
                             >
-                              Buy Plan
-                            </button>
-                          )}
+                              <span
+                                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium cursor-help ${applyStatusClass(
+                                  domain.url,
+                                  domain.expiredAt,
+                                  domain.trial,
+                                  appSumoDomains,
+                                )}`}
+                              >
+                                <span className="relative flex h-1.5 w-1.5 mr-1.5">
+                                  <span
+                                    className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                                      domainStatus === 'Life Time'
+                                        ? 'bg-green-400'
+                                        : domainStatus === 'Trial'
+                                        ? 'bg-yellow-400'
+                                        : 'bg-blue-400'
+                                    }`}
+                                  ></span>
+                                  <span
+                                    className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                                      domainStatus === 'Life Time'
+                                        ? 'bg-green-500'
+                                        : domainStatus === 'Trial'
+                                        ? 'bg-yellow-500'
+                                        : 'bg-blue-500'
+                                    }`}
+                                  ></span>
+                                </span>
+                                {domainStatus}
+                              </span>
+                            </Tooltip>
+                          </div>
+
+                          {/* Monitor Toggle */}
+                          <div className="flex-shrink-0 mr-4 w-32">
+                            <Tooltip
+                              title={
+                                monitoringStates[domain.id] ??
+                                domain.monitor_enabled
+                                  ? 'Click to disable monitoring'
+                                  : 'Click to enable monitoring'
+                              }
+                              placement="top"
+                            >
+                              <button
+                                onClick={() =>
+                                  handleMonitoringToggle(
+                                    domain.id,
+                                    monitoringStates[domain.id] ??
+                                      domain.monitor_enabled ??
+                                      false,
+                                  )
+                                }
+                                role="switch"
+                                aria-checked={
+                                  monitoringStates[domain.id] ??
+                                  domain.monitor_enabled ??
+                                  false
+                                }
+                                aria-label={`Toggle monitoring for ${domain.url}`}
+                                className={`relative inline-flex h-4 w-7 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                                  monitoringStates[domain.id] ??
+                                  domain.monitor_enabled
+                                    ? 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500'
+                                    : 'bg-gray-200 hover:bg-gray-300 focus:ring-gray-300'
+                                }`}
+                                disabled={isEditing}
+                              >
+                                <span
+                                  aria-hidden="true"
+                                  className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-all duration-300 ${
+                                    monitoringStates[domain.id] ??
+                                    domain.monitor_enabled
+                                      ? 'translate-x-3'
+                                      : 'translate-x-0.5'
+                                  }`}
+                                />
+                              </button>
+                            </Tooltip>
+                          </div>
+
+                          {/* Status Indicator */}
+                          <div className="flex-shrink-0 mr-4 w-32">
+                            {monitoringStates[domain.id] ??
+                            domain.monitor_enabled ? (
+                              domain.is_currently_down !== null &&
+                              domain.is_currently_down !== undefined ? (
+                                <>
+                                  {domain.is_currently_down === 0 ? (
+                                    <Tooltip
+                                      title={`Website is responding normally${
+                                        domain.last_monitor_check
+                                          ? ` - Last checked: ${new Date(
+                                              domain.last_monitor_check,
+                                            ).toLocaleString()}`
+                                          : ''
+                                      }`}
+                                      placement="top"
+                                    >
+                                      <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-50 text-green-700 border border-green-200 cursor-help">
+                                        <span className="relative flex h-1.5 w-1.5 mr-1.5">
+                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                                        </span>
+                                        Online
+                                      </span>
+                                    </Tooltip>
+                                  ) : domain.is_currently_down === 1 ? (
+                                    <Tooltip
+                                      title={`Website is not responding${
+                                        domain.last_monitor_check
+                                          ? ` - Last checked: ${new Date(
+                                              domain.last_monitor_check,
+                                            ).toLocaleString()}`
+                                          : ''
+                                      }`}
+                                      placement="top"
+                                    >
+                                      <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200 cursor-help">
+                                        <span className="relative flex h-1.5 w-1.5 mr-1.5">
+                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+                                        </span>
+                                        Offline
+                                      </span>
+                                    </Tooltip>
+                                  ) : (
+                                    <Tooltip
+                                      title="Status check in progress"
+                                      placement="top"
+                                    >
+                                      <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 cursor-help">
+                                        <svg
+                                          className="animate-spin -ml-0.5 mr-1.5 h-2.5 w-2.5 text-gray-400"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                          ></circle>
+                                          <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                          ></path>
+                                        </svg>
+                                        Checking...
+                                      </span>
+                                    </Tooltip>
+                                  )}
+                                </>
+                              ) : (
+                                <Tooltip
+                                  title="Waiting for first monitoring check"
+                                  placement="top"
+                                >
+                                  <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200 cursor-help">
+                                    <svg
+                                      className="mr-1.5 h-2.5 w-2.5 text-gray-400"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                      />
+                                    </svg>
+                                    Awaiting data
+                                  </span>
+                                </Tooltip>
+                              )
+                            ) : (
+                              <Tooltip
+                                title="Monitoring is disabled for this domain"
+                                placement="top"
+                              >
+                                <span className="text-xs text-gray-400 italic cursor-help">
+                                  Monitor off
+                                </span>
+                              </Tooltip>
+                            )}
+                          </div>
+
+                          {/* Actions Menu */}
+                          <div className="flex-shrink-0 w-24 flex items-center space-x-1">
+                            {isEditing ? (
+                              <>
+                                <Tooltip title="Save changes" placement="top">
+                                  <button
+                                    onClick={() => handleSave(domain.id)}
+                                    className="inline-flex items-center p-1 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all duration-200"
+                                    disabled={editLoading}
+                                  >
+                                    {editLoading ? (
+                                      <CircularProgress size={12} />
+                                    ) : (
+                                      <FaCheck className="w-3 h-3" />
+                                    )}
+                                  </button>
+                                </Tooltip>
+                                <Tooltip title="Cancel editing" placement="top">
+                                  <button
+                                    onClick={handleCancel}
+                                    className="inline-flex items-center p-1 bg-gray-500 text-white rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500/20 transition-all duration-200"
+                                    disabled={editLoading}
+                                  >
+                                    <FaTimes className="w-3 h-3" />
+                                  </button>
+                                </Tooltip>
+                              </>
+                            ) : (
+                              <>
+                                {/* Conditionally show Activate/Buy button for non-active domains */}
+                                {domainStatus === 'Trial' ||
+                                domainStatus === 'Trial Expired' ? (
+                                  <>
+                                    {activePlan !== '' && tierPlan ? (
+                                      <Tooltip
+                                        title="Activate subscription"
+                                        placement="top"
+                                      >
+                                        <button
+                                          disabled={billingLoading}
+                                          onClick={() =>
+                                            handleSubscription(domain)
+                                          }
+                                          className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                          {billingLoading
+                                            ? 'Processing...'
+                                            : 'Activate'}
+                                        </button>
+                                      </Tooltip>
+                                    ) : appSumoCount < codeCount ? (
+                                      <Tooltip
+                                        title="Activate with promo code"
+                                        placement="top"
+                                      >
+                                        <button
+                                          onClick={() =>
+                                            handleOpenActivateModal(domain)
+                                          }
+                                          className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
+                                        >
+                                          Activate
+                                        </button>
+                                      </Tooltip>
+                                    ) : (
+                                      <Tooltip
+                                        title="Buy license"
+                                        placement="top"
+                                      >
+                                        <button
+                                          onClick={() => {
+                                            setPaymentView(true);
+                                            openModal();
+                                            setOptionalDomain(domain.url);
+                                          }}
+                                          className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
+                                        >
+                                          Buy License
+                                        </button>
+                                      </Tooltip>
+                                    )}
+                                  </>
+                                ) : null}
+                                <Tooltip title="Edit domain" placement="top">
+                                  <button
+                                    onClick={() => handleEdit(domain)}
+                                    className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                    aria-label={`Edit domain ${domain.url}`}
+                                  >
+                                    <FaCog className="w-4 h-4" />
+                                  </button>
+                                </Tooltip>
+                                <Tooltip title="Delete domain" placement="top">
+                                  <button
+                                    onClick={() => {
+                                      setDeleteSiteID(domain.id);
+                                      setDeleteSiteStatus(domainStatus);
+                                      setShowModal(true);
+                                    }}
+                                    className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                    aria-label={`Delete domain ${domain.url}`}
+                                  >
+                                    <FaTrash className="w-4 h-4" />
+                                  </button>
+                                </Tooltip>
+                              </>
+                            )}
+                          </div>
                         </div>
-                      )}
-                  </>
-                )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="lg:hidden space-y-3 px-4 sm:px-6 lg:px-8 pr-12">
+          {filteredDomains.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              {/* Empty State Image */}
+              <div className="mb-6">
+                <img
+                  src={notFoundImage}
+                  alt="No sites found"
+                  className="w-32 h-32 object-contain"
+                />
               </div>
-            );
-          })}
+
+              {/* Empty State Message */}
+              <div className="text-center mb-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  You currently have no sites in this list
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {activeTab === 'active'
+                    ? 'Add your first domain to get started with accessibility monitoring.'
+                    : 'No disabled sites found. Switch to Active sites to view your domains.'}
+                </p>
+              </div>
+
+              {/* Add New Domain Button */}
+              {activeTab === 'active' && (
+                <button
+                  onClick={() => {
+                    openModal();
+                  }}
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
+                >
+                  Add new domain
+                </button>
+              )}
+            </div>
+          ) : (
+            filteredDomains.map((domain) => {
+              const isEditing = editingId === domain.id;
+              const domainStatus = getDomainStatus(
+                domain.url,
+                domain.expiredAt,
+                domain.trial,
+                appSumoDomains,
+              );
+
+              return (
+                <MobileDomainCard
+                  key={domain.id}
+                  domain={domain}
+                  isEditing={isEditing}
+                  tempDomain={tempDomain}
+                  setTempDomain={setTempDomain}
+                  domainStatus={domainStatus}
+                  monitoringStates={monitoringStates}
+                  editLoading={editLoading}
+                  billingLoading={billingLoading}
+                  activePlan={activePlan}
+                  tierPlan={tierPlan}
+                  appSumoCount={appSumoCount}
+                  codeCount={codeCount}
+                  appSumoDomains={appSumoDomains}
+                  onEdit={handleEdit}
+                  onCancel={handleCancel}
+                  onSave={handleSave}
+                  onDelete={(id, status) => {
+                    setDeleteSiteID(id);
+                    setDeleteSiteStatus(status);
+                    setShowModal(true);
+                  }}
+                  onMonitoringToggle={handleMonitoringToggle}
+                  onSubscription={handleSubscription}
+                  onOpenActivateModal={handleOpenActivateModal}
+                  onPaymentView={() => {
+                    setPaymentView(true);
+                    openModal();
+                    setOptionalDomain(domain.url);
+                  }}
+                />
+              );
+            })
+          )}
         </div>
       </div>
     </>

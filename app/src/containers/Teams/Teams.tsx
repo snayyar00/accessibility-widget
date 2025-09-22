@@ -118,9 +118,6 @@ const Teams = ({ domains, setReloadSites, customerData }: any) => {
         }}
       />
 
-      <h3 className="font-bold text-[26px] leading-9 text-sapphire-blue mb-8">
-        Add new domain
-      </h3>
       <div className="add-domain-container">
         {/* <div className="add-domain-form-container">
           <form onSubmit={handleSubmit} className="add-domain-form">
