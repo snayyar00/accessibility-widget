@@ -128,27 +128,32 @@ function createHtmlcsArrayObj(issue: any) {
 }
 
 function calculateAccessibilityScore(issues: { errors: axeOutput[]; warnings: axeOutput[]; notices: axeOutput[] }) {
-  let score = 0
+  let penalty = 0
   const issueWeights: Record<string, number> = { error: 3, warning: 2, notice: 1 }
   const impactWeights: Record<string, number> = { critical: 4, serious: 3, moderate: 2, minor: 1 }
 
   issues.errors.forEach((issue) => {
     const impactWeight = impactWeights[issue.impact.toLowerCase()] || 0
-    score += issueWeights.error * impactWeight
+    penalty += issueWeights.error * impactWeight
   })
 
   issues.warnings.forEach((issue) => {
     const impactWeight = impactWeights[issue.impact.toLowerCase()] || 0
-    score += issueWeights.warning * impactWeight
+    penalty += issueWeights.warning * impactWeight
   })
 
   issues.notices.forEach((issue) => {
     const impactWeight = impactWeights[issue.impact.toLowerCase()] || 0
-    score += issueWeights.notice * impactWeight
+    penalty += issueWeights.notice * impactWeight
   })
-  // Normalize the score to a maximum of 70%
+
+  // Start with perfect score and subtract penalties
+  const perfectScore = 100
+  const finalScore = Math.max(0, perfectScore - penalty)
+
+  // Normalize the score to a maximum of 70% (before WebAbility bonus)
   const maxScore = 70
-  return Math.min(Math.floor(score), maxScore)
+  return Math.min(Math.floor(finalScore), maxScore)
 }
 
 /**
