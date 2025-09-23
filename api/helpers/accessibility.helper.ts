@@ -129,10 +129,12 @@ function createHtmlcsArrayObj(issue: any) {
 
 function calculateAccessibilityScore(issues: { errors: axeOutput[]; warnings: axeOutput[]; notices: axeOutput[] }) {
   let penalty = 0
+  const totalWCAGIssues = 83
   const totalIssues = issues.errors.length + issues.warnings.length + issues.notices.length
   const weightReduction = totalIssues > 50 ? 0.4 : totalIssues > 25 ? 0.5 : 1.0
-  const issueWeights: Record<string, number> = { error: 3 * weightReduction, warning: 2 * weightReduction, notice: 1 * weightReduction }
-  const impactWeights: Record<string, number> = { critical: 4 * weightReduction, serious: 3 * weightReduction, moderate: 2 * weightReduction, minor: 1 * weightReduction }
+  const issueWeights: Record<string, number> = { error: 7, warning: 3, notice: 1 }
+  const impactWeights: Record<string, number> = { critical: 10, serious: 7, moderate: 3, minor: 1 }
+  const passedweights = Math.max(totalWCAGIssues - totalIssues, 0) * 7
 
   issues.errors.forEach((issue) => {
     const impactWeight = impactWeights[issue.impact.toLowerCase()] || 0
@@ -149,9 +151,12 @@ function calculateAccessibilityScore(issues: { errors: axeOutput[]; warnings: ax
     penalty += issueWeights.notice * impactWeight
   })
 
-  // Start with perfect score and subtract penalties
-  const perfectScore = 100
-  const finalScore = Math.max(10, perfectScore - penalty)
+  // Calculate score using the formula: Score = (Passed Weights) / (Passed Weights + Failed Weights)
+  const failedWeights = penalty // penalty represents the failed weights
+  const scoreRatio = passedweights / (passedweights + failedWeights)
+  const finalScore = Math.max(10, scoreRatio * 100) // Convert ratio to 0-70 scale
+
+  //console.log('passedweights', passedweights, 'failedWeights', failedWeights, 'scoreRatio', scoreRatio, 'finalScore', finalScore)
 
   // Normalize the score to a maximum of 70% (before WebAbility bonus)
   const maxScore = 70
