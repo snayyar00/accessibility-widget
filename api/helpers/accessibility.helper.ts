@@ -129,8 +129,10 @@ function createHtmlcsArrayObj(issue: any) {
 
 function calculateAccessibilityScore(issues: { errors: axeOutput[]; warnings: axeOutput[]; notices: axeOutput[] }) {
   let penalty = 0
-  const issueWeights: Record<string, number> = { error: 3, warning: 2, notice: 1 }
-  const impactWeights: Record<string, number> = { critical: 4, serious: 3, moderate: 2, minor: 1 }
+  const totalIssues = issues.errors.length + issues.warnings.length + issues.notices.length
+  const weightReduction = totalIssues > 50 ? 0.4 : totalIssues > 25 ? 0.5 : 1.0
+  const issueWeights: Record<string, number> = { error: 3 * weightReduction, warning: 2 * weightReduction, notice: 1 * weightReduction }
+  const impactWeights: Record<string, number> = { critical: 4 * weightReduction, serious: 3 * weightReduction, moderate: 2 * weightReduction, minor: 1 * weightReduction }
 
   issues.errors.forEach((issue) => {
     const impactWeight = impactWeights[issue.impact.toLowerCase()] || 0
@@ -149,7 +151,7 @@ function calculateAccessibilityScore(issues: { errors: axeOutput[]; warnings: ax
 
   // Start with perfect score and subtract penalties
   const perfectScore = 100
-  const finalScore = Math.max(0, perfectScore - penalty)
+  const finalScore = Math.max(10, perfectScore - penalty)
 
   // Normalize the score to a maximum of 70% (before WebAbility bonus)
   const maxScore = 70
@@ -361,7 +363,7 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
 
   // Helper function to check if response is empty or has zero issues
   const isEmptyResponse = (data: any) => {
-    return !data || !data.issues || !Array.isArray(data.issues) || data.issues.length === 0 || (data.issues.length === 1 && !data.issues[0].runner) || data.issues.every((issue: any) => !issue.runner || !issue.type)
+    return !data || !data.issues
   }
 
   // Helper function to make scanner API request with retries
