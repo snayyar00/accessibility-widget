@@ -194,7 +194,8 @@ export async function takeScreenshot(
 
     // Create a new session
     session = await bb.sessions.create({
-      projectId: process.env.BROWSERBASE_PROJECT_ID,
+      projectId: process.env.BROWSERBASE_PROJECT_ID!,
+      proxies: true,
     })
 
     console.log('🔗 Connecting to remote browser...')
@@ -224,6 +225,31 @@ export async function takeScreenshot(
     // Create a CDP session for faster screenshots
     const client = await page.createCDPSession()
 
+    // Handle blocking JS dialogs
+    page.on('dialog', async (dialog: any) => {
+      console.log(`⚠️ Closing dialog: ${dialog.message()}`)
+      await dialog.dismiss()
+    })
+
+    // Handle popup windows
+    browser.on('targetcreated', async (target: any) => {
+      if (target.type() === 'page') {
+        const newPage = await target.page()
+        console.log('🪟 Closing unwanted popup window...')
+        await newPage.close()
+      }
+    })
+
+    // Remove DOM-based banners/modals
+    await page.evaluate(() => {
+      const selectors = ['#cookie-banner', '.cookie-consent', '.popup', '.modal', '.overlay']
+      selectors.forEach((sel: string) => {
+        const doc = (globalThis as any).document
+        if (doc) {
+          doc.querySelectorAll(sel).forEach((el: any) => el.remove())
+        }
+      })
+    })
     // Capture the screenshot using CDP
     const { data } = await client.send('Page.captureScreenshot', {
       format,
