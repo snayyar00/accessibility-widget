@@ -1,4 +1,10 @@
-import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import React, {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { parse } from 'tldts';
 import BannerImage from '@/assets/images/WebAbility Hero3.png';
 import SingleBannerImage from '@/assets/images/WebAbilityBanner.png';
@@ -145,6 +151,7 @@ const TrialBannerAndModal: React.FC<any> = ({
   const [promoCode, setPromoCode] = useState('');
   const { search } = useLocation();
   const trialReload = useRef(false);
+  const isMountedRef = useRef(true);
 
   const showPaymentModal = async () => {
     const sanitizedDomain = getRootDomain(formData.domainName);
@@ -209,59 +216,6 @@ const TrialBannerAndModal: React.FC<any> = ({
     }
   }, [search]);
 
-  useEffect(() => {
-    if (addedDomain?.url !== '' && paymentView !== true) {
-      if (activePlan !== '' && tierPlan) {
-        const handleSubscriptionAndRedirect = async () => {
-          try {
-            await handleSubscription();
-            window.location.href = '/add-domain';
-          } catch (error) {
-            console.error('Error handling subscription:', error);
-            toast.error('There was an error processing your subscription');
-          }
-        };
-        handleSubscriptionAndRedirect();
-      } else {
-        setPaymentView(true);
-      }
-    }
-  }, [addedDomain]);
-
-  useEffect(() => {
-    if (allDomains) {
-      if (domainName) {
-        const newdomain = allDomains.getUserSites.filter(
-          (site: any) => site.url == domainName,
-        )[0];
-        setDomainCount(allDomains.getUserSites.length);
-        if (newdomain) {
-          setAddedDomain(newdomain);
-        }
-      }
-      let trialSites = 0;
-      for (let site of allDomains?.getUserSites) {
-        if (site?.trial == 1) {
-          trialSites++;
-        }
-      }
-
-      setTrialMonthlyCount((prevCount) => prevCount + trialSites);
-    }
-  }, [allDomains]);
-
-  useEffect(() => {
-    if (allDomains) {
-      const newdomain = allDomains.getUserSites.filter(
-        (site: any) => site.url == optionalDomain,
-      )[0];
-      setDomainCount(allDomains.getUserSites.length);
-      if (newdomain) {
-        setAddedDomain(newdomain);
-      }
-    }
-  }, [optionalDomain]);
-
   const [subMonthlyCount, setSubMonthlyCount] = useState(0);
   const [subYearlyCount, setSubYearlyCount] = useState(0);
 
@@ -304,8 +258,6 @@ const TrialBannerAndModal: React.FC<any> = ({
             // setTrialsCount(trials.length);
           } catch (parseError) {
             console.error('Error parsing trial subscriptions:', parseError);
-            setTrialMonthlyCount(0);
-            setTrialYearlyCount(0);
           }
         }
 
@@ -343,7 +295,7 @@ const TrialBannerAndModal: React.FC<any> = ({
 
   let maxSites = appSumoCount * 2 || 2;
 
-  const handleSubscription = async () => {
+  const handleSubscription = useCallback(async () => {
     setBillingLoading(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
     const bodyData = {
@@ -375,22 +327,90 @@ const TrialBannerAndModal: React.FC<any> = ({
       }
 
       const data = await response.json();
-      toast.success('The domain was successfully added to your active plan');
-      setBillingLoading(false);
-      closeModal();
-      setPaymentView(false);
-      window.location.reload();
+      if (isMountedRef.current) {
+        toast.success('The domain was successfully added to your active plan');
+        setBillingLoading(false);
+        closeModal();
+        setPaymentView(false);
+        window.location.reload();
+      }
     } catch (error) {
       // Handle error
-      toast.error(
-        'You have reached the maximum number of allowed domains for this plan',
-      );
-      console.error('There was a problem with the fetch operation:', error);
-      setBillingLoading(false);
-      setPaymentView(false);
-      closeModal();
+      if (isMountedRef.current) {
+        toast.error(
+          'You have reached the maximum number of allowed domains for this plan',
+        );
+        console.error('There was a problem with the fetch operation:', error);
+        setBillingLoading(false);
+        setPaymentView(false);
+        closeModal();
+      }
     }
-  };
+  }, [activePlan, isYearly, addedDomain, userData, closeModal, setPaymentView]);
+
+  const handleSubscriptionAndRedirect = useCallback(async () => {
+    try {
+      await handleSubscription();
+      if (isMountedRef.current) {
+        window.location.href = '/add-domain';
+      }
+    } catch (error) {
+      console.error('Error handling subscription:', error);
+      if (isMountedRef.current) {
+        toast.error('There was an error processing your subscription');
+      }
+    }
+  }, [handleSubscription]);
+
+  useEffect(() => {
+    if (addedDomain?.url !== '' && paymentView !== true) {
+      if (activePlan !== '' && tierPlan) {
+        handleSubscriptionAndRedirect();
+      } else {
+        setPaymentView(true);
+      }
+    }
+  }, [
+    addedDomain,
+    paymentView,
+    activePlan,
+    tierPlan,
+    handleSubscriptionAndRedirect,
+  ]);
+
+  useEffect(() => {
+    if (allDomains) {
+      if (domainName) {
+        const newdomain = allDomains.getUserSites.filter(
+          (site: any) => site.url == domainName,
+        )[0];
+        setDomainCount(allDomains.getUserSites.length);
+        if (newdomain) {
+          setAddedDomain(newdomain);
+        }
+      }
+      let trialSites = 0;
+      for (let site of allDomains?.getUserSites) {
+        if (site?.trial == 1) {
+          trialSites++;
+        }
+      }
+
+      setTrialMonthlyCount((prevCount) => prevCount + trialSites);
+    }
+  }, [allDomains]);
+
+  useEffect(() => {
+    if (allDomains) {
+      const newdomain = allDomains.getUserSites.filter(
+        (site: any) => site.url == optionalDomain,
+      )[0];
+      setDomainCount(allDomains.getUserSites.length);
+      if (newdomain) {
+        setAddedDomain(newdomain);
+      }
+    }
+  }, [optionalDomain]);
 
   const upgradeAppSumo = async () => {
     if (promoCode.length <= 2) {
@@ -443,6 +463,13 @@ const TrialBannerAndModal: React.FC<any> = ({
       showPaymentModal();
     }
   }, [cardTrial]);
+
+  // Cleanup effect to prevent state updates on unmounted component
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const [formData, setFormData] = useState<DomainFormData>({ domainName: '' });
 
