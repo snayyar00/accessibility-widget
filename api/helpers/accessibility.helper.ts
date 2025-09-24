@@ -194,7 +194,8 @@ export async function takeScreenshot(
 
     // Create a new session
     session = await bb.sessions.create({
-      projectId: process.env.BROWSERBASE_PROJECT_ID,
+      projectId: process.env.BROWSERBASE_PROJECT_ID!,
+      proxies: true,
     })
 
     console.log('🔗 Connecting to remote browser...')
@@ -211,6 +212,23 @@ export async function takeScreenshot(
     // Set viewport size
     await page.setViewport({ width, height })
 
+    // Handle blocking JS dialogs
+    page.on('dialog', async (dialog: any) => {
+      console.log(`⚠️ Closing dialog: ${dialog.message()}`)
+      await dialog.dismiss()
+    })
+
+    // Handle popup windows
+    browser.on('targetcreated', async (target: any) => {
+      if (target.type() === 'page') {
+        const newPage = await target.page()
+        if (newPage) {
+          console.log('🪟 Closing unwanted popup window...')
+          await newPage.close()
+        }
+      }
+    })
+
     console.log(`🌐 Navigating to: ${url}`)
 
     // Navigate to the URL with timeout
@@ -224,6 +242,17 @@ export async function takeScreenshot(
     // Create a CDP session for faster screenshots
     const client = await page.createCDPSession()
 
+    // Remove DOM-based banners/modals
+    const getModalSelectors = () => {
+      return process.env.MODAL_SELECTORS?.split(',') || ['#cookie-banner', '.cookie-consent', '.popup', '.modal', '.overlay']
+    }
+
+    await page.evaluate((selectorsToRemove: string[]) => {
+      for (const selector of selectorsToRemove) {
+        // @ts-ignore - This code runs in browser context where document is available
+        document.querySelectorAll(selector).forEach((element: any) => element.remove())
+      }
+    }, getModalSelectors())
     // Capture the screenshot using CDP
     const { data } = await client.send('Page.captureScreenshot', {
       format,
