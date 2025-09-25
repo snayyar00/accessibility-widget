@@ -1,5 +1,13 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import './Accessibility.css'; // Ensure your CSS file includes styles for the accordion
+import greenSuccessImage from '@/assets/images/green_success.png';
+import messageIconImage from '@/assets/images/message_icon.png';
+import criticalIconImage from '@/assets/images/critical_icon.png';
+import moderateIconImage from '@/assets/images/moderate_icon.png';
+import mildIconImage from '@/assets/images/mild_icon.png';
+import oneIssuesIconImage from '@/assets/images/1_issues_icon.png';
+import twoIssuesIconImage from '@/assets/images/2_issues_icon.png';
+import threeIssuesIconImage from '@/assets/images/3_issues_icon.png';
 import { AiFillCloseCircle } from 'react-icons/ai';
 import { FaGaugeSimpleHigh } from 'react-icons/fa6';
 import { FaUniversalAccess, FaCheckCircle, FaCircle } from 'react-icons/fa';
@@ -105,6 +113,34 @@ const normalizeDomain = (url: string) =>
     .replace(/^https?:\/\//, '')
     .replace(/^www\./, '')
     .replace(/\/$/, '');
+
+// Helper function to get impact icon based on issue impact
+const getImpactIcon = (impact: string) => {
+  switch (impact?.toLowerCase()) {
+    case 'critical':
+      return criticalIconImage;
+    case 'moderate':
+      return moderateIconImage;
+    case 'mild':
+      return mildIconImage;
+    default:
+      return mildIconImage; // default fallback
+  }
+};
+
+// Helper function to get issue count icon based on issue impact
+const getIssueCountIcon = (impact: string) => {
+  switch (impact?.toLowerCase()) {
+    case 'critical':
+      return oneIssuesIconImage;
+    case 'moderate':
+      return twoIssuesIconImage;
+    case 'mild':
+      return threeIssuesIconImage;
+    default:
+      return oneIssuesIconImage; // default fallback
+  }
+};
 
 const AccessibilityReport = ({ currentDomain }: any) => {
   const { t } = useTranslation();
@@ -494,6 +530,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     const MAX_TOTAL_SCORE = 95;
     const issues = extractIssuesFromReport(reportData);
 
+    // Debug: Log the issues count to verify it's showing actual errors
+    console.log('Total issues found:', issues.length);
+    console.log('Issues sample:', issues.slice(0, 3));
+
     //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
     const baseScore = reportData.score || 0;
     const scriptCheckResult = reportData.scriptCheckResult;
@@ -511,7 +551,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     } else if (enhancedScore >= 50) {
       status = 'Partially Compliant';
       message =
-        'Your website is partially accessible. Some improvements are needed.';
+        'Your website is partially accessible.\nSome improvements are needed.';
       statusColor = [202, 138, 4]; // yellow-600
     } else {
       status = 'Not Compliant';
@@ -603,8 +643,23 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     );
 
     status = translatedStatus;
-    doc.setFillColor(21, 101, 192); // dark blue background
-    doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F');
+
+    // Set background color for all pages
+    const backgroundColor: [number, number, number] = [238, 245, 255]; // #eef5ff converted to RGB
+    doc.setFillColor(
+      backgroundColor[0],
+      backgroundColor[1],
+      backgroundColor[2],
+    );
+    doc.rect(
+      0,
+      0,
+      doc.internal.pageSize.getWidth(),
+      doc.internal.pageSize.getHeight(),
+      'F',
+    );
+
+    // Remove old dark header bar; design now uses a clean light background
 
     let logoBottomY = 0;
 
@@ -666,28 +721,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         drawWidth *= scale;
         drawHeight *= scale;
 
-        // Logo position
-        const logoX = 0;
-        const logoY = 3;
+        // Logo position - top left corner with minimal padding
+        const logoPadding = 8; // Reduced padding from top and left edges
+        const logoX = logoPadding;
+        const logoY = logoPadding;
 
-        const padding = 14;
-        const containerX = logoX - padding;
-        // Keep the container as before, do not move it up
-        const containerYOffset = 10;
-        const containerY = logoY - padding - containerYOffset;
-        const containerW = drawWidth + 2 * padding - 10;
-        const containerH = drawHeight + 2 * padding;
-        doc.setFillColor(255, 255, 255); // white
-        doc.roundedRect(
-          containerX,
-          containerY,
-          containerW,
-          containerH,
-          4,
-          4,
-          'F',
-        );
-
+        // Add logo image directly without white container
         doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
 
         if (logoUrl) {
@@ -697,171 +736,317 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           });
         }
 
-        logoBottomY = Math.max(logoY + drawHeight, containerY + containerH);
+        logoBottomY = logoY + drawHeight;
       }
     }
 
-    const containerWidth = 170;
-    const containerHeight = 60;
-    const containerX = 105 - containerWidth / 2;
-    const containerY = (logoBottomY || 0) + 10; // 10 units gap after logo
+    // --- HEADER AREA (Figma-aligned) ---
+    const pageWidth = doc.internal.pageSize.getWidth();
+    // Adjust header position to align with logo row
+    const headerTopY = Math.max(logoBottomY || 0, 30) + 5; // Ensure minimum spacing from top
 
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(220, 220, 220);
-    doc.setLineWidth(0.2);
-    doc.roundedRect(
-      containerX,
-      containerY,
-      containerWidth,
-      containerHeight,
-      4,
-      4,
-      'FD',
+    // Date and scanned URL text positioned at top right corner of the page
+    const scannedHost = (() => {
+      try {
+        return new URL(reportData.url).hostname || reportData.url;
+      } catch {
+        return reportData.url;
+      }
+    })();
+    doc.setFont('NotoSans_Condensed-Regular');
+    doc.setFontSize(9);
+    // Set date color to #A2ADF3
+    doc.setTextColor(162, 173, 243);
+    const formattedDate = new Date().toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'long',
+      day: '2-digit',
+      year: 'numeric',
+    });
+    // Position at top right corner with reduced padding (moved further right)
+    const topRightPadding = 12; // Reduced padding to move further right
+    const topRightY = 10; // Fixed position from top
+    doc.text(`${formattedDate}`, pageWidth - topRightPadding, topRightY, {
+      align: 'right',
+    });
+    // Reset color for scanner info
+    doc.setTextColor(100, 116, 139);
+    doc.text(
+      `${translatedLabel}${scannedHost}`,
+      pageWidth - topRightPadding,
+      topRightY + 6,
+      {
+        align: 'right',
+      },
     );
 
-    // Now draw the text inside the container, moved down accordingly
-    let textY = containerY + 13;
+    // Compliance status - positioned directly under the WebAbility logo
+    const cardX = 8; // Align with logo left edge (logoPadding)
+    const cardY = (logoBottomY || 0) + 14; // Moved down to position entire section lower
 
-    doc.setFontSize(15);
-    doc.setTextColor(0, 0, 0);
-    // Compose the full string and measure widths
-    let label = 'Scan results for ';
-    label = translatedLabel;
+    // Circular progress indicator with status-specific styling - Figma design
+    const badgeCX = cardX + 15; // Position on the left side
+    const badgeCY = cardY + 15; // Centered position for larger badge
+    const badgeR = 12; // Larger radius to match Figma design
 
-    const url = `${reportData.url}`;
-    const labelWidth = doc.getTextWidth(label);
-    const urlWidth = doc.getTextWidth(url);
-    const totalWidth = labelWidth + urlWidth;
-    // Calculate starting X so the whole line is centered
-    const startX = 105 - totalWidth / 2;
+    // Determine colors and icon based on status
+    let outerRingColor: [number, number, number];
+    let innerFillColor: [number, number, number];
+    let iconColor: [number, number, number];
+    let progressPercentage: number;
 
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.setTextColor(51, 65, 85); // slate-800 for message
-    doc.text(label, startX, textY, { align: 'left' });
-    // Draw the URL in bold, immediately after the label, no overlap
-
-    doc.text(url, startX + labelWidth, textY, { align: 'left' });
-    doc.setFont('NotoSans_Condensed-Regular');
-
-    textY += 12;
-    doc.setFontSize(20);
-    doc.setTextColor(...statusColor);
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.text(status, 105, textY, { align: 'center' });
-
-    message = translatedMessage;
-    textY += 9;
-    doc.setFontSize(12);
-    doc.setTextColor(51, 65, 85);
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.text(message, 105, textY, { align: 'center' });
-
-    textY += 9;
-    doc.setFontSize(10);
-    doc.setTextColor(51, 65, 85); // slate-800 for message
-    doc.text(`${new Date().toDateString()}`, 105, textY, { align: 'center' });
-
-    // --- END REPLACEMENT BLOCK ---
-
-    // --- ADD CIRCLES FOR TOTAL ERRORS AND PERCENTAGE ---
-    const circleY = containerY + containerHeight + 17;
-    const circleRadius = 15;
-    const centerX = 105;
-    const gap = 40;
-    const circle1X = centerX - circleRadius - gap / 2;
-    const circle2X = centerX + circleRadius + gap / 2;
-
-    // Circle 1: Total Errors (filled dark blue)
-    doc.setDrawColor(21, 101, 192);
-    doc.setLineWidth(1.5);
-    doc.setFillColor(21, 101, 192);
-    doc.circle(circle1X, circleY, circleRadius, 'FD');
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.setFontSize(19);
-    doc.setTextColor(255, 255, 255);
-
-    doc.text(`${issues.length}`, circle1X, circleY, {
-      align: 'center',
-      baseline: 'middle',
-    });
-
-    doc.setFontSize(10);
-    doc.setTextColor(21, 101, 192);
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.text(translatedTotalErrors, circle1X, circleY + circleRadius + 9, {
-      align: 'center',
-    });
-
-    doc.setDrawColor(33, 150, 243);
-    doc.setLineWidth(1.5);
-    doc.setFillColor(33, 150, 243);
-    doc.circle(circle2X, circleY, circleRadius, 'FD');
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.setFontSize(19);
-    doc.setTextColor(255, 255, 255);
-    const scoreText = `${Math.round(enhancedScore)}%`;
-    const scoreFontSize = 19;
-    doc.setFontSize(scoreFontSize);
-    const textHeight = scoreFontSize * 0.35;
-    doc.text(scoreText, circle2X, circleY, {
-      align: 'center',
-      baseline: 'middle',
-    });
-
-    doc.setFontSize(10);
-    doc.setTextColor(21, 101, 192);
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.text(translatedScore, circle2X, circleY + circleRadius + 9, {
-      align: 'center',
-    });
-    // --- END CIRCLES ---
-
-    // SEVERITY SUMMARY BOXES
-
-    const yStart = circleY + circleRadius + 15;
-    const total = issues.length;
-    const counts = {
-      critical: issues.filter((i) => i.impact === 'critical').length,
-      serious: issues.filter((i) => i.impact === 'serious').length,
-      moderate: issues.filter((i) => i.impact === 'moderate').length,
-    };
-
-    const summaryBoxes = [
-      {
-        label: translatedSevere,
-        count: counts.critical + counts.serious,
-        color: [255, 204, 204],
-      },
-      {
-        label: translatedModerate,
-        count: counts.moderate,
-        color: [187, 222, 251],
-      },
-      {
-        label: translatedMild,
-        count: total - (counts.critical + counts.serious + counts.moderate),
-        color: [225, 245, 254],
-      },
-    ];
-
-    let x = 18;
-    for (const box of summaryBoxes) {
-      // Add shadow to summary boxes
-      doc.setFillColor(245, 245, 245); // Very light gray for shadow
-      doc.roundedRect(x + 1, yStart + 1, 57, 22, 4, 4, 'F');
-
-      doc.setFillColor(box.color[0], box.color[1], box.color[2]);
-      doc.setDrawColor(220, 220, 220);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(x, yStart, 57, 22, 4, 4, 'FD');
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(13);
-      doc.setFont('NotoSans_Condensed-Regular');
-      doc.text(`${box.count}`, x + 5, yStart + 9);
-      doc.setFontSize(11);
-      doc.text(box.label, x + 5, yStart + 18);
-      x += 62;
+    if (status === 'Compliant') {
+      outerRingColor = [34, 197, 94]; // Bright green ring (green-500)
+      innerFillColor = [240, 253, 244]; // Light green fill (green-50)
+      iconColor = [34, 197, 94]; // Bright green checkmark (green-500)
+      progressPercentage = 0.95; // 95% filled
+    } else if (status === 'Partially Compliant') {
+      outerRingColor = [202, 138, 4]; // yellow-600
+      innerFillColor = [254, 252, 232]; // yellow-50
+      iconColor = [245, 158, 11]; // yellow-500
+      progressPercentage = 0.65; // 65% filled
+    } else {
+      // Not Compliant
+      outerRingColor = [220, 38, 38]; // red-600
+      innerFillColor = [254, 242, 242]; // red-50
+      iconColor = [239, 68, 68]; // red-500
+      progressPercentage = 0.25; // 25% filled
     }
+
+    // Draw outer ring
+    doc.setDrawColor(...outerRingColor);
+    doc.setLineWidth(3.2);
+    doc.circle(badgeCX, badgeCY, badgeR, 'S');
+
+    // Draw inner fill
+    doc.setFillColor(...innerFillColor);
+    doc.circle(badgeCX, badgeCY, badgeR - 3, 'F');
+
+    // Draw progress arc based on status
+    doc.setDrawColor(...iconColor);
+    doc.setLineWidth(2.5);
+    if ((doc as any).setLineCap) {
+      (doc as any).setLineCap('round');
+    }
+
+    // Draw progress arc (from top, clockwise)
+    const startAngle = -Math.PI / 2; // Start from top
+    const endAngle = startAngle + 2 * Math.PI * progressPercentage;
+
+    // Draw the progress arc
+    for (let angle = startAngle; angle <= endAngle; angle += 0.1) {
+      const x1 = badgeCX + Math.cos(angle) * (badgeR - 1.5);
+      const y1 = badgeCY + Math.sin(angle) * (badgeR - 1.5);
+      const x2 = badgeCX + Math.cos(angle + 0.1) * (badgeR - 1.5);
+      const y2 = badgeCY + Math.sin(angle + 0.1) * (badgeR - 1.5);
+      doc.line(x1, y1, x2, y2);
+    }
+
+    // Draw status-specific icon in center - compact size
+    doc.setDrawColor(...iconColor);
+    doc.setLineWidth(1.5); // Reduced line width for smaller icon
+    if ((doc as any).setLineCap) {
+      (doc as any).setLineCap('round');
+    }
+
+    if (status === 'Compliant') {
+      // Draw checkmark - larger size for Figma design
+      doc.line(badgeCX - 4, badgeCY + 1, badgeCX - 1, badgeCY + 4);
+      doc.line(badgeCX - 1, badgeCY + 4, badgeCX + 5, badgeCY - 3);
+    } else if (status === 'Partially Compliant') {
+      // Draw exclamation mark - larger size
+      doc.line(badgeCX, badgeCY - 4, badgeCX, badgeCY + 2);
+      doc.line(badgeCX, badgeCY + 4, badgeCX, badgeCY + 5);
+    } else {
+      // Not Compliant
+      // Draw X mark - larger size
+      doc.line(badgeCX - 4, badgeCY - 4, badgeCX + 4, badgeCY + 4);
+      doc.line(badgeCX + 4, badgeCY - 4, badgeCX - 4, badgeCY + 4);
+    }
+
+    // Status text positioned to the right of the icon - Figma design
+    doc.setTextColor(0, 0, 0); // Black color for status text
+    doc.setFont('NotoSans_Condensed-Regular');
+    doc.setFontSize(20); // Increased font size for better visibility
+    const statusTextX = badgeCX + 18; // Increased spacing from icon
+    const statusTextY = badgeCY - 8; // Align with center of icon
+    doc.text(status, statusTextX, statusTextY);
+
+    // Percentage pill positioned in the same row as status text - Figma design
+    const pillText = `${Math.round(enhancedScore)}%`;
+    doc.setFontSize(10); // Increased font size for Figma design
+    const textWidth = doc.getTextWidth(pillText);
+    const horizontalPadding = 4; // Reduced padding for tighter fit
+    const pillTextWidth = textWidth + horizontalPadding * 2; // Total width with padding
+    const pillH = 4; // Increased height for better appearance
+    const pillX = statusTextX + doc.getTextWidth(status) + 28; // Increased spacing from status text to prevent overlap
+    const pillY = statusTextY - 6; // Align with status text
+    // Convert #222D73 to RGB: R=34, G=45, B=115
+    doc.setFillColor(34, 45, 115);
+    doc.setTextColor(255, 255, 255);
+    doc.roundedRect(pillX, pillY, pillTextWidth, pillH + 4, 4, 4, 'F'); // Increased corner radius for more pill-like appearance
+    // Center the text horizontally within the pill
+    const textX = pillX + (pillTextWidth - textWidth) / 2;
+    const textY = pillY + pillH + 2;
+    doc.text(pillText, textX, textY);
+
+    // Sub message positioned below the status text and percentage pill - Figma design
+    message = translatedMessage;
+    doc.setFontSize(10); // Increased font size for Figma design
+    doc.setTextColor(71, 85, 105); // Gray color for message
+    // Split message into lines if it contains \n
+    const messageLines = message.split('\n');
+    let messageY = statusTextY + 12; // Maintained spacing below status text
+    messageLines.forEach((line, index) => {
+      doc.text(line, statusTextX, messageY + index * 6); // 6px spacing between lines
+    });
+
+    // Add "Great job!" message below the main message for Compliant status
+    if (status === 'Compliant') {
+      doc.setFontSize(9); // Slightly smaller font for secondary message
+      doc.setTextColor(71, 85, 105); // Same gray color
+      doc.text('Great job!', statusTextX, statusTextY + 20); // Maintained spacing below main message
+    }
+
+    // Cards positioned right-aligned with Compliant section on the left - ultra compact layout
+    const cardSpacing = 4; // Minimal spacing for compact layout
+    const totalErrorsCardWidth = 25; // Further reduced width for Total Errors card
+    const totalErrorsCardHeight = 20; // Reduced height for Total Errors card
+    const severityCardWidth = 40; // Further reduced width for Severity card
+    const severityCardHeight = 20; // Reduced height for Severity card
+
+    // Calculate right-aligned positioning
+    const totalCardsWidth =
+      totalErrorsCardWidth + severityCardWidth + cardSpacing;
+    const rightMargin = 12; // Right margin from page edge
+    const totalErrorsCardX = pageWidth - rightMargin - totalCardsWidth; // Right-aligned
+    const totalErrorsCardY = cardY; // Same Y as compliance section
+
+    // Total Errors card - no fill with reduced border width
+    doc.setDrawColor(162, 173, 243); // Light blue border (#A2ADF3)
+    doc.setLineWidth(0.3); // Reduced border line width
+    doc.roundedRect(
+      totalErrorsCardX,
+      totalErrorsCardY,
+      totalErrorsCardWidth,
+      totalErrorsCardHeight,
+      2, // Reduced corner radius
+      2,
+      'D', // Draw only (no fill)
+    );
+
+    // Title: "Total Errors" - dark blue color, positioned to the left
+    doc.setTextColor(21, 101, 192); // Dark blue color for title
+    doc.setFont('NotoSans_Condensed-Regular');
+    doc.setFontSize(8); // Increased font size for better readability
+    doc.text(
+      translatedTotalErrors,
+      totalErrorsCardX + 6, // Moved to the left (6px from left edge)
+      totalErrorsCardY + 8, // Moved down
+      { align: 'left' },
+    );
+
+    // Number: Large, prominent display in dark color, positioned to the left with reduced spacing
+    doc.setTextColor(30, 30, 30); // Dark, almost black color for the number
+    doc.setFontSize(18); // Increased font size for better prominence
+    doc.text(
+      `${issues.length}`,
+      totalErrorsCardX + 6, // Moved to the left (6px from left edge)
+      totalErrorsCardY + 14, // Moved down with title
+      {
+        align: 'left',
+      },
+    );
+
+    // Severity list card - positioned to the right of Total Errors card (right-aligned)
+    let severityCardX = totalErrorsCardX + totalErrorsCardWidth + cardSpacing;
+    let severityCardY = cardY; // Same Y as compliance section
+
+    // Ensure severity card doesn't go out of page (should not happen with right-alignment)
+    if (severityCardX + severityCardWidth > pageWidth - 12) {
+      // If it would overflow, position it below the Total Errors card instead
+      severityCardX = totalErrorsCardX;
+      severityCardY = cardY + totalErrorsCardHeight + 8;
+    }
+
+    // Severity card - no fill with reduced border width
+    doc.setDrawColor(162, 173, 243); // Light blue border (#A2ADF3)
+    doc.setLineWidth(0.3); // Reduced border line width
+    doc.roundedRect(
+      severityCardX,
+      severityCardY,
+      severityCardWidth,
+      severityCardHeight,
+      2, // Reduced corner radius
+      2,
+      'D', // Draw only (no fill)
+    );
+
+    const severityCounts = {
+      severe: issues.filter(
+        (i) => i.impact === 'critical' || i.impact === 'serious',
+      ).length,
+      moderate: issues.filter((i) => i.impact === 'moderate').length,
+      mild:
+        issues.length -
+        (issues.filter((i) => i.impact === 'critical').length +
+          issues.filter((i) => i.impact === 'serious').length +
+          issues.filter((i) => i.impact === 'moderate').length),
+    } as const;
+
+    const sevLineX = severityCardX + 4;
+    let sevLineY = severityCardY + 5; // Further reduced starting position for compact height
+    doc.setFontSize(8); // Increased font size for better readability
+    // Severe - red text (matching image)
+    doc.setTextColor(220, 38, 38); // Red color
+    doc.text(`${translatedSevere}`, sevLineX, sevLineY);
+    doc.setTextColor(30, 30, 30); // Dark, almost black color for count
+    doc.text(
+      `${severityCounts.severe}`,
+      severityCardX + severityCardWidth - 4,
+      sevLineY,
+      {
+        align: 'right',
+      },
+    );
+    // Moderate - orange text (matching image)
+    sevLineY += 5; // Further reduced line spacing for compact height
+    doc.setTextColor(202, 138, 4); // Orange color
+    doc.text(`${translatedModerate}`, sevLineX, sevLineY);
+    doc.setTextColor(30, 30, 30); // Dark, almost black color for count
+    doc.text(
+      `${severityCounts.moderate}`,
+      severityCardX + severityCardWidth - 4,
+      sevLineY,
+      {
+        align: 'right',
+      },
+    );
+    // Mild - blue text (matching image)
+    sevLineY += 5; // Further reduced line spacing for compact height
+    doc.setTextColor(33, 150, 243); // Blue color
+    doc.text(`${translatedMild}`, sevLineX, sevLineY);
+    doc.setTextColor(30, 30, 30); // Dark, almost black color for count
+    doc.text(
+      `${severityCounts.mild}`,
+      severityCardX + severityCardWidth - 4,
+      sevLineY,
+      {
+        align: 'right',
+      },
+    );
+    // --- END HEADER AREA ---
+
+    // Compute a reference Y for subsequent sections based on header
+    // Calculate bottom position based on the compliance status elements
+    const complianceBottomY = Math.max(
+      badgeCY + badgeR + 10, // Icon bottom + padding
+      statusTextY + 12 + 10, // Sub message bottom + padding
+    );
+    const headerBottomY = Math.max(complianceBottomY, severityCardY + 30);
+
+    // Start Y for category grid
+    const yStart = headerBottomY + 12;
 
     // Function to load SVG icons from the report icons folder
     const loadSVGIcon = async (category: string): Promise<string | null> => {
@@ -1368,39 +1553,37 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       return b[1] - a[1];
     });
 
-    let nextY = yStart + 30; // Start right after summary boxes
+    let nextY = yStart - 10; // Moved up more from summary boxes
 
     if (categoryData.length > 0) {
       // Section header
-      doc.setDrawColor(21, 101, 192);
-      doc.setLineWidth(0.5);
-      doc.line(30, nextY, 180, nextY);
+      // No horizontal separator in the new design
 
       doc.setFontSize(14);
-      doc.setTextColor(21, 101, 192);
+      doc.setTextColor(0, 0, 0); // Black color
       doc.setFont('NotoSans_Condensed-Regular');
-      doc.text(translatedIssuesDetectedByCategory, 105, nextY + 8, {
-        align: 'center',
+      doc.text(translatedIssuesDetectedByCategory, 12, nextY + 8, {
+        align: 'left',
       });
       let currentY = nextY + 18;
 
-      // Define category colors to match the display image
+      // Define category colors to match the Figma design - all blue theme
       const categoryColors = new Map<string, [number, number, number]>([
-        ['Content', [33, 150, 243]], // Blue 500
-        ['Cognitive', [25, 118, 210]], // Blue 700
-        ['Low Vision', [30, 136, 229]], // Blue 600 (darker, not too light)
-        ['Navigation', [21, 101, 192]], // Blue 800
-        ['Mobility', [66, 165, 245]], // Blue 400 (mid blue, not too light)
-        ['Other', [120, 144, 156]], // Blue Grey 700 (neutral, not light blue)
-        ['Forms', [2, 119, 189]], // Blue 700 (darker)
+        ['Content', [68, 90, 231]], // #445AE7 - new blue color
+        ['Cognitive', [68, 90, 231]], // #445AE7 - new blue color
+        ['Low Vision', [68, 90, 231]], // #445AE7 - new blue color
+        ['Navigation', [68, 90, 231]], // #445AE7 - new blue color
+        ['Mobility', [68, 90, 231]], // #445AE7 - new blue color
+        ['Other', [68, 90, 231]], // #445AE7 - new blue color
+        ['Forms', [68, 90, 231]], // #445AE7 - new blue color
       ]);
 
-      // Card layout - 3 columns, 2 rows to match the image exactly
-      const itemsPerRow = 3;
-      const cardWidth = 58; // Increased width
-      const cardHeight = 40; // Increased height
-      const cardSpacing = 3; // Reduced spacing
-      const startX = 12; // Adjusted start position
+      // Card layout - 2 columns, 3 rows to match the updated design
+      const itemsPerRow = 2;
+      const cardWidth = 90; // Increased width for better spacing
+      const cardHeight = 20; // Height to match Figma
+      const cardSpacing = 6; // Increased spacing for 2-column layout
+      const startX = 10; // Centered start position for wider 2-column layout
       const totalIssues = issues.length;
 
       // Ensure we have exactly these 6 categories in the right order
@@ -1445,150 +1628,184 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         const percentage = totalIssues > 0 ? (count / totalIssues) * 100 : 0;
         const categoryColor = categoryColors.get(category) || [107, 114, 128];
 
-        // Card background - clean white with subtle shadow
-        doc.setFillColor(250, 250, 250); // Very light shadow
-        doc.roundedRect(x + 0.5, y + 0.5, cardWidth, cardHeight, 2, 2, 'F');
-
-        doc.setFillColor(255, 255, 255); // Clean white background
-        doc.setDrawColor(230, 230, 230); // Light border
+        // Transparent card - no fill, just border
+        doc.setDrawColor(162, 173, 243); // #A2ADF3 border color
         doc.setLineWidth(0.3);
-        doc.roundedRect(x, y, cardWidth, cardHeight, 2, 2, 'FD');
+        doc.roundedRect(x, y, cardWidth, cardHeight, 1, 1, 'D');
 
-        // Category icon in colored rounded square - top left
-        const iconSize = 10;
-        const iconX = x + 4;
-        const iconY = y + 4;
+        // Category icon in colored rounded rectangle - left side like Figma design
+        const iconWidth = 8; // Width for the blue icon section
+        const iconHeight = cardHeight - 4; // Full height minus small padding
+        const iconX = x + 2;
+        const iconY = y + 2;
 
-        // Colored rounded square background for icon
+        // Colored rounded rectangle background for icon - blue like Figma
         doc.setFillColor(...categoryColor);
-        doc.roundedRect(iconX, iconY, iconSize, iconSize, 2, 2, 'F');
+        doc.roundedRect(iconX, iconY, iconWidth, iconHeight, 1, 1, 'F');
 
-        // Add white icon
+        // Add white icon centered in the blue rectangle
         const svgIcon = iconMap.get(category);
         if (svgIcon) {
-          // Add the SVG icon in white (smaller)
-          const svgSize = iconSize - 4; // Make SVG smaller
-          const svgOffset = (iconSize - svgSize) / 2; // Center the smaller SVG
+          // Add the SVG icon in white (centered in rectangle)
+          const svgSize = Math.min(iconWidth - 4, iconHeight - 4); // Fit within rectangle
+          const svgOffsetX = (iconWidth - svgSize) / 2; // Center horizontally
+          const svgOffsetY = (iconHeight - svgSize) / 2; // Center vertically
           doc.addImage(
             svgIcon,
             'PNG',
-            iconX + svgOffset,
-            iconY + svgOffset,
+            iconX + svgOffsetX,
+            iconY + svgOffsetY,
             svgSize,
             svgSize,
           );
         } else {
-          // Draw simple white icon shapes
+          // Draw simple white icon shapes centered in rectangle
           doc.setFillColor(255, 255, 255);
           doc.setDrawColor(255, 255, 255);
           doc.setLineWidth(0.4);
 
+          const iconCenterX = iconX + iconWidth / 2;
+          const iconCenterY = iconY + iconHeight / 2;
+
           if (category === 'Content') {
-            // Simple document icon
-            doc.rect(iconX + 2.5, iconY + 2, iconSize - 5, iconSize - 4, 'FD');
-            doc.setLineWidth(0.2);
-            doc.line(iconX + 3.5, iconY + 4, iconX + 6.5, iconY + 4);
-            doc.line(iconX + 3.5, iconY + 5.5, iconX + 6.5, iconY + 5.5);
+            // Nested diamond/square outlines like Figma - really tiny
+            doc.setLineWidth(0.05);
+            // Outer square
+            doc.rect(iconCenterX - 0.3, iconCenterY - 0.3, 0.6, 0.6, 'S');
+            // Middle square (offset)
+            doc.rect(iconCenterX - 0.2, iconCenterY - 0.2, 0.4, 0.4, 'S');
+            // Inner square (offset)
+            doc.rect(iconCenterX - 0.1, iconCenterY - 0.1, 0.2, 0.2, 'S');
           } else if (category === 'Cognitive') {
-            // Simple brain/puzzle piece
-            doc.circle(iconX + iconSize / 2, iconY + iconSize / 2, 2.5, 'FD');
-          } else if (category === 'Low Vision') {
-            // Simple eye icon
-            doc.ellipse(
-              iconX + iconSize / 2,
-              iconY + iconSize / 2,
-              3,
-              1.5,
-              'FD',
+            // Simple brain icon - really tiny circle
+            doc.setLineWidth(0.05);
+            doc.circle(iconCenterX, iconCenterY, 0.25, 'S');
+            // Tiny starburst
+            doc.line(
+              iconCenterX + 0.1,
+              iconCenterY - 0.02,
+              iconCenterX + 0.15,
+              iconCenterY - 0.05,
             );
-            doc.circle(iconX + iconSize / 2, iconY + iconSize / 2, 1, 'F');
+            doc.line(
+              iconCenterX + 0.1,
+              iconCenterY - 0.02,
+              iconCenterX + 0.12,
+              iconCenterY - 0.08,
+            );
+          } else if (category === 'Low Vision') {
+            // Simple eye icon - really tiny
+            doc.setLineWidth(0.05);
+            doc.ellipse(iconCenterX, iconCenterY, 0.25, 0.15, 'S');
+            doc.circle(iconCenterX, iconCenterY, 0.08, 'F');
           } else if (category === 'Navigation') {
-            // Simple arrow
-            doc.setLineWidth(0.6);
-            doc.line(iconX + 2, iconY + 6, iconX + 6, iconY + 2);
-            doc.line(iconX + 6, iconY + 2, iconX + 5, iconY + 3.5);
-            doc.line(iconX + 6, iconY + 2, iconX + 4.5, iconY + 3);
+            // Simple arrow icon - really tiny
+            doc.setLineWidth(0.05);
+            doc.line(
+              iconCenterX - 0.15,
+              iconCenterY + 0.1,
+              iconCenterX + 0.15,
+              iconCenterY - 0.1,
+            );
+            doc.line(
+              iconCenterX + 0.15,
+              iconCenterY - 0.1,
+              iconCenterX + 0.08,
+              iconCenterY - 0.02,
+            );
+            doc.line(
+              iconCenterX + 0.15,
+              iconCenterY - 0.1,
+              iconCenterX + 0.12,
+              iconCenterY - 0.1,
+            );
           } else if (category === 'Mobility') {
-            // Simple person icon
-            doc.circle(iconX + iconSize / 2, iconY + 3, 1, 'F');
-            doc.rect(iconX + iconSize / 2 - 0.5, iconY + 4.5, 1, 3, 'F');
+            // Simple person in wheelchair icon - really tiny
+            doc.setLineWidth(0.05);
+            doc.circle(iconCenterX, iconCenterY - 0.1, 0.08, 'F'); // Head
+            doc.rect(iconCenterX - 0.02, iconCenterY - 0.02, 0.04, 0.1, 'F'); // Body
+            // Wheelchair wheels
+            doc.circle(iconCenterX - 0.1, iconCenterY + 0.1, 0.08, 'S');
+            doc.circle(iconCenterX + 0.1, iconCenterY + 0.1, 0.08, 'S');
           } else {
-            // Simple gear/other icon
-            doc.circle(iconX + iconSize / 2, iconY + iconSize / 2, 2, 'FD');
+            // Simple info icon - three really tiny circles
+            doc.setLineWidth(0.05);
+            doc.circle(iconCenterX - 0.1, iconCenterY - 0.1, 0.05, 'F');
+            doc.circle(iconCenterX, iconCenterY, 0.05, 'F');
+            doc.circle(iconCenterX + 0.1, iconCenterY + 0.1, 0.05, 'F');
+            doc.line(
+              iconCenterX - 0.1,
+              iconCenterY - 0.1,
+              iconCenterX,
+              iconCenterY,
+            );
+            doc.line(
+              iconCenterX,
+              iconCenterY,
+              iconCenterX + 0.1,
+              iconCenterY + 0.1,
+            );
           }
         }
 
-        // Category name (below icon, clean)
-        doc.setFontSize(10);
+        // Category name (to the right of blue rectangle)
+        doc.setFontSize(9);
         doc.setTextColor(0, 0, 0);
         doc.setFont('NotoSans_Condensed-Regular');
-        const categoryX = x + 4;
-        const categoryY = y + 20;
+        const categoryX = x + iconWidth + 6; // Start after the blue rectangle
+        const categoryY = y + 6;
         doc.text(category, categoryX, categoryY);
 
-        // Get category text width to align count with it
-        const categoryWidth = doc.getTextWidth(category);
-
-        // Count number (right-aligned with category name in round rect)
-        doc.setFontSize(8);
-        doc.setTextColor(255, 255, 255);
+        // Right-aligned count text (no pill in Figma)
+        doc.setFontSize(9);
+        doc.setTextColor(107, 114, 128);
         doc.setFont('NotoSans_Condensed-Regular');
         const countText = count.toString();
-        const countWidth = doc.getTextWidth(countText);
+        const countX = x + cardWidth - 3;
+        const countY = categoryY;
+        doc.text(countText, countX, countY, { align: 'right' });
 
-        // Round rectangle background for count
-        const rectPadding = 3;
-        const rectWidth = countWidth + rectPadding * 2;
-        const rectHeight = 5.5;
-        const rectX = x + cardWidth - rectWidth - 4; // Right-aligned with card
-        const rectY = categoryY - rectHeight + 1.5;
-        doc.setFillColor(80, 80, 80); // Dark gray for better contrast
-        doc.roundedRect(rectX, rectY, rectWidth, rectHeight, 2.5, 2.5, 'F');
+        // Progress bar at bottom - matching Figma design
+        const progressBarWidth = cardWidth - iconWidth - 10; // Account for blue rectangle
+        const progressBarHeight = 2;
+        const progressBarX = x + iconWidth + 6; // Start after the blue rectangle
+        const progressBarY = y + cardHeight - 10;
 
-        // Count text
-        doc.text(countText, rectX + rectPadding, categoryY - 0.5);
-
-        // Progress bar at bottom
-        const progressBarWidth = cardWidth - 6;
-        const progressBarHeight = 3;
-        const progressBarX = x + 3;
-        const progressBarY = y + cardHeight - 9;
-
-        // Progress bar background
-        doc.setFillColor(240, 240, 240);
+        // Progress bar background - light blue-grey like Figma
+        doc.setFillColor(226, 232, 240);
         doc.roundedRect(
           progressBarX,
           progressBarY,
           progressBarWidth,
           progressBarHeight,
-          1.5,
-          1.5,
+          1,
+          1,
           'F',
         );
 
-        // Progress bar fill
+        // Progress bar fill - medium blue like Figma
         const fillWidth = (progressBarWidth * percentage) / 100;
         if (fillWidth > 1) {
-          doc.setFillColor(...categoryColor);
+          doc.setFillColor(68, 90, 231); // #445AE7 - new blue color
           doc.roundedRect(
             progressBarX,
             progressBarY,
             fillWidth,
             progressBarHeight,
-            1.5,
-            1.5,
+            1,
+            1,
             'F',
           );
         }
 
         // Percentage text
-        doc.setFontSize(7);
+        doc.setFontSize(6);
         doc.setTextColor(120, 120, 120);
         doc.setFont('NotoSans_Condensed-Regular');
         doc.text(
           `${percentage.toFixed(1)}% of total issues`,
-          x + 3,
-          y + cardHeight - 3,
+          x + iconWidth + 6, // Start after the blue rectangle
+          y + cardHeight - 4,
         );
       });
 
@@ -1597,13 +1814,313 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       nextY = currentY + totalRows * (cardHeight + 6) + 15; // Added more spacing
     }
 
-    let yTable = yStart + 40;
+    // --- ACCESSIBILITY COMPLIANCE PANEL (matches Figma) ---
+    const buildCompliancePanel = async (
+      startY: number,
+      hasWebAbility: boolean,
+    ) => {
+      const panelX = 8;
+      const panelW = pageWidth - 20;
+      const outerY = startY + 4; // Moved up
+
+      // Main container (compliance vs non-compliance styling)
+      const containerHeight = 90;
+      if (hasWebAbility) {
+        // Compliant state - light blue-grey background
+        doc.setFillColor(238, 245, 255); // Light blue-grey background
+        doc.setDrawColor(162, 173, 243); // Light blue border
+      } else {
+        // Non-compliant state - light red background
+        doc.setFillColor(254, 242, 242); // Light red background (#fef2f2)
+        doc.setDrawColor(248, 113, 113); // Red border (#f87171)
+      }
+      doc.setLineWidth(0.5);
+      doc.roundedRect(panelX, outerY, panelW, containerHeight, 4, 4, 'FD');
+
+      // Compliance status icon (top left)
+      const shieldX = panelX + 8;
+      const shieldY = outerY + 5;
+      const shieldSize = 20;
+
+      if (hasWebAbility) {
+        // Compliant state - green shield with checkmark
+        try {
+          const img = new Image();
+          img.src = greenSuccessImage;
+
+          // Wait for image to load
+          await new Promise<void>((resolve, reject) => {
+            let settled = false;
+            const TIMEOUT_MS = 3000; // 3 seconds timeout
+
+            const cleanup = () => {
+              img.onload = null;
+              img.onerror = null;
+            };
+
+            const timeoutId = setTimeout(() => {
+              if (!settled) {
+                settled = true;
+                cleanup();
+                reject(new Error('Green success image load timed out'));
+              }
+            }, TIMEOUT_MS);
+
+            img.onload = () => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timeoutId);
+              cleanup();
+              resolve();
+            };
+
+            img.onerror = () => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timeoutId);
+              cleanup();
+              reject(new Error('Green success image failed to load'));
+            };
+          });
+
+          // Add the image to PDF
+          doc.addImage(img, 'PNG', shieldX, shieldY, shieldSize, shieldSize);
+        } catch (error) {
+          console.warn(
+            'Failed to load green success image, falling back to drawn shield:',
+            error,
+          );
+
+          // Fallback: Draw green shield background if image fails to load
+          doc.setFillColor(34, 197, 94); // Bright green
+          doc.setDrawColor(34, 197, 94);
+          doc.setLineWidth(0.8);
+
+          // Shield shape (rounded rectangle with pointed bottom)
+          doc.roundedRect(
+            shieldX,
+            shieldY,
+            shieldSize * 0.7,
+            shieldSize * 0.8,
+            2,
+            2,
+            'F',
+          );
+          // Pointed bottom of shield
+          doc.triangle(
+            shieldX + shieldSize * 0.35 - 3,
+            shieldY + shieldSize * 0.8,
+            shieldX + shieldSize * 0.35,
+            shieldY + shieldSize * 0.95,
+            shieldX + shieldSize * 0.35 + 3,
+            shieldY + shieldSize * 0.8,
+            'F',
+          );
+
+          // White checkmark inside shield
+          doc.setDrawColor(255, 255, 255);
+          doc.setLineWidth(2.5);
+          const checkX = shieldX + shieldSize * 0.35;
+          const checkY = shieldY + shieldSize * 0.4;
+          doc.line(checkX - 4, checkY, checkX - 1.5, checkY + 3);
+          doc.line(checkX - 1.5, checkY + 3, checkX + 5, checkY - 3);
+        }
+      } else {
+        // Non-compliant state - red warning icon with exclamation mark
+        // Red circle background
+        doc.setFillColor(239, 68, 68); // Red background (#ef4444)
+        doc.setDrawColor(239, 68, 68);
+        doc.setLineWidth(0.8);
+        doc.circle(
+          shieldX + shieldSize * 0.5,
+          shieldY + shieldSize * 0.5,
+          shieldSize * 0.4,
+          'F',
+        );
+
+        // White exclamation mark inside circle
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(255, 255, 255);
+
+        // Calculate center position of the circle
+        const centerX = shieldX + shieldSize * 0.5;
+        const centerY = shieldY + shieldSize * 0.5;
+        const radius = shieldSize * 0.4;
+
+        // Exclamation mark body (vertical line) - better proportioned
+        const lineStartY = centerY - radius * 0.6; // Start higher
+        const lineEndY = centerY - radius * 0.1; // End closer to center
+        doc.setLineWidth(2.5);
+        doc.setLineCap('round');
+        doc.line(centerX, lineStartY, centerX, lineEndY);
+
+        // Exclamation mark dot - positioned with proper gap
+        const dotY = centerY + radius * 0.3;
+        doc.circle(centerX, dotY, 1.3, 'F');
+      }
+
+      // Title text (to the right of icon)
+      const titleX = shieldX + shieldSize + 4;
+      const titleY = shieldY + 8;
+
+      doc.setFont('NotoSans_Condensed-Regular');
+      doc.setFontSize(18);
+      doc.setTextColor(0, 0, 0); // Dark text
+
+      if (hasWebAbility) {
+        doc.text(translatedAccessibilityComplianceAchieved, titleX, titleY);
+      } else {
+        doc.text(translatedCriticalViolationsDetected, titleX, titleY);
+      }
+
+      // Subtitle text
+      doc.setFontSize(12);
+      doc.setTextColor(71, 85, 105); // Gray text
+      if (hasWebAbility) {
+        doc.text(translatedWebsiteCompliant, titleX, titleY + 10);
+      } else {
+        doc.text(translatedLegalActionWarning, titleX, titleY + 10);
+      }
+
+      // Nested box for compliance status
+      const innerX = panelX + 12;
+      const innerY = outerY + 30;
+      const innerW = panelW - 24;
+      const innerH = 55;
+
+      doc.setFillColor(255, 255, 255);
+      if (hasWebAbility) {
+        doc.setDrawColor(162, 173, 243); // #A2ADF3 border color for compliant
+      } else {
+        doc.setDrawColor(248, 113, 113); // Red border for non-compliant
+      }
+      doc.setLineWidth(0.5);
+      doc.roundedRect(innerX, innerY, innerW, innerH, 3, 3, 'FD');
+
+      // Status title
+      doc.setFontSize(11);
+      doc.setTextColor(30, 41, 59);
+      doc.setFont('NotoSans_Condensed-Regular');
+      if (hasWebAbility) {
+        doc.text(translatedComplianceStatus, innerX + 8, innerY + 8);
+      } else {
+        doc.text(translatedImmediateRisks, innerX + 8, innerY + 8);
+      }
+
+      // Status items with checkmarks or crosses
+      const itemStartX = innerX + 8;
+      const itemStartY = innerY + 16; // Increased spacing from title
+
+      const drawGreenCheck = (x: number, y: number) => {
+        // Simple green checkmark without circle background
+        doc.setDrawColor(34, 197, 94); // Green color
+        doc.setLineWidth(1.2); // Thinner lines for simple appearance
+        doc.setLineCap('round'); // Rounded line ends
+
+        // Draw simple checkmark shape
+        doc.line(x - 1.5, y - 0.5, x - 0.3, y + 0.7);
+        doc.line(x - 0.3, y + 0.7, x + 2, y - 2);
+      };
+
+      const drawRedCross = (x: number, y: number) => {
+        // Simple red X mark
+        doc.setDrawColor(239, 68, 68); // Red color (#ef4444)
+        doc.setLineWidth(1.2);
+        doc.setLineCap('round');
+
+        // Draw X shape
+        doc.line(x - 2, y - 2, x + 2, y + 2);
+        doc.line(x - 2, y + 2, x + 2, y - 2);
+      };
+
+      if (hasWebAbility) {
+        // Compliant state - show green checkmarks
+        // First item
+        drawGreenCheck(itemStartX, itemStartY);
+        doc.setFontSize(10);
+        doc.setTextColor(71, 85, 105);
+        doc.text(
+          translatedWebAbilityProtecting,
+          itemStartX + 8,
+          itemStartY + 1,
+        );
+
+        // Second item
+        drawGreenCheck(itemStartX, itemStartY + 10);
+        doc.text(
+          translatedAutomatedFixesApplied,
+          itemStartX + 8,
+          itemStartY + 11,
+        );
+
+        // WCAG Compliance status
+        drawGreenCheck(itemStartX, itemStartY + 20);
+        doc.setFontSize(9);
+        doc.setTextColor(71, 85, 105);
+        doc.text('WCAG 2.1 AA standards met', itemStartX + 8, itemStartY + 21);
+
+        // Legal protection status
+        drawGreenCheck(itemStartX, itemStartY + 30);
+        doc.text(
+          'Legal compliance maintained',
+          itemStartX + 8,
+          itemStartY + 31,
+        );
+      } else {
+        // Non-compliant state - show red crosses and warning text
+        // First item
+        drawRedCross(itemStartX, itemStartY);
+        doc.setFontSize(10);
+        doc.setTextColor(71, 85, 105);
+        doc.text(translatedPotentialLawsuits, itemStartX + 8, itemStartY + 1);
+
+        // Second item
+        drawRedCross(itemStartX, itemStartY + 10);
+        doc.text(translatedCustomerLoss, itemStartX + 8, itemStartY + 11);
+
+        // Third item
+        drawRedCross(itemStartX, itemStartY + 20);
+        doc.setFontSize(9);
+        doc.setTextColor(71, 85, 105);
+        doc.text(translatedSeoPenalties, itemStartX + 8, itemStartY + 21);
+
+        // Fourth item
+        drawRedCross(itemStartX, itemStartY + 30);
+        doc.text(translatedBrandDamage, itemStartX + 8, itemStartY + 31);
+      }
+
+      return outerY + containerHeight + 12; // bottom Y with spacing
+    };
+
+    const panelBottomY = await buildCompliancePanel(nextY, hasWebAbility);
+
+    let yTable = panelBottomY + 8;
 
     const pageHeight = doc.internal.pageSize.getHeight();
     const footerHeight = 15;
 
     // Helper to ensure array
     const toArray = (val: any) => (Array.isArray(val) ? val : val ? [val] : []);
+
+    // Helper function to add page with background color
+    const addPageWithBackground = (
+      doc: any,
+      backgroundColor: [number, number, number],
+    ) => {
+      doc.addPage();
+      doc.setFillColor(
+        backgroundColor[0],
+        backgroundColor[1],
+        backgroundColor[2],
+      );
+      doc.rect(
+        0,
+        0,
+        doc.internal.pageSize.getWidth(),
+        doc.internal.pageSize.getHeight(),
+        'F',
+      );
+    };
 
     // Helper: estimate heights to keep Issue + Message + Fix(es) together on one page
     const getColumnWidths = () => [38, 38, 50, 45];
@@ -1640,39 +2157,35 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       headerRightText: string,
       fixesList: string[],
     ) => {
-      // Row: Header (two cells, colSpan 2 each)
-      const headerLeftWidth = sumColumnsWidth(0, 2) - 16; // padding 8 + 8
-      const headerRightWidth = sumColumnsWidth(2, 2) - 16;
-      const headerLeftH = estimateCellHeight(
+      // Row 1: Issue header (full width) - reduced padding
+      const issueHeaderWidth = sumColumnsWidth(0, 4) - 16; // padding 8 + 8
+      const issueHeaderH = estimateCellHeight(
         headerLeftText,
-        headerLeftWidth,
+        issueHeaderWidth,
         14,
-        8,
-        8,
+        4, // Reduced top padding
+        2, // Reduced bottom padding
       );
-      const headerRightH = estimateCellHeight(
-        headerRightText,
-        headerRightWidth,
-        14,
-        8,
-        8,
-      );
-      const headerRowH = Math.max(headerLeftH, headerRightH);
 
-      // Row: Issue + Message (two cells)
-      const issueLeftText = issue.code ? `${issue.code} (${issue.impact})` : '';
-      const issueRightText = issue.message || '';
-      const issueLeftWidth = sumColumnsWidth(0, 2) - 20; // padding 10 + 10
-      const issueRightWidth = sumColumnsWidth(2, 2) - 20;
-      const issueLeftH = Math.max(
-        30,
-        estimateCellHeight(issueLeftText, issueLeftWidth, 12, 10, 10),
+      // Row 2: Issue content (full width) - reduced padding
+      const issueContentText = issue.code
+        ? `${issue.code} (${issue.impact})`
+        : '';
+      const issueContentWidth = sumColumnsWidth(0, 4) - 16; // padding 8 + 8
+      const issueContentH = Math.max(
+        20, // Reduced minimum height
+        estimateCellHeight(issueContentText, issueContentWidth, 12, 2, 4), // Reduced padding
       );
-      const issueRightH = Math.max(
-        30,
-        estimateCellHeight(issueRightText, issueRightWidth, 12, 10, 10),
+
+      // Row 3: Message header and content combined (full width) - reduced padding
+      const messageCombinedText = `${headerRightText}\n${issue.message || ''}`;
+      const messageCombinedWidth = sumColumnsWidth(0, 4) - 16; // padding 8 + 8
+      const messageCombinedH = Math.max(
+        40, // Increased minimum height for container
+        estimateCellHeight(messageCombinedText, messageCombinedWidth, 12, 8, 8), // Container padding
       );
-      const issueRowH = Math.max(issueLeftH, issueRightH);
+
+      const headerRowH = issueHeaderH + issueContentH + messageCombinedH;
 
       // Row: Fix heading (if any)
       let fixesBlockH = 0;
@@ -1698,7 +2211,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         fixesBlockH += Math.max(0, filtered.length - 1) * 6;
       }
 
-      return headerRowH + issueRowH + fixesBlockH;
+      return headerRowH + fixesBlockH;
     };
 
     // Build the rows
@@ -1736,13 +2249,25 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             3: { cellWidth: 45 },
           },
           rowPageBreak: 'auto',
-          tableLineColor: [226, 232, 240],
-          tableLineWidth: 0.5,
-          styles: {
-            lineColor: [255, 255, 255],
-            lineWidth: 0,
-            cellPadding: 8,
+          willDrawPage: (data: any) => {
+            // Apply background color to any new pages created by autoTable
+            // This is called before any content is drawn on the page
+            if (data.pageNumber > 1) {
+              doc.setFillColor(
+                backgroundColor[0],
+                backgroundColor[1],
+                backgroundColor[2],
+              );
+              doc.rect(
+                0,
+                0,
+                doc.internal.pageSize.getWidth(),
+                doc.internal.pageSize.getHeight(),
+                'F',
+              );
+            }
           },
+
           willDrawCell: (data: any) => {
             if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
               const pageHeight = doc.internal.pageSize.getHeight();
@@ -1858,7 +2383,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         });
 
         // Start a new page and reset tableBody
-        doc.addPage();
+        addPageWithBackground(doc, backgroundColor);
         tableBody = [];
         yTable = 10; // Standard top margin for new page
       }
@@ -1877,84 +2402,78 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
       // Build group table body for this issue (Issue header + Issue row + Fixes)
       const groupBody: any[] = [];
-      // Add header row for each issue with beautiful styling
+      // Row 1: Issue header and content (vertical layout)
+      const impactIcon = getImpactIcon(issue.impact);
+      const issueCountIcon = getIssueCountIcon(issue.impact);
       groupBody.push([
         {
-          content: translatedIssue,
-          colSpan: 2,
+          content: `      ${translatedIssue}`,
+          colSpan: 4,
           pageBreak: 'avoid', // Keep issue header with its content
           _isIssueFixGroupStart: true,
+          _isImpactIcon: true,
+          _impactIcon: impactIcon,
+          _isIssueCountIcon: true,
+          _issueCountIcon: issueCountIcon,
           _groupHeight: groupHeightEstimate,
           styles: {
-            fillColor: [255, 255, 255], // white background
             textColor: [0, 0, 0], // black text
             fontSize: 14,
-            halign: 'center',
-            cellPadding: 8,
-          },
-        },
-        {
-          content: translatedIssueMessage,
-          colSpan: 2,
-          pageBreak: 'avoid', // Keep issue header with its content
-          styles: {
-            fillColor: [255, 255, 255], // matching white background
-            textColor: [0, 0, 0], // black text
-            fontSize: 14,
-            halign: 'center',
-            cellPadding: 8,
+            halign: 'left',
+            cellPadding: { top: 4, right: 6, bottom: 2, left: -2 }, // Reduced vertical padding
+            font: 'NotoSans_Condensed-Regular',
+            fontStyle: 'bold',
           },
         },
       ]);
 
-      // Row 1: Issue + Message with elegant code block styling
+      // Row 2: Issue content
       groupBody.push([
         {
           content: `${issue.code ? `${issue.code} (${issue.impact})` : ''}`,
-          colSpan: 2,
+          colSpan: 4,
           pageBreak: 'avoid', // Keep with header
           styles: {
             fontSize: 12,
             textColor: [30, 41, 59],
             halign: 'left',
-            cellPadding: 10,
-            fillColor:
-              issue.impact === 'critical'
-                ? [255, 204, 204]
-                : issue.impact === 'Mild'
-                ? [225, 245, 254]
-                : issue.impact === 'moderate'
-                ? [187, 222, 251]
-                : [248, 250, 252],
+            cellPadding: { top: 2, right: 0, bottom: 1, left: -2 }, // Reduced vertical padding
             font: 'NotoSans_Condensed-Regular',
-            minCellHeight: 30,
-          },
-        },
-
-        {
-          content: `${issue.message || ''}`,
-          colSpan: 2,
-          pageBreak: 'avoid', // Keep with header
-          styles: {
-            fontSize: 12,
-            textColor: [30, 41, 59],
-            halign: 'left',
-            cellPadding: 10,
-            fillColor:
-              issue.impact === 'critical'
-                ? [255, 204, 204]
-                : issue.impact === 'Mild'
-                ? [225, 245, 254]
-                : issue.impact === 'moderate'
-                ? [187, 222, 251]
-                : [248, 250, 252],
-            font: 'NotoSans_Condensed-Regular',
-            minCellHeight: 30,
+            minCellHeight: 20, // Reduced minimum height
           },
         },
       ]);
 
-      // Row 3: Fix(es) - display heading first, then each fix in its own white back container with spacing
+      // Row 3: Message header and content in single container (responsive height)
+      const messageCombinedText = `        ${translatedIssueMessage}\n${
+        issue.message || ''
+      }`;
+      const messageAvailableWidth = sumColumnsWidth(0, 4) - 4; // padding 2 + 2
+      const messageMinH = estimateCellHeight(
+        messageCombinedText,
+        messageAvailableWidth,
+        12,
+        2,
+        2,
+      );
+      groupBody.push([
+        {
+          content: messageCombinedText,
+          colSpan: 4,
+          pageBreak: 'avoid', // Keep message header with its content
+          styles: {
+            textColor: [0, 0, 0], // black text
+            fontSize: 12,
+            halign: 'left',
+            cellPadding: { top: 2, right: 4, bottom: 2, left: 2 },
+            font: 'NotoSans_Condensed-Regular',
+            minCellHeight: messageMinH,
+          },
+          _isMessageContainer: true, // Flag for custom drawing
+        },
+      ]);
+
+      // Row 5: Fix(es) - display heading first, then each fix in its own white back container with spacing
       if (filteredFixes.length > 0) {
         // Heading row for Fix - ensure it stays with at least first fix
         groupBody.push([
@@ -1963,17 +2482,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             colSpan: 4,
             pageBreak: 'avoid', // Keep fix heading with first fix item
             styles: {
-              fontSize: 11,
+              fontSize: 14, // Increased to match other headers
               textColor: [0, 0, 0], // black text
               halign: 'left',
-              cellPadding: 5,
-              fillColor: [255, 255, 255], // white background
+              cellPadding: { top: -2, right: 8, bottom: 2, left: -4 }, // Reduced vertical padding
               lineWidth: 0,
               font: 'NotoSans_Condensed-Regular',
             },
           },
         ]);
-        // Each fix in its own row/container, with white background and spacing
+        // Each fix in its own row/container, with reduced spacing
         filteredFixes.forEach((fix, fixIdx) => {
           groupBody.push([
             {
@@ -1982,16 +2500,15 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               pageBreak: fixIdx === 0 ? 'avoid' : 'auto', // First fix must stay with heading
               styles: {
                 fontSize: 11,
-                textColor: [0, 0, 0], // black text
+                textColor: [101, 101, 101], // #656565
                 halign: 'left',
-                cellPadding: { top: 10, right: 8, bottom: 10, left: 8 }, // more vertical space for separation
-                fillColor: [255, 255, 255], // white background for back container
+                cellPadding: { top: 0, right: 8, bottom: 2, left: -4 }, // Reduced vertical space
                 lineWidth: 0,
                 font: 'NotoSans_Condensed-Regular',
               },
             },
           ]);
-          // Add a spacer row after each fix except the last
+          // Add a minimal spacer row after each fix except the last
           if (fixIdx < filteredFixes.length - 1) {
             groupBody.push([
               {
@@ -1999,9 +2516,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 colSpan: 4,
                 styles: {
                   cellPadding: 0,
-                  fillColor: [255, 255, 255],
                   lineWidth: 0,
-                  minCellHeight: 6, // vertical space between containers
+                  minCellHeight: 2, // Reduced vertical space between containers
                 },
               },
             ]);
@@ -2009,67 +2525,71 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         });
       }
 
-      // Append Context rows to the same group so Fix and Context never split
+      // Append Context as a single combined code block (Figma-style)
       const groupContexts = toArray(issue.context).filter(Boolean);
       if (groupContexts.length > 0) {
         groupBody.push([
           {
             content: translatedContext,
             colSpan: 4,
-            pageBreak: 'avoid',
+            pageBreak: 'auto',
             styles: {
-              fontSize: 11,
+              fontSize: 14, // Increased to match other headers
               textColor: [0, 0, 0],
               halign: 'left',
-              cellPadding: 5,
-              fillColor: [255, 255, 255],
+              cellPadding: { top: 4, right: 8, bottom: 2, left: -4 }, // Reduced vertical padding
               lineWidth: 0,
+              font: 'NotoSans_Condensed-Regular',
             },
           },
         ]);
 
-        groupContexts.forEach((ctx, index) => {
-          const combinedContent = `${index + 1}. ${ctx}`;
+        // Create one row per context line to allow natural page breaks
+        // Helper to compute responsive height per code line based on wrapped width
+        const calcMinHeightForContextLine = (text: string) => {
+          const cellWidth = sumColumnsWidth(0, 4);
+          const padding = 2;
+          const leftIndexPadding = 8;
+          const maxIndexDigits = String(groupContexts.length).length;
+          const indexColWidth =
+            doc.getTextWidth('9'.repeat(maxIndexDigits)) + 12;
+          const availableWidth =
+            cellWidth - padding * 2 - indexColWidth - leftIndexPadding - 8;
+          const lineH = 6;
+          const topPad = 6;
+          const bottomPad = 2;
+          doc.setFont('NotoSans_Condensed-Regular', 'normal');
+          doc.setFontSize(10);
+          const lines = doc.splitTextToSize(
+            String(text || ''),
+            Math.max(5, availableWidth),
+          );
+          const textH = Math.max(lineH, lines.length * lineH);
+          return Math.max(18, topPad + textH + bottomPad);
+        };
+
+        groupContexts.forEach((ctx, idx) => {
           groupBody.push([
             {
-              content: combinedContent,
+              content: String(ctx || ''),
               colSpan: 4,
-              pageBreak: index === 0 ? 'avoid' : 'auto',
-              rowSpan: 1,
+              pageBreak: 'auto',
               styles: {
                 font: 'NotoSans_Condensed-Regular',
                 fontSize: 10,
                 textColor: [255, 255, 255],
-                fillColor: [255, 255, 255],
                 halign: 'left',
                 valign: 'top',
-                cellPadding: 8,
+                cellPadding: 0,
                 lineWidth: 0,
-                minCellHeight: Math.max(
-                  20,
-                  Math.ceil(combinedContent.length / 50) * 6,
-                ),
+                minCellHeight: calcMinHeightForContextLine(String(ctx || '')),
                 overflow: 'linebreak',
               },
-              _isCodeBlock: true,
-              _originalContent: combinedContent,
-              _indexNumber: index + 1,
+              _isCombinedCodeLine: true,
+              _lineIndex: idx + 1,
+              _totalLines: groupContexts.length,
             } as any,
           ]);
-          if (index < groupContexts.length - 1) {
-            groupBody.push([
-              {
-                content: '',
-                colSpan: 4,
-                styles: {
-                  fillColor: [255, 255, 255],
-                  cellPadding: 0,
-                  lineWidth: 0,
-                  minCellHeight: 8,
-                },
-              },
-            ]);
-          }
         });
       }
 
@@ -2087,13 +2607,25 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           3: { cellWidth: 45 },
         },
         rowPageBreak: 'avoid',
-        tableLineColor: [226, 232, 240],
-        tableLineWidth: 0.5,
-        styles: {
-          lineColor: [255, 255, 255],
-          lineWidth: 0,
-          cellPadding: 8,
+        willDrawPage: (data: any) => {
+          // Apply background color to any new pages created by autoTable
+          // This is called before any content is drawn on the page
+          if (data.pageNumber > 1) {
+            doc.setFillColor(
+              backgroundColor[0],
+              backgroundColor[1],
+              backgroundColor[2],
+            );
+            doc.rect(
+              0,
+              0,
+              doc.internal.pageSize.getWidth(),
+              doc.internal.pageSize.getHeight(),
+              'F',
+            );
+          }
         },
+
         willDrawCell: (data: any) => {
           if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
             const pageH = doc.internal.pageSize.getHeight();
@@ -2113,6 +2645,40 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             const bottomPad = 4;
             const textH = lines.length * lineH + topPad + bottomPad;
             const estH = Math.max(textH, 30);
+            if (curY + estH > pageH - bottom) return false;
+          }
+          // Combined code line overflow check (per line, permits natural page breaks)
+          if (data.cell.raw && (data.cell.raw as any)._isCombinedCodeLine) {
+            const pageH = doc.internal.pageSize.getHeight();
+            const curY = data.cursor.y;
+            const bottom = 25;
+            const text: string = String((data.cell.raw as any).content || '');
+            const padding = 2;
+            const leftIndexPadding = 8;
+            const totalLines = Number((data.cell.raw as any)._totalLines || 1);
+            const maxIndexDigits = String(totalLines).length;
+            const indexColWidth =
+              doc.getTextWidth('9'.repeat(maxIndexDigits)) + 12;
+            const availableWidth =
+              data.cell.width -
+              padding * 2 -
+              indexColWidth -
+              leftIndexPadding -
+              8;
+            const lineH = 6;
+            const topPad = 6;
+            const bottomPad = 2;
+            let total = topPad;
+            doc.setFont('NotoSans_Condensed-Regular', 'normal');
+            doc.setFontSize(10);
+            const lines = doc.splitTextToSize(
+              text,
+              Math.max(5, availableWidth),
+            );
+            total += Math.max(lineH, lines.length * lineH);
+            total += 2; // spacing after line
+            total += bottomPad;
+            const estH = Math.max(30, total);
             if (curY + estH > pageH - bottom) return false;
           }
           return true;
@@ -2172,6 +2738,304 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               codeTextY += 4;
             });
           }
+          // Custom drawing for a single context code line (Figma-style, per row)
+          if (data.cell.raw && (data.cell.raw as any)._isCombinedCodeLine) {
+            const { x, y, width, height } = data.cell;
+            const padding = 2;
+            const cornerRadius = 2;
+            const totalLines = Number((data.cell.raw as any)._totalLines || 1);
+            const lineIndex = Number((data.cell.raw as any)._lineIndex || 1);
+            const maxIndexDigits = String(totalLines).length;
+            const indexColWidth =
+              doc.getTextWidth('9'.repeat(maxIndexDigits)) + 12;
+
+            // Outer light-blue container
+            doc.setDrawColor(162, 173, 243);
+            doc.setLineWidth(0.6);
+            doc.setFillColor(238, 245, 255);
+            doc.roundedRect(
+              x + padding,
+              y + padding,
+              width - padding * 2,
+              height - padding * 2,
+              cornerRadius,
+              cornerRadius,
+              'FD',
+            );
+
+            // Transparent gutter for line numbers (no fill)
+
+            // Transparent code area (no white fill)
+            const codeAreaX = x + padding + indexColWidth + 1;
+            const codeAreaW = width - padding * 2 - indexColWidth - 2;
+
+            // Divider between gutter and code area
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.4);
+            doc.line(
+              x + padding + indexColWidth,
+              y + padding,
+              x + padding + indexColWidth,
+              y + height - padding,
+            );
+
+            // Draw numbered lines
+            const lineH = 6;
+            const leftIndexPadding = 8;
+            const codeTextX = x + padding + indexColWidth + 6;
+            const availableWidth =
+              width - padding * 2 - indexColWidth - leftIndexPadding - 12;
+
+            doc.setFont('NotoSans_Condensed-Regular', 'normal');
+            doc.setFontSize(10);
+
+            const numDigits = Math.max(2, maxIndexDigits);
+            const text = String((data.cell.raw as any).content || '');
+            const lines = doc.splitTextToSize(
+              text,
+              Math.max(5, availableWidth),
+            );
+            const textBlockH = Math.max(lineH, lines.length * lineH);
+            const innerH = height - padding * 2;
+            let cursorY = y + padding + (innerH - textBlockH) / 2 + lineH - 1;
+
+            // Line number in muted blue, vertically centered with text
+            doc.setTextColor(162, 173, 243);
+            const num = String(lineIndex).padStart(numDigits, '0');
+            const numX = x + padding + indexColWidth - 3;
+            doc.text(num, numX, cursorY, { align: 'right' });
+
+            // Code content with simple HTML syntax highlighting
+            const drawHighlightedHtmlLine = (
+              line: string,
+              startX: number,
+              y: number,
+            ) => {
+              // Custom palette requested by user
+              const colorDefault: [number, number, number] = [51, 67, 173]; // #3343AD
+              const colorKeyword: [number, number, number] = [216, 19, 68]; // #D81344
+              const colorString: [number, number, number] = [84, 156, 39]; // #549C27
+
+              // Keywords: attribute names and common element names to emphasize
+              const keywordSet = new Set<string>([
+                'class',
+                'style',
+                'button',
+                'input',
+                'a',
+                'div',
+                'span',
+                'p',
+                'h1',
+                'h2',
+                'h3',
+                'h4',
+                'h5',
+                'h6',
+                'img',
+                'form',
+                'label',
+                'textarea',
+                'select',
+                'option',
+                'ul',
+                'ol',
+                'li',
+                'section',
+                'header',
+                'footer',
+                'nav',
+              ]);
+
+              let xPos = startX;
+              let i = 0;
+              const len = line.length;
+
+              const draw = (text: string, color: [number, number, number]) => {
+                if (!text) return;
+                doc.setTextColor(color[0], color[1], color[2]);
+                doc.text(text, xPos, y);
+                xPos += doc.getTextWidth(text);
+              };
+
+              const isNameChar = (ch: string) => /[A-Za-z0-9_:-]/.test(ch);
+
+              while (i < len) {
+                const ch = line[i];
+                if (ch === '<') {
+                  // '<' or '</'
+                  draw('<', colorDefault);
+                  i++;
+                  if (line[i] === '/') {
+                    draw('/', colorDefault);
+                    i++;
+                  }
+                  // tag name
+                  let name = '';
+                  while (i < len && isNameChar(line[i])) {
+                    name += line[i++];
+                  }
+                  draw(
+                    name,
+                    keywordSet.has(name) ? colorKeyword : colorDefault,
+                  );
+                  // attributes until '>'
+                  while (i < len && line[i] !== '>') {
+                    if (line[i] === ' ') {
+                      // preserve spacing
+                      let spaces = '';
+                      while (i < len && line[i] === ' ') spaces += line[i++];
+                      draw(spaces, colorDefault);
+                      continue;
+                    }
+                    // attribute name
+                    let attr = '';
+                    while (i < len && isNameChar(line[i])) attr += line[i++];
+                    if (attr)
+                      draw(
+                        attr,
+                        keywordSet.has(attr) ? colorKeyword : colorDefault,
+                      );
+                    // optional = and value
+                    if (line[i] === '=') {
+                      draw('=', colorDefault);
+                      i++;
+                      let quote = '';
+                      if (line[i] === '"' || line[i] === "'") {
+                        quote = line[i++];
+                        draw(quote, colorString);
+                        let val = '';
+                        while (i < len && line[i] !== quote) val += line[i++];
+                        draw(val, colorString);
+                        if (line[i] === quote) {
+                          draw(quote, colorString);
+                          i++;
+                        }
+                      }
+                    }
+                    // other chars inside tag
+                    if (line[i] && line[i] !== '>' && line[i] !== ' ') {
+                      draw(line[i], colorDefault);
+                      i++;
+                    }
+                  }
+                  if (line[i] === '>') {
+                    draw('>', colorDefault);
+                    i++;
+                  }
+                } else {
+                  // text outside tags
+                  let textRun = '';
+                  while (i < len && line[i] !== '<') textRun += line[i++];
+                  draw(textRun, colorDefault);
+                }
+              }
+            };
+
+            doc.setTextColor(51, 65, 85);
+            lines.forEach((ln: string) => {
+              drawHighlightedHtmlLine(ln, codeTextX + 2, cursorY);
+              cursorY += lineH;
+            });
+          }
+          // Custom drawing for message container with colored background
+          if (data.cell.raw && (data.cell.raw as any)._isMessageContainer) {
+            const { x, y, width, height } = data.cell;
+            const padding = 6;
+            const cornerRadius = 6;
+
+            // Draw the colored background container
+            doc.setDrawColor(162, 173, 243); // Same color for border
+            doc.setLineWidth(0.5);
+            doc.roundedRect(
+              x + padding - 8,
+              y + padding - 8,
+              width - padding + 12,
+              height - padding - 7,
+              2,
+              2,
+              'D',
+            );
+
+            // Draw message icon before the text using simple shapes
+            const iconSize = 4;
+            const iconX = x + padding - 3;
+            const iconY = y + padding - 4;
+
+            // Add the message icon image
+            try {
+              doc.addImage(
+                messageIconImage,
+                'PNG',
+                iconX,
+                iconY,
+                iconSize,
+                iconSize,
+              );
+            } catch (error) {
+              console.warn('Failed to load message icon:', error);
+            }
+
+            // Reset text color for the content
+          }
+
+          // Custom drawing for issue count icon (before text)
+          if (data.cell.raw && (data.cell.raw as any)._isIssueCountIcon) {
+            const { x, y, width, height } = data.cell;
+            const iconSize = 5;
+
+            // Draw colored line before the issue
+            doc.setDrawColor(115, 131, 237); // #7383ED color
+            doc.setLineWidth(0.2);
+            doc.line(x, y - 1, x + width, y - 1);
+
+            // Position icon before the text content
+            const iconX = x - 2; // Small margin from left edge
+            const iconY = y + 4;
+
+            // Add the issue count icon image
+            try {
+              doc.addImage(
+                (data.cell.raw as any)._issueCountIcon,
+                'PNG',
+                iconX,
+                iconY,
+                iconSize,
+                iconSize,
+              );
+            } catch (error) {
+              console.warn('Failed to load issue count icon:', error);
+            }
+          }
+
+          // Custom drawing for impact icon (after text)
+          if (data.cell.raw && (data.cell.raw as any)._isImpactIcon) {
+            const { x, y, width, height } = data.cell;
+            const iconSize = 6;
+
+            // Position icon right after the text content
+            // Get text width to position icon after the translated issue text
+            const textContent = (data.cell.raw as any).content;
+            doc.setFont('NotoSans_Condensed-Regular', 'bold');
+            doc.setFontSize(14);
+            const textWidth = doc.getTextWidth(textContent);
+            const iconX = x + textWidth + 1; // 5px margin after text
+            const iconY = y + 4;
+
+            // Add the impact icon image
+            try {
+              doc.addImage(
+                (data.cell.raw as any)._impactIcon,
+                'PNG',
+                iconX,
+                iconY,
+                iconSize * 3, // Increase width by 50%
+                iconSize, // Keep height the same
+              );
+            } catch (error) {
+              console.warn('Failed to load impact icon:', error);
+            }
+          }
         },
       };
 
@@ -2187,7 +3051,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           : 0;
         const availableBottom = pageHeight - footerHeight;
         if (yTable + bodyHeight > availableBottom) {
-          doc.addPage();
+          addPageWithBackground(doc, backgroundColor);
           yTable = 10;
           groupOptions.startY = yTable;
         }
@@ -2236,7 +3100,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               textColor: [30, 41, 59],
               halign: 'center',
               cellPadding: 6,
-              fillColor: [237, 242, 247],
               minCellHeight: 18,
             },
           } as any,
@@ -2252,7 +3115,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               halign: 'center',
               valign: 'middle',
               cellPadding: 8,
-              fillColor: [248, 250, 252],
+
               minCellHeight: screenshotHeight + 20, // Add padding around image
             },
             _isScreenshot: true,
@@ -2279,7 +3142,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               textColor: [0, 0, 0],
               halign: 'left',
               cellPadding: 5,
-              fillColor: [255, 255, 255],
               lineWidth: 0,
             },
           },
@@ -2299,7 +3161,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 font: 'NotoSans_Condensed-Regular',
                 fontSize: 10,
                 textColor: [255, 255, 255], // This will be overridden by didDrawCell
-                fillColor: [255, 255, 255], // White background for the cell
                 halign: 'left',
                 valign: 'top',
                 cellPadding: 8,
@@ -2324,7 +3185,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 content: '',
                 colSpan: 4,
                 styles: {
-                  fillColor: [255, 255, 255],
                   cellPadding: 0,
                   lineWidth: 0,
                   minCellHeight: 8,
@@ -2349,13 +3209,25 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             3: { cellWidth: 45 },
           },
           rowPageBreak: 'avoid',
-          tableLineColor: [226, 232, 240],
-          tableLineWidth: 0.5,
-          styles: {
-            lineColor: [255, 255, 255],
-            lineWidth: 0,
-            cellPadding: 8,
+          willDrawPage: (data: any) => {
+            // Apply background color to any new pages created by autoTable
+            // This is called before any content is drawn on the page
+            if (data.pageNumber > 1) {
+              doc.setFillColor(
+                backgroundColor[0],
+                backgroundColor[1],
+                backgroundColor[2],
+              );
+              doc.rect(
+                0,
+                0,
+                doc.internal.pageSize.getWidth(),
+                doc.internal.pageSize.getHeight(),
+                'F',
+              );
+            }
           },
+
           // Keep code block and screenshot hooks for this table
           willDrawCell: (data: any) => {
             if (data.cell.raw && (data.cell.raw as any)._isCodeBlock) {
@@ -2637,6 +3509,10 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     const MAX_TOTAL_SCORE = 95;
     const issues = extractIssuesFromReport(reportData);
 
+    // Debug: Log the issues count to verify it's showing actual errors
+    console.log('Total issues found:', issues.length);
+    console.log('Issues sample:', issues.slice(0, 3));
+
     //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
     const baseScore = reportData.score || 0;
     const scriptCheckResult = reportData.scriptCheckResult;
@@ -2654,7 +3530,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     } else if (enhancedScore >= 50) {
       status = 'Partially Compliant';
       message =
-        'Your website is partially accessible. Some improvements are needed.';
+        'Your website is partially accessible.\nSome improvements are needed.';
       statusColor = [202, 138, 4]; // yellow-600
     } else {
       status = 'Not Compliant';
@@ -2746,8 +3622,23 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     );
 
     status = translatedStatus;
-    doc.setFillColor(21, 101, 192); // dark blue background
-    doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F');
+
+    // Set background color for all pages
+    const backgroundColor: [number, number, number] = [238, 245, 255]; // #eef5ff converted to RGB
+    doc.setFillColor(
+      backgroundColor[0],
+      backgroundColor[1],
+      backgroundColor[2],
+    );
+    doc.rect(
+      0,
+      0,
+      doc.internal.pageSize.getWidth(),
+      doc.internal.pageSize.getHeight(),
+      'F',
+    );
+
+    // Remove old dark header bar; design now uses a clean light background
 
     let logoBottomY = 0;
 
@@ -2809,28 +3700,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         drawWidth *= scale;
         drawHeight *= scale;
 
-        // Logo position
-        const logoX = 0;
-        const logoY = 3;
+        // Logo position - top left corner with minimal padding
+        const logoPadding = 8; // Reduced padding from top and left edges
+        const logoX = logoPadding;
+        const logoY = logoPadding;
 
-        const padding = 14;
-        const containerX = logoX - padding;
-        // Keep the container as before, do not move it up
-        const containerYOffset = 10;
-        const containerY = logoY - padding - containerYOffset;
-        const containerW = drawWidth + 2 * padding - 10;
-        const containerH = drawHeight + 2 * padding;
-        doc.setFillColor(255, 255, 255); // white
-        doc.roundedRect(
-          containerX,
-          containerY,
-          containerW,
-          containerH,
-          4,
-          4,
-          'F',
-        );
-
+        // Add logo image directly without white container
         doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
 
         if (logoUrl) {
@@ -2840,171 +3715,317 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           });
         }
 
-        logoBottomY = Math.max(logoY + drawHeight, containerY + containerH);
+        logoBottomY = logoY + drawHeight;
       }
     }
 
-    const containerWidth = 170;
-    const containerHeight = 60;
-    const containerX = 105 - containerWidth / 2;
-    const containerY = (logoBottomY || 0) + 10; // 10 units gap after logo
+    // --- HEADER AREA (Figma-aligned) ---
+    const pageWidth = doc.internal.pageSize.getWidth();
+    // Adjust header position to align with logo row
+    const headerTopY = Math.max(logoBottomY || 0, 30) + 5; // Ensure minimum spacing from top
 
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(220, 220, 220);
-    doc.setLineWidth(0.2);
-    doc.roundedRect(
-      containerX,
-      containerY,
-      containerWidth,
-      containerHeight,
-      4,
-      4,
-      'FD',
+    // Date and scanned URL text positioned at top right corner of the page
+    const scannedHost = (() => {
+      try {
+        return new URL(reportData.url).hostname || reportData.url;
+      } catch {
+        return reportData.url;
+      }
+    })();
+    doc.setFont('NotoSans_Condensed-Regular');
+    doc.setFontSize(9);
+    // Set date color to #A2ADF3
+    doc.setTextColor(162, 173, 243);
+    const formattedDate = new Date().toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'long',
+      day: '2-digit',
+      year: 'numeric',
+    });
+    // Position at top right corner with reduced padding (moved further right)
+    const topRightPadding = 12; // Reduced padding to move further right
+    const topRightY = 10; // Fixed position from top
+    doc.text(`${formattedDate}`, pageWidth - topRightPadding, topRightY, {
+      align: 'right',
+    });
+    // Reset color for scanner info
+    doc.setTextColor(100, 116, 139);
+    doc.text(
+      `${translatedLabel}${scannedHost}`,
+      pageWidth - topRightPadding,
+      topRightY + 6,
+      {
+        align: 'right',
+      },
     );
 
-    // Now draw the text inside the container, moved down accordingly
-    let textY = containerY + 13;
+    // Compliance status - positioned directly under the WebAbility logo
+    const cardX = 8; // Align with logo left edge (logoPadding)
+    const cardY = (logoBottomY || 0) + 14; // Moved down to position entire section lower
 
-    doc.setFontSize(15);
-    doc.setTextColor(0, 0, 0);
-    // Compose the full string and measure widths
-    let label = 'Scan results for ';
-    label = translatedLabel;
+    // Circular progress indicator with status-specific styling - Figma design
+    const badgeCX = cardX + 15; // Position on the left side
+    const badgeCY = cardY + 15; // Centered position for larger badge
+    const badgeR = 12; // Larger radius to match Figma design
 
-    const url = `${reportData.url}`;
-    const labelWidth = doc.getTextWidth(label);
-    const urlWidth = doc.getTextWidth(url);
-    const totalWidth = labelWidth + urlWidth;
-    // Calculate starting X so the whole line is centered
-    const startX = 105 - totalWidth / 2;
+    // Determine colors and icon based on status
+    let outerRingColor: [number, number, number];
+    let innerFillColor: [number, number, number];
+    let iconColor: [number, number, number];
+    let progressPercentage: number;
 
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.setTextColor(51, 65, 85); // slate-800 for message
-    doc.text(label, startX, textY, { align: 'left' });
-    // Draw the URL in bold, immediately after the label, no overlap
-
-    doc.text(url, startX + labelWidth, textY, { align: 'left' });
-    doc.setFont('NotoSans_Condensed-Regular');
-
-    textY += 12;
-    doc.setFontSize(20);
-    doc.setTextColor(...statusColor);
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.text(status, 105, textY, { align: 'center' });
-
-    message = translatedMessage;
-    textY += 9;
-    doc.setFontSize(12);
-    doc.setTextColor(51, 65, 85);
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.text(message, 105, textY, { align: 'center' });
-
-    textY += 9;
-    doc.setFontSize(10);
-    doc.setTextColor(51, 65, 85); // slate-800 for message
-    doc.text(`${new Date().toDateString()}`, 105, textY, { align: 'center' });
-
-    // --- END REPLACEMENT BLOCK ---
-
-    // --- ADD CIRCLES FOR TOTAL ERRORS AND PERCENTAGE ---
-    const circleY = containerY + containerHeight + 17;
-    const circleRadius = 15;
-    const centerX = 105;
-    const gap = 40;
-    const circle1X = centerX - circleRadius - gap / 2;
-    const circle2X = centerX + circleRadius + gap / 2;
-
-    // Circle 1: Total Errors (filled dark blue)
-    doc.setDrawColor(21, 101, 192);
-    doc.setLineWidth(1.5);
-    doc.setFillColor(21, 101, 192);
-    doc.circle(circle1X, circleY, circleRadius, 'FD');
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.setFontSize(19);
-    doc.setTextColor(255, 255, 255);
-
-    doc.text(`${issues.length}`, circle1X, circleY, {
-      align: 'center',
-      baseline: 'middle',
-    });
-
-    doc.setFontSize(10);
-    doc.setTextColor(21, 101, 192);
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.text(translatedTotalErrors, circle1X, circleY + circleRadius + 9, {
-      align: 'center',
-    });
-
-    doc.setDrawColor(33, 150, 243);
-    doc.setLineWidth(1.5);
-    doc.setFillColor(33, 150, 243);
-    doc.circle(circle2X, circleY, circleRadius, 'FD');
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.setFontSize(19);
-    doc.setTextColor(255, 255, 255);
-    const scoreText = `${Math.round(enhancedScore)}%`;
-    const scoreFontSize = 19;
-    doc.setFontSize(scoreFontSize);
-    const textHeight = scoreFontSize * 0.35;
-    doc.text(scoreText, circle2X, circleY, {
-      align: 'center',
-      baseline: 'middle',
-    });
-
-    doc.setFontSize(10);
-    doc.setTextColor(21, 101, 192);
-    doc.setFont('NotoSans_Condensed-Regular');
-    doc.text(translatedScore, circle2X, circleY + circleRadius + 9, {
-      align: 'center',
-    });
-    // --- END CIRCLES ---
-
-    // SEVERITY SUMMARY BOXES
-
-    const yStart = circleY + circleRadius + 15;
-    const total = issues.length;
-    const counts = {
-      critical: issues.filter((i) => i.impact === 'critical').length,
-      serious: issues.filter((i) => i.impact === 'serious').length,
-      moderate: issues.filter((i) => i.impact === 'moderate').length,
-    };
-
-    const summaryBoxes = [
-      {
-        label: translatedSevere,
-        count: counts.critical + counts.serious,
-        color: [255, 204, 204],
-      },
-      {
-        label: translatedModerate,
-        count: counts.moderate,
-        color: [187, 222, 251],
-      },
-      {
-        label: translatedMild,
-        count: total - (counts.critical + counts.serious + counts.moderate),
-        color: [225, 245, 254],
-      },
-    ];
-
-    let x = 18;
-    for (const box of summaryBoxes) {
-      // Add shadow to summary boxes
-      doc.setFillColor(245, 245, 245); // Very light gray for shadow
-      doc.roundedRect(x + 1, yStart + 1, 57, 22, 4, 4, 'F');
-
-      doc.setFillColor(box.color[0], box.color[1], box.color[2]);
-      doc.setDrawColor(220, 220, 220);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(x, yStart, 57, 22, 4, 4, 'FD');
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(13);
-      doc.setFont('NotoSans_Condensed-Regular');
-      doc.text(`${box.count}`, x + 5, yStart + 9);
-      doc.setFontSize(11);
-      doc.text(box.label, x + 5, yStart + 18);
-      x += 62;
+    if (status === 'Compliant') {
+      outerRingColor = [34, 197, 94]; // Bright green ring (green-500)
+      innerFillColor = [240, 253, 244]; // Light green fill (green-50)
+      iconColor = [34, 197, 94]; // Bright green checkmark (green-500)
+      progressPercentage = 0.95; // 95% filled
+    } else if (status === 'Partially Compliant') {
+      outerRingColor = [202, 138, 4]; // yellow-600
+      innerFillColor = [254, 252, 232]; // yellow-50
+      iconColor = [245, 158, 11]; // yellow-500
+      progressPercentage = 0.65; // 65% filled
+    } else {
+      // Not Compliant
+      outerRingColor = [220, 38, 38]; // red-600
+      innerFillColor = [254, 242, 242]; // red-50
+      iconColor = [239, 68, 68]; // red-500
+      progressPercentage = 0.25; // 25% filled
     }
+
+    // Draw outer ring
+    doc.setDrawColor(...outerRingColor);
+    doc.setLineWidth(3.2);
+    doc.circle(badgeCX, badgeCY, badgeR, 'S');
+
+    // Draw inner fill
+    doc.setFillColor(...innerFillColor);
+    doc.circle(badgeCX, badgeCY, badgeR - 3, 'F');
+
+    // Draw progress arc based on status
+    doc.setDrawColor(...iconColor);
+    doc.setLineWidth(2.5);
+    if ((doc as any).setLineCap) {
+      (doc as any).setLineCap('round');
+    }
+
+    // Draw progress arc (from top, clockwise)
+    const startAngle = -Math.PI / 2; // Start from top
+    const endAngle = startAngle + 2 * Math.PI * progressPercentage;
+
+    // Draw the progress arc
+    for (let angle = startAngle; angle <= endAngle; angle += 0.1) {
+      const x1 = badgeCX + Math.cos(angle) * (badgeR - 1.5);
+      const y1 = badgeCY + Math.sin(angle) * (badgeR - 1.5);
+      const x2 = badgeCX + Math.cos(angle + 0.1) * (badgeR - 1.5);
+      const y2 = badgeCY + Math.sin(angle + 0.1) * (badgeR - 1.5);
+      doc.line(x1, y1, x2, y2);
+    }
+
+    // Draw status-specific icon in center - compact size
+    doc.setDrawColor(...iconColor);
+    doc.setLineWidth(1.5); // Reduced line width for smaller icon
+    if ((doc as any).setLineCap) {
+      (doc as any).setLineCap('round');
+    }
+
+    if (status === 'Compliant') {
+      // Draw checkmark - larger size for Figma design
+      doc.line(badgeCX - 4, badgeCY + 1, badgeCX - 1, badgeCY + 4);
+      doc.line(badgeCX - 1, badgeCY + 4, badgeCX + 5, badgeCY - 3);
+    } else if (status === 'Partially Compliant') {
+      // Draw exclamation mark - larger size
+      doc.line(badgeCX, badgeCY - 4, badgeCX, badgeCY + 2);
+      doc.line(badgeCX, badgeCY + 4, badgeCX, badgeCY + 5);
+    } else {
+      // Not Compliant
+      // Draw X mark - larger size
+      doc.line(badgeCX - 4, badgeCY - 4, badgeCX + 4, badgeCY + 4);
+      doc.line(badgeCX + 4, badgeCY - 4, badgeCX - 4, badgeCY + 4);
+    }
+
+    // Status text positioned to the right of the icon - Figma design
+    doc.setTextColor(0, 0, 0); // Black color for status text
+    doc.setFont('NotoSans_Condensed-Regular');
+    doc.setFontSize(20); // Increased font size for better visibility
+    const statusTextX = badgeCX + 18; // Increased spacing from icon
+    const statusTextY = badgeCY - 8; // Align with center of icon
+    doc.text(status, statusTextX, statusTextY);
+
+    // Percentage pill positioned in the same row as status text - Figma design
+    const pillText = `${Math.round(enhancedScore)}%`;
+    doc.setFontSize(10); // Increased font size for Figma design
+    const textWidth = doc.getTextWidth(pillText);
+    const horizontalPadding = 4; // Reduced padding for tighter fit
+    const pillTextWidth = textWidth + horizontalPadding * 2; // Total width with padding
+    const pillH = 4; // Increased height for better appearance
+    const pillX = statusTextX + doc.getTextWidth(status) + 28; // Increased spacing from status text to prevent overlap
+    const pillY = statusTextY - 6; // Align with status text
+    // Convert #222D73 to RGB: R=34, G=45, B=115
+    doc.setFillColor(34, 45, 115);
+    doc.setTextColor(255, 255, 255);
+    doc.roundedRect(pillX, pillY, pillTextWidth, pillH + 4, 4, 4, 'F'); // Increased corner radius for more pill-like appearance
+    // Center the text horizontally within the pill
+    const textX = pillX + (pillTextWidth - textWidth) / 2;
+    const textY = pillY + pillH + 2;
+    doc.text(pillText, textX, textY);
+
+    // Sub message positioned below the status text and percentage pill - Figma design
+    message = translatedMessage;
+    doc.setFontSize(10); // Increased font size for Figma design
+    doc.setTextColor(71, 85, 105); // Gray color for message
+    // Split message into lines if it contains \n
+    const messageLines = message.split('\n');
+    let messageY = statusTextY + 12; // Maintained spacing below status text
+    messageLines.forEach((line, index) => {
+      doc.text(line, statusTextX, messageY + index * 6); // 6px spacing between lines
+    });
+
+    // Add "Great job!" message below the main message for Compliant status
+    if (status === 'Compliant') {
+      doc.setFontSize(9); // Slightly smaller font for secondary message
+      doc.setTextColor(71, 85, 105); // Same gray color
+      doc.text('Great job!', statusTextX, statusTextY + 20); // Maintained spacing below main message
+    }
+
+    // Cards positioned right-aligned with Compliant section on the left - ultra compact layout
+    const cardSpacing = 4; // Minimal spacing for compact layout
+    const totalErrorsCardWidth = 25; // Further reduced width for Total Errors card
+    const totalErrorsCardHeight = 20; // Reduced height for Total Errors card
+    const severityCardWidth = 40; // Further reduced width for Severity card
+    const severityCardHeight = 20; // Reduced height for Severity card
+
+    // Calculate right-aligned positioning
+    const totalCardsWidth =
+      totalErrorsCardWidth + severityCardWidth + cardSpacing;
+    const rightMargin = 12; // Right margin from page edge
+    const totalErrorsCardX = pageWidth - rightMargin - totalCardsWidth; // Right-aligned
+    const totalErrorsCardY = cardY; // Same Y as compliance section
+
+    // Total Errors card - no fill with reduced border width
+    doc.setDrawColor(162, 173, 243); // Light blue border (#A2ADF3)
+    doc.setLineWidth(0.3); // Reduced border line width
+    doc.roundedRect(
+      totalErrorsCardX,
+      totalErrorsCardY,
+      totalErrorsCardWidth,
+      totalErrorsCardHeight,
+      2, // Reduced corner radius
+      2,
+      'D', // Draw only (no fill)
+    );
+
+    // Title: "Total Errors" - dark blue color, positioned to the left
+    doc.setTextColor(21, 101, 192); // Dark blue color for title
+    doc.setFont('NotoSans_Condensed-Regular');
+    doc.setFontSize(8); // Increased font size for better readability
+    doc.text(
+      translatedTotalErrors,
+      totalErrorsCardX + 6, // Moved to the left (6px from left edge)
+      totalErrorsCardY + 8, // Moved down
+      { align: 'left' },
+    );
+
+    // Number: Large, prominent display in dark color, positioned to the left with reduced spacing
+    doc.setTextColor(30, 30, 30); // Dark, almost black color for the number
+    doc.setFontSize(18); // Increased font size for better prominence
+    doc.text(
+      `${issues.length}`,
+      totalErrorsCardX + 6, // Moved to the left (6px from left edge)
+      totalErrorsCardY + 14, // Moved down with title
+      {
+        align: 'left',
+      },
+    );
+
+    // Severity list card - positioned to the right of Total Errors card (right-aligned)
+    let severityCardX = totalErrorsCardX + totalErrorsCardWidth + cardSpacing;
+    let severityCardY = cardY; // Same Y as compliance section
+
+    // Ensure severity card doesn't go out of page (should not happen with right-alignment)
+    if (severityCardX + severityCardWidth > pageWidth - 12) {
+      // If it would overflow, position it below the Total Errors card instead
+      severityCardX = totalErrorsCardX;
+      severityCardY = cardY + totalErrorsCardHeight + 8;
+    }
+
+    // Severity card - no fill with reduced border width
+    doc.setDrawColor(162, 173, 243); // Light blue border (#A2ADF3)
+    doc.setLineWidth(0.3); // Reduced border line width
+    doc.roundedRect(
+      severityCardX,
+      severityCardY,
+      severityCardWidth,
+      severityCardHeight,
+      2, // Reduced corner radius
+      2,
+      'D', // Draw only (no fill)
+    );
+
+    const severityCounts = {
+      severe: issues.filter(
+        (i) => i.impact === 'critical' || i.impact === 'serious',
+      ).length,
+      moderate: issues.filter((i) => i.impact === 'moderate').length,
+      mild:
+        issues.length -
+        (issues.filter((i) => i.impact === 'critical').length +
+          issues.filter((i) => i.impact === 'serious').length +
+          issues.filter((i) => i.impact === 'moderate').length),
+    } as const;
+
+    const sevLineX = severityCardX + 4;
+    let sevLineY = severityCardY + 5; // Further reduced starting position for compact height
+    doc.setFontSize(8); // Increased font size for better readability
+    // Severe - red text (matching image)
+    doc.setTextColor(220, 38, 38); // Red color
+    doc.text(`${translatedSevere}`, sevLineX, sevLineY);
+    doc.setTextColor(30, 30, 30); // Dark, almost black color for count
+    doc.text(
+      `${severityCounts.severe}`,
+      severityCardX + severityCardWidth - 4,
+      sevLineY,
+      {
+        align: 'right',
+      },
+    );
+    // Moderate - orange text (matching image)
+    sevLineY += 5; // Further reduced line spacing for compact height
+    doc.setTextColor(202, 138, 4); // Orange color
+    doc.text(`${translatedModerate}`, sevLineX, sevLineY);
+    doc.setTextColor(30, 30, 30); // Dark, almost black color for count
+    doc.text(
+      `${severityCounts.moderate}`,
+      severityCardX + severityCardWidth - 4,
+      sevLineY,
+      {
+        align: 'right',
+      },
+    );
+    // Mild - blue text (matching image)
+    sevLineY += 5; // Further reduced line spacing for compact height
+    doc.setTextColor(33, 150, 243); // Blue color
+    doc.text(`${translatedMild}`, sevLineX, sevLineY);
+    doc.setTextColor(30, 30, 30); // Dark, almost black color for count
+    doc.text(
+      `${severityCounts.mild}`,
+      severityCardX + severityCardWidth - 4,
+      sevLineY,
+      {
+        align: 'right',
+      },
+    );
+    // --- END HEADER AREA ---
+
+    // Compute a reference Y for subsequent sections based on header
+    // Calculate bottom position based on the compliance status elements
+    const complianceBottomY = Math.max(
+      badgeCY + badgeR + 10, // Icon bottom + padding
+      statusTextY + 12 + 10, // Sub message bottom + padding
+    );
+    const headerBottomY = Math.max(complianceBottomY, severityCardY + 30);
+
+    // Start Y for category grid
+    const yStart = headerBottomY + 12;
 
     // Function to load SVG icons from the report icons folder
     const loadSVGIcon = async (category: string): Promise<string | null> => {
@@ -3511,39 +4532,37 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       return b[1] - a[1];
     });
 
-    let nextY = yStart + 30; // Start right after summary boxes
+    let nextY = yStart - 10; // Moved up more from summary boxes
 
     if (categoryData.length > 0) {
       // Section header
-      doc.setDrawColor(21, 101, 192);
-      doc.setLineWidth(0.5);
-      doc.line(30, nextY, 180, nextY);
+      // No horizontal separator in the new design
 
       doc.setFontSize(14);
-      doc.setTextColor(21, 101, 192);
+      doc.setTextColor(0, 0, 0); // Black color
       doc.setFont('NotoSans_Condensed-Regular');
-      doc.text(translatedIssuesDetectedByCategory, 105, nextY + 8, {
-        align: 'center',
+      doc.text(translatedIssuesDetectedByCategory, 12, nextY + 8, {
+        align: 'left',
       });
       let currentY = nextY + 18;
 
-      // Define category colors to match the display image
+      // Define category colors to match the Figma design - all blue theme
       const categoryColors = new Map<string, [number, number, number]>([
-        ['Content', [147, 51, 234]], // Purple
-        ['Cognitive', [34, 197, 94]], // Green
-        ['Low Vision', [249, 115, 22]], // Orange
-        ['Navigation', [59, 130, 246]], // Blue
-        ['Mobility', [239, 68, 68]], // Red
-        ['Other', [107, 114, 128]], // Gray
-        ['Forms', [168, 85, 247]], // Different purple shade
+        ['Content', [68, 90, 231]], // #445AE7 - new blue color
+        ['Cognitive', [68, 90, 231]], // #445AE7 - new blue color
+        ['Low Vision', [68, 90, 231]], // #445AE7 - new blue color
+        ['Navigation', [68, 90, 231]], // #445AE7 - new blue color
+        ['Mobility', [68, 90, 231]], // #445AE7 - new blue color
+        ['Other', [68, 90, 231]], // #445AE7 - new blue color
+        ['Forms', [68, 90, 231]], // #445AE7 - new blue color
       ]);
 
-      // Card layout - 3 columns, 2 rows to match the image exactly
-      const itemsPerRow = 3;
-      const cardWidth = 58; // Increased width
-      const cardHeight = 40; // Increased height
-      const cardSpacing = 3; // Reduced spacing
-      const startX = 12; // Adjusted start position
+      // Card layout - 2 columns, 3 rows to match the updated design
+      const itemsPerRow = 2;
+      const cardWidth = 90; // Increased width for better spacing
+      const cardHeight = 20; // Height to match Figma
+      const cardSpacing = 6; // Increased spacing for 2-column layout
+      const startX = 10; // Centered start position for wider 2-column layout
       const totalIssues = issues.length;
 
       // Ensure we have exactly these 6 categories in the right order
@@ -3588,150 +4607,184 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         const percentage = totalIssues > 0 ? (count / totalIssues) * 100 : 0;
         const categoryColor = categoryColors.get(category) || [107, 114, 128];
 
-        // Card background - clean white with subtle shadow
-        doc.setFillColor(250, 250, 250); // Very light shadow
-        doc.roundedRect(x + 0.5, y + 0.5, cardWidth, cardHeight, 2, 2, 'F');
-
-        doc.setFillColor(255, 255, 255); // Clean white background
-        doc.setDrawColor(230, 230, 230); // Light border
+        // Transparent card - no fill, just border
+        doc.setDrawColor(162, 173, 243); // #A2ADF3 border color
         doc.setLineWidth(0.3);
-        doc.roundedRect(x, y, cardWidth, cardHeight, 2, 2, 'FD');
+        doc.roundedRect(x, y, cardWidth, cardHeight, 1, 1, 'D');
 
-        // Category icon in colored rounded square - top left
-        const iconSize = 10;
-        const iconX = x + 4;
-        const iconY = y + 4;
+        // Category icon in colored rounded rectangle - left side like Figma design
+        const iconWidth = 8; // Width for the blue icon section
+        const iconHeight = cardHeight - 4; // Full height minus small padding
+        const iconX = x + 2;
+        const iconY = y + 2;
 
-        // Colored rounded square background for icon
+        // Colored rounded rectangle background for icon - blue like Figma
         doc.setFillColor(...categoryColor);
-        doc.roundedRect(iconX, iconY, iconSize, iconSize, 2, 2, 'F');
+        doc.roundedRect(iconX, iconY, iconWidth, iconHeight, 1, 1, 'F');
 
-        // Add white icon
+        // Add white icon centered in the blue rectangle
         const svgIcon = iconMap.get(category);
         if (svgIcon) {
-          // Add the SVG icon in white (smaller)
-          const svgSize = iconSize - 4; // Make SVG smaller
-          const svgOffset = (iconSize - svgSize) / 2; // Center the smaller SVG
+          // Add the SVG icon in white (centered in rectangle)
+          const svgSize = Math.min(iconWidth - 4, iconHeight - 4); // Fit within rectangle
+          const svgOffsetX = (iconWidth - svgSize) / 2; // Center horizontally
+          const svgOffsetY = (iconHeight - svgSize) / 2; // Center vertically
           doc.addImage(
             svgIcon,
             'PNG',
-            iconX + svgOffset,
-            iconY + svgOffset,
+            iconX + svgOffsetX,
+            iconY + svgOffsetY,
             svgSize,
             svgSize,
           );
         } else {
-          // Draw simple white icon shapes
+          // Draw simple white icon shapes centered in rectangle
           doc.setFillColor(255, 255, 255);
           doc.setDrawColor(255, 255, 255);
           doc.setLineWidth(0.4);
 
+          const iconCenterX = iconX + iconWidth / 2;
+          const iconCenterY = iconY + iconHeight / 2;
+
           if (category === 'Content') {
-            // Simple document icon
-            doc.rect(iconX + 2.5, iconY + 2, iconSize - 5, iconSize - 4, 'FD');
-            doc.setLineWidth(0.2);
-            doc.line(iconX + 3.5, iconY + 4, iconX + 6.5, iconY + 4);
-            doc.line(iconX + 3.5, iconY + 5.5, iconX + 6.5, iconY + 5.5);
+            // Nested diamond/square outlines like Figma - really tiny
+            doc.setLineWidth(0.05);
+            // Outer square
+            doc.rect(iconCenterX - 0.3, iconCenterY - 0.3, 0.6, 0.6, 'S');
+            // Middle square (offset)
+            doc.rect(iconCenterX - 0.2, iconCenterY - 0.2, 0.4, 0.4, 'S');
+            // Inner square (offset)
+            doc.rect(iconCenterX - 0.1, iconCenterY - 0.1, 0.2, 0.2, 'S');
           } else if (category === 'Cognitive') {
-            // Simple brain/puzzle piece
-            doc.circle(iconX + iconSize / 2, iconY + iconSize / 2, 2.5, 'FD');
-          } else if (category === 'Low Vision') {
-            // Simple eye icon
-            doc.ellipse(
-              iconX + iconSize / 2,
-              iconY + iconSize / 2,
-              3,
-              1.5,
-              'FD',
+            // Simple brain icon - really tiny circle
+            doc.setLineWidth(0.05);
+            doc.circle(iconCenterX, iconCenterY, 0.25, 'S');
+            // Tiny starburst
+            doc.line(
+              iconCenterX + 0.1,
+              iconCenterY - 0.02,
+              iconCenterX + 0.15,
+              iconCenterY - 0.05,
             );
-            doc.circle(iconX + iconSize / 2, iconY + iconSize / 2, 1, 'F');
+            doc.line(
+              iconCenterX + 0.1,
+              iconCenterY - 0.02,
+              iconCenterX + 0.12,
+              iconCenterY - 0.08,
+            );
+          } else if (category === 'Low Vision') {
+            // Simple eye icon - really tiny
+            doc.setLineWidth(0.05);
+            doc.ellipse(iconCenterX, iconCenterY, 0.25, 0.15, 'S');
+            doc.circle(iconCenterX, iconCenterY, 0.08, 'F');
           } else if (category === 'Navigation') {
-            // Simple arrow
-            doc.setLineWidth(0.6);
-            doc.line(iconX + 2, iconY + 6, iconX + 6, iconY + 2);
-            doc.line(iconX + 6, iconY + 2, iconX + 5, iconY + 3.5);
-            doc.line(iconX + 6, iconY + 2, iconX + 4.5, iconY + 3);
+            // Simple arrow icon - really tiny
+            doc.setLineWidth(0.05);
+            doc.line(
+              iconCenterX - 0.15,
+              iconCenterY + 0.1,
+              iconCenterX + 0.15,
+              iconCenterY - 0.1,
+            );
+            doc.line(
+              iconCenterX + 0.15,
+              iconCenterY - 0.1,
+              iconCenterX + 0.08,
+              iconCenterY - 0.02,
+            );
+            doc.line(
+              iconCenterX + 0.15,
+              iconCenterY - 0.1,
+              iconCenterX + 0.12,
+              iconCenterY - 0.1,
+            );
           } else if (category === 'Mobility') {
-            // Simple person icon
-            doc.circle(iconX + iconSize / 2, iconY + 3, 1, 'F');
-            doc.rect(iconX + iconSize / 2 - 0.5, iconY + 4.5, 1, 3, 'F');
+            // Simple person in wheelchair icon - really tiny
+            doc.setLineWidth(0.05);
+            doc.circle(iconCenterX, iconCenterY - 0.1, 0.08, 'F'); // Head
+            doc.rect(iconCenterX - 0.02, iconCenterY - 0.02, 0.04, 0.1, 'F'); // Body
+            // Wheelchair wheels
+            doc.circle(iconCenterX - 0.1, iconCenterY + 0.1, 0.08, 'S');
+            doc.circle(iconCenterX + 0.1, iconCenterY + 0.1, 0.08, 'S');
           } else {
-            // Simple gear/other icon
-            doc.circle(iconX + iconSize / 2, iconY + iconSize / 2, 2, 'FD');
+            // Simple info icon - three really tiny circles
+            doc.setLineWidth(0.05);
+            doc.circle(iconCenterX - 0.1, iconCenterY - 0.1, 0.05, 'F');
+            doc.circle(iconCenterX, iconCenterY, 0.05, 'F');
+            doc.circle(iconCenterX + 0.1, iconCenterY + 0.1, 0.05, 'F');
+            doc.line(
+              iconCenterX - 0.1,
+              iconCenterY - 0.1,
+              iconCenterX,
+              iconCenterY,
+            );
+            doc.line(
+              iconCenterX,
+              iconCenterY,
+              iconCenterX + 0.1,
+              iconCenterY + 0.1,
+            );
           }
         }
 
-        // Category name (below icon, clean)
-        doc.setFontSize(10);
+        // Category name (to the right of blue rectangle)
+        doc.setFontSize(9);
         doc.setTextColor(0, 0, 0);
         doc.setFont('NotoSans_Condensed-Regular');
-        const categoryX = x + 4;
-        const categoryY = y + 20;
+        const categoryX = x + iconWidth + 6; // Start after the blue rectangle
+        const categoryY = y + 6;
         doc.text(category, categoryX, categoryY);
 
-        // Get category text width to align count with it
-        const categoryWidth = doc.getTextWidth(category);
-
-        // Count number (right-aligned with category name in round rect)
-        doc.setFontSize(8);
-        doc.setTextColor(255, 255, 255);
+        // Right-aligned count text (no pill in Figma)
+        doc.setFontSize(9);
+        doc.setTextColor(107, 114, 128);
         doc.setFont('NotoSans_Condensed-Regular');
         const countText = count.toString();
-        const countWidth = doc.getTextWidth(countText);
+        const countX = x + cardWidth - 3;
+        const countY = categoryY;
+        doc.text(countText, countX, countY, { align: 'right' });
 
-        // Round rectangle background for count
-        const rectPadding = 3;
-        const rectWidth = countWidth + rectPadding * 2;
-        const rectHeight = 5.5;
-        const rectX = x + cardWidth - rectWidth - 4; // Right-aligned with card
-        const rectY = categoryY - rectHeight + 1.5;
-        doc.setFillColor(80, 80, 80); // Dark gray for better contrast
-        doc.roundedRect(rectX, rectY, rectWidth, rectHeight, 2.5, 2.5, 'F');
+        // Progress bar at bottom - matching Figma design
+        const progressBarWidth = cardWidth - iconWidth - 10; // Account for blue rectangle
+        const progressBarHeight = 2;
+        const progressBarX = x + iconWidth + 6; // Start after the blue rectangle
+        const progressBarY = y + cardHeight - 10;
 
-        // Count text
-        doc.text(countText, rectX + rectPadding, categoryY - 0.5);
-
-        // Progress bar at bottom
-        const progressBarWidth = cardWidth - 6;
-        const progressBarHeight = 3;
-        const progressBarX = x + 3;
-        const progressBarY = y + cardHeight - 9;
-
-        // Progress bar background
-        doc.setFillColor(240, 240, 240);
+        // Progress bar background - light blue-grey like Figma
+        doc.setFillColor(226, 232, 240);
         doc.roundedRect(
           progressBarX,
           progressBarY,
           progressBarWidth,
           progressBarHeight,
-          1.5,
-          1.5,
+          1,
+          1,
           'F',
         );
 
-        // Progress bar fill
+        // Progress bar fill - medium blue like Figma
         const fillWidth = (progressBarWidth * percentage) / 100;
         if (fillWidth > 1) {
-          doc.setFillColor(...categoryColor);
+          doc.setFillColor(68, 90, 231); // #445AE7 - new blue color
           doc.roundedRect(
             progressBarX,
             progressBarY,
             fillWidth,
             progressBarHeight,
-            1.5,
-            1.5,
+            1,
+            1,
             'F',
           );
         }
 
         // Percentage text
-        doc.setFontSize(7);
+        doc.setFontSize(6);
         doc.setTextColor(120, 120, 120);
         doc.setFont('NotoSans_Condensed-Regular');
         doc.text(
           `${percentage.toFixed(1)}% of total issues`,
-          x + 3,
-          y + cardHeight - 3,
+          x + iconWidth + 6, // Start after the blue rectangle
+          y + cardHeight - 4,
         );
       });
 
@@ -3740,216 +4793,285 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       nextY = currentY + totalRows * (cardHeight + 6) + 15; // Added more spacing
     }
 
-    // Check if we need a new page for the warning/compliance section
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const requiredHeight = hasWebAbility ? 70 : 120; // Estimated height needed for warning/compliance section
+    // --- ACCESSIBILITY COMPLIANCE PANEL (matches Figma) ---
+    const buildCompliancePanel = async (
+      startY: number,
+      hasWebAbility: boolean,
+    ) => {
+      const panelX = 8;
+      const panelW = pageWidth - 20;
+      const outerY = startY + 4; // Moved up
 
-    if (nextY + requiredHeight > pageHeight - 20) {
-      // Add new page if not enough space
-      doc.addPage();
-      nextY = 20; // Start from top of new page with margin
-    }
+      // Main container (compliance vs non-compliance styling)
+      const containerHeight = 90;
+      if (hasWebAbility) {
+        // Compliant state - light blue-grey background
+        doc.setFillColor(238, 245, 255); // Light blue-grey background
+        doc.setDrawColor(162, 173, 243); // Light blue border
+      } else {
+        // Non-compliant state - light red background
+        doc.setFillColor(254, 242, 242); // Light red background (#fef2f2)
+        doc.setDrawColor(248, 113, 113); // Red border (#f87171)
+      }
+      doc.setLineWidth(0.5);
+      doc.roundedRect(panelX, outerY, panelW, containerHeight, 4, 4, 'FD');
 
-    // Add status section after category analysis (warning or compliance)
-    let warningY = nextY;
+      // Compliance status icon (top left)
+      const shieldX = panelX + 8;
+      const shieldY = outerY + 5;
+      const shieldSize = 20;
 
-    if (hasWebAbility) {
-      // Compliance message for sites with WebAbility
-      const complianceHeight = 25;
-      const complianceWidth = 170;
-      const complianceX = 20;
+      if (hasWebAbility) {
+        // Compliant state - green shield with checkmark
+        try {
+          const img = new Image();
+          img.src = greenSuccessImage;
 
-      doc.setFillColor(34, 197, 94); // Green background
-      doc.roundedRect(
-        complianceX,
-        warningY,
-        complianceWidth,
-        complianceHeight,
-        4,
-        4,
-        'F',
-      );
+          // Wait for image to load
+          await new Promise<void>((resolve, reject) => {
+            let settled = false;
+            const TIMEOUT_MS = 3000; // 3 seconds timeout
 
-      // Compliance title
-      doc.setFontSize(12);
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('NotoSans_Condensed-Regular');
-      doc.text(translatedAccessibilityComplianceAchieved, 105, warningY + 10, {
-        align: 'center',
-      });
+            const cleanup = () => {
+              img.onload = null;
+              img.onerror = null;
+            };
 
-      // Compliance subtitle
-      doc.setFontSize(9);
-      doc.text(translatedWebsiteCompliant, 105, warningY + 20, {
-        align: 'center',
-      });
+            const timeoutId = setTimeout(() => {
+              if (!settled) {
+                settled = true;
+                cleanup();
+                reject(new Error('Green success image load timed out'));
+              }
+            }, TIMEOUT_MS);
 
-      warningY += complianceHeight + 4;
+            img.onload = () => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timeoutId);
+              cleanup();
+              resolve();
+            };
 
-      // Single compliance status section
-      const statusHeight = 35;
-      const statusWidth = 170;
-      const statusX = 20;
+            img.onerror = () => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timeoutId);
+              cleanup();
+              reject(new Error('Green success image failed to load'));
+            };
+          });
 
-      doc.setFillColor(240, 253, 244); // Light green background
-      doc.setDrawColor(34, 197, 94);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(statusX, warningY, statusWidth, statusHeight, 4, 4, 'FD');
+          // Add the image to PDF
+          doc.addImage(img, 'PNG', shieldX, shieldY, shieldSize, shieldSize);
+        } catch (error) {
+          console.warn(
+            'Failed to load green success image, falling back to drawn shield:',
+            error,
+          );
 
-      doc.setFontSize(9);
-      doc.setTextColor(34, 197, 94);
-      doc.text(translatedComplianceStatus, statusX + 2, warningY + 8);
+          // Fallback: Draw green shield background if image fails to load
+          doc.setFillColor(34, 197, 94); // Bright green
+          doc.setDrawColor(34, 197, 94);
+          doc.setLineWidth(0.8);
 
-      doc.setFontSize(7);
-      doc.setTextColor(75, 85, 99);
-      doc.text(translatedWebAbilityProtecting, statusX + 2, warningY + 18);
-      doc.text(translatedAutomatedFixesApplied, statusX + 2, warningY + 26);
-    } else {
-      // Warning section for non-compliant sites
-      const warningHeight = 25;
-      const warningWidth = 170;
-      const warningX = 20;
+          // Shield shape (rounded rectangle with pointed bottom)
+          doc.roundedRect(
+            shieldX,
+            shieldY,
+            shieldSize * 0.7,
+            shieldSize * 0.8,
+            2,
+            2,
+            'F',
+          );
+          // Pointed bottom of shield
+          doc.triangle(
+            shieldX + shieldSize * 0.35 - 3,
+            shieldY + shieldSize * 0.8,
+            shieldX + shieldSize * 0.35,
+            shieldY + shieldSize * 0.95,
+            shieldX + shieldSize * 0.35 + 3,
+            shieldY + shieldSize * 0.8,
+            'F',
+          );
 
-      doc.setFillColor(220, 38, 38); // Red background
-      doc.roundedRect(
-        warningX,
-        warningY,
-        warningWidth,
-        warningHeight,
-        4,
-        4,
-        'F',
-      );
-
-      // Warning title
-      doc.setFontSize(12);
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('NotoSans_Condensed-Regular');
-      doc.text(translatedCriticalViolationsDetected, 105, warningY + 10, {
-        align: 'center',
-      });
-
-      // Warning subtitle
-      doc.setFontSize(9);
-      doc.text(translatedLegalActionWarning, 105, warningY + 20, {
-        align: 'center',
-      });
-
-      warningY += warningHeight + 4;
-
-      // Two side-by-side consequence sections
-      const consequencesHeight = 45;
-      const boxWidth = 82; // Width for each box
-      const boxSpacing = 6; // Space between boxes
-      const leftBoxX = 20;
-      const rightBoxX = leftBoxX + boxWidth + boxSpacing;
-
-      // Left box - IMMEDIATE RISKS
-      doc.setFillColor(254, 242, 242); // Light red background
-      doc.setDrawColor(220, 38, 38);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(
-        leftBoxX,
-        warningY,
-        boxWidth,
-        consequencesHeight,
-        4,
-        4,
-        'FD',
-      );
-
-      doc.setFontSize(9);
-      doc.setTextColor(220, 38, 38);
-      doc.text(translatedImmediateRisks, leftBoxX + 2, warningY + 8);
-
-      doc.setFontSize(7);
-      doc.setTextColor(75, 85, 99);
-      doc.text(translatedPotentialLawsuits, leftBoxX + 2, warningY + 16);
-      doc.text(translatedCustomerLoss, leftBoxX + 2, warningY + 24);
-      doc.text(translatedSeoPenalties, leftBoxX + 2, warningY + 32);
-      doc.text(translatedBrandDamage, leftBoxX + 2, warningY + 40);
-
-      // Right box - TIME-SENSITIVE ACTION
-      doc.setFillColor(255, 247, 237); // Light orange background
-      doc.setDrawColor(202, 138, 4);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(
-        rightBoxX,
-        warningY,
-        boxWidth,
-        consequencesHeight,
-        4,
-        4,
-        'FD',
-      );
-
-      doc.setFontSize(9);
-      doc.setTextColor(202, 138, 4);
-      doc.text(translatedTimeSensitiveAction, rightBoxX + 2, warningY + 8);
-
-      doc.setFontSize(7);
-      doc.setTextColor(75, 85, 99);
-      doc.text(translatedWebAbilityAutoFix, rightBoxX + 2, warningY + 18);
-      doc.text(translatedInstantCompliance, rightBoxX + 2, warningY + 26);
-      doc.text(translatedProtectBusiness, rightBoxX + 2, warningY + 34);
-    }
-
-    // Update warningY position after warning section is complete
-    if (!hasWebAbility) {
-      // For non-compliant sites, update position after the consequence boxes
-      warningY += 45 + 10; // consequence box height + spacing
-    } else {
-      // For compliant sites, update position after the status section
-      warningY += 35 + 10; // status section height + spacing
-    }
-
-    // Check if we need a new page for WCAG section
-    const wcagSectionHeight = 100; // Estimated height needed for WCAG header and initial content
-    const currentPageHeight = doc.internal.pageSize.getHeight();
-    const footerSpace = 20;
-
-    let wcagStartY = warningY;
-    let needsNewPage = false;
-
-    if (warningY + wcagSectionHeight > currentPageHeight - footerSpace) {
-      // Add new page if not enough space
-      needsNewPage = true;
-      doc.addPage();
-      wcagStartY = 30; // Start from top of new page
-    } else {
-      // Add some spacing between sections on same page
-      wcagStartY = warningY + 15;
-    }
-
-    // Add footer to previous page(s) before continuing
-    if (accessibilityStatementLinkUrl) {
-      const totalPages = (doc as any).internal.getNumberOfPages();
-      const footerY = currentPageHeight - 10;
-
-      // Add footer to all pages up to current point
-      for (let i = 1; i <= (needsNewPage ? totalPages - 1 : totalPages); i++) {
-        doc.setPage(i);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(33, 150, 243);
-        doc.text(translatedAccessibilityStatement, 15, footerY);
-        doc.link(
-          15,
-          footerY - 3,
-          doc.getTextWidth(translatedAccessibilityStatement),
-          4,
-          {
-            url: accessibilityStatementLinkUrl,
-            target: '_blank',
-          },
+          // White checkmark inside shield
+          doc.setDrawColor(255, 255, 255);
+          doc.setLineWidth(2.5);
+          const checkX = shieldX + shieldSize * 0.35;
+          const checkY = shieldY + shieldSize * 0.4;
+          doc.line(checkX - 4, checkY, checkX - 1.5, checkY + 3);
+          doc.line(checkX - 1.5, checkY + 3, checkX + 5, checkY - 3);
+        }
+      } else {
+        // Non-compliant state - red warning icon with exclamation mark
+        // Red circle background
+        doc.setFillColor(239, 68, 68); // Red background (#ef4444)
+        doc.setDrawColor(239, 68, 68);
+        doc.setLineWidth(0.8);
+        doc.circle(
+          shieldX + shieldSize * 0.5,
+          shieldY + shieldSize * 0.5,
+          shieldSize * 0.4,
+          'F',
         );
+
+        // White exclamation mark inside circle
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(255, 255, 255);
+
+        // Calculate center position of the circle
+        const centerX = shieldX + shieldSize * 0.5;
+        const centerY = shieldY + shieldSize * 0.5;
+        const radius = shieldSize * 0.4;
+
+        // Exclamation mark body (vertical line) - better proportioned
+        const lineStartY = centerY - radius * 0.6; // Start higher
+        const lineEndY = centerY - radius * 0.1; // End closer to center
+        doc.setLineWidth(2.5);
+        doc.setLineCap('round');
+        doc.line(centerX, lineStartY, centerX, lineEndY);
+
+        // Exclamation mark dot - positioned with proper gap
+        const dotY = centerY + radius * 0.3;
+        doc.circle(centerX, dotY, 1.3, 'F');
       }
 
-      // Return to current page
-      if (needsNewPage) {
-        doc.setPage(totalPages);
+      // Title text (to the right of icon)
+      const titleX = shieldX + shieldSize + 4;
+      const titleY = shieldY + 8;
+
+      doc.setFont('NotoSans_Condensed-Regular');
+      doc.setFontSize(18);
+      doc.setTextColor(0, 0, 0); // Dark text
+
+      if (hasWebAbility) {
+        doc.text(translatedAccessibilityComplianceAchieved, titleX, titleY);
+      } else {
+        doc.text(translatedCriticalViolationsDetected, titleX, titleY);
       }
-    }
+
+      // Subtitle text
+      doc.setFontSize(12);
+      doc.setTextColor(71, 85, 105); // Gray text
+      if (hasWebAbility) {
+        doc.text(translatedWebsiteCompliant, titleX, titleY + 10);
+      } else {
+        doc.text(translatedLegalActionWarning, titleX, titleY + 10);
+      }
+
+      // Nested box for compliance status
+      const innerX = panelX + 12;
+      const innerY = outerY + 30;
+      const innerW = panelW - 24;
+      const innerH = 55;
+
+      doc.setFillColor(255, 255, 255);
+      if (hasWebAbility) {
+        doc.setDrawColor(162, 173, 243); // #A2ADF3 border color for compliant
+      } else {
+        doc.setDrawColor(248, 113, 113); // Red border for non-compliant
+      }
+      doc.setLineWidth(0.5);
+      doc.roundedRect(innerX, innerY, innerW, innerH, 3, 3, 'FD');
+
+      // Status title
+      doc.setFontSize(11);
+      doc.setTextColor(30, 41, 59);
+      doc.setFont('NotoSans_Condensed-Regular');
+      if (hasWebAbility) {
+        doc.text(translatedComplianceStatus, innerX + 8, innerY + 8);
+      } else {
+        doc.text(translatedImmediateRisks, innerX + 8, innerY + 8);
+      }
+
+      // Status items with checkmarks or crosses
+      const itemStartX = innerX + 8;
+      const itemStartY = innerY + 16; // Increased spacing from title
+
+      const drawGreenCheck = (x: number, y: number) => {
+        // Simple green checkmark without circle background
+        doc.setDrawColor(34, 197, 94); // Green color
+        doc.setLineWidth(1.2); // Thinner lines for simple appearance
+        doc.setLineCap('round'); // Rounded line ends
+
+        // Draw simple checkmark shape
+        doc.line(x - 1.5, y - 0.5, x - 0.3, y + 0.7);
+        doc.line(x - 0.3, y + 0.7, x + 2, y - 2);
+      };
+
+      const drawRedCross = (x: number, y: number) => {
+        // Simple red X mark
+        doc.setDrawColor(239, 68, 68); // Red color (#ef4444)
+        doc.setLineWidth(1.2);
+        doc.setLineCap('round');
+
+        // Draw X shape
+        doc.line(x - 2, y - 2, x + 2, y + 2);
+        doc.line(x - 2, y + 2, x + 2, y - 2);
+      };
+
+      if (hasWebAbility) {
+        // Compliant state - show green checkmarks
+        // First item
+        drawGreenCheck(itemStartX, itemStartY);
+        doc.setFontSize(10);
+        doc.setTextColor(71, 85, 105);
+        doc.text(
+          translatedWebAbilityProtecting,
+          itemStartX + 8,
+          itemStartY + 1,
+        );
+
+        // Second item
+        drawGreenCheck(itemStartX, itemStartY + 10);
+        doc.text(
+          translatedAutomatedFixesApplied,
+          itemStartX + 8,
+          itemStartY + 11,
+        );
+
+        // WCAG Compliance status
+        drawGreenCheck(itemStartX, itemStartY + 20);
+        doc.setFontSize(9);
+        doc.setTextColor(71, 85, 105);
+        doc.text('WCAG 2.1 AA standards met', itemStartX + 8, itemStartY + 21);
+
+        // Legal protection status
+        drawGreenCheck(itemStartX, itemStartY + 30);
+        doc.text(
+          'Legal compliance maintained',
+          itemStartX + 8,
+          itemStartY + 31,
+        );
+      } else {
+        // Non-compliant state - show red crosses and warning text
+        // First item
+        drawRedCross(itemStartX, itemStartY);
+        doc.setFontSize(10);
+        doc.setTextColor(71, 85, 105);
+        doc.text(translatedPotentialLawsuits, itemStartX + 8, itemStartY + 1);
+
+        // Second item
+        drawRedCross(itemStartX, itemStartY + 10);
+        doc.text(translatedCustomerLoss, itemStartX + 8, itemStartY + 11);
+
+        // Third item
+        drawRedCross(itemStartX, itemStartY + 20);
+        doc.setFontSize(9);
+        doc.setTextColor(71, 85, 105);
+        doc.text(translatedSeoPenalties, itemStartX + 8, itemStartY + 21);
+
+        // Fourth item
+        drawRedCross(itemStartX, itemStartY + 30);
+        doc.text(translatedBrandDamage, itemStartX + 8, itemStartY + 31);
+      }
+
+      return outerY + containerHeight + 12; // bottom Y with spacing
+    };
+
+    const panelBottomY = await buildCompliancePanel(nextY, hasWebAbility);
 
     // WCAG 2.1 AA Compliance Issues Section
     const wcagIssues = issues.filter((issue) => {
@@ -4055,7 +5177,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       }),
     );
 
+    // Track if we need a new page during WCAG section rendering
+    let needsNewPage = false;
+
     if (groupedWcagCodes.length > 0) {
+      // Calculate starting Y position for WCAG section
+      const wcagStartY = panelBottomY + 20; // Add spacing after compliance panel
       let currentY = wcagStartY; // Use calculated start position
 
       // Create card data with compliance check based on WCAG codes
@@ -4203,7 +5330,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
       // First line - WCAG compliance title
       doc.text(
-        `${translatedWcagComplianceIssues} ${url}`,
+        `${translatedWcagComplianceIssues} ${reportData.url}`,
         currentTextX,
         currentY + 1,
         { align: 'left' },
@@ -4339,6 +5466,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             doc.addPage();
             currentY = 15; // Reduced top margin for continuation pages
             pageRowCount = 0; // Reset row count for new page
+            needsNewPage = true; // Track that we added a new page
           }
 
           // Recalculate y position with current page row count
@@ -4548,6 +5676,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         doc.addPage();
         currentY = 15; // Reset for new page
         pageRowCount = 0;
+        needsNewPage = true; // Track that we added a new page
       }
 
       // Calculate final position for fixes more card - spanning full width
