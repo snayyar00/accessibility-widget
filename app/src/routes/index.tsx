@@ -5,11 +5,13 @@ import ProblemReport from '@/containers/ProblemReport/ProblemReport';
 import { TbReportSearch } from 'react-icons/tb';
 import { MdOutlineGavel, MdOutlineInsights } from 'react-icons/md';
 import { FiFile } from 'react-icons/fi';
+import { MdAutoMode } from 'react-icons/md';
 import ReportView from '@/containers/Accessibility/ReportView';
 import StatementGenerator from '@/containers/StatementGenerator/StatementGenerator';
 import Users from '@/containers/Users';
 import ProofOfEffortToolkit from '@/containers/ProofOfEffortToolkit/ProofOfEffortToolkit';
 import AIInsights from '@/containers/AIInsights/AIInsights';
+import AutomationScan from '@/containers/AutomationScan/AutomationScan';
 import Workspaces from '@/containers/Workspaces';
 
 const routes = [
@@ -30,6 +32,20 @@ const routes = [
         className="menu-icon text-white-blue transition-colors duration-200"
         size={30}
         aria-label="Scanner navigation icon"
+      />
+    ),
+    isSidebar: true,
+  },
+  {
+    path: '/automation-scan',
+    name: 'Automation Scan',
+    exact: true,
+    component: AutomationScan,
+    icon: (
+      <MdAutoMode
+        className="menu-icon text-white-blue transition-colors duration-200"
+        size={28}
+        aria-label="Automation Scan navigation icon"
       />
     ),
     isSidebar: true,
