@@ -645,7 +645,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     status = translatedStatus;
 
     // Set background color for all pages
-    const backgroundColor: [number, number, number] = [238, 245, 255]; // #eef5ff converted to RGB
+    const backgroundColor: [number, number, number] = [255, 255, 255]; // White background
     doc.setFillColor(
       backgroundColor[0],
       backgroundColor[1],
@@ -1827,7 +1827,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       const containerHeight = 90;
       if (hasWebAbility) {
         // Compliant state - light blue-grey background
-        doc.setFillColor(238, 245, 255); // Light blue-grey background
+        doc.setFillColor(255, 255, 255); // White background
         doc.setDrawColor(162, 173, 243); // Light blue border
       } else {
         // Non-compliant state - light red background
@@ -2752,7 +2752,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             // Outer light-blue container
             doc.setDrawColor(162, 173, 243);
             doc.setLineWidth(0.6);
-            doc.setFillColor(238, 245, 255);
+            doc.setFillColor(255, 255, 255);
             doc.roundedRect(
               x + padding,
               y + padding,
@@ -3624,7 +3624,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     status = translatedStatus;
 
     // Set background color for all pages
-    const backgroundColor: [number, number, number] = [238, 245, 255]; // #eef5ff converted to RGB
+    const backgroundColor: [number, number, number] = [255, 255, 255]; // White background
     doc.setFillColor(
       backgroundColor[0],
       backgroundColor[1],
@@ -3639,6 +3639,26 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     );
 
     // Remove old dark header bar; design now uses a clean light background
+
+    // Helper function to add page with background color
+    const addPageWithBackground = (
+      doc: any,
+      backgroundColor: [number, number, number],
+    ) => {
+      doc.addPage();
+      doc.setFillColor(
+        backgroundColor[0],
+        backgroundColor[1],
+        backgroundColor[2],
+      );
+      doc.rect(
+        0,
+        0,
+        doc.internal.pageSize.getWidth(),
+        doc.internal.pageSize.getHeight(),
+        'F',
+      );
+    };
 
     let logoBottomY = 0;
 
@@ -4806,7 +4826,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       const containerHeight = 90;
       if (hasWebAbility) {
         // Compliant state - light blue-grey background
-        doc.setFillColor(238, 245, 255); // Light blue-grey background
+        doc.setFillColor(255, 255, 255); // White background
         doc.setDrawColor(162, 173, 243); // Light blue border
       } else {
         // Non-compliant state - light red background
@@ -5072,6 +5092,63 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     };
 
     const panelBottomY = await buildCompliancePanel(nextY, hasWebAbility);
+    // Update warningY position after warning section is complete
+    let warningY = panelBottomY;
+    if (!hasWebAbility) {
+      // For non-compliant sites, update position after the consequence boxes
+      warningY += 45 + 10; // consequence box height + spacing
+    } else {
+      // For compliant sites, update position after the status section
+      warningY += 35 + 10; // status section height + spacing
+    }
+
+    // Check if we need a new page for WCAG section
+    const wcagSectionHeight = 100; // Estimated height needed for WCAG header and initial content
+    const currentPageHeight = doc.internal.pageSize.getHeight();
+    const footerSpace = 20;
+
+    let wcagStartY = warningY;
+    let needsNewPage = false;
+
+    if (warningY + wcagSectionHeight > currentPageHeight - footerSpace) {
+      // Add new page if not enough space
+      needsNewPage = true;
+      addPageWithBackground(doc, backgroundColor);
+      wcagStartY = 30; // Start from top of new page
+    } else {
+      // Add some spacing between sections on same page
+      wcagStartY = warningY + 15;
+    }
+
+    // Add footer to previous page(s) before continuing
+    if (accessibilityStatementLinkUrl) {
+      const totalPages = (doc as any).internal.getNumberOfPages();
+      const footerY = currentPageHeight - 10;
+
+      // Add footer to all pages up to current point
+      for (let i = 1; i <= (needsNewPage ? totalPages - 1 : totalPages); i++) {
+        doc.setPage(i);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(33, 150, 243);
+        doc.text(translatedAccessibilityStatement, 15, footerY);
+        doc.link(
+          15,
+          footerY - 3,
+          doc.getTextWidth(translatedAccessibilityStatement),
+          4,
+          {
+            url: accessibilityStatementLinkUrl,
+            target: '_blank',
+          },
+        );
+      }
+
+      // Return to current page
+      if (needsNewPage) {
+        doc.setPage(totalPages);
+      }
+    }
 
     // WCAG 2.1 AA Compliance Issues Section
     const wcagIssues = issues.filter((issue) => {
@@ -5177,12 +5254,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       }),
     );
 
-    // Track if we need a new page during WCAG section rendering
-    let needsNewPage = false;
-
     if (groupedWcagCodes.length > 0) {
-      // Calculate starting Y position for WCAG section
-      const wcagStartY = panelBottomY + 20; // Add spacing after compliance panel
       let currentY = wcagStartY; // Use calculated start position
 
       // Create card data with compliance check based on WCAG codes
@@ -5238,10 +5310,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       const cardsHeight = totalRows * (14 + 3); // card height + spacing
       const containerHeight = 10 + cardsHeight + 24; // ultra compact blue banner, stats, and bottom padding
 
-      // 3D effect shadow
-      doc.setFillColor(220, 220, 220); // Light gray shadow
-      doc.roundedRect(12, currentY - 6, 190, containerHeight, 3, 3, 'F');
-
       // Big container card background
       doc.setFillColor(255, 255, 255); // White background
       doc.setDrawColor(203, 213, 225); // Light border
@@ -5249,11 +5317,11 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       doc.roundedRect(10, currentY - 6, 190, containerHeight, 3, 3, 'FD');
 
       // Blue banner header section (full width of container) - ultra compact height
-      doc.setFillColor(26, 92, 255);
+      doc.setFillColor(68, 90, 231);
       doc.roundedRect(10, currentY - 6, 190, 20, 3, 3, 'F'); // Ultra compact blue section
 
       // Cover bottom corners of blue section to make it rectangular at bottom
-      doc.setFillColor(26, 92, 255);
+      doc.setFillColor(68, 90, 231);
       doc.rect(10, currentY + 11, 190, 3, 'F');
 
       // Load shield SVG icon
@@ -5463,26 +5531,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
           // Check if we need a new page (only at start of a new row)
           if (column === 0 && y + issueCardHeight > pageHeight - pageMargin) {
-            doc.addPage();
+            addPageWithBackground(doc, backgroundColor);
             currentY = 15; // Reduced top margin for continuation pages
             pageRowCount = 0; // Reset row count for new page
-            needsNewPage = true; // Track that we added a new page
           }
 
           // Recalculate y position with current page row count
           const cardY = currentY + pageRowCount * (issueCardHeight + 3); // Reduced row spacing for compact layout
-
-          // 3D shadow for individual cards
-          doc.setFillColor(220, 220, 220);
-          doc.roundedRect(
-            x + 1,
-            cardY + 1,
-            issueCardWidth,
-            issueCardHeight,
-            2,
-            2,
-            'F',
-          );
 
           // Card background based on status and hasWebAbility
           if (item.status === 'FIXED') {
@@ -5673,10 +5728,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       // Check if we need a new page for the fixes more card
       const fixesMoreCardY = currentY + fixesMoreRow * (issueCardHeight + 3);
       if (fixesMoreCardY + issueCardHeight > pageHeight - pageMargin) {
-        doc.addPage();
+        addPageWithBackground(doc, backgroundColor);
         currentY = 15; // Reset for new page
         pageRowCount = 0;
-        needsNewPage = true; // Track that we added a new page
       }
 
       // Calculate final position for fixes more card - spanning full width
@@ -5684,18 +5738,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
         currentY + pageRowCount * (issueCardHeight + 3);
       const fixesMoreCardX = cardsStartX; // Start from leftmost position
       const fixesMoreCardWidth = issueCardWidth * 3 + issueCardSpacing * 2; // Width of 3 cards + spacing
-
-      // 3D shadow for fixes more card
-      doc.setFillColor(220, 220, 220);
-      doc.roundedRect(
-        fixesMoreCardX + 1,
-        finalFixesMoreCardY + 1,
-        fixesMoreCardWidth,
-        issueCardHeight,
-        2,
-        2,
-        'F',
-      );
 
       // Card background - green if hasWebAbility, yellow if not
       if (hasWebAbility) {
