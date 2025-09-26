@@ -12,8 +12,8 @@ import {
 } from 'react-icons/fa';
 import React, { useState } from 'react';
 import {
-  Bar,
-  BarChart,
+  Area,
+  AreaChart,
   ResponsiveContainer,
   XAxis,
   YAxis,
@@ -63,7 +63,7 @@ const ChartCard: React.FC<{
     </div>
     <div className="h-[200px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart
+        <AreaChart
           data={data}
           margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
         >
@@ -86,8 +86,15 @@ const ChartCard: React.FC<{
             labelStyle={{ fontWeight: 'bold' }}
             labelFormatter={(value) => new Date(value).toLocaleDateString()}
           />
-          <Bar dataKey={dataKey} fill="#3b82f6" radius={[4, 4, 0, 0]} />
-        </BarChart>
+          <Area
+            type="monotone"
+            dataKey={dataKey}
+            stroke="#3b82f6"
+            fill="#3b82f6"
+            fillOpacity={0.3}
+            strokeWidth={2}
+          />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   </div>
@@ -123,7 +130,7 @@ export default function AnalyticsDashboard({
     };
   };
 
-  const [profileCountlength,_] = useState(Object.keys(profileCounts).length);
+  const [profileCountlength, _] = useState(Object.keys(profileCounts).length);
   const data = filterData(timeRange);
   //   console.log("td",data);
   const totalEngagements = data.engagement.reduce(
@@ -188,7 +195,13 @@ export default function AnalyticsDashboard({
 
   return (
     <div className="p-4 space-y-4 bg-gray-100">
-      <div className={`flex flex-col-reverse gap-4 ${Object.keys(profileCounts).length ? "md:flex-row":"md:flex-row-reverse"} justify-between md:items-end`}>
+      <div
+        className={`flex flex-col-reverse gap-4 ${
+          Object.keys(profileCounts).length
+            ? 'md:flex-row'
+            : 'md:flex-row-reverse'
+        } justify-between md:items-end`}
+      >
         {Object.keys(profileCounts).length ? (
           <button
             className="bg-primary hover:bg-blue-600 text-white py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -196,7 +209,7 @@ export default function AnalyticsDashboard({
           >
             {showMoreMetrics ? 'Show Less' : 'Show More'}
           </button>
-        ):null}
+        ) : null}
 
         <div className="flex flex-col justify-center gap-2">
           <label htmlFor="time-range" className="dropdown-label">
