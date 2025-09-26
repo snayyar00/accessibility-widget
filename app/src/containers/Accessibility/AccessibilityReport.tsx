@@ -530,10 +530,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     const MAX_TOTAL_SCORE = 95;
     const issues = extractIssuesFromReport(reportData);
 
-    // Debug: Log the issues count to verify it's showing actual errors
-    console.log('Total issues found:', issues.length);
-    console.log('Issues sample:', issues.slice(0, 3));
-
     //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
     const baseScore = reportData.score || 0;
     const scriptCheckResult = reportData.scriptCheckResult;
@@ -3510,8 +3506,6 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     const issues = extractIssuesFromReport(reportData);
 
     // Debug: Log the issues count to verify it's showing actual errors
-    console.log('Total issues found:', issues.length);
-    console.log('Issues sample:', issues.slice(0, 3));
 
     //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
     const baseScore = reportData.score || 0;
