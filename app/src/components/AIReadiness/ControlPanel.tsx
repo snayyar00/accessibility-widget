@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLazyQuery } from '@apollo/client';
+import { useHistory } from 'react-router-dom';
+import FETCH_ACCESSIBILITY_REPORT_KEYS from '@/queries/accessibility/fetchAccessibilityReport';
 import {
   Globe,
   FileText,
@@ -19,6 +22,7 @@ import {
   Info,
   Eye,
   Image,
+  Brain,
 } from 'lucide-react';
 import ScoreChart from './ScoreChart';
 import RadarChart from './RadarChart';
@@ -56,12 +60,38 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   heatmapData,
   onReset,
 }) => {
+  const history = useHistory();
   const [combinedChecks, setCombinedChecks] = useState<CheckItem[]>([]);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [selectedHeatmapCategory, setSelectedHeatmapCategory] = useState<
     string | null
   >(null);
   const heatmapRef = useRef<HTMLDivElement | null>(null);
+
+  // State for accessibility score
+  const [accessibilityScore, setAccessibilityScore] = useState<number | null>(
+    null,
+  );
+
+  // GraphQL query for accessibility reports
+  const [fetchAccessibilityReports] = useLazyQuery(
+    FETCH_ACCESSIBILITY_REPORT_KEYS,
+    {
+      onCompleted: (data) => {
+        if (data?.fetchAccessibilityReportFromR2?.length > 0) {
+          const mostRecent = data.fetchAccessibilityReportFromR2[0];
+          console.log('Accessibility Score:', mostRecent.score);
+          setAccessibilityScore(mostRecent.score);
+        } else {
+          console.log('No accessibility reports found');
+          setAccessibilityScore(null);
+        }
+      },
+      onError: (error) => {
+        console.error('Error fetching accessibility reports:', error);
+      },
+    },
+  );
 
   // Handle responsive screen size detection
   useEffect(() => {
@@ -78,6 +108,31 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     // Cleanup
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
+
+  // Normalize domain function
+  const normalizeDomain = (domain: string) => {
+    return domain
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .replace(/\/$/, '');
+  };
+
+  // Fetch accessibility score when URL changes
+  useEffect(() => {
+    if (url) {
+      const normalizedDomain = normalizeDomain(url);
+      console.log(
+        'Fetching accessibility reports for domain:',
+        normalizedDomain,
+      );
+
+      fetchAccessibilityReports({
+        variables: {
+          url: normalizedDomain,
+        },
+      });
+    }
+  }, [url, fetchAccessibilityReports]);
 
   const [checks, setChecks] = useState<CheckItem[]>([
     {
@@ -346,10 +401,49 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <h2 className="text-3xl font-bold text-gray-900 mb-3">
-          AI Readiness Analysis
-        </h2>
-        <p className="text-lg text-gray-600">Single-page snapshot of {url}</p>
+        {/* Enhanced Header Section */}
+        <div className="relative">
+          {/* Background gradient decoration */}
+
+          {/* Main content */}
+          <div className="relative">
+            {/* Icon with enhanced styling */}
+            <motion.div
+              className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-3xl mb-6 shadow-2xl"
+              whileHover={{ scale: 1.05, rotate: 5 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+            >
+              <Brain className="w-10 h-10 text-white drop-shadow-sm" />
+            </motion.div>
+
+            {/* Title with enhanced typography */}
+            <motion.h2
+              className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              AI Readiness Analysis
+            </motion.h2>
+
+            {/* Subtitle with better styling */}
+            <motion.div
+              className="inline-block"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="px-6 py-3 bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl">
+                <p className="text-lg text-gray-700 font-medium">
+                  Single-page snapshot of{' '}
+                  <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold">
+                    {url}
+                  </span>
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
 
         {showResults && (
           <>
@@ -380,17 +474,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               >
                 Radar Chart
               </button>
-              {/* <button
-                onClick={() => setViewMode('bars')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  viewMode === 'bars'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                Bar Chart
-              </button> */}
-              {heatmapData && (
+              {heatmapData && getAvailableHeatmapCategories().length > 0 && (
                 <button
                   onClick={() => setViewMode('heatmap')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -418,7 +502,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
       {/* Conditional rendering based on view mode */}
       {viewMode === 'grid' && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 px-4 relative">
+        <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-4 gap-4 mb-10 px-4 relative">
           {combinedChecks.map((check, index) => {
             const isActive = index === currentCheckIndex;
 
@@ -484,6 +568,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   </h3>
 
                   <p className="text-xs text-gray-600">{check.description}</p>
+
+                  {/* Display accessibility score for accessibility card */}
+                  {check.id === 'accessibility' && accessibilityScore !== null && (
+                    <div className="mt-2 text-xs text-gray-700">
+                      <div>Accessibility Score: {accessibilityScore}</div>
+                    </div>
+                  )}
 
                   {check.status !== 'pending' && check.status !== 'checking' && (
                     <>
@@ -565,6 +656,17 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                               )}
                             </ul>
                           )}
+                        </div>
+
+                        {/* Display accessibility score link in details for accessibility card */}
+
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <button
+                            onClick={() => history.push('/scanner')}
+                            className="text-xs text-blue-600 hover:text-blue-800 underline cursor-pointer transition-colors duration-200"
+                          >
+                            Click here to check latest score
+                          </button>
                         </div>
                       </div>
                     </motion.div>

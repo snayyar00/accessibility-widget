@@ -4,6 +4,7 @@ import { processAccessibilityIssuesWithFallback } from '../services/accessibilit
 import puppeteer from 'puppeteer-core'
 import { Browserbase } from '@browserbasehq/sdk'
 import fs from 'fs'
+import path from 'path'
 
 // const pa11y = require('pa11y');
 
@@ -263,7 +264,7 @@ export async function takeScreenshotAndSave(
     const buffer = Buffer.from(screenshotData, 'base64')
 
     // Ensure directory exists
-    const dir = filePath.substring(0, filePath.lastIndexOf('/'))
+    const dir = path.dirname(filePath)
     if (dir && !fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true })
     }
