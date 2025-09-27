@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { GetUserSitesDocument } from '@/generated/graphql';
 import { MdSearch, MdExpandMore, MdExpandLess, MdBugReport, MdCheckCircle, MdWarning } from 'react-icons/md';
 import { FaKeyboard, FaMapSigns, FaHeading, FaLink, FaImage, FaLanguage, FaVideo, FaPlay, FaEye, FaBrain } from 'react-icons/fa';
+import { GlowingEffect } from '@/components/ui/glowing-effect';
+import { motion } from 'framer-motion';
 
 // Mock data based on your API structure
 const mockIssuesData = [
@@ -182,9 +184,10 @@ const mockIssuesData = [
 interface IssueCardProps {
   category: any;
   onViewDetails: (category: any) => void;
+  index: number;
 }
 
-const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails }) => {
+const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index }) => {
   const totalIssues = category.subcategories.reduce((sum: number, sub: any) => sum + sub.total_fixes, 0);
   const hasIssues = totalIssues > 0;
 
@@ -210,42 +213,76 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-sm transition-shadow duration-200">
-      {/* Icon and Title */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-          <category.icon className="w-6 h-6 text-gray-600" />
+    <motion.div 
+      initial={{ 
+        y: -800, 
+        opacity: 0, 
+        scale: 0.8,
+        rotateX: -15 
+      }}
+      animate={{ 
+        y: 0, 
+        opacity: 1, 
+        scale: 1,
+        rotateX: 0 
+      }}
+      transition={{
+        type: "spring",
+        damping: 25,
+        stiffness: 60,
+        delay: index * 0.15,
+        duration: 1.2
+      }}
+      className="relative h-full rounded-lg border border-gray-300 p-2 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out"
+      style={{ transformStyle: "preserve-3d" }}
+    >
+      <GlowingEffect
+        spread={40}
+        glow={true}
+        disabled={false}
+        proximity={64}
+        inactiveZone={0.01}
+        borderWidth={3}
+      />
+      <div className="relative bg-gray-100 rounded-lg p-6 h-full hover:shadow-sm transition-shadow duration-200">
+        {/* Icon and Title */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
+            <category.icon className="w-6 h-6 text-gray-600" />
+          </div>
+          {getStatusBadge()}
         </div>
-        {getStatusBadge()}
-      </div>
 
-      {/* Category Title */}
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{category.category}</h3>
-      
-      {/* Description */}
-      <p className="text-sm text-gray-600 mb-4">
-        {category.subcategories.length} accessibility checks performed
-      </p>
-
-      {/* Issue Count */}
-      <div className="flex items-center justify-between">
-        <div className="text-2xl font-bold">
-          <span className={getStatusColor()}>{totalIssues}</span>
-          <span className="text-sm font-normal text-gray-500 ml-1">
-            {totalIssues === 1 ? 'issue' : 'issues'}
-          </span>
-        </div>
+        {/* Category Title */}
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">{category.category}</h3>
         
-        {hasIssues && (
-          <button
-            onClick={() => onViewDetails(category)}
-            className="px-3 py-1 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors duration-200"
-          >
-            View Details →
-          </button>
-        )}
+        {/* Description */}
+        <p className="text-sm text-gray-600 mb-4">
+          {category.subcategories.length} accessibility checks performed
+        </p>
+
+        {/* Issue Count */}
+        <div className="flex items-center justify-between">
+          <div className="text-2xl font-bold">
+            <span className={getStatusColor()}>{totalIssues}</span>
+            <span className="text-sm font-normal text-gray-500 ml-1">
+              {totalIssues === 1 ? 'issue' : 'issues'}
+            </span>
+          </div>
+          
+          {hasIssues && (
+            <button
+              onClick={() => onViewDetails(category)}
+              className="px-3 py-1 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors duration-200"
+            >
+              <span className="hover:scale-110 transition-transform duration-200 ease-out transform inline-block">
+                View Details →
+              </span>
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -254,7 +291,8 @@ const AutomationScan: React.FC = () => {
   const [domain, setDomain] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [hasScanned, setHasScanned] = useState(false);
+  const [hasScanned, setHasScanned] = useState(false); // Will be set to true after scanning completes
+  const [scanKey, setScanKey] = useState(0); // Key to trigger re-animation on new scans
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
 
@@ -267,6 +305,8 @@ const AutomationScan: React.FC = () => {
       return;
     }
 
+    // Reset animation state for new scan
+    setHasScanned(false);
     setIsScanning(true);
 
     try {
@@ -276,6 +316,8 @@ const AutomationScan: React.FC = () => {
       // Simulate scan delay
       await new Promise(resolve => setTimeout(resolve, 3000));
       
+      // Trigger new animation by incrementing scan key and setting hasScanned
+      setScanKey(prev => prev + 1);
       setHasScanned(true);
     } catch (error) {
       console.error('Scan failed:', error);
@@ -452,12 +494,13 @@ const AutomationScan: React.FC = () => {
 
           {/* Issue Cards or Empty State */}
           {hasScanned ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredIssues.map((category) => (
+            <div key={scanKey} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredIssues.map((category, index) => (
                 <IssueCard
-                  key={category.category}
+                  key={`${scanKey}-${category.category}`}
                   category={category}
                   onViewDetails={handleViewDetails}
+                  index={index}
                 />
               ))}
             </div>
@@ -564,4 +607,4 @@ const AutomationScan: React.FC = () => {
   );
 };
 
-export default AutomationScan; 
+export default AutomationScan;
