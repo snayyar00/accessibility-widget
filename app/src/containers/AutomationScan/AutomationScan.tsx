@@ -181,14 +181,10 @@ const mockIssuesData = [
 
 interface IssueCardProps {
   category: any;
-  isExpanded: boolean;
-  onToggle: () => void;
+  onViewDetails: (category: any) => void;
 }
 
-const IssueCard: React.FC<IssueCardProps> = ({ category, isExpanded, onToggle }) => {
-  const [selectedSubcategory, setSelectedSubcategory] = useState<any>(null);
-  const [showAnalysis, setShowAnalysis] = useState(false);
-
+const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails }) => {
   const totalIssues = category.subcategories.reduce((sum: number, sub: any) => sum + sub.total_fixes, 0);
   const hasIssues = totalIssues > 0;
 
@@ -198,152 +194,57 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, isExpanded, onToggle })
     return 'text-red-600';
   };
 
-  const getStatusIcon = () => {
-    if (!hasIssues) return <MdCheckCircle className="w-5 h-5 text-green-600" />;
-    if (totalIssues <= 3) return <MdWarning className="w-5 h-5 text-yellow-600" />;
-    return <MdBugReport className="w-5 h-5 text-red-600" />;
-  };
-
-  const getCategoryColorClass = () => {
-    const colors = {
-      blue: 'border-blue-500 bg-blue-50',
-      green: 'border-green-500 bg-green-50',
-      orange: 'border-orange-500 bg-orange-50',
-      purple: 'border-purple-500 bg-purple-50',
-      red: 'border-red-500 bg-red-50',
-      teal: 'border-teal-500 bg-teal-50'
-    };
-    return colors[category.color as keyof typeof colors] || 'border-gray-500 bg-gray-50';
+  const getStatusBadge = () => {
+    if (!hasIssues) {
+      return (
+        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+          ✓ Pass
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800">
+        {totalIssues} Issues
+      </span>
+    );
   };
 
   return (
-    <div className={`border-l-4 rounded-lg bg-white shadow-sm transition-all duration-300 hover:shadow-md ${getCategoryColorClass()}`}>
-      {/* Card Header */}
-      <div 
-        className="p-4 cursor-pointer"
-        onClick={onToggle}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg bg-${category.color}-100`}>
-              <category.icon className={`w-5 h-5 text-${category.color}-600`} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">{category.category}</h3>
-              <p className="text-sm text-gray-600">
-                {category.subcategories.length} checks • {totalIssues} issues found
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            {getStatusIcon()}
-            <div className={`transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
-              <MdExpandMore className="w-5 h-5 text-gray-400" />
-            </div>
-          </div>
+    <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-sm transition-shadow duration-200">
+      {/* Icon and Title */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+          <category.icon className="w-6 h-6 text-gray-600" />
         </div>
+        {getStatusBadge()}
       </div>
 
-      {/* Expanded Content */}
-      {isExpanded && (
-        <div className="border-t border-gray-100">
-          <div className="p-4 space-y-3">
-            {category.subcategories.map((subcategory: any) => (
-              <div key={subcategory.id} className="bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-gray-700">
-                        {subcategory.id} {subcategory.name}
-                      </span>
-                      {subcategory.total_fixes > 0 ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          {subcategory.total_fixes} issues
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Pass
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Tested: {new Date(subcategory.timestamp).toLocaleTimeString()}
-                    </p>
-                  </div>
-                  {subcategory.total_fixes > 0 && (
-                    <button
-                      onClick={() => {
-                        setSelectedSubcategory(subcategory);
-                        setShowAnalysis(true);
-                      }}
-                      className="ml-3 px-3 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors duration-200"
-                    >
-                      View Details
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Category Title */}
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">{category.category}</h3>
+      
+      {/* Description */}
+      <p className="text-sm text-gray-600 mb-4">
+        {category.subcategories.length} accessibility checks performed
+      </p>
 
-      {/* Analysis Modal */}
-      {showAnalysis && selectedSubcategory && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {selectedSubcategory.id} {selectedSubcategory.name}
-                </h3>
-                <button
-                  onClick={() => setShowAnalysis(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Summary</h4>
-                  <p className="text-sm text-gray-600">
-                    Found {selectedSubcategory.total_fixes} issues that need attention
-                  </p>
-                </div>
-
-                {selectedSubcategory.auto_fixes.length > 0 && (
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Issues Found</h4>
-                    <div className="space-y-3">
-                      {selectedSubcategory.auto_fixes.map((fix: any, index: number) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-start space-x-3">
-                            <MdBugReport className="w-5 h-5 text-red-600 mt-0.5" />
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900">{fix.issue_type}</p>
-                              <p className="text-sm text-gray-600 mt-1">{fix.description}</p>
-                              <div className="mt-2">
-                                <p className="text-xs text-gray-500">
-                                  <strong>Selector:</strong> {fix.selector}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  <strong>Action:</strong> {fix.action}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+      {/* Issue Count */}
+      <div className="flex items-center justify-between">
+        <div className="text-2xl font-bold">
+          <span className={getStatusColor()}>{totalIssues}</span>
+          <span className="text-sm font-normal text-gray-500 ml-1">
+            {totalIssues === 1 ? 'issue' : 'issues'}
+          </span>
         </div>
-      )}
+        
+        {hasIssues && (
+          <button
+            onClick={() => onViewDetails(category)}
+            className="px-3 py-1 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors duration-200"
+          >
+            View Details →
+          </button>
+        )}
+      </div>
     </div>
   );
 };
@@ -353,8 +254,9 @@ const AutomationScan: React.FC = () => {
   const [domain, setDomain] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedCards, setExpandedCards] = useState<{ [key: string]: boolean }>({});
   const [hasScanned, setHasScanned] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<any>(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   // Fetch user sites for domain selector
   const { data: sitesData, loading: sitesLoading } = useQuery(GetUserSitesDocument);
@@ -383,11 +285,9 @@ const AutomationScan: React.FC = () => {
     }
   };
 
-  const toggleCardExpansion = (categoryName: string) => {
-    setExpandedCards(prev => ({
-      ...prev,
-      [categoryName]: !prev[categoryName]
-    }));
+  const handleViewDetails = (category: any) => {
+    setSelectedCategory(category);
+    setShowAnalysis(true);
   };
 
   const filteredIssues = mockIssuesData.filter(category =>
@@ -405,7 +305,7 @@ const AutomationScan: React.FC = () => {
       }}
     >
       {/* Main Content Container */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-gray-900 mb-8">Scan your domain</h1>
@@ -552,13 +452,12 @@ const AutomationScan: React.FC = () => {
 
           {/* Issue Cards or Empty State */}
           {hasScanned ? (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredIssues.map((category) => (
                 <IssueCard
                   key={category.category}
                   category={category}
-                  isExpanded={expandedCards[category.category] || false}
-                  onToggle={() => toggleCardExpansion(category.category)}
+                  onViewDetails={handleViewDetails}
                 />
               ))}
             </div>
@@ -590,6 +489,76 @@ const AutomationScan: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Analysis Modal */}
+        {showAnalysis && selectedCategory && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {selectedCategory.category} Issues
+                  </h3>
+                  <button
+                    onClick={() => setShowAnalysis(false)}
+                    className="text-gray-400 hover:text-gray-600 text-xl"
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                <div className="space-y-6">
+                  {selectedCategory.subcategories.map((subcategory: any) => (
+                    <div key={subcategory.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium text-gray-900">
+                          {subcategory.id} {subcategory.name}
+                        </h4>
+                        {subcategory.total_fixes > 0 ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800">
+                            {subcategory.total_fixes} issues
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                            ✓ Pass
+                          </span>
+                        )}
+                      </div>
+
+                      {subcategory.auto_fixes.length > 0 && (
+                        <div className="space-y-3">
+                          {subcategory.auto_fixes.map((fix: any, index: number) => (
+                            <div key={index} className="bg-gray-50 rounded-lg p-3">
+                              <div className="flex items-start space-x-3">
+                                <MdBugReport className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-gray-900 text-sm">{fix.issue_type}</p>
+                                  <p className="text-sm text-gray-600 mt-1">{fix.description}</p>
+                                  <div className="mt-2 space-y-1">
+                                    <p className="text-xs text-gray-500">
+                                      <strong>Element:</strong> {fix.selector}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      <strong>Action Required:</strong> {fix.action}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <p className="text-xs text-gray-500 mt-3">
+                        Tested: {new Date(subcategory.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
