@@ -5,7 +5,16 @@ import { GetUserSitesDocument } from '@/generated/graphql';
 import { MdSearch, MdExpandMore, MdExpandLess, MdBugReport, MdCheckCircle, MdWarning } from 'react-icons/md';
 import { FaKeyboard, FaMapSigns, FaHeading, FaLink, FaImage, FaLanguage, FaVideo, FaPlay, FaEye, FaBrain } from 'react-icons/fa';
 import { GlowingEffect } from '@/components/ui/glowing-effect';
-import { motion } from 'framer-motion';
+import { MultiStepLoader } from '@/components/ui/multi-step-loader';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Loading states for the multi-step loader
+const loadingStates = [
+  { text: "Starting the scan" },
+  { text: "Scan started" },
+  { text: "Running various tests" },
+  { text: "Finalizing results" }
+];
 
 // Mock data based on your API structure
 const mockIssuesData = [
@@ -183,7 +192,7 @@ const mockIssuesData = [
 
 interface IssueCardProps {
   category: any;
-  onViewDetails: (category: any) => void;
+  onViewDetails: (category: any, event: React.MouseEvent) => void;
   index: number;
 }
 
@@ -233,7 +242,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index })
         delay: index * 0.15,
         duration: 1.2
       }}
-      className="relative h-full rounded-lg border border-gray-300 p-2 transition-all duration-300 ease-out"
+      className="relative h-full rounded-lg border border-gray-400 p-2 transition-all duration-300 ease-out shadow-lg"
       style={{ transformStyle: "preserve-3d" }}
       whileHover={{ 
         scale: 1.05,
@@ -249,11 +258,27 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index })
         inactiveZone={0.01}
         borderWidth={3}
       />
-      <div className="relative bg-gray-100 rounded-lg p-6 h-full hover:shadow-sm transition-shadow duration-200">
+      <div className="relative bg-gray-200 rounded-lg p-6 h-full hover:shadow-sm transition-shadow duration-200">
         {/* Icon and Title */}
         <div className="flex items-center justify-between mb-4">
-          <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
-            <category.icon className="w-6 h-6 text-gray-600" />
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm ${
+            category.color === 'blue' ? 'bg-blue-100' :
+            category.color === 'green' ? 'bg-green-100' :
+            category.color === 'orange' ? 'bg-orange-100' :
+            category.color === 'purple' ? 'bg-purple-100' :
+            category.color === 'red' ? 'bg-red-100' :
+            category.color === 'teal' ? 'bg-teal-100' :
+            'bg-gray-100'
+          }`}>
+            <category.icon className={`w-6 h-6 ${
+              category.color === 'blue' ? 'text-blue-600' :
+              category.color === 'green' ? 'text-green-600' :
+              category.color === 'orange' ? 'text-orange-600' :
+              category.color === 'purple' ? 'text-purple-600' :
+              category.color === 'red' ? 'text-red-600' :
+              category.color === 'teal' ? 'text-teal-600' :
+              'text-gray-600'
+            }`} />
           </div>
           {getStatusBadge()}
         </div>
@@ -277,7 +302,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index })
           
           {hasIssues && (
             <button
-              onClick={() => onViewDetails(category)}
+              onClick={(event) => onViewDetails(category, event)}
               className="px-3 py-1 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors duration-200"
             >
               <span className="hover:scale-110 transition-transform duration-200 ease-out transform inline-block">
@@ -302,6 +327,9 @@ const AutomationScan: React.FC = () => {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [apiResults, setApiResults] = useState<any>(null);
+  const [scanCompleted, setScanCompleted] = useState(false);
+  const [waitingForLoader, setWaitingForLoader] = useState(false);
+  const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
 
   // Fetch user sites for domain selector (optional - handle errors gracefully)
   const { data: sitesData, loading: sitesLoading, error: sitesError } = useQuery(GetUserSitesDocument, {
@@ -314,6 +342,14 @@ const AutomationScan: React.FC = () => {
     console.warn('Sites query failed (non-critical):', sitesError);
   }
 
+  // Handle cleanup when loader completes
+  React.useEffect(() => {
+    if (waitingForLoader && !isScanning) {
+      setIsScanning(false);
+      setLoadingMessage('');
+    }
+  }, [waitingForLoader, isScanning]);
+
   const handleStartScan = async () => {
     if (!domain.trim()) {
       alert('Please enter a domain to scan');
@@ -325,7 +361,11 @@ const AutomationScan: React.FC = () => {
     setIsScanning(true);
     setLoadingMessage('Running tests...');
     setApiResults(null);
+    setScanCompleted(false);
+    setWaitingForLoader(false);
 
+    const scanStartTime = Date.now();
+    
     try {
       console.log(`Starting scan for domain: ${domain}`);
       
@@ -342,83 +382,87 @@ const AutomationScan: React.FC = () => {
         },
         body: JSON.stringify({
           url: fullUrl,
-           options: {
-            detect_custom_widget_labels: true
-          }
-          //  { headless: false,
-          //   force_local: true,
-          //   debug_mode: true,
-          //   debug_save_screenshots: true,
-            
-          //   run_tab_navigation: true,
-          //   run_on_input: true,
-          //   run_on_focus: true,
-          //   detect_missing_labels: true,
-          //   detect_missing_headings: true,
-          //   detect_landmark_roles: true,
-          //   detect_main_landmark_content: true,
-          //   detect_heading_function: true,
-          //   detect_character_shortcuts: true,
-          //   detect_keystroke_timing: true,
-          //   detect_focus_order: true,
-          //   detect_visible_focus: true,
-          //   detect_main_repeating_content: true,
-          //   detect_missing_headings_visual: true,
-          //   detect_heading_level_inconsistency: true,
-          //   detect_language_violations: true,
-          //   detect_missing_captions: true,
-          //   detect_missing_audio_descriptions: true,
-          //   detect_missing_audio_transcripts: true,
-          //   detect_link_function_violations: true,
-          //   detect_redundant_entry: true,
-          //   detect_authentication_cognitive: true,
-          //   detect_css_positioning: true,
-          //   detect_layout_tables: true,
-          //   detect_page_title_violations: true,
-          //   detect_frame_title_violations: true,
-          //   detect_multiple_ways_violations: true,
-          //   detect_image_function_violations: true,
-          //   detect_text_alternative_violations: true,
-          //   detect_images_of_text_violations: true,
-          //   detect_captcha_violations: true,
-          //   detect_ui_component_contrast: true,
-          //   detect_ui_component_state_changes: true,
-          //   detect_css_content_violations: true,
-          //   detect_table_semantics_violations: true,
-          //   detect_table_headers_violations: true,
-          //   detect_semantic_markup_violations: true,
-          //   detect_native_widget_labels: true,
-          //   detect_expected_input_clarity: true,
-          //   detect_custom_widget_labels: true,
-          //   detect_custom_widget_expected_input: true,
-          //   detect_autocomplete_violations: true,
-          //   detect_color_meaning_violations: true,
-          //   detect_contrast_ratio_violations: true,
-          //   detect_aria_widget_role_violations: true,
-          //   detect_sensory_instructions: true,
-          //   detect_flashing_content: true,
-          //   detect_text_spacing_violations: true,
-          //   detect_reflow_violations: true,
-          //   detect_orientation_violations: true,
-          //   detect_resize_text_violations: true,
-          //   detect_bypass_mechanisms: true,
-          //   detect_consistent_navigation: true,
-          //   detect_consistent_identification: true,
-          //   detect_consistent_help: true,
-          //   detect_high_contrast_mode: true,
-            
-          //   use_llm_for_widget_labels: true,
-          //   use_llm_for_expected_input: true,
-          //   use_llm_for_custom_labels: true,
-          //   use_llm_for_custom_expected_input: true,
-          //   use_llm_for_color_analysis: true,
-          //   use_llm_for_contrast_analysis: true,
-          //   use_llm_for_widget_role_analysis: true,
-          //   use_llm_for_instruction_analysis: true,
-          //   use_llm_for_text_spacing: true,
-          //   use_llm_for_orientation: true,
-          //   use_llm_for_resize_text: true
+           options: 
+          //   headless: true,
+          //   force_local: false,
+          //   debug_mode: false,
+          //   debug_save_screenshots: false,
+          //   detect_custom_widget_labels: true
           // }
+           {    headless: true,
+                force_local: false,
+                debug_mode: false,
+                debug_save_screenshots: false,
+            
+            run_tab_navigation: true,
+            run_on_input: true,
+            run_on_focus: true,
+            detect_missing_labels: true,
+            detect_missing_headings: true,
+            detect_landmark_roles: true,
+            detect_main_landmark_content: true,
+            detect_heading_function: true,
+            detect_character_shortcuts: true,
+            detect_keystroke_timing: true,
+            detect_focus_order: true,
+            detect_visible_focus: true,
+            detect_main_repeating_content: true,
+            detect_missing_headings_visual: true,
+            detect_heading_level_inconsistency: true,
+            detect_language_violations: true,
+            detect_missing_captions: true,
+            detect_missing_audio_descriptions: true,
+            detect_missing_audio_transcripts: true,
+            detect_link_function_violations: true,
+            detect_redundant_entry: true,
+            detect_authentication_cognitive: true,
+            detect_css_positioning: true,
+            detect_layout_tables: true,
+            detect_page_title_violations: true,
+            detect_frame_title_violations: true,
+            detect_multiple_ways_violations: true,
+            detect_image_function_violations: true,
+            detect_text_alternative_violations: true,
+            detect_images_of_text_violations: true,
+            detect_captcha_violations: true,
+            detect_ui_component_contrast: true,
+            detect_ui_component_state_changes: true,
+            detect_css_content_violations: true,
+            detect_table_semantics_violations: true,
+            detect_table_headers_violations: true,
+            detect_semantic_markup_violations: true,
+            detect_native_widget_labels: true,
+            detect_expected_input_clarity: true,
+            detect_custom_widget_labels: true,
+            detect_custom_widget_expected_input: true,
+            detect_autocomplete_violations: true,
+            detect_color_meaning_violations: true,
+            detect_contrast_ratio_violations: true,
+            detect_aria_widget_role_violations: true,
+            detect_sensory_instructions: true,
+            detect_flashing_content: true,
+            detect_text_spacing_violations: true,
+            detect_reflow_violations: true,
+            detect_orientation_violations: true,
+            detect_resize_text_violations: true,
+            detect_bypass_mechanisms: true,
+            detect_consistent_navigation: true,
+            detect_consistent_identification: true,
+            detect_consistent_help: true,
+            detect_high_contrast_mode: true,
+            
+            use_llm_for_widget_labels: true,
+            use_llm_for_expected_input: true,
+            use_llm_for_custom_labels: true,
+            use_llm_for_custom_expected_input: true,
+            use_llm_for_color_analysis: true,
+            use_llm_for_contrast_analysis: true,
+            use_llm_for_widget_role_analysis: true,
+            use_llm_for_instruction_analysis: true,
+            use_llm_for_text_spacing: true,
+            use_llm_for_orientation: true,
+            use_llm_for_resize_text: true
+          }
         })
       });
 
@@ -481,10 +525,23 @@ const AutomationScan: React.FC = () => {
       const finalResults = await pollForResults();
       console.log('Final results:', finalResults);
       
-      // Store API results and trigger animation
+      // Store API results but wait for loader to complete
       setApiResults(finalResults);
-      setScanKey(prev => prev + 1);
-      setHasScanned(true);
+      setScanCompleted(true);
+      setWaitingForLoader(true);
+      
+      // Wait for loader to complete (4 steps * 3 seconds = 12 seconds)
+      const loaderDuration = 4 * 3000;
+      const timeElapsed = Date.now() - scanStartTime;
+      const remainingTime = Math.max(0, loaderDuration - timeElapsed);
+      
+      setTimeout(() => {
+        setScanKey(prev => prev + 1);
+        setHasScanned(true);
+        setWaitingForLoader(false);
+        setIsScanning(false);
+        setLoadingMessage('');
+      }, remainingTime);
       
     } catch (error) {
       console.error('Scan failed:', error);
@@ -505,14 +562,23 @@ const AutomationScan: React.FC = () => {
       
       alert(`Scan failed: ${errorMessage}`);
     } finally {
-      setIsScanning(false);
-      setLoadingMessage('');
+      if (!waitingForLoader) {
+        setIsScanning(false);
+        setLoadingMessage('');
+      }
     }
   };
 
-  const handleViewDetails = (category: any) => {
+  const handleViewDetails = (category: any, event: React.MouseEvent) => {
     console.log('Opening modal for category:', category);
     console.log('Category subcategories:', category.subcategories);
+    
+    // Get button position relative to viewport
+    const buttonRect = (event.target as HTMLElement).getBoundingClientRect();
+    const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+    const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+    
+    setButtonPosition({ x: buttonCenterX, y: buttonCenterY });
     setSelectedCategory(category);
     setShowAnalysis(true);
   };
@@ -636,23 +702,12 @@ const AutomationScan: React.FC = () => {
             <button
               onClick={handleStartScan}
               disabled={isScanning || !domain.trim()}
-              className="px-6 py-3 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 text-sm whitespace-nowrap"
+              className="px-6 py-3 bg-gray-500 text-gray-300 font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors duration-200 text-sm whitespace-nowrap cursor-pointer disabled:cursor-not-allowed"
             >
               {isScanning ? (loadingMessage || 'Scanning...') : 'Free Scan'}
             </button>
           </div>
 
-          {/* Scanning Status */}
-          {isScanning && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                <p className="text-sm text-blue-900">
-                  Scanning {domain}... This may take a few moments.
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Feature Cards */}
@@ -814,9 +869,42 @@ const AutomationScan: React.FC = () => {
         </div>
 
         {/* Analysis Modal */}
-        {showAnalysis && selectedCategory && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <AnimatePresence>
+          {showAnalysis && selectedCategory && (
+            <motion.div 
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.div 
+                className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+                initial={{ 
+                  scale: 0,
+                  opacity: 0,
+                  x: buttonPosition.x - window.innerWidth / 2,
+                  y: buttonPosition.y - window.innerHeight / 2,
+                }}
+                animate={{ 
+                  scale: 1,
+                  opacity: 1,
+                  x: 0,
+                  y: 0,
+                }}
+                exit={{ 
+                  scale: 0,
+                  opacity: 0,
+                  x: buttonPosition.x - window.innerWidth / 2,
+                  y: buttonPosition.y - window.innerHeight / 2,
+                }}
+                transition={{ 
+                  type: "spring",
+                  damping: 25,
+                  stiffness: 300,
+                  duration: 0.5
+                }}
+              >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-semibold text-gray-900">
@@ -895,9 +983,18 @@ const AutomationScan: React.FC = () => {
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Multi-Step Loader */}
+        <MultiStepLoader 
+          loadingStates={loadingStates} 
+          loading={isScanning} 
+          duration={3000}
+          loop={false}
+        />
       </div>
     </div>
   );
