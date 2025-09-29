@@ -1540,7 +1540,7 @@ const ProofOfEffortToolkit: React.FC = () => {
             toast.loading('Generating PDF...');
 
             // Generate the PDF blob instead of opening in new tab
-            pdfBlob = await generateAccessibilityStatementPDF(
+            pdfBlob = await generatePDF(
               fullReportData.fetchReportByR2Key,
               'en',
               currentDomain,
