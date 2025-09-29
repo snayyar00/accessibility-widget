@@ -224,30 +224,40 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index })
   return (
     <motion.div 
       initial={{ 
-        y: -800, 
+        y: 50, 
         opacity: 0, 
-        scale: 0.8,
-        rotateX: -15 
+        scale: 0.9
       }}
       animate={{ 
         y: 0, 
         opacity: 1, 
         scale: 1,
-        rotateX: 0 
+        transition: {
+          type: "spring",
+          damping: 20,
+          stiffness: 300,
+          delay: index * 0.1,
+          duration: 0.4
+        }
       }}
-      transition={{
-        type: "spring",
-        damping: 25,
-        stiffness: 60,
-        delay: index * 0.15,
-        duration: 1.2
+      exit={{ 
+        y: -50, 
+        opacity: 0, 
+        scale: 0.9,
+        transition: {
+          type: "spring",
+          damping: 25,
+          stiffness: 400,
+          duration: 0.2,
+          delay: 0 // Explicitly no delay for exit
+        }
       }}
       className="relative h-full rounded-lg border border-gray-400 p-2 transition-all duration-300 ease-out shadow-lg"
-      style={{ transformStyle: "preserve-3d" }}
       whileHover={{ 
-        scale: 1.05,
+        scale: 1.02,
+        y: -5,
         boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-        transition: { type: "spring", stiffness: 300, damping: 20 }
+        transition: { type: "spring", stiffness: 400, damping: 25, duration: 0.2 }
       }}
     >
       <GlowingEffect
@@ -258,7 +268,9 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index })
         inactiveZone={0.01}
         borderWidth={3}
       />
-      <div className="relative bg-gray-200 rounded-lg p-6 h-full hover:shadow-sm transition-shadow duration-200">
+      <div className={`relative rounded-lg p-6 h-full hover:shadow-sm transition-shadow duration-200 ${
+        hasIssues ? 'bg-gray-100' : 'bg-green-50'
+      }`}>
         {/* Icon and Title */}
         <div className="flex items-center justify-between mb-4">
           <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm ${
@@ -328,8 +340,226 @@ const AutomationScan: React.FC = () => {
   const [loadingMessage, setLoadingMessage] = useState('');
   const [apiResults, setApiResults] = useState<any>(null);
   const [scanCompleted, setScanCompleted] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string>('');
+  const [loadingAiSummary, setLoadingAiSummary] = useState(false);
   const [waitingForLoader, setWaitingForLoader] = useState(false);
   const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
+  const [useCustomTests, setUseCustomTests] = useState(false);
+  const [selectedTests, setSelectedTests] = useState({
+    // Basic Configuration
+    headless: true,
+    force_local: false,
+    debug_mode: false,
+    debug_save_screenshots: false,
+    
+    // Navigation & Interaction Tests
+    run_tab_navigation: true,
+    run_on_input: false,
+    run_on_focus: false,
+    
+    // Content & Structure Tests
+    detect_missing_labels: true,
+    detect_missing_headings: true,
+    detect_landmark_roles: true,
+    detect_main_landmark_content: false,
+    detect_heading_function: false,
+    detect_character_shortcuts: false,
+    detect_keystroke_timing: false,
+    detect_focus_order: false,
+    detect_visible_focus: false,
+    detect_main_repeating_content: false,
+    detect_missing_headings_visual: false,
+    detect_heading_level_inconsistency: false,
+    detect_language_violations: false,
+    
+    // Media & Content Tests
+    detect_missing_captions: false,
+    detect_missing_audio_descriptions: false,
+    detect_missing_audio_transcripts: false,
+    detect_link_function_violations: false,
+    detect_redundant_entry: false,
+    detect_authentication_cognitive: false,
+    detect_css_positioning: false,
+    detect_layout_tables: false,
+    detect_page_title_violations: false,
+    detect_frame_title_violations: false,
+    detect_multiple_ways_violations: false,
+    
+    // Images & Visual Tests
+    detect_image_function_violations: false,
+    detect_text_alternative_violations: false,
+    detect_images_of_text_violations: false,
+    detect_captcha_violations: false,
+    detect_ui_component_contrast: false,
+    detect_ui_component_state_changes: false,
+    detect_css_content_violations: false,
+    
+    // Tables & Semantics
+    detect_table_semantics_violations: false,
+    detect_table_headers_violations: false,
+    detect_semantic_markup_violations: false,
+    
+    // Widget & Form Tests
+    detect_native_widget_labels: false,
+    detect_expected_input_clarity: false,
+    detect_custom_widget_labels: true,
+    detect_custom_widget_expected_input: false,
+    detect_autocomplete_violations: false,
+    
+    // Color & Visual Design
+    detect_color_meaning_violations: false,
+    detect_contrast_ratio_violations: true,
+    detect_aria_widget_role_violations: false,
+    detect_sensory_instructions: false,
+    detect_flashing_content: false,
+    detect_text_spacing_violations: false,
+    detect_reflow_violations: false,
+    detect_orientation_violations: false,
+    detect_resize_text_violations: false,
+    
+    // Navigation & Consistency
+    detect_bypass_mechanisms: false,
+    detect_consistent_navigation: false,
+    detect_consistent_identification: false,
+    detect_consistent_help: false,
+    detect_high_contrast_mode: false,
+    
+    // AI-Enhanced Analysis
+    use_llm_for_widget_labels: false,
+    use_llm_for_expected_input: false,
+    use_llm_for_custom_labels: false,
+    use_llm_for_custom_expected_input: false,
+    use_llm_for_color_analysis: false,
+    use_llm_for_contrast_analysis: false,
+    use_llm_for_widget_role_analysis: false,
+    use_llm_for_instruction_analysis: false,
+    use_llm_for_text_spacing: false,
+    use_llm_for_orientation: false,
+    use_llm_for_resize_text: false
+  });
+
+  // Default configuration with all tests enabled
+  const getAllTestsConfig = () => ({
+    // Basic Configuration
+    headless: true,
+    force_local: false,
+    debug_mode: false,
+    debug_save_screenshots: false,
+    
+    // Navigation & Interaction Tests
+    run_tab_navigation: true,
+    run_on_input: true,
+    run_on_focus: true,
+    
+    // Content & Structure Tests
+    detect_missing_labels: true,
+    detect_missing_headings: true,
+    detect_landmark_roles: true,
+    detect_main_landmark_content: true,
+    detect_heading_function: true,
+    detect_character_shortcuts: true,
+    detect_keystroke_timing: true,
+    detect_focus_order: true,
+    detect_visible_focus: true,
+    detect_main_repeating_content: true,
+    detect_missing_headings_visual: true,
+    detect_heading_level_inconsistency: true,
+    detect_language_violations: true,
+    
+    // Media & Content Tests
+    detect_missing_captions: true,
+    detect_missing_audio_descriptions: true,
+    detect_missing_audio_transcripts: true,
+    detect_link_function_violations: true,
+    detect_redundant_entry: true,
+    detect_authentication_cognitive: true,
+    detect_css_positioning: true,
+    detect_layout_tables: true,
+    detect_page_title_violations: true,
+    detect_frame_title_violations: true,
+    detect_multiple_ways_violations: true,
+    
+    // Images & Visual Tests
+    detect_image_function_violations: true,
+    detect_text_alternative_violations: true,
+    detect_images_of_text_violations: true,
+    detect_captcha_violations: true,
+    detect_ui_component_contrast: true,
+    detect_ui_component_state_changes: true,
+    detect_css_content_violations: true,
+    
+    // Tables & Semantics
+    detect_table_semantics_violations: true,
+    detect_table_headers_violations: true,
+    detect_semantic_markup_violations: true,
+    
+    // Widget & Form Tests
+    detect_native_widget_labels: true,
+    detect_expected_input_clarity: true,
+    detect_custom_widget_labels: true,
+    detect_custom_widget_expected_input: true,
+    detect_autocomplete_violations: true,
+    
+    // Color & Visual Design
+    detect_color_meaning_violations: true,
+    detect_contrast_ratio_violations: true,
+    detect_aria_widget_role_violations: true,
+    detect_sensory_instructions: true,
+    detect_flashing_content: true,
+    detect_text_spacing_violations: true,
+    detect_reflow_violations: true,
+    detect_orientation_violations: true,
+    detect_resize_text_violations: true,
+    
+    // Navigation & Consistency
+    detect_bypass_mechanisms: true,
+    detect_consistent_navigation: true,
+    detect_consistent_identification: true,
+    detect_consistent_help: true,
+    detect_high_contrast_mode: true,
+    
+    // AI-Enhanced Analysis
+    use_llm_for_widget_labels: true,
+    use_llm_for_expected_input: true,
+    use_llm_for_custom_labels: true,
+    use_llm_for_custom_expected_input: true,
+    use_llm_for_color_analysis: true,
+    use_llm_for_contrast_analysis: true,
+    use_llm_for_widget_role_analysis: true,
+    use_llm_for_instruction_analysis: true,
+    use_llm_for_text_spacing: true,
+    use_llm_for_orientation: true,
+    use_llm_for_resize_text: true
+  });
+
+  // Helper functions for managing test selections
+  const handleTestToggle = (testKey: string) => {
+    setSelectedTests(prev => ({
+      ...prev,
+      [testKey]: !prev[testKey as keyof typeof prev]
+    }));
+  };
+
+  const selectAllTests = () => {
+    const allTrue = Object.keys(selectedTests).reduce((acc, key) => {
+      acc[key] = true;
+      return acc;
+    }, {} as any);
+    setSelectedTests(allTrue);
+  };
+
+  const selectNoneTests = () => {
+    const allFalse = Object.keys(selectedTests).reduce((acc, key) => {
+      acc[key] = false;
+      return acc;
+    }, {} as any);
+    setSelectedTests(allFalse);
+  };
+
+  const handleCustomTestsToggle = () => {
+    setUseCustomTests(!useCustomTests);
+  };
+
 
   // Fetch user sites for domain selector (optional - handle errors gracefully)
   const { data: sitesData, loading: sitesLoading, error: sitesError } = useQuery(GetUserSitesDocument, {
@@ -363,6 +593,8 @@ const AutomationScan: React.FC = () => {
     setApiResults(null);
     setScanCompleted(false);
     setWaitingForLoader(false);
+    setAiSummary(''); // Clear previous AI summary
+    setScanKey(prev => prev + 1); // Force complete re-render of results
 
     const scanStartTime = Date.now();
     
@@ -373,7 +605,9 @@ const AutomationScan: React.FC = () => {
       // Ensure URL has protocol
       const fullUrl = domain.startsWith('http') ? domain : `https://${domain}`;
       console.log('Making API request to:', 'https://h80wkk4o40c4cs48cccsg0wk.webability.io/analyze');
-      console.log('Request payload:', { url: fullUrl });
+      const testsToRun = useCustomTests ? selectedTests : getAllTestsConfig();
+      console.log('Request payload:', { url: fullUrl, options: testsToRun });
+      console.log('Selected tests count:', Object.values(testsToRun).filter(Boolean).length);
       
       const analyzeResponse = await fetch('https://h80wkk4o40c4cs48cccsg0wk.webability.io/analyze', {
         method: 'POST',
@@ -382,88 +616,10 @@ const AutomationScan: React.FC = () => {
         },
         body: JSON.stringify({
           url: fullUrl,
-           options: 
-          //   headless: true,
-          //   force_local: false,
-          //   debug_mode: false,
-          //   debug_save_screenshots: false,
-          //   detect_custom_widget_labels: true
-          // }
-           {    headless: true,
-                force_local: false,
-                debug_mode: false,
-                debug_save_screenshots: false,
-            
-            run_tab_navigation: true,
-            run_on_input: true,
-            run_on_focus: true,
-            detect_missing_labels: true,
-            detect_missing_headings: true,
-            detect_landmark_roles: true,
-            detect_main_landmark_content: true,
-            detect_heading_function: true,
-            detect_character_shortcuts: true,
-            detect_keystroke_timing: true,
-            detect_focus_order: true,
-            detect_visible_focus: true,
-            detect_main_repeating_content: true,
-            detect_missing_headings_visual: true,
-            detect_heading_level_inconsistency: true,
-            detect_language_violations: true,
-            detect_missing_captions: true,
-            detect_missing_audio_descriptions: true,
-            detect_missing_audio_transcripts: true,
-            detect_link_function_violations: true,
-            detect_redundant_entry: true,
-            detect_authentication_cognitive: true,
-            detect_css_positioning: true,
-            detect_layout_tables: true,
-            detect_page_title_violations: true,
-            detect_frame_title_violations: true,
-            detect_multiple_ways_violations: true,
-            detect_image_function_violations: true,
-            detect_text_alternative_violations: true,
-            detect_images_of_text_violations: true,
-            detect_captcha_violations: true,
-            detect_ui_component_contrast: true,
-            detect_ui_component_state_changes: true,
-            detect_css_content_violations: true,
-            detect_table_semantics_violations: true,
-            detect_table_headers_violations: true,
-            detect_semantic_markup_violations: true,
-            detect_native_widget_labels: true,
-            detect_expected_input_clarity: true,
-            detect_custom_widget_labels: true,
-            detect_custom_widget_expected_input: true,
-            detect_autocomplete_violations: true,
-            detect_color_meaning_violations: true,
-            detect_contrast_ratio_violations: true,
-            detect_aria_widget_role_violations: true,
-            detect_sensory_instructions: true,
-            detect_flashing_content: true,
-            detect_text_spacing_violations: true,
-            detect_reflow_violations: true,
-            detect_orientation_violations: true,
-            detect_resize_text_violations: true,
-            detect_bypass_mechanisms: true,
-            detect_consistent_navigation: true,
-            detect_consistent_identification: true,
-            detect_consistent_help: true,
-            detect_high_contrast_mode: true,
-            
-            use_llm_for_widget_labels: true,
-            use_llm_for_expected_input: true,
-            use_llm_for_custom_labels: true,
-            use_llm_for_custom_expected_input: true,
-            use_llm_for_color_analysis: true,
-            use_llm_for_contrast_analysis: true,
-            use_llm_for_widget_role_analysis: true,
-            use_llm_for_instruction_analysis: true,
-            use_llm_for_text_spacing: true,
-            use_llm_for_orientation: true,
-            use_llm_for_resize_text: true
-          }
-        })
+          options: useCustomTests ? selectedTests : getAllTestsConfig()
+        }),
+        // Extended timeout for long-running accessibility scans (20 minutes)
+        signal: AbortSignal.timeout(1200000)
       });
 
       console.log('Response status:', analyzeResponse.status);
@@ -486,39 +642,67 @@ const AutomationScan: React.FC = () => {
       console.log(`Task ID received: ${taskId}`);
       setLoadingMessage('Getting responses...');
 
-      // Step 2: Poll for results every 5 seconds
+      // Step 2: Poll for results with extended timeout for long scans
       const pollForResults = async (): Promise<any> => {
-        while (true) {
+        const maxPollingTime = 25 * 60 * 1000; // 25 minutes maximum
+        const startTime = Date.now();
+        let pollCount = 0;
+        
+        while (Date.now() - startTime < maxPollingTime) {
           try {
-            const taskResponse = await fetch(`https://h80wkk4o40c4cs48cccsg0wk.webability.io/task/${taskId}`);
+            pollCount++;
+            const elapsedMinutes = Math.floor((Date.now() - startTime) / 60000);
+            
+            const taskResponse = await fetch(`https://h80wkk4o40c4cs48cccsg0wk.webability.io/task/${taskId}`, {
+              // 30 second timeout per polling request
+              signal: AbortSignal.timeout(30000)
+            });
             
             if (!taskResponse.ok) {
               throw new Error(`Task status request failed: ${taskResponse.statusText}`);
             }
 
             const taskData = await taskResponse.json();
-            console.log('Polling response:', taskData);
+            console.log(`Polling response (${pollCount}, ${elapsedMinutes}min):`, taskData);
             
             // Check if task is completed based on API documentation
             if (taskData.status === 'completed') {
               return taskData;
             } else if (taskData.status === 'failed') {
+              // Check if it's a browser timeout - suggest retry with reduced scope
+              if (taskData.error && taskData.error.includes('browser has been closed')) {
+                throw new Error(`Browser timeout after ${elapsedMinutes} minutes. Try reducing scan scope or contact support. Error: ${taskData.error}`);
+              }
               throw new Error(taskData.error || 'Task failed');
             }
             
-            // Show progress if available
+            // Enhanced progress reporting
             if (taskData.progress) {
-              setLoadingMessage(taskData.progress);
+              const estimatedTotal = 15; // Estimated 15 minutes for full scan
+              const remainingTime = Math.max(0, estimatedTotal - elapsedMinutes);
+              setLoadingMessage(`${taskData.progress} - Elapsed: ${elapsedMinutes}min, Est. remaining: ${remainingTime}min`);
+            } else {
+              setLoadingMessage(`Scanning in progress... (${elapsedMinutes} minutes elapsed)`);
             }
             
-            // Wait 5 seconds before next poll
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            // Wait 10 seconds between polls for long scans (reduced frequency)
+            await new Promise(resolve => setTimeout(resolve, 10000));
           } catch (error) {
             console.error('Error polling for results:', error);
-            // Continue polling even if one request fails
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            
+            // If it's a timeout error and we're still within max time, continue
+            if ((error as any)?.name === 'TimeoutError' && Date.now() - startTime < maxPollingTime) {
+              console.log('Polling request timed out, retrying...');
+              await new Promise(resolve => setTimeout(resolve, 15000)); // Wait longer on timeout
+              continue;
+            }
+            
+            // For other errors, wait and retry
+            await new Promise(resolve => setTimeout(resolve, 10000));
           }
         }
+        
+        throw new Error(`Scan timed out after ${Math.floor(maxPollingTime / 60000)} minutes. The scan may still be running on the server.`);
       };
 
       // Get the final results
@@ -569,6 +753,76 @@ const AutomationScan: React.FC = () => {
     }
   };
 
+  const generateAiSummary = async (category: any) => {
+    setLoadingAiSummary(true);
+    try {
+      console.log('Starting AI summary generation for category:', category.category);
+      
+      // Collect all issues from the category
+      const allIssues = category.subcategories
+        .filter((sub: any) => sub.issues && sub.issues.length > 0)
+        .flatMap((sub: any) => sub.issues);
+
+      console.log('Found issues:', allIssues.length);
+
+      if (allIssues.length === 0) {
+        setAiSummary('Great news! No accessibility issues were found in this category. Your website is performing well in this area.');
+        setLoadingAiSummary(false);
+        return;
+      }
+
+      // Create a summary of issues for the AI
+      const issuesSummary = allIssues.map((issue: any) => ({
+        type: issue.issue_type || 'Unknown',
+        description: issue.description || '',
+        element: issue.selector || '',
+        action: issue.action || ''
+      }));
+
+      const prompt = `You are an accessibility expert explaining website issues to a non-technical person. 
+
+Category: ${category.category}
+Issues found: ${allIssues.length}
+
+Issues details:
+${issuesSummary.map((issue: any, i: number) => `${i + 1}. ${issue.type}: ${issue.description}`).join('\n')}
+
+Please provide a simple, friendly explanation in 2-3 paragraphs that:
+1. Explains what these accessibility issues mean in everyday language
+2. Why they matter for users (especially those with disabilities)
+3. What specific actions the website owner should take to fix them
+
+Use simple language, avoid technical jargon, and be encouraging. Start with "Here's what we found..." and keep it under 200 words.`;
+
+      console.log('Sending request to AI summary API...');
+      console.log('Prompt length:', prompt.length);
+
+      const response = await fetch('http://localhost:3001/api/ai-summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      console.log('API response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API error response:', errorText);
+        throw new Error(`Failed to generate AI summary: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      setAiSummary(data.summary || 'Unable to generate summary at this time.');
+    } catch (error) {
+      console.error('Error generating AI summary:', error);
+      setAiSummary('Unable to generate AI summary at this time. Please review the technical details above for specific issues that need attention.');
+    } finally {
+      setLoadingAiSummary(false);
+    }
+  };
+
   const handleViewDetails = (category: any, event: React.MouseEvent) => {
     console.log('Opening modal for category:', category);
     console.log('Category subcategories:', category.subcategories);
@@ -581,6 +835,10 @@ const AutomationScan: React.FC = () => {
     setButtonPosition({ x: buttonCenterX, y: buttonCenterY });
     setSelectedCategory(category);
     setShowAnalysis(true);
+    setAiSummary(''); // Reset AI summary
+    
+    // Generate AI summary for this category
+    generateAiSummary(category);
   };
 
   // Function to parse API results and convert to card format
@@ -588,16 +846,20 @@ const AutomationScan: React.FC = () => {
     // Handle polling response format
     const actualResults = apiData.result || apiData;
     
-    if (!actualResults || !actualResults.auto_fixes) return [];
+    console.log('Processing API results:', actualResults);
+    console.log('Auto fixes found:', actualResults?.auto_fixes?.length || 0);
+    console.log('Summary:', actualResults?.summary);
+    
+    if (!actualResults) return [];
 
-    const autoFixes = actualResults.auto_fixes;
+    const autoFixes = actualResults.auto_fixes || [];
     const summary = actualResults.summary;
     
     // Group fixes by category
     const categoryMap: { [key: string]: any } = {};
 
     // Category mapping based on API documentation
-    const categoryConfig = {
+    const categoryConfig: { [key: string]: { name: string; icon: any; color: string } } = {
       'keyboard_navigation': { name: 'Keyboard', icon: FaKeyboard, color: 'blue' },
       'forms': { name: 'Forms', icon: FaKeyboard, color: 'blue' },
       'visual_design': { name: 'Visual', icon: FaEye, color: 'teal' },
@@ -611,7 +873,10 @@ const AutomationScan: React.FC = () => {
       'responsive_design': { name: 'Responsive', icon: FaEye, color: 'teal' }
     };
 
-    // Group auto_fixes by category and issue_type
+    // Don't pre-initialize any categories - only create them based on actual results
+    // This ensures we only show categories that were actually tested and have results
+
+    // Now process actual issues and update categories that have problems
     autoFixes.forEach((fix: any) => {
       const category = fix.category || 'other';
       const issueType = fix.issue_type || 'unknown';
@@ -622,6 +887,7 @@ const AutomationScan: React.FC = () => {
         color: 'gray' 
       };
 
+      // If this category wasn't in our tested list, add it
       if (!categoryMap[category]) {
         categoryMap[category] = {
           category: categoryInfo.name,
@@ -631,25 +897,116 @@ const AutomationScan: React.FC = () => {
         };
       }
 
+      // Convert subcategories to object format if it's still an array (from initialization)
+      if (Array.isArray(categoryMap[category].subcategories)) {
+        categoryMap[category].subcategories = {};
+      }
+
       if (!categoryMap[category].subcategories[issueType]) {
         categoryMap[category].subcategories[issueType] = {
           id: issueType,
           name: issueType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
           status: 'error',
           total_fixes: 0,
-          issues: []
+          auto_fixes: [],
+          issues: [] // Add issues array for modal compatibility
         };
       }
 
       categoryMap[category].subcategories[issueType].total_fixes++;
-      categoryMap[category].subcategories[issueType].issues.push(fix);
+      categoryMap[category].subcategories[issueType].auto_fixes.push(fix);
+      categoryMap[category].subcategories[issueType].issues.push(fix); // Also add to issues array
     });
+
+    // Add "passed" categories for tests that were run but had no issues
+    // We can determine this from the API response summary or from the selected tests
+    if (summary && summary.tests_run) {
+      // If the API provides information about which tests were run
+      Object.keys(summary.tests_run).forEach(testKey => {
+        // Map test keys to categories
+        const categoryMapping: { [key: string]: string } = {
+          'run_tab_navigation': 'keyboard_navigation',
+          'detect_missing_labels': 'forms',
+          'detect_missing_headings': 'page_structure',
+          'detect_landmark_roles': 'navigation',
+          'detect_custom_widget_labels': 'aria_widgets',
+          'detect_contrast_ratio_violations': 'visual_design',
+          'detect_image_function_violations': 'images_media',
+          'detect_missing_captions': 'multimedia',
+          'detect_language_violations': 'internationalization',
+          'detect_authentication_cognitive': 'authentication',
+          'detect_reflow_violations': 'responsive_design'
+        };
+
+        const categoryKey = categoryMapping[testKey];
+        if (categoryKey && !categoryMap[categoryKey]) {
+          const categoryInfo = categoryConfig[categoryKey];
+          if (categoryInfo) {
+            categoryMap[categoryKey] = {
+              category: categoryInfo.name,
+              subcategories: [{
+                id: `${categoryKey}_check`,
+                name: `${categoryInfo.name} Check`,
+                status: 'success',
+                total_fixes: 0,
+                auto_fixes: [],
+                issues: []
+              }],
+              icon: categoryInfo.icon,
+              color: categoryInfo.color
+            };
+          }
+        }
+      });
+    } else {
+      // Fallback: Use the selected tests to determine what was run
+      const currentTests = useCustomTests ? selectedTests : getAllTestsConfig();
+      const categoryMapping: { [key: string]: string } = {
+        'run_tab_navigation': 'keyboard_navigation',
+        'detect_missing_labels': 'forms',
+        'detect_missing_headings': 'page_structure',
+        'detect_landmark_roles': 'navigation',
+        'detect_custom_widget_labels': 'aria_widgets',
+        'detect_contrast_ratio_violations': 'visual_design',
+        'detect_image_function_violations': 'images_media',
+        'detect_missing_captions': 'multimedia',
+        'detect_language_violations': 'internationalization',
+        'detect_authentication_cognitive': 'authentication',
+        'detect_reflow_violations': 'responsive_design'
+      };
+
+      Object.keys(currentTests).forEach(testKey => {
+        if (currentTests[testKey as keyof typeof currentTests] === true) {
+          const categoryKey = categoryMapping[testKey];
+          if (categoryKey && !categoryMap[categoryKey]) {
+            const categoryInfo = categoryConfig[categoryKey];
+            if (categoryInfo) {
+              categoryMap[categoryKey] = {
+                category: categoryInfo.name,
+                subcategories: [{
+                  id: `${categoryKey}_check`,
+                  name: `${categoryInfo.name} Check`,
+                  status: 'success',
+                  total_fixes: 0,
+                  auto_fixes: [],
+                  issues: []
+                }],
+                icon: categoryInfo.icon,
+                color: categoryInfo.color
+              };
+            }
+          }
+        }
+      });
+    }
 
     // Convert to array format expected by the UI
     const categories = Object.values(categoryMap).map((category: any) => ({
       ...category,
-      subcategories: Object.values(category.subcategories)
-    })).filter((category: any) => category.subcategories.length > 0);
+      subcategories: Array.isArray(category.subcategories) 
+        ? category.subcategories 
+        : Object.values(category.subcategories)
+    }));
 
     return categories;
   };
@@ -706,6 +1063,246 @@ const AutomationScan: React.FC = () => {
             >
               {isScanning ? (loadingMessage || 'Scanning...') : 'Free Scan'}
             </button>
+          </div>
+
+          {/* Advanced Options Section */}
+          <div className="mt-6">
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useCustomTests}
+                onChange={handleCustomTestsToggle}
+                className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+              />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-700">Customize Test Selection</span>
+                <span className="text-xs text-gray-500">
+                  {useCustomTests 
+                    ? `Custom selection (${Object.values(selectedTests).filter(Boolean).length} tests)` 
+                    : 'All tests enabled by default (56 tests)'
+                  }
+                </span>
+              </div>
+            </label>
+
+            {useCustomTests && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-4 bg-gray-50 rounded-lg p-6 border border-gray-200"
+              >
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Test Configuration</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Select which accessibility tests to run. More tests provide comprehensive analysis but take longer to complete.
+                  </p>
+                  
+                  {/* Quick Actions */}
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    <button
+                      onClick={selectAllTests}
+                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-200 transition-colors"
+                    >
+                      Select All
+                    </button>
+                    <button
+                      onClick={selectNoneTests}
+                      className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
+                    >
+                      Select None
+                    </button>
+                  </div>
+                </div>
+
+                {/* Test Categories */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  
+                  {/* Navigation & Interaction */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-800 text-sm border-b border-gray-300 pb-1">
+                      Navigation & Interaction
+                    </h4>
+                    {[
+                      { key: 'run_tab_navigation', label: 'Tab Navigation' },
+                      { key: 'run_on_input', label: 'Input Interaction' },
+                      { key: 'run_on_focus', label: 'Focus Events' },
+                      { key: 'detect_character_shortcuts', label: 'Character Shortcuts' },
+                      { key: 'detect_keystroke_timing', label: 'Keystroke Timing' },
+                      { key: 'detect_focus_order', label: 'Focus Order' },
+                      { key: 'detect_visible_focus', label: 'Visible Focus' }
+                    ].map(test => (
+                      <label key={test.key} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedTests[test.key as keyof typeof selectedTests]}
+                          onChange={() => handleTestToggle(test.key)}
+                          className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-700">{test.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Content & Structure */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-800 text-sm border-b border-gray-300 pb-1">
+                      Content & Structure
+                    </h4>
+                    {[
+                      { key: 'detect_missing_labels', label: 'Missing Labels' },
+                      { key: 'detect_missing_headings', label: 'Missing Headings' },
+                      { key: 'detect_landmark_roles', label: 'Landmark Roles' },
+                      { key: 'detect_main_landmark_content', label: 'Main Landmark Content' },
+                      { key: 'detect_heading_function', label: 'Heading Function' },
+                      { key: 'detect_main_repeating_content', label: 'Repeating Content' },
+                      { key: 'detect_missing_headings_visual', label: 'Visual Headings' },
+                      { key: 'detect_heading_level_inconsistency', label: 'Heading Level Issues' },
+                      { key: 'detect_language_violations', label: 'Language Violations' }
+                    ].map(test => (
+                      <label key={test.key} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedTests[test.key as keyof typeof selectedTests]}
+                          onChange={() => handleTestToggle(test.key)}
+                          className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-700">{test.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Media & Content */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-800 text-sm border-b border-gray-300 pb-1">
+                      Media & Content
+                    </h4>
+                    {[
+                      { key: 'detect_missing_captions', label: 'Missing Captions' },
+                      { key: 'detect_missing_audio_descriptions', label: 'Audio Descriptions' },
+                      { key: 'detect_missing_audio_transcripts', label: 'Audio Transcripts' },
+                      { key: 'detect_link_function_violations', label: 'Link Function' },
+                      { key: 'detect_redundant_entry', label: 'Redundant Entry' },
+                      { key: 'detect_authentication_cognitive', label: 'Authentication' },
+                      { key: 'detect_css_positioning', label: 'CSS Positioning' },
+                      { key: 'detect_layout_tables', label: 'Layout Tables' },
+                      { key: 'detect_page_title_violations', label: 'Page Titles' },
+                      { key: 'detect_frame_title_violations', label: 'Frame Titles' }
+                    ].map(test => (
+                      <label key={test.key} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedTests[test.key as keyof typeof selectedTests]}
+                          onChange={() => handleTestToggle(test.key)}
+                          className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-700">{test.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Images & Visual */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-800 text-sm border-b border-gray-300 pb-1">
+                      Images & Visual
+                    </h4>
+                    {[
+                      { key: 'detect_image_function_violations', label: 'Image Function' },
+                      { key: 'detect_text_alternative_violations', label: 'Text Alternatives' },
+                      { key: 'detect_images_of_text_violations', label: 'Images of Text' },
+                      { key: 'detect_captcha_violations', label: 'CAPTCHA Issues' },
+                      { key: 'detect_ui_component_contrast', label: 'UI Component Contrast' },
+                      { key: 'detect_ui_component_state_changes', label: 'State Changes' },
+                      { key: 'detect_css_content_violations', label: 'CSS Content' },
+                      { key: 'detect_contrast_ratio_violations', label: 'Contrast Ratio' },
+                      { key: 'detect_color_meaning_violations', label: 'Color Meaning' },
+                      { key: 'detect_sensory_instructions', label: 'Sensory Instructions' }
+                    ].map(test => (
+                      <label key={test.key} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedTests[test.key as keyof typeof selectedTests]}
+                          onChange={() => handleTestToggle(test.key)}
+                          className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-700">{test.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Forms & Widgets */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-800 text-sm border-b border-gray-300 pb-1">
+                      Forms & Widgets
+                    </h4>
+                    {[
+                      { key: 'detect_native_widget_labels', label: 'Native Widget Labels' },
+                      { key: 'detect_expected_input_clarity', label: 'Input Clarity' },
+                      { key: 'detect_custom_widget_labels', label: 'Custom Widget Labels' },
+                      { key: 'detect_custom_widget_expected_input', label: 'Custom Widget Input' },
+                      { key: 'detect_autocomplete_violations', label: 'Autocomplete' },
+                      { key: 'detect_aria_widget_role_violations', label: 'ARIA Widget Roles' },
+                      { key: 'detect_table_semantics_violations', label: 'Table Semantics' },
+                      { key: 'detect_table_headers_violations', label: 'Table Headers' },
+                      { key: 'detect_semantic_markup_violations', label: 'Semantic Markup' }
+                    ].map(test => (
+                      <label key={test.key} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedTests[test.key as keyof typeof selectedTests]}
+                          onChange={() => handleTestToggle(test.key)}
+                          className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-700">{test.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* AI-Enhanced Analysis */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-800 text-sm border-b border-gray-300 pb-1">
+                      AI-Enhanced Analysis
+                    </h4>
+                    {[
+                      { key: 'use_llm_for_widget_labels', label: 'AI Widget Labels' },
+                      { key: 'use_llm_for_expected_input', label: 'AI Expected Input' },
+                      { key: 'use_llm_for_custom_labels', label: 'AI Custom Labels' },
+                      { key: 'use_llm_for_custom_expected_input', label: 'AI Custom Input' },
+                      { key: 'use_llm_for_color_analysis', label: 'AI Color Analysis' },
+                      { key: 'use_llm_for_contrast_analysis', label: 'AI Contrast Analysis' },
+                      { key: 'use_llm_for_widget_role_analysis', label: 'AI Widget Roles' },
+                      { key: 'use_llm_for_instruction_analysis', label: 'AI Instructions' },
+                      { key: 'use_llm_for_text_spacing', label: 'AI Text Spacing' },
+                      { key: 'use_llm_for_orientation', label: 'AI Orientation' },
+                      { key: 'use_llm_for_resize_text', label: 'AI Resize Text' }
+                    ].map(test => (
+                      <label key={test.key} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedTests[test.key as keyof typeof selectedTests]}
+                          onChange={() => handleTestToggle(test.key)}
+                          className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-700">{test.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Selected Tests Summary */}
+                <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Selected Tests: {Object.values(selectedTests).filter(Boolean).length} / {Object.keys(selectedTests).length}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      Estimated scan time: {Object.values(selectedTests).filter(Boolean).length < 10 ? '2-5 min' : Object.values(selectedTests).filter(Boolean).length < 30 ? '5-15 min' : '15-25 min'}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </div>
 
         </div>
@@ -811,16 +1408,25 @@ const AutomationScan: React.FC = () => {
 
           {/* Issue Cards or Empty State */}
           {hasScanned ? (
-            <div key={scanKey} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredIssues.map((category, index) => (
-                <IssueCard
-                  key={`${scanKey}-${category.category}`}
-                  category={category}
-                  onViewDetails={handleViewDetails}
-                  index={index}
-                />
-              ))}
-            </div>
+            <AnimatePresence exitBeforeEnter={false}>
+              <motion.div 
+                key={scanKey} 
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {filteredIssues.map((category, index) => (
+                  <IssueCard
+                    key={`${scanKey}-${category.category}`}
+                    category={category}
+                    onViewDetails={handleViewDetails}
+                    index={index}
+                  />
+                ))}
+              </motion.div>
+            </AnimatePresence>
           ) : (
             /* Empty State */
             <div className="text-center py-16">
@@ -981,6 +1587,65 @@ const AutomationScan: React.FC = () => {
                       )}
                     </div>
                   ))}
+                  
+                  {/* AI Summary Section */}
+                  <div className="border-t border-gray-200 pt-6 mt-6">
+                    <div className="flex items-center mb-4">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12,2A2,2 0 0,1 14,4C14,4.74 13.6,5.39 13,5.73V7H14A7,7 0 0,1 21,14H22A1,1 0 0,1 23,15V18A1,1 0 0,1 22,19H21V20A2,2 0 0,1 19,22H5A2,2 0 0,1 3,20V19H2A1,1 0 0,1 1,18V15A1,1 0 0,1 2,14H3A7,7 0 0,1 10,7H11V5.73C10.4,5.39 10,4.74 10,4A2,2 0 0,1 12,2M7.5,13A2.5,2.5 0 0,0 5,15.5A2.5,2.5 0 0,0 7.5,18A2.5,2.5 0 0,0 10,15.5A2.5,2.5 0 0,0 7.5,13M16.5,13A2.5,2.5 0 0,0 14,15.5A2.5,2.5 0 0,0 16.5,18A2.5,2.5 0 0,0 19,15.5A2.5,2.5 0 0,0 16.5,13Z"/>
+                          </svg>
+                        </div>
+                        <h4 className="text-lg font-semibold text-gray-900">AI Summary</h4>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
+                      {loadingAiSummary ? (
+                        <div className="flex items-center space-x-3">
+                          <div className="relative">
+                            <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-200"></div>
+                            <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent absolute top-0 left-0"></div>
+                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                              <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col">
+                            <p className="text-sm font-medium text-gray-700">Generating personalized summary...</p>
+                            <div className="flex items-center space-x-1 mt-1">
+                              <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce"></div>
+                              <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                              <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                              <span className="text-xs text-gray-500 ml-2">AI is analyzing your results</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : aiSummary ? (
+                        <div className="space-y-3">
+                          <div className="flex items-start space-x-3">
+                            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                {aiSummary}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-500 italic border-t border-blue-200 pt-2 mt-3">
+                            💡 This summary was generated by AI to help explain technical issues in simple terms
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-sm text-gray-500">AI summary will appear here...</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>

@@ -1,5 +1,6 @@
 import { Router } from 'express'
 
+import aiSummaryRoutes from './ai-summary.routes'
 import chatRoutes from './chat.routes'
 import formRoutes from './form.routes'
 import monitoringRoutes from './monitoring.routes'
@@ -21,5 +22,6 @@ router.use(proofOfEffortRoutes)
 router.use(chatRoutes)
 router.use(monitoringRoutes)
 router.use(sitesRoutes)
+router.use(aiSummaryRoutes)
 
 export default router
