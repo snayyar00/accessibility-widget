@@ -1,4 +1,10 @@
-import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import React, {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { parse } from 'tldts';
 import BannerImage from '@/assets/images/WebAbility Hero3.png';
 import SingleBannerImage from '@/assets/images/WebAbilityBanner.png';
@@ -146,6 +152,7 @@ const TrialBannerAndModal: React.FC<any> = ({
   const [promoCode, setPromoCode] = useState('');
   const { search } = useLocation();
   const trialReload = useRef(false);
+  const isMountedRef = useRef(true);
 
   const showPaymentModal = async () => {
     const sanitizedDomain = getRootDomain(formData.domainName);
@@ -161,24 +168,29 @@ const TrialBannerAndModal: React.FC<any> = ({
       variables: { url: sanitizedDomain },
     });
     if (response.errors) {
-      const originalInputDetails = parse(formData.domainName);
-      if (
-        originalInputDetails.domain === sanitizedDomain &&
-        originalInputDetails.subdomain &&
-        originalInputDetails.subdomain.toLowerCase() !== 'www'
-      ) {
-        toast.error(
-          `The root domain '${sanitizedDomain}' is already registered. This covers subdomains like '${formData.domainName}'. You don't need to add it separately.`,
-        );
-      } else if (
-        originalInputDetails.domain === sanitizedDomain &&
-        originalInputDetails.subdomain &&
-        originalInputDetails.subdomain.toLowerCase() === 'www'
-      ) {
-        toast.error(
-          `The domain '${sanitizedDomain}' (derived from your input '${formData.domainName}') is already registered.`,
-        );
-      } else {
+      try {
+        const originalInputDetails = parse(formData.domainName);
+        if (
+          originalInputDetails.domain === sanitizedDomain &&
+          originalInputDetails.subdomain &&
+          originalInputDetails.subdomain.toLowerCase() !== 'www'
+        ) {
+          toast.error(
+            `The root domain '${sanitizedDomain}' is already registered. This covers subdomains like '${formData.domainName}'. You don't need to add it separately.`,
+          );
+        } else if (
+          originalInputDetails.domain === sanitizedDomain &&
+          originalInputDetails.subdomain &&
+          originalInputDetails.subdomain.toLowerCase() === 'www'
+        ) {
+          toast.error(
+            `The domain '${sanitizedDomain}' (derived from your input '${formData.domainName}') is already registered.`,
+          );
+        } else {
+          toast.error(`The domain '${sanitizedDomain}' is already in use.`);
+        }
+      } catch (parseError) {
+        console.error('Error parsing domain name:', parseError);
         toast.error(`The domain '${sanitizedDomain}' is already in use.`);
       }
     } else {
@@ -205,54 +217,6 @@ const TrialBannerAndModal: React.FC<any> = ({
   //   }
   // }, [search]);
 
-  useEffect(() => {
-    if (addedDomain?.url !== '' && paymentView !== true) {
-      if (activePlan !== '' && tierPlan) {
-        let res = async () => {
-          await handleSubscription();
-          window.location.href = '/add-domain';
-        };
-        res();
-      } else {
-        setPaymentView(true);
-      }
-    }
-  }, [addedDomain]);
-
-  useEffect(() => {
-    if (allDomains) {
-      if (domainName) {
-        const newdomain = allDomains.getUserSites.filter(
-          (site: any) => site.url == domainName,
-        )[0];
-        setDomainCount(allDomains.getUserSites.length);
-        if (newdomain) {
-          setAddedDomain(newdomain);
-        }
-      }
-      let trialSites = 0;
-      for (let site of allDomains?.getUserSites) {
-        if (site?.trial == 1) {
-          trialSites++;
-        }
-      }
-
-      setTrialMonthlyCount((prevCount) => prevCount + trialSites);
-    }
-  }, [allDomains]);
-
-  useEffect(() => {
-    if (allDomains) {
-      const newdomain = allDomains.getUserSites.filter(
-        (site: any) => site.url == optionalDomain,
-      )[0];
-      setDomainCount(allDomains.getUserSites.length);
-      if (newdomain) {
-        setAddedDomain(newdomain);
-      }
-    }
-  }, [optionalDomain]);
-
   const [subMonthlyCount, setSubMonthlyCount] = useState(0);
   const [subYearlyCount, setSubYearlyCount] = useState(0);
 
@@ -271,21 +235,31 @@ const TrialBannerAndModal: React.FC<any> = ({
           setTierPlan(true);
         }
         if (customerData.subscriptions) {
-          const subs = JSON.parse(customerData.subscriptions);
-          // console.log("subs = ",subs);
-          setSubMonthlyCount(subs.monthly.length);
-          setSubYearlyCount(subs.yearly.length);
-          // setSubCount(subs.length);
+          try {
+            const subs = JSON.parse(customerData.subscriptions);
+            // console.log("subs = ",subs);
+            setSubMonthlyCount(subs.monthly.length);
+            setSubYearlyCount(subs.yearly.length);
+            // setSubCount(subs.length);
+          } catch (parseError) {
+            console.error('Error parsing subscriptions:', parseError);
+            setSubMonthlyCount(0);
+            setSubYearlyCount(0);
+          }
         }
 
         if (customerData.trial_subs) {
-          const trials = JSON.parse(customerData.trial_subs);
-          // console.log("trials =",trials);
-          setTrialMonthlyCount(
-            (prevCount) => prevCount + trials.monthly.length,
-          );
-          setTrialYearlyCount(trials.yearly.length);
-          // setTrialsCount(trials.length);
+          try {
+            const trials = JSON.parse(customerData.trial_subs);
+            // console.log("trials =",trials);
+            setTrialMonthlyCount(
+              (prevCount) => prevCount + trials.monthly.length,
+            );
+            setTrialYearlyCount(trials.yearly.length);
+            // setTrialsCount(trials.length);
+          } catch (parseError) {
+            console.error('Error parsing trial subscriptions:', parseError);
+          }
         }
 
         setIsStripeCustomer(true);
@@ -322,7 +296,7 @@ const TrialBannerAndModal: React.FC<any> = ({
 
   let maxSites = appSumoCount * 2 || 2;
 
-  const handleSubscription = async () => {
+  const handleSubscription = useCallback(async () => {
     setBillingLoading(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
     const bodyData = {
@@ -340,43 +314,104 @@ const TrialBannerAndModal: React.FC<any> = ({
     const token = getAuthenticationCookie();
 
     try {
-      await fetch(url, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(bodyData),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
+      });
 
-          response.json().then((data) => {
-            toast.success(
-              'The domain was successfully added to your active plan',
-            );
-            setBillingLoading(false);
-            closeModal();
-            setPaymentView(false);
-            window.location.reload();
-          });
-        })
-        .catch((error) => {
-          // Handle error
-          toast.error(
-            'You have reached the maximum number of allowed domains for this plan',
-          );
-          console.error('There was a problem with the fetch operation:', error);
-          setBillingLoading(false);
-          setPaymentView(false);
-          closeModal();
-        });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      if (isMountedRef.current) {
+        toast.success('The domain was successfully added to your active plan');
+        setBillingLoading(false);
+        closeModal();
+        setPaymentView(false);
+        window.location.reload();
+      }
     } catch (error) {
-      console.log('error', error);
+      // Handle error
+      if (isMountedRef.current) {
+        toast.error(
+          'You have reached the maximum number of allowed domains for this plan',
+        );
+        console.error('There was a problem with the fetch operation:', error);
+        setBillingLoading(false);
+        setPaymentView(false);
+        closeModal();
+      }
     }
-  };
+  }, [activePlan, isYearly, addedDomain, userData, closeModal, setPaymentView]);
+
+  const handleSubscriptionAndRedirect = useCallback(async () => {
+    try {
+      await handleSubscription();
+      if (isMountedRef.current) {
+        window.location.href = '/add-domain';
+      }
+    } catch (error) {
+      console.error('Error handling subscription:', error);
+      if (isMountedRef.current) {
+        toast.error('There was an error processing your subscription');
+      }
+    }
+  }, [handleSubscription]);
+
+  useEffect(() => {
+    if (addedDomain?.url !== '' && paymentView !== true) {
+      if (activePlan !== '' && tierPlan) {
+        handleSubscriptionAndRedirect();
+      } else {
+        setPaymentView(true);
+      }
+    }
+  }, [
+    addedDomain,
+    paymentView,
+    activePlan,
+    tierPlan,
+    handleSubscriptionAndRedirect,
+  ]);
+
+  useEffect(() => {
+    if (allDomains) {
+      if (domainName) {
+        const newdomain = allDomains.getUserSites.filter(
+          (site: any) => site.url == domainName,
+        )[0];
+        setDomainCount(allDomains.getUserSites.length);
+        if (newdomain) {
+          setAddedDomain(newdomain);
+        }
+      }
+      let trialSites = 0;
+      for (let site of allDomains?.getUserSites) {
+        if (site?.trial == 1) {
+          trialSites++;
+        }
+      }
+
+      setTrialMonthlyCount((prevCount) => prevCount + trialSites);
+    }
+  }, [allDomains]);
+
+  useEffect(() => {
+    if (allDomains) {
+      const newdomain = allDomains.getUserSites.filter(
+        (site: any) => site.url == optionalDomain,
+      )[0];
+      setDomainCount(allDomains.getUserSites.length);
+      if (newdomain) {
+        setAddedDomain(newdomain);
+      }
+    }
+  }, [optionalDomain]);
 
   const upgradeAppSumo = async () => {
     if (promoCode.length <= 2) {
@@ -395,37 +430,31 @@ const TrialBannerAndModal: React.FC<any> = ({
     const token = getAuthenticationCookie();
 
     try {
-      await fetch(url, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(bodyData),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`Network response was not ok `);
-          }
+      });
 
-          response.json().then((data) => {
-            toast.success('Your Plan has been updated');
-            setTimeout(() => {
-              setPortalClick(false);
-              window.location.reload();
-            }, 2000);
-          });
-        })
-        .catch((error) => {
-          // Handle error
-          toast.error(
-            'There was an error updating your plan, please try again later',
-          );
-          console.error('There was a problem with the fetch operation:', error);
-          setPortalClick(false);
-        });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      toast.success('Your Plan has been updated');
+      setTimeout(() => {
+        setPortalClick(false);
+        window.location.reload();
+      }, 2000);
     } catch (error) {
-      console.log('error', error);
+      // Handle error
+      toast.error(
+        'There was an error updating your plan, please try again later',
+      );
+      console.error('There was a problem with the fetch operation:', error);
       setPortalClick(false);
     }
   };
@@ -435,6 +464,13 @@ const TrialBannerAndModal: React.FC<any> = ({
       showPaymentModal();
     }
   }, [cardTrial]);
+
+  // Cleanup effect to prevent state updates on unmounted component
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const [formData, setFormData] = useState<DomainFormData>({ domainName: '' });
 
@@ -463,36 +499,48 @@ const TrialBannerAndModal: React.FC<any> = ({
       toast.error('You must enter a valid domain name!');
       return;
     }
-    const response = await addSiteMutation({
-      variables: { url: sanitizedDomain },
-    });
-    if (response.errors) {
-      const originalInputDetails = parse(formData.domainName);
-      if (
-        originalInputDetails.domain === sanitizedDomain &&
-        originalInputDetails.subdomain &&
-        originalInputDetails.subdomain.toLowerCase() !== 'www'
-      ) {
-        toast.error(
-          `The root domain '${sanitizedDomain}' is already registered. This covers subdomains like '${formData.domainName}'. You don't need to add it separately.`,
-        );
-      } else if (
-        originalInputDetails.domain === sanitizedDomain &&
-        originalInputDetails.subdomain &&
-        originalInputDetails.subdomain.toLowerCase() === 'www'
-      ) {
-        toast.error(
-          `The domain '${sanitizedDomain}' (derived from your input '${formData.domainName}') is already registered.`,
-        );
+
+    try {
+      const response = await addSiteMutation({
+        variables: { url: sanitizedDomain },
+      });
+
+      if (response.errors) {
+        try {
+          const originalInputDetails = parse(formData.domainName);
+          if (
+            originalInputDetails.domain === sanitizedDomain &&
+            originalInputDetails.subdomain &&
+            originalInputDetails.subdomain.toLowerCase() !== 'www'
+          ) {
+            toast.error(
+              `The root domain '${sanitizedDomain}' is already registered. This covers subdomains like '${formData.domainName}'. You don't need to add it separately.`,
+            );
+          } else if (
+            originalInputDetails.domain === sanitizedDomain &&
+            originalInputDetails.subdomain &&
+            originalInputDetails.subdomain.toLowerCase() === 'www'
+          ) {
+            toast.error(
+              `The domain '${sanitizedDomain}' (derived from your input '${formData.domainName}') is already registered.`,
+            );
+          } else {
+            toast.error(`The domain '${sanitizedDomain}' is already in use.`);
+          }
+        } catch (parseError) {
+          console.error('Error parsing domain name:', parseError);
+          toast.error(`The domain '${sanitizedDomain}' is already in use.`);
+        }
       } else {
-        toast.error(`The domain '${sanitizedDomain}' is already in use.`);
+        toast.success('The domain was added successfully. Please Wait');
+        if (trialReload.current == true) {
+          window.location.reload();
+        }
+        // window.location.href = '/add-domain';
       }
-    } else {
-      toast.success('The domain was added successfully. Please Wait');
-      if (trialReload.current == true) {
-        window.location.reload();
-      }
-      // window.location.href = '/add-domain';
+    } catch (error) {
+      console.error('Error adding domain:', error);
+      toast.error('There was an error adding the domain. Please try again.');
     }
   };
 
