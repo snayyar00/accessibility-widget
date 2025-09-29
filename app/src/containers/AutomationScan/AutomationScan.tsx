@@ -774,7 +774,7 @@ const AutomationScan: React.FC = () => {
       // Create a summary of issues for the AI
       const issuesSummary = allIssues.map((issue: any) => ({
         type: issue.issue_type || 'Unknown',
-        description: issue.description || '',
+        description: getIssueDescription(issue),
         element: issue.selector || '',
         action: issue.action || ''
       }));
@@ -841,6 +841,35 @@ Use simple language, avoid technical jargon, and be encouraging. Start with "Her
     generateAiSummary(category);
   };
 
+  // Helper function to extract description from various possible fields
+  const getIssueDescription = (fix: any): string => {
+    // Try multiple possible fields for description
+    const possibleFields = [
+      'description',
+      'message', 
+      'details',
+      'error_message',
+      'reason',
+      'summary',
+      'text',
+      'content',
+      'explanation'
+    ];
+    
+    for (const field of possibleFields) {
+      if (fix[field] && typeof fix[field] === 'string' && fix[field].trim()) {
+        return fix[field].trim();
+      }
+    }
+    
+    // If no description found, try to construct one from available data
+    if (fix.issue_type) {
+      return `${fix.issue_type.replace(/_/g, ' ')} detected${fix.selector ? ` on element: ${fix.selector}` : ''}`;
+    }
+    
+    return 'Issue detected - review element for accessibility compliance';
+  };
+
   // Function to parse API results and convert to card format
   const parseApiResults = (apiData: any) => {
     // Handle polling response format
@@ -878,6 +907,7 @@ Use simple language, avoid technical jargon, and be encouraging. Start with "Her
 
     // Now process actual issues and update categories that have problems
     autoFixes.forEach((fix: any) => {
+      console.log('Processing fix object:', fix); // Debug: see the actual structure
       const category = fix.category || 'other';
       const issueType = fix.issue_type || 'unknown';
       
@@ -1553,7 +1583,7 @@ Use simple language, avoid technical jargon, and be encouraging. Start with "Her
                                     {fix.issue_type || 'Unknown Issue'}
                                   </p>
                                   <p className="text-sm text-gray-600 mt-1">
-                                    {fix.description || 'No description available'}
+                                    {getIssueDescription(fix)}
                                   </p>
                                   <div className="mt-2 space-y-1">
                                     <p className="text-xs text-gray-500">
