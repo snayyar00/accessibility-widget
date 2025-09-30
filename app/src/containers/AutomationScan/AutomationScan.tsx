@@ -7,6 +7,7 @@ import { FaKeyboard, FaMapSigns, FaHeading, FaLink, FaImage, FaLanguage, FaVideo
 import { GlowingEffect } from '@/components/ui/glowing-effect';
 import { MultiStepLoader } from '@/components/ui/multi-step-loader';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 
 // Loading states for the multi-step loader
 const loadingStates = [
@@ -1534,7 +1535,7 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
               transition={{ duration: 0.3 }}
             >
               <motion.div 
-                className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+                className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
                 initial={{ 
                   scale: 0,
                   opacity: 0,
@@ -1560,8 +1561,8 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
                   duration: 0.5
                 }}
               >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
+                {/* Sticky Header */}
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white sticky top-0 z-10">
                   <h3 className="text-xl font-semibold text-gray-900">
                     {selectedCategory.category} Issues
                   </h3>
@@ -1572,7 +1573,9 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
                     ✕
                   </button>
                 </div>
-                
+
+                {/* Scrollable Content */}
+                <div className="p-6 overflow-y-auto flex-1">
                 <div className="space-y-6">
                   {selectedCategory.subcategories.map((subcategory: any) => (
                     <div key={subcategory.id} className="border border-gray-200 rounded-lg p-4">
@@ -1690,9 +1693,59 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
                               </svg>
                             </div>
                             <div className="flex-1">
-                              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                                {aiSummary}
-                              </p>
+                              <div className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none">
+                                <ReactMarkdown
+                                  components={{
+                                    strong: ({ children }: any) => (
+                                      <strong className="font-bold text-gray-900">
+                                        {children}
+                                      </strong>
+                                    ),
+                                    em: ({ children }: any) => (
+                                      <em className="italic text-gray-700">{children}</em>
+                                    ),
+                                    p: ({ children }: any) => (
+                                      <p className="mb-3 last:mb-0 leading-relaxed">
+                                        {children}
+                                      </p>
+                                    ),
+                                    ul: ({ children }: any) => (
+                                      <ul className="list-disc list-inside mb-3 space-y-1">
+                                        {children}
+                                      </ul>
+                                    ),
+                                    ol: ({ children }: any) => (
+                                      <ol className="list-decimal list-inside mb-3 space-y-1">
+                                        {children}
+                                      </ol>
+                                    ),
+                                    li: ({ children }: any) => (
+                                      <li className="ml-2">{children}</li>
+                                    ),
+                                    h1: ({ children }: any) => (
+                                      <h1 className="text-lg font-bold mb-2 text-gray-900">{children}</h1>
+                                    ),
+                                    h2: ({ children }: any) => (
+                                      <h2 className="text-base font-bold mb-2 text-gray-900">{children}</h2>
+                                    ),
+                                    h3: ({ children }: any) => (
+                                      <h3 className="text-sm font-bold mb-1 text-gray-900">{children}</h3>
+                                    ),
+                                    code: ({ children }: any) => (
+                                      <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono text-gray-800">
+                                        {children}
+                                      </code>
+                                    ),
+                                    a: ({ children, href }: any) => (
+                                      <a href={href} className="text-blue-600 hover:text-blue-700 underline" target="_blank" rel="noopener noreferrer">
+                                        {children}
+                                      </a>
+                                    ),
+                                  }}
+                                >
+                                  {aiSummary}
+                                </ReactMarkdown>
+                              </div>
                             </div>
                           </div>
                           <div className="text-xs text-gray-500 italic border-t border-blue-200 pt-2 mt-3">
@@ -1711,9 +1764,9 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
                     </div>
                   </div>
                 </div>
-              </div>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
           )}
         </AnimatePresence>
 
