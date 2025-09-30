@@ -8,7 +8,7 @@ import { findUserNotificationByUserId, getUserbyId } from '../repository/user.re
 import { fetchAccessibilityReport } from '../services/accessibilityReport/accessibilityReport.service'
 import { checkScript } from '../services/allowedSites/allowedSites.service'
 import { EmailAttachment, sendEmailWithRetries } from '../services/email/email.service'
-import { generateAccessibilityReportPDF } from '../utils/pdfGenerator'
+import { generatePDF } from '../utils/generatePDF'
 import logger from '../utils/logger'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../utils/secure-unsubscribe.utils'
 
@@ -60,7 +60,9 @@ const sendMonthlyEmails = async () => {
             try {
               widgetStatus = await checkScript(site?.url)
               status = widgetStatus === 'true' || widgetStatus === 'Web Ability' ? 'Compliant' : 'Not Compliant'
-              score = widgetStatus === 'Web Ability' ? Math.floor(Math.random() * (100 - 90 + 1)) + 90 : widgetStatus === 'true' ? Math.floor(Math.random() * (88 - 80 + 1)) + 80 : report.score
+              // For WebAbility, use the original report score - the PDF generator will add the bonus
+              // For other cases, use the original report score
+              score = report.score
             } catch (error) {
               logger.warn(`Failed to check script for domain ${site?.url}:`, error)
               // Fallback to default values when checkScript fails
@@ -92,7 +94,18 @@ const sendMonthlyEmails = async () => {
             // Generate PDF attachment
             let attachments: EmailAttachment[] = []
             try {
-              const pdfBuffer = await generateAccessibilityReportPDF(report, site?.url)
+              const pdfBlob = await generatePDF(
+                {
+                  ...report, // Pass the full report data
+                  score: score,
+                  widgetInfo: { result: widgetStatus },
+                  scriptCheckResult: widgetStatus,
+                  url: site?.url,
+                },
+                'en',
+                site?.url,
+              )
+              const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
               attachments = [
                 {
                   content: pdfBuffer,
