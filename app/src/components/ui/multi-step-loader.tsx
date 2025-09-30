@@ -11,7 +11,7 @@ const CheckIcon = ({ className }: { className?: string }) => {
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="currentColor"
-      className={cn("w-6 h-6 ", className)}
+      className={cn("w-6 h-6 text-gray-400", className)}
     >
       <path d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
     </svg>
@@ -62,22 +62,22 @@ const LoaderCore = ({
           >
             <div>
               {index > value && (
-                <CheckIcon className="text-black dark:text-white" />
+                <CheckIcon className="text-gray-400" />
               )}
               {index <= value && (
                 <CheckFilled
                   className={cn(
-                    "text-black dark:text-white",
+                    "text-blue-500",
                     value === index &&
-                      "text-black dark:text-teal-500 opacity-100"
+                      "text-blue-600 opacity-100"
                   )}
                 />
               )}
             </div>
             <span
               className={cn(
-                "text-black dark:text-white",
-                value === index && "text-black dark:text-teal-500 opacity-100"
+                "text-gray-700",
+                value === index && "text-blue-600 font-semibold opacity-100"
               )}
             >
               {loadingState.text}
@@ -94,13 +94,45 @@ export const MultiStepLoader = ({
   loading,
   duration = 2000,
   loop = true,
+  onLoadingComplete,
 }: {
   loadingStates: LoadingState[];
   loading?: boolean;
   duration?: number;
   loop?: boolean;
+  onLoadingComplete?: () => void;
 }) => {
   const [currentState, setCurrentState] = useState(0);
+
+  // Disable scroll when loading
+  useEffect(() => {
+    if (loading) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+    } else {
+      // Restore scroll
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+
+    return () => {
+      // Cleanup on unmount
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+    };
+  }, [loading]);
 
   useEffect(() => {
     if (!loading) {
@@ -121,7 +153,12 @@ export const MultiStepLoader = ({
   }, [currentState, loading, loop, loadingStates.length, duration]);
   
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={() => {
+      console.log('Loader exit animation completed!');
+      if (onLoadingComplete) {
+        onLoadingComplete();
+      }
+    }}>
       {loading && (
         <motion.div
           initial={{
@@ -133,9 +170,11 @@ export const MultiStepLoader = ({
           exit={{
             opacity: 0,
           }}
+          transition={{ duration: 0.3 }}
           className="w-full h-full fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-2xl"
+          style={{ overflow: 'hidden' }}
         >
-          <div className="h-96 relative">
+          <div className="h-96 relative z-30">
             <LoaderCore value={currentState} loadingStates={loadingStates} />
           </div>
 

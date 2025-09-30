@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // Loading states for the multi-step loader
 const loadingStates = [
+  { text: "analyzing your website" },
   { text: "Starting the scan" },
   { text: "Scan started" },
   { text: "Running various tests" },
@@ -572,13 +573,23 @@ const AutomationScan: React.FC = () => {
     console.warn('Sites query failed (non-critical):', sitesError);
   }
 
-  // Handle cleanup when loader completes
+  // Safety cleanup: ensure loader doesn't get stuck
   React.useEffect(() => {
-    if (waitingForLoader && !isScanning) {
-      setIsScanning(false);
-      setLoadingMessage('');
+    if (scanCompleted && apiResults && !waitingForLoader) {
+      // If scan is completed and we have results, but loader is still showing
+      const timeout = setTimeout(() => {
+        if (isScanning && scanCompleted) {
+          console.warn('Loader stuck, forcing close...');
+          setIsScanning(false);
+          setLoadingMessage('');
+          setHasScanned(true);
+        }
+      }, 2000); // Give it 2 seconds grace period
+      
+      return () => clearTimeout(timeout);
     }
-  }, [waitingForLoader, isScanning]);
+    return undefined;
+  }, [scanCompleted, apiResults, waitingForLoader, isScanning]);
 
   const handleStartScan = async () => {
     if (!domain.trim()) {
@@ -709,22 +720,23 @@ const AutomationScan: React.FC = () => {
       const finalResults = await pollForResults();
       console.log('Final results:', finalResults);
       
-      // Store API results but wait for loader to complete
+      // Store API results
       setApiResults(finalResults);
       setScanCompleted(true);
-      setWaitingForLoader(true);
       
-      // Wait for loader to complete (4 steps * 3 seconds = 12 seconds)
-      const loaderDuration = 4 * 3000;
+      // Wait for loader animation to complete gracefully
+      const loaderDuration = 4 * 3000; // 4 steps * 3 seconds
       const timeElapsed = Date.now() - scanStartTime;
-      const remainingTime = Math.max(0, loaderDuration - timeElapsed);
+      const remainingTime = Math.max(500, loaderDuration - timeElapsed); // Minimum 500ms for smooth transition
+      
+      console.log(`Scan completed. Waiting ${remainingTime}ms for loader to finish...`);
       
       setTimeout(() => {
-        setScanKey(prev => prev + 1);
-        setHasScanned(true);
+        console.log('Closing loader - triggering exit animation...');
+        setIsScanning(false); // This will trigger the loader exit animation
         setWaitingForLoader(false);
-        setIsScanning(false);
         setLoadingMessage('');
+        // Note: Cards will be shown via onLoadingComplete callback after loader exits
       }, remainingTime);
       
     } catch (error) {
@@ -745,11 +757,11 @@ const AutomationScan: React.FC = () => {
       }
       
       alert(`Scan failed: ${errorMessage}`);
-    } finally {
-      if (!waitingForLoader) {
-        setIsScanning(false);
-        setLoadingMessage('');
-      }
+      
+      // Ensure loader closes on error
+      setIsScanning(false);
+      setLoadingMessage('');
+      setWaitingForLoader(false);
     }
   };
 
@@ -779,20 +791,28 @@ const AutomationScan: React.FC = () => {
         action: issue.action || ''
       }));
 
-      const prompt = `You are an accessibility expert explaining website issues to a non-technical person. 
+      const prompt = `You are an accessibility expert helping a website owner fix their accessibility issues. Provide a clear, actionable guide.
 
 Category: ${category.category}
 Issues found: ${allIssues.length}
 
 Issues details:
-${issuesSummary.map((issue: any, i: number) => `${i + 1}. ${issue.type}: ${issue.description}`).join('\n')}
+${issuesSummary.map((issue: any, i: number) => `${i + 1}. ${issue.type}: ${issue.description}
+   Element: ${issue.element}
+   Action: ${issue.action}`).join('\n')}
 
-Please provide a simple, friendly explanation in 2-3 paragraphs that:
+Please provide a simple, practical guide in 2-3 paragraphs that:
 1. Explains what these accessibility issues mean in everyday language
 2. Why they matter for users (especially those with disabilities)
-3. What specific actions the website owner should take to fix them
+3. Step-by-step guidance on exactly which elements need to be changed
+4. How to actually fix each issue with specific, actionable instructions
 
-Use simple language, avoid technical jargon, and be encouraging. Start with "Here's what we found..." and keep it under 200 words.`;
+Format your response as:
+- Start with "Here's what we found..."
+- Then explain the issues simply
+- End with clear fix instructions like "To fix this, you need to: [specific steps]"
+
+Use simple language, avoid technical jargon, be encouraging and practical. Focus on WHAT to change and HOW to change it. Keep it under 250 words.`;
 
       console.log('Sending request to AI summary API...');
       console.log('Prompt length:', prompt.length);
@@ -837,8 +857,7 @@ Use simple language, avoid technical jargon, and be encouraging. Start with "Her
     setShowAnalysis(true);
     setAiSummary(''); // Reset AI summary
     
-    // Generate AI summary for this category
-    generateAiSummary(category);
+    // Don't auto-generate AI summary - user will click button to generate it
   };
 
   // Helper function to extract description from various possible fields
@@ -912,7 +931,7 @@ Use simple language, avoid technical jargon, and be encouraging. Start with "Her
       const issueType = fix.issue_type || 'unknown';
       
       const categoryInfo = categoryConfig[category] || { 
-        name: category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), 
+        name: category.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()), 
         icon: FaBrain, 
         color: 'gray' 
       };
@@ -935,7 +954,7 @@ Use simple language, avoid technical jargon, and be encouraging. Start with "Her
       if (!categoryMap[category].subcategories[issueType]) {
         categoryMap[category].subcategories[issueType] = {
           id: issueType,
-          name: issueType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          name: issueType.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
           status: 'error',
           total_fixes: 0,
           auto_fixes: [],
@@ -1620,18 +1639,29 @@ Use simple language, avoid technical jargon, and be encouraging. Start with "Her
                   
                   {/* AI Summary Section */}
                   <div className="border-t border-gray-200 pt-6 mt-6">
-                    <div className="flex items-center mb-4">
+                    <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-2">
                         <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                           <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M12,2A2,2 0 0,1 14,4C14,4.74 13.6,5.39 13,5.73V7H14A7,7 0 0,1 21,14H22A1,1 0 0,1 23,15V18A1,1 0 0,1 22,19H21V20A2,2 0 0,1 19,22H5A2,2 0 0,1 3,20V19H2A1,1 0 0,1 1,18V15A1,1 0 0,1 2,14H3A7,7 0 0,1 10,7H11V5.73C10.4,5.39 10,4.74 10,4A2,2 0 0,1 12,2M7.5,13A2.5,2.5 0 0,0 5,15.5A2.5,2.5 0 0,0 7.5,18A2.5,2.5 0 0,0 10,15.5A2.5,2.5 0 0,0 7.5,13M16.5,13A2.5,2.5 0 0,0 14,15.5A2.5,2.5 0 0,0 16.5,18A2.5,2.5 0 0,0 19,15.5A2.5,2.5 0 0,0 16.5,13Z"/>
                           </svg>
                         </div>
-                        <h4 className="text-lg font-semibold text-gray-900">AI Summary</h4>
+                        <h4 className="text-lg font-semibold text-gray-900">AI Summary & Fix Guide</h4>
                       </div>
+                      {!aiSummary && !loadingAiSummary && (
+                        <button
+                          onClick={() => generateAiSummary(selectedCategory)}
+                          className="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        >
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"/>
+                          </svg>
+                          <span>Generate AI Summary</span>
+                        </button>
+                      )}
                     </div>
                     
-                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200 mt-3">
                       {loadingAiSummary ? (
                         <div className="flex items-center space-x-3">
                           <div className="relative">
@@ -1666,12 +1696,16 @@ Use simple language, avoid technical jargon, and be encouraging. Start with "Her
                             </div>
                           </div>
                           <div className="text-xs text-gray-500 italic border-t border-blue-200 pt-2 mt-3">
-                            💡 This summary was generated by AI to help explain technical issues in simple terms
+                            💡 This guide was generated by AI to help you understand and fix these accessibility issues
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center py-4">
-                          <p className="text-sm text-gray-500">AI summary will appear here...</p>
+                        <div className="text-center py-8">
+                          <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                          </svg>
+                          <p className="text-sm text-gray-600 mb-2 font-medium">Get AI-powered fix guidance</p>
+                          <p className="text-xs text-gray-500">Click the "Generate AI Summary" button above to get a step-by-step guide on how to fix these issues</p>
                         </div>
                       )}
                     </div>
@@ -1689,6 +1723,13 @@ Use simple language, avoid technical jargon, and be encouraging. Start with "Her
           loading={isScanning} 
           duration={3000}
           loop={false}
+          onLoadingComplete={() => {
+            console.log('Loader fully exited - now showing cards with fall animation!');
+            if (scanCompleted && apiResults) {
+              setScanKey(prev => prev + 1);
+              setHasScanned(true);
+            }
+          }}
         />
       </div>
     </div>
