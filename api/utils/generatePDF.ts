@@ -256,28 +256,28 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
         'Scan results for ',
         'Total Errors',
         'Issues detected by category',
-        '✓ ACCESSIBILITY COMPLIANCE ACHIEVED',
+        'ACCESSIBILITY COMPLIANCE ACHIEVED',
         'Your website is now compliant with accessibility standards',
         'COMPLIANCE STATUS:',
-        '✓ WebAbility widget is actively protecting your site',
-        '✓ Automated accessibility fixes are applied',
-        ' CRITICAL ACCESSIBILITY VIOLATIONS DETECTED',
+        'WebAbility widget is actively protecting your site',
+        'Automated accessibility fixes are applied',
+        'CRITICAL ACCESSIBILITY VIOLATIONS DETECTED',
         'Your website may face legal action and lose customers',
         'IMMEDIATE RISKS TO YOUR BUSINESS:',
-        '• Potential lawsuits under ADA compliance regulations',
-        '• Loss of 15% of potential customers (disabled users)',
-        '• Google SEO penalties reducing search rankings',
-        '• Damage to brand reputation and customer trust',
+        ' Potential lawsuits under ADA compliance regulations',
+        ' Loss of 15% of potential customers (disabled users)',
+        ' Google SEO penalties reducing search rankings',
+        ' Damage to brand reputation and customer trust',
         'TIME-SENSITIVE ACTION REQUIRED:',
-        '✓ WebAbility can fix most issues automatically',
-        '✓ Instant compliance improvement',
-        '✓ Protect your business from legal risks TODAY',
+        'WebAbility can fix most issues automatically',
+        'Instant compliance improvement',
+        'Protect your business from legal risks TODAY',
         'Accessibility Statement',
         'WCAG 2.1 AA Compliance Issues for',
         'Auto-Fixed',
         ' Ready to use',
         'Need Action',
-        '⚠ Review required',
+        'Review required',
         'Fix with AI',
         'use webability to fix',
         'Critical compliance gaps exposing your business to legal action',
@@ -1187,24 +1187,64 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
       // Title text (to the right of icon)
       const titleX = shieldX + shieldSize + 4
       const titleY = shieldY + 8
+      const availableWidth = panelW - (titleX - panelX) - 8 // Available width for title text
 
-      doc.setFont('helvetica')
-      doc.setFontSize(18)
+      doc.setFont('helvetica', 'bold') // Use bold for title
+      doc.setFontSize(16) // Reduced from 18 to prevent overflow
       doc.setTextColor(0, 0, 0) // Dark text
 
       if (hasWebAbility) {
-        doc.text(translatedAccessibilityComplianceAchieved, titleX, titleY)
+        // Check if text fits, if not, split into multiple lines
+        const titleText = translatedAccessibilityComplianceAchieved
+        const textWidth = doc.getTextWidth(titleText)
+
+        if (textWidth > availableWidth) {
+          // Split text into multiple lines if it's too long
+          const words = titleText.split(' ')
+          let currentLine = ''
+          let lines: string[] = []
+
+          for (const word of words) {
+            const testLine = currentLine ? `${currentLine} ${word}` : word
+            if (doc.getTextWidth(testLine) <= availableWidth) {
+              currentLine = testLine
+            } else {
+              if (currentLine) lines.push(currentLine)
+              currentLine = word
+            }
+          }
+          if (currentLine) lines.push(currentLine)
+
+          // Draw each line
+          lines.forEach((line, index) => {
+            doc.text(line, titleX, titleY + index * 7) // 7px line spacing
+          })
+        } else {
+          doc.text(titleText, titleX, titleY)
+        }
       } else {
         doc.text(translatedCriticalViolationsDetected, titleX, titleY)
       }
 
-      // Subtitle text
+      // Subtitle text - position based on whether title was split into multiple lines
+      doc.setFont('helvetica', 'normal') // Reset to normal for subtitle
       doc.setFontSize(12)
       doc.setTextColor(71, 85, 105) // Gray text
+
+      // Calculate subtitle Y position based on title length (using the same font size as title)
+      doc.setFont('helvetica', 'bold') // Use same font as title for width calculation
+      doc.setFontSize(16) // Use same size as title
+      const titleText = translatedAccessibilityComplianceAchieved
+      const textWidth = doc.getTextWidth(titleText)
+      doc.setFont('helvetica', 'normal') // Reset back to subtitle font
+      doc.setFontSize(12)
+
+      const subtitleY = textWidth > availableWidth ? titleY + 14 : titleY + 10 // More space if title is multi-line
+
       if (hasWebAbility) {
-        doc.text(translatedWebsiteCompliant, titleX, titleY + 10)
+        doc.text(translatedWebsiteCompliant, titleX, subtitleY)
       } else {
-        doc.text(translatedLegalActionWarning, titleX, titleY + 10)
+        doc.text(translatedLegalActionWarning, titleX, subtitleY)
       }
 
       // Nested box for compliance status
@@ -1262,6 +1302,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
         // Compliant state - show green checkmarks
         // First item
         drawGreenCheck(itemStartX, itemStartY)
+        doc.setFont('helvetica', 'normal') // Reset font
         doc.setFontSize(10)
         doc.setTextColor(71, 85, 105)
         doc.text(translatedWebAbilityProtecting, itemStartX + 8, itemStartY + 1)
