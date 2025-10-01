@@ -42,6 +42,14 @@ const threeIssuesIconImage = loadImageAsBase64('3_issues_icon.png')
 const greenSuccessImage = loadImageAsBase64('green_success.png')
 const messageIconImage = loadImageAsBase64('message_icon.png')
 
+// Load category icons from report_icons folder
+const categoryIconContent = loadImageAsBase64('report_icons/Content.png')
+const categoryIconCognitive = loadImageAsBase64('report_icons/Cognitive.png')
+const categoryIconLowVision = loadImageAsBase64('report_icons/Low vision.png')
+const categoryIconNavigation = loadImageAsBase64('report_icons/Navigation.png')
+const categoryIconMobility = loadImageAsBase64('report_icons/Mobility.png')
+const categoryIconOthers = loadImageAsBase64('report_icons/others.png')
+
 /**
  * Get the appropriate color for an issue based on compliance status
  * @param issue - The issue object with code and impact
@@ -190,7 +198,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
       statusColor = [202, 138, 4] // yellow-600
     } else {
       status = 'Not Compliant'
-      message = 'Your website needs significant accessibility improvements.'
+      message = 'Your website needs significant\naccessibility improvements.'
       statusColor = [220, 38, 38] // red-600
     }
 
@@ -280,7 +288,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
     status = translatedStatus
 
     // Set background color for all pages
-    const backgroundColor: [number, number, number] = [255, 255, 255] // White background
+    const backgroundColor: [number, number, number] = [238, 245, 255] // Light blue background (#eef5ff)
     doc.setFillColor(backgroundColor[0], backgroundColor[1], backgroundColor[2])
     doc.rect(0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight(), 'F')
 
@@ -629,46 +637,27 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
     // Start Y for category grid
     const yStart = headerBottomY + 12
 
-    // Function to load SVG icons from the report icons folder
-    const loadSVGIcon = async (category: string): Promise<string | null> => {
-      try {
-        let iconPath = ''
-        const normalizedCategory = category.toLowerCase()
+    // Function to get category icons from pre-loaded PNG images
+    const getCategoryIcon = (category: string): string | null => {
+      const normalizedCategory = category.toLowerCase()
 
-        // Map accessibility categories to appropriate icons
-        if (normalizedCategory.includes('content') || normalizedCategory.includes('text')) {
-          iconPath = path.resolve(__dirname, '..', '..', 'app', 'src', 'assets', 'images', 'svg', 'document.svg')
-        } else if (normalizedCategory.includes('navigation') || normalizedCategory.includes('navigate') || normalizedCategory.includes('menu')) {
-          iconPath = path.resolve(__dirname, '..', '..', 'app', 'src', 'assets', 'images', 'svg', 'menu.svg')
-        } else if (normalizedCategory.includes('form') || normalizedCategory.includes('input') || normalizedCategory.includes('button')) {
-          iconPath = path.resolve(__dirname, '..', '..', 'app', 'src', 'assets', 'images', 'svg', 'setting.svg')
-        } else if (normalizedCategory.includes('cognitive') || normalizedCategory.includes('brain') || normalizedCategory.includes('mental')) {
-          iconPath = path.resolve(__dirname, '..', '..', 'app', 'src', 'assets', 'images', 'svg', 'circle-small.svg')
-        } else if (normalizedCategory.includes('visual') || normalizedCategory.includes('blind') || normalizedCategory.includes('vision') || normalizedCategory.includes('low-vision')) {
-          iconPath = path.resolve(__dirname, '..', '..', 'app', 'src', 'assets', 'images', 'svg', 'adjust-colors-icon.svg')
-        } else if (normalizedCategory.includes('mobility') || normalizedCategory.includes('motor') || normalizedCategory.includes('movement')) {
-          iconPath = path.resolve(__dirname, '..', '..', 'app', 'src', 'assets', 'images', 'svg', 'user.svg')
-        } else if (normalizedCategory.includes('other') || normalizedCategory === 'others') {
-          iconPath = path.resolve(__dirname, '..', '..', 'app', 'src', 'assets', 'images', 'svg', 'square-grid.svg')
-        } else {
-          // Default fallback for unmapped categories
-          iconPath = path.resolve(__dirname, '..', '..', 'app', 'src', 'assets', 'images', 'svg', 'square-grid.svg')
-        }
-
-        if (fs.existsSync(iconPath)) {
-          const svgText = fs.readFileSync(iconPath, 'utf8')
-          // Convert SVG to base64 data URL
-          const base64 = Buffer.from(svgText).toString('base64')
-          const dataUrl = `data:image/svg+xml;base64,${base64}`
-          console.log(`SVG converted to base64 for ${category}, data URL length: ${dataUrl.length}`)
-          return dataUrl
-        } else {
-          console.warn(`SVG file not found for category ${category}: ${iconPath}`)
-        }
-      } catch (error) {
-        console.warn('Failed to load SVG icon for category:', category, error)
+      // Map accessibility categories to pre-loaded PNG icons
+      if (normalizedCategory.includes('content') || normalizedCategory.includes('text') || category === 'Content') {
+        return categoryIconContent
+      } else if (normalizedCategory.includes('cognitive') || normalizedCategory.includes('brain') || normalizedCategory.includes('mental') || category === 'Cognitive') {
+        return categoryIconCognitive
+      } else if (normalizedCategory.includes('visual') || normalizedCategory.includes('blind') || normalizedCategory.includes('vision') || normalizedCategory.includes('low-vision') || normalizedCategory.includes('low vision') || category === 'Low Vision') {
+        return categoryIconLowVision
+      } else if (normalizedCategory.includes('navigation') || normalizedCategory.includes('navigate') || normalizedCategory.includes('menu') || category === 'Navigation') {
+        return categoryIconNavigation
+      } else if (normalizedCategory.includes('mobility') || normalizedCategory.includes('motor') || normalizedCategory.includes('movement') || category === 'Mobility') {
+        return categoryIconMobility
+      } else if (normalizedCategory.includes('other') || category === 'Other' || category === 'Others') {
+        return categoryIconOthers
+      } else {
+        // Default fallback
+        return categoryIconOthers
       }
-      return null
     }
 
     // Function to draw category icons
@@ -930,13 +919,8 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
         }
       })
 
-      // Load all SVG icons first
-      const iconPromises = orderedCategoryData.map(async ([category]) => {
-        return { category, svgIcon: await loadSVGIcon(category) }
-      })
-
-      const iconResults = await Promise.all(iconPromises)
-      const iconMap = new Map(iconResults.map((result) => [result.category, result.svgIcon]))
+      // Get all category icons from pre-loaded PNG images
+      const iconMap = new Map(orderedCategoryData.map(([category]) => [category, getCategoryIcon(category)]))
 
       orderedCategoryData.forEach(([category, count], index) => {
         const column = index % itemsPerRow
@@ -963,104 +947,106 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
         doc.setFillColor(...categoryColor)
         doc.roundedRect(iconX, iconY, iconWidth, iconHeight, 1, 1, 'F')
 
-        // Add white icon centered in the blue rectangle
-        const svgIcon = iconMap.get(category)
-        if (svgIcon) {
+        // Add category icon (PNG) centered in the blue rectangle
+        const categoryIcon = iconMap.get(category)
+        let iconLoadSuccess = false
+
+        if (categoryIcon) {
           try {
-            // Add the SVG icon in white (centered in rectangle)
-            const svgSize = Math.min(iconWidth - 4, iconHeight - 4) // Fit within rectangle
-            const svgOffsetX = (iconWidth - svgSize) / 2 // Center horizontally
-            const svgOffsetY = (iconHeight - svgSize) / 2 // Center vertically
+            // Add the PNG icon centered in rectangle
+            const iconSize = Math.min(iconWidth - 4, iconHeight - 4) // Fit within rectangle with more padding for smaller icons
+            const iconOffsetX = (iconWidth - iconSize) / 2 // Center horizontally
+            const iconOffsetY = (iconHeight - iconSize) / 2 // Center vertically
 
-            // Check if it's actually an SVG (starts with data:image/svg+xml)
-            if (svgIcon.startsWith('data:image/svg+xml')) {
-              doc.addImage(svgIcon, 'SVG', iconX + svgOffsetX, iconY + svgOffsetY, svgSize, svgSize)
-            } else {
-              // If it's not SVG, try as PNG
-              doc.addImage(svgIcon, 'PNG', iconX + svgOffsetX, iconY + svgOffsetY, svgSize, svgSize)
-            }
+            // Add PNG image
+            doc.addImage(categoryIcon, 'PNG', iconX + iconOffsetX, iconY + iconOffsetY, iconSize, iconSize)
+            console.log(`Successfully added PNG icon for category: ${category}`)
+            iconLoadSuccess = true
           } catch (error) {
-            console.warn(`Failed to add SVG icon for category ${category}:`, error)
-            // Fall through to draw simple shapes
+            console.warn(`Failed to add PNG icon for category ${category}:`, error)
           }
-        }
-
-        // Always draw fallback icons (even if SVG loaded successfully, as backup)
-        console.log(`Drawing fallback icon for category: ${category}`)
-
-        // Draw simple WHITE icon shapes centered in rectangle (white on blue background)
-        doc.setFillColor(255, 255, 255) // White fill
-        doc.setDrawColor(255, 255, 255) // White stroke
-        doc.setLineWidth(0.8) // Thicker lines for visibility
-
-        const iconCenterX = iconX + iconWidth / 2
-        const iconCenterY = iconY + iconHeight / 2
-
-        console.log(`Drawing icon for ${category} at center (${iconCenterX}, ${iconCenterY}) in rect (${iconX}, ${iconY}, ${iconWidth}, ${iconHeight})`)
-
-        if (category === 'Content') {
-          // Document icon - simple rectangle with fold
-          doc.setLineWidth(1.0)
-          // Document outline
-          doc.rect(iconCenterX - 2, iconCenterY - 2.5, 4, 5, 'S')
-          // Document fold
-          doc.line(iconCenterX + 1, iconCenterY - 2.5, iconCenterX + 1, iconCenterY - 1.5)
-          doc.line(iconCenterX + 1, iconCenterY - 1.5, iconCenterX + 2, iconCenterY - 1.5)
-          // Text lines
-          doc.setLineWidth(0.5)
-          doc.line(iconCenterX - 1.5, iconCenterY - 0.5, iconCenterX + 1.5, iconCenterY - 0.5)
-          doc.line(iconCenterX - 1.5, iconCenterY + 0.5, iconCenterX + 1.5, iconCenterY + 0.5)
-          doc.line(iconCenterX - 1.5, iconCenterY + 1.5, iconCenterX + 0.5, iconCenterY + 1.5)
-        } else if (category === 'Cognitive') {
-          // Brain icon - circle with lines
-          doc.setLineWidth(1.0)
-          doc.circle(iconCenterX, iconCenterY, 1.8, 'S')
-          // Brain wrinkles
-          doc.setLineWidth(0.6)
-          doc.line(iconCenterX - 1.2, iconCenterY - 0.8, iconCenterX, iconCenterY - 1.5)
-          doc.line(iconCenterX, iconCenterY + 0.8, iconCenterX + 1.2, iconCenterY - 0.8)
-          doc.line(iconCenterX - 0.8, iconCenterY, iconCenterX + 0.8, iconCenterY)
-        } else if (category === 'Low Vision') {
-          // Eye icon - ellipse with pupil
-          doc.setLineWidth(1.0)
-          doc.ellipse(iconCenterX, iconCenterY, 1.8, 1.2, 'S')
-          doc.setFillColor(255, 255, 255)
-          doc.circle(iconCenterX, iconCenterY, 0.6, 'F')
-          // Highlight
-          doc.setFillColor(200, 200, 200) // Light gray highlight
-          doc.circle(iconCenterX + 0.3, iconCenterY - 0.3, 0.2, 'F')
-        } else if (category === 'Navigation') {
-          // Arrow icon - simple arrow pointing right
-          doc.setLineWidth(1.0)
-          doc.line(iconCenterX - 1.5, iconCenterY, iconCenterX + 1.5, iconCenterY) // Main line
-          doc.line(iconCenterX + 1.5, iconCenterY, iconCenterX + 0.5, iconCenterY - 0.8) // Top arrow
-          doc.line(iconCenterX + 1.5, iconCenterY, iconCenterX + 0.5, iconCenterY + 0.8) // Bottom arrow
-        } else if (category === 'Mobility') {
-          // Person in wheelchair icon - simple stick figure with wheels
-          doc.setLineWidth(1.0)
-          doc.circle(iconCenterX, iconCenterY - 1.2, 0.4, 'F') // Head
-          doc.line(iconCenterX, iconCenterY - 0.8, iconCenterX, iconCenterY + 0.5) // Body
-          doc.line(iconCenterX, iconCenterY - 0.2, iconCenterX - 0.8, iconCenterY + 0.3) // Left arm
-          doc.line(iconCenterX, iconCenterY - 0.2, iconCenterX + 0.8, iconCenterY + 0.3) // Right arm
-          doc.line(iconCenterX, iconCenterY + 0.5, iconCenterX - 0.5, iconCenterY + 1.2) // Left leg
-          doc.line(iconCenterX, iconCenterY + 0.5, iconCenterX + 0.5, iconCenterY + 1.2) // Right leg
-          // Wheelchair wheels
-          doc.circle(iconCenterX - 0.8, iconCenterY + 1.2, 0.6, 'S')
-          doc.circle(iconCenterX + 0.8, iconCenterY + 1.2, 0.6, 'S')
         } else {
-          // Other/Generic icon - simple grid of dots
-          doc.setLineWidth(0.8)
-          // 3x3 grid of dots
-          doc.circle(iconCenterX - 1, iconCenterY - 1, 0.3, 'F')
-          doc.circle(iconCenterX, iconCenterY - 1, 0.3, 'F')
-          doc.circle(iconCenterX + 1, iconCenterY - 1, 0.3, 'F')
-          doc.circle(iconCenterX - 1, iconCenterY, 0.3, 'F')
-          doc.circle(iconCenterX, iconCenterY, 0.3, 'F')
-          doc.circle(iconCenterX + 1, iconCenterY, 0.3, 'F')
-          doc.circle(iconCenterX - 1, iconCenterY + 1, 0.3, 'F')
-          doc.circle(iconCenterX, iconCenterY + 1, 0.3, 'F')
-          doc.circle(iconCenterX + 1, iconCenterY + 1, 0.3, 'F')
+          console.warn(`No icon found for category: ${category}`)
         }
+
+        // Draw fallback icons only if PNG icon loading failed
+        if (!iconLoadSuccess) {
+          console.log(`Drawing fallback icon for category: ${category}`)
+
+          // Draw simple WHITE icon shapes centered in rectangle (white on blue background)
+          doc.setFillColor(255, 255, 255) // White fill
+          doc.setDrawColor(255, 255, 255) // White stroke
+          doc.setLineWidth(0.8) // Thicker lines for visibility
+
+          const iconCenterX = iconX + iconWidth / 2
+          const iconCenterY = iconY + iconHeight / 2
+
+          console.log(`Drawing fallback icon for ${category} at center (${iconCenterX}, ${iconCenterY}) in rect (${iconX}, ${iconY}, ${iconWidth}, ${iconHeight})`)
+
+          if (category === 'Content') {
+            // Document icon - simple rectangle with fold
+            doc.setLineWidth(1.0)
+            // Document outline
+            doc.rect(iconCenterX - 2, iconCenterY - 2.5, 4, 5, 'S')
+            // Document fold
+            doc.line(iconCenterX + 1, iconCenterY - 2.5, iconCenterX + 1, iconCenterY - 1.5)
+            doc.line(iconCenterX + 1, iconCenterY - 1.5, iconCenterX + 2, iconCenterY - 1.5)
+            // Text lines
+            doc.setLineWidth(0.5)
+            doc.line(iconCenterX - 1.5, iconCenterY - 0.5, iconCenterX + 1.5, iconCenterY - 0.5)
+            doc.line(iconCenterX - 1.5, iconCenterY + 0.5, iconCenterX + 1.5, iconCenterY + 0.5)
+            doc.line(iconCenterX - 1.5, iconCenterY + 1.5, iconCenterX + 0.5, iconCenterY + 1.5)
+          } else if (category === 'Cognitive') {
+            // Brain icon - circle with lines
+            doc.setLineWidth(1.0)
+            doc.circle(iconCenterX, iconCenterY, 1.8, 'S')
+            // Brain wrinkles
+            doc.setLineWidth(0.6)
+            doc.line(iconCenterX - 1.2, iconCenterY - 0.8, iconCenterX, iconCenterY - 1.5)
+            doc.line(iconCenterX, iconCenterY + 0.8, iconCenterX + 1.2, iconCenterY - 0.8)
+            doc.line(iconCenterX - 0.8, iconCenterY, iconCenterX + 0.8, iconCenterY)
+          } else if (category === 'Low Vision') {
+            // Eye icon - ellipse with pupil
+            doc.setLineWidth(1.0)
+            doc.ellipse(iconCenterX, iconCenterY, 1.8, 1.2, 'S')
+            doc.setFillColor(255, 255, 255)
+            doc.circle(iconCenterX, iconCenterY, 0.6, 'F')
+            // Highlight
+            doc.setFillColor(200, 200, 200) // Light gray highlight
+            doc.circle(iconCenterX + 0.3, iconCenterY - 0.3, 0.2, 'F')
+          } else if (category === 'Navigation') {
+            // Arrow icon - simple arrow pointing right
+            doc.setLineWidth(1.0)
+            doc.line(iconCenterX - 1.5, iconCenterY, iconCenterX + 1.5, iconCenterY) // Main line
+            doc.line(iconCenterX + 1.5, iconCenterY, iconCenterX + 0.5, iconCenterY - 0.8) // Top arrow
+            doc.line(iconCenterX + 1.5, iconCenterY, iconCenterX + 0.5, iconCenterY + 0.8) // Bottom arrow
+          } else if (category === 'Mobility') {
+            // Person in wheelchair icon - simple stick figure with wheels
+            doc.setLineWidth(1.0)
+            doc.circle(iconCenterX, iconCenterY - 1.2, 0.4, 'F') // Head
+            doc.line(iconCenterX, iconCenterY - 0.8, iconCenterX, iconCenterY + 0.5) // Body
+            doc.line(iconCenterX, iconCenterY - 0.2, iconCenterX - 0.8, iconCenterY + 0.3) // Left arm
+            doc.line(iconCenterX, iconCenterY - 0.2, iconCenterX + 0.8, iconCenterY + 0.3) // Right arm
+            doc.line(iconCenterX, iconCenterY + 0.5, iconCenterX - 0.5, iconCenterY + 1.2) // Left leg
+            doc.line(iconCenterX, iconCenterY + 0.5, iconCenterX + 0.5, iconCenterY + 1.2) // Right leg
+            // Wheelchair wheels
+            doc.circle(iconCenterX - 0.8, iconCenterY + 1.2, 0.6, 'S')
+            doc.circle(iconCenterX + 0.8, iconCenterY + 1.2, 0.6, 'S')
+          } else {
+            // Other/Generic icon - simple grid of dots
+            doc.setLineWidth(0.8)
+            // 3x3 grid of dots
+            doc.circle(iconCenterX - 1, iconCenterY - 1, 0.3, 'F')
+            doc.circle(iconCenterX, iconCenterY - 1, 0.3, 'F')
+            doc.circle(iconCenterX + 1, iconCenterY - 1, 0.3, 'F')
+            doc.circle(iconCenterX - 1, iconCenterY, 0.3, 'F')
+            doc.circle(iconCenterX, iconCenterY, 0.3, 'F')
+            doc.circle(iconCenterX + 1, iconCenterY, 0.3, 'F')
+            doc.circle(iconCenterX - 1, iconCenterY + 1, 0.3, 'F')
+            doc.circle(iconCenterX, iconCenterY + 1, 0.3, 'F')
+            doc.circle(iconCenterX + 1, iconCenterY + 1, 0.3, 'F')
+          }
+        } // End of fallback icon drawing
 
         // Category name (to the right of blue rectangle)
         doc.setFontSize(9)

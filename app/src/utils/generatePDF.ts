@@ -246,7 +246,7 @@ export const generatePDF = async (
   status = translatedStatus;
 
   // Set background color for all pages
-  const backgroundColor: [number, number, number] = [255, 255, 255]; // White background
+  const backgroundColor: [number, number, number] = [238, 245, 255]; // White background
   doc.setFillColor(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
   doc.rect(
     0,
@@ -3132,7 +3132,7 @@ export const generateShortPDF = async (
   status = translatedStatus;
 
   // Set background color for all pages
-  const backgroundColor: [number, number, number] = [255, 255, 255]; // White background
+  const backgroundColor: [number, number, number] = [238, 245, 255]; // White background
   doc.setFillColor(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
   doc.rect(
     0,
