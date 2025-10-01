@@ -39,6 +39,9 @@
   margin-top: 2px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   z-index: 1000;
+  max-height: 240px; /* 15rem equivalent to max-h-60 */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .dropdown-item {
