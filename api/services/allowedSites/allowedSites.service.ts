@@ -6,7 +6,7 @@ import { findUserNotificationByUserId, getUserbyId, UserProfile } from '../../re
 import { normalizeDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
-import { generateAccessibilityReportPDF } from '../../utils/pdfGenerator'
+import { generatePDF } from '../../utils/generatePDF'
 import { validateChangeURL, validateDomain } from '../../validations/allowedSites.validation'
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service'
 import { EmailAttachment, sendEmailWithRetries } from '../email/email.service'
@@ -83,7 +83,9 @@ export async function addSite(userId: number, url: string): Promise<string> {
         try {
           widgetStatus = await checkScript(domain)
           status = widgetStatus == 'true' || widgetStatus == 'Web Ability' ? 'Compliant' : 'Not Compliant'
-          score = widgetStatus == 'Web Ability' ? Math.floor(Math.random() * (100 - 90 + 1)) + 90 : widgetStatus == 'true' ? Math.floor(Math.random() * (88 - 80 + 1)) + 80 : report.score
+          // For WebAbility, use the original report score - the PDF generator will add the bonus
+          // For other cases, use the original report score
+          score = report.score
         } catch (error) {
           logger.warn(`Failed to check script for domain ${domain}:`, error)
           // Fallback to default values when checkScript fails
@@ -121,7 +123,23 @@ export async function addSite(userId: number, url: string): Promise<string> {
           },
         })
 
-        const pdfBuffer = await generateAccessibilityReportPDF(report, url)
+        console.log('Starting PDF generation for domain:', domain)
+        console.log('Report data keys:', Object.keys(report))
+        console.log('Widget status:', widgetStatus)
+
+        const pdfBlob = await generatePDF(
+          {
+            ...report, // Pass the full report data
+            score: report.score,
+            widgetInfo: { result: widgetStatus },
+            scriptCheckResult: widgetStatus,
+            url: domain,
+          },
+          'en',
+          domain,
+        )
+        console.log('PDF generation completed, blob size:', pdfBlob.size)
+        const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
 
         const attachments: EmailAttachment[] = [
           {

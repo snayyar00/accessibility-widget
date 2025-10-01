@@ -39,7 +39,7 @@ const AuthAdsArea: React.FC = () => {
           </div>
           <div>
             <div className="max-w-[60%] block mx-auto my-0 text-center">
-              <img src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsection5-solution.85714b87.png&w=1920&q=75" alt="Screenshot of the webability accessibility widget working on a real website" className="mx-auto my-0 max-w-full" />
+              <img src="https://www.webability.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsection5-solution.bbfd215a.webp&w=828&q=75" alt="Screenshot of the webability accessibility widget working on a real website" className="mx-auto my-0 max-w-full" />
               <div className="font-bold text-[26px] leading-[36px] text-center tracking-[0.5px] text-white mt-[82px] mb-[12px]">
                 {t('Advertisement.ad2_title')}
               </div>
