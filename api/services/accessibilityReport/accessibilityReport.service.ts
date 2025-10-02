@@ -5,6 +5,7 @@ import puppeteer from 'puppeteer-core'
 import { Browserbase } from '@browserbasehq/sdk'
 import fs from 'fs'
 import path from 'path'
+import { accessibilityReportQueue } from './accessibilityReportQueue.service'
 // interface Category {
 //     description: string;
 //     count: number;
@@ -604,7 +605,8 @@ async function takeScreenshotWithWidgetDetection(
     }
   }
 }
-export const fetchAccessibilityReport = async (url: string, useCache?: boolean, fullSiteScan?: boolean) => {
+// Internal function that does the actual work (without queue)
+export const _fetchAccessibilityReportInternal = async (url: string, useCache?: boolean, fullSiteScan?: boolean) => {
   try {
     if (!url || typeof url !== 'string' || url.trim() === '') {
       console.error('Invalid URL passed to fetchAccessibilityReport:', url)
@@ -808,6 +810,15 @@ export const fetchAccessibilityReport = async (url: string, useCache?: boolean, 
   } catch (error) {
     console.error(error)
     throw new Error(`${error} Error fetching data from WebAIM API`)
+  }
+}
+
+export const fetchAccessibilityReport = async (url: string, useCache?: boolean, fullSiteScan?: boolean) => {
+  try {
+    const result = await accessibilityReportQueue.addTask(url, useCache, fullSiteScan, 0)
+    return result
+  } catch (error) {
+    throw error
   }
 }
 
