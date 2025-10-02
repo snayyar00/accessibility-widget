@@ -2,7 +2,6 @@ import { getPreprocessingConfig } from '../config/preprocessing.config'
 import { readAccessibilityDescriptionFromDb } from '../services/accessibilityReport/accessibilityIssues.service'
 import { processAccessibilityIssuesWithFallback } from '../services/accessibilityReport/enhancedProcessing.service'
 
-
 // const pa11y = require('pa11y');
 
 interface axeOutput {
@@ -65,6 +64,17 @@ interface Error {
 interface HumanFunctionality {
   FunctionalityName: string
   Errors: Error[]
+}
+
+interface ScannerJobResponse {
+  job_id: string
+  status: string
+}
+
+interface ScannerStatusResponse {
+  status: string
+  issues?: any[]
+  error?: string
 }
 
 function parseWcagCode(issue: any): string | undefined {
@@ -176,7 +186,7 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
   }
 
   // Determine API URL based on scan type
-  const apiUrl = fullSiteScan === true ? `${process.env.SCANNER_SERVER_URL}/scan/full-site/sync` : `${process.env.SCANNER_SERVER_URL}/scan`
+  const apiUrl = `${process.env.SCANNER_SERVER_URL}/scan/full-site`
 
   let results
 
@@ -185,16 +195,17 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
     return !data || !data.issues
   }
 
-  // Helper function to make scanner API request with retries
-  const makeScannerAPIRequest = async (retryCount = 0): Promise<any> => {
+  // Helper function to start scanner job and get job ID
+  const startScannerJob = async (retryCount = 0): Promise<string> => {
     const maxRetries = 2
     const delay = 1000 * (retryCount + 1) // Exponential backoff: 1s, 2s, 3s
 
     try {
       const cacheStatus = useCache !== undefined ? useCache : true
       const fullSiteStatus = fullSiteScan !== undefined ? fullSiteScan : false
-      console.log(`Using scanner API (attempt ${retryCount + 1}/${maxRetries + 1})${cacheStatus ? ' - Fast scan with cache enabled' : ' - Fresh scan without cache'}${fullSiteStatus ? ' - Full site scan enabled' : ' - Single page scan'}`)
+      console.log(`Starting scanner job (attempt ${retryCount + 1}/${maxRetries + 1})${cacheStatus ? ' - Fast scan with cache enabled' : ' - Fresh scan without cache'}${fullSiteStatus ? ' - Full site scan enabled' : ' - Single page scan'}`)
       console.log('Scanner API URL:', apiUrl)
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -202,43 +213,98 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
         },
         body: JSON.stringify({
           url: domain,
-          max_pages: 4,
-          crawl_depth: 1,
+          max_pages: fullSiteScan === false ? 1 : 20,
+          crawl_depth: fullSiteScan === false ? 1 : 2,
           use_cache: useCache !== undefined ? useCache : true,
-          full_site: fullSiteScan !== undefined ? fullSiteScan : false,
         }),
       })
 
       // Check if the response is successful
       if (!response.ok) {
-        throw new Error(`Failed to fetch screenshot. Status: ${response.status}`)
+        throw new Error(`Failed to start scanner job. Status: ${response.status}`)
       }
 
-      // Parse and return the response JSON
-      const data = await response.json()
+      // Parse and return the job ID
+      const data = (await response.json()) as ScannerJobResponse
 
-      // Check if response is empty
-      if (isEmptyResponse(data)) {
-        throw new Error('Empty response from main API')
+      if (!data.job_id) {
+        throw new Error('No job_id received from scanner API')
       }
 
-      return data
+      console.log(`Scanner job started with ID: ${data.job_id}`)
+      return data.job_id
     } catch (error) {
-      console.error(`Scanner API attempt ${retryCount + 1} failed:`, error)
+      console.error(`Scanner job start attempt ${retryCount + 1} failed:`, error)
 
       if (retryCount < maxRetries) {
-        console.log(`Retrying scanner API in ${delay}ms... (attempt ${retryCount + 2}/${maxRetries + 1})`)
+        console.log(`Retrying scanner job start in ${delay}ms... (attempt ${retryCount + 2}/${maxRetries + 1})`)
         await new Promise((resolve) => setTimeout(resolve, delay))
-        return makeScannerAPIRequest(retryCount + 1)
+        return startScannerJob(retryCount + 1)
       }
 
       throw error // Re-throw if max retries reached
     }
   }
 
+  // Helper function to poll job status and get results
+  const pollJobStatus = async (jobId: string): Promise<any> => {
+    const maxPollingAttempts = fullSiteScan === false ? 60 : 120 // 5 minutes for single page, 10 minutes for full site scan
+    const pollingInterval = 5000 // Poll every 5 seconds
+    const statusUrl = `${process.env.SCANNER_SERVER_URL}/scan/status/${jobId}`
+
+    for (let attempt = 1; attempt <= maxPollingAttempts; attempt++) {
+      try {
+        console.log(`Polling job status (attempt ${attempt}/${maxPollingAttempts}) for job ID: ${jobId}`)
+
+        const response = await fetch(statusUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error(`Failed to check job status. Status: ${response.status}`)
+        }
+
+        const data = (await response.json()) as ScannerStatusResponse
+
+        // Check if job is complete
+        if (data.status === 'completed' && data.issues) {
+          console.log(`Job completed successfully after ${attempt} polling attempts`)
+          return data
+        } else if (data.status === 'failed') {
+          throw new Error(`Scanner job failed: ${data.error || 'Unknown error'}`)
+        } else if (data.status === 'started' || data.status === 'processing') {
+          console.log(`Job still ${data.status}, waiting ${pollingInterval}ms before next check...`)
+          await new Promise((resolve) => setTimeout(resolve, pollingInterval))
+          continue
+        } else {
+          console.log(`Unknown job status: ${data.status}, continuing to poll...`)
+          await new Promise((resolve) => setTimeout(resolve, pollingInterval))
+          continue
+        }
+      } catch (error) {
+        console.error(`Polling attempt ${attempt} failed:`, error)
+
+        if (attempt === maxPollingAttempts) {
+          throw error
+        }
+
+        // Wait before retrying
+        await new Promise((resolve) => setTimeout(resolve, pollingInterval))
+      }
+    }
+
+    throw new Error(`Job did not complete within ${(maxPollingAttempts * pollingInterval) / 1000} seconds`)
+  }
+
   try {
-    // Try scanner API with retries first
-    results = await makeScannerAPIRequest()
+    // Start scanner job and get job ID
+    const jobId = await startScannerJob()
+
+    // Poll job status until completion
+    results = await pollJobStatus(jobId)
 
     // Log all screenshotUrls found in the issues array
     if (results && typeof results === 'object' && results !== null && 'issues' in results && Array.isArray((results as any).issues)) {
