@@ -353,6 +353,7 @@ const AutomationScan: React.FC = () => {
     force_local: false,
     debug_mode: false,
     debug_save_screenshots: false,
+    automated_checks: true,
     
     // Navigation & Interaction Tests
     run_tab_navigation: true,
@@ -447,6 +448,7 @@ const AutomationScan: React.FC = () => {
     force_local: false,
     debug_mode: false,
     debug_save_screenshots: false,
+    automated_checks: true,
     
     // Navigation & Interaction Tests
     run_tab_navigation: true,
@@ -543,16 +545,32 @@ const AutomationScan: React.FC = () => {
   };
 
   const selectAllTests = () => {
+    // Configuration fields that should not be affected by "Select All"
+    const configFields = ['headless', 'force_local', 'debug_mode', 'debug_save_screenshots'];
+    
     const allTrue = Object.keys(selectedTests).reduce((acc, key) => {
-      acc[key] = true;
+      // Keep configuration fields at their current values
+      if (configFields.includes(key)) {
+        acc[key] = selectedTests[key as keyof typeof selectedTests];
+      } else {
+        acc[key] = true;
+      }
       return acc;
     }, {} as any);
     setSelectedTests(allTrue);
   };
 
   const selectNoneTests = () => {
+    // Configuration fields that should not be affected by "Select None"
+    const configFields = ['headless', 'force_local', 'debug_mode', 'debug_save_screenshots'];
+    
     const allFalse = Object.keys(selectedTests).reduce((acc, key) => {
-      acc[key] = false;
+      // Keep configuration fields at their current values
+      if (configFields.includes(key)) {
+        acc[key] = selectedTests[key as keyof typeof selectedTests];
+      } else {
+        acc[key] = false;
+      }
       return acc;
     }, {} as any);
     setSelectedTests(allFalse);
@@ -1129,7 +1147,7 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
                 <span className="text-xs text-gray-500">
                   {useCustomTests 
                     ? `Custom selection (${Object.values(selectedTests).filter(Boolean).length} tests)` 
-                    : 'All tests enabled by default (56 tests)'
+                    : 'All tests enabled by default (57 tests)'
                   }
                 </span>
               </div>
@@ -1168,6 +1186,22 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
 
                 {/* Test Categories */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  
+                  {/* Basic Configuration */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-800 text-sm border-b border-gray-300 pb-1">
+                      Basic Configuration
+                    </h4>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedTests.automated_checks}
+                        onChange={() => handleTestToggle('automated_checks')}
+                        className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                      />
+                      <span className="text-sm text-gray-700">Automated Checks</span>
+                    </label>
+                  </div>
                   
                   {/* Navigation & Interaction */}
                   <div className="space-y-3">
