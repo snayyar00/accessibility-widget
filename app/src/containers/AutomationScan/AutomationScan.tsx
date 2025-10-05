@@ -332,17 +332,48 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index })
 
 const AutomationScan: React.FC = () => {
   const { t } = useTranslation();
-  const [domain, setDomain] = useState('');
+  
+  // Helper function to get cached scan data from localStorage (memoized to run only once)
+  const getCachedScanData = React.useMemo(() => {
+    try {
+      const cached = localStorage.getItem('automation_scan_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        // Check if cache is less than 1 hour old
+        if (Date.now() - parsed.timestamp < 60 * 60 * 1000) {
+          console.log('✅ Restoring cached scan data from localStorage:', {
+            domain: parsed.domain,
+            hasResults: !!parsed.apiResults,
+            cacheAge: Math.floor((Date.now() - parsed.timestamp) / 1000) + 's'
+          });
+          return parsed;
+        }
+        // Remove expired cache
+        console.log('⏰ Cache expired, removing...');
+        localStorage.removeItem('automation_scan_cache');
+      } else {
+        console.log('ℹ️ No cached scan data found');
+      }
+    } catch (error) {
+      console.error('❌ Error reading scan cache:', error);
+    }
+    return null;
+  }, []); // Empty deps = runs only once on mount
+
+  // Initialize state with cached data if available
+  const cachedData = getCachedScanData;
+  
+  const [domain, setDomain] = useState(cachedData?.domain || '');
   const [isScanning, setIsScanning] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [hasScanned, setHasScanned] = useState(false); // Will be set to true after scanning completes
-  const [scanKey, setScanKey] = useState(0); // Key to trigger re-animation on new scans
+  const [hasScanned, setHasScanned] = useState(cachedData?.hasScanned || false);
+  const [scanKey, setScanKey] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
-  const [apiResults, setApiResults] = useState<any>(null);
-  const [scanCompleted, setScanCompleted] = useState(false);
-  const [aiSummary, setAiSummary] = useState<string>('');
+  const [apiResults, setApiResults] = useState<any>(cachedData?.apiResults || null);
+  const [scanCompleted, setScanCompleted] = useState(cachedData?.scanCompleted || false);
+  const [aiSummary, setAiSummary] = useState<string>(cachedData?.aiSummary || '');
   const [loadingAiSummary, setLoadingAiSummary] = useState(false);
   const [waitingForLoader, setWaitingForLoader] = useState(false);
   const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
@@ -592,6 +623,27 @@ const AutomationScan: React.FC = () => {
     return undefined;
   }, [scanCompleted, apiResults, waitingForLoader, isScanning]);
 
+  // Save scan results to localStorage for persistence across tab switches/refreshes
+  React.useEffect(() => {
+    // Save as soon as we have results, don't wait for hasScanned
+    if (apiResults && scanCompleted) {
+      try {
+        const cacheData = {
+          domain,
+          hasScanned: true, // Force true so it restores correctly
+          apiResults,
+          scanCompleted,
+          aiSummary,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem('automation_scan_cache', JSON.stringify(cacheData));
+        console.log('✅ Scan results cached to localStorage', { domain, resultsCount: apiResults?.results?.length || 0 });
+      } catch (error) {
+        console.error('❌ Error caching scan results:', error);
+      }
+    }
+  }, [apiResults, scanCompleted, domain, aiSummary]);
+
   const handleStartScan = async () => {
     if (!domain.trim()) {
       alert('Please enter a domain to scan');
@@ -616,12 +668,20 @@ const AutomationScan: React.FC = () => {
       // Step 1: Start the analysis
       // Ensure URL has protocol
       const fullUrl = domain.startsWith('http') ? domain : `https://${domain}`;
-      console.log('Making API request to:', 'https://h80wkk4o40c4cs48cccsg0wk.webability.io/analyze');
+      
+      // Use your backend API endpoint with caching (or direct external API)
+      const apiEndpoint = process.env.REACT_APP_BACKEND_URL 
+        ? `${process.env.REACT_APP_BACKEND_URL}/automation-scan/analyze`
+        : 'https://h80wkk4o40c4cs48cccsg0wk.webability.io/analyze';
+      
+      console.log('🔗 API Endpoint:', apiEndpoint);
+      console.log('🔧 REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL || 'NOT SET - Using external API directly');
+      
       const testsToRun = useCustomTests ? selectedTests : getAllTestsConfig();
       console.log('Request payload:', { url: fullUrl, options: testsToRun });
       console.log('Selected tests count:', Object.values(testsToRun).filter(Boolean).length);
       
-      const analyzeResponse = await fetch('https://h80wkk4o40c4cs48cccsg0wk.webability.io/analyze', {
+      const analyzeResponse = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -665,7 +725,12 @@ const AutomationScan: React.FC = () => {
             pollCount++;
             const elapsedMinutes = Math.floor((Date.now() - startTime) / 60000);
             
-            const taskResponse = await fetch(`https://h80wkk4o40c4cs48cccsg0wk.webability.io/task/${taskId}`, {
+            // Use your backend API endpoint with caching (or direct external API)
+            const taskEndpoint = process.env.REACT_APP_BACKEND_URL
+              ? `${process.env.REACT_APP_BACKEND_URL}/automation-scan/task/${taskId}`
+              : `https://h80wkk4o40c4cs48cccsg0wk.webability.io/task/${taskId}`;
+            
+            const taskResponse = await fetch(taskEndpoint, {
               // 30 second timeout per polling request
               signal: AbortSignal.timeout(30000)
             });

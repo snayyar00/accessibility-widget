@@ -1,5 +1,4 @@
-const CACHE_DURATION = 30 * 60 * 1000 // 30 minutes
-const cache = new Map()
+import { cacheTechStack } from '../services/cache/apiResponseCache.service'
 
 function createFallbackResponse(url: string = '') {
   return {
@@ -25,55 +24,45 @@ export async function fetchTechStackFromAPI(url: string) {
     throw new Error('Missing URL parameter')
   }
 
-  const cacheKey = url
-  const cachedData = cache.get(cacheKey)
-  if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
-    return cachedData.data
-  }
-
   try {
-    const apiUrl = `${process.env.SECONDARY_SERVER_URL}/techstack/?url=${encodeURIComponent(url)}`
-    const apiRes = await fetch(apiUrl, {
-      headers: {
-        'User-Agent': 'webAbilityFrontend',
-        Accept: 'application/json',
-      },
+    // Use the new caching system with R2 + in-memory cache
+    return await cacheTechStack(url, async () => {
+      const apiUrl = `${process.env.SECONDARY_SERVER_URL}/techstack/?url=${encodeURIComponent(url)}`
+      const apiRes = await fetch(apiUrl, {
+        headers: {
+          'User-Agent': 'webAbilityFrontend',
+          Accept: 'application/json',
+        },
+      })
+
+      if (!apiRes.ok) {
+        throw new Error(`External API error: ${apiRes.status}`)
+      }
+
+      const rawData = (await apiRes.json()) as { data?: Record<string, unknown> }
+
+      // Validate the response structure
+      if (!rawData || typeof rawData !== 'object') {
+        throw new Error('Invalid API response format')
+      }
+
+      if (!rawData.data) {
+        throw new Error('Missing data in API response')
+      }
+
+      // Add default platform if missing
+      if (!('accessibility_context' in rawData.data)) {
+        ;(rawData.data as any).accessibility_context = {}
+      }
+      if (!(rawData.data as any).accessibility_context.platform) {
+        ;(rawData.data as any).accessibility_context.platform = 'Unknown'
+      }
+      if (!(rawData.data as any).accessibility_context.platform_type) {
+        ;(rawData.data as any).accessibility_context.platform_type = 'Unknown'
+      }
+
+      return transformResponse(rawData.data as Record<string, unknown>)
     })
-
-    if (!apiRes.ok) {
-      throw new Error(`External API error: ${apiRes.status}`)
-    }
-
-    const rawData = (await apiRes.json()) as { data?: Record<string, unknown> }
-
-    // Validate the response structure
-    if (!rawData || typeof rawData !== 'object') {
-      throw new Error('Invalid API response format')
-    }
-
-    if (!rawData.data) {
-      throw new Error('Missing data in API response')
-    }
-
-    // Add default platform if missing
-    if (!('accessibility_context' in rawData.data)) {
-      ;(rawData.data as any).accessibility_context = {}
-    }
-    if (!(rawData.data as any).accessibility_context.platform) {
-      ;(rawData.data as any).accessibility_context.platform = 'Unknown'
-    }
-    if (!(rawData.data as any).accessibility_context.platform_type) {
-      ;(rawData.data as any).accessibility_context.platform_type = 'Unknown'
-    }
-
-    const transformedData = transformResponse(rawData.data as Record<string, unknown>)
-
-    cache.set(cacheKey, {
-      data: transformedData,
-      timestamp: Date.now(),
-    })
-
-    return transformedData
   } catch (error) {
     console.error('Error fetching tech stack:', error)
     return createFallbackResponse(url)
@@ -187,17 +176,4 @@ function transformResponse(data: Record<string, unknown>) {
   }
 }
 
-// Optional: Add a cleanup function to prevent memory leaks
-if (typeof setInterval !== 'undefined') {
-  setInterval(
-    () => {
-      const now = Date.now()
-      for (const [key, value] of cache.entries()) {
-        if (now - value.timestamp > CACHE_DURATION) {
-          cache.delete(key)
-        }
-      }
-    },
-    5 * 60 * 1000,
-  ) // Cleanup every 5 minutes
-}
+// Cleanup is now handled automatically by the cacheManager

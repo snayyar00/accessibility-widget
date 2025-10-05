@@ -7,6 +7,8 @@
     "dev": "tsx watch server.ts",
     "build": "tsc --project tsconfig.json && cpx \"email-templates/**/*\" dist/email-templates && cpx \"public/**/*\" dist/public",
     "start": "node dist/server.js",
+    "check-r2": "tsx scripts/check-r2.ts",
+    "clear-cache": "tsx scripts/clear-cache.ts",
     "db:create-products": "ts-node -r tsconfig-paths/register scripts/create-products.ts",
     "db:migrate": "knex migrate:latest --knexfile config/knexfile.ts",
     "db:rollback": "knex migrate:rollback --knexfile config/knexfile.ts",

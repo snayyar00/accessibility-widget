@@ -1,6 +1,7 @@
 import { AccessibilitySchema } from './schemas/accessibilityReport.schema'
 import { aiReadinessSchema } from './schemas/aiReadiness.schema'
 import { AllowedSitesSchema } from './schemas/allowedSites.schema'
+import { cacheSchema } from './schemas/cache.schema'
 import { DomainAnalysisSchema } from './schemas/domainAnalysis.schema'
 import { ImpressionsSchema } from './schemas/impressions.schema'
 import { OrganizationSchema } from './schemas/organization.schema'
@@ -50,4 +51,5 @@ export default [
   DomainAnalysisSchema,
   WorkspaceSchema,
   aiReadinessSchema,
+  cacheSchema,
 ]

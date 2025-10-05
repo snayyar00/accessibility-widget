@@ -1,6 +1,7 @@
 import accessibilityResolves from './resolvers/accessibilityReport.resolver'
 import { aiReadinessResolvers } from './resolvers/aiReadiness.resolver'
 import allowedSitesResolves from './resolvers/allowedSites.resolver'
+import cacheResolvers from './resolvers/cache.resolver'
 import domainAnalysisResolves from './resolvers/domainAnalysis.resolver'
 import impressionResolves from './resolvers/impressions.resolver'
 import organizationResolver from './resolvers/organization.resolver'
@@ -31,4 +32,5 @@ export default [
   domainAnalysisResolves,
   workspaceResolvers,
   aiReadinessResolvers,
+  cacheResolvers,
 ]
