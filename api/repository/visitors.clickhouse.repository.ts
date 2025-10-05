@@ -2,6 +2,7 @@ import clickhouseClient from '../config/clickhouse.config'
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
 import logger from '../utils/logger'
+import { findVisitorByURL as findMySQLVisitors, findVisitorByURLDate as findMySQLVisitorsByDate } from './visitors.repository'
 
 const TABLE = TABLES.visitors
 
@@ -41,6 +42,44 @@ export type FindVisitorsBySiteId = {
 
 export type FindVisitorsResponse = FindVisitorsBySiteId[] & {
   count: number
+}
+
+// Helper function to avoid double database lookup for visitors
+async function findMySQLVisitorsWithSiteId(site_id: number): Promise<FindVisitorsBySiteId[]> {
+  const visitors = await database(TABLE)
+    .select(visitorColumns)
+    .where({ [visitorColumns.site_id]: site_id })
+
+  return visitors.map((visitor) => ({
+    id: visitor.id,
+    siteId: visitor.site_id,
+    ipAddress: visitor.ip_address,
+    city: visitor.city,
+    country: visitor.country,
+    zipcode: visitor.zipcode,
+    continent: visitor.continent,
+    firstVisit: visitor.first_visit,
+  }))
+}
+
+// Helper function for visitors by date to avoid double database lookup
+async function findMySQLVisitorsByDateWithSiteId(site_id: number, startDate: Date, endDate: Date): Promise<FindVisitorsBySiteId[]> {
+  const visitors = await database(TABLE)
+    .select(visitorColumns)
+    .where({ [visitorColumns.site_id]: site_id })
+    .andWhere(visitorColumns.first_visit, '>=', startDate)
+    .andWhere(visitorColumns.first_visit, '<=', endDate)
+
+  return visitors.map((visitor) => ({
+    id: visitor.id,
+    siteId: visitor.site_id,
+    ipAddress: visitor.ip_address,
+    city: visitor.city,
+    country: visitor.country,
+    zipcode: visitor.zipcode,
+    continent: visitor.continent,
+    firstVisit: visitor.first_visit,
+  }))
 }
 
 export async function insertVisitor(data: VisitorInfo): Promise<number[]> {
@@ -144,7 +183,99 @@ export async function findVisitorByURL(url: string): Promise<FindVisitorsBySiteI
       return [] // No site found, return empty array
     }
 
-    // Query ClickHouse unique_visitors table
+    // If CLICKHOUSE_FLAG is true, fetch from both ClickHouse and MySQL in parallel
+    if (process.env.CLICKHOUSE_FLAG === 'true') {
+      try {
+        // Prepare ClickHouse query
+        const clickhouseQuery = `
+          SELECT 
+            id,
+            site_id,
+            ip_address,
+            city,
+            country,
+            zipcode,
+            continent,
+            first_visit
+          FROM unique_visitors
+          WHERE site_id = {site_id:Int32}
+        `
+
+        // Start both queries in parallel with static imports
+        const [clickhouseResult, mysqlVisitors] = await Promise.all([
+          clickhouseClient.query({
+            query: clickhouseQuery,
+            query_params: { site_id: site.id },
+          }),
+          // Use static import - pass site.id to avoid double lookup
+          findMySQLVisitorsWithSiteId(site.id),
+        ])
+
+        const clickhouseData = (await clickhouseResult.json()) as { data: Array<{ id: number; site_id: number; ip_address: string; city: string; country: string; zipcode: string; continent: string; first_visit: string }> }
+        const clickhouseVisitors = clickhouseData.data || []
+
+        console.log(`✅ ClickHouse SUCCESS: Retrieved ${clickhouseVisitors.length} visitors for site_id ${site.id} (${url})`)
+        console.log(`✅ MySQL SUCCESS: Retrieved ${mysqlVisitors.length} visitors for comparison`)
+
+        // Return both datasets with source identification
+        return [
+          ...clickhouseVisitors.map((visitor) => ({
+            id: visitor.id,
+            siteId: visitor.site_id,
+            ipAddress: visitor.ip_address,
+            city: visitor.city,
+            country: visitor.country,
+            zipcode: visitor.zipcode,
+            continent: visitor.continent,
+            firstVisit: visitor.first_visit,
+            source: 'clickhouse' as const,
+          })),
+          ...mysqlVisitors.map((visitor) => ({
+            ...visitor,
+            source: 'mysql' as const,
+          })),
+        ]
+      } catch (mysqlError) {
+        console.log(`⚠️ MySQL parallel fetch failed, falling back to ClickHouse only: ${mysqlError.message}`)
+
+        // Fallback to ClickHouse only if parallel fetch fails
+        const clickhouseQuery = `
+          SELECT 
+            id,
+            site_id,
+            ip_address,
+            city,
+            country,
+            zipcode,
+            continent,
+            first_visit
+          FROM unique_visitors
+          WHERE site_id = {site_id:Int32}
+        `
+
+        const clickhouseResult = await clickhouseClient.query({
+          query: clickhouseQuery,
+          query_params: { site_id: site.id },
+        })
+
+        const clickhouseData = (await clickhouseResult.json()) as { data: Array<{ id: number; site_id: number; ip_address: string; city: string; country: string; zipcode: string; continent: string; first_visit: string }> }
+        const clickhouseVisitors = clickhouseData.data || []
+
+        return clickhouseVisitors.map((visitor) => ({
+          id: visitor.id,
+          siteId: visitor.site_id,
+          ipAddress: visitor.ip_address,
+          city: visitor.city,
+          country: visitor.country,
+          zipcode: visitor.zipcode,
+          continent: visitor.continent,
+          firstVisit: visitor.first_visit,
+          source: 'clickhouse',
+        }))
+      }
+    }
+
+    // Return ClickHouse data only when CLICKHOUSE_FLAG is not true
     const clickhouseQuery = `
       SELECT 
         id,
@@ -167,53 +298,6 @@ export async function findVisitorByURL(url: string): Promise<FindVisitorsBySiteI
     const clickhouseData = (await clickhouseResult.json()) as { data: Array<{ id: number; site_id: number; ip_address: string; city: string; country: string; zipcode: string; continent: string; first_visit: string }> }
     const clickhouseVisitors = clickhouseData.data || []
 
-    console.log(`✅ ClickHouse SUCCESS: Retrieved ${clickhouseVisitors.length} visitors for site_id ${site.id} (${url})`)
-
-    // If CLICKHOUSE_FLAG is true, also fetch from MySQL for comparison
-    if (process.env.CLICKHOUSE_FLAG === 'true') {
-      try {
-        // Import MySQL repository dynamically to avoid circular dependencies
-        const { findVisitorByURL: findMySQLVisitors } = await import('./visitors.repository')
-
-        const mysqlVisitors = await findMySQLVisitors(url)
-
-        console.log(`✅ MySQL SUCCESS: Retrieved ${mysqlVisitors.length} visitors for comparison`)
-
-        // Return both datasets with source identification
-        return [
-          ...clickhouseVisitors.map((visitor) => ({
-            id: visitor.id,
-            siteId: visitor.site_id,
-            ipAddress: visitor.ip_address,
-            city: visitor.city,
-            country: visitor.country,
-            zipcode: visitor.zipcode,
-            continent: visitor.continent,
-            firstVisit: visitor.first_visit,
-            source: 'clickhouse' as const,
-          })),
-          ...mysqlVisitors.map((visitor) => ({
-            ...visitor,
-            source: 'mysql' as const,
-          })),
-        ]
-      } catch (mysqlError) {
-        console.log(`⚠️ MySQL fallback failed, returning ClickHouse data only: ${mysqlError.message}`)
-        return clickhouseVisitors.map((visitor) => ({
-          id: visitor.id,
-          siteId: visitor.site_id,
-          ipAddress: visitor.ip_address,
-          city: visitor.city,
-          country: visitor.country,
-          zipcode: visitor.zipcode,
-          continent: visitor.continent,
-          firstVisit: visitor.first_visit,
-          source: 'clickhouse',
-        }))
-      }
-    }
-
-    // Return ClickHouse data only
     return clickhouseVisitors.map((visitor) => ({
       id: visitor.id,
       siteId: visitor.site_id,
@@ -248,7 +332,107 @@ export async function findVisitorByURLDate(url: string, startDate: Date, endDate
     const formattedStartDate = formatDateForClickHouse(startDate)
     const formattedEndDate = formatDateForClickHouse(endDate)
 
-    // Query ClickHouse unique_visitors table
+    // If CLICKHOUSE_FLAG is true, fetch from both ClickHouse and MySQL in parallel
+    if (process.env.CLICKHOUSE_FLAG === 'true') {
+      try {
+        // Prepare ClickHouse query
+        const clickhouseQuery = `
+          SELECT 
+            id,
+            site_id,
+            ip_address,
+            city,
+            country,
+            zipcode,
+            continent,
+            first_visit
+          FROM unique_visitors
+          WHERE site_id = {site_id:Int32}
+            AND first_visit >= '${formattedStartDate}'
+            AND first_visit <= '${formattedEndDate}'
+        `
+
+        // Start both queries in parallel with static imports
+        const [clickhouseResult, mysqlVisitors] = await Promise.all([
+          clickhouseClient.query({
+            query: clickhouseQuery,
+            query_params: {
+              site_id: site.id,
+            },
+          }),
+          // Use static import - pass site.id to avoid double lookup
+          findMySQLVisitorsByDateWithSiteId(site.id, startDate, endDate),
+        ])
+
+        const clickhouseData = (await clickhouseResult.json()) as { data: Array<{ id: number; site_id: number; ip_address: string; city: string; country: string; zipcode: string; continent: string; first_visit: string }> }
+        const clickhouseVisitors = clickhouseData.data || []
+
+        console.log(`✅ ClickHouse SUCCESS: Retrieved ${clickhouseVisitors.length} visitors for site_id ${site.id} (${url})`)
+        console.log(`✅ MySQL SUCCESS: Retrieved ${mysqlVisitors.length} visitors for date range comparison`)
+
+        // Return both datasets with source identification
+        return [
+          ...clickhouseVisitors.map((visitor) => ({
+            id: visitor.id,
+            siteId: visitor.site_id,
+            ipAddress: visitor.ip_address,
+            city: visitor.city,
+            country: visitor.country,
+            zipcode: visitor.zipcode,
+            continent: visitor.continent,
+            firstVisit: visitor.first_visit,
+            source: 'clickhouse' as const,
+          })),
+          ...mysqlVisitors.map((visitor) => ({
+            ...visitor,
+            source: 'mysql' as const,
+          })),
+        ]
+      } catch (mysqlError) {
+        console.log(`⚠️ MySQL parallel fetch failed, falling back to ClickHouse only: ${mysqlError.message}`)
+
+        // Fallback to ClickHouse only if parallel fetch fails
+        const clickhouseQuery = `
+          SELECT 
+            id,
+            site_id,
+            ip_address,
+            city,
+            country,
+            zipcode,
+            continent,
+            first_visit
+          FROM unique_visitors
+          WHERE site_id = {site_id:Int32}
+            AND first_visit >= '${formattedStartDate}'
+            AND first_visit <= '${formattedEndDate}'
+        `
+
+        const clickhouseResult = await clickhouseClient.query({
+          query: clickhouseQuery,
+          query_params: {
+            site_id: site.id,
+          },
+        })
+
+        const clickhouseData = (await clickhouseResult.json()) as { data: Array<{ id: number; site_id: number; ip_address: string; city: string; country: string; zipcode: string; continent: string; first_visit: string }> }
+        const clickhouseVisitors = clickhouseData.data || []
+
+        return clickhouseVisitors.map((visitor) => ({
+          id: visitor.id,
+          siteId: visitor.site_id,
+          ipAddress: visitor.ip_address,
+          city: visitor.city,
+          country: visitor.country,
+          zipcode: visitor.zipcode,
+          continent: visitor.continent,
+          firstVisit: visitor.first_visit,
+          source: 'clickhouse',
+        }))
+      }
+    }
+
+    // Return ClickHouse data only when CLICKHOUSE_FLAG is not true
     const clickhouseQuery = `
       SELECT 
         id,
@@ -275,51 +459,6 @@ export async function findVisitorByURLDate(url: string, startDate: Date, endDate
     const clickhouseData = (await clickhouseResult.json()) as { data: Array<{ id: number; site_id: number; ip_address: string; city: string; country: string; zipcode: string; continent: string; first_visit: string }> }
     const clickhouseVisitors = clickhouseData.data || []
 
-    // If CLICKHOUSE_FLAG is true, also fetch from MySQL for comparison
-    if (process.env.CLICKHOUSE_FLAG === 'true') {
-      try {
-        // Import MySQL repository dynamically to avoid circular dependencies
-        const { findVisitorByURLDate: findMySQLVisitors } = await import('./visitors.repository')
-
-        const mysqlVisitors = await findMySQLVisitors(url, startDate, endDate)
-
-        console.log(`✅ MySQL SUCCESS: Retrieved ${mysqlVisitors.length} visitors for date range comparison`)
-
-        // Return both datasets with source identification
-        return [
-          ...clickhouseVisitors.map((visitor) => ({
-            id: visitor.id,
-            siteId: visitor.site_id,
-            ipAddress: visitor.ip_address,
-            city: visitor.city,
-            country: visitor.country,
-            zipcode: visitor.zipcode,
-            continent: visitor.continent,
-            firstVisit: visitor.first_visit,
-            source: 'clickhouse' as const,
-          })),
-          ...mysqlVisitors.map((visitor) => ({
-            ...visitor,
-            source: 'mysql' as const,
-          })),
-        ]
-      } catch (mysqlError) {
-        console.log(`⚠️ MySQL fallback failed, returning ClickHouse data only: ${mysqlError.message}`)
-        return clickhouseVisitors.map((visitor) => ({
-          id: visitor.id,
-          siteId: visitor.site_id,
-          ipAddress: visitor.ip_address,
-          city: visitor.city,
-          country: visitor.country,
-          zipcode: visitor.zipcode,
-          continent: visitor.continent,
-          firstVisit: visitor.first_visit,
-          source: 'clickhouse',
-        }))
-      }
-    }
-
-    // Return ClickHouse data only
     return clickhouseVisitors.map((visitor) => ({
       id: visitor.id,
       siteId: visitor.site_id,
