@@ -1,22 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import { GetUserSitesDocument } from '@/generated/graphql';
 import { MdSearch, MdExpandMore, MdExpandLess, MdBugReport, MdCheckCircle, MdWarning } from 'react-icons/md';
 import { FaKeyboard, FaMapSigns, FaHeading, FaLink, FaImage, FaLanguage, FaVideo, FaPlay, FaEye, FaBrain } from 'react-icons/fa';
 import { GlowingEffect } from '@/components/ui/glowing-effect';
-import { MultiStepLoader } from '@/components/ui/multi-step-loader';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 
-// Loading states for the multi-step loader
-const loadingStates = [
-  { text: "analyzing your website" },
-  { text: "Starting the scan" },
-  { text: "Scan started" },
-  { text: "Running various tests" },
-  { text: "Finalizing results" }
-];
+// Global scan tracker that persists across component unmounts
+let activeScanPromise: Promise<any> | null = null;
+let activeScanController: AbortController | null = null;
 
 // Mock data based on your API structure
 const mockIssuesData = [
@@ -364,13 +358,13 @@ const AutomationScan: React.FC = () => {
   const cachedData = getCachedScanData;
   
   const [domain, setDomain] = useState(cachedData?.domain || '');
-  const [isScanning, setIsScanning] = useState(false);
+  const [isScanning, setIsScanning] = useState(cachedData?.isScanning || false);
   const [searchQuery, setSearchQuery] = useState('');
   const [hasScanned, setHasScanned] = useState(cachedData?.hasScanned || false);
   const [scanKey, setScanKey] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState('');
+  const [loadingMessage, setLoadingMessage] = useState(cachedData?.loadingMessage || '');
   const [apiResults, setApiResults] = useState<any>(cachedData?.apiResults || null);
   const [scanCompleted, setScanCompleted] = useState(cachedData?.scanCompleted || false);
   const [aiSummary, setAiSummary] = useState<string>(cachedData?.aiSummary || '');
@@ -641,26 +635,98 @@ const AutomationScan: React.FC = () => {
     return undefined;
   }, [scanCompleted, apiResults, waitingForLoader, isScanning]);
 
-  // Save scan results to localStorage for persistence across tab switches/refreshes
+  // Save scan results AND scanning state to localStorage
   React.useEffect(() => {
-    // Save as soon as we have results, don't wait for hasScanned
-    if (apiResults && scanCompleted) {
-      try {
-        const cacheData = {
-          domain,
-          hasScanned: true, // Force true so it restores correctly
-          apiResults,
-          scanCompleted,
-          aiSummary,
-          timestamp: Date.now(),
-        };
-        localStorage.setItem('automation_scan_cache', JSON.stringify(cacheData));
+    try {
+      const cacheData = {
+        domain,
+        hasScanned: hasScanned || (apiResults && scanCompleted),
+        apiResults,
+        scanCompleted,
+        aiSummary,
+        isScanning: isScanning && !scanCompleted, // Don't save isScanning if scan is completed
+        loadingMessage: scanCompleted ? '' : loadingMessage, // Clear message if completed
+        timestamp: Date.now(),
+      };
+      localStorage.setItem('automation_scan_cache', JSON.stringify(cacheData));
+      
+      if (apiResults && scanCompleted) {
         console.log('✅ Scan results cached to localStorage', { domain, resultsCount: apiResults?.results?.length || 0 });
-      } catch (error) {
-        console.error('❌ Error caching scan results:', error);
+      } else if (isScanning) {
+        console.log('💾 Saving scanning state to localStorage');
       }
+    } catch (error) {
+      console.error('❌ Error caching scan data:', error);
     }
-  }, [apiResults, scanCompleted, domain, aiSummary]);
+  }, [apiResults, scanCompleted, domain, aiSummary, hasScanned, isScanning, loadingMessage]);
+
+  // Sync state when scan completes (stop loading indicator)
+  React.useEffect(() => {
+    if (scanCompleted && apiResults) {
+      console.log('🎯 Scan completed detected - stopping loader and showing results');
+      setIsScanning(false);
+      setLoadingMessage('');
+      setHasScanned(true);
+      setScanCompleted(true);
+    }
+  }, [scanCompleted, apiResults]);
+
+  // Check for active scan on mount and resume if needed
+  React.useEffect(() => {
+    const checkActiveScans = async () => {
+      // First check localStorage
+      const cached = localStorage.getItem('automation_scan_cache');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          console.log('📊 Checking localStorage on mount:', {
+            hasResults: !!parsed.apiResults,
+            isScanning: parsed.isScanning,
+            scanCompleted: parsed.scanCompleted,
+            domain: parsed.domain
+          });
+          
+          // Restore domain if available
+          if (parsed.domain) {
+            setDomain(parsed.domain);
+          }
+          
+          // If there's an active scan promise, wait for it
+          if (activeScanPromise && parsed.isScanning && !parsed.scanCompleted) {
+            console.log('🔄 Active scan detected, waiting for completion...');
+            setIsScanning(true);
+            setLoadingMessage('Resuming scan...');
+            
+            try {
+              const results = await activeScanPromise;
+              console.log('✅ Active scan completed, updating UI');
+              setApiResults(results);
+              setScanCompleted(true);
+              setHasScanned(true);
+              setIsScanning(false);
+              setLoadingMessage('');
+            } catch (error) {
+              console.error('Active scan failed:', error);
+              setIsScanning(false);
+            }
+          }
+          // If we have results and it's marked complete, show them
+          else if (parsed.apiResults && parsed.scanCompleted) {
+            console.log('✅ Found completed results, updating UI');
+            setApiResults(parsed.apiResults);
+            setScanCompleted(true);
+            setHasScanned(true);
+            setIsScanning(false);
+            setLoadingMessage('');
+          }
+        } catch (error) {
+          console.error('Error checking cache:', error);
+        }
+      }
+    };
+
+    checkActiveScans();
+  }, []); // Run once on mount
 
   const handleStartScan = async () => {
     if (!domain.trim()) {
@@ -680,6 +746,8 @@ const AutomationScan: React.FC = () => {
 
     const scanStartTime = Date.now();
     
+    // Store the scan promise globally so it persists across component unmounts
+    activeScanPromise = (async () => {
     try {
       console.log(`Starting scan for domain: ${domain}`);
       
@@ -804,24 +872,40 @@ const AutomationScan: React.FC = () => {
       const finalResults = await pollForResults();
       console.log('Final results:', finalResults);
       
-      // Store API results
+      // Store API results and show immediately
+      console.log('📝 Setting scan results:', {
+        hasResults: !!finalResults,
+        resultsLength: finalResults?.results?.length || 0
+      });
+      
       setApiResults(finalResults);
       setScanCompleted(true);
+      setHasScanned(true); // Show results immediately
+      setIsScanning(false); // Hide loading indicator
+      setWaitingForLoader(false);
+      setLoadingMessage('');
       
-      // Wait for loader animation to complete gracefully
-      const loaderDuration = 4 * 3000; // 4 steps * 3 seconds
-      const timeElapsed = Date.now() - scanStartTime;
-      const remainingTime = Math.max(500, loaderDuration - timeElapsed); // Minimum 500ms for smooth transition
+      console.log('✅ Scan completed! Showing results immediately.');
       
-      console.log(`Scan completed. Waiting ${remainingTime}ms for loader to finish...`);
+      // Force immediate localStorage save
+      try {
+        const immediateCache = {
+          domain,
+          hasScanned: true,
+          apiResults: finalResults,
+          scanCompleted: true,
+          aiSummary: '',
+          isScanning: false,
+          loadingMessage: '',
+          timestamp: Date.now(),
+        };
+        localStorage.setItem('automation_scan_cache', JSON.stringify(immediateCache));
+        console.log('💾 Force saved completed scan to localStorage');
+      } catch (saveError) {
+        console.error('Error saving to localStorage:', saveError);
+      }
       
-      setTimeout(() => {
-        console.log('Closing loader - triggering exit animation...');
-        setIsScanning(false); // This will trigger the loader exit animation
-        setWaitingForLoader(false);
-        setLoadingMessage('');
-        // Note: Cards will be shown via onLoadingComplete callback after loader exits
-      }, remainingTime);
+      return finalResults; // Return results from promise
       
     } catch (error) {
       console.error('Scan failed:', error);
@@ -846,6 +930,18 @@ const AutomationScan: React.FC = () => {
       setIsScanning(false);
       setLoadingMessage('');
       setWaitingForLoader(false);
+      
+      throw error; // Re-throw for promise rejection
+    }
+    })(); // Execute the promise immediately
+    
+    // Wait for the scan to complete
+    try {
+      await activeScanPromise;
+    } catch (error) {
+      // Error already handled above
+    } finally {
+      activeScanPromise = null; // Clear the promise
     }
   };
 
@@ -1869,20 +1965,6 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
           )}
         </AnimatePresence>
 
-        {/* Multi-Step Loader */}
-        <MultiStepLoader 
-          loadingStates={loadingStates} 
-          loading={isScanning} 
-          duration={3000}
-          loop={false}
-          onLoadingComplete={() => {
-            console.log('Loader fully exited - now showing cards with fall animation!');
-            if (scanCompleted && apiResults) {
-              setScanKey(prev => prev + 1);
-              setHasScanned(true);
-            }
-          }}
-        />
       </div>
     </div>
   );
