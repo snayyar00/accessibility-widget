@@ -18,7 +18,7 @@ export interface MonitoringEvent {
 
 export interface SiteMonitoringStatus {
   monitor_enabled?: boolean
-  is_currently_down?: number  // 0 = up, 1 = down
+  is_currently_down?: number // 0 = up, 1 = down
   last_monitor_check?: Date | string
   monitor_consecutive_fails?: number
 }
@@ -53,11 +53,8 @@ export async function insertMonitoringEvent(event: MonitoringEvent): Promise<num
  */
 export async function getLastMonitoringStatus(siteId: number): Promise<MonitoringEvent | null> {
   try {
-    const result = await database(TABLE)
-      .where('site_id', siteId)
-      .orderBy('checked_at', 'desc')
-      .first()
-    
+    const result = await database(TABLE).where('site_id', siteId).orderBy('checked_at', 'desc').first()
+
     return result || null
   } catch (error: any) {
     // TESTING: If table doesn't exist, return null
@@ -72,17 +69,12 @@ export async function getLastMonitoringStatus(siteId: number): Promise<Monitorin
 /**
  * Update site monitoring status in allowed_sites table
  */
-export async function updateSiteMonitoringStatus(
-  siteId: number,
-  status: SiteMonitoringStatus
-): Promise<void> {
-  await database(TABLES.allowed_sites)
-    .where('id', siteId)
-    .update({
-      is_currently_down: status.is_currently_down,
-      last_monitor_check: status.last_monitor_check,
-      monitor_consecutive_fails: status.monitor_consecutive_fails,
-    })
+export async function updateSiteMonitoringStatus(siteId: number, status: SiteMonitoringStatus): Promise<void> {
+  await database(TABLES.allowed_sites).where('id', siteId).update({
+    is_currently_down: status.is_currently_down,
+    last_monitor_check: status.last_monitor_check,
+    monitor_consecutive_fails: status.monitor_consecutive_fails,
+  })
 }
 
 /**
@@ -90,41 +82,28 @@ export async function updateSiteMonitoringStatus(
  */
 export async function getSitesWithMonitoringEnabled(): Promise<Array<{ id: number; url: string; user_id: number }>> {
   return database(TABLES.allowed_sites)
-    .where('monitor_enabled', true)  // Changed from monitoring_enabled
-    .where('status', 'Active')        // Only active sites
+    .where('monitor_enabled', true) // Changed from monitoring_enabled
+    .where('status', 'Active') // Only active sites
     .select('id', 'url', 'user_id')
 }
 
 /**
  * Update monitoring enabled status for a site
  */
-export async function updateMonitoringEnabled(
-  siteId: number,
-  enabled: boolean
-): Promise<void> {
-  await database(TABLES.allowed_sites)
-    .where('id', siteId)
-    .update({ monitor_enabled: enabled })  // Changed to monitor_enabled
+export async function updateMonitoringEnabled(siteId: number, enabled: boolean): Promise<void> {
+  await database(TABLES.allowed_sites).where('id', siteId).update({ monitor_enabled: enabled }) // Changed to monitor_enabled
 }
 
 /**
  * Get monitoring history for a site
  */
-export async function getMonitoringHistory(
-  siteId: number,
-  limit: number = 100
-): Promise<MonitoringEvent[]> {
-  return database(TABLE)
-    .where('site_id', siteId)
-    .orderBy('checked_at', 'desc')
-    .limit(limit)
+export async function getMonitoringHistory(siteId: number, limit: number = 100): Promise<MonitoringEvent[]> {
+  return database(TABLE).where('site_id', siteId).orderBy('checked_at', 'desc').limit(limit)
 }
 
 /**
  * Mark notification as sent
  */
 export async function markNotificationSent(eventId: number): Promise<void> {
-  await database(TABLE)
-    .where('id', eventId)
-    .update({ notification_sent: true })
+  await database(TABLE).where('id', eventId).update({ notification_sent: true })
 }

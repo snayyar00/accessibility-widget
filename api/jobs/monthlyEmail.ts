@@ -93,8 +93,14 @@ const sendMonthlyEmails = async () => {
 
             const report = await fetchAccessibilityReport(site?.url)
             const user = await getUserbyId(site?.user_id)
+
+            if (!user || !user.current_organization_id) {
+              console.log(`Skipping monthly report - user ${site?.user_id} not found or has no current_organization_id`)
+              return
+            }
+
             // Check user_notifications flag
-            const notification = (await findUserNotificationByUserId(user.id)) as { monthly_report_flag?: boolean } | null
+            const notification = (await findUserNotificationByUserId(user.id, user.current_organization_id)) as { monthly_report_flag?: boolean } | null
             if (!notification || !notification.monthly_report_flag) {
               console.log(`Skipping monthly report for user ${user.email} (no notification flag)`)
               return

@@ -4,14 +4,14 @@ import { getOrganizationUser } from '../../repository/organization_user.reposito
 import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findUserSitesWithPlans, insertSite, IUserSites, updateAllowedSiteURL } from '../../repository/sites_allowed.repository'
 import { findUserNotificationByUserId, getUserbyId, UserProfile } from '../../repository/user.repository'
 import { normalizeDomain } from '../../utils/domain.utils'
+import { generatePDF } from '../../utils/generatePDF'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
-import { generatePDF } from '../../utils/generatePDF'
+import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 import { validateChangeURL, validateDomain } from '../../validations/allowedSites.validation'
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service'
 import { EmailAttachment, sendEmailWithRetries } from '../email/email.service'
 import { createSitesPlan } from './plans-sites.service'
-import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 
 export async function checkScript(url: string) {
   const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${url}`
@@ -40,10 +40,10 @@ export async function checkScript(url: string) {
 /**
  * Create Document
  *
- * @param {number} userId
+ * @param {UserProfile} user
  * @param {string} url
  */
-export async function addSite(userId: number, url: string): Promise<string> {
+export async function addSite(user: UserProfile, url: string): Promise<string> {
   const year = new Date().getFullYear()
 
   const validateResult = validateDomain({ url })
@@ -54,10 +54,14 @@ export async function addSite(userId: number, url: string): Promise<string> {
 
   const domain = normalizeDomain(url)
 
+  const userId = user.id
+  const currentOrganizationId = user.current_organization_id
+
   try {
     const data = {
       user_id: userId,
       url: domain,
+      organization_id: currentOrganizationId,
     }
 
     const response = await insertSite(data)
@@ -98,7 +102,7 @@ export async function addSite(userId: number, url: string): Promise<string> {
         const errorsCount = (report?.axe?.errors?.length || 0) + (report?.htmlcs?.errors?.length || 0)
         const warningsCount = (report?.axe?.warnings?.length || 0) + (report?.htmlcs?.warnings?.length || 0)
         const noticesCount = (report?.axe?.notices?.length || 0) + (report?.htmlcs?.notices?.length || 0)
-        const notification = (await findUserNotificationByUserId(user.id)) as { new_domain_flag?: boolean } | null
+        const notification = (await findUserNotificationByUserId(user.id, user.current_organization_id)) as { new_domain_flag?: boolean } | null
         if (!notification || !notification.new_domain_flag) {
           console.log(`Skipping new domain email for user ${user.email} (no notification flag)`)
           return 'The site was successfully added.'

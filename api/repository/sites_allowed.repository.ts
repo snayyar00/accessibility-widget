@@ -4,11 +4,11 @@ import { TABLES } from '../constants/database.constant'
 const TABLE = TABLES.allowed_sites
 
 export const siteColumns = {
-  id: 'allowed_sites.id',
-  user_id: 'allowed_sites.user_id',
-  url: 'allowed_sites.url',
-  createAt: 'allowed_sites.created_at',
-  updatedAt: 'allowed_sites.updated_at',
+  id: `${TABLE}.id`,
+  user_id: `${TABLE}.user_id`,
+  url: `${TABLE}.url`,
+  createAt: `${TABLE}.created_at`,
+  updatedAt: `${TABLE}.updated_at`,
 }
 
 export type FindAllowedSitesProps = {
@@ -46,31 +46,31 @@ export async function findUserSitesWithPlans(userId: number, organizationId?: nu
 
   if (organizationId && currentWorkspaceId) {
     // User is in a workspace - get workspace sites
-    query = query.join('workspace_allowed_sites', 'workspace_allowed_sites.allowed_site_id', 'allowed_sites.id').where('workspace_allowed_sites.workspace_id', currentWorkspaceId)
+    query = query.join(TABLES.workspace_allowed_sites, `${TABLES.workspace_allowed_sites}.allowed_site_id`, `${TABLE}.id`).where(`${TABLES.workspace_allowed_sites}.workspace_id`, currentWorkspaceId)
   } else {
     // User is not in workspace - get personal sites
-    query = query.where('allowed_sites.user_id', userId)
+    query = query.where(`${TABLE}.user_id`, userId)
   }
 
   // Get sites first, then join with latest plan info
   const sites = await query
-    .leftJoin('sites_plans', function () {
-      this.on('sites_plans.allowed_site_id', '=', 'allowed_sites.id').andOn('sites_plans.id', '=', database.raw('(SELECT MAX(sp2.id) FROM sites_plans sp2 WHERE sp2.allowed_site_id = allowed_sites.id)'))
+    .leftJoin(TABLES.sitesPlans, function () {
+      this.on(`${TABLES.sitesPlans}.allowed_site_id`, '=', `${TABLE}.id`).andOn(`${TABLES.sitesPlans}.id`, '=', database.raw(`(SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)`))
     })
     .select(
-      'allowed_sites.id', 
-      'allowed_sites.user_id', 
-      'allowed_sites.url', 
-      'allowed_sites.created_at as createAt', 
-      'allowed_sites.updated_at as updatedAt', 
-      'sites_plans.expired_at as expiredAt', 
-      'sites_plans.is_trial as trial',
-      'allowed_sites.monitor_enabled',
-      'allowed_sites.status',
-      'allowed_sites.monitor_priority',
-      'allowed_sites.last_monitor_check',
-      'allowed_sites.is_currently_down',
-      'allowed_sites.monitor_consecutive_fails'
+      `${TABLE}.id`,
+      `${TABLE}.user_id`,
+      `${TABLE}.url`,
+      `${TABLE}.created_at as createAt`,
+      `${TABLE}.updated_at as updatedAt`,
+      `${TABLES.sitesPlans}.expired_at as expiredAt`,
+      `${TABLES.sitesPlans}.is_trial as trial`,
+      `${TABLE}.monitor_enabled`,
+      `${TABLE}.status`,
+      `${TABLE}.monitor_priority`,
+      `${TABLE}.last_monitor_check`,
+      `${TABLE}.is_currently_down`,
+      `${TABLE}.monitor_consecutive_fails`,
     )
     .distinct()
 
@@ -78,9 +78,7 @@ export async function findUserSitesWithPlans(userId: number, organizationId?: nu
 }
 
 export async function findSiteById(id: number): Promise<any> {
-  return database(TABLE)
-    .where({ id })
-    .first()
+  return database(TABLE).where({ id }).first()
 }
 
 export async function findSiteByURL(url: string): Promise<FindAllowedSitesProps> {
@@ -157,41 +155,36 @@ export async function deleteSiteWithRelatedRecords(url: string, user_id: number)
       await trx.raw('SET FOREIGN_KEY_CHECKS = 0')
 
       await Promise.all([
-        trx('impressions')
+        trx(TABLES.impressions)
           .where('site_id', siteId)
           .del()
           .then((count) => console.log(`Deleted ${count} impressions`))
           .catch((err) => console.log(`Impressions deletion skipped: ${err.message}`)),
-        trx('problem_reports')
+        trx(TABLES.problemReports)
           .where('site_id', siteId)
           .del()
           .then((count) => console.log(`Deleted ${count} problem_reports`))
           .catch((err) => console.log(`Problem reports deletion skipped: ${err.message}`)),
-        trx('unique_visitors')
+        trx(TABLES.visitors)
           .where('site_id', siteId)
           .del()
           .then((count) => console.log(`Deleted ${count} unique_visitors`))
           .catch((err) => console.log(`Unique visitors deletion skipped: ${err.message}`)),
-        trx('accessibility_reports')
+        trx(TABLES.accessibilityReports)
           .where('allowed_sites_id', siteId)
           .del()
           .then((count) => console.log(`Deleted ${count} accessibility_reports`))
           .catch((err) => console.log(`Accessibility reports deletion skipped: ${err.message}`)),
-        trx('widget_settings')
+        trx(TABLES.widgetSettings)
           .where('allowed_site_id', siteId)
           .del()
           .then((count) => console.log(`Deleted ${count} widget_settings`))
           .catch((err) => console.log(`Widget settings deletion skipped: ${err.message}`)),
-        trx('sites_plans')
+        trx(TABLES.sitesPlans)
           .where('allowed_site_id', siteId)
           .del()
           .then((count) => console.log(`Deleted ${count} sites_plans`))
           .catch((err) => console.log(`Sites plans deletion skipped: ${err.message}`)),
-        trx('site_permissions')
-          .where('allowed_site_id', siteId)
-          .del()
-          .then((count) => console.log(`Deleted ${count} site_permissions`))
-          .catch((err) => console.log(`Site permissions deletion skipped: ${err.message}`)),
       ])
 
       await trx.raw('SET FOREIGN_KEY_CHECKS = 1')
@@ -207,21 +200,25 @@ export async function deleteSiteWithRelatedRecords(url: string, user_id: number)
 }
 
 export async function updateAllowedSiteURL(site_id: number, url: string, user_id: number): Promise<number> {
-  const urlExists = await database(TABLE).select(siteColumns).where({ 'allowed_sites.url': url }).andWhereNot({ 'allowed_sites.id': site_id }).first()
+  const urlExists = await database(TABLE)
+    .select(siteColumns)
+    .where({ [siteColumns.url]: url })
+    .andWhereNot({ [siteColumns.id]: site_id })
+    .first()
 
   if (urlExists) {
     throw new Error('The provided URL is already in use.')
   }
 
-  return database(TABLE).where({ 'allowed_sites.user_id': user_id, 'allowed_sites.id': site_id }).update({
-    url,
-  })
+  return database(TABLE)
+    .where({ [siteColumns.user_id]: user_id, [siteColumns.id]: site_id })
+    .update({
+      url,
+    })
 }
 
 export async function toggleSiteMonitoring(site_id: number, enabled: boolean, user_id: number): Promise<boolean> {
-  const updated = await database(TABLE)
-    .where({ id: site_id, user_id })
-    .update({ monitor_enabled: enabled })
-  
+  const updated = await database(TABLE).where({ id: site_id, user_id }).update({ monitor_enabled: enabled })
+
   return updated > 0
 }

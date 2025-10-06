@@ -2,8 +2,21 @@ import { Knex } from 'knex'
 
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
+import { siteColumns } from './sites_allowed.repository'
 
 const TABLE = TABLES.workspace_allowed_sites
+
+export const workspaceColumns = {
+  id: `${TABLES.workspaces}.id`,
+  name: `${TABLES.workspaces}.name`,
+  alias: `${TABLES.workspaces}.alias`,
+}
+
+export const userColumns = {
+  id: `${TABLES.users}.id`,
+  name: `${TABLES.users}.name`,
+  email: `${TABLES.users}.email`,
+}
 
 export type WorkspaceAllowedSite = {
   id?: number
@@ -31,13 +44,13 @@ export type WorkspaceWithDomains = {
 }
 
 export const workspaceAllowedSitesColumns = {
-  id: 'workspace_allowed_sites.id',
-  workspaceId: 'workspace_allowed_sites.workspace_id',
-  allowedSiteId: 'workspace_allowed_sites.allowed_site_id',
-  addedByUserId: 'workspace_allowed_sites.added_by_user_id',
-  siteOwnerUserId: 'workspace_allowed_sites.site_owner_user_id',
-  createdAt: 'workspace_allowed_sites.created_at',
-  updatedAt: 'workspace_allowed_sites.updated_at',
+  id: `${TABLE}.id`,
+  workspaceId: `${TABLE}.workspace_id`,
+  allowedSiteId: `${TABLE}.allowed_site_id`,
+  addedByUserId: `${TABLE}.added_by_user_id`,
+  siteOwnerUserId: `${TABLE}.site_owner_user_id`,
+  createdAt: `${TABLE}.created_at`,
+  updatedAt: `${TABLE}.updated_at`,
 }
 
 /**
@@ -47,17 +60,17 @@ export const workspaceAllowedSitesColumns = {
  */
 export async function getWorkspaceDomains(workspaceId: number): Promise<WorkspaceWithDomains[]> {
   return database(TABLE)
-    .join(TABLES.allowed_sites, workspaceAllowedSitesColumns.allowedSiteId, 'allowed_sites.id')
-    .join(TABLES.workspaces, workspaceAllowedSitesColumns.workspaceId, 'workspaces.id')
+    .join(TABLES.allowed_sites, workspaceAllowedSitesColumns.allowedSiteId, siteColumns.id)
+    .join(TABLES.workspaces, workspaceAllowedSitesColumns.workspaceId, workspaceColumns.id)
     .join(`${TABLES.users} as added_by`, workspaceAllowedSitesColumns.addedByUserId, 'added_by.id')
     .join(`${TABLES.users} as site_owner`, workspaceAllowedSitesColumns.siteOwnerUserId, 'site_owner.id')
     .where(workspaceAllowedSitesColumns.workspaceId, workspaceId)
     .select({
       workspace_id: workspaceAllowedSitesColumns.workspaceId,
-      workspace_name: 'workspaces.name',
-      workspace_alias: 'workspaces.alias',
+      workspace_name: workspaceColumns.name,
+      workspace_alias: workspaceColumns.alias,
       allowed_site_id: workspaceAllowedSitesColumns.allowedSiteId,
-      allowed_site_url: 'allowed_sites.url',
+      allowed_site_url: siteColumns.url,
       added_by_user_id: workspaceAllowedSitesColumns.addedByUserId,
       added_by_user_name: 'added_by.name',
       added_by_user_email: 'added_by.email',

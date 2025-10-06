@@ -4,9 +4,9 @@ import { FindAllowedSitesProps, findSiteByURL } from '../../repository/sites_all
 import { findUserNotificationByUserId, getUserbyId } from '../../repository/user.repository'
 import { getRootDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
+import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 import { validateReportProblem } from '../../validations/reportProblem.validation'
 import { sendMail } from '../email/email.service'
-import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 
 export async function handleReportProblem(site_url: string, issue_type: string, description: string, reporter_email: string): Promise<string> {
   const validateResult = validateReportProblem({ site_url, issue_type, description, reporter_email })
@@ -42,7 +42,7 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
       console.log(`User not found for site ${site_url}, skipping notification check`)
     }
     if (user) {
-      const notification = (await findUserNotificationByUserId(user.id)) as { issue_reported_flag?: boolean } | null
+      const notification = (await findUserNotificationByUserId(user.id, user.current_organization_id)) as { issue_reported_flag?: boolean } | null
       if (!notification || !notification.issue_reported_flag) {
         console.log(`Skipping issue report email for user ${user.email} (no notification flag)`)
         return 'Problem reported successfully (notification skipped)'
