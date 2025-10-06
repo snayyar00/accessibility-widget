@@ -1069,6 +1069,21 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
     return 'Issue detected - review element for accessibility compliance';
   };
 
+  // Helper function to generate AI color suggestions for contrast issues
+  const generateColorSuggestions = (issue: any) => {
+    if (!issue.attributes) return [];
+
+    // Return only the best suggestion: Black text on white background (highest contrast)
+    return [{
+      id: 1,
+      name: 'Black text on White background',
+      textColor: '#000000',
+      bgColor: '#FFFFFF',
+      contrast: '21:1',
+      css: 'color: #000000; background-color: #FFFFFF;',
+    }];
+  };
+
   // Function to parse API results and convert to card format
   const parseApiResults = (apiData: any) => {
     // Handle polling response format
@@ -1790,35 +1805,111 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
                       </div>
 
                       {subcategory.issues && subcategory.issues.length > 0 ? (
-                        <div className="space-y-3">
-                          {subcategory.issues.map((fix: any, index: number) => (
-                            <div key={index} className="bg-gray-50 rounded-lg p-3">
-                              <div className="flex items-start space-x-3">
-                                <MdBugReport className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-gray-900 text-sm">
-                                    {fix.issue_type || 'Unknown Issue'}
-                                  </p>
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    {getIssueDescription(fix)}
-                                  </p>
-                                  <div className="mt-2 space-y-1">
-                                    <p className="text-xs text-gray-500">
-                                      <strong>Element:</strong> {fix.selector || 'N/A'}
+                        <div className="space-y-4">
+                          {subcategory.issues.map((fix: any, index: number) => {
+                            const isContrastIssue = fix.category === 'contrast' || fix.issue_type?.includes('contrast');
+                            const hasScreenshot = fix.screenshot_base64 && fix.screenshot_status === 'success';
+                            const colorSuggestions = isContrastIssue ? generateColorSuggestions(fix) : [];
+
+                            return (
+                              <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                <div className="flex items-start space-x-3">
+                                  <MdBugReport className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-gray-900 text-base">
+                                      {fix.issue_type || 'Unknown Issue'}
                                     </p>
-                                    <p className="text-xs text-gray-500">
-                                      <strong>Action Required:</strong> {fix.action || 'Review'}
+                                    <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+                                      {getIssueDescription(fix)}
                                     </p>
-                                    {fix.wcag_criterion && (
-                                      <p className="text-xs text-gray-500">
-                                        <strong>WCAG:</strong> {fix.wcag_criterion}
-                                      </p>
+
+                                    {/* Screenshot */}
+                                    {hasScreenshot && (
+                                      <div className="mt-3 border border-gray-300 rounded-lg p-2 bg-gray-50">
+                                        <p className="text-xs font-medium text-gray-700 mb-2">Element Screenshot:</p>
+                                        <img
+                                          src={`data:image/png;base64,${fix.screenshot_base64}`}
+                                          alt="Element screenshot"
+                                          className="rounded border border-gray-200 max-w-full h-auto"
+                                          style={{ maxHeight: '200px' }}
+                                        />
+                                      </div>
                                     )}
+
+                                    {/* AI Color Suggestions for Contrast Issues */}
+                                    {isContrastIssue && colorSuggestions.length > 0 && (
+                                      <div className="mt-4 border-t border-gray-200 pt-4">
+                                        <div className="flex items-center space-x-2 mb-3">
+                                          <FaBrain className="w-4 h-4 text-purple-600" />
+                                          <h5 className="text-sm font-semibold text-gray-900">AI Color Suggestions</h5>
+                                        </div>
+                                        <div className="space-y-2">
+                                          {colorSuggestions.map((suggestion) => (
+                                            <div
+                                              key={suggestion.id}
+                                              className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-3"
+                                            >
+                                              <div className="flex items-center justify-between">
+                                                <div className="flex items-center space-x-3 flex-1">
+                                                  <div className="flex items-center space-x-1">
+                                                    <div
+                                                      className="w-6 h-6 rounded border-2 border-gray-300"
+                                                      style={{ backgroundColor: suggestion.textColor }}
+                                                      title={`Text: ${suggestion.textColor}`}
+                                                    />
+                                                    <span className="text-xs text-gray-500">on</span>
+                                                    <div
+                                                      className="w-6 h-6 rounded border-2 border-gray-300"
+                                                      style={{ backgroundColor: suggestion.bgColor }}
+                                                      title={`Background: ${suggestion.bgColor}`}
+                                                    />
+                                                  </div>
+                                                  <div className="flex-1">
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                      {suggestion.name}
+                                                    </p>
+                                                    <p className="text-xs text-gray-600">
+                                                      Contrast: <span className="font-semibold text-green-600">{suggestion.contrast}</span>
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                                <button
+                                                  className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors shadow-md"
+                                                  title="Apply this color combination"
+                                                >
+                                                  Apply
+                                                </button>
+                                              </div>
+                                              <div className="mt-2 bg-gray-100 rounded px-3 py-2 border border-gray-300">
+                                                <code className="text-xs text-gray-900 font-mono font-semibold">
+                                                  {suggestion.css}
+                                                </code>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Element Details */}
+                                    <div className="mt-3 space-y-1">
+                                      <p className="text-xs text-gray-500">
+                                        <strong>Element:</strong> {fix.selector || 'N/A'}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        <strong>Action Required:</strong> {fix.action || 'Review'}
+                                      </p>
+                                      {fix.wcag_criterion && (
+                                        <p className="text-xs text-gray-500">
+                                          <strong>WCAG:</strong> {fix.wcag_criterion}
+                                        </p>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         <div className="text-center py-4">

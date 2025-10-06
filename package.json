@@ -1,5 +1,9 @@
 {
   "devDependencies": {
     "ts-node": "^10.9.2"
+  },
+  "dependencies": {
+    "@types/ioredis": "^4.28.10",
+    "ioredis": "^5.8.1"
   }
 }
