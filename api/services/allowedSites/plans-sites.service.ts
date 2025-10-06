@@ -1,9 +1,7 @@
 import dayjs from 'dayjs'
 
-import { PERMISSION_SITE_PLAN } from '../../constants/billing.constant'
 import { findProductAndPriceByType, FindProductAndPriceByTypeResponse } from '../../repository/products.repository'
 import { findSiteByUserIdAndSiteId } from '../../repository/sites_allowed.repository'
-import { deletePermissionBySitePlanId, insertMultiSitePermission } from '../../repository/sites_permission.repository'
 import { deleteSitePlanById, getAnySitePlanById, getSitePlanById, getSitePlanBySiteId, insertSitePlan, SitesPlanData, updateSitePlanById } from '../../repository/sites_plans.repository'
 import { findUser } from '../../repository/user.repository'
 import formatDateDB from '../../utils/format-date-db'
@@ -74,7 +72,7 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
     }
 
     if (sitePlan) {
-      await Promise.all([updateSitePlanById(sitePlan.id, { is_active: false }), deletePermissionBySitePlanId(sitePlan.id)])
+      await Promise.all([updateSitePlanById(sitePlan.id, { is_active: false })])
     }
 
     const { subcription_id, customer_id } = await createNewSubcription(paymentMethodToken, user.email, user.name, product.price_stripe_id, paymentMethodToken === 'Trial', coupon)
@@ -96,18 +94,7 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
         expired_at: expiry,
       }
 
-      const sitePlanId = await insertSitePlan(dataUserPlan as any)
-
-      // let sitePermissionData
-
-      // if (product.type === 'small' || product.type === 'medium' || product.type === 'large') {
-      //   sitePermissionData = PERMISSION_SITE_PLAN[product.type as keyof typeof PERMISSION_SITE_PLAN].map((permission: string) => ({
-      //     allowed_site_id: siteId,
-      //     sites_plan_id: sitePlanId[0],
-      //     permission,
-      //   }))
-      // }
-      // await insertMultiSitePermission(sitePermissionData)
+      await insertSitePlan(dataUserPlan as any)
     }
     return true
   } catch (error) {
@@ -162,17 +149,7 @@ export async function updateSitesPlan(userId: number, sitePlanId: number, planNa
     }
 
     await updateSitePlanById(sitePlanId, dataSitePlan)
-    let sitePermissionData
 
-    if (product.type === 'small' || product.type === 'medium' || product.type === 'large') {
-      sitePermissionData = PERMISSION_SITE_PLAN[product.type as keyof typeof PERMISSION_SITE_PLAN].map((permission: string) => ({
-        allowed_site_id: sitePlan.allowed_site_id,
-        sites_plan_id: sitePlanId,
-        permission,
-      }))
-    }
-    await deletePermissionBySitePlanId(sitePlanId)
-    await insertMultiSitePermission(sitePermissionData)
     return true
   } catch (error) {
     logger.error(error)
@@ -224,7 +201,7 @@ export async function deleteSitesPlan(id: number, hook = false): Promise<true> {
     }
 
     try {
-      await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)])
+      await deleteSitePlanById(sitePlan.id)
     } catch (error) {
       console.log('Error Deleting Plan for site:', sitePlan.allowed_site_id)
       throw error
@@ -260,7 +237,7 @@ export async function deleteExpiredSitesPlan(id: number, hook = false): Promise<
     }
 
     try {
-      await Promise.all([deleteSitePlanById(sitePlan.id), deletePermissionBySitePlanId(sitePlan.id)])
+      await deleteSitePlanById(sitePlan.id)
     } catch (error) {
       console.log('Error Deleting Plan for site:', sitePlan.allowed_site_id)
       throw error

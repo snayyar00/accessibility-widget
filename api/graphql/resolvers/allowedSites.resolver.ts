@@ -1,7 +1,7 @@
 import { combineResolvers } from 'graphql-resolvers'
 
-import { addSite, changeURL, deleteSite, findUserSites, isDomainAlreadyAdded } from '../../services/allowedSites/allowedSites.service'
 import { toggleSiteMonitoring } from '../../repository/sites_allowed.repository'
+import { addSite, changeURL, deleteSite, findUserSites, isDomainAlreadyAdded } from '../../services/allowedSites/allowedSites.service'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 const resolvers = {
@@ -13,7 +13,7 @@ const resolvers = {
     isDomainAlreadyAdded: combineResolvers(allowedOrganization, (_, { url }) => isDomainAlreadyAdded(url)),
   },
   Mutation: {
-    addSite: combineResolvers(allowedOrganization, isAuthenticated, (_, { url }, { user }) => addSite(user.id, url)),
+    addSite: combineResolvers(allowedOrganization, isAuthenticated, (_, { url }, { user }) => addSite(user, url)),
 
     changeURL: combineResolvers(allowedOrganization, isAuthenticated, (_, { newURL, siteId }, { user }) => changeURL(siteId, user.id, newURL)),
 

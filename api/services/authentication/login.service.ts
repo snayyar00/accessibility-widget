@@ -87,11 +87,11 @@ export async function loginUser(email: string, password: string, organization: O
   }
 
   // Ensure user_notifications row exists for this user
-  const notification = await findUserNotificationByUserId(user.id)
+  const notification = await findUserNotificationByUserId(user.id, userOrganization.id)
 
   if (!notification) {
     try {
-      await insertUserNotification(user.id)
+      await insertUserNotification(user.id, userOrganization.id)
       console.log('User added to notification')
     } catch (error) {
       console.error('Failed to add user to notification:', error)

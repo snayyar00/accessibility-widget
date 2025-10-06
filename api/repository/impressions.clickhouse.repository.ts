@@ -3,8 +3,6 @@ import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
 import logger from '../utils/logger'
 
-const TABLE = TABLES.impressions
-
 export const impressionsColumns = {
   id: 'id',
   site_id: 'site_id',

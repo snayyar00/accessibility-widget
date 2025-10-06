@@ -11,6 +11,10 @@ export async function checkCustomer(req: Request, res: Response) {
   const { user } = req as any
 
   try {
+    if (!user.current_organization_id) {
+      return res.status(400).json({ error: 'User has no current organization' })
+    }
+
     // Search for an existing customer by email
     const customers = await stripe.customers.list({
       email: user.email,
@@ -19,7 +23,7 @@ export async function checkCustomer(req: Request, res: Response) {
 
     let customer
 
-    const userAppSumoTokens = await getUserTokens(user.id)
+    const userAppSumoTokens = await getUserTokens(user.id, user.current_organization_id)
     const hasCustomInfinityToken = userAppSumoTokens.includes('customInfinity')
 
     let maxSites = 0
@@ -33,9 +37,8 @@ export async function checkCustomer(req: Request, res: Response) {
       } else {
         maxSites = nonCustomCodes.length
       }
-    }
-    else{
-      maxSites = 9999;
+    } else {
+      maxSites = 9999
     }
     // Check if customer exists
     if (customers.data.length > 0) {

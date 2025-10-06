@@ -37,18 +37,18 @@ export async function findImpressionsURLDate(user_id: number, site_url: string, 
 }
 
 export async function findEngagementURLDate(user_id: number, site_url: string, startDate: string, endDate: string) {
-  const results = await database('impressions')
-    .join('allowed_sites', 'impressions.site_id', 'allowed_sites.id')
+  const results = await database(TABLE)
+    .join(TABLES.allowed_sites, `${TABLE}.site_id`, `${TABLES.allowed_sites}.id`)
     .select([
-      database.raw('DATE(impressions.created_at) as date'),
+      database.raw(`DATE(${TABLE}.created_at) as date`),
       database.raw('COUNT(*) as totalImpressions'),
       database.raw(`
-		COUNT(CASE WHEN impressions.widget_opened = true OR impressions.widget_closed = true THEN 1 ELSE NULL END) as engagedImpressions
+		COUNT(CASE WHEN ${TABLE}.widget_opened = true OR ${TABLE}.widget_closed = true THEN 1 ELSE NULL END) as engagedImpressions
 	  `),
     ])
-    .whereBetween('impressions.created_at', [startDate, endDate])
-    .andWhere({ 'allowed_sites.url': site_url, 'allowed_sites.user_id': user_id })
-    .groupByRaw('DATE(impressions.created_at)')
+    .whereBetween(`${TABLE}.created_at`, [startDate, endDate])
+    .andWhere({ [`${TABLES.allowed_sites}.url`]: site_url, [`${TABLES.allowed_sites}.user_id`]: user_id })
+    .groupByRaw(`DATE(${TABLE}.created_at)`)
     .orderBy('date', 'asc')
 
   const engagementRates = results.map((result: any) => {
