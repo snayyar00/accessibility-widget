@@ -3,9 +3,9 @@ import Stripe from 'stripe'
 import { addUserToken } from '../repository/user_plan_tokens.repository'
 import findAllPromos from '../services/stripe/findAllPromos'
 
-export async function expireUsedPromo(numPromoSites: number, stripe: Stripe, orderedCodes: string[], userId: number, email: string): Promise<void> {
+export async function expireUsedPromo(numPromoSites: number, stripe: Stripe, orderedCodes: string[], userId: number, organizationId: number, email: string): Promise<void> {
   // Save the promocodes to the user first (blocking)
-  await addUserToken(userId, orderedCodes, email)
+  await addUserToken(userId, organizationId, orderedCodes, email)
 
   // Run the rest of the expiration logic in background
   setImmediate(async () => {

@@ -46,6 +46,7 @@ export async function updateProfile(id: number, name: string, company: string, p
 
 export async function updateUserNotificationSettings(
   userId: number,
+  organizationId: number,
   flags: {
     monthly_report_flag?: boolean
     new_domain_flag?: boolean
@@ -56,9 +57,9 @@ export async function updateUserNotificationSettings(
 ): Promise<{ success: boolean; message: string }> {
   try {
     // Check current onboarding email status before updating
-    const currentOnboardingStatus = flags.onboarding_emails_flag !== undefined ? await checkOnboardingEmailsEnabled(userId) : null
+    const currentOnboardingStatus = flags.onboarding_emails_flag !== undefined ? await checkOnboardingEmailsEnabled(userId, organizationId) : null
 
-    const updatedRows = await updateUserNotificationFlags(userId, flags)
+    const updatedRows = await updateUserNotificationFlags(userId, organizationId, flags)
 
     if (updatedRows > 0) {
       // Handle onboarding email preference changes
@@ -109,19 +110,19 @@ export async function updateUserNotificationSettings(
   }
 }
 
-export async function getUserNotificationSettingsService(userId: number): Promise<unknown> {
+export async function getUserNotificationSettingsService(userId: number, organizationId: number): Promise<unknown> {
   try {
-    const notification = await findUserNotificationByUserId(userId)
+    const notification = await findUserNotificationByUserId(userId, organizationId)
 
     if (!notification) {
       try {
-        await insertUserNotification(userId)
+        await insertUserNotification(userId, organizationId)
         console.log('User added to notification')
       } catch (error) {
         console.error('Failed to add user to notification:', error)
       }
     }
-    const settings = await getUserNotificationSettings(userId)
+    const settings = await getUserNotificationSettings(userId, organizationId)
 
     return (
       settings || {

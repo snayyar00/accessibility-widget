@@ -3,15 +3,16 @@ import { Request, Response } from 'express'
 import { addCancelFeedback, CancelFeedbackProps } from '../../repository/cancel_feedback.repository'
 import { deleteSiteWithRelatedRecords, findSiteByURL } from '../../repository/sites_allowed.repository'
 import { getAnySitePlanBySiteId } from '../../repository/sites_plans.repository'
+import { UserProfile } from '../../repository/user.repository'
 import { deleteExpiredSitesPlan, deleteSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service'
 
-export async function cancelSiteSubscription(req: Request, res: Response) {
+export async function cancelSiteSubscription(req: Request & { user: UserProfile }, res: Response) {
   const { domainId, domainUrl, status, cancelReason, otherReason } = req.body
 
   let previous_plan: any[]
   let stripeCustomerId: string | null = null
 
-  const { user } = req as any
+  const { user } = req
   const site = await findSiteByURL(domainUrl)
 
   if (!site || site.user_id !== user.id) {
@@ -96,6 +97,7 @@ export async function cancelSiteSubscription(req: Request, res: Response) {
         stripe_customer_id: stripeCustomerId,
         site_status_on_cancel: status,
         deleted_at: new Date(),
+        organization_id: user.current_organization_id,
       }
 
       await addCancelFeedback(feedbackData)

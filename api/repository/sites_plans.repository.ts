@@ -25,24 +25,24 @@ export type SitesPlanData = {
 }
 
 export const sitesPlansColumns = {
-  id: 'sites_plans.id',
-  siteId: 'sites_plans.allowed_site_id',
-  productId: 'sites_plans.product_id',
-  priceId: 'sites_plans.price_id',
-  subcriptionId: 'sites_plans.subcription_id',
-  customerId: 'sites_plans.customer_id',
-  isTrial: 'sites_plans.is_trial',
-  expiredAt: 'sites_plans.expired_at',
-  isActive: 'sites_plans.is_active',
-  createAt: 'sites_plans.created_at',
-  updatedAt: 'sites_plans.updated_at',
-  deletedAt: 'sites_plans.deleted_at',
+  id: `${TABLE}.id`,
+  siteId: `${TABLE}.allowed_site_id`,
+  productId: `${TABLE}.product_id`,
+  priceId: `${TABLE}.price_id`,
+  subcriptionId: `${TABLE}.subcription_id`,
+  customerId: `${TABLE}.customer_id`,
+  isTrial: `${TABLE}.is_trial`,
+  expiredAt: `${TABLE}.expired_at`,
+  isActive: `${TABLE}.is_active`,
+  createAt: `${TABLE}.created_at`,
+  updatedAt: `${TABLE}.updated_at`,
+  deletedAt: `${TABLE}.deleted_at`,
 }
 
 export function getSitesPlanByUserId(userId: number) {
   return database(TABLE)
-    .leftJoin(TABLES.allowed_sites, sitesPlansColumns.siteId, 'allowed_sites.id')
-    .select(sitesPlansColumns, 'allowed_sites.url as siteName')
+    .leftJoin(TABLES.allowed_sites, sitesPlansColumns.siteId, siteColumns.id)
+    .select(sitesPlansColumns, `${siteColumns.url} as siteName`)
     .where({ [siteColumns.user_id]: userId, [sitesPlansColumns.isActive]: true })
     .where(sitesPlansColumns.expiredAt, '>=', formatDateDB())
 }

@@ -106,7 +106,11 @@ export async function createSubscription(req: Request, res: Response) {
       }
 
       if (typeof promoCode[0] === 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id))) {
-        const [{ orderedCodes, numPromoSites }, tokenUsed] = await Promise.all([appSumoPromoCount(subscriptions, promoCode, user.id), getUserTokens(user.id)])
+        if (!user.current_organization_id) {
+          return res.status(400).json({ error: 'User has no current organization' })
+        }
+
+        const [{ orderedCodes, numPromoSites }, tokenUsed] = await Promise.all([appSumoPromoCount(subscriptions, promoCode, user.id, user.current_organization_id), getUserTokens(user.id, user.current_organization_id)])
 
         const { lastCustomCode, nonCustomCodes } = await customTokenCount(user.id, tokenUsed)
 
@@ -125,7 +129,7 @@ export async function createSubscription(req: Request, res: Response) {
           description: `Plan for ${domainUrl}(${lastCustomCode ? [lastCustomCode, ...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
         })
 
-        cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.email)]
+        cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.current_organization_id, user.email)]
       } else if (promoCode && promoCode.length > 0) {
         return res.json({ valid: false, error: 'Invalid promo code' })
       } else if (cardTrial) {

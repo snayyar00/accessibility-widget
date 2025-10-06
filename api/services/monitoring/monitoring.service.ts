@@ -1,10 +1,11 @@
-import { sendMail } from '../email/email.service'
+import database from '../../config/database.config'
+import { TABLES } from '../../constants/database.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import { findSiteById } from '../../repository/sites_allowed.repository'
 import { findUserById, findUserNotificationByUserId } from '../../repository/user.repository'
 import logger from '../../utils/logger'
-import database from '../../config/database.config'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
+import { sendMail } from '../email/email.service'
 
 export interface MonitoringResult {
   site_id: number
@@ -53,7 +54,7 @@ async function processSingleMonitoringResult(result: MonitoringResult): Promise<
 
   // Update database with numeric status (0 = up, 1 = down)
   try {
-    await database('allowed_sites')
+    await database(TABLES.allowed_sites)
       .where('id', result.site_id)
       .update({
         is_currently_down: result.is_down ? 1 : 0, // 0=up, 1=down
@@ -93,8 +94,13 @@ async function sendStatusChangeNotification(result: MonitoringResult, lastStatus
       return
     }
 
+    if (!user.current_organization_id) {
+      logger.error(`User ${site.user_id} has no current_organization_id`)
+      return
+    }
+
     // Check if user has monitoring alerts enabled
-    const userNotifications = (await findUserNotificationByUserId(site.user_id)) as { monitoring_alert_flag?: boolean } | null
+    const userNotifications = (await findUserNotificationByUserId(site.user_id, user.current_organization_id)) as { monitoring_alert_flag?: boolean } | null
     if (userNotifications && userNotifications.monitoring_alert_flag === false) {
       logger.info(`User ${user.id} has monitoring alerts disabled, skipping email`)
       return

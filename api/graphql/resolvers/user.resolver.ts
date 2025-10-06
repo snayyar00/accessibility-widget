@@ -50,7 +50,7 @@ const resolvers = {
     isEmailAlreadyRegistered: combineResolvers(allowedOrganization, async (_: unknown, { email }: { email: string }) => isEmailAlreadyRegistered(normalizeEmail(email))),
 
     getUserNotificationSettings: combineResolvers(allowedOrganization, isAuthenticated, async (_, __, { user }) => {
-      return await getUserNotificationSettingsService(user.id)
+      return await getUserNotificationSettingsService(user.id, user.current_organization_id)
     }),
 
     getLicenseOwnerInfo: combineResolvers(allowedOrganization, isAuthenticated, async (_, __, { user }) => {
@@ -128,7 +128,7 @@ const resolvers = {
     updateProfile: combineResolvers(allowedOrganization, isAuthenticated, (_, { name, company, position }, { user }) => updateProfile(user.id, name, company, position)),
 
     updateNotificationSettings: combineResolvers(allowedOrganization, isAuthenticated, async (_, { monthly_report_flag, new_domain_flag, issue_reported_flag, onboarding_emails_flag, monitoring_alert_flag }, { user }) => {
-      const result = await updateUserNotificationSettings(user.id, {
+      const result = await updateUserNotificationSettings(user.id, user.current_organization_id, {
         monthly_report_flag,
         new_domain_flag,
         issue_reported_flag,

@@ -76,7 +76,11 @@ export async function createCheckoutSession(req: Request, res: Response) {
 
     let session: any = {}
     if (typeof promoCode?.[0] === 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id))) {
-      const [{ orderedCodes, numPromoSites }, tokenUsed] = await Promise.all([appSumoPromoCount(subscriptions, promoCode, user.id), getUserTokens(user.id)])
+      if (!user.current_organization_id) {
+        return res.status(400).json({ error: 'User has no current organization' })
+      }
+
+      const [{ orderedCodes, numPromoSites }, tokenUsed] = await Promise.all([appSumoPromoCount(subscriptions, promoCode, user.id, user.current_organization_id), getUserTokens(user.id, user.current_organization_id)])
 
       console.log('promo')
       const { lastCustomCode, nonCustomCodes } = await customTokenCount(user.id, tokenUsed || [])
@@ -97,7 +101,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
         description: `Plan for ${domain}(${lastCustomCode ? [lastCustomCode, ...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
       })
 
-      const cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.email)]
+      const cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.current_organization_id, user.email)]
 
       try {
         const previous_plan = await getSitePlanBySiteId(Number(domainId))

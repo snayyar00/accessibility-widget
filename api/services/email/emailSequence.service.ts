@@ -6,7 +6,7 @@ import compileEmailTemplate from '../../helpers/compile-email-template'
 import { checkOnboardingEmailsEnabled, getUserbyId, getUsersRegisteredOnDate, UserProfile } from '../../repository/user.repository'
 import { sendEmailWithRetries } from '../../services/email/email.service'
 import logger from '../../utils/logger'
-import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
+import { generateSecureUnsubscribeLink } from '../../utils/secure-unsubscribe.utils'
 
 /**
  * Email Sequence Service - Immediate Sending with Database Tracking
@@ -38,7 +38,7 @@ export class EmailSequenceService {
   /**
    * Send welcome email immediately upon user registration (Production)
    */
-  static async sendWelcomeEmail(userEmail: string, userName: string, userId: number): Promise<boolean> {
+  static async sendWelcomeEmail(userEmail: string, userName: string, userId: number, organizationId: number): Promise<boolean> {
     try {
       // Email sequence kill switch for staging
       if (process.env.DISABLE_EMAIL_SEQUENCE === 'true') {
@@ -47,7 +47,7 @@ export class EmailSequenceService {
       }
 
       // Check if user has onboarding emails enabled
-      const isOnboardingEnabled = await checkOnboardingEmailsEnabled(userId)
+      const isOnboardingEnabled = await checkOnboardingEmailsEnabled(userId, organizationId)
       if (!isOnboardingEnabled) {
         logger.info(`Skipping welcome email for user ${userId} - onboarding emails disabled`)
         return false
@@ -56,7 +56,7 @@ export class EmailSequenceService {
       const welcomeStep = EMAIL_SEQUENCES.ONBOARDING.steps[0] // Day 0 email
 
       // Check if email was already sent using database tracking
-      if (await this.wasEmailAlreadySent(userId, welcomeStep.day)) {
+      if (await this.wasEmailAlreadySent(userId, welcomeStep.day, organizationId)) {
         logger.info(`Welcome email already sent to user ${userId}`)
         return true
       }
@@ -106,7 +106,7 @@ export class EmailSequenceService {
       await sendEmailWithRetries(emailToSend, template, welcomeStep.subject)
 
       // Mark email as sent in tracking system
-      await this.markEmailAsSent(userId, welcomeStep.day)
+      await this.markEmailAsSent(userId, welcomeStep.day, organizationId)
       logger.info(`Welcome email sent successfully to user ${userId}`)
 
       return true
@@ -174,8 +174,14 @@ export class EmailSequenceService {
       for (const user of uniqueUsers) {
         totalUsersProcessed++
 
+        // Check if user has current organization
+        if (!user.current_organization_id) {
+          logger.info(`Skipping user ${user.id} - no current_organization_id`)
+          continue
+        }
+
         // Check if user has onboarding emails enabled
-        const isOnboardingEnabled = await checkOnboardingEmailsEnabled(user.id)
+        const isOnboardingEnabled = await checkOnboardingEmailsEnabled(user.id, user.current_organization_id)
         if (!isOnboardingEnabled) {
           logger.info(`Skipping user ${user.id} - onboarding emails disabled`)
           continue
@@ -185,12 +191,12 @@ export class EmailSequenceService {
 
         // Process each sequence step for this user
         for (const step of sequenceSteps) {
-          const shouldSend = await this.shouldSendEmail(user.id, step.day, registrationDate)
+          const shouldSend = await this.shouldSendEmail(user.id, step.day, registrationDate, user.current_organization_id)
 
           if (shouldSend.should) {
             try {
               await this.sendSequenceEmail(user, step)
-              await this.markEmailAsSent(user.id, step.day)
+              await this.markEmailAsSent(user.id, step.day, user.current_organization_id)
               totalEmailsSent++
               logger.info(`✅ Sent Day ${step.day} email to user ${user.id}: ${step.description}`)
             } catch (error) {
@@ -224,19 +230,24 @@ export class EmailSequenceService {
     try {
       logger.info(`🔄 Starting email recovery for user ${userId}`)
 
-      // Check if user has onboarding emails enabled
-      const isOnboardingEnabled = await checkOnboardingEmailsEnabled(userId)
-      if (!isOnboardingEnabled) {
-        logger.info(`User ${userId} has onboarding emails disabled - skipping recovery`)
-        return { recovered: 0, details: ['Onboarding emails disabled'] }
-      }
-
       // Get user details
       const user = await getUserbyId(userId)
 
       if (!user) {
         logger.info(`User ${userId} not found`)
         return { recovered: 0, details: ['User not found'] }
+      }
+
+      if (!user.current_organization_id) {
+        logger.info(`User ${userId} has no current_organization_id`)
+        return { recovered: 0, details: ['No current organization'] }
+      }
+
+      // Check if user has onboarding emails enabled
+      const isOnboardingEnabled = await checkOnboardingEmailsEnabled(userId, user.current_organization_id)
+      if (!isOnboardingEnabled) {
+        logger.info(`User ${userId} has onboarding emails disabled - skipping recovery`)
+        return { recovered: 0, details: ['Onboarding emails disabled'] }
       }
 
       const registrationDate = new Date(user.created_at)
@@ -262,13 +273,13 @@ export class EmailSequenceService {
 
       // Check each step to see if it should be sent (with gap enforcement)
       for (const step of allSteps) {
-        const shouldSend = await this.shouldSendEmail(userId, step.day, registrationDate)
+        const shouldSend = await this.shouldSendEmail(userId, step.day, registrationDate, user.current_organization_id)
 
         if (shouldSend.should) {
           try {
             logger.info(`   📧 Sending missing email: ${step.description} (Day ${step.day})`)
             await this.sendSequenceEmail(user, step)
-            await this.markEmailAsSent(userId, step.day)
+            await this.markEmailAsSent(userId, step.day, user.current_organization_id)
             recoveredCount++
             recoveryDetails.push(`Sent: ${step.description} (Day ${step.day})`)
           } catch (error) {
@@ -307,8 +318,13 @@ export class EmailSequenceService {
         return
       }
 
+      if (!user.current_organization_id) {
+        logger.info(`User ${userId} has no current_organization_id`)
+        return
+      }
+
       // Check if user has onboarding emails enabled
-      const isOnboardingEnabled = await checkOnboardingEmailsEnabled(user.id)
+      const isOnboardingEnabled = await checkOnboardingEmailsEnabled(user.id, user.current_organization_id)
       if (!isOnboardingEnabled) {
         logger.info(`Skipping email sequence for user ${user.id} - onboarding emails disabled`)
         return
@@ -329,7 +345,7 @@ export class EmailSequenceService {
       const allEmailsSent: EmailSequenceStep[] = []
 
       for (const step of sequenceSteps) {
-        const alreadySent = await this.wasEmailAlreadySent(user.id, step.day)
+        const alreadySent = await this.wasEmailAlreadySent(user.id, step.day, user.current_organization_id)
 
         if (alreadySent) {
           allEmailsSent.push(step)
@@ -435,8 +451,13 @@ export class EmailSequenceService {
       const emailToSend = this.getEmailForSending(user.email)
       await sendEmailWithRetries(emailToSend, template, compiledSubject)
 
+      if (!user.current_organization_id) {
+        logger.error(`Cannot mark email as sent - user ${user.id} has no current_organization_id`)
+        return
+      }
+
       // Mark email as sent in tracking system
-      await this.markEmailAsSent(user.id, step.day)
+      await this.markEmailAsSent(user.id, step.day, user.current_organization_id)
       logger.info(`Email sent successfully: ${step.description} to user ${user.id}`)
     } catch (error) {
       logger.error(`Failed to send ${step.description} email to user ${user.id}:`, error)
@@ -446,10 +467,10 @@ export class EmailSequenceService {
   /**
    * Check if email was already sent using database JSON tracking
    */
-  private static async wasEmailAlreadySent(userId: number, sequenceDay: number): Promise<boolean> {
+  private static async wasEmailAlreadySent(userId: number, sequenceDay: number, organizationId: number): Promise<boolean> {
     try {
       const { getUserSentEmails } = await import('../../repository/user.repository')
-      const sentEmails = await getUserSentEmails(userId)
+      const sentEmails = await getUserSentEmails(userId, organizationId)
 
       if (!sentEmails) return false
 
@@ -463,14 +484,14 @@ export class EmailSequenceService {
   /**
    * Mark an email as sent in database tracking system
    */
-  private static async markEmailAsSent(userId: number, sequenceDay: number): Promise<void> {
+  private static async markEmailAsSent(userId: number, sequenceDay: number, organizationId: number): Promise<void> {
     try {
       const { getUserSentEmails, updateUserSentEmails } = await import('../../repository/user.repository')
 
-      const sentEmails = (await getUserSentEmails(userId)) || {}
+      const sentEmails = (await getUserSentEmails(userId, organizationId)) || {}
       sentEmails[sequenceDay.toString()] = new Date().toISOString()
 
-      await updateUserSentEmails(userId, sentEmails)
+      await updateUserSentEmails(userId, organizationId, sentEmails)
       logger.info(`Marked email as sent: Day ${sequenceDay} for user ${userId}`)
     } catch (error) {
       logger.error('Error marking email as sent:', error)
@@ -489,7 +510,7 @@ export class EmailSequenceService {
   /**
    * Check if user should receive email (new users only + gap enforcement)
    */
-  private static async shouldSendEmail(userId: number, sequenceDay: number, registrationDate: Date): Promise<{ should: boolean; reason: string }> {
+  private static async shouldSendEmail(userId: number, sequenceDay: number, registrationDate: Date, organizationId: number): Promise<{ should: boolean; reason: string }> {
     try {
       // Check if user registered on or after August 14, 2025 (new users only)
       const cutoffDate = new Date('2025-08-14')
@@ -502,7 +523,7 @@ export class EmailSequenceService {
       }
 
       // Check if email already sent
-      if (await this.wasEmailAlreadySent(userId, sequenceDay)) {
+      if (await this.wasEmailAlreadySent(userId, sequenceDay, organizationId)) {
         return { should: false, reason: 'Email already sent' }
       }
 
@@ -608,8 +629,14 @@ export class EmailSequenceService {
    */
   static async resetEmailTrackingForUser(userId: number): Promise<void> {
     try {
+      const user = await getUserbyId(userId)
+      if (!user || !user.current_organization_id) {
+        logger.error(`Cannot reset email tracking - user ${userId} not found or has no current_organization_id`)
+        return
+      }
+
       const { resetUserEmailTracking } = await import('../../repository/user.repository')
-      await resetUserEmailTracking(userId)
+      await resetUserEmailTracking(userId, user.current_organization_id)
       logger.info(`🔄 Reset email tracking for user ${userId}`)
     } catch (error) {
       logger.error(`Error resetting email tracking for user ${userId}:`, error)
@@ -620,14 +647,14 @@ export class EmailSequenceService {
    * TESTING UTILITY: Get email sequence status for a user
    * ⚠️  FOR TESTING PURPOSES ONLY - Use to check email sequence progress during development
    */
-  static async getEmailSequenceStatus(userId: number): Promise<{ sent: number; total: number; pending: string[] }> {
+  static async getEmailSequenceStatus(userId: number, organizationId: number): Promise<{ sent: number; total: number; pending: string[] }> {
     try {
       const sequenceSteps = EMAIL_SEQUENCES.ONBOARDING.steps
       let sentCount = 0
       const pendingEmails: string[] = []
 
       for (const step of sequenceSteps) {
-        const alreadySent = await this.wasEmailAlreadySent(userId, step.day)
+        const alreadySent = await this.wasEmailAlreadySent(userId, step.day, organizationId)
 
         if (alreadySent) {
           sentCount++
