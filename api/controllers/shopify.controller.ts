@@ -15,17 +15,15 @@ function verifyShopifyWebhook(rawBody: Buffer, hmacHeader: string): boolean {
   return crypto.timingSafeEqual(Buffer.from(hmacHeader, 'base64'), Buffer.from(calculatedHmac, 'base64'))
 }
 
-// Main compliance webhook handler
+// Main compliance webhook handler with improved security
 export const handleComplianceWebhook = async (req: Request, res: Response) => {
   try {
-    // req.body should be a Buffer due to express.raw middleware in server.ts
-    let rawBody: Buffer
-    if (Buffer.isBuffer(req.body)) {
-      rawBody = req.body
-    } else {
-      // Fallback: convert object back to JSON string then to Buffer
-      rawBody = Buffer.from(JSON.stringify(req.body))
+    // Ensure req.body is a Buffer (from express.raw middleware)
+    if (!Buffer.isBuffer(req.body)) {
+      console.error('Shopify webhook body is not a Buffer. Check middleware configuration.')
+      return res.status(500).json({ error: 'Internal server error' })
     }
+    const rawBody: Buffer = req.body
 
     // 1. Verify HMAC signature (REQUIRED)
     const hmac = req.get('X-Shopify-Hmac-Sha256')
