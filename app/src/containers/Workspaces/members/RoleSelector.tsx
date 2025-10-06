@@ -6,7 +6,7 @@ import {
   SelectChangeEvent,
 } from '@mui/material';
 import { useMutation } from '@apollo/client';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import {
   WorkspaceUserRole,
   ChangeWorkspaceMemberRoleMutation,

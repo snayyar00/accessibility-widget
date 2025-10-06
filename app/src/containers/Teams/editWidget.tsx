@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import { CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { head } from 'lodash';

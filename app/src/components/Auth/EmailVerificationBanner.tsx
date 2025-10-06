@@ -2,38 +2,43 @@ import React, { useState } from 'react';
 import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
 import { useMutation } from '@apollo/client';
 import RESEND_VERIFICATION from '../../queries/auth/resendVerification';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 interface EmailVerificationBannerProps {
   email: string; // Make optional since we'll use the mutation
 }
 
-const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({ 
+const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({
   email,
 }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
-  
+
   // Set up the mutation
-  const [resendVerification, { error: resendError }] = useMutation(RESEND_VERIFICATION, {
-    onCompleted: () => {
-      setResendSuccess(true);
-      toast.success('Verification email sent successfully!');
+  const [resendVerification, { error: resendError }] = useMutation(
+    RESEND_VERIFICATION,
+    {
+      onCompleted: () => {
+        setResendSuccess(true);
+        toast.success('Verification email sent successfully!');
+      },
+      onError: (error) => {
+        toast.error(
+          error.message ||
+            'Failed to send verification email. Please try again.',
+        );
+      },
     },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to send verification email. Please try again.');
-    }
-  });
+  );
 
   const handleResend = async () => {
     setIsResending(true);
     setResendSuccess(false);
-    
+
     try {
-      
-        await resendVerification();
-      
+      await resendVerification();
+
       setResendSuccess(true);
     } catch (error) {
       console.error('Failed to resend verification email:', error);
@@ -69,7 +74,7 @@ const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-4 mt-2 lg:mt-0">
           <button
             onClick={handleResend}
@@ -78,9 +83,9 @@ const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({
           >
             {isResending ? 'Sending...' : 'Resend verification email'}
           </button>
-          
-          <button 
-            onClick={handleDismiss} 
+
+          <button
+            onClick={handleDismiss}
             className="text-white hover:text-gray-200"
             aria-label="Dismiss"
           >
@@ -92,4 +97,4 @@ const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({
   );
 };
 
-export default EmailVerificationBanner; 
+export default EmailVerificationBanner;

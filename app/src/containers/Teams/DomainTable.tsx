@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@apollo/client';
 import { FaTrash, FaCheck, FaTimes, FaCog } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import { CircularProgress, Tooltip } from '@mui/material';

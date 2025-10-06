@@ -6,7 +6,7 @@ import {
 } from '@/generated/graphql';
 import { useMutation } from '@apollo/client';
 import CHANGE_CURRENT_ORGANIZATION from '@/queries/user/changeCurrentOrganization';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 type ChangeOrganizationSelectProps = {
   initialValue: number | string;

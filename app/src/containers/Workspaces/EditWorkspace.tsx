@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { useMutation } from '@apollo/client';
 import UPDATE_WORKSPACE from '@/queries/workspace/updateWorkspace';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import EditIcon from '@mui/icons-material/Edit';
 import { UpdateWorkspaceMutation, Workspace, Site } from '@/generated/graphql';
 import WorkspaceDomainsSelect from './WorkspaceDomainsSelect';

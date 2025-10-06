@@ -12,7 +12,7 @@ import GET_USER_SITES from '@/queries/sites/getSites';
 import FETCH_ACCESSIBILITY_REPORT_KEYS from '@/queries/accessibility/fetchAccessibilityReport';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
 import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import isValidDomain from '@/utils/verifyDomain';
 import Button from '@mui/joy/Button';
 import AccordionGroup from '@mui/joy/AccordionGroup';

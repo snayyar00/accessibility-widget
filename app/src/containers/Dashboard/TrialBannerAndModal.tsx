@@ -12,7 +12,7 @@ import MySiteImage from '@/assets/images/my_site.png';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import { useMutation } from '@apollo/client';
 import addSite from '@/queries/sites/addSite';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import {
   getRootDomain,
   isValidRootDomainFormat,

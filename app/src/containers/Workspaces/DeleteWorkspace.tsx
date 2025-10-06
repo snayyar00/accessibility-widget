@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { useMutation } from '@apollo/client';
 import DELETE_WORKSPACE from '@/queries/workspace/deleteWorkspace';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DeleteWorkspaceMutation, Workspace } from '@/generated/graphql';
 

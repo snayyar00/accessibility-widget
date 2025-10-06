@@ -3,7 +3,7 @@ import { CircularProgress, Tooltip } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Copy } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { getAuthenticationCookie } from '@/utils/cookie';
 
 interface ConfirmDeleteSiteModalProps {

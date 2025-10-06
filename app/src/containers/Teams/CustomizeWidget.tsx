@@ -3,7 +3,7 @@ import type React from 'react';
 import { Colors, Toggles } from './editWidget';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import { useEffect, useRef, useState } from 'react';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 

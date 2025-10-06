@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useMutation } from '@apollo/client';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
 import ResetPasswordForm from '@/components/Auth/ResetPasswordForm';
@@ -20,7 +20,8 @@ import circleSmall from '@/assets/images/svg/circle-small.svg';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 
 const ResetPasswordSchema = yup.object().shape({
-  password: yup.string()
+  password: yup
+    .string()
     .required('Common.validation.require_password')
     .min(6, 'Common.validation.min_password')
     .max(50, 'Common.validation.max_password'),
@@ -28,13 +29,13 @@ const ResetPasswordSchema = yup.object().shape({
     .string()
     .required('Common.validation.require_password_confirm')
     .max(50, 'Common.validation.max_password')
-    .oneOf([yup.ref('password'), ""], 'Common.validation.password_match'),
+    .oneOf([yup.ref('password'), ''], 'Common.validation.password_match'),
 });
 
 type Payload = {
   password: string;
   passwordConfirmation: string;
-}
+};
 
 const ResetPassword: React.FC = () => {
   const { t } = useTranslation();
@@ -98,6 +99,6 @@ const ResetPassword: React.FC = () => {
       </div>
     </div>
   );
-}
+};
 
 export default ResetPassword;

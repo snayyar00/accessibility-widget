@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { useMutation } from '@apollo/client';
 import REMOVE_USER_FROM_ORGANIZATION from '@/queries/organization/removeUserFromOrganization';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { RemoveUserFromOrganizationMutation } from '@/generated/graphql';
 

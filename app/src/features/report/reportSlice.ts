@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import getAccessibilityReportByJobId from '@/queries/accessibility/getAccessibilityReportByJobId';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { createClient } from '@/config/apollo';
 
 const apolloClient = createClient();
@@ -14,18 +14,36 @@ export const generateReport = createAsyncThunk<any, any>(
     } catch (error) {
       return rejectWithValue('Failed to generate report');
     }
-  }
+  },
 );
 
 export const processAndSaveReport = createAsyncThunk(
   'report/processAndSaveReport',
-  async ({ result, validDomain, sitesData, saveAccessibilityReport, isMounted, groupByCode }: any, { dispatch }) => {
+  async (
+    {
+      result,
+      validDomain,
+      sitesData,
+      saveAccessibilityReport,
+      isMounted,
+      groupByCode,
+    }: any,
+    { dispatch },
+  ) => {
     let score = result.score;
     let allowed_sites_id = null;
 
     if (sitesData && sitesData.getUserSites) {
       const matchedSite = sitesData.getUserSites.find(
-        (site: any) => (site.url || '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '') == validDomain.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
+        (site: any) =>
+          (site.url || '')
+            .replace(/^https?:\/\//, '')
+            .replace(/^www\./, '')
+            .replace(/\/$/, '') ==
+          validDomain
+            .replace(/^https?:\/\//, '')
+            .replace(/^www\./, '')
+            .replace(/\/$/, ''),
       );
       allowed_sites_id = matchedSite ? matchedSite.id : null;
     }
@@ -50,7 +68,7 @@ export const processAndSaveReport = createAsyncThunk(
       dispatch(generateReport({ url: newReportUrl, allowed_sites_id }));
     }
     // Optionally process htmlcs, siteImg, etc. here if needed
-  }
+  },
 );
 
 export const pollReportJob = createAsyncThunk(
@@ -79,7 +97,9 @@ export const pollReportJob = createAsyncThunk(
           // Compose the report URL from backend result
           const r2Key = result.savedReport.key;
           const savedUrl = result.savedReport.report.url;
-          const newReportUrl = `/${r2Key}?domain=${encodeURIComponent(savedUrl)}`;
+          const newReportUrl = `/${r2Key}?domain=${encodeURIComponent(
+            savedUrl,
+          )}`;
           dispatch(generateReport({ url: newReportUrl }));
           return true;
         } else if (status === 'error' || status === 'not_found') {
@@ -94,9 +114,9 @@ export const pollReportJob = createAsyncThunk(
     let finished = false;
     while (!finished) {
       finished = await poll();
-      if (!finished) await new Promise(res => setTimeout(res, 5000));
+      if (!finished) await new Promise((res) => setTimeout(res, 5000));
     }
-  }
+  },
 );
 
 const reportSlice = createSlice({
@@ -168,5 +188,12 @@ const reportSlice = createSlice({
   },
 });
 
-export const { closeModal, resetReport, setIsGenerating, setSelectedDomain, setJobId, clearJobId } = reportSlice.actions;
-export default reportSlice.reducer; 
+export const {
+  closeModal,
+  resetReport,
+  setIsGenerating,
+  setSelectedDomain,
+  setJobId,
+  clearJobId,
+} = reportSlice.actions;
+export default reportSlice.reducer;

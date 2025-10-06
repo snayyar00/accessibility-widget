@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { useMutation } from '@apollo/client';
 import CREATE_WORKSPACE from '@/queries/workspace/createWorkspace';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { CreateWorkspaceMutation } from '@/generated/graphql';
 
 interface CreateWorkspaceProps {

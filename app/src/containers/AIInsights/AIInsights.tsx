@@ -11,7 +11,7 @@ import { ANALYZE_DOMAIN } from '@/queries/domainAnalysis/analyzeDomain';
 import { ANALYZE_AI_READINESS } from '@/queries/aiReadiness/analyzeAIReadiness';
 import { GetUserSitesDocument } from '@/generated/graphql';
 import { CircularProgress } from '@mui/material';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import Select from 'react-select/creatable';
 
 import { Search, Monitor, Loader2, Brain } from 'lucide-react';

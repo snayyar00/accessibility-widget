@@ -1,18 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@apollo/client';
 import addSite from '@/queries/sites/addSite';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { CircularProgress } from '@mui/material';
 import isValidDomain from '@/utils/verifyDomain';
-
 
 interface AddDomainModalProps {
   setShowPopup: (show: boolean) => void;
   setReloadSites: (show: boolean) => void;
 }
 
-export default function AddDomainModal({ setShowPopup, setReloadSites }: AddDomainModalProps) {
-
+export default function AddDomainModal({
+  setShowPopup,
+  setReloadSites,
+}: AddDomainModalProps) {
   const [newDomain, setNewDomain] = useState('');
   const modalRef = useRef<HTMLDivElement>(null);
   const [addSiteMutation, { loading }] = useMutation(addSite, {
@@ -23,15 +24,14 @@ export default function AddDomainModal({ setShowPopup, setReloadSites }: AddDoma
         toast.success('Domain was successfully added.');
         setReloadSites(true);
         setShowPopup(false);
-      }
-      else if(data.addSite.includes('already')){
+      } else if (data.addSite.includes('already')) {
         toast.error(data.addSite);
         setShowPopup(false);
       }
     },
     onError: (error) => {
       toast.error('There was an error while adding the domain.');
-    }
+    },
   });
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -42,20 +42,20 @@ export default function AddDomainModal({ setShowPopup, setReloadSites }: AddDoma
 
   const handleAddNewDomain = () => {
     if (newDomain === '' || newDomain === ' ') {
-      toast.error('The domain name can not be empty and it cannot contain any spaces.');
+      toast.error(
+        'The domain name can not be empty and it cannot contain any spaces.',
+      );
       setShowPopup(false);
       return;
     }
-    if (!isValidDomain(newDomain)){
+    if (!isValidDomain(newDomain)) {
       toast.error('You must enter a valid domain name!');
-      setShowPopup(false)
+      setShowPopup(false);
       return;
     }
     const sanitizedDomain = newDomain.replace(/^(https?:\/\/)?(www\.)?/, '');
     addSiteMutation({ variables: { url: sanitizedDomain } });
-
   };
-
 
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
@@ -71,14 +71,26 @@ export default function AddDomainModal({ setShowPopup, setReloadSites }: AddDoma
         ref={modalRef}
       >
         <div className="flex justify-between items-center">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">Add New Domain</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900">
+            Add New Domain
+          </h3>
           <button
             onClick={() => setShowPopup(false)}
             className="text-gray-400 hover:text-red transition-colors duration-300"
           >
             <span className="sr-only">Close</span>
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -98,13 +110,15 @@ export default function AddDomainModal({ setShowPopup, setReloadSites }: AddDoma
               onClick={handleAddNewDomain}
             >
               Add Domain
-              <span className='ml-3 inline-block'>
-                {loading && <CircularProgress size={14} sx={{ color: 'white'}} />}
+              <span className="ml-3 inline-block">
+                {loading && (
+                  <CircularProgress size={14} sx={{ color: 'white' }} />
+                )}
               </span>
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

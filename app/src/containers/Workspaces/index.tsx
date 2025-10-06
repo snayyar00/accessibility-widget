@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import GET_PROFILE from '@/queries/auth/getProfile';
 import { useApolloClient, useLazyQuery } from '@apollo/client';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { setProfileUser } from '@/features/auth/user';
 import GET_USER_WORKSPACES from '@/queries/workspace/getUserWorkspaces';
 import GET_USER_SITES from '@/queries/sites/getSites';

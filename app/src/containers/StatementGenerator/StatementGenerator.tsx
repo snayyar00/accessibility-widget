@@ -15,7 +15,7 @@ import {
 import { HiDownload, HiClipboardCopy } from 'react-icons/hi';
 import { MdOutlineGavel, MdCode, MdTextFields } from 'react-icons/md';
 import { FaFileAlt, FaCode } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import noReportFoundImage from '@/assets/images/no-report-found.png';
 import TourGuide from '@/components/Common/TourGuide';
 import { defaultTourStyles } from '@/config/tourStyles';

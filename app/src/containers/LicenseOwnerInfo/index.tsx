@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { HiOutlineUser, HiOutlineMail, HiOutlinePhone } from 'react-icons/hi';
 import { FaChevronDown } from 'react-icons/fa';
 import { useQuery, useMutation } from '@apollo/client';

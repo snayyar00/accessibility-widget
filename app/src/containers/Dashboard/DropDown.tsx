@@ -3,7 +3,7 @@ import './DropDown.css';
 import { useMutation, useQuery } from '@apollo/client';
 import deleteSite from '@/queries/sites/deleteSite';
 import { MdDelete } from 'react-icons/md';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import AddDomainModal from './AddDomainModal';
 import Favicon from '@/components/Common/Favicon';
 
