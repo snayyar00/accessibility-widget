@@ -5,6 +5,7 @@ import formRoutes from './form.routes'
 import monitoringRoutes from './monitoring.routes'
 import proofOfEffortRoutes from './proof-of-effort.routes'
 import reportsRoutes from './reports.routes'
+import shopifyRoutes from './shopify.routes'
 import sitesRoutes from './sites.routes'
 import stripeRoutes from './stripe.routes'
 import translationRoutes from './translation.routes'
@@ -21,5 +22,6 @@ router.use(proofOfEffortRoutes)
 router.use(chatRoutes)
 router.use(monitoringRoutes)
 router.use(sitesRoutes)
+router.use('/shopify', shopifyRoutes)
 
 export default router
