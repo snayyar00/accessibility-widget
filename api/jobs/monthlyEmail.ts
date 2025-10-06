@@ -8,7 +8,7 @@ import { findUserNotificationByUserId, getUserbyId } from '../repository/user.re
 import { fetchAccessibilityReport } from '../services/accessibilityReport/accessibilityReport.service'
 import { checkScript } from '../services/allowedSites/allowedSites.service'
 import { EmailAttachment, sendEmailWithRetries } from '../services/email/email.service'
-import { generateAccessibilityReportPDF } from '../utils/pdfGenerator'
+import { generatePDF } from '../utils/generatePDF'
 import logger from '../utils/logger'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../utils/secure-unsubscribe.utils'
 
@@ -27,12 +27,58 @@ interface sitePlan {
   deletedAt: any
 }
 
+/**
+ * Check if today is a monthly anniversary of the site's creation date
+ * @param createdAt - ISO date string of when the site was created
+ * @returns boolean - true if today is a monthly anniversary
+ */
+const isMonthlyAnniversary = (createdAt: string): boolean => {
+  if (!createdAt) return false
+
+  const today = new Date()
+  const created = new Date(createdAt)
+
+  // Check if the day of month matches (or it's the last day of month for dates like Jan 31 -> Feb 28)
+  const todayDay = today.getDate()
+  const createdDay = created.getDate()
+
+  // Get the last day of current month
+  const lastDayOfCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
+
+  // For sites created on 29, 30, or 31, and current month doesn't have that day,
+  // send on the last day of the month
+  if (createdDay > lastDayOfCurrentMonth) {
+    return todayDay === lastDayOfCurrentMonth
+  }
+
+  // Otherwise, send on the same day of month
+  return todayDay === createdDay
+}
+
 const sendMonthlyEmails = async () => {
   try {
-    const sitePlans = await getActiveSitesPlan()
+    const allSitePlans = await getActiveSitesPlan()
+
+    // Filter sites that are due for their monthly email today (based on creation date anniversary)
+    const sitePlans = allSitePlans.filter((sitePlan: sitePlan) => {
+      const createdAt = sitePlan.createAt
+      if (!createdAt) {
+        console.log(`Skipping site ${sitePlan.siteId} - no creation date found`)
+        return false
+      }
+
+      const isDue = isMonthlyAnniversary(createdAt)
+      if (isDue) {
+        console.log(`Site ${sitePlan.siteId} is due for monthly email (created on ${createdAt})`)
+      }
+      return isDue
+    })
+
+    console.log(`Found ${sitePlans.length} sites due for monthly emails today (out of ${allSitePlans.length} total active sites)`)
+
     const year = new Date().getFullYear()
 
-    // Limit concurrency to 2 tasks at a time
+    // Limit concurrency to 10 tasks at a time
     const limit = pLimit(10)
 
     await Promise.allSettled(
@@ -60,7 +106,9 @@ const sendMonthlyEmails = async () => {
             try {
               widgetStatus = await checkScript(site?.url)
               status = widgetStatus === 'true' || widgetStatus === 'Web Ability' ? 'Compliant' : 'Not Compliant'
-              score = widgetStatus === 'Web Ability' ? Math.floor(Math.random() * (100 - 90 + 1)) + 90 : widgetStatus === 'true' ? Math.floor(Math.random() * (88 - 80 + 1)) + 80 : report.score
+              // For WebAbility, use the original report score - the PDF generator will add the bonus
+              // For other cases, use the original report score
+              score = report.score
             } catch (error) {
               logger.warn(`Failed to check script for domain ${site?.url}:`, error)
               // Fallback to default values when checkScript fails
@@ -92,7 +140,18 @@ const sendMonthlyEmails = async () => {
             // Generate PDF attachment
             let attachments: EmailAttachment[] = []
             try {
-              const pdfBuffer = await generateAccessibilityReportPDF(report, site?.url)
+              const pdfBlob = await generatePDF(
+                {
+                  ...report, // Pass the full report data
+                  score: score,
+                  widgetInfo: { result: widgetStatus },
+                  scriptCheckResult: widgetStatus,
+                  url: site?.url,
+                },
+                'en',
+                site?.url,
+              )
+              const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
               attachments = [
                 {
                   content: pdfBuffer,
@@ -116,12 +175,12 @@ const sendMonthlyEmails = async () => {
   }
 }
 
-// Schedule the cron job to run monthly
+// Schedule the cron job to run daily (checks for monthly anniversaries)
 const scheduleMonthlyEmails = () => {
-  cron.schedule('0 0 1 * *', async () => {
-    console.log('Running monthly email job...')
+  cron.schedule('0 0 * * *', async () => {
+    console.log('Running monthly anniversary email job...')
     await sendMonthlyEmails()
-    console.log('Monthly email job completed.')
+    console.log('Monthly anniversary email job completed.')
   })
 }
 
