@@ -9,6 +9,7 @@ import { createServer } from 'http'
 
 import { initializeSentry } from './config/sentry.config'
 import { ALLOWED_OPERATIONS, ALLOWED_ORIGINS, configureServer, PORT } from './config/server.config'
+import { handleComplianceWebhook } from './controllers/shopify.controller'
 import { createGraphQLContext } from './graphql/context'
 import { createGraphQLServer } from './graphql/server'
 import scheduleEmailSequences from './jobs/emailSequence'
@@ -16,7 +17,7 @@ import scheduleMonthlyEmails from './jobs/monthlyEmail'
 import { dynamicCors } from './middlewares/cors.middleware'
 import { expressErrorMiddleware } from './middlewares/expressError.middleware'
 import { graphqlTimeoutMiddleware } from './middlewares/graphqlTimeout.middleware'
-import { strictLimiter } from './middlewares/limiters.middleware'
+import { moderateLimiter, strictLimiter } from './middlewares/limiters.middleware'
 import { configureMorgan } from './middlewares/morgan.middleware'
 import { requestTimingMiddleware } from './middlewares/requestTiming.middleware'
 import routes from './routes'
@@ -36,6 +37,9 @@ app.use(requestTimingMiddleware)
 
 // Stripe webhook endpoint (before CORS and JSON parsing)
 app.post('/stripe-hooks', strictLimiter, express.raw({ type: 'application/json' }), stripeHooks)
+
+// Shopify compliance webhook endpoint (before CORS and JSON parsing)
+app.post('/shopify/compliance', moderateLimiter, express.raw({ type: 'application/json' }), handleComplianceWebhook)
 
 app.use(cookieParser())
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }))
