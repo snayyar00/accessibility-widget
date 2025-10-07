@@ -336,7 +336,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   );
 
   return (
-    <div className="w-full min-h-screen">
+    <div>
       {/* Header */}
       <div className=" px-6 pb-4">
         {/* Tabs */}
@@ -812,14 +812,14 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <button
                       onClick={onReset}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                     >
                       Reset
                     </button>
                     <button
                       onClick={onSave}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#4285F4] hover:bg-[#3367D6] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#445AE7] hover:bg-[#3A4BC7] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                     >
                       Save
                     </button>
@@ -995,7 +995,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <div className="flex gap-2">
                       <button
                         onClick={handleReset}
-                        className="px-3 py-2 bg-[#4285F4] text-white rounded text-sm hover:bg-[#3367D6]"
+                        className="px-3 py-2 bg-[#445AE7] text-white rounded text-sm hover:bg-[#3A4BC7]"
                       >
                         Reset
                       </button>
@@ -1019,7 +1019,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             toast.error('Please provide a valid Image or URL.');
                           }
                         }}
-                        className="px-3 py-2 bg-[#4285F4] text-white rounded text-sm hover:bg-[#3367D6]"
+                        className="px-3 py-2 bg-[#445AE7] text-white rounded text-sm hover:bg-[#3A4BC7]"
                       >
                         Set Logo
                       </button>
@@ -1057,7 +1057,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         }));
                         setLogoUrl(DefaultColors.logoUrl);
                       }}
-                      className="px-3 py-2 bg-[#4285F4] text-white rounded text-sm hover:bg-[#3367D6]"
+                      className="px-3 py-2 bg-[#445AE7] text-white rounded text-sm hover:bg-[#3A4BC7]"
                     >
                       Reset
                     </button>
@@ -1097,7 +1097,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           DefaultColors.accessibilityStatementLinkUrl,
                         );
                       }}
-                      className="px-3 py-2 bg-[#4285F4] text-white rounded text-sm hover:bg-[#3367D6]"
+                      className="px-3 py-2 bg-[#445AE7] text-white rounded text-sm hover:bg-[#3A4BC7]"
                     >
                       Reset
                     </button>
@@ -1127,7 +1127,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                       onClick={() => {
                         setSelectedFont('auto');
                       }}
-                      className="px-3 py-2 bg-[#4285F4] text-white rounded text-sm hover:bg-[#3367D6]"
+                      className="px-3 py-2 bg-[#445AE7] text-white rounded text-sm hover:bg-[#3A4BC7]"
                     >
                       Reset
                     </button>
@@ -1138,14 +1138,14 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <button
                       onClick={onReset}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                     >
                       Reset
                     </button>
                     <button
                       onClick={onSave}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#4285F4] hover:bg-[#3367D6] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#445AE7] hover:bg-[#3A4BC7] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                     >
                       Save
                     </button>

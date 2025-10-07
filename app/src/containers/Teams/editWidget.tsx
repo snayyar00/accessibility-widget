@@ -1171,7 +1171,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
         customStyles={defaultTourStyles}
       />
 
-      <div className="min-h-screen">
+      <div>
         {/* Site Selector Header */}
         <div className="px-6 py-4">
           <div className="flex flex-col sm:flex-col md:flex-row items-start sm:items-start md:items-center justify-between gap-3 sm:gap-3 md:gap-0">
@@ -1184,7 +1184,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
               <button
                 onClick={() => setIsCopyModalOpen(true)}
                 disabled={buttonDisable}
-                className="px-4 py-2 border border-transparent rounded-md text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center gap-2 w-full sm:w-auto md:w-auto"
+                className="px-4 py-2 border border-transparent rounded-md text-white bg-[#445AE7] hover:bg-[#3A4BC7] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] flex items-center gap-2 w-full sm:w-auto md:w-auto"
               >
                 <Settings size={16} />
                 Copy Customization
