@@ -22,7 +22,6 @@ export interface Colors {
   allIconsAndText: string;
   toggleIconColor: string;
   toggleBgUnchecked: string;
-  toggleBgChecked: string;
   reportIssueText: string;
   reportIssueInputText: string;
   reportIssueButtons: string;
@@ -122,14 +121,14 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     seizureAndEpileptic: true,
     colorBlind: true,
     adhd: true,
-    oversizeWidget: false,
-    fontSize: false,
-    textColor: false,
-    titleColor: false,
-    backgroundColor: false,
-    pageStructure: false,
-    keyboardNavigation: false,
-    widgetPosition: false,
+    oversizeWidget: true,
+    fontSize: true,
+    textColor: true,
+    titleColor: true,
+    backgroundColor: true,
+    pageStructure: true,
+    keyboardNavigation: true,
+    widgetPosition: true,
   });
   const { data: userData } = useSelector((state: RootState) => state.user);
   const [buttonDisable, setButtonDisable] = useState(false);
@@ -146,7 +145,6 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     allIconsAndText: '#3b4581',
     toggleIconColor: '#232e72',
     toggleBgUnchecked: '#c3c3c3',
-    toggleBgChecked: '#c3c3c3',
     reportIssueText: '#111639',
     reportIssueInputText: '#656565',
     reportIssueButtons: '#ffffff',
@@ -168,7 +166,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     selectedLanguage: '#232e72',
     progressBars: '#ffffff',
     // Existing properties
-    widgetBtnColor: '#195AFF',
+    widgetBtnColor: '#111639',
     logoImage: '',
     accessibilityStatementLinkUrl: 'https://www.webability.io/statement',
     logoUrl: 'https://webability.io',
@@ -179,7 +177,6 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     allIconsAndText: '#d0d5f8',
     toggleIconColor: '#465ce4',
     toggleBgUnchecked: '#c3c3c3',
-    toggleBgChecked: '#c3c3c3',
     reportIssueText: '#ffffff',
     reportIssueInputText: '#d0d5f8',
     reportIssueButtons: '#e6f2f2',
@@ -201,7 +198,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     selectedLanguage: '#465ce4',
     progressBars: '#ffffff',
     // Existing properties (same as light mode)
-    widgetBtnColor: '#195AFF',
+    widgetBtnColor: '#111639',
     logoImage: '',
     accessibilityStatementLinkUrl: 'https://www.webability.io/statement',
     logoUrl: 'https://webability.io',
@@ -234,14 +231,14 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     seizureAndEpileptic: true,
     colorBlind: true,
     adhd: true,
-    oversizeWidget: false,
-    fontSize: false,
-    textColor: false,
-    titleColor: false,
-    backgroundColor: false,
-    pageStructure: false,
-    keyboardNavigation: false,
-    widgetPosition: false,
+    oversizeWidget: true,
+    fontSize: true,
+    textColor: true,
+    titleColor: true,
+    backgroundColor: true,
+    pageStructure: true,
+    keyboardNavigation: true,
+    widgetPosition: true,
   };
 
   const [colorMode, setColorMode] = useState<'light' | 'dark'>('light');
@@ -280,7 +277,6 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     'light-mode-all-icons-and-text': DefaultLightColors.allIconsAndText,
     'light-mode-toggle-icon-color': DefaultLightColors.toggleIconColor,
     'light-mode-toggle-bg-unchecked': DefaultLightColors.toggleBgUnchecked,
-    'light-mode-toggle-bg-checked': DefaultLightColors.toggleBgChecked,
     'light-mode-report-issue-text': DefaultLightColors.reportIssueText,
     'light-mode-report-issue-input-text':
       DefaultLightColors.reportIssueInputText,
@@ -309,7 +305,6 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     'dark-mode-all-icons-and-text': DefaultDarkColors.allIconsAndText,
     'dark-mode-toggle-icon-color': DefaultDarkColors.toggleIconColor,
     'dark-mode-toggle-bg-unchecked': DefaultDarkColors.toggleBgUnchecked,
-    'dark-mode-toggle-bg-checked': DefaultDarkColors.toggleBgChecked,
     'dark-mode-report-issue-text': DefaultDarkColors.reportIssueText,
     'dark-mode-report-issue-input-text': DefaultDarkColors.reportIssueInputText,
     'dark-mode-report-issue-buttons': DefaultDarkColors.reportIssueButtons,
@@ -396,7 +391,6 @@ const AccessibilityWidgetPage: React.FC<any> = ({
       'light-mode-all-icons-and-text': lightModeColors.allIconsAndText,
       'light-mode-toggle-icon-color': lightModeColors.toggleIconColor,
       'light-mode-toggle-bg-unchecked': lightModeColors.toggleBgUnchecked,
-      'light-mode-toggle-bg-checked': lightModeColors.toggleBgChecked,
       'light-mode-report-issue-text': lightModeColors.reportIssueText,
       'light-mode-report-issue-input-text':
         lightModeColors.reportIssueInputText,
@@ -425,7 +419,6 @@ const AccessibilityWidgetPage: React.FC<any> = ({
       'dark-mode-all-icons-and-text': darkModeColors.allIconsAndText,
       'dark-mode-toggle-icon-color': darkModeColors.toggleIconColor,
       'dark-mode-toggle-bg-unchecked': darkModeColors.toggleBgUnchecked,
-      'dark-mode-toggle-bg-checked': darkModeColors.toggleBgChecked,
       'dark-mode-report-issue-text': darkModeColors.reportIssueText,
       'dark-mode-report-issue-input-text': darkModeColors.reportIssueInputText,
       'dark-mode-report-issue-buttons': darkModeColors.reportIssueButtons,
@@ -493,57 +486,24 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     });
   }, [toggles, lightModeColors, darkModeColors, selectedFont]);
 
-  const resetAll = () => {
+  const resetAll = async () => {
     if (isMounted.current) {
       setHasUserMadeChanges(false);
 
       setLightModeColors(DefaultLightColors);
       setDarkModeColors(DefaultDarkColors);
-      // Reset all toggles to true (turn everything on)
-      const resetToggles = {
-        language: true,
-        darkMode: true,
-        screenReader: true,
-        readingGuide: true,
-        stopAnimations: true,
-        bigCursor: true,
-        voiceNavigation: true,
-        darkContrast: true,
-        lightContrast: true,
-        highContrast: true,
-        highSaturation: true,
-        lowSaturation: true,
-        monochrome: true,
-        highlightLinks: true,
-        highlightTitle: true,
-        dyslexiaFont: true,
-        letterSpacing: true,
-        lineHeight: true,
-        fontWeight: true,
-        motorImpaired: true,
-        blind: true,
-        dyslexia: true,
-        visuallyImpaired: true,
-        cognitiveAndLearning: true,
-        seizureAndEpileptic: true,
-        colorBlind: true,
-        adhd: true,
-        oversizeWidget: true,
-        fontSize: true,
-        textColor: true,
-        titleColor: true,
-        backgroundColor: true,
-        pageStructure: true,
-        keyboardNavigation: true,
-        widgetPosition: true,
-      };
-      setToggles(resetToggles);
+      // Reset all toggles to default values
+      setToggles(DefaultToggles);
       setSelectedFont("'Times New Roman', serif");
 
-      // Re-enable auto-save after a short delay
-      setTimeout(() => {
-        setHasUserMadeChanges(true);
-      }, 100);
+      // Wait for state updates to complete, then save the reset values
+      setTimeout(async () => {
+        await handleSave();
+        // Re-enable change tracking after save completes
+        setTimeout(() => {
+          setHasUserMadeChanges(true);
+        }, 100);
+      }, 300);
     } else {
       console.log('Component not mounted, skipping reset');
     }
@@ -680,9 +640,6 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           toggleBgUnchecked:
             fetchedSettings['light-mode-toggle-bg-unchecked'] ||
             DefaultLightColors.toggleBgUnchecked,
-          toggleBgChecked:
-            fetchedSettings['light-mode-toggle-bg-checked'] ||
-            DefaultLightColors.toggleBgChecked,
           reportIssueText:
             fetchedSettings['light-mode-report-issue-text'] ||
             DefaultLightColors.reportIssueText,
@@ -768,9 +725,6 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           toggleBgUnchecked:
             fetchedSettings['dark-mode-toggle-bg-unchecked'] ||
             DefaultDarkColors.toggleBgUnchecked,
-          toggleBgChecked:
-            fetchedSettings['dark-mode-toggle-bg-checked'] ||
-            DefaultDarkColors.toggleBgChecked,
           reportIssueText:
             fetchedSettings['dark-mode-report-issue-text'] ||
             DefaultDarkColors.reportIssueText,
@@ -973,9 +927,6 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           toggleBgUnchecked:
             fetchedSettings['light-mode-toggle-bg-unchecked'] ||
             DefaultLightColors.toggleBgUnchecked,
-          toggleBgChecked:
-            fetchedSettings['light-mode-toggle-bg-checked'] ||
-            DefaultLightColors.toggleBgChecked,
           reportIssueText:
             fetchedSettings['light-mode-report-issue-text'] ||
             DefaultLightColors.reportIssueText,
@@ -1061,9 +1012,6 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           toggleBgUnchecked:
             fetchedSettings['dark-mode-toggle-bg-unchecked'] ||
             DefaultDarkColors.toggleBgUnchecked,
-          toggleBgChecked:
-            fetchedSettings['dark-mode-toggle-bg-checked'] ||
-            DefaultDarkColors.toggleBgChecked,
           reportIssueText:
             fetchedSettings['dark-mode-report-issue-text'] ||
             DefaultDarkColors.reportIssueText,

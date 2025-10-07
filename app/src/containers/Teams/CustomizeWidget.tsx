@@ -119,123 +119,134 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   const colorPickers = [
     {
       key: 'allIconsAndText',
-      label: 'All Icons and Text',
-      description: 'Text/icons color in the widget',
+      label: 'Text and Icon Colors',
+      description:
+        'Change the color of all text and icons displayed throughout the widget',
     },
     {
       key: 'toggleIconColor',
-      label: 'Toggle Icon Color',
-      description: 'Toggle button icon (sun/moon) color',
+      label: 'Theme Switch Icon',
+      description:
+        'Color of the sun/moon icon in the light/dark mode toggle button',
     },
     {
       key: 'toggleBgUnchecked',
-      label: 'Toggle Background (Unchecked)',
-      description: 'Toggle button background when OFF',
-    },
-    {
-      key: 'toggleBgChecked',
-      label: 'Toggle Background (Checked)',
-      description: 'Toggle button background when ON',
-    },
-    {
-      key: 'reportIssueText',
-      label: 'Report Issue Text',
-      description: 'Report issue form text color',
-    },
-    {
-      key: 'reportIssueInputText',
-      label: 'Report Issue Input Text',
-      description: 'Report issue input text color',
-    },
-    {
-      key: 'reportIssueButtons',
-      label: 'Report Issue Buttons',
-      description: 'Report issue button text color',
-    },
-    {
-      key: 'reportIssueButtonBackground',
-      label: 'Report Issue Button Background',
-      description: 'Report issue button background color',
-    },
-    {
-      key: 'reportIssueTextboxBackground',
-      label: 'Report Issue Textbox Background',
-      description: 'Report issue textbox background color',
-    },
-    {
-      key: 'reportIssueCardDropdownBackground',
-      label: 'Report Issue Card & Dropdown Background',
-      description: 'Report issue card and dropdown background color',
+      label: 'Theme Toggle Background ',
+      description: "Background color of the theme switch when it's turned off",
     },
     {
       key: 'selectedItems',
-      label: 'Selected Items',
-      description: 'Color for selected items',
+      label: 'Active Button Highlight',
+      description:
+        'Color that highlights numbered buttons when they are actively selected',
     },
     {
       key: 'headerText',
-      label: 'Header Text',
-      description: 'Text color for widget header',
+      label: 'Widget Header Text',
+      description:
+        'Color of the title and text displayed at the header of the widget',
     },
     {
       key: 'cardTitles',
-      label: 'Card Titles',
-      description: 'Color for card titles',
+      label: 'Headings',
+      description: 'Color of the heading text',
     },
     {
       key: 'headerIcons',
-      label: 'Header Icons',
-      description: 'Color for header icons',
+      label: 'Widget Header Icons',
+      description:
+        'Color of the icons displayed in the header section of the widget',
     },
     {
       key: 'headerBackground',
-      label: 'Header Background',
-      description: 'Background color for header',
+      label: 'Header Background color',
+      description: 'Background color of the top section of the widget',
     },
     {
       key: 'footerBackground',
-      label: 'Footer Background',
-      description: 'Background color for footer',
+      label: 'Footer Background color',
+      description: 'Background color of the bottom section of the widget',
     },
     {
       key: 'headerButtonsBorder',
-      label: 'Header Buttons Border',
-      description: 'Border color for header buttons',
+      label: 'Header Button Outlines',
+      description:
+        'Color of the border lines around buttons in the header section',
     },
     {
       key: 'allBorderLines',
-      label: 'All Border Lines',
-      description: 'Color for all border lines',
+      label: 'Border Lines ',
+      description:
+        'Color of all separator lines and borders throughout the widget main panel',
     },
     {
       key: 'numberedButtons',
-      label: 'Numbered Buttons',
-      description: 'Color for numbered buttons',
+      label: 'Numbered Adjustment Buttons',
+      description:
+        'Color of numeric increment buttons used to adjust feature levels',
     },
     {
       key: 'widgetBackground',
-      label: 'Widget Background',
-      description: 'Background color for the widget menu',
+      label: 'Main Widget Panel Background',
+      description: "Background color of the main widget panel when it's opened",
     },
     {
       key: 'dropdownBackgrounds',
-      label: 'Dropdown Backgrounds',
-      description: 'Background color for dropdowns',
+      label: 'Dropdown Menu Backgrounds',
+      description:
+        'Background color of language and widget position dropdown selection menus in the widget',
     },
     {
       key: 'allHoverStates',
-      label: 'All Hover States',
-      description: 'Color for all hover states',
+      label: 'Mouse Hover Highlight',
+      description:
+        'Color that appears when you move your mouse over clickable items',
     },
     {
       key: 'selectedLanguage',
-      label: 'Selected Language',
-      description: 'Color for selected language item',
+      label: 'Selected Dropdown Options',
+      description:
+        'Color that highlights your chosen language and widget position in dropdown menus',
     },
     {
       key: 'progressBars',
-      label: 'Progress Bars',
-      description: 'Color for progress bars',
+      label: 'Cycling Button Progress Bars',
+      description:
+        'Color of bars that displays the current state of cycling buttons',
+    },
+    {
+      key: 'reportIssueText',
+      label: 'Issue Report Form Labels',
+      description:
+        'Color of text labels in the form where users report accessibility issues',
+    },
+    {
+      key: 'reportIssueInputText',
+      label: 'Issue Report Input Fields',
+      description:
+        'Text color inside the input boxes when users type their feedback',
+    },
+    {
+      key: 'reportIssueButtons',
+      label: 'Issue Report Button Text',
+      description: 'Color of text on buttons in the report issue section',
+    },
+    {
+      key: 'reportIssueButtonBackground',
+      label: 'Issue Report Button Fill',
+      description: 'Background color of buttons in the report issue section',
+    },
+    {
+      key: 'reportIssueTextboxBackground',
+      label: 'Issue Report Text Box Fill',
+      description:
+        'Background color of the text input areas where users write their feedback',
+    },
+    {
+      key: 'reportIssueCardDropdownBackground',
+      label: 'Issue Report Panel Background',
+      description:
+        'Background color of the entire report issue panel and its dropdown menus',
     },
   ];
 
