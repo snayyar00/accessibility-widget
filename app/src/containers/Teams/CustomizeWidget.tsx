@@ -340,10 +340,10 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       {/* Header */}
       <div className=" px-6 pb-4">
         {/* Tabs */}
-        <div className="flex space-x-8 mt-4">
+        <div className="flex space-x-8 mt-4 widget-tabs-section">
           <button
             onClick={() => setActiveTab('appearance')}
-            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
+            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors appearance-tab ${
               activeTab === 'appearance'
                 ? 'border-[#4285F4] text-[#4285F4]'
                 : 'border-transparent text-[#666666] hover:text-[#4A4A4A]'
@@ -353,7 +353,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('preference')}
-            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
+            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors preference-tab ${
               activeTab === 'preference'
                 ? 'border-[#4285F4] text-[#4285F4]'
                 : 'border-transparent text-[#666666] hover:text-[#4A4A4A]'
@@ -369,7 +369,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         <div
           className={`${
             livePreview ? 'w-full md:w-1/2' : 'w-full'
-          } p-3 md:p-6 transition-all duration-300 flex flex-col `}
+          } p-3 md:p-6 transition-all duration-300 flex flex-col widget-customization-section`}
         >
           <div className="flex-1 space-y-6">
             {activeTab === 'preference' && (
@@ -396,7 +396,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                   Toggle which accessibility features you want to show or hide
                 </p>
                 <div
-                  className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 md:p-4 max-h-[calc(100vh-400px)] overflow-y-auto hide-scrollbar"
+                  className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 md:p-4 max-h-[calc(100vh-400px)] overflow-y-auto hide-scrollbar toggle-features-panel"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                   <div className="space-y-3">
@@ -808,7 +808,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                   </div>
 
                   {/* Save and Reset Buttons */}
-                  <div className="flex flex-row justify-end gap-4 mt-4 px-4 pb-6 mb-4">
+                  <div className="flex flex-row justify-end gap-4 mt-4 px-4 pb-6 mb-4 save-reset-buttons">
                     <button
                       onClick={onReset}
                       disabled={buttonDisable}
@@ -831,7 +831,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
             {activeTab === 'appearance' && (
               <>
                 {/* Live Preview Section */}
-                <div className="px-2">
+                <div className="px-2 live-preview-toggle">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-base sm:text-lg font-semibold text-[#333333]">
                       Live preview
@@ -854,7 +854,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                 </p>
 
                 <div
-                  className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 md:p-4 max-h-[calc(100vh-400px)] overflow-y-auto hide-scrollbar"
+                  className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 md:p-4 max-h-[calc(100vh-400px)] overflow-y-auto hide-scrollbar color-customization-panel"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                   {/* Widget Button Color */}
@@ -1134,7 +1134,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                   </div>
 
                   {/* Save and Reset Buttons */}
-                  <div className="flex flex-row justify-end gap-4 mt-8 px-4 pb-6 mb-4">
+                  <div className="flex flex-row justify-end gap-4 mt-8 px-4 pb-6 mb-4 save-reset-buttons">
                     <button
                       onClick={onReset}
                       disabled={buttonDisable}
@@ -1158,7 +1158,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
         {/* Right Side - Widget Preview (Only visible when live preview is on) */}
         {livePreview && (
-          <div className="w-full md:w-1/2 p-3 md:p-6 transition-all duration-300 ">
+          <div className="w-full md:w-1/2 p-3 md:p-6 transition-all duration-300 widget-preview-section">
             <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-4 md:p-6 h-[500px] md:h-full">
               <div className="border border-[#E0E0E0] rounded-lg p-4 bg-[#F8F9FA] h-full overflow-auto">
                 <AccessibilityMenu

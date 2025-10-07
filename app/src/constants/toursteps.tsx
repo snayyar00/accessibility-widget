@@ -412,7 +412,7 @@ export const accessibilityTourSteps: Step[] = [
           This section provides a table of audit reports for the selected
           domain, organized by the date and time of the scan. It includes
           information on the compliance status and accessibility score for each
-          report, allowing for easy tracking and review of the domain’s
+          report, allowing for easy tracking and review of the domain's
           accessibility performance over time.
         </p>
       </div>
@@ -498,7 +498,7 @@ export const customizeWidgetTourSteps: Step[] = [
         <p>
           This powerful interface lets you fully customize your accessibility
           widget's appearance and features. Let's explore all the customization
-          options available!
+          options available to make your widget perfectly match your brand!
         </p>
       </div>
     ),
@@ -506,112 +506,136 @@ export const customizeWidgetTourSteps: Step[] = [
     disableBeacon: true,
   },
   {
-    target: '.domain-selection-section',
+    target: '.widget-tabs-section',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Select Your Domain 🌐</h3>
-        <p>
-          First, choose which website you want to customize the widget for. Each
-          domain can have its own unique widget settings and appearance.
+        <h3 className="text-lg font-semibold mb-2">
+          Appearance vs Preference Tabs 🔄
+        </h3>
+        <p className="mb-3">
+          Your customization options are organized into two tabs:
+        </p>
+        <ul className="text-sm space-y-2">
+          <li>
+            <strong>🎨 Appearance Tab:</strong> Customize visual elements like
+            colors, logo, fonts, and branding
+          </li>
+          <li>
+            <strong>⚙️ Preference Tab:</strong> Enable or disable specific
+            accessibility features that appear in your widget
+          </li>
+        </ul>
+        <p className="mt-3 text-sm text-gray-600">
+          Switch between tabs to access different customization options!
         </p>
       </div>
     ),
     placement: 'bottom' as Placement,
   },
   {
-    target: '.widget-preview-section',
+    target: '.live-preview-toggle',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Live Widget Preview 👀</h3>
-        <p className="mb-3">
-          Watch your changes come to life in real-time! This preview shows
-          exactly how your accessibility widget will look and function on your
-          website. Here's what you can see:
+        <h3 className="text-lg font-semibold mb-2">Live Preview Toggle 👀</h3>
+        <p className="mb-2">
+          Turn on Live Preview to see your changes in real-time! The widget
+          preview will appear on the right side, showing exactly how your
+          customizations will look on your website.
         </p>
-        <ul className="text-sm space-y-2">
-          <li>
-            <strong>🎨 Header Section:</strong> Widget title with customizable
-            background, text colors, and control buttons
-          </li>
-          <li>
-            <strong>🔧 Accessibility Features:</strong> All enabled
-            accessibility tools like screen reader, contrast options, and font
-            adjustments
-          </li>
-          <li>
-            <strong>🎯 Interactive Elements:</strong> Buttons, dropdowns, and
-            toggles that respond to your customization changes
-          </li>
-          <li>
-            <strong>📱 Real-time Updates:</strong> Colors, fonts, and features
-            update instantly as you make changes
-          </li>
-          <li>
-            <strong>🖼️ Logo Display:</strong> Your custom logo appears exactly
-            as it will on your website
-          </li>
-        </ul>
-        <p className="mt-3 text-sm text-gray-600">
-          Try making changes in the customization panel to see them reflected
-          here!
+        <p className="text-sm text-gray-600">
+          <strong>💡 Tip:</strong> Enable it now to see the preview panel!
         </p>
       </div>
     ),
     placement: 'right' as Placement,
   },
   {
-    target: '.widget-customization-section',
+    target: '.appearance-tab',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">
-          Customization Controls ⚙️
-        </h3>
+        <h3 className="text-lg font-semibold mb-2">Appearance Tab 🎨</h3>
         <p className="mb-3">
-          This panel contains all the tools you need to personalize your widget.
-          Here's what you can customize:
+          In the Appearance tab, customize all visual aspects:
         </p>
         <ul className="text-sm space-y-2">
-          <li>
-            <strong>🎨 Color Customization:</strong> Match your brand colors by
-            customizing header, footer, button, and menu colors
-          </li>
-          <li>
-            <strong>📸 Logo Upload:</strong> Add your company logo via file
-            upload or URL to maintain brand consistency
-          </li>
-          <li>
-            <strong>🔗 Logo & Statement Links:</strong> Set custom URLs for your
-            logo and accessibility statement links
-          </li>
-          <li>
-            <strong>📝 Typography:</strong> Choose from web-safe fonts to match
-            your site's typography
-          </li>
-          <li>
-            <strong>🔧 Feature Toggles:</strong> Enable/disable specific
-            accessibility features based on your needs
-          </li>
+          <li>🎯 Widget Button Color - Main accessibility icon</li>
+          <li>🌓 Light/Dark Mode Colors - Separate schemes</li>
+          <li>📊 Header & Footer - Background and text colors</li>
+          <li>🔘 Buttons & Icons - Interactive elements</li>
+          <li>🖼️ Logo Upload - Add your branding</li>
+          <li>🔤 Font Selection - Typography options</li>
         </ul>
         <p className="mt-3 text-sm text-gray-600">
-          Scroll through this panel to explore all customization options!
+          Each color has a reset button to restore defaults!
         </p>
       </div>
     ),
-    placement: 'right' as Placement,
+    placement: 'bottom' as Placement,
+  },
+  {
+    target: '.preference-tab',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Preference Tab ⚙️</h3>
+        <p className="mb-3">
+          Switch to Preference tab to control which features appear:
+        </p>
+        <ul className="text-sm space-y-2">
+          <li>♿ Accessibility Profiles - Motor, Visual, Cognitive</li>
+          <li>📝 Content Adjustments - Font, spacing, weight</li>
+          <li>🎨 Color Adjustments - Contrast, saturation</li>
+          <li>🛠️ Tools - Screen reader, dark mode, guides</li>
+        </ul>
+        <p className="mt-3 text-sm text-gray-600">
+          Toggle features on/off to customize functionality!
+        </p>
+      </div>
+    ),
+    placement: 'bottom' as Placement,
   },
   {
     target: '.save-reset-buttons',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Save Your Changes 💾</h3>
-        <p>
-          Your Changes get saved automatically. However you can manually save
-          your customizations as well! You can also reset everything back to
-          default settings if you want to start over.
+        <h3 className="text-lg font-semibold mb-2">Save & Reset 💾</h3>
+        <p className="mb-3">Your customizations are managed automatically:</p>
+        <ul className="text-sm space-y-2">
+          <li>✨ Auto-Save - Changes saved after 1 second</li>
+          <li>💾 Manual Save - Click to save immediately</li>
+          <li>🔄 Reset - Restore default settings</li>
+        </ul>
+        <p className="mt-3 text-sm text-gray-600">
+          Changes apply to your live website instantly!
         </p>
       </div>
     ),
     placement: 'top' as Placement,
+  },
+  {
+    target: 'body',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Tour Complete! 🎉</h3>
+        <p className="mb-3">
+          You're ready to customize your accessibility widget! Quick recap:
+        </p>
+        <ul className="text-sm space-y-2">
+          <li>✅ Switch between Appearance and Preference tabs</li>
+          <li>✅ Use Live Preview for real-time changes</li>
+          <li>✅ Customize colors to match your brand</li>
+          <li>✅ Enable/disable features as needed</li>
+          <li>✅ Upload logos and set custom links</li>
+          <li>✅ Changes auto-save instantly</li>
+        </ul>
+        <p className="mt-3 text-sm text-gray-600">
+          💡 <strong>Pro Tip:</strong> When you have multiple domains, use the
+          "Copy Customization" button at the top to copy all settings from one
+          domain to another!
+        </p>
+      </div>
+    ),
+    placement: 'center' as Placement,
+    disableBeacon: true,
   },
 ];
 
@@ -761,7 +785,7 @@ export const proofOfEffortTourSteps: Step[] = [
       <div>
         <h3 className="text-lg font-semibold mb-2">Send via Email ✉️</h3>
         <p>
-          Send the full toolkit to any email address. We’ll generate all PDFs
+          Send the full toolkit to any email address. We'll generate all PDFs
           and deliver them in a single zip.
         </p>
       </div>
