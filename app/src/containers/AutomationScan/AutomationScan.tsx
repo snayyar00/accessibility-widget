@@ -1983,15 +1983,55 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
                                       </div>
                                     )}
 
+                                    {/* HTML Context Section */}
+                                    {(fix.html_context || fix.element_html || fix.html || fix.outerHTML) && (
+                                      <div className="mt-4">
+                                        <div className="mb-2">
+                                          <p className="text-xs font-semibold text-gray-700 mb-1">HTML Context:</p>
+                                        </div>
+                                        <div className="bg-gray-900 rounded-lg p-3 overflow-x-auto">
+                                          <pre className="text-xs text-gray-100 font-mono leading-relaxed whitespace-pre-wrap break-words">
+                                            <code className="language-html">
+                                              {fix.html_context || fix.element_html || fix.html || fix.outerHTML}
+                                            </code>
+                                          </pre>
+                                        </div>
+                                      </div>
+                                    )}
+
                                     {/* Element Details */}
                                     <div className="mt-3 pt-3 border-t border-gray-200">
                                       <div className="grid grid-cols-1 gap-2">
                                         <div className="flex items-start">
-                                          <span className="text-xs font-semibold text-gray-600 w-24 flex-shrink-0">Element:</span>
-                                          <span className="text-xs text-gray-800 font-mono bg-gray-100 px-2 py-1 rounded flex-1">
+                                          <span className="text-xs font-semibold text-gray-600 w-32 flex-shrink-0">Element:</span>
+                                          <span className="text-xs text-gray-800 font-mono bg-gray-100 px-2 py-1 rounded flex-1 break-all">
                                             {fix.selector || 'N/A'}
                                           </span>
                                         </div>
+                                        {fix.action && (
+                                          <div className="flex items-start">
+                                            <span className="text-xs font-semibold text-gray-600 w-32 flex-shrink-0">Action Required:</span>
+                                            <span className="text-xs text-gray-800 capitalize">
+                                              {fix.action}
+                                            </span>
+                                          </div>
+                                        )}
+                                        {fix.wcag_criterion && (
+                                          <div className="flex items-start">
+                                            <span className="text-xs font-semibold text-gray-600 w-32 flex-shrink-0">WCAG:</span>
+                                            <span className="text-xs text-gray-800 font-medium">
+                                              {fix.wcag_criterion}
+                                            </span>
+                                          </div>
+                                        )}
+                                        {fix.suggestion && (
+                                          <div className="flex items-start">
+                                            <span className="text-xs font-semibold text-gray-600 w-32 flex-shrink-0">Suggestion:</span>
+                                            <span className="text-xs text-gray-700">
+                                              {fix.suggestion}
+                                            </span>
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
