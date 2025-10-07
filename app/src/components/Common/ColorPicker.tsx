@@ -24,9 +24,9 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
   const safeValue = isValidHex(value) ? value : '#000000';
 
   return (
-    <div className="flex items-center justify-between w-full py-3">
+    <div className="flex flex-col sm:flex-col md:flex-row md:items-center md:justify-between w-full py-3 gap-3 sm:gap-3 md:gap-0">
       {/* Left side - Label and Description */}
-      <div className="flex flex-col flex-1 pr-4">
+      <div className="flex flex-col flex-1 sm:pr-0 md:pr-4">
         <span className="text-sm font-medium text-gray-700 mb-1">{label}</span>
         <span className="text-xs text-gray-500 leading-relaxed">
           {description}
@@ -34,7 +34,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
       </div>
 
       {/* Right side - Color picker control */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 sm:justify-start md:justify-end">
         <div className="relative">
           {/* Hidden color input */}
           <input

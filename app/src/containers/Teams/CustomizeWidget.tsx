@@ -28,6 +28,9 @@ interface CustomizeWidgetProps {
   selectedFont: string;
   setSelectedFont: React.Dispatch<React.SetStateAction<string>>;
   DefaultColors: Colors;
+  onSave: () => void;
+  onReset: () => void;
+  buttonDisable: boolean;
 }
 
 const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
@@ -41,6 +44,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   setSelectedFont,
   selectedFont,
   DefaultColors,
+  onSave,
+  onReset,
+  buttonDisable,
 }) => {
   const [activeTab, setActiveTab] = useState<'appearance' | 'preference'>(
     'appearance',
@@ -319,13 +325,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   );
 
   return (
-    <div className="w-full bg-[#F8F9FA] min-h-screen">
+    <div className="w-full min-h-screen">
       {/* Header */}
-      <div className="bg-white border-b border-[#E0E0E0] px-6 py-4">
-        <h1 className="text-2xl font-bold text-[#333333]">
-          Customize widget interface
-        </h1>
-
+      <div className=" px-6 pb-4">
         {/* Tabs */}
         <div className="flex space-x-8 mt-4">
           <button
@@ -351,20 +353,20 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         </div>
       </div>
 
-      <div className="flex h-[calc(100vh-200px)]">
+      <div className="relative flex flex-col md:flex-row h-auto md:h-[calc(100vh-200px)] bg-[#ebeffd] border border-[#a3aef1] rounded-lg ">
         {/* Left Side - Settings */}
         <div
           className={`${
-            livePreview ? 'w-1/2' : 'w-full'
-          } p-6 transition-all duration-300 flex flex-col`}
+            livePreview ? 'w-full md:w-1/2' : 'w-full'
+          } p-3 md:p-6 transition-all duration-300 flex flex-col `}
         >
-          <div className="flex-1 overflow-y-auto space-y-6">
-            {activeTab === 'appearance' && (
+          <div className="flex-1 space-y-6">
+            {activeTab === 'preference' && (
               <>
                 {/* Live Preview Section */}
-                <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-6">
+                <div className="px-2">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[#333333]">
+                    <h3 className="text-base sm:text-lg font-semibold text-[#333333]">
                       Live preview
                     </h3>
                     <Switch
@@ -376,19 +378,21 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                 </div>
 
                 {/* Toggle Features */}
-                <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-2">
-                    Toggle Features
-                  </h3>
-                  <p className="text-sm text-[#757575] mb-4">
-                    Toggle which accessibility features you want to show or hide
-                  </p>
-
+                <h3 className="text-base md:text-lg font-semibold text-[#333333] mb-2 px-2">
+                  Toggle Features
+                </h3>
+                <p className="text-xs md:text-sm text-[#757575] mb-4 px-2">
+                  Toggle which accessibility features you want to show or hide
+                </p>
+                <div
+                  className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 md:p-4 max-h-[calc(100vh-400px)] overflow-y-auto hide-scrollbar"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
                   <div className="space-y-3">
                     {/* Language */}
-                    <div className="bg-white rounded-lg border border-[#E0E0E0] p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-[#333333]">
+                        <span className="font-medium text-[#333333] text-sm md:text-base">
                           Language
                         </span>
                         <Switch
@@ -405,9 +409,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </div>
 
                     {/* Oversize widget */}
-                    <div className="bg-white rounded-lg border border-[#E0E0E0] p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-[#333333]">
+                        <span className="font-medium text-[#333333] text-sm md:text-base">
                           Oversize widget
                         </span>
                         <Switch
@@ -424,9 +428,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </div>
 
                     {/* Accessibility Profiles */}
-                    <div className="bg-white rounded-lg border border-[#E0E0E0] p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="font-medium text-[#333333]">
+                        <span className="font-medium text-[#333333] text-sm md:text-base">
                           Accessibility Profiles
                         </span>
                         <div className="flex items-center gap-2">
@@ -518,9 +522,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </div>
 
                     {/* 2 Content Adjustments */}
-                    <div className="bg-white rounded-lg border border-[#E0E0E0] p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="font-medium text-[#333333]">
+                        <span className="font-medium text-[#333333] text-sm md:text-base">
                           Content Adjustments
                         </span>
                         <div className="flex items-center gap-2">
@@ -598,9 +602,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </div>
 
                     {/* 3 Color Adjustments */}
-                    <div className="bg-white rounded-lg border border-[#E0E0E0] p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="font-medium text-[#333333]">
+                        <span className="font-medium text-[#333333] text-sm md:text-base">
                           Color Adjustments
                         </span>
                         <div className="flex items-center gap-2">
@@ -684,9 +688,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </div>
 
                     {/* 4 Tools */}
-                    <div className="bg-white rounded-lg border border-[#E0E0E0] p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="font-medium text-[#333333]">
+                        <span className="font-medium text-[#333333] text-sm md:text-base">
                           Tools
                         </span>
                         <div className="flex items-center gap-2">
@@ -773,9 +777,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </div>
 
                     {/* Widget position */}
-                    <div className="bg-white rounded-lg border border-[#E0E0E0] p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-[#333333]">
+                        <span className="font-medium text-[#333333] text-sm md:text-base">
                           Widget position
                         </span>
                         <Switch
@@ -791,16 +795,34 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                       </div>
                     </div>
                   </div>
+
+                  {/* Save and Reset Buttons */}
+                  <div className="flex flex-row justify-end gap-4 mt-4 px-4 pb-6 mb-4">
+                    <button
+                      onClick={onReset}
+                      disabled={buttonDisable}
+                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                    >
+                      Reset
+                    </button>
+                    <button
+                      onClick={onSave}
+                      disabled={buttonDisable}
+                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#4285F4] hover:bg-[#3367D6] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                    >
+                      Save
+                    </button>
+                  </div>
                 </div>
               </>
             )}
 
-            {activeTab === 'preference' && (
+            {activeTab === 'appearance' && (
               <>
                 {/* Live Preview Section */}
-                <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-6">
+                <div className="px-2">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[#333333]">
+                    <h3 className="text-base sm:text-lg font-semibold text-[#333333]">
                       Live preview
                     </h3>
                     <Switch
@@ -811,322 +833,312 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                   </div>
                 </div>
 
-                {/* Widget Button Color - Traditional Input */}
-                <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4">
-                    Widget Button Color
-                  </h3>
-                  <p className="text-sm text-[#757575] mb-4">
-                    Primary color for the main widget button
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="color"
+                {/* Color Customization Section */}
+                <h3 className="text-base md:text-lg font-semibold text-[#333333] mb-2 px-2">
+                  Color Customization
+                </h3>
+                <p className="text-xs md:text-sm text-[#757575] mb-4 px-2">
+                  Customize the appearance and colors of your accessibility
+                  widget to match your brand
+                </p>
+
+                <div
+                  className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 md:p-4 max-h-[calc(100vh-400px)] overflow-y-auto hide-scrollbar"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                  {/* Widget Button Color */}
+                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-4">
+                    <ColorPicker
+                      label="Widget Button Color"
+                      description="Primary color for the main widget button"
                       value={colors.widgetBtnColor}
-                      onChange={(e) =>
-                        setColors((prev) => ({
-                          ...prev,
-                          widgetBtnColor: e.target.value,
-                        }))
-                      }
-                      className="w-16 h-10 border border-[#E0E0E0] rounded cursor-pointer"
+                      onChange={updateColor('widgetBtnColor')}
+                      onReset={resetColor('widgetBtnColor')}
                     />
-                    <div className="flex-1">
+                  </div>
+
+                  {/* Color Mode Toggle */}
+                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-semibold text-[#333333]">
+                        Chose your mode
+                      </h3>
+                      <div className="relative w-32">
+                        <select
+                          value={colorMode}
+                          onChange={(e) =>
+                            setColorMode(e.target.value as 'light' | 'dark')
+                          }
+                          className="appearance-none bg-white border border-[#E0E0E0] rounded-lg px-4 py-2 pr-8 text-sm text-[#333333] focus:outline-none focus:border-[#4285F4] cursor-pointer w-full"
+                        >
+                          <option value="light">Light</option>
+                          <option value="dark">Dark</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                          <ChevronDown className="w-4 h-4 text-[#4285F4]" />
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-sm text-[#757575]">
+                      Change the theme colour of your widget interface
+                    </p>
+                  </div>
+
+                  {/* Widget Color Adjustments */}
+                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-4">
+                    <h3 className="text-lg font-semibold text-[#333333] mb-2">
+                      Widget Color Adjustments
+                      <span className="ml-2 text-sm font-normal text-[#757575]">
+                        ({colorMode === 'light' ? 'Light' : 'Dark'} Mode)
+                      </span>
+                    </h3>
+                    <p className="text-sm text-[#757575] mb-6">
+                      Customize colors for {colorMode} mode. Changes are saved
+                      separately for each mode.
+                    </p>
+                    <div className="space-y-4">
+                      {colorPickers.map(({ key, label, description }) => {
+                        const colorValue = colors[key as keyof typeof colors];
+                        const defaultValue =
+                          DefaultColors[key as keyof typeof DefaultColors];
+                        return (
+                          <ColorPicker
+                            key={key}
+                            label={label}
+                            description={description}
+                            value={colorValue || defaultValue || '#000000'}
+                            onChange={updateColor(key as keyof Colors)}
+                            onReset={resetColor(key as keyof Colors)}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Upload Widget Logo */}
+                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-4">
+                    <h3 className="text-lg font-semibold text-[#333333] mb-2">
+                      Upload Widget Logo
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      <strong>Optimal dimensions:</strong> 200 × 50 pixels for
+                      best display quality
+                    </p>
+
+                    {/* File upload */}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={fileInputRef}
+                      disabled={!isFileInput}
+                      className="w-full p-2 border rounded mb-3 text-sm"
+                      onChange={handleFileChange}
+                    />
+
+                    {/* URL input */}
+                    <div className="flex items-center mb-3">
                       <input
                         type="text"
-                        value={colors.widgetBtnColor}
-                        onChange={(e) =>
-                          setColors((prev) => ({
-                            ...prev,
-                            widgetBtnColor: e.target.value,
-                          }))
-                        }
-                        className="w-full px-3 py-2 border border-[#E0E0E0] rounded text-sm"
-                        placeholder="#195AFF"
+                        placeholder="Or enter image URL"
+                        className="w-full p-2 border rounded text-sm"
+                        ref={urlInputRef}
+                        disabled={!isUrlInput}
+                        onChange={(e) => {
+                          const url = e.target.value.trim();
+                          if (url) {
+                            setLogoInput(url);
+                          }
+                          setIsFileInput(false);
+                        }}
+                      />
+                    </div>
+
+                    {/* Displaying the logo */}
+                    <div className="mb-4">
+                      {colors.logoImage.length ? (
+                        <img
+                          src={
+                            colors.logoImage.length
+                              ? colors.logoImage
+                              : (LogoIcon as any)
+                          }
+                          alt="Logo Preview"
+                          className="w-24 h-24 object-contain"
+                        />
+                      ) : (
+                        <>
+                          {organization?.logo_url ? (
+                            <img
+                              width={198}
+                              height={47}
+                              src={organization.logo_url}
+                              alt={organization.name}
+                            />
+                          ) : (
+                            <LogoIcon />
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleReset}
+                        className="px-3 py-2 bg-[#4285F4] text-white rounded text-sm hover:bg-[#3367D6]"
+                      >
+                        Reset
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (isBase64(logoInput)) {
+                            setColors((prev) => ({
+                              ...prev,
+                              logoImage: logoInput,
+                            }));
+                            setIsFileInput(true);
+                            setIsUrlInput(false);
+                          } else if (isValidUrl(logoInput)) {
+                            setColors((prev) => ({
+                              ...prev,
+                              logoImage: logoInput,
+                            }));
+                            setIsUrlInput(true);
+                            setIsFileInput(false);
+                          } else {
+                            toast.error('Please provide a valid Image or URL.');
+                          }
+                        }}
+                        className="px-3 py-2 bg-[#4285F4] text-white rounded text-sm hover:bg-[#3367D6]"
+                      >
+                        Set Logo
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Set Logo Link URL */}
+                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-4">
+                    <h3 className="text-lg font-semibold text-[#333333] mb-4">
+                      Set Logo Link URL
+                    </h3>
+                    <div className="flex items-center mb-4">
+                      <input
+                        type="text"
+                        placeholder="Enter Logo Link URL"
+                        className="w-full p-2 border rounded text-sm"
+                        value={logoUrl}
+                        onChange={(e) => {
+                          const url = e.target.value.trim();
+                          if (url) {
+                            setColors((prev) => ({
+                              ...prev,
+                              logoUrl: url,
+                            }));
+                          }
+                          setLogoUrl(url);
+                        }}
                       />
                     </div>
                     <button
-                      onClick={() =>
+                      onClick={() => {
                         setColors((prev) => ({
                           ...prev,
-                          widgetBtnColor: DefaultColors.widgetBtnColor,
-                        }))
-                      }
-                      className="px-3 py-2 text-xs text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
-                    >
-                      Reset
-                    </button>
-                  </div>
-                </div>
-
-                {/* Color Mode Toggle */}
-                <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4">
-                    Color Mode
-                  </h3>
-                  <p className="text-sm text-[#757575] mb-4">
-                    Switch between light and dark color profiles
-                  </p>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setColorMode('light')}
-                      className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all ${
-                        colorMode === 'light'
-                          ? 'border-[#4285F4] bg-[#E8F0FE] text-[#1967D2] font-semibold'
-                          : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                      }`}
-                    >
-                      ☀️ Light Mode
-                    </button>
-                    <button
-                      onClick={() => setColorMode('dark')}
-                      className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all ${
-                        colorMode === 'dark'
-                          ? 'border-[#4285F4] bg-[#E8F0FE] text-[#1967D2] font-semibold'
-                          : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                      }`}
-                    >
-                      🌙 Dark Mode
-                    </button>
-                  </div>
-                </div>
-
-                {/* Widget Color Adjustments */}
-                <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-2">
-                    Widget Color Adjustments
-                    <span className="ml-2 text-sm font-normal text-[#757575]">
-                      ({colorMode === 'light' ? 'Light' : 'Dark'} Mode)
-                    </span>
-                  </h3>
-                  <p className="text-sm text-[#757575] mb-6">
-                    Customize colors for {colorMode} mode. Changes are saved
-                    separately for each mode.
-                  </p>
-                  <div className="space-y-4">
-                    {colorPickers.map(({ key, label, description }) => {
-                      const colorValue = colors[key as keyof typeof colors];
-                      const defaultValue =
-                        DefaultColors[key as keyof typeof DefaultColors];
-                      return (
-                        <ColorPicker
-                          key={key}
-                          label={label}
-                          description={description}
-                          value={colorValue || defaultValue || '#000000'}
-                          onChange={updateColor(key as keyof Colors)}
-                          onReset={resetColor(key as keyof Colors)}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Upload Widget Logo */}
-                <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-2">
-                    Upload Widget Logo
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    <strong>Optimal dimensions:</strong> 200 × 50 pixels for
-                    best display quality
-                  </p>
-
-                  {/* File upload */}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    disabled={!isFileInput}
-                    className="w-full p-2 border rounded mb-3 text-sm"
-                    onChange={handleFileChange}
-                  />
-
-                  {/* URL input */}
-                  <div className="flex items-center mb-3">
-                    <input
-                      type="text"
-                      placeholder="Or enter image URL"
-                      className="w-full p-2 border rounded text-sm"
-                      ref={urlInputRef}
-                      disabled={!isUrlInput}
-                      onChange={(e) => {
-                        const url = e.target.value.trim();
-                        if (url) {
-                          setLogoInput(url);
-                        }
-                        setIsFileInput(false);
+                          logoUrl: DefaultColors.logoUrl,
+                        }));
+                        setLogoUrl(DefaultColors.logoUrl);
                       }}
-                    />
-                  </div>
-
-                  {/* Displaying the logo */}
-                  <div className="mb-4">
-                    {colors.logoImage.length ? (
-                      <img
-                        src={
-                          colors.logoImage.length
-                            ? colors.logoImage
-                            : (LogoIcon as any)
-                        }
-                        alt="Logo Preview"
-                        className="w-24 h-24 object-contain"
-                      />
-                    ) : (
-                      <>
-                        {organization?.logo_url ? (
-                          <img
-                            width={198}
-                            height={47}
-                            src={organization.logo_url}
-                            alt={organization.name}
-                          />
-                        ) : (
-                          <LogoIcon />
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleReset}
                       className="px-3 py-2 bg-[#4285F4] text-white rounded text-sm hover:bg-[#3367D6]"
                     >
                       Reset
                     </button>
+                  </div>
+
+                  {/* Set Accessibility Statement Link URL */}
+                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-8">
+                    <h3 className="text-lg font-semibold text-[#333333] mb-4">
+                      Set Accessibility Statement Link URL
+                    </h3>
+                    <div className="flex items-center mb-4">
+                      <input
+                        type="text"
+                        placeholder="Enter Accessibility Statement Link URL"
+                        className="w-full p-2 border rounded text-sm"
+                        value={accessibilityStatementLinkUrl}
+                        onChange={(e) => {
+                          const url = e.target.value.trim();
+                          if (url) {
+                            setColors((prev) => ({
+                              ...prev,
+                              accessibilityStatementLinkUrl: url,
+                            }));
+                          }
+                          setAccessibilityStatementLinkUrl(url);
+                        }}
+                      />
+                    </div>
                     <button
                       onClick={() => {
-                        if (isBase64(logoInput)) {
-                          setColors((prev) => ({
-                            ...prev,
-                            logoImage: logoInput,
-                          }));
-                          setIsFileInput(true);
-                          setIsUrlInput(false);
-                        } else if (isValidUrl(logoInput)) {
-                          setColors((prev) => ({
-                            ...prev,
-                            logoImage: logoInput,
-                          }));
-                          setIsUrlInput(true);
-                          setIsFileInput(false);
-                        } else {
-                          toast.error('Please provide a valid Image or URL.');
-                        }
+                        setColors((prev) => ({
+                          ...prev,
+                          accessibilityStatementLinkUrl:
+                            DefaultColors.accessibilityStatementLinkUrl,
+                        }));
+                        setAccessibilityStatementLinkUrl(
+                          DefaultColors.accessibilityStatementLinkUrl,
+                        );
                       }}
                       className="px-3 py-2 bg-[#4285F4] text-white rounded text-sm hover:bg-[#3367D6]"
                     >
-                      Set Logo
+                      Reset
                     </button>
                   </div>
-                </div>
 
-                {/* Set Logo Link URL */}
-                <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4">
-                    Set Logo Link URL
-                  </h3>
-                  <div className="flex items-center mb-4">
-                    <input
-                      type="text"
-                      placeholder="Enter Logo Link URL"
-                      className="w-full p-2 border rounded text-sm"
-                      value={logoUrl}
-                      onChange={(e) => {
-                        const url = e.target.value.trim();
-                        if (url) {
-                          setColors((prev) => ({
-                            ...prev,
-                            logoUrl: url,
-                          }));
-                        }
-                        setLogoUrl(url);
-                      }}
-                    />
-                  </div>
-                  <button
-                    onClick={() => {
-                      setColors((prev) => ({
-                        ...prev,
-                        logoUrl: DefaultColors.logoUrl,
-                      }));
-                      setLogoUrl(DefaultColors.logoUrl);
-                    }}
-                    className="px-3 py-2 bg-[#4285F4] text-white rounded text-sm hover:bg-[#3367D6]"
-                  >
-                    Reset
-                  </button>
-                </div>
-
-                {/* Set Accessibility Statement Link URL */}
-                <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4">
-                    Set Accessibility Statement Link URL
-                  </h3>
-                  <div className="flex items-center mb-4">
-                    <input
-                      type="text"
-                      placeholder="Enter Accessibility Statement Link URL"
-                      className="w-full p-2 border rounded text-sm"
-                      value={accessibilityStatementLinkUrl}
-                      onChange={(e) => {
-                        const url = e.target.value.trim();
-                        if (url) {
-                          setColors((prev) => ({
-                            ...prev,
-                            accessibilityStatementLinkUrl: url,
-                          }));
-                        }
-                        setAccessibilityStatementLinkUrl(url);
-                      }}
-                    />
-                  </div>
-                  <button
-                    onClick={() => {
-                      setColors((prev) => ({
-                        ...prev,
-                        accessibilityStatementLinkUrl:
-                          DefaultColors.accessibilityStatementLinkUrl,
-                      }));
-                      setAccessibilityStatementLinkUrl(
-                        DefaultColors.accessibilityStatementLinkUrl,
-                      );
-                    }}
-                    className="px-3 py-2 bg-[#4285F4] text-white rounded text-sm hover:bg-[#3367D6]"
-                  >
-                    Reset
-                  </button>
-                </div>
-
-                {/* Select Widget Font */}
-                <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4">
-                    Select Widget Font
-                  </h3>
-                  <select
-                    className="w-full p-2 border rounded mb-4 text-sm"
-                    value={selectedFont}
-                    onChange={(e) => setSelectedFont(e.target.value)}
-                  >
-                    <option value="auto">Auto</option>
-                    <option value="'Times New Roman', serif">
-                      'Times New Roman', serif
-                    </option>
-                    {font.map((fonts) => (
-                      <option key={fonts} value={fonts}>
-                        {fonts}
+                  {/* Select Widget Font */}
+                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-8">
+                    <h3 className="text-lg font-semibold text-[#333333] mb-4">
+                      Select Widget Font
+                    </h3>
+                    <select
+                      className="w-full p-2 border rounded mb-4 text-sm"
+                      value={selectedFont}
+                      onChange={(e) => setSelectedFont(e.target.value)}
+                    >
+                      <option value="auto">Auto</option>
+                      <option value="'Times New Roman', serif">
+                        'Times New Roman', serif
                       </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => {
-                      setSelectedFont('auto');
-                    }}
-                    className="px-3 py-2 bg-[#4285F4] text-white rounded text-sm hover:bg-[#3367D6]"
-                  >
-                    Reset
-                  </button>
+                      {font.map((fonts) => (
+                        <option key={fonts} value={fonts}>
+                          {fonts}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => {
+                        setSelectedFont('auto');
+                      }}
+                      className="px-3 py-2 bg-[#4285F4] text-white rounded text-sm hover:bg-[#3367D6]"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  {/* Save and Reset Buttons */}
+                  <div className="flex flex-row justify-end gap-4 mt-8 px-4 pb-6 mb-4">
+                    <button
+                      onClick={onReset}
+                      disabled={buttonDisable}
+                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                    >
+                      Reset
+                    </button>
+                    <button
+                      onClick={onSave}
+                      disabled={buttonDisable}
+                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#4285F4] hover:bg-[#3367D6] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                    >
+                      Save
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -1135,12 +1147,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
         {/* Right Side - Widget Preview (Only visible when live preview is on) */}
         {livePreview && (
-          <div className="w-1/2 p-6 transition-all duration-300">
-            <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-6 h-full">
-              <h2 className="text-lg font-semibold text-[#333333] mb-4">
-                Live preview
-              </h2>
-
+          <div className="w-full md:w-1/2 p-3 md:p-6 transition-all duration-300 ">
+            <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-4 md:p-6 h-[500px] md:h-full">
               <div className="border border-[#E0E0E0] rounded-lg p-4 bg-[#F8F9FA] h-full overflow-auto">
                 <AccessibilityMenu
                   selectedFont={selectedFont}

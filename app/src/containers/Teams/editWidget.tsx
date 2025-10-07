@@ -1223,10 +1223,10 @@ const AccessibilityWidgetPage: React.FC<any> = ({
         customStyles={defaultTourStyles}
       />
 
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen">
         {/* Site Selector Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
+        <div className="px-6 py-4">
+          <div className="flex flex-col sm:flex-col md:flex-row items-start sm:items-start md:items-center justify-between gap-3 sm:gap-3 md:gap-0">
             <h1 className="text-2xl font-bold text-gray-900">
               {selectedSite != SITE_SELECTOR_TEXT
                 ? selectedSite + "'s Widget Customization"
@@ -1236,7 +1236,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
               <button
                 onClick={() => setIsCopyModalOpen(true)}
                 disabled={buttonDisable}
-                className="px-4 py-2 border border-transparent rounded-md text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center gap-2"
+                className="px-4 py-2 border border-transparent rounded-md text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center gap-2 w-full sm:w-auto md:w-auto"
               >
                 <Settings size={16} />
                 Copy Customization
@@ -1259,36 +1259,10 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           DefaultColors={
             colorMode === 'light' ? DefaultLightColors : DefaultDarkColors
           }
+          onSave={handleSave}
+          onReset={resetAll}
+          buttonDisable={buttonDisable}
         />
-
-        {/* Loading indicator or Save/Reset Buttons */}
-        {isLoadingSettings ? (
-          <div className="bg-white border-t border-gray-200 px-6 py-4">
-            <div className="flex justify-center items-center gap-2">
-              <CircularProgress size={20} />
-              <span className="text-gray-600">Loading settings...</span>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white border-t border-gray-200 px-6 py-4">
-            <div className="flex gap-4 max-w-4xl mx-auto">
-              <button
-                onClick={handleSave}
-                disabled={buttonDisable}
-                className="flex-1 px-4 py-2 border border-transparent rounded-md text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Save
-              </button>
-              <button
-                disabled={buttonDisable}
-                onClick={resetAll}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Reset
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       <CopyCustomizationModal
