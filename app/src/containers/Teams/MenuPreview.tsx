@@ -302,15 +302,15 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
     <div
       style={{
         ...fontStyle,
-        backgroundColor: colors['menuBg'],
-        // color: colors['widgetInnerText'],
+        backgroundColor: colors['widgetBackground'],
+        // color: colors['cardTitles'],
       }}
       className="w-full bg-[#eff1f5] text-base sm:text-lg flex flex-col h-[calc(100vh-2rem)] md:h-screen overflow-hidden"
     >
       <header
         style={{
           ...fontStyle,
-          backgroundColor: colors['headerBg'],
+          backgroundColor: colors['headerBackground'],
           color: colors['headerText'],
         }}
         className="flex items-center justify-between py-2 px-4 h-14 bg-[#0848ca] text-white"
@@ -329,7 +329,7 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
           <button
             style={{
               ...fontStyle,
-              color: colors['headerControlsColor'],
+              color: colors['headerIcons'],
             }}
             className="p-2 bg-white rounded-full"
             aria-label="Reset accessibility settings"
@@ -339,7 +339,7 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
           <button
             style={{
               ...fontStyle,
-              color: colors['headerControlsColor'],
+              color: colors['headerIcons'],
             }}
             className="p-2 bg-white rounded-full"
             aria-label="Close accessibility menu"
@@ -356,8 +356,8 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
               <button
                 style={{
                   ...fontStyle,
-                  backgroundColor: colors['dropdownBg'],
-                  color: colors['dropdownText'],
+                  backgroundColor: colors['dropdownBackgrounds'],
+                  color: colors['allIconsAndText'],
                 }}
                 onClick={() => setShowLanguages(!showLanguages)}
                 className="w-full flex items-center justify-between p-4 bg-white rounded-xl"
@@ -378,7 +378,7 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                 <div
                   style={{
                     ...fontStyle,
-                    backgroundColor: colors['dropdownBg'],
+                    backgroundColor: colors['dropdownBackgrounds'],
                   }}
                   className="absolute z-10 w-full mt-2 bg-white rounded-xl shadow-lg max-h-64 overflow-y-auto"
                 >
@@ -393,9 +393,9 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                         ...fontStyle,
                         backgroundColor:
                           selectedLanguage.code === lang.code
-                            ? colors['buttonBg']
+                            ? colors['widgetBackground']
                             : 'transparent',
-                        color: colors['dropdownText'],
+                        color: colors['allIconsAndText'],
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-gray-100 first:rounded-t-xl last:rounded-b-xl flex justify-between items-center"
                     >
@@ -419,8 +419,8 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
             <button
               style={{
                 ...fontStyle,
-                backgroundColor: colors['dropdownBg'],
-                color: colors['dropdownText'],
+                backgroundColor: colors['dropdownBackgrounds'],
+                color: colors['allIconsAndText'],
               }}
               onClick={() => setShowProfiles(!showProfiles)}
               className="w-full flex items-center justify-between p-4 bg-white rounded-xl"
@@ -445,8 +445,8 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                       key={profile.id}
                       style={{
                         ...fontStyle,
-                        backgroundColor: colors['buttonBg'],
-                        color: colors['buttonText'],
+                        backgroundColor: colors['widgetBackground'],
+                        color: colors['allIconsAndText'],
                       }}
                       className="bg-white p-4 rounded-xl flex flex-col items-center justify-center hover:outline hover:outline-2 hover:outline-[#0848ca] transition-all"
                     >
@@ -454,8 +454,8 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                       <span
                         style={{
                           ...fontStyle,
-                          backgroundColor: colors['buttonBg'],
-                          color: colors['buttonText'],
+                          backgroundColor: colors['widgetBackground'],
+                          color: colors['allIconsAndText'],
                         }}
                         className="mt-2 text-center text-sm"
                       >
@@ -472,7 +472,7 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
             <h2
               style={{
                 ...fontStyle,
-                color: colors['widgetInnerText'],
+                color: colors['cardTitles'],
               }}
               className="text-xl font-semibold mb-2"
             >
@@ -481,7 +481,7 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
             <div
               style={{
                 ...fontStyle,
-                backgroundColor: colors['fontSizeMenuBg'],
+                backgroundColor: colors['widgetBackground'],
               }}
               className="bg-white p-4 rounded-xl mb-4"
             >
@@ -494,13 +494,13 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                     className="w-6 h-6"
                     style={{
                       ...fontStyle,
-                      color: colors['fontSizeMenuText'],
+                      color: colors['allIconsAndText'],
                     }}
                   />
                   <span
                     style={{
                       ...fontStyle,
-                      color: colors['fontSizeMenuText'],
+                      color: colors['allIconsAndText'],
                     }}
                   >
                     Adjust Font Size
@@ -514,8 +514,8 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                 <button
                   style={{
                     ...fontStyle,
-                    backgroundColor: colors['fontSizeMenuButton'],
-                    color: colors['fontSizeMenuText'],
+                    backgroundColor: colors['widgetBackground'],
+                    color: colors['allIconsAndText'],
                   }}
                   onClick={() => setFontSize((prev) => Math.max(prev - 10, 80))}
                   className="w-10 h-10 bg-[#eff1f5] rounded-full flex items-center justify-center text-2xl"
@@ -525,7 +525,7 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                 <span
                   style={{
                     ...fontStyle,
-                    color: colors['fontSizeMenuText'],
+                    color: colors['allIconsAndText'],
                   }}
                 >
                   {fontSize}%
@@ -533,8 +533,8 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                 <button
                   style={{
                     ...fontStyle,
-                    backgroundColor: colors['fontSizeMenuButton'],
-                    color: colors['fontSizeMenuText'],
+                    backgroundColor: colors['widgetBackground'],
+                    color: colors['allIconsAndText'],
                   }}
                   onClick={() =>
                     setFontSize((prev) => Math.min(prev + 10, 150))
@@ -551,8 +551,8 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                   key={index}
                   style={{
                     ...fontStyle,
-                    backgroundColor: colors['buttonBg'],
-                    color: colors['buttonText'],
+                    backgroundColor: colors['widgetBackground'],
+                    color: colors['allIconsAndText'],
                   }}
                   className="bg-white p-4 rounded-xl flex flex-col items-center justify-center hover:outline hover:outline-2 hover:outline-solid hover:outline-[#0848ca]"
                 >
@@ -573,7 +573,7 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
             <h2
               style={{
                 ...fontStyle,
-                color: colors['widgetInnerText'],
+                color: colors['cardTitles'],
               }}
               className="text-xl font-semibold mb-4"
             >
@@ -585,8 +585,8 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                   key={index}
                   style={{
                     ...fontStyle,
-                    backgroundColor: colors['buttonBg'],
-                    color: colors['buttonText'],
+                    backgroundColor: colors['widgetBackground'],
+                    color: colors['allIconsAndText'],
                   }}
                   className="bg-white p-4 rounded-xl flex flex-col items-center justify-center hover:outline hover:outline-2 hover:outline-[#0848ca]"
                 >
@@ -594,8 +594,8 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                   <span
                     style={{
                       ...fontStyle,
-                      backgroundColor: colors['buttonBg'],
-                      color: colors['buttonText'],
+                      backgroundColor: colors['widgetBackground'],
+                      color: colors['allIconsAndText'],
                     }}
                     className="mt-2 text-center"
                   >
@@ -656,7 +656,7 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
             <h2
               style={{
                 ...fontStyle,
-                color: colors['widgetInnerText'],
+                color: colors['cardTitles'],
               }}
               className="text-xl font-semibold mb-4"
             >
@@ -668,8 +668,8 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                   key={index}
                   style={{
                     ...fontStyle,
-                    backgroundColor: colors['buttonBg'],
-                    color: colors['buttonText'],
+                    backgroundColor: colors['widgetBackground'],
+                    color: colors['allIconsAndText'],
                   }}
                   className="bg-white p-4 rounded-xl flex flex-col items-center justify-center hover:outline hover:outline-2 hover:outline-[#0848ca]"
                 >
@@ -677,8 +677,8 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
                   <span
                     style={{
                       ...fontStyle,
-                      backgroundColor: colors['buttonBg'],
-                      color: colors['buttonText'],
+                      backgroundColor: colors['widgetBackground'],
+                      color: colors['allIconsAndText'],
                     }}
                     className="mt-2 text-center text-lg"
                   >
@@ -694,8 +694,8 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
       <footer
         style={{
           ...fontStyle,
-          backgroundColor: colors['footerBg'],
-          color: colors['footerText'],
+          backgroundColor: colors['footerBackground'],
+          color: colors['allIconsAndText'],
         }}
         className="bg-white p-4 border-t flex justify-between items-center"
       >
@@ -703,7 +703,7 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
           <a
             style={{
               ...fontStyle,
-              color: colors['footerText'],
+              color: colors['allIconsAndText'],
             }}
             href="https://www.webability.io/statement"
             target="_blank"
@@ -715,7 +715,7 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
           <button
             style={{
               ...fontStyle,
-              color: colors['footerText'],
+              color: colors['allIconsAndText'],
             }}
             className="text-[#3563E9] hover:underline"
           >
@@ -734,7 +734,7 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
           <LogoIcon
             style={{
               ...fontStyle,
-              color: colors['footerText'],
+              color: colors['allIconsAndText'],
             }}
           />
         )}
