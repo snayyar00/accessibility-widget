@@ -7,6 +7,7 @@ import { FaKeyboard, FaMapSigns, FaHeading, FaLink, FaImage, FaLanguage, FaVideo
 import { GlowingEffect } from '@/components/ui/glowing-effect';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
+import { getAuthenticationCookie } from '@/utils/cookie';
 
 // Global scan tracker that persists across component unmounts
 let activeScanPromise: Promise<any> | null = null;
@@ -372,6 +373,7 @@ const AutomationScan: React.FC = () => {
   const [waitingForLoader, setWaitingForLoader] = useState(false);
   const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
   const [useCustomTests, setUseCustomTests] = useState(false);
+  const [expandedSubcategories, setExpandedSubcategories] = useState<{ [key: string]: boolean }>({});
   const [selectedTests, setSelectedTests] = useState({
     // Basic Configuration
     headless: true,
@@ -606,16 +608,30 @@ const AutomationScan: React.FC = () => {
   };
 
 
-  // Fetch user sites for domain selector (optional - handle errors gracefully)
+  // Check if we have authentication token before making the query
+  const hasAuthToken = React.useMemo(() => {
+    // Check cookie for auth token (this is where the app stores authentication)
+    const token = getAuthenticationCookie();
+    return !!token;
+  }, []);
+
+  // Fetch user sites for domain selector (optional - only if authenticated)
   const { data: sitesData, loading: sitesLoading, error: sitesError } = useQuery(GetUserSitesDocument, {
-    errorPolicy: 'ignore', // Don't throw errors, just return undefined data
-    notifyOnNetworkStatusChange: false
+    errorPolicy: 'all', // Return both data and errors
+    notifyOnNetworkStatusChange: false,
+    skip: !hasAuthToken, // Skip query if not authenticated to avoid unnecessary 500 errors
+    fetchPolicy: 'cache-first', // Use cached data if available to reduce server load
   });
 
-  // Log any GraphQL errors for debugging
-  if (sitesError) {
-    console.warn('Sites query failed (non-critical):', sitesError);
-  }
+  // Silently handle any errors - this feature is optional
+  React.useEffect(() => {
+    if (sitesError && hasAuthToken) {
+      // Only log in development if we expected the query to work (user is authenticated)
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Unable to fetch user sites (optional feature):', sitesError.message);
+      }
+    }
+  }, [sitesError, hasAuthToken]);
 
   // Safety cleanup: ensure loader doesn't get stuck
   React.useEffect(() => {
@@ -1036,8 +1052,16 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
     setSelectedCategory(category);
     setShowAnalysis(true);
     setAiSummary(''); // Reset AI summary
+    setExpandedSubcategories({}); // Reset expanded state
     
     // Don't auto-generate AI summary - user will click button to generate it
+  };
+
+  const toggleSubcategory = (subcategoryId: string) => {
+    setExpandedSubcategories(prev => ({
+      ...prev,
+      [subcategoryId]: !prev[subcategoryId]
+    }));
   };
 
   // Helper function to extract description from various possible fields
@@ -1786,42 +1810,110 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
 
                 {/* Scrollable Content */}
                 <div className="p-6 overflow-y-auto flex-1">
-                <div className="space-y-6">
-                  {selectedCategory.subcategories.map((subcategory: any) => (
-                    <div key={subcategory.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium text-gray-900">
-                          {subcategory.id} {subcategory.name}
-                        </h4>
-                        {subcategory.total_fixes > 0 ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800">
-                            {subcategory.total_fixes} issues
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                            ✓ Pass
-                          </span>
-                        )}
+                <div className="space-y-4">
+                  {selectedCategory.subcategories.map((subcategory: any) => {
+                    const isExpanded = expandedSubcategories[subcategory.id];
+                    
+                    return (
+                    <div key={subcategory.id} className="border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm">
+                      {/* Subcategory Header - Clickable */}
+                      <div 
+                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => toggleSubcategory(subcategory.id)}
+                      >
+                        <div className="flex items-center space-x-3 flex-1">
+                          <div className="text-gray-600 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                            <MdExpandMore className="w-6 h-6" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 text-base">
+                              {subcategory.name}
+                            </h4>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          {subcategory.total_fixes > 0 ? (
+                            <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-red-100 text-red-800">
+                              {subcategory.total_fixes} issue{subcategory.total_fixes !== 1 ? 's' : ''}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-green-100 text-green-800">
+                              ✓ Pass
+                            </span>
+                          )}
+                        </div>
                       </div>
 
+                      {/* Expanded Content */}
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="border-t border-gray-200"
+                          >
+                            <div className="p-4 bg-orange-50">
+                              {/* Subcategory Details Header */}
+                              <div className="mb-4 pb-3 border-b border-orange-200">
+                                <div className="flex items-center justify-between">
+                                  <div className="space-y-1">
+                                    <p className="text-sm font-medium text-gray-700">
+                                      <span className="inline-block px-2 py-1 bg-white rounded border border-gray-300 text-xs font-mono text-gray-900">
+                                        {subcategory.id}
+                                      </span>
+                                    </p>
+                                  </div>
+                                  {subcategory.issues && subcategory.issues.length > 0 && subcategory.issues[0].wcag_criterion && (
+                                    <div className="text-right">
+                                      <p className="text-xs text-gray-600 mb-1">WCAG Guideline</p>
+                                      <span className="inline-block px-3 py-1 bg-blue-100 rounded border border-blue-300 text-sm font-semibold text-blue-800">
+                                        {subcategory.issues[0].wcag_criterion}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
                       {subcategory.issues && subcategory.issues.length > 0 ? (
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                           {subcategory.issues.map((fix: any, index: number) => {
                             const isContrastIssue = fix.category === 'contrast' || fix.issue_type?.includes('contrast');
                             const hasScreenshot = fix.screenshot_base64 && fix.screenshot_status === 'success';
                             const colorSuggestions = isContrastIssue ? generateColorSuggestions(fix) : [];
 
                             return (
-                              <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                                <div className="flex items-start space-x-3">
-                                  <MdBugReport className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-gray-900 text-base">
-                                      {fix.issue_type || 'Unknown Issue'}
-                                    </p>
-                                    <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-                                      {getIssueDescription(fix)}
-                                    </p>
+                              <div key={index} className="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                                {/* Issue Header */}
+                                <div className="bg-red-50 px-4 py-3 border-b border-red-200">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex items-start space-x-3 flex-1">
+                                      <MdBugReport className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                                      <div className="flex-1">
+                                        <p className="font-semibold text-gray-900 text-sm">
+                                          {fix.issue_type || 'Unknown Issue'}
+                                        </p>
+                                        {fix.wcag_criterion && (
+                                          <p className="text-xs text-gray-600 mt-1">
+                                            <span className="font-medium">WCAG:</span> {fix.wcag_criterion}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {fix.action && (
+                                      <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded border border-yellow-300">
+                                        {fix.action}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                {/* Issue Body */}
+                                <div className="p-4">
+                                  <p className="text-sm text-gray-700 leading-relaxed">
+                                    {getIssueDescription(fix)}
+                                  </p>
 
                                     {/* Screenshot */}
                                     {hasScreenshot && (
@@ -1892,22 +1984,18 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
                                     )}
 
                                     {/* Element Details */}
-                                    <div className="mt-3 space-y-1">
-                                      <p className="text-xs text-gray-500">
-                                        <strong>Element:</strong> {fix.selector || 'N/A'}
-                                      </p>
-                                      <p className="text-xs text-gray-500">
-                                        <strong>Action Required:</strong> {fix.action || 'Review'}
-                                      </p>
-                                      {fix.wcag_criterion && (
-                                        <p className="text-xs text-gray-500">
-                                          <strong>WCAG:</strong> {fix.wcag_criterion}
-                                        </p>
-                                      )}
+                                    <div className="mt-3 pt-3 border-t border-gray-200">
+                                      <div className="grid grid-cols-1 gap-2">
+                                        <div className="flex items-start">
+                                          <span className="text-xs font-semibold text-gray-600 w-24 flex-shrink-0">Element:</span>
+                                          <span className="text-xs text-gray-800 font-mono bg-gray-100 px-2 py-1 rounded flex-1">
+                                            {fix.selector || 'N/A'}
+                                          </span>
+                                        </div>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
                             );
                           })}
                         </div>
@@ -1918,13 +2006,18 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
                         </div>
                       )}
 
-                      {subcategory.timestamp && (
-                        <p className="text-xs text-gray-500 mt-3">
-                          Tested: {new Date(subcategory.timestamp).toLocaleString()}
-                        </p>
-                      )}
+                              {subcategory.timestamp && (
+                                <p className="text-xs text-gray-500 mt-4 pt-3 border-t border-orange-200">
+                                  Tested: {new Date(subcategory.timestamp).toLocaleString()}
+                                </p>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                  ))}
+                    );
+                  })}
                   
                   {/* AI Summary Section */}
                   <div className="border-t border-gray-200 pt-6 mt-6">
