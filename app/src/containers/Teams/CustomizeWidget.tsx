@@ -522,7 +522,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       margin: 0;
       padding: 20px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background: #F8F9FA;
+      background: #ebeffd;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -571,7 +571,6 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 </head>
 <body>
   <div class="container">
-    <p class="info-text">Click the button below to open the accessibility widget</p>
     <button class="preview-btn" onclick="openWidget()">Open Accessibility Widget</button>
   </div>
   
@@ -703,7 +702,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         </div>
       </div>
 
-      <div className="relative flex flex-col md:flex-row h-auto sm:h-[calc(100vh-180px)] md:h-[calc(100vh-200px)] bg-[#ebeffd] border border-[#a3aef1] rounded-lg">
+      <div className="relative flex flex-col md:flex-row h-auto sm:h-auto md:h-[calc(100vh-200px)] bg-[#ebeffd] border border-[#a3aef1] rounded-lg">
         {/* Left Side - Settings */}
         <div
           className={`${
@@ -1492,10 +1491,13 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         {/* Right Side - Widget Preview (Only visible when live preview is on) */}
         {livePreview && (
           <div className="w-full md:w-[60%] xl:w-1/3 p-3 sm:p-4 md:p-6 transition-all duration-300 widget-preview-section">
-            <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] h-full flex flex-col overflow-hidden">
+            <div
+              className="rounded-lg shadow-sm h-full flex flex-col overflow-hidden"
+              style={{ backgroundColor: '#ebeffd' }}
+            >
               <iframe
                 ref={widgetIframeRef}
-                className="w-full flex-1 border-0 rounded-lg no-scrollbar min-h-[400px] sm:min-h-[500px] md:min-h-[600px]"
+                className="w-full flex-1 border-0 rounded-lg no-scrollbar min-h-[500px] sm:min-h-[500px] md:min-h-[500px]"
                 title="Widget Live Preview"
                 sandbox="allow-scripts allow-same-origin"
                 style={{
