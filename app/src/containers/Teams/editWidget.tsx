@@ -1,5 +1,4 @@
 import type React from 'react';
-import AccessibilityMenu from './MenuPreview';
 import CustomizeWidget from './CustomizeWidget';
 import { useEffect, useState, useRef } from 'react';
 import { CircularProgress } from '@mui/material';
@@ -18,30 +17,14 @@ import { SITE_SELECTOR_TEXT } from '@/constants';
 import { getAuthenticationCookie } from '@/utils/cookie';
 
 export interface Colors {
-  // Widget script color properties
-  allIconsAndText: string;
-  toggleIconColor: string;
-  toggleBgUnchecked: string;
-  reportIssueText: string;
-  reportIssueInputText: string;
-  reportIssueButtons: string;
-  reportIssueButtonBackground: string;
-  reportIssueTextboxBackground: string;
-  reportIssueCardDropdownBackground: string;
-  selectedItems: string;
-  headerText: string;
-  cardTitles: string;
-  headerIcons: string;
-  headerBackground: string;
-  footerBackground: string;
-  headerButtonsBorder: string;
-  allBorderLines: string;
-  numberedButtons: string;
-  widgetBackground: string;
-  dropdownBackgrounds: string;
-  allHoverStates: string;
-  selectedLanguage: string;
-  progressBars: string;
+  // Grouped color properties (customizable)
+  colorGroup1: string; // Light: #232e72, Dark: #d0d5f8
+  colorGroup2: string; // Light: #e0eceb, Dark: #465ce4
+  colorGroup3: string; // Light: #111639, Dark: #232e72
+  colorGroup4: string; // Light: #232e72, Dark: #111639
+  colorGroup5: string; // Light: #465ce4, Dark: #e6f2f2
+  colorGroup6: string; // Light: #ffffff, Dark: #333d7c
+
   // Keep existing properties for compatibility
   widgetBtnColor: string;
   logoImage: string;
@@ -141,30 +124,14 @@ const AccessibilityWidgetPage: React.FC<any> = ({
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
   const DefaultLightColors: Colors = {
-    // Light mode - Widget script color properties
-    allIconsAndText: '#3b4581',
-    toggleIconColor: '#232e72',
-    toggleBgUnchecked: '#c3c3c3',
-    reportIssueText: '#111639',
-    reportIssueInputText: '#656565',
-    reportIssueButtons: '#ffffff',
-    reportIssueButtonBackground: '#465ce4',
-    reportIssueTextboxBackground: '#ffffff',
-    reportIssueCardDropdownBackground: '#ffffff',
-    selectedItems: '#232e72',
-    headerText: '#e0eceb',
-    cardTitles: '#111639',
-    headerIcons: '#cacff1',
-    headerBackground: '#111639',
-    footerBackground: '#232e72',
-    headerButtonsBorder: '#465ce4',
-    allBorderLines: '#d7d7d7',
-    numberedButtons: '#232e72',
-    widgetBackground: '#ffffff',
-    dropdownBackgrounds: '#ffffff',
-    allHoverStates: '#232e72',
-    selectedLanguage: '#232e72',
-    progressBars: '#ffffff',
+    // Grouped colors for light mode
+    colorGroup1: '#232e72', // Main text, icons, buttons
+    colorGroup2: '#e0eceb', // Header text and icons
+    colorGroup3: '#111639', // Header background
+    colorGroup4: '#232e72', // Footer background
+    colorGroup5: '#465ce4', // Header button borders
+    colorGroup6: '#ffffff', // White backgrounds
+
     // Existing properties
     widgetBtnColor: '#111639',
     logoImage: '',
@@ -173,30 +140,14 @@ const AccessibilityWidgetPage: React.FC<any> = ({
   };
 
   const DefaultDarkColors: Colors = {
-    // Dark mode - Widget script color properties
-    allIconsAndText: '#d0d5f8',
-    toggleIconColor: '#465ce4',
-    toggleBgUnchecked: '#c3c3c3',
-    reportIssueText: '#ffffff',
-    reportIssueInputText: '#d0d5f8',
-    reportIssueButtons: '#e6f2f2',
-    reportIssueButtonBackground: '#465ce4',
-    reportIssueTextboxBackground: '#232e72',
-    reportIssueCardDropdownBackground: '#111639',
-    selectedItems: '#465ce4',
-    headerText: '#e6f2f2',
-    cardTitles: '#ffffff',
-    headerIcons: '#d0d5f8',
-    headerBackground: '#333d7c',
-    footerBackground: '#465ce4',
-    headerButtonsBorder: '#7382e7',
-    allBorderLines: '#7484eb',
-    numberedButtons: '#cacff1',
-    widgetBackground: '#111639',
-    dropdownBackgrounds: '#111639',
-    allHoverStates: '#465ce4',
-    selectedLanguage: '#465ce4',
-    progressBars: '#ffffff',
+    // Grouped colors for dark mode
+    colorGroup1: '#d0d5f8', // Light text and icons
+    colorGroup2: '#465ce4', // Primary accent
+    colorGroup3: '#232e72', // Mid-tone background
+    colorGroup4: '#111639', // Dark backgrounds
+    colorGroup5: '#e6f2f2', // Light accent text
+    colorGroup6: '#333d7c', // Header background
+
     // Existing properties (same as light mode)
     widgetBtnColor: '#111639',
     logoImage: '',
@@ -273,61 +224,20 @@ const AccessibilityWidgetPage: React.FC<any> = ({
 
   const [settings, setSettings] = useState({
     widgetFont: selectedFont,
-    // Light mode colors
-    'light-mode-all-icons-and-text': DefaultLightColors.allIconsAndText,
-    'light-mode-toggle-icon-color': DefaultLightColors.toggleIconColor,
-    'light-mode-toggle-bg-unchecked': DefaultLightColors.toggleBgUnchecked,
-    'light-mode-report-issue-text': DefaultLightColors.reportIssueText,
-    'light-mode-report-issue-input-text':
-      DefaultLightColors.reportIssueInputText,
-    'light-mode-report-issue-buttons': DefaultLightColors.reportIssueButtons,
-    'light-mode-report-issue-button-background':
-      DefaultLightColors.reportIssueButtonBackground,
-    'light-mode-report-issue-textbox-background':
-      DefaultLightColors.reportIssueTextboxBackground,
-    'light-mode-report-issue-card-dropdown-background':
-      DefaultLightColors.reportIssueCardDropdownBackground,
-    'light-mode-selected-items': DefaultLightColors.selectedItems,
-    'light-mode-header-text': DefaultLightColors.headerText,
-    'light-mode-card-titles': DefaultLightColors.cardTitles,
-    'light-mode-header-icons': DefaultLightColors.headerIcons,
-    'light-mode-header-background': DefaultLightColors.headerBackground,
-    'light-mode-footer-background': DefaultLightColors.footerBackground,
-    'light-mode-header-buttons-border': DefaultLightColors.headerButtonsBorder,
-    'light-mode-all-border-lines': DefaultLightColors.allBorderLines,
-    'light-mode-numbered-buttons': DefaultLightColors.numberedButtons,
-    'light-mode-widget-background': DefaultLightColors.widgetBackground,
-    'light-mode-dropdown-backgrounds': DefaultLightColors.dropdownBackgrounds,
-    'light-mode-all-hover-states': DefaultLightColors.allHoverStates,
-    'light-mode-selected-language': DefaultLightColors.selectedLanguage,
-    'light-mode-progress-bars': DefaultLightColors.progressBars,
-    // Dark mode colors
-    'dark-mode-all-icons-and-text': DefaultDarkColors.allIconsAndText,
-    'dark-mode-toggle-icon-color': DefaultDarkColors.toggleIconColor,
-    'dark-mode-toggle-bg-unchecked': DefaultDarkColors.toggleBgUnchecked,
-    'dark-mode-report-issue-text': DefaultDarkColors.reportIssueText,
-    'dark-mode-report-issue-input-text': DefaultDarkColors.reportIssueInputText,
-    'dark-mode-report-issue-buttons': DefaultDarkColors.reportIssueButtons,
-    'dark-mode-report-issue-button-background':
-      DefaultDarkColors.reportIssueButtonBackground,
-    'dark-mode-report-issue-textbox-background':
-      DefaultDarkColors.reportIssueTextboxBackground,
-    'dark-mode-report-issue-card-dropdown-background':
-      DefaultDarkColors.reportIssueCardDropdownBackground,
-    'dark-mode-selected-items': DefaultDarkColors.selectedItems,
-    'dark-mode-header-text': DefaultDarkColors.headerText,
-    'dark-mode-card-titles': DefaultDarkColors.cardTitles,
-    'dark-mode-header-icons': DefaultDarkColors.headerIcons,
-    'dark-mode-header-background': DefaultDarkColors.headerBackground,
-    'dark-mode-footer-background': DefaultDarkColors.footerBackground,
-    'dark-mode-header-buttons-border': DefaultDarkColors.headerButtonsBorder,
-    'dark-mode-all-border-lines': DefaultDarkColors.allBorderLines,
-    'dark-mode-numbered-buttons': DefaultDarkColors.numberedButtons,
-    'dark-mode-widget-background': DefaultDarkColors.widgetBackground,
-    'dark-mode-dropdown-backgrounds': DefaultDarkColors.dropdownBackgrounds,
-    'dark-mode-all-hover-states': DefaultDarkColors.allHoverStates,
-    'dark-mode-selected-language': DefaultDarkColors.selectedLanguage,
-    'dark-mode-progress-bars': DefaultDarkColors.progressBars,
+    // Light mode grouped colors
+    'light-mode-color-group-1': DefaultLightColors.colorGroup1,
+    'light-mode-color-group-2': DefaultLightColors.colorGroup2,
+    'light-mode-color-group-3': DefaultLightColors.colorGroup3,
+    'light-mode-color-group-4': DefaultLightColors.colorGroup4,
+    'light-mode-color-group-5': DefaultLightColors.colorGroup5,
+    'light-mode-color-group-6': DefaultLightColors.colorGroup6,
+    // Dark mode grouped colors
+    'dark-mode-color-group-1': DefaultDarkColors.colorGroup1,
+    'dark-mode-color-group-2': DefaultDarkColors.colorGroup2,
+    'dark-mode-color-group-3': DefaultDarkColors.colorGroup3,
+    'dark-mode-color-group-4': DefaultDarkColors.colorGroup4,
+    'dark-mode-color-group-5': DefaultDarkColors.colorGroup5,
+    'dark-mode-color-group-6': DefaultDarkColors.colorGroup6,
     // Common properties
     'widget-btn-color': DefaultLightColors.widgetBtnColor,
     logoImage: DefaultLightColors.logoImage,
@@ -387,61 +297,20 @@ const AccessibilityWidgetPage: React.FC<any> = ({
   useEffect(() => {
     setSettings({
       widgetFont: selectedFont,
-      // Light mode colors
-      'light-mode-all-icons-and-text': lightModeColors.allIconsAndText,
-      'light-mode-toggle-icon-color': lightModeColors.toggleIconColor,
-      'light-mode-toggle-bg-unchecked': lightModeColors.toggleBgUnchecked,
-      'light-mode-report-issue-text': lightModeColors.reportIssueText,
-      'light-mode-report-issue-input-text':
-        lightModeColors.reportIssueInputText,
-      'light-mode-report-issue-buttons': lightModeColors.reportIssueButtons,
-      'light-mode-report-issue-button-background':
-        lightModeColors.reportIssueButtonBackground,
-      'light-mode-report-issue-textbox-background':
-        lightModeColors.reportIssueTextboxBackground,
-      'light-mode-report-issue-card-dropdown-background':
-        lightModeColors.reportIssueCardDropdownBackground,
-      'light-mode-selected-items': lightModeColors.selectedItems,
-      'light-mode-header-text': lightModeColors.headerText,
-      'light-mode-card-titles': lightModeColors.cardTitles,
-      'light-mode-header-icons': lightModeColors.headerIcons,
-      'light-mode-header-background': lightModeColors.headerBackground,
-      'light-mode-footer-background': lightModeColors.footerBackground,
-      'light-mode-header-buttons-border': lightModeColors.headerButtonsBorder,
-      'light-mode-all-border-lines': lightModeColors.allBorderLines,
-      'light-mode-numbered-buttons': lightModeColors.numberedButtons,
-      'light-mode-widget-background': lightModeColors.widgetBackground,
-      'light-mode-dropdown-backgrounds': lightModeColors.dropdownBackgrounds,
-      'light-mode-all-hover-states': lightModeColors.allHoverStates,
-      'light-mode-selected-language': lightModeColors.selectedLanguage,
-      'light-mode-progress-bars': lightModeColors.progressBars,
-      // Dark mode colors
-      'dark-mode-all-icons-and-text': darkModeColors.allIconsAndText,
-      'dark-mode-toggle-icon-color': darkModeColors.toggleIconColor,
-      'dark-mode-toggle-bg-unchecked': darkModeColors.toggleBgUnchecked,
-      'dark-mode-report-issue-text': darkModeColors.reportIssueText,
-      'dark-mode-report-issue-input-text': darkModeColors.reportIssueInputText,
-      'dark-mode-report-issue-buttons': darkModeColors.reportIssueButtons,
-      'dark-mode-report-issue-button-background':
-        darkModeColors.reportIssueButtonBackground,
-      'dark-mode-report-issue-textbox-background':
-        darkModeColors.reportIssueTextboxBackground,
-      'dark-mode-report-issue-card-dropdown-background':
-        darkModeColors.reportIssueCardDropdownBackground,
-      'dark-mode-selected-items': darkModeColors.selectedItems,
-      'dark-mode-header-text': darkModeColors.headerText,
-      'dark-mode-card-titles': darkModeColors.cardTitles,
-      'dark-mode-header-icons': darkModeColors.headerIcons,
-      'dark-mode-header-background': darkModeColors.headerBackground,
-      'dark-mode-footer-background': darkModeColors.footerBackground,
-      'dark-mode-header-buttons-border': darkModeColors.headerButtonsBorder,
-      'dark-mode-all-border-lines': darkModeColors.allBorderLines,
-      'dark-mode-numbered-buttons': darkModeColors.numberedButtons,
-      'dark-mode-widget-background': darkModeColors.widgetBackground,
-      'dark-mode-dropdown-backgrounds': darkModeColors.dropdownBackgrounds,
-      'dark-mode-all-hover-states': darkModeColors.allHoverStates,
-      'dark-mode-selected-language': darkModeColors.selectedLanguage,
-      'dark-mode-progress-bars': darkModeColors.progressBars,
+      // Light mode grouped colors
+      'light-mode-color-group-1': lightModeColors.colorGroup1,
+      'light-mode-color-group-2': lightModeColors.colorGroup2,
+      'light-mode-color-group-3': lightModeColors.colorGroup3,
+      'light-mode-color-group-4': lightModeColors.colorGroup4,
+      'light-mode-color-group-5': lightModeColors.colorGroup5,
+      'light-mode-color-group-6': lightModeColors.colorGroup6,
+      // Dark mode grouped colors
+      'dark-mode-color-group-1': darkModeColors.colorGroup1,
+      'dark-mode-color-group-2': darkModeColors.colorGroup2,
+      'dark-mode-color-group-3': darkModeColors.colorGroup3,
+      'dark-mode-color-group-4': darkModeColors.colorGroup4,
+      'dark-mode-color-group-5': darkModeColors.colorGroup5,
+      'dark-mode-color-group-6': darkModeColors.colorGroup6,
       // Common properties
       'widget-btn-color': lightModeColors.widgetBtnColor,
       logoImage: lightModeColors.logoImage,
@@ -628,79 +497,27 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           setSelectedFont(fetchedSettings?.widgetFont);
         }
 
-        // Update colors using the corresponding keys.
-        // Load light mode colors
+        // Update colors using grouped structure
+        // Load light mode grouped colors
         setLightModeColors({
-          allIconsAndText:
-            fetchedSettings['light-mode-all-icons-and-text'] ||
-            DefaultLightColors.allIconsAndText,
-          toggleIconColor:
-            fetchedSettings['light-mode-toggle-icon-color'] ||
-            DefaultLightColors.toggleIconColor,
-          toggleBgUnchecked:
-            fetchedSettings['light-mode-toggle-bg-unchecked'] ||
-            DefaultLightColors.toggleBgUnchecked,
-          reportIssueText:
-            fetchedSettings['light-mode-report-issue-text'] ||
-            DefaultLightColors.reportIssueText,
-          reportIssueInputText:
-            fetchedSettings['light-mode-report-issue-input-text'] ||
-            DefaultLightColors.reportIssueInputText,
-          reportIssueButtons:
-            fetchedSettings['light-mode-report-issue-buttons'] ||
-            DefaultLightColors.reportIssueButtons,
-          reportIssueButtonBackground:
-            fetchedSettings['light-mode-report-issue-button-background'] ||
-            DefaultLightColors.reportIssueButtonBackground,
-          reportIssueTextboxBackground:
-            fetchedSettings['light-mode-report-issue-textbox-background'] ||
-            DefaultLightColors.reportIssueTextboxBackground,
-          reportIssueCardDropdownBackground:
-            fetchedSettings[
-              'light-mode-report-issue-card-dropdown-background'
-            ] || DefaultLightColors.reportIssueCardDropdownBackground,
-          selectedItems:
-            fetchedSettings['light-mode-selected-items'] ||
-            DefaultLightColors.selectedItems,
-          headerText:
-            fetchedSettings['light-mode-header-text'] ||
-            DefaultLightColors.headerText,
-          cardTitles:
-            fetchedSettings['light-mode-card-titles'] ||
-            DefaultLightColors.cardTitles,
-          headerIcons:
-            fetchedSettings['light-mode-header-icons'] ||
-            DefaultLightColors.headerIcons,
-          headerBackground:
-            fetchedSettings['light-mode-header-background'] ||
-            DefaultLightColors.headerBackground,
-          footerBackground:
-            fetchedSettings['light-mode-footer-background'] ||
-            DefaultLightColors.footerBackground,
-          headerButtonsBorder:
-            fetchedSettings['light-mode-header-buttons-border'] ||
-            DefaultLightColors.headerButtonsBorder,
-          allBorderLines:
-            fetchedSettings['light-mode-all-border-lines'] ||
-            DefaultLightColors.allBorderLines,
-          numberedButtons:
-            fetchedSettings['light-mode-numbered-buttons'] ||
-            DefaultLightColors.numberedButtons,
-          widgetBackground:
-            fetchedSettings['light-mode-widget-background'] ||
-            DefaultLightColors.widgetBackground,
-          dropdownBackgrounds:
-            fetchedSettings['light-mode-dropdown-backgrounds'] ||
-            DefaultLightColors.dropdownBackgrounds,
-          allHoverStates:
-            fetchedSettings['light-mode-all-hover-states'] ||
-            DefaultLightColors.allHoverStates,
-          selectedLanguage:
-            fetchedSettings['light-mode-selected-language'] ||
-            DefaultLightColors.selectedLanguage,
-          progressBars:
-            fetchedSettings['light-mode-progress-bars'] ||
-            DefaultLightColors.progressBars,
+          colorGroup1:
+            fetchedSettings['light-mode-color-group-1'] ||
+            DefaultLightColors.colorGroup1,
+          colorGroup2:
+            fetchedSettings['light-mode-color-group-2'] ||
+            DefaultLightColors.colorGroup2,
+          colorGroup3:
+            fetchedSettings['light-mode-color-group-3'] ||
+            DefaultLightColors.colorGroup3,
+          colorGroup4:
+            fetchedSettings['light-mode-color-group-4'] ||
+            DefaultLightColors.colorGroup4,
+          colorGroup5:
+            fetchedSettings['light-mode-color-group-5'] ||
+            DefaultLightColors.colorGroup5,
+          colorGroup6:
+            fetchedSettings['light-mode-color-group-6'] ||
+            DefaultLightColors.colorGroup6,
           widgetBtnColor:
             fetchedSettings['widget-btn-color'] ||
             DefaultLightColors.widgetBtnColor,
@@ -714,78 +531,26 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           logoUrl: fetchedSettings['logoUrl'] || DefaultLightColors.logoUrl,
         });
 
-        // Load dark mode colors
+        // Load dark mode grouped colors
         setDarkModeColors({
-          allIconsAndText:
-            fetchedSettings['dark-mode-all-icons-and-text'] ||
-            DefaultDarkColors.allIconsAndText,
-          toggleIconColor:
-            fetchedSettings['dark-mode-toggle-icon-color'] ||
-            DefaultDarkColors.toggleIconColor,
-          toggleBgUnchecked:
-            fetchedSettings['dark-mode-toggle-bg-unchecked'] ||
-            DefaultDarkColors.toggleBgUnchecked,
-          reportIssueText:
-            fetchedSettings['dark-mode-report-issue-text'] ||
-            DefaultDarkColors.reportIssueText,
-          reportIssueInputText:
-            fetchedSettings['dark-mode-report-issue-input-text'] ||
-            DefaultDarkColors.reportIssueInputText,
-          reportIssueButtons:
-            fetchedSettings['dark-mode-report-issue-buttons'] ||
-            DefaultDarkColors.reportIssueButtons,
-          reportIssueButtonBackground:
-            fetchedSettings['dark-mode-report-issue-button-background'] ||
-            DefaultDarkColors.reportIssueButtonBackground,
-          reportIssueTextboxBackground:
-            fetchedSettings['dark-mode-report-issue-textbox-background'] ||
-            DefaultDarkColors.reportIssueTextboxBackground,
-          reportIssueCardDropdownBackground:
-            fetchedSettings[
-              'dark-mode-report-issue-card-dropdown-background'
-            ] || DefaultDarkColors.reportIssueCardDropdownBackground,
-          selectedItems:
-            fetchedSettings['dark-mode-selected-items'] ||
-            DefaultDarkColors.selectedItems,
-          headerText:
-            fetchedSettings['dark-mode-header-text'] ||
-            DefaultDarkColors.headerText,
-          cardTitles:
-            fetchedSettings['dark-mode-card-titles'] ||
-            DefaultDarkColors.cardTitles,
-          headerIcons:
-            fetchedSettings['dark-mode-header-icons'] ||
-            DefaultDarkColors.headerIcons,
-          headerBackground:
-            fetchedSettings['dark-mode-header-background'] ||
-            DefaultDarkColors.headerBackground,
-          footerBackground:
-            fetchedSettings['dark-mode-footer-background'] ||
-            DefaultDarkColors.footerBackground,
-          headerButtonsBorder:
-            fetchedSettings['dark-mode-header-buttons-border'] ||
-            DefaultDarkColors.headerButtonsBorder,
-          allBorderLines:
-            fetchedSettings['dark-mode-all-border-lines'] ||
-            DefaultDarkColors.allBorderLines,
-          numberedButtons:
-            fetchedSettings['dark-mode-numbered-buttons'] ||
-            DefaultDarkColors.numberedButtons,
-          widgetBackground:
-            fetchedSettings['dark-mode-widget-background'] ||
-            DefaultDarkColors.widgetBackground,
-          dropdownBackgrounds:
-            fetchedSettings['dark-mode-dropdown-backgrounds'] ||
-            DefaultDarkColors.dropdownBackgrounds,
-          allHoverStates:
-            fetchedSettings['dark-mode-all-hover-states'] ||
-            DefaultDarkColors.allHoverStates,
-          selectedLanguage:
-            fetchedSettings['dark-mode-selected-language'] ||
-            DefaultDarkColors.selectedLanguage,
-          progressBars:
-            fetchedSettings['dark-mode-progress-bars'] ||
-            DefaultDarkColors.progressBars,
+          colorGroup1:
+            fetchedSettings['dark-mode-color-group-1'] ||
+            DefaultDarkColors.colorGroup1,
+          colorGroup2:
+            fetchedSettings['dark-mode-color-group-2'] ||
+            DefaultDarkColors.colorGroup2,
+          colorGroup3:
+            fetchedSettings['dark-mode-color-group-3'] ||
+            DefaultDarkColors.colorGroup3,
+          colorGroup4:
+            fetchedSettings['dark-mode-color-group-4'] ||
+            DefaultDarkColors.colorGroup4,
+          colorGroup5:
+            fetchedSettings['dark-mode-color-group-5'] ||
+            DefaultDarkColors.colorGroup5,
+          colorGroup6:
+            fetchedSettings['dark-mode-color-group-6'] ||
+            DefaultDarkColors.colorGroup6,
           widgetBtnColor:
             fetchedSettings['widget-btn-color'] ||
             DefaultDarkColors.widgetBtnColor,
@@ -915,79 +680,27 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           setSelectedFont(fetchedSettings?.widgetFont);
         }
 
-        // Update colors using the corresponding keys.
-        // Load light mode colors
+        // Update colors using grouped structure
+        // Load light mode grouped colors
         setLightModeColors({
-          allIconsAndText:
-            fetchedSettings['light-mode-all-icons-and-text'] ||
-            DefaultLightColors.allIconsAndText,
-          toggleIconColor:
-            fetchedSettings['light-mode-toggle-icon-color'] ||
-            DefaultLightColors.toggleIconColor,
-          toggleBgUnchecked:
-            fetchedSettings['light-mode-toggle-bg-unchecked'] ||
-            DefaultLightColors.toggleBgUnchecked,
-          reportIssueText:
-            fetchedSettings['light-mode-report-issue-text'] ||
-            DefaultLightColors.reportIssueText,
-          reportIssueInputText:
-            fetchedSettings['light-mode-report-issue-input-text'] ||
-            DefaultLightColors.reportIssueInputText,
-          reportIssueButtons:
-            fetchedSettings['light-mode-report-issue-buttons'] ||
-            DefaultLightColors.reportIssueButtons,
-          reportIssueButtonBackground:
-            fetchedSettings['light-mode-report-issue-button-background'] ||
-            DefaultLightColors.reportIssueButtonBackground,
-          reportIssueTextboxBackground:
-            fetchedSettings['light-mode-report-issue-textbox-background'] ||
-            DefaultLightColors.reportIssueTextboxBackground,
-          reportIssueCardDropdownBackground:
-            fetchedSettings[
-              'light-mode-report-issue-card-dropdown-background'
-            ] || DefaultLightColors.reportIssueCardDropdownBackground,
-          selectedItems:
-            fetchedSettings['light-mode-selected-items'] ||
-            DefaultLightColors.selectedItems,
-          headerText:
-            fetchedSettings['light-mode-header-text'] ||
-            DefaultLightColors.headerText,
-          cardTitles:
-            fetchedSettings['light-mode-card-titles'] ||
-            DefaultLightColors.cardTitles,
-          headerIcons:
-            fetchedSettings['light-mode-header-icons'] ||
-            DefaultLightColors.headerIcons,
-          headerBackground:
-            fetchedSettings['light-mode-header-background'] ||
-            DefaultLightColors.headerBackground,
-          footerBackground:
-            fetchedSettings['light-mode-footer-background'] ||
-            DefaultLightColors.footerBackground,
-          headerButtonsBorder:
-            fetchedSettings['light-mode-header-buttons-border'] ||
-            DefaultLightColors.headerButtonsBorder,
-          allBorderLines:
-            fetchedSettings['light-mode-all-border-lines'] ||
-            DefaultLightColors.allBorderLines,
-          numberedButtons:
-            fetchedSettings['light-mode-numbered-buttons'] ||
-            DefaultLightColors.numberedButtons,
-          widgetBackground:
-            fetchedSettings['light-mode-widget-background'] ||
-            DefaultLightColors.widgetBackground,
-          dropdownBackgrounds:
-            fetchedSettings['light-mode-dropdown-backgrounds'] ||
-            DefaultLightColors.dropdownBackgrounds,
-          allHoverStates:
-            fetchedSettings['light-mode-all-hover-states'] ||
-            DefaultLightColors.allHoverStates,
-          selectedLanguage:
-            fetchedSettings['light-mode-selected-language'] ||
-            DefaultLightColors.selectedLanguage,
-          progressBars:
-            fetchedSettings['light-mode-progress-bars'] ||
-            DefaultLightColors.progressBars,
+          colorGroup1:
+            fetchedSettings['light-mode-color-group-1'] ||
+            DefaultLightColors.colorGroup1,
+          colorGroup2:
+            fetchedSettings['light-mode-color-group-2'] ||
+            DefaultLightColors.colorGroup2,
+          colorGroup3:
+            fetchedSettings['light-mode-color-group-3'] ||
+            DefaultLightColors.colorGroup3,
+          colorGroup4:
+            fetchedSettings['light-mode-color-group-4'] ||
+            DefaultLightColors.colorGroup4,
+          colorGroup5:
+            fetchedSettings['light-mode-color-group-5'] ||
+            DefaultLightColors.colorGroup5,
+          colorGroup6:
+            fetchedSettings['light-mode-color-group-6'] ||
+            DefaultLightColors.colorGroup6,
           widgetBtnColor:
             fetchedSettings['widget-btn-color'] ||
             DefaultLightColors.widgetBtnColor,
@@ -1001,78 +714,26 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           logoUrl: fetchedSettings['logoUrl'] || DefaultLightColors.logoUrl,
         });
 
-        // Load dark mode colors
+        // Load dark mode grouped colors
         setDarkModeColors({
-          allIconsAndText:
-            fetchedSettings['dark-mode-all-icons-and-text'] ||
-            DefaultDarkColors.allIconsAndText,
-          toggleIconColor:
-            fetchedSettings['dark-mode-toggle-icon-color'] ||
-            DefaultDarkColors.toggleIconColor,
-          toggleBgUnchecked:
-            fetchedSettings['dark-mode-toggle-bg-unchecked'] ||
-            DefaultDarkColors.toggleBgUnchecked,
-          reportIssueText:
-            fetchedSettings['dark-mode-report-issue-text'] ||
-            DefaultDarkColors.reportIssueText,
-          reportIssueInputText:
-            fetchedSettings['dark-mode-report-issue-input-text'] ||
-            DefaultDarkColors.reportIssueInputText,
-          reportIssueButtons:
-            fetchedSettings['dark-mode-report-issue-buttons'] ||
-            DefaultDarkColors.reportIssueButtons,
-          reportIssueButtonBackground:
-            fetchedSettings['dark-mode-report-issue-button-background'] ||
-            DefaultDarkColors.reportIssueButtonBackground,
-          reportIssueTextboxBackground:
-            fetchedSettings['dark-mode-report-issue-textbox-background'] ||
-            DefaultDarkColors.reportIssueTextboxBackground,
-          reportIssueCardDropdownBackground:
-            fetchedSettings[
-              'dark-mode-report-issue-card-dropdown-background'
-            ] || DefaultDarkColors.reportIssueCardDropdownBackground,
-          selectedItems:
-            fetchedSettings['dark-mode-selected-items'] ||
-            DefaultDarkColors.selectedItems,
-          headerText:
-            fetchedSettings['dark-mode-header-text'] ||
-            DefaultDarkColors.headerText,
-          cardTitles:
-            fetchedSettings['dark-mode-card-titles'] ||
-            DefaultDarkColors.cardTitles,
-          headerIcons:
-            fetchedSettings['dark-mode-header-icons'] ||
-            DefaultDarkColors.headerIcons,
-          headerBackground:
-            fetchedSettings['dark-mode-header-background'] ||
-            DefaultDarkColors.headerBackground,
-          footerBackground:
-            fetchedSettings['dark-mode-footer-background'] ||
-            DefaultDarkColors.footerBackground,
-          headerButtonsBorder:
-            fetchedSettings['dark-mode-header-buttons-border'] ||
-            DefaultDarkColors.headerButtonsBorder,
-          allBorderLines:
-            fetchedSettings['dark-mode-all-border-lines'] ||
-            DefaultDarkColors.allBorderLines,
-          numberedButtons:
-            fetchedSettings['dark-mode-numbered-buttons'] ||
-            DefaultDarkColors.numberedButtons,
-          widgetBackground:
-            fetchedSettings['dark-mode-widget-background'] ||
-            DefaultDarkColors.widgetBackground,
-          dropdownBackgrounds:
-            fetchedSettings['dark-mode-dropdown-backgrounds'] ||
-            DefaultDarkColors.dropdownBackgrounds,
-          allHoverStates:
-            fetchedSettings['dark-mode-all-hover-states'] ||
-            DefaultDarkColors.allHoverStates,
-          selectedLanguage:
-            fetchedSettings['dark-mode-selected-language'] ||
-            DefaultDarkColors.selectedLanguage,
-          progressBars:
-            fetchedSettings['dark-mode-progress-bars'] ||
-            DefaultDarkColors.progressBars,
+          colorGroup1:
+            fetchedSettings['dark-mode-color-group-1'] ||
+            DefaultDarkColors.colorGroup1,
+          colorGroup2:
+            fetchedSettings['dark-mode-color-group-2'] ||
+            DefaultDarkColors.colorGroup2,
+          colorGroup3:
+            fetchedSettings['dark-mode-color-group-3'] ||
+            DefaultDarkColors.colorGroup3,
+          colorGroup4:
+            fetchedSettings['dark-mode-color-group-4'] ||
+            DefaultDarkColors.colorGroup4,
+          colorGroup5:
+            fetchedSettings['dark-mode-color-group-5'] ||
+            DefaultDarkColors.colorGroup5,
+          colorGroup6:
+            fetchedSettings['dark-mode-color-group-6'] ||
+            DefaultDarkColors.colorGroup6,
           widgetBtnColor:
             fetchedSettings['widget-btn-color'] ||
             DefaultDarkColors.widgetBtnColor,

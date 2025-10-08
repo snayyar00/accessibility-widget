@@ -119,135 +119,56 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
   const colorPickers = [
     {
-      key: 'allIconsAndText',
-      label: 'Text and Icon Colors',
+      key: 'colorGroup1',
+      label:
+        colorMode === 'light' ? 'Primary Text & Icons' : 'Light Text & Icons',
       description:
-        'Change the color of all text and icons displayed throughout the widget',
+        colorMode === 'light'
+          ? 'Main text, icons, buttons, and interactive elements'
+          : 'Light colored text, icons, input text, and numbered buttons',
     },
     {
-      key: 'toggleIconColor',
-      label: 'Theme Switch Icon',
+      key: 'colorGroup2',
+      label:
+        colorMode === 'light' ? 'Header Text & Icons' : 'Primary Accent Color',
       description:
-        'Color of the sun/moon icon in the light/dark mode toggle button',
+        colorMode === 'light'
+          ? 'Text and icons in the header section'
+          : 'Toggle icon, buttons, hover states, selected items, and borders',
     },
     {
-      key: 'toggleBgUnchecked',
-      label: 'Theme Toggle Background ',
-      description: "Background color of the theme switch when it's turned off",
-    },
-    {
-      key: 'selectedItems',
-      label: 'Active Button Highlight',
+      key: 'colorGroup3',
+      label:
+        colorMode === 'light' ? 'Header Background' : 'Mid-tone Background',
       description:
-        'Color that highlights numbered buttons when they are actively selected',
+        colorMode === 'light'
+          ? 'Background color of the header section'
+          : 'Background for textbox elements in report form',
     },
     {
-      key: 'headerText',
-      label: 'Widget Header Text',
+      key: 'colorGroup4',
+      label: colorMode === 'light' ? 'Footer Background' : 'Dark Backgrounds',
       description:
-        'Color of the title and text displayed at the header of the widget',
+        colorMode === 'light'
+          ? 'Background color of the footer section'
+          : 'Main widget background, dropdown backgrounds, and card backgrounds',
     },
     {
-      key: 'cardTitles',
-      label: 'Headings',
-      description: 'Color of the heading text',
-    },
-    {
-      key: 'headerIcons',
-      label: 'Widget Header Icons',
+      key: 'colorGroup5',
+      label:
+        colorMode === 'light' ? 'Header Button Borders' : 'Light Accent Text',
       description:
-        'Color of the icons displayed in the header section of the widget',
+        colorMode === 'light'
+          ? 'Border color of header buttons'
+          : 'Light colored text for buttons and header text',
     },
     {
-      key: 'headerBackground',
-      label: 'Header Background color',
-      description: 'Background color of the top section of the widget',
-    },
-    {
-      key: 'footerBackground',
-      label: 'Footer Background color',
-      description: 'Background color of the bottom section of the widget',
-    },
-    {
-      key: 'headerButtonsBorder',
-      label: 'Header Button Outlines',
+      key: 'colorGroup6',
+      label: colorMode === 'light' ? 'White Backgrounds' : 'Header Background',
       description:
-        'Color of the border lines around buttons in the header section',
-    },
-    {
-      key: 'allBorderLines',
-      label: 'Border Lines ',
-      description:
-        'Color of all separator lines and borders throughout the widget main panel',
-    },
-    {
-      key: 'numberedButtons',
-      label: 'Numbered Adjustment Buttons',
-      description:
-        'Color of numeric increment buttons used to adjust feature levels',
-    },
-    {
-      key: 'widgetBackground',
-      label: 'Main Widget Panel Background',
-      description: "Background color of the main widget panel when it's opened",
-    },
-    {
-      key: 'dropdownBackgrounds',
-      label: 'Dropdown Menu Backgrounds',
-      description:
-        'Background color of language and widget position dropdown selection menus in the widget',
-    },
-    {
-      key: 'allHoverStates',
-      label: 'Mouse Hover Highlight',
-      description:
-        'Color that appears when you move your mouse over clickable items',
-    },
-    {
-      key: 'selectedLanguage',
-      label: 'Selected Dropdown Options',
-      description:
-        'Color that highlights your chosen language and widget position in dropdown menus',
-    },
-    {
-      key: 'progressBars',
-      label: 'Cycling Button Progress Bars',
-      description:
-        'Color of bars that displays the current state of cycling buttons',
-    },
-    {
-      key: 'reportIssueText',
-      label: 'Issue Report Form Labels',
-      description:
-        'Color of text labels in the form where users report accessibility issues',
-    },
-    {
-      key: 'reportIssueInputText',
-      label: 'Issue Report Input Fields',
-      description:
-        'Text color inside the input boxes when users type their feedback',
-    },
-    {
-      key: 'reportIssueButtons',
-      label: 'Issue Report Button Text',
-      description: 'Color of text on buttons in the report issue section',
-    },
-    {
-      key: 'reportIssueButtonBackground',
-      label: 'Issue Report Button Fill',
-      description: 'Background color of buttons in the report issue section',
-    },
-    {
-      key: 'reportIssueTextboxBackground',
-      label: 'Issue Report Text Box Fill',
-      description:
-        'Background color of the text input areas where users write their feedback',
-    },
-    {
-      key: 'reportIssueCardDropdownBackground',
-      label: 'Issue Report Panel Background',
-      description:
-        'Background color of the entire report issue panel and its dropdown menus',
+        colorMode === 'light'
+          ? 'White backgrounds for widget panel and dropdowns'
+          : 'Background color of the header section',
     },
   ];
 
@@ -335,6 +256,95 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   const organization = useSelector(
     (state: RootState) => state.organization.data,
   );
+
+  // Helper function to get selector-to-color mapping based on color groups
+  const getColorMapping = (isDarkMode: boolean) => {
+    if (isDarkMode) {
+      // Dark mode color group mappings
+      return {
+        // Color group 1: #d0d5f8 - Light text and icons
+        'all-icons-and-text': colors.colorGroup1 || '#d0d5f8',
+        'report-issue-input-text': colors.colorGroup1 || '#d0d5f8',
+        'header-icons': colors.colorGroup1 || '#d0d5f8',
+        'numbered-buttons': colors.colorGroup1 || '#d0d5f8',
+
+        // Color group 2: #465ce4 - Primary accent
+        'toggle-icon-color': colors.colorGroup2 || '#465ce4',
+        'report-issue-button-background': colors.colorGroup2 || '#465ce4',
+        'selected-items': colors.colorGroup2 || '#465ce4',
+        'footer-background': colors.colorGroup2 || '#465ce4',
+        'all-hover-states': colors.colorGroup2 || '#465ce4',
+        'selected-language': colors.colorGroup2 || '#465ce4',
+        'header-buttons-border': colors.colorGroup2 || '#465ce4',
+        'all-border-lines': colors.colorGroup2 || '#465ce4',
+
+        // Color group 3: #232e72 - Mid-tone background
+        'report-issue-textbox-background': colors.colorGroup3 || '#232e72',
+
+        // Color group 4: #111639 - Dark backgrounds
+        'report-issue-card-dropdown-background':
+          colors.colorGroup4 || '#111639',
+        'widget-background': colors.colorGroup4 || '#111639',
+        'dropdown-backgrounds': colors.colorGroup4 || '#111639',
+
+        // Color group 5: #e6f2f2 - Light accent text
+        'report-issue-buttons': colors.colorGroup5 || '#e6f2f2',
+        'header-text': colors.colorGroup5 || '#e6f2f2',
+
+        // Color group 6: #333d7c - Header background
+        'header-background': colors.colorGroup6 || '#333d7c',
+
+        // Static colors (not customizable)
+        'progress-bars': '#ffffff',
+        'toggle-bg-unchecked': '#c3c3c3',
+        'toggle-bg-checked': '#c3c3c3',
+        'card-titles': '#ffffff',
+        'report-issue-text': '#ffffff',
+      };
+    } else {
+      // Light mode color group mappings
+      return {
+        // Color group 1: #232e72 - Primary text, icons, buttons
+        'all-icons-and-text': colors.colorGroup1 || '#232e72',
+        'toggle-icon-color': colors.colorGroup1 || '#232e72',
+        'selected-items': colors.colorGroup1 || '#232e72',
+        'card-titles': colors.colorGroup1 || '#232e72',
+        'all-hover-states': colors.colorGroup1 || '#232e72',
+        'selected-language': colors.colorGroup1 || '#232e72',
+        'numbered-buttons': colors.colorGroup1 || '#232e72',
+        'report-issue-text': colors.colorGroup1 || '#232e72',
+        'report-issue-input-text': colors.colorGroup1 || '#232e72',
+        'report-issue-button-background': colors.colorGroup1 || '#232e72',
+
+        // Color group 2: #e0eceb - Header text and icons
+        'header-text': colors.colorGroup2 || '#e0eceb',
+        'header-icons': colors.colorGroup2 || '#e0eceb',
+
+        // Color group 3: #111639 - Header background
+        'header-background': colors.colorGroup3 || '#111639',
+
+        // Color group 4: #232e72 - Footer background (same as group1)
+        'footer-background': colors.colorGroup4 || '#232e72',
+
+        // Color group 5: #465ce4 - Header button borders
+        'header-buttons-border': colors.colorGroup5 || '#465ce4',
+
+        // Color group 6: #ffffff - White backgrounds
+        'widget-background': colors.colorGroup6 || '#ffffff',
+        'dropdown-backgrounds': colors.colorGroup6 || '#ffffff',
+        'report-issue-textbox-background': colors.colorGroup6 || '#ffffff',
+        'report-issue-card-dropdown-background':
+          colors.colorGroup6 || '#ffffff',
+
+        // Static colors (not customizable)
+        'progress-bars': '#ffffff',
+        'report-issue-buttons': '#ffffff',
+        'toggle-bg-unchecked': '#c3c3c3',
+        'toggle-bg-checked': '#c3c3c3',
+        'all-border-lines': '#d7d7d7',
+      };
+    }
+  };
 
   // Helper function to apply toggle visibility to widget elements
   const applyToggleVisibility = ($menu: HTMLElement, toggles: Toggles) => {
@@ -642,347 +652,13 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           // Apply colors based on dark mode setting
           const isDarkMode = colorMode === 'dark';
 
-          if (isDarkMode) {
-            // Apply custom dark theme colors when dark mode is ON
-            applyMenuColor(
-              'all-icons-and-text',
-              colors.allIconsAndText || '#d0d5f8',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'toggle-icon-color',
-              colors.toggleIconColor || '#465ce4',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'toggle-bg-unchecked',
-              colors.toggleBgUnchecked || '#c3c3c3',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'toggle-bg-checked',
-              colors.toggleBgUnchecked || '#c3c3c3',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'report-issue-text',
-              colors.reportIssueText || '#ffffff',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'report-issue-input-text',
-              colors.reportIssueInputText || '#d0d5f8',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'report-issue-buttons',
-              colors.reportIssueButtons || '#e6f2f2',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'report-issue-button-background',
-              colors.reportIssueButtonBackground || '#465ce4',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'report-issue-textbox-background',
-              colors.reportIssueTextboxBackground || '#232e72',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'report-issue-card-dropdown-background',
-              colors.reportIssueCardDropdownBackground || '#111639',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'selected-items',
-              colors.selectedItems || '#465ce4',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'header-text',
-              colors.headerText || '#e6f2f2',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'card-titles',
-              colors.cardTitles || '#ffffff',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'header-icons',
-              colors.headerIcons || '#d0d5f8',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'header-background',
-              colors.headerBackground || '#333d7c',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'footer-background',
-              colors.footerBackground || '#465ce4',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'header-buttons-border',
-              colors.headerButtonsBorder || '#7382e7',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'all-border-lines',
-              colors.allBorderLines || '#7484eb',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'numbered-buttons',
-              colors.numberedButtons || '#cacff1',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'widget-background',
-              colors.widgetBackground || '#111639',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'dropdown-backgrounds',
-              colors.dropdownBackgrounds || '#111639',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'all-hover-states',
-              colors.allHoverStates || '#465ce4',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'selected-language',
-              colors.selectedLanguage || '#465ce4',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'progress-bars',
-              colors.progressBars || '#ffffff',
-              $menu,
-              container,
-              iframeDoc,
-            );
-          } else {
-            // Apply default colors when dark mode is OFF
-            applyMenuColor(
-              'all-icons-and-text',
-              colors.allIconsAndText || '#3b4581',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'toggle-icon-color',
-              colors.toggleIconColor || '#232e72',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'toggle-bg-unchecked',
-              colors.toggleBgUnchecked || '#c3c3c3',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'toggle-bg-checked',
-              colors.toggleBgUnchecked || '#c3c3c3',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'report-issue-text',
-              colors.reportIssueText || '#111639',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'report-issue-input-text',
-              colors.reportIssueInputText || '#656565',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'report-issue-buttons',
-              colors.reportIssueButtons || '#ffffff',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'report-issue-button-background',
-              colors.reportIssueButtonBackground || '#465ce4',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'report-issue-textbox-background',
-              colors.reportIssueTextboxBackground || '#ffffff',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'report-issue-card-dropdown-background',
-              colors.reportIssueCardDropdownBackground || '#ffffff',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'selected-items',
-              colors.selectedItems || '#232e72',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'header-text',
-              colors.headerText || '#e0eceb',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'card-titles',
-              colors.cardTitles || '#111639',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'header-icons',
-              colors.headerIcons || '#cacff1',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'header-background',
-              colors.headerBackground || '#111639',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'footer-background',
-              colors.footerBackground || '#232e72',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'header-buttons-border',
-              colors.headerButtonsBorder || '#465ce4',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'all-border-lines',
-              colors.allBorderLines || '#d7d7d7',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'numbered-buttons',
-              colors.numberedButtons || '#232e72',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'widget-background',
-              colors.widgetBackground || '#ffffff',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'dropdown-backgrounds',
-              colors.dropdownBackgrounds || '#ffffff',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'all-hover-states',
-              colors.allHoverStates || '#232e72',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'selected-language',
-              colors.selectedLanguage || '#232e72',
-              $menu,
-              container,
-              iframeDoc,
-            );
-            applyMenuColor(
-              'progress-bars',
-              colors.progressBars || '#ffffff',
-              $menu,
-              container,
-              iframeDoc,
-            );
-          }
+          // Get the color mapping based on the current mode
+          const colorMapping = getColorMapping(isDarkMode);
+
+          // Apply all colors using the grouped color mapping
+          Object.entries(colorMapping).forEach(([section, color]) => {
+            applyMenuColor(section, color, $menu, container, iframeDoc);
+          });
         }
       }, 100);
 
