@@ -336,6 +336,147 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     (state: RootState) => state.organization.data,
   );
 
+  // Helper function to apply toggle visibility to widget elements
+  const applyToggleVisibility = ($menu: HTMLElement, toggles: Toggles) => {
+    // Helper to find and hide/show profile buttons by text content
+    const toggleProfileByName = (name: string, isVisible: boolean) => {
+      const profileButtons = $menu.querySelectorAll('.profile-grid .asw-btn');
+      profileButtons.forEach((btn: Element) => {
+        const text = btn.textContent?.trim();
+        if (text?.includes(name)) {
+          (btn as HTMLElement).style.display = isVisible ? '' : 'none';
+        }
+      });
+    };
+
+    // Helper to find and hide/show tool/feature buttons by text content
+    const toggleButtonByName = (name: string, isVisible: boolean) => {
+      const buttons = $menu.querySelectorAll(
+        '.asw-btn:not(.profile-grid .asw-btn)',
+      );
+      buttons.forEach((btn: Element) => {
+        const text = btn.textContent?.trim();
+        if (text?.includes(name)) {
+          (btn as HTMLElement).style.display = isVisible ? '' : 'none';
+        }
+      });
+    };
+
+    // Helper to find and hide/show color adjustment buttons by text content
+    const toggleColorButtonByName = (name: string, isVisible: boolean) => {
+      const colorButtons = $menu.querySelectorAll('.asw-filter');
+      colorButtons.forEach((btn: Element) => {
+        const text = btn.textContent?.trim();
+        if (text?.includes(name)) {
+          (btn as HTMLElement).style.display = isVisible ? '' : 'none';
+        }
+      });
+    };
+
+    // Apply toggles for header elements
+    const headerLangSelector = $menu.querySelector('.asw-header-lang-selector');
+    if (headerLangSelector) {
+      (headerLangSelector as HTMLElement).style.display = toggles.language
+        ? ''
+        : 'none';
+    }
+
+    const oversizeWidget = $menu.querySelector(
+      '.asw-oversize-widget-container',
+    );
+    if (oversizeWidget) {
+      (oversizeWidget as HTMLElement).style.display = toggles.oversizeWidget
+        ? ''
+        : 'none';
+    }
+
+    // Apply toggles for accessibility profiles
+    toggleProfileByName('Motor', toggles.motorImpaired);
+    toggleProfileByName('Blind', toggles.blind);
+    toggleProfileByName('Color Blind', toggles.colorBlind);
+    toggleProfileByName('Dyslexia', toggles.dyslexia);
+    toggleProfileByName('Visually', toggles.visuallyImpaired);
+    toggleProfileByName('Cognitive', toggles.cognitiveAndLearning);
+    toggleProfileByName('Seizure', toggles.seizureAndEpileptic);
+    toggleProfileByName('ADHD', toggles.adhd);
+
+    // Apply toggles for tools
+    toggleButtonByName('Screen Reader', toggles.screenReader);
+    toggleButtonByName('Reading Guide', toggles.readingGuide);
+    toggleButtonByName('Stop Animation', toggles.stopAnimations);
+    toggleButtonByName('Big Cursor', toggles.bigCursor);
+    toggleButtonByName('Voice', toggles.voiceNavigation);
+    toggleButtonByName('Keyboard', toggles.keyboardNavigation);
+    toggleButtonByName('Page Structure', toggles.pageStructure);
+    toggleButtonByName('Dark Mode', toggles.darkMode);
+
+    // Widget Position - specific dropdown element
+    const widgetPositionDropdown = $menu.querySelector(
+      '#widget-position-dropdown-toggle',
+    );
+    if (widgetPositionDropdown) {
+      (widgetPositionDropdown as HTMLElement).style.display =
+        toggles.widgetPosition ? '' : 'none';
+    }
+
+    // Also hide the parent card if it exists
+    const widgetPositionCard = widgetPositionDropdown?.closest('.asw-card');
+    if (widgetPositionCard) {
+      (widgetPositionCard as HTMLElement).style.display = toggles.widgetPosition
+        ? ''
+        : 'none';
+    }
+
+    // Apply toggles for content adjustments
+    const adjustFont = $menu.querySelector('.asw-adjust-font');
+    if (adjustFont) {
+      (adjustFont as HTMLElement).style.display = toggles.fontSize
+        ? ''
+        : 'none';
+    }
+
+    toggleButtonByName(
+      'Highlight',
+      toggles.highlightLinks || toggles.highlightTitle,
+    );
+    toggleButtonByName('Dyslexia Font', toggles.dyslexiaFont);
+    toggleButtonByName('Letter Spacing', toggles.letterSpacing);
+    toggleButtonByName('Line Height', toggles.lineHeight);
+    toggleButtonByName('Font Weight', toggles.fontWeight);
+
+    // Apply toggles for color adjustments
+    toggleColorButtonByName(
+      'Contrast',
+      toggles.darkContrast || toggles.lightContrast || toggles.highContrast,
+    );
+    toggleColorButtonByName(
+      'Saturation',
+      toggles.highSaturation || toggles.lowSaturation,
+    );
+    toggleColorButtonByName('Monochrome', toggles.monochrome);
+
+    // Apply toggles for color sections
+    const colorSections = $menu.querySelectorAll('.asw-color-section');
+    colorSections.forEach((section: Element) => {
+      const titleText = section
+        .querySelector('.asw-color-title')
+        ?.textContent?.trim();
+      if (titleText?.includes('Text Color')) {
+        (section as HTMLElement).style.display = toggles.textColor
+          ? ''
+          : 'none';
+      } else if (titleText?.includes('Title Color')) {
+        (section as HTMLElement).style.display = toggles.titleColor
+          ? ''
+          : 'none';
+      } else if (titleText?.includes('Background')) {
+        (section as HTMLElement).style.display = toggles.backgroundColor
+          ? ''
+          : 'none';
+      }
+    });
+  };
+
   // Generate widget HTML for iframe
   const generateWidgetHTML = () => {
     return `
@@ -494,6 +635,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
         if ($menu && container) {
           clearInterval(checkWidget);
+
+          // Apply toggle visibility settings
+          applyToggleVisibility($menu, toggles);
 
           // Apply colors based on dark mode setting
           const isDarkMode = colorMode === 'dark';
@@ -852,7 +996,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [livePreview, colors, colorMode]);
+  }, [livePreview, colors, colorMode, toggles]);
 
   return (
     <div>
