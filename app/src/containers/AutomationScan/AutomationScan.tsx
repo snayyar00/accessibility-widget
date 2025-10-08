@@ -374,6 +374,8 @@ const AutomationScan: React.FC = () => {
   const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
   const [useCustomTests, setUseCustomTests] = useState(false);
   const [expandedSubcategories, setExpandedSubcategories] = useState<{ [key: string]: boolean }>({});
+  const [llmSuggestions, setLlmSuggestions] = useState<{ [key: string]: any }>({});
+  const [loadingLLMSuggestions, setLoadingLLMSuggestions] = useState<{ [key: string]: boolean }>({});
   const [selectedTests, setSelectedTests] = useState({
     // Basic Configuration
     headless: true,
@@ -1093,19 +1095,253 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
     return 'Issue detected - review element for accessibility compliance';
   };
 
-  // Helper function to generate AI color suggestions for contrast issues
-  const generateColorSuggestions = (issue: any) => {
-    if (!issue.attributes) return [];
+  // Helper function to calculate relative luminance
+  const getRelativeLuminance = (hex: string): number => {
+    const rgb = parseInt(hex.slice(1), 16);
+    const r = ((rgb >> 16) & 0xff) / 255;
+    const g = ((rgb >> 8) & 0xff) / 255;
+    const b = ((rgb >> 0) & 0xff) / 255;
+    
+    const [rs, gs, bs] = [r, g, b].map(c => 
+      c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+    );
+    
+    return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+  };
 
-    // Return only the best suggestion: Black text on white background (highest contrast)
-    return [{
-      id: 1,
-      name: 'Black text on White background',
-      textColor: '#000000',
-      bgColor: '#FFFFFF',
-      contrast: '21:1',
-      css: 'color: #000000; background-color: #FFFFFF;',
-    }];
+  // Helper function to calculate contrast ratio
+  const calculateContrastRatio = (color1: string, color2: string): number => {
+    const l1 = getRelativeLuminance(color1);
+    const l2 = getRelativeLuminance(color2);
+    const lighter = Math.max(l1, l2);
+    const darker = Math.min(l1, l2);
+    return (lighter + 0.05) / (darker + 0.05);
+  };
+
+  // Helper function to adjust color brightness
+  const adjustColorBrightness = (hex: string, percent: number): string => {
+    const num = parseInt(hex.slice(1), 16);
+    const r = Math.min(255, Math.max(0, ((num >> 16) & 0xff) + percent));
+    const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + percent));
+    const b = Math.min(255, Math.max(0, ((num >> 0) & 0xff) + percent));
+    return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+  };
+
+  // Function to get LLM-based color suggestion - Direct OpenAI API call
+  const fetchLLMColorSuggestion = async (issueKey: string, description: string, currentText: string, currentBg: string) => {
+    console.log('🚀 Starting LLM color suggestion fetch:', { issueKey, currentText, currentBg });
+    setLoadingLLMSuggestions(prev => ({ ...prev, [issueKey]: true }));
+    
+    try {
+      // Get OpenAI API key from environment
+      const openaiApiKey = process.env.REACT_APP_OPENAI_API_KEY;
+      
+      if (!openaiApiKey) {
+        console.error('❌ REACT_APP_OPENAI_API_KEY not found in environment');
+        throw new Error('OpenAI API key not configured');
+      }
+      
+      console.log('🔑 OpenAI API key exists:', !!openaiApiKey);
+      console.log('📤 Sending request to OpenAI GPT-4o...');
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openaiApiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a color accessibility expert. You provide minimal color adjustments to achieve WCAG AA compliance while preserving design aesthetics. Always respond with valid JSON only.'
+            },
+            {
+              role: 'user',
+              content: `Fix this contrast issue:
+- Current text color: ${currentText}
+- Current background: ${currentBg}
+- Issue: ${description}
+
+Provide ONE minimal tweak to achieve 4.5:1 contrast ratio while keeping similar colors.
+
+Respond with ONLY this JSON (no markdown, no extra text):
+{"textColor": "#hexcode", "bgColor": "#hexcode", "reasoning": "one sentence"}
+
+Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened blue from #3B82F6 to #2563EB"}`
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 150,
+          response_format: { type: "json_object" }
+        }),
+      });
+
+      console.log('📥 Response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ OpenAI API Error:', errorText);
+        throw new Error(`OpenAI API failed: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ OpenAI raw response:', data);
+      
+      // Parse the response
+      let parsedSuggestion;
+      try {
+        const content = data.choices[0]?.message?.content;
+        console.log('📝 AI content:', content);
+        
+        if (!content) {
+          throw new Error('No content in OpenAI response');
+        }
+        
+        // Parse JSON - OpenAI should return pure JSON with response_format
+        parsedSuggestion = JSON.parse(content);
+        console.log('✅ Parsed suggestion:', parsedSuggestion);
+        
+        // Validate required fields
+        if (!parsedSuggestion.textColor || !parsedSuggestion.bgColor) {
+          console.error('❌ Invalid JSON structure:', parsedSuggestion);
+          throw new Error('Missing textColor or bgColor in response');
+        }
+      } catch (parseError) {
+        console.error('❌ Failed to parse OpenAI response:', parseError);
+        console.error('Raw content:', data.choices[0]?.message?.content);
+        
+        // Fallback to black on white
+        const bgLuminance = getRelativeLuminance(currentBg);
+        const fallbackSuggestion = bgLuminance > 0.5 
+          ? { textColor: '#000000', bgColor: '#FFFFFF', reasoning: 'Fallback: AI response could not be parsed' }
+          : { textColor: '#FFFFFF', bgColor: '#000000', reasoning: 'Fallback: AI response could not be parsed' };
+        parsedSuggestion = fallbackSuggestion;
+        console.log('⚠️ Using fallback suggestion:', parsedSuggestion);
+      }
+
+      // Calculate the actual contrast ratio
+      const actualContrast = calculateContrastRatio(parsedSuggestion.textColor, parsedSuggestion.bgColor);
+      
+      const suggestion = {
+        id: 1,
+        name: parsedSuggestion.reasoning?.includes('Fallback') ? 'High contrast fallback' : 'AI-suggested color adjustment',
+        textColor: parsedSuggestion.textColor,
+        bgColor: parsedSuggestion.bgColor,
+        contrast: actualContrast.toFixed(2) + ':1',
+        css: `color: ${parsedSuggestion.textColor}; background-color: ${parsedSuggestion.bgColor};`,
+        reasoning: parsedSuggestion.reasoning,
+        isLLM: !parsedSuggestion.reasoning?.includes('Fallback'),
+      };
+      
+      console.log('💾 Saving suggestion to state:', suggestion);
+      
+      setLlmSuggestions(prev => ({
+        ...prev,
+        [issueKey]: suggestion
+      }));
+      
+      return suggestion;
+    } catch (error: any) {
+      console.error('❌ Error fetching LLM suggestion:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
+      
+      // Fallback to black on white
+      const bgLuminance = getRelativeLuminance(currentBg);
+      const fallbackSuggestion = {
+        id: 1,
+        name: 'High contrast fallback',
+        textColor: bgLuminance > 0.5 ? '#000000' : '#FFFFFF',
+        bgColor: bgLuminance > 0.5 ? '#FFFFFF' : '#000000',
+        contrast: '21:1',
+        css: bgLuminance > 0.5 
+          ? 'color: #000000; background-color: #FFFFFF;' 
+          : 'color: #FFFFFF; background-color: #000000;',
+        reasoning: `AI Error: ${error.message}`,
+        isLLM: false,
+      };
+      
+      console.log('⚠️ Using network error fallback:', fallbackSuggestion);
+      
+      setLlmSuggestions(prev => ({
+        ...prev,
+        [issueKey]: fallbackSuggestion
+      }));
+      
+      return fallbackSuggestion;
+    } finally {
+      setLoadingLLMSuggestions(prev => ({ ...prev, [issueKey]: false }));
+      console.log('🏁 Finished LLM suggestion fetch for:', issueKey);
+    }
+  };
+
+  // Helper function to extract colors from contrast issues
+  const extractColorsFromIssue = (issue: any): { textColor: string; bgColor: string; description: string } => {
+    // Extract current colors from various sources
+    let currentTextColor = '#3B82F6'; // Default blue from screenshot
+    let currentBgColor = '#FFFFFF';
+    
+    // Try to extract colors from description
+    const description = getIssueDescription(issue);
+    console.log('Contrast issue description:', description);
+    
+    // Try to extract colors from attributes or description
+    if (issue.attributes) {
+      currentTextColor = issue.attributes.foreground || issue.attributes.fgColor || issue.attributes.textColor || currentTextColor;
+      currentBgColor = issue.attributes.background || issue.attributes.bgColor || issue.attributes.backgroundColor || currentBgColor;
+    }
+    
+    // Try extracting from description text patterns
+    const colorPatterns = [
+      /foreground[:\s]+([#a-fA-F0-9]{3,8})/i,
+      /text[:\s]+([#a-fA-F0-9]{3,8})/i,
+      /color[:\s]+([#a-fA-F0-9]{3,8})/i,
+    ];
+    
+    const bgPatterns = [
+      /background[:\s]+([#a-fA-F0-9]{3,8})/i,
+      /bg[:\s]+([#a-fA-F0-9]{3,8})/i,
+    ];
+
+    for (const pattern of colorPatterns) {
+      const match = description.match(pattern);
+      if (match && match[1].startsWith('#')) {
+        currentTextColor = match[1];
+        break;
+      }
+    }
+
+    for (const pattern of bgPatterns) {
+      const match = description.match(pattern);
+      if (match && match[1].startsWith('#')) {
+        currentBgColor = match[1];
+        break;
+      }
+    }
+
+    // Ensure colors are valid hex
+    const normalizeColor = (color: string): string => {
+      if (!color.startsWith('#')) color = '#' + color;
+      if (color.length === 4) {
+        color = '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+      }
+      return color.toLowerCase();
+    };
+
+    currentTextColor = normalizeColor(currentTextColor);
+    currentBgColor = normalizeColor(currentBgColor);
+
+    console.log('Extracted colors - Text:', currentTextColor, 'Background:', currentBgColor);
+
+    return {
+      textColor: currentTextColor,
+      bgColor: currentBgColor,
+      description: description
+    };
   };
 
   // Function to parse API results and convert to card format
@@ -1881,7 +2117,9 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
                           {subcategory.issues.map((fix: any, index: number) => {
                             const isContrastIssue = fix.category === 'contrast' || fix.issue_type?.includes('contrast');
                             const hasScreenshot = fix.screenshot_base64 && fix.screenshot_status === 'success';
-                            const colorSuggestions = isContrastIssue ? generateColorSuggestions(fix) : [];
+                            const issueKey = `${fix.selector || 'unknown'}_${index}`;
+                            const hasSuggestion = llmSuggestions[issueKey];
+                            const isLoadingSuggestion = loadingLLMSuggestions[issueKey];
 
                             return (
                               <div key={index} className="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
@@ -1929,57 +2167,107 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
                                     )}
 
                                     {/* AI Color Suggestions for Contrast Issues */}
-                                    {isContrastIssue && colorSuggestions.length > 0 && (
+                                    {isContrastIssue && (
                                       <div className="mt-4 border-t border-gray-200 pt-4">
-                                        <div className="flex items-center space-x-2 mb-3">
-                                          <FaBrain className="w-4 h-4 text-purple-600" />
-                                          <h5 className="text-sm font-semibold text-gray-900">AI Color Suggestions</h5>
-                                        </div>
-                                        <div className="space-y-2">
-                                          {colorSuggestions.map((suggestion) => (
-                                            <div
-                                              key={suggestion.id}
-                                              className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-3"
+                                        <div className="flex items-center justify-between mb-3">
+                                          <div className="flex items-center space-x-2">
+                                            <FaBrain className="w-4 h-4 text-purple-600" />
+                                            <h5 className="text-sm font-semibold text-gray-900">AI Color Suggestion</h5>
+                                          </div>
+                                          {!hasSuggestion && !isLoadingSuggestion && (
+                                            <button
+                                              onClick={() => {
+                                                console.log('🔘 Generate AI Fix button clicked');
+                                                const colors = extractColorsFromIssue(fix);
+                                                console.log('🎨 Extracted colors:', colors);
+                                                fetchLLMColorSuggestion(issueKey, colors.description, colors.textColor, colors.bgColor);
+                                              }}
+                                              className="px-4 py-2 text-sm font-bold rounded-lg transition-all shadow-lg flex items-center space-x-2 border-2"
+                                              style={{ 
+                                                background: 'linear-gradient(to right, #9333EA, #3B82F6)',
+                                                color: '#FFFFFF',
+                                                borderColor: '#A855F7'
+                                              }}
+                                              onMouseEnter={(e) => {
+                                                e.currentTarget.style.background = 'linear-gradient(to right, #7E22CE, #2563EB)';
+                                              }}
+                                              onMouseLeave={(e) => {
+                                                e.currentTarget.style.background = 'linear-gradient(to right, #9333EA, #3B82F6)';
+                                              }}
                                             >
-                                              <div className="flex items-center justify-between">
-                                                <div className="flex items-center space-x-3 flex-1">
-                                                  <div className="flex items-center space-x-1">
-                                                    <div
-                                                      className="w-6 h-6 rounded border-2 border-gray-300"
-                                                      style={{ backgroundColor: suggestion.textColor }}
-                                                      title={`Text: ${suggestion.textColor}`}
-                                                    />
-                                                    <span className="text-xs text-gray-500">on</span>
-                                                    <div
-                                                      className="w-6 h-6 rounded border-2 border-gray-300"
-                                                      style={{ backgroundColor: suggestion.bgColor }}
-                                                      title={`Background: ${suggestion.bgColor}`}
-                                                    />
-                                                  </div>
-                                                  <div className="flex-1">
-                                                    <p className="text-sm font-medium text-gray-900">
-                                                      {suggestion.name}
-                                                    </p>
-                                                    <p className="text-xs text-gray-600">
-                                                      Contrast: <span className="font-semibold text-green-600">{suggestion.contrast}</span>
-                                                    </p>
-                                                  </div>
-                                                </div>
-                                                <button
-                                                  className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors shadow-md"
-                                                  title="Apply this color combination"
-                                                >
-                                                  Apply
-                                                </button>
-                                              </div>
-                                              <div className="mt-2 bg-gray-100 rounded px-3 py-2 border border-gray-300">
-                                                <code className="text-xs text-gray-900 font-mono font-semibold">
-                                                  {suggestion.css}
-                                                </code>
-                                              </div>
-                                            </div>
-                                          ))}
+                                              <FaBrain className="w-4 h-4" style={{ color: '#FFFFFF' }} />
+                                              <span style={{ color: '#FFFFFF' }}>Generate AI Fix</span>
+                                            </button>
+                                          )}
                                         </div>
+                                        
+                                        {isLoadingSuggestion && (
+                                          <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 text-center">
+                                            <div className="flex items-center justify-center space-x-2">
+                                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
+                                              <p className="text-sm text-gray-700">AI is analyzing colors...</p>
+                                            </div>
+                                          </div>
+                                        )}
+                                        
+                                        {hasSuggestion && (
+                                          <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-3">
+                                            <div className="flex items-center justify-between">
+                                              <div className="flex items-center space-x-3 flex-1">
+                                                <div className="flex items-center space-x-1">
+                                                  <div
+                                                    className="w-8 h-8 rounded border-2 border-gray-300 shadow-sm"
+                                                    style={{ backgroundColor: hasSuggestion.textColor }}
+                                                    title={`Text: ${hasSuggestion.textColor}`}
+                                                  />
+                                                  <span className="text-xs text-gray-500 font-medium">on</span>
+                                                  <div
+                                                    className="w-8 h-8 rounded border-2 border-gray-300 shadow-sm"
+                                                    style={{ backgroundColor: hasSuggestion.bgColor }}
+                                                    title={`Background: ${hasSuggestion.bgColor}`}
+                                                  />
+                                                </div>
+                                                <div className="flex-1">
+                                                  <p className="text-sm font-medium text-gray-900">
+                                                    {hasSuggestion.name}
+                                                    {hasSuggestion.isLLM && (
+                                                      <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
+                                                        AI
+                                                      </span>
+                                                    )}
+                                                  </p>
+                                                  <p className="text-xs text-gray-600 mt-0.5">
+                                                    Contrast: <span className="font-semibold text-green-600">{hasSuggestion.contrast}</span>
+                                                  </p>
+                                                  {hasSuggestion.reasoning && (
+                                                    <p className="text-xs text-gray-500 mt-1.5 italic">
+                                                      💡 {hasSuggestion.reasoning}
+                                                    </p>
+                                                  )}
+                                                </div>
+                                              </div>
+                                              <button
+                                                className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors shadow-md flex-shrink-0"
+                                                title="Apply this color combination"
+                                              >
+                                                Apply
+                                              </button>
+                                            </div>
+                                            <div className="mt-3 bg-gray-900 rounded px-3 py-2 border border-gray-700">
+                                              <code className="text-xs text-green-400 font-mono font-semibold">
+                                                {hasSuggestion.css}
+                                              </code>
+                                            </div>
+                                          </div>
+                                        )}
+                                        
+                                        {!hasSuggestion && !isLoadingSuggestion && (
+                                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                                            <p className="text-xs text-gray-600">
+                                              Click "Generate AI Fix" to get smart color suggestions that preserve your design
+                                            </p>
+                                          </div>
+                                        )}
                                       </div>
                                     )}
 
