@@ -14,8 +14,8 @@ import {
   Link,
   HelpCircle,
 } from 'lucide-react';
-import AccessibilityMenu from './MenuPreview';
 import ColorPicker from '@/components/Common/ColorPicker';
+import applyMenuColor from './applyMenuColor';
 
 interface CustomizeWidgetProps {
   colors: Colors;
@@ -70,6 +70,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     colorAdjustments: false,
     tools: false,
   });
+  const widgetIframeRef = useRef<HTMLIFrameElement>(null);
 
   const updateColor = (key: keyof Colors) => (color: string) => {
     setColors((prev) => ({ ...prev, [key]: color }));
@@ -335,6 +336,524 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     (state: RootState) => state.organization.data,
   );
 
+  // Generate widget HTML for iframe
+  const generateWidgetHTML = () => {
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Widget Preview</title>
+  <style>
+    /* Hide all scrollbars */
+    * {
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    
+    *::-webkit-scrollbar {
+      display: none !important;
+    }
+    
+    html, body {
+      overflow: hidden !important;
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+      display: none !important;
+    }
+    
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: #F8F9FA;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      text-align: center;
+    }
+    .preview-btn {
+      padding: 12px 24px;
+      background: #4285F4;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
+      transition: all 0.2s;
+    }
+    .preview-btn:hover {
+      background: #3367D6;
+      box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4);
+    }
+    .info-text {
+      margin-bottom: 20px;
+      color: #666;
+      font-size: 14px;
+    }
+    
+    /* Hide scrollbars from accessibility widget */
+    .asw-widget,
+    .asw-menu,
+    .asw-panel,
+    .asw-container {
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    
+    .asw-widget::-webkit-scrollbar,
+    .asw-menu::-webkit-scrollbar,
+    .asw-panel::-webkit-scrollbar,
+    .asw-container::-webkit-scrollbar {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <p class="info-text">Click the button below to open the accessibility widget</p>
+    <button class="preview-btn" onclick="openWidget()">Open Accessibility Widget</button>
+  </div>
+  
+  <script src="https://webability-widget.server.techywebsolutions.com/widget.min.js" 
+          data-asw-position="bottom-left" 
+          data-asw-lang="auto" 
+          data-asw-icon-type="hidden" 
+          defer></script>
+  
+  <script>
+    function openWidget() {
+      // Wait for widget to be fully loaded
+      const checkWidget = setInterval(() => {
+        const widgetBtn = document.querySelector('.asw-menu-btn');
+        if (widgetBtn) {
+          clearInterval(checkWidget);
+          widgetBtn.click();
+        }
+      }, 100);
+      
+      // Timeout after 5 seconds
+      setTimeout(() => clearInterval(checkWidget), 5000);
+    }
+    
+    // Auto-open widget when iframe loads (after a small delay to ensure script is loaded)
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        openWidget();
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
+    `;
+  };
+
+  // Handle iframe loading
+  useEffect(() => {
+    if (livePreview && widgetIframeRef.current) {
+      const iframe = widgetIframeRef.current;
+      const html = generateWidgetHTML();
+
+      // Write HTML to iframe
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (doc) {
+        doc.open();
+        doc.write(html);
+        doc.close();
+      }
+    }
+  }, [livePreview]);
+
+  // Apply colors to widget inside iframe
+  useEffect(() => {
+    if (!livePreview || !widgetIframeRef.current) return;
+
+    const applyColorsToIframe = () => {
+      const iframe = widgetIframeRef.current;
+      if (!iframe) return;
+
+      const iframeDoc =
+        iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) return;
+
+      // Wait for the widget to be loaded inside the iframe
+      const checkWidget = setInterval(() => {
+        const $menu = iframeDoc.querySelector('.asw-menu') as HTMLElement;
+        const container = iframeDoc.querySelector(
+          '.asw-container',
+        ) as HTMLElement;
+
+        if ($menu && container) {
+          clearInterval(checkWidget);
+
+          // Apply colors based on dark mode setting
+          const isDarkMode = colorMode === 'dark';
+
+          if (isDarkMode) {
+            // Apply custom dark theme colors when dark mode is ON
+            applyMenuColor(
+              'all-icons-and-text',
+              colors.allIconsAndText || '#d0d5f8',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'toggle-icon-color',
+              colors.toggleIconColor || '#465ce4',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'toggle-bg-unchecked',
+              colors.toggleBgUnchecked || '#c3c3c3',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'toggle-bg-checked',
+              colors.toggleBgUnchecked || '#c3c3c3',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'report-issue-text',
+              colors.reportIssueText || '#ffffff',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'report-issue-input-text',
+              colors.reportIssueInputText || '#d0d5f8',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'report-issue-buttons',
+              colors.reportIssueButtons || '#e6f2f2',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'report-issue-button-background',
+              colors.reportIssueButtonBackground || '#465ce4',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'report-issue-textbox-background',
+              colors.reportIssueTextboxBackground || '#232e72',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'report-issue-card-dropdown-background',
+              colors.reportIssueCardDropdownBackground || '#111639',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'selected-items',
+              colors.selectedItems || '#465ce4',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'header-text',
+              colors.headerText || '#e6f2f2',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'card-titles',
+              colors.cardTitles || '#ffffff',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'header-icons',
+              colors.headerIcons || '#d0d5f8',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'header-background',
+              colors.headerBackground || '#333d7c',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'footer-background',
+              colors.footerBackground || '#465ce4',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'header-buttons-border',
+              colors.headerButtonsBorder || '#7382e7',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'all-border-lines',
+              colors.allBorderLines || '#7484eb',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'numbered-buttons',
+              colors.numberedButtons || '#cacff1',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'widget-background',
+              colors.widgetBackground || '#111639',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'dropdown-backgrounds',
+              colors.dropdownBackgrounds || '#111639',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'all-hover-states',
+              colors.allHoverStates || '#465ce4',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'selected-language',
+              colors.selectedLanguage || '#465ce4',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'progress-bars',
+              colors.progressBars || '#ffffff',
+              $menu,
+              container,
+              iframeDoc,
+            );
+          } else {
+            // Apply default colors when dark mode is OFF
+            applyMenuColor(
+              'all-icons-and-text',
+              colors.allIconsAndText || '#3b4581',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'toggle-icon-color',
+              colors.toggleIconColor || '#232e72',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'toggle-bg-unchecked',
+              colors.toggleBgUnchecked || '#c3c3c3',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'toggle-bg-checked',
+              colors.toggleBgUnchecked || '#c3c3c3',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'report-issue-text',
+              colors.reportIssueText || '#111639',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'report-issue-input-text',
+              colors.reportIssueInputText || '#656565',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'report-issue-buttons',
+              colors.reportIssueButtons || '#ffffff',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'report-issue-button-background',
+              colors.reportIssueButtonBackground || '#465ce4',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'report-issue-textbox-background',
+              colors.reportIssueTextboxBackground || '#ffffff',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'report-issue-card-dropdown-background',
+              colors.reportIssueCardDropdownBackground || '#ffffff',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'selected-items',
+              colors.selectedItems || '#232e72',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'header-text',
+              colors.headerText || '#e0eceb',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'card-titles',
+              colors.cardTitles || '#111639',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'header-icons',
+              colors.headerIcons || '#cacff1',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'header-background',
+              colors.headerBackground || '#111639',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'footer-background',
+              colors.footerBackground || '#232e72',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'header-buttons-border',
+              colors.headerButtonsBorder || '#465ce4',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'all-border-lines',
+              colors.allBorderLines || '#d7d7d7',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'numbered-buttons',
+              colors.numberedButtons || '#232e72',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'widget-background',
+              colors.widgetBackground || '#ffffff',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'dropdown-backgrounds',
+              colors.dropdownBackgrounds || '#ffffff',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'all-hover-states',
+              colors.allHoverStates || '#232e72',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'selected-language',
+              colors.selectedLanguage || '#232e72',
+              $menu,
+              container,
+              iframeDoc,
+            );
+            applyMenuColor(
+              'progress-bars',
+              colors.progressBars || '#ffffff',
+              $menu,
+              container,
+              iframeDoc,
+            );
+          }
+        }
+      }, 100);
+
+      // Clear the interval after 10 seconds to avoid infinite checking
+      setTimeout(() => clearInterval(checkWidget), 10000);
+    };
+
+    // Small delay to ensure iframe content is loaded
+    const timer = setTimeout(applyColorsToIframe, 1500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [livePreview, colors, colorMode]);
+
   return (
     <div>
       {/* Header */}
@@ -368,10 +887,10 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         {/* Left Side - Settings */}
         <div
           className={`${
-            livePreview ? 'w-full md:w-1/2' : 'w-full'
-          } p-3 md:p-6 transition-all duration-300 flex flex-col widget-customization-section`}
+            livePreview ? 'w-full md:w-[40%] xl:w-2/3' : 'w-full'
+          } p-3 md:p-6 transition-all duration-300 flex flex-col widget-customization-section overflow-y-auto`}
         >
-          <div className="flex-1 space-y-6">
+          <div className="space-y-6">
             {activeTab === 'preference' && (
               <>
                 {/* Live Preview Section */}
@@ -395,10 +914,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                 <p className="text-xs md:text-sm text-[#757575] mb-4 px-2">
                   Toggle which accessibility features you want to show or hide
                 </p>
-                <div
-                  className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 md:p-4 max-h-[calc(100vh-400px)] overflow-y-auto hide-scrollbar toggle-features-panel"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
+                <div className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 md:p-4 toggle-features-panel">
                   <div className="space-y-3">
                     {/* Language */}
                     <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
@@ -853,10 +1369,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                   widget to match your brand
                 </p>
 
-                <div
-                  className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 md:p-4 max-h-[calc(100vh-400px)] overflow-y-auto hide-scrollbar color-customization-panel"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
+                <div className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 md:p-4 color-customization-panel">
                   {/* Widget Button Color */}
                   <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-4">
                     <ColorPicker
@@ -1158,15 +1671,20 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
         {/* Right Side - Widget Preview (Only visible when live preview is on) */}
         {livePreview && (
-          <div className="w-full md:w-1/2 p-3 md:p-6 transition-all duration-300 widget-preview-section">
-            <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-4 md:p-6 h-[500px] md:h-full">
-              <div className="border border-[#E0E0E0] rounded-lg p-4 bg-[#F8F9FA] h-full overflow-auto">
-                <AccessibilityMenu
-                  selectedFont={selectedFont}
-                  colors={colors}
-                  toggles={toggles}
-                />
-              </div>
+          <div className="w-full md:w-[60%] xl:w-1/3 p-3 md:p-6 transition-all duration-300 widget-preview-section">
+            <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] h-full flex flex-col overflow-hidden">
+              <iframe
+                ref={widgetIframeRef}
+                className="w-full flex-1 border-0 rounded-lg no-scrollbar"
+                title="Widget Live Preview"
+                sandbox="allow-scripts allow-same-origin"
+                style={{
+                  backgroundColor: '#F8F9FA',
+                  overflow: 'hidden',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                }}
+              />
             </div>
           </div>
         )}
