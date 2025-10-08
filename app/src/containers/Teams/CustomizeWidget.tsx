@@ -1027,12 +1027,12 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         </div>
       </div>
 
-      <div className="relative flex flex-col md:flex-row h-auto md:h-[calc(100vh-200px)] bg-[#ebeffd] border border-[#a3aef1] rounded-lg ">
+      <div className="relative flex flex-col md:flex-row h-auto sm:h-[calc(100vh-180px)] md:h-[calc(100vh-200px)] bg-[#ebeffd] border border-[#a3aef1] rounded-lg">
         {/* Left Side - Settings */}
         <div
           className={`${
             livePreview ? 'w-full md:w-[40%] xl:w-2/3' : 'w-full'
-          } p-3 md:p-6 transition-all duration-300 flex flex-col widget-customization-section overflow-y-auto`}
+          } p-3 sm:p-4 md:p-6 transition-all duration-300 flex flex-col widget-customization-section overflow-y-auto`}
         >
           <div className="space-y-6">
             {activeTab === 'preference' && (
@@ -1055,13 +1055,13 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                 <h3 className="text-base md:text-lg font-semibold text-[#333333] mb-2 px-2">
                   Toggle Features
                 </h3>
-                <p className="text-xs md:text-sm text-[#757575] mb-4 px-2">
+                <p className="text-xs sm:text-sm md:text-sm text-[#757575] mb-4 px-2">
                   Toggle which accessibility features you want to show or hide
                 </p>
-                <div className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 md:p-4 toggle-features-panel">
+                <div className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 sm:p-3 md:p-4 toggle-features-panel">
                   <div className="space-y-3">
                     {/* Language */}
-                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 sm:p-4 md:p-4">
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-[#333333] text-sm md:text-base">
                           Language
@@ -1080,7 +1080,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </div>
 
                     {/* Oversize widget */}
-                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 sm:p-4 md:p-4">
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-[#333333] text-sm md:text-base">
                           Oversize widget
@@ -1099,7 +1099,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </div>
 
                     {/* Accessibility Profiles */}
-                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 sm:p-4 md:p-4">
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-medium text-[#333333] text-sm md:text-base">
                           Accessibility Profiles
@@ -1193,7 +1193,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </div>
 
                     {/* 2 Content Adjustments */}
-                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 sm:p-4 md:p-4">
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-medium text-[#333333] text-sm md:text-base">
                           Content Adjustments
@@ -1273,7 +1273,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </div>
 
                     {/* 3 Color Adjustments */}
-                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 sm:p-4 md:p-4">
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-medium text-[#333333] text-sm md:text-base">
                           Color Adjustments
@@ -1359,7 +1359,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </div>
 
                     {/* 4 Tools */}
-                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 sm:p-4 md:p-4">
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-medium text-[#333333] text-sm md:text-base">
                           Tools
@@ -1448,7 +1448,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </div>
 
                     {/* Widget position */}
-                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 md:p-4">
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 sm:p-4 md:p-4">
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-[#333333] text-sm md:text-base">
                           Widget position
@@ -1508,14 +1508,14 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                 <h3 className="text-base md:text-lg font-semibold text-[#333333] mb-2 px-2">
                   Color Customization
                 </h3>
-                <p className="text-xs md:text-sm text-[#757575] mb-4 px-2">
+                <p className="text-xs sm:text-sm md:text-sm text-[#757575] mb-4 px-2">
                   Customize the appearance and colors of your accessibility
                   widget to match your brand
                 </p>
 
-                <div className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 md:p-4 color-customization-panel">
+                <div className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 sm:p-3 md:p-4 color-customization-panel">
                   {/* Widget Button Color */}
-                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-4">
+                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-3 sm:p-4 md:p-6 mb-4">
                     <ColorPicker
                       label="Widget Button Color"
                       description="Primary color for the main widget button"
@@ -1526,7 +1526,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                   </div>
 
                   {/* Color Mode Toggle */}
-                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-4">
+                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-3 sm:p-4 md:p-6 mb-4">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-lg font-semibold text-[#333333]">
                         Chose your mode
@@ -1553,7 +1553,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                   </div>
 
                   {/* Widget Color Adjustments */}
-                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-4">
+                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-3 sm:p-4 md:p-6 mb-4">
                     <h3 className="text-lg font-semibold text-[#333333] mb-2">
                       Widget Color Adjustments
                       <span className="ml-2 text-sm font-normal text-[#757575]">
@@ -1584,7 +1584,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                   </div>
 
                   {/* Upload Widget Logo */}
-                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-4">
+                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-3 sm:p-4 md:p-6 mb-4">
                     <h3 className="text-lg font-semibold text-[#333333] mb-2">
                       Upload Widget Logo
                     </h3>
@@ -1684,7 +1684,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                   </div>
 
                   {/* Set Logo Link URL */}
-                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-4">
+                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-3 sm:p-4 md:p-6 mb-4">
                     <h3 className="text-lg font-semibold text-[#333333] mb-4">
                       Set Logo Link URL
                     </h3>
@@ -1815,11 +1815,11 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
         {/* Right Side - Widget Preview (Only visible when live preview is on) */}
         {livePreview && (
-          <div className="w-full md:w-[60%] xl:w-1/3 p-3 md:p-6 transition-all duration-300 widget-preview-section">
+          <div className="w-full md:w-[60%] xl:w-1/3 p-3 sm:p-4 md:p-6 transition-all duration-300 widget-preview-section">
             <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] h-full flex flex-col overflow-hidden">
               <iframe
                 ref={widgetIframeRef}
-                className="w-full flex-1 border-0 rounded-lg no-scrollbar"
+                className="w-full flex-1 border-0 rounded-lg no-scrollbar min-h-[400px] sm:min-h-[500px] md:min-h-[600px]"
                 title="Widget Live Preview"
                 sandbox="allow-scripts allow-same-origin"
                 style={{
