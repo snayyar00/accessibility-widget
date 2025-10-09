@@ -73,7 +73,7 @@ async function registerUser(email: string, password: string, name: string, organ
 
       // Create user_notifications record with onboarding emails enabled (within transaction)
       try {
-        await insertUserNotification(userId, trx)
+        await insertUserNotification(userId, organization.id, trx)
         logger.info(`Created user_notifications record for user: ${email}`)
       } catch (error) {
         logger.error(`Failed to create user_notifications: ${email}`, error)
@@ -93,7 +93,7 @@ async function registerUser(email: string, password: string, name: string, organ
     // The email sequence will be handled by the daily cron job
     if (newUserId) {
       try {
-        const welcomeEmailSent = await EmailSequenceService.sendWelcomeEmail(email, name, newUserId)
+        const welcomeEmailSent = await EmailSequenceService.sendWelcomeEmail(email, name, newUserId, organization.id)
         if (welcomeEmailSent) {
           logger.info(`Welcome email sent successfully to new user: ${email}`)
         } else {

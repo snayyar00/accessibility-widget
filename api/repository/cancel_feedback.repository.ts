@@ -1,4 +1,5 @@
 import database from '../config/database.config'
+import { TABLES } from '../constants/database.constant'
 
 export interface CancelFeedbackProps {
   user_id: number
@@ -6,12 +7,14 @@ export interface CancelFeedbackProps {
   site_url: string
   stripe_customer_id?: string
   site_status_on_cancel: string
+  organization_id: number
   deleted_at?: Date
 }
 
 export const addCancelFeedback = async (feedbackData: CancelFeedbackProps): Promise<void> => {
   try {
-    await database('cancel_feedback').insert({
+    await database(TABLES.cancelFeedback).insert({
+      organization_id: feedbackData.organization_id,
       user_id: feedbackData.user_id,
       user_feedback: feedbackData.user_feedback,
       site_url: feedbackData.site_url,
@@ -23,24 +26,6 @@ export const addCancelFeedback = async (feedbackData: CancelFeedbackProps): Prom
     })
   } catch (error) {
     console.error('Error adding cancel feedback:', error)
-    throw error
-  }
-}
-
-export const getCancelFeedbackByUserId = async (userId: number) => {
-  try {
-    return await database('cancel_feedback').where('user_id', userId).orderBy('created_at', 'desc')
-  } catch (error) {
-    console.error('Error fetching cancel feedback:', error)
-    throw error
-  }
-}
-
-export const getAllCancelFeedback = async () => {
-  try {
-    return await database('cancel_feedback').orderBy('created_at', 'desc')
-  } catch (error) {
-    console.error('Error fetching all cancel feedback:', error)
     throw error
   }
 }

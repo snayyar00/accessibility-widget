@@ -490,7 +490,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
     const horizontalPadding = 4 // Reduced padding for tighter fit
     const pillTextWidth = textWidth + horizontalPadding * 2 // Total width with padding
     const pillH = 4 // Increased height for better appearance
-    const pillX = statusTextX + doc.getTextWidth(status) + 28 // Increased spacing from status text to prevent overlap
+    const pillX = statusTextX + doc.getTextWidth(status) + 34 // Increased spacing from status text to prevent overlap
     const pillY = statusTextY - 6 // Align with status text
     // Convert #222D73 to RGB: R=34, G=45, B=115
     doc.setFillColor(34, 45, 115)
@@ -507,7 +507,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
     doc.setTextColor(71, 85, 105) // Gray color for message
     // Split message into lines if it contains \n
     const messageLines = message.split('\n')
-    let messageY = statusTextY + 12 // Maintained spacing below status text
+    let messageY = statusTextY + 14 // Maintained spacing below status text
     messageLines.forEach((line, index) => {
       doc.text(line, statusTextX, messageY + index * 6) // 6px spacing between lines
     })

@@ -1,6 +1,6 @@
 import { findUsersByToken, getUserTokens } from '../repository/user_plan_tokens.repository'
 
-export async function appSumoPromoCount(subscriptions: any, promoCode: any, userId: number): Promise<any> {
+export async function appSumoPromoCount(subscriptions: any, promoCode: any, userId: number, organizationId: number): Promise<any> {
   let promoSiteCount = 0
 
   const seenCodes = new Set<string>()
@@ -59,7 +59,7 @@ export async function appSumoPromoCount(subscriptions: any, promoCode: any, user
     }
   })
 
-  const usedTokens = await getUserTokens(userId)
+  const usedTokens = await getUserTokens(userId, organizationId)
   let max_sites = orderedCodes.length * 2
   if (usedTokens.length > 0) {
     let maxNum: number = usedTokens.reduce((max, code) => {

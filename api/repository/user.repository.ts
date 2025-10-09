@@ -120,17 +120,18 @@ export async function activeUser(id: number): Promise<number> {
 }
 
 // USER NOTIFICATIONS
-export async function findUserNotificationByUserId(user_id: number): Promise<unknown> {
-  return database('user_notifications').where({ user_id }).first()
+export async function findUserNotificationByUserId(user_id: number, organization_id: number): Promise<unknown> {
+  return database(TABLES.userNotifications).where({ user_id, organization_id }).first()
 }
 
-export async function insertUserNotification(user_id: number, trx?: Knex.Transaction): Promise<unknown> {
-  const query = database('user_notifications').insert({ user_id })
+export async function insertUserNotification(user_id: number, organization_id: number, trx?: Knex.Transaction): Promise<unknown> {
+  const query = database(TABLES.userNotifications).insert({ user_id, organization_id })
   return trx ? query.transacting(trx) : query
 }
 
 export async function updateUserNotificationFlags(
   user_id: number,
+  organization_id: number,
   flags: {
     monthly_report_flag?: boolean
     new_domain_flag?: boolean
@@ -139,19 +140,19 @@ export async function updateUserNotificationFlags(
     monitoring_alert_flag?: boolean
   },
 ): Promise<number> {
-  return database('user_notifications').where({ user_id }).update(flags)
+  return database(TABLES.userNotifications).where({ user_id, organization_id }).update(flags)
 }
 
-export async function getUserNotificationSettings(user_id: number): Promise<unknown> {
-  return database('user_notifications').where({ user_id }).first()
+export async function getUserNotificationSettings(user_id: number, organization_id: number): Promise<unknown> {
+  return database(TABLES.userNotifications).where({ user_id, organization_id }).first()
 }
 
 /**
  * Check if a user has onboarding emails enabled
  */
-export async function checkOnboardingEmailsEnabled(user_id: number): Promise<boolean> {
+export async function checkOnboardingEmailsEnabled(user_id: number, organization_id: number): Promise<boolean> {
   try {
-    const result = await database('user_notifications').where({ user_id }).first()
+    const result = await database(TABLES.userNotifications).where({ user_id, organization_id }).first()
     return !!result && !!result.onboarding_emails_flag
   } catch (error) {
     console.error('Error checking onboarding emails flag:', error)
@@ -162,10 +163,10 @@ export async function checkOnboardingEmailsEnabled(user_id: number): Promise<boo
 /**
  * Set onboarding emails flag for a user
  */
-export async function setOnboardingEmailsFlag(user_id: number, enabled: boolean): Promise<boolean> {
+export async function setOnboardingEmailsFlag(user_id: number, organization_id: number, enabled: boolean): Promise<boolean> {
   try {
-    const updatedRows = await database('user_notifications')
-      .where({ user_id })
+    const updatedRows = await database(TABLES.userNotifications)
+      .where({ user_id, organization_id })
       .update({ onboarding_emails_flag: enabled ? 1 : 0 })
 
     if (updatedRows > 0) {
@@ -173,9 +174,9 @@ export async function setOnboardingEmailsFlag(user_id: number, enabled: boolean)
     }
 
     // If no rows were updated, insert the record with the onboarding flag
-    await database('user_notifications')
-      .insert({ user_id, onboarding_emails_flag: enabled ? 1 : 0 })
-      .onConflict('user_id')
+    await database(TABLES.userNotifications)
+      .insert({ user_id, organization_id, onboarding_emails_flag: enabled ? 1 : 0 })
+      .onConflict(['user_id', 'organization_id'])
       .merge({ onboarding_emails_flag: enabled ? 1 : 0 })
 
     return true
@@ -202,9 +203,9 @@ export async function getLatestRegisteredUser(): Promise<UserProfile | null> {
 /**
  * Get user's sent emails from database JSON column
  */
-export async function getUserSentEmails(user_id: number): Promise<Record<string, string> | null> {
+export async function getUserSentEmails(user_id: number, organization_id: number): Promise<Record<string, string> | null> {
   try {
-    const result = await database('user_notifications').where({ user_id }).first('sent_emails')
+    const result = await database(TABLES.userNotifications).where({ user_id, organization_id }).first('sent_emails')
     return result?.sent_emails || null
   } catch (error) {
     console.error('Error getting user sent emails:', error)
@@ -215,10 +216,10 @@ export async function getUserSentEmails(user_id: number): Promise<Record<string,
 /**
  * Update user's sent emails in database JSON column
  */
-export async function updateUserSentEmails(user_id: number, sentEmails: Record<string, string>): Promise<boolean> {
+export async function updateUserSentEmails(user_id: number, organization_id: number, sentEmails: Record<string, string>): Promise<boolean> {
   try {
-    const updatedRows = await database('user_notifications')
-      .where({ user_id })
+    const updatedRows = await database(TABLES.userNotifications)
+      .where({ user_id, organization_id })
       .update({ sent_emails: JSON.stringify(sentEmails) })
 
     if (updatedRows > 0) {
@@ -226,9 +227,9 @@ export async function updateUserSentEmails(user_id: number, sentEmails: Record<s
     }
 
     // If no rows were updated, insert or upsert the record
-    await database('user_notifications')
-      .insert({ user_id, sent_emails: JSON.stringify(sentEmails) })
-      .onConflict('user_id')
+    await database(TABLES.userNotifications)
+      .insert({ user_id, organization_id, sent_emails: JSON.stringify(sentEmails) })
+      .onConflict(['user_id', 'organization_id'])
       .merge({ sent_emails: JSON.stringify(sentEmails) })
 
     return true
@@ -241,16 +242,16 @@ export async function updateUserSentEmails(user_id: number, sentEmails: Record<s
 /**
  * MIGRATION UTILITY: Reset user's email tracking (for testing/recovery)
  */
-export async function resetUserEmailTracking(user_id: number): Promise<boolean> {
+export async function resetUserEmailTracking(user_id: number, organization_id: number): Promise<boolean> {
   try {
-    const updatedRows = await database('user_notifications').where({ user_id }).update({ sent_emails: null })
+    const updatedRows = await database(TABLES.userNotifications).where({ user_id, organization_id }).update({ sent_emails: null })
 
     if (updatedRows > 0) {
       return true
     }
 
     // If no rows were updated, insert the record with null sent_emails
-    await database('user_notifications').insert({ user_id, sent_emails: null }).onConflict('user_id').merge({ sent_emails: null })
+    await database(TABLES.userNotifications).insert({ user_id, organization_id, sent_emails: null }).onConflict(['user_id', 'organization_id']).merge({ sent_emails: null })
 
     return true
   } catch (error) {

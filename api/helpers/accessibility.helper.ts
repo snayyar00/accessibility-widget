@@ -136,37 +136,54 @@ function createHtmlcsArrayObj(issue: any) {
 
 function calculateAccessibilityScore(issues: { errors: axeOutput[]; warnings: axeOutput[]; notices: axeOutput[] }) {
   let penalty = 0
+  let minorPenalty = 0
   const totalWCAGIssues = 83
   const totalIssues = issues.errors.length + issues.warnings.length + issues.notices.length
   const weightReduction = totalIssues > 50 ? 0.4 : totalIssues > 25 ? 0.5 : 1.0
   const issueWeights: Record<string, number> = { error: 7, warning: 3, notice: 1 }
-  const impactWeights: Record<string, number> = { critical: 10, serious: 7, moderate: 3, minor: 1 }
+  const impactWeights: Record<string, number> = { critical: 10, serious: 7, moderate: 3, minor: 0 } // Minor now has no weight
   const passedweights = Math.max(totalWCAGIssues - totalIssues, 0) * 7
 
   issues.errors.forEach((issue) => {
     const impactWeight = impactWeights[issue.impact.toLowerCase()] || 0
-    penalty += issueWeights.error * impactWeight
+    if (issue.impact.toLowerCase() === 'minor') {
+      minorPenalty += issueWeights.error
+    } else {
+      penalty += issueWeights.error * impactWeight
+    }
   })
 
   issues.warnings.forEach((issue) => {
     const impactWeight = impactWeights[issue.impact.toLowerCase()] || 0
-    penalty += issueWeights.warning * impactWeight
+    if (issue.impact.toLowerCase() === 'minor') {
+      minorPenalty += issueWeights.warning
+    } else {
+      penalty += issueWeights.warning * impactWeight
+    }
   })
 
   issues.notices.forEach((issue) => {
     const impactWeight = impactWeights[issue.impact.toLowerCase()] || 0
-    penalty += issueWeights.notice * impactWeight
+    if (issue.impact.toLowerCase() === 'minor') {
+      minorPenalty += issueWeights.notice
+    } else {
+      penalty += issueWeights.notice * impactWeight
+    }
   })
 
+  // Cap minor penalty at maximum of 5 points
+  const cappedMinorPenalty = Math.min(minorPenalty, 5)
+  const totalPenalty = penalty + cappedMinorPenalty
+
   // Calculate score using the formula: Score = (Passed Weights) / (Passed Weights + Failed Weights)
-  const failedWeights = penalty // penalty represents the failed weights
+  const failedWeights = totalPenalty // totalPenalty represents the failed weights
   const scoreRatio = passedweights / (passedweights + failedWeights)
   const finalScore = Math.max(10, scoreRatio * 100) // Convert ratio to 0-70 scale
 
-  //console.log('passedweights', passedweights, 'failedWeights', failedWeights, 'scoreRatio', scoreRatio, 'finalScore', finalScore)
+  //console.log('passedweights', passedweights, 'failedWeights', failedWeights, 'minorPenalty', minorPenalty, 'cappedMinorPenalty', cappedMinorPenalty, 'finalScore', finalScore)
 
-  // Normalize the score to a maximum of 70% (before WebAbility bonus)
-  const maxScore = 70
+  // Normalize the score to a maximum of 95% (before WebAbility bonus)
+  const maxScore = 95
   return Math.min(Math.floor(finalScore), maxScore)
 }
 
@@ -279,6 +296,9 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
           console.log(`Job still ${data.status}, waiting ${pollingInterval}ms before next check...`)
           await new Promise((resolve) => setTimeout(resolve, pollingInterval))
           continue
+        } else if (data.status === 'not_found') {
+          console.log(`Job not found (status: ${data.status}), stopping polling...`)
+          throw new Error(`Scanner job not found: ${data.error || 'Job ID may be invalid or expired'}`)
         } else {
           console.log(`Unknown job status: ${data.status}, continuing to poll...`)
           await new Promise((resolve) => setTimeout(resolve, pollingInterval))
@@ -286,6 +306,12 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
         }
       } catch (error) {
         console.error(`Polling attempt ${attempt} failed:`, error)
+
+        // If the error is about job not found, don't retry
+        if (error instanceof Error && error.message.includes('Scanner job not found')) {
+          console.log('Job not found error detected, stopping polling immediately')
+          throw error
+        }
 
         if (attempt === maxPollingAttempts) {
           throw error

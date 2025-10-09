@@ -7,7 +7,6 @@ export const TABLES = {
   visitors: 'unique_visitors',
   impressions: 'impressions',
   sitesPlans: 'sites_plans',
-  sitePermissions: 'sites_permissions',
   problemReports: 'problem_reports',
   widgetSettings: 'widget_settings',
   newsletterSubscribers: 'newsletter_subscribers',
@@ -22,6 +21,8 @@ export const TABLES = {
   workspace_invitations: 'workspace_invitations',
   workspace_allowed_sites: 'workspace_allowed_sites',
   monitoringEvents: 'monitoring_events',
+  invitations: 'invitations',
+  userNotifications: 'user_notifications',
 }
 
 export const DEFAULT_LIMIT = 25

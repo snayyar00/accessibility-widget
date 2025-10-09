@@ -7,6 +7,7 @@ export const userPlanTokensColumns = {
   id: `${TABLE}.id`,
   email: `${TABLE}.email`,
   user_id: `${TABLE}.user_id`,
+  organization_id: `${TABLE}.organization_id`,
   created_at: `${TABLE}.created_at`,
   token: `${TABLE}.token`,
 }
@@ -16,11 +17,12 @@ export type userPlanTokensProps = {
   email: string
   token: object
   user_id: number
+  organization_id: number
 }
 
-export async function addUserToken(user_id: number, newTokens: string[], email: string): Promise<any> {
+export async function addUserToken(user_id: number, organizationId: number, newTokens: string[], email: string): Promise<any> {
   // 1) fetch existing
-  const [row] = await database(TABLE).select('token').where({ user_id })
+  const [row] = await database(TABLE).select('token').where({ user_id, organization_id: organizationId })
 
   // 2) parse existing into array (and drop any empty strings)
   const existing: string[] = row ? row.token.filter((t: any) => t.trim() !== '') : []
@@ -34,12 +36,13 @@ export async function addUserToken(user_id: number, newTokens: string[], email: 
   if (row) {
     // Update existing row
     return database(TABLE)
-      .where({ user_id })
+      .where({ user_id, organization_id: organizationId })
       .update({ token: JSON.stringify(merged) })
   }
   // Insert new row
   return database(TABLE).insert({
     user_id,
+    organization_id: organizationId,
     token: JSON.stringify(merged),
     email,
   })
@@ -54,9 +57,9 @@ export async function findUsersByToken(searchToken: string): Promise<number[]> {
   return rows.map((r) => r.user_id)
 }
 
-export async function getUserTokens(user_id: number): Promise<any[]> {
-  // Fetch the token JSON for the given user_id
-  const row = await database(TABLE).select('token').where({ user_id }).first()
+export async function getUserTokens(user_id: number, organizationId: number): Promise<any[]> {
+  // Fetch the token JSON for the given user_id and organization_id
+  const row = await database(TABLE).select('token').where({ user_id, organization_id: organizationId }).first()
 
   if (!row || !row.token) {
     // No row or no token field → return empty array

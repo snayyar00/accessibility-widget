@@ -853,39 +853,6 @@ WCAG: ${issue.code || issue.message || 'N/A'}`;
             </div>
           </div>
         )}
-
-        {/* Update the widget info display to emphasize the score bonus */}
-        {webabilityenabled && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-green-50 border border-green-200 rounded-lg p-4 sm:p-6 mb-4 relative"
-          >
-            <div className="flex items-center gap-2 sm:gap-4 flex-col sm:flex-row text-center sm:text-left">
-              <div className="bg-green-100 p-2 sm:p-3 rounded-full mb-2 sm:mb-0">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-green-800 text-base sm:text-lg font-medium mb-1">
-                  WebAbility Widget Detected! 🎉
-                </h3>
-                <p className="text-green-700 text-xs sm:text-base">
-                  Your website's accessibility score has been enhanced because
-                  you're using WebAbility's accessibility solution.
-                </p>
-                <div className="mt-2 sm:mt-3 flex flex-col sm:flex-row gap-2 justify-center sm:justify-start">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-green-100 text-green-800">
-                    Base Score: {totalStats.originalScore}%
-                  </span>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-green-200 text-green-800">
-                    Enhanced Score:{' '}
-                    {calculateEnhancedScore(totalStats.originalScore)}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
       </div>
       <FloatingChatbot
         scanResults={{ ...report, url: fullUrl }}

@@ -3,8 +3,8 @@ import { Request, Response } from 'express'
 import { addNewsletterSub, unsubscribeFromNewsletter } from '../repository/newsletter_subscribers.repository'
 import { findUser, setOnboardingEmailsFlag, updateUserNotificationFlags } from '../repository/user.repository'
 import { sendMail } from '../services/email/email.service'
-import { emailValidation } from '../validations/email.validation'
 import { verifyUnsubscribeToken } from '../utils/secure-unsubscribe.utils'
+import { emailValidation } from '../validations/email.validation'
 
 export async function handleFormSubmission(req: Request, res: Response) {
   const validateResult = emailValidation(req.body.email)
@@ -135,34 +135,45 @@ export async function unsubscribe(req: Request, res: Response) {
         `)
     }
 
+    if (!user.current_organization_id) {
+      return res.status(400).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+              <h2 style="color: #dc3545;">Error</h2>
+              <p>User has no current organization. Please contact support.</p>
+            </body>
+          </html>
+        `)
+    }
+
     let success = false
     let message = ''
 
     // Handle different types of unsubscribe
     if (type === 'monitoring') {
       // Disable monitoring alerts
-      const updated = await updateUserNotificationFlags(user.id, {
+      const updated = await updateUserNotificationFlags(user.id, user.current_organization_id, {
         monitoring_alert_flag: false,
       })
       success = updated > 0
       message = 'You have been successfully unsubscribed from WebAbility monitoring alerts.<br/>You will no longer receive email notifications when your websites go down or come back online.'
     } else if (type === 'monthly') {
       // Disable monthly reports
-      const updated = await updateUserNotificationFlags(user.id, {
+      const updated = await updateUserNotificationFlags(user.id, user.current_organization_id, {
         monthly_report_flag: false,
       })
       success = updated > 0
       message = 'You have been successfully unsubscribed from WebAbility monthly accessibility reports.<br/>You will no longer receive monthly accessibility reports for your websites.'
     } else if (type === 'domain') {
       // Disable new domain alerts
-      const updated = await updateUserNotificationFlags(user.id, {
+      const updated = await updateUserNotificationFlags(user.id, user.current_organization_id, {
         new_domain_flag: false,
       })
       success = updated > 0
       message = 'You have been successfully unsubscribed from WebAbility new domain alerts.<br/>You will no longer receive email notifications when new domains are added to your account.'
     } else {
       // Default: Disable onboarding emails
-      success = await setOnboardingEmailsFlag(user.id, false)
+      success = await setOnboardingEmailsFlag(user.id, user.current_organization_id, false)
 
       // Also unsubscribe from general newsletter for complete unsubscribe
       await unsubscribeFromNewsletter(email)
@@ -267,36 +278,47 @@ export async function secureUnsubscribe(req: Request, res: Response) {
         `)
     }
 
+    if (!user.current_organization_id) {
+      return res.status(400).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+              <h2 style="color: #dc3545;">Error</h2>
+              <p>User has no current organization. Please contact support.</p>
+            </body>
+          </html>
+        `)
+    }
+
     let success = false
     let message = ''
 
     // Handle different types of unsubscribe based on token payload
     if (payload.type === 'monitoring') {
-      const updated = await updateUserNotificationFlags(user.id, {
+      const updated = await updateUserNotificationFlags(user.id, user.current_organization_id, {
         monitoring_alert_flag: false,
       })
       success = updated > 0
       message = 'You have been successfully unsubscribed from WebAbility monitoring alerts.<br/>You will no longer receive email notifications when your websites go down or come back online.'
     } else if (payload.type === 'monthly') {
-      const updated = await updateUserNotificationFlags(user.id, {
+      const updated = await updateUserNotificationFlags(user.id, user.current_organization_id, {
         monthly_report_flag: false,
       })
       success = updated > 0
       message = 'You have been successfully unsubscribed from WebAbility monthly accessibility reports.<br/>You will no longer receive monthly accessibility reports for your websites.'
     } else if (payload.type === 'domain') {
-      const updated = await updateUserNotificationFlags(user.id, {
+      const updated = await updateUserNotificationFlags(user.id, user.current_organization_id, {
         new_domain_flag: false,
       })
       success = updated > 0
       message = 'You have been successfully unsubscribed from WebAbility new domain alerts.<br/>You will no longer receive email notifications when new domains are added to your account.'
     } else if (payload.type === 'onboarding') {
-      success = await setOnboardingEmailsFlag(user.id, false)
+      success = await setOnboardingEmailsFlag(user.id, user.current_organization_id, false)
 
       // Also unsubscribe from general newsletter for complete unsubscribe (consistent with old unsubscribe function)
       await unsubscribeFromNewsletter(user.email)
       message = 'You have been successfully unsubscribed from WebAbility onboarding emails.<br/>You will no longer receive onboarding and educational emails from us.'
     } else if (payload.type === 'issue_reports') {
-      const updated = await updateUserNotificationFlags(user.id, {
+      const updated = await updateUserNotificationFlags(user.id, user.current_organization_id, {
         issue_reported_flag: false,
       })
       success = updated > 0
