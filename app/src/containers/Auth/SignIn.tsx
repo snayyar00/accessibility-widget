@@ -7,7 +7,6 @@ import { useMutation } from '@apollo/client';
 import { useHistory } from 'react-router-dom';
 import SignInForm from '@/components/Auth/SignInForm';
 import loginQuery from '@/queries/auth/login';
-import AuthAdsArea from '@/components/Auth/AuthAds';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { setAuthenticationCookie } from '@/utils/cookie';
 import { LoginMutation, Mutation } from '@/generated/graphql';
@@ -135,7 +134,7 @@ const SignIn: React.FC = () => {
     console.log('Custom Error Message:', getErrorMessage(currentErrorCode));
   }
   return (
-    <div className="flex justify-center min-h-screen sm:flex-col sm:pt-[40px]">
+    <div className="flex min-h-screen sm:flex-col">
       <div className="w-[45%] flex justify-center items-center sm:w-full">
         <SignInForm
           onSubmit={handleSubmit(onSubmit)}
@@ -147,8 +146,12 @@ const SignIn: React.FC = () => {
           showForgotPasswordLink={isAccountLocked(currentErrorCode)}
         />
       </div>
-      <div className="w-[55%] bg-primary overflow-hidden sm:hidden">
-        <AuthAdsArea />
+      <div className="w-[55%] sm:hidden flex items-center justify-center p-5">
+        <img
+          src="/images/auth/auth_image1.png"
+          alt="Authentication"
+          className="w-full h-[90vh] object-contain"
+        />
       </div>
     </div>
   );
