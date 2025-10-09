@@ -725,7 +725,7 @@ WCAG: ${issue.code || issue.message || 'N/A'}`;
                             <h3 className="text-xs sm:text-sm font-semibold mb-2">
                               Affected Element
                             </h3>
-                            <pre className="bg-gray-50 p-2 sm:p-3 rounded text-xs overflow-x-auto border border-gray-element">
+                            <pre className="bg-gray-50 p-2 sm:p-3 rounded text-xs overflow-x-auto border border-gray-element min-h-[60px] flex items-center text-center">
                               {issue.context[0]}
                             </pre>
                           </div>
@@ -736,7 +736,7 @@ WCAG: ${issue.code || issue.message || 'N/A'}`;
                             <h3 className="text-xs sm:text-sm font-semibold mb-2">
                               CSS Selector
                             </h3>
-                            <pre className="bg-gray-50 p-2 sm:p-3 rounded text-xs overflow-x-auto border border-gray-element">
+                            <pre className="bg-gray-50 p-2 sm:p-3 rounded text-xs overflow-x-auto border border-gray-element min-h-[60px] flex items-center text-center">
                               {issue.selectors[0]}
                             </pre>
                           </div>

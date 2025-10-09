@@ -266,8 +266,14 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
   // Helper function to poll job status and get results
   const pollJobStatus = async (jobId: string): Promise<any> => {
     const maxPollingAttempts = fullSiteScan === false ? 60 : 120 // 5 minutes for single page, 10 minutes for full site scan
-    const pollingInterval = 5000 // Poll every 5 seconds
     const statusUrl = `${process.env.SCANNER_SERVER_URL}/scan/status/${jobId}`
+
+    // Variable polling intervals: 45s for first check, 30s for second, 15s for all others
+    const getPollingInterval = (attempt: number): number => {
+      if (attempt === 1) return 45000 // 45 seconds for first check
+      if (attempt === 2) return 30000 // 30 seconds for second check
+      return 15000 // 15 seconds for all subsequent checks
+    }
 
     for (let attempt = 1; attempt <= maxPollingAttempts; attempt++) {
       try {
@@ -293,6 +299,7 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
         } else if (data.status === 'failed') {
           throw new Error(`Scanner job failed: ${data.error || 'Unknown error'}`)
         } else if (data.status === 'started' || data.status === 'processing') {
+          const pollingInterval = getPollingInterval(attempt)
           console.log(`Job still ${data.status}, waiting ${pollingInterval}ms before next check...`)
           await new Promise((resolve) => setTimeout(resolve, pollingInterval))
           continue
@@ -300,6 +307,7 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
           console.log(`Job not found (status: ${data.status}), stopping polling...`)
           throw new Error(`Scanner job not found: ${data.error || 'Job ID may be invalid or expired'}`)
         } else {
+          const pollingInterval = getPollingInterval(attempt)
           console.log(`Unknown job status: ${data.status}, continuing to poll...`)
           await new Promise((resolve) => setTimeout(resolve, pollingInterval))
           continue
@@ -318,11 +326,12 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
         }
 
         // Wait before retrying
+        const pollingInterval = getPollingInterval(attempt)
         await new Promise((resolve) => setTimeout(resolve, pollingInterval))
       }
     }
 
-    throw new Error(`Job did not complete within ${(maxPollingAttempts * pollingInterval) / 1000} seconds`)
+    throw new Error(`Job did not complete after ${maxPollingAttempts} polling attempts`)
   }
 
   try {
