@@ -126,6 +126,115 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     }
   };
 
+  // Function to apply font to widget
+  const applyFontToWidget = (iframeDoc: Document, fontFamily: string) => {
+    if (!iframeDoc) return;
+
+    // Remove existing custom font style if present
+    const existingStyle = iframeDoc.getElementById('custom-widget-font-style');
+    if (existingStyle) {
+      existingStyle.remove();
+    }
+
+    // Skip if font is set to 'auto' (use website default)
+    if (fontFamily === 'auto') {
+      return;
+    }
+
+    // Create and inject a style tag with high specificity selectors
+    // Following the same pattern as color application for consistency
+    const styleElement = iframeDoc.createElement('style');
+    styleElement.id = 'custom-widget-font-style';
+    styleElement.textContent = `
+      /* Widget container and all children with high specificity */
+      .asw-container,
+      .asw-container *,
+      .asw-container .asw-menu,
+      .asw-container .asw-menu *,
+      .asw-container .asw-widget,
+      .asw-container .asw-widget *,
+      .asw-container .asw-panel,
+      .asw-container .asw-panel *,
+      
+      /* Specific widget elements */
+      .asw-menu-title,
+      .asw-menu-header,
+      .asw-menu-content,
+      .asw-footer,
+      .asw-btn,
+      .asw-card-title,
+      .asw-color-title,
+      .asw-report-issue-btn,
+      .asw-selected-lang,
+      .asw-language-option,
+      .asw-language-name,
+      .asw-custom-dropdown-item,
+      .asw-custom-dropdown-toggle,
+      .asw-accessprofiles-dropdown-toggle,
+      .asw-oversize-widget-container,
+      .asw-header-lang-selector,
+      .asw-font-size-btn,
+      .asw-adjust-font,
+      .asw-structure-item,
+      .asw-structure-section,
+      .asw-color-btn,
+      .asw-filter,
+      .font-size-text,
+      .asw-form-text,
+      
+      /* Form elements */
+      #report-problem-form,
+      #report-problem-form *,
+      #report-problem-form label,
+      #report-problem-form textarea,
+      #report-problem-form select,
+      #report-problem-form input,
+      
+      /* Buttons and interactive elements */
+      button.asw-btn,
+      button.asw-report-issue-btn,
+      .asw-cancel-btn,
+      .submit-button,
+      .cancel-button,
+      .issue-type-button,
+      .asw-info-button,
+      
+      /* Profile grid */
+      .profile-grid,
+      .profile-grid *,
+      .profile-grid .asw-btn,
+      
+      /* Language selector */
+      .asw-header-lang-selector *,
+      .asw-lang-dropdown-content,
+      .asw-lang-dropdown-content *,
+      
+      /* Color sections */
+      .asw-color-section,
+      .asw-color-section *,
+      
+      /* Translate elements */
+      .asw-translate,
+      span.asw-translate,
+      
+      /* Modal elements */
+      .asw-confirmation-modal,
+      .asw-confirmation-modal *,
+      .asw-modal-title,
+      .asw-modal-text,
+      .asw-modal-btn-primary,
+      .asw-modal-btn-secondary {
+        font-family: ${fontFamily} !important;
+      }
+    `;
+
+    // Append the style to the iframe's head
+    const head = iframeDoc.head || iframeDoc.getElementsByTagName('head')[0];
+    if (head) {
+      head.appendChild(styleElement);
+    }
+  };
+
   const resetColor = (key: keyof Colors) => () => {
     setColors((prev) => ({ ...prev, [key]: DefaultColors[key] }));
   };
@@ -755,6 +864,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
           // Apply logo to widget if it exists
           applyLogoToWidget(iframeDoc, colors.logoImage);
+
+          // Apply font to widget
+          applyFontToWidget(iframeDoc, selectedFont);
         }
       }, 100);
 
@@ -768,7 +880,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [livePreview, colors, colorMode, toggles, colors.logoImage]);
+  }, [livePreview, colors, colorMode, toggles, colors.logoImage, selectedFont]);
 
   return (
     <div>
