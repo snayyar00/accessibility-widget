@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import TourGuide from '@/components/Common/TourGuide';
 import { useLocation, useHistory } from 'react-router-dom';
 import { defaultTourStyles } from '@/config/tourStyles';
-import { addDomainTourSteps, tourKeys } from '@/constants/toursteps';
+import { mySitesTourSteps, tourKeys } from '@/constants/toursteps';
 
 interface DomainFormData {
   domainName: string;
@@ -83,7 +83,7 @@ const Teams = ({ domains, setReloadSites, customerData }: any) => {
 
   // Handle tour completion
   const handleTourComplete = () => {
-    console.log('Add domain tour completed!');
+    console.log('My Sites tour completed!');
     // Optionally show a success message or redirect
   };
 
@@ -105,17 +105,13 @@ const Teams = ({ domains, setReloadSites, customerData }: any) => {
 
   return (
     <>
-      {/* Unified tour that adapts to current UI state */}
+      {/* My Sites page tour */}
       <TourGuide
-        steps={addDomainTourSteps}
-        tourKey={tourKeys.addDomain}
+        steps={mySitesTourSteps}
+        tourKey={tourKeys.mySites}
         autoStart={true}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}
-        currentState={{
-          isModalOpen: isModalOpen,
-          isPaymentView: paymentView,
-        }}
       />
 
       <div className="add-domain-container">

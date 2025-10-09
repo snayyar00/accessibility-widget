@@ -642,16 +642,18 @@ export const customizeWidgetTourSteps: Step[] = [
 // Statement Generator Tour Steps
 export const statementGeneratorTourSteps: Step[] = [
   {
-    target: '.statement-generator-wrapper',
+    target: 'body',
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">
-          Welcome to AI Statement Generator! 🎉
+          Welcome to AI Accessibility Statement Generator! 🎉
         </h3>
-        <p>
+        <p className="mb-3">
           Create professional, WCAG 2.1 AA compliant accessibility statements in
-          42+ languages using our advanced AI engine. Let's walk through the
-          process!
+          42+ languages using our advanced AI engine.
+        </p>
+        <p className="text-sm text-gray-600">
+          Let's take a tour to understand all the powerful features!
         </p>
       </div>
     ),
@@ -665,24 +667,37 @@ export const statementGeneratorTourSteps: Step[] = [
         <h3 className="text-lg font-semibold mb-2">
           Company Information Form 📝
         </h3>
-        <p>
+        <p className="mb-3">
           Fill in your company details here. All fields marked with * are
-          required to generate a comprehensive accessibility statement
-          customized for your organization.
+          required to generate a comprehensive accessibility statement.
+        </p>
+        <ul className="text-sm space-y-1">
+          <li>✅ Company Name</li>
+          <li>✅ Website URL</li>
+          <li>✅ Contact Email</li>
+          <li>✅ Industry</li>
+        </ul>
+        <p className="text-sm text-gray-600 mt-2">
+          Toggle "Optional Information" to add phone, addresses, and widget
+          branding.
         </p>
       </div>
     ),
-    placement: 'right' as Placement,
+    placement: 'left' as Placement,
   },
   {
     target: '.language-dropdown-section',
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Choose Your Language 🌐</h3>
-        <p>
-          Select from 42+ available languages! Use the search feature to quickly
-          find your language. Each language shows both native and English names
-          for easy identification.
+        <p className="mb-3">
+          Select from 42+ available languages! The AI will translate your entire
+          statement professionally while maintaining legal accuracy and
+          technical terminology.
+        </p>
+        <p className="text-sm text-gray-600">
+          💡 <strong>Tip:</strong> Use the search feature to quickly find your
+          language.
         </p>
       </div>
     ),
@@ -693,10 +708,13 @@ export const statementGeneratorTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Generate AI Statement 🚀</h3>
-        <p>
-          Click this button to create your professional accessibility statement.
+        <p className="mb-3">
+          Click "Generate" to create your professional accessibility statement.
           Our AI will generate industry-standard, legally compliant content
           based on your information.
+        </p>
+        <p className="text-sm text-gray-600">
+          ⏱️ Takes 10-30 seconds depending on the selected language.
         </p>
       </div>
     ),
@@ -707,44 +725,271 @@ export const statementGeneratorTourSteps: Step[] = [
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">
-          Statement Preview & Export 📄
+          Preview & Format Selection 📄
+        </h3>
+        <p className="mb-3">
+          Your generated statement appears here with three format options:
+        </p>
+        <ul className="text-sm space-y-1">
+          <li>
+            📝 <strong>Markdown</strong> - For GitHub, GitLab, CMS
+          </li>
+          <li>
+            💻 <strong>HTML</strong> - Ready for web embedding
+          </li>
+          <li>
+            📄 <strong>Plain Text</strong> - For emails & documents
+          </li>
+        </ul>
+        <p className="text-sm text-gray-600 mt-2">
+          Switch formats anytime and use Copy or Download buttons below the
+          preview! You can also enhance your statement with additional
+          professional features.
+        </p>
+      </div>
+    ),
+    placement: 'right' as Placement,
+  },
+];
+
+// My Sites Tour Steps
+export const mySitesTourSteps: Step[] = [
+  {
+    target: 'body',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Welcome to My Sites! 🎉</h3>
+        <p>
+          This is your command center for managing all your website domains.
+          Here you can add new sites, monitor their status, manage
+          subscriptions, and keep track of all your accessibility initiatives.
+          Let's explore the features!
+        </p>
+      </div>
+    ),
+    placement: 'center' as Placement,
+    disableBeacon: true,
+  },
+  {
+    target: '.add-domain-banner',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Add New Domains 🌐</h3>
+        <p>
+          Click the "Get Compliant Now" button to add a new website domain. You
+          can add as many domains as your subscription plan allows. Each domain
+          will be monitored for accessibility compliance.
+        </p>
+      </div>
+    ),
+    placement: 'bottom' as Placement,
+  },
+  {
+    target: '.my-sites-tabs',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Site Status Tabs 📑</h3>
+        <p className="mb-2">
+          Switch between viewing different categories of your sites:
+        </p>
+        <ul className="text-sm space-y-1">
+          <li>
+            <strong>Active sites:</strong> Domains with active subscriptions
+          </li>
+          <li>
+            <strong>Disabled sites:</strong> Domains with expired or inactive
+            subscriptions
+          </li>
+        </ul>
+        <p className="text-sm text-gray-600 mt-2">
+          Use these tabs to organize and manage your domains efficiently.
+        </p>
+      </div>
+    ),
+    placement: 'bottom' as Placement,
+  },
+  {
+    target: '.my-sites-search',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Search Your Sites 🔍</h3>
+        <p>
+          Use the search bar to quickly find specific domains. Just start typing
+          any part of the domain name, and the list will filter in real-time to
+          show matching results.
+        </p>
+      </div>
+    ),
+    placement: 'bottom' as Placement,
+  },
+  {
+    target: '.my-sites-table-headers',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Domain Table Columns 📊</h3>
+        <p className="mb-2">Your domains are organized with these columns:</p>
+        <ul className="text-sm space-y-1">
+          <li>
+            <strong>Domain:</strong> Your website URL
+          </li>
+          <li>
+            <strong>Plan:</strong> Subscription status (Active, Trial, etc.)
+          </li>
+          <li>
+            <strong>Monitor:</strong> Toggle uptime monitoring on/off
+          </li>
+          <li>
+            <strong>Status:</strong> Current uptime status (Online/Offline)
+          </li>
+          <li>
+            <strong>Actions:</strong> Edit, delete, or activate domains
+          </li>
+        </ul>
+      </div>
+    ),
+    placement: 'bottom' as Placement,
+  },
+  {
+    target: '.my-sites-domain-row',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Domain Row Details 📝</h3>
+        <p>
+          Each row represents one of your domains. You can see the domain name,
+          its favicon, subscription plan status, monitoring settings, and
+          current uptime status all at a glance.
+        </p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+  {
+    target: '.my-sites-plan-status',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Plan Status Badge 🎯</h3>
+        <p className="mb-2">
+          This badge shows your domain's current subscription status:
+        </p>
+        <ul className="text-sm space-y-1">
+          <li>
+            <strong>Active:</strong> Subscription is active and running
+          </li>
+          <li>
+            <strong>Life Time:</strong> Permanent license (never expires)
+          </li>
+          <li>
+            <strong>Trial:</strong> In trial period
+          </li>
+          <li>
+            <strong>Trial Expired:</strong> Trial ended, needs activation
+          </li>
+        </ul>
+        <p className="text-sm text-gray-600 mt-2">
+          Hover over the badge to see more details!
+        </p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+  {
+    target: '.my-sites-monitor-toggle',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">
+          Monitoring Toggle Switch 🔄
         </h3>
         <p>
-          Your generated statement appears here with format options (Markdown,
-          HTML, Plain Text). You can copy to clipboard or download in your
-          preferred format.
+          Toggle uptime monitoring on or off for each domain. When enabled,
+          we'll continuously check if your website is online and alert you
+          immediately if it goes down.
+        </p>
+        <p className="text-sm text-gray-600 mt-2">
+          💡 <strong>Pro Tip:</strong> Enable monitoring for critical sites to
+          receive instant downtime alerts!
+        </p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+  {
+    target: '.my-sites-status-indicator',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">
+          Uptime Status Indicator 📡
+        </h3>
+        <p className="mb-2">This shows your website's current uptime status:</p>
+        <ul className="text-sm space-y-1">
+          <li>
+            <strong>Online:</strong> Website is responding normally
+          </li>
+          <li>
+            <strong>Offline:</strong> Website is not responding
+          </li>
+          <li>
+            <strong>Checking:</strong> Status check in progress
+          </li>
+          <li>
+            <strong>Monitor off:</strong> Monitoring is disabled
+          </li>
+        </ul>
+        <p className="text-sm text-gray-600 mt-2">
+          Hover to see last check time and additional details.
+        </p>
+      </div>
+    ),
+    placement: 'top' as Placement,
+  },
+  {
+    target: '.my-sites-actions',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Action Buttons ⚙️</h3>
+        <p className="mb-2">Use these buttons to manage your domains:</p>
+        <ul className="text-sm space-y-1">
+          <li>
+            <strong>Settings Icon:</strong> Edit the domain URL
+          </li>
+          <li>
+            <strong>Trash Icon:</strong> Delete the domain
+          </li>
+          <li>
+            <strong>Activate/Buy:</strong> For trial domains, activate your
+            subscription or purchase a plan
+          </li>
+        </ul>
+        <p className="text-sm text-gray-600 mt-2">
+          Hover over each button for a helpful tooltip!
         </p>
       </div>
     ),
     placement: 'left' as Placement,
   },
   {
-    target: '.ai-helper-section',
+    target: 'body',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">AI Assistant 🤖</h3>
-        <p>
-          Use the AI Assistant to analyze your statement and get suggestions for
-          improvements. It provides feedback on completeness, compliance, and
-          best practices.
+        <h3 className="text-lg font-semibold mb-2">Tour Complete! 🎉</h3>
+        <p className="mb-3">
+          You're all set to manage your domains! Here's a quick recap:
+        </p>
+        <ul className="text-sm space-y-2">
+          <li>✅ Add new domains with "Get Compliant Now" button</li>
+          <li>✅ Switch between Active and Disabled sites tabs</li>
+          <li>✅ Search to find specific domains quickly</li>
+          <li>✅ Monitor website uptime with toggle switches</li>
+          <li>✅ Check subscription status at a glance</li>
+          <li>✅ Edit, delete, or activate domains with action buttons</li>
+        </ul>
+        <p className="mt-3 text-sm text-gray-600">
+          💡 <strong>Need help?</strong> Check our documentation or contact
+          support anytime!
         </p>
       </div>
     ),
-    placement: 'top' as Placement,
-  },
-  {
-    target: '.features-section',
-    content: (
-      <div>
-        <h3 className="text-lg font-semibold mb-2">Statement Features ✨</h3>
-        <p>
-          Every generated statement includes WCAG 2.1 AA compliance,
-          multi-language support, industry-standard content, and strategic
-          backlinks for SEO optimization.
-        </p>
-      </div>
-    ),
-    placement: 'top' as Placement,
+    placement: 'center' as Placement,
+    disableBeacon: true,
   },
 ];
 
@@ -758,8 +1003,10 @@ export const proofOfEffortTourSteps: Step[] = [
           Welcome to the Proof of Effort Toolkit 🎉
         </h3>
         <p>
-          This page lets you compile and share key documentation that
-          demonstrates your accessibility efforts. Let's take a quick tour.
+          This toolkit compiles key documentation that demonstrates your
+          accessibility efforts. If your website's accessibility is ever
+          challenged, you'll have the evidence needed to respond with
+          confidence. Let's take a quick tour!
         </p>
       </div>
     ),
@@ -767,17 +1014,18 @@ export const proofOfEffortTourSteps: Step[] = [
     disableBeacon: true,
   },
   {
-    target: '.poe-documents-count',
+    target: '.poe-left-panel',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Included Documents 📄</h3>
+        <h3 className="text-lg font-semibold mb-2">Document Viewer Panel 📖</h3>
         <p>
-          Here you can see how many documents are included: an intro guide, your
-          latest monthly audit report, and your accessibility statement.
+          This is your document viewer. When you select a document from the
+          right panel, it will appear here for preview. You can navigate between
+          documents using the arrow buttons.
         </p>
       </div>
     ),
-    placement: 'bottom' as Placement,
+    placement: 'right' as Placement,
   },
   {
     target: '.poe-send-email-button',
@@ -785,68 +1033,96 @@ export const proofOfEffortTourSteps: Step[] = [
       <div>
         <h3 className="text-lg font-semibold mb-2">Send via Email ✉️</h3>
         <p>
-          Send the full toolkit to any email address. We'll generate all PDFs
-          and deliver them in a single zip.
+          Need to share the toolkit with your legal team or stakeholders? Click
+          here to send all documents as a zip file to any email address. Perfect
+          for quick sharing!
         </p>
       </div>
     ),
     placement: 'top' as Placement,
   },
   {
-    target: '.poe-download-zip-button',
+    target: '.poe-right-panel',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Download Zip ⬇️</h3>
+        <h3 className="text-lg font-semibold mb-2">
+          Document Library Panel 📁
+        </h3>
         <p>
-          Prefer to keep a local copy? Download the complete toolkit as a zip
-          file.
+          This panel shows all available documents in your toolkit. Each card
+          displays the document name and creation date. Use the menu button
+          (three dots) on each card to view or download individual documents.
         </p>
       </div>
     ),
-    placement: 'top' as Placement,
-  },
-  {
-    target: '.poe-view-files-toggle',
-    content: (
-      <div>
-        <h3 className="text-lg font-semibold mb-2">View Files 👀</h3>
-        <p>
-          Expand this section to view each document. From here you can preview
-          or download items individually.
-        </p>
-      </div>
-    ),
-    placement: 'bottom' as Placement,
+    placement: 'left' as Placement,
   },
   {
     target: '.poe-documents-list',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Documents List 🗂️</h3>
+        <h3 className="text-lg font-semibold mb-2">Your Documents 📄</h3>
         <p>
-          Each row shows the document name and creation date. Use the action
-          buttons to preview or download.
+          Your toolkit includes three essential documents: an intro guide
+          explaining the toolkit, your latest monthly audit report showing
+          accessibility compliance, and your accessibility statement
+          demonstrating your commitment.
         </p>
       </div>
     ),
     placement: 'top' as Placement,
   },
   {
-    target: '.poe-view-button',
+    target: '.poe-document-card',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Preview PDF 🔎</h3>
-        <p>Open the selected document in a new tab for review.</p>
+        <h3 className="text-lg font-semibold mb-2">Document Card 🗂️</h3>
+        <p>
+          Each document card shows the document name and creation date. Click
+          the three dots menu button to view or download individual documents.
+        </p>
+      </div>
+    ),
+    placement: 'left' as Placement,
+  },
+  {
+    target: '.poe-document-dropdown',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Document Actions Menu ⚙️</h3>
+        <p>
+          Click this menu button to access document actions. You can preview the
+          document in the viewer panel or download it directly to your device.
+        </p>
+      </div>
+    ),
+    placement: 'left' as Placement,
+  },
+  {
+    target: '.poe-download-zip-button',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">
+          Download Complete Toolkit 📦
+        </h3>
+        <p>
+          Download all documents together as a single zip file. This is perfect
+          for keeping a local backup or sharing with your team. All PDFs are
+          generated fresh with the latest data.
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
   },
   {
-    target: '.poe-download-button',
+    target: '.poe-documents-count',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Download PDF 💾</h3>
-        <p>Download an individual document as a PDF for your records.</p>
+        <h3 className="text-lg font-semibold mb-2">Document Count 🔢</h3>
+        <p>
+          This shows the total number of documents included in your toolkit.
+          You're all set to demonstrate your accessibility efforts! 🎊
+        </p>
       </div>
     ),
     placement: 'top' as Placement,
@@ -857,6 +1133,7 @@ export const proofOfEffortTourSteps: Step[] = [
 export const allTourSteps = {
   dashboard: dashboardTourSteps,
   addDomain: addDomainTourSteps,
+  mySites: mySitesTourSteps,
   installation: installationTourSteps,
   accessibility: accessibilityTourSteps,
   reports: reportsTourSteps,
@@ -869,6 +1146,7 @@ export const allTourSteps = {
 export const tourKeys = {
   dashboard: 'dashboard_tour',
   addDomain: 'add_domain_unified_tour',
+  mySites: 'my_sites_tour',
   installation: 'installation_tour',
   accessibility: 'accessibility_tour',
   reports: 'reports_tour',
@@ -889,7 +1167,7 @@ export const getTourKeyByRoute = (
   if (pathname === '/dashboard' || pathname === '/') {
     return 'dashboard';
   } else if (pathname === '/add-domain') {
-    return 'addDomain';
+    return 'mySites'; // Updated to use mySites tour for the main page
   } else if (pathname.includes('/installation')) {
     return 'installation';
   } else if (pathname === '/scanner') {

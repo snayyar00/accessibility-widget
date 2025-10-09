@@ -1791,8 +1791,8 @@ const ProofOfEffortToolkit: React.FC = () => {
 
       <div className="p-6">
         {/* Page Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">
+        <div className="mb-6 poe-page-header">
+          <h1 className="text-3xl font-bold text-gray-900 poe-title">
             Proof of effort toolkit
           </h1>
         </div>
@@ -1800,7 +1800,7 @@ const ProofOfEffortToolkit: React.FC = () => {
         <div className="flex lg:h-[calc(100vh-8rem)] h-auto lg:flex-row flex-col gap-6 overflow-hidden">
           {/* Left Panel - Document Content */}
           <div
-            className="flex-1 bg-white flex flex-col lg:min-h-0 min-h-[50vh] sm:min-h-[60vh] border-2 rounded-xl overflow-hidden"
+            className="poe-left-panel flex-1 bg-white flex flex-col lg:min-h-0 min-h-[50vh] sm:min-h-[60vh] border-2 rounded-xl overflow-hidden"
             style={{ borderColor: '#A2ADF3', minHeight: 0 }}
           >
             {selectedDocument ? (
@@ -1974,15 +1974,17 @@ const ProofOfEffortToolkit: React.FC = () => {
 
           {/* Right Panel - Document List */}
           <div
-            className="lg:w-96 w-full lg:h-auto h-auto p-6 flex flex-col border-2 rounded-xl lg:flex-shrink-0"
+            className="poe-right-panel lg:w-96 w-full lg:h-auto h-auto p-6 flex flex-col border-2 rounded-xl lg:flex-shrink-0"
             style={{ backgroundColor: '#e9ecfb', borderColor: '#A2ADF3' }}
           >
             {/* Document Cards */}
-            <div className="space-y-3 flex-grow">
+            <div className="poe-documents-list space-y-3 flex-grow">
               {documents.map((document, index) => (
                 <div
                   key={index}
-                  className="bg-white rounded-lg p-4 shadow-sm border-2"
+                  className={`bg-white rounded-lg p-4 shadow-sm border-2 ${
+                    index === 0 ? 'poe-document-card' : ''
+                  }`}
                   style={{ borderColor: '#A2ADF3' }}
                 >
                   <div className="flex items-start justify-between">
@@ -2005,7 +2007,9 @@ const ProofOfEffortToolkit: React.FC = () => {
                     </div>
                     <div className="relative">
                       <button
-                        className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+                        className={`p-1 rounded-full hover:bg-gray-100 transition-colors ${
+                          index === 0 ? 'poe-document-dropdown' : ''
+                        }`}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDropdownToggle(index);
@@ -2019,12 +2023,18 @@ const ProofOfEffortToolkit: React.FC = () => {
 
                       {/* Dropdown menu */}
                       {openDropdownIndex === index && (
-                        <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-32">
+                        <div
+                          className={`absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-32 ${
+                            index === 0 ? 'poe-dropdown-menu' : ''
+                          }`}
+                        >
                           <button
                             onClick={() =>
                               handleDropdownAction(document, 'view')
                             }
-                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            className={`w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors ${
+                              index === 0 ? 'poe-view-button' : ''
+                            }`}
                             disabled={
                               (document.type === 'monthly-report' &&
                                 isProcessingReport) ||
@@ -2038,7 +2048,9 @@ const ProofOfEffortToolkit: React.FC = () => {
                             onClick={() =>
                               handleDropdownAction(document, 'download')
                             }
-                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            className={`w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors ${
+                              index === 0 ? 'poe-download-button' : ''
+                            }`}
                             disabled={
                               (document.type === 'monthly-report' &&
                                 isProcessingReport) ||

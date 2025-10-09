@@ -430,7 +430,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
             {/* Navigation Tabs and Search Bar */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 space-y-4 md:space-y-0">
               {/* Navigation Tabs - Left */}
-              <div className="flex items-center space-x-8">
+              <div className="flex items-center space-x-8 my-sites-tabs">
                 <button
                   onClick={() => setActiveTab('active')}
                   className={`font-normal text-base pb-2 transition-colors ${
@@ -456,7 +456,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
               {/* Blue line below tabs */}
 
               {/* Search Bar - Right */}
-              <div className="relative w-full md:w-80 md:max-w-md">
+              <div className="relative w-full md:w-80 md:max-w-md my-sites-search">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg
                     className="h-4 w-4 text-gray-400"
@@ -531,7 +531,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
               <>
                 {/* Column Headers - Desktop Only */}
                 <div className="hidden lg:block">
-                  <div className="flex items-center text-sm font-medium text-gray-700 mb-4 pr-8">
+                  <div className="flex items-center text-sm font-medium text-gray-700 mb-4 pr-8 my-sites-table-headers">
                     <div className="flex-shrink-0 mr-3 w-6">
                       {/* Empty space for favicon alignment */}
                     </div>
@@ -600,7 +600,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     return (
                       <div
                         key={domain.id}
-                        className="bg-white border p-6 pr-8 hover:shadow-md transition-shadow rounded-lg min-h-[80px]"
+                        className="bg-white border p-6 pr-8 hover:shadow-md transition-shadow rounded-lg min-h-[80px] my-sites-domain-row"
                         style={{ borderColor: '#A2ADF3' }}
                       >
                         <div className="flex items-center">
@@ -636,7 +636,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           </div>
 
                           {/* Plan Status */}
-                          <div className="flex-shrink-0 mr-4 w-24">
+                          <div className="flex-shrink-0 mr-4 w-24 my-sites-plan-status">
                             <Tooltip
                               title={
                                 domainStatus === 'Life Time'
@@ -693,7 +693,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           </div>
 
                           {/* Monitor Toggle */}
-                          <div className="flex-shrink-0 mr-4 w-32">
+                          <div className="flex-shrink-0 mr-4 w-32 my-sites-monitor-toggle">
                             <Tooltip
                               title={
                                 monitoringStates[domain.id] ??
@@ -741,7 +741,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           </div>
 
                           {/* Status Indicator */}
-                          <div className="flex-shrink-0 mr-4 w-32">
+                          <div className="flex-shrink-0 mr-4 w-32 my-sites-status-indicator">
                             {monitoringStates[domain.id] ??
                             domain.monitor_enabled ? (
                               domain.is_currently_down !== null &&
@@ -851,7 +851,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           </div>
 
                           {/* Actions Menu */}
-                          <div className="flex-shrink-0 w-24 flex items-center space-x-1">
+                          <div className="flex-shrink-0 w-24 flex items-center space-x-1 my-sites-actions">
                             {isEditing ? (
                               <>
                                 <Tooltip title="Save changes" placement="top">
