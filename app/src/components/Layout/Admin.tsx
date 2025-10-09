@@ -11,6 +11,8 @@ import Installation from '@/containers/Installation/Installation';
 import Teams from '@/containers/Teams';
 import SiteDetail from '@/containers/SiteDetail';
 import AccessibilityWidgetPage from '@/containers/Teams/editWidget';
+import OldWidgetPage from '@/containers/Teams/old-widget-Customization/editWidget_old';
+import WidgetSelection from '@/containers/WidgetSelection';
 import ProofOfEffortToolkit from '@/containers/ProofOfEffortToolkit/ProofOfEffortToolkit';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/config/store';
@@ -242,6 +244,23 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
               path="/installation"
               render={() => <Installation domain={selectedOption} />}
               key="/installation"
+              exact={false}
+            />
+            <Route
+              path="/widget-selection"
+              component={WidgetSelection}
+              key="/widget-selection"
+              exact={false}
+            />
+            <Route
+              path="/old-widget"
+              render={() => (
+                <OldWidgetPage
+                  selectedSite={selectedOption}
+                  allDomains={data}
+                />
+              )}
+              key="/old-widget"
               exact={false}
             />
             <Route

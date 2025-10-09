@@ -231,29 +231,43 @@ const Sidebar = ({
 
                 {/* Customization */}
                 <NavLink
-                  to="/customize-widget"
+                  to="/widget-selection"
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
-                    getNavItemStyles(isActiveRoute('/customize-widget'))
-                      .className
+                    getNavItemStyles(
+                      isActiveRoute('/widget-selection') ||
+                        isActiveRoute('/customize-widget') ||
+                        isActiveRoute('/old-widget'),
+                    ).className
                   }`}
                   style={
-                    getNavItemStyles(isActiveRoute('/customize-widget')).style
+                    getNavItemStyles(
+                      isActiveRoute('/widget-selection') ||
+                        isActiveRoute('/customize-widget') ||
+                        isActiveRoute('/old-widget'),
+                    ).style
                   }
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
                     <Pencil
                       size={24}
-                      style={getIconStyles(isActiveRoute('/customize-widget'))}
+                      style={getIconStyles(
+                        isActiveRoute('/widget-selection') ||
+                          isActiveRoute('/customize-widget') ||
+                          isActiveRoute('/old-widget'),
+                      )}
                     />
                   </div>
                   {!isCollapsed && (
                     <span
                       className="text-sm"
                       style={{
-                        color: isActiveRoute('/customize-widget')
-                          ? baseColors.brandPrimary
-                          : baseColors.grayMedium,
+                        color:
+                          isActiveRoute('/widget-selection') ||
+                          isActiveRoute('/customize-widget') ||
+                          isActiveRoute('/old-widget')
+                            ? baseColors.brandPrimary
+                            : baseColors.grayMedium,
                       }}
                     >
                       Customization

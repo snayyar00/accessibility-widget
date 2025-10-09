@@ -12,8 +12,10 @@ const getTourKeyFromRoute = (pathname: string): string | null => {
     return 'accessibility_tour';
   } else if (pathname === '/problem-reports') {
     return 'reports_tour';
-  } else if (pathname === '/customize-widget') {
+  } else if (pathname === '/customize-widget' || pathname === '/old-widget') {
     return 'customize_widget_tour';
+  } else if (pathname === '/widget-selection') {
+    return null; // No tour for widget selection page
   } else if (pathname === '/statement-generator') {
     return 'statement_generator_tour';
   } else if (pathname === '/proof-of-effort-toolkit') {
