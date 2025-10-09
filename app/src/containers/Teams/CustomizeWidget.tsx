@@ -508,7 +508,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     }
     
     html, body {
-      overflow: hidden !important;
+      overflow: visible !important;
       scrollbar-width: none !important;
       -ms-overflow-style: none !important;
     }
@@ -527,6 +527,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       display: flex;
       align-items: center;
       justify-content: center;
+      box-sizing: border-box;
     }
     .container {
       text-align: center;
@@ -552,7 +553,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       font-size: 14px;
     }
     
-    /* Hide scrollbars from accessibility widget */
+    /* Simple solution - just hide scrollbars */
     .asw-widget,
     .asw-menu,
     .asw-panel,
@@ -567,6 +568,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     .asw-container::-webkit-scrollbar {
       display: none !important;
     }
+    
   </style>
 </head>
 <body>
@@ -619,6 +621,48 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         doc.open();
         doc.write(html);
         doc.close();
+
+        // Function to adjust iframe height based on content
+        const adjustIframeHeight = () => {
+          try {
+            const iframeDoc =
+              iframe.contentDocument || iframe.contentWindow?.document;
+            if (iframeDoc) {
+              // Wait for widget to load
+              const checkWidget = setInterval(() => {
+                const widget = iframeDoc.querySelector(
+                  '.asw-widget, .asw-menu',
+                );
+                if (widget) {
+                  clearInterval(checkWidget);
+
+                  // Get the actual height of the widget content
+                  const widgetHeight = widget.scrollHeight;
+                  const bodyHeight = iframeDoc.body.scrollHeight;
+                  const documentHeight = iframeDoc.documentElement.scrollHeight;
+
+                  // Use the maximum height to ensure full content is visible
+                  const contentHeight = Math.max(
+                    widgetHeight,
+                    bodyHeight,
+                    documentHeight,
+                  );
+
+                  // Set iframe height to content height plus some padding
+                  iframe.style.height = `${contentHeight + 40}px`;
+                }
+              }, 100);
+
+              // Clear interval after 5 seconds
+              setTimeout(() => clearInterval(checkWidget), 5000);
+            }
+          } catch (error) {
+            console.log('Could not adjust iframe height:', error);
+          }
+        };
+
+        // Adjust height after a delay to ensure content is loaded
+        setTimeout(adjustIframeHeight, 2000);
       }
     }
   }, [livePreview]);
@@ -702,12 +746,13 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         </div>
       </div>
 
-      <div className="relative flex flex-col md:flex-row h-auto sm:h-auto md:h-[calc(100vh-200px)] bg-[#ebeffd] border border-[#a3aef1] rounded-lg">
+      <div className="relative flex flex-col md:flex-row h-auto bg-[#ebeffd] border border-[#a3aef1] rounded-lg">
         {/* Left Side - Settings */}
         <div
           className={`${
             livePreview ? 'w-full md:w-[40%] xl:w-2/3' : 'w-full'
           } p-3 sm:p-4 md:p-6 transition-all duration-300 flex flex-col widget-customization-section overflow-y-auto`}
+          style={{ height: '900px' }}
         >
           <div className="space-y-6">
             {activeTab === 'preference' && (
@@ -1492,19 +1537,21 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         {livePreview && (
           <div className="w-full md:w-[60%] xl:w-1/3 p-3 sm:p-4 md:p-6 transition-all duration-300 widget-preview-section">
             <div
-              className="rounded-lg shadow-sm h-full flex flex-col overflow-hidden"
+              className="rounded-lg shadow-sm flex flex-col overflow-visible min-h-fit"
               style={{ backgroundColor: '#ebeffd' }}
             >
               <iframe
                 ref={widgetIframeRef}
-                className="w-full flex-1 border-0 rounded-lg no-scrollbar min-h-[500px] sm:min-h-[500px] md:min-h-[500px]"
+                className="w-full border-0 rounded-lg no-scrollbar"
                 title="Widget Live Preview"
                 sandbox="allow-scripts allow-same-origin"
                 style={{
                   backgroundColor: '#F8F9FA',
-                  overflow: 'hidden',
+                  overflow: 'visible',
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none',
+                  height: 'auto',
+                  minHeight: '900px',
                 }}
               />
             </div>
