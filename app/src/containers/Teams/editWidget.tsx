@@ -357,22 +357,14 @@ const AccessibilityWidgetPage: React.FC<any> = ({
 
   const resetAll = async () => {
     if (isMounted.current) {
-      setHasUserMadeChanges(false);
-
+      // Reset all state values to defaults
       setLightModeColors(DefaultLightColors);
       setDarkModeColors(DefaultDarkColors);
-      // Reset all toggles to default values
       setToggles(DefaultToggles);
       setSelectedFont("'Times New Roman', serif");
 
-      // Wait for state updates to complete, then save the reset values
-      setTimeout(async () => {
-        await handleSave();
-        // Re-enable change tracking after save completes
-        setTimeout(() => {
-          setHasUserMadeChanges(true);
-        }, 100);
-      }, 300);
+      // Enable change tracking so the useEffect can update settings and trigger save
+      setHasUserMadeChanges(true);
     } else {
       console.log('Component not mounted, skipping reset');
     }

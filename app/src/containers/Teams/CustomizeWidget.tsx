@@ -222,8 +222,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     },
   ];
 
-  const fileInputRef = useRef(null); // Create a ref for the file input
-  const urlInputRef = useRef(null); // Create a ref for the URL input
+  const fileInputRef = useRef<HTMLInputElement>(null); // Create a ref for the file input
+  const urlInputRef = useRef<HTMLInputElement>(null); // Create a ref for the URL input
 
   const handleReset = () => {
     setColors((prevColors) => ({
@@ -805,7 +805,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           className={`${
             livePreview ? 'w-full md:w-[40%] xl:w-2/3' : 'w-full'
           } p-3 sm:p-4 md:p-6 transition-all duration-300 flex flex-col widget-customization-section overflow-y-auto`}
-          style={{ height: '900px' }}
+          style={{ height: '1000px' }}
         >
           <div className="space-y-6">
             {activeTab === 'preference' && (
@@ -1299,30 +1299,61 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                   </div>
 
                   {/* Color Mode Toggle */}
-                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-3 sm:p-4 md:p-6 mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-[#333333]">
-                        Chose your mode
-                      </h3>
-                      <div className="relative w-32">
-                        <select
-                          value={colorMode}
-                          onChange={(e) =>
-                            setColorMode(e.target.value as 'light' | 'dark')
-                          }
-                          className="appearance-none bg-white border border-[#E0E0E0] rounded-lg px-4 py-2 pr-8 text-sm text-[#333333] focus:outline-none focus:border-[#4285F4] cursor-pointer w-full"
-                        >
-                          <option value="light">Light</option>
-                          <option value="dark">Dark</option>
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                          <ChevronDown className="w-4 h-4 text-[#4285F4]" />
+                  <div className="bg-white rounded-xl shadow-sm border border-[#A2ADF3] p-4 sm:p-5 md:p-6 mb-4">
+                    <div className="flex flex-col sm:flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 md:gap-6">
+                      {/* Title and Description Section */}
+                      <div className="flex-1">
+                        <h3 className="text-lg sm:text-xl md:text-xl font-semibold text-[#1a1a1a] mb-1 sm:mb-2">
+                          Choose Your Mode
+                        </h3>
+                        <p className="text-xs sm:text-sm md:text-sm text-[#666666] leading-relaxed">
+                          Select between light and dark theme for your widget
+                          interface
+                        </p>
+                      </div>
+
+                      {/* Dropdown Section */}
+                      <div className="flex-shrink-0 w-full sm:w-full md:w-auto md:min-w-[200px]">
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 md:pl-3 flex items-center pointer-events-none">
+                            {colorMode === 'light' ? (
+                              <svg
+                                className="h-4 w-4 sm:h-5 sm:w-5 md:h-5 md:w-5 text-[#F59E0B]"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z" />
+                              </svg>
+                            ) : (
+                              <svg
+                                className="h-4 w-4 sm:h-5 sm:w-5 md:h-5 md:w-5 text-[#6B7280]"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                          <select
+                            value={colorMode}
+                            onChange={(e) =>
+                              setColorMode(e.target.value as 'light' | 'dark')
+                            }
+                            className="w-full pl-8 sm:pl-10 md:pl-10 pr-8 sm:pr-10 md:pr-10 py-2 sm:py-2.5 md:py-3 border border-[#D1D5DB] rounded-lg text-xs sm:text-sm md:text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white appearance-none cursor-pointer"
+                          >
+                            <option value="light">Light Mode</option>
+                            <option value="dark">Dark Mode</option>
+                          </select>
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:pr-3 md:pr-3 pointer-events-none">
+                            <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 text-[#9CA3AF]" />
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <p className="text-sm text-[#757575]">
-                      Change the theme colour of your widget interface
-                    </p>
                   </div>
 
                   {/* Widget Color Adjustments */}
@@ -1357,41 +1388,92 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                   </div>
 
                   {/* Upload Widget Logo */}
-                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-3 sm:p-4 md:p-6 mb-4">
-                    <h3 className="text-lg font-semibold text-[#333333] mb-2">
-                      Upload Widget Logo
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      <strong>Optimal dimensions:</strong> 200 × 50 pixels for
-                      best display quality
-                    </p>
+                  <div className="bg-white rounded-xl shadow-sm border border-[#A2ADF3] p-6 mb-4">
+                    <div className="mb-6">
+                      <h3 className="text-xl font-semibold text-[#1a1a1a] mb-2">
+                        Upload Widget Logo
+                      </h3>
+                      <p className="text-sm text-[#666666] leading-relaxed">
+                        <span className="font-medium text-[#445AE7]">
+                          Optimal dimensions:
+                        </span>{' '}
+                        200 × 50 pixels for best display quality
+                      </p>
+                    </div>
 
-                    {/* File upload */}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      ref={fileInputRef}
-                      disabled={!isFileInput}
-                      className="w-full p-2 border rounded mb-3 text-sm"
-                      onChange={handleFileChange}
-                    />
+                    {/* File Upload Area */}
+                    <div className="mb-6">
+                      <div
+                        className="relative border-2 border-dashed border-[#E5E7EB] rounded-xl p-6 text-center hover:border-[#445AE7] hover:bg-[#F8FAFF] transition-all duration-200 cursor-pointer group"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <input
+                          type="file"
+                          accept="image/*"
+                          ref={fileInputRef}
+                          disabled={!isFileInput}
+                          className="hidden"
+                          onChange={handleFileChange}
+                        />
+                        <div className="flex flex-col items-center">
+                          <div className="w-12 h-12 bg-[#F3F4F6] rounded-lg flex items-center justify-center mb-3 group-hover:bg-[#445AE7]/10 transition-colors duration-200">
+                            <svg
+                              className="w-6 h-6 text-[#6B7280] group-hover:text-[#445AE7] transition-colors duration-200"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                              />
+                            </svg>
+                          </div>
+                          <p className="text-sm font-medium text-[#374151] mb-1">
+                            Choose file
+                          </p>
+                          <p className="text-xs text-[#9CA3AF]">
+                            PNG, JPG, SVG up to 5MB
+                          </p>
+                        </div>
+                      </div>
+                    </div>
 
-                    {/* URL input */}
-                    <div className="flex items-center mb-3">
-                      <input
-                        type="text"
-                        placeholder="Or enter image URL"
-                        className="w-full p-2 border rounded text-sm"
-                        ref={urlInputRef}
-                        disabled={!isUrlInput}
-                        onChange={(e) => {
-                          const url = e.target.value.trim();
-                          if (url) {
-                            setLogoInput(url);
-                          }
-                          setIsFileInput(false);
-                        }}
-                      />
+                    {/* URL Input */}
+                    <div className="mb-6">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <svg
+                            className="h-5 w-5 text-[#9CA3AF]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                            />
+                          </svg>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Or enter image URL"
+                          className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white"
+                          ref={urlInputRef}
+                          disabled={!isUrlInput}
+                          onChange={(e) => {
+                            const url = e.target.value.trim();
+                            if (url) {
+                              setLogoInput(url);
+                            }
+                            setIsFileInput(false);
+                          }}
+                        />
+                      </div>
                     </div>
 
                     {/* Displaying the logo */}
@@ -1422,10 +1504,11 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                       )}
                     </div>
 
-                    <div className="flex gap-2">
+                    {/* Action Buttons */}
+                    <div className="flex gap-3">
                       <button
                         onClick={handleReset}
-                        className="px-3 py-2 bg-[#445AE7] text-white rounded text-sm hover:bg-[#3A4BC7]"
+                        className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
                       >
                         Reset
                       </button>
@@ -1449,7 +1532,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             toast.error('Please provide a valid Image or URL.');
                           }
                         }}
-                        className="px-3 py-2 bg-[#445AE7] text-white rounded text-sm hover:bg-[#3A4BC7]"
+                        className="px-6 py-2.5 bg-[#445AE7] text-white rounded-lg text-sm font-medium hover:bg-[#3A4BC7] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:outline-none shadow-sm hover:shadow-md"
                       >
                         Set Logo
                       </button>
@@ -1457,28 +1540,53 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                   </div>
 
                   {/* Set Logo Link URL */}
-                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-3 sm:p-4 md:p-6 mb-4">
-                    <h3 className="text-lg font-semibold text-[#333333] mb-4">
-                      Set Logo Link URL
-                    </h3>
-                    <div className="flex items-center mb-4">
-                      <input
-                        type="text"
-                        placeholder="Enter Logo Link URL"
-                        className="w-full p-2 border rounded text-sm"
-                        value={logoUrl}
-                        onChange={(e) => {
-                          const url = e.target.value.trim();
-                          if (url) {
-                            setColors((prev) => ({
-                              ...prev,
-                              logoUrl: url,
-                            }));
-                          }
-                          setLogoUrl(url);
-                        }}
-                      />
+                  <div className="bg-white rounded-xl shadow-sm border border-[#A2ADF3] p-6 mb-4">
+                    <div className="mb-6">
+                      <h3 className="text-xl font-semibold text-[#1a1a1a] mb-2">
+                        Set Logo Link URL
+                      </h3>
+                      <p className="text-sm text-[#666666] leading-relaxed">
+                        Define where users will be redirected when they click on
+                        your widget logo
+                      </p>
                     </div>
+
+                    <div className="mb-6">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <svg
+                            className="h-5 w-5 text-[#9CA3AF]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                            />
+                          </svg>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Enter Logo Link URL (e.g., https://yourwebsite.com)"
+                          className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white"
+                          value={logoUrl}
+                          onChange={(e) => {
+                            const url = e.target.value.trim();
+                            if (url) {
+                              setColors((prev) => ({
+                                ...prev,
+                                logoUrl: url,
+                              }));
+                            }
+                            setLogoUrl(url);
+                          }}
+                        />
+                      </div>
+                    </div>
+
                     <button
                       onClick={() => {
                         setColors((prev) => ({
@@ -1487,35 +1595,60 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         }));
                         setLogoUrl(DefaultColors.logoUrl);
                       }}
-                      className="px-3 py-2 bg-[#445AE7] text-white rounded text-sm hover:bg-[#3A4BC7]"
+                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
                     >
                       Reset
                     </button>
                   </div>
 
                   {/* Set Accessibility Statement Link URL */}
-                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-8">
-                    <h3 className="text-lg font-semibold text-[#333333] mb-4">
-                      Set Accessibility Statement Link URL
-                    </h3>
-                    <div className="flex items-center mb-4">
-                      <input
-                        type="text"
-                        placeholder="Enter Accessibility Statement Link URL"
-                        className="w-full p-2 border rounded text-sm"
-                        value={accessibilityStatementLinkUrl}
-                        onChange={(e) => {
-                          const url = e.target.value.trim();
-                          if (url) {
-                            setColors((prev) => ({
-                              ...prev,
-                              accessibilityStatementLinkUrl: url,
-                            }));
-                          }
-                          setAccessibilityStatementLinkUrl(url);
-                        }}
-                      />
+                  <div className="bg-white rounded-xl shadow-sm border border-[#A2ADF3] p-6 mb-4">
+                    <div className="mb-6">
+                      <h3 className="text-xl font-semibold text-[#1a1a1a] mb-2">
+                        Set Accessibility Statement Link URL
+                      </h3>
+                      <p className="text-sm text-[#666666] leading-relaxed">
+                        Provide a link to your organization's accessibility
+                        compliance statement
+                      </p>
                     </div>
+
+                    <div className="mb-6">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <svg
+                            className="h-5 w-5 text-[#9CA3AF]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Enter Accessibility Statement URL (e.g., https://yourwebsite.com/statement)"
+                          className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white"
+                          value={accessibilityStatementLinkUrl}
+                          onChange={(e) => {
+                            const url = e.target.value.trim();
+                            if (url) {
+                              setColors((prev) => ({
+                                ...prev,
+                                accessibilityStatementLinkUrl: url,
+                              }));
+                            }
+                            setAccessibilityStatementLinkUrl(url);
+                          }}
+                        />
+                      </div>
+                    </div>
+
                     <button
                       onClick={() => {
                         setColors((prev) => ({
@@ -1527,37 +1660,81 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           DefaultColors.accessibilityStatementLinkUrl,
                         );
                       }}
-                      className="px-3 py-2 bg-[#445AE7] text-white rounded text-sm hover:bg-[#3A4BC7]"
+                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
                     >
                       Reset
                     </button>
                   </div>
 
                   {/* Select Widget Font */}
-                  <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-4 md:p-6 mb-8">
-                    <h3 className="text-lg font-semibold text-[#333333] mb-4">
-                      Select Widget Font
-                    </h3>
-                    <select
-                      className="w-full p-2 border rounded mb-4 text-sm"
-                      value={selectedFont}
-                      onChange={(e) => setSelectedFont(e.target.value)}
-                    >
-                      <option value="auto">Auto</option>
-                      <option value="'Times New Roman', serif">
-                        'Times New Roman', serif
-                      </option>
-                      {font.map((fonts) => (
-                        <option key={fonts} value={fonts}>
-                          {fonts}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="bg-white rounded-xl shadow-sm border border-[#A2ADF3] p-6 mb-4">
+                    <div className="mb-6">
+                      <h3 className="text-xl font-semibold text-[#1a1a1a] mb-2">
+                        Select Widget Font
+                      </h3>
+                      <p className="text-sm text-[#666666] leading-relaxed">
+                        Choose the font family that will be used throughout your
+                        accessibility widget
+                      </p>
+                    </div>
+
+                    <div className="mb-6">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <svg
+                            className="h-5 w-5 text-[#9CA3AF]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M7 21h10M12 21v-3m-4 0h8m-8 0H6a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2v11a2 2 0 01-2 2h-2M9 7h6m-3 0v9"
+                            />
+                          </svg>
+                        </div>
+                        <select
+                          className="w-full pl-10 pr-10 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white appearance-none cursor-pointer"
+                          value={selectedFont}
+                          onChange={(e) => setSelectedFont(e.target.value)}
+                        >
+                          <option value="auto">
+                            Auto (Use website default)
+                          </option>
+                          <option value="'Times New Roman', serif">
+                            Times New Roman (serif)
+                          </option>
+                          {font.map((fonts) => (
+                            <option key={fonts} value={fonts}>
+                              {fonts.replace(/['"]/g, '')}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                          <svg
+                            className="h-5 w-5 text-[#9CA3AF]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
                     <button
                       onClick={() => {
                         setSelectedFont('auto');
                       }}
-                      className="px-3 py-2 bg-[#445AE7] text-white rounded text-sm hover:bg-[#3A4BC7]"
+                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
                     >
                       Reset
                     </button>
