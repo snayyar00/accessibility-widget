@@ -1,32 +1,34 @@
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { Readable } from 'stream'
 import * as dotenv from 'dotenv'
+import { redisCacheManager } from './redisCacheManager'
 
 // Load environment variables
 dotenv.config()
 
 /**
  * Multi-layer Cache Manager
- * Provides in-memory caching with R2 persistent storage fallback
+ * Provides Redis caching with R2 persistent storage fallback
  * 
  * Features:
- * - Fast in-memory cache with TTL
+ * - Fast Redis cache with TTL
  * - Persistent R2 storage
  * - Automatic cache warming from R2
- * - Memory leak prevention with automatic cleanup
  * - Cache statistics and monitoring
+ * 
+ * MIGRATED FROM: In-memory cache to Redis for better persistence and scalability
  */
 
 export interface CacheOptions {
-  /** Time-to-live for in-memory cache in milliseconds (default: 30 minutes) */
+  /** Time-to-live for Redis cache in milliseconds (default: 30 minutes) */
   memoryTTL?: number
   /** Time-to-live for R2 cache in milliseconds (default: 7 days) */
   r2TTL?: number
   /** Enable R2 storage (default: true) */
   enableR2?: boolean
-  /** Enable in-memory cache (default: true) */
+  /** Enable Redis cache (default: true) */
   enableMemory?: boolean
-  /** Custom key prefix for R2 storage */
+  /** Custom key prefix for storage */
   keyPrefix?: string
   /** Whether to compress data before storing */
   compress?: boolean
@@ -36,7 +38,7 @@ export interface CacheEntry<T = any> {
   data: T
   timestamp: number
   expiresAt: number
-  source: 'memory' | 'r2' | 'fresh'
+  source: 'memory' | 'r2' | 'fresh' | 'redis'
   key: string
 }
 
@@ -50,16 +52,13 @@ export interface CacheStats {
 }
 
 class CacheManager {
-  private memoryCache: Map<string, CacheEntry>
   private s3Client: S3Client | null = null
   private stats: CacheStats
-  private cleanupInterval: NodeJS.Timeout | null = null
   private defaultOptions: Required<CacheOptions>
 
   constructor() {
-    this.memoryCache = new Map()
     this.stats = {
-      memoryHits: 0,
+      memoryHits: 0, // Now tracks Redis hits for backward compatibility
       r2Hits: 0,
       misses: 0,
       totalRequests: 0,
@@ -68,19 +67,16 @@ class CacheManager {
     }
 
     this.defaultOptions = {
-      memoryTTL: 30 * 60 * 1000, // 30 minutes
+      memoryTTL: 30 * 60 * 1000, // 30 minutes - now used for Redis TTL
       r2TTL: 7 * 24 * 60 * 60 * 1000, // 7 days
       enableR2: true,
-      enableMemory: true,
+      enableMemory: true, // Now controls Redis instead of in-memory
       keyPrefix: 'cache',
       compress: false,
     }
 
     // Initialize R2 client if credentials are available
     this.initializeR2Client()
-
-    // Start automatic cleanup
-    this.startCleanupInterval()
   }
 
   private initializeR2Client(): void {
@@ -113,18 +109,20 @@ class CacheManager {
     const opts = { ...this.defaultOptions, ...options }
     this.stats.totalRequests++
 
-    // 1. Try in-memory cache first
+    // 1. Try Redis cache first (replaces in-memory cache)
     if (opts.enableMemory) {
-      const memoryEntry = this.memoryCache.get(key)
-      if (memoryEntry && Date.now() < memoryEntry.expiresAt) {
+      const redisEntry = await redisCacheManager.get<T>(key, {
+        ttl: opts.memoryTTL,
+        keyPrefix: opts.keyPrefix,
+      })
+      
+      if (redisEntry) {
         this.stats.memoryHits++
-        console.log(`🎯 Cache HIT (memory): ${key}`)
-        return memoryEntry as CacheEntry<T>
-      }
-
-      // Remove expired entry
-      if (memoryEntry) {
-        this.memoryCache.delete(key)
+        console.log(`🎯 Cache HIT (Redis): ${key}`)
+        return {
+          ...redisEntry,
+          source: 'memory', // Keep as 'memory' for backward compatibility
+        } as CacheEntry<T>
       }
     }
 
@@ -138,9 +136,12 @@ class CacheManager {
           this.stats.r2Hits++
           console.log(`🎯 Cache HIT (R2): ${key}`)
 
-          // Warm up memory cache
+          // Warm up Redis cache
           if (opts.enableMemory) {
-            this.setInMemory(key, r2Data, opts.memoryTTL)
+            await redisCacheManager.set(key, r2Data, {
+              ttl: opts.memoryTTL,
+              keyPrefix: opts.keyPrefix,
+            })
           }
 
           return {
@@ -163,7 +164,7 @@ class CacheManager {
   }
 
   /**
-   * Set data in cache (both memory and R2)
+   * Set data in cache (both Redis and R2)
    */
   async set<T = any>(
     key: string,
@@ -172,10 +173,13 @@ class CacheManager {
   ): Promise<void> {
     const opts = { ...this.defaultOptions, ...options }
 
-    // 1. Store in memory cache
+    // 1. Store in Redis cache (replaces in-memory)
     if (opts.enableMemory) {
-      this.setInMemory(key, data, opts.memoryTTL)
-      console.log(`💾 Cache SET (memory): ${key}`)
+      await redisCacheManager.set(key, data, {
+        ttl: opts.memoryTTL,
+        keyPrefix: opts.keyPrefix,
+      })
+      console.log(`💾 Cache SET (Redis): ${key}`)
     }
 
     // 2. Store in R2
@@ -196,10 +200,12 @@ class CacheManager {
   async delete(key: string, options?: Partial<CacheOptions>): Promise<void> {
     const opts = { ...this.defaultOptions, ...options }
 
-    // 1. Delete from memory
+    // 1. Delete from Redis
     if (opts.enableMemory) {
-      this.memoryCache.delete(key)
-      console.log(`🗑️ Cache DELETE (memory): ${key}`)
+      await redisCacheManager.delete(key, {
+        keyPrefix: opts.keyPrefix,
+      })
+      console.log(`🗑️ Cache DELETE (Redis): ${key}`)
     }
 
     // 2. Delete from R2
@@ -215,12 +221,12 @@ class CacheManager {
   }
 
   /**
-   * Clear all cache (memory only for safety)
+   * Clear all cache (Redis only for safety)
    */
-  clearMemory(): void {
-    this.memoryCache.clear()
+  async clearMemory(): Promise<void> {
+    await redisCacheManager.clearByPrefix(this.defaultOptions.keyPrefix)
     this.stats.memorySize = 0
-    console.log('🧹 Memory cache cleared')
+    console.log('🧹 Redis cache cleared')
   }
 
   /**
@@ -257,18 +263,6 @@ class CacheManager {
   }
 
   // ========== Private Helper Methods ==========
-
-  private setInMemory<T>(key: string, data: T, ttl: number): void {
-    const entry: CacheEntry<T> = {
-      data,
-      timestamp: Date.now(),
-      expiresAt: Date.now() + ttl,
-      source: 'memory',
-      key,
-    }
-    this.memoryCache.set(key, entry)
-    this.stats.memorySize = this.memoryCache.size
-  }
 
   private buildR2Key(key: string, prefix: string): string {
     // Sanitize key to be R2-compatible
@@ -342,40 +336,11 @@ class CacheManager {
     await this.s3Client.send(command)
   }
 
-  private startCleanupInterval(): void {
-    // Cleanup expired entries every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup()
-    }, 5 * 60 * 1000)
-  }
-
-  private cleanup(): void {
-    const now = Date.now()
-    let removed = 0
-
-    for (const [key, entry] of this.memoryCache.entries()) {
-      if (now >= entry.expiresAt) {
-        this.memoryCache.delete(key)
-        removed++
-      }
-    }
-
-    this.stats.lastCleanup = now
-    this.stats.memorySize = this.memoryCache.size
-
-    if (removed > 0) {
-      console.log(`🧹 CacheManager: Cleaned up ${removed} expired entries`)
-    }
-  }
-
   /**
-   * Shutdown cleanup interval
+   * Shutdown Redis connection
    */
-  destroy(): void {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval)
-      this.cleanupInterval = null
-    }
+  async destroy(): Promise<void> {
+    await redisCacheManager.destroy()
   }
 }
 

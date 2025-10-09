@@ -2,6 +2,7 @@ import { Router } from 'express'
 
 import aiSummaryRoutes from './ai-summary.routes'
 import automationScanRoutes from './automation-scan.routes'
+import cacheRoutes from './cache.routes'
 import chatRoutes from './chat.routes'
 import formRoutes from './form.routes'
 import monitoringRoutes from './monitoring.routes'
@@ -25,5 +26,6 @@ router.use(monitoringRoutes)
 router.use(sitesRoutes)
 router.use(aiSummaryRoutes)
 router.use(automationScanRoutes)
+router.use('/cache', cacheRoutes)
 
 export default router

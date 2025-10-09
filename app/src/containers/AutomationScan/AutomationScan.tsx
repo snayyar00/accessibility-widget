@@ -8,6 +8,7 @@ import { GlowingEffect } from '@/components/ui/glowing-effect';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { getAuthenticationCookie } from '@/utils/cookie';
+import { getCacheData, setCacheData, deleteCacheData } from '@/utils/cacheApi';
 
 // Global scan tracker that persists across component unmounts
 let activeScanPromise: Promise<any> | null = null;
@@ -328,47 +329,87 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index })
 const AutomationScan: React.FC = () => {
   const { t } = useTranslation();
   
-  // Helper function to get cached scan data from localStorage (memoized to run only once)
-  const getCachedScanData = React.useMemo(() => {
-    try {
-      const cached = localStorage.getItem('automation_scan_cache');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        // Check if cache is less than 1 hour old
-        if (Date.now() - parsed.timestamp < 60 * 60 * 1000) {
-          console.log('✅ Restoring cached scan data from localStorage:', {
-            domain: parsed.domain,
-            hasResults: !!parsed.apiResults,
-            cacheAge: Math.floor((Date.now() - parsed.timestamp) / 1000) + 's'
-          });
-          return parsed;
+  // Helper function to get cached scan data from Redis (async version)
+  const [cachedData, setCachedDataState] = useState<any>(null);
+  const [cacheLoaded, setCacheLoaded] = useState(false);
+
+  // Load cache data on mount
+  React.useEffect(() => {
+    const loadCachedData = async () => {
+      console.log('🔍 Loading cache data on mount...');
+      try {
+        const cached = await getCacheData('automation_scan_cache', { prefix: 'app' });
+        console.log('📦 Cache data received:', cached ? 'Found' : 'Not found');
+        
+        if (cached) {
+          // Check if cache is less than 1 hour old
+          const cacheAge = Date.now() - cached.timestamp;
+          const cacheAgeMinutes = Math.floor(cacheAge / 1000 / 60);
+          
+          if (cacheAge < 60 * 60 * 1000) {
+            console.log('✅ Found valid cached scan data from Redis:', {
+              domain: cached.domain,
+              hasResults: !!cached.apiResults,
+              resultsCount: cached.apiResults?.results?.length || 0,
+              cacheAgeMinutes: cacheAgeMinutes + ' minutes',
+              scanCompleted: cached.scanCompleted,
+              hasScanned: cached.hasScanned
+            });
+            setCachedDataState(cached);
+          } else {
+            // Remove expired cache
+            console.log('⏰ Cache expired (age: ' + cacheAgeMinutes + ' minutes), removing...');
+            await deleteCacheData('automation_scan_cache', { prefix: 'app' }).catch(() => {});
+          }
+        } else {
+          console.log('ℹ️ No cached scan data found in Redis');
         }
-        // Remove expired cache
-        console.log('⏰ Cache expired, removing...');
-        localStorage.removeItem('automation_scan_cache');
-      } else {
-        console.log('ℹ️ No cached scan data found');
+      } catch (error) {
+        console.warn('⚠️ Redis cache unavailable, trying localStorage fallback:', error);
+        // Try localStorage as fallback
+        try {
+          const localCached = localStorage.getItem('automation_scan_cache');
+          if (localCached) {
+            const parsed = JSON.parse(localCached);
+            const cacheAge = Date.now() - parsed.timestamp;
+            
+            if (cacheAge < 60 * 60 * 1000) {
+              console.log('✅ Found valid cached scan data from localStorage:', {
+                domain: parsed.domain,
+                hasResults: !!parsed.apiResults,
+                resultsCount: parsed.apiResults?.results?.length || 0
+              });
+              setCachedDataState(parsed);
+            } else {
+              console.log('⏰ localStorage cache also expired');
+            }
+          } else {
+            console.log('ℹ️ No localStorage cache found either');
+          }
+        } catch (localError) {
+          console.warn('⚠️ localStorage also unavailable:', localError);
+        }
+      } finally {
+        setCacheLoaded(true);
+        console.log('✅ Cache loading complete');
       }
-    } catch (error) {
-      console.error('❌ Error reading scan cache:', error);
-    }
-    return null;
+    };
+
+    loadCachedData();
   }, []); // Empty deps = runs only once on mount
 
-  // Initialize state with cached data if available
-  const cachedData = getCachedScanData;
-  
-  const [domain, setDomain] = useState(cachedData?.domain || '');
-  const [isScanning, setIsScanning] = useState(cachedData?.isScanning || false);
+  // Initialize state - will be updated once cache is loaded
+  const [domain, setDomain] = useState('');
+  const [isScanning, setIsScanning] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [hasScanned, setHasScanned] = useState(cachedData?.hasScanned || false);
+  const [hasScanned, setHasScanned] = useState(false);
   const [scanKey, setScanKey] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState(cachedData?.loadingMessage || '');
-  const [apiResults, setApiResults] = useState<any>(cachedData?.apiResults || null);
-  const [scanCompleted, setScanCompleted] = useState(cachedData?.scanCompleted || false);
-  const [aiSummary, setAiSummary] = useState<string>(cachedData?.aiSummary || '');
+  const [loadingMessage, setLoadingMessage] = useState('');
+  const [apiResults, setApiResults] = useState<any>(null);
+  const [scanCompleted, setScanCompleted] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string>('');
   const [loadingAiSummary, setLoadingAiSummary] = useState(false);
   const [waitingForLoader, setWaitingForLoader] = useState(false);
   const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
@@ -635,6 +676,31 @@ const AutomationScan: React.FC = () => {
     }
   }, [sitesError, hasAuthToken]);
 
+  // Restore state from cached data when it's loaded
+  React.useEffect(() => {
+    if (cacheLoaded && cachedData) {
+      console.log('🔄 Restoring state from cache:', {
+        domain: cachedData.domain,
+        hasResults: !!cachedData.apiResults,
+        scanCompleted: cachedData.scanCompleted,
+        hasScanned: cachedData.hasScanned
+      });
+      
+      // Restore all state
+      if (cachedData.domain) setDomain(cachedData.domain);
+      if (cachedData.apiResults) setApiResults(cachedData.apiResults);
+      if (cachedData.scanCompleted) setScanCompleted(true);
+      if (cachedData.hasScanned) setHasScanned(true);
+      if (cachedData.aiSummary) setAiSummary(cachedData.aiSummary);
+      
+      // Don't restore scanning state - should always start as not scanning
+      setIsScanning(false);
+      setLoadingMessage('');
+      
+      console.log('✅ State restored from cache successfully');
+    }
+  }, [cacheLoaded, cachedData]);
+
   // Safety cleanup: ensure loader doesn't get stuck
   React.useEffect(() => {
     if (scanCompleted && apiResults && !waitingForLoader) {
@@ -653,9 +719,9 @@ const AutomationScan: React.FC = () => {
     return undefined;
   }, [scanCompleted, apiResults, waitingForLoader, isScanning]);
 
-  // Save scan results AND scanning state to localStorage
+  // Save scan results AND scanning state to Redis (with localStorage fallback)
   React.useEffect(() => {
-    try {
+    const saveCacheData = async () => {
       const cacheData = {
         domain,
         hasScanned: hasScanned || (apiResults && scanCompleted),
@@ -666,16 +732,50 @@ const AutomationScan: React.FC = () => {
         loadingMessage: scanCompleted ? '' : loadingMessage, // Clear message if completed
         timestamp: Date.now(),
       };
-      localStorage.setItem('automation_scan_cache', JSON.stringify(cacheData));
-      
-      if (apiResults && scanCompleted) {
-        console.log('✅ Scan results cached to localStorage', { domain, resultsCount: apiResults?.results?.length || 0 });
-      } else if (isScanning) {
-        console.log('💾 Saving scanning state to localStorage');
+
+      // Only save if there's meaningful data to save
+      if (!domain && !apiResults) {
+        console.log('⏭️ Skipping cache save - no data to save yet');
+        return;
       }
-    } catch (error) {
-      console.error('❌ Error caching scan data:', error);
-    }
+
+      try {
+        // Try Redis first
+        await setCacheData('automation_scan_cache', cacheData, { 
+          prefix: 'app',
+          ttl: 60 * 60 * 1000 // 1 hour TTL
+        });
+        
+        if (apiResults && scanCompleted) {
+          console.log('✅ Scan results cached to Redis', { 
+            domain, 
+            resultsCount: apiResults?.results?.length || 0,
+            hasScanned,
+            scanCompleted 
+          });
+        } else if (isScanning) {
+          console.log('💾 Saving scanning state to Redis');
+        }
+      } catch (error) {
+        console.warn('⚠️ Redis unavailable, falling back to localStorage:', error);
+        // Fallback to localStorage
+        try {
+          localStorage.setItem('automation_scan_cache', JSON.stringify(cacheData));
+          if (apiResults && scanCompleted) {
+            console.log('✅ Scan results cached to localStorage (fallback)', { 
+              domain, 
+              resultsCount: apiResults?.results?.length || 0,
+              hasScanned,
+              scanCompleted
+            });
+          }
+        } catch (localError) {
+          console.error('❌ Error caching scan data to localStorage:', localError);
+        }
+      }
+    };
+
+    saveCacheData();
   }, [apiResults, scanCompleted, domain, aiSummary, hasScanned, isScanning, loadingMessage]);
 
   // Sync state when scan completes (stop loading indicator)
@@ -692,25 +792,20 @@ const AutomationScan: React.FC = () => {
   // Check for active scan on mount and resume if needed
   React.useEffect(() => {
     const checkActiveScans = async () => {
-      // First check localStorage
-      const cached = localStorage.getItem('automation_scan_cache');
-      if (cached) {
+      // Check Redis cache (already loaded in cacheLoaded state)
+      if (!cacheLoaded) return;
+      
+      if (cachedData) {
         try {
-          const parsed = JSON.parse(cached);
-          console.log('📊 Checking localStorage on mount:', {
-            hasResults: !!parsed.apiResults,
-            isScanning: parsed.isScanning,
-            scanCompleted: parsed.scanCompleted,
-            domain: parsed.domain
+          console.log('📊 Checking Redis cache on mount:', {
+            hasResults: !!cachedData.apiResults,
+            isScanning: cachedData.isScanning,
+            scanCompleted: cachedData.scanCompleted,
+            domain: cachedData.domain
           });
           
-          // Restore domain if available
-          if (parsed.domain) {
-            setDomain(parsed.domain);
-          }
-          
           // If there's an active scan promise, wait for it
-          if (activeScanPromise && parsed.isScanning && !parsed.scanCompleted) {
+          if (activeScanPromise && cachedData.isScanning && !cachedData.scanCompleted) {
             console.log('🔄 Active scan detected, waiting for completion...');
             setIsScanning(true);
             setLoadingMessage('Resuming scan...');
@@ -729,13 +824,9 @@ const AutomationScan: React.FC = () => {
             }
           }
           // If we have results and it's marked complete, show them
-          else if (parsed.apiResults && parsed.scanCompleted) {
-            console.log('✅ Found completed results, updating UI');
-            setApiResults(parsed.apiResults);
-            setScanCompleted(true);
-            setHasScanned(true);
-            setIsScanning(false);
-            setLoadingMessage('');
+          else if (cachedData.apiResults && cachedData.scanCompleted) {
+            console.log('✅ Found completed results in Redis');
+            // State already restored by previous useEffect
           }
         } catch (error) {
           console.error('Error checking cache:', error);
@@ -744,7 +835,7 @@ const AutomationScan: React.FC = () => {
     };
 
     checkActiveScans();
-  }, []); // Run once on mount
+  }, [cacheLoaded, cachedData]); // Run when cache is loaded
 
   const handleStartScan = async () => {
     if (!domain.trim()) {
@@ -905,7 +996,7 @@ const AutomationScan: React.FC = () => {
       
       console.log('✅ Scan completed! Showing results immediately.');
       
-      // Force immediate localStorage save
+      // Force immediate save (Redis with localStorage fallback)
       try {
         const immediateCache = {
           domain,
@@ -917,10 +1008,20 @@ const AutomationScan: React.FC = () => {
           loadingMessage: '',
           timestamp: Date.now(),
         };
-        localStorage.setItem('automation_scan_cache', JSON.stringify(immediateCache));
-        console.log('💾 Force saved completed scan to localStorage');
+        
+        try {
+          await setCacheData('automation_scan_cache', immediateCache, { 
+            prefix: 'app',
+            ttl: 60 * 60 * 1000 // 1 hour TTL
+          });
+          console.log('💾 Force saved completed scan to Redis');
+        } catch (redisError) {
+          console.warn('⚠️ Redis unavailable, saving to localStorage');
+          localStorage.setItem('automation_scan_cache', JSON.stringify(immediateCache));
+          console.log('💾 Force saved completed scan to localStorage');
+        }
       } catch (saveError) {
-        console.error('Error saving to localStorage:', saveError);
+        console.error('Error saving scan data:', saveError);
       }
       
       return finalResults; // Return results from promise
