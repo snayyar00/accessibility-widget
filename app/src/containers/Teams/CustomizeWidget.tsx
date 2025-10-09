@@ -756,10 +756,145 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       setTimeout(() => clearInterval(checkWidget), 5000);
     }
     
-    // Auto-open widget when iframe loads (after a small delay to ensure script is loaded)
+    // Function to find dark mode toggle with multiple possible selectors
+    function findDarkModeToggle() {
+      const selectors = [
+        '[data-asw-action="dark-mode"]',
+        '.asw-dark-mode-toggle',
+        '.asw-header-toggle-switch input',
+        '.asw-header-toggle-switch',
+        '[aria-label*="dark" i]',
+        '[aria-label*="theme" i]',
+        '.asw-menu .asw-header-toggle-switch input[type="checkbox"]'
+      ];
+      
+      for (const selector of selectors) {
+        const element = document.querySelector(selector);
+        if (element) {
+          return element;
+        }
+      }
+      
+      return null;
+    }
+    
+    // Function to check if dark mode is active
+    function isDarkModeActive() {
+      // Check document for dark mode class
+      if (document.body.classList.contains('asw-dark-mode') || 
+          document.body.classList.contains('dark-mode')) {
+        return true;
+      }
+      
+      // Check toggle state
+      const toggle = findDarkModeToggle();
+      if (toggle) {
+        // If it's an input checkbox
+        if (toggle.tagName === 'INPUT' && toggle.type === 'checkbox') {
+          return toggle.checked;
+        }
+        // If it has active class
+        if (toggle.classList.contains('active') || toggle.classList.contains('checked')) {
+          return true;
+        }
+      }
+      
+      return false;
+    }
+    
+    // Listen for theme updates from parent window
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'THEME_UPDATE_FROM_PARENT') {
+        const newTheme = event.data.theme;
+        const darkModeToggle = findDarkModeToggle();
+        
+        if (darkModeToggle) {
+          const currentlyDark = isDarkModeActive();
+          const shouldBeDark = newTheme === 'dark';
+          
+          // Only click if state needs to change
+          if (currentlyDark !== shouldBeDark) {
+            darkModeToggle.click();
+          }
+        }
+      }
+    });
+    
+    // Monitor widget's dark mode toggle and notify parent
+    function setupThemeSync() {
+      const darkModeToggle = findDarkModeToggle();
+      
+      if (darkModeToggle) {
+        // Create a MutationObserver to watch for class changes on body/document
+        const bodyObserver = new MutationObserver(() => {
+          const isDark = isDarkModeActive();
+          window.parent.postMessage({
+            type: 'THEME_CHANGED_IN_WIDGET',
+            theme: isDark ? 'dark' : 'light'
+          }, '*');
+        });
+        
+        // Observe body for class changes
+        bodyObserver.observe(document.body, {
+          attributes: true,
+          attributeFilter: ['class']
+        });
+        
+        // If toggle is an input, listen for change events
+        if (darkModeToggle.tagName === 'INPUT') {
+          darkModeToggle.addEventListener('change', () => {
+            setTimeout(() => {
+              const isDark = isDarkModeActive();
+              window.parent.postMessage({
+                type: 'THEME_CHANGED_IN_WIDGET',
+                theme: isDark ? 'dark' : 'light'
+              }, '*');
+            }, 150);
+          });
+        }
+        
+        // Also listen for direct clicks on toggle or its parent
+        const clickTarget = darkModeToggle.closest('.asw-header-toggle-switch') || darkModeToggle;
+        clickTarget.addEventListener('click', () => {
+          setTimeout(() => {
+            const isDark = isDarkModeActive();
+            window.parent.postMessage({
+              type: 'THEME_CHANGED_IN_WIDGET',
+              theme: isDark ? 'dark' : 'light'
+            }, '*');
+          }, 150);
+        });
+      }
+    }
+    
+    // Wait for widget menu to be available before setting up sync
+    function waitForWidgetMenu(callback, maxAttempts = 50) {
+      let attempts = 0;
+      const checkMenu = setInterval(() => {
+        attempts++;
+        const menu = document.querySelector('.asw-menu');
+        
+        if (menu) {
+          clearInterval(checkMenu);
+          callback();
+        } else if (attempts >= maxAttempts) {
+          clearInterval(checkMenu);
+        }
+      }, 100);
+    }
+    
+    // Auto-open widget when iframe loads
     window.addEventListener('load', () => {
       setTimeout(() => {
         openWidget();
+        // Wait for widget menu to be rendered before setting up sync
+        waitForWidgetMenu(() => {
+          setupThemeSync();
+          // Request initial theme state from parent
+          window.parent.postMessage({
+            type: 'REQUEST_THEME_STATE'
+          }, '*');
+        });
       }, 1000);
     });
   </script>
@@ -881,6 +1016,119 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       clearTimeout(timer);
     };
   }, [livePreview, colors, colorMode, toggles, colors.logoImage, selectedFont]);
+
+  // Track if theme just changed to trigger color reapplication
+  const [themeJustChanged, setThemeJustChanged] = useState(false);
+
+  // Listen for theme changes from widget iframe
+  useEffect(() => {
+    if (!livePreview) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      if (!event.data) return;
+
+      // Handle theme change from widget
+      if (event.data.type === 'THEME_CHANGED_IN_WIDGET') {
+        const newTheme = event.data.theme as 'light' | 'dark';
+
+        // Only update if theme actually changed to avoid infinite loops
+        if (newTheme !== colorMode) {
+          setColorMode(newTheme);
+          setThemeJustChanged(true);
+          toast.success(`Theme switched to ${newTheme} mode`);
+        }
+      }
+
+      // Handle initial theme state request from widget
+      if (event.data.type === 'REQUEST_THEME_STATE') {
+        const iframe = widgetIframeRef.current;
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage(
+            {
+              type: 'THEME_UPDATE_FROM_PARENT',
+              theme: colorMode,
+            },
+            '*',
+          );
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [livePreview, colorMode, setColorMode]);
+
+  // Re-apply colors when theme changes (after React updates with new colors)
+  useEffect(() => {
+    if (!livePreview || !widgetIframeRef.current || !themeJustChanged) return;
+
+    const reapplyColors = () => {
+      const iframe = widgetIframeRef.current;
+      if (!iframe) return;
+
+      const iframeDoc =
+        iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) return;
+
+      const $menu = iframeDoc.querySelector('.asw-menu') as HTMLElement;
+      const container = iframeDoc.querySelector(
+        '.asw-container',
+      ) as HTMLElement;
+
+      if ($menu && container) {
+        const isDarkMode = colorMode === 'dark';
+        const colorMapping = getColorMapping(isDarkMode);
+
+        Object.entries(colorMapping).forEach(([section, color]) => {
+          applyMenuColor(section, color, $menu, container, iframeDoc);
+        });
+
+        applyLogoToWidget(iframeDoc, colors.logoImage);
+        applyFontToWidget(iframeDoc, selectedFont);
+      }
+
+      setThemeJustChanged(false);
+    };
+
+    // Wait for widget's theme transition to complete before reapplying colors
+    const timer = setTimeout(reapplyColors, 400);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [livePreview, themeJustChanged, colorMode, colors, selectedFont]);
+
+  // Send theme updates to widget iframe when parent changes
+  useEffect(() => {
+    if (!livePreview || !widgetIframeRef.current) return;
+
+    const sendThemeUpdate = () => {
+      const iframe = widgetIframeRef.current;
+      if (!iframe || !iframe.contentWindow) return;
+
+      // Send message to iframe to update its theme
+      iframe.contentWindow.postMessage(
+        {
+          type: 'THEME_UPDATE_FROM_PARENT',
+          theme: colorMode,
+        },
+        '*',
+      );
+
+      // Mark that theme changed to trigger color reapplication
+      setThemeJustChanged(true);
+    };
+
+    // Wait a bit to ensure iframe is ready
+    const timer = setTimeout(sendThemeUpdate, 2000);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [livePreview, colorMode]);
 
   return (
     <div>
