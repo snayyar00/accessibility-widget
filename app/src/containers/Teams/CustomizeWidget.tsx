@@ -76,6 +76,56 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     setColors((prev) => ({ ...prev, [key]: color }));
   };
 
+  // Function to apply logo to widget
+  const applyLogoToWidget = (iframeDoc: Document, logoImage: string) => {
+    // Find the specific logo container div
+    const logoContainer = iframeDoc.querySelector(
+      '.asw-footer-logo',
+    ) as HTMLElement;
+
+    if (!logoContainer) return;
+
+    // Find the dynamic SVG container
+    const dynamicSvgContainer = logoContainer.querySelector(
+      '#dynamic-svg',
+    ) as HTMLElement;
+
+    if (logoImage) {
+      if (dynamicSvgContainer) {
+        // Clear the existing SVG content
+        dynamicSvgContainer.innerHTML = '';
+
+        // Create a new img element to replace the SVG
+        const logoImg = iframeDoc.createElement('img');
+        logoImg.src = logoImage;
+        logoImg.style.maxWidth = '198px';
+        logoImg.style.maxHeight = '47px';
+        logoImg.style.objectFit = 'contain';
+        logoImg.style.display = 'block';
+        logoImg.style.width = '100%';
+        logoImg.style.height = '100%';
+        logoImg.alt = 'Widget Logo';
+        logoImg.className = 'widget-logo';
+
+        // Insert the new logo image into the dynamic SVG container
+        dynamicSvgContainer.appendChild(logoImg);
+
+        // Ensure the logo container is visible
+        logoContainer.style.display = 'block';
+        logoContainer.style.visibility = 'visible';
+        logoContainer.style.opacity = '1';
+      }
+    } else {
+      // If no logo image provided, ensure the default logo is still visible
+      if (dynamicSvgContainer) {
+        // Keep the existing SVG but make sure it's visible
+        logoContainer.style.display = 'block';
+        logoContainer.style.visibility = 'visible';
+        logoContainer.style.opacity = '1';
+      }
+    }
+  };
+
   const resetColor = (key: keyof Colors) => () => {
     setColors((prev) => ({ ...prev, [key]: DefaultColors[key] }));
   };
@@ -702,6 +752,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           Object.entries(colorMapping).forEach(([section, color]) => {
             applyMenuColor(section, color, $menu, container, iframeDoc);
           });
+
+          // Apply logo to widget if it exists
+          applyLogoToWidget(iframeDoc, colors.logoImage);
         }
       }, 100);
 
@@ -715,7 +768,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [livePreview, colors, colorMode, toggles]);
+  }, [livePreview, colors, colorMode, toggles, colors.logoImage]);
 
   return (
     <div>
