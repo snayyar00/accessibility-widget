@@ -4,8 +4,10 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import cn from 'classnames';
 import { HiOutlineUser, HiOutlineMail, HiOutlinePhone } from 'react-icons/hi';
 import { FaChevronDown } from 'react-icons/fa';
+import { Settings, ChevronDown } from 'lucide-react';
 import { useQuery, useMutation } from '@apollo/client';
 
 import Input from '@/components/Common/Input';
@@ -63,6 +65,7 @@ type LicenseOwnerFormData = {
 
 const LicenseOwnerInfo: React.FC = () => {
   const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(countryCodes[0]);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -198,154 +201,198 @@ const LicenseOwnerInfo: React.FC = () => {
   }
 
   return (
-    <div className="w-full max-w-full min-w-0">
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="space-y-3 sm:space-y-4 md:space-y-6 max-w-full min-w-0"
+    <div className="space-y-4">
+      {/* License Owner Info Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-3 md:space-y-0 p-3 md:p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg">
+        <div className="flex-1 w-full md:w-auto">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900">
+            {t('License Owner Information') || 'License Owner Information'}
+          </h3>
+          <p className="text-xs md:text-sm text-gray-600 mt-1">
+            {t('Update your license owner details') ||
+              'Update your license owner details'}
+          </p>
+        </div>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-auto md:w-auto flex-shrink-0 px-3 md:px-4 py-2 bg-amber-600 text-white rounded-lg text-xs md:text-sm font-medium hover:bg-amber-700 transition-colors duration-200 flex items-center justify-center space-x-2 shadow-sm"
+        >
+          <Settings className="w-3 h-3 md:w-4 md:h-4 text-white" />
+          <span className="text-white">
+            {t('License info') || 'Edit Information'}
+          </span>
+          <ChevronDown
+            className={cn(
+              'w-3 h-3 md:w-4 md:h-4 transition-transform duration-300 text-white',
+              {
+                'rotate-180': isOpen,
+              },
+            )}
+          />
+        </button>
+      </div>
+
+      {/* Expandable Form Section */}
+      <div
+        className={cn(
+          'transition-all duration-300 ease-in-out overflow-hidden',
+          {
+            'max-h-0 opacity-0': !isOpen,
+            'max-h-[1000px] opacity-100': isOpen,
+          },
+        )}
       >
-        {/* Website Owner's Name */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
-          <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
-            <HiOutlineUser className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
-            <span>
-              {t('Common.license_owner.owner_name') || 'Website owner name'}
-            </span>
-          </label>
-          <div className="md:col-span-1 lg:col-span-2">
-            <Input
-              name="ownerName"
-              ref={register}
-              placeholder={
-                t('Common.license_owner.enter_owner_name') ||
-                "Enter website owner's name"
-              }
-              className={errors.ownerName ? 'border-red-500' : ''}
-            />
-            {errors.ownerName && (
-              <p className="text-red-500 text-xs sm:text-sm mt-1">
-                {errors.ownerName.message}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Website Owner's Email */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
-          <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
-            <HiOutlineMail className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
-            <span>
-              {t('Common.license_owner.owner_email') || "Website owner's email"}
-            </span>
-          </label>
-          <div className="md:col-span-1 lg:col-span-2">
-            <Input
-              name="ownerEmail"
-              ref={register}
-              type="email"
-              placeholder={
-                t('Common.license_owner.enter_owner_email') ||
-                "Enter website owner's email"
-              }
-              className={errors.ownerEmail ? 'border-red-500' : ''}
-            />
-            {errors.ownerEmail && (
-              <p className="text-red-500 text-xs sm:text-sm mt-1">
-                {errors.ownerEmail.message}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Phone Number */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
-          <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
-            <HiOutlinePhone className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
-            <span>
-              {t('Common.license_owner.phone_number') || 'Phone number'}
-            </span>
-          </label>
-          <div className="md:col-span-1 lg:col-span-2">
-            {/* Responsive row/col for code and number */}
-            <div className="flex flex-col md:flex-row gap-2 sm:gap-3 md:gap-4">
-              {/* Country Code Dropdown */}
-              <div
-                className="relative flex-shrink-0 md:w-1/3"
-                ref={dropdownRef}
-              >
-                <button
-                  type="button"
-                  onClick={() =>
-                    setIsCountryDropdownOpen(!isCountryDropdownOpen)
-                  }
-                  className="flex items-center gap-2 bg-light-gray border border-white-blue rounded-[10px] px-[10px] py-[10.5px] text-[13px] sm:text-[14px] md:text-[16px] text-white-gray w-full hover:border-light-primary transition-colors h-[42px]"
-                >
-                  <span className="text-base sm:text-lg">
-                    {selectedCountry.flag}
-                  </span>
-                  <span className="truncate flex-1 text-left">
-                    {selectedCountry.code}
-                  </span>
-                  <FaChevronDown className="w-3 h-3 sm:w-4 sm:h-4 ml-auto flex-shrink-0" />
-                </button>
-
-                {isCountryDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto w-full">
-                    {countryCodes.map((country) => (
-                      <button
-                        key={country.code + country.name}
-                        type="button"
-                        onClick={() => handleCountrySelect(country)}
-                        className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-2 hover:bg-gray-50 text-left transition-colors text-xs sm:text-sm md:text-base min-h-[44px] sm:min-h-[40px]"
-                      >
-                        <span className="text-base sm:text-lg">
-                          {country.flag}
-                        </span>
-                        <span className="text-gray-700 truncate">
-                          {country.code}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Phone Number Input */}
-              <div className="flex-1">
+        <div className="bg-gray-50 rounded-lg p-4 md:p-6">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-3 sm:space-y-4 md:space-y-6 max-w-full min-w-0"
+          >
+            {/* Website Owner's Name */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
+              <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
+                <HiOutlineUser className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                <span>
+                  {t('Common.license_owner.owner_name') || 'Website owner name'}
+                </span>
+              </label>
+              <div className="md:col-span-1 lg:col-span-2">
                 <Input
-                  name="phoneNumber"
+                  name="ownerName"
                   ref={register}
                   placeholder={
-                    t('Common.license_owner.enter_phone_number') ||
-                    'Enter phone number'
+                    t('Common.license_owner.enter_owner_name') ||
+                    "Enter website owner's name"
                   }
-                  className={`${
-                    errors.phoneNumber ? 'border-red-500' : ''
-                  } h-[42px]`}
+                  className={errors.ownerName ? 'border-red-500' : ''}
                 />
-                {errors.phoneNumber && (
+                {errors.ownerName && (
                   <p className="text-red-500 text-xs sm:text-sm mt-1">
-                    {errors.phoneNumber.message}
+                    {errors.ownerName.message}
                   </p>
                 )}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Save Button */}
-        <div className="pt-2 sm:pt-3 md:pt-4">
-          <Button
-            type="submit"
-            color="primary"
-            className="px-4 sm:px-6 md:px-8 py-3 text-sm sm:text-base md:text-lg font-semibold w-full sm:w-auto"
-            disabled={queryLoading || mutationLoading}
-          >
-            {mutationLoading
-              ? t('Common.license_owner.saving') || 'Saving...'
-              : t('Common.license_owner.save_changes') || 'Save Changes'}
-          </Button>
+            {/* Website Owner's Email */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
+              <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
+                <HiOutlineMail className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                <span>
+                  {t('Common.license_owner.owner_email') ||
+                    "Website owner's email"}
+                </span>
+              </label>
+              <div className="md:col-span-1 lg:col-span-2">
+                <Input
+                  name="ownerEmail"
+                  ref={register}
+                  type="email"
+                  placeholder={
+                    t('Common.license_owner.enter_owner_email') ||
+                    "Enter website owner's email"
+                  }
+                  className={errors.ownerEmail ? 'border-red-500' : ''}
+                />
+                {errors.ownerEmail && (
+                  <p className="text-red-500 text-xs sm:text-sm mt-1">
+                    {errors.ownerEmail.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Phone Number */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
+              <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
+                <HiOutlinePhone className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                <span>
+                  {t('Common.license_owner.phone_number') || 'Phone number'}
+                </span>
+              </label>
+              <div className="md:col-span-1 lg:col-span-2">
+                {/* Responsive row/col for code and number */}
+                <div className="flex flex-col md:flex-row gap-2 sm:gap-3 md:gap-4">
+                  {/* Country Code Dropdown */}
+                  <div
+                    className="relative flex-shrink-0 md:w-1/3"
+                    ref={dropdownRef}
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setIsCountryDropdownOpen(!isCountryDropdownOpen)
+                      }
+                      className="flex items-center gap-2 bg-light-gray border border-white-blue rounded-[10px] px-[10px] py-[10.5px] text-[13px] sm:text-[14px] md:text-[16px] text-white-gray w-full hover:border-light-primary transition-colors h-[42px]"
+                    >
+                      <span className="text-base sm:text-lg">
+                        {selectedCountry.flag}
+                      </span>
+                      <span className="truncate flex-1 text-left">
+                        {selectedCountry.code}
+                      </span>
+                      <FaChevronDown className="w-3 h-3 sm:w-4 sm:h-4 ml-auto flex-shrink-0" />
+                    </button>
+
+                    {isCountryDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto w-full">
+                        {countryCodes.map((country) => (
+                          <button
+                            key={country.code + country.name}
+                            type="button"
+                            onClick={() => handleCountrySelect(country)}
+                            className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-2 hover:bg-gray-50 text-left transition-colors text-xs sm:text-sm md:text-base min-h-[44px] sm:min-h-[40px]"
+                          >
+                            <span className="text-base sm:text-lg">
+                              {country.flag}
+                            </span>
+                            <span className="text-gray-700 truncate">
+                              {country.code}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Phone Number Input */}
+                  <div className="flex-1">
+                    <Input
+                      name="phoneNumber"
+                      ref={register}
+                      placeholder={
+                        t('Common.license_owner.enter_phone_number') ||
+                        'Enter phone number'
+                      }
+                      className={`${
+                        errors.phoneNumber ? 'border-red-500' : ''
+                      } h-[42px]`}
+                    />
+                    {errors.phoneNumber && (
+                      <p className="text-red-500 text-xs sm:text-sm mt-1">
+                        {errors.phoneNumber.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <div className="pt-2 sm:pt-3 md:pt-4">
+              <Button
+                type="submit"
+                color="primary"
+                className="px-4 sm:px-6 md:px-8 py-3 text-sm sm:text-base md:text-lg font-semibold w-full sm:w-auto"
+                disabled={queryLoading || mutationLoading}
+              >
+                {mutationLoading
+                  ? t('Common.license_owner.saving') || 'Saving...'
+                  : t('Common.license_owner.save_changes') || 'Save Changes'}
+              </Button>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
     </div>
   );
 };
