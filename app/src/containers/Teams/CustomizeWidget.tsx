@@ -1,7 +1,7 @@
 import { Switch } from '@mui/material';
 import type React from 'react';
 import { Colors, Toggles } from './editWidget';
-import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
+import { ReactComponent as LogoIcon } from '@/assets/images/svg/new_logo.svg';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
@@ -735,7 +735,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     <button class="preview-btn" onclick="openWidget()">Open Accessibility Widget</button>
   </div>
   
-  <script src="https://webability-widget.server.techywebsolutions.com/widget.min.js" 
+  <script src="https://co0kk804s4cw4gk488gocsos.webability.io/widget.min.js" 
           data-asw-position="bottom-left" 
           data-asw-lang="auto" 
           data-asw-icon-type="hidden" 
