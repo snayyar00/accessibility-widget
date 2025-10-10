@@ -497,7 +497,7 @@ export const customizeWidgetTourSteps: Step[] = [
         </h3>
         <p>
           This powerful interface lets you fully customize your accessibility
-          widget's appearance and features. Let's explore all the customization
+          widget's appearance and features. Let's explore the main customization
           options available to make your widget perfectly match your brand!
         </p>
       </div>
@@ -506,60 +506,16 @@ export const customizeWidgetTourSteps: Step[] = [
     disableBeacon: true,
   },
   {
-    target: '.widget-tabs-section',
-    content: (
-      <div>
-        <h3 className="text-lg font-semibold mb-2">
-          Appearance vs Preference Tabs 🔄
-        </h3>
-        <p className="mb-3">
-          Your customization options are organized into two tabs:
-        </p>
-        <ul className="text-sm space-y-2">
-          <li>
-            <strong>🎨 Appearance Tab:</strong> Customize visual elements like
-            colors, logo, fonts, and branding
-          </li>
-          <li>
-            <strong>⚙️ Preference Tab:</strong> Enable or disable specific
-            accessibility features that appear in your widget
-          </li>
-        </ul>
-        <p className="mt-3 text-sm text-gray-600">
-          Switch between tabs to access different customization options!
-        </p>
-      </div>
-    ),
-    placement: 'bottom' as Placement,
-  },
-  {
-    target: '.live-preview-toggle',
-    content: (
-      <div>
-        <h3 className="text-lg font-semibold mb-2">Live Preview Toggle 👀</h3>
-        <p className="mb-2">
-          Turn on Live Preview to see your changes in real-time! The widget
-          preview will appear on the right side, showing exactly how your
-          customizations will look on your website.
-        </p>
-        <p className="text-sm text-gray-600">
-          <strong>💡 Tip:</strong> Enable it now to see the preview panel!
-        </p>
-      </div>
-    ),
-    placement: 'right' as Placement,
-  },
-  {
     target: '.appearance-tab',
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Appearance Tab 🎨</h3>
         <p className="mb-3">
-          In the Appearance tab, customize all visual aspects:
+          In the Appearance tab, customize all visual aspects of your widget:
         </p>
         <ul className="text-sm space-y-2">
           <li>🎯 Widget Button Color - Main accessibility icon</li>
-          <li>🌓 Light/Dark Mode Colors - Separate schemes</li>
+          <li>🌓 Light/Dark Mode Colors - Separate color schemes</li>
           <li>📊 Header & Footer - Background and text colors</li>
           <li>🔘 Buttons & Icons - Interactive elements</li>
           <li>🖼️ Logo Upload - Add your branding</li>
@@ -578,7 +534,8 @@ export const customizeWidgetTourSteps: Step[] = [
       <div>
         <h3 className="text-lg font-semibold mb-2">Preference Tab ⚙️</h3>
         <p className="mb-3">
-          Switch to Preference tab to control which features appear:
+          Click the Preference tab to control which accessibility features
+          appear in your widget:
         </p>
         <ul className="text-sm space-y-2">
           <li>♿ Accessibility Profiles - Motor, Visual, Cognitive</li>
@@ -594,22 +551,22 @@ export const customizeWidgetTourSteps: Step[] = [
     placement: 'bottom' as Placement,
   },
   {
-    target: '.save-reset-buttons',
+    target: '.copy-customization-button',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Save & Reset 💾</h3>
-        <p className="mb-3">Your customizations are managed automatically:</p>
-        <ul className="text-sm space-y-2">
-          <li>✨ Auto-Save - Changes saved after 1 second</li>
-          <li>💾 Manual Save - Click to save immediately</li>
-          <li>🔄 Reset - Restore default settings</li>
-        </ul>
-        <p className="mt-3 text-sm text-gray-600">
-          Changes apply to your live website instantly!
+        <h3 className="text-lg font-semibold mb-2">Copy Customization 📋</h3>
+        <p className="mb-3">
+          Have multiple domains? Use this button to copy all your customization
+          settings from one domain to another. This saves you time and ensures
+          consistency across your websites.
+        </p>
+        <p className="text-sm text-gray-600">
+          <strong>💡 Pro Tip:</strong> All appearance and preference settings
+          will be copied, including colors, logos, fonts, and feature toggles!
         </p>
       </div>
     ),
-    placement: 'top' as Placement,
+    placement: 'bottom' as Placement,
   },
   {
     target: 'body',
@@ -617,20 +574,20 @@ export const customizeWidgetTourSteps: Step[] = [
       <div>
         <h3 className="text-lg font-semibold mb-2">Tour Complete! 🎉</h3>
         <p className="mb-3">
-          You're ready to customize your accessibility widget! Quick recap:
+          You're all set to customize your accessibility widget! Quick recap:
         </p>
         <ul className="text-sm space-y-2">
-          <li>✅ Switch between Appearance and Preference tabs</li>
-          <li>✅ Use Live Preview for real-time changes</li>
-          <li>✅ Customize colors to match your brand</li>
-          <li>✅ Enable/disable features as needed</li>
-          <li>✅ Upload logos and set custom links</li>
-          <li>✅ Changes auto-save instantly</li>
+          <li>
+            ✅ Use the Appearance tab to customize colors, logos, and fonts
+          </li>
+          <li>✅ Use the Preference tab to enable/disable features</li>
+          <li>
+            ✅ Use Copy Customization to duplicate settings across domains
+          </li>
+          <li>✅ Changes auto-save after 1 second</li>
         </ul>
         <p className="mt-3 text-sm text-gray-600">
-          💡 <strong>Pro Tip:</strong> When you have multiple domains, use the
-          "Copy Customization" button at the top to copy all settings from one
-          domain to another!
+          Need help? Check our documentation or contact support anytime!
         </p>
       </div>
     ),
