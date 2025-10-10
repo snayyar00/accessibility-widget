@@ -1858,7 +1858,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                               alt={organization.name}
                             />
                           ) : (
-                            <LogoIcon />
+                            <LogoIcon className="w-[400px] h-[100px] object-contain" />
                           )}
                         </>
                       )}
