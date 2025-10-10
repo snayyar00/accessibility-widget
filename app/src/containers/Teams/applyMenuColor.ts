@@ -381,8 +381,7 @@ function injectSelectedButtonStyles(
     }
 
     .asw-container .asw-confirmation-modal .asw-modal-icon {
-      box-shadow: 0 8px 25px ${customColor}26 !important;
-      border-color: ${customColor} !important;
+      /* Icon styling removed - no background circle */
     }
 
     .asw-container .asw-confirmation-modal .asw-modal-icon svg path {
@@ -1368,7 +1367,7 @@ export const sectionSelectors: Record<string, string | string[]> = {
     '.asw-report-issue-btn',
     '.asw-header-lang-selector',
   ],
-  'widget-background': ['.asw-menu-content', '.asw-menu'],
+  'widget-background': ['.asw-menu-content', '.asw-menu', '.asw-modal-content'],
   'selected-language': [
     '.asw-language-list .asw-language-option.asw-language-selected',
     ".asw-custom-dropdown-item[aria-selected='true']",
@@ -1669,17 +1668,25 @@ export default function applyMenuColor(
 
     // Handle widget background
     if (section === 'widget-background') {
-      // Query widget button from the widget container or document
+      // Query widget elements from the widget container or document
       const widgetContainer =
         $widgetContainer || document.querySelector('.asw-container');
-      const widgetButtons = widgetContainer?.querySelectorAll(selector);
+      const widgetElements = widgetContainer?.querySelectorAll(selector);
 
-      widgetButtons?.forEach((el: any) => {
+      widgetElements?.forEach((el: any) => {
         // Apply background color/gradient
         el.style.setProperty('background', color, 'important');
         // Apply outline color (slightly darker version of the color)
         el.style.setProperty('outline-color', color, 'important');
       });
+
+      // Also handle modal content which might be outside the widget container
+      if (selector === '.asw-modal-content') {
+        document.querySelectorAll(selector).forEach((el: any) => {
+          el.style.setProperty('background', color, 'important');
+        });
+      }
+
       return;
     }
 
