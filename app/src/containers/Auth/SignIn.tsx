@@ -146,11 +146,12 @@ const SignIn: React.FC = () => {
           showForgotPasswordLink={isAccountLocked(currentErrorCode)}
         />
       </div>
-      <div className="w-[55%] sm:hidden flex items-center justify-center p-5">
+      <div className="w-[55%] sm:hidden flex items-center justify-end p-5 relative">
         <img
           src="/images/auth/auth_image1.png"
           alt="Authentication"
-          className="w-full h-[90vh] object-contain"
+          className="h-[95vh] object-contain ml-auto"
+          style={{ maxWidth: '90%' }}
         />
       </div>
     </div>
