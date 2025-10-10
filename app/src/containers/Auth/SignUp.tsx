@@ -230,8 +230,8 @@ const SignUp: React.FC = () => {
   }
 
   return (
-    <div className="flex justify-center min-h-screen sm:flex-col">
-      <div className="w-[80%] flex justify-center items-start mb-10 align-middle sm:w-full overflow-scroll">
+    <div className="flex min-h-screen sm:flex-col">
+      <div className="w-[45%] flex justify-end items-center sm:w-full lg:pl-16">
         <SignUpForm
           onSubmit={handleSubmit(onSubmit)}
           register={register}
@@ -245,8 +245,13 @@ const SignUp: React.FC = () => {
           )}
         />
       </div>
-      <div className="w-[20%] bg-primary overflow-hidden sm:hidden">
-        <AuthAdsArea />
+      <div className="w-[55%] sm:hidden flex items-center justify-end p-5 relative">
+        <img
+          src="/images/auth/auth_image1.png"
+          alt="Authentication"
+          className="h-[95vh] object-contain ml-auto"
+          style={{ maxWidth: '90%' }}
+        />
       </div>
     </div>
   );
