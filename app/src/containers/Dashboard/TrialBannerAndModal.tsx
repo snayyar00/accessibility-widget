@@ -73,10 +73,12 @@ const Modal: React.FC<ModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl sm:w-full md:w-5/6 lg:w-4/5 xl:w-3/4 max-w-7xl overflow-hidden max-h-[95vh] transform transition-all duration-300 ease-out">
+    <div className="fixed inset-0 flex sm:items-start sm:justify-center md:items-center md:justify-center z-50 bg-black bg-opacity-60 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl sm:w-full sm:max-h-none sm:overflow-y-auto sm:min-h-screen md:w-5/6 lg:w-4/5 xl:w-3/4 max-w-7xl md:overflow-hidden md:max-h-[95vh] transform transition-all duration-300 ease-out">
         {/* Content */}
-        <div className="overflow-hidden max-h-[95vh]">{children}</div>
+        <div className="sm:overflow-y-auto sm:max-h-screen md:overflow-hidden md:max-h-[95vh]">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -561,9 +563,16 @@ const TrialBannerAndModal: React.FC<any> = ({
               customerData={customerData}
             />
           ) : (
-            <div className="grid grid-cols-12 h-[calc(100vh-120px)] max-h-[800px]">
-              <div className="sm:col-span-12 md:col-span-6 px-4 md:px-6 lg:px-8 py-3 md:py-4 flex flex-col bg-gradient-to-br from-gray-50 to-white">
-                <div className="flex flex-col gap-3 flex-1 overflow-hidden">
+            <div className="grid grid-cols-12 sm:h-auto sm:min-h-screen sm:max-h-screen md:h-[calc(100vh-120px)] sm:max-h-none md:max-h-[800px]">
+              <div className="sm:col-span-12 md:col-span-6 px-4 md:px-6 lg:px-8 py-3 md:py-4 flex flex-col bg-gradient-to-br from-gray-50 to-white sm:min-h-screen sm:max-h-screen md:min-h-0 sm:overflow-y-auto relative">
+                {/* Close button for mobile view */}
+                <button
+                  className="absolute top-4 right-4 sm:block md:hidden text-gray-600 hover:text-gray-800 text-2xl hover:bg-gray-100 transition-colors duration-200 p-1 rounded-full z-10"
+                  onClick={closeModal}
+                >
+                  ×
+                </button>
+                <div className="flex flex-col gap-3 sm:flex-none md:flex-1 sm:overflow-visible md:overflow-hidden">
                   {/* Logo Section */}
                   <div className="flex justify-center mb-4">
                     <LogoIcon className="w-26 h-7 sm:w-26 sm:h-7 md:w-40 md:h-10 lg:w-48 lg:h-12" />
@@ -602,7 +611,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                     </p>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto">
+                  <div className="sm:flex-none md:flex-1 sm:overflow-visible md:overflow-y-auto sm:overflow-y-auto">
                     <form
                       id="bannerForm"
                       onSubmit={handleSubmit}
@@ -877,8 +886,8 @@ const TrialBannerAndModal: React.FC<any> = ({
                   </div>
                 </div>
               </div>
-              <div className="sm:hidden md:col-span-6 px-4 md:px-6 py-3 md:py-4 bg-gradient-to-br from-blue-600 to-blue-800 flex flex-col justify-center relative">
-                {/* Close button for right panel */}
+              <div className="sm:hidden md:col-span-6 px-4 md:px-6 py-3 md:py-4 bg-gradient-to-br from-blue-600 to-blue-800 flex flex-col justify-center relative md:overflow-y-auto md:max-h-[calc(100vh-120px)]">
+                {/* Close button for right panel - visible on md and larger */}
                 <button
                   className="absolute top-4 right-4 text-white text-2xl hover:text-gray-200 transition-colors duration-200 p-1 rounded-full hover:bg-white/10 z-10"
                   onClick={closeModal}
