@@ -841,7 +841,7 @@ const Sidebar = ({
                   </div>
                 </NavLink>
 
-                {/* License Owner */}
+                {/* License Owner
                 <NavLink
                   to="/license-owner-info"
                   onClick={closeSidebar}
@@ -861,7 +861,7 @@ const Sidebar = ({
                       }
                     />
                   </div>
-                </NavLink>
+                </NavLink> */}
 
                 {/* Admin Controls - Only visible for admin/owner roles */}
                 {userData?.isAdminOrOwner && (
