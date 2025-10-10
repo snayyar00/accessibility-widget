@@ -566,7 +566,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                 <div className="flex flex-col gap-3 flex-1 overflow-hidden">
                   {/* Logo Section */}
                   <div className="flex justify-center mb-4">
-                    <LogoIcon className="w-48 h-12" />
+                    <LogoIcon className="w-26 h-7 sm:w-26 sm:h-7 md:w-40 md:h-10 lg:w-48 lg:h-12" />
                   </div>
 
                   <div className="space-y-2 lg:pt-4">

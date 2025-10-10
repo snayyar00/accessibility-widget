@@ -198,16 +198,16 @@ const LicenseOwnerInfo: React.FC = () => {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-full min-w-0">
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="space-y-3 sm:space-y-4 md:space-y-6"
+        className="space-y-3 sm:space-y-4 md:space-y-6 max-w-full min-w-0"
       >
         {/* Website Owner's Name */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
           <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
             <HiOutlineUser className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
-            <span className="whitespace-nowrap">
+            <span>
               {t('Common.license_owner.owner_name') || 'Website owner name'}
             </span>
           </label>
@@ -230,10 +230,10 @@ const LicenseOwnerInfo: React.FC = () => {
         </div>
 
         {/* Website Owner's Email */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
           <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
             <HiOutlineMail className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
-            <span className="whitespace-nowrap">
+            <span>
               {t('Common.license_owner.owner_email') || "Website owner's email"}
             </span>
           </label>
@@ -257,10 +257,10 @@ const LicenseOwnerInfo: React.FC = () => {
         </div>
 
         {/* Phone Number */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
           <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
             <HiOutlinePhone className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
-            <span className="whitespace-nowrap">
+            <span>
               {t('Common.license_owner.phone_number') || 'Phone number'}
             </span>
           </label>
