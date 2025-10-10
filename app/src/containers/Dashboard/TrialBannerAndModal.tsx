@@ -49,6 +49,7 @@ interface ModalProps {
   optionalDomain: any;
   isStripeCustomer: boolean;
   domainCount: number;
+  closeModal: () => void;
 }
 
 interface DomainFormData {
@@ -63,6 +64,7 @@ const Modal: React.FC<ModalProps> = ({
   paymentView,
   optionalDomain,
   domainCount,
+  closeModal,
 }) => {
   if (!isOpen) return null;
 
@@ -71,39 +73,10 @@ const Modal: React.FC<ModalProps> = ({
   );
 
   return (
-    <div
-      className={`fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50`}
-    >
-      <div className="bg-white rounded-lg sm:w-full md:w-3/4 overflow-y-auto max-h-[95vh]">
-        <div className="grid grid-cols-12 justify-evenly">
-          <div className="sm:col-span-9 col-span-6 pl-4 pt-2">
-            {organization?.logo_url ? (
-              <img
-                width={198}
-                height={47}
-                src={organization.logo_url}
-                alt={organization.name}
-              />
-            ) : (
-              <LogoIcon />
-            )}
-          </div>
-          <div
-            className={`sm:col-span-3 col-span-6 pt-2 pr-4 text-end rounded-tr-lg sm:bg-white ${
-              paymentView ? '' : 'bg-[#0033ed]'
-            }`}
-          >
-            <button
-              className={`sm:text-black text-${
-                paymentView ? 'black' : 'white'
-              } text-3xl hover:text-gray-700`}
-              onClick={onClose}
-            >
-              ×
-            </button>
-          </div>
-        </div>
-        <div>{children}</div>
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl sm:w-full md:w-5/6 lg:w-4/5 xl:w-3/4 max-w-7xl overflow-hidden max-h-[95vh] transform transition-all duration-300 ease-out">
+        {/* Content */}
+        <div className="overflow-hidden max-h-[95vh]">{children}</div>
       </div>
     </div>
   );
@@ -577,6 +550,7 @@ const TrialBannerAndModal: React.FC<any> = ({
           paymentView={paymentView}
           optionalDomain={optionalDomain}
           domainCount={domainCount}
+          closeModal={closeModal}
         >
           {paymentView ? (
             <PlanSetting
@@ -587,270 +561,517 @@ const TrialBannerAndModal: React.FC<any> = ({
               customerData={customerData}
             />
           ) : (
-            <div className="grid grid-cols-12">
-              <div className="sm:col-span-12 col-span-6 px-4 flex flex-col justify-between ">
-                <div className="flex flex-col gap-3">
-                  <h1 className="card-title text-2xl py-4">
-                    Make your business accessible today!
-                  </h1>
-                  <p>
-                    Streamline web accessibility with WebAbilityWidget, the #1
-                    web accessibility, WCAG and ADA compliance solution. Please
-                    add only the root domain. We will manage the subdomains on
-                    our end.
-                  </p>
-                  <div className="form-group">
-                    <input
-                      type="text"
-                      id="domainName"
-                      name="domainName"
-                      placeholder="Add a new domain name"
-                      value={formData.domainName}
-                      onChange={handleInputChange}
-                      className="domain-input-field form-control"
-                      form="bannerForm"
-                    />
+            <div className="grid grid-cols-12 h-[calc(100vh-120px)] max-h-[800px]">
+              <div className="sm:col-span-12 md:col-span-6 px-4 md:px-6 lg:px-8 py-3 md:py-4 flex flex-col bg-gradient-to-br from-gray-50 to-white">
+                <div className="flex flex-col gap-3 flex-1 overflow-hidden">
+                  {/* Logo Section */}
+                  <div className="flex justify-center mb-4">
+                    <LogoIcon className="w-48 h-12" />
+                  </div>
+
+                  <div className="space-y-2 lg:pt-4">
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
+                      Make your business accessible today!
+                    </h1>
+                    <p className="text-gray-600 text-sm md:text-base leading-relaxed">
+                      Streamline web accessibility with WebAbilityWidget, the #1
+                      web accessibility, WCAG and ADA compliance solution.
+                    </p>
+                  </div>
+
+                  {/* Domain Input Section */}
+                  <div className="bg-white rounded-lg p-4 shadow-md border border-gray-100">
+                    <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                      Your Domain
+                    </h2>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        id="domainName"
+                        name="domainName"
+                        placeholder="example.com"
+                        value={formData.domainName}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-3 text-base border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 placeholder-gray-400 bg-gray-50 hover:bg-white focus:bg-white"
+                        form="bannerForm"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-600 mt-2">
+                      Please add only the root domain. We will manage the
+                      subdomains on our end.
+                    </p>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto">
+                    <form
+                      id="bannerForm"
+                      onSubmit={handleSubmit}
+                      className="space-y-3"
+                    >
+                      {/* Trial Options */}
+                      <div className="space-y-3">
+                        <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3">
+                          Choose Your Trial Option
+                        </h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+                          <button
+                            type="button"
+                            className="group relative p-3 md:p-4 text-left border-2 border-blue-200 rounded-xl bg-gradient-to-br from-blue-50 to-white hover:from-blue-100 hover:to-blue-50 transition-all duration-300 hover:border-blue-300 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => {
+                              if (
+                                !formData.domainName ||
+                                formData.domainName.trim() === ''
+                              ) {
+                                toast.error(
+                                  'Please enter a domain name first!',
+                                );
+                                return;
+                              }
+                              setCardTrial(true);
+                            }}
+                            disabled={
+                              addSiteLoading ||
+                              billingLoading ||
+                              !formData.domainName
+                            }
+                          >
+                            <div className="flex items-center space-x-2">
+                              <div className="flex-shrink-0">
+                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <svg
+                                    className="w-4 h-4 text-blue-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                                    />
+                                  </svg>
+                                </div>
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-900">
+                                  30 Day Trial
+                                </h4>
+                                <p className="text-xs text-gray-600">
+                                  Requires credit card
+                                </p>
+                              </div>
+                            </div>
+                            {addSiteLoading || billingLoading ? (
+                              <div className="mt-2 text-center">
+                                <div className="inline-flex items-center text-blue-600 text-xs">
+                                  <svg
+                                    className="animate-spin -ml-1 mr-2 h-3 w-3 text-blue-600"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
+                                  </svg>
+                                  Please Wait...
+                                </div>
+                              </div>
+                            ) : null}
+                          </button>
+
+                          <button
+                            disabled={
+                              addSiteLoading ||
+                              billingLoading ||
+                              !formData.domainName
+                            }
+                            type="submit"
+                            onClick={() => {
+                              if (
+                                !formData.domainName ||
+                                formData.domainName.trim() === ''
+                              ) {
+                                toast.error(
+                                  'Please enter a domain name first!',
+                                );
+                                return;
+                              }
+                              trialReload.current = true;
+                            }}
+                            className="group relative p-3 md:p-4 text-left border-2 border-green-200 rounded-xl bg-gradient-to-br from-green-50 to-white hover:from-green-100 hover:to-green-50 transition-all duration-300 hover:border-green-300 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <div className="flex-shrink-0">
+                                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                  <svg
+                                    className="w-4 h-4 text-green-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                  </svg>
+                                </div>
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-900">
+                                  15 Day Trial
+                                </h4>
+                                <p className="text-xs text-gray-600">
+                                  No credit card required
+                                </p>
+                              </div>
+                            </div>
+                            {addSiteLoading || billingLoading ? (
+                              <div className="mt-2 text-center">
+                                <div className="inline-flex items-center text-green-600 text-xs">
+                                  <svg
+                                    className="animate-spin -ml-1 mr-2 h-3 w-3 text-green-600"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
+                                  </svg>
+                                  Please Wait...
+                                </div>
+                              </div>
+                            ) : null}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Skip Trial Button */}
+                      <div className="pt-2">
+                        <button
+                          type="button"
+                          className="w-full py-2 md:py-3 px-3 md:px-4 text-white text-sm md:text-base font-semibold text-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                          onClick={() => {
+                            if (
+                              !formData.domainName ||
+                              formData.domainName.trim() === ''
+                            ) {
+                              toast.error('Please enter a domain name first!');
+                              return;
+                            }
+                            showPaymentModal();
+                          }}
+                          disabled={
+                            addSiteLoading ||
+                            billingLoading ||
+                            !formData.domainName
+                          }
+                        >
+                          {addSiteLoading || billingLoading ? (
+                            <div className="flex items-center justify-center space-x-2">
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Please Wait...
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center space-x-2">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                                />
+                              </svg>
+                              Skip trial & buy
+                            </div>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* AppSumo User Notice */}
+                      <div className="relative mt-3 p-3 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg shadow-md border border-yellow-300 overflow-hidden">
+                        {/* Background decoration */}
+                        <div className="absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 bg-yellow-300 rounded-full opacity-20"></div>
+                        <div className="absolute top-0 right-0 w-10 h-10 -mr-5 -mt-5 bg-yellow-200 rounded-full opacity-30"></div>
+
+                        <div className="relative z-10">
+                          <div className="flex items-start space-x-3">
+                            <div className="flex-shrink-0">
+                              <div className="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center shadow-md">
+                                <svg
+                                  className="w-4 h-4 text-white"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                    clipRule="evenodd"
+                                  ></path>
+                                </svg>
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-sm font-bold text-gray-900 mb-1">
+                                🎉 AppSumo Customers
+                              </h3>
+                              <p className="text-gray-800 text-xs leading-relaxed">
+                                Click "Skip trial & buy" to enter your coupon
+                                code.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              <div className="sm:hidden md:col-span-6 px-4 md:px-6 py-3 md:py-4 bg-gradient-to-br from-blue-600 to-blue-800 flex flex-col justify-center relative">
+                {/* Close button for right panel */}
+                <button
+                  className="absolute top-4 right-4 text-white text-2xl hover:text-gray-200 transition-colors duration-200 p-1 rounded-full hover:bg-white/10 z-10"
+                  onClick={closeModal}
+                >
+                  ×
+                </button>
+
+                <div className="text-center mb-4">
+                  <h2 className="text-xl font-bold text-white mb-3">
+                    Free Accessibility Scan
+                  </h2>
+                  <div className="bg-white rounded-lg p-3 mb-4 shadow-lg">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value="https://WebAbility.io"
+                        readOnly
+                        className="flex-1 px-3 py-2 text-gray-700 bg-gray-50 rounded-lg border border-gray-200 text-xs"
+                      />
+                      <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 shadow-md text-xs">
+                        Free Scan
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <div className="add-domain-form-container py-4">
-                  <form
-                    id="bannerForm"
-                    onSubmit={handleSubmit}
-                    className="add-domain-form"
-                  >
-                    <div className="trial-buttons-section sm:flex-col md:flex-row flex justify-end pb-3 pt-4">
-                      <button
-                        type="button"
-                        className="py-3 mr-4 justify-center text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full sm:w-full transition duration-300"
-                        onClick={() => {
-                          setCardTrial(true);
-                        }}
-                        disabled={addSiteLoading || billingLoading}
-                      >
-                        {addSiteLoading || billingLoading
-                          ? 'Please Wait...'
-                          : '30 Day trial (Card)'}
-                      </button>
-
-                      <button
-                        disabled={addSiteLoading || billingLoading}
-                        type="submit"
-                        onClick={() => {
-                          trialReload.current = true;
-                        }}
-                        className="py-3 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full sm:mt-2 sm:w-full transition duration-300"
-                      >
-                        {addSiteLoading || billingLoading
-                          ? 'Please Wait...'
-                          : '15 Day trial (No Card)'}
-                      </button>
+                {/* Accessibility Overview Cards */}
+                <div className="space-y-3 mb-4">
+                  <div className="bg-white rounded-lg p-4 shadow-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                          <svg
+                            className="w-4 h-4 text-red-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">
+                          Status
+                        </h3>
+                        <p className="text-red-600 font-medium text-sm">
+                          Not Compliant
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          Your site doesn't comply with WCAG 2.1 AA
+                        </p>
+                      </div>
                     </div>
-                    <div className="sm:flex-col md:flex-row flex justify-end">
-                      <button
-                        type="button"
-                        className="skip-trial-button py-3 text-white text-center rounded-xl bg-primary hover:bg-sapphire-blue w-full sm:w-full transition duration-300"
-                        onClick={showPaymentModal}
-                        disabled={addSiteLoading || billingLoading}
-                      >
-                        {addSiteLoading || billingLoading
-                          ? 'Please Wait...'
-                          : activePlan !== '' && tierPlan
-                          ? 'Skip trial & add to plan'
-                          : 'Skip trial & buy'}
-                      </button>
-                    </div>
+                  </div>
 
-                    {/* AppSumo User Notice */}
-                    <div className="appsumo-notice mt-6 p-5 bg-[rgb(255,188,0)] border-2 border-amber-500 rounded-xl shadow-lg relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 bg-amber-500 rounded-full opacity-20"></div>
-                      <div className="absolute top-0 right-0 w-16 h-16 -mr-4 -mt-4 bg-amber-400 rounded-full opacity-30"></div>
-                      <div className="flex items-center">
+                  <div className="bg-white rounded-lg p-4 shadow-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                          <span className="text-red-600 font-bold text-sm">
+                            18%
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">
+                          Accessibility Score
+                        </h3>
+                        <p className="text-red-600 font-medium text-sm">18%</p>
+                        <p className="text-xs text-gray-600">
+                          Websites with a score of 70% or lower are considered
+                          at high risk
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-4 shadow-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                          <svg
+                            className="w-4 h-4 text-red-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">
+                          Lawsuit Risk
+                        </h3>
+                        <p className="text-red-600 font-medium text-sm">High</p>
+                        <p className="text-xs text-gray-600">
+                          Multiple violations may be exposing your site to legal
+                          action
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Toggle */}
+                <div className="bg-white rounded-lg p-3 mb-3 shadow-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-700 font-medium text-sm">
+                      See your results with WebAbility!
+                    </span>
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        defaultChecked
+                      />
+                      <div className="w-10 h-5 bg-blue-600 rounded-full shadow-inner"></div>
+                      <div className="absolute top-0.5 right-0.5 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out"></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Key Features */}
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-white mb-2">
+                    Key Features
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-purple-500 rounded-sm flex items-center justify-center">
                         <svg
-                          className="w-10 h-10 mr-4 text-amber-800"
+                          className="w-2 h-2 text-white"
                           fill="currentColor"
                           viewBox="0 0 20 20"
-                          xmlns="http://www.w3.org/2000/svg"
                         >
                           <path
                             fillRule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"
                             clipRule="evenodd"
-                          ></path>
+                          />
                         </svg>
-                        <div className="flex-1 z-10">
-                          <h3 className="text-lg font-bold text-black mb-1">
-                            AppSumo Customers
-                          </h3>
-                          <p className="text-black text-base">
-                            Click{' '}
-                            <span className="font-bold underline">
-                              Skip trial & buy
-                            </span>{' '}
-                            above, and you'll be able to enter your coupon code
-                            in the next step.
-                          </p>
-                        </div>
                       </div>
-                    </div>
-                  </form>
-                </div>
-              </div>
-              <div className="sm:hidden col-span-6 px-4 flex justify-center rounded-br-lg bg-[#0033ED]">
-                <div className="flex flex-col justify-center items-center">
-                  <img
-                    src={SingleBannerImage} // Replace with the actual URL of your image
-                    alt="Accessibility Widget"
-                    className="max-w-[70%] max-h-full shadow-lg"
-                  />
-
-                  <div className="py-3 text-white">
-                    <div className="flex">
-                      <i
-                        role="presentation"
-                        aria-hidden="true"
-                        className="sc-brSamD froxNw"
-                      >
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M19.208 2H4.79a.666.666 0 0 0-.547.28L.11 8.21a.608.608 0 0 0 .048.758L11.604 21.78a.677.677 0 0 0 1.003-.005L23.846 8.968a.608.608 0 0 0 .044-.754L19.756 2.28a.666.666 0 0 0-.548-.28Z"
-                            fill="#683AEC"
-                          ></path>
-                          <path
-                            d="m11.478 21.538-6.94-19.26c-.05-.136.056-.278.207-.278h14.51c.15 0 .256.14.209.276l-6.741 19.256c-.2.57-1.04.574-1.245.006Z"
-                            fill="#906AFF"
-                          ></path>
-                          <path
-                            d="M.31 8.606c-.187 0-.288.21-.166.346l11.46 12.828a.677.677 0 0 0 1.003-.005L23.861 8.951c.12-.136.018-.345-.168-.345H.31Z"
-                            fill="url(#diamond_svg__a)"
-                            fillOpacity="0.52"
-                          ></path>
-                          <defs>
-                            <linearGradient
-                              id="diamond_svg__a"
-                              x1="11.999"
-                              y1="8.606"
-                              x2="11.999"
-                              y2="22.344"
-                              gradientUnits="userSpaceOnUse"
-                            >
-                              <stop stopColor="#4014BC"></stop>
-                              <stop
-                                offset="1"
-                                stopColor="#4014BC"
-                                stopOpacity="0"
-                              ></stop>
-                            </linearGradient>
-                          </defs>
-                        </svg>
-                      </i>
-                      <p className="px-3">
+                      <span className="text-white text-xs">
                         Accessibility statement and certifications
-                      </p>
+                      </span>
                     </div>
-                    <div className="flex">
-                      <i
-                        role="presentation"
-                        aria-hidden="true"
-                        className="sc-brSamD froxNw"
-                      >
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-purple-500 rounded-sm flex items-center justify-center">
                         <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-2 h-2 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
                         >
                           <path
-                            d="M19.208 2H4.79a.666.666 0 0 0-.547.28L.11 8.21a.608.608 0 0 0 .048.758L11.604 21.78a.677.677 0 0 0 1.003-.005L23.846 8.968a.608.608 0 0 0 .044-.754L19.756 2.28a.666.666 0 0 0-.548-.28Z"
-                            fill="#683AEC"
-                          ></path>
-                          <path
-                            d="m11.478 21.538-6.94-19.26c-.05-.136.056-.278.207-.278h14.51c.15 0 .256.14.209.276l-6.741 19.256c-.2.57-1.04.574-1.245.006Z"
-                            fill="#906AFF"
-                          ></path>
-                          <path
-                            d="M.31 8.606c-.187 0-.288.21-.166.346l11.46 12.828a.677.677 0 0 0 1.003-.005L23.861 8.951c.12-.136.018-.345-.168-.345H.31Z"
-                            fill="url(#diamond_svg__a)"
-                            fillOpacity="0.52"
-                          ></path>
-                          <defs>
-                            <linearGradient
-                              id="diamond_svg__a"
-                              x1="11.999"
-                              y1="8.606"
-                              x2="11.999"
-                              y2="22.344"
-                              gradientUnits="userSpaceOnUse"
-                            >
-                              <stop stopColor="#4014BC"></stop>
-                              <stop
-                                offset="1"
-                                stopColor="#4014BC"
-                                stopOpacity="0"
-                              ></stop>
-                            </linearGradient>
-                          </defs>
+                            fillRule="evenodd"
+                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"
+                            clipRule="evenodd"
+                          />
                         </svg>
-                      </i>
-                      <p className="px-3">
+                      </div>
+                      <span className="text-white text-xs">
                         2-minute integration, immediate turnaround
-                      </p>
+                      </span>
                     </div>
-                    <div className="flex">
-                      <i
-                        role="presentation"
-                        aria-hidden="true"
-                        className="sc-brSamD froxNw"
-                      >
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-purple-500 rounded-sm flex items-center justify-center">
                         <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-2 h-2 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
                         >
                           <path
-                            d="M19.208 2H4.79a.666.666 0 0 0-.547.28L.11 8.21a.608.608 0 0 0 .048.758L11.604 21.78a.677.677 0 0 0 1.003-.005L23.846 8.968a.608.608 0 0 0 .044-.754L19.756 2.28a.666.666 0 0 0-.548-.28Z"
-                            fill="#683AEC"
-                          ></path>
-                          <path
-                            d="m11.478 21.538-6.94-19.26c-.05-.136.056-.278.207-.278h14.51c.15 0 .256.14.209.276l-6.741 19.256c-.2.57-1.04.574-1.245.006Z"
-                            fill="#906AFF"
-                          ></path>
-                          <path
-                            d="M.31 8.606c-.187 0-.288.21-.166.346l11.46 12.828a.677.677 0 0 0 1.003-.005L23.861 8.951c.12-.136.018-.345-.168-.345H.31Z"
-                            fill="url(#diamond_svg__a)"
-                            fillOpacity="0.52"
-                          ></path>
-                          <defs>
-                            <linearGradient
-                              id="diamond_svg__a"
-                              x1="11.999"
-                              y1="8.606"
-                              x2="11.999"
-                              y2="22.344"
-                              gradientUnits="userSpaceOnUse"
-                            >
-                              <stop stopColor="#4014BC"></stop>
-                              <stop
-                                offset="1"
-                                stopColor="#4014BC"
-                                stopOpacity="0"
-                              ></stop>
-                            </linearGradient>
-                          </defs>
+                            fillRule="evenodd"
+                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"
+                            clipRule="evenodd"
+                          />
                         </svg>
-                      </i>
-                      <p className="px-3">
+                      </div>
+                      <span className="text-white text-xs">
                         AI-Powered daily monitoring and scanning
-                      </p>
+                      </span>
                     </div>
                   </div>
                 </div>
