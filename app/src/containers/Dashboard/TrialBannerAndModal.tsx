@@ -617,7 +617,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                           <button
                             type="button"
-                            className="group relative p-3 md:p-4 text-left border-2 border-blue-200 rounded-xl bg-gradient-to-br from-blue-50 to-white hover:from-blue-100 hover:to-blue-50 transition-all duration-300 hover:border-blue-300 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="group relative p-3 md:p-4 text-left border-2 border-blue-300 rounded-xl bg-gradient-to-br from-blue-50 to-white hover:from-blue-100 hover:to-blue-50 transition-all duration-300 hover:border-blue-400 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={() => {
                               if (
                                 !formData.domainName ||
