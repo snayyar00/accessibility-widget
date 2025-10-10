@@ -18,6 +18,8 @@ import { CircularProgress } from '@mui/material';
 
 interface CodeProps {
   codeString: string;
+  shouldOpenCustomization?: boolean;
+  onCustomizationOpened?: () => void;
 }
 
 const SEND_WIDGET_INSTALLATION = gql`
@@ -100,7 +102,66 @@ const languages = [
   { code: 'ca', name: 'Català', englishName: 'Catalan' },
 ];
 
-export default function CodeContainer({ codeString }: CodeProps) {
+const iconTypes = [
+  {
+    value: 'full',
+    label: 'Full Widget',
+    preview: () => (
+      <div className="w-8 h-8 flex items-center justify-center">
+        <img
+          src="/images/svg/full_widget_icon.svg"
+          alt="Full Widget Icon"
+          width={32}
+          height={32}
+          className="object-contain"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.visibility = 'hidden';
+          }}
+        />
+      </div>
+    ),
+  },
+  {
+    value: 'compact',
+    label: 'Compact Widget',
+    preview: () => (
+      <div className="w-20 h-5 flex items-center justify-center">
+        <div
+          className="w-20 h-5 flex items-center justify-center"
+          style={{ backgroundColor: '#195AFF' }}
+        >
+          <span className="text-white text-[8px] font whitespace-nowrap">
+            Site Accessibility
+          </span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    value: 'hidden',
+    label: 'Button Trigger',
+    preview: () => (
+      <div
+        className="w-16 h-6 border-2 border-dashed rounded flex items-center justify-center"
+        style={{ backgroundColor: '#195AFF', borderColor: '#195AFF' }}
+      >
+        <span className="text-white text-[8px] font-medium">Button</span>
+      </div>
+    ),
+  },
+];
+
+const widgetSizes = [
+  { value: 's', label: 'Small' },
+  { value: 'm', label: 'Medium' },
+  { value: 'l', label: 'Large' },
+];
+
+export default function CodeContainer({
+  codeString,
+  shouldOpenCustomization,
+  onCustomizationOpened,
+}: CodeProps) {
   const [copySuccess, setCopySuccess] = useState(false);
   const [position, setPosition] = useState('bottom-left');
   const [language, setLanguage] = useState('auto');
@@ -112,12 +173,17 @@ export default function CodeContainer({ codeString }: CodeProps) {
   const [offsetY, setOffsetY] = useState(20);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
+  const [isIconTypeDropdownOpen, setIsIconTypeDropdownOpen] = useState(false);
+  const [isWidgetSizeDropdownOpen, setIsWidgetSizeDropdownOpen] =
+    useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [email, setEmail] = useState('');
   const [sendSuccess, setSendSuccess] = useState(false);
   const [emailError, setEmailError] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const iconTypeDropdownRef = useRef<HTMLDivElement>(null);
+  const widgetSizeDropdownRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
   const [sendWidgetInstallation, { loading: isSending }] = useMutation(
@@ -126,6 +192,11 @@ export default function CodeContainer({ codeString }: CodeProps) {
 
   const selectedLanguage =
     languages.find((lang) => lang.code === language) || languages[0];
+
+  const selectedIconType =
+    iconTypes.find((type) => type.value === iconType) || iconTypes[0];
+  const selectedWidgetSize =
+    widgetSizes.find((size) => size.value === widgetSize) || widgetSizes[1];
 
   const filteredLanguages = languages.filter(
     (lang) =>
@@ -136,16 +207,48 @@ export default function CodeContainer({ codeString }: CodeProps) {
       lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase()),
   );
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(formattedCodeString);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 3000);
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(formattedCodeString);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 3000);
+    } catch (err) {
+      console.log('Failed to copy text: ', err);
+      // Fallback for older browsers
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = formattedCodeString;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 3000);
+      } catch (fallbackErr) {
+        console.log('Fallback copy failed: ', fallbackErr);
+        alert('Failed to copy to clipboard. Please copy manually.');
+      }
+    }
   };
 
   const handleLanguageSelect = (lang: typeof languages[0]) => {
     setLanguage(lang.code);
     setIsLanguageDropdownOpen(false);
     setLanguageSearchTerm('');
+  };
+
+  const handleIconTypeSelect = (type: typeof iconTypes[0]) => {
+    setIconType(type.value as 'full' | 'compact' | 'hidden');
+    setIsIconTypeDropdownOpen(false);
+  };
+
+  const handleWidgetSizeSelect = (size: typeof widgetSizes[0]) => {
+    setWidgetSize(size.value as 's' | 'm' | 'l');
+    setIsWidgetSizeDropdownOpen(false);
   };
 
   const toggleExpand = () => {
@@ -218,6 +321,18 @@ export default function CodeContainer({ codeString }: CodeProps) {
         setLanguageSearchTerm('');
       }
       if (
+        iconTypeDropdownRef.current &&
+        !iconTypeDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsIconTypeDropdownOpen(false);
+      }
+      if (
+        widgetSizeDropdownRef.current &&
+        !widgetSizeDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsWidgetSizeDropdownOpen(false);
+      }
+      if (
         modalRef.current &&
         !modalRef.current.contains(event.target as Node)
       ) {
@@ -229,276 +344,331 @@ export default function CodeContainer({ codeString }: CodeProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isSending]);
 
-  return (
-    <div className="min-h-[400px] max-w-4xl w-full flex flex-col bg-gradient-to-br from-white via-blue-50/30 to-white rounded-2xl overflow-hidden shadow-xl shadow-blue-500/10 backdrop-blur-sm">
-      {/* Header */}
-      <div className="p-4 border-b border-blue-100/60 flex-shrink-0 bg-gradient-to-r from-white to-blue-50/50">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 ring-2 ring-blue-100">
-            <FaMagic className="w-4 h-4 text-white drop-shadow-sm" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-gray-900 tracking-tight">
-              Customize Your Widget
-            </h3>
-            <p className="text-sm text-gray-600 font-medium">
-              Choose position and language
-            </p>
-          </div>
-        </div>
+  const [showCustomization, setShowCustomization] = useState(false);
 
-        <div className="widget-customization-options grid grid-cols-1 ">
-          {/* Position Selector */}
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-800 tracking-wide">
-              Position
-            </label>
-            <div className="relative">
-              <select
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
-                className="w-full px-4 py-3 pr-10 border border-blue-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 text-sm bg-white/80 text-gray-900 hover:border-blue-300 transition-all duration-200 shadow-sm hover:shadow-md backdrop-blur-sm font-medium appearance-none"
-                aria-label="Select widget position"
-              >
-                {positions.map((pos) => (
-                  <option key={pos.value} value={pos.value}>
-                    {pos.label}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <FaChevronDown className="w-4 h-4 text-gray-500" />
-              </div>
+  // Handle opening customization menu for tour
+  useEffect(() => {
+    if (shouldOpenCustomization && !showCustomization) {
+      setShowCustomization(true);
+      onCustomizationOpened?.();
+    }
+  }, [shouldOpenCustomization, showCustomization, onCustomizationOpened]);
+
+  return (
+    <div
+      className="w-full bg-white rounded-2xl overflow-hidden border shadow-sm"
+      style={{ borderColor: '#A2ADF3' }}
+    >
+      {/* Customization Section - Hidden by default, matches Figma */}
+      {showCustomization && (
+        <div className="p-4 border-b border-gray-100 bg-gray-50 widget-customization-options">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h- rounded-lg flex items-center justify-center">
+              <FaMagic className="w-4 h-4" style={{ color: '#205A76' }} />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-gray-900">
+                Customize Your Widget
+              </h3>
+              <p className="text-sm text-gray-600">
+                Choose position and language
+              </p>
             </div>
           </div>
 
-          {/* Language Selector */}
-          <div className="relative space-y-2" ref={dropdownRef}>
-            <label className="block text-sm font-semibold text-gray-800 tracking-wide">
-              Language
-            </label>
-            <button
-              type="button"
-              onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
-              className="w-full px-4 py-3 border border-blue-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 text-sm bg-white/80 flex items-center justify-between hover:border-blue-300 transition-all duration-200 shadow-sm hover:shadow-md backdrop-blur-sm"
-              aria-label="Select widget language"
-              aria-expanded={isLanguageDropdownOpen}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Position Selector - Matches Figma Design */}
+            <div
+              className="bg-gray-50 rounded-lg border border-gray-200 p-4"
+              style={{ borderColor: '#A2ADF3' }}
             >
-              <div className="flex items-center gap-3">
-                {selectedLanguage.code === 'auto' ? (
-                  <span className="w-6 h-6 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
-                    <FaMagic className="w-4 h-4 text-blue-500" />
-                  </span>
-                ) : (
-                  <span className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
-                    {selectedLanguage.code.toUpperCase().slice(0, 2)}
-                  </span>
-                )}
-                <span className="text-gray-900 font-semibold text-sm truncate">
-                  {selectedLanguage.name}
-                </span>
-              </div>
-              <FaChevronDown
-                className={`w-4 h-4 text-gray-500 transition-all duration-300 ${
-                  isLanguageDropdownOpen ? 'rotate-180 text-blue-500' : ''
-                }`}
-              />
-            </button>
-
-            {isLanguageDropdownOpen && (
-              <div className="absolute z-50 w-full mt-2 bg-white/95 backdrop-blur-md border border-blue-200/60 rounded-xl shadow-2xl shadow-blue-500/20 max-h-48 overflow-hidden ring-1 ring-blue-100/50">
-                {/* Search Input */}
-                <div className="p-3 border-b border-blue-100/60 bg-gradient-to-r from-blue-50/50 to-white">
-                  <div className="relative">
-                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
-                      placeholder="Search languages..."
-                      value={languageSearchTerm}
-                      onChange={(e) => setLanguageSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 border border-blue-200/60 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 bg-white/80 backdrop-blur-sm font-medium"
-                      aria-label="Search languages"
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800 mb-1">
+                    Position
+                  </h4>
+                  <p className="text-xs text-gray-600">
+                    Change the position of your widget
+                  </p>
+                </div>
+                <div className="relative">
+                  <select
+                    value={position}
+                    onChange={(e) => setPosition(e.target.value)}
+                    className="w-full md:w-auto px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900 font-medium appearance-none min-w-[120px]"
+                    style={{ borderColor: '#A2ADF3' }}
+                  >
+                    {positions.map((pos) => (
+                      <option key={pos.value} value={pos.value}>
+                        {pos.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                    <FaChevronDown
+                      className="w-3 h-3"
+                      style={{ color: '#A2ADF3' }}
                     />
                   </div>
                 </div>
+              </div>
+            </div>
 
-                {/* Language List */}
-                <div className="max-h-36 overflow-y-auto">
-                  {filteredLanguages.length > 0 ? (
-                    filteredLanguages.map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => handleLanguageSelect(lang)}
-                        className="w-full px-4 py-3 text-left hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100/50 flex items-center justify-between group text-sm transition-all duration-200 border-b border-blue-50/50 last:border-b-0"
-                        aria-label={`Select ${lang.englishName} language`}
-                      >
-                        <div className="flex items-center gap-3">
-                          {lang.code === 'auto' ? (
-                            <span className="w-6 h-6 bg-gray-200 group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-blue-600 group-hover:text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-sm">
-                              <FaMagic className="w-4 h-4" />
-                            </span>
-                          ) : (
-                            <span className="w-6 h-6 bg-gray-200 group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-blue-600 group-hover:text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-sm">
-                              {lang.code.toUpperCase().slice(0, 2)}
-                            </span>
-                          )}
-                          <span className="text-gray-900 font-semibold truncate text-sm group-hover:text-blue-900">
-                            {lang.name}
-                          </span>
+            {/* Language Selector - Matches Figma Design */}
+            <div
+              className="bg-gray-50 rounded-lg border border-gray-200 p-4 relative"
+              style={{ borderColor: '#A2ADF3' }}
+              ref={dropdownRef}
+            >
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800 mb-1">
+                    Language
+                  </h4>
+                  <p className="text-xs text-gray-600">
+                    Choose your preferred language
+                  </p>
+                </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIsLanguageDropdownOpen(!isLanguageDropdownOpen)
+                    }
+                    className="w-full md:w-auto px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center justify-between hover:border-gray-300 transition-colors min-w-[180px]"
+                    style={{ borderColor: '#A2ADF3' }}
+                  >
+                    <span className="text-gray-900 font-medium">
+                      {selectedLanguage.name}
+                    </span>
+                    <FaChevronDown
+                      className={`w-3 h-3 transition-transform ${
+                        isLanguageDropdownOpen ? 'rotate-180' : ''
+                      }`}
+                      style={{ color: '#A2ADF3' }}
+                    />
+                  </button>
+
+                  {isLanguageDropdownOpen && (
+                    <div
+                      className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-hidden min-w-[200px]"
+                      style={{ borderColor: '#A2ADF3' }}
+                    >
+                      <div className="p-3 border-b border-gray-100">
+                        <div className="relative">
+                          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <input
+                            type="text"
+                            placeholder="Search languages..."
+                            value={languageSearchTerm}
+                            onChange={(e) =>
+                              setLanguageSearchTerm(e.target.value)
+                            }
+                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                          />
                         </div>
-                        {language === lang.code && (
-                          <FaCheck className="w-4 h-4 text-blue-500 drop-shadow-sm" />
+                      </div>
+                      <div className="max-h-36 overflow-y-auto">
+                        {filteredLanguages.length > 0 ? (
+                          filteredLanguages.map((lang) => (
+                            <button
+                              key={lang.code}
+                              onClick={() => handleLanguageSelect(lang)}
+                              className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center justify-between text-sm border-b border-gray-50 last:border-b-0"
+                            >
+                              <div className="flex items-center gap-3">
+                                {lang.code === 'auto' ? (
+                                  <span className="w-6 h-6 bg-gray-200 group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-blue-600 group-hover:text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-sm">
+                                    <FaMagic className="w-4 h-4" />
+                                  </span>
+                                ) : (
+                                  <span className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold">
+                                    {lang.code.toUpperCase().slice(0, 2)}
+                                  </span>
+                                )}
+                                <span className="text-gray-900 font-medium">
+                                  {lang.name}
+                                </span>
+                              </div>
+                              {language === lang.code && (
+                                <FaCheck className="w-4 h-4 text-blue-500" />
+                              )}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-gray-500 text-sm">
+                            No languages found
+                          </div>
                         )}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-4 py-3 text-gray-500 text-sm font-medium">
-                      No languages found
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Icon Customization */}
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-800 tracking-wide">
-              Icon Type
-            </label>
-            <p className="text-xs text-gray-600  pl-1">
-              You can switch between our widget icon, non-intrusive text icon,
-              or hidden mode.
-            </p>
-            <div className="flex gap-4">
-              {/* Full Widget Option */}
-              <button
-                type="button"
-                onClick={() => setIconType('full')}
-                className={`relative p-4 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-48 ${
-                  iconType === 'full'
-                    ? 'border-blue-500 bg-blue-50/50'
-                    : 'border-gray-200 hover:border-blue-300 bg-white/80'
-                }`}
-                aria-label="Select full widget icon"
+          <div className="pt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Trigger Icon */}
+              <div
+                className="bg-gray-50 rounded-lg border border-gray-200 p-4"
+                style={{ borderColor: '#A2ADF3' }}
               >
-                <div className="flex flex-col items-center space-y-2">
-                  <div className="w-[58px] h-[58px] flex items-center justify-center">
-                    <img
-                      src="/images/svg/full_widget_icon.svg"
-                      alt="Full Widget Icon"
-                      width={48}
-                      height={48}
-                      className="object-contain"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).style.visibility =
-                          'hidden';
-                      }}
-                    />
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-800 mb-1">
+                      Trigger icon
+                    </h4>
+                    <p className="text-xs text-gray-600">
+                      You can switch between our widget icon, non-intrusive text
+                      icon, or hidden mode.
+                    </p>
                   </div>
-                  <span className="text-sm font-medium text-gray-900">
-                    Full Widget
-                  </span>
-                </div>
-                {iconType === 'full' && (
-                  <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                    <FaCheck className="w-2.5 h-2.5 text-white" />
-                  </div>
-                )}
-              </button>
-
-              {/* Compact Widget Option */}
-              <button
-                type="button"
-                onClick={() => setIconType('compact')}
-                className={`relative p-4 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-48 ${
-                  iconType === 'compact'
-                    ? 'border-blue-500 bg-blue-50/50'
-                    : 'border-gray-200 hover:border-blue-300 bg-white/80'
-                }`}
-                aria-label="Select compact widget icon"
-              >
-                <div className="flex flex-col items-center space-y-2">
-                  <div className="w-[140px] h-[30px] flex items-center justify-center">
-                    <div
-                      className="w-[140px] h-[30px] flex items-center justify-center"
-                      style={{ backgroundColor: '#195AFF' }}
+                  <div className="relative" ref={iconTypeDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setIsIconTypeDropdownOpen(!isIconTypeDropdownOpen)
+                      }
+                      className="w-full md:w-auto px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center hover:border-gray-300 transition-colors min-w-[280px] sm:min-w-[260px] relative"
+                      style={{ borderColor: '#A2ADF3' }}
                     >
-                      <span className="text-white text-[11px] font whitespace-nowrap">
-                        Site Accessibility
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-900 font-medium">
+                          {selectedIconType.label}
+                        </span>
+                        {selectedIconType.preview()}
+                      </div>
+                      <FaChevronDown
+                        className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 transition-transform ${
+                          isIconTypeDropdownOpen ? 'rotate-180' : ''
+                        }`}
+                        style={{ color: '#A2ADF3' }}
+                      />
+                    </button>
+
+                    {isIconTypeDropdownOpen && (
+                      <div
+                        className="absolute z-50 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-hidden min-w-[280px] sm:min-w-[260px]"
+                        style={{ borderColor: '#A2ADF3' }}
+                      >
+                        <div className="max-h-36 overflow-y-auto">
+                          {iconTypes.map((type) => (
+                            <button
+                              key={type.value}
+                              onClick={() => handleIconTypeSelect(type)}
+                              className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center justify-between text-sm border-b border-gray-50 last:border-b-0"
+                            >
+                              <div className="flex items-center gap-3 flex-1">
+                                <span className="text-gray-900 font-medium">
+                                  {type.label}
+                                </span>
+                                {type.preview()}
+                              </div>
+                              <div className="flex-shrink-0 ml-4">
+                                {iconType === type.value && (
+                                  <FaCheck className="w-4 h-4 text-blue-500" />
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Trigger Size */}
+              {iconType !== 'hidden' && (
+                <div
+                  className="bg-gray-50 rounded-lg border border-gray-200 p-4"
+                  style={{ borderColor: '#A2ADF3' }}
+                >
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-800 mb-1">
+                        Trigger size
+                      </h4>
+                      <p className="text-xs text-gray-600">
+                        Size of the trigger button on screen.
+                      </p>
+                    </div>
+                    <div className="relative" ref={widgetSizeDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setIsWidgetSizeDropdownOpen(!isWidgetSizeDropdownOpen)
+                        }
+                        className="w-full md:w-auto px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center justify-between hover:border-gray-300 transition-colors min-w-[120px] sm:min-w-[100px] md:min-w-[120px]"
+                        style={{ borderColor: '#A2ADF3' }}
+                      >
+                        <span className="text-gray-900 font-medium">
+                          {selectedWidgetSize.label}
+                        </span>
+                        <FaChevronDown
+                          className={`w-3 h-3 transition-transform ${
+                            isWidgetSizeDropdownOpen ? 'rotate-180' : ''
+                          }`}
+                          style={{ color: '#A2ADF3' }}
+                        />
+                      </button>
+
+                      {isWidgetSizeDropdownOpen && (
+                        <div
+                          className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-hidden min-w-[120px] sm:min-w-[100px] md:min-w-[120px]"
+                          style={{ borderColor: '#A2ADF3' }}
+                        >
+                          <div className="max-h-36 overflow-y-auto">
+                            {widgetSizes.map((size) => (
+                              <button
+                                key={size.value}
+                                onClick={() => handleWidgetSizeSelect(size)}
+                                className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center justify-between text-sm border-b border-gray-50 last:border-b-0"
+                              >
+                                <span className="text-gray-900 font-medium">
+                                  {size.label}
+                                </span>
+                                {widgetSize === size.value && (
+                                  <FaCheck className="w-4 h-4 text-blue-500" />
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <span className="text-sm font-medium text-gray-900">
-                    Compact Widget
-                  </span>
                 </div>
-                {iconType === 'compact' && (
-                  <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                    <FaCheck className="w-2.5 h-2.5 text-white" />
-                  </div>
-                )}
-              </button>
-
-              {/* Hidden Widget Option */}
-              <button
-                type="button"
-                onClick={() => setIconType('hidden')}
-                className={`relative p-4 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 w-48 ${
-                  iconType === 'hidden'
-                    ? 'border-blue-500 bg-blue-50/50'
-                    : 'border-gray-200 hover:border-blue-300 bg-white/80'
-                }`}
-                aria-label="Select hidden widget icon"
-              >
-                <div className="flex flex-col items-center space-y-2">
-                  <div className="w-12 h-12 flex items-center justify-center">
-                    <div
-                      className="w-20 h-8 border-2 border-dashed rounded-lg flex items-center justify-center"
-                      style={{
-                        backgroundColor: '#195AFF',
-                        borderColor: '#195AFF',
-                      }}
-                    >
-                      <span className="text-white text-xs font-medium">
-                        Button
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">
-                    Button Trigger
-                  </span>
-                </div>
-                {iconType === 'hidden' && (
-                  <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                    <FaCheck className="w-2.5 h-2.5 text-white" />
-                  </div>
-                )}
-              </button>
+              )}
             </div>
           </div>
 
           {/* Hidden Widget Information */}
           {iconType === 'hidden' && (
-            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center mt-0.5">
+            <div className="mt-4 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex flex-col sm:flex-row items-start gap-3">
+                <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
                   <span className="text-white text-xs font-bold">!</span>
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-amber-800 mb-2">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-amber-800 mb-2 text-sm sm:text-base">
                     How Button Trigger Works
                   </h4>
-                  <p className="text-sm text-amber-700 mb-3">
+                  <p className="text-xs sm:text-sm text-amber-700 mb-3 leading-relaxed">
                     With button trigger mode, no widget icon appears on your
                     site. Instead, you can make any existing button or element
                     activate the accessibility widget by adding this onclick
                     function:
                   </p>
-                  <div className="bg-gray-900 text-green-400 p-3 rounded font-mono text-xs overflow-x-auto">
-                    onclick="document.querySelector('.asw-menu-btn')?.click()"
+                  <div className="bg-gray-900 text-green-400 p-2 sm:p-3 rounded font-mono text-xs sm:text-sm overflow-x-auto">
+                    <code className="whitespace-nowrap">
+                      onclick="document.querySelector('.asw-menu-btn')?.click()"
+                    </code>
                   </div>
-                  <p className="text-sm text-amber-700 mt-2">
+                  <p className="text-xs sm:text-sm text-amber-700 mt-2 leading-relaxed">
                     Perfect for integrating with your existing navigation, help
                     buttons, or any custom UI elements while maintaining full
                     control over the user experience.
@@ -508,340 +678,260 @@ export default function CodeContainer({ codeString }: CodeProps) {
             </div>
           )}
         </div>
-      </div>
+      )}
 
-      {/* Widget Size - Hidden when icon type is hidden */}
-      {iconType !== 'hidden' && (
-        <div className="p-4 border-b border-blue-100/60 bg-gradient-to-r from-white to-blue-50/50">
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-800 tracking-wide">
-              Widget Size
-            </label>
-            <p className="text-xs text-gray-600 pl-1">
-              Choose the size of your widget icon
-            </p>
-            <div className="flex gap-3">
-              {[
-                { value: 's', label: 'Small', size: 'w-12 h-12' },
-                { value: 'm', label: 'Medium', size: 'w-[58px] h-[58px]' },
-                { value: 'l', label: 'Large', size: 'w-[68px] h-[68px]' },
-              ].map((size) => (
-                <button
-                  key={size.value}
-                  type="button"
-                  onClick={() => setWidgetSize(size.value as 's' | 'm' | 'l')}
-                  className={`relative p-3 border-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/40 flex-1 ${
-                    widgetSize === size.value
-                      ? 'border-blue-500 bg-blue-50/50'
-                      : 'border-gray-200 hover:border-blue-300 bg-white/80'
-                  }`}
-                  aria-label={`Select ${size.label} widget size`}
+      {/* Offset Controls - Hidden when icon type is hidden or customization is not shown */}
+      {showCustomization && iconType !== 'hidden' && (
+        <div className="p-4 border-b border-gray-100 bg-gray-50">
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-4">
+            <h4 className="text-sm font-bold text-gray-800">Set offset</h4>
+            <div className="relative group">
+              <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center cursor-help">
+                <span className="text-white text-xs font-bold">?</span>
+              </div>
+              {/* Tooltip */}
+              <div className="absolute top-1/2 left-full transform -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-[9999] shadow-lg">
+                Adjust the widget position from the corner (in pixels)
+                <div className="absolute top-1/2 right-full transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-gray-900"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Offset Card */}
+          <div
+            className="bg-gray-50 rounded-lg border border-gray-200 p-4"
+            style={{ borderColor: '#A2ADF3' }}
+          >
+            {/* Desktop Section */}
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-sm font-bold text-gray-800">Desktop</span>
+              <div className="w-4 h-4 bg-blue-100 rounded flex items-center justify-center">
+                <svg
+                  className="w-3 h-3 text-blue-500"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
                 >
-                  <div className="flex flex-col items-center space-y-2">
-                    <div
-                      className={`${size.size} flex items-center justify-center`}
+                  <path
+                    fillRule="evenodd"
+                    d="M3 4a1 1 0 011-1h12a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 1v6h10V5H5z"
+                    clipRule="evenodd"
+                  />
+                  <path d="M6 12h8v1H6v-1z" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Offset Inputs */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Horizontal Offset */}
+              <div>
+                <label className="block text-xs font-medium text-blue-600 mb-2">
+                  Horizontal
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={offsetX}
+                    onChange={(e) => setOffsetX(parseInt(e.target.value) || 0)}
+                    className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900"
+                    min="0"
+                    max="100"
+                  />
+                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                    <svg
+                      className="w-4 h-4 text-blue-500"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
                     >
-                      {iconType === 'full' ? (
-                        <img
-                          src="/images/svg/full_widget_icon.svg"
-                          alt="Full Widget Icon"
-                          width={
-                            size.value === 's'
-                              ? 48
-                              : size.value === 'm'
-                              ? 58
-                              : 68
-                          }
-                          height={
-                            size.value === 's'
-                              ? 48
-                              : size.value === 'm'
-                              ? 58
-                              : 68
-                          }
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            (
-                              e.currentTarget as HTMLImageElement
-                            ).style.visibility = 'hidden';
-                          }}
-                        />
-                      ) : iconType === 'compact' ? (
-                        <div
-                          className={`${
-                            size.value === 's'
-                              ? 'w-[120px] h-[28px]'
-                              : size.value === 'm'
-                              ? 'w-[140px] h-[30px]'
-                              : 'w-[160px] h-[32px]'
-                          } flex items-center justify-center`}
-                        >
-                          <div
-                            className={`${
-                              size.value === 's'
-                                ? 'w-[120px] h-[28px]'
-                                : size.value === 'm'
-                                ? 'w-[140px] h-[30px]'
-                                : 'w-[160px] h-[32px]'
-                            } flex items-center justify-center`}
-                            style={{ backgroundColor: '#195AFF' }}
-                          >
-                            <span
-                              className={`text-white ${
-                                size.value === 's'
-                                  ? 'text-[10px]'
-                                  : size.value === 'm'
-                                  ? 'text-[11px]'
-                                  : 'text-[12px]'
-                              } font whitespace-nowrap`}
-                            >
-                              Site Accessibility
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          className={`${
-                            size.value === 's'
-                              ? 'w-16 h-6'
-                              : size.value === 'm'
-                              ? 'w-20 h-8'
-                              : 'w-24 h-10'
-                          } border-2 border-dashed rounded-lg flex items-center justify-center`}
-                          style={{
-                            backgroundColor: '#195AFF',
-                            borderColor: '#195AFF',
-                          }}
-                        >
-                          <span
-                            className={`text-white ${
-                              size.value === 's'
-                                ? 'text-[8px]'
-                                : size.value === 'm'
-                                ? 'text-xs'
-                                : 'text-sm'
-                            } font-medium`}
-                          >
-                            Button
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">
-                      {size.label}
-                    </span>
+                      <path d="M3 8h14v1H3V8z" />
+                      <path d="M3 11h14v1H3v-1z" />
+                    </svg>
                   </div>
-                  {widgetSize === size.value && (
-                    <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                      <FaCheck className="w-2.5 h-2.5 text-white" />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Offset Controls - Hidden when icon type is hidden */}
-      {iconType !== 'hidden' && (
-        <div className="p-4 border-b border-blue-100/60 bg-gradient-to-r from-white to-blue-50/50">
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-800 tracking-wide">
-              Widget Offset
-            </label>
-            <p className="text-xs text-gray-600 pl-1">
-              Adjust the widget position from the corner (in pixels)
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  X Offset
-                </label>
-                <input
-                  type="number"
-                  value={offsetX}
-                  onChange={(e) => setOffsetX(parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-blue-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 text-sm bg-white/80 text-gray-900"
-                  min="0"
-                  max="100"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Y Offset
-                </label>
-                <input
-                  type="number"
-                  value={offsetY}
-                  onChange={(e) => setOffsetY(parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-blue-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 text-sm bg-white/80 text-gray-900"
-                  min="0"
-                  max="100"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Installation Snippet */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        <div className="installation-instructions p-4 bg-gradient-to-r from-white to-blue-50/30 flex-shrink-0">
-          <h4 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2">
-            <span className="w-5 h-5 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-sm ring-2 ring-green-100">
-              <span className="text-white text-xs font-bold">✓</span>
-            </span>
-            Installation Snippet
-          </h4>
-          <p className="text-sm text-gray-600 font-medium">
-            Paste before closing {'</body>'} tag <br />
-            Note: To enable new features, please copy and paste this updated
-            script tag to your website.
-          </p>
-        </div>
-
-        <div
-          className={`bg-gradient-to-br from-gray-50 to-blue-50/30 p-3 border-y border-blue-100/60 flex-1 min-h-[100px] ${
-            isExpanded ? 'max-h-none' : 'max-h-[100px]'
-          } flex flex-col`}
-        >
-          <div className="installation-code-block bg-gray-900 rounded-xl border border-gray-700 p-4 hover:border-gray-600 hover:shadow-lg transition-all duration-300 flex-1 min-h-[80px] ${isExpanded ? 'max-h-none' : 'max-h-[80px]'} flex flex-col shadow-sm ring-1 ring-gray-800/50">
-            {/* Code content */}
-            <div
-              className={`flex-1 min-h-[60px] ${
-                isExpanded ? 'max-h-none' : 'max-h-[60px]'
-              } bg-gray-800 rounded-lg p-3 w-full overflow-hidden relative`}
-            >
-              <pre
-                className={`text-base text-gray-100 font-mono leading-relaxed w-full p-0 m-0 ${
-                  isExpanded ? 'whitespace-pre-wrap' : 'overflow-x-hidden'
-                }`}
-              >
-                <code
-                  className={`block ${
-                    isExpanded ? 'whitespace-pre-wrap' : 'whitespace-nowrap'
-                  } text-gray-100`}
-                >
-                  {formattedCodeString}
-                </code>
-              </pre>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="p-4 bg-gradient-to-r from-white to-blue-50/30 flex-shrink-0 border-t border-blue-100/60">
-          <div className="flex flex-row gap-3 justify-center items-center">
-            <button
-              className={`copy-code-button py-4 px-6 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-3 text-base focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-lg transform hover:scale-[1.02] active:scale-[0.98] ${
-                copySuccess
-                  ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-green-500/25 focus:ring-green-500 ring-2 ring-green-100'
-                  : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-blue-500/25 focus:ring-blue-500'
-              }`}
-              onClick={copyToClipboard}
-              aria-label={
-                copySuccess
-                  ? 'Code copied successfully'
-                  : 'Copy installation code'
-              }
-            >
-              {copySuccess ? (
-                <>
-                  <FaCheck className="w-4 h-4 drop-shadow-sm" />
-                  Copied Successfully!
-                </>
-              ) : (
-                <>
-                  <FaRegCopy className="w-4 h-4 drop-shadow-sm" />
-                  Copy Installation Code
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={() => setShowEmailModal(true)}
-              className="py-4 px-6 bg-white border-2 border-blue-500 hover:bg-blue-50 text-blue-600 hover:text-blue-700 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
-              aria-label="Send installation instructions via email"
-            >
-              <FaEnvelope className="w-4 h-4" />
-              Send Instructions
-            </button>
-
-            <div className="flex-1 flex justify-end">
-              <button
-                onClick={toggleExpand}
-                className="expand-code-button py-4 px-6 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-400 border border-blue-700 font-bold text-base flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
-                aria-label={
-                  isExpanded ? 'Collapse code view' : 'Expand code view'
-                }
-              >
-                {isExpanded ? (
-                  <>
-                    <FaCompress className="w-4 h-4" />
-                    Collapse
-                  </>
-                ) : (
-                  <>
-                    <FaExpand className="w-4 h-4" />
-                    Expand
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {copySuccess && (
-            <p className="text-center text-sm text-green-600 mt-2 font-bold animate-pulse">
-              Ready to paste into your website!
-            </p>
-          )}
-        </div>
-
-        {/* Email Modal */}
-        {showEmailModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div
-              ref={modalRef}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden border border-gray-200"
-            >
-              {/* Modal Header */}
-              <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                      <FaEnvelope className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold">
-                        Send Installation Instructions
-                      </h3>
-                      <p className="text-purple-100 text-sm">
-                        We'll email you the setup code
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleModalClose}
-                    disabled={isSending}
-                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors disabled:opacity-50"
-                  >
-                    <FaTimes className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
 
-              {/* Modal Body */}
-              <div className="p-6">
-                {!sendSuccess ? (
-                  <>
-                    <div>
-                      <label
-                        htmlFor="email"
-                        className="block text-sm font-semibold text-gray-700 mb-2"
-                      >
-                        Email Address
-                      </label>
+              {/* Vertical Offset */}
+              <div>
+                <label className="block text-xs font-medium text-blue-600 mb-2">
+                  Vertical
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={offsetY}
+                    onChange={(e) => setOffsetY(parseInt(e.target.value) || 0)}
+                    className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900"
+                    min="0"
+                    max="100"
+                  />
+                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                    <svg
+                      className="w-4 h-4 text-blue-500"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M8 3v14h1V3H8z" />
+                      <path d="M11 3v14h1V3h-1z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Installation Snippet - Matches Figma exactly */}
+      <div className="p-4 installation-instructions">
+        <div className="mb-3">
+          <h4 className="text-sm font-semibold text-gray-900 mb-1">
+            Installation snippet
+          </h4>
+          <p className="text-sm text-gray-500">
+            Paste before closing {'</body>'} tag
+          </p>
+        </div>
+
+        {/* Code Block with integrated Copy Button */}
+        <div
+          className="rounded-lg p-8 mb-4 relative min-h-[160px] installation-code-block"
+          style={{ backgroundColor: '#D0D5F9' }}
+        >
+          <code
+            className="text-sm lg:text-base font-mono break-all pb-16 block"
+            style={{ color: '#3343AD' }}
+          >
+            {formattedCodeString}
+          </code>
+
+          {/* Copy Button in bottom left corner of the code box */}
+          <button
+            onClick={copyToClipboard}
+            className={`absolute bottom-3 left-3 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-white font-medium text-sm transition-all duration-200 copy-code-button ${
+              copySuccess
+                ? 'bg-green-600 hover:bg-green-700'
+                : 'hover:opacity-80'
+            }`}
+            style={{ backgroundColor: copySuccess ? undefined : '#3343AD' }}
+          >
+            {copySuccess ? (
+              <>
+                <FaCheck className="w-3 h-3" />
+                Copied!
+              </>
+            ) : (
+              <>
+                <FaRegCopy className="w-3 h-3" />
+                Copy Snippet
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Additional Action Buttons */}
+        <div className="flex flex-col md:flex-row gap-3 mt-3">
+          {/* Additional Actions - Hidden behind customization toggle */}
+          {showCustomization && (
+            <>
+              <button
+                onClick={() => setShowEmailModal(true)}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-[#445AE7] hover:bg-[#e6f3fa] text-[#445AE7] rounded-lg font-medium transition-colors"
+              >
+                <FaEnvelope className="w-4 h-4" />
+                Send Instructions
+              </button>
+            </>
+          )}
+
+          {/* Customize Button */}
+          <button
+            onClick={() => setShowCustomization(!showCustomization)}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-[#445AE7] hover:bg-[#e6f3fa] text-[#445AE7] rounded-lg font-medium transition-colors customize-widget-button"
+          >
+            <FaMagic className="w-4 h-4" />
+            {showCustomization ? 'Hide Options' : 'Customize'}
+          </button>
+        </div>
+
+        {/* Support Contact - Matches the image */}
+        <div className="mt-6">
+          <p className="text-sm mb-1" style={{ color: '#A1A1A1' }}>
+            Need help for the next step?
+          </p>
+          <button
+            className="text-sm font-medium hover:underline transition-all"
+            style={{
+              color: '#445AE7',
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.color = '#3a4bc7')}
+            onMouseOut={(e) => (e.currentTarget.style.color = '#445AE7')}
+          >
+            Contact Support
+          </button>
+        </div>
+      </div>
+
+      {/* Email Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div
+            ref={modalRef}
+            className="bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-300"
+            style={{
+              boxShadow:
+                '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              className="p-8 text-white relative overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, #445AE7 0%, #4A8BB5 100%)',
+              }}
+            >
+              {/* Decorative background pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
+              </div>
+
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30">
+                    <FaEnvelope className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold mb-1">
+                      Send Installation Instructions
+                    </h3>
+                    <p className="text-white/90 text-sm font-medium">
+                      We'll email you the complete setup code
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleModalClose}
+                  disabled={isSending}
+                  className="w-10 h-10 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 flex items-center justify-center transition-all duration-200 disabled:opacity-50 hover:scale-105"
+                >
+                  <FaTimes className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-8">
+              {!sendSuccess ? (
+                <>
+                  <div className="mb-6">
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-bold text-gray-800 mb-3"
+                    >
+                      Email Address
+                    </label>
+                    <div className="relative">
                       <input
                         type="email"
                         id="email"
@@ -851,73 +941,133 @@ export default function CodeContainer({ codeString }: CodeProps) {
                           if (emailError) setEmailError('');
                         }}
                         placeholder="Enter your email address"
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all ${
+                        className={`w-full px-5 py-4 border-2 rounded-xl focus:outline-none transition-all duration-200 text-gray-800 font-medium placeholder-gray-400 ${
                           emailError
-                            ? 'border-red-300 focus:border-red-500'
-                            : 'border-gray-300 focus:border-purple-500'
+                            ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100'
+                            : 'border-gray-200 focus:border-[#445AE7] focus:ring-4 focus:ring-[#445AE7]/20'
                         }`}
                         disabled={isSending}
+                        style={{
+                          backgroundColor: '#FAFBFC',
+                        }}
                       />
-                      {emailError && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {emailError}
-                        </p>
-                      )}
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                        <FaEnvelope className="w-4 h-4 text-gray-400" />
+                      </div>
                     </div>
-
-                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 mb-6">
-                      <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                        <FaMagic className="w-4 h-4 text-purple-500" />
-                        What you'll receive:
-                      </h4>
-                      <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• Complete installation code</li>
-                        <li>• Step-by-step setup instructions</li>
-                        <li>• Configuration options</li>
-                        <li>• Troubleshooting tips</li>
-                      </ul>
-                    </div>
-
-                    <button
-                      onClick={handleSendInstructions}
-                      disabled={isSending || !email.trim()}
-                      className="w-full py-3 px-6 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:cursor-not-allowed"
-                    >
-                      {isSending ? (
-                        <>
-                          <CircularProgress
-                            size={24}
-                            color={'inherit'}
-                            className="w-4 h-4"
-                          />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <FaEnvelope className="w-4 h-4" />
-                          Send Instructions
-                        </>
-                      )}
-                    </button>
-                  </>
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <FaCheck className="w-8 h-8 text-green-500" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-800 mb-2">
-                      Email Sent Successfully!
-                    </h3>
-                    <p className="text-gray-600">
-                      Check your inbox for installation instructions.
-                    </p>
+                    {emailError && (
+                      <p className="text-red-500 text-sm mt-2 font-medium flex items-center gap-1">
+                        <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                        {emailError}
+                      </p>
+                    )}
                   </div>
-                )}
-              </div>
+
+                  <div
+                    className="rounded-2xl p-6 mb-8 border-2"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, #F8FBFF 0%, #E8F4FD 100%)',
+                      borderColor: '#E1F0F7',
+                    }}
+                  >
+                    <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-3 text-base">
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: '#445AE7' }}
+                      >
+                        <FaMagic className="w-4 h-4 text-white" />
+                      </div>
+                      What you'll receive:
+                    </h4>
+                    <ul className="text-sm text-gray-700 space-y-3 font-medium">
+                      <li className="flex items-center gap-3">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: '#445AE7' }}
+                        ></div>
+                        Complete installation code
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: '#445AE7' }}
+                        ></div>
+                        Step-by-step setup instructions
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: '#445AE7' }}
+                        ></div>
+                        Configuration options
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: '#445AE7' }}
+                        ></div>
+                        Troubleshooting tips
+                      </li>
+                    </ul>
+                  </div>
+
+                  <button
+                    onClick={handleSendInstructions}
+                    disabled={isSending || !email.trim()}
+                    className="w-full py-4 px-6 text-white rounded-xl font-bold transition-all duration-200 flex items-center justify-center gap-3 disabled:cursor-not-allowed disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]"
+                    style={{
+                      background:
+                        isSending || !email.trim()
+                          ? '#94A3B8'
+                          : 'linear-gradient(135deg, #445AE7 0%, #4A8BB5 100%)',
+                      boxShadow:
+                        isSending || !email.trim()
+                          ? 'none'
+                          : '0 10px 25px -5px rgba(85, 158, 193, 0.4), 0 4px 6px -2px rgba(85, 158, 193, 0.1)',
+                    }}
+                  >
+                    {isSending ? (
+                      <>
+                        <CircularProgress
+                          size={20}
+                          color={'inherit'}
+                          className="w-5 h-5"
+                        />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <FaEnvelope className="w-5 h-5" />
+                        Send Instructions
+                      </>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <div
+                    className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                      boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.4)',
+                    }}
+                  >
+                    <FaCheck className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-3">
+                    Email Sent Successfully!
+                  </h3>
+                  <p className="text-gray-600 text-lg font-medium">
+                    Check your inbox for installation instructions.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

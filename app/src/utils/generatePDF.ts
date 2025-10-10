@@ -476,7 +476,7 @@ export const generatePDF = async (
   const horizontalPadding = 4; // Reduced padding for tighter fit
   const pillTextWidth = textWidth + horizontalPadding * 2; // Total width with padding
   const pillH = 4; // Increased height for better appearance
-  const pillX = statusTextX + doc.getTextWidth(status) + 28; // Increased spacing from status text to prevent overlap
+  const pillX = statusTextX + doc.getTextWidth(status) + 34; // Increased spacing from status text to prevent overlap
   const pillY = statusTextY - 6; // Align with status text
   // Convert #222D73 to RGB: R=34, G=45, B=115
   doc.setFillColor(34, 45, 115);
@@ -3382,7 +3382,7 @@ export const generateShortPDF = async (
   const horizontalPadding = 4; // Reduced padding for tighter fit
   const pillTextWidth = textWidth + horizontalPadding * 2; // Total width with padding
   const pillH = 4; // Increased height for better appearance
-  const pillX = statusTextX + doc.getTextWidth(status) + 28; // Increased spacing from status text to prevent overlap
+  const pillX = statusTextX + doc.getTextWidth(status) + 34; // Increased spacing from status text to prevent overlap
   const pillY = statusTextY - 6; // Align with status text
   // Convert #222D73 to RGB: R=34, G=45, B=115
   doc.setFillColor(34, 45, 115);

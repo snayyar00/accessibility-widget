@@ -15,7 +15,7 @@ import { ChangeCurrentOrganizationMutation, Query } from '@/generated/graphql';
 import CHANGE_CURRENT_ORGANIZATION from '@/queries/user/changeCurrentOrganization';
 import GET_PROFILE from '@/queries/auth/getProfile';
 import { IS_LOCAL } from '@/config/env';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { redirectToUserOrganization } from '@/helpers/redirectToOrganization';
 import { setProfileUser } from '@/features/auth/user';
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { okaidia } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { VscSparkle } from 'react-icons/vsc';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { CircularProgress } from '@mui/material';
 import { getAuthenticationCookie } from '@/utils/cookie';
 

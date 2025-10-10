@@ -5,15 +5,17 @@ const getTourKeyFromRoute = (pathname: string): string | null => {
   if (pathname === '/dashboard' || pathname === '/') {
     return 'dashboard_tour';
   } else if (pathname === '/add-domain') {
-    return 'add_domain_unified_tour';
+    return 'my_sites_tour';
   } else if (pathname.includes('/installation')) {
     return 'installation_tour';
   } else if (pathname === '/scanner') {
     return 'accessibility_tour';
   } else if (pathname === '/problem-reports') {
     return 'reports_tour';
-  } else if (pathname === '/customize-widget') {
+  } else if (pathname === '/customize-widget' || pathname === '/old-widget') {
     return 'customize_widget_tour';
+  } else if (pathname === '/widget-selection') {
+    return null; // No tour for widget selection page
   } else if (pathname === '/statement-generator') {
     return 'statement_generator_tour';
   } else if (pathname === '/proof-of-effort-toolkit') {
@@ -26,6 +28,7 @@ const getTourKeyFromRoute = (pathname: string): string | null => {
 const ALL_TOUR_KEYS = [
   'dashboard_tour_completed',
   'add_domain_unified_tour_completed',
+  'my_sites_tour_completed',
   'installation_tour_completed',
   'accessibility_tour_completed',
   'reports_tour_completed',

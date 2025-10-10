@@ -2,26 +2,27 @@ import React, { useState, FormEvent, useEffect } from 'react';
 import './Teams.css';
 import { useMutation } from '@apollo/client';
 import addSite from '@/queries/sites/addSite';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import isValidDomain from '@/utils/verifyDomain';
 import DomainTable from './DomainTable';
 import TrialBannerAndModal from '../Dashboard/TrialBannerAndModal';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import TourGuide from '@/components/Common/TourGuide';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom';
 import { defaultTourStyles } from '@/config/tourStyles';
-import { addDomainTourSteps, tourKeys } from '@/constants/toursteps';
+import { mySitesTourSteps, tourKeys } from '@/constants/toursteps';
 
 interface DomainFormData {
   domainName: string;
 }
 
-const Teams = ({ domains, setReloadSites,customerData }: any) => {
-   const { t } = useTranslation();
+const Teams = ({ domains, setReloadSites, customerData }: any) => {
+  const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.add_domain') });
   const location = useLocation();
-  
+  const history = useHistory();
+
   const [addSiteMutation, { error, loading }] = useMutation(addSite, {
     onCompleted: () => {
       setReloadSites(true);
@@ -30,45 +31,59 @@ const Teams = ({ domains, setReloadSites,customerData }: any) => {
   });
   // const [formData, setFormData] = useState<DomainFormData>({ domainName: '' });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const openModal = () => {setIsModalOpen(true)};
-  const closeModal = () => {setIsModalOpen(false);setOptionalDomain("yes");setPaymentView(false);};
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setOptionalDomain('yes');
+    setPaymentView(false);
+  };
   const [paymentView, setPaymentView] = useState(false);
-  const [optionalDomain,setOptionalDomain] = useState("yes");
+  const [optionalDomain, setOptionalDomain] = useState('yes');
 
   // Check if user has no domains for tour condition
-  const hasNoDomains = !domains?.getUserSites || domains.getUserSites.length === 0;
-  
+  const hasNoDomains =
+    !domains?.getUserSites || domains.getUserSites.length === 0;
+
   // Check if modal should open automatically (coming from dashboard)
   const searchParams = new URLSearchParams(location.search);
   const shouldOpenModal = searchParams.get('open-modal') === 'true';
-  
+
   // Automatically open modal if query parameter is present
   useEffect(() => {
     if (shouldOpenModal) {
       setIsModalOpen(true);
-      
+
+      // Remove the query param via React Router so subsequent clicks retrigger
+      const params = new URLSearchParams(location.search);
+      params.delete('open-modal');
+      history.replace({
+        pathname: location.pathname,
+        search: params.toString(),
+      });
+
       // If tour should start and modal is opening, restart tour from step 2 after a delay
-      const tourCompleted = localStorage.getItem('add_domain_unified_tour_completed') === 'true';
+      const tourCompleted =
+        localStorage.getItem('add_domain_unified_tour_completed') === 'true';
       if (!tourCompleted) {
         setTimeout(() => {
           // Trigger a tour restart from step 2 by dispatching a custom event
-          const event = new CustomEvent('startTour', { 
-            detail: { 
+          const event = new CustomEvent('startTour', {
+            detail: {
               tourKey: 'add_domain_unified_tour',
-              startStep: 1 // Step 2 (index 1)
-            } 
+              startStep: 1, // Step 2 (index 1)
+            },
           });
           window.dispatchEvent(event);
         }, 1000); // Wait for modal to fully open
       }
     }
-  }, [shouldOpenModal]);
-  
-
+  }, [shouldOpenModal, history, location.pathname, location.search]);
 
   // Handle tour completion
   const handleTourComplete = () => {
-    console.log('Add domain tour completed!');
+    console.log('My Sites tour completed!');
     // Optionally show a success message or redirect
   };
 
@@ -90,22 +105,15 @@ const Teams = ({ domains, setReloadSites,customerData }: any) => {
 
   return (
     <>
-      {/* Unified tour that adapts to current UI state */}
+      {/* My Sites page tour */}
       <TourGuide
-        steps={addDomainTourSteps}
-        tourKey={tourKeys.addDomain}
+        steps={mySitesTourSteps}
+        tourKey={tourKeys.mySites}
         autoStart={true}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}
-        currentState={{
-          isModalOpen: isModalOpen,
-          isPaymentView: paymentView
-        }}
       />
 
-      <h3 className="font-bold text-[26px] leading-9 text-sapphire-blue mb-8">
-        Add new domain
-      </h3>
       <div className="add-domain-container">
         {/* <div className="add-domain-form-container">
           <form onSubmit={handleSubmit} className="add-domain-form">
@@ -132,8 +140,25 @@ const Teams = ({ domains, setReloadSites,customerData }: any) => {
             <></>
           )}
         </div> */}
-        <TrialBannerAndModal allDomains={domains} setReloadSites={setReloadSites} customerData={customerData} isModalOpen={isModalOpen} closeModal={closeModal} openModal={openModal} paymentView={paymentView} setPaymentView={setPaymentView} optionalDomain={optionalDomain}/>
-        <DomainTable data={domains} setReloadSites={setReloadSites} customerData={customerData} setPaymentView={setPaymentView} openModal={openModal} setOptionalDomain={setOptionalDomain}/>
+        <TrialBannerAndModal
+          allDomains={domains}
+          setReloadSites={setReloadSites}
+          customerData={customerData}
+          isModalOpen={isModalOpen}
+          closeModal={closeModal}
+          openModal={openModal}
+          paymentView={paymentView}
+          setPaymentView={setPaymentView}
+          optionalDomain={optionalDomain}
+        />
+        <DomainTable
+          data={domains}
+          setReloadSites={setReloadSites}
+          customerData={customerData}
+          setPaymentView={setPaymentView}
+          openModal={openModal}
+          setOptionalDomain={setOptionalDomain}
+        />
       </div>
     </>
   );

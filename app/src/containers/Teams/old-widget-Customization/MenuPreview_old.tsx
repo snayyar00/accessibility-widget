@@ -22,7 +22,7 @@ import {
   MdMotionPhotosPause,
 } from 'react-icons/md';
 import { TbBrain, TbCircleHalf2 } from 'react-icons/tb';
-import { Colors, Toggles } from './editWidget';
+import { Colors, Toggles } from './editWidget_old';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 

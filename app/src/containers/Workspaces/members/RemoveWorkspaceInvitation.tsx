@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { useMutation } from '@apollo/client';
 import REMOVE_WORKSPACE_INVITATION from '@/queries/workspace/removeWorkspaceInvitation';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 type RemoveWorkspaceInvitationProps = {

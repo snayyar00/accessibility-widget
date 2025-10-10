@@ -9,7 +9,7 @@ const Logo: React.FC = () => {
   );
 
   return (
-    <div className="mb-2">
+    <div className="mb-2 flex justify-center">
       {organization?.logo_url ? (
         <img
           width={198}

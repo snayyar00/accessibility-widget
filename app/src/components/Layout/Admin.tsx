@@ -11,6 +11,8 @@ import Installation from '@/containers/Installation/Installation';
 import Teams from '@/containers/Teams';
 import SiteDetail from '@/containers/SiteDetail';
 import AccessibilityWidgetPage from '@/containers/Teams/editWidget';
+import OldWidgetPage from '@/containers/Teams/old-widget-Customization/editWidget_old';
+import WidgetSelection from '@/containers/WidgetSelection';
 import ProofOfEffortToolkit from '@/containers/ProofOfEffortToolkit/ProofOfEffortToolkit';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/config/store';
@@ -176,15 +178,24 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
   }, [selectedOption, dispatch]);
 
   return (
-    <div className="flex">
-      <Sidebar
+    <div className="flex flex-col h-screen bg-gray-50 overflow-x-hidden">
+      {/* Header spans full width above everything */}
+      <Topbar
+        signout={signout}
         options={data}
         setReloadSites={setReloadSites}
         selectedOption={selectedOption}
         setSelectedOption={setSelectedOption}
       />
-      <div className="flex flex-col flex-grow">
-        <Topbar signout={signout} />
+
+      {/* Main content area with sidebar and content */}
+      <div className="flex flex-grow">
+        <Sidebar
+          options={data}
+          setReloadSites={setReloadSites}
+          selectedOption={selectedOption}
+          setSelectedOption={setSelectedOption}
+        />
         <div className="flex-grow bg-body overflow-y-auto px-[15px] py-[32px] sm:min-h-[calc(100vh_-_64px)]">
           <Switch>
             {routes.map((route) => (
@@ -233,6 +244,23 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
               path="/installation"
               render={() => <Installation domain={selectedOption} />}
               key="/installation"
+              exact={false}
+            />
+            <Route
+              path="/widget-selection"
+              component={WidgetSelection}
+              key="/widget-selection"
+              exact={false}
+            />
+            <Route
+              path="/old-widget"
+              render={() => (
+                <OldWidgetPage
+                  selectedSite={selectedOption}
+                  allDomains={data}
+                />
+              )}
+              key="/old-widget"
               exact={false}
             />
             <Route

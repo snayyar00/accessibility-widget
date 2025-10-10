@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import { useMutation } from '@apollo/client';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import CHANGE_ORGANIZATION_USER_ROLE from '@/queries/organization/changeOrganizationUserRole';
 import { OrganizationUserRole } from '@/generated/graphql';
 

@@ -158,7 +158,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     },
     {
       id: 'semantic-html',
-      label: 'Semantic HTML',
+      label: 'HTML',
       description: 'Proper HTML5 tags',
       icon: Code,
       status: 'pending',
@@ -304,25 +304,22 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
     const categoryMeta: Record<
       string,
-      { heading: string; description: string; icon: string }
+      { heading: string; description: string }
     > = {
       conversion_focus: {
         heading: 'Conversion Impact Heatmap',
         description:
           'Shows which buttons or links people click the most, so you can see whats working and get more sales or sign-ups.',
-        icon: '',
       },
       customer_journey: {
         heading: 'Interaction Flow Heatmap',
         description:
           'Shows the path people take through your website where they start, where they click, and where they leave so you can make it easier for them to find what they need.',
-        icon: '',
       },
       roi_detailed: {
         heading: 'Precision ROI Heatmap',
         description:
           'Shows exactly which parts of your page are making you money, using a very detailed scan that highlights whats worth keeping and whats not.',
-        icon: '',
       },
     };
 
@@ -345,7 +342,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           name: meta.heading,
           heading: meta.heading,
           description: meta.description,
-          icon: meta.icon,
           url: url,
           style: style,
         };
@@ -452,7 +448,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="mt-6 mb-8 flex justify-center gap-4"
+              className="mt-6 mb-8 flex flex-row sm:flex-col justify-center gap-4"
             >
               <button
                 onClick={() => setViewMode('grid')}
@@ -706,7 +702,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                         : check.label,
                     score: check.score || 0,
                   }))}
-                size={isSmallScreen ? 250 : 350}
+                size={isSmallScreen ? 240 : 350}
               />
               <div className="mt-4 text-center">
                 <div className="text-2xl text-gray-900">{overallScore}%</div>
@@ -787,9 +783,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <div className="p-5 sm:p-7 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-blue-100">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">
                   <div className="flex items-center gap-2 sm:gap-3 lg:gap-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-12 lg:h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0">
-                      <Image className="w-5 h-5 sm:w-6 sm:h-6 lg:w-6 lg:h-6 text-white" />
-                    </div>
                     <div>
                       <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
                         {
@@ -835,9 +828,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           {/* No Heatmap Selected Message */}
           {heatmapData && !selectedHeatmapCategory && (
             <div className="bg-blue-100 rounded-xl p-5 sm:p-10 text-center shadow-lg">
-              <div className="w-12 h-12 sm:w-20 sm:h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-6">
-                <Image className="w-6 h-6 sm:w-10 sm:h-10 text-blue-600" />
-              </div>
               <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">
                 Select a Heatmap Category
               </h3>

@@ -1,11 +1,10 @@
 import type React from 'react';
-import AccessibilityMenu from './MenuPreview';
 import CustomizeWidget from './CustomizeWidget';
 import { useEffect, useState, useRef } from 'react';
 import { CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { head } from 'lodash';
@@ -18,27 +17,19 @@ import { SITE_SELECTOR_TEXT } from '@/constants';
 import { getAuthenticationCookie } from '@/utils/cookie';
 
 export interface Colors {
-  headerText: string;
-  headerBg: string;
-  headerControlsColor: string;
-  footerText: string;
-  footerBg: string;
-  buttonText: string;
-  buttonBg: string;
-  menuBg: string;
-  dropdownText: string;
-  dropdownBg: string;
-  widgetInnerText: string;
-  fontSizeMenuBg: string;
-  fontSizeMenuText: string;
-  fontSizeMenuButton: string;
-  customizationMenuInnerBg: string;
+  // Grouped color properties (customizable)
+  colorGroup1: string; // Light: #232e72, Dark: #d0d5f8
+  colorGroup2: string; // Light: #e0eceb, Dark: #465ce4
+  colorGroup3: string; // Light: #111639, Dark: #232e72
+  colorGroup4: string; // Light: #232e72, Dark: #111639
+  colorGroup5: string; // Light: #465ce4, Dark: #e6f2f2
+  colorGroup6: string; // Light: #ffffff, Dark: #333d7c
+
+  // Keep existing properties for compatibility
   widgetBtnColor: string;
   logoImage: string;
   accessibilityStatementLinkUrl: string;
   logoUrl: string;
-  reportButtonsBgColor: string;
-  reportButtonsTextColor: string;
 }
 
 export interface Toggles {
@@ -69,6 +60,14 @@ export interface Toggles {
   seizureAndEpileptic: boolean;
   colorBlind: boolean;
   adhd: boolean;
+  oversizeWidget: boolean;
+  fontSize: boolean;
+  textColor: boolean;
+  titleColor: boolean;
+  backgroundColor: boolean;
+  pageStructure: boolean;
+  keyboardNavigation: boolean;
+  widgetPosition: boolean;
 }
 
 const AccessibilityWidgetPage: React.FC<any> = ({
@@ -105,6 +104,14 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     seizureAndEpileptic: true,
     colorBlind: true,
     adhd: true,
+    oversizeWidget: true,
+    fontSize: true,
+    textColor: true,
+    titleColor: true,
+    backgroundColor: true,
+    pageStructure: true,
+    keyboardNavigation: true,
+    widgetPosition: true,
   });
   const { data: userData } = useSelector((state: RootState) => state.user);
   const [buttonDisable, setButtonDisable] = useState(false);
@@ -114,29 +121,38 @@ const AccessibilityWidgetPage: React.FC<any> = ({
   const [copyDomain, setCopyDomain] = useState('');
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [copyComplete, setCopyComplete] = useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
-  const DefaultColors: Colors = {
-    headerText: '#FFFFFF',
-    headerBg: '#0848ca',
-    headerControlsColor: '#0848ca',
-    footerText: '#000000',
-    footerBg: '#FFFFFF',
-    buttonText: '#000000',
-    buttonBg: '#FFFFFF',
-    menuBg: '#eff1f5',
-    dropdownText: '#000000',
-    dropdownBg: '#FFFFFF',
-    widgetInnerText: '#000000',
-    fontSizeMenuBg: '#FFFFFF',
-    fontSizeMenuText: '#000000',
-    fontSizeMenuButton: '#eff1f5',
-    customizationMenuInnerBg: '#FFFFFF',
-    widgetBtnColor: '#195AFF',
+  const DefaultLightColors: Colors = {
+    // Grouped colors for light mode
+    colorGroup1: '#232e72', // Main text, icons, buttons
+    colorGroup2: '#e0eceb', // Header text and icons
+    colorGroup3: '#111639', // Header background
+    colorGroup4: '#232e72', // Footer background
+    colorGroup5: '#465ce4', // Header button borders
+    colorGroup6: '#ffffff', // White backgrounds
+
+    // Existing properties
+    widgetBtnColor: '#111639',
     logoImage: '',
     accessibilityStatementLinkUrl: 'https://www.webability.io/statement',
     logoUrl: 'https://webability.io',
-    reportButtonsBgColor: '#0948c9',
-    reportButtonsTextColor: '#FFFFFF',
+  };
+
+  const DefaultDarkColors: Colors = {
+    // Grouped colors for dark mode
+    colorGroup1: '#d0d5f8', // Light text and icons
+    colorGroup2: '#465ce4', // Primary accent
+    colorGroup3: '#232e72', // Mid-tone background
+    colorGroup4: '#111639', // Dark backgrounds
+    colorGroup5: '#e6f2f2', // Light accent text
+    colorGroup6: '#333d7c', // Header background
+
+    // Existing properties (same as light mode)
+    widgetBtnColor: '#111639',
+    logoImage: '',
+    accessibilityStatementLinkUrl: 'https://www.webability.io/statement',
+    logoUrl: 'https://webability.io',
   };
   const DefaultToggles = {
     language: true,
@@ -166,31 +182,30 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     seizureAndEpileptic: true,
     colorBlind: true,
     adhd: true,
+    oversizeWidget: true,
+    fontSize: true,
+    textColor: true,
+    titleColor: true,
+    backgroundColor: true,
+    pageStructure: true,
+    keyboardNavigation: true,
+    widgetPosition: true,
   };
 
-  const [colors, setColors] = useState({
-    headerText: DefaultColors.headerText,
-    headerBg: DefaultColors.headerBg,
-    headerControlsColor: DefaultColors.headerControlsColor,
-    footerText: DefaultColors.footerText,
-    footerBg: DefaultColors.footerBg,
-    buttonText: DefaultColors.buttonText,
-    buttonBg: DefaultColors.buttonBg,
-    menuBg: DefaultColors.menuBg,
-    dropdownText: DefaultColors.dropdownText,
-    dropdownBg: DefaultColors.dropdownBg,
-    widgetInnerText: DefaultColors.widgetInnerText,
-    fontSizeMenuBg: DefaultColors.fontSizeMenuBg,
-    fontSizeMenuText: DefaultColors.fontSizeMenuText,
-    fontSizeMenuButton: DefaultColors.fontSizeMenuButton,
-    customizationMenuInnerBg: DefaultColors.customizationMenuInnerBg,
-    widgetBtnColor: DefaultColors.widgetBtnColor,
-    logoImage: DefaultColors.logoImage,
-    accessibilityStatementLinkUrl: DefaultColors.accessibilityStatementLinkUrl,
-    logoUrl: DefaultColors.logoUrl,
-    reportButtonsBgColor: DefaultColors.reportButtonsBgColor,
-    reportButtonsTextColor: DefaultColors.reportButtonsTextColor,
+  const [colorMode, setColorMode] = useState<'light' | 'dark'>('light');
+
+  const [lightModeColors, setLightModeColors] = useState({
+    ...DefaultLightColors,
   });
+
+  const [darkModeColors, setDarkModeColors] = useState({
+    ...DefaultDarkColors,
+  });
+
+  // Active colors based on selected mode
+  const colors = colorMode === 'light' ? lightModeColors : darkModeColors;
+  const setColors =
+    colorMode === 'light' ? setLightModeColors : setDarkModeColors;
 
   const fonts = [
     "'Arial', sans-serif",
@@ -209,26 +224,26 @@ const AccessibilityWidgetPage: React.FC<any> = ({
 
   const [settings, setSettings] = useState({
     widgetFont: selectedFont,
-    'footer-bg': DefaultColors.footerBg,
-    'footer-text': DefaultColors.footerText,
-    'header-text': DefaultColors.headerText,
-    'header-bg': DefaultColors.headerBg,
-    'header-controls-color': DefaultColors.headerControlsColor,
-    'button-text': DefaultColors.buttonText,
-    'bg-button': DefaultColors.buttonBg,
-    'widget-background': DefaultColors.menuBg,
-    'dropdown-text': DefaultColors.dropdownText,
-    'bg-dropdown': DefaultColors.dropdownBg,
-    'widget-text': DefaultColors.widgetInnerText,
-    'font-size-bg': DefaultColors.fontSizeMenuBg,
-    'font-size-buttons': DefaultColors.fontSizeMenuButton,
-    'font-size-text': DefaultColors.fontSizeMenuText,
-    'widget-btn-color': DefaultColors.widgetBtnColor,
-    logoImage: DefaultColors.logoImage,
-    accessibilityStatementLinkUrl: DefaultColors.accessibilityStatementLinkUrl,
-    logoUrl: DefaultColors.logoUrl,
-    reportButtonsBgColor: DefaultColors.reportButtonsBgColor,
-    reportButtonsTextColor: DefaultColors.reportButtonsTextColor,
+    // Light mode grouped colors
+    'light-mode-color-group-1': DefaultLightColors.colorGroup1,
+    'light-mode-color-group-2': DefaultLightColors.colorGroup2,
+    'light-mode-color-group-3': DefaultLightColors.colorGroup3,
+    'light-mode-color-group-4': DefaultLightColors.colorGroup4,
+    'light-mode-color-group-5': DefaultLightColors.colorGroup5,
+    'light-mode-color-group-6': DefaultLightColors.colorGroup6,
+    // Dark mode grouped colors
+    'dark-mode-color-group-1': DefaultDarkColors.colorGroup1,
+    'dark-mode-color-group-2': DefaultDarkColors.colorGroup2,
+    'dark-mode-color-group-3': DefaultDarkColors.colorGroup3,
+    'dark-mode-color-group-4': DefaultDarkColors.colorGroup4,
+    'dark-mode-color-group-5': DefaultDarkColors.colorGroup5,
+    'dark-mode-color-group-6': DefaultDarkColors.colorGroup6,
+    // Common properties
+    'widget-btn-color': DefaultLightColors.widgetBtnColor,
+    logoImage: DefaultLightColors.logoImage,
+    accessibilityStatementLinkUrl:
+      DefaultLightColors.accessibilityStatementLinkUrl,
+    logoUrl: DefaultLightColors.logoUrl,
     toggleLanguage: DefaultToggles.language ? 1 : 0,
     toggledarkMode: DefaultToggles.darkMode ? 1 : 0,
     'togglescreen-reader': DefaultToggles.screenReader ? 1 : 0,
@@ -256,6 +271,14 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     'toggleseizure-epileptic': DefaultToggles.seizureAndEpileptic ? 1 : 0,
     'togglecolor-blind': DefaultToggles.colorBlind ? 1 : 0,
     toggleadhd: DefaultToggles.adhd ? 1 : 0,
+    'toggleoversize-widget': DefaultToggles.oversizeWidget ? 1 : 0,
+    'togglefont-size': DefaultToggles.fontSize ? 1 : 0,
+    'toggletext-color': DefaultToggles.textColor ? 1 : 0,
+    'toggletitle-color': DefaultToggles.titleColor ? 1 : 0,
+    'togglebackground-color': DefaultToggles.backgroundColor ? 1 : 0,
+    'togglepage-structure': DefaultToggles.pageStructure ? 1 : 0,
+    'togglekeyboard-navigation': DefaultToggles.keyboardNavigation ? 1 : 0,
+    'togglewidget-position': DefaultToggles.widgetPosition ? 1 : 0,
   });
 
   // Handle tour completion
@@ -274,26 +297,26 @@ const AccessibilityWidgetPage: React.FC<any> = ({
   useEffect(() => {
     setSettings({
       widgetFont: selectedFont,
-      'footer-bg': colors.footerBg,
-      'footer-text': colors.footerText,
-      'header-text': colors.headerText,
-      'header-bg': colors.headerBg,
-      'header-controls-color': colors.headerControlsColor,
-      'button-text': colors.buttonText,
-      'bg-button': colors.buttonBg,
-      'widget-background': colors.menuBg,
-      'dropdown-text': colors.dropdownText,
-      'bg-dropdown': colors.dropdownBg,
-      'widget-text': colors.widgetInnerText,
-      'font-size-bg': colors.fontSizeMenuBg,
-      'font-size-buttons': colors.fontSizeMenuButton,
-      'font-size-text': colors.fontSizeMenuText,
-      'widget-btn-color': colors.widgetBtnColor,
-      logoImage: colors.logoImage,
-      accessibilityStatementLinkUrl: colors.accessibilityStatementLinkUrl,
-      logoUrl: colors.logoUrl,
-      reportButtonsBgColor: colors.reportButtonsBgColor,
-      reportButtonsTextColor: colors.reportButtonsTextColor,
+      // Light mode grouped colors
+      'light-mode-color-group-1': lightModeColors.colorGroup1,
+      'light-mode-color-group-2': lightModeColors.colorGroup2,
+      'light-mode-color-group-3': lightModeColors.colorGroup3,
+      'light-mode-color-group-4': lightModeColors.colorGroup4,
+      'light-mode-color-group-5': lightModeColors.colorGroup5,
+      'light-mode-color-group-6': lightModeColors.colorGroup6,
+      // Dark mode grouped colors
+      'dark-mode-color-group-1': darkModeColors.colorGroup1,
+      'dark-mode-color-group-2': darkModeColors.colorGroup2,
+      'dark-mode-color-group-3': darkModeColors.colorGroup3,
+      'dark-mode-color-group-4': darkModeColors.colorGroup4,
+      'dark-mode-color-group-5': darkModeColors.colorGroup5,
+      'dark-mode-color-group-6': darkModeColors.colorGroup6,
+      // Common properties
+      'widget-btn-color': lightModeColors.widgetBtnColor,
+      logoImage: lightModeColors.logoImage,
+      accessibilityStatementLinkUrl:
+        lightModeColors.accessibilityStatementLinkUrl,
+      logoUrl: lightModeColors.logoUrl,
       toggleLanguage: toggles.language ? 1 : 0,
       toggledarkMode: toggles.darkMode ? 1 : 0,
       'togglescreen-reader': toggles.screenReader ? 1 : 0,
@@ -321,14 +344,29 @@ const AccessibilityWidgetPage: React.FC<any> = ({
       'toggleseizure-epileptic': toggles.seizureAndEpileptic ? 1 : 0,
       'togglecolor-blind': toggles.colorBlind ? 1 : 0,
       toggleadhd: toggles.adhd ? 1 : 0,
+      'toggleoversize-widget': toggles.oversizeWidget ? 1 : 0,
+      'togglefont-size': toggles.fontSize ? 1 : 0,
+      'toggletext-color': toggles.textColor ? 1 : 0,
+      'toggletitle-color': toggles.titleColor ? 1 : 0,
+      'togglebackground-color': toggles.backgroundColor ? 1 : 0,
+      'togglepage-structure': toggles.pageStructure ? 1 : 0,
+      'togglekeyboard-navigation': toggles.keyboardNavigation ? 1 : 0,
+      'togglewidget-position': toggles.widgetPosition ? 1 : 0,
     });
-  }, [toggles, colors, selectedFont]);
+  }, [toggles, lightModeColors, darkModeColors, selectedFont]);
 
-  const resetAll = () => {
+  const resetAll = async () => {
     if (isMounted.current) {
-      setColors(DefaultColors);
+      // Reset all state values to defaults
+      setLightModeColors(DefaultLightColors);
+      setDarkModeColors(DefaultDarkColors);
       setToggles(DefaultToggles);
       setSelectedFont("'Times New Roman', serif");
+
+      // Enable change tracking so the useEffect can update settings and trigger save
+      setHasUserMadeChanges(true);
+    } else {
+      console.log('Component not mounted, skipping reset');
     }
   };
 
@@ -397,9 +435,11 @@ const AccessibilityWidgetPage: React.FC<any> = ({
   const getSettings = async () => {
     if (selectedSite == '' || selectedSite == SITE_SELECTOR_TEXT) {
       toast.error('Please Select a Site from the Side Bar');
+      setIsLoadingSettings(false);
       return;
     }
     setButtonDisable(true);
+    setIsLoadingSettings(true);
     const url = `${process.env.REACT_APP_BACKEND_URL}/get-site-widget-settings`;
     const bodyData = { site_url: selectedSite };
 
@@ -434,11 +474,13 @@ const AccessibilityWidgetPage: React.FC<any> = ({
               : data.settings;
         } catch (e) {
           console.error('Failed to parse settings', e);
+          setIsLoadingSettings(false);
           return;
         }
 
         if (Object.keys(fetchedSettings).length == 0) {
           resetAll();
+          setIsLoadingSettings(false);
           return;
         }
 
@@ -447,52 +489,71 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           setSelectedFont(fetchedSettings?.widgetFont);
         }
 
-        // Update colors using the corresponding keys.
-        // (For any color key not returned, the default will be used.)
-        setColors({
-          headerText:
-            fetchedSettings['header-text'] || DefaultColors.headerText,
-          headerBg: fetchedSettings['header-bg'] || DefaultColors.headerBg,
-          headerControlsColor:
-            fetchedSettings['header-controls-color'] ||
-            DefaultColors.headerControlsColor,
-          footerText:
-            fetchedSettings['footer-text'] || DefaultColors.footerText,
-          footerBg: fetchedSettings['footer-bg'] || DefaultColors.footerBg,
-          buttonText:
-            fetchedSettings['button-text'] || DefaultColors.buttonText,
-          buttonBg: fetchedSettings['bg-button'] || DefaultColors.buttonBg,
-          menuBg: fetchedSettings['widget-background'] || DefaultColors.menuBg,
+        // Update colors using grouped structure
+        // Load light mode grouped colors
+        setLightModeColors({
+          colorGroup1:
+            fetchedSettings['light-mode-color-group-1'] ||
+            DefaultLightColors.colorGroup1,
+          colorGroup2:
+            fetchedSettings['light-mode-color-group-2'] ||
+            DefaultLightColors.colorGroup2,
+          colorGroup3:
+            fetchedSettings['light-mode-color-group-3'] ||
+            DefaultLightColors.colorGroup3,
+          colorGroup4:
+            fetchedSettings['light-mode-color-group-4'] ||
+            DefaultLightColors.colorGroup4,
+          colorGroup5:
+            fetchedSettings['light-mode-color-group-5'] ||
+            DefaultLightColors.colorGroup5,
+          colorGroup6:
+            fetchedSettings['light-mode-color-group-6'] ||
+            DefaultLightColors.colorGroup6,
           widgetBtnColor:
-            fetchedSettings['widget-btn-color'] || DefaultColors.widgetBtnColor,
-          dropdownText:
-            fetchedSettings['dropdown-text'] || DefaultColors.dropdownText,
-          dropdownBg:
-            fetchedSettings['bg-dropdown'] || DefaultColors.dropdownBg,
-          widgetInnerText:
-            fetchedSettings['widget-text'] || DefaultColors.widgetInnerText,
-          fontSizeMenuBg:
-            fetchedSettings['font-size-bg'] || DefaultColors.fontSizeMenuBg,
-          fontSizeMenuButton:
-            fetchedSettings['font-size-buttons'] ||
-            DefaultColors.fontSizeMenuButton,
-          fontSizeMenuText:
-            fetchedSettings['font-size-text'] || DefaultColors.fontSizeMenuText,
-          customizationMenuInnerBg: DefaultColors.customizationMenuInnerBg,
+            fetchedSettings['widget-btn-color'] ||
+            DefaultLightColors.widgetBtnColor,
           logoImage:
             fetchedSettings['logoImage'] && fetchedSettings['logoImage'].length
               ? fetchedSettings['logoImage']
-              : DefaultColors.logoImage,
+              : DefaultLightColors.logoImage,
           accessibilityStatementLinkUrl:
             fetchedSettings['accessibilityStatementLinkUrl'] ||
-            DefaultColors.accessibilityStatementLinkUrl,
-          logoUrl: fetchedSettings['logoUrl'] || DefaultColors.logoUrl,
-          reportButtonsBgColor:
-            fetchedSettings['reportButtonsBgColor'] ||
-            DefaultColors.reportButtonsBgColor,
-          reportButtonsTextColor:
-            fetchedSettings['reportButtonsTextColor'] ||
-            DefaultColors.reportButtonsTextColor,
+            DefaultLightColors.accessibilityStatementLinkUrl,
+          logoUrl: fetchedSettings['logoUrl'] || DefaultLightColors.logoUrl,
+        });
+
+        // Load dark mode grouped colors
+        setDarkModeColors({
+          colorGroup1:
+            fetchedSettings['dark-mode-color-group-1'] ||
+            DefaultDarkColors.colorGroup1,
+          colorGroup2:
+            fetchedSettings['dark-mode-color-group-2'] ||
+            DefaultDarkColors.colorGroup2,
+          colorGroup3:
+            fetchedSettings['dark-mode-color-group-3'] ||
+            DefaultDarkColors.colorGroup3,
+          colorGroup4:
+            fetchedSettings['dark-mode-color-group-4'] ||
+            DefaultDarkColors.colorGroup4,
+          colorGroup5:
+            fetchedSettings['dark-mode-color-group-5'] ||
+            DefaultDarkColors.colorGroup5,
+          colorGroup6:
+            fetchedSettings['dark-mode-color-group-6'] ||
+            DefaultDarkColors.colorGroup6,
+          widgetBtnColor:
+            fetchedSettings['widget-btn-color'] ||
+            DefaultDarkColors.widgetBtnColor,
+          logoImage:
+            fetchedSettings['logoImage'] && fetchedSettings['logoImage'].length
+              ? fetchedSettings['logoImage']
+              : DefaultDarkColors.logoImage,
+          accessibilityStatementLinkUrl:
+            fetchedSettings['accessibilityStatementLinkUrl'] ||
+            DefaultDarkColors.accessibilityStatementLinkUrl,
+          logoUrl: fetchedSettings['logoUrl'] || DefaultDarkColors.logoUrl,
         });
 
         // Update toggles.
@@ -526,6 +587,15 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           seizureAndEpileptic: fetchedSettings['toggleseizure-epileptic'] === 1,
           colorBlind: fetchedSettings['togglecolor-blind'] === 1,
           adhd: fetchedSettings['toggleadhd'] === 1,
+          oversizeWidget: fetchedSettings['toggleoversize-widget'] === 1,
+          fontSize: fetchedSettings['togglefont-size'] === 1,
+          textColor: fetchedSettings['toggletext-color'] === 1,
+          titleColor: fetchedSettings['toggletitle-color'] === 1,
+          backgroundColor: fetchedSettings['togglebackground-color'] === 1,
+          pageStructure: fetchedSettings['togglepage-structure'] === 1,
+          keyboardNavigation:
+            fetchedSettings['togglekeyboard-navigation'] === 1,
+          widgetPosition: fetchedSettings['togglewidget-position'] === 1,
         });
         // Set hasUserMadeChanges to false after initial fetch
         setHasUserMadeChanges(false);
@@ -533,10 +603,12 @@ const AccessibilityWidgetPage: React.FC<any> = ({
         // Then after a small delay, enable changes tracking
         setTimeout(() => {
           setHasUserMadeChanges(true);
+          setIsLoadingSettings(false);
         }, 100);
       })
       .catch((error) => {
         setButtonDisable(false);
+        setIsLoadingSettings(false);
         toast.error(`Error While Fetching Settings. Try Again Later !!`);
         console.error('There was a problem with the fetch operation:', error);
       });
@@ -600,51 +672,71 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           setSelectedFont(fetchedSettings?.widgetFont);
         }
 
-        // Update colors using the corresponding keys.
-        setColors({
-          headerText:
-            fetchedSettings['header-text'] || DefaultColors.headerText,
-          headerBg: fetchedSettings['header-bg'] || DefaultColors.headerBg,
-          headerControlsColor:
-            fetchedSettings['header-controls-color'] ||
-            DefaultColors.headerControlsColor,
-          footerText:
-            fetchedSettings['footer-text'] || DefaultColors.footerText,
-          footerBg: fetchedSettings['footer-bg'] || DefaultColors.footerBg,
-          buttonText:
-            fetchedSettings['button-text'] || DefaultColors.buttonText,
-          buttonBg: fetchedSettings['bg-button'] || DefaultColors.buttonBg,
-          menuBg: fetchedSettings['widget-background'] || DefaultColors.menuBg,
+        // Update colors using grouped structure
+        // Load light mode grouped colors
+        setLightModeColors({
+          colorGroup1:
+            fetchedSettings['light-mode-color-group-1'] ||
+            DefaultLightColors.colorGroup1,
+          colorGroup2:
+            fetchedSettings['light-mode-color-group-2'] ||
+            DefaultLightColors.colorGroup2,
+          colorGroup3:
+            fetchedSettings['light-mode-color-group-3'] ||
+            DefaultLightColors.colorGroup3,
+          colorGroup4:
+            fetchedSettings['light-mode-color-group-4'] ||
+            DefaultLightColors.colorGroup4,
+          colorGroup5:
+            fetchedSettings['light-mode-color-group-5'] ||
+            DefaultLightColors.colorGroup5,
+          colorGroup6:
+            fetchedSettings['light-mode-color-group-6'] ||
+            DefaultLightColors.colorGroup6,
           widgetBtnColor:
-            fetchedSettings['widget-btn-color'] || DefaultColors.widgetBtnColor,
-          dropdownText:
-            fetchedSettings['dropdown-text'] || DefaultColors.dropdownText,
-          dropdownBg:
-            fetchedSettings['bg-dropdown'] || DefaultColors.dropdownBg,
-          widgetInnerText:
-            fetchedSettings['widget-text'] || DefaultColors.widgetInnerText,
-          fontSizeMenuBg:
-            fetchedSettings['font-size-bg'] || DefaultColors.fontSizeMenuBg,
-          fontSizeMenuButton:
-            fetchedSettings['font-size-buttons'] ||
-            DefaultColors.fontSizeMenuButton,
-          fontSizeMenuText:
-            fetchedSettings['font-size-text'] || DefaultColors.fontSizeMenuText,
-          customizationMenuInnerBg: DefaultColors.customizationMenuInnerBg,
+            fetchedSettings['widget-btn-color'] ||
+            DefaultLightColors.widgetBtnColor,
           logoImage:
             fetchedSettings['logoImage'] && fetchedSettings['logoImage'].length
               ? fetchedSettings['logoImage']
-              : DefaultColors.logoImage,
+              : DefaultLightColors.logoImage,
           accessibilityStatementLinkUrl:
             fetchedSettings['accessibilityStatementLinkUrl'] ||
-            DefaultColors.accessibilityStatementLinkUrl,
-          logoUrl: fetchedSettings['logoUrl'] || DefaultColors.logoUrl,
-          reportButtonsBgColor:
-            fetchedSettings['reportButtonsBgColor'] ||
-            DefaultColors.reportButtonsBgColor,
-          reportButtonsTextColor:
-            fetchedSettings['reportButtonsTextColor'] ||
-            DefaultColors.reportButtonsTextColor,
+            DefaultLightColors.accessibilityStatementLinkUrl,
+          logoUrl: fetchedSettings['logoUrl'] || DefaultLightColors.logoUrl,
+        });
+
+        // Load dark mode grouped colors
+        setDarkModeColors({
+          colorGroup1:
+            fetchedSettings['dark-mode-color-group-1'] ||
+            DefaultDarkColors.colorGroup1,
+          colorGroup2:
+            fetchedSettings['dark-mode-color-group-2'] ||
+            DefaultDarkColors.colorGroup2,
+          colorGroup3:
+            fetchedSettings['dark-mode-color-group-3'] ||
+            DefaultDarkColors.colorGroup3,
+          colorGroup4:
+            fetchedSettings['dark-mode-color-group-4'] ||
+            DefaultDarkColors.colorGroup4,
+          colorGroup5:
+            fetchedSettings['dark-mode-color-group-5'] ||
+            DefaultDarkColors.colorGroup5,
+          colorGroup6:
+            fetchedSettings['dark-mode-color-group-6'] ||
+            DefaultDarkColors.colorGroup6,
+          widgetBtnColor:
+            fetchedSettings['widget-btn-color'] ||
+            DefaultDarkColors.widgetBtnColor,
+          logoImage:
+            fetchedSettings['logoImage'] && fetchedSettings['logoImage'].length
+              ? fetchedSettings['logoImage']
+              : DefaultDarkColors.logoImage,
+          accessibilityStatementLinkUrl:
+            fetchedSettings['accessibilityStatementLinkUrl'] ||
+            DefaultDarkColors.accessibilityStatementLinkUrl,
+          logoUrl: fetchedSettings['logoUrl'] || DefaultDarkColors.logoUrl,
         });
 
         // Update toggles.
@@ -677,6 +769,15 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           seizureAndEpileptic: fetchedSettings['toggleseizure-epileptic'] === 1,
           colorBlind: fetchedSettings['togglecolor-blind'] === 1,
           adhd: fetchedSettings['toggleadhd'] === 1,
+          oversizeWidget: fetchedSettings['toggleoversize-widget'] === 1,
+          fontSize: fetchedSettings['togglefont-size'] === 1,
+          textColor: fetchedSettings['toggletext-color'] === 1,
+          titleColor: fetchedSettings['toggletitle-color'] === 1,
+          backgroundColor: fetchedSettings['togglebackground-color'] === 1,
+          pageStructure: fetchedSettings['togglepage-structure'] === 1,
+          keyboardNavigation:
+            fetchedSettings['togglekeyboard-navigation'] === 1,
+          widgetPosition: fetchedSettings['togglewidget-position'] === 1,
         });
 
         // Disable change tracking temporarily
@@ -723,77 +824,46 @@ const AccessibilityWidgetPage: React.FC<any> = ({
         customStyles={defaultTourStyles}
       />
 
-      <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto max-w-7xl">
-          <header className="customize-widget-header mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+      <div>
+        {/* Site Selector Header */}
+        <div className="px-6 py-4 customize-widget-header">
+          <div className="flex flex-col sm:flex-col md:flex-row items-start sm:items-start md:items-center justify-between gap-3 sm:gap-3 md:gap-0">
+            <h1 className="text-2xl font-bold text-gray-900">
               {selectedSite != SITE_SELECTOR_TEXT
                 ? selectedSite + "'s Widget Customization"
                 : 'Select a Domain to Customize from the Side Bar'}
             </h1>
-          </header>
-
-          <div className="grid gap-8 lg:grid-cols-2">
-            <div className="widget-preview-section rounded-lg bg-white p-6 shadow-md">
-              <h2 className="mb-4 text-xl font-semibold text-gray-800">
-                Widget Preview
-              </h2>
-              <div className="border border-gray-100 p-4 rounded-md">
-                <AccessibilityMenu
-                  selectedFont={selectedFont}
-                  colors={colors}
-                  toggles={toggles}
-                />
-              </div>
-            </div>
-            <div className="widget-customization-section rounded-lg bg-white p-6 shadow-md">
-              <div className="flex justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  Choose your settings
-                </h2>
-                {selectedSite != '' && selectedSite != SITE_SELECTOR_TEXT && (
-                  <button
-                    onClick={() => setIsCopyModalOpen(true)}
-                    disabled={buttonDisable}
-                    className="w-fit px-4 py-2 border border-transparent rounded-md text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center gap-2"
-                  >
-                    <Settings size={16} />
-                    Copy Customization
-                  </button>
-                )}
-              </div>
-
-              <div className="border border-gray-100 p-4 rounded-md">
-                <CustomizeWidget
-                  toggles={toggles}
-                  setToggles={setToggles}
-                  colors={colors}
-                  setColors={setColors}
-                  font={fonts}
-                  selectedFont={selectedFont}
-                  setSelectedFont={setSelectedFont}
-                  DefaultColors={DefaultColors}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="save-reset-buttons mt-8 flex flex-col justify-center w-full space-y-4">
-            <button
-              onClick={handleSave}
-              disabled={buttonDisable}
-              className="w-full px-4 py-2 border border-transparent rounded-md text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Save
-            </button>
-            <button
-              disabled={buttonDisable}
-              onClick={resetAll}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Reset
-            </button>
+            {selectedSite != '' && selectedSite != SITE_SELECTOR_TEXT && (
+              <button
+                onClick={() => setIsCopyModalOpen(true)}
+                disabled={buttonDisable}
+                className="px-4 py-2 border border-transparent rounded-md text-white bg-[#445AE7] hover:bg-[#3A4BC7] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] flex items-center gap-2 w-full sm:w-auto md:w-auto copy-customization-button"
+              >
+                <Settings size={16} />
+                Copy Customization
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Main Content */}
+        <CustomizeWidget
+          toggles={toggles}
+          setToggles={setToggles}
+          colors={colors}
+          setColors={setColors}
+          colorMode={colorMode}
+          setColorMode={setColorMode}
+          font={fonts}
+          selectedFont={selectedFont}
+          setSelectedFont={setSelectedFont}
+          DefaultColors={
+            colorMode === 'light' ? DefaultLightColors : DefaultDarkColors
+          }
+          onSave={handleSave}
+          onReset={resetAll}
+          buttonDisable={buttonDisable}
+        />
       </div>
 
       <CopyCustomizationModal

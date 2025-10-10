@@ -11,6 +11,8 @@ import { reportsTourSteps, tourKeys } from '@/constants/toursteps';
 import { getAuthenticationCookie } from '@/utils/cookie';
 import { useQuery } from '@apollo/client';
 import { GetUserSitesDocument } from '@/generated/graphql';
+import notFoundImage from '@/assets/images/not_found_image.png';
+import Favicon from '@/components/Common/Favicon';
 
 export interface Problem {
   id: number;
@@ -76,7 +78,7 @@ const ProblemReport: React.FC = () => {
       }
 
       const responseData = await response.json();
-      
+
       if (isMounted.current) {
         setProblemArray(responseData || []);
         setLoader(false);
@@ -87,7 +89,11 @@ const ProblemReport: React.FC = () => {
       if (isMounted.current) {
         setProblemArray([]);
         setLoader(false);
-        setError(error instanceof Error ? error.message : 'Failed to fetch problem reports');
+        setError(
+          error instanceof Error
+            ? error.message
+            : 'Failed to fetch problem reports',
+        );
       }
     }
   };
@@ -146,89 +152,49 @@ const ProblemReport: React.FC = () => {
         customStyles={defaultTourStyles}
       />
 
-      <div className="min-h-screen py-6 sm:py-8 md:py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <header className="reports-page-header mb-8 sm:mb-12 text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900">
-              Reported Problems
-            </h1>
-            <p className="mt-3 max-w-md mx-auto text-sm sm:text-base md:text-lg text-gray-500 md:mt-5 md:max-w-3xl">
-              View and manage issues reported across your websites
-            </p>
-          </header>
+      <div className="relative">
+        {/* Dotted pattern background */}
+        <div className="absolute inset-0 bg-dotted-pattern opacity-20 -z-10"></div>
 
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">Error loading problem reports</h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    <p>{error}</p>
-                  </div>
-                  <div className="mt-4">
-                    <button
-                      type="button"
-                      className="bg-red-50 px-2 py-1 text-sm font-medium text-red-800 hover:bg-red-100 rounded-md"
-                      onClick={fetchProblemReports}
-                    >
-                      Try again
-                    </button>
-                  </div>
-                </div>
+        <div className="relative z-0 pl-2 pb-2 sm:pb-4 md:pb-6 px-4 sm:px-6 lg:px-8">
+          <div className="w-full">
+            <header className="mb-1 sm:mb-2 text-left">
+              <h1 className="text-3xl sm:text-2xl md:text-3xl lg:text-4xl  text-gray-900">
+                Issues
+              </h1>
+            </header>
+
+            {/* Search/Filter Card */}
+            <div className="bg-white rounded-lg shadow-sm border border-[#A2ADF3] p-3 sm:p-4 mb-3 sm:mb-4">
+              <div className="mb-3 sm:mb-4 pl-4 pt-4">
+                <h2 className="text-2xl sm:text-xl md:text-2xl text-gray-900 mb-1 sm:mb-2">
+                  Reported Problems
+                </h2>
+                <p className="text-base sm:text-sm md:text-base text-gray-500">
+                  View and manage issues reported across your websites
+                </p>
               </div>
-            </div>
-          )}
 
-          {loader ? (
-            <div className="flex justify-center">
-              <CircularProgress
-                size={100}
-                sx={{ color: '#0080ff' }}
-                className="mx-auto my-auto"
-              />
-            </div>
-          ) : (
-            <>
-              <div className="mb-6 sm:mb-8 flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-center lg:justify-center">
-                <div className="w-full lg:w-auto">
-                  <select
-                    className="w-full lg:w-auto text-sm sm:text-base inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-3 border border-transparent font-medium rounded-md text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value as typeof filter)}
-                  >
-                    <option value="all">All Problems</option>
-                    <option value="bug">Site Bugs</option>
-                    <option value="accessibility">Accessibility Issues</option>
-                  </select>
-                </div>
-
-                <div className="w-full lg:flex-1 lg:max-w-md relative">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      className="w-full px-4 py-2 sm:px-5 sm:py-3 border border-gray-300 rounded-md text-sm sm:text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-900 placeholder-gray-500 pr-10"
-                      placeholder="Search or select domain..."
-                      value={domainSearchTerm}
-                      onChange={(e) => handleDomainInputChange(e.target.value)}
-                      onFocus={() => setIsDomainDropdownOpen(true)}
-                      disabled={sitesLoading}
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                      onClick={() =>
-                        setIsDomainDropdownOpen(!isDomainDropdownOpen)
+              {!loader && (
+                <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-center pl-2 pt-2 pb-4">
+                  <div className="w-full lg:w-auto relative">
+                    <select
+                      className="w-full lg:w-auto text-xs sm:text-sm md:text-base inline-flex items-center justify-center pl-3 pr-8 py-2 sm:pl-4 sm:pr-10 sm:py-2 md:pl-5 md:pr-12 md:py-3 border border-transparent font-medium rounded-md text-white bg-[#3343AD] hover:bg-[#2a3699] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3343AD] transition-colors duration-200 appearance-none cursor-pointer"
+                      value={filter}
+                      onChange={(e) =>
+                        setFilter(e.target.value as typeof filter)
                       }
                     >
+                      <option value="all">All issue</option>
+                      <option value="bug">Site Bugs</option>
+                      <option value="accessibility">
+                        Accessibility Issues
+                      </option>
+                    </select>
+                    {/* Custom dropdown arrow */}
+                    <div className="absolute inset-y-0 right-0 pr-2 sm:pr-3 flex items-center pointer-events-none">
                       <svg
-                        className={`h-5 w-5 text-gray-400 transition-transform ${
-                          isDomainDropdownOpen ? 'rotate-180' : ''
-                        }`}
+                        className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-white"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -240,63 +206,157 @@ const ProblemReport: React.FC = () => {
                           d="M19 9l-7 7-7-7"
                         />
                       </svg>
-                    </button>
+                    </div>
                   </div>
 
-                  {isDomainDropdownOpen && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                      <div className="py-1">
-        
-                        {filteredDomains.map((site) => (
-                          <div
-                            key={site?.id}
-                            
-                            className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-                            onClick={() => handleDomainSelect(site?.url || '')}
-                          >
-                            {site?.url}
-                          </div>
-                        ))}
-                        {filteredDomains.length === 0 && domainSearchTerm && (
-                          <div className="px-4 py-2 text-sm text-gray-500 italic">
-                            No domains found matching "{domainSearchTerm}"
-                          </div>
-                        )}
+                  <div className="w-full lg:flex-1 relative">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-2 md:px-5 md:py-3 border border-gray-300 rounded-md text-xs sm:text-sm md:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 pr-8 sm:pr-10"
+                        placeholder="Search by site URL"
+                        value={domainSearchTerm}
+                        onChange={(e) =>
+                          handleDomainInputChange(e.target.value)
+                        }
+                        onFocus={() => setIsDomainDropdownOpen(true)}
+                        disabled={sitesLoading}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-2 sm:pr-3 flex items-center"
+                        onClick={() =>
+                          setIsDomainDropdownOpen(!isDomainDropdownOpen)
+                        }
+                      >
+                        <svg
+                          className={`h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-gray-400 transition-transform ${
+                            isDomainDropdownOpen ? 'rotate-180' : ''
+                          }`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {isDomainDropdownOpen && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                        <div className="py-1">
+                          {filteredDomains.map((site) => (
+                            <div
+                              key={site?.id}
+                              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center"
+                              onClick={() =>
+                                handleDomainSelect(site?.url || '')
+                              }
+                            >
+                              <Favicon
+                                domain={site?.url || ''}
+                                size={16}
+                                className="mr-2 flex-shrink-0"
+                              />
+                              <span className="truncate">{site?.url}</span>
+                            </div>
+                          ))}
+                          {filteredDomains.length === 0 && domainSearchTerm && (
+                            <div className="px-4 py-2 text-sm text-gray-500 italic">
+                              No domains found matching "{domainSearchTerm}"
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Issues Display Card */}
+            <div className="bg-[#eaeffb] rounded-lg shadow-sm border border-[#A2ADF3] p-3 sm:p-4">
+              {loader ? (
+                <div className="flex justify-center py-12">
+                  <CircularProgress
+                    size={100}
+                    sx={{ color: '#0080ff' }}
+                    className="mx-auto my-auto"
+                  />
+                </div>
+              ) : (
+                <>
+                  {/* Issue Summary Section */}
+                  <div className="mb-3 border-b border-gray-200 pb-2 pl-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="text-xl font-medium text-gray-900">
+                          Active issues
+                        </h3>
+                        <p className="text-base  text-gray-900 mt-1">
+                          {filteredProblems.length}
+                        </p>
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="reports-grid-section grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-                {filteredProblems.map((problem) => (
-                  <div key={problem.id} className="problem-card">
-                    <ProblemCard problem={problem} />
+                    <div className="flex justify-center -ml-4 px-4">
+                      <div className="w-full h-0.5 bg-[#7383ED] mt-2"></div>
+                    </div>
                   </div>
-                ))}
-              </div>
 
-              {problemArray.length === 0 && !loader && !error && (
-                <div className="text-center py-12">
-                  <div className="mx-auto h-12 w-12 text-gray-400">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                  {/* Scrollable Issues Container */}
+                  <div className="max-h-80 sm:max-h-96 md:max-h-[28rem] lg:max-h-[32rem] overflow-y-auto pr-1 sm:pr-2 issues-scrollbar">
+                    <div className="space-y-3 sm:space-y-4">
+                      {filteredProblems.map((problem) => (
+                        <div key={problem.id} className="problem-card">
+                          <ProblemCard problem={problem} />
+                        </div>
+                      ))}
+                    </div>
+
+                    {problemArray.length === 0 && !loader && (
+                      <div className="text-center py-12">
+                        <div className="mx-auto mb-6">
+                          <img
+                            src={notFoundImage}
+                            alt="No reports found"
+                            className="mx-auto h-32 w-auto"
+                          />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No problem reports
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          You haven't received any problem reports yet. They
+                          will appear here when users report issues with your
+                          websites.
+                        </p>
+                      </div>
+                    )}
+
+                    {filteredProblems.length === 0 && problemArray.length > 0 && (
+                      <div className="text-center py-12">
+                        <div className="mx-auto mb-6">
+                          <img
+                            src={notFoundImage}
+                            alt="No reports found"
+                            className="mx-auto h-32 w-auto"
+                          />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No reports found matching your criteria.
+                        </h3>
+                      </div>
+                    )}
                   </div>
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No problem reports</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    You haven't received any problem reports yet. They will appear here when users report issues with your websites.
-                  </p>
-                </div>
+                </>
               )}
-
-              {filteredProblems.length === 0 && problemArray.length > 0 && (
-                <p className="text-center text-gray-500 mt-8">
-                  No problems found matching your criteria.
-                </p>
-              )}
-            </>
-          )}
+            </div>
+          </div>
         </div>
       </div>
     </>

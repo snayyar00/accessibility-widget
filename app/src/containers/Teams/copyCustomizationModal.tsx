@@ -41,7 +41,7 @@ const CopyCustomizationModal: React.FC<CopyCustomizationModalProps> = ({
           <h3 className="text-lg font-medium mb-4">
             Copy Customization from Another Domain
           </h3>
-          
+
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2">
               Select source domain:
@@ -98,7 +98,7 @@ const CopyCustomizationModal: React.FC<CopyCustomizationModalProps> = ({
             <button
               onClick={handleCopy}
               disabled={!copyDomain || buttonDisable}
-              className="px-4 py-2 border border-transparent rounded-md text-white bg-primary transition-all duration-300 hover:bg-sapphire-blue disabled:bg-gray-600 disabled:cursor-not-allowed"
+              className="px-4 py-2 border border-transparent rounded-md text-white bg-[#445AE7] transition-all duration-300 hover:bg-[#3A4BC7] disabled:bg-gray-600 disabled:cursor-not-allowed"
             >
               Copy Settings
             </button>

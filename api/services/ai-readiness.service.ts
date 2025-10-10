@@ -212,7 +212,7 @@ export class AIReadinessService {
 
     results.push({
       id: 'semantic-html',
-      label: 'Semantic HTML',
+      label: 'HTML',
       status: semanticScore >= 80 ? 'pass' : semanticScore >= 40 ? 'warning' : 'fail',
       score: semanticScore,
       details: `Found ${semanticCount} semantic HTML5 elements`,

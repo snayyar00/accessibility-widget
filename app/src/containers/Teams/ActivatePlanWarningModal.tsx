@@ -2,7 +2,7 @@ import { RootState } from '@/config/store';
 import { CircularProgress } from '@mui/material';
 import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { Domain } from './DomainTable';
 import { plans } from '@/constants';
 import { useLazyQuery } from '@apollo/client';
