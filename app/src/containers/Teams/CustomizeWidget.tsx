@@ -702,9 +702,14 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
       transition: all 0.2s;
     }
-    .preview-btn:hover {
+    .preview-btn:hover:not(:disabled) {
       background: #3367D6;
       box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4);
+    }
+    .preview-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      box-shadow: none;
     }
     .info-text {
       margin-bottom: 20px;
@@ -732,16 +737,46 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 </head>
 <body>
   <div class="container">
-    <button class="preview-btn" onclick="openWidget()">Open Accessibility Widget</button>
+    <button id="widgetBtn" class="preview-btn" onclick="openWidget()" disabled>Loading...</button>
   </div>
   
-  <script src="https://co0kk804s4cw4gk488gocsos.webability.io/widget.min.js" 
+  <script src="https://widget-v2.webability.io/widget.min.js" 
           data-asw-position="bottom-left" 
           data-asw-lang="auto" 
           data-asw-icon-type="hidden" 
           defer></script>
   
   <script>
+    // Check when widget is loaded and enable the button
+    function checkWidgetLoaded() {
+      const checkInterval = setInterval(() => {
+        const widgetBtn = document.querySelector('.asw-menu-btn');
+        const previewBtn = document.getElementById('widgetBtn');
+        
+        if (widgetBtn && previewBtn) {
+          clearInterval(checkInterval);
+          previewBtn.disabled = false;
+          previewBtn.textContent = 'Open Accessibility Widget';
+        }
+      }, 100);
+      
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        const previewBtn = document.getElementById('widgetBtn');
+        if (previewBtn && previewBtn.disabled) {
+          previewBtn.textContent = 'Widget failed to load';
+        }
+      }, 10000);
+    }
+    
+    // Start checking when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkWidgetLoaded);
+    } else {
+      checkWidgetLoaded();
+    }
+    
     function openWidget() {
       // Wait for widget to be fully loaded
       const checkWidget = setInterval(() => {
@@ -1660,7 +1695,13 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
                   {/* Color Mode Toggle */}
                   <div className="bg-white rounded-xl shadow-sm border border-[#A2ADF3] p-4 sm:p-5 md:p-6 mb-4">
-                    <div className="flex flex-col sm:flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 md:gap-6">
+                    <div
+                      className={`flex flex-col gap-3 sm:gap-4 md:gap-6 ${
+                        livePreview
+                          ? 'sm:flex-col md:flex-col md:items-start md:justify-between'
+                          : 'sm:flex-col md:flex-row md:items-start md:justify-between'
+                      }`}
+                    >
                       {/* Title and Description Section */}
                       <div className="flex-1">
                         <h3 className="text-lg sm:text-xl md:text-xl font-semibold text-[#1a1a1a] mb-1 sm:mb-2">
