@@ -740,7 +740,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     <button id="widgetBtn" class="preview-btn" onclick="openWidget()" disabled>Loading...</button>
   </div>
   
-  <script src="https://widget-v2.webability.io/widget.min.js" 
+  <script src="${process.env.REACT_APP_WIDGET_URL}" 
           data-asw-position="bottom-left" 
           data-asw-lang="auto" 
           data-asw-icon-type="hidden" 
