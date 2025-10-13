@@ -163,6 +163,8 @@ export default function CodeContainer({
   onCustomizationOpened,
 }: CodeProps) {
   const [copySuccess, setCopySuccess] = useState(false);
+  const [copySuccessNew, setCopySuccessNew] = useState(false);
+  const [selectedScript, setSelectedScript] = useState<'old' | 'new'>('new');
   const [position, setPosition] = useState('bottom-left');
   const [language, setLanguage] = useState('auto');
   const [iconType, setIconType] = useState<'full' | 'compact' | 'hidden'>(
@@ -235,6 +237,34 @@ export default function CodeContainer({
     }
   };
 
+  const copyToClipboardNew = async () => {
+    try {
+      await navigator.clipboard.writeText(newFormattedCodeString);
+      setCopySuccessNew(true);
+      setTimeout(() => setCopySuccessNew(false), 3000);
+    } catch (err) {
+      console.log('Failed to copy text: ', err);
+      // Fallback for older browsers
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = newFormattedCodeString;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+        setCopySuccessNew(true);
+        setTimeout(() => setCopySuccessNew(false), 3000);
+      } catch (fallbackErr) {
+        console.log('Fallback copy failed: ', fallbackErr);
+        alert('Failed to copy to clipboard. Please copy manually.');
+      }
+    }
+  };
+
   const handleLanguageSelect = (lang: typeof languages[0]) => {
     setLanguage(lang.code);
     setIsLanguageDropdownOpen(false);
@@ -259,6 +289,11 @@ export default function CodeContainer({
     iconType === 'hidden'
       ? `<script src="https://widget.webability.io/widget.min.js" data-asw-position="${position}" data-asw-lang="${language}" data-asw-icon-type="hidden" defer></script>`
       : `<script src="https://widget.webability.io/widget.min.js" data-asw-position="${position}-x-${offsetX}-y-${offsetY}" data-asw-lang="${language}" data-asw-icon-type="${widgetSize}-${iconType}" defer></script>`;
+
+  const newFormattedCodeString =
+    iconType === 'hidden'
+      ? `<script src="https://widget-v2.webability.io/widget.min.js" data-asw-position="${position}" data-asw-lang="${language}" data-asw-icon-type="hidden" defer></script>`
+      : `<script src="https://widget-v2.webability.io/widget.min.js" data-asw-position="${position}-x-${offsetX}-y-${offsetY}" data-asw-lang="${language}" data-asw-icon-type="${widgetSize}-${iconType}" defer></script>`;
 
   const validateEmail = (email: string) => {
     const emailRegex =
@@ -793,6 +828,30 @@ export default function CodeContainer({
           </p>
         </div>
 
+        {/* Script Toggle Buttons */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setSelectedScript('new')}
+            className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
+              selectedScript === 'new'
+                ? 'bg-[#445AE7] text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            New Widget Script
+          </button>
+          <button
+            onClick={() => setSelectedScript('old')}
+            className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
+              selectedScript === 'old'
+                ? 'bg-[#445AE7] text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Old Widget Script
+          </button>
+        </div>
+
         {/* Code Block with integrated Copy Button */}
         <div
           className="rounded-lg p-8 mb-4 relative min-h-[160px] installation-code-block"
@@ -802,20 +861,49 @@ export default function CodeContainer({
             className="text-sm lg:text-base font-mono break-all pb-16 block"
             style={{ color: '#3343AD' }}
           >
-            {formattedCodeString}
+            {selectedScript === 'new'
+              ? newFormattedCodeString
+              : formattedCodeString}
           </code>
 
           {/* Copy Button in bottom left corner of the code box */}
           <button
-            onClick={copyToClipboard}
+            onClick={
+              selectedScript === 'new' ? copyToClipboardNew : copyToClipboard
+            }
             className={`absolute bottom-3 left-3 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-white font-medium text-sm transition-all duration-200 copy-code-button ${
-              copySuccess
+              selectedScript === 'new'
+                ? copySuccessNew
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'hover:opacity-80'
+                : copySuccess
                 ? 'bg-green-600 hover:bg-green-700'
                 : 'hover:opacity-80'
             }`}
-            style={{ backgroundColor: copySuccess ? undefined : '#3343AD' }}
+            style={{
+              backgroundColor:
+                selectedScript === 'new'
+                  ? copySuccessNew
+                    ? undefined
+                    : '#3343AD'
+                  : copySuccess
+                  ? undefined
+                  : '#3343AD',
+            }}
           >
-            {copySuccess ? (
+            {selectedScript === 'new' ? (
+              copySuccessNew ? (
+                <>
+                  <FaCheck className="w-3 h-3" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <FaRegCopy className="w-3 h-3" />
+                  Copy Snippet
+                </>
+              )
+            ) : copySuccess ? (
               <>
                 <FaCheck className="w-3 h-3" />
                 Copied!

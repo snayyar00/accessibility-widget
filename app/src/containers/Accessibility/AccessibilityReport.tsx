@@ -2882,7 +2882,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               </div>
 
               {/* Scan Type Selector */}
-              <div className="w-full lg:w-auto lg:min-w-[220px]">
+              <div className="w-full lg:w-auto lg:min-w-[220px] scan-type-selector">
                 <div ref={dropdownRef} className="relative">
                   <button
                     type="button"
@@ -2956,7 +2956,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               </div>
 
               {/* Checkbox for full site scan */}
-              <div className="w-full lg:w-auto">
+              <div className="w-full lg:w-auto full-site-scan-checkbox">
                 <div
                   className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg whitespace-nowrap"
                   style={{
