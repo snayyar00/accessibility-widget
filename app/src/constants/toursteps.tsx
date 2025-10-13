@@ -391,6 +391,34 @@ export const accessibilityTourSteps: Step[] = [
     placement: 'bottom' as Placement,
   },
   {
+    target: '.scan-type-selector',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Choose Scan Speed ⚡</h3>
+        <p>
+          Select between "Faster (Use saved data)" for quick results using
+          cached data, or "Slower (Do full scan)" for a fresh, comprehensive
+          analysis. Choose based on your needs!
+        </p>
+      </div>
+    ),
+    placement: 'bottom' as Placement,
+  },
+  {
+    target: '.full-site-scan-checkbox',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Full Site Scan Option 🔍</h3>
+        <p>
+          Enable this checkbox to scan your entire website, including all linked
+          pages, for comprehensive accessibility analysis. When unchecked, only
+          the homepage will be scanned.
+        </p>
+      </div>
+    ),
+    placement: 'bottom' as Placement,
+  },
+  {
     target: '.search-button',
     content: (
       <div>
