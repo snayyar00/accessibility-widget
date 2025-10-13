@@ -262,14 +262,14 @@ const Topbar: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* Workspace Selector - Only for admin users */}
+              {/* Workspace Selector - Only for admin users
               {data?.isAdminOrOwner && (
                 <div className="w-full md:w-auto min-w-[150px]">
                   <div className="bg-gray-50 rounded-lg border border-gray-200">
                     <WorkspacesSelect />
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* Site Selector */}
               <div className="w-full md:w-auto">

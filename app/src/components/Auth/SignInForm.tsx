@@ -128,7 +128,7 @@ const SignInForm: React.FC<Props> = ({
               to="/auth/forgot-password"
               className="text-[14px] text-blue-600 hover:text-blue-800"
             >
-              forgot password?
+              Forgot password?
             </Link>
           </div>
           <Button
