@@ -551,7 +551,7 @@ export default function CodeContainer({
                 className="bg-gray-50 rounded-lg border border-gray-200 p-4"
                 style={{ borderColor: '#A2ADF3' }}
               >
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
+                <div className="space-y-4">
                   <div>
                     <h4 className="text-sm font-bold text-gray-800 mb-1">
                       Trigger icon
@@ -567,7 +567,7 @@ export default function CodeContainer({
                       onClick={() =>
                         setIsIconTypeDropdownOpen(!isIconTypeDropdownOpen)
                       }
-                      className="w-full md:w-auto px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center hover:border-gray-300 transition-colors min-w-[280px] sm:min-w-[260px] relative"
+                      className="w-full px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center hover:border-gray-300 transition-colors relative"
                       style={{ borderColor: '#A2ADF3' }}
                     >
                       <div className="flex items-center gap-3">
@@ -586,7 +586,7 @@ export default function CodeContainer({
 
                     {isIconTypeDropdownOpen && (
                       <div
-                        className="absolute z-50 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-hidden min-w-[280px] sm:min-w-[260px]"
+                        className="absolute z-50 right-0 left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-hidden"
                         style={{ borderColor: '#A2ADF3' }}
                       >
                         <div className="max-h-36 overflow-y-auto">
@@ -622,7 +622,7 @@ export default function CodeContainer({
                   className="bg-gray-50 rounded-lg border border-gray-200 p-4"
                   style={{ borderColor: '#A2ADF3' }}
                 >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
+                  <div className="space-y-4">
                     <div>
                       <h4 className="text-sm font-bold text-gray-800 mb-1">
                         Trigger size
@@ -637,7 +637,7 @@ export default function CodeContainer({
                         onClick={() =>
                           setIsWidgetSizeDropdownOpen(!isWidgetSizeDropdownOpen)
                         }
-                        className="w-full md:w-auto px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center justify-between hover:border-gray-300 transition-colors min-w-[120px] sm:min-w-[100px] md:min-w-[120px]"
+                        className="w-full px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center justify-between hover:border-gray-300 transition-colors"
                         style={{ borderColor: '#A2ADF3' }}
                       >
                         <span className="text-gray-900 font-medium">
@@ -653,7 +653,7 @@ export default function CodeContainer({
 
                       {isWidgetSizeDropdownOpen && (
                         <div
-                          className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-hidden min-w-[120px] sm:min-w-[100px] md:min-w-[120px]"
+                          className="absolute z-50 right-0 left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-hidden"
                           style={{ borderColor: '#A2ADF3' }}
                         >
                           <div className="max-h-36 overflow-y-auto">
@@ -683,27 +683,27 @@ export default function CodeContainer({
 
           {/* Hidden Widget Information */}
           {iconType === 'hidden' && (
-            <div className="mt-4 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="flex flex-col sm:flex-row items-start gap-3">
-                <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="text-white text-xs font-bold">!</span>
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 overflow-hidden">
                   <h4 className="font-medium text-amber-800 mb-2 text-sm sm:text-base">
                     How Button Trigger Works
                   </h4>
-                  <p className="text-xs sm:text-sm text-amber-700 mb-3 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-amber-700 mb-3 leading-relaxed break-words">
                     With button trigger mode, no widget icon appears on your
                     site. Instead, you can make any existing button or element
                     activate the accessibility widget by adding this onclick
                     function:
                   </p>
-                  <div className="bg-gray-900 text-green-400 p-2 sm:p-3 rounded font-mono text-xs sm:text-sm overflow-x-auto">
-                    <code className="whitespace-nowrap">
+                  <div className="bg-gray-900 text-green-400 p-3 rounded font-mono text-xs sm:text-sm overflow-x-auto mb-3">
+                    <code className="block break-all">
                       onclick="document.querySelector('.asw-menu-btn')?.click()"
                     </code>
                   </div>
-                  <p className="text-xs sm:text-sm text-amber-700 mt-2 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-amber-700 leading-relaxed break-words">
                     Perfect for integrating with your existing navigation, help
                     buttons, or any custom UI elements while maintaining full
                     control over the user experience.

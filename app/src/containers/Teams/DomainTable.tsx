@@ -489,7 +489,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
         </div>
 
         {/* Main Content */}
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-6 pr-12">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6 lg:pr-12">
           {/* Empty State - Desktop Only */}
           <div className="hidden lg:block">
             {filteredDomains.length === 0 ? (
@@ -969,7 +969,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
         </div>
 
         {/* Mobile Cards */}
-        <div className="lg:hidden space-y-3 px-4 sm:px-6 lg:px-8 pr-12">
+        <div className="lg:hidden space-y-3 px-4 sm:px-6 lg:px-8">
           {filteredDomains.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4">
               {/* Empty State Image */}
