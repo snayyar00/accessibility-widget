@@ -12,7 +12,7 @@ import { getCacheData, setCacheData, deleteCacheData } from '@/utils/cacheApi';
 
 // Global scan tracker that persists across component unmounts
 let activeScanPromise: Promise<any> | null = null;
-let activeScanController: AbortController | null = null;
+const activeScanController: AbortController | null = null;
 
 // Mock data based on your API structure
 const mockIssuesData = [
@@ -65,7 +65,7 @@ const mockIssuesData = [
           },
           {
             selector: "div.container",
-            action: "add", 
+            action: "add",
             issue_type: "landmark_missing_unique_label",
             description: "Missing unique label for navigation landmark"
           }
@@ -220,15 +220,15 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index })
   };
 
   return (
-    <motion.div 
-      initial={{ 
-        y: 50, 
-        opacity: 0, 
+    <motion.div
+      initial={{
+        y: 50,
+        opacity: 0,
         scale: 0.9
       }}
-      animate={{ 
-        y: 0, 
-        opacity: 1, 
+      animate={{
+        y: 0,
+        opacity: 1,
         scale: 1,
         transition: {
           type: "spring",
@@ -238,9 +238,9 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index })
           duration: 0.4
         }
       }}
-      exit={{ 
-        y: -50, 
-        opacity: 0, 
+      exit={{
+        y: -50,
+        opacity: 0,
         scale: 0.9,
         transition: {
           type: "spring",
@@ -251,7 +251,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index })
         }
       }}
       className="relative h-full rounded-lg border border-gray-400 p-2 transition-all duration-300 ease-out shadow-lg"
-      whileHover={{ 
+      whileHover={{
         scale: 1.02,
         y: -5,
         boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
@@ -260,42 +260,42 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index })
     >
       <GlowingEffect
         spread={40}
-        glow={true}
+        glow
         disabled={false}
         proximity={64}
         inactiveZone={0.01}
         borderWidth={3}
       />
-      <div className={`relative rounded-lg p-6 h-full hover:shadow-sm transition-shadow duration-200 ${
-        hasIssues ? 'bg-gray-100' : 'bg-green-50'
-      }`}>
+      <div
+        className={`relative rounded-lg p-6 h-full hover:shadow-sm transition-shadow duration-200 ${hasIssues ? 'bg-gray-100' : 'bg-green-50'
+          }`}>
         {/* Icon and Title */}
         <div className="flex items-center justify-between mb-4">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm ${
-            category.color === 'blue' ? 'bg-blue-100' :
-            category.color === 'green' ? 'bg-green-100' :
-            category.color === 'orange' ? 'bg-orange-100' :
-            category.color === 'purple' ? 'bg-purple-100' :
-            category.color === 'red' ? 'bg-red-100' :
-            category.color === 'teal' ? 'bg-teal-100' :
-            'bg-gray-100'
-          }`}>
-            <category.icon className={`w-6 h-6 ${
-              category.color === 'blue' ? 'text-blue-600' :
-              category.color === 'green' ? 'text-green-600' :
-              category.color === 'orange' ? 'text-orange-600' :
-              category.color === 'purple' ? 'text-purple-600' :
-              category.color === 'red' ? 'text-red-600' :
-              category.color === 'teal' ? 'text-teal-600' :
-              'text-gray-600'
-            }`} />
+          <div
+            className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm ${category.color === 'blue' ? 'bg-blue-100' :
+              category.color === 'green' ? 'bg-green-100' :
+                category.color === 'orange' ? 'bg-orange-100' :
+                  category.color === 'purple' ? 'bg-purple-100' :
+                    category.color === 'red' ? 'bg-red-100' :
+                      category.color === 'teal' ? 'bg-teal-100' :
+                        'bg-gray-100'
+              }`}>
+            <category.icon
+              className={`w-6 h-6 ${category.color === 'blue' ? 'text-blue-600' :
+                category.color === 'green' ? 'text-green-600' :
+                  category.color === 'orange' ? 'text-orange-600' :
+                    category.color === 'purple' ? 'text-purple-600' :
+                      category.color === 'red' ? 'text-red-600' :
+                        category.color === 'teal' ? 'text-teal-600' :
+                          'text-gray-600'
+                }`} />
           </div>
           {getStatusBadge()}
         </div>
 
         {/* Category Title */}
         <h3 className="text-lg font-semibold text-gray-900 mb-2">{category.category}</h3>
-        
+
         {/* Description */}
         <p className="text-sm text-gray-600 mb-4">
           {category.subcategories.length} accessibility checks performed
@@ -309,7 +309,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index })
               {totalIssues === 1 ? 'issue' : 'issues'}
             </span>
           </div>
-          
+
           {hasIssues && (
             <button
               onClick={(event) => onViewDetails(category, event)}
@@ -328,7 +328,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ category, onViewDetails, index })
 
 const AutomationScan: React.FC = () => {
   const { t } = useTranslation();
-  
+
   // Helper function to get cached scan data from Redis (async version)
   const [cachedData, setCachedDataState] = useState<any>(null);
   const [cacheLoaded, setCacheLoaded] = useState(false);
@@ -340,26 +340,26 @@ const AutomationScan: React.FC = () => {
       try {
         const cached = await getCacheData('automation_scan_cache', { prefix: 'app' });
         console.log('📦 Cache data received:', cached ? 'Found' : 'Not found');
-        
+
         if (cached) {
           // Check if cache is less than 1 hour old
           const cacheAge = Date.now() - cached.timestamp;
           const cacheAgeMinutes = Math.floor(cacheAge / 1000 / 60);
-          
+
           if (cacheAge < 60 * 60 * 1000) {
             console.log('✅ Found valid cached scan data from Redis:', {
               domain: cached.domain,
               hasResults: !!cached.apiResults,
               resultsCount: cached.apiResults?.results?.length || 0,
-              cacheAgeMinutes: cacheAgeMinutes + ' minutes',
+              cacheAgeMinutes: `${cacheAgeMinutes} minutes`,
               scanCompleted: cached.scanCompleted,
               hasScanned: cached.hasScanned
             });
             setCachedDataState(cached);
           } else {
             // Remove expired cache
-            console.log('⏰ Cache expired (age: ' + cacheAgeMinutes + ' minutes), removing...');
-            await deleteCacheData('automation_scan_cache', { prefix: 'app' }).catch(() => {});
+            console.log(`⏰ Cache expired (age: ${cacheAgeMinutes} minutes), removing...`);
+            await deleteCacheData('automation_scan_cache', { prefix: 'app' }).catch(() => { });
           }
         } else {
           console.log('ℹ️ No cached scan data found in Redis');
@@ -372,7 +372,7 @@ const AutomationScan: React.FC = () => {
           if (localCached) {
             const parsed = JSON.parse(localCached);
             const cacheAge = Date.now() - parsed.timestamp;
-            
+
             if (cacheAge < 60 * 60 * 1000) {
               console.log('✅ Found valid cached scan data from localStorage:', {
                 domain: parsed.domain,
@@ -408,6 +408,7 @@ const AutomationScan: React.FC = () => {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [apiResults, setApiResults] = useState<any>(null);
+  const [previousApiResults, setPreviousApiResults] = useState<any>(null); // Store previous results
   const [scanCompleted, setScanCompleted] = useState(false);
   const [aiSummary, setAiSummary] = useState<string>('');
   const [loadingAiSummary, setLoadingAiSummary] = useState(false);
@@ -424,12 +425,12 @@ const AutomationScan: React.FC = () => {
     debug_mode: false,
     debug_save_screenshots: false,
     automated_checks: true,
-    
+
     // Navigation & Interaction Tests
     run_tab_navigation: true,
     run_on_input: false,
     run_on_focus: false,
-    
+
     // Content & Structure Tests
     detect_missing_labels: true,
     detect_missing_headings: true,
@@ -444,7 +445,7 @@ const AutomationScan: React.FC = () => {
     detect_missing_headings_visual: false,
     detect_heading_level_inconsistency: false,
     detect_language_violations: false,
-    
+
     // Media & Content Tests
     detect_missing_captions: false,
     detect_missing_audio_descriptions: false,
@@ -457,7 +458,7 @@ const AutomationScan: React.FC = () => {
     detect_page_title_violations: false,
     detect_frame_title_violations: false,
     detect_multiple_ways_violations: false,
-    
+
     // Images & Visual Tests
     detect_image_function_violations: false,
     detect_text_alternative_violations: false,
@@ -466,19 +467,19 @@ const AutomationScan: React.FC = () => {
     detect_ui_component_contrast: false,
     detect_ui_component_state_changes: false,
     detect_css_content_violations: false,
-    
+
     // Tables & Semantics
     detect_table_semantics_violations: false,
     detect_table_headers_violations: false,
     detect_semantic_markup_violations: false,
-    
+
     // Widget & Form Tests
     detect_native_widget_labels: false,
     detect_expected_input_clarity: false,
     detect_custom_widget_labels: true,
     detect_custom_widget_expected_input: false,
     detect_autocomplete_violations: false,
-    
+
     // Color & Visual Design
     detect_color_meaning_violations: false,
     detect_contrast_ratio_violations: true,
@@ -489,14 +490,14 @@ const AutomationScan: React.FC = () => {
     detect_reflow_violations: false,
     detect_orientation_violations: false,
     detect_resize_text_violations: false,
-    
+
     // Navigation & Consistency
     detect_bypass_mechanisms: false,
     detect_consistent_navigation: false,
     detect_consistent_identification: false,
     detect_consistent_help: false,
     detect_high_contrast_mode: false,
-    
+
     // AI-Enhanced Analysis
     use_llm_for_widget_labels: false,
     use_llm_for_expected_input: false,
@@ -519,12 +520,12 @@ const AutomationScan: React.FC = () => {
     debug_mode: false,
     debug_save_screenshots: false,
     automated_checks: true,
-    
+
     // Navigation & Interaction Tests
     run_tab_navigation: true,
     run_on_input: true,
     run_on_focus: true,
-    
+
     // Content & Structure Tests
     detect_missing_labels: true,
     detect_missing_headings: true,
@@ -539,7 +540,7 @@ const AutomationScan: React.FC = () => {
     detect_missing_headings_visual: true,
     detect_heading_level_inconsistency: true,
     detect_language_violations: true,
-    
+
     // Media & Content Tests
     detect_missing_captions: true,
     detect_missing_audio_descriptions: true,
@@ -552,7 +553,7 @@ const AutomationScan: React.FC = () => {
     detect_page_title_violations: true,
     detect_frame_title_violations: true,
     detect_multiple_ways_violations: true,
-    
+
     // Images & Visual Tests
     detect_image_function_violations: true,
     detect_text_alternative_violations: true,
@@ -561,19 +562,19 @@ const AutomationScan: React.FC = () => {
     detect_ui_component_contrast: true,
     detect_ui_component_state_changes: true,
     detect_css_content_violations: true,
-    
+
     // Tables & Semantics
     detect_table_semantics_violations: true,
     detect_table_headers_violations: true,
     detect_semantic_markup_violations: true,
-    
+
     // Widget & Form Tests
     detect_native_widget_labels: true,
     detect_expected_input_clarity: true,
     detect_custom_widget_labels: true,
     detect_custom_widget_expected_input: true,
     detect_autocomplete_violations: true,
-    
+
     // Color & Visual Design
     detect_color_meaning_violations: true,
     detect_contrast_ratio_violations: true,
@@ -584,14 +585,14 @@ const AutomationScan: React.FC = () => {
     detect_reflow_violations: true,
     detect_orientation_violations: true,
     detect_resize_text_violations: true,
-    
+
     // Navigation & Consistency
     detect_bypass_mechanisms: true,
     detect_consistent_navigation: true,
     detect_consistent_identification: true,
     detect_consistent_help: true,
     detect_high_contrast_mode: true,
-    
+
     // AI-Enhanced Analysis
     use_llm_for_widget_labels: true,
     use_llm_for_expected_input: true,
@@ -617,7 +618,7 @@ const AutomationScan: React.FC = () => {
   const selectAllTests = () => {
     // Configuration fields that should not be affected by "Select All"
     const configFields = ['headless', 'force_local', 'debug_mode', 'debug_save_screenshots'];
-    
+
     const allTrue = Object.keys(selectedTests).reduce((acc, key) => {
       // Keep configuration fields at their current values
       if (configFields.includes(key)) {
@@ -633,7 +634,7 @@ const AutomationScan: React.FC = () => {
   const selectNoneTests = () => {
     // Configuration fields that should not be affected by "Select None"
     const configFields = ['headless', 'force_local', 'debug_mode', 'debug_save_screenshots'];
-    
+
     const allFalse = Object.keys(selectedTests).reduce((acc, key) => {
       // Keep configuration fields at their current values
       if (configFields.includes(key)) {
@@ -648,6 +649,26 @@ const AutomationScan: React.FC = () => {
 
   const handleCustomTestsToggle = () => {
     setUseCustomTests(!useCustomTests);
+  };
+
+  const handleClearResults = async () => {
+    console.log('🗑️ Clearing all scan results');
+    setApiResults(null);
+    setPreviousApiResults(null);
+    setHasScanned(false);
+    setScanCompleted(false);
+    setAiSummary('');
+    setScanKey(prev => prev + 1);
+
+    // Clear cache
+    try {
+      await deleteCacheData('automation_scan_cache', { prefix: 'app' });
+      console.log('✅ Cache cleared');
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+      // Fallback to localStorage
+      localStorage.removeItem('automation_scan_cache');
+    }
   };
 
 
@@ -685,18 +706,22 @@ const AutomationScan: React.FC = () => {
         scanCompleted: cachedData.scanCompleted,
         hasScanned: cachedData.hasScanned
       });
-      
+
       // Restore all state
       if (cachedData.domain) setDomain(cachedData.domain);
-      if (cachedData.apiResults) setApiResults(cachedData.apiResults);
+      if (cachedData.apiResults) {
+        setApiResults(cachedData.apiResults);
+        // If cached results are merged, we don't need to set previousApiResults
+        // as they're already combined
+      }
       if (cachedData.scanCompleted) setScanCompleted(true);
       if (cachedData.hasScanned) setHasScanned(true);
       if (cachedData.aiSummary) setAiSummary(cachedData.aiSummary);
-      
+
       // Don't restore scanning state - should always start as not scanning
       setIsScanning(false);
       setLoadingMessage('');
-      
+
       console.log('✅ State restored from cache successfully');
     }
   }, [cacheLoaded, cachedData]);
@@ -713,7 +738,7 @@ const AutomationScan: React.FC = () => {
           setHasScanned(true);
         }
       }, 2000); // Give it 2 seconds grace period
-      
+
       return () => clearTimeout(timeout);
     }
     return undefined;
@@ -741,17 +766,17 @@ const AutomationScan: React.FC = () => {
 
       try {
         // Try Redis first
-        await setCacheData('automation_scan_cache', cacheData, { 
+        await setCacheData('automation_scan_cache', cacheData, {
           prefix: 'app',
           ttl: 60 * 60 * 1000 // 1 hour TTL
         });
-        
+
         if (apiResults && scanCompleted) {
-          console.log('✅ Scan results cached to Redis', { 
-            domain, 
+          console.log('✅ Scan results cached to Redis', {
+            domain,
             resultsCount: apiResults?.results?.length || 0,
             hasScanned,
-            scanCompleted 
+            scanCompleted
           });
         } else if (isScanning) {
           console.log('💾 Saving scanning state to Redis');
@@ -762,8 +787,8 @@ const AutomationScan: React.FC = () => {
         try {
           localStorage.setItem('automation_scan_cache', JSON.stringify(cacheData));
           if (apiResults && scanCompleted) {
-            console.log('✅ Scan results cached to localStorage (fallback)', { 
-              domain, 
+            console.log('✅ Scan results cached to localStorage (fallback)', {
+              domain,
               resultsCount: apiResults?.results?.length || 0,
               hasScanned,
               scanCompleted
@@ -794,7 +819,7 @@ const AutomationScan: React.FC = () => {
     const checkActiveScans = async () => {
       // Check Redis cache (already loaded in cacheLoaded state)
       if (!cacheLoaded) return;
-      
+
       if (cachedData) {
         try {
           console.log('📊 Checking Redis cache on mount:', {
@@ -803,13 +828,13 @@ const AutomationScan: React.FC = () => {
             scanCompleted: cachedData.scanCompleted,
             domain: cachedData.domain
           });
-          
+
           // If there's an active scan promise, wait for it
           if (activeScanPromise && cachedData.isScanning && !cachedData.scanCompleted) {
             console.log('🔄 Active scan detected, waiting for completion...');
             setIsScanning(true);
             setLoadingMessage('Resuming scan...');
-            
+
             try {
               const results = await activeScanPromise;
               console.log('✅ Active scan completed, updating UI');
@@ -843,217 +868,230 @@ const AutomationScan: React.FC = () => {
       return;
     }
 
-    // Reset animation state for new scan
-    setHasScanned(false);
+    // Store current results as previous results before starting new scan
+    if (apiResults) {
+      console.log('📦 Preserving previous scan results for merging');
+      setPreviousApiResults(apiResults);
+    }
+
+    // Only reset loading states, keep existing results visible
     setIsScanning(true);
     setLoadingMessage('Running tests...');
-    setApiResults(null);
     setScanCompleted(false);
     setWaitingForLoader(false);
-    setAiSummary(''); // Clear previous AI summary
-    setScanKey(prev => prev + 1); // Force complete re-render of results
+    // Don't clear apiResults - keep showing previous results during scan
+    // Don't clear hasScanned - keep showing previous cards
+    // Don't clear aiSummary - keep previous summary visible
 
     const scanStartTime = Date.now();
-    
+
     // Store the scan promise globally so it persists across component unmounts
     activeScanPromise = (async () => {
-    try {
-      console.log(`Starting scan for domain: ${domain}`);
-      
-      // Step 1: Start the analysis
-      // Ensure URL has protocol
-      const fullUrl = domain.startsWith('http') ? domain : `https://${domain}`;
-      
-      // Use your backend API endpoint with caching (or direct external API)
-      const apiEndpoint = process.env.REACT_APP_BACKEND_URL 
-        ? `${process.env.REACT_APP_BACKEND_URL}/automation-scan/analyze`
-        : 'https://h80wkk4o40c4cs48cccsg0wk.webability.io/analyze';
-      
-      console.log('🔗 API Endpoint:', apiEndpoint);
-      console.log('🔧 REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL || 'NOT SET - Using external API directly');
-      
-      const testsToRun = useCustomTests ? selectedTests : getAllTestsConfig();
-      console.log('Request payload:', { url: fullUrl, options: testsToRun });
-      console.log('Selected tests count:', Object.values(testsToRun).filter(Boolean).length);
-      
-      const analyzeResponse = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: fullUrl,
-          options: useCustomTests ? selectedTests : getAllTestsConfig()
-        }),
-        // Extended timeout for long-running accessibility scans (20 minutes)
-        signal: AbortSignal.timeout(1200000)
-      });
-
-      console.log('Response status:', analyzeResponse.status);
-      console.log('Response headers:', Object.fromEntries(analyzeResponse.headers.entries()));
-
-      if (!analyzeResponse.ok) {
-        const errorText = await analyzeResponse.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`Analysis request failed: ${analyzeResponse.status} ${analyzeResponse.statusText}. Response: ${errorText}`);
-      }
-
-      const analyzeData = await analyzeResponse.json();
-      console.log('Analysis response:', analyzeData);
-      const taskId = analyzeData.task_id;
-
-      if (!taskId) {
-        throw new Error('No task ID received from analysis endpoint');
-      }
-
-      console.log(`Task ID received: ${taskId}`);
-      setLoadingMessage('Getting responses...');
-
-      // Step 2: Poll for results with extended timeout for long scans
-      const pollForResults = async (): Promise<any> => {
-        const maxPollingTime = 25 * 60 * 1000; // 25 minutes maximum
-        const startTime = Date.now();
-        let pollCount = 0;
-        
-        while (Date.now() - startTime < maxPollingTime) {
-          try {
-            pollCount++;
-            const elapsedMinutes = Math.floor((Date.now() - startTime) / 60000);
-            
-            // Use your backend API endpoint with caching (or direct external API)
-            const taskEndpoint = process.env.REACT_APP_BACKEND_URL
-              ? `${process.env.REACT_APP_BACKEND_URL}/automation-scan/task/${taskId}`
-              : `https://h80wkk4o40c4cs48cccsg0wk.webability.io/task/${taskId}`;
-            
-            const taskResponse = await fetch(taskEndpoint, {
-              // 30 second timeout per polling request
-              signal: AbortSignal.timeout(30000)
-            });
-            
-            if (!taskResponse.ok) {
-              throw new Error(`Task status request failed: ${taskResponse.statusText}`);
-            }
-
-            const taskData = await taskResponse.json();
-            console.log(`Polling response (${pollCount}, ${elapsedMinutes}min):`, taskData);
-            
-            // Check if task is completed based on API documentation
-            if (taskData.status === 'completed') {
-              return taskData;
-            } else if (taskData.status === 'failed') {
-              // Check if it's a browser timeout - suggest retry with reduced scope
-              if (taskData.error && taskData.error.includes('browser has been closed')) {
-                throw new Error(`Browser timeout after ${elapsedMinutes} minutes. Try reducing scan scope or contact support. Error: ${taskData.error}`);
-              }
-              throw new Error(taskData.error || 'Task failed');
-            }
-            
-            // Enhanced progress reporting
-            if (taskData.progress) {
-              const estimatedTotal = 15; // Estimated 15 minutes for full scan
-              const remainingTime = Math.max(0, estimatedTotal - elapsedMinutes);
-              setLoadingMessage(`${taskData.progress} - Elapsed: ${elapsedMinutes}min, Est. remaining: ${remainingTime}min`);
-            } else {
-              setLoadingMessage(`Scanning in progress... (${elapsedMinutes} minutes elapsed)`);
-            }
-            
-            // Wait 10 seconds between polls for long scans (reduced frequency)
-            await new Promise(resolve => setTimeout(resolve, 10000));
-          } catch (error) {
-            console.error('Error polling for results:', error);
-            
-            // If it's a timeout error and we're still within max time, continue
-            if ((error as any)?.name === 'TimeoutError' && Date.now() - startTime < maxPollingTime) {
-              console.log('Polling request timed out, retrying...');
-              await new Promise(resolve => setTimeout(resolve, 15000)); // Wait longer on timeout
-              continue;
-            }
-            
-            // For other errors, wait and retry
-            await new Promise(resolve => setTimeout(resolve, 10000));
-          }
-        }
-        
-        throw new Error(`Scan timed out after ${Math.floor(maxPollingTime / 60000)} minutes. The scan may still be running on the server.`);
-      };
-
-      // Get the final results
-      const finalResults = await pollForResults();
-      console.log('Final results:', finalResults);
-      
-      // Store API results and show immediately
-      console.log('📝 Setting scan results:', {
-        hasResults: !!finalResults,
-        resultsLength: finalResults?.results?.length || 0
-      });
-      
-      setApiResults(finalResults);
-      setScanCompleted(true);
-      setHasScanned(true); // Show results immediately
-      setIsScanning(false); // Hide loading indicator
-      setWaitingForLoader(false);
-      setLoadingMessage('');
-      
-      console.log('✅ Scan completed! Showing results immediately.');
-      
-      // Force immediate save (Redis with localStorage fallback)
       try {
-        const immediateCache = {
-          domain,
-          hasScanned: true,
-          apiResults: finalResults,
-          scanCompleted: true,
-          aiSummary: '',
-          isScanning: false,
-          loadingMessage: '',
-          timestamp: Date.now(),
-        };
-        
-        try {
-          await setCacheData('automation_scan_cache', immediateCache, { 
-            prefix: 'app',
-            ttl: 60 * 60 * 1000 // 1 hour TTL
-          });
-          console.log('💾 Force saved completed scan to Redis');
-        } catch (redisError) {
-          console.warn('⚠️ Redis unavailable, saving to localStorage');
-          localStorage.setItem('automation_scan_cache', JSON.stringify(immediateCache));
-          console.log('💾 Force saved completed scan to localStorage');
+        console.log(`Starting scan for domain: ${domain}`);
+
+        // Step 1: Start the analysis
+        // Ensure URL has protocol
+        const fullUrl = domain.startsWith('http') ? domain : `https://${domain}`;
+
+        // Use your backend API endpoint with caching (or direct external API)
+        const apiEndpoint = process.env.REACT_APP_BACKEND_URL
+          ? `${process.env.REACT_APP_BACKEND_URL}/automation-scan/analyze`
+          : 'https://h80wkk4o40c4cs48cccsg0wk.webability.io/analyze';
+
+        console.log('🔗 API Endpoint:', apiEndpoint);
+        console.log('🔧 REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL || 'NOT SET - Using external API directly');
+
+        const testsToRun = useCustomTests ? selectedTests : getAllTestsConfig();
+        console.log('Request payload:', { url: fullUrl, options: testsToRun });
+        console.log('Selected tests count:', Object.values(testsToRun).filter(Boolean).length);
+
+        const analyzeResponse = await fetch(apiEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: fullUrl,
+            options: useCustomTests ? selectedTests : getAllTestsConfig()
+          }),
+          // Extended timeout for long-running accessibility scans (20 minutes)
+          signal: AbortSignal.timeout(1200000)
+        });
+
+        console.log('Response status:', analyzeResponse.status);
+        console.log('Response headers:', Object.fromEntries(analyzeResponse.headers.entries()));
+
+        if (!analyzeResponse.ok) {
+          const errorText = await analyzeResponse.text();
+          console.error('API Error Response:', errorText);
+          throw new Error(`Analysis request failed: ${analyzeResponse.status} ${analyzeResponse.statusText}. Response: ${errorText}`);
         }
-      } catch (saveError) {
-        console.error('Error saving scan data:', saveError);
+
+        const analyzeData = await analyzeResponse.json();
+        console.log('Analysis response:', analyzeData);
+        const taskId = analyzeData.task_id;
+
+        if (!taskId) {
+          throw new Error('No task ID received from analysis endpoint');
+        }
+
+        console.log(`Task ID received: ${taskId}`);
+        setLoadingMessage('Getting responses...');
+
+        // Step 2: Poll for results with extended timeout for long scans
+        const pollForResults = async (): Promise<any> => {
+          const maxPollingTime = 25 * 60 * 1000; // 25 minutes maximum
+          const startTime = Date.now();
+          let pollCount = 0;
+
+          while (Date.now() - startTime < maxPollingTime) {
+            try {
+              pollCount++;
+              const elapsedMinutes = Math.floor((Date.now() - startTime) / 60000);
+
+              // Use your backend API endpoint with caching (or direct external API)
+              const taskEndpoint = process.env.REACT_APP_BACKEND_URL
+                ? `${process.env.REACT_APP_BACKEND_URL}/automation-scan/task/${taskId}`
+                : `https://h80wkk4o40c4cs48cccsg0wk.webability.io/task/${taskId}`;
+
+              const taskResponse = await fetch(taskEndpoint, {
+                // 30 second timeout per polling request
+                signal: AbortSignal.timeout(30000)
+              });
+
+              if (!taskResponse.ok) {
+                throw new Error(`Task status request failed: ${taskResponse.statusText}`);
+              }
+
+              const taskData = await taskResponse.json();
+              console.log(`Polling response (${pollCount}, ${elapsedMinutes}min):`, taskData);
+
+              // Check if task is completed based on API documentation
+              if (taskData.status === 'completed') {
+                return taskData;
+              } if (taskData.status === 'failed') {
+                // Check if it's a browser timeout - suggest retry with reduced scope
+                if (taskData.error && taskData.error.includes('browser has been closed')) {
+                  throw new Error(`Browser timeout after ${elapsedMinutes} minutes. Try reducing scan scope or contact support. Error: ${taskData.error}`);
+                }
+                throw new Error(taskData.error || 'Task failed');
+              }
+
+              // Enhanced progress reporting
+              if (taskData.progress) {
+                const estimatedTotal = 15; // Estimated 15 minutes for full scan
+                const remainingTime = Math.max(0, estimatedTotal - elapsedMinutes);
+                setLoadingMessage(`${taskData.progress} - Elapsed: ${elapsedMinutes}min, Est. remaining: ${remainingTime}min`);
+              } else {
+                setLoadingMessage(`Scanning in progress... (${elapsedMinutes} minutes elapsed)`);
+              }
+
+              // Wait 10 seconds between polls for long scans (reduced frequency)
+              await new Promise(resolve => setTimeout(resolve, 10000));
+            } catch (error) {
+              console.error('Error polling for results:', error);
+
+              // If it's a timeout error and we're still within max time, continue
+              if ((error as any)?.name === 'TimeoutError' && Date.now() - startTime < maxPollingTime) {
+                console.log('Polling request timed out, retrying...');
+                await new Promise(resolve => setTimeout(resolve, 15000)); // Wait longer on timeout
+                continue;
+              }
+
+              // For other errors, wait and retry
+              await new Promise(resolve => setTimeout(resolve, 10000));
+            }
+          }
+
+          throw new Error(`Scan timed out after ${Math.floor(maxPollingTime / 60000)} minutes. The scan may still be running on the server.`);
+        };
+
+        // Get the final results
+        const finalResults = await pollForResults();
+        console.log('Final results:', finalResults);
+
+        // Merge with previous results if they exist
+        const mergedResults = previousApiResults
+          ? mergeApiResults(previousApiResults, finalResults)
+          : finalResults;
+
+        console.log('📝 Setting scan results:', {
+          hasResults: !!mergedResults,
+          resultsLength: mergedResults?.auto_fixes?.length || 0,
+          wasMerged: !!previousApiResults,
+          previousCount: previousApiResults?.auto_fixes?.length || 0,
+          newCount: finalResults?.auto_fixes?.length || 0,
+          mergedCount: mergedResults?.auto_fixes?.length || 0
+        });
+
+        setApiResults(mergedResults);
+        setScanCompleted(true);
+        setHasScanned(true); // Show results immediately
+        setIsScanning(false); // Hide loading indicator
+        setWaitingForLoader(false);
+        setLoadingMessage('');
+
+        console.log('✅ Scan completed! Showing merged results immediately.');
+
+        // Force immediate save (Redis with localStorage fallback)
+        try {
+          const immediateCache = {
+            domain,
+            hasScanned: true,
+            apiResults: mergedResults, // Save merged results
+            scanCompleted: true,
+            aiSummary: '',
+            isScanning: false,
+            loadingMessage: '',
+            timestamp: Date.now(),
+          };
+
+          try {
+            await setCacheData('automation_scan_cache', immediateCache, {
+              prefix: 'app',
+              ttl: 60 * 60 * 1000 // 1 hour TTL
+            });
+            console.log('💾 Force saved completed scan to Redis');
+          } catch (redisError) {
+            console.warn('⚠️ Redis unavailable, saving to localStorage');
+            localStorage.setItem('automation_scan_cache', JSON.stringify(immediateCache));
+            console.log('💾 Force saved completed scan to localStorage');
+          }
+        } catch (saveError) {
+          console.error('Error saving scan data:', saveError);
+        }
+
+        return mergedResults; // Return merged results from promise
+
+      } catch (error) {
+        console.error('Scan failed:', error);
+
+        let errorMessage = 'Unknown error occurred';
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        }
+
+        // Check for common network issues
+        if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+          errorMessage = 'Network error: Unable to connect to the API. Please check your internet connection and try again.';
+        } else if (errorMessage.includes('CORS')) {
+          errorMessage = 'CORS error: The API server may not be configured to accept requests from this domain.';
+        }
+
+        alert(`Scan failed: ${errorMessage}`);
+
+        // Ensure loader closes on error
+        setIsScanning(false);
+        setLoadingMessage('');
+        setWaitingForLoader(false);
+
+        throw error; // Re-throw for promise rejection
       }
-      
-      return finalResults; // Return results from promise
-      
-    } catch (error) {
-      console.error('Scan failed:', error);
-      
-      let errorMessage = 'Unknown error occurred';
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      }
-      
-      // Check for common network issues
-      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
-        errorMessage = 'Network error: Unable to connect to the API. Please check your internet connection and try again.';
-      } else if (errorMessage.includes('CORS')) {
-        errorMessage = 'CORS error: The API server may not be configured to accept requests from this domain.';
-      }
-      
-      alert(`Scan failed: ${errorMessage}`);
-      
-      // Ensure loader closes on error
-      setIsScanning(false);
-      setLoadingMessage('');
-      setWaitingForLoader(false);
-      
-      throw error; // Re-throw for promise rejection
-    }
     })(); // Execute the promise immediately
-    
+
     // Wait for the scan to complete
     try {
       await activeScanPromise;
@@ -1068,7 +1106,7 @@ const AutomationScan: React.FC = () => {
     setLoadingAiSummary(true);
     try {
       console.log('Starting AI summary generation for category:', category.category);
-      
+
       // Collect all issues from the category
       const allIssues = category.subcategories
         .filter((sub: any) => sub.issues && sub.issues.length > 0)
@@ -1145,18 +1183,18 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
   const handleViewDetails = (category: any, event: React.MouseEvent) => {
     console.log('Opening modal for category:', category);
     console.log('Category subcategories:', category.subcategories);
-    
+
     // Get button position relative to viewport
     const buttonRect = (event.target as HTMLElement).getBoundingClientRect();
     const buttonCenterX = buttonRect.left + buttonRect.width / 2;
     const buttonCenterY = buttonRect.top + buttonRect.height / 2;
-    
+
     setButtonPosition({ x: buttonCenterX, y: buttonCenterY });
     setSelectedCategory(category);
     setShowAnalysis(true);
     setAiSummary(''); // Reset AI summary
     setExpandedSubcategories({}); // Reset expanded state
-    
+
     // Don't auto-generate AI summary - user will click button to generate it
   };
 
@@ -1172,7 +1210,7 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
     // Try multiple possible fields for description
     const possibleFields = [
       'description',
-      'message', 
+      'message',
       'details',
       'error_message',
       'reason',
@@ -1181,18 +1219,18 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
       'content',
       'explanation'
     ];
-    
+
     for (const field of possibleFields) {
       if (fix[field] && typeof fix[field] === 'string' && fix[field].trim()) {
         return fix[field].trim();
       }
     }
-    
+
     // If no description found, try to construct one from available data
     if (fix.issue_type) {
       return `${fix.issue_type.replace(/_/g, ' ')} detected${fix.selector ? ` on element: ${fix.selector}` : ''}`;
     }
-    
+
     return 'Issue detected - review element for accessibility compliance';
   };
 
@@ -1202,11 +1240,11 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
     const r = ((rgb >> 16) & 0xff) / 255;
     const g = ((rgb >> 8) & 0xff) / 255;
     const b = ((rgb >> 0) & 0xff) / 255;
-    
-    const [rs, gs, bs] = [r, g, b].map(c => 
+
+    const [rs, gs, bs] = [r, g, b].map(c =>
       c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
     );
-    
+
     return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
   };
 
@@ -1225,26 +1263,26 @@ Use simple language, avoid technical jargon, be encouraging and practical. Focus
     const r = Math.min(255, Math.max(0, ((num >> 16) & 0xff) + percent));
     const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + percent));
     const b = Math.min(255, Math.max(0, ((num >> 0) & 0xff) + percent));
-    return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
   };
 
   // Function to get LLM-based color suggestion - Direct OpenAI API call
   const fetchLLMColorSuggestion = async (issueKey: string, description: string, currentText: string, currentBg: string) => {
     console.log('🚀 Starting LLM color suggestion fetch:', { issueKey, currentText, currentBg });
     setLoadingLLMSuggestions(prev => ({ ...prev, [issueKey]: true }));
-    
+
     try {
       // Get OpenAI API key from environment
       const openaiApiKey = process.env.REACT_APP_OPENAI_API_KEY;
-      
+
       if (!openaiApiKey) {
         console.error('❌ REACT_APP_OPENAI_API_KEY not found in environment');
         throw new Error('OpenAI API key not configured');
       }
-      
+
       console.log('🔑 OpenAI API key exists:', !!openaiApiKey);
       console.log('📤 Sending request to OpenAI GPT-4o...');
-      
+
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -1289,21 +1327,21 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
 
       const data = await response.json();
       console.log('✅ OpenAI raw response:', data);
-      
+
       // Parse the response
       let parsedSuggestion;
       try {
         const content = data.choices[0]?.message?.content;
         console.log('📝 AI content:', content);
-        
+
         if (!content) {
           throw new Error('No content in OpenAI response');
         }
-        
+
         // Parse JSON - OpenAI should return pure JSON with response_format
         parsedSuggestion = JSON.parse(content);
         console.log('✅ Parsed suggestion:', parsedSuggestion);
-        
+
         // Validate required fields
         if (!parsedSuggestion.textColor || !parsedSuggestion.bgColor) {
           console.error('❌ Invalid JSON structure:', parsedSuggestion);
@@ -1312,10 +1350,10 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
       } catch (parseError) {
         console.error('❌ Failed to parse OpenAI response:', parseError);
         console.error('Raw content:', data.choices[0]?.message?.content);
-        
+
         // Fallback to black on white
         const bgLuminance = getRelativeLuminance(currentBg);
-        const fallbackSuggestion = bgLuminance > 0.5 
+        const fallbackSuggestion = bgLuminance > 0.5
           ? { textColor: '#000000', bgColor: '#FFFFFF', reasoning: 'Fallback: AI response could not be parsed' }
           : { textColor: '#FFFFFF', bgColor: '#000000', reasoning: 'Fallback: AI response could not be parsed' };
         parsedSuggestion = fallbackSuggestion;
@@ -1324,25 +1362,25 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
 
       // Calculate the actual contrast ratio
       const actualContrast = calculateContrastRatio(parsedSuggestion.textColor, parsedSuggestion.bgColor);
-      
+
       const suggestion = {
         id: 1,
         name: parsedSuggestion.reasoning?.includes('Fallback') ? 'High contrast fallback' : 'AI-suggested color adjustment',
         textColor: parsedSuggestion.textColor,
         bgColor: parsedSuggestion.bgColor,
-        contrast: actualContrast.toFixed(2) + ':1',
+        contrast: `${actualContrast.toFixed(2)}:1`,
         css: `color: ${parsedSuggestion.textColor}; background-color: ${parsedSuggestion.bgColor};`,
         reasoning: parsedSuggestion.reasoning,
         isLLM: !parsedSuggestion.reasoning?.includes('Fallback'),
       };
-      
+
       console.log('💾 Saving suggestion to state:', suggestion);
-      
+
       setLlmSuggestions(prev => ({
         ...prev,
         [issueKey]: suggestion
       }));
-      
+
       return suggestion;
     } catch (error: any) {
       console.error('❌ Error fetching LLM suggestion:', error);
@@ -1350,7 +1388,7 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
         message: error.message,
         stack: error.stack
       });
-      
+
       // Fallback to black on white
       const bgLuminance = getRelativeLuminance(currentBg);
       const fallbackSuggestion = {
@@ -1359,20 +1397,20 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
         textColor: bgLuminance > 0.5 ? '#000000' : '#FFFFFF',
         bgColor: bgLuminance > 0.5 ? '#FFFFFF' : '#000000',
         contrast: '21:1',
-        css: bgLuminance > 0.5 
-          ? 'color: #000000; background-color: #FFFFFF;' 
+        css: bgLuminance > 0.5
+          ? 'color: #000000; background-color: #FFFFFF;'
           : 'color: #FFFFFF; background-color: #000000;',
         reasoning: `AI Error: ${error.message}`,
         isLLM: false,
       };
-      
+
       console.log('⚠️ Using network error fallback:', fallbackSuggestion);
-      
+
       setLlmSuggestions(prev => ({
         ...prev,
         [issueKey]: fallbackSuggestion
       }));
-      
+
       return fallbackSuggestion;
     } finally {
       setLoadingLLMSuggestions(prev => ({ ...prev, [issueKey]: false }));
@@ -1385,24 +1423,24 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
     // Extract current colors from various sources
     let currentTextColor = '#3B82F6'; // Default blue from screenshot
     let currentBgColor = '#FFFFFF';
-    
+
     // Try to extract colors from description
     const description = getIssueDescription(issue);
     console.log('Contrast issue description:', description);
-    
+
     // Try to extract colors from attributes or description
     if (issue.attributes) {
       currentTextColor = issue.attributes.foreground || issue.attributes.fgColor || issue.attributes.textColor || currentTextColor;
       currentBgColor = issue.attributes.background || issue.attributes.bgColor || issue.attributes.backgroundColor || currentBgColor;
     }
-    
+
     // Try extracting from description text patterns
     const colorPatterns = [
       /foreground[:\s]+([#a-fA-F0-9]{3,8})/i,
       /text[:\s]+([#a-fA-F0-9]{3,8})/i,
       /color[:\s]+([#a-fA-F0-9]{3,8})/i,
     ];
-    
+
     const bgPatterns = [
       /background[:\s]+([#a-fA-F0-9]{3,8})/i,
       /bg[:\s]+([#a-fA-F0-9]{3,8})/i,
@@ -1426,9 +1464,9 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
 
     // Ensure colors are valid hex
     const normalizeColor = (color: string): string => {
-      if (!color.startsWith('#')) color = '#' + color;
+      if (!color.startsWith('#')) color = `#${color}`;
       if (color.length === 4) {
-        color = '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+        color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
       }
       return color.toLowerCase();
     };
@@ -1441,24 +1479,85 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
     return {
       textColor: currentTextColor,
       bgColor: currentBgColor,
-      description: description
+      description
     };
   };
 
   // Function to parse API results and convert to card format
+  // Function to merge multiple API results
+  const mergeApiResults = (previousResults: any, newResults: any) => {
+    if (!previousResults) return newResults;
+    if (!newResults) return previousResults;
+
+    // Extract actual results from both
+    const prevActual = previousResults.result || previousResults;
+    const newActual = newResults.result || newResults;
+
+    // Merge auto_fixes arrays, removing duplicates based on unique key
+    const prevFixes = prevActual.auto_fixes || [];
+    const newFixes = newActual.auto_fixes || [];
+
+    // Create a map to track unique fixes by their key attributes
+    const fixesMap = new Map();
+
+    // Add previous fixes
+    prevFixes.forEach((fix: any) => {
+      const key = `${fix.category}_${fix.issue_type}_${fix.selector}_${fix.description}`;
+      if (!fixesMap.has(key)) {
+        fixesMap.set(key, fix);
+      }
+    });
+
+    // Add new fixes (will override if same key exists, ensuring latest data)
+    newFixes.forEach((fix: any) => {
+      const key = `${fix.category}_${fix.issue_type}_${fix.selector}_${fix.description}`;
+      if (!fixesMap.has(key)) {
+        fixesMap.set(key, fix);
+      } else {
+        // Merge: if same issue exists, keep both test results
+        const existing = fixesMap.get(key);
+        // Combine any test-specific data if needed
+        fixesMap.set(key, { ...existing, ...fix });
+      }
+    });
+
+    // Convert back to array
+    const mergedFixes = Array.from(fixesMap.values());
+
+    // Merge summary data
+    const mergedSummary = {
+      ...prevActual.summary,
+      ...newActual.summary,
+      tests_run: {
+        ...(prevActual.summary?.tests_run || {}),
+        ...(newActual.summary?.tests_run || {})
+      }
+    };
+
+    // Return merged result
+    return {
+      ...newActual,
+      auto_fixes: mergedFixes,
+      summary: mergedSummary,
+      merged: true, // Flag to indicate this is a merged result
+      merge_timestamp: Date.now()
+    };
+  };
+
   const parseApiResults = (apiData: any) => {
     // Handle polling response format
     const actualResults = apiData.result || apiData;
-    
+
     console.log('Processing API results:', actualResults);
     console.log('Auto fixes found:', actualResults?.auto_fixes?.length || 0);
+    console.log('Is merged result:', actualResults?.merged || false);
     console.log('Summary:', actualResults?.summary);
-    
+
     if (!actualResults) return [];
 
     const autoFixes = actualResults.auto_fixes || [];
-    const summary = actualResults.summary;
-    
+    const { summary } = actualResults;
+
     // Group fixes by category
     const categoryMap: { [key: string]: any } = {};
 
@@ -1485,11 +1584,11 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
       console.log('Processing fix object:', fix); // Debug: see the actual structure
       const category = fix.category || 'other';
       const issueType = fix.issue_type || 'unknown';
-      
-      const categoryInfo = categoryConfig[category] || { 
-        name: category.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()), 
-        icon: FaBrain, 
-        color: 'gray' 
+
+      const categoryInfo = categoryConfig[category] || {
+        name: category.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+        icon: FaBrain,
+        color: 'gray'
       };
 
       // If this category wasn't in our tested list, add it
@@ -1608,8 +1707,8 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
     // Convert to array format expected by the UI
     const categories = Object.values(categoryMap).map((category: any) => ({
       ...category,
-      subcategories: Array.isArray(category.subcategories) 
-        ? category.subcategories 
+      subcategories: Array.isArray(category.subcategories)
+        ? category.subcategories
         : Object.values(category.subcategories)
     }));
 
@@ -1618,16 +1717,16 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
 
   // Use API results if available, otherwise fall back to mock data
   const issuesData = apiResults ? parseApiResults(apiResults) : mockIssuesData;
-  
+
   const filteredIssues = issuesData.filter((category: any) =>
     category.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    category.subcategories.some((sub: any) => 
+    category.subcategories.some((sub: any) =>
       sub.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
 
   return (
-    <div 
+    <div
       className="min-h-screen"
       style={{
         background: 'linear-gradient(124.44deg, #E9F2FF 5.14%, #DFE1F9 94.18%)'
@@ -1668,6 +1767,14 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
             >
               {isScanning ? (loadingMessage || 'Scanning...') : 'Free Scan'}
             </button>
+            {hasScanned && !isScanning && (
+              <button
+                onClick={handleClearResults}
+                className="px-6 py-3 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200 text-sm whitespace-nowrap cursor-pointer"
+              >
+                Clear Results
+              </button>
+            )}
           </div>
 
           {/* Advanced Options Section */}
@@ -1682,8 +1789,8 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-gray-700">Customize Test Selection</span>
                 <span className="text-xs text-gray-500">
-                  {useCustomTests 
-                    ? `Custom selection (${Object.values(selectedTests).filter(Boolean).length} tests)` 
+                  {useCustomTests
+                    ? `Custom selection (${Object.values(selectedTests).filter(Boolean).length} tests)`
                     : 'All tests enabled by default (57 tests)'
                   }
                 </span>
@@ -1703,7 +1810,7 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
                   <p className="text-sm text-gray-600 mb-4">
                     Select which accessibility tests to run. More tests provide comprehensive analysis but take longer to complete.
                   </p>
-                  
+
                   {/* Quick Actions */}
                   <div className="flex flex-wrap gap-2 mb-6">
                     <button
@@ -1723,7 +1830,7 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
 
                 {/* Test Categories */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  
+
                   {/* Basic Configuration */}
                   <div className="space-y-3">
                     <h4 className="font-semibold text-gray-800 text-sm border-b border-gray-300 pb-1">
@@ -1739,7 +1846,7 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
                       <span className="text-sm text-gray-700">Automated Checks</span>
                     </label>
                   </div>
-                  
+
                   {/* Navigation & Interaction */}
                   <div className="space-y-3">
                     <h4 className="font-semibold text-gray-800 text-sm border-b border-gray-300 pb-1">
@@ -1931,7 +2038,7 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
         {/* Feature Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {/* Comprehensive Analysis */}
-          <div 
+          <div
             className="rounded-lg p-6 text-white relative overflow-hidden"
             style={{
               background: 'linear-gradient(99.22deg, #1A4F69 -1.44%, #164861 50.95%, #2779A0 103.34%)'
@@ -1941,9 +2048,9 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
                   <svg width="24" height="24" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9.75 26.25L9.75 21.75M17.25 26.25L17.25 12.75M24.75 26.25V20.25" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                    <path d="M32.25 8.25C32.25 10.7353 30.2353 12.75 27.75 12.75C25.2647 12.75 23.25 10.7353 23.25 8.25C23.25 5.76472 25.2647 3.75 27.75 3.75C30.2353 3.75 32.25 5.76472 32.25 8.25Z" stroke="white" strokeWidth="2"/>
-                    <path d="M32.2433 16.5C32.2433 16.5 32.25 17.0093 32.25 18C32.25 24.7176 32.25 28.0763 30.1631 30.1632C28.0763 32.25 24.7175 32.25 18 32.25C11.2825 32.25 7.92373 32.25 5.83686 30.1632C3.75 28.0763 3.75 24.7176 3.75 18C3.75 11.2825 3.75 7.92377 5.83686 5.83691C7.92373 3.75005 11.2825 3.75005 18 3.75005L19.5 3.75" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M9.75 26.25L9.75 21.75M17.25 26.25L17.25 12.75M24.75 26.25V20.25" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M32.25 8.25C32.25 10.7353 30.2353 12.75 27.75 12.75C25.2647 12.75 23.25 10.7353 23.25 8.25C23.25 5.76472 25.2647 3.75 27.75 3.75C30.2353 3.75 32.25 5.76472 32.25 8.25Z" stroke="white" strokeWidth="2" />
+                    <path d="M32.2433 16.5C32.2433 16.5 32.25 17.0093 32.25 18C32.25 24.7176 32.25 28.0763 30.1631 30.1632C28.0763 32.25 24.7175 32.25 18 32.25C11.2825 32.25 7.92373 32.25 5.83686 30.1632C3.75 28.0763 3.75 24.7176 3.75 18C3.75 11.2825 3.75 7.92377 5.83686 5.83691C7.92373 3.75005 11.2825 3.75005 18 3.75005L19.5 3.75" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
               </div>
@@ -1957,7 +2064,7 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
           </div>
 
           {/* Detailed Reports */}
-          <div 
+          <div
             className="rounded-lg p-6 text-white relative overflow-hidden"
             style={{
               background: 'linear-gradient(99.22deg, #1A4F69 -1.44%, #164861 50.95%, #2779A0 103.34%)'
@@ -1967,10 +2074,10 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
                   <svg width="32" height="32" viewBox="0 0 53 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M13.917 23C13.917 17.3431 13.917 14.5147 15.7842 12.7574C17.6514 11 20.6566 11 26.667 11H27.8261C32.7179 11 35.1638 11 36.8624 12.1968C37.3491 12.5396 37.7811 12.9463 38.1454 13.4043C39.417 15.003 39.417 17.305 39.417 21.9091V25.7273C39.417 30.172 39.417 32.3944 38.7136 34.1694C37.5828 37.0229 35.1913 39.2737 32.1595 40.338C30.2736 41 27.9123 41 23.1897 41C20.4911 41 19.1418 41 18.0642 40.6217C16.3317 40.0135 14.9651 38.7274 14.3189 37.0968C13.917 36.0825 13.917 34.8126 13.917 32.2727V23Z" stroke="white" strokeWidth="2" strokeLinejoin="round"/>
-                    <path d="M39.417 26C39.417 28.7614 37.1784 31 34.417 31C33.4183 31 32.2409 30.825 31.2699 31.0852C30.4072 31.3164 29.7333 31.9902 29.5022 32.853C29.242 33.8239 29.417 35.0013 29.417 36C29.417 38.7614 27.1784 41 24.417 41" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M20.667 18.5H31.167" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M20.667 24.5H25.167" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M13.917 23C13.917 17.3431 13.917 14.5147 15.7842 12.7574C17.6514 11 20.6566 11 26.667 11H27.8261C32.7179 11 35.1638 11 36.8624 12.1968C37.3491 12.5396 37.7811 12.9463 38.1454 13.4043C39.417 15.003 39.417 17.305 39.417 21.9091V25.7273C39.417 30.172 39.417 32.3944 38.7136 34.1694C37.5828 37.0229 35.1913 39.2737 32.1595 40.338C30.2736 41 27.9123 41 23.1897 41C20.4911 41 19.1418 41 18.0642 40.6217C16.3317 40.0135 14.9651 38.7274 14.3189 37.0968C13.917 36.0825 13.917 34.8126 13.917 32.2727V23Z" stroke="white" strokeWidth="2" strokeLinejoin="round" />
+                    <path d="M39.417 26C39.417 28.7614 37.1784 31 34.417 31C33.4183 31 32.2409 30.825 31.2699 31.0852C30.4072 31.3164 29.7333 31.9902 29.5022 32.853C29.242 33.8239 29.417 35.0013 29.417 36C29.417 38.7614 27.1784 41 24.417 41" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M20.667 18.5H31.167" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M20.667 24.5H25.167" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
               </div>
@@ -1984,7 +2091,7 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
           </div>
 
           {/* Improve User Experience */}
-          <div 
+          <div
             className="rounded-lg p-6 text-white relative overflow-hidden"
             style={{
               background: 'linear-gradient(99.22deg, #1A4F69 -1.44%, #164861 50.95%, #2779A0 103.34%)'
@@ -1994,8 +2101,8 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
                   <svg width="32" height="32" viewBox="0 0 53 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="9.33301" y="9" width="34" height="34" rx="17" stroke="white" strokeWidth="2"/>
-                    <path d="M26.3333 17.5479C25.5508 17.5479 24.8811 17.2722 24.3244 16.721C23.7676 16.1697 23.4887 15.5062 23.4878 14.7305C23.4868 13.9548 23.7657 13.2917 24.3244 12.7414C24.883 12.1911 25.5527 11.915 26.3333 11.9131C27.1139 11.9112 27.784 12.1873 28.3436 12.7414C28.9032 13.2955 29.1816 13.9585 29.1787 14.7305C29.1759 15.5025 28.8975 16.1659 28.3436 16.721C27.7897 17.276 27.1196 17.5516 26.3333 17.5479ZM23.4129 40.087C22.6685 40.087 22.065 39.4863 22.065 38.7454V23.009C22.065 22.311 21.5272 21.7313 20.8298 21.6579C19.8071 21.5503 18.7724 21.4129 17.7257 21.2457C16.7235 21.0857 15.7544 20.8983 14.8183 20.6837C14.1001 20.5191 13.6729 19.7938 13.8525 19.0824L13.9063 18.8693C14.0897 18.1428 14.8348 17.7089 15.5688 17.8743C17.0247 18.2025 18.5499 18.4519 20.1443 18.6227C22.231 18.8462 24.294 18.9575 26.3333 18.9566C28.3725 18.9556 30.4355 18.8439 32.5222 18.6213C34.1166 18.4512 35.6418 18.2022 37.0977 17.8743C37.8317 17.7089 38.5768 18.1428 38.7602 18.8693L38.814 19.0824C38.9937 19.7938 38.5664 20.5191 37.8482 20.6837C36.9122 20.8983 35.943 21.0857 34.9409 21.2457C33.8941 21.4129 32.8594 21.5503 31.8367 21.6579C31.1394 21.7313 30.6015 22.311 30.6015 23.009V38.7454C30.6015 39.4863 29.998 40.087 29.2536 40.087H29.1039C28.3595 40.087 27.756 39.4863 27.756 38.7454V32.9764C27.756 32.2355 27.1525 31.6348 26.4081 31.6348H26.2584C25.514 31.6348 24.9105 32.2355 24.9105 32.9764V38.7454C24.9105 39.4863 24.3071 40.087 23.5627 40.087H23.4129Z" fill="white"/>
+                    <rect x="9.33301" y="9" width="34" height="34" rx="17" stroke="white" strokeWidth="2" />
+                    <path d="M26.3333 17.5479C25.5508 17.5479 24.8811 17.2722 24.3244 16.721C23.7676 16.1697 23.4887 15.5062 23.4878 14.7305C23.4868 13.9548 23.7657 13.2917 24.3244 12.7414C24.883 12.1911 25.5527 11.915 26.3333 11.9131C27.1139 11.9112 27.784 12.1873 28.3436 12.7414C28.9032 13.2955 29.1816 13.9585 29.1787 14.7305C29.1759 15.5025 28.8975 16.1659 28.3436 16.721C27.7897 17.276 27.1196 17.5516 26.3333 17.5479ZM23.4129 40.087C22.6685 40.087 22.065 39.4863 22.065 38.7454V23.009C22.065 22.311 21.5272 21.7313 20.8298 21.6579C19.8071 21.5503 18.7724 21.4129 17.7257 21.2457C16.7235 21.0857 15.7544 20.8983 14.8183 20.6837C14.1001 20.5191 13.6729 19.7938 13.8525 19.0824L13.9063 18.8693C14.0897 18.1428 14.8348 17.7089 15.5688 17.8743C17.0247 18.2025 18.5499 18.4519 20.1443 18.6227C22.231 18.8462 24.294 18.9575 26.3333 18.9566C28.3725 18.9556 30.4355 18.8439 32.5222 18.6213C34.1166 18.4512 35.6418 18.2022 37.0977 17.8743C37.8317 17.7089 38.5768 18.1428 38.7602 18.8693L38.814 19.0824C38.9937 19.7938 38.5664 20.5191 37.8482 20.6837C36.9122 20.8983 35.943 21.0857 34.9409 21.2457C33.8941 21.4129 32.8594 21.5503 31.8367 21.6579C31.1394 21.7313 30.6015 22.311 30.6015 23.009V38.7454C30.6015 39.4863 29.998 40.087 29.2536 40.087H29.1039C28.3595 40.087 27.756 39.4863 27.756 38.7454V32.9764C27.756 32.2355 27.1525 31.6348 26.4081 31.6348H26.2584C25.514 31.6348 24.9105 32.2355 24.9105 32.9764V38.7454C24.9105 39.4863 24.3071 40.087 23.5627 40.087H23.4129Z" fill="white" />
                   </svg>
                 </div>
               </div>
@@ -2030,8 +2137,8 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
           {/* Issue Cards or Empty State */}
           {hasScanned ? (
             <AnimatePresence exitBeforeEnter={false}>
-              <motion.div 
-                key={scanKey} 
+              <motion.div
+                key={scanKey}
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -2053,39 +2160,39 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
             <div className="text-center py-16">
               <div className="mx-auto mb-6 flex justify-center">
                 <svg width="130" height="182" viewBox="0 0 130 182" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="0.5" y="1" width="129" height="179" rx="7.5" fill="#F9FBFB" stroke="#A5BACC"/>
-                  <rect x="16" y="12.5" width="98" height="28" rx="4" fill="#559EC1"/>
-                  <rect x="24" y="23.5" width="40" height="6" rx="3" fill="white"/>
-                  <rect x="16.5" y="53" width="42" height="31" rx="3.5" fill="#F9FBFB" stroke="#A5BACC"/>
-                  <rect x="16.5" y="95" width="42" height="31" rx="3.5" fill="#F9FBFB" stroke="#A5BACC"/>
-                  <rect x="16.5" y="137" width="42" height="31" rx="3.5" fill="#F9FBFB" stroke="#A5BACC"/>
-                  <rect x="71.5" y="53" width="42" height="31" rx="3.5" fill="#F9FBFB" stroke="#A5BACC"/>
-                  <rect x="71.5" y="95" width="42" height="31" rx="3.5" fill="#F9FBFB" stroke="#A5BACC"/>
-                  <rect x="25.5" y="65.5" width="24" height="6" rx="3" fill="#C7D0D3"/>
-                  <rect x="25.5" y="107.5" width="24" height="6" rx="3" fill="#C7D0D3"/>
-                  <rect x="25.5" y="149.5" width="24" height="6" rx="3" fill="#C7D0D3"/>
-                  <rect x="80.5" y="65.5" width="24" height="6" rx="3" fill="#C7D0D3"/>
-                  <rect x="80.5" y="107.5" width="24" height="6" rx="3" fill="#C7D0D3"/>
+                  <rect x="0.5" y="1" width="129" height="179" rx="7.5" fill="#F9FBFB" stroke="#A5BACC" />
+                  <rect x="16" y="12.5" width="98" height="28" rx="4" fill="#559EC1" />
+                  <rect x="24" y="23.5" width="40" height="6" rx="3" fill="white" />
+                  <rect x="16.5" y="53" width="42" height="31" rx="3.5" fill="#F9FBFB" stroke="#A5BACC" />
+                  <rect x="16.5" y="95" width="42" height="31" rx="3.5" fill="#F9FBFB" stroke="#A5BACC" />
+                  <rect x="16.5" y="137" width="42" height="31" rx="3.5" fill="#F9FBFB" stroke="#A5BACC" />
+                  <rect x="71.5" y="53" width="42" height="31" rx="3.5" fill="#F9FBFB" stroke="#A5BACC" />
+                  <rect x="71.5" y="95" width="42" height="31" rx="3.5" fill="#F9FBFB" stroke="#A5BACC" />
+                  <rect x="25.5" y="65.5" width="24" height="6" rx="3" fill="#C7D0D3" />
+                  <rect x="25.5" y="107.5" width="24" height="6" rx="3" fill="#C7D0D3" />
+                  <rect x="25.5" y="149.5" width="24" height="6" rx="3" fill="#C7D0D3" />
+                  <rect x="80.5" y="65.5" width="24" height="6" rx="3" fill="#C7D0D3" />
+                  <rect x="80.5" y="107.5" width="24" height="6" rx="3" fill="#C7D0D3" />
                   <g filter="url(#filter0_d_4084_5597)">
                     <g clipPath="url(#clip0_4084_5597)">
-                      <rect x="68.5" y="130.5" width="43" height="43" rx="21.5" fill="#559EC1"/>
-                      <path d="M90 145.25C89.3751 145.25 88.8403 145.03 88.3957 144.59C87.951 144.149 87.7283 143.62 87.7276 143C87.7268 142.381 87.9495 141.851 88.3957 141.412C88.8418 140.972 89.3766 140.752 90 140.75C90.6234 140.749 91.1586 140.969 91.6055 141.412C92.0524 141.854 92.2747 142.384 92.2724 143C92.2702 143.617 92.0478 144.146 91.6055 144.59C91.1631 145.033 90.6279 145.253 90 145.25ZM87.6678 163.25C87.0733 163.25 86.5913 162.77 86.5913 162.179V149.611C86.5913 149.054 86.1618 148.591 85.6049 148.532C84.7881 148.446 83.9618 148.337 83.1259 148.203C82.3255 148.075 81.5516 147.926 80.804 147.754C80.2305 147.623 79.8893 147.044 80.0327 146.476L80.0757 146.305C80.2222 145.725 80.8172 145.379 81.4034 145.511C82.5661 145.773 83.7841 145.972 85.0575 146.108C86.7239 146.287 88.3714 146.376 90 146.375C91.6286 146.374 93.2761 146.285 94.9425 146.107C96.2159 145.971 97.4339 145.773 98.5966 145.511C99.1828 145.379 99.7778 145.725 99.9243 146.305L99.9673 146.476C100.111 147.044 99.7695 147.623 99.196 147.754C98.4484 147.926 97.6745 148.075 96.8741 148.203C96.0382 148.337 95.2119 148.446 94.3951 148.532C93.8382 148.591 93.4087 149.054 93.4087 149.611V162.179C93.4087 162.77 92.9267 163.25 92.3322 163.25H92.2126C91.6181 163.25 91.1362 162.77 91.1362 162.179V157.571C91.1362 156.98 90.6543 156.5 90.0598 156.5H89.9402C89.3457 156.5 88.8638 156.98 88.8638 157.571V162.179C88.8638 162.77 88.3819 163.25 87.7874 163.25H87.6678Z" fill="white"/>
-                      <circle cx="89" cy="151" r="30" stroke="#F9FBFB"/>
+                      <rect x="68.5" y="130.5" width="43" height="43" rx="21.5" fill="#559EC1" />
+                      <path d="M90 145.25C89.3751 145.25 88.8403 145.03 88.3957 144.59C87.951 144.149 87.7283 143.62 87.7276 143C87.7268 142.381 87.9495 141.851 88.3957 141.412C88.8418 140.972 89.3766 140.752 90 140.75C90.6234 140.749 91.1586 140.969 91.6055 141.412C92.0524 141.854 92.2747 142.384 92.2724 143C92.2702 143.617 92.0478 144.146 91.6055 144.59C91.1631 145.033 90.6279 145.253 90 145.25ZM87.6678 163.25C87.0733 163.25 86.5913 162.77 86.5913 162.179V149.611C86.5913 149.054 86.1618 148.591 85.6049 148.532C84.7881 148.446 83.9618 148.337 83.1259 148.203C82.3255 148.075 81.5516 147.926 80.804 147.754C80.2305 147.623 79.8893 147.044 80.0327 146.476L80.0757 146.305C80.2222 145.725 80.8172 145.379 81.4034 145.511C82.5661 145.773 83.7841 145.972 85.0575 146.108C86.7239 146.287 88.3714 146.376 90 146.375C91.6286 146.374 93.2761 146.285 94.9425 146.107C96.2159 145.971 97.4339 145.773 98.5966 145.511C99.1828 145.379 99.7778 145.725 99.9243 146.305L99.9673 146.476C100.111 147.044 99.7695 147.623 99.196 147.754C98.4484 147.926 97.6745 148.075 96.8741 148.203C96.0382 148.337 95.2119 148.446 94.3951 148.532C93.8382 148.591 93.4087 149.054 93.4087 149.611V162.179C93.4087 162.77 92.9267 163.25 92.3322 163.25H92.2126C91.6181 163.25 91.1362 162.77 91.1362 162.179V157.571C91.1362 156.98 90.6543 156.5 90.0598 156.5H89.9402C89.3457 156.5 88.8638 156.98 88.8638 157.571V162.179C88.8638 162.77 88.3819 163.25 87.7874 163.25H87.6678Z" fill="white" />
+                      <circle cx="89" cy="151" r="30" stroke="#F9FBFB" />
                     </g>
                   </g>
                   <defs>
                     <filter id="filter0_d_4084_5597" x="64.5" y="130.5" width="51" height="51" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-                      <feFlood floodOpacity="0" result="BackgroundImageFix"/>
-                      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-                      <feOffset dy="4"/>
-                      <feGaussianBlur stdDeviation="2"/>
-                      <feComposite in2="hardAlpha" operator="out"/>
-                      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0"/>
-                      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_4084_5597"/>
-                      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_4084_5597" result="shape"/>
+                      <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+                      <feOffset dy="4" />
+                      <feGaussianBlur stdDeviation="2" />
+                      <feComposite in2="hardAlpha" operator="out" />
+                      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0" />
+                      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_4084_5597" />
+                      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_4084_5597" result="shape" />
                     </filter>
                     <clipPath id="clip0_4084_5597">
-                      <rect x="68.5" y="130.5" width="43" height="43" rx="21.5" fill="white"/>
+                      <rect x="68.5" y="130.5" width="43" height="43" rx="21.5" fill="white" />
                     </clipPath>
                   </defs>
                 </svg>
@@ -2098,34 +2205,34 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
         {/* Analysis Modal */}
         <AnimatePresence>
           {showAnalysis && selectedCategory && (
-            <motion.div 
+            <motion.div
               className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <motion.div 
+              <motion.div
                 className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
-                initial={{ 
+                initial={{
                   scale: 0,
                   opacity: 0,
                   x: buttonPosition.x - window.innerWidth / 2,
                   y: buttonPosition.y - window.innerHeight / 2,
                 }}
-                animate={{ 
+                animate={{
                   scale: 1,
                   opacity: 1,
                   x: 0,
                   y: 0,
                 }}
-                exit={{ 
+                exit={{
                   scale: 0,
                   opacity: 0,
                   x: buttonPosition.x - window.innerWidth / 2,
                   y: buttonPosition.y - window.innerHeight / 2,
                 }}
-                transition={{ 
+                transition={{
                   type: "spring",
                   damping: 25,
                   stiffness: 300,
@@ -2147,431 +2254,431 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
 
                 {/* Scrollable Content */}
                 <div className="p-6 overflow-y-auto flex-1">
-                <div className="space-y-4">
-                  {selectedCategory.subcategories.map((subcategory: any) => {
-                    const isExpanded = expandedSubcategories[subcategory.id];
-                    
-                    return (
-                    <div key={subcategory.id} className="border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm">
-                      {/* Subcategory Header - Clickable */}
-                      <div 
-                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => toggleSubcategory(subcategory.id)}
-                      >
-                        <div className="flex items-center space-x-3 flex-1">
-                          <div className="text-gray-600 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                            <MdExpandMore className="w-6 h-6" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900 text-base">
-                              {subcategory.name}
-                            </h4>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          {subcategory.total_fixes > 0 ? (
-                            <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-red-100 text-red-800">
-                              {subcategory.total_fixes} issue{subcategory.total_fixes !== 1 ? 's' : ''}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-green-100 text-green-800">
-                              ✓ Pass
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                  <div className="space-y-4">
+                    {selectedCategory.subcategories.map((subcategory: any) => {
+                      const isExpanded = expandedSubcategories[subcategory.id];
 
-                      {/* Expanded Content */}
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="border-t border-gray-200"
+                      return (
+                        <div key={subcategory.id} className="border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm">
+                          {/* Subcategory Header - Clickable */}
+                          <div
+                            className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                            onClick={() => toggleSubcategory(subcategory.id)}
                           >
-                            <div className="p-4 bg-orange-50">
-                              {/* Subcategory Details Header */}
-                              <div className="mb-4 pb-3 border-b border-orange-200">
-                                <div className="flex items-center justify-between">
-                                  <div className="space-y-1">
-                                    <p className="text-sm font-medium text-gray-700">
-                                      <span className="inline-block px-2 py-1 bg-white rounded border border-gray-300 text-xs font-mono text-gray-900">
-                                        {subcategory.id}
-                                      </span>
-                                    </p>
-                                  </div>
-                                  {subcategory.issues && subcategory.issues.length > 0 && subcategory.issues[0].wcag_criterion && (
-                                    <div className="text-right">
-                                      <p className="text-xs text-gray-600 mb-1">WCAG Guideline</p>
-                                      <span className="inline-block px-3 py-1 bg-blue-100 rounded border border-blue-300 text-sm font-semibold text-blue-800">
-                                        {subcategory.issues[0].wcag_criterion}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
+                            <div className="flex items-center space-x-3 flex-1">
+                              <div className="text-gray-600 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                                <MdExpandMore className="w-6 h-6" />
                               </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900 text-base">
+                                  {subcategory.name}
+                                </h4>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              {subcategory.total_fixes > 0 ? (
+                                <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-red-100 text-red-800">
+                                  {subcategory.total_fixes} issue{subcategory.total_fixes !== 1 ? 's' : ''}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-green-100 text-green-800">
+                                  ✓ Pass
+                                </span>
+                              )}
+                            </div>
+                          </div>
 
-                      {subcategory.issues && subcategory.issues.length > 0 ? (
-                        <div className="space-y-3">
-                          {subcategory.issues.map((fix: any, index: number) => {
-                            const isContrastIssue = fix.category === 'contrast' || fix.issue_type?.includes('contrast');
-                            const hasScreenshot = fix.screenshot_base64 && fix.screenshot_status === 'success';
-                            const issueKey = `${fix.selector || 'unknown'}_${index}`;
-                            const hasSuggestion = llmSuggestions[issueKey];
-                            const isLoadingSuggestion = loadingLLMSuggestions[issueKey];
-
-                            return (
-                              <div key={index} className="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
-                                {/* Issue Header */}
-                                <div className="bg-red-50 px-4 py-3 border-b border-red-200">
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex items-start space-x-3 flex-1">
-                                      <MdBugReport className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                                      <div className="flex-1">
-                                        <p className="font-semibold text-gray-900 text-sm">
-                                          {fix.issue_type || 'Unknown Issue'}
+                          {/* Expanded Content */}
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="border-t border-gray-200"
+                              >
+                                <div className="p-4 bg-orange-50">
+                                  {/* Subcategory Details Header */}
+                                  <div className="mb-4 pb-3 border-b border-orange-200">
+                                    <div className="flex items-center justify-between">
+                                      <div className="space-y-1">
+                                        <p className="text-sm font-medium text-gray-700">
+                                          <span className="inline-block px-2 py-1 bg-white rounded border border-gray-300 text-xs font-mono text-gray-900">
+                                            {subcategory.id}
+                                          </span>
                                         </p>
-                                        {fix.wcag_criterion && (
-                                          <p className="text-xs text-gray-600 mt-1">
-                                            <span className="font-medium">WCAG:</span> {fix.wcag_criterion}
-                                          </p>
-                                        )}
                                       </div>
-                                    </div>
-                                    {fix.action && (
-                                      <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded border border-yellow-300">
-                                        {fix.action}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                                
-                                {/* Issue Body */}
-                                <div className="p-4">
-                                  <p className="text-sm text-gray-700 leading-relaxed">
-                                    {getIssueDescription(fix)}
-                                  </p>
-
-                                    {/* Screenshot */}
-                                    {hasScreenshot && (
-                                      <div className="mt-3 border border-gray-300 rounded-lg p-2 bg-gray-50">
-                                        <p className="text-xs font-medium text-gray-700 mb-2">Element Screenshot:</p>
-                                        <img
-                                          src={`data:image/png;base64,${fix.screenshot_base64}`}
-                                          alt="Element screenshot"
-                                          className="rounded border border-gray-200 max-w-full h-auto"
-                                          style={{ maxHeight: '200px' }}
-                                        />
-                                      </div>
-                                    )}
-
-                                    {/* AI Color Suggestions for Contrast Issues */}
-                                    {isContrastIssue && (
-                                      <div className="mt-4 border-t border-gray-200 pt-4">
-                                        <div className="flex items-center justify-between mb-3">
-                                          <div className="flex items-center space-x-2">
-                                            <FaBrain className="w-4 h-4 text-purple-600" />
-                                            <h5 className="text-sm font-semibold text-gray-900">AI Color Suggestion</h5>
-                                          </div>
-                                          {!hasSuggestion && !isLoadingSuggestion && (
-                                            <button
-                                              onClick={() => {
-                                                console.log('🔘 Generate AI Fix button clicked');
-                                                const colors = extractColorsFromIssue(fix);
-                                                console.log('🎨 Extracted colors:', colors);
-                                                fetchLLMColorSuggestion(issueKey, colors.description, colors.textColor, colors.bgColor);
-                                              }}
-                                              className="px-4 py-2 text-sm font-bold rounded-lg transition-all shadow-lg flex items-center space-x-2 border-2"
-                                              style={{ 
-                                                background: 'linear-gradient(to right, #9333EA, #3B82F6)',
-                                                color: '#FFFFFF',
-                                                borderColor: '#A855F7'
-                                              }}
-                                              onMouseEnter={(e) => {
-                                                e.currentTarget.style.background = 'linear-gradient(to right, #7E22CE, #2563EB)';
-                                              }}
-                                              onMouseLeave={(e) => {
-                                                e.currentTarget.style.background = 'linear-gradient(to right, #9333EA, #3B82F6)';
-                                              }}
-                                            >
-                                              <FaBrain className="w-4 h-4" style={{ color: '#FFFFFF' }} />
-                                              <span style={{ color: '#FFFFFF' }}>Generate AI Fix</span>
-                                            </button>
-                                          )}
+                                      {subcategory.issues && subcategory.issues.length > 0 && subcategory.issues[0].wcag_criterion && (
+                                        <div className="text-right">
+                                          <p className="text-xs text-gray-600 mb-1">WCAG Guideline</p>
+                                          <span className="inline-block px-3 py-1 bg-blue-100 rounded border border-blue-300 text-sm font-semibold text-blue-800">
+                                            {subcategory.issues[0].wcag_criterion}
+                                          </span>
                                         </div>
-                                        
-                                        {isLoadingSuggestion && (
-                                          <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 text-center">
-                                            <div className="flex items-center justify-center space-x-2">
-                                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
-                                              <p className="text-sm text-gray-700">AI is analyzing colors...</p>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {subcategory.issues && subcategory.issues.length > 0 ? (
+                                    <div className="space-y-3">
+                                      {subcategory.issues.map((fix: any, index: number) => {
+                                        const isContrastIssue = fix.category === 'contrast' || fix.issue_type?.includes('contrast');
+                                        const hasScreenshot = fix.screenshot_base64 && fix.screenshot_status === 'success';
+                                        const issueKey = `${fix.selector || 'unknown'}_${index}`;
+                                        const hasSuggestion = llmSuggestions[issueKey];
+                                        const isLoadingSuggestion = loadingLLMSuggestions[issueKey];
+
+                                        return (
+                                          <div key={index} className="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                                            {/* Issue Header */}
+                                            <div className="bg-red-50 px-4 py-3 border-b border-red-200">
+                                              <div className="flex items-start justify-between">
+                                                <div className="flex items-start space-x-3 flex-1">
+                                                  <MdBugReport className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                                                  <div className="flex-1">
+                                                    <p className="font-semibold text-gray-900 text-sm">
+                                                      {fix.issue_type || 'Unknown Issue'}
+                                                    </p>
+                                                    {fix.wcag_criterion && (
+                                                      <p className="text-xs text-gray-600 mt-1">
+                                                        <span className="font-medium">WCAG:</span> {fix.wcag_criterion}
+                                                      </p>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                                {fix.action && (
+                                                  <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded border border-yellow-300">
+                                                    {fix.action}
+                                                  </span>
+                                                )}
+                                              </div>
                                             </div>
-                                          </div>
-                                        )}
-                                        
-                                        {hasSuggestion && (
-                                          <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-3">
-                                            <div className="flex items-center justify-between">
-                                              <div className="flex items-center space-x-3 flex-1">
-                                                <div className="flex items-center space-x-1">
-                                                  <div
-                                                    className="w-8 h-8 rounded border-2 border-gray-300 shadow-sm"
-                                                    style={{ backgroundColor: hasSuggestion.textColor }}
-                                                    title={`Text: ${hasSuggestion.textColor}`}
-                                                  />
-                                                  <span className="text-xs text-gray-500 font-medium">on</span>
-                                                  <div
-                                                    className="w-8 h-8 rounded border-2 border-gray-300 shadow-sm"
-                                                    style={{ backgroundColor: hasSuggestion.bgColor }}
-                                                    title={`Background: ${hasSuggestion.bgColor}`}
+
+                                            {/* Issue Body */}
+                                            <div className="p-4">
+                                              <p className="text-sm text-gray-700 leading-relaxed">
+                                                {getIssueDescription(fix)}
+                                              </p>
+
+                                              {/* Screenshot */}
+                                              {hasScreenshot && (
+                                                <div className="mt-3 border border-gray-300 rounded-lg p-2 bg-gray-50">
+                                                  <p className="text-xs font-medium text-gray-700 mb-2">Element Screenshot:</p>
+                                                  <img
+                                                    src={`data:image/png;base64,${fix.screenshot_base64}`}
+                                                    alt="Element screenshot"
+                                                    className="rounded border border-gray-200 max-w-full h-auto"
+                                                    style={{ maxHeight: '200px' }}
                                                   />
                                                 </div>
-                                                <div className="flex-1">
-                                                  <p className="text-sm font-medium text-gray-900">
-                                                    {hasSuggestion.name}
-                                                    {hasSuggestion.isLLM && (
-                                                      <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
-                                                        AI
-                                                      </span>
+                                              )}
+
+                                              {/* AI Color Suggestions for Contrast Issues */}
+                                              {isContrastIssue && (
+                                                <div className="mt-4 border-t border-gray-200 pt-4">
+                                                  <div className="flex items-center justify-between mb-3">
+                                                    <div className="flex items-center space-x-2">
+                                                      <FaBrain className="w-4 h-4 text-purple-600" />
+                                                      <h5 className="text-sm font-semibold text-gray-900">AI Color Suggestion</h5>
+                                                    </div>
+                                                    {!hasSuggestion && !isLoadingSuggestion && (
+                                                      <button
+                                                        onClick={() => {
+                                                          console.log('🔘 Generate AI Fix button clicked');
+                                                          const colors = extractColorsFromIssue(fix);
+                                                          console.log('🎨 Extracted colors:', colors);
+                                                          fetchLLMColorSuggestion(issueKey, colors.description, colors.textColor, colors.bgColor);
+                                                        }}
+                                                        className="px-4 py-2 text-sm font-bold rounded-lg transition-all shadow-lg flex items-center space-x-2 border-2"
+                                                        style={{
+                                                          background: 'linear-gradient(to right, #9333EA, #3B82F6)',
+                                                          color: '#FFFFFF',
+                                                          borderColor: '#A855F7'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                          e.currentTarget.style.background = 'linear-gradient(to right, #7E22CE, #2563EB)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                          e.currentTarget.style.background = 'linear-gradient(to right, #9333EA, #3B82F6)';
+                                                        }}
+                                                      >
+                                                        <FaBrain className="w-4 h-4" style={{ color: '#FFFFFF' }} />
+                                                        <span style={{ color: '#FFFFFF' }}>Generate AI Fix</span>
+                                                      </button>
                                                     )}
-                                                  </p>
-                                                  <p className="text-xs text-gray-600 mt-0.5">
-                                                    Contrast: <span className="font-semibold text-green-600">{hasSuggestion.contrast}</span>
-                                                  </p>
-                                                  {hasSuggestion.reasoning && (
-                                                    <p className="text-xs text-gray-500 mt-1.5 italic">
-                                                      💡 {hasSuggestion.reasoning}
-                                                    </p>
+                                                  </div>
+
+                                                  {isLoadingSuggestion && (
+                                                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 text-center">
+                                                      <div className="flex items-center justify-center space-x-2">
+                                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
+                                                        <p className="text-sm text-gray-700">AI is analyzing colors...</p>
+                                                      </div>
+                                                    </div>
+                                                  )}
+
+                                                  {hasSuggestion && (
+                                                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-3">
+                                                      <div className="flex items-center justify-between">
+                                                        <div className="flex items-center space-x-3 flex-1">
+                                                          <div className="flex items-center space-x-1">
+                                                            <div
+                                                              className="w-8 h-8 rounded border-2 border-gray-300 shadow-sm"
+                                                              style={{ backgroundColor: hasSuggestion.textColor }}
+                                                              title={`Text: ${hasSuggestion.textColor}`}
+                                                            />
+                                                            <span className="text-xs text-gray-500 font-medium">on</span>
+                                                            <div
+                                                              className="w-8 h-8 rounded border-2 border-gray-300 shadow-sm"
+                                                              style={{ backgroundColor: hasSuggestion.bgColor }}
+                                                              title={`Background: ${hasSuggestion.bgColor}`}
+                                                            />
+                                                          </div>
+                                                          <div className="flex-1">
+                                                            <p className="text-sm font-medium text-gray-900">
+                                                              {hasSuggestion.name}
+                                                              {hasSuggestion.isLLM && (
+                                                                <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
+                                                                  AI
+                                                                </span>
+                                                              )}
+                                                            </p>
+                                                            <p className="text-xs text-gray-600 mt-0.5">
+                                                              Contrast: <span className="font-semibold text-green-600">{hasSuggestion.contrast}</span>
+                                                            </p>
+                                                            {hasSuggestion.reasoning && (
+                                                              <p className="text-xs text-gray-500 mt-1.5 italic">
+                                                                💡 {hasSuggestion.reasoning}
+                                                              </p>
+                                                            )}
+                                                          </div>
+                                                        </div>
+                                                        <button
+                                                          className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors shadow-md flex-shrink-0"
+                                                          title="Apply this color combination"
+                                                        >
+                                                          Apply
+                                                        </button>
+                                                      </div>
+                                                      <div className="mt-3 bg-gray-900 rounded px-3 py-2 border border-gray-700">
+                                                        <code className="text-xs text-green-400 font-mono font-semibold">
+                                                          {hasSuggestion.css}
+                                                        </code>
+                                                      </div>
+                                                    </div>
+                                                  )}
+
+                                                  {!hasSuggestion && !isLoadingSuggestion && (
+                                                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                                                      <p className="text-xs text-gray-600">
+                                                        Click "Generate AI Fix" to get smart color suggestions that preserve your design
+                                                      </p>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              )}
+
+                                              {/* HTML Context Section */}
+                                              {(fix.html_context || fix.element_html || fix.html || fix.outerHTML) && (
+                                                <div className="mt-4">
+                                                  <div className="mb-2">
+                                                    <p className="text-xs font-semibold text-gray-700 mb-1">HTML Context:</p>
+                                                  </div>
+                                                  <div className="bg-gray-900 rounded-lg p-3 overflow-x-auto">
+                                                    <pre className="text-xs text-gray-100 font-mono leading-relaxed whitespace-pre-wrap break-words">
+                                                      <code className="language-html">
+                                                        {fix.html_context || fix.element_html || fix.html || fix.outerHTML}
+                                                      </code>
+                                                    </pre>
+                                                  </div>
+                                                </div>
+                                              )}
+
+                                              {/* Element Details */}
+                                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                                <div className="grid grid-cols-1 gap-2">
+                                                  <div className="flex items-start">
+                                                    <span className="text-xs font-semibold text-gray-600 w-32 flex-shrink-0">Element:</span>
+                                                    <span className="text-xs text-gray-800 font-mono bg-gray-100 px-2 py-1 rounded flex-1 break-all">
+                                                      {fix.selector || 'N/A'}
+                                                    </span>
+                                                  </div>
+                                                  {fix.action && (
+                                                    <div className="flex items-start">
+                                                      <span className="text-xs font-semibold text-gray-600 w-32 flex-shrink-0">Action Required:</span>
+                                                      <span className="text-xs text-gray-800 capitalize">
+                                                        {fix.action}
+                                                      </span>
+                                                    </div>
+                                                  )}
+                                                  {fix.wcag_criterion && (
+                                                    <div className="flex items-start">
+                                                      <span className="text-xs font-semibold text-gray-600 w-32 flex-shrink-0">WCAG:</span>
+                                                      <span className="text-xs text-gray-800 font-medium">
+                                                        {fix.wcag_criterion}
+                                                      </span>
+                                                    </div>
+                                                  )}
+                                                  {fix.suggestion && (
+                                                    <div className="flex items-start">
+                                                      <span className="text-xs font-semibold text-gray-600 w-32 flex-shrink-0">Suggestion:</span>
+                                                      <span className="text-xs text-gray-700">
+                                                        {fix.suggestion}
+                                                      </span>
+                                                    </div>
                                                   )}
                                                 </div>
                                               </div>
-                                              <button
-                                                className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors shadow-md flex-shrink-0"
-                                                title="Apply this color combination"
-                                              >
-                                                Apply
-                                              </button>
-                                            </div>
-                                            <div className="mt-3 bg-gray-900 rounded px-3 py-2 border border-gray-700">
-                                              <code className="text-xs text-green-400 font-mono font-semibold">
-                                                {hasSuggestion.css}
-                                              </code>
                                             </div>
                                           </div>
-                                        )}
-                                        
-                                        {!hasSuggestion && !isLoadingSuggestion && (
-                                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                                            <p className="text-xs text-gray-600">
-                                              Click "Generate AI Fix" to get smart color suggestions that preserve your design
-                                            </p>
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
-
-                                    {/* HTML Context Section */}
-                                    {(fix.html_context || fix.element_html || fix.html || fix.outerHTML) && (
-                                      <div className="mt-4">
-                                        <div className="mb-2">
-                                          <p className="text-xs font-semibold text-gray-700 mb-1">HTML Context:</p>
-                                        </div>
-                                        <div className="bg-gray-900 rounded-lg p-3 overflow-x-auto">
-                                          <pre className="text-xs text-gray-100 font-mono leading-relaxed whitespace-pre-wrap break-words">
-                                            <code className="language-html">
-                                              {fix.html_context || fix.element_html || fix.html || fix.outerHTML}
-                                            </code>
-                                          </pre>
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* Element Details */}
-                                    <div className="mt-3 pt-3 border-t border-gray-200">
-                                      <div className="grid grid-cols-1 gap-2">
-                                        <div className="flex items-start">
-                                          <span className="text-xs font-semibold text-gray-600 w-32 flex-shrink-0">Element:</span>
-                                          <span className="text-xs text-gray-800 font-mono bg-gray-100 px-2 py-1 rounded flex-1 break-all">
-                                            {fix.selector || 'N/A'}
-                                          </span>
-                                        </div>
-                                        {fix.action && (
-                                          <div className="flex items-start">
-                                            <span className="text-xs font-semibold text-gray-600 w-32 flex-shrink-0">Action Required:</span>
-                                            <span className="text-xs text-gray-800 capitalize">
-                                              {fix.action}
-                                            </span>
-                                          </div>
-                                        )}
-                                        {fix.wcag_criterion && (
-                                          <div className="flex items-start">
-                                            <span className="text-xs font-semibold text-gray-600 w-32 flex-shrink-0">WCAG:</span>
-                                            <span className="text-xs text-gray-800 font-medium">
-                                              {fix.wcag_criterion}
-                                            </span>
-                                          </div>
-                                        )}
-                                        {fix.suggestion && (
-                                          <div className="flex items-start">
-                                            <span className="text-xs font-semibold text-gray-600 w-32 flex-shrink-0">Suggestion:</span>
-                                            <span className="text-xs text-gray-700">
-                                              {fix.suggestion}
-                                            </span>
-                                          </div>
-                                        )}
-                                      </div>
+                                        );
+                                      })}
                                     </div>
-                                  </div>
-                                </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="text-center py-4">
-                          <MdCheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                          <p className="text-sm text-gray-600">No issues found for this test</p>
-                        </div>
-                      )}
+                                  ) : (
+                                    <div className="text-center py-4">
+                                      <MdCheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                                      <p className="text-sm text-gray-600">No issues found for this test</p>
+                                    </div>
+                                  )}
 
-                              {subcategory.timestamp && (
-                                <p className="text-xs text-gray-500 mt-4 pt-3 border-t border-orange-200">
-                                  Tested: {new Date(subcategory.timestamp).toLocaleString()}
-                                </p>
-                              )}
-                            </div>
-                          </motion.div>
+                                  {subcategory.timestamp && (
+                                    <p className="text-xs text-gray-500 mt-4 pt-3 border-t border-orange-200">
+                                      Tested: {new Date(subcategory.timestamp).toLocaleString()}
+                                    </p>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+
+                    {/* AI Summary Section */}
+                    <div className="border-t border-gray-200 pt-6 mt-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12,2A2,2 0 0,1 14,4C14,4.74 13.6,5.39 13,5.73V7H14A7,7 0 0,1 21,14H22A1,1 0 0,1 23,15V18A1,1 0 0,1 22,19H21V20A2,2 0 0,1 19,22H5A2,2 0 0,1 3,20V19H2A1,1 0 0,1 1,18V15A1,1 0 0,1 2,14H3A7,7 0 0,1 10,7H11V5.73C10.4,5.39 10,4.74 10,4A2,2 0 0,1 12,2M7.5,13A2.5,2.5 0 0,0 5,15.5A2.5,2.5 0 0,0 7.5,18A2.5,2.5 0 0,0 10,15.5A2.5,2.5 0 0,0 7.5,13M16.5,13A2.5,2.5 0 0,0 14,15.5A2.5,2.5 0 0,0 16.5,18A2.5,2.5 0 0,0 19,15.5A2.5,2.5 0 0,0 16.5,13Z" />
+                            </svg>
+                          </div>
+                          <h4 className="text-lg font-semibold text-gray-900">AI Summary & Fix Guide</h4>
+                        </div>
+                        {!aiSummary && !loadingAiSummary && (
+                          <button
+                            onClick={() => generateAiSummary(selectedCategory)}
+                            className="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
+                            </svg>
+                            <span>Generate AI Summary</span>
+                          </button>
                         )}
-                      </AnimatePresence>
-                    </div>
-                    );
-                  })}
-                  
-                  {/* AI Summary Section */}
-                  <div className="border-t border-gray-200 pt-6 mt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12,2A2,2 0 0,1 14,4C14,4.74 13.6,5.39 13,5.73V7H14A7,7 0 0,1 21,14H22A1,1 0 0,1 23,15V18A1,1 0 0,1 22,19H21V20A2,2 0 0,1 19,22H5A2,2 0 0,1 3,20V19H2A1,1 0 0,1 1,18V15A1,1 0 0,1 2,14H3A7,7 0 0,1 10,7H11V5.73C10.4,5.39 10,4.74 10,4A2,2 0 0,1 12,2M7.5,13A2.5,2.5 0 0,0 5,15.5A2.5,2.5 0 0,0 7.5,18A2.5,2.5 0 0,0 10,15.5A2.5,2.5 0 0,0 7.5,13M16.5,13A2.5,2.5 0 0,0 14,15.5A2.5,2.5 0 0,0 16.5,18A2.5,2.5 0 0,0 19,15.5A2.5,2.5 0 0,0 16.5,13Z"/>
-                          </svg>
-                        </div>
-                        <h4 className="text-lg font-semibold text-gray-900">AI Summary & Fix Guide</h4>
                       </div>
-                      {!aiSummary && !loadingAiSummary && (
-                        <button
-                          onClick={() => generateAiSummary(selectedCategory)}
-                          className="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                        >
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"/>
-                          </svg>
-                          <span>Generate AI Summary</span>
-                        </button>
-                      )}
-                    </div>
-                    
-                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200 mt-3">
-                      {loadingAiSummary ? (
-                        <div className="flex items-center space-x-3">
-                          <div className="relative">
-                            <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-200"></div>
-                            <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent absolute top-0 left-0"></div>
-                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                              <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+
+                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200 mt-3">
+                        {loadingAiSummary ? (
+                          <div className="flex items-center space-x-3">
+                            <div className="relative">
+                              <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-200"></div>
+                              <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent absolute top-0 left-0"></div>
+                              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex flex-col">
-                            <p className="text-sm font-medium text-gray-700">Generating personalized summary...</p>
-                            <div className="flex items-center space-x-1 mt-1">
-                              <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce"></div>
-                              <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                              <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                              <span className="text-xs text-gray-500 ml-2">AI is analyzing your results</span>
-                            </div>
-                          </div>
-                        </div>
-                      ) : aiSummary ? (
-                        <div className="space-y-3">
-                          <div className="flex items-start space-x-3">
-                            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
-                              </svg>
-                            </div>
-                            <div className="flex-1">
-                              <div className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none">
-                                <ReactMarkdown
-                                  components={{
-                                    strong: ({ children }: any) => (
-                                      <strong className="font-bold text-gray-900">
-                                        {children}
-                                      </strong>
-                                    ),
-                                    em: ({ children }: any) => (
-                                      <em className="italic text-gray-700">{children}</em>
-                                    ),
-                                    p: ({ children }: any) => (
-                                      <p className="mb-3 last:mb-0 leading-relaxed">
-                                        {children}
-                                      </p>
-                                    ),
-                                    ul: ({ children }: any) => (
-                                      <ul className="list-disc list-inside mb-3 space-y-1">
-                                        {children}
-                                      </ul>
-                                    ),
-                                    ol: ({ children }: any) => (
-                                      <ol className="list-decimal list-inside mb-3 space-y-1">
-                                        {children}
-                                      </ol>
-                                    ),
-                                    li: ({ children }: any) => (
-                                      <li className="ml-2">{children}</li>
-                                    ),
-                                    h1: ({ children }: any) => (
-                                      <h1 className="text-lg font-bold mb-2 text-gray-900">{children}</h1>
-                                    ),
-                                    h2: ({ children }: any) => (
-                                      <h2 className="text-base font-bold mb-2 text-gray-900">{children}</h2>
-                                    ),
-                                    h3: ({ children }: any) => (
-                                      <h3 className="text-sm font-bold mb-1 text-gray-900">{children}</h3>
-                                    ),
-                                    code: ({ children }: any) => (
-                                      <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono text-gray-800">
-                                        {children}
-                                      </code>
-                                    ),
-                                    a: ({ children, href }: any) => (
-                                      <a href={href} className="text-blue-600 hover:text-blue-700 underline" target="_blank" rel="noopener noreferrer">
-                                        {children}
-                                      </a>
-                                    ),
-                                  }}
-                                >
-                                  {aiSummary}
-                                </ReactMarkdown>
+                            <div className="flex flex-col">
+                              <p className="text-sm font-medium text-gray-700">Generating personalized summary...</p>
+                              <div className="flex items-center space-x-1 mt-1">
+                                <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce"></div>
+                                <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                <span className="text-xs text-gray-500 ml-2">AI is analyzing your results</span>
                               </div>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-500 italic border-t border-blue-200 pt-2 mt-3">
-                            💡 This guide was generated by AI to help you understand and fix these accessibility issues
+                        ) : aiSummary ? (
+                          <div className="space-y-3">
+                            <div className="flex items-start space-x-3">
+                              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                              <div className="flex-1">
+                                <div className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none">
+                                  <ReactMarkdown
+                                    components={{
+                                      strong: ({ children }: any) => (
+                                        <strong className="font-bold text-gray-900">
+                                          {children}
+                                        </strong>
+                                      ),
+                                      em: ({ children }: any) => (
+                                        <em className="italic text-gray-700">{children}</em>
+                                      ),
+                                      p: ({ children }: any) => (
+                                        <p className="mb-3 last:mb-0 leading-relaxed">
+                                          {children}
+                                        </p>
+                                      ),
+                                      ul: ({ children }: any) => (
+                                        <ul className="list-disc list-inside mb-3 space-y-1">
+                                          {children}
+                                        </ul>
+                                      ),
+                                      ol: ({ children }: any) => (
+                                        <ol className="list-decimal list-inside mb-3 space-y-1">
+                                          {children}
+                                        </ol>
+                                      ),
+                                      li: ({ children }: any) => (
+                                        <li className="ml-2">{children}</li>
+                                      ),
+                                      h1: ({ children }: any) => (
+                                        <h1 className="text-lg font-bold mb-2 text-gray-900">{children}</h1>
+                                      ),
+                                      h2: ({ children }: any) => (
+                                        <h2 className="text-base font-bold mb-2 text-gray-900">{children}</h2>
+                                      ),
+                                      h3: ({ children }: any) => (
+                                        <h3 className="text-sm font-bold mb-1 text-gray-900">{children}</h3>
+                                      ),
+                                      code: ({ children }: any) => (
+                                        <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono text-gray-800">
+                                          {children}
+                                        </code>
+                                      ),
+                                      a: ({ children, href }: any) => (
+                                        <a href={href} className="text-blue-600 hover:text-blue-700 underline" target="_blank" rel="noopener noreferrer">
+                                          {children}
+                                        </a>
+                                      ),
+                                    }}
+                                  >
+                                    {aiSummary}
+                                  </ReactMarkdown>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-xs text-gray-500 italic border-t border-blue-200 pt-2 mt-3">
+                              💡 This guide was generated by AI to help you understand and fix these accessibility issues
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="text-center py-8">
-                          <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                          </svg>
-                          <p className="text-sm text-gray-600 mb-2 font-medium">Get AI-powered fix guidance</p>
-                          <p className="text-xs text-gray-500">Click the "Generate AI Summary" button above to get a step-by-step guide on how to fix these issues</p>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="text-center py-8">
+                            <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                            <p className="text-sm text-gray-600 mb-2 font-medium">Get AI-powered fix guidance</p>
+                            <p className="text-xs text-gray-500">Click the "Generate AI Summary" button above to get a step-by-step guide on how to fix these issues</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
                 </div>
               </motion.div>
             </motion.div>
