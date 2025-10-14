@@ -922,7 +922,7 @@ const SignUpForm: React.FC<CustomProps> = ({
               {t('Sign_up.text.footer_desc')}
             </Trans>
           </div>
-          <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center">
+          <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center pb-8">
             <Trans components={[<Link to="/auth/signin"></Link>]}>
               {t('Sign_up.text.have_account')}
             </Trans>
@@ -931,7 +931,7 @@ const SignUpForm: React.FC<CustomProps> = ({
       )}
 
       {currentStep === 3 && (
-        <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center">
+        <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center pb-8">
           <Trans components={[<Link to="/auth/signin"></Link>]}>
             {t('Sign_up.text.have_account')}
           </Trans>

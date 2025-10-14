@@ -230,8 +230,8 @@ const SignUp: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen sm:flex-col">
-      <div className="w-[45%] flex justify-end items-center sm:w-full lg:pl-16">
+    <div className="flex h-screen sm:flex-col overflow-hidden">
+      <div className="w-[80%] flex justify-end items-start sm:w-full lg:pl-16 overflow-y-auto pt-8 no-scrollbar">
         <SignUpForm
           onSubmit={handleSubmit(onSubmit)}
           register={register}
@@ -245,7 +245,7 @@ const SignUp: React.FC = () => {
           )}
         />
       </div>
-      <div className="w-[55%] sm:hidden flex items-center justify-end p-5 relative">
+      <div className="w-[55%] sm:hidden flex items-center justify-end p-5 relative overflow-hidden">
         <img
           src="/images/auth/auth_image1.png"
           alt="Authentication"
