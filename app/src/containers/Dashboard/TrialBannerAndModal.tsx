@@ -73,12 +73,10 @@ const Modal: React.FC<ModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 flex sm:items-start sm:justify-center md:items-center md:justify-center z-50 bg-black bg-opacity-60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl sm:w-full sm:max-h-none sm:overflow-y-auto sm:min-h-screen md:w-5/6 lg:w-4/5 xl:w-3/4 max-w-7xl md:overflow-hidden md:max-h-[95vh] transform transition-all duration-300 ease-out">
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60 backdrop-blur-sm">
+      <div className="w-full max-w-md mx-4">
         {/* Content */}
-        <div className="sm:overflow-y-auto sm:max-h-screen md:overflow-hidden md:max-h-[95vh]">
-          {children}
-        </div>
+        <div>{children}</div>
       </div>
     </div>
   );
@@ -563,228 +561,69 @@ const TrialBannerAndModal: React.FC<any> = ({
               customerData={customerData}
             />
           ) : (
-            <div className="grid grid-cols-12 sm:h-auto sm:min-h-screen sm:max-h-screen md:h-[calc(100vh-120px)] sm:max-h-none md:max-h-[800px]">
-              <div className="sm:col-span-12 md:col-span-6 px-4 md:px-6 lg:px-8 py-3 md:py-4 flex flex-col bg-gradient-to-br from-gray-50 to-white sm:min-h-screen sm:max-h-screen md:min-h-0 sm:overflow-y-auto relative">
-                {/* Close button for mobile view */}
-                <button
-                  className="absolute top-4 right-4 sm:block md:hidden text-gray-600 hover:text-gray-800 text-2xl hover:bg-gray-100 transition-colors duration-200 p-1 rounded-full z-10"
-                  onClick={closeModal}
-                >
-                  ×
-                </button>
-                <div className="flex flex-col gap-3 sm:flex-none md:flex-1 sm:overflow-visible md:overflow-hidden">
-                  {/* Logo Section */}
-                  <div className="flex justify-center mb-4">
-                    <LogoIcon className="w-26 h-7 sm:w-26 sm:h-7 md:w-40 md:h-10 lg:w-48 lg:h-12" />
+            <div className="w-full max-w-md px-4 md:px-6 lg:px-8 py-3 md:py-4 flex flex-col bg-white rounded-lg shadow-lg sm:min-h-screen sm:max-h-screen md:min-h-0 sm:overflow-y-auto relative">
+              {/* Close button - visible on all screen sizes */}
+              <button
+                className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-2xl hover:bg-gray-100 transition-colors duration-200 p-1 rounded-full z-10"
+                onClick={closeModal}
+              >
+                ×
+              </button>
+              <div className="flex flex-col gap-3 sm:flex-none md:flex-1 sm:overflow-visible md:overflow-hidden">
+                {/* Logo Section */}
+                <div className="flex justify-center mb-4">
+                  <LogoIcon className="w-26 h-7 sm:w-26 sm:h-7 md:w-40 md:h-10 lg:w-48 lg:h-12" />
+                </div>
+
+                <div className="space-y-2 lg:pt-4">
+                  <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
+                    Make your business accessible today!
+                  </h1>
+                  <p className="text-gray-600 text-sm md:text-base leading-relaxed">
+                    Streamline web accessibility with WebAbilityWidget, the #1
+                    web accessibility, WCAG and ADA compliance solution.
+                  </p>
+                </div>
+
+                {/* Domain Input Section */}
+                <div className="space-y-2">
+                  <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                    Your Domain
+                  </h2>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="domainName"
+                      name="domainName"
+                      placeholder="example.com"
+                      value={formData.domainName}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-3 text-base border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 placeholder-gray-400 bg-gray-50 hover:bg-white focus:bg-white"
+                      form="bannerForm"
+                    />
                   </div>
+                  <p className="text-xs text-gray-600 mt-2">
+                    Please add only the root domain. We will manage the
+                    subdomains on our end.
+                  </p>
+                </div>
 
-                  <div className="space-y-2 lg:pt-4">
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
-                      Make your business accessible today!
-                    </h1>
-                    <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                      Streamline web accessibility with WebAbilityWidget, the #1
-                      web accessibility, WCAG and ADA compliance solution.
-                    </p>
-                  </div>
+                <div className="sm:flex-none md:flex-1 sm:overflow-visible md:overflow-y-auto sm:overflow-y-auto">
+                  <form
+                    id="bannerForm"
+                    onSubmit={handleSubmit}
+                    className="space-y-3"
+                  >
+                    {/* Trial Options */}
+                    <div className="space-y-3">
+                      <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3">
+                        Choose Your Trial Option
+                      </h3>
 
-                  {/* Domain Input Section */}
-                  <div className="bg-white rounded-lg p-4 shadow-md border border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                      Your Domain
-                    </h2>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        id="domainName"
-                        name="domainName"
-                        placeholder="example.com"
-                        value={formData.domainName}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-3 text-base border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 placeholder-gray-400 bg-gray-50 hover:bg-white focus:bg-white"
-                        form="bannerForm"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-600 mt-2">
-                      Please add only the root domain. We will manage the
-                      subdomains on our end.
-                    </p>
-                  </div>
-
-                  <div className="sm:flex-none md:flex-1 sm:overflow-visible md:overflow-y-auto sm:overflow-y-auto">
-                    <form
-                      id="bannerForm"
-                      onSubmit={handleSubmit}
-                      className="space-y-3"
-                    >
-                      {/* Trial Options */}
-                      <div className="space-y-3">
-                        <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3">
-                          Choose Your Trial Option
-                        </h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-                          <button
-                            type="button"
-                            className="group relative p-3 md:p-4 text-left border-2 border-blue-300 rounded-xl bg-gradient-to-br from-blue-50 to-white hover:from-blue-100 hover:to-blue-50 transition-all duration-300 hover:border-blue-400 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                            onClick={() => {
-                              if (
-                                !formData.domainName ||
-                                formData.domainName.trim() === ''
-                              ) {
-                                toast.error(
-                                  'Please enter a domain name first!',
-                                );
-                                return;
-                              }
-                              setCardTrial(true);
-                            }}
-                            disabled={
-                              addSiteLoading ||
-                              billingLoading ||
-                              !formData.domainName
-                            }
-                          >
-                            <div className="flex items-center space-x-2">
-                              <div className="flex-shrink-0">
-                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                  <svg
-                                    className="w-4 h-4 text-blue-600"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                                    />
-                                  </svg>
-                                </div>
-                              </div>
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-900">
-                                  30 Day Trial
-                                </h4>
-                                <p className="text-xs text-gray-600">
-                                  Requires credit card
-                                </p>
-                              </div>
-                            </div>
-                            {addSiteLoading || billingLoading ? (
-                              <div className="mt-2 text-center">
-                                <div className="inline-flex items-center text-blue-600 text-xs">
-                                  <svg
-                                    className="animate-spin -ml-1 mr-2 h-3 w-3 text-blue-600"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <circle
-                                      className="opacity-25"
-                                      cx="12"
-                                      cy="12"
-                                      r="10"
-                                      stroke="currentColor"
-                                      strokeWidth="4"
-                                    ></circle>
-                                    <path
-                                      className="opacity-75"
-                                      fill="currentColor"
-                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                    ></path>
-                                  </svg>
-                                  Please Wait...
-                                </div>
-                              </div>
-                            ) : null}
-                          </button>
-
-                          <button
-                            disabled={
-                              addSiteLoading ||
-                              billingLoading ||
-                              !formData.domainName
-                            }
-                            type="submit"
-                            onClick={() => {
-                              if (
-                                !formData.domainName ||
-                                formData.domainName.trim() === ''
-                              ) {
-                                toast.error(
-                                  'Please enter a domain name first!',
-                                );
-                                return;
-                              }
-                              trialReload.current = true;
-                            }}
-                            className="group relative p-3 md:p-4 text-left border-2 border-blue-300 rounded-xl bg-gradient-to-br from-blue-50 to-white hover:from-blue-100 hover:to-blue-50 transition-all duration-300 hover:border-blue-400 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <div className="flex-shrink-0">
-                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                  <svg
-                                    className="w-4 h-4 text-blue-600"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                  </svg>
-                                </div>
-                              </div>
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-900">
-                                  15 Day Trial
-                                </h4>
-                                <p className="text-xs text-gray-600">
-                                  No credit card required
-                                </p>
-                              </div>
-                            </div>
-                            {addSiteLoading || billingLoading ? (
-                              <div className="mt-2 text-center">
-                                <div className="inline-flex items-center text-blue-600 text-xs">
-                                  <svg
-                                    className="animate-spin -ml-1 mr-2 h-3 w-3 text-blue-600"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <circle
-                                      className="opacity-25"
-                                      cx="12"
-                                      cy="12"
-                                      r="10"
-                                      stroke="currentColor"
-                                      strokeWidth="4"
-                                    ></circle>
-                                    <path
-                                      className="opacity-75"
-                                      fill="currentColor"
-                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                    ></path>
-                                  </svg>
-                                  Please Wait...
-                                </div>
-                              </div>
-                            ) : null}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Skip Trial Button */}
-                      <div className="pt-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                         <button
                           type="button"
-                          className="w-full py-2 md:py-3 px-3 md:px-4 text-white text-sm md:text-base font-semibold text-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                          className="group relative p-3 md:p-4 text-left border-2 border-blue-300 rounded-xl bg-gradient-to-br from-blue-50 to-white hover:from-blue-100 hover:to-blue-50 transition-all duration-300 hover:border-blue-400 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                           onClick={() => {
                             if (
                               !formData.domainName ||
@@ -793,7 +632,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                               toast.error('Please enter a domain name first!');
                               return;
                             }
-                            showPaymentModal();
+                            setCardTrial(true);
                           }}
                           disabled={
                             addSiteLoading ||
@@ -801,275 +640,229 @@ const TrialBannerAndModal: React.FC<any> = ({
                             !formData.domainName
                           }
                         >
-                          {addSiteLoading || billingLoading ? (
-                            <div className="flex items-center justify-center space-x-2">
-                              <svg
-                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                ></circle>
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                ></path>
-                              </svg>
-                              Please Wait...
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-center space-x-2">
-                              Skip trial & buy
-                            </div>
-                          )}
-                        </button>
-                      </div>
-
-                      {/* AppSumo User Notice */}
-                      <div className="relative mt-3 p-3 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg shadow-md border border-yellow-300 overflow-hidden">
-                        {/* Background decoration */}
-                        <div className="absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 bg-yellow-300 rounded-full opacity-20"></div>
-                        <div className="absolute top-0 right-0 w-10 h-10 -mr-5 -mt-5 bg-yellow-200 rounded-full opacity-30"></div>
-
-                        <div className="relative z-10">
-                          <div className="flex items-start space-x-3">
+                          <div className="flex items-center space-x-2">
                             <div className="flex-shrink-0">
-                              <div className="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center shadow-md">
+                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                                 <svg
-                                  className="w-4 h-4 text-white"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="w-4 h-4 text-blue-600"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
                                 >
                                   <path
-                                    fillRule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                    clipRule="evenodd"
-                                  ></path>
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                                  />
                                 </svg>
                               </div>
                             </div>
-                            <div className="flex-1">
-                              <h3 className="text-sm font-bold text-gray-900 mb-1">
-                                🎉 AppSumo Customers
-                              </h3>
-                              <p className="text-gray-800 text-xs leading-relaxed">
-                                Click "Skip trial & buy" to enter your coupon
-                                code.
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-900">
+                                30 Day Trial
+                              </h4>
+                              <p className="text-xs text-gray-600">
+                                Requires credit card
                               </p>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-              <div className="sm:hidden md:col-span-6 px-4 md:px-6 py-3 md:py-4 bg-gradient-to-br from-blue-600 to-blue-800 flex flex-col justify-center relative md:overflow-y-auto md:max-h-[calc(100vh-120px)]">
-                {/* Close button for right panel - visible on md and larger */}
-                <button
-                  className="absolute top-4 right-4 text-white text-2xl hover:text-gray-200 transition-colors duration-200 p-1 rounded-full hover:bg-white/10 z-10"
-                  onClick={closeModal}
-                >
-                  ×
-                </button>
+                          {addSiteLoading || billingLoading ? (
+                            <div className="mt-2 text-center">
+                              <div className="inline-flex items-center text-blue-600 text-xs">
+                                <svg
+                                  className="animate-spin -ml-1 mr-2 h-3 w-3 text-blue-600"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  ></circle>
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  ></path>
+                                </svg>
+                                Please Wait...
+                              </div>
+                            </div>
+                          ) : null}
+                        </button>
 
-                <div className="text-center mb-4">
-                  <h2 className="text-xl font-bold text-white mb-3">
-                    Free Accessibility Scan
-                  </h2>
-                  <div className="bg-white rounded-lg p-3 mb-4 shadow-lg">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="text"
-                        value="https://WebAbility.io"
-                        readOnly
-                        className="flex-1 px-3 py-2 text-gray-700 bg-gray-50 rounded-lg border border-gray-200 text-xs"
-                      />
-                      <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 shadow-md text-xs">
-                        Free Scan
+                        <button
+                          disabled={
+                            addSiteLoading ||
+                            billingLoading ||
+                            !formData.domainName
+                          }
+                          type="submit"
+                          onClick={() => {
+                            if (
+                              !formData.domainName ||
+                              formData.domainName.trim() === ''
+                            ) {
+                              toast.error('Please enter a domain name first!');
+                              return;
+                            }
+                            trialReload.current = true;
+                          }}
+                          className="group relative p-3 md:p-4 text-left border-2 border-blue-300 rounded-xl bg-gradient-to-br from-blue-50 to-white hover:from-blue-100 hover:to-blue-50 transition-all duration-300 hover:border-blue-400 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <div className="flex-shrink-0">
+                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <svg
+                                  className="w-4 h-4 text-blue-600"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
+                                </svg>
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-900">
+                                15 Day Trial
+                              </h4>
+                              <p className="text-xs text-gray-600">
+                                No credit card required
+                              </p>
+                            </div>
+                          </div>
+                          {addSiteLoading || billingLoading ? (
+                            <div className="mt-2 text-center">
+                              <div className="inline-flex items-center text-blue-600 text-xs">
+                                <svg
+                                  className="animate-spin -ml-1 mr-2 h-3 w-3 text-blue-600"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  ></circle>
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  ></path>
+                                </svg>
+                                Please Wait...
+                              </div>
+                            </div>
+                          ) : null}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Skip Trial Button */}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        className="w-full py-2 md:py-3 px-3 md:px-4 text-white text-sm md:text-base font-semibold text-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        onClick={() => {
+                          if (
+                            !formData.domainName ||
+                            formData.domainName.trim() === ''
+                          ) {
+                            toast.error('Please enter a domain name first!');
+                            return;
+                          }
+                          showPaymentModal();
+                        }}
+                        disabled={
+                          addSiteLoading ||
+                          billingLoading ||
+                          !formData.domainName
+                        }
+                      >
+                        {addSiteLoading || billingLoading ? (
+                          <div className="flex items-center justify-center space-x-2">
+                            <svg
+                              className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            Please Wait...
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center space-x-2">
+                            Skip trial & buy
+                          </div>
+                        )}
                       </button>
                     </div>
-                  </div>
-                </div>
 
-                {/* Accessibility Overview Cards */}
-                <div className="space-y-3 mb-4">
-                  <div className="bg-white rounded-lg p-4 shadow-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                          <svg
-                            className="w-4 h-4 text-red-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
+                    {/* AppSumo User Notice */}
+                    <div className="relative mt-3 p-3 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg shadow-md border border-yellow-300 overflow-hidden">
+                      {/* Background decoration */}
+                      <div className="absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 bg-yellow-300 rounded-full opacity-20"></div>
+                      <div className="absolute top-0 right-0 w-10 h-10 -mr-5 -mt-5 bg-yellow-200 rounded-full opacity-30"></div>
+
+                      <div className="relative z-10">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0">
+                            <div className="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center shadow-md">
+                              <svg
+                                className="w-4 h-4 text-white"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                  clipRule="evenodd"
+                                ></path>
+                              </svg>
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-sm font-bold text-gray-900 mb-1">
+                              🎉 AppSumo Customers
+                            </h3>
+                            <p className="text-gray-800 text-xs leading-relaxed">
+                              Click "Skip trial & buy" to enter your coupon
+                              code.
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900">
-                          Status
-                        </h3>
-                        <p className="text-red-600 font-medium text-sm">
-                          Not Compliant
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          Your site doesn't comply with WCAG 2.1 AA
-                        </p>
-                      </div>
                     </div>
-                  </div>
-
-                  <div className="bg-white rounded-lg p-4 shadow-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                          <span className="text-red-600 font-bold text-sm">
-                            18%
-                          </span>
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900">
-                          Accessibility Score
-                        </h3>
-                        <p className="text-red-600 font-medium text-sm">18%</p>
-                        <p className="text-xs text-gray-600">
-                          Websites with a score of 70% or lower are considered
-                          at high risk
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-lg p-4 shadow-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                          <svg
-                            className="w-4 h-4 text-red-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"
-                            />
-                          </svg>
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900">
-                          Lawsuit Risk
-                        </h3>
-                        <p className="text-red-600 font-medium text-sm">High</p>
-                        <p className="text-xs text-gray-600">
-                          Multiple violations may be exposing your site to legal
-                          action
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Toggle */}
-                <div className="bg-white rounded-lg p-3 mb-3 shadow-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-700 font-medium text-sm">
-                      See your results with WebAbility!
-                    </span>
-                    <div className="relative">
-                      <input
-                        type="checkbox"
-                        className="sr-only"
-                        defaultChecked
-                      />
-                      <div className="w-10 h-5 bg-blue-600 rounded-full shadow-inner"></div>
-                      <div className="absolute top-0.5 right-0.5 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out"></div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Key Features */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-white mb-2">
-                    Key Features
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 bg-purple-500 rounded-sm flex items-center justify-center">
-                        <svg
-                          className="w-2 h-2 text-white"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                      <span className="text-white text-xs">
-                        Accessibility statement and certifications
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 bg-purple-500 rounded-sm flex items-center justify-center">
-                        <svg
-                          className="w-2 h-2 text-white"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                      <span className="text-white text-xs">
-                        2-minute integration, immediate turnaround
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 bg-purple-500 rounded-sm flex items-center justify-center">
-                        <svg
-                          className="w-2 h-2 text-white"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                      <span className="text-white text-xs">
-                        AI-Powered daily monitoring and scanning
-                      </span>
-                    </div>
-                  </div>
+                  </form>
                 </div>
               </div>
             </div>
