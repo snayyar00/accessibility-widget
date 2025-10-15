@@ -129,7 +129,7 @@ export const InviteWorkspaceMember: React.FC<InviteWorkspaceMemberProps> = ({
     }
   };
 
-  if (!availableWorkspaces?.length && !workspacesLoading) return null;
+  // if (!availableWorkspaces?.length && !workspacesLoading) return null;
 
   return (
     <>

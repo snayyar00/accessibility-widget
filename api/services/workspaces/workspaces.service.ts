@@ -7,12 +7,12 @@ import { WORKSPACE_INVITATION_STATUS_ACCEPTED, WORKSPACE_INVITATION_STATUS_PENDI
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import generateRandomKey from '../../helpers/genarateRandomkey'
 import { normalizeEmail, stringToSlug } from '../../helpers/string.helper'
+import { createWorkspaceInvitation, deleteWorkspaceInvitations, GetDetailWorkspaceInvitation, getDetailWorkspaceInvitations, getWorkspaceInvitation, updateWorkspaceInvitationByToken, VALID_PERIOD_DAYS } from '../../repository/invitations.repository'
 import { updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
 import { findUser } from '../../repository/user.repository'
 import { UserProfile } from '../../repository/user.repository'
 import { createNewWorkspaceAndMember, deleteWorkspaceById, getAllWorkspace, GetAllWorkspaceResponse, getWorkspace, getWorkspaceMembers as getWorkspaceMembersRepo, updateWorkspace as updateWorkspaceRepo, Workspace } from '../../repository/workspace.repository'
 import { setWorkspaceDomains } from '../../repository/workspace_allowed_sites.repository'
-import { createWorkspaceInvitation, deleteWorkspaceInvitations, GetDetailWorkspaceInvitation, getDetailWorkspaceInvitations, getWorkspaceInvitation, updateWorkspaceInvitationByToken, VALID_PERIOD_DAYS } from '../../repository/workspace_invitations.repository'
 import { createMemberAndInviteToken, deleteWorkspaceUsers, getWorkspaceUser, updateWorkspaceUser } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import formatDateDB from '../../utils/format-date-db'
@@ -430,10 +430,10 @@ export async function inviteWorkspaceMember(user: UserProfile, workspaceId: numb
         {
           email: invitee_email,
           token,
-          invited_by: user.id,
+          invited_by_id: user.id,
           workspace_id: workspace.id,
           organization_id: workspace.organization_id,
-          role,
+          workspace_role: role,
           valid_until: formatDateDB(dayjs().add(VALID_PERIOD_DAYS, 'day')),
           status: WORKSPACE_INVITATION_STATUS_PENDING,
         },
@@ -631,7 +631,7 @@ export async function changeWorkspaceMemberRole(user: UserProfile, id: number, r
       const [workspaceInvitation] = await getDetailWorkspaceInvitations({ token: workspaceMember.invitation_token })
 
       if (workspaceInvitation) {
-        await updateWorkspaceInvitationByToken(workspaceMember.invitation_token, { role, status: WORKSPACE_USER_STATUS_PENDING }, transaction)
+        await updateWorkspaceInvitationByToken(workspaceMember.invitation_token, { workspace_role: role, status: WORKSPACE_USER_STATUS_PENDING }, transaction)
       }
     }
 

@@ -2,8 +2,8 @@ import dayjs from 'dayjs'
 
 import { WORKSPACE_INVITATION_STATUS_PENDING } from '../../constants/workspace.constant'
 import { verify } from '../../helpers/jwt.helper'
+import { getWorkspaceInvitation } from '../../repository/invitations.repository'
 import { findUser } from '../../repository/user.repository'
-import { getWorkspaceInvitation } from '../../repository/workspace_invitations.repository'
 
 export type UserLoginedResponse = {
   id: number

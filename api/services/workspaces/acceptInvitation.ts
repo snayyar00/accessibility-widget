@@ -1,8 +1,8 @@
 import database from '../../config/database.config'
 import { WORKSPACE_INVITATION_STATUS_ACCEPTED, WORKSPACE_INVITATION_STATUS_DECLINED, WORKSPACE_USER_STATUS_ACTIVE, WORKSPACE_USER_STATUS_DECLINE } from '../../constants/workspace.constant'
+import { getDetailWorkspaceInvitations, updateWorkspaceInvitationByToken } from '../../repository/invitations.repository'
 import { updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
 import { UserProfile } from '../../repository/user.repository'
-import { getDetailWorkspaceInvitations, updateWorkspaceInvitationByToken } from '../../repository/workspace_invitations.repository'
 import { updateWorkspaceUser } from '../../repository/workspace_users.repository'
 
 export async function acceptInvitation(token: string, type: 'accept' | 'decline', user: UserProfile): Promise<boolean> {
