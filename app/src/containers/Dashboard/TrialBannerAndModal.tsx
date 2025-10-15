@@ -372,7 +372,7 @@ const TrialBannerAndModal: React.FC<any> = ({
         }
       }
 
-      setTrialMonthlyCount((prevCount) => prevCount + trialSites);
+      setTrialMonthlyCount(trialSites);
     }
   }, [allDomains]);
 
