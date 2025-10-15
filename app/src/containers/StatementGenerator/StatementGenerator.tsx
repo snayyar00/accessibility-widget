@@ -2072,8 +2072,7 @@ ${
                         textTransform: 'none',
                         fontSize: '1.1rem',
                         fontWeight: '600',
-                        background:
-                          'linear-gradient(180deg, #445AE7 0%, #11163A 100%)',
+                        background: '#3343ad',
                         color: 'white',
                         boxShadow: '0 4px 12px rgba(68, 90, 231, 0.25)',
                         border: 'none',
@@ -2090,8 +2089,7 @@ ${
                             'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)',
                         },
                         '&:hover': {
-                          background:
-                            'linear-gradient(180deg, #3d4fd1 0%, #0f1233 100%)',
+                          background: '#2c3a99',
                           boxShadow: '0 6px 16px rgba(68, 90, 231, 0.3)',
                           transform: 'translateY(-1px)',
                         },
