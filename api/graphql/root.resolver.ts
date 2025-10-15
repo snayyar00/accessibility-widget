@@ -3,6 +3,7 @@ import { aiReadinessResolvers } from './resolvers/aiReadiness.resolver'
 import allowedSitesResolves from './resolvers/allowedSites.resolver'
 import domainAnalysisResolves from './resolvers/domainAnalysis.resolver'
 import impressionResolves from './resolvers/impressions.resolver'
+import invitationResolvers from './resolvers/invitation.resolver'
 import organizationResolver from './resolvers/organization.resolver'
 import proofOfEffortResolves from './resolvers/proofOfEffort.resolver'
 import problemReportResolves from './resolvers/reportProblem.resolver'
@@ -30,5 +31,6 @@ export default [
   widgetResolvers,
   domainAnalysisResolves,
   workspaceResolvers,
+  invitationResolvers,
   aiReadinessResolvers,
 ]

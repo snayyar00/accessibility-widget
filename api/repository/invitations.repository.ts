@@ -2,7 +2,9 @@ import { Knex } from 'knex'
 
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
+import { OrganizationUserRole } from '../constants/organization.constant'
 import { WorkspaceInvitationStatus, WorkspaceUserRole } from '../constants/workspace.constant'
+import { organizationsColumns } from './organization.repository'
 import { usersColumns } from './user.repository'
 import { workspacesColumns } from './workspace.repository'
 
@@ -35,6 +37,19 @@ export type GetDetailWorkspaceInvitation = {
   valid_until: string
   organization_id?: number
   workspace_id?: number
+  token?: string
+  created_at?: string
+}
+
+export type GetDetailOrganizationInvitation = {
+  id?: number
+  organization_name: string
+  invited_by: string
+  email: string
+  status: WorkspaceInvitationStatus
+  role: OrganizationUserRole
+  valid_until: string
+  organization_id?: number
   token?: string
   created_at?: string
 }
@@ -201,4 +216,111 @@ export async function getOrganizationInvitations(organizationId: number): Promis
     ])
 
   return await query
+}
+
+/**
+ * Function to create organization invitation
+ *
+ * @param object      data        Object contains invitations data
+ * @param Transaction transaction Transaction object want to use within query
+ */
+export async function createOrganizationInvitation(data: Invitation, transaction: Knex.Transaction = null): Promise<number[]> {
+  const invitationData = {
+    email: data.email,
+    type: 'organization' as const,
+    organization_id: data.organization_id,
+    organization_role: data.organization_role,
+    status: data.status,
+    token: data.token,
+    invited_by_id: data.invited_by_id,
+    valid_until: data.valid_until,
+  }
+
+  const query = database(TABLE).insert(invitationData)
+
+  if (!transaction) {
+    return query
+  }
+
+  return query.transacting(transaction)
+}
+
+export async function getOrganizationInvitation(condition: Partial<Invitation>): Promise<Invitation[]> {
+  const query = database(TABLE).where({ type: 'organization' })
+
+  if (condition.id) query.where({ id: condition.id })
+  if (condition.email) query.where({ email: condition.email })
+  if (condition.organization_id) query.where({ organization_id: condition.organization_id })
+  if (condition.status) query.where({ status: condition.status })
+  if (condition.token) query.where({ token: condition.token })
+
+  return query
+}
+
+export async function getDetailOrganizationInvitations(condition: { token?: string; organizationId?: number }): Promise<GetDetailOrganizationInvitation[]> {
+  const query = database(TABLE)
+    .join(TABLES.organizations, organizationsColumns.id, invitationsColumns.organizationId)
+    .join(TABLES.users, usersColumns.id, invitationsColumns.invitedById)
+    .where({ [invitationsColumns.type]: 'organization' })
+    .select({
+      id: invitationsColumns.id,
+      organization_name: organizationsColumns.name,
+      invited_by: usersColumns.email,
+      email: invitationsColumns.email,
+      status: invitationsColumns.status,
+      role: invitationsColumns.organizationRole,
+      valid_until: invitationsColumns.validUntil,
+      organization_id: invitationsColumns.organizationId,
+      token: invitationsColumns.token,
+      created_at: invitationsColumns.createdAt,
+    })
+
+  if (condition.token) {
+    query.where({ [invitationsColumns.token]: condition.token })
+  }
+
+  if (condition.organizationId) {
+    query.where({ [invitationsColumns.organizationId]: condition.organizationId })
+  }
+
+  query.orderBy(invitationsColumns.createdAt, 'desc')
+
+  return query
+}
+
+export async function updateOrganizationInvitationByToken(token: string, data: Partial<Invitation>, transaction: Knex.Transaction = null): Promise<number> {
+  const updateData: Partial<Invitation> = {}
+
+  if (data.status) updateData.status = data.status
+  if (data.organization_role) updateData.organization_role = data.organization_role
+  if (data.accepted_at) updateData.accepted_at = data.accepted_at
+  if (data.accepted_by_id) updateData.accepted_by_id = data.accepted_by_id
+
+  const query = database(TABLE).where({ token, type: 'organization' }).update(updateData)
+
+  if (transaction) {
+    return query.transacting(transaction)
+  }
+
+  return query
+}
+
+export async function deleteOrganizationInvitations(condition: Partial<Invitation>, transaction: Knex.Transaction = null): Promise<boolean> {
+  const query = database(TABLE).where({ type: 'organization' })
+
+  if (condition.id) query.where({ id: condition.id })
+  if (condition.email) query.where({ email: condition.email })
+  if (condition.organization_id) query.where({ organization_id: condition.organization_id })
+  if (condition.token) query.where({ token: condition.token })
+  if (condition.invited_by_id) query.where({ invited_by_id: condition.invited_by_id })
+
+  const deleteQuery = query.del()
+
+  if (transaction) {
+    const result = await deleteQuery.transacting(transaction)
+    return result > 0
+  }
+
+  const result = await deleteQuery
+  return result > 0
 }
