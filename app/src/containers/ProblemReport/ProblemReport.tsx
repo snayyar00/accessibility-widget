@@ -22,6 +22,7 @@ export interface Problem {
   description: string;
   reporter_email: string;
   created_at: string;
+  fixed: boolean;
 }
 
 const ProblemReport: React.FC = () => {
@@ -32,6 +33,9 @@ const ProblemReport: React.FC = () => {
   const [loader, setLoader] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'bug' | 'accessibility'>('all');
+  const [statusFilter, setStatusFilter] = useState<'active' | 'solved'>(
+    'active',
+  );
   const [selectedDomain, setSelectedDomain] = useState<string>('all');
   const [domainSearchTerm, setDomainSearchTerm] = useState<string>('');
   const [isDomainDropdownOpen, setIsDomainDropdownOpen] = useState(false);
@@ -102,11 +106,27 @@ const ProblemReport: React.FC = () => {
     fetchProblemReports();
   }, []);
 
-  const filteredProblems = problemArray.filter((problem) => {
+  // First filter by domain and issue type (without status filter)
+  const issuesFilteredByDomainAndType = problemArray.filter((problem) => {
     const matchesType = filter === 'all' ? true : problem.issue_type === filter;
     const matchesDomain =
       selectedDomain === 'all' ? true : problem.site_url === selectedDomain;
     return matchesType && matchesDomain;
+  });
+
+  // Calculate counts for the tabs based on filtered data
+  const activeIssuesCount = issuesFilteredByDomainAndType.filter(
+    (problem) => !problem.fixed,
+  ).length;
+  const solvedIssuesCount = issuesFilteredByDomainAndType.filter(
+    (problem) => problem.fixed,
+  ).length;
+
+  // Final filter that includes status filter for display
+  const filteredProblems = issuesFilteredByDomainAndType.filter((problem) => {
+    const matchesStatus =
+      statusFilter === 'active' ? !problem.fixed : problem.fixed;
+    return matchesStatus;
   });
 
   // Filter domains based on search term
@@ -139,6 +159,39 @@ const ProblemReport: React.FC = () => {
         // Allow custom domain filtering
         setSelectedDomain(value);
       }
+    }
+  };
+
+  const handleToggleFixed = async (problemId: number) => {
+    const token = getAuthenticationCookie();
+    const url = `${process.env.REACT_APP_BACKEND_URL}/toggle-problem-report-fixed/${problemId}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Server error:', errorText);
+        throw new Error(`Server error: ${errorText}`);
+      }
+
+      // Update the local state to reflect the change
+      setProblemArray((prevArray) =>
+        prevArray.map((problem) =>
+          problem.id === problemId
+            ? { ...problem, fixed: !problem.fixed }
+            : problem,
+        ),
+      );
+    } catch (error) {
+      console.error('Error toggling fixed status:', error);
+      // You might want to show a toast notification here
     }
   };
 
@@ -291,15 +344,36 @@ const ProblemReport: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  {/* Issue Summary Section */}
+                  {/* Issue Summary Section with Filter */}
                   <div className="mb-3 border-b border-gray-200 pb-2 pl-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="text-xl font-medium text-gray-900">
-                          Active issues
-                        </h3>
-                        <p className="text-base  text-gray-900 mt-1">
-                          {filteredProblems.length}
+                    <div className="flex gap-8 mb-3">
+                      {/* Active Issues Filter */}
+                      <div
+                        className={`cursor-pointer transition-all duration-200 ${
+                          statusFilter === 'active'
+                            ? 'text-gray-800'
+                            : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                        onClick={() => setStatusFilter('active')}
+                      >
+                        <h3 className="text-base font-medium">Active issues</h3>
+                        <p className="text-lg font-semibold mt-1">
+                          {activeIssuesCount}
+                        </p>
+                      </div>
+
+                      {/* Solved Issues Filter */}
+                      <div
+                        className={`cursor-pointer transition-all duration-200 ${
+                          statusFilter === 'solved'
+                            ? 'text-gray-800'
+                            : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                        onClick={() => setStatusFilter('solved')}
+                      >
+                        <h3 className="text-base font-medium">Solved issues</h3>
+                        <p className="text-lg font-semibold mt-1">
+                          {solvedIssuesCount}
                         </p>
                       </div>
                     </div>
@@ -313,7 +387,10 @@ const ProblemReport: React.FC = () => {
                     <div className="space-y-3 sm:space-y-4">
                       {filteredProblems.map((problem) => (
                         <div key={problem.id} className="problem-card">
-                          <ProblemCard problem={problem} />
+                          <ProblemCard
+                            problem={problem}
+                            onToggleFixed={handleToggleFixed}
+                          />
                         </div>
                       ))}
                     </div>
@@ -348,8 +425,15 @@ const ProblemReport: React.FC = () => {
                           />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900 mb-2">
-                          No reports found matching your criteria.
+                          {statusFilter === 'active'
+                            ? 'No active issues found'
+                            : 'No solved issues found'}
                         </h3>
+                        <p className="text-sm text-gray-500">
+                          {statusFilter === 'active'
+                            ? 'All issues have been marked as solved!'
+                            : 'Issues will appear here once they are marked as solved.'}
+                        </p>
                       </div>
                     )}
                   </div>

@@ -48,7 +48,7 @@ function BillingPortalLink() {
   return (
     <div className="space-y-4">
       {/* Billing Portal Section */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-3 md:space-y-0 p-3 md:p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-3 md:space-y-0 p-3 md:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
         <div className="flex-1 w-full md:w-auto">
           <h3 className="text-base md:text-lg font-semibold text-gray-900">
             Billing Portal
@@ -62,7 +62,7 @@ function BillingPortalLink() {
             handleBilling(setClicked, data?.email);
           }}
           disabled={clicked}
-          className="w-auto md:w-auto flex-shrink-0 px-4 md:px-6 py-2 md:py-2.5 bg-green-600 text-white rounded-lg text-xs md:text-sm font-medium hover:bg-green-700 transition-all duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+          className="w-auto md:w-auto flex-shrink-0 px-4 md:px-6 py-2 md:py-2.5 bg-blue-600 text-white rounded-lg text-xs md:text-sm font-medium hover:bg-blue-700 transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
         >
           {clicked ? (
             <span className="flex items-center space-x-2">

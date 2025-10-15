@@ -481,93 +481,12 @@ export default function Installation({ domain }: any) {
               ></div>
             </div>
 
-            <div className="relative z-10 p-4 sm:p-6 md:p-8 lg:p-12 xl:p-16">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 h-full">
-                {/* Main feature card - left side, spans 2 rows */}
-                <div className="lg:col-span-1 flex items-center mb-6 lg:mb-0">
-                  <StatCard
-                    title="Built for Scale, Chosen by the Best."
-                    subtitle="Reasons why Leading Brands Choose AI Accessibility"
-                    size="large"
-                    className="h-full w-full"
-                    titleColor="#ffffff"
-                    subtitleColor="#ffffff"
-                    textColor="#ffffff"
-                  />
-                </div>
-
-                {/* Right side - responsive grid layout */}
-                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 auto-rows-fr">
-                  {/* Top row */}
-                  <div className="h-48 sm:h-52 md:h-56 lg:h-60">
-                    <StatCard
-                      title="48 Hours"
-                      subtitle="Time to compliance"
-                      description="AI remediation delivers immediate result"
-                      size="medium"
-                      hasGlow={false}
-                      className="h-full"
-                      titleColor="#ffffff"
-                      subtitleColor="#ffffff"
-                      textColor="#ffffff"
-                    />
-                  </div>
-                  <div className="h-48 sm:h-52 md:h-56 lg:h-60">
-                    <StatCard
-                      title="99.7%"
-                      subtitle="Legal risk reduction"
-                      description="Automatic WCAG 2.1 AA compliance protection"
-                      size="medium"
-                      className="h-full"
-                      titleColor="#ffffff"
-                      subtitleColor="#ffffff"
-                      textColor="#ffffff"
-                    />
-                  </div>
-
-                  {/* Middle row */}
-                  <div className="h-48 sm:h-52 md:h-56 lg:h-60">
-                    <StatCard
-                      title="2.3X"
-                      subtitle="Revenue increase potential"
-                      description="Accessible sites convert better to all users"
-                      size="medium"
-                      hasGlow={false}
-                      className="h-full"
-                      titleColor="#ffffff"
-                      subtitleColor="#ffffff"
-                      textColor="#ffffff"
-                    />
-                  </div>
-                  <div className="h-48 sm:h-52 md:h-56 lg:h-60">
-                    <StatCard
-                      title="98%"
-                      subtitle="Websites fail accessibility tests"
-                      description="Gain competitive advantage with compliance"
-                      size="medium"
-                      className="h-full"
-                      titleColor="#ffffff"
-                      subtitleColor="#ffffff"
-                      textColor="#ffffff"
-                    />
-                  </div>
-
-                  {/* Bottom row - spans 2 columns on md+ screens */}
-                  <div className="md:col-span-2 h-48 sm:h-52 md:h-56 lg:h-60">
-                    <StatCard
-                      title="$13 Trillion"
-                      subtitle="Global disability market value"
-                      description="World's largest underserved consumer segment"
-                      size="medium"
-                      hasGlow={false}
-                      className="h-full"
-                      titleColor="#ffffff"
-                      subtitleColor="#ffffff"
-                      textColor="#ffffff"
-                    />
-                  </div>
-                </div>
-              </div>
+            <div >
+              <img
+                src="/images/Installation_page_image.png"
+                alt="Installation guide"
+                className="w-full h-auto rounded-lg"
+              />
             </div>
           </div>
         </div>

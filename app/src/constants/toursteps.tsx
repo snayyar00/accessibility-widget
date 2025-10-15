@@ -782,7 +782,7 @@ export const mySitesTourSteps: Step[] = [
             <strong>Active sites:</strong> Domains with active subscriptions
           </li>
           <li>
-            <strong>Disabled sites:</strong> Domains with expired or inactive
+            <strong>Trial sites:</strong> Domains with expired or inactive
             subscriptions
           </li>
         </ul>
@@ -961,7 +961,7 @@ export const mySitesTourSteps: Step[] = [
         </p>
         <ul className="text-sm space-y-2">
           <li>✅ Add new domains with "Get Compliant Now" button</li>
-          <li>✅ Switch between Active and Disabled sites tabs</li>
+          <li>✅ Switch between Active and Trial sites tabs</li>
           <li>✅ Search to find specific domains quickly</li>
           <li>✅ Monitor website uptime with toggle switches</li>
           <li>✅ Check subscription status at a glance</li>

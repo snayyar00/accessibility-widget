@@ -3,7 +3,15 @@ import { Problem } from './ProblemReport';
 import Favicon from '@/components/Common/Favicon';
 import './ProblemCard.css';
 
-const ProblemCard: React.FC<{ problem: Problem }> = ({ problem }) => {
+interface ProblemCardProps {
+  problem: Problem;
+  onToggleFixed?: (id: number) => void;
+}
+
+const ProblemCard: React.FC<ProblemCardProps> = ({
+  problem,
+  onToggleFixed,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Calculate time ago
@@ -22,6 +30,13 @@ const ProblemCard: React.FC<{ problem: Problem }> = ({ problem }) => {
 
     const diffInWeeks = Math.floor(diffInDays / 7);
     return `${diffInWeeks} weeks ago`;
+  };
+
+  const handleToggleFixed = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card expansion when clicking checkmark
+    if (onToggleFixed) {
+      onToggleFixed(problem.id);
+    }
   };
 
   return (
@@ -47,23 +62,51 @@ const ProblemCard: React.FC<{ problem: Problem }> = ({ problem }) => {
           </span>
         </div>
 
-        {/* Status icon */}
-        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
-          <svg
-            width="21"
-            height="20"
-            viewBox="0 0 21 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M13.642 7.98312L9.375 12.2501L7.92049 10.7956M10.5 1.00012C5.52944 1.00012 1.5 5.02956 1.5 10.0001C1.5 14.9707 5.52944 19.0001 10.5 19.0001C15.4706 19.0001 19.5 14.9707 19.5 10.0001C19.5 5.02956 15.4706 1.00012 10.5 1.00012Z"
-              stroke="#445AE7"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+        {/* Status icon - Checkmark */}
+        <div
+          className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-2 cursor-pointer transition-all duration-200 hover:scale-110 ${
+            problem.fixed
+              ? 'border-[#445AE7] bg-transparent'
+              : 'border-gray-400 bg-white hover:border-gray-500'
+          }`}
+          onClick={handleToggleFixed}
+          title={problem.fixed ? 'Mark as unfixed' : 'Mark as fixed'}
+        >
+          {problem.fixed ? (
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-[#445AE7]"
+            >
+              <path
+                d="M7 12l3 3 7-7"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : (
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-gray-400"
+            >
+              <path
+                d="M7 12l3 3 7-7"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
         </div>
       </div>
 

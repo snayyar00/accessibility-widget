@@ -115,38 +115,6 @@ const Sidebar = ({
     await handleBilling(setBillingClicked, user?.email);
   };
 
-  // Helper function to get navigation item styles
-  const getNavItemStyles = (isActive: boolean) => {
-    if (isActive) {
-      return {
-        className: isCollapsed
-          ? 'w-10 h-10 font-medium justify-center mx-auto'
-          : 'space-x-3 px-3 py-2 font-medium',
-        style: {
-          backgroundColor: baseColors.blueLight,
-          color: baseColors.brandPrimary,
-        },
-      };
-    } else {
-      return {
-        className: isCollapsed
-          ? 'w-10 h-10 justify-center mx-auto'
-          : 'space-x-3 px-3 py-2',
-        style: {
-          color: baseColors.grayMedium,
-          ':hover': {
-            backgroundColor: baseColors.grayLight,
-          },
-        },
-      };
-    }
-  };
-
-  // Helper function to get icon styles
-  const getIconStyles = (isActive: boolean) => ({
-    color: isActive ? baseColors.brandPrimary : baseColors.grayMedium,
-  });
-
   return (
     <>
       {isOpen && (
@@ -199,78 +167,40 @@ const Sidebar = ({
 
             {/* Navigation Section */}
             <div className="flex-grow px-4">
-              <nav className="space-y-0.5">
+              <nav className="space-y-2">
                 {/* Dashboard */}
                 <NavLink
                   to="/dashboard"
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
-                    getNavItemStyles(isActiveRoute('/dashboard')).className
+                    isActiveRoute('/dashboard')
+                      ? isCollapsed
+                        ? 'w-12 h-12 bg-[#d0d5f9] text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#d0d5f9] text-[#445AE7] font-medium'
+                      : isCollapsed
+                      ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
-                  style={getNavItemStyles(isActiveRoute('/dashboard')).style}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
                     <BiBarChartAlt2
                       size={24}
-                      style={getIconStyles(isActiveRoute('/dashboard'))}
+                      className={
+                        isActiveRoute('/dashboard')
+                          ? 'text-[#445AE7]'
+                          : 'text-[#656565]'
+                      }
                     />
                   </div>
                   {!isCollapsed && (
                     <span
-                      className="text-sm"
-                      style={{
-                        color: isActiveRoute('/dashboard')
-                          ? baseColors.brandPrimary
-                          : baseColors.grayMedium,
-                      }}
+                      className={`text-sm whitespace-nowrap ${
+                        isActiveRoute('/dashboard')
+                          ? 'text-[#445AE7]'
+                          : 'text-[#656565]'
+                      }`}
                     >
                       Dashboard
-                    </span>
-                  )}
-                </NavLink>
-
-                {/* Customization */}
-                <NavLink
-                  to="/widget-selection"
-                  onClick={closeSidebar}
-                  className={`flex items-center rounded-lg transition-all duration-200 ${
-                    getNavItemStyles(
-                      isActiveRoute('/widget-selection') ||
-                        isActiveRoute('/customize-widget') ||
-                        isActiveRoute('/old-widget'),
-                    ).className
-                  }`}
-                  style={
-                    getNavItemStyles(
-                      isActiveRoute('/widget-selection') ||
-                        isActiveRoute('/customize-widget') ||
-                        isActiveRoute('/old-widget'),
-                    ).style
-                  }
-                >
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    <Pencil
-                      size={24}
-                      style={getIconStyles(
-                        isActiveRoute('/widget-selection') ||
-                          isActiveRoute('/customize-widget') ||
-                          isActiveRoute('/old-widget'),
-                      )}
-                    />
-                  </div>
-                  {!isCollapsed && (
-                    <span
-                      className="text-sm"
-                      style={{
-                        color:
-                          isActiveRoute('/widget-selection') ||
-                          isActiveRoute('/customize-widget') ||
-                          isActiveRoute('/old-widget')
-                            ? baseColors.brandPrimary
-                            : baseColors.grayMedium,
-                      }}
-                    >
-                      Customization
                     </span>
                   )}
                 </NavLink>
@@ -280,26 +210,77 @@ const Sidebar = ({
                   to="/installation"
                   onClick={closeSidebar}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
-                    getNavItemStyles(isActiveRoute('/installation')).className
+                    isActiveRoute('/installation')
+                      ? isCollapsed
+                        ? 'w-12 h-12 bg-[#d0d5f9] text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#d0d5f9] text-[#445AE7] font-medium'
+                      : isCollapsed
+                      ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
-                  style={getNavItemStyles(isActiveRoute('/installation')).style}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
                     <RiStackLine
                       size={24}
-                      style={getIconStyles(isActiveRoute('/installation'))}
+                      className={
+                        isActiveRoute('/installation')
+                          ? 'text-[#445AE7]'
+                          : 'text-[#656565]'
+                      }
                     />
                   </div>
                   {!isCollapsed && (
                     <span
-                      className="text-sm"
-                      style={{
-                        color: isActiveRoute('/installation')
-                          ? baseColors.brandPrimary
-                          : baseColors.grayMedium,
-                      }}
+                      className={`text-sm whitespace-nowrap ${
+                        isActiveRoute('/installation')
+                          ? 'text-[#445AE7]'
+                          : 'text-[#656565]'
+                      }`}
                     >
                       Installation
+                    </span>
+                  )}
+                </NavLink>
+
+                {/* Customization */}
+                <NavLink
+                  to="/widget-selection"
+                  onClick={closeSidebar}
+                  className={`flex items-center rounded-lg transition-all duration-200 ${
+                    isActiveRoute('/widget-selection') ||
+                    isActiveRoute('/customize-widget') ||
+                    isActiveRoute('/old-widget')
+                      ? isCollapsed
+                        ? 'w-12 h-12 bg-[#d0d5f9] text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#d0d5f9] text-[#445AE7] font-medium'
+                      : isCollapsed
+                      ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <Pencil
+                      size={24}
+                      className={
+                        isActiveRoute('/widget-selection') ||
+                        isActiveRoute('/customize-widget') ||
+                        isActiveRoute('/old-widget')
+                          ? 'text-[#445AE7]'
+                          : 'text-[#656565]'
+                      }
+                    />
+                  </div>
+                  {!isCollapsed && (
+                    <span
+                      className={`text-sm whitespace-nowrap ${
+                        isActiveRoute('/widget-selection') ||
+                        isActiveRoute('/customize-widget') ||
+                        isActiveRoute('/old-widget')
+                          ? 'text-[#445AE7]'
+                          : 'text-[#656565]'
+                      }`}
+                    >
+                      Customization
                     </span>
                   )}
                 </NavLink>
@@ -311,11 +292,11 @@ const Sidebar = ({
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/add-domain')
                       ? isCollapsed
-                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
-                      ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                      : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                      ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
@@ -330,7 +311,7 @@ const Sidebar = ({
                   </div>
                   {!isCollapsed && (
                     <span
-                      className={`text-sm ${
+                      className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/add-domain')
                           ? 'text-[#445AE7]'
                           : 'text-[#656565]'
@@ -348,11 +329,11 @@ const Sidebar = ({
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/scanner')
                       ? isCollapsed
-                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
-                      ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                      : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                      ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
@@ -367,7 +348,7 @@ const Sidebar = ({
                   </div>
                   {!isCollapsed && (
                     <span
-                      className={`text-sm ${
+                      className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/scanner')
                           ? 'text-[#445AE7]'
                           : 'text-[#656565]'
@@ -385,11 +366,11 @@ const Sidebar = ({
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/problem-reports')
                       ? isCollapsed
-                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
-                      ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                      : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                      ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
@@ -404,7 +385,7 @@ const Sidebar = ({
                   </div>
                   {!isCollapsed && (
                     <span
-                      className={`text-sm ${
+                      className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/problem-reports')
                           ? 'text-[#445AE7]'
                           : 'text-[#656565]'
@@ -422,11 +403,11 @@ const Sidebar = ({
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/statement-generator')
                       ? isCollapsed
-                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
-                      ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                      : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                      ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
@@ -441,7 +422,7 @@ const Sidebar = ({
                   </div>
                   {!isCollapsed && (
                     <span
-                      className={`text-sm ${
+                      className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/statement-generator')
                           ? 'text-[#445AE7]'
                           : 'text-[#656565]'
@@ -459,11 +440,11 @@ const Sidebar = ({
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/proof-of-effort-toolkit')
                       ? isCollapsed
-                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
-                      ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                      : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                      ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
@@ -478,7 +459,7 @@ const Sidebar = ({
                   </div>
                   {!isCollapsed && (
                     <span
-                      className={`text-sm ${
+                      className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/proof-of-effort-toolkit')
                           ? 'text-[#445AE7]'
                           : 'text-[#656565]'
@@ -496,11 +477,11 @@ const Sidebar = ({
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/ai-insights')
                       ? isCollapsed
-                        ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
-                      ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                      : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                      ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
@@ -515,7 +496,7 @@ const Sidebar = ({
                   </div>
                   {!isCollapsed && (
                     <span
-                      className={`text-sm ${
+                      className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/ai-insights')
                           ? 'text-[#445AE7]'
                           : 'text-[#656565]'
@@ -536,11 +517,11 @@ const Sidebar = ({
                       className={`flex items-center rounded-lg transition-all duration-200 ${
                         isActiveRoute('/users')
                           ? isCollapsed
-                            ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                            : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                            ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                            : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                           : isCollapsed
-                          ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                          : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                          ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
                       <div className="w-6 h-6 flex items-center justify-center">
@@ -555,7 +536,7 @@ const Sidebar = ({
                       </div>
                       {!isCollapsed && (
                         <span
-                          className={`text-sm ${
+                          className={`text-sm whitespace-nowrap ${
                             isActiveRoute('/users')
                               ? 'text-[#445AE7]'
                               : 'text-[#656565]'
@@ -573,11 +554,11 @@ const Sidebar = ({
                       className={`flex items-center rounded-lg transition-all duration-200 ${
                         isActiveRoute('/workspaces')
                           ? isCollapsed
-                            ? 'w-10 h-10 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                            : 'space-x-3 px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                            ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                            : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                           : isCollapsed
-                          ? 'w-10 h-10 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                          : 'space-x-3 px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                          ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
                       <div className="w-6 h-6 flex items-center justify-center">
@@ -592,7 +573,7 @@ const Sidebar = ({
                       </div>
                       {!isCollapsed && (
                         <span
-                          className={`text-sm ${
+                          className={`text-sm whitespace-nowrap ${
                             isActiveRoute('/workspaces')
                               ? 'text-[#445AE7]'
                               : 'text-[#656565]'
@@ -607,7 +588,7 @@ const Sidebar = ({
               </nav>
             </div>
 
-            {/* Billing Button - Always at the end */}
+            {/* Billing Button - Always at the end
             <div className="px-4 pb-4 mt-auto">
               <button
                 onClick={handleBillingClick}
@@ -617,7 +598,7 @@ const Sidebar = ({
                 <div className="w-6 h-6 flex items-center justify-center">
                   <LuCircleDollarSign size={24} className="text-[#94BFFF]" />
                 </div>
-                <span className="text-sm font-medium text-[#656565]">
+                <span className="text-sm font-medium text-[#656565] whitespace-nowrap">
                   {billingClicked ? (
                     <CircularProgress size={16} sx={{ color: '#94BFFF' }} />
                   ) : (
@@ -625,7 +606,7 @@ const Sidebar = ({
                   )}
                 </span>
               </button>
-            </div>
+            </div> */}
           </div>
         ) : (
           /* Collapsed Mode - Direct navigation without card */
@@ -665,28 +646,6 @@ const Sidebar = ({
                   </div>
                 </NavLink>
 
-                {/* Customization */}
-                <NavLink
-                  to="/customize-widget"
-                  onClick={closeSidebar}
-                  className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
-                    isActiveRoute('/customize-widget')
-                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
-                      : 'text-black hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    <Pencil
-                      size={24}
-                      className={
-                        isActiveRoute('/customize-widget')
-                          ? 'text-[#445AE7]'
-                          : 'text-[#656565]'
-                      }
-                    />
-                  </div>
-                </NavLink>
-
                 {/* Installation */}
                 <NavLink
                   to="/installation"
@@ -702,6 +661,32 @@ const Sidebar = ({
                       size={24}
                       className={
                         isActiveRoute('/installation')
+                          ? 'text-[#445AE7]'
+                          : 'text-[#656565]'
+                      }
+                    />
+                  </div>
+                </NavLink>
+
+                {/* Customization */}
+                <NavLink
+                  to="/widget-selection"
+                  onClick={closeSidebar}
+                  className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
+                    isActiveRoute('/widget-selection') ||
+                    isActiveRoute('/customize-widget') ||
+                    isActiveRoute('/old-widget')
+                      ? 'bg-[#D0D5F9] text-[#445AE7] font-medium'
+                      : 'text-black hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <Pencil
+                      size={24}
+                      className={
+                        isActiveRoute('/widget-selection') ||
+                        isActiveRoute('/customize-widget') ||
+                        isActiveRoute('/old-widget')
                           ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
@@ -914,7 +899,7 @@ const Sidebar = ({
               </nav>
             </div>
 
-            {/* Billing Button - Collapsed - Always at the end */}
+            {/* Billing Button - Collapsed - Always at the end
             <div className="pb-4 mt-auto">
               <button
                 onClick={handleBillingClick}
@@ -929,7 +914,7 @@ const Sidebar = ({
                   )}
                 </div>
               </button>
-            </div>
+            </div> */}
           </div>
         )}
       </div>

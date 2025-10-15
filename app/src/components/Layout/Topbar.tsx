@@ -183,30 +183,11 @@ const Topbar: React.FC<Props> = ({
             <div className="flex items-center space-x-3">
               <div className="flex items-center justify-center origin-left scale-90 md:scale-95 lg:scale-100">
                 {/* WebAbility Logo */}
-                <svg
-                  width="148"
-                  height="29"
-                  viewBox="0 0 148 29"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M31.6083 0.895264H41.34L35.1117 28.1049H22.3438L20.67 17.7115L18.9961 28.1049H6.22825L0 0.895264H9.73163L12.6511 19.8525L16.1934 0.895264H25.1465L28.6499 19.8525L31.6083 0.895264Z"
-                    fill="#559EC1"
-                  />
-                  <path
-                    d="M20.544 17.8326L16.4351 0.986084L12.3262 18.6544C12.6549 23.2564 17.1199 26.8722 19.3113 28.1049L20.544 17.8326Z"
-                    fill="#205A76"
-                  />
-                  <path
-                    d="M34.9252 28.1049C31.3093 26.4613 29.3097 21.6676 28.7618 19.4762L31.2272 0.986084H41.4994L34.9252 28.1049Z"
-                    fill="#205A76"
-                  />
-                  <path
-                    d="M55.34 20.5L51.82 6.42H54.06L56.6 17.5C56.72 18.04 56.76 18.7 56.78 19.18C56.78 19.3 56.82 19.38 56.94 19.38C57.06 19.38 57.1 19.3 57.1 19.18C57.1 18.7 57.12 18.04 57.24 17.5L59.66 6.42H61.9L64.32 17.5C64.44 18.04 64.46 18.7 64.46 19.18C64.46 19.3 64.5 19.38 64.62 19.38C64.74 19.38 64.78 19.3 64.78 19.18C64.8 18.7 64.84 18.04 64.96 17.5L67.5 6.42H69.74L66.22 20.5H63.18L61.06 10.44C61 10.18 60.96 9.72 60.94 9.22C60.94 9.1 60.9 9.02 60.78 9.02C60.66 9.02 60.62 9.1 60.62 9.22C60.6 9.72 60.56 10.18 60.5 10.44L58.38 20.5H55.34ZM79.0056 15.24C79.0056 15.52 78.9856 15.72 78.9456 15.94H71.3056C71.4456 17.58 72.5656 18.9 74.4256 18.9C75.8056 18.9 76.4856 18.22 76.8456 17.04H78.8256C78.4056 18.94 77.0056 20.66 74.3856 20.66C71.1656 20.66 69.4056 18.28 69.4056 15.38C69.4056 12.3 71.4056 10.1 74.3456 10.1C76.6256 10.1 79.0056 11.6 79.0056 15.24ZM71.4056 14.34H77.0856C76.9656 12.84 76.0056 11.78 74.4456 11.78C72.5256 11.78 71.6856 12.96 71.4056 14.34ZM80.612 6.1H82.532V11.06C82.532 11.44 82.472 11.74 82.332 12.16C82.272 12.32 82.152 12.52 82.332 12.58C82.492 12.64 82.552 12.44 82.572 12.38C83.172 11.06 84.372 10.1 86.012 10.1C88.672 10.1 90.532 12.34 90.532 15.38C90.532 18.42 88.672 20.66 86.012 20.66C84.412 20.66 83.192 19.72 82.572 18.34C82.552 18.28 82.492 18.12 82.372 18.16C82.172 18.22 82.272 18.4 82.332 18.56C82.472 19 82.532 19.28 82.532 19.64V20.5H80.612V6.1ZM85.612 18.9C87.612 18.9 88.612 17.28 88.612 15.38C88.612 13.48 87.612 11.86 85.612 11.86C83.792 11.86 82.532 13.48 82.532 15.38C82.532 17.28 83.792 18.9 85.612 18.9ZM104.452 20.5H102.132L100.992 17.14H94.4717L93.3317 20.5H91.0117L96.1317 6.42H99.3317L104.452 20.5ZM97.3717 8.5L95.0517 15.38H100.412L98.0917 8.5C98.0117 8.24 97.9317 8 97.8917 7.66C97.8717 7.54 97.8717 7.42 97.7317 7.42C97.5917 7.42 97.5917 7.54 97.5717 7.66C97.5317 8 97.4517 8.24 97.3717 8.5ZM105.729 6.1H107.649V11.06C107.649 11.44 107.589 11.74 107.449 12.16C107.389 12.32 107.269 12.52 107.449 12.58C107.609 12.64 107.669 12.44 107.689 12.38C108.289 11.06 109.489 10.1 111.129 10.1C113.789 10.1 115.649 12.34 115.649 15.38C115.649 18.42 113.789 20.66 111.129 20.66C109.529 20.66 108.309 19.72 107.689 18.34C107.669 18.28 107.609 18.12 107.489 18.16C107.289 18.22 107.389 18.4 107.449 18.56C107.589 19 107.649 19.28 107.649 19.64V20.5H105.729V6.1ZM110.729 18.9C112.729 18.9 113.729 17.28 113.729 15.38C113.729 13.48 112.729 11.86 110.729 11.86C108.909 11.86 107.649 13.48 107.649 15.38C107.649 17.28 108.909 18.9 110.729 18.9ZM117.329 8.34V6.1H119.409V8.34H117.329ZM117.409 10.26H119.329V20.5H117.409V10.26ZM123.645 6.1V20.5H121.725V6.1H123.645ZM125.962 8.34V6.1H128.042V8.34H125.962ZM126.042 10.26H127.962V20.5H126.042V10.26ZM135.962 10.26V11.94H133.082V17.3C133.082 18.46 133.322 18.82 134.442 18.82H135.962V20.5H134.282C132.162 20.5 131.162 19.72 131.162 17.5V11.94H129.242V10.26H131.162V7.38H133.082V10.26H135.962ZM141.13 20.9L136.93 10.26H139.01L141.77 17.82C141.91 18.18 141.93 18.56 141.93 18.9C141.93 19.02 141.93 19.16 142.09 19.16C142.25 19.16 142.25 19.02 142.25 18.9C142.25 18.56 142.31 18.18 142.43 17.82L145.09 10.26H147.17L142.73 21.72C142.01 23.6 141.01 24.34 139.17 24.34H137.85V22.66H138.77C140.29 22.66 140.55 22.32 140.85 21.58L141.13 20.9Z"
-                    fill="#2C2C2C"
-                  />
-                </svg>
+                <img
+                  src="/images/logo.png"
+                  alt="WebAbility Logo"
+                  className="h-12"
+                />
               </div>
             </div>
 
@@ -262,14 +243,14 @@ const Topbar: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* Workspace Selector - Only for admin users */}
+              {/* Workspace Selector - Only for admin users
               {data?.isAdminOrOwner && (
                 <div className="w-full md:w-auto min-w-[150px]">
                   <div className="bg-gray-50 rounded-lg border border-gray-200">
                     <WorkspacesSelect />
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* Site Selector */}
               <div className="w-full md:w-auto">
@@ -335,7 +316,13 @@ const Topbar: React.FC<Props> = ({
               </button>
 
               {/* Support */}
-              <button className="p-2 rounded-lg hover:bg-blue-200 transition-colors duration-200">
+              <button
+                className="p-2 rounded-lg hover:bg-blue-200 transition-colors duration-200"
+                onClick={() =>
+                  window.open('mailto:support@webability.io', '_blank')
+                }
+                title="Contact Support"
+              >
                 <Headset className="w-5 h-5" style={{ color: '#484848' }} />
               </button>
 
@@ -358,7 +345,7 @@ const Topbar: React.FC<Props> = ({
 
           {/* Notification Settings Dropdown */}
           {isShowNotificationSettings && (
-            <div className="absolute top-[calc(100%_+_10px)] right-0 w-[280px] sm:right-0 md:right-[215px] lg:right-[215px] z-50">
+            <div className="absolute top-full right-0 mt-3 w-[280px] sm:w-[260px] z-50">
               <div className="relative p-4 border border-solid border-dark-grey rounded-[5px] shadow-xsl bg-white">
                 <h3 className="text-lg font-semibold text-sapphire-blue mb-4">
                   Notification Settings
@@ -486,9 +473,9 @@ const Topbar: React.FC<Props> = ({
 
           {/* Profile Menu */}
           {isShowMenu && (
-            <div className="absolute top-[calc(100%_+_17px)] right-[10px] w-[200px] sm:top-full z-50">
-              <ul className="relative p-0 border border-solid border-dark-grey rounded-[5px] shadow-xsl bg-white before:content-[''] before:block before:absolute before:left-1/2 before:bottom-full before:translate-x-[-1/2] before:translate-y-0 before:w-0 before:h-0 before:border-[12px] before:border-solid before:border-transparent before:border-b-dark-grey sm:before:left-[unset] sm:before:right-1 after:content-[''] after:block after:absolute after:left-1/2 after:bottom-full after:translate-x-[-1/2] after:translate-y-0 after:w-0 after:h-0 after:border-[10px] after:border-solid after:border-transparent after:border-b-white sm:after:left-[unset] sm:after:right-2">
-                <li className="list-none h-9">
+            <div className="absolute top-full right-0 mt-3 w-[200px] z-50">
+              <div className="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
+                <div className="py-2">
                   <NavLink
                     to="/profile"
                     onClick={(e) => {
@@ -499,12 +486,24 @@ const Topbar: React.FC<Props> = ({
                         document.dispatchEvent(new MouseEvent('click'));
                       }
                     }}
-                    className="text-[14px] text-sapphire-blue pl-6 overflow-hidden flex items-center w-full h-full active:bg-regular-primary"
+                    className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 cursor-pointer"
                   >
+                    <svg
+                      className="w-4 h-4 mr-3 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
                     {t('Common.label.profile')}
                   </NavLink>
-                </li>
-                <li className="list-none h-9">
+
                   <button
                     disabled={clicked}
                     onClick={async (e) => {
@@ -515,30 +514,57 @@ const Topbar: React.FC<Props> = ({
                       // Manually trigger a click outside to close the menu
                       document.dispatchEvent(new MouseEvent('click'));
                     }}
-                    className="text-[14px] text-sapphire-blue pl-6 overflow-hidden flex items-center w-full h-full active:bg-regular-primary"
+                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 cursor-pointer border-none outline-none bg-transparent"
                   >
+                    <svg
+                      className="w-4 h-4 mr-3 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                      />
+                    </svg>
                     {!clicked ? (
                       t('Common.label.billing')
                     ) : (
                       <CircularProgress
-                        size={20}
-                        sx={{ color: 'blue' }}
-                        className="my-auto"
+                        size={16}
+                        sx={{ color: '#3B82F6' }}
+                        className="mr-3"
                       />
                     )}
                   </button>
-                </li>
-                <li className="list-none h-9">
+
+                  <div className="border-t border-gray-100 my-1"></div>
+
                   <button
                     type="button"
                     disabled={clicked}
                     onClick={signout}
-                    className="text-[14px] text-sapphire-blue pl-6 overflow-hidden flex items-center w-full h-full border-none outline-none bg-transparent cursor-pointer"
+                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 cursor-pointer border-none outline-none bg-transparent"
                   >
+                    <svg
+                      className="w-4 h-4 mr-3 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
                     {t('Common.title.sign_out')}
                   </button>
-                </li>
-              </ul>
+                </div>
+              </div>
             </div>
           )}
 

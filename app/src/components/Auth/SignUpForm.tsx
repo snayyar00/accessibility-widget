@@ -504,7 +504,7 @@ const SignUpForm: React.FC<CustomProps> = ({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"
+                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
                     />
                   </svg>
                 </div>
@@ -712,10 +712,26 @@ const SignUpForm: React.FC<CustomProps> = ({
     );
   };
 
+  // Function to handle skipping the analysis
+  const handleSkipAnalysis = () => {
+    // Clear the analysis timeout
+    if (analysisTimeout) {
+      clearTimeout(analysisTimeout);
+      setAnalysisTimeout(null);
+    }
+
+    // Set a default error count for skipped analysis
+    setTotalErrorCount(119);
+    setScriptCheckResult('false');
+
+    // Move to next step
+    setCurrentStep(3);
+  };
+
   // Step 2: Website Analysis
   const renderStep2 = () => {
     return (
-      <div className="text-center flex flex-col items-center justify-center min-h-[600px]">
+      <div className="text-center flex flex-col items-center justify-center min-h-[600px] relative">
         {/* Logo Animation Section - Fade out after 30 seconds */}
         {showLogoAnimation && (
           <div
@@ -786,6 +802,18 @@ const SignUpForm: React.FC<CustomProps> = ({
             <AccessibilityFacts isVisible={showFacts} />
           </div>
         )}
+
+        {/* Skip Button */}
+        <div className="mt-8">
+          <Button
+            color="default"
+            type="button"
+            className="px-8 py-3 text-gray-600 hover:text-gray-800 border-2 border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 rounded-xl transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+            onClick={handleSkipAnalysis}
+          >
+            Skip Analysis
+          </Button>
+        </div>
       </div>
     );
   };
@@ -922,7 +950,7 @@ const SignUpForm: React.FC<CustomProps> = ({
               {t('Sign_up.text.footer_desc')}
             </Trans>
           </div>
-          <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center">
+          <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center pb-8">
             <Trans components={[<Link to="/auth/signin"></Link>]}>
               {t('Sign_up.text.have_account')}
             </Trans>
@@ -931,7 +959,7 @@ const SignUpForm: React.FC<CustomProps> = ({
       )}
 
       {currentStep === 3 && (
-        <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center">
+        <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center pb-8">
           <Trans components={[<Link to="/auth/signin"></Link>]}>
             {t('Sign_up.text.have_account')}
           </Trans>

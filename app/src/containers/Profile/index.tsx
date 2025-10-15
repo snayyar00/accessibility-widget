@@ -87,9 +87,9 @@ const Profile: React.FC = () => {
 
           {/* Billing Portal Card */}
           <div className="bg-white rounded-lg md:rounded-xl shadow-sm border border-[#a3aef1] overflow-hidden max-w-full min-w-0">
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-4 md:px-6 py-3 md:py-4 border-b border-gray-200">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 md:px-6 py-3 md:py-4 border-b border-gray-200">
               <div className="flex items-center space-x-2 md:space-x-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                   <CreditCard className="w-4 h-4 md:w-5 md:h-5 text-white" />
                 </div>
                 <div>
@@ -109,9 +109,9 @@ const Profile: React.FC = () => {
 
           {/* License Owner Information Card */}
           <div className="bg-white rounded-lg md:rounded-xl shadow-sm border border-[#a3aef1] overflow-hidden max-w-full min-w-0">
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 px-4 md:px-6 py-3 md:py-4 border-b border-gray-200">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 md:px-6 py-3 md:py-4 border-b border-gray-200">
               <div className="flex items-center space-x-2 md:space-x-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-amber-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                   <FileText className="w-4 h-4 md:w-5 md:h-5 text-white" />
                 </div>
                 <div>

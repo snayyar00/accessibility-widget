@@ -1,22 +1,31 @@
 import React from 'react';
 
-type InputType = "text" | "number" | "email" | "tel" | "password";
+type InputType = 'text' | 'number' | 'email' | 'tel' | 'password';
 
 type Props = {
-  type?: InputType
+  type?: InputType;
   defaultValue?: string | number;
   placeholder?: string;
   className?: string;
   [x: string]: unknown;
-}
+};
 
 const Input = React.forwardRef(
-  ({ type = 'text', defaultValue = '', placeholder = '', className, ...props }: Props, ref: React.Ref<HTMLInputElement>) => (
+  (
+    {
+      type = 'text',
+      defaultValue = '',
+      placeholder = '',
+      className,
+      ...props
+    }: Props,
+    ref: React.Ref<HTMLInputElement>,
+  ) => (
     <input
       type={type}
       defaultValue={defaultValue}
       placeholder={placeholder}
-      className={`bg-light-gray border-[1px] border-solid border-white-blue rounded-[10px] px-[10px] py-[10.5px] text-[16px] leading-[19px] text-white-gray w-full focus:border-light-primary focus:outline-none active:border-light-primary active:outline-none placeholder:text-[16px] placeholder:leading-[19px] placeholder:text-light-grey ${className}`}
+      className={`bg-light-gray border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200 placeholder:text-gray-400 hover:border-gray-300 ${className}`}
       {...props}
       ref={ref}
     />

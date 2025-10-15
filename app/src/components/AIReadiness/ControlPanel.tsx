@@ -298,6 +298,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     return 'text-red-600';
   };
 
+  // Function to truncate URL to first 5 words
+  const getTruncatedUrl = (url: string, maxWords: number = 5) => {
+    const words = url.split(/[\s/]+/).filter(Boolean);
+    if (words.length <= maxWords) return url;
+    return words.slice(0, maxWords).join('/') + '...';
+  };
+
   // Heatmap helper functions
   const getAvailableHeatmapCategories = () => {
     if (!heatmapData?.insights?.data?.heatmap_urls) return [];
@@ -388,7 +395,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.5 }}
-      className="w-full max-w-6xl mx-auto"
+      className="w-full"
     >
       {/* Header */}
       <motion.div
@@ -414,7 +421,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
             {/* Title with enhanced typography */}
             <motion.h2
-              className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4"
+              className="text-4xl font-extrabold text-blue-700 mb-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -424,15 +431,19 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
             {/* Subtitle with better styling */}
             <motion.div
-              className="inline-block"
+              className="inline-block w-full max-w-full px-2 sm:px-0"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <div className="px-6 py-3 bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl">
-                <p className="text-lg text-gray-700 font-medium">
-                  Single-page snapshot of{' '}
-                  <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold">
+              <div className="px-3 sm:px-6 py-3 max-w-full overflow-hidden">
+                <p className="text-sm sm:text-lg text-gray-700 font-medium">
+                  Single-page snapshot of {/* Mobile: Show truncated URL */}
+                  <span className="inline sm:hidden bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold break-all">
+                    {getTruncatedUrl(url, 5)}
+                  </span>
+                  {/* Desktop: Show full URL */}
+                  <span className="hidden sm:inline bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold break-all">
                     {url}
                   </span>
                 </p>

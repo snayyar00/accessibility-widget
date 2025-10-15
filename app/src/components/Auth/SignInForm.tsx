@@ -128,14 +128,15 @@ const SignInForm: React.FC<Props> = ({
               to="/auth/forgot-password"
               className="text-[14px] text-blue-600 hover:text-blue-800"
             >
-              forgot password?
+              Forgot password?
             </Link>
           </div>
           <Button
             color="primary"
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+            className="w-full text-white font-medium py-3 px-4 rounded-lg transition-colors"
+            style={{ backgroundColor: '#3343ad' }}
           >
             {isSubmitting ? t('Common.text.please_wait') : 'Login'}
           </Button>

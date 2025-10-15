@@ -3334,10 +3334,18 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       return (
                         <div
                           key={row.r2_key}
-                          className="block md:grid md:grid-cols-4 gap-4 md:items-center p-3 sm:p-4 rounded-lg border hover:shadow-md transition-all duration-200 group relative overflow-hidden md:overflow-visible w-full"
+                          className="block md:grid md:grid-cols-4 gap-4 md:items-center p-3 sm:p-4 rounded-lg border hover:shadow-md transition-all duration-200 group relative overflow-hidden md:overflow-visible w-full cursor-pointer"
                           style={{
                             backgroundColor: baseColors.cardLight,
                             borderColor: baseColors.cardBorder,
+                          }}
+                          onClick={() => {
+                            setReportUrl(
+                              `/${row.r2_key}?domain=${encodeURIComponent(
+                                row.url,
+                              )}`,
+                            );
+                            setIsSuccessModalOpen(true);
                           }}
                         >
                           {/* Mobile Layout */}
@@ -3384,13 +3392,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                               >
                                 <button
                                   className="p-1 rounded hover:bg-gray-100 transition-colors"
-                                  onClick={() =>
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setOpenDropdown(
                                       openDropdown === row.r2_key
                                         ? null
                                         : row.r2_key,
-                                    )
-                                  }
+                                    );
+                                  }}
                                   aria-label={`Open actions menu for ${row.url}`}
                                   style={{
                                     backgroundColor:
@@ -3421,6 +3430,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                       right: '0',
                                       left: 'auto',
                                     }}
+                                    onClick={(e) => e.stopPropagation()}
                                   >
                                     <button
                                       className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
@@ -3676,13 +3686,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                           >
                             <button
                               className="p-1 rounded hover:bg-gray-100 transition-colors"
-                              onClick={() =>
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setOpenDropdown(
                                   openDropdown === row.r2_key
                                     ? null
                                     : row.r2_key,
-                                )
-                              }
+                                );
+                              }}
                               aria-label={`Open actions menu for ${row.url}`}
                               style={{
                                 backgroundColor:
@@ -3713,6 +3724,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   right: '0',
                                   left: 'auto',
                                 }}
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 <button
                                   className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
