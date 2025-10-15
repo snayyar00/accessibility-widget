@@ -49,7 +49,7 @@ export const InviteUser: React.FC<InviteUserProps> = ({
   const [open, setOpen] = React.useState(false);
   const [email, setEmail] = React.useState(userEmail);
   const [selectedWorkspace, setSelectedWorkspace] = React.useState('');
-  const [role, setRole] = React.useState<WorkspaceUserRole | OrganizationUserRole>(
+  const [role, setRole] = React.useState<string>(
     mode === 'workspace' ? WorkspaceUserRole.Member : OrganizationUserRole.Member,
   );
 
@@ -89,7 +89,7 @@ export const InviteUser: React.FC<InviteUserProps> = ({
   };
 
   const handleRoleChange = (e: SelectChangeEvent) => {
-    setRole(e.target.value as WorkspaceUserRole | OrganizationUserRole);
+    setRole(e.target.value);
   };
 
   const handleSave = async () => {
