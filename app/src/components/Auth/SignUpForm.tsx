@@ -712,10 +712,26 @@ const SignUpForm: React.FC<CustomProps> = ({
     );
   };
 
+  // Function to handle skipping the analysis
+  const handleSkipAnalysis = () => {
+    // Clear the analysis timeout
+    if (analysisTimeout) {
+      clearTimeout(analysisTimeout);
+      setAnalysisTimeout(null);
+    }
+
+    // Set a default error count for skipped analysis
+    setTotalErrorCount(119);
+    setScriptCheckResult('false');
+
+    // Move to next step
+    setCurrentStep(3);
+  };
+
   // Step 2: Website Analysis
   const renderStep2 = () => {
     return (
-      <div className="text-center flex flex-col items-center justify-center min-h-[600px]">
+      <div className="text-center flex flex-col items-center justify-center min-h-[600px] relative">
         {/* Logo Animation Section - Fade out after 30 seconds */}
         {showLogoAnimation && (
           <div
@@ -786,6 +802,18 @@ const SignUpForm: React.FC<CustomProps> = ({
             <AccessibilityFacts isVisible={showFacts} />
           </div>
         )}
+
+        {/* Skip Button */}
+        <div className="mt-8">
+          <Button
+            color="default"
+            type="button"
+            className="px-8 py-3 text-gray-600 hover:text-gray-800 border-2 border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 rounded-xl transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+            onClick={handleSkipAnalysis}
+          >
+            Skip Analysis
+          </Button>
+        </div>
       </div>
     );
   };
