@@ -449,7 +449,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                       : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
-                  Disabled sites
+                  Trial sites
                 </button>
               </div>
 
@@ -511,7 +511,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   <p className="text-sm text-gray-500">
                     {activeTab === 'active'
                       ? 'Add your first domain to get started with accessibility monitoring.'
-                      : 'No disabled sites found. Switch to Active sites to view your domains.'}
+                      : 'No Trial sites found. Switch to Active sites to view your domains.'}
                   </p>
                 </div>
 
@@ -989,7 +989,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                 <p className="text-sm text-gray-500">
                   {activeTab === 'active'
                     ? 'Add your first domain to get started with accessibility monitoring.'
-                    : 'No disabled sites found. Switch to Active sites to view your domains.'}
+                    : 'No Trial sites found. Switch to Active sites to view your domains.'}
                 </p>
               </div>
 
