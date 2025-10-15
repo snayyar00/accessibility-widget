@@ -11,7 +11,7 @@ import { Query, WorkspaceUser, AllowedSite } from '@/generated/graphql';
 import { CreateWorkspace } from './CreateWorkspace';
 import { EditWorkspace } from './EditWorkspace';
 import { DeleteWorkspace } from './DeleteWorkspace';
-import { InviteWorkspaceMember } from '@/components/Invite/InviteWorkspaceMember';
+import { InviteUser } from '@/components/Invite';
 
 type TableWorkspacesProps = {
   onUpdate: () => void;
@@ -206,7 +206,8 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
       disableColumnMenu: true,
       renderCell: (params) => (
         <div style={{ display: 'flex', gap: 4 }}>
-          <InviteWorkspaceMember
+          <InviteUser
+            mode="workspace"
             disableSelect
             preSelectedWorkspace={params.row.id}
             onUserInvited={handleUpdate}

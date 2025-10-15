@@ -65,7 +65,6 @@ type Documents = {
     "\n  query GetWorkspaceByAlias($alias: String!) {\n    getWorkspaceByAlias(alias: $alias) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": typeof types.GetWorkspaceByAliasDocument,
     "\n  query GetWorkspaceInvitationsByAlias($alias: String!) {\n    getWorkspaceInvitationsByAlias(alias: $alias) {\n      id\n      invited_by\n      email\n      status\n      workspace_id\n      created_at\n    }\n  }\n": typeof types.GetWorkspaceInvitationsByAliasDocument,
     "\n  query GetWorkspaceMembersByAlias($alias: String!) {\n    getWorkspaceMembersByAlias(alias: $alias) {\n      id\n      user_id\n      workspace_id\n      role\n      status\n      created_at\n      updated_at\n      invitationId\n      user {\n        id\n        name\n        email\n        avatarUrl\n      }\n    }\n  }\n": typeof types.GetWorkspaceMembersByAliasDocument,
-    "\n  mutation InviteWorkspaceMember(\n    $email: String!\n    $workspaceId: ID!\n    $role: WorkspaceUserRole!\n  ) {\n    inviteWorkspaceMember(\n      email: $email\n      workspaceId: $workspaceId\n      role: $role\n    ) {\n      user_id\n      user_name\n      user_email\n      status\n    }\n  }\n": typeof types.InviteWorkspaceMemberDocument,
     "\n  mutation InviteMember($type: JoinWorkspaceType!, $token: String!) {\n    joinWorkspace(type: $type, token: $token)\n  }\n": typeof types.InviteMemberDocument,
     "\n  mutation RemoveAllUserInvitations($email: String!) {\n    removeAllUserInvitations(email: $email)\n  }\n": typeof types.RemoveAllUserInvitationsDocument,
     "\n  mutation RemoveWorkspaceInvitation($id: ID!) {\n    removeWorkspaceInvitation(id: $id)\n  }\n": typeof types.RemoveWorkspaceInvitationDocument,
@@ -125,7 +124,6 @@ const documents: Documents = {
     "\n  query GetWorkspaceByAlias($alias: String!) {\n    getWorkspaceByAlias(alias: $alias) {\n      id\n      name\n      alias\n      organization_id\n    }\n  }\n": types.GetWorkspaceByAliasDocument,
     "\n  query GetWorkspaceInvitationsByAlias($alias: String!) {\n    getWorkspaceInvitationsByAlias(alias: $alias) {\n      id\n      invited_by\n      email\n      status\n      workspace_id\n      created_at\n    }\n  }\n": types.GetWorkspaceInvitationsByAliasDocument,
     "\n  query GetWorkspaceMembersByAlias($alias: String!) {\n    getWorkspaceMembersByAlias(alias: $alias) {\n      id\n      user_id\n      workspace_id\n      role\n      status\n      created_at\n      updated_at\n      invitationId\n      user {\n        id\n        name\n        email\n        avatarUrl\n      }\n    }\n  }\n": types.GetWorkspaceMembersByAliasDocument,
-    "\n  mutation InviteWorkspaceMember(\n    $email: String!\n    $workspaceId: ID!\n    $role: WorkspaceUserRole!\n  ) {\n    inviteWorkspaceMember(\n      email: $email\n      workspaceId: $workspaceId\n      role: $role\n    ) {\n      user_id\n      user_name\n      user_email\n      status\n    }\n  }\n": types.InviteWorkspaceMemberDocument,
     "\n  mutation InviteMember($type: JoinWorkspaceType!, $token: String!) {\n    joinWorkspace(type: $type, token: $token)\n  }\n": types.InviteMemberDocument,
     "\n  mutation RemoveAllUserInvitations($email: String!) {\n    removeAllUserInvitations(email: $email)\n  }\n": types.RemoveAllUserInvitationsDocument,
     "\n  mutation RemoveWorkspaceInvitation($id: ID!) {\n    removeWorkspaceInvitation(id: $id)\n  }\n": types.RemoveWorkspaceInvitationDocument,
@@ -352,10 +350,6 @@ export function graphql(source: "\n  query GetWorkspaceInvitationsByAlias($alias
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query GetWorkspaceMembersByAlias($alias: String!) {\n    getWorkspaceMembersByAlias(alias: $alias) {\n      id\n      user_id\n      workspace_id\n      role\n      status\n      created_at\n      updated_at\n      invitationId\n      user {\n        id\n        name\n        email\n        avatarUrl\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetWorkspaceMembersByAlias($alias: String!) {\n    getWorkspaceMembersByAlias(alias: $alias) {\n      id\n      user_id\n      workspace_id\n      role\n      status\n      created_at\n      updated_at\n      invitationId\n      user {\n        id\n        name\n        email\n        avatarUrl\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  mutation InviteWorkspaceMember(\n    $email: String!\n    $workspaceId: ID!\n    $role: WorkspaceUserRole!\n  ) {\n    inviteWorkspaceMember(\n      email: $email\n      workspaceId: $workspaceId\n      role: $role\n    ) {\n      user_id\n      user_name\n      user_email\n      status\n    }\n  }\n"): (typeof documents)["\n  mutation InviteWorkspaceMember(\n    $email: String!\n    $workspaceId: ID!\n    $role: WorkspaceUserRole!\n  ) {\n    inviteWorkspaceMember(\n      email: $email\n      workspaceId: $workspaceId\n      role: $role\n    ) {\n      user_id\n      user_name\n      user_email\n      status\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

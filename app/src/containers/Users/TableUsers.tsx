@@ -13,7 +13,7 @@ import {
 import { ChangeOrganizationSelect } from './ChangeOrganizationSelect';
 import { ChangeOrganizationUserRole } from './ChangeOrganizationUserRole';
 import { DeleteUserFromOrganization } from './DeleteUserFromOrganization';
-import { InviteWorkspaceMember } from '@/components/Invite/InviteWorkspaceMember';
+import { InviteUser } from '@/components/Invite';
 import { RemoveAllUserInvitations } from '@/components/Invite/RemoveAllUserInvitations';
 
 type TableUsersProps = {
@@ -328,7 +328,8 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
         return (
           <div className="flex">
             {rowUserId !== userId && (
-              <InviteWorkspaceMember
+              <InviteUser
+                mode="workspace"
                 userEmail={userEmail}
                 userWorkspaces={userWorkspaces}
                 onUserInvited={refetch}
@@ -359,10 +360,10 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
   return (
     <>
       <div className="static mb-5 top-[15px] right-[17px] lg:absolute lg:mb-0">
-        <InviteWorkspaceMember
+        <InviteUser
+          mode="organization"
           onUserInvited={refetch}
-          allWorkspaces={allWorkspaces}
-          workspacesLoading={workspacesLoading}
+          buttonText="Invite User"
         />
       </div>
 
