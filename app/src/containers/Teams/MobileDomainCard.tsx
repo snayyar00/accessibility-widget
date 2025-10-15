@@ -228,12 +228,14 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
                     }`}
                     placement="top"
                   >
-                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-50 text-green-700 border border-green-200 cursor-help">
-                      <span className="relative flex h-1.5 w-1.5 mr-1.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                    <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-green-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-help border border-green-400">
+                      <span className="relative flex h-2 w-2 mr-2">
+                        <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                       </span>
-                      Online
+                      <span className="text-white font-medium tracking-wide">
+                        ONLINE
+                      </span>
                     </span>
                   </Tooltip>
                 ) : domain.is_currently_down === 1 ? (

@@ -758,12 +758,14 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                       }`}
                                       placement="top"
                                     >
-                                      <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-50 text-green-700 border border-green-200 cursor-help">
-                                        <span className="relative flex h-1.5 w-1.5 mr-1.5">
-                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-green-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-help border border-green-400">
+                                        <span className="relative flex h-2 w-2 mr-2">
+                                          <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span>
+                                          <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                                         </span>
-                                        Online
+                                        <span className="text-white font-medium tracking-wide">
+                                          ONLINE
+                                        </span>
                                       </span>
                                     </Tooltip>
                                   ) : domain.is_currently_down === 1 ? (
@@ -777,12 +779,14 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                       }`}
                                       placement="top"
                                     >
-                                      <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200 cursor-help">
-                                        <span className="relative flex h-1.5 w-1.5 mr-1.5">
-                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+                                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-help border border-red-400">
+                                        <span className="relative flex h-2 w-2 mr-2">
+                                          <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span>
+                                          <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                                         </span>
-                                        Offline
+                                        <span className="text-white font-medium tracking-wide">
+                                          OFFLINE
+                                        </span>
                                       </span>
                                     </Tooltip>
                                   ) : (
@@ -790,9 +794,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                       title="Status check in progress"
                                       placement="top"
                                     >
-                                      <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 cursor-help">
+                                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-help border border-blue-400">
                                         <svg
-                                          className="animate-spin -ml-0.5 mr-1.5 h-2.5 w-2.5 text-gray-400"
+                                          className="animate-spin -ml-0.5 mr-2 h-3 w-3 text-white"
                                           fill="none"
                                           viewBox="0 0 24 24"
                                         >
@@ -810,7 +814,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                           ></path>
                                         </svg>
-                                        Checking...
+                                        <span className="text-white font-medium tracking-wide">
+                                          CHECKING...
+                                        </span>
                                       </span>
                                     </Tooltip>
                                   )}
@@ -820,9 +826,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                   title="Waiting for first monitoring check"
                                   placement="top"
                                 >
-                                  <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200 cursor-help">
+                                  <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-gray-500 to-slate-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-help border border-gray-400">
                                     <svg
-                                      className="mr-1.5 h-2.5 w-2.5 text-gray-400"
+                                      className="mr-2 h-3 w-3 text-white"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -834,7 +840,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                       />
                                     </svg>
-                                    Awaiting data
+                                    <span className="text-white font-medium tracking-wide">
+                                      AWAITING DATA
+                                    </span>
                                   </span>
                                 </Tooltip>
                               )
