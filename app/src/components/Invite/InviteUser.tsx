@@ -185,8 +185,10 @@ export const InviteUser: React.FC<InviteUserProps> = ({
 
           {mode === 'workspace' && (
             <FormControl fullWidth margin="normal">
-              <InputLabel>Workspace</InputLabel>
+              <InputLabel id="workspace-select-label">Workspace</InputLabel>
               <Select
+                labelId="workspace-select-label"
+                id="workspace-select"
                 value={selectedWorkspace}
                 onChange={handleWorkspaceChange}
                 label="Workspace"
@@ -202,8 +204,14 @@ export const InviteUser: React.FC<InviteUserProps> = ({
           )}
 
           <FormControl fullWidth margin="normal">
-            <InputLabel>{getRoleLabel()}</InputLabel>
-            <Select value={role} onChange={handleRoleChange} label={getRoleLabel()}>
+            <InputLabel id="role-select-label">{getRoleLabel()}</InputLabel>
+            <Select 
+              labelId="role-select-label"
+              id="role-select"
+              value={role} 
+              onChange={handleRoleChange} 
+              label={getRoleLabel()}
+            >
               {mode === 'workspace' ? (
                 <>
                   <MenuItem value={WorkspaceUserRole.Member}>Member</MenuItem>
