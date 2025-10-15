@@ -588,7 +588,7 @@ const Sidebar = ({
               </nav>
             </div>
 
-            {/* Billing Button - Always at the end */}
+            {/* Billing Button - Always at the end
             <div className="px-4 pb-4 mt-auto">
               <button
                 onClick={handleBillingClick}
@@ -606,7 +606,7 @@ const Sidebar = ({
                   )}
                 </span>
               </button>
-            </div>
+            </div> */}
           </div>
         ) : (
           /* Collapsed Mode - Direct navigation without card */
@@ -899,7 +899,7 @@ const Sidebar = ({
               </nav>
             </div>
 
-            {/* Billing Button - Collapsed - Always at the end */}
+            {/* Billing Button - Collapsed - Always at the end
             <div className="pb-4 mt-auto">
               <button
                 onClick={handleBillingClick}
@@ -914,7 +914,7 @@ const Sidebar = ({
                   )}
                 </div>
               </button>
-            </div>
+            </div> */}
           </div>
         )}
       </div>

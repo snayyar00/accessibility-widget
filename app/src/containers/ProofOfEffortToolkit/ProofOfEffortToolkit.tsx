@@ -33,7 +33,7 @@ import oneIssuesIconImage from '@/assets/images/1_issues_icon.png';
 import twoIssuesIconImage from '@/assets/images/2_issues_icon.png';
 import threeIssuesIconImage from '@/assets/images/3_issues_icon.png';
 import getWidgetSettings from '@/utils/getWidgetSettings';
-import EmailModal from '@/components/Common/EmailModal';
+import InstallationEmailModal from '@/components/Common/InstallationEmailModal';
 import { CircularProgress } from '@mui/material';
 import TourGuide from '@/components/Common/TourGuide';
 import { defaultTourStyles } from '@/config/tourStyles';
@@ -2100,13 +2100,20 @@ const ProofOfEffortToolkit: React.FC = () => {
       </div>
 
       {/* Email Modal */}
-      <EmailModal
+      <InstallationEmailModal
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}
         onSubmit={handleEmailSubmit}
         isLoading={isEmailSending}
         title="Send Proof of Effort Toolkit"
-        description="Enter the email address where you would like to send the proof of effort toolkit containing all three PDF documents."
+        description="We'll email you the complete toolkit"
+        bulletPoints={[
+          { text: 'Introduction to the toolkit PDF' },
+          { text: 'Monthly audit report PDF' },
+          { text: 'Accessibility statement PDF' },
+          { text: 'All documents in a single ZIP file' },
+        ]}
+        showSuccessState={false}
       />
     </div>
   );
