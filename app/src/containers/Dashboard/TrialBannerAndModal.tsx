@@ -720,13 +720,13 @@ const TrialBannerAndModal: React.FC<any> = ({
                               }
                               trialReload.current = true;
                             }}
-                            className="group relative p-3 md:p-4 text-left border-2 border-green-200 rounded-xl bg-gradient-to-br from-green-50 to-white hover:from-green-100 hover:to-green-50 transition-all duration-300 hover:border-green-300 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="group relative p-3 md:p-4 text-left border-2 border-blue-300 rounded-xl bg-gradient-to-br from-blue-50 to-white hover:from-blue-100 hover:to-blue-50 transition-all duration-300 hover:border-blue-400 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <div className="flex items-center space-x-2">
                               <div className="flex-shrink-0">
-                                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                                   <svg
-                                    className="w-4 h-4 text-green-600"
+                                    className="w-4 h-4 text-blue-600"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -751,9 +751,9 @@ const TrialBannerAndModal: React.FC<any> = ({
                             </div>
                             {addSiteLoading || billingLoading ? (
                               <div className="mt-2 text-center">
-                                <div className="inline-flex items-center text-green-600 text-xs">
+                                <div className="inline-flex items-center text-blue-600 text-xs">
                                   <svg
-                                    className="animate-spin -ml-1 mr-2 h-3 w-3 text-green-600"
+                                    className="animate-spin -ml-1 mr-2 h-3 w-3 text-blue-600"
                                     xmlns="http://www.w3.org/2000/svg"
                                     fill="none"
                                     viewBox="0 0 24 24"
@@ -827,19 +827,6 @@ const TrialBannerAndModal: React.FC<any> = ({
                             </div>
                           ) : (
                             <div className="flex items-center justify-center space-x-2">
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                                />
-                              </svg>
                               Skip trial & buy
                             </div>
                           )}
