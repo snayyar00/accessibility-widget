@@ -335,7 +335,13 @@ const Topbar: React.FC<Props> = ({
               </button>
 
               {/* Support */}
-              <button className="p-2 rounded-lg hover:bg-blue-200 transition-colors duration-200">
+              <button
+                className="p-2 rounded-lg hover:bg-blue-200 transition-colors duration-200"
+                onClick={() =>
+                  window.open('mailto:support@webability.io', '_blank')
+                }
+                title="Contact Support"
+              >
                 <Headset className="w-5 h-5" style={{ color: '#484848' }} />
               </button>
 
@@ -358,7 +364,7 @@ const Topbar: React.FC<Props> = ({
 
           {/* Notification Settings Dropdown */}
           {isShowNotificationSettings && (
-            <div className="absolute top-[calc(100%_+_10px)] right-0 w-[280px] sm:right-0 md:right-[215px] lg:right-[215px] z-50">
+            <div className="absolute top-full right-0 mt-3 w-[280px] sm:w-[260px] z-50">
               <div className="relative p-4 border border-solid border-dark-grey rounded-[5px] shadow-xsl bg-white">
                 <h3 className="text-lg font-semibold text-sapphire-blue mb-4">
                   Notification Settings
@@ -486,9 +492,9 @@ const Topbar: React.FC<Props> = ({
 
           {/* Profile Menu */}
           {isShowMenu && (
-            <div className="absolute top-[calc(100%_+_17px)] right-[10px] w-[200px] sm:top-full z-50">
-              <ul className="relative p-0 border border-solid border-dark-grey rounded-[5px] shadow-xsl bg-white before:content-[''] before:block before:absolute before:left-1/2 before:bottom-full before:translate-x-[-1/2] before:translate-y-0 before:w-0 before:h-0 before:border-[12px] before:border-solid before:border-transparent before:border-b-dark-grey sm:before:left-[unset] sm:before:right-1 after:content-[''] after:block after:absolute after:left-1/2 after:bottom-full after:translate-x-[-1/2] after:translate-y-0 after:w-0 after:h-0 after:border-[10px] after:border-solid after:border-transparent after:border-b-white sm:after:left-[unset] sm:after:right-2">
-                <li className="list-none h-9">
+            <div className="absolute top-full right-0 mt-3 w-[200px] z-50">
+              <div className="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
+                <div className="py-2">
                   <NavLink
                     to="/profile"
                     onClick={(e) => {
@@ -499,12 +505,24 @@ const Topbar: React.FC<Props> = ({
                         document.dispatchEvent(new MouseEvent('click'));
                       }
                     }}
-                    className="text-[14px] text-sapphire-blue pl-6 overflow-hidden flex items-center w-full h-full active:bg-regular-primary"
+                    className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 cursor-pointer"
                   >
+                    <svg
+                      className="w-4 h-4 mr-3 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
                     {t('Common.label.profile')}
                   </NavLink>
-                </li>
-                <li className="list-none h-9">
+
                   <button
                     disabled={clicked}
                     onClick={async (e) => {
@@ -515,30 +533,57 @@ const Topbar: React.FC<Props> = ({
                       // Manually trigger a click outside to close the menu
                       document.dispatchEvent(new MouseEvent('click'));
                     }}
-                    className="text-[14px] text-sapphire-blue pl-6 overflow-hidden flex items-center w-full h-full active:bg-regular-primary"
+                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 cursor-pointer border-none outline-none bg-transparent"
                   >
+                    <svg
+                      className="w-4 h-4 mr-3 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                      />
+                    </svg>
                     {!clicked ? (
                       t('Common.label.billing')
                     ) : (
                       <CircularProgress
-                        size={20}
-                        sx={{ color: 'blue' }}
-                        className="my-auto"
+                        size={16}
+                        sx={{ color: '#3B82F6' }}
+                        className="mr-3"
                       />
                     )}
                   </button>
-                </li>
-                <li className="list-none h-9">
+
+                  <div className="border-t border-gray-100 my-1"></div>
+
                   <button
                     type="button"
                     disabled={clicked}
                     onClick={signout}
-                    className="text-[14px] text-sapphire-blue pl-6 overflow-hidden flex items-center w-full h-full border-none outline-none bg-transparent cursor-pointer"
+                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 cursor-pointer border-none outline-none bg-transparent"
                   >
+                    <svg
+                      className="w-4 h-4 mr-3 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
                     {t('Common.title.sign_out')}
                   </button>
-                </li>
-              </ul>
+                </div>
+              </div>
             </div>
           )}
 
