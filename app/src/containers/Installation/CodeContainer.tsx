@@ -938,7 +938,7 @@ export default function CodeContainer({
             className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-[#445AE7] hover:bg-[#e6f3fa] text-[#445AE7] rounded-lg font-medium transition-colors customize-widget-button"
           >
             <FaMagic className="w-4 h-4" />
-            {showCustomization ? 'Hide Options' : 'Customize'}
+            {showCustomization ? 'Hide Options' : 'Customize Script'}
           </button>
         </div>
 
