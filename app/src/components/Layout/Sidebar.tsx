@@ -646,6 +646,28 @@ const Sidebar = ({
                   </div>
                 </NavLink>
 
+                {/* Installation */}
+                <NavLink
+                  to="/installation"
+                  onClick={closeSidebar}
+                  className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
+                    isActiveRoute('/installation')
+                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                      : 'text-black hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <RiStackLine
+                      size={24}
+                      className={
+                        isActiveRoute('/installation')
+                          ? 'text-[#445AE7]'
+                          : 'text-[#656565]'
+                      }
+                    />
+                  </div>
+                </NavLink>
+
                 {/* Customization */}
                 <NavLink
                   to="/widget-selection"
@@ -665,28 +687,6 @@ const Sidebar = ({
                         isActiveRoute('/widget-selection') ||
                         isActiveRoute('/customize-widget') ||
                         isActiveRoute('/old-widget')
-                          ? 'text-[#445AE7]'
-                          : 'text-[#656565]'
-                      }
-                    />
-                  </div>
-                </NavLink>
-
-                {/* Installation */}
-                <NavLink
-                  to="/installation"
-                  onClick={closeSidebar}
-                  className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
-                    isActiveRoute('/installation')
-                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
-                      : 'text-black hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    <RiStackLine
-                      size={24}
-                      className={
-                        isActiveRoute('/installation')
                           ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }
