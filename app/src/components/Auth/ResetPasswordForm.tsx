@@ -8,14 +8,14 @@ import ErrorText from '@/components/Common/ErrorText';
 import Input from '@/components/Common/Input/Input';
 import Button from '@/components/Common/Button';
 import Badge from '@/components/Common/Badge';
-import { ReactHookFormType } from "@/typeReactHookForm";
+import { ReactHookFormType } from '@/typeReactHookForm';
 
 type Props = ReactHookFormType & {
   isSubmitting?: boolean;
   apiError?: string;
-}
+};
 
-const ResetPasswordForm:React.FC<Props> = ({
+const ResetPasswordForm: React.FC<Props> = ({
   onSubmit,
   register,
   errors,
@@ -25,68 +25,129 @@ const ResetPasswordForm:React.FC<Props> = ({
   const { t } = useTranslation();
 
   return (
-    <>
-      <GoBack link="/auth/signin" />
-      <div>
-        <Logo />
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="text-center space-y-6">
+        <div className="flex justify-center">
+          <Logo />
+        </div>
+        <div className="space-y-3">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+            {t('Common.title.reset_password')}
+          </h1>
+          <p className="text-gray-600 text-base leading-relaxed max-w-sm mx-auto">
+            {t('Reset_password.description')}
+          </p>
+        </div>
       </div>
-      <div className="font-bold text-[26px] leading-9 text-sapphire-blue mt-[3px]">
-        {t('Common.title.reset_password')}
-      </div>
-      <p className="text-[14px] leading-6 text-sapphire-blue max-w-[567px] mx-auto mt-6 mb-10">
-        {t('Reset_password.description')}
-      </p>
-      <form onSubmit={onSubmit} className="w-[420px] mx-auto my-0 text-left block">
-        <div className="block w-full mb-4">
-          <label className="font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block uppercase mb-[19px]">
+
+      <form onSubmit={onSubmit} className="space-y-6">
+        {/* Password Input */}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">
             {t('Common.label.password')}
           </label>
-          <FormControl>
+          <div className="relative">
             <Input
               type="password"
               placeholder={t('Common.placeholder.password')}
               name="password"
               ref={register}
+              className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-gray-400"
             />
-            {errors?.password?.message && (
+          </div>
+          {errors?.password?.message && (
+            <div className="mt-2">
               <ErrorText message={String(t(errors.password.message))} />
-            )}
-          </FormControl>
+            </div>
+          )}
         </div>
-        <div className="block w-full mb-4">
-          <label className="font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block uppercase mb-[19px]">
+
+        {/* Confirm Password Input */}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">
             {t('Common.label.confirm_password')}
           </label>
-          <FormControl>
+          <div className="relative">
             <Input
               type="password"
               placeholder={t('Common.placeholder.confirm_password')}
               name="passwordConfirmation"
               ref={register}
+              className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-gray-400"
             />
-            {errors?.passwordConfirmation?.message && (
-              <ErrorText message={String(t(errors.passwordConfirmation.message))} />
-            )}
-          </FormControl>
+          </div>
+          {errors?.passwordConfirmation?.message && (
+            <div className="mt-2">
+              <ErrorText
+                message={String(t(errors.passwordConfirmation.message))}
+              />
+            </div>
+          )}
         </div>
-        <div className="block w-full mb-4">
-          <div className="block text-center mt-[50px]">
-            <Button color="primary" type="submit">
-              {isSubmitting ? t('Reset_password.please_wait') : t('Common.title.reset_password')}
-            </Button>
-          </div>
-          {apiError && <Badge type="error">{apiError}</Badge>}
-          <div className="text-[14px] leading-6 text-sapphire-blue text-center mt-[69px]">
-          <Trans
-              i18nKey="Forgot_password.footer"
-              components={[<a href="mailto:support@webability.com"></a>]}
-            />
 
+        {/* Submit Button */}
+        <div className="pt-4">
+          <Button
+            color="primary"
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            {isSubmitting ? (
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>{t('Reset_password.please_wait')}</span>
+              </div>
+            ) : (
+              t('Common.title.reset_password')
+            )}
+          </Button>
+        </div>
+
+        {/* Error Message */}
+        {apiError && (
+          <div className="mt-4">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-800 font-medium">{apiError}</p>
+                </div>
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* Support Link */}
+        <div className="pt-6 text-center">
+          <p className="text-sm text-gray-600">
+            <Trans
+              i18nKey="Forgot_password.footer"
+              components={[
+                <a
+                  href="mailto:support@webability.com"
+                  className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                ></a>,
+              ]}
+            />
+          </p>
         </div>
       </form>
-    </>
+    </div>
   );
-}
+};
 
 export default ResetPasswordForm;
