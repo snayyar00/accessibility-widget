@@ -418,6 +418,8 @@ const AutomationScan: React.FC = () => {
   const [expandedSubcategories, setExpandedSubcategories] = useState<{ [key: string]: boolean }>({});
   const [llmSuggestions, setLlmSuggestions] = useState<{ [key: string]: any }>({});
   const [loadingLLMSuggestions, setLoadingLLMSuggestions] = useState<{ [key: string]: boolean }>({});
+  const [appliedIssues, setAppliedIssues] = useState<{ [key: string]: boolean }>({});
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [selectedTests, setSelectedTests] = useState({
     // Basic Configuration
     headless: true,
@@ -937,6 +939,8 @@ const AutomationScan: React.FC = () => {
         }
 
         console.log(`Task ID received: ${taskId}`);
+        // Store the current session ID for marking issues as applied
+        setCurrentSessionId(taskId);
         setLoadingMessage('Getting responses...');
 
         // Step 2: Poll for results with extended timeout for long scans
@@ -1415,6 +1419,69 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
     } finally {
       setLoadingLLMSuggestions(prev => ({ ...prev, [issueKey]: false }));
       console.log('🏁 Finished LLM suggestion fetch for:', issueKey);
+    }
+  };
+
+  // Function to mark issue as applied in database
+  const markIssueAsApplied = async (issueKey: string, fix: any, sessionId: string) => {
+    try {
+      console.log('🔄 Marking issue as applied:', { issueKey, fix, sessionId });
+
+      // First, we need to find the issue ID from the database
+      // The issue was stored with the taskId as sessionId
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/accessibility-issues/session/${sessionId}`,
+        {
+          headers: {
+            'X-API-Key': getAuthenticationCookie() || '',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch session issues');
+      }
+
+      const data = await response.json();
+
+      // Find the matching issue by selector and issue type
+      const matchingIssue = data.issues?.find((issue: any) =>
+        issue.issue.includes(fix.selector) ||
+        issue.issue.includes(fix.issue_type)
+      );
+
+      if (!matchingIssue) {
+        console.warn('⚠️  Issue not found in database, cannot mark as applied');
+        // Still update local state for UX
+        setAppliedIssues(prev => ({ ...prev, [issueKey]: true }));
+        return;
+      }
+
+      // Update the issue in the database
+      const updateResponse = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/accessibility-issues/${matchingIssue.id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': getAuthenticationCookie() || '',
+          },
+          body: JSON.stringify({ is_applied: true }),
+        }
+      );
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update issue status');
+      }
+
+      // Update local state
+      setAppliedIssues(prev => ({ ...prev, [issueKey]: true }));
+      console.log('✅ Issue marked as applied successfully');
+
+    } catch (error) {
+      console.error('❌ Error marking issue as applied:', error);
+      // Still update local state for better UX even if API fails
+      setAppliedIssues(prev => ({ ...prev, [issueKey]: true }));
     }
   };
 
@@ -2455,10 +2522,19 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
                                                           </div>
                                                         </div>
                                                         <button
-                                                          className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors shadow-md flex-shrink-0"
-                                                          title="Apply this color combination"
+                                                          onClick={() => {
+                                                            if (!appliedIssues[issueKey] && currentSessionId) {
+                                                              markIssueAsApplied(issueKey, fix, currentSessionId);
+                                                            }
+                                                          }}
+                                                          disabled={appliedIssues[issueKey] || !currentSessionId}
+                                                          className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors shadow-md flex-shrink-0 ${appliedIssues[issueKey]
+                                                              ? 'bg-green-600 text-white cursor-not-allowed'
+                                                              : 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+                                                            }`}
+                                                          title={appliedIssues[issueKey] ? 'Fix already applied' : 'Apply this color combination'}
                                                         >
-                                                          Apply
+                                                          {appliedIssues[issueKey] ? 'Applied' : 'Apply'}
                                                         </button>
                                                       </div>
                                                       <div className="mt-3 bg-gray-900 rounded px-3 py-2 border border-gray-700">

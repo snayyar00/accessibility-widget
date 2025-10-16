@@ -1,5 +1,6 @@
 import { Router } from 'express'
 
+import accessibilityIssuesRoutes from './accessibility-issues.routes'
 import aiSummaryRoutes from './ai-summary.routes'
 import automationScanRoutes from './automation-scan.routes'
 import cacheRoutes from './cache.routes'
@@ -26,6 +27,7 @@ router.use(monitoringRoutes)
 router.use(sitesRoutes)
 router.use(aiSummaryRoutes)
 router.use(automationScanRoutes)
+router.use(accessibilityIssuesRoutes)
 router.use('/cache', cacheRoutes)
 
 export default router

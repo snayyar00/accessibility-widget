@@ -1,4 +1,9 @@
+import { config } from 'dotenv'
+import { resolve } from 'path'
 import type { Knex } from 'knex'
+
+// Load .env from the api folder (parent of config folder)
+config({ path: resolve(__dirname, '../.env') })
 
 const knexConfig = (database: string, host: string, user: string, password: string, port: number): Knex.Config => ({
   client: 'mysql2',

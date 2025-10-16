@@ -13,6 +13,7 @@ export const TABLES = {
   newsletterSubscribers: 'newsletter_subscribers',
   userPlanTokens: 'user_plan_tokens',
   accessibilityReports: 'accessibility_reports',
+  accessibilityIssues: 'accessibility_issues',
   failedLoginAttempts: 'failed_login_attempts',
   cancelFeedback: 'cancel_feedback',
   organizations: 'organizations',
