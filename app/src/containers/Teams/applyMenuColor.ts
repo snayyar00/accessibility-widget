@@ -504,6 +504,20 @@ function injectHeaderIconStyles(
       fill: ${customColor} !important;
       color: ${customColor} !important;
     }
+          /* Ensure reset button icon is always visible with proper styling */
+    .asw-container .asw-menu .asw-menu-reset .asw-header-icon,
+    .asw-container .asw-menu .asw-menu-reset .asw-header-icon *,
+    .asw-container .asw-menu .asw-menu-reset .asw-header-icon path,
+    .asw-container .asw-menu .asw-menu-reset .asw-header-icon svg {
+      fill: ${customColor} !important;
+      color: ${customColor} !important;
+      stroke: none !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      display: block !important;
+      width: 16px !important;
+      height: 16px !important;
+    }
 
     /* Override other header SVG styles */
     .asw-container .asw-menu .asw-menu-header svg:not(.asw-header-icon) {
