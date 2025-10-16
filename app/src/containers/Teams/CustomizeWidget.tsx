@@ -141,89 +141,94 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       return;
     }
 
-    // Create and inject a style tag with high specificity selectors
-    // Following the same pattern as color application for consistency
+    // Create and inject a style tag with maximum specificity selectors
+    // Using the same approach as color application for consistency
     const styleElement = iframeDoc.createElement('style');
     styleElement.id = 'custom-widget-font-style';
     styleElement.textContent = `
-      /* Widget container and all children with high specificity */
-      .asw-container,
-      .asw-container *,
-      .asw-container .asw-menu,
+      /* Maximum specificity selectors to override widget's default fonts */
       .asw-container .asw-menu *,
-      .asw-container .asw-widget,
       .asw-container .asw-widget *,
-      .asw-container .asw-panel,
       .asw-container .asw-panel *,
       
-      /* Specific widget elements */
-      .asw-menu-title,
-      .asw-menu-header,
-      .asw-menu-content,
-      .asw-footer,
-      .asw-btn,
-      .asw-card-title,
-      .asw-color-title,
-      .asw-report-issue-btn,
-      .asw-selected-lang,
-      .asw-language-option,
-      .asw-language-name,
-      .asw-custom-dropdown-item,
-      .asw-custom-dropdown-toggle,
-      .asw-accessprofiles-dropdown-toggle,
-      .asw-oversize-widget-container,
-      .asw-header-lang-selector,
-      .asw-font-size-btn,
-      .asw-adjust-font,
-      .asw-structure-item,
-      .asw-structure-section,
-      .asw-color-btn,
-      .asw-filter,
-      .font-size-text,
-      .asw-form-text,
+      /* Specific widget elements with high specificity */
+      .asw-container .asw-menu .asw-menu-title,
+      .asw-container .asw-menu .asw-menu-header,
+      .asw-container .asw-menu .asw-menu-content,
+      .asw-container .asw-menu .asw-footer,
+      .asw-container .asw-menu .asw-btn,
+      .asw-container .asw-menu .asw-card-title,
+      .asw-container .asw-menu .asw-color-title,
+      .asw-container .asw-menu .asw-report-issue-btn,
+      .asw-container .asw-menu .asw-selected-lang,
+      .asw-container .asw-menu .asw-language-option,
+      .asw-container .asw-menu .asw-language-name,
+      .asw-container .asw-menu .asw-custom-dropdown-item,
+      .asw-container .asw-menu .asw-custom-dropdown-toggle,
+      .asw-container .asw-menu .asw-accessprofiles-dropdown-toggle,
+      .asw-container .asw-menu .asw-oversize-widget-container,
+      .asw-container .asw-menu .asw-header-lang-selector,
+      .asw-container .asw-menu .asw-font-size-btn,
+      .asw-container .asw-menu .asw-adjust-font,
+      .asw-container .asw-menu .asw-structure-item,
+      .asw-container .asw-menu .asw-structure-section,
+      .asw-container .asw-menu .asw-color-btn,
+      .asw-container .asw-menu .asw-filter,
+      .asw-container .asw-menu .font-size-text,
+      .asw-container .asw-menu .asw-form-text,
       
-      /* Form elements */
-      #report-problem-form,
-      #report-problem-form *,
-      #report-problem-form label,
-      #report-problem-form textarea,
-      #report-problem-form select,
-      #report-problem-form input,
+      /* Form elements with high specificity */
+      .asw-container .asw-menu #report-problem-form,
+      .asw-container .asw-menu #report-problem-form *,
+      .asw-container .asw-menu #report-problem-form label,
+      .asw-container .asw-menu #report-problem-form textarea,
+      .asw-container .asw-menu #report-problem-form select,
+      .asw-container .asw-menu #report-problem-form input,
       
-      /* Buttons and interactive elements */
-      button.asw-btn,
-      button.asw-report-issue-btn,
-      .asw-cancel-btn,
-      .submit-button,
-      .cancel-button,
-      .issue-type-button,
-      .asw-info-button,
+      /* Buttons and interactive elements with high specificity */
+      .asw-container .asw-menu button.asw-btn,
+      .asw-container .asw-menu button.asw-report-issue-btn,
+      .asw-container .asw-menu .asw-cancel-btn,
+      .asw-container .asw-menu .submit-button,
+      .asw-container .asw-menu .cancel-button,
+      .asw-container .asw-menu .issue-type-button,
+      .asw-container .asw-menu .asw-info-button,
       
-      /* Profile grid */
-      .profile-grid,
-      .profile-grid *,
-      .profile-grid .asw-btn,
+      /* Profile grid with high specificity */
+      .asw-container .asw-menu .profile-grid,
+      .asw-container .asw-menu .profile-grid *,
+      .asw-container .asw-menu .profile-grid .asw-btn,
       
-      /* Language selector */
-      .asw-header-lang-selector *,
-      .asw-lang-dropdown-content,
-      .asw-lang-dropdown-content *,
+      /* Language selector with high specificity */
+      .asw-container .asw-menu .asw-header-lang-selector *,
+      .asw-container .asw-menu .asw-lang-dropdown-content,
+      .asw-container .asw-menu .asw-lang-dropdown-content *,
       
-      /* Color sections */
-      .asw-color-section,
-      .asw-color-section *,
+      /* Color sections with high specificity */
+      .asw-container .asw-menu .asw-color-section,
+      .asw-container .asw-menu .asw-color-section *,
       
-      /* Translate elements */
-      .asw-translate,
-      span.asw-translate,
+      /* Translate elements with high specificity */
+      .asw-container .asw-menu .asw-translate,
+      .asw-container .asw-menu span.asw-translate,
       
-      /* Modal elements */
-      .asw-confirmation-modal,
-      .asw-confirmation-modal *,
-      .asw-modal-title,
-      .asw-modal-text,
-      .asw-modal-btn-primary,
-      .asw-modal-btn-secondary {
+      /* Modal elements with high specificity */
+      .asw-container .asw-menu .asw-confirmation-modal,
+      .asw-container .asw-menu .asw-confirmation-modal *,
+      .asw-container .asw-menu .asw-modal-title,
+      .asw-container .asw-menu .asw-modal-text,
+      .asw-container .asw-menu .asw-modal-btn-primary,
+      .asw-container .asw-menu .asw-modal-btn-secondary,
+      
+      /* Additional specific selectors for problematic elements */
+      .asw-container .asw-menu .asw-oversize-widget-container .asw-selected-lang,
+      .asw-container .asw-menu .asw-accessprofiles-dropdown-toggle .asw-selected-lang,
+      .asw-container .asw-menu .asw-header-lang-selector .asw-selected-lang,
+      .asw-container .asw-menu .asw-lang-dropdown-content .asw-language-option,
+      .asw-container .asw-menu .asw-lang-dropdown-content .asw-language-name,
+      
+      /* Universal selector as fallback with maximum specificity */
+      .asw-container .asw-menu *:not(svg):not(path):not(circle):not(rect):not(line):not(polyline):not(polygon) {
         font-family: ${fontFamily} !important;
       }
     `;
@@ -232,6 +237,58 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     const head = iframeDoc.head || iframeDoc.getElementsByTagName('head')[0];
     if (head) {
       head.appendChild(styleElement);
+    }
+
+    // Also apply font directly to existing elements as a backup
+    const applyFontToElements = () => {
+      const elements = iframeDoc.querySelectorAll(
+        '.asw-container .asw-menu *:not(svg):not(path):not(circle):not(rect):not(line):not(polyline):not(polygon)',
+      );
+      elements.forEach((element: any) => {
+        if (element.style) {
+          element.style.setProperty('font-family', fontFamily, 'important');
+        }
+      });
+    };
+
+    // Apply font to existing elements immediately
+    applyFontToElements();
+
+    // Set up a MutationObserver to apply font to dynamically added elements
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach((node: any) => {
+            if (node.nodeType === 1) {
+              // Element node
+              const elements = node.querySelectorAll
+                ? node.querySelectorAll(
+                    '*:not(svg):not(path):not(circle):not(rect):not(line):not(polyline):not(polygon)',
+                  )
+                : [node];
+
+              elements.forEach((element: any) => {
+                if (element.style && element.closest('.asw-container')) {
+                  element.style.setProperty(
+                    'font-family',
+                    fontFamily,
+                    'important',
+                  );
+                }
+              });
+            }
+          });
+        }
+      });
+    });
+
+    // Start observing the widget container for changes
+    const widgetContainer = iframeDoc.querySelector('.asw-container');
+    if (widgetContainer) {
+      observer.observe(widgetContainer, {
+        childList: true,
+        subtree: true,
+      });
     }
   };
 
@@ -1035,8 +1092,10 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           // Apply logo to widget if it exists
           applyLogoToWidget(iframeDoc, colors.logoImage);
 
-          // Apply font to widget
-          applyFontToWidget(iframeDoc, selectedFont);
+          // Apply font to widget with additional delay to ensure widget CSS is loaded
+          setTimeout(() => {
+            applyFontToWidget(iframeDoc, selectedFont);
+          }, 500);
         }
       }, 100);
 
@@ -1122,7 +1181,11 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         });
 
         applyLogoToWidget(iframeDoc, colors.logoImage);
-        applyFontToWidget(iframeDoc, selectedFont);
+
+        // Reapply font with additional delay to ensure it overrides widget CSS
+        setTimeout(() => {
+          applyFontToWidget(iframeDoc, selectedFont);
+        }, 300);
       }
 
       setThemeJustChanged(false);
@@ -1878,7 +1941,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </div>
 
                     {/* Displaying the logo */}
-                    <div className="mb-4">
+                    <div className="mb-4 max-w-xs">
                       {colors.logoImage.length ? (
                         <img
                           src={
@@ -1887,7 +1950,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                               : (LogoIcon as any)
                           }
                           alt="Logo Preview"
-                          className="w-24 h-24 object-contain"
+                          className="w-48 h-12 object-contain"
                         />
                       ) : (
                         <>
@@ -1897,9 +1960,10 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                               height={47}
                               src={organization.logo_url}
                               alt={organization.name}
+                              className="object-contain max-w-full"
                             />
                           ) : (
-                            <LogoIcon className="w-[400px] h-[100px] object-contain" />
+                            <LogoIcon className="w-48 h-16 object-contain" />
                           )}
                         </>
                       )}

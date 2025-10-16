@@ -173,12 +173,6 @@ const AIInsights: React.FC = () => {
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
                 AI Heatmap Insights
               </h1>
-              <div className="relative inline-flex items-center">
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
-                <div className="inline-flex items-center bg-indigo-100 text-indigo-800 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1 rounded-full w-fit pl-5">
-                  Beta
-                </div>
-              </div>
             </div>
           </div>
 
