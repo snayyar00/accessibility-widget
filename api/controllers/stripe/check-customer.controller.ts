@@ -75,7 +75,7 @@ export async function checkCustomer(req: Request, res: Response) {
           const daysRemaining = Math.ceil((trialEndTimestamp! - currentTimestamp) / (60 * 60 * 24))
 
           // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-          if (!price || price?.tiers?.length! > 0) {
+          if (price?.tiers?.length! > 0) {
             return res.status(200).json({
               tierPlan: true,
               isCustomer: true,
@@ -107,7 +107,7 @@ export async function checkCustomer(req: Request, res: Response) {
           const prod = await stripe.products.retrieve(String(subscriptions.data[0]?.plan?.product))
 
           // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-          if (!price || price?.tiers?.length! > 0) {
+          if (price?.tiers?.length! > 0) {
             return res.status(200).json({
               tierPlan: true,
               isCustomer: true,
