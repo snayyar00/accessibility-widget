@@ -7,7 +7,7 @@ import { UserProfile } from '../../repository/user.repository'
 import { deleteExpiredSitesPlan, deleteSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service'
 
 export async function cancelSiteSubscription(req: Request & { user: UserProfile }, res: Response) {
-  const { domainId, domainUrl, status, cancelReason, otherReason } = req.body
+  const { domainId, domainUrl, status, cancelReason, otherReason, isCancel } = req.body
 
   let previous_plan: any[]
   let stripeCustomerId: string | null = null
@@ -81,7 +81,9 @@ export async function cancelSiteSubscription(req: Request & { user: UserProfile 
   }
 
   try {
-    await deleteSiteWithRelatedRecords(domainUrl, user.id)
+    if (!isCancel) {
+      await deleteSiteWithRelatedRecords(domainUrl, user.id)
+    }
   } catch (error) {
     console.error('Error deleting site:', error)
     return res.status(500).json({ error: 'Failed to delete site' })

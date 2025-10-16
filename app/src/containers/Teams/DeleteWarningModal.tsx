@@ -19,6 +19,7 @@ interface ConfirmDeleteSiteModalProps {
   domainStatus: string;
   billingLoading: boolean;
   appSumoCount?: number;
+  isCancel?: boolean;
 }
 
 const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
@@ -29,6 +30,7 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
   domainStatus,
   billingLoading,
   appSumoCount = 0,
+  isCancel = false,
 }) => {
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [otherReason, setOtherReason] = useState<string>('');
@@ -153,12 +155,12 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-2xl font-bold mb-6 text-gray-800">
-          Confirm Site Deletion
+          {isCancel ? 'Confirm Subscription Cancellation' : 'Confirm Site Deletion'}
         </h2>
 
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Please tell us why you're deleting this site:
+            {isCancel ? 'Please tell us why you\'re canceling this subscription:' : 'Please tell us why you\'re deleting this site:'}
           </h3>
 
           <div className="space-y-3">
@@ -318,7 +320,7 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
                 Processing...
               </>
             ) : (
-              'Delete Site'
+              isCancel ? 'Cancel Subscription' : 'Delete Site'
             )}
           </button>
         </div>
