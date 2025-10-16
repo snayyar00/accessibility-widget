@@ -43,7 +43,6 @@
       <mj-column>
         <mj-text font-size="18px" font-weight="bold" color="#007bff" align="center"> Compliance Status </mj-text>
         <mj-text font-size="16px" color="#333333" align="center"> {{ statusDescription }} </mj-text>
-        <mj-image src="{{statusImage}}" css-class="image-shadow" alt="Site image" width="300px" />
       </mj-column>
     </mj-section>
 
