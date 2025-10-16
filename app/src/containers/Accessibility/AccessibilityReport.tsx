@@ -3038,7 +3038,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 }}
               >
                 <CardContent className="p-0">
-                  <div className="flex items-start space-x-3">
+                  <div className="flex sm:flex-col md:flex-row items-start sm:items-center md:items-start space-x-3 sm:space-x-0 md:space-x-3 sm:space-y-3 md:space-y-0 sm:text-center md:text-left">
                     <div
                       className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                       style={{
@@ -3105,7 +3105,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 }}
               >
                 <CardContent className="p-0">
-                  <div className="flex items-start space-x-3">
+                  <div className="flex sm:flex-col md:flex-row items-start sm:items-center md:items-start space-x-3 sm:space-x-0 md:space-x-3 sm:space-y-3 md:space-y-0 sm:text-center md:text-left">
                     <div
                       className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                       style={{
@@ -3181,7 +3181,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 }}
               >
                 <CardContent className="p-0">
-                  <div className="flex items-start space-x-3">
+                  <div className="flex sm:flex-col md:flex-row items-start sm:items-center md:items-start space-x-3 sm:space-x-0 md:space-x-3 sm:space-y-3 md:space-y-0 sm:text-center md:text-left">
                     <div
                       className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
                       style={{

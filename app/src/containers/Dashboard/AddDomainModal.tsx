@@ -106,7 +106,7 @@ export default function AddDomainModal({
             <button
               id="submit-btn"
               type="button"
-              className="px-4 py-2 bg-blue-500 text-white bg-primary bg text-base font-medium rounded-md w-full shadow-sm hover:bg-sapphire-blue focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors duration-300"
+              className="px-4 py-2 bg-blue-500 text-white bg text-base font-medium rounded-md w-full shadow-sm hover:bg-sapphire-blue focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors duration-300"
               onClick={handleAddNewDomain}
             >
               Add Domain
