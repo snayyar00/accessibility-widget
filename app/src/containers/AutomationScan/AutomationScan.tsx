@@ -2529,8 +2529,8 @@ Example: {"textColor": "#2563EB", "bgColor": "#FFFFFF", "reasoning": "Darkened b
                                                           }}
                                                           disabled={appliedIssues[issueKey] || !currentSessionId}
                                                           className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors shadow-md flex-shrink-0 ${appliedIssues[issueKey]
-                                                              ? 'bg-green-600 text-white cursor-not-allowed'
-                                                              : 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+                                                            ? 'bg-green-600 text-white cursor-not-allowed'
+                                                            : 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
                                                             }`}
                                                           title={appliedIssues[issueKey] ? 'Fix already applied' : 'Apply this color combination'}
                                                         >
