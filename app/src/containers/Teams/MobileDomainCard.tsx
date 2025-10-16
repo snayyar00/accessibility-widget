@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaCheck, FaTimes, FaCog, FaTrash } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaPencilAlt, FaTrash } from 'react-icons/fa';
 import { Tooltip, CircularProgress } from '@mui/material';
 import { Domain } from './DomainTable';
 import applyStatusClass from '@/utils/applyStatusClass';
@@ -137,13 +137,13 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
               </Tooltip>
             </div>
           ) : (
-            <Tooltip title="Settings" placement="top">
+            <Tooltip title="Edit domain" placement="top">
               <button
                 onClick={() => onEdit(domain)}
                 className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
                 aria-label={`Edit domain ${domain.url}`}
               >
-                <FaCog className="w-4 h-4" />
+                <FaPencilAlt className="w-4 h-4" />
               </button>
             </Tooltip>
           )}

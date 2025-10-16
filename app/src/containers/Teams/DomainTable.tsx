@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@apollo/client';
-import { FaTrash, FaCheck, FaTimes, FaCog } from 'react-icons/fa';
+import { FaTrash, FaCheck, FaTimes, FaPencilAlt } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
@@ -947,7 +947,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                     className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
                                     aria-label={`Edit domain ${domain.url}`}
                                   >
-                                    <FaCog className="w-4 h-4" />
+                                    <FaPencilAlt className="w-4 h-4" />
                                   </button>
                                 </Tooltip>
                                 <Tooltip title="Delete domain" placement="top">
