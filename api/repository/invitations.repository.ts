@@ -2,8 +2,9 @@ import { Knex } from 'knex'
 
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
+import { InvitationStatus } from '../constants/invitation.constant'
 import { OrganizationUserRole } from '../constants/organization.constant'
-import { WorkspaceInvitationStatus, WorkspaceUserRole } from '../constants/workspace.constant'
+import { WorkspaceUserRole } from '../constants/workspace.constant'
 import { organizationsColumns } from './organization.repository'
 import { usersColumns } from './user.repository'
 import { workspacesColumns } from './workspace.repository'
@@ -16,7 +17,7 @@ type Invitation = {
   workspace_id?: number
   organization_role?: string
   workspace_role?: WorkspaceUserRole
-  status?: WorkspaceInvitationStatus
+  status?: InvitationStatus
   token?: string
   invited_by_id?: number
   valid_until?: string
@@ -32,7 +33,7 @@ export type GetDetailWorkspaceInvitation = {
   workspace_alias?: string
   invited_by: string
   email: string
-  status: WorkspaceInvitationStatus
+  status: InvitationStatus
   role: WorkspaceUserRole
   valid_until: string
   organization_id?: number
@@ -46,7 +47,7 @@ export type GetDetailOrganizationInvitation = {
   organization_name: string
   invited_by: string
   email: string
-  status: WorkspaceInvitationStatus
+  status: InvitationStatus
   role: OrganizationUserRole
   valid_until: string
   organization_id?: number
@@ -156,6 +157,31 @@ export async function getDetailWorkspaceInvitations(condition: { token?: string;
   return query
 }
 
+export async function getOrganizationWorkspaceInvitations(organizationId: number): Promise<GetDetailWorkspaceInvitation[]> {
+  return database(TABLE)
+    .join(TABLES.workspaces, function joinOn() {
+      this.on(workspacesColumns.id, '=', invitationsColumns.workspaceId)
+    })
+    .join(TABLES.users, usersColumns.id, invitationsColumns.invitedById)
+    .where(invitationsColumns.organizationId, organizationId)
+    .where(invitationsColumns.type, 'workspace')
+    .select({
+      id: invitationsColumns.id,
+      workspace_name: workspacesColumns.name,
+      workspace_alias: workspacesColumns.alias,
+      invited_by: usersColumns.email,
+      email: invitationsColumns.email,
+      status: invitationsColumns.status,
+      role: invitationsColumns.workspaceRole,
+      valid_until: invitationsColumns.validUntil,
+      organization_id: invitationsColumns.organizationId,
+      workspace_id: invitationsColumns.workspaceId,
+      token: invitationsColumns.token,
+      created_at: invitationsColumns.createdAt,
+    })
+    .orderBy(invitationsColumns.createdAt, 'desc')
+}
+
 export async function updateWorkspaceInvitationByToken(token: string, data: Partial<Invitation>, transaction: Knex.Transaction = null): Promise<number> {
   const updateData: Partial<Invitation> = {}
 
@@ -194,25 +220,21 @@ export async function deleteWorkspaceInvitations(condition: Partial<Invitation>,
   return result > 0
 }
 
-export async function getOrganizationInvitations(organizationId: number): Promise<GetDetailWorkspaceInvitation[]> {
+export async function getOrganizationInvitations(organizationId: number): Promise<GetDetailOrganizationInvitation[]> {
   const query = database(TABLE)
     .leftJoin(TABLES.users, usersColumns.id, invitationsColumns.invitedById)
-    .leftJoin(TABLES.workspaces, workspacesColumns.id, invitationsColumns.workspaceId)
     .where(invitationsColumns.organizationId, organizationId)
-    .where(invitationsColumns.type, 'workspace')
+    .where(invitationsColumns.type, 'organization')
     .select([
       `${invitationsColumns.id} as id`,
       `${invitationsColumns.email} as email`,
       `${invitationsColumns.status} as status`,
-      `${invitationsColumns.workspaceRole} as role`,
+      `${invitationsColumns.organizationRole} as role`,
       `${invitationsColumns.token} as token`,
       `${invitationsColumns.validUntil} as valid_until`,
       `${invitationsColumns.createdAt} as created_at`,
       `${invitationsColumns.organizationId} as organization_id`,
-      `${invitationsColumns.workspaceId} as workspace_id`,
       `${usersColumns.name} as invited_by`,
-      `${workspacesColumns.name} as workspace_name`,
-      `${workspacesColumns.alias} as workspace_alias`,
     ])
 
   return await query

@@ -1,6 +1,4 @@
-import { updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
 import { checkOnboardingEmailsEnabled, findUser, findUserNotificationByUserId, getUserNotificationSettings, insertUserNotification, updateUser, updateUserNotificationFlags, UserProfile } from '../../repository/user.repository'
-import { getWorkspace } from '../../repository/workspace.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { ApolloError, ForbiddenError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
@@ -167,45 +165,6 @@ export async function changeCurrentOrganization(initiator: UserProfile, targetOr
   } catch (error) {
     logger.error(error)
     throw new ForbiddenError('Failed to change current organization')
-  }
-}
-
-export async function changeCurrentWorkspace(initiator: UserProfile, targetWorkspaceId: number | null, userId?: number): Promise<true | ApolloError> {
-  try {
-    if (!initiator.current_organization_id) {
-      throw new ForbiddenError('Current organization not found')
-    }
-
-    const targetUserId = userId || initiator.id
-    const switchingOtherUser = userId && userId !== initiator.id
-
-    await checkCanSwitchEntity(initiator, targetUserId, initiator.current_organization_id, switchingOtherUser)
-
-    if (targetWorkspaceId) {
-      const workspace = await getWorkspace({
-        id: targetWorkspaceId,
-        organization_id: initiator.current_organization_id,
-      })
-
-      if (!workspace) {
-        throw new ForbiddenError('Workspace not found or does not belong to organization')
-      }
-    }
-
-    await updateOrganizationUserByOrganizationAndUserId(initiator.current_organization_id, targetUserId, { current_workspace_id: targetWorkspaceId })
-
-    logger.info({
-      message: 'Workspace switched',
-      initiatorId: initiator.id,
-      targetUserId,
-      targetWorkspaceId,
-      organizationId: initiator.current_organization_id,
-    })
-
-    return true
-  } catch (error) {
-    logger.error(error)
-    throw new ForbiddenError('Failed to change current workspace')
   }
 }
 

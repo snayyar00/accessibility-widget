@@ -186,7 +186,8 @@
     "have_invitated": "You' ve been invitated to join <0>{{teamName}}</0> by <0>{{owner}}</0>",
     "by": "by",
     "accept": "Accept",
-    "decline": "Decline"
+    "decline": "Decline",
+    "join": "Join"
   },
   "Dashboard": "Dashboard Page",
   "Team": {

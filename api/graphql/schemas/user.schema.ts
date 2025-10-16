@@ -85,8 +85,6 @@ export const UserSchema = `#graphql
 
     changeCurrentOrganization(organizationId: Int!, userId: Int): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many organization change requests. Please try again later.")
 
-    changeCurrentWorkspace(workspaceId: Int, userId: Int): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many workspace change requests. Please try again later.")
-
     logout: Boolean!
   }
 `

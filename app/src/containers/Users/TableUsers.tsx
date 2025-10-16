@@ -21,24 +21,27 @@ type TableUsersProps = {
   userId: number;
 };
 
-const STATUS_STYLES = {
+const STATUS_STYLES: Record<
+  string,
+  { backgroundColor: string; color: string }
+> = {
   [OrganizationUserStatus.Active]: {
     backgroundColor: '#22c55e',
-    color: '#fff',
-  },
-  [OrganizationUserStatus.Invited]: {
-    backgroundColor: '#3b82f6',
     color: '#fff',
   },
   [OrganizationUserStatus.Pending]: {
     backgroundColor: '#f59e0b',
     color: '#fff',
   },
-  [OrganizationUserStatus.Removed]: {
+  [OrganizationUserStatus.Inactive]: {
     backgroundColor: '#ef4444',
     color: '#fff',
   },
-} as const;
+  [OrganizationUserStatus.Decline]: {
+    backgroundColor: '#ef4444',
+    color: '#fff',
+  },
+};
 
 export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
   const [pageSize, setPageSize] = React.useState<number>(50);
@@ -58,7 +61,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
     () =>
       users.map((row, idx) => ({
         number: idx + 1,
-        id: row.user?.id,
+        id: row.user_id,
         name: row.user?.name ?? '',
         email: row.user?.email ?? '',
         isActive: row.user?.isActive ?? false,
@@ -81,13 +84,13 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       headerName: 'User ID',
       width: 100,
       renderCell: (params) => {
-        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+        const isVirtualUser = params.row.id < 0;
 
-        if (isInvited) {
+        if (isVirtualUser) {
           return <span>—</span>;
         }
 
-        return params.value;
+        return params.row.id;
       },
     },
     {
@@ -98,11 +101,11 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       flex: 1,
       renderCell: (params) => {
         const rowUserId = params.row.id;
-        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+        const isVirtualUser = params.row.id < 0;
 
         let name = params.value;
 
-        if (isInvited) {
+        if (isVirtualUser) {
           return <span>—</span>;
         }
 
@@ -135,9 +138,9 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       headerName: 'Account',
       width: 150,
       renderCell: (params) => {
-        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+        const isVirtualUser = params.row.id < 0;
 
-        if (isInvited) {
+        if (isVirtualUser) {
           return <span>—</span>;
         }
 
@@ -235,9 +238,9 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
         const value = params.row.currentOrganizationId;
         const rowUserId = params.row.id || null;
         const NonActive = params.row?.status !== OrganizationUserStatus.Active;
-        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+        const isVirtualUser = params.row.id < 0;
 
-        if (isInvited) {
+        if (isVirtualUser) {
           return <span>—</span>;
         }
 
@@ -292,9 +295,9 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       renderCell: (params) => {
         const rowUserId = params.row.id;
         const isSelf = rowUserId === userId;
-        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+        const isVirtualUser = params.row.id < 0;
 
-        if (isInvited) {
+        if (isVirtualUser) {
           return <span>—</span>;
         }
 
@@ -323,7 +326,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
         const rowOwner = params.row.role === OrganizationUserRole.Owner;
         const userEmail = params.row.email;
         const userWorkspaces = params.row.workspaces || [];
-        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+        const isVirtualUser = !rowUserId || rowUserId < 0;
 
         return (
           <div className="flex">
@@ -338,7 +341,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
                 workspacesLoading={workspacesLoading}
               />
             )}
-            {isInvited ? (
+            {isVirtualUser ? (
               <RemoveAllUserInvitations
                 email={userEmail}
                 onInvitationRemoved={refetch}

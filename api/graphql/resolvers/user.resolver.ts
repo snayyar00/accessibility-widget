@@ -1,8 +1,6 @@
 import { combineResolvers } from 'graphql-resolvers'
 
 import { normalizeEmail } from '../../helpers/string.helper'
-import { type OrganizationUser } from '../../repository/organization_user.repository'
-import { getWorkspace } from '../../repository/workspace.repository'
 import { changePasswordUser } from '../../services/authentication/change-password.service'
 import { forgotPasswordUser } from '../../services/authentication/forgot-password.service'
 import { loginUser } from '../../services/authentication/login.service'
@@ -14,7 +12,7 @@ import { getUserOrganization } from '../../services/organization/organization_us
 import { deleteUser } from '../../services/user/delete-user.service'
 import { getLicenseOwnerInfo, updateLicenseOwnerInfo } from '../../services/user/license-owner.service'
 import { getUserNotificationSettingsService, updateProfile, updateUserNotificationSettings } from '../../services/user/update-user.service'
-import { changeCurrentOrganization, changeCurrentWorkspace } from '../../services/user/update-user.service'
+import { changeCurrentOrganization } from '../../services/user/update-user.service'
 import { isEmailAlreadyRegistered } from '../../services/user/user.service'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
@@ -76,22 +74,7 @@ const resolvers = {
 
     hasOrganization: (parent: { current_organization_id?: number }) => Boolean(parent.current_organization_id),
   },
-  OrganizationUser: {
-    currentWorkspace: async (parent: OrganizationUser) => {
-      if (!parent.current_workspace_id || !parent.organization_id) return null
-
-      try {
-        return await getWorkspace({
-          id: parent.current_workspace_id,
-          organization_id: parent.organization_id,
-        })
-      } catch {
-        return null
-      }
-    },
-
-    hasWorkspace: (parent: OrganizationUser) => Boolean(parent.current_workspace_id),
-  },
+  OrganizationUser: {},
   Mutation: {
     register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name }: Register, { organization }) => {
       const result = await registerUser(normalizeEmail(email), password, name, organization)
@@ -146,10 +129,6 @@ const resolvers = {
 
     changeCurrentOrganization: combineResolvers(allowedOrganization, isAuthenticated, async (_, { organizationId, userId }, { user }) => {
       return await changeCurrentOrganization(user, organizationId, userId)
-    }),
-
-    changeCurrentWorkspace: combineResolvers(allowedOrganization, isAuthenticated, async (_, { workspaceId, userId }, { user }) => {
-      return await changeCurrentWorkspace(user, workspaceId, userId)
     }),
   },
 }

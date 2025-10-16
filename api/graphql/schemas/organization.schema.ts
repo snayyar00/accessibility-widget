@@ -7,9 +7,9 @@ export const OrganizationSchema = `#graphql
 
   enum OrganizationUserStatus {
     active
-    invited
     pending
-    removed
+    inactive
+    decline
   }
 
   type Organization {
@@ -27,7 +27,6 @@ export const OrganizationSchema = `#graphql
     id: ID
     user_id: Int!
     organization_id: Int!
-    current_workspace_id: Int
     role: OrganizationUserRole
     status: OrganizationUserStatus
     created_at: Date
@@ -36,7 +35,6 @@ export const OrganizationSchema = `#graphql
     user: User!
     organizations: [Organization!]!
     currentOrganization: Organization
-    currentWorkspace: Workspace
     workspaces: [Workspace!]!
     hasWorkspace: Boolean!
   }

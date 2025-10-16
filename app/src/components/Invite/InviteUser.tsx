@@ -17,7 +17,11 @@ import { Add as AddIcon } from '@mui/icons-material';
 import { useMutation } from '@apollo/client';
 import INVITE_USER from '@/queries/invitations/inviteUser';
 import { toast } from 'react-toastify';
-import { Workspace, WorkspaceUserRole, OrganizationUserRole } from '@/generated/graphql';
+import {
+  Workspace,
+  WorkspaceUserRole,
+  OrganizationUserRole,
+} from '@/generated/graphql';
 
 type InviteMode = 'organization' | 'workspace';
 
@@ -49,8 +53,12 @@ export const InviteUser: React.FC<InviteUserProps> = ({
   const [open, setOpen] = React.useState(false);
   const [email, setEmail] = React.useState(userEmail);
   const [selectedWorkspace, setSelectedWorkspace] = React.useState('');
-  const [role, setRole] = React.useState<string>(
-    mode === 'workspace' ? WorkspaceUserRole.Member : OrganizationUserRole.Member,
+  const [role, setRole] = React.useState<
+    WorkspaceUserRole | OrganizationUserRole
+  >(
+    mode === 'workspace'
+      ? WorkspaceUserRole.Member
+      : OrganizationUserRole.Member,
   );
 
   const [inviteUser, { loading: inviteLoading }] = useMutation(INVITE_USER);
@@ -77,7 +85,11 @@ export const InviteUser: React.FC<InviteUserProps> = ({
     setOpen(false);
     setEmail('');
     setSelectedWorkspace('');
-    setRole(mode === 'workspace' ? WorkspaceUserRole.Member : OrganizationUserRole.Member);
+    setRole(
+      mode === 'workspace'
+        ? WorkspaceUserRole.Member
+        : OrganizationUserRole.Member,
+    );
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,7 +101,7 @@ export const InviteUser: React.FC<InviteUserProps> = ({
   };
 
   const handleRoleChange = (e: SelectChangeEvent) => {
-    setRole(e.target.value);
+    setRole(e.target.value as WorkspaceUserRole | OrganizationUserRole);
   };
 
   const handleSave = async () => {
@@ -114,12 +126,15 @@ export const InviteUser: React.FC<InviteUserProps> = ({
           type: mode,
           email,
           role,
-          workspaceId: mode === 'workspace' ? selectedWorkspaceData?.id : undefined,
+          workspaceId:
+            mode === 'workspace' ? selectedWorkspaceData?.id : undefined,
         },
       });
 
       if (errors?.length) {
-        errors.forEach((err) => toast.error(err.message || 'Failed to invite user.'));
+        errors.forEach((err) =>
+          toast.error(err.message || 'Failed to invite user.'),
+        );
         return;
       }
 
@@ -127,7 +142,9 @@ export const InviteUser: React.FC<InviteUserProps> = ({
 
       if (result) {
         toast.success(
-          `User invite to ${mode === 'workspace' ? 'workspace' : 'organization'} successfully sent!`,
+          `User invite to ${
+            mode === 'workspace' ? 'workspace' : 'organization'
+          } successfully sent!`,
         );
         handleClose();
         onUserInvited?.();
@@ -140,7 +157,9 @@ export const InviteUser: React.FC<InviteUserProps> = ({
   };
 
   const getDialogTitle = () => {
-    return mode === 'workspace' ? 'Invite User to Workspace' : 'Invite User to Organization';
+    return mode === 'workspace'
+      ? 'Invite User to Workspace'
+      : 'Invite User to Organization';
   };
 
   const getRoleLabel = () => {
@@ -149,7 +168,9 @@ export const InviteUser: React.FC<InviteUserProps> = ({
 
   const getButtonText = () => {
     if (buttonText) return buttonText;
-    return mode === 'workspace' ? 'Invite to Workspace' : 'Invite to Organization';
+    return mode === 'workspace'
+      ? 'Invite to Workspace'
+      : 'Invite to Organization';
   };
 
   return (
@@ -205,32 +226,47 @@ export const InviteUser: React.FC<InviteUserProps> = ({
 
           <FormControl fullWidth margin="normal">
             <InputLabel id="role-select-label">{getRoleLabel()}</InputLabel>
-            <Select 
+            <Select
               labelId="role-select-label"
               id="role-select"
-              value={role} 
-              onChange={handleRoleChange} 
+              value={role}
+              onChange={handleRoleChange}
               label={getRoleLabel()}
             >
-              {mode === 'workspace' ? (
-                <>
-                  <MenuItem value={WorkspaceUserRole.Member}>Member</MenuItem>
-                  <MenuItem value={WorkspaceUserRole.Admin}>Admin</MenuItem>
-                  <MenuItem value={WorkspaceUserRole.Owner}>Owner</MenuItem>
-                </>
-              ) : (
-                <>
-                  <MenuItem value={OrganizationUserRole.Member}>Member</MenuItem>
-                  <MenuItem value={OrganizationUserRole.Admin}>Admin</MenuItem>
-                  <MenuItem value={OrganizationUserRole.Owner}>Owner</MenuItem>
-                </>
-              )}
+              {mode === 'workspace'
+                ? [
+                    <MenuItem key="member" value={WorkspaceUserRole.Member}>
+                      Member
+                    </MenuItem>,
+                    <MenuItem key="admin" value={WorkspaceUserRole.Admin}>
+                      Admin
+                    </MenuItem>,
+                    <MenuItem key="owner" value={WorkspaceUserRole.Owner}>
+                      Owner
+                    </MenuItem>,
+                  ]
+                : [
+                    <MenuItem key="member" value={OrganizationUserRole.Member}>
+                      Member
+                    </MenuItem>,
+                    <MenuItem key="admin" value={OrganizationUserRole.Admin}>
+                      Admin
+                    </MenuItem>,
+                    <MenuItem key="owner" value={OrganizationUserRole.Owner}>
+                      Owner
+                    </MenuItem>,
+                  ]}
             </Select>
           </FormControl>
         </DialogContent>
 
         <DialogActions>
-          <Button color="primary" variant="outlined" size="large" onClick={handleClose}>
+          <Button
+            color="primary"
+            variant="outlined"
+            size="large"
+            onClick={handleClose}
+          >
             Cancel
           </Button>
 

@@ -2,8 +2,9 @@ import dayjs from 'dayjs'
 import { Knex } from 'knex'
 
 import database from '../../config/database.config'
+import { INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
 import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_STATUS_PENDING, OrganizationUserRole } from '../../constants/organization.constant'
-import { WORKSPACE_INVITATION_STATUS_PENDING, WORKSPACE_USER_STATUS_ACTIVE, WorkspaceUserRole } from '../../constants/workspace.constant'
+import { WORKSPACE_USER_STATUS_ACTIVE, WorkspaceUserRole } from '../../constants/workspace.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import generateRandomKey from '../../helpers/genarateRandomkey'
 import { normalizeEmail } from '../../helpers/string.helper'
@@ -18,9 +19,9 @@ import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateInviteWorkspaceMember } from '../../validations/workspace.validation'
 import { sendMail } from '../email/email.service'
-import { getUserOrganization } from '../organization/organization_users.service'
+import { addUserToOrganization, getUserOrganization } from '../organization/organization_users.service'
 
-type InviteWorkspaceMemberResponse = {
+type InvitationResponse = {
   user_id: number
   user_name: string
   user_email: string
@@ -40,7 +41,7 @@ export type InviteUserParams = {
 /**
  * Universal function to invite user to organization or workspace
  */
-export async function inviteUser(user: UserProfile, params: InviteUserParams): Promise<InviteWorkspaceMemberResponse> {
+export async function inviteUser(user: UserProfile, params: InviteUserParams): Promise<InvitationResponse> {
   const { type, invitee_email, role, allowedFrontendUrl, workspace_id } = params
 
   if (type === 'workspace') {
@@ -53,7 +54,7 @@ export async function inviteUser(user: UserProfile, params: InviteUserParams): P
 /**
  * Invite user to workspace
  */
-async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, invitee_email: string, role: WorkspaceUserRole = 'member', allowedFrontendUrl: string): Promise<InviteWorkspaceMemberResponse> {
+async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, invitee_email: string, role: WorkspaceUserRole = 'member', allowedFrontendUrl: string): Promise<InvitationResponse> {
   const validateResult = validateInviteWorkspaceMember({ workspaceId, email: invitee_email, role })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -91,7 +92,7 @@ async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, inv
       workspace_id: workspace.id,
     })
 
-    const pendingInvitation = existingInvitations.find((inv) => inv.status === WORKSPACE_INVITATION_STATUS_PENDING)
+    const pendingInvitation = existingInvitations.find((inv) => inv.status === INVITATION_STATUS_PENDING)
 
     if (pendingInvitation) {
       const isExpired = dayjs().isAfter(pendingInvitation.valid_until)
@@ -138,7 +139,7 @@ async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, inv
       fileName: 'inviteWorkspaceMember.mjml',
       data: {
         workspaceName: workspace.name,
-        url: `${allowedFrontendUrl}/workspaces/invitation/${token}`,
+        url: `${allowedFrontendUrl}/invitation/${token}`,
       },
     })
 
@@ -165,7 +166,7 @@ async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, inv
           organization_id: workspace.organization_id,
           workspace_role: role,
           valid_until: formatDateDB(dayjs().add(VALID_PERIOD_DAYS, 'day')),
-          status: WORKSPACE_INVITATION_STATUS_PENDING,
+          status: INVITATION_STATUS_PENDING,
         },
         transaction,
       )
@@ -189,7 +190,7 @@ async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, inv
       user_id: member?.id || 0,
       user_name: member?.name || '',
       user_email: member?.email || invitee_email,
-      status: WORKSPACE_INVITATION_STATUS_PENDING,
+      status: INVITATION_STATUS_PENDING,
     }
   } catch (error) {
     if (transaction) await transaction.rollback()
@@ -200,7 +201,7 @@ async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, inv
 /**
  * Invite user to organization
  */
-async function inviteUserToOrganization(user: UserProfile, invitee_email: string, role: OrganizationUserRole = 'member', allowedFrontendUrl: string): Promise<InviteWorkspaceMemberResponse> {
+async function inviteUserToOrganization(user: UserProfile, invitee_email: string, role: OrganizationUserRole = 'member', allowedFrontendUrl: string): Promise<InvitationResponse> {
   if (!user.current_organization_id) {
     throw new ApolloError('No current organization selected')
   }
@@ -227,7 +228,6 @@ async function inviteUserToOrganization(user: UserProfile, invitee_email: string
       throw new ApolloError("Can't invite yourself")
     }
 
-    // Check existing invitations
     const existingInvitations = await getOrganizationInvitation({
       email: invitee_email,
       organization_id: organization.id,
@@ -243,7 +243,6 @@ async function inviteUserToOrganization(user: UserProfile, invitee_email: string
       }
     }
 
-    // Delete old invitations
     await deleteOrganizationInvitations(
       {
         email: invitee_email,
@@ -268,9 +267,13 @@ async function inviteUserToOrganization(user: UserProfile, invitee_email: string
       fileName: 'inviteOrganizationMember.mjml',
       data: {
         organizationName: organization.name,
-        url: `${allowedFrontendUrl}/organizations/invitation/${token}`,
+        url: `${allowedFrontendUrl}/invitation/${token}`,
       },
     })
+
+    if (member) {
+      await addUserToOrganization(member.id, organization.id, role, ORGANIZATION_USER_STATUS_PENDING, transaction)
+    }
 
     await createOrganizationInvitation(
       {

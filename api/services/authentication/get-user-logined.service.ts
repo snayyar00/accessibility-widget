@@ -1,8 +1,8 @@
 import dayjs from 'dayjs'
 
-import { WORKSPACE_INVITATION_STATUS_PENDING } from '../../constants/workspace.constant'
+import { INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
 import { verify } from '../../helpers/jwt.helper'
-import { getWorkspaceInvitation } from '../../repository/invitations.repository'
+import { getOrganizationInvitation, getWorkspaceInvitation } from '../../repository/invitations.repository'
 import { findUser } from '../../repository/user.repository'
 
 export type UserLoginedResponse = {
@@ -26,7 +26,11 @@ export default async function getUserLogined(bearerToken: string | null): Promis
         const { user, iat } = verifyToken
 
         const userInfo = await findUser({ email: user.email })
-        const [invitationToken] = await getWorkspaceInvitation({ email: user.email, status: WORKSPACE_INVITATION_STATUS_PENDING })
+
+        const [workspaceInvitationToken] = await getWorkspaceInvitation({ email: user.email, status: INVITATION_STATUS_PENDING })
+        const [organizationInvitationToken] = await getOrganizationInvitation({ email: user.email, status: INVITATION_STATUS_PENDING })
+
+        const invitationToken = organizationInvitationToken || workspaceInvitationToken
 
         if (userInfo.password_changed_at && iat && iat * 1000 < dayjs.utc(userInfo.password_changed_at).valueOf()) {
           return null

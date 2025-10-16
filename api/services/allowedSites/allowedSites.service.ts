@@ -1,6 +1,5 @@
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '../../constants/billing.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
-import { getOrganizationUser } from '../../repository/organization_user.repository'
 import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findUserSitesWithPlans, insertSite, IUserSites, updateAllowedSiteURL } from '../../repository/sites_allowed.repository'
 import { findUserNotificationByUserId, getUserbyId, UserProfile } from '../../repository/user.repository'
 import { normalizeDomain } from '../../utils/domain.utils'
@@ -173,19 +172,9 @@ export async function addSite(user: UserProfile, url: string): Promise<string> {
  *
  */
 
-export async function findUserSites(user: UserProfile, ignoreWorkspace = false): Promise<IUserSites[]> {
+export async function findUserSites(user: UserProfile, _ignoreWorkspace = false): Promise<IUserSites[]> {
   try {
-    let currentWorkspaceId: number | null = null
-
-    if (!ignoreWorkspace) {
-      // Get workspace info if user has organization
-      if (user.current_organization_id) {
-        const organizationUser = await getOrganizationUser(user.id, user.current_organization_id)
-        currentWorkspaceId = organizationUser?.current_workspace_id || null
-      }
-    }
-
-    const sites = await findUserSitesWithPlans(user.id, ignoreWorkspace ? null : user.current_organization_id, ignoreWorkspace ? null : currentWorkspaceId)
+    const sites = await findUserSitesWithPlans(user.id)
 
     return sites
   } catch (e) {

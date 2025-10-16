@@ -10,7 +10,6 @@ import { GoGear } from 'react-icons/go';
 import { GrInstallOption } from 'react-icons/gr';
 import OrganizationsSelect from '@/containers/Dashboard/OrganizationsSelect';
 import { Folders, UserIcon } from 'lucide-react';
-import WorkspacesSelect from '@/containers/Dashboard/WorkspacesSelect';
 import Dropdown from '../../containers/Dashboard/DropDown';
 
 const Sidebar = ({
@@ -65,7 +64,6 @@ const Sidebar = ({
 
           <div className="px-3 py-5 space-y-3 border-b border-solid border-gray empty:hidden">
             <OrganizationsSelect />
-            <WorkspacesSelect />
 
             <Dropdown
               data={options}

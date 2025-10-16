@@ -19,7 +19,6 @@ export type OrganizationUser = {
   status?: OrganizationUserStatus
   created_at?: string
   updated_at?: string
-  current_workspace_id?: number | null
 }
 
 export type OrganizationUserWithUserInfo = OrganizationUser & {
@@ -150,7 +149,6 @@ export async function getOrganizationUsersWithUserInfo(organization_id: number):
       status: row.status,
       created_at: row.created_at,
       updated_at: row.updated_at,
-      current_workspace_id: row.current_workspace_id,
       organizations: orgsByUser[row.user_id] || [],
       workspaces: workspacesByUser[row.user_id] || [],
       user: {

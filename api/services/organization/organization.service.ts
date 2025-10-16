@@ -2,7 +2,7 @@ import database from '../../config/database.config'
 import { IS_PROD } from '../../config/env'
 import { ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { objectToString } from '../../helpers/string.helper'
-import { deleteWorkspaceInvitations } from '../../repository/invitations.repository'
+import { deleteOrganizationInvitations, deleteWorkspaceInvitations } from '../../repository/invitations.repository'
 import { createOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization, updateOrganization } from '../../repository/organization.repository'
 import { findUser } from '../../repository/user.repository'
 import { updateUser, UserProfile } from '../../repository/user.repository'
@@ -254,10 +254,12 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
 
     if (targetUser && targetUser.email) {
       await deleteWorkspaceInvitations({ email: targetUser.email, organization_id: organizationId }, trx)
+      await deleteOrganizationInvitations({ email: targetUser.email, organization_id: organizationId }, trx)
     }
 
     // Also remove invitations created by this user in this organization
     await deleteWorkspaceInvitations({ invited_by_id: userId, organization_id: organizationId }, trx)
+    await deleteOrganizationInvitations({ invited_by_id: userId, organization_id: organizationId }, trx)
 
     const result = await removeUserFromOrganizationService(target.id, trx)
 

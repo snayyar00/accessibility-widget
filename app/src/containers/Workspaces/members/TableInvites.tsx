@@ -3,7 +3,7 @@ import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Chip, IconButton } from '@mui/material';
 import { useApolloClient, useQuery } from '@apollo/client';
 import GET_WORKSPACE_INVITATIONS_BY_ALIAS from '@/queries/workspace/getWorkspaceInvitationsByAlias';
-import { Query, WorkspaceInvitationStatus } from '@/generated/graphql';
+import { InvitationStatus, Query } from '@/generated/graphql';
 import { RemoveWorkspaceInvitation } from './RemoveWorkspaceInvitation';
 
 type TableInvitesProps = {
@@ -12,19 +12,19 @@ type TableInvitesProps = {
 };
 
 const STATUS_STYLES = {
-  [WorkspaceInvitationStatus.Pending]: {
+  [InvitationStatus.Pending]: {
     backgroundColor: '#f59e0b',
     color: '#fff',
   },
-  [WorkspaceInvitationStatus.Accepted]: {
+  [InvitationStatus.Accepted]: {
     backgroundColor: '#22c55e',
     color: '#fff',
   },
-  [WorkspaceInvitationStatus.Declined]: {
+  [InvitationStatus.Declined]: {
     backgroundColor: '#dc2626',
     color: '#fff',
   },
-  [WorkspaceInvitationStatus.Expired]: {
+  [InvitationStatus.Expired]: {
     backgroundColor: '#6b7280',
     color: '#fff',
   },
@@ -93,7 +93,7 @@ export const TableInvites = ({ alias, onUpdate }: TableInvitesProps) => {
       headerName: 'Status',
       width: 120,
       renderCell: (params) => {
-        const status = params.value as WorkspaceInvitationStatus;
+        const status = params.value as InvitationStatus;
         const chipStyle = STATUS_STYLES[status] || {
           backgroundColor: '#6b7280',
           color: '#fff',

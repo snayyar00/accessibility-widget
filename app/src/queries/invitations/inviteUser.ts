@@ -7,7 +7,12 @@ export default gql`
     $role: String!
     $workspaceId: ID
   ) {
-    inviteUser(type: $type, email: $email, role: $role, workspaceId: $workspaceId) {
+    inviteUser(
+      type: $type
+      email: $email
+      role: $role
+      workspaceId: $workspaceId
+    ) {
       user_id
       user_name
       user_email

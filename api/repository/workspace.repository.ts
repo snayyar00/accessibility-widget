@@ -2,7 +2,6 @@ import { Knex } from 'knex'
 
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
-import { updateOrganizationUserByOrganizationAndUserId } from './organization_user.repository'
 import { createWorkspaceUser, WorkspaceUser, workspaceUsersColumns } from './workspace_users.repository'
 
 export type Workspace = {
@@ -114,7 +113,6 @@ export async function createNewWorkspaceAndMember({ name, alias, organization_id
     const [workspaceId] = await insertWorkspace({ name, alias, organization_id, created_by: user_id }, transaction)
 
     await createWorkspaceUser({ user_id: user_id, workspace_id: workspaceId, role: 'owner', status: 'active' }, transaction)
-    await updateOrganizationUserByOrganizationAndUserId(organization_id, user_id, { current_workspace_id: workspaceId }, transaction)
 
     await transaction.commit()
 

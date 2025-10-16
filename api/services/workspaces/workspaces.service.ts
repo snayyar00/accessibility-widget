@@ -1,33 +1,19 @@
-import dayjs from 'dayjs'
 import { Knex } from 'knex'
 
 import database from '../../config/database.config'
-import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
-import { WORKSPACE_INVITATION_STATUS_ACCEPTED, WORKSPACE_INVITATION_STATUS_PENDING, WORKSPACE_USER_STATUS_ACTIVE, WORKSPACE_USER_STATUS_DECLINE, WORKSPACE_USER_STATUS_INACTIVE, WORKSPACE_USER_STATUS_PENDING, WorkspaceUserRole } from '../../constants/workspace.constant'
-import compileEmailTemplate from '../../helpers/compile-email-template'
-import generateRandomKey from '../../helpers/genarateRandomkey'
-import { normalizeEmail, stringToSlug } from '../../helpers/string.helper'
-import { createWorkspaceInvitation, deleteWorkspaceInvitations, GetDetailWorkspaceInvitation, getDetailWorkspaceInvitations, getWorkspaceInvitation, updateWorkspaceInvitationByToken, VALID_PERIOD_DAYS } from '../../repository/invitations.repository'
-import { updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
-import { findUser } from '../../repository/user.repository'
+import { INVITATION_STATUS_ACCEPTED, INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
+import { WORKSPACE_USER_STATUS_ACTIVE, WORKSPACE_USER_STATUS_DECLINE, WORKSPACE_USER_STATUS_INACTIVE, WORKSPACE_USER_STATUS_PENDING, WorkspaceUserRole } from '../../constants/workspace.constant'
+import { stringToSlug } from '../../helpers/string.helper'
+import { deleteOrganizationInvitations, deleteWorkspaceInvitations, GetDetailWorkspaceInvitation, getDetailWorkspaceInvitations, getOrganizationInvitation, getWorkspaceInvitation, updateWorkspaceInvitationByToken } from '../../repository/invitations.repository'
 import { UserProfile } from '../../repository/user.repository'
 import { createNewWorkspaceAndMember, deleteWorkspaceById, getAllWorkspace, GetAllWorkspaceResponse, getWorkspace, getWorkspaceMembers as getWorkspaceMembersRepo, updateWorkspace as updateWorkspaceRepo, Workspace } from '../../repository/workspace.repository'
 import { setWorkspaceDomains } from '../../repository/workspace_allowed_sites.repository'
-import { createMemberAndInviteToken, deleteWorkspaceUsers, getWorkspaceUser, updateWorkspaceUser } from '../../repository/workspace_users.repository'
+import { deleteWorkspaceUsers, getWorkspaceUser, updateWorkspaceUser } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
-import formatDateDB from '../../utils/format-date-db'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
-import { validateChangeWorkspaceMemberRole, validateCreateWorkspace, validateInviteWorkspaceMember, validateRemoveWorkspaceInvitation, validateRemoveWorkspaceMember, validateUpdateWorkspace } from '../../validations/workspace.validation'
-import { sendMail } from '../email/email.service'
+import { validateChangeWorkspaceMemberRole, validateCreateWorkspace, validateRemoveWorkspaceInvitation, validateRemoveWorkspaceMember, validateUpdateWorkspace } from '../../validations/workspace.validation'
 import { getUserOrganization } from '../organization/organization_users.service'
-
-type InviteWorkspaceMemberResponse = {
-  user_id: number
-  user_name: string
-  user_email: string
-  status: string
-}
 
 type CreateWorkspaceResponse = {
   id: Promise<number | Error>
@@ -224,7 +210,7 @@ export async function getWorkspaceMembersByAlias(alias: string, user: UserProfil
   const existingEmails = getExistingMemberEmails(members)
 
   const invitations = await getDetailWorkspaceInvitations({ workspaceId: workspace.id })
-  const pendingInvitations = invitations.filter((invitation) => invitation.status === WORKSPACE_INVITATION_STATUS_PENDING)
+  const pendingInvitations = invitations.filter((invitation) => invitation.status === INVITATION_STATUS_PENDING)
 
   const invitedMembers = createVirtualUsersFromInvitations(pendingInvitations, existingEmails, workspace)
 
@@ -310,168 +296,6 @@ export async function createWorkspace(user: UserProfile, workspaceName: string):
     organization_id: user.current_organization_id,
     name: workspaceName,
     alias,
-  }
-}
-
-/**
- * Function to invite workspace member
- *
- * @param UserProfile user User who creates invitation
- * @param number workspaceId ID of workspace to invite to
- * @param string invitee_email Email of who you want to send invitation to
- * @param WorkspaceUserRole role Role for the invited user (optional, defaults to 'member')
- * @param string allowedFrontendUrl Frontend URL for invitation link
- * @returns Promise<InviteWorkspaceMemberResponse> Created invitation info
- */
-export async function inviteWorkspaceMember(user: UserProfile, workspaceId: number, invitee_email: string, role: WorkspaceUserRole = 'member', allowedFrontendUrl: string): Promise<InviteWorkspaceMemberResponse> {
-  const validateResult = validateInviteWorkspaceMember({ workspaceId, email: invitee_email, role })
-
-  if (Array.isArray(validateResult) && validateResult.length) {
-    throw new ValidationError(validateResult.map((it) => it.message).join(','))
-  }
-
-  if (!user.current_organization_id) {
-    throw new ApolloError('No current organization selected')
-  }
-
-  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isAllowed = orgUser && canManageOrganization(orgUser.role)
-
-  if (!isAllowed) {
-    throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can create the workspace`)
-  }
-
-  let transaction: Knex.Transaction
-
-  try {
-    transaction = await database.transaction()
-
-    const workspace = await getWorkspace({ id: workspaceId, organization_id: user.current_organization_id })
-
-    if (!workspace) {
-      throw new ApolloError('Workspace not found')
-    }
-
-    if (user.email === invitee_email) {
-      throw new ApolloError("Can't invite yourself")
-    }
-
-    const existingInvitations = await getWorkspaceInvitation({
-      email: invitee_email,
-      workspace_id: workspace.id,
-    })
-
-    const pendingInvitation = existingInvitations.find((inv) => inv.status === WORKSPACE_INVITATION_STATUS_PENDING)
-
-    if (pendingInvitation) {
-      const isExpired = dayjs().isAfter(pendingInvitation.valid_until)
-
-      if (!isExpired) {
-        throw new ApolloError('User already has a pending invitation for this workspace')
-      }
-    }
-
-    await deleteWorkspaceInvitations(
-      {
-        email: invitee_email,
-        workspace_id: workspace.id,
-      },
-      transaction,
-    )
-
-    const member = await findUser({ email: invitee_email })
-
-    if (member) {
-      const existingWorkspaceUser = await getWorkspaceUser({
-        user_id: member.id,
-        workspace_id: workspace.id,
-      })
-
-      if (existingWorkspaceUser) {
-        if (existingWorkspaceUser.status === WORKSPACE_USER_STATUS_ACTIVE) {
-          throw new ApolloError('User is already an active member of this workspace')
-        }
-
-        await deleteWorkspaceUsers(
-          {
-            user_id: member.id,
-            workspace_id: workspace.id,
-          },
-          transaction,
-        )
-      }
-    }
-
-    const token = await generateRandomKey()
-
-    const template = await compileEmailTemplate({
-      fileName: 'inviteWorkspaceMember.mjml',
-      data: {
-        workspaceName: workspace.name,
-        url: `${allowedFrontendUrl}/workspaces/invitation/${token}`,
-      },
-    })
-
-    if (member) {
-      await createMemberAndInviteToken(
-        {
-          organization_id: workspace.organization_id,
-          workspace_id: workspace.id,
-          user_id: user.id,
-          member_id: member.id,
-          email: invitee_email,
-          token,
-          role,
-        },
-        transaction,
-      )
-    } else {
-      await createWorkspaceInvitation(
-        {
-          email: invitee_email,
-          token,
-          invited_by_id: user.id,
-          workspace_id: workspace.id,
-          organization_id: workspace.organization_id,
-          workspace_role: role,
-          valid_until: formatDateDB(dayjs().add(VALID_PERIOD_DAYS, 'day')),
-          status: WORKSPACE_INVITATION_STATUS_PENDING,
-        },
-        transaction,
-      )
-    }
-
-    await transaction.commit()
-
-    try {
-      await sendMail(normalizeEmail(invitee_email), 'Workspace invitation', template)
-      console.log('Invitation Token', token)
-    } catch (emailError) {
-      logger.error('Failed to send invitation email:', {
-        error: emailError,
-        workspace_id: workspaceId,
-        invitee_email,
-        inviter_id: user.id,
-      })
-    }
-
-    return {
-      user_id: member?.id || 0,
-      user_name: member?.name || '',
-      user_email: member?.email || invitee_email,
-      status: WORKSPACE_INVITATION_STATUS_PENDING,
-    }
-  } catch (error) {
-    await transaction.rollback()
-
-    logger.error('Failed to invite workspace member:', {
-      error,
-      workspace_id: workspaceId,
-      invitee_email,
-      inviter_id: user.id,
-    })
-
-    throw new ApolloError(error)
   }
 }
 
@@ -719,12 +543,6 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
       )
     }
 
-    const removedUserOrganization = await getUserOrganization(workspaceMember.user_id, user.current_organization_id)
-
-    if (removedUserOrganization && Number(removedUserOrganization.current_workspace_id) === Number(workspace.id)) {
-      await updateOrganizationUserByOrganizationAndUserId(user.current_organization_id, workspaceMember.user_id, { current_workspace_id: null }, transaction)
-    }
-
     await transaction.commit()
 
     logger.info('Successfully removed workspace member:', {
@@ -796,7 +614,7 @@ export async function removeWorkspaceInvitation(user: UserProfile, id: number): 
       transaction,
     )
 
-    if (invitation.token && invitation.status !== WORKSPACE_INVITATION_STATUS_ACCEPTED) {
+    if (invitation.token && invitation.status !== INVITATION_STATUS_ACCEPTED) {
       await deleteWorkspaceUsers(
         {
           invitation_token: invitation.token,
@@ -851,50 +669,65 @@ export async function removeAllUserInvitations(user: UserProfile, email: string)
   try {
     transaction = await database.transaction()
 
-    // Get all invitations for this email in this organization
-    const invitations = await getWorkspaceInvitation({
+    // Get all workspace invitations for this email in this organization
+    const workspaceInvitations = await getWorkspaceInvitation({
       email,
       organization_id: user.current_organization_id,
     })
 
-    if (invitations.length === 0) {
+    // Get all organization invitations for this email in this organization
+    const organizationInvitations = await getOrganizationInvitation({
+      email,
+      organization_id: user.current_organization_id,
+    })
+
+    if (workspaceInvitations.length === 0 && organizationInvitations.length === 0) {
       await transaction.rollback()
       throw new ApolloError('No invitations found for this email')
     }
 
-    // Remove all invitations
-    const result = await deleteWorkspaceInvitations(
-      {
-        email,
-        organization_id: user.current_organization_id,
-      },
-      transaction,
-    )
+    // Remove all workspace invitations
+    if (workspaceInvitations.length > 0) {
+      await deleteWorkspaceInvitations(
+        {
+          email,
+          organization_id: user.current_organization_id,
+        },
+        transaction,
+      )
 
-    if (!result) {
-      await transaction.rollback()
-      throw new ApolloError('Failed to remove invitations')
+      // Remove associated workspace users for tokens that were not accepted
+      for (const invitation of workspaceInvitations) {
+        if (invitation.token && invitation.status !== INVITATION_STATUS_ACCEPTED) {
+          await deleteWorkspaceUsers(
+            {
+              invitation_token: invitation.token,
+            },
+            transaction,
+          )
+        }
+      }
     }
 
-    // Remove associated workspace users for tokens that were not accepted
-    for (const invitation of invitations) {
-      if (invitation.token && invitation.status !== WORKSPACE_INVITATION_STATUS_ACCEPTED) {
-        await deleteWorkspaceUsers(
-          {
-            invitation_token: invitation.token,
-          },
-          transaction,
-        )
-      }
+    // Remove all organization invitations
+    if (organizationInvitations.length > 0) {
+      await deleteOrganizationInvitations(
+        {
+          email,
+          organization_id: user.current_organization_id,
+        },
+        transaction,
+      )
     }
 
     await transaction.commit()
 
-    logger.info('Successfully removed all workspace invitations for user:', {
+    logger.info('Successfully removed all invitations for user:', {
       email,
       organization_id: user.current_organization_id,
       removed_by: user.id,
-      count: invitations.length,
+      workspace_invitations_count: workspaceInvitations.length,
+      organization_invitations_count: organizationInvitations.length,
     })
 
     return true

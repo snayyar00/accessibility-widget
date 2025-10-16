@@ -2,32 +2,46 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { useParams, useHistory } from 'react-router-dom';
 import { useQuery, useLazyQuery, useMutation } from '@apollo/client';
-import verifyTokenQuery from '@/queries/workspace/verifyInviteToken';
+import VERIFY_INVITATION_TOKEN from '@/queries/invitations/verifyInvitationToken';
 import GET_PROFILE from '@/queries/auth/getProfile';
-import joinTeamQuery from '@/queries/workspace/joinWorkspace';
+import JOIN_INVITATION from '@/queries/invitations/joinInvitation';
 import Logo from '@/components/Common/Logo';
 import Button from '@/components/Common/Button';
-import {
-  InviteMemberMutation,
-  Query,
-  VerifyWorkspaceInvitationResponse,
-} from '@/generated/graphql';
 
 type Params = {
   invitationToken: string;
+};
+
+type InvitationInfo = {
+  id?: string;
+  workspace_name?: string;
+  workspace_alias?: string;
+  organization_name?: string;
+  invited_by: string;
+  email: string;
+  status: string;
+  role: string;
+  valid_until: string;
+  organization_id?: string;
+  workspace_id?: string;
+  token?: string;
+  type: 'workspace' | 'organization';
+  created_at?: string;
 };
 
 const AcceptInvitation: React.FC = () => {
   const { t } = useTranslation();
 
   const { invitationToken } = useParams<Params>();
-  const [workspaceInfo, setTeamInfo] =
-    useState<VerifyWorkspaceInvitationResponse | null>(null);
+  const [invitationInfo, setInvitationInfo] = useState<InvitationInfo | null>(
+    null,
+  );
 
   const history = useHistory();
 
-  const [verify, { data, loading, error }] =
-    useLazyQuery<Query>(verifyTokenQuery);
+  const [verify, { data, loading, error }] = useLazyQuery(
+    VERIFY_INVITATION_TOKEN,
+  );
 
   const {
     data: userInfo,
@@ -35,7 +49,7 @@ const AcceptInvitation: React.FC = () => {
     loading: getProfileLoading,
   } = useQuery(GET_PROFILE);
 
-  const [joinWorkspace] = useMutation<InviteMemberMutation>(joinTeamQuery);
+  const [joinInvitation] = useMutation(JOIN_INVITATION);
 
   useEffect(() => {
     if (!getProfileLoading && userInfo?.profileUser) {
@@ -45,8 +59,8 @@ const AcceptInvitation: React.FC = () => {
   }, [getProfileError, userInfo]);
 
   useEffect(() => {
-    if (!loading && data?.verifyWorkspaceInvitationToken) {
-      setTeamInfo(data.verifyWorkspaceInvitationToken);
+    if (!loading && data?.verifyInvitationToken) {
+      setInvitationInfo(data.verifyInvitationToken);
     }
 
     if (error) {
@@ -54,14 +68,19 @@ const AcceptInvitation: React.FC = () => {
     }
   }, [data, error, loading]);
 
-  async function handleUserJoinTeam(type: 'accept' | 'decline') {
+  async function handleUserJoinInvitation(type?: 'accept' | 'decline') {
     try {
-      await joinWorkspace({ variables: { token: invitationToken, type } });
+      await joinInvitation({ variables: { token: invitationToken, type } });
       history.replace('/');
     } catch (e) {
       console.error(e);
     }
   }
+
+  const invitationTarget =
+    invitationInfo?.type === 'workspace'
+      ? invitationInfo?.workspace_name
+      : invitationInfo?.organization_name;
 
   return loading && getProfileLoading ? (
     <div> {t('Common.text.loading')}</div>
@@ -79,20 +98,33 @@ const AcceptInvitation: React.FC = () => {
           <Trans
             components={[<strong></strong>]}
             values={{
-              teamName: workspaceInfo?.workspace_name,
-              owner: workspaceInfo?.invited_by,
+              teamName: invitationTarget,
+              owner: invitationInfo?.invited_by,
             }}
           >
             {t('Accept_invitation.have_invitated')}
           </Trans>
         </p>
         <div className="flex justify-center [&>button:first-child]:mr-8">
-          <Button color="primary" onClick={() => handleUserJoinTeam('accept')}>
-            {t('Accept_invitation.accept')}
-          </Button>
-          <Button onClick={() => handleUserJoinTeam('decline')}>
-            {t('Accept_invitation.decline')}
-          </Button>
+          {invitationInfo?.type === 'organization' ? (
+            // Organization invitation - only one button to accept
+            <Button color="primary" onClick={() => handleUserJoinInvitation()}>
+              {t('Accept_invitation.join')}
+            </Button>
+          ) : (
+            // Workspace invitation - two buttons (accept/decline)
+            <>
+              <Button
+                color="primary"
+                onClick={() => handleUserJoinInvitation('accept')}
+              >
+                {t('Accept_invitation.accept')}
+              </Button>
+              <Button onClick={() => handleUserJoinInvitation('decline')}>
+                {t('Accept_invitation.decline')}
+              </Button>
+            </>
+          )}
         </div>
         <div className="absolute w-[495px] h-[480px] left-[-400px] top-[-175px] z-[-1]">
           <svg

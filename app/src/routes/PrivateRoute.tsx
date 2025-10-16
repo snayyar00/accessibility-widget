@@ -40,9 +40,7 @@ const PrivateRoute: React.FC<Props> = ({ render }) => {
       }
 
       if (userProfile?.profileUser?.invitationToken) {
-        history.push(
-          `/workspaces/invitation/${userProfile.profileUser.invitationToken}`,
-        );
+        history.push(`/invitation/${userProfile.profileUser.invitationToken}`);
 
         return;
       }

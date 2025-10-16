@@ -35,22 +35,13 @@ export async function findSitesByUserId(id: number): Promise<IUserSites[]> {
 }
 
 /**
- * Find user sites with workspace support and site plans in a single optimized query
+ * Get sites with plan information for a user
  * @param userId - User ID
- * @param organizationId - Organization ID (optional)
- * @param currentWorkspaceId - Current workspace ID (optional)
  * @returns Promise<IUserSites[]> - Sites with plan information
  */
-export async function findUserSitesWithPlans(userId: number, organizationId?: number, currentWorkspaceId?: number | null): Promise<IUserSites[]> {
-  let query = database(TABLE)
-
-  if (organizationId && currentWorkspaceId) {
-    // User is in a workspace - get workspace sites
-    query = query.join(TABLES.workspace_allowed_sites, `${TABLES.workspace_allowed_sites}.allowed_site_id`, `${TABLE}.id`).where(`${TABLES.workspace_allowed_sites}.workspace_id`, currentWorkspaceId)
-  } else {
-    // User is not in workspace - get personal sites
-    query = query.where(`${TABLE}.user_id`, userId)
-  }
+export async function findUserSitesWithPlans(userId: number): Promise<IUserSites[]> {
+  // Get personal sites only - workspace filtering removed
+  const query = database(TABLE).where(`${TABLE}.user_id`, userId)
 
   // Get sites first, then join with latest plan info
   const sites = await query
