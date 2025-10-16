@@ -65,7 +65,7 @@ export async function checkCustomer(req: Request, res: Response) {
           price = await stripe.prices.retrieve(price_id.id, {
             expand: ['tiers'],
           })
-        }else if (trial_subs.data.length > 0) {
+        } else if (trial_subs.data.length > 0) {
           price_id = (trial_subs.data[0] as Stripe.Subscription).items.data[0].price
           price = await stripe.prices.retrieve(price_id.id, {
             expand: ['tiers'],
