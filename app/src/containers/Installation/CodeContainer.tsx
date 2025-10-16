@@ -924,16 +924,20 @@ export default function CodeContainer({
           <p className="text-sm mb-1" style={{ color: '#A1A1A1' }}>
             Need help for the next step?
           </p>
-          <button
-            className="text-sm font-medium hover:underline transition-all"
+          <a
+            href="https://www.webability.io/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium hover:underline transition-all cursor-pointer"
             style={{
               color: '#445AE7',
+              textDecoration: 'none',
             }}
             onMouseOver={(e) => (e.currentTarget.style.color = '#3a4bc7')}
             onMouseOut={(e) => (e.currentTarget.style.color = '#445AE7')}
           >
             Contact Support
-          </button>
+          </a>
         </div>
       </div>
 
