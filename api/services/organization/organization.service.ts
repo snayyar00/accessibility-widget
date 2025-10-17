@@ -1,5 +1,4 @@
 import database from '../../config/database.config'
-import { IS_PROD } from '../../config/env'
 import { ORGANIZATION_USER_ROLE_ADMIN, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { objectToString } from '../../helpers/string.helper'
 import { deleteOrganizationInvitations, deleteWorkspaceInvitations } from '../../repository/invitations.repository'
@@ -28,20 +27,15 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
     return new ValidationError(validateResult.map((it) => it.message).join(','))
   }
 
+  if (!user.is_super_admin) {
+    throw new ForbiddenError('Only super admin can create organizations')
+  }
+
   const currentUrl = getMatchingFrontendUrl(data.domain)
   logger.info('Current URL:', currentUrl)
 
   if (!currentUrl) {
     throw new ForbiddenError('Provided domain is not in the list of allowed URLs')
-  }
-
-  const orgLinks = await getOrganizationsByUserId(user.id)
-  const maxOrgs = user.isActive ? 3 : 1
-
-  if (IS_PROD) {
-    if (orgLinks.length >= maxOrgs) {
-      throw new ApolloError(user.isActive ? 'You have reached the limit of organizations you can create (3 for verified users).' : 'Please verify your email to create more than one organization.')
-    }
   }
 
   const trx = await database.transaction()
@@ -83,13 +77,15 @@ export async function editOrganization(data: Partial<Organization>, user: UserPr
     return new ValidationError(validateResult.map((it) => it.message).join(','))
   }
 
-  await checkOrganizationAccess(user, organizationId, 'You can only edit your own organizations')
+  if (!user.is_super_admin) {
+    await checkOrganizationAccess(user, organizationId, 'You can only edit your own organizations')
 
-  const orgUser = await getUserOrganization(user.id, Number(organizationId))
-  const isAllowed = orgUser && canManageOrganization(orgUser.role)
+    const orgUser = await getUserOrganization(user.id, Number(organizationId))
+    const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
-  if (!isAllowed) {
-    throw new ApolloError('Only owner or admin can edit the organization')
+    if (!isAllowed) {
+      throw new ApolloError('Only owner or admin can edit the organization')
+    }
   }
 
   const trx = await database.transaction()
@@ -129,13 +125,8 @@ export async function removeOrganization(user: UserProfile, organizationId: numb
     return new ValidationError(validateResult.map((it) => it.message).join(','))
   }
 
-  await checkOrganizationAccess(user, organizationId, 'You can only remove your own organizations')
-
-  const orgUser = await getUserOrganization(user.id, Number(organizationId))
-  const isAllowed = orgUser && canManageOrganization(orgUser.role)
-
-  if (!isAllowed) {
-    throw new ApolloError('Only owner or admin can remove the organization')
+  if (!user.is_super_admin) {
+    throw new ForbiddenError('Only super admin can delete organizations')
   }
 
   const trx = await database.transaction()
@@ -171,7 +162,9 @@ export async function getOrganizations(user: UserProfile): Promise<Organization[
 }
 
 export async function getOrganizationById(id: number | string, user: UserProfile): Promise<Organization | undefined> {
-  await checkOrganizationAccess(user, id, 'You can only access your own organizations')
+  if (!user.is_super_admin) {
+    await checkOrganizationAccess(user, id, 'You can only access your own organizations')
+  }
 
   try {
     return await getOrganizationByIdRepo(Number(id))
@@ -210,11 +203,13 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
     throw new ForbiddenError('You cannot remove yourself from the organization')
   }
 
-  const orgUser = await getUserOrganization(initiator.id, organizationId)
-  const isAllowed = orgUser && canManageOrganization(orgUser.role)
+  if (!initiator.is_super_admin) {
+    const orgUser = await getUserOrganization(initiator.id, organizationId)
+    const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
-  if (!isAllowed) {
-    throw new ForbiddenError('Only owner or admin can remove users from the organization')
+    if (!isAllowed) {
+      throw new ForbiddenError('Only owner or admin can remove users from the organization')
+    }
   }
 
   const trx = await database.transaction()
@@ -226,7 +221,7 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
       throw new ValidationError('User is not a member of this organization')
     }
 
-    if (target.role === ORGANIZATION_USER_ROLE_OWNER) {
+    if (target.role === ORGANIZATION_USER_ROLE_OWNER && !initiator.is_super_admin) {
       throw new ForbiddenError('Cannot remove the owner of the organization')
     }
 

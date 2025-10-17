@@ -36,6 +36,7 @@ interface InviteUserProps {
   preSelectedWorkspace?: string;
   disableSelect?: boolean;
   buttonText?: string;
+  isSuperAdmin?: boolean;
 }
 
 export const InviteUser: React.FC<InviteUserProps> = ({
@@ -49,6 +50,7 @@ export const InviteUser: React.FC<InviteUserProps> = ({
   preSelectedWorkspace,
   disableSelect = false,
   buttonText,
+  isSuperAdmin = false,
 }) => {
   const [open, setOpen] = React.useState(false);
   const [email, setEmail] = React.useState(userEmail);
@@ -260,9 +262,16 @@ export const InviteUser: React.FC<InviteUserProps> = ({
                     <MenuItem key="admin" value={OrganizationUserRole.Admin}>
                       Admin
                     </MenuItem>,
-                    <MenuItem key="owner" value={OrganizationUserRole.Owner}>
-                      Owner
-                    </MenuItem>,
+                    ...(isSuperAdmin
+                      ? [
+                          <MenuItem
+                            key="owner"
+                            value={OrganizationUserRole.Owner}
+                          >
+                            Owner
+                          </MenuItem>,
+                        ]
+                      : []),
                   ]}
             </Select>
           </FormControl>

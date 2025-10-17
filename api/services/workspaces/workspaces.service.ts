@@ -71,14 +71,16 @@ export async function getOrganizationWorkspaces(organizationId: number, user: Us
     throw new ValidationError('User is required')
   }
 
-  const userOrganization = await getUserOrganization(user.id, organizationId)
+  if (!user.is_super_admin) {
+    const userOrganization = await getUserOrganization(user.id, organizationId)
 
-  if (!userOrganization) {
-    return []
-  }
+    if (!userOrganization) {
+      return []
+    }
 
-  if (!canManageOrganization(userOrganization.role)) {
-    return []
+    if (!canManageOrganization(userOrganization.role)) {
+      return []
+    }
   }
 
   const workspaces = await getAllWorkspace({ organizationId })

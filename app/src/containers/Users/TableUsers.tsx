@@ -19,6 +19,7 @@ import { RemoveAllUserInvitations } from '@/components/Invite/RemoveAllUserInvit
 type TableUsersProps = {
   organizationId: number;
   userId: number;
+  isSuperAdmin?: boolean;
 };
 
 const STATUS_STYLES: Record<
@@ -43,7 +44,11 @@ const STATUS_STYLES: Record<
   },
 };
 
-export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
+export const TableUsers = ({
+  organizationId,
+  userId,
+  isSuperAdmin = false,
+}: TableUsersProps) => {
   const [pageSize, setPageSize] = React.useState<number>(50);
 
   const { data, loading, error, refetch } = useQuery<Query>(
@@ -303,9 +308,10 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
 
         return (
           <ChangeOrganizationUserRole
-            disabled={isSelf}
+            disabled={isSelf && !isSuperAdmin}
             initialValue={params.value}
             userId={rowUserId}
+            isSuperAdmin={isSuperAdmin}
             onRoleChanged={refetch}
           />
         );
@@ -339,6 +345,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
                 buttonSize="medium"
                 allWorkspaces={allWorkspaces}
                 workspacesLoading={workspacesLoading}
+                isSuperAdmin={isSuperAdmin}
               />
             )}
 
@@ -349,7 +356,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
               />
             ) : (
               <DeleteUserFromOrganization
-                disabled={rowUserId === userId || rowOwner}
+                disabled={(rowUserId === userId || rowOwner) && !isSuperAdmin}
                 userId={rowUserId}
                 organizationId={organizationId}
                 onUserDeleted={refetch}
@@ -364,7 +371,11 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
   return (
     <>
       <div className="static mb-5 top-[15px] right-[17px] lg:absolute lg:mb-0">
-        <InviteUser mode="organization" onUserInvited={refetch} />
+        <InviteUser
+          mode="organization"
+          onUserInvited={refetch}
+          isSuperAdmin={isSuperAdmin}
+        />
       </div>
 
       <div className="h-[calc(100vh-310px)]">

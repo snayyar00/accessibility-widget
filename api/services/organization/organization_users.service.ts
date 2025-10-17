@@ -3,7 +3,7 @@ import { Knex } from 'knex'
 import { INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
 import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_PENDING, OrganizationUserRole, OrganizationUserStatus } from '../../constants/organization.constant'
 import { GetDetailOrganizationInvitation, GetDetailWorkspaceInvitation, getOrganizationInvitations, getOrganizationWorkspaceInvitations } from '../../repository/invitations.repository'
-import { deleteOrganizationUser, getOrganizationUser, getOrganizationUsersByUserId, getOrganizationUsersWithUserInfo, insertOrganizationUser, OrganizationUser, updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
+import { deleteOrganizationUser, getOrganizationUser, getOrganizationUsersByOrganizationId, getOrganizationUsersByUserId, getOrganizationUsersWithUserInfo, insertOrganizationUser, OrganizationUser, updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
 import { findUsersByEmails, UserProfile } from '../../repository/user.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { ApolloError } from '../../utils/graphql-errors.helper'
@@ -11,6 +11,15 @@ import logger from '../../utils/logger'
 
 export async function addUserToOrganization(user_id: number, organization_id: number, role: OrganizationUserRole = 'member', status: OrganizationUserStatus = 'active', trx?: Knex.Transaction): Promise<number[]> {
   try {
+    if (role === ORGANIZATION_USER_ROLE_OWNER) {
+      const allOrgUsers = await getOrganizationUsersByOrganizationId(organization_id)
+      const existingOwner = allOrgUsers.find((user) => user.role === ORGANIZATION_USER_ROLE_OWNER)
+
+      if (existingOwner) {
+        throw new ApolloError('Organization can have only one owner. Please change the current owner role first.')
+      }
+    }
+
     return await insertOrganizationUser({ user_id, organization_id, role, status }, trx)
   } catch (error) {
     logger.error('Error adding user to organization:', error)
@@ -57,16 +66,18 @@ export async function getOrganizationUsers(user: UserProfile) {
     return []
   }
 
-  const orgUser = await getUserOrganization(userId, organizationId)
+  if (!user.is_super_admin) {
+    const orgUser = await getUserOrganization(userId, organizationId)
 
-  if (!orgUser || !canManageOrganization(orgUser.role)) {
-    logger.warn('getOrganizationUsers: No permission to view organization users', { userId, organizationId, orgUser })
-    return []
+    if (!orgUser || !canManageOrganization(orgUser.role)) {
+      logger.warn('getOrganizationUsers: No permission to view organization users', { userId, organizationId, orgUser })
+      return []
+    }
   }
 
   const users = await getOrganizationUsersWithUserInfo(organizationId)
   const myOrgs = await getOrganizationsByUserId(userId)
-  const allowedOrgIds = myOrgs.filter((o) => canManageOrganization(o.role)).map((o) => o.organization_id)
+  const allowedOrgIds = user.is_super_admin ? users.flatMap((u) => u.organizations.map((o) => o.id)) : myOrgs.filter((o) => canManageOrganization(o.role)).map((o) => o.organization_id)
 
   const existingUsers = users.map((user) => ({
     ...user,
@@ -105,14 +116,7 @@ export async function changeOrganizationUserRole(initiator: UserProfile, targetU
     throw new ApolloError('No current organization selected')
   }
 
-  const initiatorOrgUser = await getUserOrganization(initiator.id, organizationId)
-  const isAllowed = initiatorOrgUser && canManageOrganization(initiatorOrgUser.role)
-
-  if (!isAllowed) {
-    throw new ApolloError('Only owner or admin can change user roles')
-  }
-
-  if (initiator.id === targetUserId) {
+  if (initiator.id === targetUserId && !initiator.is_super_admin) {
     throw new ApolloError('You cannot change your own role')
   }
 
@@ -122,12 +126,48 @@ export async function changeOrganizationUserRole(initiator: UserProfile, targetU
     throw new ApolloError('User not found in organization')
   }
 
-  if (targetOrgUser.role === ORGANIZATION_USER_ROLE_OWNER && initiatorOrgUser.role !== ORGANIZATION_USER_ROLE_OWNER) {
-    throw new ApolloError('Only owner can change owner role')
+  if (newRole === ORGANIZATION_USER_ROLE_OWNER && !initiator.is_super_admin) {
+    throw new ApolloError('Only super admin can assign owner role')
   }
 
-  if (newRole === ORGANIZATION_USER_ROLE_OWNER && initiatorOrgUser.role !== ORGANIZATION_USER_ROLE_OWNER) {
-    throw new ApolloError('Only owner can assign owner role')
+  if (!initiator.is_super_admin) {
+    const initiatorOrgUser = await getUserOrganization(initiator.id, organizationId)
+    const isAllowed = initiatorOrgUser && canManageOrganization(initiatorOrgUser.role)
+
+    if (!isAllowed) {
+      throw new ApolloError('Only owner or admin can change user roles')
+    }
+
+    if (targetOrgUser.role === ORGANIZATION_USER_ROLE_OWNER) {
+      throw new ApolloError('Only super admin can change owner role')
+    }
+  }
+
+  if (newRole === ORGANIZATION_USER_ROLE_OWNER || targetOrgUser.role === ORGANIZATION_USER_ROLE_OWNER) {
+    // Skip check if not actually changing the role
+    if (targetOrgUser.role !== newRole) {
+      const allInvitations = await getOrganizationInvitations(organizationId)
+      const pendingOwnerInvitation = allInvitations.find((inv) => inv.role === ORGANIZATION_USER_ROLE_OWNER && inv.status === INVITATION_STATUS_PENDING)
+
+      if (pendingOwnerInvitation) {
+        if (targetOrgUser.role === ORGANIZATION_USER_ROLE_OWNER && newRole !== ORGANIZATION_USER_ROLE_OWNER) {
+          throw new ApolloError('Cannot change owner role while there is a pending invitation for owner role. Please cancel the invitation first.')
+        }
+        if (newRole === ORGANIZATION_USER_ROLE_OWNER && targetOrgUser.role !== ORGANIZATION_USER_ROLE_OWNER) {
+          throw new ApolloError('There is already a pending invitation for owner role. Please cancel it before assigning a new owner.')
+        }
+      }
+    }
+  }
+
+  // Check if trying to assign owner role - only one owner allowed per organization
+  if (newRole === ORGANIZATION_USER_ROLE_OWNER) {
+    const allOrgUsers = await getOrganizationUsersByOrganizationId(organizationId)
+    const existingOwner = allOrgUsers.find((user) => user.role === ORGANIZATION_USER_ROLE_OWNER && user.user_id !== targetUserId)
+
+    if (existingOwner) {
+      throw new ApolloError('Organization can have only one owner. Please change the current owner role first.')
+    }
   }
 
   try {

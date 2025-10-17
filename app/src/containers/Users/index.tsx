@@ -21,6 +21,7 @@ const Users: React.FC = () => {
         <TableUsers
           userId={Number(userData.id)}
           organizationId={userData.current_organization_id}
+          isSuperAdmin={userData.is_super_admin}
         />
       )}
     </section>
