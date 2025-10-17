@@ -14,6 +14,7 @@ export const usersColumns = {
   createAt: 'users.created_at',
   updatedAt: 'users.updated_at',
   isActive: 'users.is_active',
+  isSuperAdmin: 'users.is_super_admin',
   position: 'users.position',
   company: 'users.company',
   avatarUrl: 'users.avatar_url',
@@ -43,6 +44,7 @@ export type UserProfile = {
   provider_id?: string
   avatar_url?: string
   is_active?: boolean
+  is_super_admin?: boolean
   company?: string
   created_at?: string
   updated_at?: string

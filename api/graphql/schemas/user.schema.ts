@@ -14,6 +14,7 @@ export const UserSchema = `#graphql
     email: String!
     name: String!
     isActive: Boolean!
+    is_super_admin: Boolean!
     position: String
     company: String
     avatarUrl: String

@@ -10,6 +10,7 @@ export type UserLoginedResponse = {
   email: string
   name: string
   isActive: boolean
+  is_super_admin: boolean
   position: string
   company: string
   avatarUrl: string
@@ -41,6 +42,7 @@ export default async function getUserLogined(bearerToken: string | null): Promis
           email: userInfo.email,
           name: userInfo.name,
           isActive: userInfo.is_active,
+          is_super_admin: userInfo.is_super_admin || false,
           position: userInfo.position,
           company: userInfo.company,
           avatarUrl: userInfo.avatar_url,
