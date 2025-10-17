@@ -1,7 +1,7 @@
 import { Knex } from 'knex'
 
 import { INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
-import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_PENDING, OrganizationUserRole, OrganizationUserStatus } from '../../constants/organization.constant'
+import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE, ORGANIZATION_USER_STATUS_PENDING, OrganizationUserRole, OrganizationUserStatus } from '../../constants/organization.constant'
 import { GetDetailOrganizationInvitation, GetDetailWorkspaceInvitation, getOrganizationInvitations, getOrganizationWorkspaceInvitations } from '../../repository/invitations.repository'
 import { deleteOrganizationUser, getOrganizationUser, getOrganizationUsersByOrganizationId, getOrganizationUsersByUserId, getOrganizationUsersWithUserInfo, insertOrganizationUser, OrganizationUser, updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
 import { findUsersByEmails, UserProfile } from '../../repository/user.repository'
@@ -9,14 +9,14 @@ import { canManageOrganization } from '../../utils/access.helper'
 import { ApolloError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 
-export async function addUserToOrganization(user_id: number, organization_id: number, role: OrganizationUserRole = 'member', status: OrganizationUserStatus = 'active', trx?: Knex.Transaction): Promise<number[]> {
+export async function addUserToOrganization(user_id: number, organization_id: number, role: OrganizationUserRole = ORGANIZATION_USER_ROLE_MEMBER, status: OrganizationUserStatus = ORGANIZATION_USER_STATUS_ACTIVE, trx?: Knex.Transaction): Promise<number[]> {
   try {
     if (role === ORGANIZATION_USER_ROLE_OWNER) {
       const allOrgUsers = await getOrganizationUsersByOrganizationId(organization_id)
       const existingOwner = allOrgUsers.find((user) => user.role === ORGANIZATION_USER_ROLE_OWNER)
 
       if (existingOwner) {
-        throw new ApolloError('Organization can have only one owner. Please change the current owner role first.')
+        throw new ApolloError(`Organization can have only one ${ORGANIZATION_USER_ROLE_OWNER}. Please change the current owner role first.`)
       }
     }
 
@@ -127,7 +127,7 @@ export async function changeOrganizationUserRole(initiator: UserProfile, targetU
   }
 
   if (newRole === ORGANIZATION_USER_ROLE_OWNER && !initiator.is_super_admin) {
-    throw new ApolloError('Only super admin can assign owner role')
+    throw new ApolloError(`Only super admin can assign ${ORGANIZATION_USER_ROLE_OWNER} role`)
   }
 
   if (!initiator.is_super_admin) {
@@ -135,11 +135,11 @@ export async function changeOrganizationUserRole(initiator: UserProfile, targetU
     const isAllowed = initiatorOrgUser && canManageOrganization(initiatorOrgUser.role)
 
     if (!isAllowed) {
-      throw new ApolloError('Only owner or admin can change user roles')
+      throw new ApolloError(`Only ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can change user roles`)
     }
 
     if (targetOrgUser.role === ORGANIZATION_USER_ROLE_OWNER) {
-      throw new ApolloError('Only super admin can change owner role')
+      throw new ApolloError(`Only super admin can change ${ORGANIZATION_USER_ROLE_OWNER} role`)
     }
   }
 
@@ -151,10 +151,10 @@ export async function changeOrganizationUserRole(initiator: UserProfile, targetU
 
       if (pendingOwnerInvitation) {
         if (targetOrgUser.role === ORGANIZATION_USER_ROLE_OWNER && newRole !== ORGANIZATION_USER_ROLE_OWNER) {
-          throw new ApolloError('Cannot change owner role while there is a pending invitation for owner role. Please cancel the invitation first.')
+          throw new ApolloError(`Cannot change ${ORGANIZATION_USER_ROLE_OWNER} role while there is a pending invitation for ${ORGANIZATION_USER_ROLE_OWNER} role. Please cancel the invitation first.`)
         }
         if (newRole === ORGANIZATION_USER_ROLE_OWNER && targetOrgUser.role !== ORGANIZATION_USER_ROLE_OWNER) {
-          throw new ApolloError('There is already a pending invitation for owner role. Please cancel it before assigning a new owner.')
+          throw new ApolloError(`There is already a pending invitation for ${ORGANIZATION_USER_ROLE_OWNER} role. Please cancel it before assigning a new ${ORGANIZATION_USER_ROLE_OWNER}.`)
         }
       }
     }
@@ -166,7 +166,7 @@ export async function changeOrganizationUserRole(initiator: UserProfile, targetU
     const existingOwner = allOrgUsers.find((user) => user.role === ORGANIZATION_USER_ROLE_OWNER && user.user_id !== targetUserId)
 
     if (existingOwner) {
-      throw new ApolloError('Organization can have only one owner. Please change the current owner role first.')
+      throw new ApolloError(`Organization can have only one ${ORGANIZATION_USER_ROLE_OWNER}. Please change the current ${ORGANIZATION_USER_ROLE_OWNER} role first.`)
     }
   }
 

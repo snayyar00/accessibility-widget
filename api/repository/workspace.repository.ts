@@ -2,6 +2,7 @@ import { Knex } from 'knex'
 
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
+import { WORKSPACE_USER_ROLE_OWNER, WORKSPACE_USER_STATUS_ACTIVE } from '../constants/workspace.constant'
 import { createWorkspaceUser, WorkspaceUser, workspaceUsersColumns } from './workspace_users.repository'
 
 export type Workspace = {
@@ -86,7 +87,7 @@ export async function updateWorkspace(workspaceId: number, data: Workspace, tran
  */
 export async function getAllWorkspace({ workspaceId, userId, organizationId }: GetAllWorkspace): Promise<GetAllWorkspaceResponse[]> {
   const condition: Condition = {
-    [workspaceUsersColumns.status]: 'active',
+    [workspaceUsersColumns.status]: WORKSPACE_USER_STATUS_ACTIVE,
   }
 
   if (workspaceId) condition[workspaceUsersColumns.workspaceId] = workspaceId
@@ -112,7 +113,7 @@ export async function createNewWorkspaceAndMember({ name, alias, organization_id
     transaction = await database.transaction()
     const [workspaceId] = await insertWorkspace({ name, alias, organization_id, created_by: user_id }, transaction)
 
-    await createWorkspaceUser({ user_id: user_id, workspace_id: workspaceId, role: 'owner', status: 'active' }, transaction)
+    await createWorkspaceUser({ user_id: user_id, workspace_id: workspaceId, role: WORKSPACE_USER_ROLE_OWNER, status: WORKSPACE_USER_STATUS_ACTIVE }, transaction)
 
     await transaction.commit()
 

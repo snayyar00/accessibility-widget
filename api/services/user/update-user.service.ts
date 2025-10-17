@@ -1,3 +1,4 @@
+import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
 import { checkOnboardingEmailsEnabled, findUser, findUserNotificationByUserId, getUserNotificationSettings, insertUserNotification, updateUser, updateUserNotificationFlags, UserProfile } from '../../repository/user.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { ApolloError, ForbiddenError } from '../../utils/graphql-errors.helper'
@@ -180,7 +181,7 @@ async function checkCanSwitchEntity(initiator: UserProfile, targetUserId: number
     const isAllowed = initiatorOrg && canManageOrganization(initiatorOrg.role)
 
     if (!isAllowed) {
-      throw new ForbiddenError('Must be owner/admin to switch for other users')
+      throw new ForbiddenError(`Must be ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} to switch for other users`)
     }
   } else {
     const selfOrg = await getUserOrganization(initiator.id, targetOrganizationId)

@@ -2,6 +2,7 @@ import { Knex } from 'knex'
 
 import database from '../../config/database.config'
 import { INVITATION_STATUS_ACCEPTED, INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
+import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
 import { WORKSPACE_USER_STATUS_ACTIVE, WORKSPACE_USER_STATUS_DECLINE, WORKSPACE_USER_STATUS_INACTIVE, WORKSPACE_USER_STATUS_PENDING, WorkspaceUserRole } from '../../constants/workspace.constant'
 import { stringToSlug } from '../../helpers/string.helper'
 import { deleteOrganizationInvitations, deleteWorkspaceInvitations, GetDetailWorkspaceInvitation, getDetailWorkspaceInvitations, getOrganizationInvitation, getWorkspaceInvitation, updateWorkspaceInvitationByToken } from '../../repository/invitations.repository'
@@ -279,7 +280,7 @@ export async function createWorkspace(user: UserProfile, workspaceName: string):
   const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
   if (!isAllowed) {
-    throw new ApolloError('Only organization owner or admin can create the workspace')
+    throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can create the workspace`)
   }
 
   const alias = stringToSlug(workspaceName)
@@ -316,7 +317,7 @@ export async function deleteWorkspace(user: UserProfile, workspace_id: number): 
   const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
   if (!isAllowed) {
-    throw new ApolloError('Only organization owner or admin can delete the workspace')
+    throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can delete the workspace`)
   }
 
   const workspace = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
@@ -356,7 +357,7 @@ export async function updateWorkspace(user: UserProfile, workspace_id: number, d
   const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
   if (!isAllowed) {
-    throw new ApolloError('Only organization owner or admin can update the workspace')
+    throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can update the workspace`)
   }
 
   const workspace = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
@@ -427,7 +428,7 @@ export async function changeWorkspaceMemberRole(user: UserProfile, id: number, r
   const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
   if (!isAllowed) {
-    throw new ApolloError('Only organization owner or admin can change workspace member roles')
+    throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can change workspace member roles`)
   }
 
   const workspaceMember = await getWorkspaceUser({ id })
@@ -501,7 +502,7 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
   const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
   if (!isAllowed) {
-    throw new ApolloError('Only organization owner or admin can remove workspace members')
+    throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can remove workspace members`)
   }
 
   const workspaceMember = await getWorkspaceUser({ id })
@@ -589,7 +590,7 @@ export async function removeWorkspaceInvitation(user: UserProfile, id: number): 
   const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
   if (!isAllowed) {
-    throw new ApolloError('Only organization owner or admin can remove workspace invitations')
+    throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can remove workspace invitations`)
   }
 
   const [invitation] = await getWorkspaceInvitation({ id })
@@ -663,7 +664,7 @@ export async function removeAllUserInvitations(user: UserProfile, email: string)
   const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
   if (!isAllowed) {
-    throw new ApolloError('Only organization owner or admin can remove workspace invitations')
+    throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can remove workspace invitations`)
   }
 
   let transaction: Knex.Transaction

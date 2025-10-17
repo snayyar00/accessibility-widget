@@ -3,8 +3,8 @@ import { Knex } from 'knex'
 
 import database from '../../config/database.config'
 import { INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
-import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_PENDING, OrganizationUserRole } from '../../constants/organization.constant'
-import { WORKSPACE_USER_STATUS_ACTIVE, WorkspaceUserRole } from '../../constants/workspace.constant'
+import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_PENDING, OrganizationUserRole } from '../../constants/organization.constant'
+import { WORKSPACE_USER_ROLE_MEMBER, WORKSPACE_USER_STATUS_ACTIVE, WorkspaceUserRole } from '../../constants/workspace.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import generateRandomKey from '../../helpers/genarateRandomkey'
 import { normalizeEmail } from '../../helpers/string.helper'
@@ -55,7 +55,7 @@ export async function inviteUser(user: UserProfile, params: InviteUserParams): P
 /**
  * Invite user to workspace
  */
-async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, invitee_email: string, role: WorkspaceUserRole = 'member', allowedFrontendUrl: string): Promise<InvitationResponse> {
+async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, invitee_email: string, role: WorkspaceUserRole = WORKSPACE_USER_ROLE_MEMBER, allowedFrontendUrl: string): Promise<InvitationResponse> {
   const validateResult = validateInviteWorkspaceMember({ workspaceId, email: invitee_email, role })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -202,13 +202,13 @@ async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, inv
 /**
  * Invite user to organization
  */
-async function inviteUserToOrganization(user: UserProfile, invitee_email: string, role: OrganizationUserRole = 'member', allowedFrontendUrl: string): Promise<InvitationResponse> {
+async function inviteUserToOrganization(user: UserProfile, invitee_email: string, role: OrganizationUserRole = ORGANIZATION_USER_ROLE_MEMBER, allowedFrontendUrl: string): Promise<InvitationResponse> {
   if (!user.current_organization_id) {
     throw new ApolloError('No current organization selected')
   }
 
   if (role === ORGANIZATION_USER_ROLE_OWNER && !user.is_super_admin) {
-    throw new ApolloError('Only super admin can invite users with owner role.')
+    throw new ApolloError(`Only super admin can invite users with ${ORGANIZATION_USER_ROLE_OWNER} role.`)
   }
 
   if (role === ORGANIZATION_USER_ROLE_OWNER) {
@@ -222,14 +222,14 @@ async function inviteUserToOrganization(user: UserProfile, invitee_email: string
     const existingOwner = allOrgUsers.find((orgUser) => orgUser.role === ORGANIZATION_USER_ROLE_OWNER)
 
     if (existingOwner) {
-      throw new ApolloError('Organization already has an owner. Only one owner is allowed per organization.')
+      throw new ApolloError(`Organization already has an ${ORGANIZATION_USER_ROLE_OWNER}. Only one ${ORGANIZATION_USER_ROLE_OWNER} is allowed per organization.`)
     }
 
     const allInvitations = await getOrganizationInvitations(organization.id)
     const pendingOwnerInvitation = allInvitations.find((inv) => inv.role === ORGANIZATION_USER_ROLE_OWNER && inv.status === INVITATION_STATUS_PENDING)
 
     if (pendingOwnerInvitation) {
-      throw new ApolloError('There is already a pending invitation for owner role. Only one owner is allowed per organization.')
+      throw new ApolloError(`There is already a pending invitation for ${ORGANIZATION_USER_ROLE_OWNER} role. Only one ${ORGANIZATION_USER_ROLE_OWNER} is allowed per organization.`)
     }
   }
 

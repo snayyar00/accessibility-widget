@@ -1,5 +1,5 @@
 import database from '../../config/database.config'
-import { ORGANIZATION_USER_ROLE_ADMIN, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
+import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_ADMIN, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { objectToString } from '../../helpers/string.helper'
 import { deleteOrganizationInvitations, deleteWorkspaceInvitations } from '../../repository/invitations.repository'
 import { createOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization, updateOrganization } from '../../repository/organization.repository'
@@ -84,7 +84,7 @@ export async function editOrganization(data: Partial<Organization>, user: UserPr
     const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
     if (!isAllowed) {
-      throw new ApolloError('Only owner or admin can edit the organization')
+      throw new ApolloError(`Only ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can edit the organization`)
     }
   }
 
@@ -208,7 +208,7 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
     const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
     if (!isAllowed) {
-      throw new ForbiddenError('Only owner or admin can remove users from the organization')
+      throw new ForbiddenError(`Only ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can remove users from the organization`)
     }
   }
 
@@ -222,7 +222,7 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
     }
 
     if (target.role === ORGANIZATION_USER_ROLE_OWNER && !initiator.is_super_admin) {
-      throw new ForbiddenError('Cannot remove the owner of the organization')
+      throw new ForbiddenError(`Cannot remove the ${ORGANIZATION_USER_ROLE_OWNER} of the organization`)
     }
 
     const targetUser = await findUser({ id: userId })
