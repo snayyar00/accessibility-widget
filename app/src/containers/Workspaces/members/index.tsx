@@ -17,7 +17,7 @@ import { TableMembers } from './TableMembers';
 import { TableInvites } from './TableInvites';
 import { RootState } from '@/config/store';
 import { useDispatch, useSelector } from 'react-redux';
-import { InviteUser } from '@/components/Invite';
+import { InviteUser } from '@/components/Invite/InviteUser';
 import GET_USER_WORKSPACES from '@/queries/workspace/getUserWorkspaces';
 import GET_PROFILE from '@/queries/auth/getProfile';
 import GET_USER_SITES from '@/queries/sites/getSites';

@@ -173,6 +173,14 @@ export const InviteUser: React.FC<InviteUserProps> = ({
       : 'Invite to Organization';
   };
 
+  if (
+    mode === 'workspace' &&
+    !availableWorkspaces?.length &&
+    !workspacesLoading
+  ) {
+    return null;
+  }
+
   return (
     <>
       {buttonSize === 'large' ? (

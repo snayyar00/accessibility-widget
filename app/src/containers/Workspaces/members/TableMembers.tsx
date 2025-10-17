@@ -52,7 +52,7 @@ export const TableMembers = ({ alias, onUpdate }: TableMembersProps) => {
           email: member.user?.email ?? '',
           name: isInvitedUser ? '—' : member.user?.name ?? '',
           role: member.role ?? '',
-          status: isInvitedUser ? 'invited' : member.status ?? '',
+          status: member.status,
           created_at: member.created_at ?? '',
           updated_at: member.updated_at ?? '',
           avatarUrl: member.user?.avatarUrl ?? '',

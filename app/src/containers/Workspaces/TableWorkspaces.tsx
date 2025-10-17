@@ -11,7 +11,7 @@ import { Query, WorkspaceUser, AllowedSite } from '@/generated/graphql';
 import { CreateWorkspace } from './CreateWorkspace';
 import { EditWorkspace } from './EditWorkspace';
 import { DeleteWorkspace } from './DeleteWorkspace';
-import { InviteUser } from '@/components/Invite';
+import { InviteUser } from '@/components/Invite/InviteUser';
 
 type TableWorkspacesProps = {
   onUpdate: () => void;

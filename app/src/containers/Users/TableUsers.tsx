@@ -13,7 +13,7 @@ import {
 import { ChangeOrganizationSelect } from './ChangeOrganizationSelect';
 import { ChangeOrganizationUserRole } from './ChangeOrganizationUserRole';
 import { DeleteUserFromOrganization } from './DeleteUserFromOrganization';
-import { InviteUser } from '@/components/Invite';
+import { InviteUser } from '@/components/Invite/InviteUser';
 import { RemoveAllUserInvitations } from '@/components/Invite/RemoveAllUserInvitations';
 
 type TableUsersProps = {
@@ -341,6 +341,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
                 workspacesLoading={workspacesLoading}
               />
             )}
+
             {isVirtualUser ? (
               <RemoveAllUserInvitations
                 email={userEmail}
@@ -363,11 +364,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
   return (
     <>
       <div className="static mb-5 top-[15px] right-[17px] lg:absolute lg:mb-0">
-        <InviteUser
-          mode="organization"
-          onUserInvited={refetch}
-          buttonText="Invite User"
-        />
+        <InviteUser mode="organization" onUserInvited={refetch} />
       </div>
 
       <div className="h-[calc(100vh-310px)]">
