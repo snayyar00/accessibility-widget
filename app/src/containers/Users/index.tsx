@@ -19,7 +19,7 @@ const Users: React.FC = () => {
 
       {userData.current_organization_id && userData.id && (
         <TableUsers
-          userId={userData.id}
+          userId={Number(userData.id)}
           organizationId={userData.current_organization_id}
         />
       )}
