@@ -61,7 +61,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
     () =>
       users.map((row, idx) => ({
         number: idx + 1,
-        id: row.user_id,
+        id: Number(row.user_id),
         name: row.user?.name ?? '',
         email: row.user?.email ?? '',
         isActive: row.user?.isActive ?? false,
