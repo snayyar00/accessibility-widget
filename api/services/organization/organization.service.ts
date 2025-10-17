@@ -1,6 +1,6 @@
 import database from '../../config/database.config'
 import { IS_PROD } from '../../config/env'
-import { ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
+import { ORGANIZATION_USER_ROLE_ADMIN, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { objectToString } from '../../helpers/string.helper'
 import { deleteOrganizationInvitations, deleteWorkspaceInvitations } from '../../repository/invitations.repository'
 import { createOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization, updateOrganization } from '../../repository/organization.repository'
@@ -62,7 +62,7 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
     const ids = await createOrganization(orgToCreate, trx)
     const newOrgId = Number(ids[0])
 
-    await addUserToOrganization(user.id, newOrgId, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE, trx)
+    await addUserToOrganization(user.id, newOrgId, ORGANIZATION_USER_ROLE_ADMIN, ORGANIZATION_USER_STATUS_ACTIVE, trx)
     await updateUser(user.id, { current_organization_id: newOrgId }, trx)
 
     await trx.commit()
