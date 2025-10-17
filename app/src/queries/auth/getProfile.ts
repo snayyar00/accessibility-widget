@@ -7,6 +7,7 @@ export default gql`
       email
       name
       isActive
+      is_super_admin
       company
       position
       avatarUrl

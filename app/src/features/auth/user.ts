@@ -7,6 +7,7 @@ type Profile = {
   avatarUrl?: string;
   email?: string;
   isActive?: boolean;
+  is_super_admin?: boolean;
   position?: string;
   company?: string;
   name?: string;
