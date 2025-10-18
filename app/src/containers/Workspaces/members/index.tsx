@@ -50,9 +50,9 @@ export const WorkspaceMembers = () => {
 
   const workspace = workspaceData?.getWorkspaceByAlias;
 
-  if (!userData.isAdminOrOwner) {
-    return <Redirect to="/" />;
-  }
+  // if (!userData.isAdminOrOwner) {
+  //   return <Redirect to="/" />;
+  // }
 
   const handleChange = (_: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);

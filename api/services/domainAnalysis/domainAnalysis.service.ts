@@ -1,7 +1,8 @@
+import axios from 'axios'
+
+import { normalizeDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
-import { normalizeDomain } from '../../utils/domain.utils'
-import axios from 'axios'
 
 export interface DomainAnalysisResult {
   url: string

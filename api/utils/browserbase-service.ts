@@ -341,7 +341,7 @@ export class BrowserbaseService {
       //  console.log(`[BROWSERBASE] Converting HTML to markdown, HTML length: ${html.length}`)
 
       // Simple HTML to markdown conversion
-      let markdown = html
+      const markdown = html
         .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
         .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
         .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')

@@ -1,7 +1,7 @@
 import { Router } from 'express'
 
-import { getSiteWidgetSettings, updateSiteWidgetSettings } from '../controllers/widget-settings.controller'
 import { sendWidgetInstallationInstructionsController } from '../controllers/widget-installation.controller'
+import { getSiteWidgetSettings, updateSiteWidgetSettings } from '../controllers/widget-settings.controller'
 import { allowedOrganization, isAuthenticated } from '../middlewares/auth.middleware'
 import { moderateLimiter } from '../middlewares/limiters.middleware'
 import { validateBody } from '../middlewares/validation.middleware'

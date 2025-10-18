@@ -1,4 +1,5 @@
 import { createClient } from '@clickhouse/client'
+
 import { isClickHouseDisabled } from '../utils/database.utils'
 
 // ClickHouse connection configuration

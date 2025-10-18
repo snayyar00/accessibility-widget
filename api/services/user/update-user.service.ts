@@ -178,7 +178,7 @@ async function checkCanSwitchEntity(initiator: UserProfile, targetUserId: number
 
   if (requireAdmin) {
     const initiatorOrg = await getUserOrganization(initiator.id, targetOrganizationId)
-    const isAllowed = initiatorOrg && canManageOrganization(initiatorOrg.role)
+    const isAllowed = initiator.is_super_admin || (initiatorOrg && canManageOrganization(initiatorOrg.role))
 
     if (!isAllowed) {
       throw new ForbiddenError(`Must be ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} to switch for other users`)

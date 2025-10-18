@@ -1,10 +1,11 @@
-import { getAccessibilityInformationPally } from '../../helpers/accessibility.helper'
-import { formatUrlForScan, getRetryUrls } from '../../utils/domain.utils'
-import { GPTChunks } from './accessibilityIssues.service'
-import puppeteer from 'puppeteer-core'
 import { Browserbase } from '@browserbasehq/sdk'
 import fs from 'fs'
 import path from 'path'
+import puppeteer from 'puppeteer-core'
+
+import { getAccessibilityInformationPally } from '../../helpers/accessibility.helper'
+import { formatUrlForScan, getRetryUrls } from '../../utils/domain.utils'
+import { GPTChunks } from './accessibilityIssues.service'
 import { accessibilityReportQueue } from './accessibilityReportQueue.service'
 // interface Category {
 //     description: string;

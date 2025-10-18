@@ -54,8 +54,7 @@ const user = createSlice({
       state.data = {
         ...state.data,
         ...dataUser,
-        isAdminOrOwner:
-          isAdminOrOwner(organizationUser) || dataUser.is_super_admin,
+        isAdminOrOwner: isAdminOrOwner(organizationUser),
       };
 
       state.loading = loading;

@@ -187,28 +187,28 @@ const Sidebar = ({
                 </li>
               ))}
 
-            {userData.isAdminOrOwner && (
-              <>
-                <li key="/workspaces" className="h-[60px] flex items-center">
-                  <NavLink
-                    to="/workspaces"
-                    activeClassName="active"
-                    onClick={closeSidebar}
-                    className="w-full h-full flex items-center px-2 border-l-2 border-transparent [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200 [&.active>.menu-icon>svg_*[fill]]:fill-primary [&.active>.menu-icon>svg_*[stroke]]:stroke-primary"
-                  >
-                    <div className="menu-icon flex items-center justify-center w-12 h-6">
-                      <Folders
-                        className="menu-icon text-white-blue transition-colors duration-200"
-                        size={25}
-                        aria-label="User navigation icon"
-                      />
-                    </div>
-                    <span className="menu-text text-lg text-white-blue ml-4">
-                      Workspaces
-                    </span>
-                  </NavLink>
-                </li>
+            <li key="/workspaces" className="h-[60px] flex items-center">
+              <NavLink
+                to="/workspaces"
+                activeClassName="active"
+                onClick={closeSidebar}
+                className="w-full h-full flex items-center px-2 border-l-2 border-transparent [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200 [&.active>.menu-icon>svg_*[fill]]:fill-primary [&.active>.menu-icon>svg_*[stroke]]:stroke-primary"
+              >
+                <div className="menu-icon flex items-center justify-center w-12 h-6">
+                  <Folders
+                    className="menu-icon text-white-blue transition-colors duration-200"
+                    size={25}
+                    aria-label="User navigation icon"
+                  />
+                </div>
+                <span className="menu-text text-lg text-white-blue ml-4">
+                  Workspaces
+                </span>
+              </NavLink>
+            </li>
 
+            {(userData.isAdminOrOwner || userData.is_super_admin) && (
+              <>
                 <li key="/users" className="h-[60px] flex items-center">
                   <NavLink
                     to="/users"

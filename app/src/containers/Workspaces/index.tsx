@@ -17,10 +17,6 @@ const Workspaces: React.FC = () => {
 
   const [getProfile, { loading: profileLoading }] = useLazyQuery(GET_PROFILE);
 
-  if (!userData.isAdminOrOwner) {
-    return <Redirect to="/" />;
-  }
-
   const handleUpdate = async () => {
     try {
       client.refetchQueries({

@@ -1,4 +1,5 @@
 import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_ROLE_OWNER, OrganizationUserRole } from '../constants/organization.constant'
+import { WORKSPACE_MANAGEMENT_ROLES, WorkspaceUserRole } from '../constants/workspace.constant'
 
 /**
  * Checks if user has one of the allowed roles in the organization
@@ -44,4 +45,13 @@ export function isOrganizationMember(userRole: OrganizationUserRole): boolean {
  */
 export function canManageOrganization(userRole: OrganizationUserRole): boolean {
   return isOrganizationAdminOrOwner(userRole)
+}
+
+/**
+ * Checks if user can manage a workspace (owner or admin)
+ * @param userRole - user's role in the workspace
+ * @returns true if user can manage the workspace
+ */
+export function canManageWorkspace(userRole: WorkspaceUserRole): boolean {
+  return !!userRole && (WORKSPACE_MANAGEMENT_ROLES as readonly WorkspaceUserRole[]).includes(userRole)
 }
