@@ -172,9 +172,13 @@ export async function addSite(user: UserProfile, url: string): Promise<string> {
  *
  */
 
-export async function findUserSites(user: UserProfile, _ignoreWorkspace = false): Promise<IUserSites[]> {
+export async function findUserSites(user: UserProfile): Promise<IUserSites[]> {
+  if (!user.current_organization_id) {
+    return []
+  }
+
   try {
-    const sites = await findUserSitesWithPlans(user.id)
+    const sites = await findUserSitesWithPlans(user.id, user.current_organization_id)
 
     return sites
   } catch (e) {
@@ -212,7 +216,7 @@ export async function deleteSite(userId: number, url: string) {
   }
 }
 
-export async function changeURL(siteId: number, userId: number, url: string) {
+export async function changeURL(siteId: number, userId: number, url: string, organizationId?: number) {
   const validateResult = validateChangeURL({ url, siteId })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -225,6 +229,11 @@ export async function changeURL(siteId: number, userId: number, url: string) {
     const site = await findSiteById(siteId)
 
     if (!site || site.user_id !== userId) {
+      throw new ValidationError('You do not have permission to change this site.')
+    }
+
+    // Check organization_id if provided
+    if (organizationId && site.organization_id !== organizationId) {
       throw new ValidationError('You do not have permission to change this site.')
     }
 

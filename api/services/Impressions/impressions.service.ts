@@ -12,6 +12,8 @@ import {
   updateImpressionProfileCount as updateImpressionProfileCountSQL,
   updateImpressions as updateImpressionsSQL,
 } from '../../repository/impressions.repository'
+import { findSiteByURL } from '../../repository/sites_allowed.repository'
+import { UserProfile } from '../../repository/user.repository'
 import { findVisitorByIp as findVisitorByIpClickHouse } from '../../repository/visitors.clickhouse.repository'
 import { findVisitorByIp as findVisitorByIpSQL } from '../../repository/visitors.repository'
 import { getCurrentDatabaseType, isClickHouseDisabled } from '../../utils/database.utils'
@@ -72,7 +74,7 @@ export async function addImpressionsURL(ipAddress: string, url: string) {
   }
 }
 
-export async function findImpressionsByURLAndDate(userId: number, url: string, startDate: Date, endDate: Date) {
+export async function findImpressionsByURLAndDate(user: UserProfile, url: string, startDate: Date, endDate: Date) {
   const validateResult = validateFindImpressionsByURLAndDate({ url, startDate, endDate })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -82,14 +84,29 @@ export async function findImpressionsByURLAndDate(userId: number, url: string, s
   const domain = normalizeDomain(url)
 
   try {
-    const impressions = isClickHouseDisabled() ? await findImpressionsURLDateSQL(userId, domain, startDate, endDate) : await findImpressionsURLDateClickHouse(userId, domain, startDate, endDate)
+    // Verify that the site belongs to the current organization
+    const site = await findSiteByURL(domain)
+
+    if (!site) {
+      throw new Error('Site not found')
+    }
+
+    if (site.user_id !== user.id) {
+      throw new Error('User does not own this site')
+    }
+
+    if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
+      throw new Error('Site does not belong to current organization')
+    }
+
+    const impressions = isClickHouseDisabled() ? await findImpressionsURLDateSQL(user.id, domain, startDate, endDate) : await findImpressionsURLDateClickHouse(user.id, domain, startDate, endDate)
 
     logger.info(`Using ${getCurrentDatabaseType()} for impressions lookup by URL and date`)
 
     return { impressions, count: impressions.length }
   } catch (e) {
     logger.error('Error finding impressions by URL and date', {
-      userId,
+      userId: user.id,
       domain: domain.substring(0, 50),
       dateRange: `${startDate.toISOString()} to ${endDate.toISOString()}`,
       error: e.message,
@@ -157,7 +174,7 @@ export async function addProfileCount(impressionId: number, profileCount: any): 
   }
 }
 
-export async function getEngagementRates(userId: number, url: string, startDate: string, endDate: string) {
+export async function getEngagementRates(user: UserProfile, url: string, startDate: string, endDate: string) {
   const validateResult = validateGetEngagementRates({ url, startDate, endDate })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -167,7 +184,22 @@ export async function getEngagementRates(userId: number, url: string, startDate:
   const domain = normalizeDomain(url)
 
   try {
-    const impressions = isClickHouseDisabled() ? await findEngagementURLDateSQL(userId, domain, startDate, endDate) : await findEngagementURLDateClickHouse(userId, domain, startDate, endDate)
+    // Verify that the site belongs to the current organization
+    const site = await findSiteByURL(domain)
+
+    if (!site) {
+      throw new Error('Site not found')
+    }
+
+    if (site.user_id !== user.id) {
+      throw new Error('User does not own this site')
+    }
+
+    if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
+      throw new Error('Site does not belong to current organization')
+    }
+
+    const impressions = isClickHouseDisabled() ? await findEngagementURLDateSQL(user.id, domain, startDate, endDate) : await findEngagementURLDateClickHouse(user.id, domain, startDate, endDate)
 
     logger.info(`Using ${getCurrentDatabaseType()} for engagement rates lookup`)
     return impressions

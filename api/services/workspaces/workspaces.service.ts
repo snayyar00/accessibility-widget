@@ -1,6 +1,7 @@
 import { Knex } from 'knex'
 
 import database from '../../config/database.config'
+import { TABLES } from '../../constants/database.constant'
 import { INVITATION_STATUS_ACCEPTED, INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
 import { WORKSPACE_MANAGEMENT_ROLES, WORKSPACE_USER_ROLE_OWNER, WORKSPACE_USER_STATUS_ACTIVE, WORKSPACE_USER_STATUS_DECLINE, WORKSPACE_USER_STATUS_INACTIVE, WORKSPACE_USER_STATUS_PENDING, WorkspaceUserRole } from '../../constants/workspace.constant'
@@ -465,6 +466,21 @@ export async function updateWorkspace(user: UserProfile, workspace_id: number, d
   }
 
   if (allowedSiteIds !== undefined) {
+    // Verify that all sites belong to the current organization
+    if (allowedSiteIds.length > 0) {
+      const sites = await database(TABLES.allowed_sites).whereIn('id', allowedSiteIds).select('id', 'organization_id')
+
+      const invalidSites = sites.filter((site) => site.organization_id !== user.current_organization_id)
+
+      if (invalidSites.length > 0) {
+        throw new ValidationError(`Sites with IDs [${invalidSites.map((s) => s.id).join(', ')}] do not belong to current organization`)
+      }
+
+      if (sites.length !== allowedSiteIds.length) {
+        throw new ValidationError('Some sites were not found')
+      }
+    }
+
     await setWorkspaceDomains(workspace_id, allowedSiteIds, user.id)
   }
 

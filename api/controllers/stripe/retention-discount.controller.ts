@@ -17,6 +17,11 @@ export async function applyRetentionDiscount(req: Request, res: Response) {
     return res.status(403).json({ error: 'User does not own this domain' })
   }
 
+  // Check organization_id if user has current organization
+  if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
+    return res.status(403).json({ error: 'Site does not belong to current organization' })
+  }
+
   try {
     const sitePlan = await getSitePlanBySiteId(Number(domainId))
 

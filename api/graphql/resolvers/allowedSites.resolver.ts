@@ -8,19 +8,17 @@ const resolvers = {
   Query: {
     getUserSites: combineResolvers(allowedOrganization, isAuthenticated, (_, t, { user }) => findUserSites(user)),
 
-    getAllUserSites: combineResolvers(allowedOrganization, isAuthenticated, (_, t, { user }) => findUserSites(user, true)),
-
     isDomainAlreadyAdded: combineResolvers(allowedOrganization, (_, { url }) => isDomainAlreadyAdded(url)),
   },
   Mutation: {
     addSite: combineResolvers(allowedOrganization, isAuthenticated, (_, { url }, { user }) => addSite(user, url)),
 
-    changeURL: combineResolvers(allowedOrganization, isAuthenticated, (_, { newURL, siteId }, { user }) => changeURL(siteId, user.id, newURL)),
+    changeURL: combineResolvers(allowedOrganization, isAuthenticated, (_, { newURL, siteId }, { user }) => changeURL(siteId, user.id, newURL, user.current_organization_id)),
 
     deleteSite: combineResolvers(allowedOrganization, isAuthenticated, (_, { url }, { user }) => deleteSite(user.id, url)),
 
     toggleSiteMonitoring: combineResolvers(allowedOrganization, isAuthenticated, async (_, { siteId, enabled }, { user }) => {
-      return toggleSiteMonitoring(siteId, enabled, user.id)
+      return toggleSiteMonitoring(siteId, enabled, user.id, user.current_organization_id)
     }),
   },
 }

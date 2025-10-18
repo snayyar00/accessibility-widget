@@ -9,6 +9,7 @@ export const siteColumns = {
   url: `${TABLE}.url`,
   createAt: `${TABLE}.created_at`,
   updatedAt: `${TABLE}.updated_at`,
+  organizationId: `${TABLE}.organization_id`,
 }
 
 export type FindAllowedSitesProps = {
@@ -17,6 +18,7 @@ export type FindAllowedSitesProps = {
   url?: string
   createAt?: string
   updatedAt?: string
+  organization_id?: number
 }
 
 export interface IUserSites extends FindAllowedSitesProps {
@@ -28,6 +30,7 @@ export type allowedSites = {
   id?: number
   user_id?: number
   url?: string
+  organization_id: number // Required for creation
 }
 
 export async function findSitesByUserId(id: number): Promise<IUserSites[]> {
@@ -37,11 +40,12 @@ export async function findSitesByUserId(id: number): Promise<IUserSites[]> {
 /**
  * Get sites with plan information for a user
  * @param userId - User ID
+ * @param organizationId - Organization ID (required, filters by organization)
  * @returns Promise<IUserSites[]> - Sites with plan information
  */
-export async function findUserSitesWithPlans(userId: number): Promise<IUserSites[]> {
-  // Get personal sites only - workspace filtering removed
-  const query = database(TABLE).where(`${TABLE}.user_id`, userId)
+export async function findUserSitesWithPlans(userId: number, organizationId: number): Promise<IUserSites[]> {
+  // Get sites filtered by organization
+  const query = database(TABLE).where(`${TABLE}.user_id`, userId).where(`${TABLE}.organization_id`, organizationId)
 
   // Get sites first, then join with latest plan info
   const sites = await query
@@ -54,6 +58,7 @@ export async function findUserSitesWithPlans(userId: number): Promise<IUserSites
       `${TABLE}.url`,
       `${TABLE}.created_at as createAt`,
       `${TABLE}.updated_at as updatedAt`,
+      `${TABLE}.organization_id`,
       `${TABLES.sitesPlans}.expired_at as expiredAt`,
       `${TABLES.sitesPlans}.is_trial as trial`,
       `${TABLE}.monitor_enabled`,
@@ -68,13 +73,13 @@ export async function findUserSitesWithPlans(userId: number): Promise<IUserSites
   return sites
 }
 
-export async function findSiteById(id: number): Promise<any> {
+export async function findSiteById(id: number): Promise<FindAllowedSitesProps | undefined> {
   return database(TABLE).where({ id }).first()
 }
 
 export async function findSiteByURL(url: string): Promise<FindAllowedSitesProps> {
   const result = await database(TABLE)
-    .select(siteColumns)
+    .select(`${TABLE}.id`, `${TABLE}.user_id`, `${TABLE}.url`, `${TABLE}.created_at as createAt`, `${TABLE}.updated_at as updatedAt`, `${TABLE}.organization_id`)
     .where({ [siteColumns.url]: url })
     .first()
   return result
@@ -82,7 +87,7 @@ export async function findSiteByURL(url: string): Promise<FindAllowedSitesProps>
 
 export async function findSiteByUserIdAndSiteId(user_id: number, site_id: number): Promise<FindAllowedSitesProps> {
   return database(TABLE)
-    .select(siteColumns)
+    .select(`${TABLE}.id`, `${TABLE}.user_id`, `${TABLE}.url`, `${TABLE}.created_at as createAt`, `${TABLE}.updated_at as updatedAt`, `${TABLE}.organization_id`)
     .where({ [siteColumns.user_id]: user_id, [siteColumns.id]: site_id })
     .first()
 }
@@ -108,6 +113,7 @@ export async function insertSite(data: allowedSites): Promise<FindAllowedSitesPr
         id: site_id[0],
         user_id: data.user_id,
         url: data.url,
+        organization_id: data.organization_id,
         createAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
@@ -208,8 +214,14 @@ export async function updateAllowedSiteURL(site_id: number, url: string, user_id
     })
 }
 
-export async function toggleSiteMonitoring(site_id: number, enabled: boolean, user_id: number): Promise<boolean> {
-  const updated = await database(TABLE).where({ id: site_id, user_id }).update({ monitor_enabled: enabled })
+export async function toggleSiteMonitoring(site_id: number, enabled: boolean, user_id: number, organization_id?: number): Promise<boolean> {
+  const whereClause: Record<string, number> = { id: site_id, user_id }
+
+  if (organization_id) {
+    whereClause.organization_id = organization_id
+  }
+
+  const updated = await database(TABLE).where(whereClause).update({ monitor_enabled: enabled })
 
   return updated > 0
 }

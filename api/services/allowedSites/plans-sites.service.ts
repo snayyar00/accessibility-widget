@@ -25,7 +25,7 @@ export interface ResponseSitesPlan {
   isActive: boolean
 }
 
-export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
+export async function getPlanBySiteIdAndUserId(userId: number, siteId: number, organizationId?: number) {
   const validateResult = await validateGetPlanBySiteIdAndUserId({ userId, siteId })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -37,6 +37,12 @@ export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
   if (!site) {
     logger.warn(`Site not found for userId: ${userId}, siteId: ${siteId}`)
     throw new ApolloError('Can not find any site')
+  }
+
+  // Check organization_id if provided
+  if (organizationId && site.organization_id !== organizationId) {
+    logger.warn(`Organization mismatch for userId: ${userId}, siteId: ${siteId}, expected: ${organizationId}, got: ${site.organization_id}`)
+    throw new ApolloError('Site does not belong to current organization')
   }
 
   const plan = await getSitePlanBySiteId(site.id)
@@ -55,7 +61,7 @@ export async function getPlanBySiteIdAndUserId(userId: number, siteId: number) {
   return result
 }
 
-export async function createSitesPlan(userId: number, paymentMethodToken: string, planName: string, billingType: 'MONTHLY' | 'YEARLY', siteId: number, couponCode: string): Promise<true> {
+export async function createSitesPlan(userId: number, paymentMethodToken: string, planName: string, billingType: 'MONTHLY' | 'YEARLY', siteId: number, couponCode: string, organizationId?: number): Promise<true> {
   try {
     const [user, site, product, sitePlan] = await Promise.all([findUser({ id: userId }), findSiteByUserIdAndSiteId(userId, siteId), findProductAndPriceByType(planName, billingType), getSitePlanBySiteId(siteId).catch((): null => null)])
 
@@ -67,6 +73,13 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
     if (!site) {
       throw new ApolloError('Can not find any site')
     }
+
+    // Check organization_id if provided (skip for webhook/system calls)
+    if (organizationId && site.organization_id !== organizationId) {
+      logger.warn(`Organization mismatch in createSitesPlan for userId: ${userId}, siteId: ${siteId}, expected: ${organizationId}, got: ${site.organization_id}`)
+      throw new ApolloError('Site does not belong to current organization')
+    }
+
     if (!product) {
       throw new ApolloError('Can not find any plan')
     }
@@ -104,7 +117,7 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
   }
 }
 
-export async function updateSitesPlan(userId: number, sitePlanId: number, planName: string, billingType: 'MONTHLY' | 'YEARLY', hook = false): Promise<true> {
+export async function updateSitesPlan(userId: number, sitePlanId: number, planName: string, billingType: 'MONTHLY' | 'YEARLY', hook = false, organizationId?: number): Promise<true> {
   try {
     const validateResult = await validateUpdateSitesPlan({
       userId,
@@ -128,6 +141,12 @@ export async function updateSitesPlan(userId: number, sitePlanId: number, planNa
 
     if (!site) {
       throw new ApolloError('Can not find any site')
+    }
+
+    // Check organization_id if provided
+    if (organizationId && site.organization_id !== organizationId) {
+      logger.warn(`Organization mismatch for userId: ${userId}, sitePlanId: ${sitePlanId}, expected: ${organizationId}, got: ${site.organization_id}`)
+      throw new ApolloError('Site does not belong to current organization')
     }
 
     const product: FindProductAndPriceByTypeResponse = await findProductAndPriceByType(planName, billingType)

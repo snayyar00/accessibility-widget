@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 
 import { useQuery } from '@apollo/client';
 import GET_ORGANIZATION_WORKSPACES from '@/queries/workspace/getOrganizationWorkspaces';
-import GET_ALL_USER_SITES from '@/queries/sites/getAllUserSites';
+import GET_USER_SITES from '@/queries/sites/getSites';
 import { Query, WorkspaceUser, AllowedSite } from '@/generated/graphql';
 import { CreateWorkspace } from './CreateWorkspace';
 import { EditWorkspace } from './EditWorkspace';
@@ -25,11 +25,11 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
   );
 
   const { data: allUserSitesData, loading: allUserSitesLoading } =
-    useQuery<Query>(GET_ALL_USER_SITES);
+    useQuery<Query>(GET_USER_SITES);
 
   const workspaces = data?.getOrganizationWorkspaces || [];
 
-  const allUserSites = (allUserSitesData?.getAllUserSites || []).filter(
+  const allUserSites = (allUserSitesData?.getUserSites || []).filter(
     (site): site is NonNullable<typeof site> => site !== null,
   );
 

@@ -291,6 +291,11 @@ const resolvers = {
           throw new Error('User does not own this site')
         }
 
+        // Check organization_id if user has current organization
+        if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
+          throw new Error('Site does not belong to current organization')
+        }
+
         const result = await deleteAccessibilityReportByR2Key(r2_key)
         await deleteReportFromR2(r2_key)
 
