@@ -21,7 +21,7 @@ import { getRootDomain, normalizeDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateAddImpressionsURL, validateAddInteraction, validateAddProfileCount, validateFindImpressionsByURLAndDate, validateGetEngagementRates } from '../../validations/impression.validation'
-import { findSite } from '../allowedSites/allowedSites.service'
+import { canAccessSite, findSite } from '../allowedSites/allowedSites.service'
 import { addNewVisitor } from '../uniqueVisitors/uniqueVisitor.service'
 
 export async function addImpressionsURL(ipAddress: string, url: string) {
@@ -84,19 +84,17 @@ export async function findImpressionsByURLAndDate(user: UserProfile, url: string
   const domain = normalizeDomain(url)
 
   try {
-    // Verify that the site belongs to the current organization
+    // Verify that the site exists
     const site = await findSiteByURL(domain)
 
     if (!site) {
       throw new Error('Site not found')
     }
 
-    if (site.user_id !== user.id) {
-      throw new Error('User does not own this site')
-    }
-
-    if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
-      throw new Error('Site does not belong to current organization')
+    // Check if user has access to this site
+    const hasAccess = await canAccessSite(user, site)
+    if (!hasAccess) {
+      throw new Error('Access denied: You do not have permission to view this site')
     }
 
     const impressions = isClickHouseDisabled() ? await findImpressionsURLDateSQL(user.id, domain, startDate, endDate) : await findImpressionsURLDateClickHouse(user.id, domain, startDate, endDate)
@@ -184,19 +182,17 @@ export async function getEngagementRates(user: UserProfile, url: string, startDa
   const domain = normalizeDomain(url)
 
   try {
-    // Verify that the site belongs to the current organization
+    // Verify that the site exists
     const site = await findSiteByURL(domain)
 
     if (!site) {
       throw new Error('Site not found')
     }
 
-    if (site.user_id !== user.id) {
-      throw new Error('User does not own this site')
-    }
-
-    if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
-      throw new Error('Site does not belong to current organization')
+    // Check if user has access to this site
+    const hasAccess = await canAccessSite(user, site)
+    if (!hasAccess) {
+      throw new Error('Access denied: You do not have permission to view this site')
     }
 
     const impressions = isClickHouseDisabled() ? await findEngagementURLDateSQL(user.id, domain, startDate, endDate) : await findEngagementURLDateClickHouse(user.id, domain, startDate, endDate)

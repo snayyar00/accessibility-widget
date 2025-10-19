@@ -1,7 +1,8 @@
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '../../constants/billing.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
-import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findUserSitesWithPlansWithWorkspaces, insertSite, IUserSites, updateAllowedSiteURL } from '../../repository/sites_allowed.repository'
+import { deleteSiteWithRelatedRecords, FindAllowedSitesProps, findSiteById, findSiteByURL, findUserSitesWithPlansWithWorkspaces, insertSite, IUserSites, toggleSiteMonitoring as toggleSiteMonitoringRepo, updateAllowedSiteURL } from '../../repository/sites_allowed.repository'
 import { findUserNotificationByUserId, getUserbyId, UserProfile } from '../../repository/user.repository'
+import { hasWorkspaceAccessToSite } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { generatePDF } from '../../utils/generatePDF'
@@ -13,6 +14,38 @@ import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityRe
 import { EmailAttachment, sendEmailWithRetries } from '../email/email.service'
 import { getUserOrganization } from '../organization/organization_users.service'
 import { createSitesPlan } from './plans-sites.service'
+
+/**
+ * Check if user has access to a site:
+ * - Super admin or organization manager: full access
+ * - Regular user: only own sites or workspace sites where they are active member
+ */
+export async function canAccessSite(user: UserProfile, site: FindAllowedSitesProps): Promise<boolean> {
+  // Check organization match
+  if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
+    return false
+  }
+
+  // Super admin has full access
+  if (user.is_super_admin) {
+    return true
+  }
+
+  // Owner has access
+  if (site.user_id === user.id) {
+    return true
+  }
+
+  // Organization manager has full access
+  const userOrganization = await getUserOrganization(user.id, user.current_organization_id)
+
+  if (userOrganization && canManageOrganization(userOrganization.role)) {
+    return true
+  }
+
+  // Check workspace access via repository layer
+  return hasWorkspaceAccessToSite(user.id, site.id)
+}
 
 export async function checkScript(url: string) {
   const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${url}`
@@ -176,9 +209,8 @@ export async function findUserSites(user: UserProfile): Promise<IUserSites[]> {
     const userOrganization = !isSuperAdmin ? await getUserOrganization(user.id, user.current_organization_id) : null
 
     const isManager = userOrganization && canManageOrganization(userOrganization.role)
-    const isAdmin = isSuperAdmin || isManager
 
-    const allSites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isAdmin)
+    const allSites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isSuperAdmin || isManager)
 
     const sitesWithOwnership = allSites.map((site) => ({
       ...site,
@@ -240,7 +272,7 @@ export async function deleteSite(userId: number, url: string, organizationId?: n
   }
 }
 
-export async function changeURL(siteId: number, userId: number, url: string, organizationId?: number) {
+export async function changeURL(siteId: number, userId: number, url: string, organizationId?: number, isSuperAdmin?: boolean) {
   const validateResult = validateChangeURL({ url, siteId })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -252,8 +284,8 @@ export async function changeURL(siteId: number, userId: number, url: string, org
   try {
     const site = await findSiteById(siteId)
 
-    if (!site || site.user_id !== userId) {
-      throw new ValidationError('You do not have permission to change this site.')
+    if (!site) {
+      throw new ValidationError('Site not found.')
     }
 
     // Check organization_id if provided
@@ -261,7 +293,23 @@ export async function changeURL(siteId: number, userId: number, url: string, org
       throw new ValidationError('You do not have permission to change this site.')
     }
 
-    const x = await updateAllowedSiteURL(siteId, domain, userId)
+    // Only super admin, organization manager, or site owner can change URL
+    const isOwner = site.user_id === userId
+
+    if (!isSuperAdmin && !isOwner) {
+      if (!organizationId) {
+        throw new ValidationError('Organization ID is required.')
+      }
+
+      const userOrganization = await getUserOrganization(userId, organizationId)
+
+      if (!userOrganization || !canManageOrganization(userOrganization.role)) {
+        throw new ValidationError('Only site owner or organization administrators can change site URLs.')
+      }
+    }
+
+    // Use the original site owner's user_id for the update
+    const x = await updateAllowedSiteURL(siteId, domain, site.user_id)
 
     if (x > 0) return 'Successfully updated URL'
     return 'Could not change URL'
@@ -292,5 +340,41 @@ export async function isDomainAlreadyAdded(url: string): Promise<boolean> {
     // For other errors, re-throw
     logger.error(error)
     throw error
+  }
+}
+
+export async function toggleSiteMonitoring(siteId: number, enabled: boolean, userId: number, organizationId?: number, isSuperAdmin?: boolean): Promise<boolean> {
+  try {
+    const site = await findSiteById(siteId)
+
+    if (!site) {
+      throw new ValidationError('Site not found.')
+    }
+
+    // Check organization_id if provided
+    if (organizationId && site.organization_id !== organizationId) {
+      throw new ValidationError('You do not have permission to modify this site.')
+    }
+
+    // Only super admin, organization manager, or site owner can toggle site monitoring
+    const isOwner = site.user_id === userId
+
+    if (!isSuperAdmin && !isOwner) {
+      if (!organizationId) {
+        throw new ValidationError('Organization ID is required.')
+      }
+
+      const userOrganization = await getUserOrganization(userId, organizationId)
+
+      if (!userOrganization || !canManageOrganization(userOrganization.role)) {
+        throw new ValidationError('Only site owner or organization administrators can toggle site monitoring.')
+      }
+    }
+
+    // Use the original site owner's user_id for the update
+    return toggleSiteMonitoringRepo(siteId, enabled, site.user_id, organizationId)
+  } catch (e) {
+    logger.error(e)
+    throw e
   }
 }

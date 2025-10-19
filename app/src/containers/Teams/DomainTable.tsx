@@ -4,8 +4,7 @@ import { FaTrash, FaCheck, FaTimes, FaCog } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
-import { CircularProgress, Tooltip } from '@mui/material';
-import deleteSite from '@/queries/sites/deleteSite';
+import { CircularProgress, Tooltip, Chip } from '@mui/material';
 import updateSite from '@/queries/sites/updateSite';
 import toggleSiteMonitoring from '@/queries/sites/toggleSiteMonitoring';
 import isValidDomain from '@/utils/verifyDomain';
@@ -16,19 +15,7 @@ import getDomainStatus from '@/utils/getDomainStatus';
 import applyStatusClass from '@/utils/applyStatusClass';
 import ActivatePlanWarningModal from './ActivatePlanWarningModal';
 import { getAuthenticationCookie } from '@/utils/cookie';
-
-export interface Domain {
-  id: number;
-  url: string;
-  expiredAt: string;
-  status: string;
-  trial: number;
-  monitor_enabled?: boolean;
-  monitor_priority?: number;
-  last_monitor_check?: string;
-  is_currently_down?: number;
-  monitor_consecutive_fails?: number;
-}
+import { Site } from '@/generated/graphql';
 
 interface DomainTableProps {
   data: any;
@@ -47,7 +34,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
   setOptionalDomain,
   customerData,
 }) => {
-  const [domains, setDomains] = useState<Domain[]>([]);
+  const [domains, setDomains] = useState<Site[]>([]);
   const { data: userData } = useSelector((state: RootState) => state.user);
   const [billingLoading, setBillingLoading] = useState(false);
   const [activePlan, setActivePlan] = useState('');
@@ -60,24 +47,12 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [tempDomain, setTempDomain] = useState('');
   const [expiryDays, setExpiryDays] = useState(-1);
-  const selectedDomain = useRef<Domain | null>(null);
+  const selectedDomain = useRef<Site | null>(null);
   const [showActivateModal, setShowActivateModal] = useState(false);
   // Local state for monitoring toggles (temporary until DB is updated)
   const [monitoringStates, setMonitoringStates] = useState<{
     [key: number]: boolean;
   }>({});
-
-  const [deleteSiteMutation] = useMutation(deleteSite, {
-    onCompleted: (response) => {
-      setReloadSites(true);
-      if (response.deleteSite === 1) {
-        toast.success('The domain was successfully deleted.');
-      }
-    },
-    onError: () => {
-      toast.error('There was an error while deleting the domain.');
-    },
-  });
 
   const [updateSiteMutation] = useMutation(updateSite, {
     onCompleted: (response) => {
@@ -157,12 +132,12 @@ const DomainTable: React.FC<DomainTableProps> = ({
     setDomains(domains.filter((domain) => domain.id !== id));
   };
 
-  const handleEdit = (domain: Domain) => {
+  const handleEdit = (domain: Site) => {
     // toast.info('Warning: You can only edit up to 3 characters in the URL.', {
     //   position: 'top-center',
     // });
-    setEditingId(domain.id);
-    setTempDomain(domain.url);
+    setEditingId(domain.id ?? null);
+    setTempDomain(domain.url ?? '');
   };
 
   const handleCancel = () => {
@@ -218,7 +193,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
 
     // Duplicate check using root domain comparison
     const isDuplicate = domains.some((d) => {
-      const existingRootDomain = getRootDomain(d.url);
+      const existingRootDomain = getRootDomain(d.url ?? '');
       return existingRootDomain === rootDomain && d.id !== id;
     });
     if (isDuplicate) {
@@ -246,7 +221,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [codeCount, setCodeCount] = useState(0);
   const [isStripeCustomer, setIsStripeCustomer] = useState(false);
 
-  const handleSubscription = async (selectedDomain: Domain) => {
+  const handleSubscription = async (selectedDomain: Site) => {
     setBillingLoading(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
     const bodyData = {
@@ -305,7 +280,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
     setShowActivateModal(false);
   };
 
-  const handleOpenActivateModal = (domain: Domain) => {
+  const handleOpenActivateModal = (domain: Site) => {
     setShowActivateModal(true);
     selectedDomain.current = domain;
   };
@@ -409,7 +384,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
             <table className="min-w-full">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                 <tr>
-                  <th className="py-5 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="py-5 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider max-w-[250px]">
                     <Tooltip
                       title="Website domain URL that you want to monitor"
                       placement="top"
@@ -429,6 +404,29 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           />
                         </svg>
                         <span>Domain</span>
+                      </div>
+                    </Tooltip>
+                  </th>
+                  <th className="py-5 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider max-w-[250px]">
+                    <Tooltip
+                      title="Domain ownership status and workspace sharing"
+                      placement="top"
+                    >
+                      <div className="flex items-center space-x-1 cursor-help">
+                        <svg
+                          className="w-4 h-4 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                          />
+                        </svg>
+                        <span>Ownership</span>
                       </div>
                     </Tooltip>
                   </th>
@@ -536,9 +534,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
                 {domains.map((domain) => {
                   const isEditing = editingId === domain.id;
                   const domainStatus = getDomainStatus(
-                    domain.url,
-                    domain.expiredAt,
-                    domain.trial,
+                    domain.url ?? '',
+                    domain.expiredAt ?? '',
+                    domain.trial ?? 0,
                     appSumoDomains,
                   );
                   return (
@@ -546,7 +544,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                       key={domain.id}
                       className="group hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-transparent transition-all duration-300"
                     >
-                      <td className="py-5 px-6 whitespace-nowrap">
+                      <td className="py-5 px-6 whitespace-nowrap max-w-[250px]">
                         {isEditing ? (
                           <input
                             type="text"
@@ -561,6 +559,36 @@ const DomainTable: React.FC<DomainTableProps> = ({
                             {domain.url}
                           </div>
                         )}
+                      </td>
+                      <td className="py-5 px-6 whitespace-nowrap max-w-[250px]">
+                        <div className="flex flex-nowrap gap-[5px]">
+                          {!domain.is_owner && !domain?.workspaces?.length && (
+                            <Chip
+                              variant="outlined"
+                              color="info"
+                              size="small"
+                              label={domain.user_email}
+                            />
+                          )}
+
+                          {!!domain?.workspaces?.length && (
+                            <Chip
+                              variant="outlined"
+                              color="primary"
+                              size="small"
+                              label="Workspace"
+                            />
+                          )}
+
+                          {domain.is_owner && (
+                            <Chip
+                              variant="outlined"
+                              color="success"
+                              size="small"
+                              label="Owner"
+                            />
+                          )}
+                        </div>
                       </td>
                       <td className="py-5 px-6 whitespace-nowrap">
                         <Tooltip
@@ -587,9 +615,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
                         >
                           <span
                             className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all duration-200 cursor-help ${applyStatusClass(
-                              domain.url,
-                              domain.expiredAt,
-                              domain.trial,
+                              domain.url ?? '',
+                              domain.expiredAt ?? '',
+                              domain.trial ?? 0,
                               appSumoDomains,
                             )}`}
                           >
@@ -626,59 +654,62 @@ const DomainTable: React.FC<DomainTableProps> = ({
                         </Tooltip>
                       </td>
                       <td className="py-5 px-6 whitespace-nowrap text-center">
-                        <Tooltip
-                          title={
-                            monitoringStates[domain.id] ??
-                            domain.monitor_enabled
-                              ? 'Click to disable monitoring'
-                              : 'Click to enable monitoring'
-                          }
-                          placement="top"
-                        >
-                          <button
-                            onClick={() =>
-                              handleMonitoringToggle(
-                                domain.id,
-                                monitoringStates[domain.id] ??
-                                  domain.monitor_enabled ??
-                                  false,
-                              )
-                            }
-                            role="switch"
-                            aria-checked={
-                              monitoringStates[domain.id] ??
-                              domain.monitor_enabled ??
-                              false
-                            }
-                            aria-label={`Toggle monitoring for ${domain.url}`}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 ${
-                              monitoringStates[domain.id] ??
+                        {(userData.isAdminOrOwnerOrSuper ||
+                          domain.is_owner) && (
+                          <Tooltip
+                            title={
+                              monitoringStates[domain.id ?? 0] ??
                               domain.monitor_enabled
-                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:ring-blue-500 shadow-lg shadow-blue-500/25'
-                                : 'bg-gray-200 hover:bg-gray-300 focus:ring-gray-300'
-                            }`}
-                            disabled={isEditing}
+                                ? 'Click to disable monitoring'
+                                : 'Click to enable monitoring'
+                            }
+                            placement="top"
                           >
-                            <span className="sr-only">
-                              {monitoringStates[domain.id] ??
-                              domain.monitor_enabled
-                                ? 'Monitoring is enabled'
-                                : 'Monitoring is disabled'}
-                            </span>
-                            <span
-                              aria-hidden="true"
-                              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-all duration-300 ${
-                                monitoringStates[domain.id] ??
+                            <button
+                              onClick={() =>
+                                handleMonitoringToggle(
+                                  domain.id ?? 0,
+                                  monitoringStates[domain.id ?? 0] ??
+                                    domain.monitor_enabled ??
+                                    false,
+                                )
+                              }
+                              role="switch"
+                              aria-checked={
+                                monitoringStates[domain.id ?? 0] ??
+                                domain.monitor_enabled ??
+                                false
+                              }
+                              aria-label={`Toggle monitoring for ${domain.url}`}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 ${
+                                monitoringStates[domain.id ?? 0] ??
                                 domain.monitor_enabled
-                                  ? 'translate-x-6'
-                                  : 'translate-x-1'
+                                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:ring-blue-500 shadow-lg shadow-blue-500/25'
+                                  : 'bg-gray-200 hover:bg-gray-300 focus:ring-gray-300'
                               }`}
-                            />
-                          </button>
-                        </Tooltip>
+                              disabled={isEditing}
+                            >
+                              <span className="sr-only">
+                                {monitoringStates[domain.id ?? 0] ??
+                                domain.monitor_enabled
+                                  ? 'Monitoring is enabled'
+                                  : 'Monitoring is disabled'}
+                              </span>
+                              <span
+                                aria-hidden="true"
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-all duration-300 ${
+                                  monitoringStates[domain.id ?? 0] ??
+                                  domain.monitor_enabled
+                                    ? 'translate-x-6'
+                                    : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                          </Tooltip>
+                        )}
                       </td>
                       <td className="py-5 px-6 whitespace-nowrap text-center">
-                        {monitoringStates[domain.id] ??
+                        {monitoringStates[domain.id ?? 0] ??
                         domain.monitor_enabled ? (
                           domain.is_currently_down !== null &&
                           domain.is_currently_down !== undefined ? (
@@ -790,7 +821,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           <div className="flex justify-end items-center space-x-2">
                             <Tooltip title="Save changes" placement="top">
                               <button
-                                onClick={() => handleSave(domain.id)}
+                                onClick={() => handleSave(domain.id ?? 0)}
                                 className="inline-flex items-center p-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 focus:outline-none focus:ring-4 focus:ring-green-500/20 transition-all duration-200 shadow-lg shadow-green-500/25"
                                 disabled={editLoading}
                               >
@@ -813,96 +844,109 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           </div>
                         ) : (
                           <div className="flex justify-end items-center gap-2">
-                            {/* Conditionally show Activate/Buy button for non-active domains */}
-                            {domainStatus === 'Trial' ||
-                            domainStatus === 'Trial Expired' ? (
+                            {domain.is_owner && (
                               <>
-                                {activePlan !== '' && tierPlan ? (
-                                  <Tooltip
-                                    title="Activate your subscription for this domain"
-                                    placement="top"
-                                  >
-                                    <button
-                                      disabled={billingLoading}
-                                      onClick={() => handleSubscription(domain)}
-                                      type="button"
-                                      aria-label={`Activate subscription for ${domain.url}`}
-                                      className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 text-xs font-semibold rounded-lg hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                      {billingLoading
-                                        ? 'Processing...'
-                                        : 'Activate'}
-                                    </button>
-                                  </Tooltip>
-                                ) : appSumoCount < codeCount ? (
-                                  <Tooltip
-                                    title="Activate domain with promo code"
-                                    placement="top"
-                                  >
-                                    <button
-                                      onClick={() =>
-                                        handleOpenActivateModal(domain)
-                                      }
-                                      type="button"
-                                      aria-label={`Open activation modal for ${domain.url}`}
-                                      className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 text-xs font-semibold rounded-lg hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                                    >
-                                      Activate
-                                    </button>
-                                  </Tooltip>
-                                ) : (
-                                  <Tooltip
-                                    title="Purchase a license for this domain"
-                                    placement="top"
-                                  >
-                                    <button
-                                      onClick={() => {
-                                        setPaymentView(true);
-                                        openModal();
-                                        setOptionalDomain(domain.url);
-                                      }}
-                                      type="button"
-                                      aria-label={`Buy license for ${domain.url}`}
-                                      className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 text-xs font-semibold rounded-lg hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                                    >
-                                      Buy License
-                                    </button>
-                                  </Tooltip>
-                                )}
+                                {/* Conditionally show Activate/Buy button for non-active domains */}
+                                {domainStatus === 'Trial' ||
+                                domainStatus === 'Trial Expired' ? (
+                                  <>
+                                    {activePlan !== '' && tierPlan ? (
+                                      <Tooltip
+                                        title="Activate your subscription for this domain"
+                                        placement="top"
+                                      >
+                                        <button
+                                          disabled={billingLoading}
+                                          onClick={() =>
+                                            handleSubscription(domain)
+                                          }
+                                          type="button"
+                                          aria-label={`Activate subscription for ${domain.url}`}
+                                          className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 text-xs font-semibold rounded-lg hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                          {billingLoading
+                                            ? 'Processing...'
+                                            : 'Activate'}
+                                        </button>
+                                      </Tooltip>
+                                    ) : appSumoCount < codeCount ? (
+                                      <Tooltip
+                                        title="Activate domain with promo code"
+                                        placement="top"
+                                      >
+                                        <button
+                                          onClick={() =>
+                                            handleOpenActivateModal(domain)
+                                          }
+                                          type="button"
+                                          aria-label={`Open activation modal for ${domain.url}`}
+                                          className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 text-xs font-semibold rounded-lg hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
+                                        >
+                                          Activate
+                                        </button>
+                                      </Tooltip>
+                                    ) : (
+                                      <Tooltip
+                                        title="Purchase a license for this domain"
+                                        placement="top"
+                                      >
+                                        <button
+                                          onClick={() => {
+                                            setPaymentView(true);
+                                            openModal();
+                                            setOptionalDomain(domain.url ?? '');
+                                          }}
+                                          type="button"
+                                          aria-label={`Buy license for ${domain.url}`}
+                                          className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 text-xs font-semibold rounded-lg hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
+                                        >
+                                          Buy License
+                                        </button>
+                                      </Tooltip>
+                                    )}
+                                  </>
+                                ) : null}
                               </>
-                            ) : null}
-                            <Tooltip
-                              title="Edit domain settings"
-                              placement="top"
-                            >
-                              <button
-                                onClick={() => handleEdit(domain)}
-                                type="button"
-                                aria-label={`Edit domain ${domain.url}`}
-                                className="inline-flex items-center px-3 py-1.5 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                            )}
+
+                            {(userData.isAdminOrOwnerOrSuper ||
+                              domain.is_owner) && (
+                              <Tooltip
+                                title="Edit domain settings"
+                                placement="top"
                               >
-                                <FaCog className="w-3.5 h-3.5 mr-1" />
-                                Edit
-                              </button>
-                            </Tooltip>
-                            <Tooltip
-                              title="Delete this domain from your account"
-                              placement="top"
-                            >
-                              <button
-                                onClick={() => {
-                                  setDeleteSiteID(domain.id);
-                                  setDeleteSiteStatus(domainStatus);
-                                  setShowModal(true);
-                                }}
-                                type="button"
-                                aria-label={`Delete domain ${domain.url}`}
-                                className="inline-flex items-center px-3 py-1.5 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                <button
+                                  onClick={() => handleEdit(domain)}
+                                  type="button"
+                                  aria-label={`Edit domain ${domain.url}`}
+                                  className="inline-flex items-center px-3 py-1.5 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                >
+                                  <FaCog className="w-3.5 h-3.5 mr-1" />
+                                  Edit
+                                </button>
+                              </Tooltip>
+                            )}
+
+                            {domain.is_owner && (
+                              <Tooltip
+                                title="Delete this domain from your account"
+                                placement="top"
                               >
-                                <FaTrash className="w-3.5 h-3.5 mr-1" />
-                                Delete
-                              </button>
-                            </Tooltip>
+                                <button
+                                  onClick={() => {
+                                    setDeleteSiteID(domain.id ?? 0);
+                                    setDeleteSiteStatus(domainStatus);
+                                    setShowModal(true);
+                                  }}
+                                  type="button"
+                                  aria-label={`Delete domain ${domain.url}`}
+                                  className="inline-flex items-center px-3 py-1.5 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                >
+                                  <FaTrash className="w-3.5 h-3.5 mr-1" />
+                                  Delete
+                                </button>
+                              </Tooltip>
+                            )}
                           </div>
                         )}
                       </td>
@@ -918,9 +962,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
           {domains.map((domain) => {
             const isEditing = editingId === domain.id;
             const domainStatus = getDomainStatus(
-              domain.url,
-              domain.expiredAt,
-              domain.trial,
+              domain.url ?? '',
+              domain.expiredAt ?? '',
+              domain.trial ?? 0,
               appSumoDomains,
             );
             return (
@@ -949,9 +993,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     <div className="mt-2 md:mt-0">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-semibold ${applyStatusClass(
-                          domain.url,
-                          domain.expiredAt,
-                          domain.trial,
+                          domain.url ?? '',
+                          domain.expiredAt ?? '',
+                          domain.trial ?? 0,
                           appSumoDomains,
                         )}`}
                       >
@@ -972,7 +1016,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                 {isEditing ? (
                   <div className="p-4 bg-gray-50 flex justify-end items-center space-x-2">
                     <button
-                      onClick={() => handleSave(domain.id)}
+                      onClick={() => handleSave(domain.id ?? 0)}
                       className="p-2 text-white text-center rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] transition duration-300 w-full"
                       disabled={editLoading}
                     >
@@ -989,52 +1033,64 @@ const DomainTable: React.FC<DomainTableProps> = ({
                 ) : (
                   <>
                     {/* Mobile actions split into two rows */}
-                    <div className="p-4 bg-gray-50 flex justify-between items-center space-x-2 mb-2">
-                      <button
-                        onClick={() => handleEdit(domain)}
-                        className="p-2 bg-[#2563EB] text-white rounded-md text-sm flex-1 flex items-center justify-center hover:bg-[#1D4ED8] transition-colors duration-200"
-                      >
-                        <FaCog className="mr-2" /> Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          setDeleteSiteID(domain.id);
-                          setDeleteSiteStatus(domainStatus);
-                          setShowModal(true);
-                        }}
-                        className="p-2 bg-[#1E40AF] text-white rounded-md text-sm flex-1 flex items-center justify-center hover:bg-[#1E3A8A] transition-colors duration-200"
-                      >
-                        <FaTrash className="mr-2" /> Delete
-                      </button>
-                    </div>
-                    {domainStatus !== 'Active' &&
-                      domainStatus != 'Life Time' &&
-                      domainStatus !== 'Expiring' && (
-                        <div className="p-4 bg-gray-100">
-                          {activePlan !== '' && tierPlan ? (
-                            <button
-                              disabled={billingLoading}
-                              onClick={() => handleSubscription(domain)}
-                              type="submit"
-                              className="p-2 bg-primary text-white rounded-md text-sm flex items-center justify-center hover:bg-[#1D4ED8] transition-colors duration-200"
-                            >
-                              {billingLoading ? 'Please Wait...' : 'Activate'}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setPaymentView(true);
-                                openModal();
-                                setOptionalDomain(domain.url);
-                              }}
-                              type="submit"
-                              className="p-2 bg-green w-full text-white rounded-md text-sm flex items-center justify-center hover:bg-green-600 transition-colors duration-200"
-                            >
-                              Buy Plan
-                            </button>
-                          )}
-                        </div>
+                    <div className="p-4 bg-gray-50 flex justify-between items-center space-x-2 mb-2 empty:hidden">
+                      {(userData.isAdminOrOwnerOrSuper || domain.is_owner) && (
+                        <button
+                          onClick={() => handleEdit(domain)}
+                          className="p-2 bg-[#2563EB] text-white rounded-md text-sm flex-1 flex items-center justify-center hover:bg-[#1D4ED8] transition-colors duration-200"
+                        >
+                          <FaCog className="mr-2" /> Edit
+                        </button>
                       )}
+
+                      {domain.is_owner && (
+                        <button
+                          onClick={() => {
+                            setDeleteSiteID(domain.id ?? 0);
+                            setDeleteSiteStatus(domainStatus);
+                            setShowModal(true);
+                          }}
+                          className="p-2 bg-[#1E40AF] text-white rounded-md text-sm flex-1 flex items-center justify-center hover:bg-[#1E3A8A] transition-colors duration-200"
+                        >
+                          <FaTrash className="mr-2" /> Delete
+                        </button>
+                      )}
+                    </div>
+
+                    {domain.is_owner && (
+                      <>
+                        {domainStatus !== 'Active' &&
+                          domainStatus != 'Life Time' &&
+                          domainStatus !== 'Expiring' && (
+                            <div className="p-4 bg-gray-100">
+                              {activePlan !== '' && tierPlan ? (
+                                <button
+                                  disabled={billingLoading}
+                                  onClick={() => handleSubscription(domain)}
+                                  type="submit"
+                                  className="p-2 bg-primary text-white rounded-md text-sm flex items-center justify-center hover:bg-[#1D4ED8] transition-colors duration-200"
+                                >
+                                  {billingLoading
+                                    ? 'Please Wait...'
+                                    : 'Activate'}
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setPaymentView(true);
+                                    openModal();
+                                    setOptionalDomain(domain.url ?? '');
+                                  }}
+                                  type="submit"
+                                  className="p-2 bg-green w-full text-white rounded-md text-sm flex items-center justify-center hover:bg-green-600 transition-colors duration-200"
+                                >
+                                  Buy Plan
+                                </button>
+                              )}
+                            </div>
+                          )}
+                      </>
+                    )}
                   </>
                 )}
               </div>

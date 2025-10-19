@@ -3,14 +3,15 @@ import { Request, Response } from 'express'
 import { RETENTION_COUPON_ID } from '../../constants/billing.constant'
 import { findSiteById } from '../../repository/sites_allowed.repository'
 import { getSitePlanBySiteId } from '../../repository/sites_plans.repository'
+import { UserProfile } from '../../repository/user.repository'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
-export async function applyRetentionDiscount(req: Request, res: Response) {
+export async function applyRetentionDiscount(req: Request & { user: UserProfile }, res: Response) {
   const { domainId, status } = req.body
 
-  const { user } = req as any
+  const { user } = req
   const site = await findSiteById(domainId)
 
   if (!site || site.user_id !== user.id) {

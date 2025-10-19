@@ -1,14 +1,15 @@
 import { Request, Response } from 'express'
 import Stripe from 'stripe'
 
+import { UserProfile } from '../../repository/user.repository'
 import { getUserTokens } from '../../repository/user_plan_tokens.repository'
 import { customTokenCount } from '../../utils/customTokenCount'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
-export async function checkCustomer(req: Request, res: Response) {
-  const { user } = req as any
+export async function checkCustomer(req: Request & { user: UserProfile }, res: Response) {
+  const { user } = req
 
   try {
     if (!user.current_organization_id) {

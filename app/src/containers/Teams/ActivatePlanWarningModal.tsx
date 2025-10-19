@@ -3,18 +3,18 @@ import { CircularProgress } from '@mui/material';
 import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { Domain } from './DomainTable';
 import { plans } from '@/constants';
 import { useLazyQuery } from '@apollo/client';
 import getSitePlanQuery from '@/queries/sitePlans/getSitePlan';
 import { getAuthenticationCookie } from '@/utils/cookie';
+import { Site } from '@/generated/graphql';
 
 interface ActivatePlanWarningModalProps {
   isOpen: boolean;
   onClose: () => void;
   billingLoading: boolean;
   setBillingLoading: (value: boolean) => void;
-  domain: Domain | null;
+  domain: Site | null;
   promoCode: number[];
   setReloadSites: (value: boolean) => void;
   isStripeCustomer: boolean;
@@ -33,7 +33,7 @@ const ActivatePlanWarningModal: React.FC<ActivatePlanWarningModalProps> = ({
   const { data: userData } = useSelector((state: RootState) => state.user);
   const [fetchSitePlan] = useLazyQuery(getSitePlanQuery);
 
-  const handleDirectSubscription = async (domain: Domain | null) => {
+  const handleDirectSubscription = async (domain: Site | null) => {
     if (!domain) return;
 
     setBillingLoading(true);

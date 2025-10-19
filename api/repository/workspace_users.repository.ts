@@ -128,3 +128,22 @@ export async function updateWorkspaceUser(condition: WorkspaceUser, data: Worksp
 
   return query
 }
+
+/**
+ * Check if user has access to a site through workspace membership
+ * @param userId - User ID
+ * @param siteId - Site ID
+ * @returns true if user is an active member of a workspace that has access to this site
+ */
+export async function hasWorkspaceAccessToSite(userId: number, siteId: number): Promise<boolean> {
+  const result = await database(TABLES.workspace_allowed_sites)
+    .join(TABLES.workspace_users, `${TABLES.workspace_allowed_sites}.workspace_id`, `${TABLES.workspace_users}.workspace_id`)
+    .where({
+      [`${TABLES.workspace_allowed_sites}.allowed_site_id`]: siteId,
+      [`${TABLES.workspace_users}.user_id`]: userId,
+      [`${TABLES.workspace_users}.status`]: 'active',
+    })
+    .first()
+
+  return !!result
+}

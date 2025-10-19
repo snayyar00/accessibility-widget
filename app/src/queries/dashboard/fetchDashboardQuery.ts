@@ -1,26 +1,34 @@
 import { gql } from 'graphql.macro';
 
 export default gql`
-  query fetchDashboardQuery($url: String!, $startDate: String!, $endDate: String!) {
+  query fetchDashboardQuery(
+    $url: String!
+    $startDate: String!
+    $endDate: String!
+  ) {
     getSiteVisitorsByURL(url: $url) {
-        count
-      }
-    
-    getImpressionsByURLAndDate(url: $url, startDate: $startDate, endDate: $endDate){
-        impressions{
-            widget_opened,
-            widget_closed,
-            createdAt,
-            id,
-            site_id,
-            profileCounts
-        }
+      count
     }
 
-    getEngagementRates(url: $url, startDate: $startDate, endDate: $endDate){
-      totalEngagements,
+    getImpressionsByURLAndDate(
+      url: $url
+      startDate: $startDate
+      endDate: $endDate
+    ) {
+      impressions {
+        widget_opened
+        widget_closed
+        createdAt
+        id
+        site_id
+        profileCounts
+      }
+    }
+
+    getEngagementRates(url: $url, startDate: $startDate, endDate: $endDate) {
+      totalEngagements
       totalImpressions
-      engagementRate,
+      engagementRate
       date
     }
   }

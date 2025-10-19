@@ -1,10 +1,12 @@
 import { Request, Response } from 'express'
 
+import { UserProfile } from '../../repository/user.repository'
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
-export async function createCustomerPortalSession(req: Request, res: Response) {
-  const { user } = req as any
+export async function createCustomerPortalSession(req: Request & { user: UserProfile }, res: Response) {
+  const { user } = req
   const { returnURL } = req.body
 
   let customerId: string
