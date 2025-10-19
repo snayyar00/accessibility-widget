@@ -7,7 +7,7 @@ import { Redirect } from 'react-router-dom';
 const Users: React.FC = () => {
   const { data: userData } = useSelector((state: RootState) => state.user);
 
-  if (!userData.isAdminOrOwner && !userData.is_super_admin) {
+  if (!userData.isAdminOrOwnerOrSuper) {
     return <Redirect to="/" />;
   }
 

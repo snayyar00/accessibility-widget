@@ -50,7 +50,7 @@ export const WorkspaceMembers = () => {
 
   const workspace = workspaceData?.getWorkspaceByAlias;
 
-  // if (!userData.isAdminOrOwner) {
+  // if (!userData.isAdminOrOwnerOrSuper) {
   //   return <Redirect to="/" />;
   // }
 

@@ -24,6 +24,9 @@ export type FindAllowedSitesProps = {
 export interface IUserSites extends FindAllowedSitesProps {
   expiredAt?: string | null | undefined
   trial?: number | null | undefined
+  is_owner?: boolean // true if current user is the owner of this site
+  workspaces?: Array<{ id: number; name: string }> // Array of all workspaces this site belongs to
+  user_email?: string // Email of the site owner
 }
 
 export type allowedSites = {
@@ -38,39 +41,106 @@ export async function findSitesByUserId(id: number): Promise<IUserSites[]> {
 }
 
 /**
- * Get sites with plan information for a user
+ * For admins: Returns ALL organization sites with workspace data aggregated via LEFT JOIN
+ * For regular users: Returns own sites + workspace sites (with active membership check) in single query
+ *
  * @param userId - User ID
- * @param organizationId - Organization ID (required, filters by organization)
- * @returns Promise<IUserSites[]> - Sites with plan information
+ * @param organizationId - Organization ID
+ * @param isAdmin - If true, returns ALL sites in organization (for super admin / org managers)
+ * @returns Promise<IUserSites[]> - Sites with plan information and workspace data pre-aggregated
  */
-export async function findUserSitesWithPlans(userId: number, organizationId: number): Promise<IUserSites[]> {
-  // Get sites filtered by organization
-  const query = database(TABLE).where(`${TABLE}.user_id`, userId).where(`${TABLE}.organization_id`, organizationId)
+export async function findUserSitesWithPlansWithWorkspaces(userId: number, organizationId: number, isAdmin: boolean): Promise<IUserSites[]> {
+  if (isAdmin) {
+    // Admin path: Get ALL sites in organization with workspace info via subquery to avoid GROUP BY issues
+    const sites = await database(TABLE)
+      .where(`${TABLE}.organization_id`, organizationId)
+      .leftJoin(TABLES.sitesPlans, function () {
+        this.on(`${TABLES.sitesPlans}.allowed_site_id`, '=', `${TABLE}.id`).andOn(`${TABLES.sitesPlans}.id`, '=', database.raw(`(SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)`))
+      })
+      .leftJoin(TABLES.users, `${TABLE}.user_id`, `${TABLES.users}.id`)
+      .select(
+        `${TABLE}.id`,
+        `${TABLE}.user_id`,
+        `${TABLE}.url`,
+        `${TABLE}.created_at as createAt`,
+        `${TABLE}.updated_at as updatedAt`,
+        `${TABLE}.organization_id`,
+        `${TABLES.sitesPlans}.expired_at as expiredAt`,
+        `${TABLES.sitesPlans}.is_trial as trial`,
+        `${TABLE}.monitor_enabled`,
+        `${TABLE}.status`,
+        `${TABLE}.monitor_priority`,
+        `${TABLE}.last_monitor_check`,
+        `${TABLE}.is_currently_down`,
+        `${TABLE}.monitor_consecutive_fails`,
+        `${TABLES.users}.email as user_email`,
+        database.raw(
+          `(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', w.id, 'name', w.name))
+            FROM ${TABLES.workspace_allowed_sites} was
+            JOIN ${TABLES.workspaces} w ON was.workspace_id = w.id
+            WHERE was.allowed_site_id = ${TABLE}.id
+          ) as workspaces`,
+        ),
+      )
 
-  // Get sites first, then join with latest plan info
-  const sites = await query
-    .leftJoin(TABLES.sitesPlans, function () {
-      this.on(`${TABLES.sitesPlans}.allowed_site_id`, '=', `${TABLE}.id`).andOn(`${TABLES.sitesPlans}.id`, '=', database.raw(`(SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)`))
-    })
-    .select(
-      `${TABLE}.id`,
-      `${TABLE}.user_id`,
-      `${TABLE}.url`,
-      `${TABLE}.created_at as createAt`,
-      `${TABLE}.updated_at as updatedAt`,
-      `${TABLE}.organization_id`,
-      `${TABLES.sitesPlans}.expired_at as expiredAt`,
-      `${TABLES.sitesPlans}.is_trial as trial`,
-      `${TABLE}.monitor_enabled`,
-      `${TABLE}.status`,
-      `${TABLE}.monitor_priority`,
-      `${TABLE}.last_monitor_check`,
-      `${TABLE}.is_currently_down`,
-      `${TABLE}.monitor_consecutive_fails`,
+    return sites
+  } else {
+    // Regular user path: Single query with OR condition (own sites OR workspace membership)
+    // Workspace array aggregated in subquery to avoid GROUP BY complexity
+    const sites = await database.raw(
+      `
+      SELECT DISTINCT
+        ${TABLE}.id,
+        ${TABLE}.user_id,
+        ${TABLE}.url,
+        ${TABLE}.created_at as createAt,
+        ${TABLE}.updated_at as updatedAt,
+        ${TABLE}.organization_id,
+        sp.expired_at as expiredAt,
+        sp.is_trial as trial,
+        ${TABLE}.monitor_enabled,
+        ${TABLE}.status,
+        ${TABLE}.monitor_priority,
+        ${TABLE}.last_monitor_check,
+        ${TABLE}.is_currently_down,
+        ${TABLE}.monitor_consecutive_fails,
+        users.email as user_email,
+        (
+          SELECT JSON_ARRAYAGG(JSON_OBJECT('id', w.id, 'name', w.name))
+          FROM ${TABLES.workspace_allowed_sites} was
+          JOIN ${TABLES.workspaces} w ON was.workspace_id = w.id
+          WHERE was.allowed_site_id = ${TABLE}.id
+        ) as workspaces
+      FROM ${TABLE}
+      LEFT JOIN (
+        SELECT sp2.allowed_site_id, sp2.expired_at, sp2.is_trial
+        FROM ${TABLES.sitesPlans} sp2
+        INNER JOIN (
+          SELECT allowed_site_id, MAX(id) as max_id
+          FROM ${TABLES.sitesPlans}
+          GROUP BY allowed_site_id
+        ) sp3 ON sp2.id = sp3.max_id
+      ) sp ON sp.allowed_site_id = ${TABLE}.id
+      LEFT JOIN ${TABLES.users} users ON ${TABLE}.user_id = users.id
+      WHERE ${TABLE}.organization_id = ?
+        AND (
+          ${TABLE}.user_id = ?
+          OR EXISTS (
+            SELECT 1
+            FROM ${TABLES.workspace_allowed_sites} was2
+            JOIN ${TABLES.workspaces} w2 ON was2.workspace_id = w2.id
+            JOIN ${TABLES.workspace_users} wu ON w2.id = wu.workspace_id
+            WHERE was2.allowed_site_id = ${TABLE}.id
+              AND wu.user_id = ?
+              AND wu.status = 'active'
+          )
+        )
+      `,
+      [organizationId, userId, userId],
     )
-    .distinct()
 
-  return sites
+    return sites[0] // raw() returns [rows, fields]
+  }
 }
 
 export async function findSiteById(id: number): Promise<FindAllowedSitesProps | undefined> {
@@ -133,14 +203,20 @@ export async function deleteSiteByURL(url: string, user_id: number): Promise<num
  * Safely deletes a site and all its related records to avoid foreign key constraint violations
  * Uses a transaction to ensure atomicity - either all records are deleted or none are
  */
-export async function deleteSiteWithRelatedRecords(url: string, user_id: number): Promise<number> {
+export async function deleteSiteWithRelatedRecords(url: string, user_id: number, organization_id?: number): Promise<number> {
   return database.transaction(async (trx) => {
     try {
       // Find the site within the transaction
-      const site = await trx(TABLE)
-        .select(siteColumns)
-        .where({ [siteColumns.url]: url, [siteColumns.user_id]: user_id })
-        .first()
+      const whereClause: Record<string, string | number> = {
+        [siteColumns.url]: url,
+        [siteColumns.user_id]: user_id,
+      }
+
+      if (organization_id) {
+        whereClause[siteColumns.organizationId] = organization_id
+      }
+
+      const site = await trx(TABLE).select(siteColumns).where(whereClause).first()
 
       if (!site) {
         throw new Error(`Site not found: ${url} for user ${user_id}`)

@@ -98,16 +98,24 @@ export async function setWorkspaceDomains(workspaceId: number, allowedSiteIds: n
 
     // Add new domains if any
     if (allowedSiteIds.length > 0) {
-      // Get site owners information from allowed_sites table
-      const siteOwners = await database(TABLES.allowed_sites).whereIn('id', allowedSiteIds).select('id', 'user_id').transacting(trx)
+      // Convert to numbers to ensure type consistency (IDs might come as strings from GraphQL)
+      const numericSiteIds = allowedSiteIds.map((id) => Number(id))
 
-      const domainsData = allowedSiteIds.map((allowedSiteId) => {
+      // Get site owners information from allowed_sites table
+      const siteOwners = await database(TABLES.allowed_sites).whereIn('id', numericSiteIds).select('id', 'user_id').transacting(trx)
+
+      const domainsData = numericSiteIds.map((allowedSiteId) => {
         const siteOwner = siteOwners.find((s) => s.id === allowedSiteId)
+
+        if (!siteOwner) {
+          console.warn(`Warning: Site ${allowedSiteId} not found in allowed_sites table`)
+        }
+
         return {
           workspace_id: workspaceId,
           allowed_site_id: allowedSiteId,
           added_by_user_id: addedByUserId,
-          site_owner_user_id: siteOwner?.user_id || addedByUserId, // fallback to addedByUserId if owner not found
+          site_owner_user_id: siteOwner?.user_id ?? null,
         }
       })
 

@@ -86,7 +86,7 @@ export async function cancelSiteSubscription(req: Request & { user: UserProfile 
   }
 
   try {
-    await deleteSiteWithRelatedRecords(domainUrl, user.id)
+    await deleteSiteWithRelatedRecords(domainUrl, user.id, user.current_organization_id)
   } catch (error) {
     console.error('Error deleting site:', error)
     return res.status(500).json({ error: 'Failed to delete site' })

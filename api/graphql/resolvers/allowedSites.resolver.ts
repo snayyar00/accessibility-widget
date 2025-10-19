@@ -15,7 +15,7 @@ const resolvers = {
 
     changeURL: combineResolvers(allowedOrganization, isAuthenticated, (_, { newURL, siteId }, { user }) => changeURL(siteId, user.id, newURL, user.current_organization_id)),
 
-    deleteSite: combineResolvers(allowedOrganization, isAuthenticated, (_, { url }, { user }) => deleteSite(user.id, url)),
+    deleteSite: combineResolvers(allowedOrganization, isAuthenticated, (_, { url }, { user }) => deleteSite(user.id, url, user.current_organization_id)),
 
     toggleSiteMonitoring: combineResolvers(allowedOrganization, isAuthenticated, async (_, { siteId, enabled }, { user }) => {
       return toggleSiteMonitoring(siteId, enabled, user.id, user.current_organization_id)

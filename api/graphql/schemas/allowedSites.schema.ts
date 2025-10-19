@@ -1,4 +1,9 @@
 export const AllowedSitesSchema = `#graphql
+  type SiteWorkspace {
+    id: Int!
+    name: String!
+  }
+
   type Site {
     id: Int
     user_id: Int
@@ -14,6 +19,9 @@ export const AllowedSitesSchema = `#graphql
     last_monitor_check: String
     is_currently_down: Int
     monitor_consecutive_fails: Int
+    is_owner: Boolean
+    workspaces: [SiteWorkspace]
+    user_email: String
   }
 
   extend type Query {

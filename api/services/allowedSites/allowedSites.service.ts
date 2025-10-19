@@ -1,7 +1,8 @@
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '../../constants/billing.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
-import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findUserSitesWithPlans, insertSite, IUserSites, updateAllowedSiteURL } from '../../repository/sites_allowed.repository'
+import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findUserSitesWithPlansWithWorkspaces, insertSite, IUserSites, updateAllowedSiteURL } from '../../repository/sites_allowed.repository'
 import { findUserNotificationByUserId, getUserbyId, UserProfile } from '../../repository/user.repository'
+import { canManageOrganization } from '../../utils/access.helper'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { generatePDF } from '../../utils/generatePDF'
 import { ValidationError } from '../../utils/graphql-errors.helper'
@@ -10,6 +11,7 @@ import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../..
 import { validateChangeURL, validateDomain } from '../../validations/allowedSites.validation'
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service'
 import { EmailAttachment, sendEmailWithRetries } from '../email/email.service'
+import { getUserOrganization } from '../organization/organization_users.service'
 import { createSitesPlan } from './plans-sites.service'
 
 export async function checkScript(url: string) {
@@ -164,23 +166,45 @@ export async function addSite(user: UserProfile, url: string): Promise<string> {
   }
 }
 
-/**
- * Get List Documents
- *
- * @param {number} offset
- * @param {number} limit
- *
- */
-
 export async function findUserSites(user: UserProfile): Promise<IUserSites[]> {
   if (!user.current_organization_id) {
     return []
   }
 
   try {
-    const sites = await findUserSitesWithPlans(user.id, user.current_organization_id)
+    const isSuperAdmin = user.is_super_admin
+    const userOrganization = !isSuperAdmin ? await getUserOrganization(user.id, user.current_organization_id) : null
 
-    return sites
+    const isManager = userOrganization && canManageOrganization(userOrganization.role)
+    const isAdmin = isSuperAdmin || isManager
+
+    const allSites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isAdmin)
+
+    const sitesWithOwnership = allSites.map((site) => ({
+      ...site,
+      is_owner: site.user_id === user.id,
+      workspaces: site.workspaces || [],
+    }))
+
+    // Sort by priority:
+    // 1. My sites (owner) without workspace
+    // 2. Other people's sites without workspace
+    // 3. My sites (owner) in workspace
+    // 4. Other people's sites in workspace
+    return sitesWithOwnership.sort((a, b) => {
+      const getPriority = (site: typeof a) => {
+        const hasWorkspace = (site.workspaces?.length || 0) > 0
+
+        if (site.is_owner && !hasWorkspace) return 1
+        if (!site.is_owner && !hasWorkspace) return 2
+        if (site.is_owner && hasWorkspace) return 3
+        if (!site.is_owner && hasWorkspace) return 4
+
+        return 5
+      }
+
+      return getPriority(a) - getPriority(b)
+    })
   } catch (e) {
     logger.error(e)
     throw e
@@ -197,7 +221,7 @@ export async function findSite(url: string) {
   }
 }
 
-export async function deleteSite(userId: number, url: string) {
+export async function deleteSite(userId: number, url: string, organizationId?: number) {
   const validateResult = validateDomain({ url })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -207,7 +231,7 @@ export async function deleteSite(userId: number, url: string) {
   const domain = normalizeDomain(url)
 
   try {
-    const deletedRecs = await deleteSiteWithRelatedRecords(domain, userId)
+    const deletedRecs = await deleteSiteWithRelatedRecords(domain, userId, organizationId)
 
     return deletedRecs
   } catch (e) {
