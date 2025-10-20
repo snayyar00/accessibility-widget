@@ -21,7 +21,7 @@ type AccessibilityReportJob = {
 
 // In-memory job store
 const accessibilityReportJobs = new Map<string, AccessibilityReportJob>() // jobId -> job
-const JOB_EXPIRY_MS = 10 * 60 * 1000 // 10 minutes
+const JOB_EXPIRY_MS = 60 * 60 * 1000 // 1 hour
 
 function createJob(): string {
   const jobId = uuidv4()

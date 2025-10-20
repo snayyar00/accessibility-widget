@@ -3456,6 +3456,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                       onClick={async () => {
                                         setOpenDropdown(null);
                                         setDownloadingRow(row.r2_key);
+                                        const pdfToastId = toast.loading(
+                                          'Generating detailed report...',
+                                        );
                                         try {
                                           const { data: fetchedReportData } =
                                             await fetchReportByR2Key({
@@ -3472,6 +3475,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                               currentLanguage,
                                               row.url,
                                             );
+                                            toast.dismiss(pdfToastId);
                                             const url =
                                               window.URL.createObjectURL(
                                                 pdfBlob,
@@ -3486,11 +3490,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                             document.body.removeChild(link);
                                             window.URL.revokeObjectURL(url);
                                           } else {
+                                            toast.dismiss(pdfToastId);
                                             toast.error(
                                               'Failed to generate PDF. Please try again.',
                                             );
                                           }
                                         } catch (error) {
+                                          toast.dismiss(pdfToastId);
                                           console.error(
                                             'Error fetching report:',
                                             error,
@@ -3748,6 +3754,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   onClick={async () => {
                                     setOpenDropdown(null);
                                     setDownloadingRow(row.r2_key);
+                                    const pdfToastId = toast.loading(
+                                      'Generating detailed report...',
+                                    );
                                     try {
                                       const { data: fetchedReportData } =
                                         await fetchReportByR2Key({
@@ -3764,6 +3773,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                           currentLanguage,
                                           row.url,
                                         );
+                                        toast.dismiss(pdfToastId);
                                         const url =
                                           window.URL.createObjectURL(pdfBlob);
                                         const link =
@@ -3776,11 +3786,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                         document.body.removeChild(link);
                                         window.URL.revokeObjectURL(url);
                                       } else {
+                                        toast.dismiss(pdfToastId);
                                         toast.error(
                                           'Failed to generate PDF. Please try again.',
                                         );
                                       }
                                     } catch (error) {
+                                      toast.dismiss(pdfToastId);
                                       console.error(
                                         'Error fetching report:',
                                         error,
