@@ -145,16 +145,20 @@ export const generatePDF = async (
     : baseScore;
 
   let status: string, message: string, statusColor: [number, number, number];
+  let statusKey: 'compliant' | 'partial' | 'non';
   if (enhancedScore >= 80) {
+    statusKey = 'compliant';
     status = 'Compliant';
     message = 'Your website is highly accessible. Great job!';
     statusColor = [22, 163, 74]; // green-600
   } else if (enhancedScore >= 50) {
+    statusKey = 'partial';
     status = 'Partially Compliant';
     message =
       'Your website is partially accessible.\nSome improvements are needed.';
     statusColor = [202, 138, 4]; // yellow-600
   } else {
+    statusKey = 'non';
     status = 'Not Compliant';
     message = 'Your website needs significant accessibility improvements.';
     statusColor = [220, 38, 38]; // red-600
@@ -392,12 +396,12 @@ export const generatePDF = async (
   let iconColor: [number, number, number];
   let progressPercentage: number;
 
-  if (status === 'Compliant') {
+  if (statusKey === 'compliant') {
     outerRingColor = [34, 197, 94]; // Bright green ring (green-500)
     innerFillColor = [240, 253, 244]; // Light green fill (green-50)
     iconColor = [34, 197, 94]; // Bright green checkmark (green-500)
     progressPercentage = 0.95; // 95% filled
-  } else if (status === 'Partially Compliant') {
+  } else if (statusKey === 'partial') {
     outerRingColor = [202, 138, 4]; // yellow-600
     innerFillColor = [254, 252, 232]; // yellow-50
     iconColor = [245, 158, 11]; // yellow-500
@@ -446,11 +450,11 @@ export const generatePDF = async (
     (doc as any).setLineCap('round');
   }
 
-  if (status === 'Compliant') {
+  if (statusKey === 'compliant') {
     // Draw checkmark - larger size for Figma design
     doc.line(badgeCX - 4, badgeCY + 1, badgeCX - 1, badgeCY + 4);
     doc.line(badgeCX - 1, badgeCY + 4, badgeCX + 5, badgeCY - 3);
-  } else if (status === 'Partially Compliant') {
+  } else if (statusKey === 'partial') {
     // Draw exclamation mark - larger size
     doc.line(badgeCX, badgeCY - 4, badgeCX, badgeCY + 2);
     doc.line(badgeCX, badgeCY + 4, badgeCX, badgeCY + 5);
@@ -499,7 +503,7 @@ export const generatePDF = async (
   });
 
   // Add "Great job!" message below the main message for Compliant status
-  if (status === 'Compliant') {
+  if (statusKey === 'compliant') {
     doc.setFontSize(9); // Slightly smaller font for secondary message
     doc.setTextColor(71, 85, 105); // Same gray color
     doc.text('Great job!', statusTextX, statusTextY + 20); // Maintained spacing below main message
@@ -3031,16 +3035,20 @@ export const generateShortPDF = async (
     : baseScore;
 
   let status: string, message: string, statusColor: [number, number, number];
+  let statusKey: 'compliant' | 'partial' | 'non';
   if (enhancedScore >= 80) {
+    statusKey = 'compliant';
     status = 'Compliant';
     message = 'Your website is highly accessible. Great job!';
     statusColor = [22, 163, 74]; // green-600
   } else if (enhancedScore >= 50) {
+    statusKey = 'partial';
     status = 'Partially Compliant';
     message =
       'Your website is partially accessible.\nSome improvements are needed.';
     statusColor = [202, 138, 4]; // yellow-600
   } else {
+    statusKey = 'non';
     status = 'Not Compliant';
     message = 'Your website needs significant accessibility improvements.';
     statusColor = [220, 38, 38]; // red-600
@@ -3298,12 +3306,12 @@ export const generateShortPDF = async (
   let iconColor: [number, number, number];
   let progressPercentage: number;
 
-  if (status === 'Compliant') {
+  if (statusKey === 'compliant') {
     outerRingColor = [34, 197, 94]; // Bright green ring (green-500)
     innerFillColor = [240, 253, 244]; // Light green fill (green-50)
     iconColor = [34, 197, 94]; // Bright green checkmark (green-500)
     progressPercentage = 0.95; // 95% filled
-  } else if (status === 'Partially Compliant') {
+  } else if (statusKey === 'partial') {
     outerRingColor = [202, 138, 4]; // yellow-600
     innerFillColor = [254, 252, 232]; // yellow-50
     iconColor = [245, 158, 11]; // yellow-500
@@ -3352,11 +3360,11 @@ export const generateShortPDF = async (
     (doc as any).setLineCap('round');
   }
 
-  if (status === 'Compliant') {
+  if (statusKey === 'compliant') {
     // Draw checkmark - larger size for Figma design
     doc.line(badgeCX - 4, badgeCY + 1, badgeCX - 1, badgeCY + 4);
     doc.line(badgeCX - 1, badgeCY + 4, badgeCX + 5, badgeCY - 3);
-  } else if (status === 'Partially Compliant') {
+  } else if (statusKey === 'partial') {
     // Draw exclamation mark - larger size
     doc.line(badgeCX, badgeCY - 4, badgeCX, badgeCY + 2);
     doc.line(badgeCX, badgeCY + 4, badgeCX, badgeCY + 5);
@@ -3405,7 +3413,7 @@ export const generateShortPDF = async (
   });
 
   // Add "Great job!" message below the main message for Compliant status
-  if (status === 'Compliant') {
+  if (statusKey === 'compliant') {
     doc.setFontSize(9); // Slightly smaller font for secondary message
     doc.setTextColor(71, 85, 105); // Same gray color
     doc.text('Great job!', statusTextX, statusTextY + 20); // Maintained spacing below main message

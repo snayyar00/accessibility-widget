@@ -19,6 +19,7 @@ interface ConfirmDeleteSiteModalProps {
   domainStatus: string;
   billingLoading: boolean;
   appSumoCount?: number;
+  isCancel?: boolean;
 }
 
 const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
@@ -29,6 +30,7 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
   domainStatus,
   billingLoading,
   appSumoCount = 0,
+  isCancel = false,
 }) => {
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [otherReason, setOtherReason] = useState<string>('');
@@ -156,35 +158,13 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
             '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)',
         }}
       >
-        <div className="flex items-center mb-8">
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
-            <svg
-              className="w-6 h-6 text-red-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"
-              />
-            </svg>
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 leading-tight">
-              Confirm Site Deletion
-            </h2>
-            <p className="text-gray-600 text-sm mt-1">
-              This action cannot be undone
-            </p>
-          </div>
-        </div>
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">
+          {isCancel ? 'Confirm Subscription Cancellation' : 'Confirm Site Deletion'}
+        </h2>
 
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6 leading-relaxed">
-            Please tell us why you're deleting this site:
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            {isCancel ? 'Please tell us why you\'re canceling this subscription:' : 'Please tell us why you\'re deleting this site:'}
           </h3>
 
           <div className="space-y-3">
@@ -423,22 +403,7 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
                 Processing...
               </>
             ) : (
-              <>
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-                Delete Site
-              </>
+              isCancel ? 'Cancel Subscription' : 'Delete Site'
             )}
           </button>
         </div>

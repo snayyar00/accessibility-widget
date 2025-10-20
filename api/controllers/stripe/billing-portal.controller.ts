@@ -129,7 +129,7 @@ export async function createBillingPortalSession(req: Request, res: Response) {
         configuration = await stripe.billingPortal.configurations.update(configurations.data[0].id, {
           features: {
             subscription_update: { enabled: false },
-            subscription_cancel: { enabled: false },
+            subscription_cancel: { enabled: true },
           },
         })
       } catch (error) {

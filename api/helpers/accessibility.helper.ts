@@ -1,4 +1,5 @@
 import { getPreprocessingConfig } from '../config/preprocessing.config'
+import { SCANNER_MAX_POLLING_ATTEMPTS_SINGLE, SCANNER_MAX_POLLING_ATTEMPTS_FULL } from '../config/env'
 import { readAccessibilityDescriptionFromDb } from '../services/accessibilityReport/accessibilityIssues.service'
 import { processAccessibilityIssuesWithFallback } from '../services/accessibilityReport/enhancedProcessing.service'
 
@@ -265,7 +266,7 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
 
   // Helper function to poll job status and get results
   const pollJobStatus = async (jobId: string): Promise<any> => {
-    const maxPollingAttempts = fullSiteScan === false ? 60 : 120 // 5 minutes for single page, 10 minutes for full site scan
+    const maxPollingAttempts = fullSiteScan === false ? SCANNER_MAX_POLLING_ATTEMPTS_SINGLE : SCANNER_MAX_POLLING_ATTEMPTS_FULL // 5 minutes for single page, 10 minutes for full site scan
     const maxErrorAttempts = 5 // Limit to 5 attempts only in case of consecutive errors
     const pollingInterval = 5000 // Poll every 5 seconds
     const statusUrl = `${process.env.SCANNER_SERVER_URL}/scan/status/${jobId}`

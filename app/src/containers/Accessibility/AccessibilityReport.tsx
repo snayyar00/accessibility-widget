@@ -3374,13 +3374,26 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   )}
                                 </div>
                                 <div className="min-w-0 flex-1">
+                                  {/* Mobile (≤768px): Show 7 letters, Desktop (>768px): Show full with truncate */}
                                   <div
-                                    className="font-medium truncate"
+                                    className="font-medium"
                                     style={{ color: baseColors.grayDark2 }}
                                   >
-                                    {row.url
-                                      .replace(/^https?:\/\//, '')
-                                      .replace(/^www\./, '')}
+                                    <span className="hidden sm:inline">
+                                      {row.url
+                                        .replace(/^https?:\/\//, '')
+                                        .replace(/^www\./, '')
+                                        .substring(0, 7)}
+                                      {row.url
+                                        .replace(/^https?:\/\//, '')
+                                        .replace(/^www\./, '').length > 7 &&
+                                        '...'}
+                                    </span>
+                                    <span className="sm:hidden truncate">
+                                      {row.url
+                                        .replace(/^https?:\/\//, '')
+                                        .replace(/^www\./, '')}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
@@ -3456,6 +3469,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                       onClick={async () => {
                                         setOpenDropdown(null);
                                         setDownloadingRow(row.r2_key);
+                                        const pdfToastId = toast.loading(
+                                          'Generating detailed report...',
+                                        );
                                         try {
                                           const { data: fetchedReportData } =
                                             await fetchReportByR2Key({
@@ -3472,6 +3488,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                               currentLanguage,
                                               row.url,
                                             );
+                                            toast.dismiss(pdfToastId);
                                             const url =
                                               window.URL.createObjectURL(
                                                 pdfBlob,
@@ -3486,11 +3503,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                             document.body.removeChild(link);
                                             window.URL.revokeObjectURL(url);
                                           } else {
+                                            toast.dismiss(pdfToastId);
                                             toast.error(
                                               'Failed to generate PDF. Please try again.',
                                             );
                                           }
                                         } catch (error) {
+                                          toast.dismiss(pdfToastId);
                                           console.error(
                                             'Error fetching report:',
                                             error,
@@ -3641,13 +3660,25 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
+                              {/* Mobile (≤768px): Show 5 letters, Desktop (>768px): Show full with truncate */}
                               <div
-                                className="font-medium truncate"
+                                className="font-medium"
                                 style={{ color: baseColors.grayDark2 }}
                               >
-                                {row.url
-                                  .replace(/^https?:\/\//, '')
-                                  .replace(/^www\./, '')}
+                                <span className="hidden sm:inline">
+                                  {row.url
+                                    .replace(/^https?:\/\//, '')
+                                    .replace(/^www\./, '')
+                                    .substring(0, 7)}
+                                  {row.url
+                                    .replace(/^https?:\/\//, '')
+                                    .replace(/^www\./, '').length > 7 && '...'}
+                                </span>
+                                <span className="sm:hidden truncate">
+                                  {row.url
+                                    .replace(/^https?:\/\//, '')
+                                    .replace(/^www\./, '')}
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -3748,6 +3779,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   onClick={async () => {
                                     setOpenDropdown(null);
                                     setDownloadingRow(row.r2_key);
+                                    const pdfToastId = toast.loading(
+                                      'Generating detailed report...',
+                                    );
                                     try {
                                       const { data: fetchedReportData } =
                                         await fetchReportByR2Key({
@@ -3764,6 +3798,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                           currentLanguage,
                                           row.url,
                                         );
+                                        toast.dismiss(pdfToastId);
                                         const url =
                                           window.URL.createObjectURL(pdfBlob);
                                         const link =
@@ -3776,11 +3811,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                         document.body.removeChild(link);
                                         window.URL.revokeObjectURL(url);
                                       } else {
+                                        toast.dismiss(pdfToastId);
                                         toast.error(
                                           'Failed to generate PDF. Please try again.',
                                         );
                                       }
                                     } catch (error) {
+                                      toast.dismiss(pdfToastId);
                                       console.error(
                                         'Error fetching report:',
                                         error,

@@ -110,14 +110,20 @@ export async function addSite(user: UserProfile, url: string): Promise<string> {
         // Generate secure unsubscribe link for new domain alerts
         const unsubscribeLink = generateSecureUnsubscribeLink(user.email, getUnsubscribeTypeForEmail('domain'), user.id)
 
+        // Match PDF scoring logic for emails
+        const enhancedFromReport = (report as any)?.totalStats?.score
+        const displayedScore = typeof enhancedFromReport === 'number' ? enhancedFromReport : widgetStatus === 'true' || widgetStatus === 'Web Ability' ? Math.min((score || 0) + 45, 95) : score || 0
+
+        const complianceByScore = displayedScore >= 80 ? 'Compliant' : displayedScore >= 50 ? 'Partially Compliant' : 'Not Compliant'
+
         const template = await compileEmailTemplate({
           fileName: 'accessReport.mjml',
           data: {
             status,
             url: domain,
             statusImage: report?.siteImg,
-            statusDescription: report?.score > 89 ? 'You achieved exceptionally high compliance status!' : 'Your Site may not comply with WCAG 2.1 AA.',
-            score,
+            statusDescription: complianceByScore,
+            score: displayedScore,
             errorsCount: errorsCount,
             warningsCount: warningsCount,
             noticesCount: noticesCount,
