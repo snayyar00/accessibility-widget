@@ -11,6 +11,7 @@ export const problemReportsColumns = {
   description: 'problem_reports.description',
   reporter_email: 'problem_reports.reporter_email',
   created_at: 'problem_reports.created_at',
+  fixed: 'problem_reports.fixed',
 }
 
 export type problemReportProps = {
@@ -26,4 +27,12 @@ export async function addProblemReport(problem: problemReportProps) {
 
 export async function getProblemReportsBySiteId(site_id: number) {
   return database(TABLE).join(TABLES.allowed_sites, problemReportsColumns.site_id, siteColumns.id).select(problemReportsColumns, `${siteColumns.url} as site_url`).where('site_id', site_id)
+}
+
+export async function toggleProblemReportFixedStatus(id: number) {
+  return database(TABLE)
+    .where('id', id)
+    .update({
+      fixed: database.raw('NOT fixed'),
+    })
 }

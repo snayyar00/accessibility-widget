@@ -79,7 +79,7 @@ const sendMonthlyEmails = async () => {
     const year = new Date().getFullYear()
 
     // Limit concurrency to 10 tasks at a time
-    const limit = pLimit(10)
+    const limit = pLimit(6)
 
     await Promise.allSettled(
       sitePlans.map((sitePlan: sitePlan) =>
@@ -126,14 +126,23 @@ const sendMonthlyEmails = async () => {
             // Generate secure unsubscribe link for monthly reports
             const unsubscribeLink = generateSecureUnsubscribeLink(user.email, getUnsubscribeTypeForEmail('monthly'), user.id)
 
+            // Use the same score shown in the PDF:
+            // 1) Prefer processed enhanced score when available
+            // 2) Otherwise, if WebAbility is active, add the 45 bonus (capped at 95)
+            // 3) Otherwise, use the raw scanner score
+            const enhancedFromReport = (report as any)?.totalStats?.score
+            const displayedScore = typeof enhancedFromReport === 'number' ? enhancedFromReport : widgetStatus === 'true' || widgetStatus === 'Web Ability' ? Math.min((score || 0) + 45, 95) : score || 0
+
+            const complianceByScore = displayedScore >= 80 ? 'Compliant' : displayedScore >= 50 ? 'Partially Compliant' : 'Not Compliant'
+
             const template = await compileEmailTemplate({
               fileName: 'accessReport.mjml',
               data: {
                 status,
                 url: site?.url,
                 statusImage: report.siteImg,
-                statusDescription: report.score > 89 ? 'You achieved exceptionally high compliance status!' : 'Your Site may not comply with WCAG 2.1 AA.',
-                score,
+                statusDescription: complianceByScore,
+                score: displayedScore,
                 errorsCount: report.htmlcs.errors.length,
                 warningsCount: report.htmlcs.warnings.length,
                 noticesCount: report.htmlcs.notices.length,

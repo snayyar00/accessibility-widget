@@ -230,7 +230,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ autoShow = false }) => {
         }`}
       >
         {/* Header with blue background */}
-        <div className="bg-blue-600 text-white p-6 relative overflow-hidden">
+        <div className="bg-[#465ce4] text-white p-6 relative overflow-hidden">
           {/* Subtle pattern overlay for better text clarity */}
           <div className="absolute inset-0 bg-black/5"></div>
           <div className="relative flex items-center justify-between">

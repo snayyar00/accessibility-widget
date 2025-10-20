@@ -1,10 +1,6 @@
 .add-domain-container {
-
   max-width: auto;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: #f4f7fc;
-  border-radius: 8px;
+  margin: 0.1rem auto;
   /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); */
 }
 
@@ -12,7 +8,6 @@
   font-size: 1.625rem;
   color: #333;
   text-align: center;
-  margin-bottom: 2rem;
 }
 
 .add-domain-form-container {
@@ -38,7 +33,7 @@
 }
 
 .submit-btn {
-  background-color: #369AFE !important;
+  background-color: #369afe !important;
   color: #fff;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -47,7 +42,6 @@
   cursor: pointer;
   display: block;
   width: fit-content;
-
 }
 
 .submit-btn:hover {

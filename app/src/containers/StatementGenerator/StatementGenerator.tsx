@@ -15,7 +15,8 @@ import {
 import { HiDownload, HiClipboardCopy } from 'react-icons/hi';
 import { MdOutlineGavel, MdCode, MdTextFields } from 'react-icons/md';
 import { FaFileAlt, FaCode } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
+import noReportFoundImage from '@/assets/images/no-report-found.png';
 import TourGuide from '@/components/Common/TourGuide';
 import { defaultTourStyles } from '@/config/tourStyles';
 import { statementGeneratorTourSteps, tourKeys } from '@/constants/toursteps';
@@ -65,6 +66,10 @@ const StatementGenerator: React.FC = () => {
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] =
     useState<boolean>(false);
   const [showOptionalFields, setShowOptionalFields] = useState<boolean>(false);
+  const [showEnhancePage, setShowEnhancePage] = useState<boolean>(false);
+  const [selectedEnhancements, setSelectedEnhancements] = useState<string[]>(
+    [],
+  );
 
   const [translateStatement, { loading: isTranslating }] = useMutation(
     translateStatementMutation,
@@ -1216,10 +1221,46 @@ ${
   const copyToClipboard = async () => {
     try {
       const content = getFormattedContent();
-      await navigator.clipboard.writeText(content);
-      toast.success(`Statement copied as ${selectedFormat.toUpperCase()}!`);
+
+      // Check if content is empty
+      if (!content || content.trim() === '') {
+        toast.error('No content to copy. Please generate a statement first.');
+        return;
+      }
+
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(content);
+        toast.success(`Statement copied as ${selectedFormat.toUpperCase()}!`);
+      } else {
+        // Fallback for older browsers or non-secure contexts
+        const textArea = document.createElement('textarea');
+        textArea.value = content;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+          const successful = document.execCommand('copy');
+          if (successful) {
+            toast.success(
+              `Statement copied as ${selectedFormat.toUpperCase()}!`,
+            );
+          } else {
+            throw new Error('Copy command failed');
+          }
+        } finally {
+          document.body.removeChild(textArea);
+        }
+      }
     } catch (error) {
-      toast.error('Failed to copy to clipboard');
+      console.error('Copy to clipboard error:', error);
+      toast.error(
+        'Failed to copy to clipboard. Please try selecting and copying manually.',
+      );
     }
   };
 
@@ -1244,6 +1285,150 @@ ${
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success(`Statement downloaded as ${selectedFormat.toUpperCase()}!`);
+  };
+
+  // Toggle enhancement selection and apply immediately
+  const toggleEnhancement = async (enhancement: string) => {
+    const isCurrentlySelected = selectedEnhancements.includes(enhancement);
+
+    if (isCurrentlySelected) {
+      // Remove enhancement
+      setSelectedEnhancements((prev) =>
+        prev.filter((item) => item !== enhancement),
+      );
+      // You could regenerate without this enhancement here if needed
+    } else {
+      // Add enhancement and apply immediately
+      const newSelectedEnhancements = [...selectedEnhancements, enhancement];
+      setSelectedEnhancements(newSelectedEnhancements);
+
+      // Apply the enhancement immediately
+      await applySpecificEnhancement(enhancement);
+    }
+  };
+
+  // Apply a specific enhancement immediately
+  const applySpecificEnhancement = async (enhancement: string) => {
+    if (!generatedStatement) {
+      toast.error('Please generate a statement first');
+      return;
+    }
+
+    setIsGenerating(true);
+    toast.info('Applying enhancement...');
+
+    try {
+      // Create enhanced form data with the specific enhancement
+      const enhancedFormData = { ...formData };
+
+      switch (enhancement) {
+        case 'add-testing':
+          enhancedFormData.industry =
+            formData.industry + ' (with detailed testing procedures)';
+          break;
+        case 'add-timeline':
+          enhancedFormData.industry =
+            formData.industry + ' (with response timelines)';
+          break;
+        case 'add-training':
+          enhancedFormData.industry =
+            formData.industry + ' (with staff training details)';
+          break;
+        case 'add-standards':
+          enhancedFormData.industry =
+            formData.industry + ' (with additional standards)';
+          break;
+      }
+
+      // Regenerate the statement with the enhancement
+      const enhancedStatement = await generateStatement(
+        enhancedFormData,
+        enhancement,
+      );
+      setGeneratedStatement(enhancedStatement);
+
+      const enhancementNames = {
+        'add-testing': 'automated testing procedures',
+        'add-timeline': 'response timelines',
+        'add-training': 'staff training information',
+        'add-standards': 'additional compliance standards',
+      };
+
+      toast.success(
+        `Enhancement applied: ${
+          enhancementNames[enhancement as keyof typeof enhancementNames]
+        }!`,
+      );
+    } catch (error) {
+      console.error('Enhancement error:', error);
+      toast.error('Failed to apply enhancement. Please try again.');
+      // Remove the enhancement from selection if it failed
+      setSelectedEnhancements((prev) =>
+        prev.filter((item) => item !== enhancement),
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Apply selected enhancements
+  const applyEnhancements = async () => {
+    if (selectedEnhancements.length === 0) {
+      toast.error('Please select at least one enhancement');
+      return;
+    }
+
+    if (!generatedStatement) {
+      toast.error('Please generate a statement first');
+      return;
+    }
+
+    setIsGenerating(true);
+    toast.info('Applying enhancements to statement...');
+
+    try {
+      // Create enhanced form data with all selected enhancements
+      const enhancedFormData = { ...formData };
+
+      // Apply all selected enhancements
+      let enhancementSuffix = '';
+      selectedEnhancements.forEach((enhancement) => {
+        switch (enhancement) {
+          case 'add-testing':
+            enhancementSuffix += ' (with detailed testing procedures)';
+            break;
+          case 'add-timeline':
+            enhancementSuffix += ' (with response timelines)';
+            break;
+          case 'add-training':
+            enhancementSuffix += ' (with staff training details)';
+            break;
+          case 'add-standards':
+            enhancementSuffix += ' (with additional standards)';
+            break;
+        }
+      });
+
+      enhancedFormData.industry = formData.industry + enhancementSuffix;
+
+      // Regenerate the statement with all enhancements
+      const enhancedStatement = await generateStatement(
+        enhancedFormData,
+        selectedEnhancements.join(','),
+      );
+      setGeneratedStatement(enhancedStatement);
+
+      toast.success(
+        `Statement enhanced with ${selectedEnhancements.length} improvements!`,
+      );
+      setShowEnhancePage(false);
+      setSelectedEnhancements([]);
+    } catch (error) {
+      console.error('Enhancement error:', error);
+      toast.error('Failed to enhance statement. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   // AI enhancement function that regenerates the statement with additional features
@@ -1311,377 +1496,62 @@ ${
   };
 
   return (
-    <div className="statement-generator-wrapper min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <header className="text-center mb-16">
-          <div className="mb-6">
-            <div className="bg-primary p-4 rounded-2xl w-20 h-20 mx-auto mb-6 flex items-center justify-center shadow-sm">
-              <FaFileAlt className="text-white" size={36} />
-            </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-3">
+    <div className="statement-generator-wrapper min-h-screen">
+      <style>{`
+        /* Custom scrollbar styling to match Figma design */
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #7383ED;
+          border-radius: 3px;
+          border: none;
+          min-height: 20px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #5a6bdb;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-corner {
+          background: transparent;
+        }
+        
+        /* For Firefox */
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #7383ED transparent;
+        }
+      `}</style>
+      <div className="pl-6">
+        <header className="text-left mb-1">
+          <div className="mb-1">
+            <h1 className="text-4xl font-bold text-gray-900 mb-1">
               AI Accessibility Statement Generator
             </h1>
-            <p className="text-lg text-gray-600 mb-6">
-              AI-Powered • WCAG 2.1 AA Compliant • 42+ Languages • Ready to
-              Deploy
-            </p>
           </div>
-          <p className="text-xl text-gray-700 max-w-4xl mx-auto leading-relaxed font-medium">
-            Generate industry-standard accessibility statements that comply with
-            WCAG 2.1 AA guidelines in 42+ languages using our advanced AI
-            engine. Perfect for legal compliance and demonstrating your
-            commitment to digital accessibility.
-          </p>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Form Section */}
-          <div className="bg-white rounded-3xl shadow-lg border border-gray-200 h-fit company-form-section">
-            <div className="p-8">
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Company Information
-                </h2>
-                <p className="text-gray-600">
-                  Fill in your details to generate a customized accessibility
-                  statement
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <TextField
-                  fullWidth
-                  label="Company Name *"
-                  value={formData.companyName}
-                  onChange={handleInputChange('companyName')}
-                  placeholder="Enter your company name"
-                  variant="outlined"
-                  inputProps={{
-                    onPaste: (e) => {
-                      // Explicitly allow paste
-                      e.stopPropagation();
-                    },
-                  }}
-                />
-
-                <TextField
-                  fullWidth
-                  label="Website URL *"
-                  value={formData.websiteUrl}
-                  onChange={handleInputChange('websiteUrl')}
-                  placeholder="https://example.com"
-                  variant="outlined"
-                  inputProps={{
-                    onPaste: (e) => {
-                      // Explicitly allow paste
-                      e.stopPropagation();
-                    },
-                  }}
-                />
-
-                <TextField
-                  fullWidth
-                  label="Contact Email *"
-                  value={formData.contactEmail}
-                  onChange={handleInputChange('contactEmail')}
-                  placeholder="accessibility@example.com"
-                  variant="outlined"
-                  inputProps={{
-                    onPaste: (e) => {
-                      // Explicitly allow paste
-                      e.stopPropagation();
-                    },
-                  }}
-                />
-
-                <FormControl fullWidth>
-                  <InputLabel>Industry *</InputLabel>
-                  <Select
-                    value={formData.industry}
-                    onChange={handleInputChange('industry')}
-                    label="Industry *"
-                  >
-                    {industries.map((industry) => (
-                      <MenuItem key={industry} value={industry}>
-                        {industry}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                {/* Custom Language Selector */}
-                <div className="relative language-dropdown-section">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Language
-                  </label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setIsLanguageDropdownOpen(!isLanguageDropdownOpen)
-                      }
-                      className="w-full px-3 py-3 text-left bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                    >
-                      <span className="block truncate">{displayLanguage}</span>
-                      <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <svg
-                          className="h-5 w-5 text-gray-400"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </span>
-                    </button>
-
-                    {isLanguageDropdownOpen && (
-                      <div className="absolute z-10 mt-1 w-full bg-white shadow-lg border border-gray-300 rounded-lg">
-                        <div className="p-3 border-b border-gray-200">
-                          <input
-                            type="text"
-                            placeholder="Search languages..."
-                            value={languageSearch}
-                            onChange={(e) => setLanguageSearch(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
-                          />
-                        </div>
-                        <div className="max-h-60 overflow-auto">
-                          {filteredLanguages.map((lang) => (
-                            <button
-                              key={lang.code}
-                              type="button"
-                              onClick={() => {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  language: lang.code,
-                                }));
-                                setIsLanguageDropdownOpen(false);
-                                setLanguageSearch('');
-                              }}
-                              className={`w-full text-left px-3 py-2 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 ${
-                                formData.language === lang.code
-                                  ? 'bg-primary/10 text-primary font-medium'
-                                  : 'text-gray-900'
-                              }`}
-                            >
-                              <div className="flex justify-between items-center">
-                                <span>
-                                  {lang.name} ({lang.englishName})
-                                </span>
-                                {formData.language === lang.code && (
-                                  <svg
-                                    className="h-4 w-4 text-primary"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
-                                )}
-                              </div>
-                            </button>
-                          ))}
-                          {filteredLanguages.length === 0 && (
-                            <div className="px-3 py-2 text-gray-500 text-sm">
-                              No languages found
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Divider for optional fields */}
-                <div className="my-6 border-t border-gray-200 pt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Optional Information
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setShowOptionalFields(!showOptionalFields)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                        showOptionalFields ? 'bg-blue-600' : 'bg-gray-300'
-                      }`}
-                      aria-label="Toggle optional fields"
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                          showOptionalFields ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  {showOptionalFields && (
-                    <>
-                      {/* Brand Customization */}
-                      <div className="mb-4">
-                        <p className="text-sm text-gray-600 mb-3">
-                          Customize widget branding (leave empty to use
-                          WebAbility.io)
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <TextField
-                            fullWidth
-                            label="Widget Brand Name"
-                            value={formData.widgetBrandName}
-                            onChange={handleInputChange('widgetBrandName')}
-                            placeholder="WebAbility.io"
-                            variant="outlined"
-                            size="small"
-                          />
-                          <TextField
-                            fullWidth
-                            label="Widget Brand URL"
-                            value={formData.widgetBrandUrl}
-                            onChange={handleInputChange('widgetBrandUrl')}
-                            placeholder="https://webability.io"
-                            variant="outlined"
-                            size="small"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Contact Information */}
-                      <div>
-                        <p className="text-sm text-gray-600 mb-3">
-                          Additional contact information (fields left empty will
-                          not appear in the statement)
-                        </p>
-                        <div className="space-y-4">
-                          <TextField
-                            fullWidth
-                            label="Phone Number"
-                            value={formData.phoneNumber}
-                            onChange={handleInputChange('phoneNumber')}
-                            placeholder="+1 (555) 123-4567"
-                            variant="outlined"
-                            size="small"
-                          />
-                          <TextField
-                            fullWidth
-                            label="Online Form URL"
-                            value={formData.onlineFormUrl}
-                            onChange={handleInputChange('onlineFormUrl')}
-                            placeholder="https://example.com/accessibility-feedback"
-                            variant="outlined"
-                            size="small"
-                          />
-                          <TextField
-                            fullWidth
-                            label="Visitor Address"
-                            value={formData.visitorAddress}
-                            onChange={handleInputChange('visitorAddress')}
-                            placeholder="123 Main St, Suite 100, City, State 12345"
-                            variant="outlined"
-                            size="small"
-                          />
-                          <TextField
-                            fullWidth
-                            label="Postal Address"
-                            value={formData.postalAddress}
-                            onChange={handleInputChange('postalAddress')}
-                            placeholder="P.O. Box 123, City, State 12345"
-                            variant="outlined"
-                            size="small"
-                          />
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="generate-button-section">
-                <Button
-                  fullWidth
-                  variant="contained"
-                  size="large"
-                  onClick={generateStatementDebounced}
-                  disabled={isGenerating}
-                  startIcon={
-                    isGenerating ? (
-                      <CircularProgress size={20} color="inherit" />
-                    ) : (
-                      <MdOutlineGavel />
-                    )
-                  }
-                  sx={{
-                    mt: 4,
-                    py: 2,
-                    borderRadius: '16px',
-                    textTransform: 'none',
-                    fontSize: '1.1rem',
-                    fontWeight: '600',
-                    backgroundColor: '#0033ed',
-                    color: 'white',
-                    boxShadow: '0 4px 12px rgba(0, 51, 237, 0.25)',
-                    '&:hover': {
-                      backgroundColor: '#0029c7',
-                      boxShadow: '0 6px 16px rgba(0, 51, 237, 0.3)',
-                    },
-                    '&:disabled': {
-                      backgroundColor: '#9ca3af',
-                    },
-                  }}
-                >
-                  {isGenerating
-                    ? 'Generating Professional Statement...'
-                    : 'Generate AI Statement'}
-                </Button>
-              </div>
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Generated Statement Section */}
-          <div className="bg-white rounded-3xl shadow-lg border border-gray-200 h-fit statement-preview-section">
-            <div className="p-8">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    Generated Statement
-                  </h2>
-                  <p className="text-gray-600">
-                    Your professional accessibility statement will appear here
-                  </p>
-                </div>
-                {generatedStatement && (
-                  <Chip
-                    label="✓ Ready"
-                    sx={{
-                      backgroundColor: '#10b981',
-                      color: 'white',
-                      fontWeight: '600',
-                      px: 2,
-                      py: 1,
-                    }}
-                  />
-                )}
-              </div>
-
+          <div className=" statement-preview-section w-full lg:col-span-2">
+            <div className="pt-2 w-full">
               {generatedStatement ? (
                 <div>
                   {/* Format Selection */}
                   <div className="mb-6">
-                    <p className="mb-3 font-semibold text-gray-900">
-                      Export Format:
-                    </p>
-                    <div className="flex space-x-3">
+                    <div className="flex flex-row sm:flex-col bg-gray-50 border border-[#A2ADF3] rounded-lg p-1">
                       <button
                         onClick={() => setSelectedFormat('markdown')}
-                        className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                        className={`flex-1 px-4 py-3 rounded-md font-medium text-sm transition-all ${
                           selectedFormat === 'markdown'
-                            ? 'bg-primary text-white shadow-md'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? 'bg-[#445AE7] text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-800'
                         }`}
                       >
                         <FaFileAlt className="inline mr-2" size={14} />
@@ -1689,10 +1559,10 @@ ${
                       </button>
                       <button
                         onClick={() => setSelectedFormat('html')}
-                        className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                        className={`flex-1 px-4 py-3 rounded-md font-medium text-sm transition-all ${
                           selectedFormat === 'html'
-                            ? 'bg-primary text-white shadow-md'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? 'bg-[#445AE7] text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-800'
                         }`}
                       >
                         <FaCode className="inline mr-2" size={14} />
@@ -1700,10 +1570,10 @@ ${
                       </button>
                       <button
                         onClick={() => setSelectedFormat('text')}
-                        className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                        className={`flex-1 px-4 py-3 rounded-md font-medium text-sm transition-all ${
                           selectedFormat === 'text'
-                            ? 'bg-primary text-white shadow-md'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? 'bg-[#445AE7] text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-800'
                         }`}
                       >
                         <MdTextFields className="inline mr-2" size={14} />
@@ -1713,7 +1583,7 @@ ${
                   </div>
 
                   <div
-                    className="bg-gray-50 p-6 rounded-2xl max-h-96 overflow-y-auto mb-6 border border-gray-200"
+                    className="bg-[#edf2fd] p-6 pr-4 rounded-2xl max-h-[600px] overflow-y-auto mb-6 border border-[#A2ADF3] custom-scrollbar"
                     style={{
                       fontFamily:
                         selectedFormat === 'html' ? 'inherit' : 'monospace',
@@ -1746,7 +1616,7 @@ ${
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="flex flex-col md:flex-row gap-4 mb-4 justify-end">
                     <Button
                       variant="outlined"
                       onClick={copyToClipboard}
@@ -1786,166 +1656,481 @@ ${
                       Download {selectedFormat.toUpperCase()}
                     </Button>
                   </div>
-
-                  {/* AI Enhancement Section */}
-                  <div className="border-t border-gray-200 pt-6 mt-6 ai-helper-section">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center">
-                        <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                          <MdOutlineGavel className="text-blue-700" size={20} />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-gray-900">
-                            AI Enhancements
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            Improve your statement with one-click additions
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() =>
-                          setShowEnhanceOptions(!showEnhanceOptions)
-                        }
-                        sx={{
-                          borderRadius: '8px',
-                          textTransform: 'none',
-                          fontSize: '0.875rem',
-                          fontWeight: '500',
-                          borderColor: '#d1d5db',
-                          color: '#374151',
-                          '&:hover': {
-                            backgroundColor: '#f9fafb',
-                            borderColor: '#9ca3af',
-                          },
-                        }}
-                      >
-                        {showEnhanceOptions
-                          ? 'Hide Options'
-                          : 'Enhance Statement'}
-                      </Button>
-                    </div>
-
-                    {showEnhanceOptions && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <button
-                          onClick={() => enhanceStatement('add-testing')}
-                          className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="font-medium text-gray-900 mb-1">
-                            Add Testing Details
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            Include automated testing tools and procedures
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => enhanceStatement('add-timeline')}
-                          className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="font-medium text-gray-900 mb-1">
-                            Add Response Timeline
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            Include specific response times for feedback
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => enhanceStatement('add-training')}
-                          className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="font-medium text-gray-900 mb-1">
-                            Add Staff Training
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            Include information about accessibility training
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => enhanceStatement('add-standards')}
-                          className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="font-medium text-gray-900 mb-1">
-                            Add More Standards
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            Include EN 301 549 and Section 508 compliance
-                          </div>
-                        </button>
-                      </div>
-                    )}
-                  </div>
                 </div>
               ) : (
-                <div className="text-center py-12 text-gray-500">
-                  <FaFileAlt size={64} className="mx-auto mb-4 text-gray-300" />
-                  <p className="mb-2 text-base">
-                    Fill in the form and click "Generate AI Statement"
-                  </p>
-                  <p className="text-gray-400 text-sm">
-                    Create professional accessibility statements in multiple
-                    formats
-                  </p>
+                <div className="flex flex-col items-center justify-center min-h-[600px] bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 rounded-2xl border border-[#A2ADF3] p-8">
+                  <div className="relative mb-6">
+                    <img
+                      src={noReportFoundImage}
+                      alt="No statement generated"
+                      className="w-24 h-30 mx-auto drop-shadow-sm"
+                    />
+                  </div>
+                  <div className="text-center max-w-md">
+                    <h3 className="text-lg font-medium text-gray-700 mb-2 leading-relaxed">
+                      Your statement will be shown here after generated
+                    </h3>
+                    <p className="text-sm text-gray-500 leading-relaxed">
+                      Fill in the form and click "Generate AI Statement" to
+                      create your accessibility statement
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
           </div>
-        </div>
 
-        {/* Features Section */}
-        <div className="mt-8 bg-white rounded-2xl shadow-lg border border-gray-100 features-section">
-          <div className="p-8">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                AI Statement Features
-              </h2>
-              <p className="text-gray-600 text-base">
-                Industry-standard, legally compliant, and ready-to-deploy
-                accessibility statements
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="bg-blue-500 p-4 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center shadow-md">
-                  <FaFileAlt className="text-white" size={24} />
-                </div>
-                <h3 className="font-bold text-lg mb-3 text-gray-900">
-                  WCAG 2.1 AA Compliant
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  Professional statements following WCAG 2.1 AA guidelines with
-                  industry-standard language and comprehensive coverage for
-                  legal compliance
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="bg-green-500 p-4 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center shadow-md">
-                  <MdCode className="text-white" size={28} />
-                </div>
-                <h3 className="font-bold text-lg mb-3 text-gray-900">
-                  42+ Languages
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  Generate statements in 42+ languages including Arabic,
-                  Chinese, Spanish, French, and more for global accessibility
-                  compliance
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="bg-gray-500 p-4 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center shadow-md">
-                  <HiDownload className="text-white" size={24} />
-                </div>
-                <h3 className="font-bold text-lg mb-3 text-gray-900">
-                  Multiple Formats
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  Download as Markdown, HTML, or Plain Text - statements are
-                  ready for immediate deployment on your website or
-                  documentation
-                </p>
-              </div>
+          {/* Form Section */}
+          <div className="bg-white rounded-3xl shadow-lg border border-gray-200 h-fit company-form-section lg:max-w-lg max-h-[800px] overflow-y-auto custom-scrollbar">
+            <div className="p-8">
+              {showEnhancePage ? (
+                /* Enhance Statement Content */
+                <>
+                  {/* Header */}
+                  <div className="flex items-center mb-6">
+                    <button
+                      onClick={() => setShowEnhancePage(false)}
+                      className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <svg
+                        className="w-5 h-5 text-gray-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                    </button>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      Enhance Statement
+                    </h2>
+                  </div>
+
+                  {/* Instruction */}
+                  <p className="text-gray-600 mb-6">
+                    Select one or more enhancement
+                  </p>
+
+                  {/* Enhancement Options */}
+                  <div className="space-y-4 mb-8">
+                    <button
+                      onClick={() => toggleEnhancement('add-testing')}
+                      className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
+                        selectedEnhancements.includes('add-testing')
+                          ? 'border-[#445AE7] bg-[#445AE7] text-white'
+                          : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="font-medium mb-1">
+                        Add testing details
+                      </div>
+                      <div className="text-sm opacity-80">
+                        Include automated testing tools and procedures
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => toggleEnhancement('add-timeline')}
+                      className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
+                        selectedEnhancements.includes('add-timeline')
+                          ? 'border-[#445AE7] bg-[#445AE7] text-white'
+                          : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="font-medium mb-1">Add Response Time</div>
+                      <div className="text-sm opacity-80">
+                        Include specific response times for feedback
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => toggleEnhancement('add-training')}
+                      className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
+                        selectedEnhancements.includes('add-training')
+                          ? 'border-[#445AE7] bg-[#445AE7] text-white'
+                          : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="font-medium mb-1">Add Staff Training</div>
+                      <div className="text-sm opacity-80">
+                        Include information about accessibility training
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => toggleEnhancement('add-standards')}
+                      className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
+                        selectedEnhancements.includes('add-standards')
+                          ? 'border-[#445AE7] bg-[#445AE7] text-white'
+                          : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="font-medium mb-1">Add More Standards</div>
+                      <div className="text-sm opacity-80">
+                        Include EN 301 549 and Section 508 compliance
+                      </div>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                /* Normal Form Content */
+                <>
+                  <div className="mb-8">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                      Company Information
+                    </h2>
+                    <p className="text-gray-600">
+                      Fill in your details to generate a customized
+                      accessibility statement
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <TextField
+                      fullWidth
+                      label="Company Name *"
+                      value={formData.companyName}
+                      onChange={handleInputChange('companyName')}
+                      placeholder="Enter your company name"
+                      variant="outlined"
+                      inputProps={{
+                        onPaste: (e) => {
+                          // Explicitly allow paste
+                          e.stopPropagation();
+                        },
+                      }}
+                    />
+
+                    <TextField
+                      fullWidth
+                      label="Website URL *"
+                      value={formData.websiteUrl}
+                      onChange={handleInputChange('websiteUrl')}
+                      placeholder="https://example.com"
+                      variant="outlined"
+                      inputProps={{
+                        onPaste: (e) => {
+                          // Explicitly allow paste
+                          e.stopPropagation();
+                        },
+                      }}
+                    />
+
+                    <TextField
+                      fullWidth
+                      label="Contact Email *"
+                      value={formData.contactEmail}
+                      onChange={handleInputChange('contactEmail')}
+                      placeholder="accessibility@example.com"
+                      variant="outlined"
+                      inputProps={{
+                        onPaste: (e) => {
+                          // Explicitly allow paste
+                          e.stopPropagation();
+                        },
+                      }}
+                    />
+
+                    <FormControl fullWidth>
+                      <InputLabel>Industry *</InputLabel>
+                      <Select
+                        value={formData.industry}
+                        onChange={handleInputChange('industry')}
+                        label="Industry *"
+                      >
+                        {industries.map((industry) => (
+                          <MenuItem key={industry} value={industry}>
+                            {industry}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    {/* Custom Language Selector */}
+                    <div className="relative language-dropdown-section">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Language
+                      </label>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setIsLanguageDropdownOpen(!isLanguageDropdownOpen)
+                          }
+                          className="w-full px-3 py-3 text-left bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                        >
+                          <span className="block truncate">
+                            {displayLanguage}
+                          </span>
+                          <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <svg
+                              className="h-5 w-5 text-gray-400"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </span>
+                        </button>
+
+                        {isLanguageDropdownOpen && (
+                          <div className="absolute z-10 mt-1 w-full bg-white shadow-lg border border-gray-300 rounded-lg">
+                            <div className="p-3 border-b border-gray-200">
+                              <input
+                                type="text"
+                                placeholder="Search languages..."
+                                value={languageSearch}
+                                onChange={(e) =>
+                                  setLanguageSearch(e.target.value)
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                              />
+                            </div>
+                            <div className="max-h-60 overflow-auto custom-scrollbar">
+                              {filteredLanguages.map((lang) => (
+                                <button
+                                  key={lang.code}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      language: lang.code,
+                                    }));
+                                    setIsLanguageDropdownOpen(false);
+                                    setLanguageSearch('');
+                                  }}
+                                  className={`w-full text-left px-3 py-2 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 ${
+                                    formData.language === lang.code
+                                      ? 'bg-primary/10 text-primary font-medium'
+                                      : 'text-gray-900'
+                                  }`}
+                                >
+                                  <div className="flex justify-between items-center">
+                                    <span>
+                                      {lang.name} ({lang.englishName})
+                                    </span>
+                                    {formData.language === lang.code && (
+                                      <svg
+                                        className="h-4 w-4 text-primary"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                      >
+                                        <path
+                                          fillRule="evenodd"
+                                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                          clipRule="evenodd"
+                                        />
+                                      </svg>
+                                    )}
+                                  </div>
+                                </button>
+                              ))}
+                              {filteredLanguages.length === 0 && (
+                                <div className="px-3 py-2 text-gray-500 text-sm">
+                                  No languages found
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Divider for optional fields */}
+                    <div className="my-6 border-t border-gray-200 pt-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Optional Information
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowOptionalFields(!showOptionalFields)
+                          }
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                            showOptionalFields ? 'bg-blue-600' : 'bg-gray-300'
+                          }`}
+                          aria-label="Toggle optional fields"
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                              showOptionalFields
+                                ? 'translate-x-6'
+                                : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {showOptionalFields && (
+                        <>
+                          {/* Brand Customization */}
+                          <div className="mb-4">
+                            <p className="text-sm text-gray-600 mb-3">
+                              Customize widget branding (leave empty to use
+                              WebAbility.io)
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <TextField
+                                fullWidth
+                                label="Widget Brand Name"
+                                value={formData.widgetBrandName}
+                                onChange={handleInputChange('widgetBrandName')}
+                                placeholder="WebAbility.io"
+                                variant="outlined"
+                                size="small"
+                              />
+                              <TextField
+                                fullWidth
+                                label="Widget Brand URL"
+                                value={formData.widgetBrandUrl}
+                                onChange={handleInputChange('widgetBrandUrl')}
+                                placeholder="https://webability.io"
+                                variant="outlined"
+                                size="small"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Contact Information */}
+                          <div>
+                            <p className="text-sm text-gray-600 mb-3">
+                              Additional contact information (fields left empty
+                              will not appear in the statement)
+                            </p>
+                            <div className="space-y-4">
+                              <TextField
+                                fullWidth
+                                label="Phone Number"
+                                value={formData.phoneNumber}
+                                onChange={handleInputChange('phoneNumber')}
+                                placeholder="+1 (555) 123-4567"
+                                variant="outlined"
+                                size="small"
+                              />
+                              <TextField
+                                fullWidth
+                                label="Online Form URL"
+                                value={formData.onlineFormUrl}
+                                onChange={handleInputChange('onlineFormUrl')}
+                                placeholder="https://example.com/accessibility-feedback"
+                                variant="outlined"
+                                size="small"
+                              />
+                              <TextField
+                                fullWidth
+                                label="Visitor Address"
+                                value={formData.visitorAddress}
+                                onChange={handleInputChange('visitorAddress')}
+                                placeholder="123 Main St, Suite 100, City, State 12345"
+                                variant="outlined"
+                                size="small"
+                              />
+                              <TextField
+                                fullWidth
+                                label="Postal Address"
+                                value={formData.postalAddress}
+                                onChange={handleInputChange('postalAddress')}
+                                placeholder="P.O. Box 123, City, State 12345"
+                                variant="outlined"
+                                size="small"
+                              />
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="generate-button-section">
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      size="large"
+                      onClick={generateStatementDebounced}
+                      disabled={isGenerating}
+                      startIcon={
+                        isGenerating ? (
+                          <CircularProgress size={20} color="inherit" />
+                        ) : (
+                          <MdOutlineGavel />
+                        )
+                      }
+                      sx={{
+                        mt: 4,
+                        py: 2,
+                        borderRadius: '12px',
+                        textTransform: 'none',
+                        fontSize: '1.1rem',
+                        fontWeight: '600',
+                        background: '#3343ad',
+                        color: 'white',
+                        boxShadow: '0 4px 12px rgba(68, 90, 231, 0.25)',
+                        border: 'none',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&:before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '1px',
+                          background:
+                            'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)',
+                        },
+                        '&:hover': {
+                          background: '#2c3a99',
+                          boxShadow: '0 6px 16px rgba(68, 90, 231, 0.3)',
+                          transform: 'translateY(-1px)',
+                        },
+                        '&:active': {
+                          transform: 'translateY(0)',
+                          boxShadow: '0 2px 8px rgba(68, 90, 231, 0.2)',
+                        },
+                        '&:disabled': {
+                          background: '#9ca3af',
+                          transform: 'none',
+                          boxShadow: 'none',
+                        },
+                      }}
+                    >
+                      {isGenerating ? 'Generating...' : 'Generate'}
+                    </Button>
+
+                    {generatedStatement && (
+                      <Button
+                        fullWidth
+                        variant="text"
+                        size="medium"
+                        onClick={() => setShowEnhancePage(true)}
+                        sx={{
+                          mt: 2,
+                          py: 1.5,
+                          textTransform: 'none',
+                          fontSize: '0.9rem',
+                          fontWeight: '500',
+                          color: '#0033ed',
+                          '&:hover': {
+                            backgroundColor: '#f8faff',
+                          },
+                        }}
+                      >
+                        Enhance Statement
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

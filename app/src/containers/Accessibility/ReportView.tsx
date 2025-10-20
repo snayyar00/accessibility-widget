@@ -697,11 +697,11 @@ WCAG: ${issue.code || issue.message || 'N/A'}`;
                           </span>
                         )}
 
-                        {issue.source && (
+                        {/* {issue.source && (
                           <span className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 text-gray-700">
                             {issue.source}
                           </span>
-                        )}
+                        )} */}
 
                         {issue.code && (
                           <span className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 text-gray-700">
@@ -1033,6 +1033,11 @@ const IssuesSummary: React.FC<IssuesSummaryProps> = ({
 };
 
 const ScanningPreview: React.FC<{ siteImg: string }> = ({ siteImg }) => {
+  // Only render if siteImg is available
+  if (!siteImg) {
+    return null;
+  }
+
   return (
     <div className="relative w-full rounded-lg overflow-hidden bg-gray-100 mb-8">
       <img

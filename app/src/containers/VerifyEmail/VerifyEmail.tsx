@@ -8,7 +8,7 @@ import GoBack from '@/components/Common/GoBack';
 import Logo from '@/components/Common/Logo';
 import Badge from '@/components/Common/Badge';
 import RESEND_VERIFICATION from '@/queries/auth/resendVerification';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { CircularProgress } from '@mui/material';
 
 const VerifyEmail: React.FC = () => {

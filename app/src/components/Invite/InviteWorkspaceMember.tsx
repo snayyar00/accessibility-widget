@@ -16,7 +16,7 @@ import {
 import { Add as AddIcon } from '@mui/icons-material';
 import { useMutation } from '@apollo/client';
 import INVITE_WORKSPACE_MEMBER from '@/queries/workspace/inviteWorkspaceMember';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { Workspace, WorkspaceUserRole } from '@/generated/graphql';
 
 interface InviteWorkspaceMemberProps {

@@ -14,6 +14,8 @@ import { defaultTourStyles } from '@/config/tourStyles';
 import { dashboardTourSteps, tourKeys } from '@/constants/toursteps';
 import getDomainStatus from '@/utils/getDomainStatus';
 import applyStatusClass from '@/utils/applyStatusClass';
+import dashboardImage from '@/assets/images/dashboard_image.png';
+import { baseColors } from '@/config/colors';
 
 interface ChartData {
   date: string;
@@ -50,6 +52,9 @@ const Dashboard: React.FC<any> = ({
 }: any) => {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.dashboard') });
+
+  // Get colors configuration
+  // Using baseColors directly
   // const [startDate, setStartDate] = useState<string>();
   // const [endDate, setEndDate] = useState<string>();
   const [impressions, setImpressions] = useState<number>(0);
@@ -66,6 +71,7 @@ const Dashboard: React.FC<any> = ({
   const closeModal = () => setIsModalOpen(false);
   const [paymentView, setPaymentView] = useState(false);
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
+  const [isSmallScreen, setIsSmallScreen] = useState<boolean>(false);
   const history = useHistory();
 
   const handleRedirect = () => {
@@ -186,6 +192,21 @@ const Dashboard: React.FC<any> = ({
       });
     }
   }, [domain, startDate, endDate, loadDashboard]);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth < 640); // 640px is Tailwind's sm breakpoint
+    };
+
+    // Check on mount
+    checkScreenSize();
+
+    // Add event listener
+    window.addEventListener('resize', checkScreenSize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   useEffect(() => {
     if (data) {
@@ -349,7 +370,7 @@ const Dashboard: React.FC<any> = ({
         </>
       ) : (
         <>
-          {domainData ? (
+          {/* {domainData ? (
             <div className="flex gap-3">
               <p
                 className={`p-1.5 text-xs font-semibold rounded w-fit whitespace-no-wrap ${statusClass}`}
@@ -368,86 +389,53 @@ const Dashboard: React.FC<any> = ({
             </div>
           ) : (
             <p>-</p>
-          )}
+          )} */}
 
-          <div className="container py-4">
-            <div className="flex flex-col items-center justify-center w-full mb-8 pl-0 pr-3">
-              <div className="w-full mb-6 flex">
+          <div className="w-full py-4">
+            <div className="flex flex-col items-center justify-center w-full mb-4 px-4">
+              <div className="w-full mb-3 flex">
                 <div
-                  className="dashboard-welcome-banner w-full grid grid-cols-1 lg:grid-cols-12 text-white rounded-xl overflow-hidden shadow-2xl transform hover:scale-[1.01] transition-transform duration-300"
-                  style={{ backgroundColor: 'rgb(0 51 237)' }}
+                  className="dashboard-welcome-banner w-full grid grid-cols-1 lg:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 min-h-[320px] sm:min-h-[380px] md:min-h-[450px] lg:min-h-[500px]"
+                  style={{
+                    backgroundImage: `url(${dashboardImage})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: isSmallScreen
+                      ? 'center left'
+                      : 'center right',
+                    backgroundRepeat: 'no-repeat',
+                    color: baseColors.white,
+                  }}
                 >
-                  {/* Left Column */}
-                  <div className="col-span-full xl:col-span-7 px-6 py-6 flex flex-col justify-center space-y-4">
-                    <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight">
-                      Empower Every Visitor with Inclusive Design
-                    </h1>
-                    <p className="text-base lg:text-lg">
-                      Achieve seamless ADA & WCAG compliance effortlessly with
-                      WebAbility's AI-driven accessibility toolkit.
-                    </p>
-
-                    {/* Features Card */}
-                    <div className="bg-white/10 p-4 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {[
-                        {
-                          title: 'Comprehensive Standards',
-                          desc: 'Fully aligned with ADA, WCAG, and international guidelines.',
-                        },
-                        {
-                          title: 'Instant One-Click Setup',
-                          desc: 'Get up and running in minutes, backed by fast expert support.',
-                        },
-                        {
-                          title: 'Adaptive AI Enhancements',
-                          desc: 'Auto-adjust text size, contrast, and navigation for all users.',
-                        },
-                        {
-                          title: 'Brand-Friendly Customization',
-                          desc: "Style the widget to perfectly match your site's look and feel.",
-                        },
-                      ].map((item) => (
-                        <div
-                          key={item.title}
-                          className="flex items-start space-x-2"
-                        >
-                          <div className="flex-shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                            <FaCheckCircle className="text-white w-5 h-5" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-sm">
-                              {item.title}
-                            </h3>
-                            <p className="text-xs">{item.desc}</p>
-                          </div>
-                        </div>
-                      ))}
+                  {/* Left Column - Content */}
+                  <div className="px-6 sm:px-8 md:px-10 py-8 md:py-10 h-full flex flex-col justify-center items-center md:items-start space-y-4 md:space-y-6 text-center md:text-left">
+                    <div className="space-y-6 md:pr-96 lg:pr-0">
+                      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl  leading-tight tracking-tight">
+                        Design for Everyone
+                      </h1>
+                      <p className="text-base sm:text-xs md:text-xs lg:text-xl  font-normal leading-relaxed opacity-90 max-w-md md:max-w-20">
+                        Achieve seamless ADA & WCAG compliance effortlessly with
+                        WebAbility
+                      </p>
                     </div>
-                  </div>
 
-                  {/* Right Column (Image) */}
-                  <div className="hidden xl:flex xl:col-span-5 items-center justify-center p-6">
-                    <img
-                      src="https://www.webability.io/images/section_1_right.png"
-                      alt="Graphic showing increase in accessibility score"
-                      className="max-w-full max-h-full object-contain"
-                    />
-                  </div>
-                  {/* Call‑to‑Action Buttons */}
-                  <div className="col-span-full bg-white/5 py-4 flex flex-row sm:flex-col gap-8 justify-center px-6">
-                    <button
-                      className="get-compliant-button flex-1 py-4 text-white font-bold text-xl rounded-xl bg-primary hover:bg-sapphire-blue transition-colors duration-300"
-                      onClick={handleRedirect}
-                    >
-                      Get Compliant
-                    </button>
+                    {/* Action Buttons */}
+                    <div className="flex flex-col flex-wrap lg:flex-row items-center justify-center gap-3 pt-4">
+                      <button
+                        className="get-compliant-button w-full sm:w-48 md:w-64 px-6 py-4 h-14 text-blue-900 text-lg font-medium rounded-2xl bg-blue-100 hover:bg-blue-200 border-0 transition-all duration-300 cursor-pointer"
+                        onClick={handleRedirect}
+                      >
+                        Get compliant
+                      </button>
 
-                    <button
-                      className="app-sumo-button flex-1 py-4 text-black font-bold text-xl rounded-xl bg-[#ffbc00] hover:bg-yellow-600 transition-colors duration-300"
-                      onClick={handleRedirect}
-                    >
-                      Redeem App Sumo
-                    </button>
+                      <button
+                        className="app-sumo-button w-full sm:w-48 md:w-64 lg:w-64 flex justify-center px-6 py-4 h-14 text-white text-lg font-medium rounded-2xl bg-slate-800 hover:bg-slate-700 border-2 border-blue-400/50 transition-all duration-300 shadow-lg shadow-blue-400/20 hover:shadow-blue-400/30 cursor-pointer"
+                        style={{ alignItems: 'center' }}
+                        onClick={handleRedirect}
+                      >
+                        <span className=" lg:hidden">Appsumo</span>
+                        <span className="hidden lg:inline">Redeem Appsumo</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

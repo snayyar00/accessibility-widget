@@ -46,35 +46,52 @@ function BillingPortalLink() {
   const { data, loading } = useSelector((state: RootState) => state.user);
   const [clicked, setClicked] = useState(false);
   return (
-    <div
-      className={
-        'max-h-[100px] pb-8 border-t border-solid border-dark-grey transition-[max-height] duration-300 ease-in-out overflow-hidden'
-      }
-    >
-      <div
-        role="presentation"
-        className="flex justify-between items-center cursor-pointer h-[90px]"
-      >
-        <div className="flex flex-col">
-          <p className="text-[16px] leading-[26px] text-sapphire-blue">
+    <div className="space-y-4">
+      {/* Billing Portal Section */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-3 md:space-y-0 p-3 md:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+        <div className="flex-1 w-full md:w-auto">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900">
             Billing Portal
-          </p>
-          <span className="text-[12px] leading-4 text-white-gray">
+          </h3>
+          <p className="text-xs md:text-sm text-gray-600 mt-1">
             Manage all your subscriptions in one place, fast and simple
-          </span>
+          </p>
         </div>
-        <div className="flex items-center">
-          <span className="block font-bold text-[14px] leading-[22px] mr-[14px] text-light-primary max-h-[22px] sm:mr-0 sm:text-left sm:hidden">
-            <button
-              className="submit-btn"
-              onClick={() => {
-                handleBilling(setClicked, data?.email);
-              }}
-            >
-              {clicked ? 'Please Wait...' : 'Billing Portal'}
-            </button>
-          </span>
-        </div>
+        <button
+          onClick={() => {
+            handleBilling(setClicked, data?.email);
+          }}
+          disabled={clicked}
+          className="w-auto md:w-auto flex-shrink-0 px-4 md:px-6 py-2 md:py-2.5 bg-blue-600 text-white rounded-lg text-xs md:text-sm font-medium hover:bg-blue-700 transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+        >
+          {clicked ? (
+            <span className="flex items-center space-x-2">
+              <svg
+                className="animate-spin h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span>Please Wait...</span>
+            </span>
+          ) : (
+            'Open Billing Portal'
+          )}
+        </button>
       </div>
     </div>
   );

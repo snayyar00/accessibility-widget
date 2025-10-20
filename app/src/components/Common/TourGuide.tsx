@@ -16,6 +16,8 @@ interface TourGuideProps {
   tourKey: string;
   /** Callback when tour is completed or skipped */
   onTourComplete?: () => void;
+  /** Callback when tour step changes */
+  onStepChange?: (data: CallBackProps) => void;
   /** Whether data/content is still loading */
   isLoading?: boolean;
   /** Custom styling for the tour */
@@ -38,6 +40,7 @@ const TourGuide: React.FC<TourGuideProps> = ({
   autoStart = true,
   tourKey,
   onTourComplete,
+  onStepChange,
   isLoading = false,
   customStyles,
   customLocale,
@@ -137,6 +140,11 @@ const TourGuide: React.FC<TourGuideProps> = ({
   // Handle tour callback
   const handleTourCallback = (data: CallBackProps) => {
     const { status, type, index, action } = data;
+
+    // Call step change callback if provided
+    if (onStepChange) {
+      onStepChange(data);
+    }
 
     // Handle close button (X) click
     if (action === ACTIONS.CLOSE) {

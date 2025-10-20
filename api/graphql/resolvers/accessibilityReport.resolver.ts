@@ -1,6 +1,7 @@
 import { combineResolvers } from 'graphql-resolvers'
 import { v4 as uuidv4 } from 'uuid'
 
+import { JOB_EXPIRY_MS } from '../../config/env'
 import { deleteAccessibilityReportByR2Key, getAccessibilityReportByR2Key, getR2KeysByParams, insertAccessibilityReport } from '../../repository/accessibilityReports.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { fetchTechStackFromAPI } from '../../repository/techStack.repository'
@@ -21,7 +22,6 @@ type AccessibilityReportJob = {
 
 // In-memory job store
 const accessibilityReportJobs = new Map<string, AccessibilityReportJob>() // jobId -> job
-const JOB_EXPIRY_MS = 10 * 60 * 1000 // 10 minutes
 
 function createJob(): string {
   const jobId = uuidv4()

@@ -17,7 +17,7 @@ import checkDomainQuery from '@/queries/allowedSites/checkDomain.js';
 import checkEmailQuery from '@/queries/user/checkEmail';
 import { CircularProgress } from '@mui/material';
 import WebAbilityWidget from './TryWidgetBanner';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import AccessibilitySteps from './AccessibilitySteps';
 import { parse } from 'tldts';
 import {
@@ -397,139 +397,341 @@ const SignUpForm: React.FC<CustomProps> = ({
   // Step 1: Basic Information
   const renderStep1 = () => {
     return (
-      <div className="sm:px-6 md:px-16">
-        <div className="mb-4 w-full block">
-          <label className="text-left font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block mb-[19px] uppercase">
-            {t('Common.label.your_name')}
-          </label>
-          <FormControl>
-            <Input
-              type="text"
-              placeholder={t('Common.placeholder.name')}
-              name="name"
-              ref={register}
-              value={formData.name}
-              onChange={handleInputChange}
-            />
-            {formErrors?.name?.message && (
-              <ErrorText message={String(t(formErrors.name.message))} />
-            )}
-          </FormControl>
+      <div className="w-full px-8 py-8">
+        {/* Welcome Message */}
+        <div className="text-left mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Create Your Account
+          </h2>
+          <p className="text-gray-600">
+            Let's get started with your information
+          </p>
         </div>
-        <div className="mb-4 w-full block">
-          <label className="text-left font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block mb-[19px] uppercase">
-            {t('Common.label.email')}
-          </label>
-          <FormControl>
-            <Input
-              type="email"
-              placeholder={t('Common.placeholder.email')}
-              name="email"
-              ref={register}
-              value={formData.email}
-              onChange={handleInputChange}
-            />
-            {formErrors?.email?.message && (
-              <ErrorText message={String(t(formErrors.email.message))} />
-            )}
-          </FormControl>
+
+        <div className="space-y-6">
+          {/* Name Field */}
+          <div className="group">
+            <label className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+              {t('Common.label.your_name')}
+            </label>
+            <FormControl>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg
+                    className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+                <Input
+                  type="text"
+                  placeholder="Enter your full name"
+                  name="name"
+                  ref={register}
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder-gray-500"
+                />
+              </div>
+              {formErrors?.name?.message && (
+                <ErrorText message={String(t(formErrors.name.message))} />
+              )}
+            </FormControl>
+          </div>
+
+          {/* Email Field */}
+          <div className="group">
+            <label className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+              {t('Common.label.email')}
+            </label>
+            <FormControl>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg
+                    className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <Input
+                  type="email"
+                  placeholder="yourname@yourbusiness.com"
+                  name="email"
+                  ref={register}
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder-gray-500"
+                />
+              </div>
+              {formErrors?.email?.message && (
+                <ErrorText message={String(t(formErrors.email.message))} />
+              )}
+            </FormControl>
+          </div>
+
+          {/* Website URL Field */}
+          <div className="group">
+            <label className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+              {t('Common.label.website_url')}{' '}
+              <span className="text-gray-500 font-normal">(Optional)</span>
+            </label>
+            <FormControl>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg
+                    className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
+                    />
+                  </svg>
+                </div>
+                <Input
+                  type="url"
+                  placeholder="example.com"
+                  name="websiteUrl"
+                  ref={register}
+                  value={formData.websiteUrl}
+                  onChange={handleInputChange}
+                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder-gray-500"
+                />
+              </div>
+              {formErrors?.websiteUrl?.message && (
+                <ErrorText message={String(t(formErrors.websiteUrl.message))} />
+              )}
+            </FormControl>
+          </div>
+
+          {/* Password Field */}
+          <div className="group">
+            <label className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+              {t('Common.label.password')}
+            </label>
+            <FormControl>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg
+                    className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
+                  </svg>
+                </div>
+                <Input
+                  type={passwordVisible ? 'text' : 'password'}
+                  placeholder="Create a strong password"
+                  name="password"
+                  ref={register}
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder-gray-500"
+                />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center hover:text-gray-600 transition-colors"
+                >
+                  {passwordVisible ? (
+                    <svg
+                      className="h-5 w-5 text-gray-400 hover:text-gray-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      className="h-5 w-5 text-gray-400 hover:text-gray-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {formErrors?.password?.message && (
+                <ErrorText message={String(t(formErrors.password.message))} />
+              )}
+            </FormControl>
+          </div>
+
+          {/* Confirm Password Field */}
+          <div className="group">
+            <label className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+              {t('Common.label.confirm_password')}
+            </label>
+            <FormControl>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg
+                    className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <Input
+                  type={confirmPasswordVisible ? 'text' : 'password'}
+                  placeholder="Confirm your password"
+                  name="passwordConfirmation"
+                  ref={register}
+                  value={formData.passwordConfirmation}
+                  onChange={handleInputChange}
+                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder-gray-500"
+                />
+                <button
+                  type="button"
+                  onClick={toggleConfirmPasswordVisibility}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center hover:text-gray-600 transition-colors"
+                >
+                  {confirmPasswordVisible ? (
+                    <svg
+                      className="h-5 w-5 text-gray-400 hover:text-gray-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      className="h-5 w-5 text-gray-400 hover:text-gray-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {formErrors?.passwordConfirmation?.message && (
+                <ErrorText
+                  message={String(t(formErrors.passwordConfirmation.message))}
+                />
+              )}
+            </FormControl>
+          </div>
         </div>
-        <div className="mb-4 w-full block">
-          <label className="text-left font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block mb-[19px] uppercase">
-            {t('Common.label.website_url')} (Optional)
-          </label>
-          <FormControl>
-            <Input
-              type="url"
-              placeholder="example.com"
-              name="websiteUrl"
-              ref={register}
-              value={formData.websiteUrl}
-              onChange={handleInputChange}
-            />
-            {formErrors?.websiteUrl?.message && (
-              <ErrorText message={String(t(formErrors.websiteUrl.message))} />
+
+        {/* Continue Button */}
+        <div className="mt-10">
+          <Button
+            color="primary"
+            type="button"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] focus:scale-[1.02] focus:ring-4 focus:ring-blue-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            onClick={handleNextStep}
+            disabled={checkingDomain || checkingEmail}
+          >
+            {checkingDomain || checkingEmail ? (
+              <span className="flex items-center justify-center">
+                <CircularProgress
+                  size={24}
+                  color={'inherit'}
+                  className="mr-3"
+                />
+                <span className="text-lg">Please Wait...</span>
+              </span>
+            ) : (
+              <span className="text-lg font-semibold">Continue</span>
             )}
-          </FormControl>
+          </Button>
         </div>
-        <div className="mb-4 w-full block">
-          <label className="text-left font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block mb-[19px] uppercase">
-            {t('Common.label.password')}
-          </label>
-          <FormControl className="relative">
-            <Input
-              type={passwordVisible ? 'text' : 'password'}
-              placeholder={t('Common.placeholder.password')}
-              name="password"
-              ref={register}
-              value={formData.password}
-              onChange={handleInputChange}
-              className="pr-10"
-            />
-            <button
-              type="button"
-              onClick={togglePasswordVisibility}
-              className="absolute right-3 top-3.5 text-gray-500"
-            >
-              {passwordVisible ? <FaEyeSlash /> : <FaEye />}
-            </button>
-            {formErrors?.password?.message && (
-              <ErrorText message={String(t(formErrors.password.message))} />
-            )}
-          </FormControl>
-        </div>
-        <div className="mb-4 w-full block">
-          <label className="text-left font-bold text-[12px] leading-[15px] tracking-[2px] text-white-blue mix-blend-normal opacity-90 block mb-[19px] uppercase">
-            {t('Common.label.confirm_password')}
-          </label>
-          <FormControl className="relative">
-            <Input
-              type={confirmPasswordVisible ? 'text' : 'password'}
-              placeholder={t('Common.placeholder.confirm_password')}
-              name="passwordConfirmation"
-              ref={register}
-              value={formData.passwordConfirmation}
-              onChange={handleInputChange}
-              className="pr-10"
-            />
-            <button
-              type="button"
-              onClick={toggleConfirmPasswordVisibility}
-              className="absolute right-3 top-3.5 text-gray-500"
-            >
-              {confirmPasswordVisible ? <FaEyeSlash /> : <FaEye />}
-            </button>
-            {formErrors?.passwordConfirmation?.message && (
-              <ErrorText
-                message={String(t(formErrors.passwordConfirmation.message))}
-              />
-            )}
-          </FormControl>
-        </div>
-        <Button
-          color="primary"
-          type="button"
-          className="w-full uppercase mt-[34px]"
-          onClick={handleNextStep}
-          disabled={checkingDomain || checkingEmail}
-        >
-          {checkingDomain || checkingEmail ? (
-            <span className="flex items-center justify-center">
-              <CircularProgress size={30} color={'inherit'} className="mr-2 " />
-              Please Wait
-            </span>
-          ) : (
-            t('Common.text.continue')
-          )}
-        </Button>
       </div>
     );
+  };
+
+  // Function to handle skipping the analysis
+  const handleSkipAnalysis = () => {
+    // Clear the analysis timeout
+    if (analysisTimeout) {
+      clearTimeout(analysisTimeout);
+      setAnalysisTimeout(null);
+    }
+
+    // Set a default error count for skipped analysis
+    setTotalErrorCount(119);
+    setScriptCheckResult('false');
+
+    // Move to next step
+    setCurrentStep(3);
   };
 
   // Step 2: Website Analysis
   const renderStep2 = () => {
     return (
-      <div className="text-center flex flex-col items-center justify-center min-h-[600px]">
+      <div className="text-center flex flex-col items-center justify-center min-h-[600px] relative">
         {/* Logo Animation Section - Fade out after 30 seconds */}
         {showLogoAnimation && (
           <div
@@ -600,6 +802,18 @@ const SignUpForm: React.FC<CustomProps> = ({
             <AccessibilityFacts isVisible={showFacts} />
           </div>
         )}
+
+        {/* Skip Button */}
+        <div className="mt-8">
+          <Button
+            color="default"
+            type="button"
+            className="px-8 py-3 text-gray-600 hover:text-gray-800 border-2 border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 rounded-xl transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+            onClick={handleSkipAnalysis}
+          >
+            Skip Analysis
+          </Button>
+        </div>
       </div>
     );
   };
@@ -736,7 +950,7 @@ const SignUpForm: React.FC<CustomProps> = ({
               {t('Sign_up.text.footer_desc')}
             </Trans>
           </div>
-          <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center">
+          <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center pb-8">
             <Trans components={[<Link to="/auth/signin"></Link>]}>
               {t('Sign_up.text.have_account')}
             </Trans>
@@ -745,7 +959,7 @@ const SignUpForm: React.FC<CustomProps> = ({
       )}
 
       {currentStep === 3 && (
-        <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center">
+        <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center pb-8">
           <Trans components={[<Link to="/auth/signin"></Link>]}>
             {t('Sign_up.text.have_account')}
           </Trans>

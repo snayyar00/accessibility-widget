@@ -3,8 +3,9 @@ import './DropDown.css';
 import { useMutation, useQuery } from '@apollo/client';
 import deleteSite from '@/queries/sites/deleteSite';
 import { MdDelete } from 'react-icons/md';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import AddDomainModal from './AddDomainModal';
+import Favicon from '@/components/Common/Favicon';
 
 interface siteDetails {
   url: string;
@@ -59,14 +60,23 @@ const DropDown = ({
     >
       <button
         type="button"
-        className="dropdown-btn mr-5 inline-flex justify-between w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm focus:outline-none focus:border-blue-500"
+        className="dropdown-btn mr-5 inline-flex items-center justify-between w-full rounded-lg bg-[#D0D5F9] px-3 py-2 text-sm font-medium text-[#445AE7] focus:outline-none focus:ring-2 focus:ring-[#445AE7] focus:ring-opacity-50"
         onClick={() => setIsOpen(!isOpen)}
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
-        {selectedOption}
+        <div className="flex items-center space-x-2 min-w-0 flex-1">
+          {selectedOption && (
+            <Favicon
+              domain={selectedOption}
+              size={20}
+              className="flex-shrink-0"
+            />
+          )}
+          <span className="truncate">{selectedOption}</span>
+        </div>
         <svg
-          className="h-5 w-5"
+          className="h-4 w-4 text-[#445AE7] flex-shrink-0 ml-2"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -104,7 +114,7 @@ const DropDown = ({
               data.getUserSites.map((site: siteDetails) => (
                 <div
                   key={site.id}
-                  className="dropdown-item flex justify-between w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  className="dropdown-item flex items-center justify-between w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                   role="menuitem"
                   tabIndex={0}
                   onClick={() => handleOptionClick(site.url)}
@@ -114,7 +124,14 @@ const DropDown = ({
                     }
                   }}
                 >
-                  {site.url}
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                    <Favicon
+                      domain={site.url}
+                      size={20}
+                      className="flex-shrink-0"
+                    />
+                    <span className="truncate">{site.url}</span>
+                  </div>
                   {/* <button onClick={() => handleDeleteDomain(site.url)}>
                   <MdDelete color='#EC4545' size={16} />
                 </button> */}

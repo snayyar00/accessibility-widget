@@ -11,7 +11,7 @@ import Plans from '@/components/Plans';
 import Button from '@/components/Common/Button';
 import { TDomain } from '.';
 import { setSitePlan } from '@/features/site/sitePlan';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { MdLocalOffer } from 'react-icons/md';

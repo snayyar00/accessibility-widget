@@ -11,7 +11,7 @@ import { ANALYZE_DOMAIN } from '@/queries/domainAnalysis/analyzeDomain';
 import { ANALYZE_AI_READINESS } from '@/queries/aiReadiness/analyzeAIReadiness';
 import { GetUserSitesDocument } from '@/generated/graphql';
 import { CircularProgress } from '@mui/material';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import Select from 'react-select/creatable';
 
 import { Search, Monitor, Loader2, Brain } from 'lucide-react';
@@ -21,6 +21,7 @@ import {
   isIpAddress,
 } from '@/utils/domainUtils';
 import ControlPanel from '@/components/AIReadiness/ControlPanel';
+import NoReportsFound from '@/components/AIReadiness/NoReportsFound';
 import '../Accessibility/Accessibility.css';
 import '../Accessibility/AccessibilityReport.css';
 
@@ -164,22 +165,33 @@ const AIInsights: React.FC = () => {
 
   return (
     <>
-      <div className="accessibility-wrapper">
-        <header className="accessibility-page-header text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            AI Readiness & Heatmap Analysis
-          </h1>
-          <p className="text-xl text-gray-600">
-            Get comprehensive AI readiness insights with multiple view modes
-            including grid, charts, and heatmap analysis. Discover actionable
-            recommendations to optimize your website for AI and user experience.
-          </p>
-        </header>
+      <div className="min-h-screen px-2 sm:px-4 py-4 sm:py-8">
+        <div className="w-full max-w-7xl mx-auto">
+          {/* Page Header - Outside the card */}
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-row sm:flex-col  gap-2 sm:gap-3">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+                AI Heatmap Insights
+              </h1>
+            </div>
+          </div>
 
-        <div className="w-full pl-6 pr-6 border-none shadow-none flex flex-col justify-center items-center">
-          <div className="search-bar-container bg-white my-6 p-3 sm:p-4 rounded-xl w-full">
-            <div className="flex flex-col items-center gap-4 w-full">
-              <div className="w-full">
+          {/* Main Card Container */}
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 w-full">
+            {/* Card Header Section */}
+            <div className="mb-6 sm:mb-8">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">
+                Analyze Your Website
+              </h2>
+              <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
+                Get comprehensive AI-powered heatmap insights and
+                recommendations.
+              </p>
+            </div>
+
+            {/* Input Section */}
+            <div className="flex flex-col md:flex-row gap-3 sm:gap-4 mb-6">
+              <div className="flex-1">
                 <Select
                   options={siteOptions}
                   value={selectedOption}
@@ -194,7 +206,7 @@ const AIInsights: React.FC = () => {
                     setSelectedOption(newOption);
                     setDomainInput(inputValue);
                   }}
-                  placeholder="Select or enter a domain"
+                  placeholder="Enter your Domain URL (e.g. example.com)"
                   isSearchable
                   isClearable
                   formatCreateLabel={(inputValue: any) =>
@@ -205,44 +217,60 @@ const AIInsights: React.FC = () => {
                   styles={{
                     control: (provided: any, state: any) => ({
                       ...provided,
-                      borderRadius: '6px',
+                      borderRadius: '8px',
                       border: state.isFocused
-                        ? '1px solid #3b82f6'
-                        : '1px solid #d1d5db',
-                      minHeight: '38px',
+                        ? '2px solid #3b82f6'
+                        : '1px solid #e5e7eb',
+                      minHeight: '44px',
                       boxShadow: state.isFocused
-                        ? '0 0 0 2px rgba(59, 130, 246, 0.1)'
+                        ? '0 0 0 3px rgba(59, 130, 246, 0.1)'
                         : 'none',
+                      fontSize: '14px',
+                      '@media (min-width: 640px)': {
+                        fontSize: '16px',
+                        minHeight: '48px',
+                      },
                       '&:hover': {
                         border: state.isFocused
-                          ? '1px solid #3b82f6'
+                          ? '2px solid #3b82f6'
                           : '1px solid #d1d5db',
+                      },
+                    }),
+                    placeholder: (provided: any) => ({
+                      ...provided,
+                      color: '#9ca3af',
+                      fontSize: '14px',
+                      '@media (min-width: 640px)': {
+                        fontSize: '16px',
                       },
                     }),
                   }}
                 />
               </div>
 
-              <div className="w-full">
-                <button
-                  type="button"
-                  className="search-button bg-primary text-white px-4 py-2 rounded whitespace-nowrap w-full"
-                  style={{ width: '100%' }}
-                  onClick={handleDomainAnalysis}
-                  disabled={isAnalyzing}
-                >
-                  Free Scan
-                  {isAnalyzing && (
-                    <CircularProgress
-                      size={14}
-                      sx={{ color: 'white' }}
-                      className="ml-2 my-auto"
-                    />
-                  )}
-                </button>
-              </div>
+              <button
+                type="button"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 min-w-[120px] sm:min-w-[140px] text-sm sm:text-base"
+                onClick={handleDomainAnalysis}
+                disabled={isAnalyzing}
+              >
+                {isAnalyzing ? (
+                  <CircularProgress size={18} sx={{ color: 'white' }} />
+                ) : (
+                  <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+                )}
+                <span className="hidden sm:inline">Analyze now</span>
+                <span className="sm:hidden">Analyze</span>
+              </button>
             </div>
           </div>
+
+          {/* No Reports Found State */}
+          {!isAnalyzing && !aiReadinessResult && !analysisResult && (
+            <div className="w-full">
+              <NoReportsFound />
+            </div>
+          )}
 
           {/* AI Readiness Analysis Section */}
           {aiReadinessResult && (

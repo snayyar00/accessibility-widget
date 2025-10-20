@@ -56,7 +56,7 @@ export async function applyRetentionDiscount(req: Request, res: Response) {
     try {
       const subscription = await stripe.subscriptions.retrieve(sitePlan.subcriptionId)
 
-      if (!subscription || subscription.status !== 'active') {
+      if (!subscription) {
         return res.status(400).json({ error: 'Active subscription not found' })
       }
 

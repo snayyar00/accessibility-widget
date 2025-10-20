@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import { ChangeCurrentWorkspaceMutation, Query } from '@/generated/graphql';
 import { setProfileUser } from '@/features/auth/user';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import CHANGE_CURRENT_WORKSPACE from '@/queries/user/changeCurrentWorkspace';
 import GET_PROFILE from '@/queries/auth/getProfile';
 

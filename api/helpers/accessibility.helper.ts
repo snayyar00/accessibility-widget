@@ -1,4 +1,5 @@
 import { getPreprocessingConfig } from '../config/preprocessing.config'
+import { SCANNER_MAX_POLLING_ATTEMPTS_SINGLE, SCANNER_MAX_POLLING_ATTEMPTS_FULL } from '../config/env'
 import { readAccessibilityDescriptionFromDb } from '../services/accessibilityReport/accessibilityIssues.service'
 import { processAccessibilityIssuesWithFallback } from '../services/accessibilityReport/enhancedProcessing.service'
 
@@ -265,9 +266,11 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
 
   // Helper function to poll job status and get results
   const pollJobStatus = async (jobId: string): Promise<any> => {
-    const maxPollingAttempts = fullSiteScan === false ? 60 : 120 // 5 minutes for single page, 10 minutes for full site scan
+    const maxPollingAttempts = fullSiteScan === false ? SCANNER_MAX_POLLING_ATTEMPTS_SINGLE : SCANNER_MAX_POLLING_ATTEMPTS_FULL // 5 minutes for single page, 10 minutes for full site scan
+    const maxErrorAttempts = 5 // Limit to 5 attempts only in case of consecutive errors
     const pollingInterval = 5000 // Poll every 5 seconds
     const statusUrl = `${process.env.SCANNER_SERVER_URL}/scan/status/${jobId}`
+    let errorAttempts = 0 // Track consecutive error attempts
 
     for (let attempt = 1; attempt <= maxPollingAttempts; attempt++) {
       try {
@@ -293,6 +296,8 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
         } else if (data.status === 'failed') {
           throw new Error(`Scanner job failed: ${data.error || 'Unknown error'}`)
         } else if (data.status === 'started' || data.status === 'processing') {
+          // Reset error counter only on meaningful successful responses
+          errorAttempts = 0
           console.log(`Job still ${data.status}, waiting ${pollingInterval}ms before next check...`)
           await new Promise((resolve) => setTimeout(resolve, pollingInterval))
           continue
@@ -300,16 +305,25 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
           console.log(`Job not found (status: ${data.status}), stopping polling...`)
           throw new Error(`Scanner job not found: ${data.error || 'Job ID may be invalid or expired'}`)
         } else {
+          // Reset error counter only on meaningful successful responses
+          errorAttempts = 0
           console.log(`Unknown job status: ${data.status}, continuing to poll...`)
           await new Promise((resolve) => setTimeout(resolve, pollingInterval))
           continue
         }
       } catch (error) {
-        console.error(`Polling attempt ${attempt} failed:`, error)
+        errorAttempts++
+        console.error(`Polling attempt ${attempt} failed (consecutive errors: ${errorAttempts}/${maxErrorAttempts}):`, error)
 
         // If the error is about job not found, don't retry
         if (error instanceof Error && error.message.includes('Scanner job not found')) {
           console.log('Job not found error detected, stopping polling immediately')
+          throw error
+        }
+
+        // Stop polling if we've had too many consecutive errors
+        if (errorAttempts >= maxErrorAttempts) {
+          console.error(`Too many consecutive errors (${maxErrorAttempts}), stopping polling`)
           throw error
         }
 
@@ -374,7 +388,7 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
           notices: [],
           warnings: [],
         },
-        score: 0,
+        score: 95,
         totalElements: 0,
         ByFunctions: [],
         processing_stats: {
