@@ -543,30 +543,30 @@ const DomainTable: React.FC<DomainTableProps> = ({
                 {/* Column Headers - Desktop Only */}
                 <div className="hidden lg:block">
                   <div className="flex items-center text-sm font-medium text-gray-700 mb-4 pr-8 my-sites-table-headers">
-                    <div className="flex-shrink-0 mr-3 w-6">
+                    <div className="flex-shrink-0 mr-2 w-6">
                       {/* Empty space for favicon alignment */}
                     </div>
-                    <div className="flex-1 min-w-0 mr-4 flex items-center">
+                    <div className="flex-1 min-w-0 mr-2 flex items-center">
                       <span className="uppercase" style={{ color: '#445AE7' }}>
                         Domain
                       </span>
                     </div>
-                    <div className="flex-shrink-0 mr-4 w-24 flex items-center">
+                    <div className="flex-shrink-0 mr-16 w-16 flex items-center">
                       <span className="uppercase" style={{ color: '#445AE7' }}>
                         Plan
                       </span>
                     </div>
-                    <div className="flex-shrink-0 mr-4 w-32 flex items-center">
+                    <div className="flex-shrink-0 mr-8 w-20 flex items-center">
                       <span className="uppercase" style={{ color: '#445AE7' }}>
                         Monitor
                       </span>
                     </div>
-                    <div className="flex-shrink-0 mr-4 w-32 flex items-center">
+                    <div className="flex-shrink-0 mr-3 w-24 flex items-center">
                       <span className="uppercase" style={{ color: '#445AE7' }}>
                         Status
                       </span>
                     </div>
-                    <div className="flex-shrink-0 w-24 flex items-center">
+                    <div className="flex-shrink-0 w-56 flex items-center">
                       <span className="uppercase" style={{ color: '#445AE7' }}>
                         Actions
                       </span>
@@ -616,7 +616,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                       >
                         <div className="flex items-center">
                           {/* Favicon */}
-                          <div className="flex-shrink-0 mr-3">
+                          <div className="flex-shrink-0 mr-2">
                             <img
                               src={getFaviconUrl(domain.url)}
                               alt={`${domain.url} favicon`}
@@ -629,7 +629,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           </div>
 
                           {/* Domain Name */}
-                          <div className="flex-1 min-w-0 mr-4">
+                          <div className="flex-1 min-w-0 mr-2">
                             {isEditing ? (
                               <input
                                 type="text"
@@ -640,26 +640,16 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 autoFocus
                               />
                             ) : (
-                              <div className="text-sm font-medium text-gray-900">
-                                <span className="hidden sm:inline">
-                                  {domain.url
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/^www\./, '')
-                                    .substring(0, 7)}
-                                  {domain.url
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/^www\./, '').length > 7 && '...'}
-                                </span>
-                                <span className="sm:hidden truncate">
-                                  {domain.url}
-                                </span>
+                              <div className="text-sm font-medium text-gray-900 truncate">
+                                {domain.url
+                                  .replace(/^https?:\/\//, '')
+                                  .replace(/^www\./, '')}
                               </div>
                             )}
                           </div>
 
                           {/* Plan Status */}
-                          <div className="flex-shrink-0 mr-4 w-24 my-sites-plan-status">
-                        <div className="flex items-center space-x-2">
+                          <div className="flex-shrink-0 mr-16 w-16 my-sites-plan-status">
                             <Tooltip
                               title={
                                 domainStatus === 'Life Time'
@@ -683,7 +673,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                               placement="top"
                             >
                               <span
-                                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium cursor-help ${applyStatusClass(
+                                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium cursor-help whitespace-nowrap ${applyStatusClass(
                                   domain.url,
                                   domain.expiredAt,
                                   domain.trial,
@@ -713,26 +703,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 {domainStatus}
                               </span>
                             </Tooltip>
-                        {(domainStatus === 'Active' || domainStatus == 'Life Time') && (
-                          <Tooltip
-                          title={'Cancel Subscription for this domain'}
-                          placement="top"
-                        >
-                          <button
-                            type="button"
-                            className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer ${RED_BG}`}
-                            onClick={() => handleCancelSubscription(domain.id, domainStatus)}
-                          >
-                            <FaTimes className="w-4 h-4 text-red-500" />
-                            Cancel
-                          </button>
-                        </Tooltip>
-                        )}
-                        </div>
                           </div>
 
                           {/* Monitor Toggle */}
-                          <div className="flex-shrink-0 mr-4 w-32 my-sites-monitor-toggle">
+                          <div className="flex-shrink-0 mr-8 w-20 my-sites-monitor-toggle">
                             <Tooltip
                               title={
                                 monitoringStates[domain.id] ??
@@ -780,7 +754,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           </div>
 
                           {/* Status Indicator */}
-                          <div className="flex-shrink-0 mr-4 w-32 my-sites-status-indicator">
+                          <div className="flex-shrink-0 mr-3 w-24 my-sites-status-indicator">
                             {monitoringStates[domain.id] ??
                             domain.monitor_enabled ? (
                               domain.is_currently_down !== null &&
@@ -898,7 +872,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           </div>
 
                           {/* Actions Menu */}
-                          <div className="flex-shrink-0 w-24 flex items-center space-x-1 my-sites-actions">
+                          <div className="flex-shrink-0 w-56 flex items-center space-x-1 my-sites-actions">
                             {isEditing ? (
                               <>
                                 <Tooltip title="Save changes" placement="top">
@@ -995,7 +969,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                       setDeleteSiteID(domain.id);
                                       setDeleteSiteStatus(domainStatus);
                                       setShowModal(true);
-                                  setIsCancel(false);
+                                      setIsCancel(false);
                                     }}
                                     className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
                                     aria-label={`Delete domain ${domain.url}`}
@@ -1003,6 +977,30 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                     <FaTrash className="w-4 h-4" />
                                   </button>
                                 </Tooltip>
+                                {/* Cancel Button for Active/Life Time domains */}
+                                {(domainStatus === 'Active' ||
+                                  domainStatus === 'Life Time') && (
+                                  <Tooltip
+                                    title={
+                                      'Cancel Subscription for this domain'
+                                    }
+                                    placement="top"
+                                  >
+                                    <button
+                                      type="button"
+                                      className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer whitespace-nowrap ${RED_BG}`}
+                                      onClick={() =>
+                                        handleCancelSubscription(
+                                          domain.id,
+                                          domainStatus,
+                                        )
+                                      }
+                                    >
+                                      <FaTimes className="w-3 h-3 text-red-500 mr-1 flex-shrink-0" />
+                                      Cancel Subscription
+                                    </button>
+                                  </Tooltip>
+                                )}
                               </>
                             )}
                           </div>
@@ -1046,7 +1044,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                 <button
                   onClick={() => {
                     openModal();
-                          setIsCancel(false);
+                    setIsCancel(false);
                   }}
                   className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
                 >
@@ -1096,6 +1094,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     openModal();
                     setOptionalDomain(domain.url);
                   }}
+                  onCancelSubscription={handleCancelSubscription}
                 />
               );
             })

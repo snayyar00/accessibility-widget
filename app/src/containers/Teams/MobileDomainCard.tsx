@@ -3,6 +3,7 @@ import { FaCheck, FaTimes, FaPencilAlt, FaTrash } from 'react-icons/fa';
 import { Tooltip, CircularProgress } from '@mui/material';
 import { Domain } from './DomainTable';
 import applyStatusClass from '@/utils/applyStatusClass';
+import { RED_BG } from '@/utils/applyStatusClass';
 
 interface MobileDomainCardProps {
   domain: Domain;
@@ -26,6 +27,7 @@ interface MobileDomainCardProps {
   onSubscription: (domain: Domain) => void;
   onOpenActivateModal: (domain: Domain) => void;
   onPaymentView: () => void;
+  onCancelSubscription: (domainId: number, domainStatus: string) => void;
 }
 
 const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
@@ -50,6 +52,7 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
   onSubscription,
   onOpenActivateModal,
   onPaymentView,
+  onCancelSubscription,
 }) => {
   // Generate favicon URL
   const getFaviconUrl = (url: string) => {
@@ -161,61 +164,82 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
       {/* Column Layout for Mobile */}
       <div className="space-y-3 mt-3 pt-3 border-t border-gray-100">
         {/* Plan Status */}
-        <div className="flex items-center space-x-2">
-          <span className="text-xs text-gray-500">Plan:</span>
-          <Tooltip
-            title={
-              domainStatus === 'Life Time'
-                ? 'Lifetime license - Never expires'
-                : domainStatus === 'Active'
-                ? 'Subscription is active'
-                : domainStatus === 'Trial'
-                ? `Trial period ends on ${
-                    domain?.expiredAt
-                      ? new Date(
-                          Number.parseInt(domain.expiredAt),
-                        ).toLocaleDateString()
-                      : 'N/A'
-                  }`
-                : domainStatus === 'Trial Expired'
-                ? 'Trial period has ended - Please activate'
-                : domainStatus === 'Expiring'
-                ? 'Subscription is expiring soon'
-                : 'Subscription has expired'
-            }
-            placement="top"
-          >
-            <span
-              className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium cursor-help ${applyStatusClass(
-                domain.url,
-                domain.expiredAt,
-                domain.trial,
-                appSumoDomains,
-              )}`}
+        <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-2">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-500">Plan:</span>
+            <Tooltip
+              title={
+                domainStatus === 'Life Time'
+                  ? 'Lifetime license - Never expires'
+                  : domainStatus === 'Active'
+                  ? 'Subscription is active'
+                  : domainStatus === 'Trial'
+                  ? `Trial period ends on ${
+                      domain?.expiredAt
+                        ? new Date(
+                            Number.parseInt(domain.expiredAt),
+                          ).toLocaleDateString()
+                        : 'N/A'
+                    }`
+                  : domainStatus === 'Trial Expired'
+                  ? 'Trial period has ended - Please activate'
+                  : domainStatus === 'Expiring'
+                  ? 'Subscription is expiring soon'
+                  : 'Subscription has expired'
+              }
+              placement="top"
             >
-              <span className="relative flex h-1.5 w-1.5 mr-1.5">
-                <span
-                  className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                    domainStatus === 'Life Time'
-                      ? 'bg-green-400'
-                      : domainStatus === 'Trial'
-                      ? 'bg-yellow-400'
-                      : 'bg-blue-400'
-                  }`}
-                ></span>
-                <span
-                  className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
-                    domainStatus === 'Life Time'
-                      ? 'bg-green-500'
-                      : domainStatus === 'Trial'
-                      ? 'bg-yellow-500'
-                      : 'bg-blue-500'
-                  }`}
-                ></span>
+              <span
+                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium cursor-help ${applyStatusClass(
+                  domain.url,
+                  domain.expiredAt,
+                  domain.trial,
+                  appSumoDomains,
+                )}`}
+              >
+                <span className="relative flex h-1.5 w-1.5 mr-1.5">
+                  <span
+                    className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                      domainStatus === 'Life Time'
+                        ? 'bg-green-400'
+                        : domainStatus === 'Trial'
+                        ? 'bg-yellow-400'
+                        : 'bg-blue-400'
+                    }`}
+                  ></span>
+                  <span
+                    className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                      domainStatus === 'Life Time'
+                        ? 'bg-green-500'
+                        : domainStatus === 'Trial'
+                        ? 'bg-yellow-500'
+                        : 'bg-blue-500'
+                    }`}
+                  ></span>
+                </span>
+                {domainStatus}
               </span>
-              {domainStatus}
-            </span>
-          </Tooltip>
+            </Tooltip>
+          </div>
+          {/* Cancel Button for Active/Life Time domains */}
+          {(domainStatus === 'Active' || domainStatus === 'Life Time') && (
+            <div className="flex items-center">
+              <Tooltip
+                title={'Cancel Subscription for this domain'}
+                placement="top"
+              >
+                <button
+                  type="button"
+                  className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer ${RED_BG} w-fit`}
+                  onClick={() => onCancelSubscription(domain.id, domainStatus)}
+                >
+                  <FaTimes className="w-4 h-4 text-red-500 mr-1" />
+                  <span className="hidden md:inline">Cancel</span>
+                  <span className="md:hidden">Cancel Subscription</span>
+                </button>
+              </Tooltip>
+            </div>
+          )}
         </div>
 
         {/* Status Indicator */}
