@@ -76,7 +76,7 @@ const ProblemReport: React.FC = () => {
       }
 
       const responseData = await response.json();
-      
+
       if (isMounted.current) {
         setProblemArray(responseData || []);
         setLoader(false);
@@ -87,14 +87,18 @@ const ProblemReport: React.FC = () => {
       if (isMounted.current) {
         setProblemArray([]);
         setLoader(false);
-        setError(error instanceof Error ? error.message : 'Failed to fetch problem reports');
+        setError(
+          error instanceof Error
+            ? error.message
+            : 'Failed to fetch problem reports',
+        );
       }
     }
   };
 
   useEffect(() => {
     fetchProblemReports();
-  }, []);
+  }, [data.current_organization_id]);
 
   const filteredProblems = problemArray.filter((problem) => {
     const matchesType = filter === 'all' ? true : problem.issue_type === filter;
@@ -161,12 +165,22 @@ const ProblemReport: React.FC = () => {
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">Error loading problem reports</h3>
+                  <h3 className="text-sm font-medium text-red-800">
+                    Error loading problem reports
+                  </h3>
                   <div className="mt-2 text-sm text-red-700">
                     <p>{error}</p>
                   </div>
@@ -246,11 +260,9 @@ const ProblemReport: React.FC = () => {
                   {isDomainDropdownOpen && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                       <div className="py-1">
-        
                         {filteredDomains.map((site) => (
                           <div
                             key={site?.id}
-                            
                             className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                             onClick={() => handleDomainSelect(site?.url || '')}
                           >
@@ -280,12 +292,20 @@ const ProblemReport: React.FC = () => {
                 <div className="text-center py-12">
                   <div className="mx-auto h-12 w-12 text-gray-400">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
                     </svg>
                   </div>
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No problem reports</h3>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    No problem reports
+                  </h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    You haven't received any problem reports yet. They will appear here when users report issues with your websites.
+                    You haven't received any problem reports yet. They will
+                    appear here when users report issues with your websites.
                   </p>
                 </div>
               )}

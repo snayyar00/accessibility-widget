@@ -1,24 +1,25 @@
 import { Request, Response } from 'express'
 
-import { getProblemReportsBySiteId } from '../repository/problem_reports.repository'
-import { findSitesByUserId, IUserSites } from '../repository/sites_allowed.repository'
+import { getProblemReportsBySiteIds } from '../repository/problem_reports.repository'
+import { findUserSitesWithPlansWithWorkspaces } from '../repository/sites_allowed.repository'
+import { UserProfile } from '../repository/user.repository'
+import { getUserOrganization } from '../services/organization/organization_users.service'
+import { canManageOrganization } from '../utils/access.helper'
 
-export async function getProblemReports(req: Request, res: Response) {
-  const { user } = req as any
+export async function getProblemReports(req: Request & { user: UserProfile }, res: Response) {
+  const { user } = req
 
   try {
-    // Fetch sites by user ID
-    const Sites: IUserSites[] = await findSitesByUserId(user.id)
+    if (!user.current_organization_id) {
+      return res.status(400).send('No organization selected')
+    }
 
-    // Use Promise.all to fetch problem reports for all sites concurrently
-    const allReports = (
-      await Promise.all(
-        Sites.map(async (site: IUserSites) => {
-          const reports = await getProblemReportsBySiteId(site.id)
-          return reports // Return reports for each site
-        }),
-      )
-    ).flat() // Flatten the array of arrays into a single array
+    const isSuperAdmin = user.is_super_admin
+    const userOrganization = !isSuperAdmin ? await getUserOrganization(user.id, user.current_organization_id) : null
+    const isAdmin = isSuperAdmin || (userOrganization && canManageOrganization(userOrganization.role))
+
+    const sites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isAdmin)
+    const allReports = await getProblemReportsBySiteIds(sites.map((site) => site.id))
 
     res.status(200).send(allReports)
   } catch (error) {

@@ -223,6 +223,7 @@ export async function findUserSites(user: UserProfile): Promise<IUserSites[]> {
     // 2. Other people's sites without workspace
     // 3. My sites (owner) in workspace
     // 4. Other people's sites in workspace
+    // Within each priority group, sort alphabetically by URL
     return sitesWithOwnership.sort((a, b) => {
       const getPriority = (site: typeof a) => {
         const hasWorkspace = (site.workspaces?.length || 0) > 0
@@ -235,7 +236,16 @@ export async function findUserSites(user: UserProfile): Promise<IUserSites[]> {
         return 5
       }
 
-      return getPriority(a) - getPriority(b)
+      const priorityA = getPriority(a)
+      const priorityB = getPriority(b)
+
+      // First sort by priority
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB
+      }
+
+      // Then sort alphabetically by URL within the same priority
+      return a.url.localeCompare(b.url)
     })
   } catch (e) {
     logger.error(e)
