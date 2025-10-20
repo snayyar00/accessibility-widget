@@ -3374,13 +3374,26 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   )}
                                 </div>
                                 <div className="min-w-0 flex-1">
+                                  {/* Mobile (≤768px): Show 7 letters, Desktop (>768px): Show full with truncate */}
                                   <div
-                                    className="font-medium truncate"
+                                    className="font-medium"
                                     style={{ color: baseColors.grayDark2 }}
                                   >
-                                    {row.url
-                                      .replace(/^https?:\/\//, '')
-                                      .replace(/^www\./, '')}
+                                    <span className="hidden sm:inline">
+                                      {row.url
+                                        .replace(/^https?:\/\//, '')
+                                        .replace(/^www\./, '')
+                                        .substring(0, 7)}
+                                      {row.url
+                                        .replace(/^https?:\/\//, '')
+                                        .replace(/^www\./, '').length > 7 &&
+                                        '...'}
+                                    </span>
+                                    <span className="sm:hidden truncate">
+                                      {row.url
+                                        .replace(/^https?:\/\//, '')
+                                        .replace(/^www\./, '')}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
@@ -3647,13 +3660,25 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
+                              {/* Mobile (≤768px): Show 5 letters, Desktop (>768px): Show full with truncate */}
                               <div
-                                className="font-medium truncate"
+                                className="font-medium"
                                 style={{ color: baseColors.grayDark2 }}
                               >
-                                {row.url
-                                  .replace(/^https?:\/\//, '')
-                                  .replace(/^www\./, '')}
+                                <span className="hidden sm:inline">
+                                  {row.url
+                                    .replace(/^https?:\/\//, '')
+                                    .replace(/^www\./, '')
+                                    .substring(0, 7)}
+                                  {row.url
+                                    .replace(/^https?:\/\//, '')
+                                    .replace(/^www\./, '').length > 7 && '...'}
+                                </span>
+                                <span className="sm:hidden truncate">
+                                  {row.url
+                                    .replace(/^https?:\/\//, '')
+                                    .replace(/^www\./, '')}
+                                </span>
                               </div>
                             </div>
                           </div>

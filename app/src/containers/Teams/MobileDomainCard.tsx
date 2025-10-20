@@ -103,8 +103,16 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
               autoFocus
             />
           ) : (
-            <div className="text-sm font-medium text-gray-900 truncate">
-              {domain.url}
+            <div className="text-sm font-medium text-gray-900">
+              <span className="hidden sm:inline">
+                {domain.url
+                  .replace(/^https?:\/\//, '')
+                  .replace(/^www\./, '')
+                  .substring(0, 7)}
+                {domain.url.replace(/^https?:\/\//, '').replace(/^www\./, '')
+                  .length > 7 && '...'}
+              </span>
+              <span className="sm:hidden truncate">{domain.url}</span>
             </div>
           )}
         </div>
