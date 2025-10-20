@@ -1,6 +1,6 @@
 const YELLOW_BG = 'bg-yellow-200 text-yellow-800';
 const GREEN_BG = 'bg-green-200 text-green-600';
-const RED_BG = 'bg-red-200 text-red-600';
+export const RED_BG = 'bg-red-200 text-red-600';
 const applyStatusClass = (domainUrl: string, status: string, trial: number, appSumoDomains: string[]): string => {
     if(appSumoDomains.includes(domainUrl)){
       return GREEN_BG;

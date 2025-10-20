@@ -16,6 +16,7 @@ import getDomainStatus from '@/utils/getDomainStatus';
 import applyStatusClass from '@/utils/applyStatusClass';
 import ActivatePlanWarningModal from './ActivatePlanWarningModal';
 import { getAuthenticationCookie } from '@/utils/cookie';
+import { RED_BG } from '@/utils/applyStatusClass';
 import MobileDomainCard from './MobileDomainCard';
 import notFoundImage from '@/assets/images/not_found_image.png';
 
@@ -59,6 +60,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [showModal, setShowModal] = useState(false);
   const [deleteSiteID, setDeleteSiteID] = useState(-1);
   const [deleteSiteStatus, setDeleteSiteStatus] = useState('');
+  const [isCancel, setIsCancel] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [tempDomain, setTempDomain] = useState('');
   const [expiryDays, setExpiryDays] = useState(-1);
@@ -127,6 +129,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
       status: status,
       cancelReason: cancelReason,
       otherReason: otherReason,
+      isCancel: isCancel,
     };
 
     const token = getAuthenticationCookie();
@@ -316,6 +319,13 @@ const DomainTable: React.FC<DomainTableProps> = ({
     selectedDomain.current = domain;
   };
 
+  const handleCancelSubscription = (domainId: number, domainStatus: string) => {
+    setShowModal(true);
+    setDeleteSiteID(domainId);
+    setDeleteSiteStatus(domainStatus);
+    setIsCancel(true);
+  };
+
   useEffect(() => {
     if (data) {
       setDomains(data.getUserSites);
@@ -407,6 +417,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
         onClose={handleCloseModal}
         onDelete={handleDelete}
         appSumoCount={customerData?.appSumoCount || 0}
+        isCancel={isCancel}
       />
 
       <ActivatePlanWarningModal
@@ -648,6 +659,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
 
                           {/* Plan Status */}
                           <div className="flex-shrink-0 mr-4 w-24 my-sites-plan-status">
+                        <div className="flex items-center space-x-2">
                             <Tooltip
                               title={
                                 domainStatus === 'Life Time'
@@ -701,6 +713,22 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 {domainStatus}
                               </span>
                             </Tooltip>
+                        {(domainStatus === 'Active' || domainStatus == 'Life Time') && (
+                          <Tooltip
+                          title={'Cancel Subscription for this domain'}
+                          placement="top"
+                        >
+                          <button
+                            type="button"
+                            className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer ${RED_BG}`}
+                            onClick={() => handleCancelSubscription(domain.id, domainStatus)}
+                          >
+                            <FaTimes className="w-4 h-4 text-red-500" />
+                            Cancel
+                          </button>
+                        </Tooltip>
+                        )}
+                        </div>
                           </div>
 
                           {/* Monitor Toggle */}
@@ -967,6 +995,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                       setDeleteSiteID(domain.id);
                                       setDeleteSiteStatus(domainStatus);
                                       setShowModal(true);
+                                  setIsCancel(false);
                                     }}
                                     className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
                                     aria-label={`Delete domain ${domain.url}`}
@@ -1017,6 +1046,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                 <button
                   onClick={() => {
                     openModal();
+                          setIsCancel(false);
                   }}
                   className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
                 >
