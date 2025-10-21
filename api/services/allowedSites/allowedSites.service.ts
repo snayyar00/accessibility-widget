@@ -1,4 +1,5 @@
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '../../constants/billing.constant'
+import { QUEUE_PRIORITY } from '../../constants/queue-priority.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import { getOrganizationUser } from '../../repository/organization_user.repository'
 import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findUserSitesWithPlans, insertSite, IUserSites, updateAllowedSiteURL } from '../../repository/sites_allowed.repository'
@@ -76,7 +77,7 @@ export async function addSite(user: UserProfile, url: string): Promise<string> {
       try {
         await createSitesPlan(userId, 'Trial', TRIAL_PLAN_NAME, TRIAL_PLAN_INTERVAL, site.id, '')
 
-        const report = await fetchAccessibilityReport(domain)
+        const report = await fetchAccessibilityReport({ url: domain, priority: QUEUE_PRIORITY.LOW })
         const user = await getUserbyId(userId)
         // Check user_notifications flag for new_domain_flag
 

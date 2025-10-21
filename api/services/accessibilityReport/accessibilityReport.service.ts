@@ -6,6 +6,7 @@ import { Browserbase } from '@browserbasehq/sdk'
 import fs from 'fs'
 import path from 'path'
 import { accessibilityReportQueue } from './accessibilityReportQueue.service'
+import { QUEUE_PRIORITY } from '../../constants/queue-priority.constant'
 // interface Category {
 //     description: string;
 //     count: number;
@@ -813,9 +814,9 @@ export const _fetchAccessibilityReportInternal = async (url: string, useCache?: 
   }
 }
 
-export const fetchAccessibilityReport = async (url: string, useCache?: boolean, fullSiteScan?: boolean) => {
+export const fetchAccessibilityReport = async (options: { url: string; useCache?: boolean; fullSiteScan?: boolean; priority?: number }) => {
   try {
-    const result = await accessibilityReportQueue.addTask(url, useCache, fullSiteScan, 0)
+    const result = await accessibilityReportQueue.addTask(options)
     return result
   } catch (error) {
     throw error
