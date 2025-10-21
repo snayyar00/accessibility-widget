@@ -57,25 +57,28 @@ export async function checkCustomer(req: Request, res: Response) {
           limit: 100,
         })
 
+        const filteredTrialSubs = trial_subs.data.filter((sub: any) => sub.description != null && sub.description !== '')
+        const filteredSubscriptions = subscriptions.data.filter((sub: any) => sub.description != null && sub.description !== '')
+
         let price_id
         let price: Stripe.Price
 
-        if (subscriptions.data.length > 0) {
-          price_id = (subscriptions.data[0] as Stripe.Subscription).items.data[0].price
+        if (filteredSubscriptions.length > 0) {
+          price_id = (filteredSubscriptions[0] as Stripe.Subscription).items.data[0].price
           price = await stripe.prices.retrieve(price_id.id, {
             expand: ['tiers'],
           })
-        } else if (trial_subs.data.length > 0) {
-          price_id = (trial_subs.data[0] as Stripe.Subscription).items.data[0].price
+        } else if (filteredTrialSubs.length > 0) {
+          price_id = (filteredTrialSubs[0] as Stripe.Subscription).items.data[0].price
           price = await stripe.prices.retrieve(price_id.id, {
             expand: ['tiers'],
           })
         }
 
         // Handle trial subscriptions
-        if (trial_subs?.data?.length) {
-          const prod = await stripe.products.retrieve(String(trial_subs?.data[0]?.plan?.product))
-          const trialEndTimestamp = trial_subs?.data[0]?.trial_end
+        if (filteredTrialSubs?.length) {
+          const prod = await stripe.products.retrieve(String(filteredTrialSubs[0]?.plan?.product))
+          const trialEndTimestamp = filteredTrialSubs[0]?.trial_end
           const currentTimestamp = Math.floor(Date.now() / 1000)
           const daysRemaining = Math.ceil((trialEndTimestamp! - currentTimestamp) / (60 * 60 * 24))
 
@@ -85,22 +88,22 @@ export async function checkCustomer(req: Request, res: Response) {
               tierPlan: true,
               isCustomer: true,
               plan_name: prod.name,
-              interval: trial_subs.data[0].plan.interval,
-              submeta: trial_subs.data[0].metadata,
+              interval: filteredTrialSubs[0].plan.interval,
+              submeta: filteredTrialSubs[0].metadata,
               card: customers?.data[0]?.invoice_settings.default_payment_method,
               expiry: daysRemaining,
             })
           }
-          const subscriptionData = processSubscriptions(trial_subs.data, subscriptions.data)
-          const appSumoData = calculateAppSumoData(subscriptions.data)
+          const subscriptionData = processSubscriptions(filteredTrialSubs, filteredSubscriptions)
+          const appSumoData = calculateAppSumoData(filteredSubscriptions)
 
           return res.status(200).json({
             trial_subs: JSON.stringify(subscriptionData.trial_sub_data),
             subscriptions: JSON.stringify(subscriptionData.regular_sub_data),
             isCustomer: true,
             plan_name: prod.name,
-            interval: trial_subs.data[0].plan.interval,
-            submeta: trial_subs.data[0].metadata,
+            interval: filteredTrialSubs[0].plan.interval,
+            submeta: filteredTrialSubs[0].metadata,
             card: customers?.data[0]?.invoice_settings.default_payment_method,
             expiry: daysRemaining,
             appSumoCount: appSumoData.appSumoCount,
@@ -108,8 +111,8 @@ export async function checkCustomer(req: Request, res: Response) {
             infinityToken: hasCustomInfinityToken,
           })
         }
-        if (subscriptions.data.length > 0) {
-          const prod = await stripe.products.retrieve(String(subscriptions.data[0]?.plan?.product))
+        if (filteredSubscriptions.length > 0) {
+          const prod = await stripe.products.retrieve(String(filteredSubscriptions[0]?.plan?.product))
 
           // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
           if (!price || price?.tiers?.length! > 0) {
@@ -117,20 +120,20 @@ export async function checkCustomer(req: Request, res: Response) {
               tierPlan: true,
               isCustomer: true,
               plan_name: prod.name,
-              interval: subscriptions.data[0].plan.interval,
-              submeta: subscriptions.data[0].metadata,
+              interval: filteredSubscriptions[0].plan.interval,
+              submeta: filteredSubscriptions[0].metadata,
               card: customers?.data[0]?.invoice_settings.default_payment_method,
             })
           }
-          const subscriptionData = processSubscriptions([], subscriptions.data)
-          const appSumoData = calculateAppSumoData(subscriptions.data)
+          const subscriptionData = processSubscriptions([], filteredSubscriptions)
+          const appSumoData = calculateAppSumoData(filteredSubscriptions)
 
           return res.status(200).json({
             subscriptions: JSON.stringify(subscriptionData.regular_sub_data),
             isCustomer: true,
             plan_name: prod.name,
-            interval: subscriptions.data[0].plan.interval,
-            submeta: subscriptions.data[0].metadata,
+            interval: filteredSubscriptions[0].plan.interval,
+            submeta: filteredSubscriptions[0].metadata,
             card: customers?.data[0]?.invoice_settings.default_payment_method,
             appSumoCount: appSumoData.appSumoCount,
             codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length : appSumoData.uniquePromoCodes.size,

@@ -24,7 +24,7 @@ export async function appSumoPromoCount(subscriptions: any, promoCode: any, user
     const sortedSubs = [...subscriptions.data].sort((a, b) => a.created - b.created)
 
     sortedSubs.forEach((subscription: any) => {
-      const match = subscription.description.match(/\(([^)]*)\)$/)
+      const match = subscription?.description?.match(/\(([^)]*)\)$/)
       if (match) {
         // Split the extracted string on commas and trim any extra whitespace.
         const codesInDesc = match[1].split(',').map((code: string) => code.trim())
@@ -60,14 +60,14 @@ export async function appSumoPromoCount(subscriptions: any, promoCode: any, user
   })
 
   const usedTokens = await getUserTokens(userId, organizationId)
-  let max_sites = orderedCodes.length * 2
-  if (usedTokens.length > 0) {
+  let max_sites = orderedCodes?.length * 2
+  if (usedTokens?.length > 0) {
     let maxNum: number = usedTokens.reduce((max, code) => {
-      const m = code.match(/^custom(\d+)$/)
+      const m = code?.match(/^custom(\d+)$/)
       return m ? Math.max(max, Number(m[1])) : max
     }, 0)
 
-    const hasInfinityToken = usedTokens.includes('customInfinity')
+    const hasInfinityToken = usedTokens?.includes('customInfinity')
 
     if (hasInfinityToken) {
       // Infinity token
