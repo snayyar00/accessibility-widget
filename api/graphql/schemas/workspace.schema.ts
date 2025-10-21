@@ -24,6 +24,10 @@ export const WorkspaceSchema = `#graphql
   type AllowedSite {
     id: ID!
     url: String!
+    added_by_user_id: Int
+    added_by_user_email: String
+    site_owner_user_id: Int
+    site_owner_user_email: String
   }
 
   type WorkspaceUser {
@@ -69,7 +73,9 @@ export const WorkspaceSchema = `#graphql
   extend type Mutation {
     createWorkspace(name: String!): Workspace! @rateLimit(limit: 5, duration: 60, message: "Too many add workspace. Please try again later.")
     deleteWorkspace(id: ID!): Boolean! @rateLimit(limit: 5, duration: 60, message: "Too many delete workspace. Please try again later.")
-    updateWorkspace(id: ID!, name: String, allowedSiteIds: [ID!]): Workspace! @rateLimit(limit: 30, duration: 60, message: "Too many update workspace. Please try again later.")
+    updateWorkspace(id: ID!, name: String): Workspace! @rateLimit(limit: 30, duration: 60, message: "Too many update workspace. Please try again later.")
+    addWorkspaceDomains(workspaceId: ID!, siteIds: [ID!]!): Workspace! @rateLimit(limit: 30, duration: 60, message: "Too many add domain requests. Please try again later.")
+    removeWorkspaceDomains(workspaceId: ID!, siteIds: [ID!]!): Workspace! @rateLimit(limit: 30, duration: 60, message: "Too many remove domain requests. Please try again later.")
     changeWorkspaceMemberRole(id: ID!, role: WorkspaceUserRole!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many role change requests. Please try again later.")
     removeWorkspaceMember(id: ID!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many remove member requests. Please try again later.")
     removeWorkspaceInvitation(id: ID!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many remove invitation requests. Please try again later.")

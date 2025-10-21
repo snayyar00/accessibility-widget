@@ -1,11 +1,13 @@
 import { combineResolvers } from 'graphql-resolvers'
 
-import { addSite, changeURL, deleteSite, findUserSites, isDomainAlreadyAdded, toggleSiteMonitoring } from '../../services/allowedSites/allowedSites.service'
+import { addSite, changeURL, deleteSite, findAvailableSitesForWorkspaceAssignment, findUserSites, isDomainAlreadyAdded, toggleSiteMonitoring } from '../../services/allowedSites/allowedSites.service'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 const resolvers = {
   Query: {
     getUserSites: combineResolvers(allowedOrganization, isAuthenticated, (_, t, { user }) => findUserSites(user)),
+
+    getAvailableSitesForWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_, t, { user }) => findAvailableSitesForWorkspaceAssignment(user)),
 
     isDomainAlreadyAdded: combineResolvers(allowedOrganization, (_, { url }) => isDomainAlreadyAdded(url)),
   },

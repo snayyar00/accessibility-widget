@@ -5,26 +5,18 @@ import { GraphQLContext } from '../../graphql/types'
 import { findUser, UserProfile } from '../../repository/user.repository'
 import { WorkspaceWithDomains } from '../../repository/workspace_allowed_sites.repository'
 import { getWorkspaceDomainsService } from '../../services/workspaces/workspaceDomains.service'
-import {
-  changeWorkspaceMemberRole,
-  createWorkspace,
-  deleteWorkspace,
-  getAllWorkspaces,
-  getWorkspaceByAlias,
-  getWorkspaceInvitationsByAlias,
-  getWorkspaceMembers,
-  getWorkspaceMembersByAlias,
-  removeAllUserInvitations,
-  removeWorkspaceInvitation,
-  removeWorkspaceMember,
-  updateWorkspace,
-} from '../../services/workspaces/workspaces.service'
+import { getWorkspaceInvitationsByAlias, removeAllUserInvitations, removeWorkspaceInvitation } from '../../services/workspaces/workspaceInvitations.service'
+import { addWorkspaceDomains, changeWorkspaceMemberRole, createWorkspace, deleteWorkspace, getAllWorkspaces, getWorkspaceByAlias, getWorkspaceMembers, getWorkspaceMembersByAlias, removeWorkspaceDomains, removeWorkspaceMember, updateWorkspace } from '../../services/workspaces/workspaces.service'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 type WorkspaceInput = {
   id?: number
   name?: string
-  allowedSiteIds?: number[]
+}
+
+type WorkspaceDomainsInput = {
+  workspaceId: string
+  siteIds: string[]
 }
 
 type ChangeWorkspaceMemberRoleInput = {
@@ -60,6 +52,20 @@ const resolvers = {
     removeAllUserInvitations: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { email }: RemoveAllUserInvitationsInput, { user }) => removeAllUserInvitations(user, email)),
     deleteWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { id }: { id: number }, { user }) => deleteWorkspace(user, id)),
     updateWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, data: WorkspaceInput, { user }) => updateWorkspace(user, data.id, data)),
+    addWorkspaceDomains: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { workspaceId, siteIds }: WorkspaceDomainsInput, { user }) =>
+      addWorkspaceDomains(
+        user,
+        parseInt(workspaceId, 10),
+        siteIds.map((id) => parseInt(id, 10)),
+      ),
+    ),
+    removeWorkspaceDomains: combineResolvers(allowedOrganization, isAuthenticated, (_: unknown, { workspaceId, siteIds }: WorkspaceDomainsInput, { user }) =>
+      removeWorkspaceDomains(
+        user,
+        parseInt(workspaceId, 10),
+        siteIds.map((id) => parseInt(id, 10)),
+      ),
+    ),
   },
 
   Workspace: {
@@ -83,6 +89,10 @@ const resolvers = {
         return workspaceDomains.map((domain: WorkspaceWithDomains) => ({
           id: domain.allowed_site_id,
           url: domain.allowed_site_url,
+          added_by_user_id: domain.added_by_user_id,
+          added_by_user_email: domain.added_by_user_email,
+          site_owner_user_id: domain.site_owner_user_id,
+          site_owner_user_email: domain.site_owner_user_email,
         }))
       } catch {
         return []

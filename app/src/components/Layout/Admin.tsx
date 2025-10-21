@@ -19,7 +19,7 @@ import { getAuthenticationCookie } from '@/utils/cookie';
 import { setSelectedDomain } from '@/features/report/reportSlice';
 import Topbar from './Topbar';
 import Sidebar from './Sidebar';
-import { WorkspaceMembers } from '@/containers/Workspaces/members';
+import { WorkspaceDetails } from '@/containers/Workspaces/details';
 
 type Props = {
   signout: () => void;
@@ -254,8 +254,8 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
             />
             <Route
               path="/workspaces/:alias"
-              component={WorkspaceMembers}
-              key="/workspace-members"
+              component={WorkspaceDetails}
+              key="/workspace-details"
               exact={false}
             />
             <Redirect from="*" to="/dashboard" />

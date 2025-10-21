@@ -15,6 +15,7 @@ import { Query } from '@/generated/graphql';
 import GET_WORKSPACE_BY_ALIAS from '@/queries/workspace/getWorkspaceByAlias';
 import { TableMembers } from './TableMembers';
 import { TableInvites } from './TableInvites';
+import { TableDomains } from './TableDomains';
 import { RootState } from '@/config/store';
 import { useDispatch, useSelector } from 'react-redux';
 import { InviteUser } from '@/components/Invite/InviteUser';
@@ -29,7 +30,7 @@ interface TabPanelProps {
   value: number;
 }
 
-export const WorkspaceMembers = () => {
+export const WorkspaceDetails = () => {
   const dispatch = useDispatch();
   const history = useHistory();
   const { alias } = useParams<{ alias: string }>();
@@ -141,16 +142,21 @@ export const WorkspaceMembers = () => {
           onChange={handleChange}
           aria-label="basic tabs example"
         >
-          <Tab label="Members" {...a11yProps(0)} />
-          <Tab label="Invites" {...a11yProps(1)} />
+          <Tab label="Domains" {...a11yProps(0)} />
+          <Tab label="Members" {...a11yProps(1)} />
+          <Tab label="Invites" {...a11yProps(2)} />
         </Tabs>
       </div>
 
       <TabPanel value={value} index={0}>
-        <TableMembers onUpdate={handleTableUpdate} alias={alias} />
+        <TableDomains onUpdate={handleTableUpdate} alias={alias} />
       </TabPanel>
 
       <TabPanel value={value} index={1}>
+        <TableMembers onUpdate={handleTableUpdate} alias={alias} />
+      </TabPanel>
+
+      <TabPanel value={value} index={2}>
         <TableInvites onUpdate={handleTableUpdate} alias={alias} />
       </TabPanel>
     </section>

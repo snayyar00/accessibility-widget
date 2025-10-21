@@ -1,6 +1,17 @@
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '../../constants/billing.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
-import { deleteSiteWithRelatedRecords, FindAllowedSitesProps, findSiteById, findSiteByURL, findUserSitesWithPlansWithWorkspaces, insertSite, IUserSites, toggleSiteMonitoring as toggleSiteMonitoringRepo, updateAllowedSiteURL } from '../../repository/sites_allowed.repository'
+import {
+  deleteSiteWithRelatedRecords,
+  FindAllowedSitesProps,
+  findSiteById,
+  findSiteByURL,
+  findUserSitesWithPlansForWorkspace,
+  findUserSitesWithPlansWithWorkspaces,
+  insertSite,
+  IUserSites,
+  toggleSiteMonitoring as toggleSiteMonitoringRepo,
+  updateAllowedSiteURL,
+} from '../../repository/sites_allowed.repository'
 import { findUserNotificationByUserId, getUserbyId, UserProfile } from '../../repository/user.repository'
 import { hasWorkspaceAccessToSite } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
@@ -16,35 +27,15 @@ import { getUserOrganization } from '../organization/organization_users.service'
 import { createSitesPlan } from './plans-sites.service'
 
 /**
- * Check if user has access to a site:
- * - Super admin or organization manager: full access
- * - Regular user: only own sites or workspace sites where they are active member
+ * Check if user is super admin or organization manager
  */
-export async function canAccessSite(user: UserProfile, site: FindAllowedSitesProps): Promise<boolean> {
-  // Check organization match
-  if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
-    return false
-  }
-
-  // Super admin has full access
+async function isAdminOrManager(user: UserProfile): Promise<boolean> {
   if (user.is_super_admin) {
     return true
   }
 
-  // Owner has access
-  if (site.user_id === user.id) {
-    return true
-  }
-
-  // Organization manager has full access
   const userOrganization = await getUserOrganization(user.id, user.current_organization_id)
-
-  if (userOrganization && canManageOrganization(userOrganization.role)) {
-    return true
-  }
-
-  // Check workspace access via repository layer
-  return hasWorkspaceAccessToSite(user.id, site.id)
+  return userOrganization ? canManageOrganization(userOrganization.role) : false
 }
 
 export async function checkScript(url: string) {
@@ -205,48 +196,33 @@ export async function findUserSites(user: UserProfile): Promise<IUserSites[]> {
   }
 
   try {
-    const isSuperAdmin = user.is_super_admin
-    const userOrganization = !isSuperAdmin ? await getUserOrganization(user.id, user.current_organization_id) : null
+    const isAdmin = await isAdminOrManager(user)
+    const allSites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isAdmin)
+    const sitesWithOwnership = addOwnershipFlag(allSites, user.id)
 
-    const isManager = userOrganization && canManageOrganization(userOrganization.role)
+    return sortSitesByPriorityAndAlphabetically(sitesWithOwnership)
+  } catch (e) {
+    logger.error(e)
+    throw e
+  }
+}
 
-    const allSites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isSuperAdmin || isManager)
+/**
+ * Get sites available for adding to a workspace
+ * For admins/managers: Returns ALL organization sites
+ * For regular users: Returns ONLY their own sites
+ */
+export async function findAvailableSitesForWorkspaceAssignment(user: UserProfile): Promise<IUserSites[]> {
+  if (!user.current_organization_id) {
+    return []
+  }
 
-    const sitesWithOwnership = allSites.map((site) => ({
-      ...site,
-      is_owner: site.user_id === user.id,
-      workspaces: site.workspaces || [],
-    }))
+  try {
+    const isAdmin = await isAdminOrManager(user)
+    const allSites = await findUserSitesWithPlansForWorkspace(user.id, user.current_organization_id, isAdmin)
+    const sitesWithOwnership = addOwnershipFlag(allSites, user.id)
 
-    // Sort by priority:
-    // 1. My sites (owner) without workspace
-    // 2. Other people's sites without workspace
-    // 3. My sites (owner) in workspace
-    // 4. Other people's sites in workspace
-    // Within each priority group, sort alphabetically by URL
-    return sitesWithOwnership.sort((a, b) => {
-      const getPriority = (site: typeof a) => {
-        const hasWorkspace = (site.workspaces?.length || 0) > 0
-
-        if (site.is_owner && !hasWorkspace) return 1
-        if (!site.is_owner && !hasWorkspace) return 2
-        if (site.is_owner && hasWorkspace) return 3
-        if (!site.is_owner && hasWorkspace) return 4
-
-        return 5
-      }
-
-      const priorityA = getPriority(a)
-      const priorityB = getPriority(b)
-
-      // First sort by priority
-      if (priorityA !== priorityB) {
-        return priorityA - priorityB
-      }
-
-      // Then sort alphabetically by URL within the same priority
-      return a.url.localeCompare(b.url)
-    })
+    return sortSitesByPriorityAndAlphabetically(sitesWithOwnership)
   } catch (e) {
     logger.error(e)
     throw e
@@ -387,4 +363,81 @@ export async function toggleSiteMonitoring(siteId: number, enabled: boolean, use
     logger.error(e)
     throw e
   }
+}
+
+/**
+ * Sort sites by priority and alphabetically
+ * Priority order:
+ * 1. My sites (owner) without workspace
+ * 2. Other people's sites without workspace
+ * 3. My sites (owner) in workspace
+ * 4. Other people's sites in workspace
+ */
+function sortSitesByPriorityAndAlphabetically(sites: IUserSites[]): IUserSites[] {
+  return sites.sort((a, b) => {
+    const getPriority = (site: IUserSites) => {
+      const hasWorkspace = (site.workspaces?.length || 0) > 0
+
+      if (site.is_owner && !hasWorkspace) return 1
+      if (!site.is_owner && !hasWorkspace) return 2
+      if (site.is_owner && hasWorkspace) return 3
+      if (!site.is_owner && hasWorkspace) return 4
+
+      return 5
+    }
+
+    const priorityA = getPriority(a)
+    const priorityB = getPriority(b)
+
+    // First sort by priority
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB
+    }
+
+    // Then sort alphabetically by URL within the same priority
+    return a.url.localeCompare(b.url)
+  })
+}
+
+/**
+ * Add ownership flag to sites
+ */
+function addOwnershipFlag(sites: IUserSites[], userId: number): IUserSites[] {
+  return sites.map((site) => ({
+    ...site,
+    is_owner: site.user_id === userId,
+    workspaces: site.workspaces || [],
+  }))
+}
+
+/**
+ * Check if user has access to a site:
+ * - Super admin or organization manager: full access
+ * - Regular user: only own sites or workspace sites where they are active member
+ */
+export async function canAccessSite(user: UserProfile, site: FindAllowedSitesProps): Promise<boolean> {
+  // Check organization match
+  if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
+    return false
+  }
+
+  // Super admin has full access
+  if (user.is_super_admin) {
+    return true
+  }
+
+  // Owner has access
+  if (site.user_id === user.id) {
+    return true
+  }
+
+  // Organization manager has full access
+  const userOrganization = await getUserOrganization(user.id, user.current_organization_id)
+
+  if (userOrganization && canManageOrganization(userOrganization.role)) {
+    return true
+  }
+
+  // Check workspace access via repository layer
+  return hasWorkspaceAccessToSite(user.id, site.id)
 }

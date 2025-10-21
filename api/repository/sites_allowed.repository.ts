@@ -40,6 +40,10 @@ export async function findSitesByUserId(id: number): Promise<IUserSites[]> {
   return database(TABLE).where({ [siteColumns.user_id]: id })
 }
 
+export async function findSiteById(id: number): Promise<FindAllowedSitesProps | undefined> {
+  return database(TABLE).where({ id }).first()
+}
+
 /**
  * For admins: Returns ALL organization sites with workspace data aggregated via LEFT JOIN
  * For regular users: Returns own sites + workspace sites (with active membership check) in single query
@@ -52,38 +56,9 @@ export async function findSitesByUserId(id: number): Promise<IUserSites[]> {
 export async function findUserSitesWithPlansWithWorkspaces(userId: number, organizationId: number, isAdmin: boolean): Promise<IUserSites[]> {
   if (isAdmin) {
     // Admin path: Get ALL sites in organization with workspace info via subquery to avoid GROUP BY issues
-    const sites = await database(TABLE)
+    return buildSitesBaseQuery()
       .where(`${TABLE}.organization_id`, organizationId)
-      .leftJoin(TABLES.sitesPlans, function () {
-        this.on(`${TABLES.sitesPlans}.allowed_site_id`, '=', `${TABLE}.id`).andOn(`${TABLES.sitesPlans}.id`, '=', database.raw(`(SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)`))
-      })
-      .leftJoin(TABLES.users, `${TABLE}.user_id`, `${TABLES.users}.id`)
-      .select(
-        `${TABLE}.id`,
-        `${TABLE}.user_id`,
-        `${TABLE}.url`,
-        `${TABLE}.created_at as createAt`,
-        `${TABLE}.updated_at as updatedAt`,
-        `${TABLE}.organization_id`,
-        `${TABLES.sitesPlans}.expired_at as expiredAt`,
-        `${TABLES.sitesPlans}.is_trial as trial`,
-        `${TABLE}.monitor_enabled`,
-        `${TABLE}.status`,
-        `${TABLE}.monitor_priority`,
-        `${TABLE}.last_monitor_check`,
-        `${TABLE}.is_currently_down`,
-        `${TABLE}.monitor_consecutive_fails`,
-        `${TABLES.users}.email as user_email`,
-        database.raw(
-          `(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', w.id, 'name', w.name))
-            FROM ${TABLES.workspace_allowed_sites} was
-            JOIN ${TABLES.workspaces} w ON was.workspace_id = w.id
-            WHERE was.allowed_site_id = ${TABLE}.id
-          ) as workspaces`,
-        ),
-      )
-
-    return sites
+      .select(...selectSiteFieldsWithMonitoring())
   } else {
     // Regular user path: Single query with OR condition (own sites OR workspace membership)
     // Workspace array aggregated in subquery to avoid GROUP BY complexity
@@ -143,8 +118,31 @@ export async function findUserSitesWithPlansWithWorkspaces(userId: number, organ
   }
 }
 
-export async function findSiteById(id: number): Promise<FindAllowedSitesProps | undefined> {
-  return database(TABLE).where({ id }).first()
+/**
+ * Get sites available for adding to a workspace
+ * For admins: Returns ALL organization sites
+ * For regular users: Returns ONLY their own sites (user_id matches)
+ *
+ * @param userId - User ID
+ * @param organizationId - Organization ID
+ * @param isAdmin - If true, returns ALL sites in organization
+ * @returns Promise<IUserSites[]> - Sites available for workspace assignment
+ */
+export async function findUserSitesWithPlansForWorkspace(userId: number, organizationId: number, isAdmin: boolean): Promise<IUserSites[]> {
+  const query = buildSitesBaseQuery()
+
+  if (isAdmin) {
+    // Admin path: Get ALL sites in organization
+    query.where(`${TABLE}.organization_id`, organizationId)
+  } else {
+    // Regular user path: Returns ONLY their own sites
+    query.where({
+      [`${TABLE}.organization_id`]: organizationId,
+      [`${TABLE}.user_id`]: userId,
+    })
+  }
+
+  return query.select(...selectSiteFields())
 }
 
 export async function findSiteByURL(url: string): Promise<FindAllowedSitesProps> {
@@ -300,4 +298,68 @@ export async function toggleSiteMonitoring(site_id: number, enabled: boolean, us
   const updated = await database(TABLE).where(whereClause).update({ monitor_enabled: enabled })
 
   return updated > 0
+}
+
+/**
+ * Helper function to build base query for sites with plans and workspaces
+ */
+function buildSitesBaseQuery() {
+  return database(TABLE)
+    .leftJoin(TABLES.sitesPlans, function () {
+      this.on(`${TABLES.sitesPlans}.allowed_site_id`, '=', `${TABLE}.id`).andOn(`${TABLES.sitesPlans}.id`, '=', database.raw(`(SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)`))
+    })
+    .leftJoin(TABLES.users, `${TABLE}.user_id`, `${TABLES.users}.id`)
+}
+
+/**
+ * Helper function to get workspace aggregation subquery
+ */
+function getWorkspacesSubquery(): string {
+  return `(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', w.id, 'name', w.name))
+    FROM ${TABLES.workspace_allowed_sites} was
+    JOIN ${TABLES.workspaces} w ON was.workspace_id = w.id
+    WHERE was.allowed_site_id = ${TABLE}.id
+  )`
+}
+
+/**
+ * Helper function to select common site fields (for workspace assignment)
+ */
+function selectSiteFields() {
+  return [
+    `${TABLE}.id`,
+    `${TABLE}.user_id`,
+    `${TABLE}.url`,
+    `${TABLE}.created_at as createAt`,
+    `${TABLE}.updated_at as updatedAt`,
+    `${TABLE}.organization_id`,
+    `${TABLES.sitesPlans}.expired_at as expiredAt`,
+    `${TABLES.sitesPlans}.is_trial as trial`,
+    `${TABLES.users}.email as user_email`,
+    database.raw(`${getWorkspacesSubquery()} as workspaces`),
+  ]
+}
+
+/**
+ * Helper function to select site fields with monitoring info
+ */
+function selectSiteFieldsWithMonitoring() {
+  return [
+    `${TABLE}.id`,
+    `${TABLE}.user_id`,
+    `${TABLE}.url`,
+    `${TABLE}.created_at as createAt`,
+    `${TABLE}.updated_at as updatedAt`,
+    `${TABLE}.organization_id`,
+    `${TABLES.sitesPlans}.expired_at as expiredAt`,
+    `${TABLES.sitesPlans}.is_trial as trial`,
+    `${TABLE}.monitor_enabled`,
+    `${TABLE}.status`,
+    `${TABLE}.monitor_priority`,
+    `${TABLE}.last_monitor_check`,
+    `${TABLE}.is_currently_down`,
+    `${TABLE}.monitor_consecutive_fails`,
+    `${TABLES.users}.email as user_email`,
+    database.raw(`${getWorkspacesSubquery()} as workspaces`),
+  ]
 }

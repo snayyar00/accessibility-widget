@@ -273,7 +273,7 @@ export const TableUsers = ({
     },
     {
       field: 'status',
-      headerName: 'Org Status',
+      headerName: 'Status',
       width: 140,
       renderCell: (params) => {
         const status = params.value as OrganizationUserStatus;
@@ -295,7 +295,7 @@ export const TableUsers = ({
     },
     {
       field: 'role',
-      headerName: 'Org Role',
+      headerName: 'Role',
       width: 140,
       renderCell: (params) => {
         const rowUserId = params.row.id;
