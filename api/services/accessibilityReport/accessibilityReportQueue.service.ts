@@ -14,6 +14,16 @@ const QUEUE_CONFIG = {
   staleTaskWarningThreshold: parseInt('600000'), // 10 minutes
 }
 
+/**
+ * Priority System:
+ * - HIGH (10): User-initiated scans from frontend scanner page (processed first)
+ * - NORMAL (0): Default priority for general operations
+ * - LOW (-10): Automated background tasks (monthly reports, new domain reports)
+ *
+ * Tasks are processed in descending priority order (higher values first).
+ * See: api/constants/queue-priority.constant.ts for priority constants.
+ */
+
 interface QueueTask {
   id: string
   url: string
@@ -76,7 +86,9 @@ class AccessibilityReportQueue {
     this.startHealthCheck()
   }
 
-  async addTask(url: string, useCache?: boolean, fullSiteScan?: boolean, priority: number = 0): Promise<any> {
+  async addTask(options: { url: string; useCache?: boolean; fullSiteScan?: boolean; priority?: number }): Promise<any> {
+    const { url, useCache, fullSiteScan, priority = 0 } = options
+
     return new Promise((resolve, reject) => {
       if (this.queue.length >= this.maxQueueSize) {
         const error = new Error(`Queue is at maximum capacity (${this.maxQueueSize}). Please try again later.`)
@@ -106,7 +118,8 @@ class AccessibilityReportQueue {
       this.insertTaskByPriority(task)
       this.updateStats()
 
-      console.log(`📊 Queue Status: ${this.activeTasks.size}/${this.concurrencyLimit} processing, ${this.queue.length} pending (${url})`)
+      const priorityLabel = priority > 0 ? 'HIGH' : priority < 0 ? 'LOW' : 'NORMAL'
+      console.log(`📊 Queue Status: ${this.activeTasks.size}/${this.concurrencyLimit} processing, ${this.queue.length} pending [Priority: ${priorityLabel}] (${url})`)
 
       // Warn if queue is getting too long (throttle warnings to every 30 seconds)
       if (this.queue.length >= this.queueWarningThreshold) {
@@ -138,9 +151,10 @@ class AccessibilityReportQueue {
     this.recordWaitTime(waitTime)
 
     // Log if task waited unusually long (for monitoring)
+    const priorityLabel = task.priority > 0 ? 'HIGH' : task.priority < 0 ? 'LOW' : 'NORMAL'
     if (waitTime > 300000) {
       // 5 minutes
-      console.warn(`⏱️ Task ${task.id} waited ${Math.round(waitTime / 1000)}s in queue before processing (${task.url})`)
+      console.warn(`⏱️ Task ${task.id} [Priority: ${priorityLabel}] waited ${Math.round(waitTime / 1000)}s in queue before processing (${task.url})`)
     }
 
     this.activeTasks.set(task.id, task)
@@ -161,7 +175,8 @@ class AccessibilityReportQueue {
 
       this.recordProcessingTime(processingTime)
 
-      console.log(`✅ Report completed for ${task.url} - Wait: ${Math.round(waitTime / 1000)}s, Processing: ${Math.round(processingTime / 1000)}s, Total: ${Math.round(totalTime / 1000)}s`)
+      const priorityLabel = task.priority > 0 ? 'HIGH' : task.priority < 0 ? 'LOW' : 'NORMAL'
+      console.log(`✅ Report completed [Priority: ${priorityLabel}] for ${task.url} - Wait: ${Math.round(waitTime / 1000)}s, Processing: ${Math.round(processingTime / 1000)}s, Total: ${Math.round(totalTime / 1000)}s`)
 
       task.resolve(result)
       this.stats.totalProcessed++
@@ -169,7 +184,8 @@ class AccessibilityReportQueue {
       const processingTime = Date.now() - processingStartTime
       const totalTime = Date.now() - task.createdAt
 
-      console.error(`❌ Report failed for ${task.url} after ${Math.round(processingTime / 1000)}s processing (${Math.round(totalTime / 1000)}s total):`, (error as Error).message)
+      const priorityLabel = task.priority > 0 ? 'HIGH' : task.priority < 0 ? 'LOW' : 'NORMAL'
+      console.error(`❌ Report failed [Priority: ${priorityLabel}] for ${task.url} after ${Math.round(processingTime / 1000)}s processing (${Math.round(totalTime / 1000)}s total):`, (error as Error).message)
 
       task.reject(error as Error)
       this.stats.totalFailed++
