@@ -118,7 +118,7 @@ class AccessibilityReportQueue {
       this.insertTaskByPriority(task)
       this.updateStats()
 
-      const priorityLabel = priority > 0 ? 'HIGH' : priority < 0 ? 'LOW' : 'NORMAL'
+      const priorityLabel = this.getPriorityLabel(priority)
       console.log(`📊 Queue Status: ${this.activeTasks.size}/${this.concurrencyLimit} processing, ${this.queue.length} pending [Priority: ${priorityLabel}] (${url})`)
 
       // Warn if queue is getting too long (throttle warnings to every 30 seconds)
@@ -151,7 +151,7 @@ class AccessibilityReportQueue {
     this.recordWaitTime(waitTime)
 
     // Log if task waited unusually long (for monitoring)
-    const priorityLabel = task.priority > 0 ? 'HIGH' : task.priority < 0 ? 'LOW' : 'NORMAL'
+    const priorityLabel = this.getPriorityLabel(task.priority)
     if (waitTime > 300000) {
       // 5 minutes
       console.warn(`⏱️ Task ${task.id} [Priority: ${priorityLabel}] waited ${Math.round(waitTime / 1000)}s in queue before processing (${task.url})`)
@@ -175,7 +175,7 @@ class AccessibilityReportQueue {
 
       this.recordProcessingTime(processingTime)
 
-      const priorityLabel = task.priority > 0 ? 'HIGH' : task.priority < 0 ? 'LOW' : 'NORMAL'
+      const priorityLabel = this.getPriorityLabel(task.priority)
       console.log(`✅ Report completed [Priority: ${priorityLabel}] for ${task.url} - Wait: ${Math.round(waitTime / 1000)}s, Processing: ${Math.round(processingTime / 1000)}s, Total: ${Math.round(totalTime / 1000)}s`)
 
       task.resolve(result)
@@ -184,7 +184,7 @@ class AccessibilityReportQueue {
       const processingTime = Date.now() - processingStartTime
       const totalTime = Date.now() - task.createdAt
 
-      const priorityLabel = task.priority > 0 ? 'HIGH' : task.priority < 0 ? 'LOW' : 'NORMAL'
+      const priorityLabel = this.getPriorityLabel(task.priority)
       console.error(`❌ Report failed [Priority: ${priorityLabel}] for ${task.url} after ${Math.round(processingTime / 1000)}s processing (${Math.round(totalTime / 1000)}s total):`, (error as Error).message)
 
       task.reject(error as Error)
@@ -211,6 +211,15 @@ class AccessibilityReportQueue {
 
   private generateTaskId(): string {
     return `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  }
+
+  /**
+   * Get human-readable priority label from priority value
+   * @param priority - Numeric priority value
+   * @returns 'HIGH' | 'NORMAL' | 'LOW'
+   */
+  private getPriorityLabel(priority: number): 'HIGH' | 'NORMAL' | 'LOW' {
+    return priority > 0 ? 'HIGH' : priority < 0 ? 'LOW' : 'NORMAL'
   }
 
   private recordProcessingTime(time: number): void {
