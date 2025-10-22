@@ -206,6 +206,19 @@ export const stripeWebhook = async (req: Request, res: Response) => {
             planInterval = 'YEARLY'
           }
 
+          // Get user to check for referral code
+          const { findUserById } = require('../../repository/user.repository')
+          let referralCode = null
+          try {
+            const user = await findUserById(Number(session.metadata.userId))
+            if (user && user.referral) {
+              referralCode = user.referral
+              console.log('[REWARDFUL] Found referral code for webhook subscription:', referralCode)
+            }
+          } catch (error) {
+            console.error('[REWARDFUL] Failed to load user referral:', error)
+          }
+
           const subscription = await (stripe.subscriptions as any).create({
             customer: customerId,
             items: [{ price: price.id, quantity: 1 }],
@@ -216,6 +229,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
               userId: session.metadata.userId,
               maxDomains: 1,
               usedDomains: 1,
+              ...(referralCode && { referral: referralCode }),
             },
             description: `Plan for ${session.metadata.domain}`,
           })

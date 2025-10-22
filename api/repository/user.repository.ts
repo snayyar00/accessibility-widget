@@ -52,6 +52,7 @@ export type UserProfile = {
   license_owner_email?: string
   phone_number?: string
   monitoring_alert_flag?: boolean
+  referral?: string
 }
 
 type GetUserByIdAndJoinUserTokenResponse = UserProfile & UserToken

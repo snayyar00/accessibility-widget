@@ -55,6 +55,9 @@ const ActivatePlanWarningModal: React.FC<ActivatePlanWarningModalProps> = ({
     if (!isStripeCustomer) {
       url = `${process.env.REACT_APP_BACKEND_URL}/create-checkout-session`;
 
+      // Get Rewardful referral ID if available
+      const referralId = window.Rewardful?.referral || null;
+
       bodyData = {
         email: userData.email,
         returnUrl: window.location.href,
@@ -66,6 +69,11 @@ const ActivatePlanWarningModal: React.FC<ActivatePlanWarningModalProps> = ({
         promoCode: promoCode,
         cardTrial: false,
       };
+
+      // Add referral ID if present
+      if (referralId) {
+        bodyData.referral = referralId;
+      }
     }
 
     const token = getAuthenticationCookie();

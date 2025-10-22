@@ -15,6 +15,9 @@ export type DataSubcription = {
   hosted_invoice_url?: string
   coupon?: string
   trial_settings?: any
+  metadata?: {
+    [key: string]: string
+  }
 }
 
 type NewSubcription = {
@@ -35,9 +38,10 @@ const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY, {
  * @param {string} priceId
  * @param {boolean} isTrial
  * @param {string} couponCode
+ * @param {string} referralCode
  * @returns {Promise<any>}
  */
-export async function createNewSubcription(token: string, email: string, name: string, priceId: string, isTrial = false, couponCode = ''): Promise<NewSubcription> {
+export async function createNewSubcription(token: string, email: string, name: string, priceId: string, isTrial = false, couponCode = '', referralCode = ''): Promise<NewSubcription> {
   if (!token) {
     throw new ApolloError('Invalid token')
   }
@@ -64,20 +68,41 @@ export async function createNewSubcription(token: string, email: string, name: s
     // Check if customer exists
     if (customers.data.length > 0) {
       customer = customers.data[0]
-      // console.log("customer exists = ",customer);
+
+      // Update customer metadata with referral code if not already present
+      if (referralCode && (!customer.metadata || !customer.metadata.referral)) {
+        try {
+          customer = await stripe.customers.update(customer.id, {
+            metadata: {
+              ...customer.metadata,
+              referral: referralCode,
+            },
+          })
+          console.log('[REWARDFUL] Updated existing customer with referral:', referralCode)
+        } catch (error) {
+          console.error('[REWARDFUL] Failed to update customer metadata:', error)
+        }
+      }
     } else {
       // Create a new customer if not found
+      const customerData: any = {
+        email: normalizeEmail(email),
+        name,
+      }
+
+      // Add referral to customer metadata if available
+      if (referralCode) {
+        customerData.metadata = {
+          referral: referralCode,
+        }
+        console.log('[REWARDFUL] Creating new customer with referral:', referralCode)
+      }
+
       if (token !== 'Trial') {
-        customer = await stripe.customers.create({
-          email: normalizeEmail(email),
-          name,
-          source: token,
-        })
+        customerData.source = token
+        customer = await stripe.customers.create(customerData)
       } else {
-        customer = await stripe.customers.create({
-          email: normalizeEmail(email),
-          name,
-        })
+        customer = await stripe.customers.create(customerData)
       }
     }
 
@@ -104,11 +129,33 @@ export async function createNewSubcription(token: string, email: string, name: s
         },
       }
 
+      // Add referral code to trial subscription metadata if present
+      if (referralCode) {
+        if (!dataSubcription.metadata) {
+          dataSubcription.metadata = {}
+        }
+        dataSubcription.metadata.referral = referralCode
+        console.log('[REWARDFUL] Adding referral to trial subscription metadata:', referralCode)
+      }
+
+      // Create the actual Stripe subscription for trial plans too
+      const result = await stripe.subscriptions.create(dataSubcription)
+
       return {
         customer_id: customer.id,
-        subcription_id: 'Trial',
+        subcription_id: result.id,
       }
     }
+
+    // Add referral code to subscription metadata if present
+    if (referralCode) {
+      if (!dataSubcription.metadata) {
+        dataSubcription.metadata = {}
+      }
+      dataSubcription.metadata.referral = referralCode
+      console.log('[REWARDFUL] Adding referral to subscription metadata:', referralCode)
+    }
+
     const result = await stripe.subscriptions.create(dataSubcription)
 
     return {
