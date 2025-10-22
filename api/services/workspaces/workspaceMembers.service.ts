@@ -4,7 +4,7 @@ import database from '../../config/database.config'
 import { INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
 import { WORKSPACE_MANAGEMENT_ROLES, WORKSPACE_USER_ROLE_OWNER, WORKSPACE_USER_STATUS_ACTIVE, WORKSPACE_USER_STATUS_DECLINE, WORKSPACE_USER_STATUS_INACTIVE, WORKSPACE_USER_STATUS_PENDING, WorkspaceUserRole } from '../../constants/workspace.constant'
-import { deletePendingInvitationsByCreator, getDetailWorkspaceInvitations, getInvitationTokensByCreator, getWorkspaceInvitation, updateWorkspaceInvitationByToken } from '../../repository/invitations.repository'
+import { deletePendingInvitationsByCreator, deleteWorkspaceInvitations, getDetailWorkspaceInvitations, getInvitationTokensByCreator, getWorkspaceInvitation, updateWorkspaceInvitationByToken } from '../../repository/invitations.repository'
 import { UserProfile } from '../../repository/user.repository'
 import { GetAllWorkspaceResponse, getWorkspace, getWorkspaceMembers as getWorkspaceMembersRepo } from '../../repository/workspace.repository'
 import { removeWorkspaceDomainsBySiteOwner } from '../../repository/workspace_allowed_sites.repository'
@@ -364,6 +364,7 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
     // Remove PENDING invitations created by this user
     await deletePendingInvitationsByCreator(workspaceMember.user_id, workspace.id, undefined, transaction)
 
+    // Delete the workspace_user record
     await deleteWorkspaceUsers(
       {
         user_id: workspaceMember.user_id,
@@ -372,8 +373,14 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
       transaction,
     )
 
-    // Note: member's own invitation (if pending) was already deleted in step above
-    // If invitation is accepted/declined, we keep it for history
+    if (workspaceMember.invitation_token && workspaceMember.status === WORKSPACE_USER_STATUS_PENDING) {
+      await deleteWorkspaceInvitations(
+        {
+          token: workspaceMember.invitation_token,
+        },
+        transaction,
+      )
+    }
 
     await transaction.commit()
 
