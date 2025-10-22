@@ -3,13 +3,13 @@ import { Knex } from 'knex'
 import database from '../../config/database.config'
 import { INVITATION_STATUS_ACCEPTED } from '../../constants/invitation.constant'
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
-import { WORKSPACE_USER_STATUS_PENDING } from '../../constants/workspace.constant'
+import { WORKSPACE_USER_ROLE_OWNER, WORKSPACE_USER_STATUS_PENDING } from '../../constants/workspace.constant'
 import { deleteOrganizationInvitations, deleteWorkspaceInvitations, GetDetailWorkspaceInvitation, getDetailWorkspaceInvitations, getOrganizationInvitation, getWorkspaceInvitation } from '../../repository/invitations.repository'
 import { UserProfile } from '../../repository/user.repository'
 import { GetAllWorkspaceResponse, getWorkspace, Workspace } from '../../repository/workspace.repository'
 import { deleteWorkspaceUsers, getWorkspaceUser } from '../../repository/workspace_users.repository'
 import { canManageOrganization, canManageWorkspace } from '../../utils/access.helper'
-import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
+import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateRemoveWorkspaceInvitation } from '../../validations/workspace.validation'
 import { getUserOrganization } from '../organization/organization_users.service'
@@ -99,6 +99,11 @@ export async function removeWorkspaceInvitation(user: UserProfile, id: number): 
 
   if (!isOrgManager && !isWorkspaceManager && !isInvitationCreator) {
     throw new ApolloError('You can only remove invitations that you created')
+  }
+
+  // Only organization managers can remove workspace owner invitations
+  if (invitation.workspace_role === WORKSPACE_USER_ROLE_OWNER && !isOrgManager) {
+    throw new ForbiddenError('Only organization admin can remove workspace owner invitation')
   }
 
   if (isInvitationCreator && !isOrgManager && !isWorkspaceManager) {

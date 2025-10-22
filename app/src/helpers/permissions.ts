@@ -147,3 +147,65 @@ export function canChangeWorkspaceMemberRole(
   // Workspace members cannot change roles
   return false;
 }
+
+/**
+ * Checks if user can change role of specific target member
+ * Additional checks:
+ * - Only Org Admin can change Owner role
+ * - Only Org Admin can change own role
+ * - Cannot change role of inactive/decline members
+ */
+export function canChangeTargetMemberRole(
+  isAdminOrOwnerOrSuper: boolean,
+  userWorkspaceRole: string | null | undefined,
+  targetMemberRole: string | null | undefined,
+  targetMemberId: number | string,
+  currentUserId?: number,
+  targetMemberStatus?: string | null,
+): boolean {
+  // Cannot change inactive/decline members
+  if (targetMemberStatus === 'inactive' || targetMemberStatus === 'decline') {
+    return false;
+  }
+
+  // Only Org Admin can change Owner role
+  if (isWorkspaceOwner(targetMemberRole) && !isAdminOrOwnerOrSuper) {
+    return false;
+  }
+
+  // Only Org Admin can change own role
+  if (
+    currentUserId &&
+    Number(targetMemberId) === Number(currentUserId) &&
+    !isAdminOrOwnerOrSuper
+  ) {
+    return false;
+  }
+
+  // Check general permission
+  return canChangeWorkspaceMemberRole(isAdminOrOwnerOrSuper, userWorkspaceRole);
+}
+
+/**
+ * Gets list of roles user can assign to a member
+ * - Org Admin: can assign all roles (owner, admin, member)
+ * - Workspace Owner/Admin: can assign admin and member (not owner)
+ * - Workspace Member: cannot assign any roles
+ */
+export function getAvailableRolesToAssign(
+  isAdminOrOwnerOrSuper: boolean,
+  userWorkspaceRole: string | null | undefined,
+): string[] {
+  // Org-level permissions - can assign all roles
+  if (isAdminOrOwnerOrSuper) {
+    return ['owner', 'admin', 'member'];
+  }
+
+  // Workspace-level permissions (owner or admin) - cannot assign owner
+  if (isWorkspaceAdminOrOwner(userWorkspaceRole)) {
+    return ['admin', 'member'];
+  }
+
+  // Workspace members cannot assign roles
+  return [];
+}

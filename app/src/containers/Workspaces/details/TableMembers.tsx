@@ -14,7 +14,8 @@ import { RemoveWorkspaceMember } from './RemoveWorkspaceMember';
 import { RemoveWorkspaceInvitation } from './RemoveWorkspaceInvitation';
 import {
   canDeleteWorkspaceMember,
-  canChangeWorkspaceMemberRole,
+  canChangeTargetMemberRole,
+  getAvailableRolesToAssign,
 } from '@/helpers/permissions';
 
 type TableMembersProps = {
@@ -149,21 +150,28 @@ export const TableMembers = ({
           return <span>{currentRole}</span>;
         }
 
-        // Check if user has permission to change roles
-        const canChangeRole = canChangeWorkspaceMemberRole(
+        // Check if user can change this specific member's role
+        const canChangeThisMemberRole = canChangeTargetMemberRole(
+          isAdminOrOwnerOrSuper,
+          userWorkspaceRole,
+          currentRole,
+          params.row.user_id,
+          currentUserId,
+          params.row.status,
+        );
+
+        // Get available roles user can assign
+        const availableRoles = getAvailableRolesToAssign(
           isAdminOrOwnerOrSuper,
           userWorkspaceRole,
         );
 
         return (
           <RoleSelector
-            disabled={
-              !canChangeRole ||
-              params.row.status === WorkspaceUserStatus.Inactive ||
-              params.row.status === WorkspaceUserStatus.Decline
-            }
+            disabled={!canChangeThisMemberRole}
             initialRole={currentRole}
             workspaceUserId={params.row.id}
+            availableRoles={availableRoles}
             onRoleChanged={handleUpdate}
           />
         );
@@ -188,6 +196,11 @@ export const TableMembers = ({
         const targetMemberRole = params.row.role;
 
         if (!hasAccess) {
+          return null;
+        }
+
+        // Only Org Admin can delete Owner
+        if (targetMemberRole === 'owner' && !isAdminOrOwnerOrSuper) {
           return null;
         }
 

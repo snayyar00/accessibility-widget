@@ -188,36 +188,36 @@ export const InviteUser: React.FC<InviteUserProps> = ({
   );
 
   const getWorkspaceRoles = () => {
+    const memberOnlyRoles = [WorkspaceUserRole.Member];
+    const adminAndMemberRoles = [
+      WorkspaceUserRole.Member,
+      WorkspaceUserRole.Admin,
+    ];
     const allRoles = [
       WorkspaceUserRole.Member,
       WorkspaceUserRole.Admin,
       WorkspaceUserRole.Owner,
     ];
 
-    const memberOnlyRoles = [WorkspaceUserRole.Member];
-
+    // Only Org Admin/Super Admin can invite Owner
     if (isAdminOrOwnerOrSuper) {
       return allRoles.map(createRoleMenuItem);
     }
 
+    // Workspace Owner/Admin can invite Admin and Member (not Owner)
     if (
       userWorkspaceRole === WorkspaceUserRole.Owner ||
       userWorkspaceRole === WorkspaceUserRole.Admin
     ) {
-      return allRoles.map(createRoleMenuItem);
+      return adminAndMemberRoles.map(createRoleMenuItem);
     }
 
+    // Workspace Member can only invite Member
     if (userWorkspaceRole === WorkspaceUserRole.Member) {
       return memberOnlyRoles.map(createRoleMenuItem);
     }
 
-    if (
-      isAdminOrOwnerOrSuper === undefined &&
-      userWorkspaceRole === undefined
-    ) {
-      return allRoles.map(createRoleMenuItem);
-    }
-
+    // Default: if role unknown, show Member-only (safest fallback)
     return memberOnlyRoles.map(createRoleMenuItem);
   };
 

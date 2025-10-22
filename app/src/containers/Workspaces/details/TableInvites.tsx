@@ -150,6 +150,11 @@ export const TableInvites = ({
           return null;
         }
 
+        // Only Org Admin can delete Owner invitation
+        if (targetInvitationRole === 'owner' && !isAdminOrOwnerOrSuper) {
+          return null;
+        }
+
         // Check if user can delete using helper function
         const canDelete = canDeleteWorkspaceMember(
           isAdminOrOwnerOrSuper,

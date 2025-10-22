@@ -213,6 +213,7 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
         const currentUserMember = (params.row.members as WorkspaceUser[])?.find(
           (member) => member.user_id === Number(userData?.id),
         );
+
         const userWorkspaceRole = currentUserMember?.role || null;
 
         return (

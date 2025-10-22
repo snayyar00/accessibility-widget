@@ -10,7 +10,7 @@ import { UserProfile } from '../../repository/user.repository'
 import { GetAllWorkspaceResponse, getWorkspace, getWorkspaceMembers as getWorkspaceMembersRepo } from '../../repository/workspace.repository'
 import { deleteWorkspaceUsers, getWorkspaceUser, updateWorkspaceUser } from '../../repository/workspace_users.repository'
 import { canManageOrganization, canManageWorkspace, isWorkspaceMember } from '../../utils/access.helper'
-import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
+import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateChangeWorkspaceMemberRole, validateRemoveWorkspaceMember } from '../../validations/workspace.validation'
 import { getUserOrganization } from '../organization/organization_users.service'
@@ -310,6 +310,23 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
     throw new ApolloError('You can only remove members that you invited')
   }
 
+  // Get all members for validation checks
+  const allMembers = await getWorkspaceMembersRepo({ workspaceId: workspace.id })
+  const activeMembers = allMembers.filter((member) => member.status === WORKSPACE_USER_STATUS_ACTIVE)
+  const activeOwners = activeMembers.filter((member) => member.role === WORKSPACE_USER_ROLE_OWNER)
+
+  // Only organization managers can remove workspace owners
+  if (workspaceMember.role === WORKSPACE_USER_ROLE_OWNER && !isOrgManager) {
+    throw new ForbiddenError('Only organization admin can remove workspace owner')
+  }
+
+  // Owner cannot leave workspace if they are the last owner
+  if (user.id === workspaceMember.user_id && workspaceMember.role === WORKSPACE_USER_ROLE_OWNER) {
+    if (activeOwners.length === 1) {
+      throw new ForbiddenError('Cannot leave workspace as the last owner. Transfer ownership first.')
+    }
+  }
+
   if (isMemberCreator && !isWorkspaceManager && !isOrgManager && currentUserWorkspaceMember) {
     if (workspaceMember.user_id === user.id) {
       throw new ApolloError('You cannot remove yourself from the workspace')
@@ -320,8 +337,10 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
     }
   }
 
-  const allMembers = await getWorkspaceMembersRepo({ workspaceId: workspace.id })
-  const activeMembers = allMembers.filter((member) => member.status === WORKSPACE_USER_STATUS_ACTIVE)
+  // Cannot remove the last owner from workspace
+  if (workspaceMember.role === WORKSPACE_USER_ROLE_OWNER && activeOwners.length === 1 && workspaceMember.status === WORKSPACE_USER_STATUS_ACTIVE) {
+    throw new ValidationError('Cannot remove the last owner of the workspace')
+  }
 
   if (activeMembers.length === 1 && workspaceMember.status === WORKSPACE_USER_STATUS_ACTIVE) {
     throw new ApolloError('Cannot remove the last active member from workspace')

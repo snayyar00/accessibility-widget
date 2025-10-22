@@ -17,10 +17,11 @@ type RoleSelectorProps = {
   initialRole: WorkspaceUserRole;
   workspaceUserId: number;
   disabled?: boolean;
+  availableRoles?: string[]; // Filtered roles based on user permissions
   onRoleChanged?: () => void;
 };
 
-const ROLE_OPTIONS = [
+const ALL_ROLE_OPTIONS = [
   { value: WorkspaceUserRole.Owner, label: 'Owner' },
   { value: WorkspaceUserRole.Admin, label: 'Admin' },
   { value: WorkspaceUserRole.Member, label: 'Member' },
@@ -30,6 +31,7 @@ export const RoleSelector = ({
   initialRole,
   workspaceUserId,
   disabled = false,
+  availableRoles,
   onRoleChanged,
 }: RoleSelectorProps) => {
   const [currentRole, setCurrentRole] =
@@ -38,6 +40,33 @@ export const RoleSelector = ({
   React.useEffect(() => {
     setCurrentRole(initialRole);
   }, [initialRole]);
+
+  // Filter role options based on available roles
+  const roleOptions = React.useMemo(() => {
+    if (!availableRoles || availableRoles.length === 0) {
+      return ALL_ROLE_OPTIONS;
+    }
+
+    // Always include the current role, even if not in availableRoles
+    // This ensures the current value is visible in the select
+    const currentRoleOption = ALL_ROLE_OPTIONS.find(
+      (option) => option.value === currentRole,
+    );
+
+    const filteredOptions = ALL_ROLE_OPTIONS.filter((option) =>
+      availableRoles.includes(option.value),
+    );
+
+    // If current role is not in filtered options, add it
+    if (
+      currentRoleOption &&
+      !filteredOptions.some((opt) => opt.value === currentRole)
+    ) {
+      return [currentRoleOption, ...filteredOptions];
+    }
+
+    return filteredOptions;
+  }, [availableRoles, currentRole]);
 
   const [changeWorkspaceMemberRole, { loading: changingRole }] =
     useMutation<ChangeWorkspaceMemberRoleMutation>(
@@ -95,7 +124,7 @@ export const RoleSelector = ({
         height: '36px',
       }}
     >
-      {ROLE_OPTIONS.map((option) => (
+      {roleOptions.map((option) => (
         <MenuItem key={option.value} value={option.value}>
           {option.label}
         </MenuItem>
