@@ -1,11 +1,12 @@
 import database from '../../config/database.config'
 import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_ADMIN, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { objectToString } from '../../helpers/string.helper'
-import { deleteOrganizationInvitations, deleteWorkspaceInvitations } from '../../repository/invitations.repository'
+import { deletePendingInvitationsByCreator, deletePendingInvitationsByEmail, deletePendingOrganizationInvitationsByCreator, getInvitationTokensByCreator } from '../../repository/invitations.repository'
 import { createOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization, updateOrganization } from '../../repository/organization.repository'
 import { findUser } from '../../repository/user.repository'
 import { updateUser, UserProfile } from '../../repository/user.repository'
-import { deleteWorkspaceUsersByOrganization } from '../../repository/workspace_users.repository'
+import { removeWorkspaceDomainsBySiteOwnerInOrganization } from '../../repository/workspace_allowed_sites.repository'
+import { deletePendingWorkspaceMembersByTokensInOrganization, deleteWorkspaceUsersByOrganization } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
@@ -245,20 +246,35 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
       await updateUser(userId, { current_organization_id: newOrgId }, trx)
     }
 
-    await deleteWorkspaceUsersByOrganization(userId, organizationId, trx)
+    // Remove all domains owned by this user from all workspaces in this organization
+    const removedDomainsCount = await removeWorkspaceDomainsBySiteOwnerInOrganization(userId, organizationId, trx)
 
+    // Get invitation tokens created by this user BEFORE deleting invitations
+    const tokens = await getInvitationTokensByCreator(userId, undefined, organizationId, trx)
+
+    // Remove PENDING workspace members (real records) invited by this user in all workspaces
+    await deletePendingWorkspaceMembersByTokensInOrganization(organizationId, tokens, trx)
+
+    // Remove PENDING invitations for this user
     if (targetUser && targetUser.email) {
-      await deleteWorkspaceInvitations({ email: targetUser.email, organization_id: organizationId }, trx)
-      await deleteOrganizationInvitations({ email: targetUser.email, organization_id: organizationId }, trx)
+      await deletePendingInvitationsByEmail(targetUser.email, organizationId, trx)
     }
 
-    // Also remove invitations created by this user in this organization
-    await deleteWorkspaceInvitations({ invited_by_id: userId, organization_id: organizationId }, trx)
-    await deleteOrganizationInvitations({ invited_by_id: userId, organization_id: organizationId }, trx)
+    await deletePendingInvitationsByCreator(userId, undefined, organizationId, trx)
+    await deletePendingOrganizationInvitationsByCreator(userId, organizationId, trx)
+
+    await deleteWorkspaceUsersByOrganization(userId, organizationId, trx)
 
     const result = await removeUserFromOrganizationService(target.id, trx)
 
     await trx.commit()
+
+    logger.info('User removed from organization', {
+      organization_id: organizationId,
+      removed_user_id: userId,
+      removed_by: initiator.id,
+      removed_domains_count: removedDomainsCount,
+    })
 
     return result
   } catch (error) {

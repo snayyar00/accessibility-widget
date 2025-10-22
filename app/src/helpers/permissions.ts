@@ -87,8 +87,10 @@ export function canManageWorkspace(
  * Checks if user can delete workspace member or invitation
  * User can delete if:
  * - is super admin OR organization owner/admin (isAdminOrOwnerOrSuper) OR
- * - is workspace owner/admin OR
+ * - is workspace owner/admin (but NOT Owner role members) OR
  * - is the creator of the invitation/member (invited_by matches currentUserId) AND target is a member (not admin/owner)
+ *
+ * Special rule: Only Org Admin can delete Owner role members/invitations
  */
 export function canDeleteWorkspaceMember(
   isAdminOrOwnerOrSuper: boolean,
@@ -97,6 +99,11 @@ export function canDeleteWorkspaceMember(
   currentUserId?: number,
   targetMemberRole?: string | null | undefined,
 ): boolean {
+  // Only Org Admin can delete Owner
+  if (isWorkspaceOwner(targetMemberRole) && !isAdminOrOwnerOrSuper) {
+    return false;
+  }
+
   // Org-level permissions
   if (isAdminOrOwnerOrSuper) {
     return true;
@@ -124,33 +131,11 @@ export function canDeleteWorkspaceMember(
 }
 
 /**
- * Checks if user can change workspace member roles
- * User can change roles if:
+ * Checks if user can change role of specific target member
+ * Checks both general permission and specific constraints:
  * - is super admin OR organization owner/admin (isAdminOrOwnerOrSuper) OR
  * - is workspace owner/admin
- * Workspace members cannot change roles (they can only invite with member role)
- */
-export function canChangeWorkspaceMemberRole(
-  isAdminOrOwnerOrSuper: boolean,
-  userWorkspaceRole: string | null | undefined,
-): boolean {
-  // Org-level permissions
-  if (isAdminOrOwnerOrSuper) {
-    return true;
-  }
-
-  // Workspace-level permissions (owner or admin only)
-  if (isWorkspaceAdminOrOwner(userWorkspaceRole)) {
-    return true;
-  }
-
-  // Workspace members cannot change roles
-  return false;
-}
-
-/**
- * Checks if user can change role of specific target member
- * Additional checks:
+ * Additional constraints:
  * - Only Org Admin can change Owner role
  * - Only Org Admin can change own role
  * - Cannot change role of inactive/decline members
@@ -183,7 +168,18 @@ export function canChangeTargetMemberRole(
   }
 
   // Check general permission
-  return canChangeWorkspaceMemberRole(isAdminOrOwnerOrSuper, userWorkspaceRole);
+  // Org-level permissions
+  if (isAdminOrOwnerOrSuper) {
+    return true;
+  }
+
+  // Workspace-level permissions (owner or admin only)
+  if (isWorkspaceAdminOrOwner(userWorkspaceRole)) {
+    return true;
+  }
+
+  // Workspace members cannot change roles
+  return false;
 }
 
 /**

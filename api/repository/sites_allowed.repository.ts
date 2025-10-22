@@ -45,6 +45,16 @@ export async function findSiteById(id: number): Promise<FindAllowedSitesProps | 
 }
 
 /**
+ * Get sites by array of IDs
+ * @param ids - Array of site IDs
+ * @returns Array of sites with id, organization_id, and user_id
+ */
+export async function findSitesByIds(ids: number[]): Promise<Array<{ id: number; organization_id: number; user_id: number }>> {
+  if (ids.length === 0) return []
+  return database(TABLE).whereIn('id', ids).select('id', 'organization_id', 'user_id')
+}
+
+/**
  * For admins: Returns ALL organization sites with workspace data aggregated via LEFT JOIN
  * For regular users: Returns own sites + workspace sites (with active membership check) in single query
  *

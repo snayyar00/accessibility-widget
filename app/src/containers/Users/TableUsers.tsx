@@ -19,7 +19,8 @@ import { RemoveAllUserInvitations } from '@/components/Invite/RemoveAllUserInvit
 type TableUsersProps = {
   organizationId: number;
   userId: number;
-  isSuperAdmin?: boolean;
+  isSuperAdmin: boolean;
+  isAdminOrOwnerOrSuper: boolean;
 };
 
 const STATUS_STYLES: Record<
@@ -48,6 +49,7 @@ export const TableUsers = ({
   organizationId,
   userId,
   isSuperAdmin = false,
+  isAdminOrOwnerOrSuper = false,
 }: TableUsersProps) => {
   const [pageSize, setPageSize] = React.useState<number>(50);
 
@@ -346,6 +348,7 @@ export const TableUsers = ({
                 allWorkspaces={allWorkspaces}
                 workspacesLoading={workspacesLoading}
                 isSuperAdmin={isSuperAdmin}
+                isAdminOrOwnerOrSuper={isAdminOrOwnerOrSuper}
               />
             )}
 

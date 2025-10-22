@@ -349,3 +349,81 @@ export async function deleteOrganizationInvitations(condition: Partial<Invitatio
   const result = await deleteQuery
   return result > 0
 }
+
+/**
+ * Get invitation tokens created by specific user
+ * @param invitedById - User ID who created invitations
+ * @param workspaceId - Optional workspace ID filter
+ * @param organizationId - Optional organization ID filter
+ * @param transaction - Optional transaction
+ * @returns Array of invitation tokens
+ */
+export async function getInvitationTokensByCreator(invitedById: number, workspaceId?: number, organizationId?: number, transaction: Knex.Transaction = null): Promise<string[]> {
+  const query = database(TABLE).select('token').where({ invited_by_id: invitedById, type: 'workspace' })
+
+  if (workspaceId) query.where({ workspace_id: workspaceId })
+  if (organizationId) query.where({ organization_id: organizationId })
+
+  if (transaction) {
+    const results = await query.transacting(transaction)
+    return results.map((r) => r.token)
+  }
+
+  const results = await query
+  return results.map((r) => r.token)
+}
+
+/**Ы
+ * Delete pending invitations created by specific user
+ * @param invitedById - User ID who created invitations
+ * @param workspaceId - Optional workspace ID filter
+ * @param organizationId - Optional organization ID filter
+ * @param transaction - Optional transaction
+ * @returns Number of deleted records
+ */
+export async function deletePendingInvitationsByCreator(invitedById: number, workspaceId?: number, organizationId?: number, transaction: Knex.Transaction = null): Promise<number> {
+  const query = database(TABLE).where({ invited_by_id: invitedById, type: 'workspace', status: 'pending' })
+
+  if (workspaceId) query.where({ workspace_id: workspaceId })
+  if (organizationId) query.where({ organization_id: organizationId })
+
+  if (transaction) {
+    return query.del().transacting(transaction)
+  }
+
+  return query.del()
+}
+
+/**
+ * Delete pending organization invitations created by specific user
+ * @param invitedById - User ID who created invitations
+ * @param organizationId - Organization ID
+ * @param transaction - Optional transaction
+ * @returns Number of deleted records
+ */
+export async function deletePendingOrganizationInvitationsByCreator(invitedById: number, organizationId: number, transaction: Knex.Transaction = null): Promise<number> {
+  const query = database(TABLE).where({ invited_by_id: invitedById, organization_id: organizationId, type: 'organization', status: 'pending' })
+
+  if (transaction) {
+    return query.del().transacting(transaction)
+  }
+
+  return query.del()
+}
+
+/**
+ * Delete pending invitations for specific email
+ * @param email - Email address
+ * @param organizationId - Organization ID
+ * @param transaction - Optional transaction
+ * @returns Number of deleted records
+ */
+export async function deletePendingInvitationsByEmail(email: string, organizationId: number, transaction: Knex.Transaction = null): Promise<number> {
+  const query = database(TABLE).where({ email, organization_id: organizationId, status: 'pending' })
+
+  if (transaction) {
+    return query.del().transacting(transaction)
+  }
+
+  return query.del()
+}

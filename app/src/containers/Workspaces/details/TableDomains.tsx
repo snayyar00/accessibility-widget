@@ -16,6 +16,9 @@ type TableDomainsProps = {
   alias: string;
   onUpdate?: () => void;
   hasAccess?: boolean;
+  isAdminOrOwnerOrSuper?: boolean;
+  userWorkspaceRole?: string | null;
+  currentUserId?: number;
 };
 
 type CustomToolbarProps = {
@@ -92,6 +95,9 @@ export const TableDomains = ({
   alias,
   onUpdate,
   hasAccess = true,
+  isAdminOrOwnerOrSuper = false,
+  userWorkspaceRole = null,
+  currentUserId,
 }: TableDomainsProps) => {
   const [pageSize, setPageSize] = React.useState<number>(50);
   const [selectionModel, setSelectionModel] =
@@ -119,6 +125,7 @@ export const TableDomains = ({
         domainId: domain.id,
         addedByEmail: domain.added_by_user_email || '—',
         siteOwnerEmail: domain.site_owner_user_email || '—',
+        siteOwnerId: domain.site_owner_user_id,
       })),
     [domains],
   );
@@ -185,6 +192,19 @@ export const TableDomains = ({
   const selectedDomainIds = selectionModel.map((id) => Number(id));
   const currentDomainIds = domains.map((d) => Number(d.id));
 
+  const isRowSelectable = React.useCallback(
+    (params: any) => {
+      if (isAdminOrOwnerOrSuper) return true;
+      if (userWorkspaceRole === 'owner' || userWorkspaceRole === 'admin')
+        return true;
+
+      const siteOwnerId = params.row.siteOwnerId;
+
+      return siteOwnerId === currentUserId;
+    },
+    [isAdminOrOwnerOrSuper, userWorkspaceRole, currentUserId],
+  );
+
   return (
     <div className="h-[calc(100vh-367px)]">
       <DataGrid
@@ -197,6 +217,7 @@ export const TableDomains = ({
         rows={rows}
         columns={columns}
         checkboxSelection
+        isRowSelectable={isRowSelectable}
         selectionModel={selectionModel}
         onSelectionModelChange={(newSelection) => {
           setSelectionModel(newSelection);

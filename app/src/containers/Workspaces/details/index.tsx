@@ -167,6 +167,9 @@ export const WorkspaceDetails = () => {
           onUpdate={handleTableUpdate}
           alias={alias}
           hasAccess={hasAccess}
+          isAdminOrOwnerOrSuper={userData?.isAdminOrOwnerOrSuper || false}
+          userWorkspaceRole={userWorkspaceRole}
+          currentUserId={Number(userData?.id)}
         />
       </TabPanel>
 

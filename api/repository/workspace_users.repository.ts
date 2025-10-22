@@ -156,3 +156,41 @@ export async function hasWorkspaceAccessToSite(userId: number, siteId: number): 
 
   return !!result
 }
+
+/**
+ * Delete pending workspace members by invitation tokens
+ * @param workspaceId - Workspace ID
+ * @param tokens - Array of invitation tokens
+ * @param transaction - Optional transaction
+ * @returns Number of deleted records
+ */
+export async function deletePendingWorkspaceMembersByTokens(workspaceId: number, tokens: string[], transaction: Knex.Transaction = null): Promise<number> {
+  if (tokens.length === 0) return 0
+
+  const query = database(TABLE).where({ workspace_id: workspaceId, status: 'pending' }).whereIn('invitation_token', tokens).del()
+
+  if (transaction) {
+    return query.transacting(transaction)
+  }
+
+  return query
+}
+
+/**
+ * Delete pending workspace members by invitation tokens in organization workspaces
+ * @param organizationId - Organization ID
+ * @param tokens - Array of invitation tokens
+ * @param transaction - Optional transaction
+ * @returns Number of deleted records
+ */
+export async function deletePendingWorkspaceMembersByTokensInOrganization(organizationId: number, tokens: string[], transaction: Knex.Transaction = null): Promise<number> {
+  if (tokens.length === 0) return 0
+
+  const query = database(TABLE).whereIn('invitation_token', tokens).andWhere('status', 'pending').whereIn('workspace_id', database(TABLES.workspaces).select('id').where('organization_id', organizationId)).del()
+
+  if (transaction) {
+    return query.transacting(transaction)
+  }
+
+  return query
+}

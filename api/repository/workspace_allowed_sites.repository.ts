@@ -175,3 +175,68 @@ export async function removeWorkspaceDomainsRepo(workspaceId: number, allowedSit
     throw error
   }
 }
+
+/**
+ * Remove all domains from workspace where user is the site owner
+ * @param workspaceId - ID of workspace
+ * @param siteOwnerUserId - ID of site owner user
+ * @param transaction - optional transaction
+ * @returns number of deleted records
+ */
+export async function removeWorkspaceDomainsBySiteOwner(workspaceId: number, siteOwnerUserId: number, transaction: Knex.Transaction = null): Promise<number> {
+  const trx = transaction || (await database.transaction())
+
+  try {
+    const deletedCount = await database(TABLE)
+      .where({
+        workspace_id: workspaceId,
+        site_owner_user_id: siteOwnerUserId,
+      })
+      .del()
+      .transacting(trx)
+
+    if (!transaction) {
+      await trx.commit()
+    }
+
+    return deletedCount
+  } catch (error) {
+    if (!transaction) {
+      await trx.rollback()
+    }
+    throw error
+  }
+}
+
+/**
+ * Remove all domains from all workspaces in organization where user is the site owner
+ * @param siteOwnerUserId - ID of site owner user
+ * @param organizationId - ID of organization
+ * @param transaction - optional transaction
+ * @returns number of deleted records
+ */
+export async function removeWorkspaceDomainsBySiteOwnerInOrganization(siteOwnerUserId: number, organizationId: number, transaction: Knex.Transaction = null): Promise<number> {
+  const trx = transaction || (await database.transaction())
+
+  try {
+    const deletedCount = await database(TABLE)
+      .join(TABLES.workspaces, workspaceAllowedSitesColumns.workspaceId, workspaceColumns.id)
+      .where({
+        [workspaceAllowedSitesColumns.siteOwnerUserId]: siteOwnerUserId,
+        [`${TABLES.workspaces}.organization_id`]: organizationId,
+      })
+      .del()
+      .transacting(trx)
+
+    if (!transaction) {
+      await trx.commit()
+    }
+
+    return deletedCount
+  } catch (error) {
+    if (!transaction) {
+      await trx.rollback()
+    }
+    throw error
+  }
+}

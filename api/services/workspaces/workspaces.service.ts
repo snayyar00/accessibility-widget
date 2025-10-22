@@ -1,3 +1,6 @@
+import { Knex } from 'knex'
+
+import database from '../../config/database.config'
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
 import { WORKSPACE_MANAGEMENT_ROLES } from '../../constants/workspace.constant'
 import { stringToSlug } from '../../helpers/string.helper'
@@ -154,9 +157,35 @@ export async function deleteWorkspace(user: UserProfile, workspace_id: number): 
     throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} or workspace ${WORKSPACE_MANAGEMENT_ROLES.join(', ')} can delete the workspace`)
   }
 
-  await deleteWorkspaceById(workspace_id)
+  let transaction: Knex.Transaction
 
-  return true
+  try {
+    transaction = await database.transaction()
+
+    await deleteWorkspaceById(workspace_id, transaction)
+
+    await transaction.commit()
+
+    logger.info('Successfully deleted workspace', {
+      workspace_id,
+      deleted_by: user.id,
+      organization_id: user.current_organization_id,
+    })
+
+    return true
+  } catch (error) {
+    if (transaction) {
+      await transaction.rollback()
+    }
+
+    logger.error('Failed to delete workspace', {
+      workspace_id,
+      user_id: user.id,
+      error: error.message,
+    })
+
+    throw new ApolloError('Failed to delete workspace')
+  }
 }
 
 /**

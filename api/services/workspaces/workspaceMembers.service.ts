@@ -1,14 +1,14 @@
 import { Knex } from 'knex'
 
 import database from '../../config/database.config'
-import { TABLES } from '../../constants/database.constant'
 import { INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
 import { WORKSPACE_MANAGEMENT_ROLES, WORKSPACE_USER_ROLE_OWNER, WORKSPACE_USER_STATUS_ACTIVE, WORKSPACE_USER_STATUS_DECLINE, WORKSPACE_USER_STATUS_INACTIVE, WORKSPACE_USER_STATUS_PENDING, WorkspaceUserRole } from '../../constants/workspace.constant'
-import { deleteWorkspaceInvitations, getDetailWorkspaceInvitations, updateWorkspaceInvitationByToken } from '../../repository/invitations.repository'
+import { deletePendingInvitationsByCreator, getDetailWorkspaceInvitations, getInvitationTokensByCreator, getWorkspaceInvitation, updateWorkspaceInvitationByToken } from '../../repository/invitations.repository'
 import { UserProfile } from '../../repository/user.repository'
 import { GetAllWorkspaceResponse, getWorkspace, getWorkspaceMembers as getWorkspaceMembersRepo } from '../../repository/workspace.repository'
-import { deleteWorkspaceUsers, getWorkspaceUser, updateWorkspaceUser } from '../../repository/workspace_users.repository'
+import { removeWorkspaceDomainsBySiteOwner } from '../../repository/workspace_allowed_sites.repository'
+import { deletePendingWorkspaceMembersByTokens, deleteWorkspaceUsers, getWorkspaceUser, updateWorkspaceUser } from '../../repository/workspace_users.repository'
 import { canManageOrganization, canManageWorkspace, isWorkspaceMember } from '../../utils/access.helper'
 import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
@@ -301,7 +301,8 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
   let isMemberCreator = false
 
   if (currentUserWorkspaceMember && workspaceMember.invitation_token) {
-    const memberInvitation = await database(TABLES.invitations).where({ token: workspaceMember.invitation_token }).first()
+    const memberInvitations = await getWorkspaceInvitation({ token: workspaceMember.invitation_token })
+    const memberInvitation = memberInvitations.length > 0 ? memberInvitations[0] : null
 
     isMemberCreator = memberInvitation && memberInvitation.invited_by_id === user.id
   }
@@ -351,6 +352,18 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
   try {
     transaction = await database.transaction()
 
+    // Remove all domains owned by this user from the workspace
+    const removedDomainsCount = await removeWorkspaceDomainsBySiteOwner(workspace.id, workspaceMember.user_id, transaction)
+
+    // Get invitation tokens created by this user BEFORE deleting invitations
+    const tokens = await getInvitationTokensByCreator(workspaceMember.user_id, workspace.id, undefined, transaction)
+
+    // Remove PENDING workspace members (real records) invited by this user
+    await deletePendingWorkspaceMembersByTokens(workspace.id, tokens, transaction)
+
+    // Remove PENDING invitations created by this user
+    await deletePendingInvitationsByCreator(workspaceMember.user_id, workspace.id, undefined, transaction)
+
     await deleteWorkspaceUsers(
       {
         user_id: workspaceMember.user_id,
@@ -359,14 +372,8 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
       transaction,
     )
 
-    if (workspaceMember.invitation_token) {
-      await deleteWorkspaceInvitations(
-        {
-          token: workspaceMember.invitation_token,
-        },
-        transaction,
-      )
-    }
+    // Note: member's own invitation (if pending) was already deleted in step above
+    // If invitation is accepted/declined, we keep it for history
 
     await transaction.commit()
 
@@ -376,6 +383,7 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
       removed_user_id: workspaceMember.user_id,
       had_invitation_token: !!workspaceMember.invitation_token,
       removed_by: user.id,
+      removed_domains_count: removedDomainsCount,
     })
 
     return true

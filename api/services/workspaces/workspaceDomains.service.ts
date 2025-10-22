@@ -1,7 +1,4 @@
-import database from '../../config/database.config'
-import { TABLES } from '../../constants/database.constant'
-import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
-import { WORKSPACE_MANAGEMENT_ROLES } from '../../constants/workspace.constant'
+import { findSitesByIds } from '../../repository/sites_allowed.repository'
 import { UserProfile } from '../../repository/user.repository'
 import { getWorkspace, Workspace } from '../../repository/workspace.repository'
 import { addWorkspaceDomainsRepo, getWorkspaceDomains, removeWorkspaceDomainsRepo, WorkspaceWithDomains } from '../../repository/workspace_allowed_sites.repository'
@@ -57,6 +54,9 @@ export async function addWorkspaceDomains(user: UserProfile, workspace_id: numbe
     throw new ValidationError('At least one site ID is required')
   }
 
+  // Remove duplicates from siteIds
+  const uniqueSiteIds = [...new Set(siteIds)]
+
   const workspace = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
 
   if (!workspace) {
@@ -74,7 +74,7 @@ export async function addWorkspaceDomains(user: UserProfile, workspace_id: numbe
     throw new ApolloError('You must be a member of this workspace to add domains')
   }
 
-  const sites = await database(TABLES.allowed_sites).whereIn('id', siteIds).select('id', 'organization_id', 'user_id')
+  const sites = await findSitesByIds(uniqueSiteIds)
 
   const invalidSites = sites.filter((site) => site.organization_id !== user.current_organization_id)
 
@@ -82,8 +82,10 @@ export async function addWorkspaceDomains(user: UserProfile, workspace_id: numbe
     throw new ValidationError(`Sites with IDs [${invalidSites.map((s) => s.id).join(', ')}] do not belong to current organization`)
   }
 
-  if (sites.length !== siteIds.length) {
-    throw new ValidationError('Some sites were not found')
+  if (sites.length !== uniqueSiteIds.length) {
+    const foundIds = sites.map((s) => s.id)
+    const notFoundIds = uniqueSiteIds.filter((id) => !foundIds.includes(id))
+    throw new ValidationError(`Sites with IDs [${notFoundIds.join(', ')}] were not found`)
   }
 
   if (!isOrgManager && !isWorkspaceManager) {
@@ -94,7 +96,7 @@ export async function addWorkspaceDomains(user: UserProfile, workspace_id: numbe
     }
   }
 
-  await addWorkspaceDomainsRepo(workspace_id, siteIds, user.id)
+  await addWorkspaceDomainsRepo(workspace_id, uniqueSiteIds, user.id)
 
   const updated = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
 
@@ -121,6 +123,8 @@ export async function removeWorkspaceDomains(user: UserProfile, workspace_id: nu
     throw new ValidationError('At least one site ID is required')
   }
 
+  const uniqueSiteIds = [...new Set(siteIds)]
+
   const workspace = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
   if (!workspace) {
     throw new ApolloError('Workspace not found')
@@ -131,12 +135,34 @@ export async function removeWorkspaceDomains(user: UserProfile, workspace_id: nu
 
   const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id })
   const isWorkspaceManager = workspaceMember && canManageWorkspace(workspaceMember.role)
+  const isWorkspaceMember = !!workspaceMember
 
-  if (!isOrgManager && !isWorkspaceManager) {
-    throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} or workspace ${WORKSPACE_MANAGEMENT_ROLES.join(', ')} can manage workspace domains`)
+  if (!isOrgManager && !isWorkspaceManager && !isWorkspaceMember) {
+    throw new ApolloError('You must be a member of this workspace to remove domains')
   }
 
-  await removeWorkspaceDomainsRepo(workspace_id, siteIds)
+  const sites = await findSitesByIds(uniqueSiteIds)
+
+  if (sites.length !== uniqueSiteIds.length) {
+    const foundIds = sites.map((s) => s.id)
+    const notFoundIds = uniqueSiteIds.filter((id) => !foundIds.includes(id))
+    throw new ValidationError(`Sites with IDs [${notFoundIds.join(', ')}] were not found`)
+  }
+
+  const invalidSites = sites.filter((site) => site.organization_id !== user.current_organization_id)
+  if (invalidSites.length > 0) {
+    throw new ValidationError(`Sites with IDs [${invalidSites.map((s) => s.id).join(', ')}] do not belong to current organization`)
+  }
+
+  if (!isOrgManager && !isWorkspaceManager) {
+    const notOwnedSites = sites.filter((site) => site.user_id !== user.id)
+
+    if (notOwnedSites.length > 0) {
+      throw new ValidationError(`You can only remove domains you own. Sites with IDs [${notOwnedSites.map((s) => s.id).join(', ')}] are not owned by you`)
+    }
+  }
+
+  await removeWorkspaceDomainsRepo(workspace_id, uniqueSiteIds)
 
   const updated = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
 

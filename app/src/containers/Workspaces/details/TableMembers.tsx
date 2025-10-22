@@ -199,11 +199,6 @@ export const TableMembers = ({
           return null;
         }
 
-        // Only Org Admin can delete Owner
-        if (targetMemberRole === 'owner' && !isAdminOrOwnerOrSuper) {
-          return null;
-        }
-
         // Check if user can delete using helper function
         const canDelete = canDeleteWorkspaceMember(
           isAdminOrOwnerOrSuper,
