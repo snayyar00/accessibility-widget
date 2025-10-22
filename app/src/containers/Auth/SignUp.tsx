@@ -153,8 +153,11 @@ const SignUp: React.FC = () => {
 
   async function signup(params: SignUpPayload) {
     try {
-      // Get Rewardful referral ID if available
-      const referralCode = window.Rewardful?.referral || null;
+      // Get referral code from Rewardful or localStorage
+      const referralCode =
+        window.Rewardful?.referral ||
+        localStorage.getItem('referralCode') ||
+        null;
 
       const variables: any = {
         email: params.email,
