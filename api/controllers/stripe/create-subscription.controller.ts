@@ -6,6 +6,7 @@ import { findProductAndPriceByType } from '../../repository/products.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { getSitePlanBySiteId, getSitesPlanByUserId } from '../../repository/sites_plans.repository'
 import { getUserTokens } from '../../repository/user_plan_tokens.repository'
+import { findUserById } from '../../repository/user.repository'
 import { createSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service'
 import findPromo from '../../services/stripe/findPromo'
 import { appSumoPromoCount } from '../../utils/appSumoPromoCount'
@@ -23,6 +24,19 @@ export async function createSubscription(req: Request, res: Response) {
 
   if (!site || site.user_id !== user.id) {
     return res.status(403).json({ error: 'User does not own this domain' })
+  }
+
+  // If user doesn't have referral in session but might have it in database, reload it
+  if (!user.referral) {
+    try {
+      const freshUser = await findUserById(user.id)
+      if (freshUser.referral) {
+        user.referral = freshUser.referral
+        console.log('[REWARDFUL] Loaded existing referral code from database:', freshUser.referral)
+      }
+    } catch (error) {
+      console.error('[REWARDFUL] Failed to reload user referral code:', error)
+    }
   }
 
   const [price, sites, customers] = await Promise.all([
@@ -114,6 +128,13 @@ export async function createSubscription(req: Request, res: Response) {
 
         const { lastCustomCode, nonCustomCodes } = await customTokenCount(user.id, tokenUsed)
 
+        // Add Rewardful referral ID if present
+        if (user.referral) {
+          console.log('[REWARDFUL] Creating subscription with referral:', user.referral)
+        } else {
+          console.log('[REWARDFUL] No referral code found for user')
+        }
+
         subscription = await stripe.subscriptions.create({
           customer: customer.id,
           items: [{ price: price.price_stripe_id, quantity: 1 }],
@@ -125,14 +146,24 @@ export async function createSubscription(req: Request, res: Response) {
             userId: user.id,
             maxDomains: 1,
             usedDomains: 1,
+            ...(user.referral && { referral: user.referral }),
           },
           description: `Plan for ${domainUrl}(${lastCustomCode ? [lastCustomCode, ...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
         })
+
+        console.log('[REWARDFUL] Subscription created:', subscription.id)
 
         cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.current_organization_id, user.email)]
       } else if (promoCode && promoCode.length > 0) {
         return res.json({ valid: false, error: 'Invalid promo code' })
       } else if (cardTrial) {
+        // Add Rewardful referral ID if present
+        if (user.referral) {
+          console.log('[REWARDFUL] Creating trial subscription with referral:', user.referral)
+        } else {
+          console.log('[REWARDFUL] No referral code found for user')
+        }
+
         subscription = await stripe.subscriptions.create({
           trial_period_days: 30,
           customer: customer.id,
@@ -144,10 +175,20 @@ export async function createSubscription(req: Request, res: Response) {
             userId: user.id,
             maxDomains: 1,
             usedDomains: 1,
+            ...(user.referral && { referral: user.referral }),
           },
           description: `Plan for ${domainUrl}`,
         })
+
+        console.log('[REWARDFUL] Trial subscription created:', subscription.id)
       } else {
+        // Add Rewardful referral ID if present
+        if (user.referral) {
+          console.log('[REWARDFUL] Creating subscription with referral:', user.referral)
+        } else {
+          console.log('[REWARDFUL] No referral code found for user')
+        }
+
         subscription = await stripe.subscriptions.create({
           customer: customer.id,
           items: [{ price: price.price_stripe_id, quantity: 1 }],
@@ -158,9 +199,12 @@ export async function createSubscription(req: Request, res: Response) {
             userId: user.id,
             maxDomains: 1,
             usedDomains: 1,
+            ...(user.referral && { referral: user.referral }),
           },
           description: `Plan for ${domainUrl}`,
         })
+
+        console.log('[REWARDFUL] Subscription created:', subscription.id)
       }
 
       try {

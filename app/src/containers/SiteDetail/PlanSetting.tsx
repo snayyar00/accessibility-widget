@@ -202,7 +202,10 @@ const PlanSetting: React.FC<{
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-checkout-session`;
     const result = planChanged?.id.replace(/\d+/g, '');
 
-    const bodyData = {
+    // Get Rewardful referral ID if available
+    const referralId = window.Rewardful?.referral || null;
+
+    const bodyData: any = {
       email: data.email,
       planName: result,
       billingInterval: isYearly ? 'YEARLY' : 'MONTHLY',
@@ -217,6 +220,11 @@ const PlanSetting: React.FC<{
         : [appSumoCount],
       cardTrial: cardTrial || card,
     };
+
+    // Add referral ID if present
+    if (referralId) {
+      bodyData.referral = referralId;
+    }
 
     const token = getAuthenticationCookie();
 

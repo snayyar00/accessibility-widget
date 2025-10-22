@@ -153,7 +153,24 @@ const SignUp: React.FC = () => {
 
   async function signup(params: SignUpPayload) {
     try {
-      const { data } = await registerMutation({ variables: params });
+      // Get referral code from Rewardful or localStorage
+      const referralCode =
+        window.Rewardful?.referral ||
+        localStorage.getItem('referralCode') ||
+        null;
+
+      const variables: any = {
+        email: params.email,
+        password: params.password,
+        name: params.name,
+      };
+
+      // Add referral code if present
+      if (referralCode) {
+        variables.referralCode = referralCode;
+      }
+
+      const { data } = await registerMutation({ variables });
 
       if (data?.register?.token) {
         setAuthenticationCookie(data?.register?.token);

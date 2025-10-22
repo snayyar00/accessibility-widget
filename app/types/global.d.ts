@@ -3,6 +3,13 @@
 declare global {
   interface Window {
     submitAccessibilityIssue?: (issueDetails: string) => void;
+    rewardful?: (
+      command: string,
+      callback?: (referral: string) => void,
+    ) => void;
+    Rewardful?: {
+      referral?: string;
+    };
   }
 }
 

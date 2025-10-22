@@ -2,6 +2,7 @@ import { combineResolvers } from 'graphql-resolvers'
 import { v4 as uuidv4 } from 'uuid'
 
 import { JOB_EXPIRY_MS } from '../../config/env'
+import { QUEUE_PRIORITY } from '../../constants/queue-priority.constant'
 import { deleteAccessibilityReportByR2Key, getAccessibilityReportByR2Key, getR2KeysByParams, insertAccessibilityReport } from '../../repository/accessibilityReports.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { fetchTechStackFromAPI } from '../../repository/techStack.repository'
@@ -38,9 +39,9 @@ function createJob(): string {
   return jobId
 }
 
-async function processAccessibilityReportJob(jobId: string, url: string, useCache?: boolean, fullSiteScan?: boolean) {
+async function processAccessibilityReportJob(jobId: string, url: string, useCache?: boolean, fullSiteScan?: boolean, priority?: number) {
   try {
-    const accessibilityReport = await fetchAccessibilityReport(url, useCache, fullSiteScan)
+    const accessibilityReport = await fetchAccessibilityReport({ url, useCache, fullSiteScan, priority })
 
     // Use tech stack from accessibility report if available, otherwise fetch from API
     let techStack = accessibilityReport.techStack
@@ -134,8 +135,8 @@ const resolvers = {
 
       const jobId = createJob()
 
-      // Start processing in background
-      processAccessibilityReportJob(jobId, url, use_cache, full_site_scan).catch(console.error)
+      // Start processing in background with HIGH priority (user-initiated frontend scanner)
+      processAccessibilityReportJob(jobId, url, use_cache, full_site_scan, QUEUE_PRIORITY.HIGH).catch(console.error)
       return { jobId }
     }),
 
@@ -163,7 +164,7 @@ const resolvers = {
       }
 
       try {
-        const accessibilityReport = await fetchAccessibilityReport(url)
+        const accessibilityReport = await fetchAccessibilityReport({ url })
 
         // Use tech stack from accessibility report if available, otherwise fetch from API
         let techStack = accessibilityReport.techStack

@@ -21,7 +21,7 @@ type RegisterResponse = {
   token: string
 }
 
-async function registerUser(email: string, password: string, name: string, organization: Organization): Promise<ApolloError | RegisterResponse> {
+async function registerUser(email: string, password: string, name: string, organization: Organization, referralCode?: string): Promise<ApolloError | RegisterResponse> {
   const sanitizedInput = sanitizeUserInput({ email, name })
 
   email = sanitizedInput.email
@@ -56,11 +56,16 @@ async function registerUser(email: string, password: string, name: string, organ
     await database.transaction(async (trx) => {
       const passwordHashed = await generatePassword(password)
 
-      const userData = {
+      const userData: any = {
         email,
         password: passwordHashed,
         name,
         password_changed_at: dayjs().utc().format('YYYY-MM-DD HH:mm:ss'),
+      }
+
+      // Add referral code if provided
+      if (referralCode) {
+        userData.referral = referralCode
       }
 
       const userId = await createUser(userData, trx)

@@ -6,6 +6,7 @@ import { findProductAndPriceByType } from '../../repository/products.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { getSitePlanBySiteId } from '../../repository/sites_plans.repository'
 import { getUserTokens } from '../../repository/user_plan_tokens.repository'
+import { updateUser, findUserById } from '../../repository/user.repository'
 import { createSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service'
 import findPromo from '../../services/stripe/findPromo'
 import { appSumoPromoCount } from '../../utils/appSumoPromoCount'
@@ -16,13 +17,40 @@ import { expireUsedPromo } from '../../utils/expireUsedPromo'
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
 export async function createCheckoutSession(req: Request, res: Response) {
-  const { planName, billingInterval, returnUrl, domainId, domain, cardTrial, promoCode } = req.body
+  const { planName, billingInterval, returnUrl, domainId, domain, cardTrial, promoCode, referral } = req.body
 
   const { user } = req as any
   const site = await findSiteByURL(domain)
 
   if (!site || site.user_id !== user.id) {
     return res.status(403).json({ error: 'User does not own this domain' })
+  }
+
+  // Store referral code in user record if provided and user doesn't have one
+  if (referral && !user.referral) {
+    try {
+      const updateData: any = { referral: referral }
+      await updateUser(user.id, updateData)
+      // Update the local user object so it's available for Stripe calls
+      user.referral = referral
+      console.log('[REWARDFUL] Saved new referral code to user:', referral)
+    } catch (error) {
+      console.error('Failed to save referral code:', error)
+      // Don't fail the checkout if referral code save fails
+    }
+  }
+
+  // If user doesn't have referral in session but might have it in database, reload it
+  if (!user.referral) {
+    try {
+      const freshUser = await findUserById(user.id)
+      if (freshUser.referral) {
+        user.referral = freshUser.referral
+        console.log('[REWARDFUL] Loaded existing referral code from database:', freshUser.referral)
+      }
+    } catch (error) {
+      console.error('[REWARDFUL] Failed to reload user referral code:', error)
+    }
   }
 
   try {
@@ -87,6 +115,11 @@ export async function createCheckoutSession(req: Request, res: Response) {
 
       // This will work on for AppSumo coupons, we allow use of coupons that should only work for the app sumo tier plans and we manually apply the discount according to new plan (single)
 
+      // Log referral status
+      if (user.referral) {
+        console.log('[REWARDFUL] Creating AppSumo subscription with referral:', user.referral)
+      }
+
       const subscription = await stripe.subscriptions.create({
         customer: customer.id,
         items: [{ price: price.price_stripe_id, quantity: 1 }],
@@ -97,6 +130,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
           userId: user.id,
           maxDomains: 1,
           usedDomains: 1,
+          ...(user.referral && { referral: user.referral }),
         },
         description: `Plan for ${domain}(${lastCustomCode ? [lastCustomCode, ...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
       })
@@ -124,6 +158,14 @@ export async function createCheckoutSession(req: Request, res: Response) {
     }
     if (cardTrial) {
       console.log('trial')
+
+      // Log referral status
+      if (user.referral) {
+        console.log('[REWARDFUL] Creating checkout session with referral:', user.referral)
+      } else {
+        console.log('[REWARDFUL] No referral code found for user')
+      }
+
       session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         mode: 'subscription',
@@ -137,6 +179,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
         allow_promotion_codes: true,
         success_url: `${returnUrl}`,
         cancel_url: returnUrl,
+        ...(user.referral && { client_reference_id: user.referral }),
         metadata: {
           domainId,
           userId: user.id,
@@ -152,17 +195,29 @@ export async function createCheckoutSession(req: Request, res: Response) {
           description: `Plan for ${domain}`,
         },
       })
+
+      console.log('[REWARDFUL] Checkout session created:', session.id)
     } else {
       console.log('normal')
 
       if (subscriptions.data.length > 0) {
         console.log('setup intent only')
+
+        // Log referral status
+        if (user.referral) {
+          console.log('[REWARDFUL] Creating setup session with referral:', user.referral)
+        } else {
+          console.log('[REWARDFUL] No referral code found for user')
+        }
+
         session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'setup',
           customer: customer.id,
+          // customer_creation: 'always',
           success_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`, // you can include the session id to later verify the setup
           cancel_url: returnUrl,
+          ...(user.referral && { client_reference_id: user.referral }),
           metadata: {
             price_id: price.price_stripe_id,
             domainId,
@@ -171,8 +226,18 @@ export async function createCheckoutSession(req: Request, res: Response) {
             updateMetaData: 'true',
           },
         })
+
+        console.log('[REWARDFUL] Setup session created:', session.id)
       } else {
         console.log('checkout intent')
+
+        // Log referral status
+        if (user.referral) {
+          console.log('[REWARDFUL] Creating subscription session with referral:', user.referral)
+        } else {
+          console.log('[REWARDFUL] No referral code found for user')
+        }
+
         session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'subscription',
@@ -186,6 +251,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
           allow_promotion_codes: true,
           success_url: `${returnUrl}`,
           cancel_url: returnUrl,
+          ...(user.referral && { client_reference_id: user.referral }),
           metadata: {
             domainId,
             userId: user.id,
@@ -200,6 +266,8 @@ export async function createCheckoutSession(req: Request, res: Response) {
             description: `Plan for ${domain}`,
           },
         })
+
+        console.log('[REWARDFUL] Subscription session created:', session.id)
       }
     }
 

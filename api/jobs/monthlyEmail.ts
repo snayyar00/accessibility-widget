@@ -1,6 +1,7 @@
 import cron from 'node-cron'
 import pLimit from 'p-limit'
 
+import { QUEUE_PRIORITY } from '../constants/queue-priority.constant'
 import compileEmailTemplate from '../helpers/compile-email-template'
 import { findSiteById } from '../repository/sites_allowed.repository'
 import { getActiveSitesPlan } from '../repository/sites_plans.repository'
@@ -91,7 +92,7 @@ const sendMonthlyEmails = async () => {
               return
             }
 
-            const report = await fetchAccessibilityReport(site?.url)
+            const report = await fetchAccessibilityReport({ url: site?.url, priority: QUEUE_PRIORITY.LOW })
             const user = await getUserbyId(site?.user_id)
 
             if (!user || !user.current_organization_id) {
