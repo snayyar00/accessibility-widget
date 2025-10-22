@@ -3,7 +3,7 @@ import { Knex } from 'knex'
 import database from '../../config/database.config'
 import { INVITATION_STATUS_ACCEPTED } from '../../constants/invitation.constant'
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
-import { WORKSPACE_MANAGEMENT_ROLES, WORKSPACE_USER_STATUS_PENDING } from '../../constants/workspace.constant'
+import { WORKSPACE_USER_STATUS_PENDING } from '../../constants/workspace.constant'
 import { deleteOrganizationInvitations, deleteWorkspaceInvitations, GetDetailWorkspaceInvitation, getDetailWorkspaceInvitations, getOrganizationInvitation, getWorkspaceInvitation } from '../../repository/invitations.repository'
 import { UserProfile } from '../../repository/user.repository'
 import { GetAllWorkspaceResponse, getWorkspace, Workspace } from '../../repository/workspace.repository'
@@ -45,14 +45,13 @@ export async function getWorkspaceInvitationsByAlias(alias: string, user: UserPr
     return []
   }
 
-  // Check permissions: super admin OR org admin/owner OR workspace admin/owner
   const userOrganization = await getUserOrganization(user.id, user.current_organization_id)
   const isOrgManager = user.is_super_admin || (userOrganization && canManageOrganization(userOrganization.role))
 
   const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id: workspace.id })
-  const isWorkspaceManager = workspaceMember && canManageWorkspace(workspaceMember.role)
+  const isWorkspaceMember = !!workspaceMember // Any workspace member can view invitations
 
-  if (!isOrgManager && !isWorkspaceManager) {
+  if (!isOrgManager && !isWorkspaceMember) {
     return []
   }
 
@@ -90,15 +89,22 @@ export async function removeWorkspaceInvitation(user: UserProfile, id: number): 
     throw new ApolloError('Workspace not found or access denied')
   }
 
-  // Check permissions: super admin OR org admin/owner OR workspace admin/owner
   const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
   const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
 
   const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id: workspace.id })
   const isWorkspaceManager = workspaceMember && canManageWorkspace(workspaceMember.role)
 
-  if (!isOrgManager && !isWorkspaceManager) {
-    throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} or workspace ${WORKSPACE_MANAGEMENT_ROLES.join(', ')} can remove invitations`)
+  const isInvitationCreator = workspaceMember && invitation.invited_by_id === user.id
+
+  if (!isOrgManager && !isWorkspaceManager && !isInvitationCreator) {
+    throw new ApolloError('You can only remove invitations that you created')
+  }
+
+  if (isInvitationCreator && !isOrgManager && !isWorkspaceManager) {
+    if (invitation.workspace_role && canManageWorkspace(invitation.workspace_role)) {
+      throw new ApolloError('You can only remove invitations with member role')
+    }
   }
 
   let transaction: Knex.Transaction
@@ -168,13 +174,11 @@ export async function removeAllUserInvitations(user: UserProfile, email: string)
   try {
     transaction = await database.transaction()
 
-    // Get all workspace invitations for this email in this organization
     const workspaceInvitations = await getWorkspaceInvitation({
       email,
       organization_id: user.current_organization_id,
     })
 
-    // Get all organization invitations for this email in this organization
     const organizationInvitations = await getOrganizationInvitation({
       email,
       organization_id: user.current_organization_id,
@@ -185,7 +189,6 @@ export async function removeAllUserInvitations(user: UserProfile, email: string)
       throw new ApolloError('No invitations found for this email')
     }
 
-    // Remove all workspace invitations
     if (workspaceInvitations.length > 0) {
       await deleteWorkspaceInvitations(
         {
@@ -195,7 +198,6 @@ export async function removeAllUserInvitations(user: UserProfile, email: string)
         transaction,
       )
 
-      // Remove associated workspace users for tokens that were not accepted
       for (const invitation of workspaceInvitations) {
         if (invitation.token && invitation.status !== INVITATION_STATUS_ACCEPTED) {
           await deleteWorkspaceUsers(
@@ -208,7 +210,6 @@ export async function removeAllUserInvitations(user: UserProfile, email: string)
       }
     }
 
-    // Remove all organization invitations
     if (organizationInvitations.length > 0) {
       await deleteOrganizationInvitations(
         {
@@ -267,6 +268,7 @@ export function createVirtualUsersFromInvitations(invitations: GetDetailWorkspac
         updated_at: null as string | null,
         deleted_at: null as string | null,
         invitation_token: invitation.token,
+        invited_by: invitation.invited_by_id,
         email: invitation.email,
         name: invitation.email.split('@')[0],
         isActive: false,

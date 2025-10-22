@@ -39,6 +39,7 @@ export const WorkspaceSchema = `#graphql
     created_at: Date
     updated_at: Date
     invitationId: Int
+    invited_by: Int
     user: User
   }
 
@@ -53,6 +54,7 @@ export const WorkspaceSchema = `#graphql
     id: ID
     workspace_name: String!
     invited_by: String!
+    invited_by_id: Int
     email: String!
     status: String!
     role: WorkspaceUserRole!

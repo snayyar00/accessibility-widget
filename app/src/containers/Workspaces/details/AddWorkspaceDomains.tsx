@@ -50,7 +50,6 @@ export const AddWorkspaceDomains: React.FC<AddWorkspaceDomainsProps> = ({
 
   const allSites = sitesData?.getAvailableSitesForWorkspace || [];
 
-  // Filter out sites that are already in the workspace and null values
   const availableSites = allSites.filter(
     (site): site is NonNullable<typeof site> =>
       site != null &&
@@ -58,14 +57,18 @@ export const AddWorkspaceDomains: React.FC<AddWorkspaceDomainsProps> = ({
       !currentDomainIds.includes(Number(site.id)),
   );
 
-  // Apply search filter
   const filteredSites = React.useMemo(() => {
-    if (!searchQuery.trim()) return availableSites;
+    let sites = availableSites;
 
-    const query = searchQuery.toLowerCase();
-    return availableSites.filter((site) =>
-      site.url?.toLowerCase().includes(query),
-    );
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      sites = sites.filter((site) => site.url?.toLowerCase().includes(query));
+    }
+
+    return sites.sort((a, b) => {
+      if (a.is_owner === b.is_owner) return 0;
+      return a.is_owner ? -1 : 1;
+    });
   }, [availableSites, searchQuery]);
 
   const handleClose = () => {
@@ -265,14 +268,15 @@ export const AddWorkspaceDomains: React.FC<AddWorkspaceDomainsProps> = ({
                               minWidth: 0,
                             }}
                           >
-                            {site.is_owner && (
-                              <Chip
-                                variant="outlined"
-                                color="success"
-                                size="small"
-                                label="Owner"
-                              />
-                            )}
+                            {userData.isAdminOrOwnerOrSuper &&
+                              site.is_owner && (
+                                <Chip
+                                  variant="outlined"
+                                  color="success"
+                                  size="small"
+                                  label="Owner"
+                                />
+                              )}
 
                             {!site.is_owner && site.user_email && (
                               <Chip

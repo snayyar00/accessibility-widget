@@ -1,14 +1,19 @@
 import * as React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { Chip, IconButton } from '@mui/material';
-import { useApolloClient, useQuery } from '@apollo/client';
+import { Chip } from '@mui/material';
+import { useQuery } from '@apollo/client';
 import GET_WORKSPACE_INVITATIONS_BY_ALIAS from '@/queries/workspace/getWorkspaceInvitationsByAlias';
 import { InvitationStatus, Query } from '@/generated/graphql';
 import { RemoveWorkspaceInvitation } from './RemoveWorkspaceInvitation';
+import { canDeleteWorkspaceMember } from '@/helpers/permissions';
 
 type TableInvitesProps = {
   alias: string;
   onUpdate: () => void;
+  hasAccess?: boolean;
+  isAdminOrOwnerOrSuper?: boolean;
+  userWorkspaceRole?: string | null;
+  currentUserId?: number;
 };
 
 const STATUS_STYLES = {
@@ -30,9 +35,15 @@ const STATUS_STYLES = {
   },
 } as const;
 
-export const TableInvites = ({ alias, onUpdate }: TableInvitesProps) => {
+export const TableInvites = ({
+  alias,
+  onUpdate,
+  hasAccess = true,
+  isAdminOrOwnerOrSuper = false,
+  userWorkspaceRole = null,
+  currentUserId,
+}: TableInvitesProps) => {
   const [pageSize, setPageSize] = React.useState<number>(50);
-  const client = useApolloClient();
 
   const { data, loading, error, refetch } = useQuery<Query>(
     GET_WORKSPACE_INVITATIONS_BY_ALIAS,
@@ -52,6 +63,8 @@ export const TableInvites = ({ alias, onUpdate }: TableInvitesProps) => {
         number: idx + 1,
         email: invitation.email,
         invited_by: invitation.invited_by,
+        invited_by_id: invitation.invited_by_id,
+        role: invitation.role,
         status: invitation.status,
         created_at: invitation.created_at
           ? new Date(invitation.created_at).toLocaleDateString()
@@ -128,10 +141,25 @@ export const TableInvites = ({ alias, onUpdate }: TableInvitesProps) => {
       filterable: false,
       disableColumnMenu: true,
       renderCell: (params) => {
-        const invitationId = params.row.invitationId;
+        const { invitationId } = params.row;
         const inviteeEmail = params.row.email;
+        const invitedById = params.row.invited_by_id;
+        const targetInvitationRole = params.row.role;
 
-        if (!invitationId) {
+        if (!invitationId || !hasAccess) {
+          return null;
+        }
+
+        // Check if user can delete using helper function
+        const canDelete = canDeleteWorkspaceMember(
+          isAdminOrOwnerOrSuper,
+          userWorkspaceRole,
+          invitedById,
+          currentUserId,
+          targetInvitationRole,
+        );
+
+        if (!canDelete) {
           return null;
         }
 

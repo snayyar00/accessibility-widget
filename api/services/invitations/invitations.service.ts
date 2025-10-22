@@ -4,7 +4,7 @@ import { Knex } from 'knex'
 import database from '../../config/database.config'
 import { INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
 import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_PENDING, OrganizationUserRole } from '../../constants/organization.constant'
-import { WORKSPACE_MANAGEMENT_ROLES, WORKSPACE_USER_ROLE_MEMBER, WORKSPACE_USER_ROLE_OWNER, WORKSPACE_USER_STATUS_ACTIVE, WorkspaceUserRole } from '../../constants/workspace.constant'
+import { WORKSPACE_USER_ROLE_MEMBER, WORKSPACE_USER_ROLE_OWNER, WORKSPACE_USER_STATUS_ACTIVE, WorkspaceUserRole } from '../../constants/workspace.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import generateRandomKey from '../../helpers/genarateRandomkey'
 import { normalizeEmail } from '../../helpers/string.helper'
@@ -24,7 +24,7 @@ import { getOrganizationUsersByOrganizationId } from '../../repository/organizat
 import { findUser, UserProfile } from '../../repository/user.repository'
 import { getWorkspace, getWorkspaceMembers } from '../../repository/workspace.repository'
 import { createMemberAndInviteToken, deleteWorkspaceUsers, getWorkspaceUser } from '../../repository/workspace_users.repository'
-import { canManageOrganization, canManageWorkspace } from '../../utils/access.helper'
+import { canManageOrganization, validateWorkspaceInvitePermissions } from '../../utils/access.helper'
 import formatDateDB from '../../utils/format-date-db'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
@@ -87,17 +87,17 @@ async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, inv
       throw new ApolloError('Workspace not found')
     }
 
-    // Check if trying to invite with owner role - only super admin or org admin/owner can do this
-    if (role === WORKSPACE_USER_ROLE_OWNER) {
-      const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-      const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+    const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
+    const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id: workspace.id })
 
-      if (!isOrgManager) {
-        throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can invite users with ${WORKSPACE_USER_ROLE_OWNER} role.`)
-      }
+    const permissions = validateWorkspaceInvitePermissions(user.is_super_admin || false, orgUser?.role, workspaceMember?.role, role)
+
+    if (!permissions.canInvite) {
+      const allowedRolesStr = permissions.allowedRoles.length > 0 ? permissions.allowedRoles.join(', ') : 'none'
+      throw new ApolloError(`You don't have permission to invite users with ${role} role. ` + `You can only invite with the following roles: ${allowedRolesStr}`)
     }
 
-    // Check if inviting with owner role - only one owner allowed per workspace
+    // Check if trying to invite with owner role - only one owner allowed per workspace
     if (role === WORKSPACE_USER_ROLE_OWNER) {
       const allWorkspaceMembers = await getWorkspaceMembers({ workspaceId: workspace.id })
       const existingOwner = allWorkspaceMembers.find((member) => member.role === WORKSPACE_USER_ROLE_OWNER)
@@ -112,17 +112,6 @@ async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, inv
       if (pendingOwnerInvitation) {
         throw new ApolloError(`There is already a pending invitation for ${WORKSPACE_USER_ROLE_OWNER} role. Only one ${WORKSPACE_USER_ROLE_OWNER} is allowed per workspace.`)
       }
-    }
-
-    // Check permissions: super admin OR org admin/owner OR workspace admin/owner
-    const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-    const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
-
-    const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id: workspace.id })
-    const isWorkspaceManager = workspaceMember && canManageWorkspace(workspaceMember.role)
-
-    if (!isOrgManager && !isWorkspaceManager) {
-      throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} or workspace ${WORKSPACE_MANAGEMENT_ROLES.join(', ')} can invite to workspace`)
     }
 
     if (user.email === invitee_email) {

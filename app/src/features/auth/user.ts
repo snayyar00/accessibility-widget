@@ -1,5 +1,5 @@
 import { Organization, OrganizationUser } from '@/generated/graphql';
-import { isAdminOrOwner } from '@/helpers/organizationRole';
+import { isAdminOrOwner } from '@/helpers/permissions';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 type Profile = {

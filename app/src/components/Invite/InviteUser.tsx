@@ -37,6 +37,8 @@ interface InviteUserProps {
   disableSelect?: boolean;
   buttonText?: string;
   isSuperAdmin?: boolean;
+  isAdminOrOwnerOrSuper?: boolean;
+  userWorkspaceRole?: string | null;
 }
 
 export const InviteUser: React.FC<InviteUserProps> = ({
@@ -51,6 +53,8 @@ export const InviteUser: React.FC<InviteUserProps> = ({
   disableSelect = false,
   buttonText,
   isSuperAdmin = false,
+  isAdminOrOwnerOrSuper,
+  userWorkspaceRole,
 }) => {
   const [open, setOpen] = React.useState(false);
   const [email, setEmail] = React.useState(userEmail);
@@ -175,6 +179,64 @@ export const InviteUser: React.FC<InviteUserProps> = ({
       : 'Invite to Organization';
   };
 
+  const createRoleMenuItem = (
+    role: WorkspaceUserRole | OrganizationUserRole,
+  ) => (
+    <MenuItem key={role} value={role}>
+      {role.charAt(0).toUpperCase() + role.slice(1)}
+    </MenuItem>
+  );
+
+  const getWorkspaceRoles = () => {
+    const allRoles = [
+      WorkspaceUserRole.Member,
+      WorkspaceUserRole.Admin,
+      WorkspaceUserRole.Owner,
+    ];
+
+    const memberOnlyRoles = [WorkspaceUserRole.Member];
+
+    if (isAdminOrOwnerOrSuper) {
+      return allRoles.map(createRoleMenuItem);
+    }
+
+    if (
+      userWorkspaceRole === WorkspaceUserRole.Owner ||
+      userWorkspaceRole === WorkspaceUserRole.Admin
+    ) {
+      return allRoles.map(createRoleMenuItem);
+    }
+
+    if (userWorkspaceRole === WorkspaceUserRole.Member) {
+      return memberOnlyRoles.map(createRoleMenuItem);
+    }
+
+    if (
+      isAdminOrOwnerOrSuper === undefined &&
+      userWorkspaceRole === undefined
+    ) {
+      return allRoles.map(createRoleMenuItem);
+    }
+
+    return memberOnlyRoles.map(createRoleMenuItem);
+  };
+
+  const getOrganizationRoles = () => {
+    const baseRoles = [OrganizationUserRole.Member, OrganizationUserRole.Admin];
+
+    const allRoles = [
+      OrganizationUserRole.Member,
+      OrganizationUserRole.Admin,
+      OrganizationUserRole.Owner,
+    ];
+
+    if (isSuperAdmin) {
+      return allRoles.map(createRoleMenuItem);
+    }
+
+    return baseRoles.map(createRoleMenuItem);
+  };
+
   if (
     mode === 'workspace' &&
     !availableWorkspaces?.length &&
@@ -244,35 +306,8 @@ export const InviteUser: React.FC<InviteUserProps> = ({
               label={getRoleLabel()}
             >
               {mode === 'workspace'
-                ? [
-                    <MenuItem key="member" value={WorkspaceUserRole.Member}>
-                      Member
-                    </MenuItem>,
-                    <MenuItem key="admin" value={WorkspaceUserRole.Admin}>
-                      Admin
-                    </MenuItem>,
-                    <MenuItem key="owner" value={WorkspaceUserRole.Owner}>
-                      Owner
-                    </MenuItem>,
-                  ]
-                : [
-                    <MenuItem key="member" value={OrganizationUserRole.Member}>
-                      Member
-                    </MenuItem>,
-                    <MenuItem key="admin" value={OrganizationUserRole.Admin}>
-                      Admin
-                    </MenuItem>,
-                    ...(isSuperAdmin
-                      ? [
-                          <MenuItem
-                            key="owner"
-                            value={OrganizationUserRole.Owner}
-                          >
-                            Owner
-                          </MenuItem>,
-                        ]
-                      : []),
-                  ]}
+                ? getWorkspaceRoles()
+                : getOrganizationRoles()}
             </Select>
           </FormControl>
         </DialogContent>

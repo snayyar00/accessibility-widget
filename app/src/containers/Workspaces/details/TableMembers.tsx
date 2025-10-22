@@ -12,10 +12,18 @@ import {
 import { RoleSelector } from './RoleSelector';
 import { RemoveWorkspaceMember } from './RemoveWorkspaceMember';
 import { RemoveWorkspaceInvitation } from './RemoveWorkspaceInvitation';
+import {
+  canDeleteWorkspaceMember,
+  canChangeWorkspaceMemberRole,
+} from '@/helpers/permissions';
 
 type TableMembersProps = {
   alias: string;
   onUpdate: () => void;
+  hasAccess?: boolean;
+  isAdminOrOwnerOrSuper?: boolean;
+  userWorkspaceRole?: string | null;
+  currentUserId?: number;
 };
 
 const STATUS_STYLES = {
@@ -26,7 +34,14 @@ const STATUS_STYLES = {
   invited: { backgroundColor: '#3b82f6', color: '#fff' },
 } as const;
 
-export const TableMembers = ({ alias, onUpdate }: TableMembersProps) => {
+export const TableMembers = ({
+  alias,
+  onUpdate,
+  hasAccess = true,
+  isAdminOrOwnerOrSuper = false,
+  userWorkspaceRole = null,
+  currentUserId,
+}: TableMembersProps) => {
   const [pageSize, setPageSize] = React.useState<number>(50);
 
   const { data, loading, error, refetch } = useQuery<Query>(
@@ -58,6 +73,7 @@ export const TableMembers = ({ alias, onUpdate }: TableMembersProps) => {
           avatarUrl: member.user?.avatarUrl ?? '',
           isInvitedUser,
           invitationId: member.invitationId,
+          invited_by: member.invited_by,
         };
       }),
     [members],
@@ -129,9 +145,20 @@ export const TableMembers = ({ alias, onUpdate }: TableMembersProps) => {
           return <span>—</span>;
         }
 
+        if (!hasAccess) {
+          return <span>{currentRole}</span>;
+        }
+
+        // Check if user has permission to change roles
+        const canChangeRole = canChangeWorkspaceMemberRole(
+          isAdminOrOwnerOrSuper,
+          userWorkspaceRole,
+        );
+
         return (
           <RoleSelector
             disabled={
+              !canChangeRole ||
               params.row.status === WorkspaceUserStatus.Inactive ||
               params.row.status === WorkspaceUserStatus.Decline
             }
@@ -155,7 +182,27 @@ export const TableMembers = ({ alias, onUpdate }: TableMembersProps) => {
       renderCell: (params) => {
         const memberName = params.row.name;
         const memberEmail = params.row.email;
+
         const isInvited = params.row.isInvitedUser;
+        const invitedBy = params.row.invited_by;
+        const targetMemberRole = params.row.role;
+
+        if (!hasAccess) {
+          return null;
+        }
+
+        // Check if user can delete using helper function
+        const canDelete = canDeleteWorkspaceMember(
+          isAdminOrOwnerOrSuper,
+          userWorkspaceRole,
+          invitedBy,
+          currentUserId,
+          targetMemberRole,
+        );
+
+        if (!canDelete) {
+          return null;
+        }
 
         if (isInvited) {
           return (

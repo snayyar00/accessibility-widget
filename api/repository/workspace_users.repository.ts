@@ -80,7 +80,16 @@ export async function createMemberAndInviteToken({ user_id, workspace_id, member
       transaction,
     )
 
-    await createWorkspaceUser({ user_id: member_id, workspace_id, role, status: WORKSPACE_USER_STATUS_PENDING, invitation_token: token }, transaction)
+    await createWorkspaceUser(
+      {
+        user_id: member_id,
+        workspace_id,
+        role,
+        status: WORKSPACE_USER_STATUS_PENDING,
+        invitation_token: token,
+      },
+      transaction,
+    )
 
     return true
   } catch (error) {

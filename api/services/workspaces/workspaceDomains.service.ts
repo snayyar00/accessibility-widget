@@ -1,9 +1,13 @@
+import database from '../../config/database.config'
+import { TABLES } from '../../constants/database.constant'
+import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
+import { WORKSPACE_MANAGEMENT_ROLES } from '../../constants/workspace.constant'
 import { UserProfile } from '../../repository/user.repository'
-import { getWorkspace } from '../../repository/workspace.repository'
-import { getWorkspaceDomains, WorkspaceWithDomains } from '../../repository/workspace_allowed_sites.repository'
+import { getWorkspace, Workspace } from '../../repository/workspace.repository'
+import { addWorkspaceDomainsRepo, getWorkspaceDomains, removeWorkspaceDomainsRepo, WorkspaceWithDomains } from '../../repository/workspace_allowed_sites.repository'
 import { getWorkspaceUser } from '../../repository/workspace_users.repository'
 import { canManageOrganization, canManageWorkspace } from '../../utils/access.helper'
-import { ApolloError } from '../../utils/graphql-errors.helper'
+import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import { getUserOrganization } from '../organization/organization_users.service'
 
 /**
@@ -17,14 +21,12 @@ export async function getWorkspaceDomainsService(workspaceId: number, user: User
     throw new ApolloError('No current organization selected')
   }
 
-  // Check if workspace exists and belongs to user's organization
   const workspace = await getWorkspace({ id: workspaceId, organization_id: user.current_organization_id })
 
   if (!workspace) {
     return []
   }
 
-  // Check permissions: super admin OR org admin/owner OR workspace admin/owner OR workspace member
   const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
   const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
 
@@ -37,4 +39,110 @@ export async function getWorkspaceDomainsService(workspaceId: number, user: User
   }
 
   return await getWorkspaceDomains(workspaceId)
+}
+
+/**
+ * Add domains to workspace
+ * @param user - User who wants to add domains
+ * @param workspace_id - ID of the workspace
+ * @param siteIds - Array of site IDs to add
+ * @returns Promise<Workspace> Updated workspace
+ */
+export async function addWorkspaceDomains(user: UserProfile, workspace_id: number, siteIds: number[]): Promise<Workspace> {
+  if (!user.current_organization_id) {
+    throw new ApolloError('No current organization selected')
+  }
+
+  if (!siteIds || siteIds.length === 0) {
+    throw new ValidationError('At least one site ID is required')
+  }
+
+  const workspace = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
+
+  if (!workspace) {
+    throw new ApolloError('Workspace not found')
+  }
+
+  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
+  const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+
+  const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id })
+  const isWorkspaceManager = workspaceMember && canManageWorkspace(workspaceMember.role)
+  const isWorkspaceMember = !!workspaceMember
+
+  if (!isOrgManager && !isWorkspaceManager && !isWorkspaceMember) {
+    throw new ApolloError('You must be a member of this workspace to add domains')
+  }
+
+  const sites = await database(TABLES.allowed_sites).whereIn('id', siteIds).select('id', 'organization_id', 'user_id')
+
+  const invalidSites = sites.filter((site) => site.organization_id !== user.current_organization_id)
+
+  if (invalidSites.length > 0) {
+    throw new ValidationError(`Sites with IDs [${invalidSites.map((s) => s.id).join(', ')}] do not belong to current organization`)
+  }
+
+  if (sites.length !== siteIds.length) {
+    throw new ValidationError('Some sites were not found')
+  }
+
+  if (!isOrgManager && !isWorkspaceManager) {
+    const notOwnedSites = sites.filter((site) => site.user_id !== user.id)
+
+    if (notOwnedSites.length > 0) {
+      throw new ValidationError(`You can only add domains you own. Sites with IDs [${notOwnedSites.map((s) => s.id).join(', ')}] are not owned by you`)
+    }
+  }
+
+  await addWorkspaceDomainsRepo(workspace_id, siteIds, user.id)
+
+  const updated = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
+
+  if (!updated) {
+    throw new ApolloError('Workspace not found after update')
+  }
+
+  return updated
+}
+
+/**
+ * Remove domains from workspace
+ * @param user - User who wants to remove domains
+ * @param workspace_id - ID of the workspace
+ * @param siteIds - Array of site IDs to remove
+ * @returns Promise<Workspace> Updated workspace
+ */
+export async function removeWorkspaceDomains(user: UserProfile, workspace_id: number, siteIds: number[]): Promise<Workspace> {
+  if (!user.current_organization_id) {
+    throw new ApolloError('No current organization selected')
+  }
+
+  if (!siteIds || siteIds.length === 0) {
+    throw new ValidationError('At least one site ID is required')
+  }
+
+  const workspace = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
+  if (!workspace) {
+    throw new ApolloError('Workspace not found')
+  }
+
+  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
+  const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+
+  const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id })
+  const isWorkspaceManager = workspaceMember && canManageWorkspace(workspaceMember.role)
+
+  if (!isOrgManager && !isWorkspaceManager) {
+    throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} or workspace ${WORKSPACE_MANAGEMENT_ROLES.join(', ')} can manage workspace domains`)
+  }
+
+  await removeWorkspaceDomainsRepo(workspace_id, siteIds)
+
+  const updated = await getWorkspace({ id: workspace_id, organization_id: user.current_organization_id })
+
+  if (!updated) {
+    throw new ApolloError('Workspace not found after update')
+  }
+
+  return updated
 }

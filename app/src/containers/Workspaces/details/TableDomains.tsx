@@ -5,7 +5,7 @@ import {
   GridSelectionModel,
   GridToolbarContainer,
 } from '@mui/x-data-grid';
-import { Button, Box, Typography } from '@mui/material';
+import { Button, Typography } from '@mui/material';
 import { useQuery } from '@apollo/client';
 import GET_WORKSPACE_BY_ALIAS from '@/queries/workspace/getWorkspaceByAlias';
 import { Query } from '@/generated/graphql';
@@ -15,6 +15,7 @@ import { AddWorkspaceDomains } from './AddWorkspaceDomains';
 type TableDomainsProps = {
   alias: string;
   onUpdate?: () => void;
+  hasAccess?: boolean;
 };
 
 type CustomToolbarProps = {
@@ -22,6 +23,7 @@ type CustomToolbarProps = {
   selectedCount: number;
   onAddClick: () => void;
   onRemoveClick: () => void;
+  hasAccess?: boolean;
 };
 
 const CustomToolbar: React.FC<CustomToolbarProps> = ({
@@ -29,6 +31,7 @@ const CustomToolbar: React.FC<CustomToolbarProps> = ({
   selectedCount,
   onAddClick,
   onRemoveClick,
+  hasAccess = true,
 }) => {
   return (
     <GridToolbarContainer
@@ -40,6 +43,7 @@ const CustomToolbar: React.FC<CustomToolbarProps> = ({
         borderBottom: '1px solid',
         borderColor: 'divider',
         backgroundColor: 'transparent',
+        minHeight: '64px',
       }}
     >
       {selectedCount > 0 ? (
@@ -49,15 +53,17 @@ const CustomToolbar: React.FC<CustomToolbarProps> = ({
             selected
           </Typography>
 
-          <Button
-            variant="contained"
-            color="error"
-            size="small"
-            onClick={onRemoveClick}
-            disableElevation
-          >
-            Remove Selected
-          </Button>
+          {hasAccess && (
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              onClick={onRemoveClick}
+              disableElevation
+            >
+              Remove Selected
+            </Button>
+          )}
         </>
       ) : (
         <>
@@ -65,22 +71,28 @@ const CustomToolbar: React.FC<CustomToolbarProps> = ({
             {domainsCount} {domainsCount === 1 ? 'domain' : 'domains'} in
             workspace
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            onClick={onAddClick}
-            disableElevation
-          >
-            Add Domains
-          </Button>
+          {hasAccess && (
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={onAddClick}
+              disableElevation
+            >
+              Add Domains
+            </Button>
+          )}
         </>
       )}
     </GridToolbarContainer>
   );
 };
 
-export const TableDomains = ({ alias, onUpdate }: TableDomainsProps) => {
+export const TableDomains = ({
+  alias,
+  onUpdate,
+  hasAccess = true,
+}: TableDomainsProps) => {
   const [pageSize, setPageSize] = React.useState<number>(50);
   const [selectionModel, setSelectionModel] =
     React.useState<GridSelectionModel>([]);
@@ -198,6 +210,7 @@ export const TableDomains = ({ alias, onUpdate }: TableDomainsProps) => {
             selectedCount: selectionModel.length,
             onAddClick: handleAddClick,
             onRemoveClick: handleRemoveClick,
+            hasAccess,
           },
         }}
         sx={{

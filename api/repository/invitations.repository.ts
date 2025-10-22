@@ -32,6 +32,7 @@ export type GetDetailWorkspaceInvitation = {
   workspace_name: string
   workspace_alias?: string
   invited_by: string
+  invited_by_id?: number
   email: string
   status: InvitationStatus
   role: WorkspaceUserRole
@@ -134,6 +135,7 @@ export async function getDetailWorkspaceInvitations(condition: { token?: string;
       id: invitationsColumns.id,
       workspace_name: workspacesColumns.name,
       invited_by: usersColumns.email,
+      invited_by_id: invitationsColumns.invitedById,
       email: invitationsColumns.email,
       status: invitationsColumns.status,
       role: invitationsColumns.workspaceRole,
@@ -170,6 +172,7 @@ export async function getOrganizationWorkspaceInvitations(organizationId: number
       workspace_name: workspacesColumns.name,
       workspace_alias: workspacesColumns.alias,
       invited_by: usersColumns.email,
+      invited_by_id: invitationsColumns.invitedById,
       email: invitationsColumns.email,
       status: invitationsColumns.status,
       role: invitationsColumns.workspaceRole,

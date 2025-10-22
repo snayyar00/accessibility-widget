@@ -131,6 +131,7 @@ export async function getWorkspaceMembers({ workspaceId, userId, organizationId 
   const query = database(TABLE)
     .join('workspace_users', 'workspaces.id', 'workspace_users.workspace_id')
     .join('users', 'workspace_users.user_id', 'users.id')
+    .leftJoin('invitations', 'workspace_users.invitation_token', 'invitations.token')
     .select(
       'workspace_users.id',
       'workspace_users.user_id',
@@ -139,6 +140,7 @@ export async function getWorkspaceMembers({ workspaceId, userId, organizationId 
       'workspace_users.status',
       'workspace_users.created_at',
       'workspace_users.updated_at',
+      'invitations.invited_by_id as invited_by',
       database.raw(`JSON_OBJECT(
         'id', users.id,
         'name', users.name,

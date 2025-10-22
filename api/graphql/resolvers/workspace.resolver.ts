@@ -4,9 +4,10 @@ import { WorkspaceUserRole } from '../../constants/workspace.constant'
 import { GraphQLContext } from '../../graphql/types'
 import { findUser, UserProfile } from '../../repository/user.repository'
 import { WorkspaceWithDomains } from '../../repository/workspace_allowed_sites.repository'
-import { getWorkspaceDomainsService } from '../../services/workspaces/workspaceDomains.service'
+import { addWorkspaceDomains, getWorkspaceDomainsService, removeWorkspaceDomains } from '../../services/workspaces/workspaceDomains.service'
 import { getWorkspaceInvitationsByAlias, removeAllUserInvitations, removeWorkspaceInvitation } from '../../services/workspaces/workspaceInvitations.service'
-import { addWorkspaceDomains, changeWorkspaceMemberRole, createWorkspace, deleteWorkspace, getAllWorkspaces, getWorkspaceByAlias, getWorkspaceMembers, getWorkspaceMembersByAlias, removeWorkspaceDomains, removeWorkspaceMember, updateWorkspace } from '../../services/workspaces/workspaces.service'
+import { changeWorkspaceMemberRole, getWorkspaceMembers, getWorkspaceMembersByAlias, removeWorkspaceMember } from '../../services/workspaces/workspaceMembers.service'
+import { createWorkspace, deleteWorkspace, getAllWorkspaces, getWorkspaceByAlias, updateWorkspace } from '../../services/workspaces/workspaces.service'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 type WorkspaceInput = {
