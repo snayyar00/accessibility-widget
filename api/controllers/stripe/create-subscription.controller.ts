@@ -26,6 +26,18 @@ export async function createSubscription(req: Request, res: Response) {
     return res.status(403).json({ error: 'User does not own this domain' })
   }
 
+  // If user doesn't have referral in session but might have it in database, reload it
+  if (!user.referral) {
+    try {
+      const freshUser = await findUserById(user.id)
+      if (freshUser.referral) {
+        user.referral = freshUser.referral
+        console.log('[REWARDFUL] Loaded existing referral code from database:', freshUser.referral)
+      }
+    } catch (error) {
+      console.error('[REWARDFUL] Failed to reload user referral code:', error)
+    }
+  }
   const [price, sites, customers] = await Promise.all([
     findProductAndPriceByType(planName, billingInterval),
     getSitesPlanByUserId(Number(user.id)),

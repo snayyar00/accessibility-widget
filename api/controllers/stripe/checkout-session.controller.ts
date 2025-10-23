@@ -25,6 +25,32 @@ export async function createCheckoutSession(req: Request, res: Response) {
   if (!site || site.user_id !== user.id) {
     return res.status(403).json({ error: 'User does not own this domain' })
   }
+  // Store referral code in user record if provided and user doesn't have one
+  if (referral && !user.referral) {
+    try {
+      const updateData: any = { referral: referral }
+      await updateUser(user.id, updateData)
+      // Update the local user object so it's available for Stripe calls
+      user.referral = referral
+      console.log('[REWARDFUL] Saved new referral code to user:', referral)
+    } catch (error) {
+      console.error('Failed to save referral code:', error)
+      // Don't fail the checkout if referral code save fails
+    }
+  }
+
+  // If user doesn't have referral in session but might have it in database, reload it
+  if (!user.referral) {
+    try {
+      const freshUser = await findUserById(user.id)
+      if (freshUser.referral) {
+        user.referral = freshUser.referral
+        console.log('[REWARDFUL] Loaded existing referral code from database:', freshUser.referral)
+      }
+    } catch (error) {
+      console.error('[REWARDFUL] Failed to reload user referral code:', error)
+    }
+  }
 
   try {
     const [price, customers] = await Promise.all([
