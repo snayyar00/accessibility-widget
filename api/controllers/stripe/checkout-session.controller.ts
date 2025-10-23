@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import Stripe from 'stripe'
 
-import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from '../../constants/billing.constant'
+import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, REWARDFUL_COUPON } from '../../constants/billing.constant'
 import { findProductAndPriceByType } from '../../repository/products.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { getSitePlanBySiteId } from '../../repository/sites_plans.repository'
@@ -179,7 +179,10 @@ export async function createCheckoutSession(req: Request, res: Response) {
         allow_promotion_codes: true,
         success_url: `${returnUrl}`,
         cancel_url: returnUrl,
-        ...(user.referral && { client_reference_id: user.referral }),
+        ...(user.referral && {
+          client_reference_id: user.referral,
+          discounts: [{ coupon: REWARDFUL_COUPON }],
+        }),
         metadata: {
           domainId,
           userId: user.id,
@@ -251,7 +254,10 @@ export async function createCheckoutSession(req: Request, res: Response) {
           allow_promotion_codes: true,
           success_url: `${returnUrl}`,
           cancel_url: returnUrl,
-          ...(user.referral && { client_reference_id: user.referral }),
+          ...(user.referral && {
+            client_reference_id: user.referral,
+            discounts: [{ coupon: REWARDFUL_COUPON }],
+          }),
           metadata: {
             domainId,
             userId: user.id,

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import Stripe from 'stripe'
 
-import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from '../../constants/billing.constant'
+import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, REWARDFUL_COUPON } from '../../constants/billing.constant'
 import { findProductAndPriceByType } from '../../repository/products.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { getSitePlanBySiteId, getSitesPlanByUserId } from '../../repository/sites_plans.repository'
@@ -170,6 +170,7 @@ export async function createSubscription(req: Request, res: Response) {
           items: [{ price: price.price_stripe_id, quantity: 1 }],
           expand: ['latest_invoice.payment_intent'],
           default_payment_method: customer.invoice_settings.default_payment_method,
+          ...(user.referral && { coupon: REWARDFUL_COUPON }),
           metadata: {
             domainId,
             userId: user.id,
@@ -194,6 +195,7 @@ export async function createSubscription(req: Request, res: Response) {
           items: [{ price: price.price_stripe_id, quantity: 1 }],
           expand: ['latest_invoice.payment_intent'],
           default_payment_method: customer.invoice_settings.default_payment_method,
+          ...(user.referral && { coupon: REWARDFUL_COUPON }),
           metadata: {
             domainId,
             userId: user.id,

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import Stripe from 'stripe'
 
+import { REWARDFUL_COUPON } from '../../constants/billing.constant'
 import { findProductById, findProductByStripeId, insertProduct, updateProduct } from '../../repository/products.repository'
 import { getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId } from '../../repository/sites_plans.repository'
 import { createSitesPlan, deleteSitesPlan, deleteTrialPlan, updateSitesPlan } from '../allowedSites/plans-sites.service'
@@ -224,6 +225,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
             items: [{ price: price.id, quantity: 1 }],
             expand: ['latest_invoice.payment_intent'],
             default_payment_method: paymentMethod,
+            ...(referralCode && { coupon: REWARDFUL_COUPON }),
             metadata: {
               domainId: session.metadata.domainId,
               userId: session.metadata.userId,
