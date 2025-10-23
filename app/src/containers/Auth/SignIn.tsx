@@ -53,18 +53,10 @@ const SignIn: React.FC = () => {
       if (referralId) {
         // Save to localStorage for persistence across sessions
         localStorage.setItem('rewardful_referral', referralId);
-        console.log(
-          '[REWARDFUL] Referral link saved to localStorage:',
-          referralId,
-        );
       } else {
         // Check if we have a stored referral from previous visit
         const storedReferral = localStorage.getItem('rewardful_referral');
         if (storedReferral) {
-          console.log(
-            '[REWARDFUL] Using stored referral from localStorage:',
-            storedReferral,
-          );
           // Set it in Rewardful if available
           if ((window as any).Rewardful) {
             (window as any).Rewardful.referral = storedReferral;
