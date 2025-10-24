@@ -69,10 +69,6 @@ const Topbar: React.FC<Props> = ({ signout }) => {
     data: { avatarUrl, name, email, isActive },
   } = useSelector((state: RootState) => state.user);
 
-  const { data } = useSelector((state: RootState) => state.user);
-
-  const lastSeenDate = useSelector(selectLastSeenDate);
-
   const [isShowMenu, setIsShowMenu] = useState(false);
   const [isShowNotificationSettings, setIsShowNotificationSettings] =
     useState(false);

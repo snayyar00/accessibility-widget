@@ -5,7 +5,6 @@ import { expressMiddleware } from '@as-integrations/express5'
 import bodyParser, { json } from 'body-parser'
 import cookieParser from 'cookie-parser'
 import express from 'express'
-import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.mjs'
 import { createServer } from 'http'
 
 import { initializeSentry } from './config/sentry.config'
@@ -13,6 +12,7 @@ import { ALLOWED_OPERATIONS, ALLOWED_ORIGINS, configureServer, PORT } from './co
 import { handleComplianceWebhook } from './controllers/shopify.controller'
 import { createGraphQLContext } from './graphql/context'
 import { createGraphQLServer } from './graphql/server'
+import { initializeGraphQLUpload } from './graphql/upload'
 import scheduleEmailSequences from './jobs/emailSequence'
 import scheduleMonthlyEmails from './jobs/monthlyEmail'
 import { dynamicCors } from './middlewares/cors.middleware'
@@ -55,9 +55,18 @@ app.get('/', (_, res) => {
 app.use(routes)
 app.use(expressErrorMiddleware)
 
-const serverGraph = createGraphQLServer(httpServer)
+let serverGraph: Awaited<ReturnType<typeof createGraphQLServer>> | null = null
 
 async function initializeServer() {
+  // Initialize graphql-upload ES modules before creating GraphQL server
+  await initializeGraphQLUpload()
+
+  // Create GraphQL server after upload modules are initialized
+  serverGraph = createGraphQLServer(httpServer)
+
+  // Dynamically import ES module to avoid CommonJS/ESM conflict
+  const { default: graphqlUploadExpress } = await import('graphql-upload/graphqlUploadExpress.mjs')
+
   await serverGraph.start()
 
   app.use('/graphql', graphqlTimeoutMiddleware)
@@ -114,7 +123,9 @@ initializeServer().catch((error) => {
 process.on('SIGINT', async () => {
   console.info('Received SIGINT, shutting down gracefully...')
 
-  await serverGraph.stop()
+  if (serverGraph) {
+    await serverGraph.stop()
+  }
 
   httpServer.close(() => {
     console.info('Server closed')
@@ -125,7 +136,9 @@ process.on('SIGINT', async () => {
 process.on('SIGTERM', async () => {
   console.info('Received SIGTERM, shutting down gracefully...')
 
-  await serverGraph.stop()
+  if (serverGraph) {
+    await serverGraph.stop()
+  }
 
   httpServer.close(() => {
     console.info('Server closed')

@@ -1,5 +1,4 @@
 import { combineResolvers } from 'graphql-resolvers'
-import FileUpload from 'graphql-upload/Upload.mjs'
 
 import { OrganizationUserRole } from '../../constants/organization.constant'
 import { GraphQLContext } from '../../graphql/types'
@@ -111,7 +110,7 @@ const organizationResolver = {
       }
     }),
 
-    uploadOrganizationLogo: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { organizationId: string; logo: Promise<FileUpload> }, { user }): Promise<Organization | null> => {
+    uploadOrganizationLogo: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { organizationId: string; logo: Promise<unknown> }, { user }): Promise<Organization | null> => {
       const file = (await args.logo) as unknown as FileUploadResolved
       await uploadOrganizationLogo(Number(args.organizationId), file, user)
 
@@ -119,7 +118,7 @@ const organizationResolver = {
       return org || null
     }),
 
-    uploadOrganizationFavicon: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { organizationId: string; favicon: Promise<FileUpload> }, { user }): Promise<Organization | null> => {
+    uploadOrganizationFavicon: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { organizationId: string; favicon: Promise<unknown> }, { user }): Promise<Organization | null> => {
       const file = (await args.favicon) as unknown as FileUploadResolved
       await uploadOrganizationFavicon(Number(args.organizationId), file, user)
 

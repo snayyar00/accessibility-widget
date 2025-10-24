@@ -1,5 +1,3 @@
-import GraphQLUpload from 'graphql-upload/GraphQLUpload.mjs'
-
 import accessibilityResolves from './resolvers/accessibilityReport.resolver'
 import { aiReadinessResolvers } from './resolvers/aiReadiness.resolver'
 import allowedSitesResolves from './resolvers/allowedSites.resolver'
@@ -16,26 +14,32 @@ import uniqueVisitorResolves from './resolvers/uniqueVisitor.resolver'
 import userResolves from './resolvers/user.resolver'
 import widgetResolvers from './resolvers/widget.resolver'
 import workspaceResolvers from './resolvers/workspace.resolver'
+import { getGraphQLUploadType } from './upload'
 
-// eslint-disable-next-line import/no-anonymous-default-export
-export default [
-  {
-    Upload: GraphQLUpload,
-  },
-  userResolves,
-  allowedSitesResolves,
-  uniqueVisitorResolves,
-  impressionResolves,
-  accessibilityResolves,
-  sitePlanResolves,
-  problemReportResolves,
-  organizationResolver,
-  translationResolves,
-  uniqueTokenResolver,
-  proofOfEffortResolves,
-  widgetResolvers,
-  domainAnalysisResolves,
-  workspaceResolvers,
-  invitationResolvers,
-  aiReadinessResolvers,
-]
+// Function to create resolvers after GraphQL Upload is initialized
+export function createResolvers() {
+  return [
+    {
+      Upload: getGraphQLUploadType(),
+    },
+    userResolves,
+    allowedSitesResolves,
+    uniqueVisitorResolves,
+    impressionResolves,
+    accessibilityResolves,
+    sitePlanResolves,
+    problemReportResolves,
+    organizationResolver,
+    translationResolves,
+    uniqueTokenResolver,
+    proofOfEffortResolves,
+    widgetResolvers,
+    domainAnalysisResolves,
+    workspaceResolvers,
+    invitationResolvers,
+    aiReadinessResolvers,
+  ]
+}
+
+// For backward compatibility - will be called after initialization
+export default createResolvers
