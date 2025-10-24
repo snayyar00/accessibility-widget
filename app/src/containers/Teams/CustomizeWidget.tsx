@@ -126,6 +126,21 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     }
   };
 
+  // Function to apply footer text to widget
+  const applyFooterTextToWidget = (iframeDoc: Document, text: string) => {
+    if (!text) return;
+
+    // Find the footer text element using the correct class name
+    const footerTextElement = iframeDoc.querySelector(
+      '.footer-main-title',
+    ) as HTMLElement;
+
+    if (footerTextElement) {
+      // Update the text content
+      footerTextElement.textContent = text;
+    }
+  };
+
   // Function to apply font to widget
   const applyFontToWidget = (iframeDoc: Document, fontFamily: string) => {
     if (!iframeDoc) return;
@@ -415,11 +430,13 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   const [accessibilityStatementLinkUrl, setAccessibilityStatementLinkUrl] =
     useState(colors.accessibilityStatementLinkUrl);
   const [logoUrl, setLogoUrl] = useState(colors.logoUrl);
+  const [footerText, setFooterText] = useState(colors.footerText);
 
   useEffect(() => {
     setAccessibilityStatementLinkUrl(colors.accessibilityStatementLinkUrl);
     setLogoUrl(colors.logoUrl);
-  }, [colors.accessibilityStatementLinkUrl, colors.logoUrl]);
+    setFooterText(colors.footerText);
+  }, [colors.accessibilityStatementLinkUrl, colors.logoUrl, colors.footerText]);
   const isBase64 = (str: any) => {
     const regex = /^data:image\/(png|jpg|jpeg|gif|bmp);base64,/;
     return regex.test(str);
@@ -1092,6 +1109,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           // Apply logo to widget if it exists
           applyLogoToWidget(iframeDoc, colors.logoImage);
 
+          // Apply footer text to widget
+          applyFooterTextToWidget(iframeDoc, colors.footerText);
+
           // Apply font to widget with additional delay to ensure widget CSS is loaded
           setTimeout(() => {
             applyFontToWidget(iframeDoc, selectedFont);
@@ -1181,6 +1201,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         });
 
         applyLogoToWidget(iframeDoc, colors.logoImage);
+
+        // Apply footer text to widget
+        applyFooterTextToWidget(iframeDoc, colors.footerText);
 
         // Reapply font with additional delay to ensure it overrides widget CSS
         setTimeout(() => {
@@ -2198,6 +2221,66 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <button
                       onClick={() => {
                         setSelectedFont('auto');
+                      }}
+                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  {/* Set Footer Text */}
+                  <div className="bg-white rounded-xl shadow-sm border border-[#A2ADF3] p-6 mb-4">
+                    <div className="mb-6">
+                      <h3 className="text-xl font-semibold text-[#1a1a1a] mb-2">
+                        Customize Footer Text
+                      </h3>
+                      <p className="text-sm text-[#666666] leading-relaxed">
+                        Set custom branding text that will appear in the widget
+                        footer
+                      </p>
+                    </div>
+
+                    <div className="mb-6">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <svg
+                            className="h-5 w-5 text-[#9CA3AF]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                            />
+                          </svg>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Enter footer text (e.g., Your Company Name)"
+                          className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white"
+                          value={footerText}
+                          onChange={(e) => {
+                            const text = e.target.value;
+                            setFooterText(text);
+                            setColors((prev) => ({
+                              ...prev,
+                              footerText: text,
+                            }));
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setColors((prev) => ({
+                          ...prev,
+                          footerText: DefaultColors.footerText,
+                        }));
+                        setFooterText(DefaultColors.footerText);
                       }}
                       className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
                     >
