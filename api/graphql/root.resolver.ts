@@ -16,7 +16,6 @@ import widgetResolvers from './resolvers/widget.resolver'
 import workspaceResolvers from './resolvers/workspace.resolver'
 import { getGraphQLUploadType } from './upload'
 
-// Function to create resolvers after GraphQL Upload is initialized
 export function createResolvers() {
   return [
     {

@@ -22,7 +22,7 @@ import { ReactComponent as ArrowDownIcon } from '@/assets/images/svg/arrow-down-
 import { ReactComponent as MenuIcon } from '@/assets/images/svg/menu.svg';
 import Input from '@/components/Common/Input';
 import { handleBilling } from '@/containers/Profile/BillingPortalLink';
-import { CircularProgress } from '@mui/material';
+import { Chip, CircularProgress } from '@mui/material';
 import EmailVerificationBanner from '../Auth/EmailVerificationBanner';
 import { useTourGuidance } from '@/hooks/useTourGuidance';
 import { useMutation, useQuery } from '@apollo/client';
@@ -66,7 +66,14 @@ const Topbar: React.FC<Props> = ({ signout }) => {
   const dispath = useDispatch();
   const { t } = useTranslation();
   const {
-    data: { avatarUrl, name, email, isActive },
+    data: {
+      name,
+      email,
+      isActive,
+      isAdminOrOwnerOrSuper,
+      currentOrganizationUser,
+      is_super_admin,
+    },
   } = useSelector((state: RootState) => state.user);
 
   const [isShowMenu, setIsShowMenu] = useState(false);
@@ -80,9 +87,7 @@ const Topbar: React.FC<Props> = ({ signout }) => {
   ) as React.MutableRefObject<HTMLDivElement>;
 
   // GraphQL queries and mutations
-  const { data: notificationData, refetch: refetchNotifications } = useQuery(
-    GET_USER_NOTIFICATION_SETTINGS,
-  );
+  const { data: notificationData } = useQuery(GET_USER_NOTIFICATION_SETTINGS);
   const [updateNotificationSettings] = useMutation(
     UPDATE_NOTIFICATION_SETTINGS,
   );
@@ -160,7 +165,18 @@ const Topbar: React.FC<Props> = ({ signout }) => {
           </div>
         </div>
         <div className="flex items-center gap-1">
-          {/* Tour Guidance Button */}
+          {isAdminOrOwnerOrSuper && (
+            <div className="capitalize">
+              <Chip
+                variant="outlined"
+                color="success"
+                size="small"
+                label={
+                  is_super_admin ? 'Super Admin' : currentOrganizationUser?.role
+                }
+              />
+            </div>
+          )}
 
           {/* What's New Button */}
           <div className="flex items-center cursor-pointer relative sm:mr-2">

@@ -103,11 +103,6 @@ const AgencyProgram: React.FC<AgencyProgramProps> = ({
           response.message || 'Successfully disconnected from Agency Program.',
         );
 
-        // Refetch all active queries and update user profile
-        client.refetchQueries({
-          include: 'active',
-        });
-
         const profileResult = await getProfile();
         const profileUser = profileResult?.data?.profileUser;
 
