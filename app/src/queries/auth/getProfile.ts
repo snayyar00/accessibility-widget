@@ -29,6 +29,7 @@ export default gql`
         organization_id
         role
         status
+        hasAgencyAccountId
         created_at
         updated_at
       }

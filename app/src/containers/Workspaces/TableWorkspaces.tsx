@@ -30,8 +30,6 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
 
   const workspaces = data?.getOrganizationWorkspaces || [];
 
-  console.log(workspaces);
-
   const rows = React.useMemo(
     () =>
       workspaces.map((workspace, idx) => ({

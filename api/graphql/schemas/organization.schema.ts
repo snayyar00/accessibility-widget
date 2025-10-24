@@ -37,6 +37,17 @@ export const OrganizationSchema = `#graphql
     currentOrganization: Organization
     workspaces: [Workspace!]!
     hasWorkspace: Boolean!
+    hasAgencyAccountId: Boolean!
+  }
+
+  type AgencyProgramConnectionResponse {
+    onboardingUrl: String!
+    success: Boolean!
+  }
+
+  type AgencyProgramDisconnectionResponse {
+    success: Boolean!
+    message: String
   }
 
   extend type Query {
@@ -54,5 +65,8 @@ export const OrganizationSchema = `#graphql
     removeOrganization(id: ID!): Boolean @rateLimit(limit: 5, duration: 60, message: "Too many remove attempts. Please try again later.")
     removeUserFromOrganization(userId: Int!): Boolean @rateLimit(limit: 30, duration: 60, message: "Too many remove user attempts. Please try again later.")
     changeOrganizationUserRole(userId: Int!, role: OrganizationUserRole!): Boolean @rateLimit(limit: 20, duration: 60, message: "Too many role change attempts. Please try again later.")
+    connectToAgencyProgram(successUrl: String!): AgencyProgramConnectionResponse! @rateLimit(limit: 5, duration: 300, message: "Too many agency connection attempts. Please try again later.")
+    disconnectFromAgencyProgram: AgencyProgramDisconnectionResponse! @rateLimit(limit: 5, duration: 300, message: "Too many agency disconnection attempts. Please try again later.")
+    updateAgencyAccount(agencyAccountId: String!): Boolean! @rateLimit(limit: 5, duration: 300, message: "Too many agency update attempts. Please try again later.")
   }
 `

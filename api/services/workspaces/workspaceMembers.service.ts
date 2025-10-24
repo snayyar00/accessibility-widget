@@ -27,15 +27,6 @@ type WorkspaceMemberWithUser = GetAllWorkspaceResponse & {
 }
 
 /**
- * Helper function to get existing member emails
- * @param GetAllWorkspaceResponse[] members Array of workspace members
- * @returns Set<string> Set of existing emails
- */
-function getExistingMemberEmails(members: GetAllWorkspaceResponse[]): Set<string> {
-  return new Set(members.map((member) => (member as WorkspaceMemberWithUser).user?.email || (member as WorkspaceMemberWithUser).email).filter(Boolean) as string[])
-}
-
-/**
  * Function to get all members of a workspace by ID
  * Users who are members of the workspace can see members
  * Super admins and organization managers can also see members
@@ -212,6 +203,7 @@ export async function changeWorkspaceMemberRole(user: UserProfile, id: number, r
         if (workspaceMember.role === WORKSPACE_USER_ROLE_OWNER && role !== WORKSPACE_USER_ROLE_OWNER) {
           throw new ApolloError(`Cannot change ${WORKSPACE_USER_ROLE_OWNER} role while there is a pending invitation for ${WORKSPACE_USER_ROLE_OWNER} role. Please cancel the invitation first.`)
         }
+
         if (role === WORKSPACE_USER_ROLE_OWNER && workspaceMember.role !== WORKSPACE_USER_ROLE_OWNER) {
           throw new ApolloError(`There is already a pending invitation for ${WORKSPACE_USER_ROLE_OWNER} role. Please cancel it before assigning a new ${WORKSPACE_USER_ROLE_OWNER}.`)
         }
@@ -335,7 +327,6 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
     }
   }
 
-  // Cannot remove the last owner from workspace
   if (workspaceMember.role === WORKSPACE_USER_ROLE_OWNER && activeOwners.length === 1 && workspaceMember.status === WORKSPACE_USER_STATUS_ACTIVE) {
     throw new ValidationError('Cannot remove the last owner of the workspace')
   }
@@ -397,4 +388,13 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
 
     throw new ApolloError(error)
   }
+}
+
+/**
+ * Helper function to get existing member emails
+ * @param GetAllWorkspaceResponse[] members Array of workspace members
+ * @returns Set<string> Set of existing emails
+ */
+function getExistingMemberEmails(members: GetAllWorkspaceResponse[]): Set<string> {
+  return new Set(members.map((member) => (member as WorkspaceMemberWithUser).user?.email || (member as WorkspaceMemberWithUser).email).filter(Boolean) as string[])
 }

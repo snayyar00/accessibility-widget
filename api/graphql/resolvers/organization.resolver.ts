@@ -5,6 +5,8 @@ import { OrganizationUserRole } from '../../constants/organization.constant'
 import { GraphQLContext } from '../../graphql/types'
 import { generateOrganizationFaviconUrl, generateOrganizationLogoUrl } from '../../helpers/imgproxy.helper'
 import { Organization } from '../../repository/organization.repository'
+import { OrganizationUser } from '../../repository/organization_user.repository'
+import { AgencyProgramConnectionResponse, AgencyProgramDisconnectionResponse, connectToAgencyProgram, disconnectFromAgencyProgram, updateAgencyAccount } from '../../services/organization/agencyProgram.service'
 import { addOrganization, CreateOrganizationInput, editOrganization, getOrganizationByDomainService, getOrganizationById, getOrganizations, removeOrganization, removeUserFromOrganization } from '../../services/organization/organization.service'
 import { changeOrganizationUserRole, getOrganizationUsers } from '../../services/organization/organization_users.service'
 import { FileUploadResolved, uploadOrganizationFavicon, uploadOrganizationLogo } from '../../services/upload/organizationUpload.service'
@@ -19,10 +21,17 @@ const organizationResolver = {
 
       return generateOrganizationLogoUrl(parent.logo_url)
     },
+
     favicon: (parent: Organization) => {
       if (!parent.favicon) return null
 
       return generateOrganizationFaviconUrl(parent.favicon)
+    },
+  },
+
+  OrganizationUser: {
+    hasAgencyAccountId: (parent: OrganizationUser) => {
+      return !!parent.agencyAccountId
     },
   },
 
@@ -116,6 +125,19 @@ const organizationResolver = {
 
       const org = await getOrganizationById(args.organizationId, user)
       return org || null
+    }),
+
+    connectToAgencyProgram: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { successUrl: string }, { user }): Promise<AgencyProgramConnectionResponse> => {
+      return await connectToAgencyProgram(user, args.successUrl)
+    }),
+
+    disconnectFromAgencyProgram: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, __: unknown, { user }): Promise<AgencyProgramDisconnectionResponse> => {
+      return await disconnectFromAgencyProgram(user)
+    }),
+
+    updateAgencyAccount: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { agencyAccountId: string }, { user }): Promise<boolean> => {
+      // @TODO: For Stripe Webhook
+      return await updateAgencyAccount(user, args.agencyAccountId)
     }),
   },
 }

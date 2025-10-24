@@ -17,6 +17,7 @@ export type OrganizationUser = {
   organization_id: number
   role?: OrganizationUserRole
   status?: OrganizationUserStatus
+  agencyAccountId?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -62,6 +63,16 @@ export async function updateOrganizationUserByOrganizationAndUserId(organization
 
 export async function deleteOrganizationUser(id: number, trx?: Knex.Transaction): Promise<number> {
   const query = database(TABLE).where({ id }).del()
+
+  if (!trx) {
+    return query
+  }
+
+  return query.transacting(trx)
+}
+
+export async function updateOrganizationUserAgencyAccount(id: number, agencyAccountId: string | null, trx?: Knex.Transaction): Promise<number> {
+  const query = database(TABLE).where({ id }).update({ agencyAccountId })
 
   if (!trx) {
     return query

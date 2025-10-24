@@ -101,7 +101,6 @@ export async function removeWorkspaceInvitation(user: UserProfile, id: number): 
     throw new ApolloError('You can only remove invitations that you created')
   }
 
-  // Only organization managers can remove workspace owner invitations
   if (invitation.workspace_role === WORKSPACE_USER_ROLE_OWNER && !isOrgManager) {
     throw new ForbiddenError('Only organization admin can remove workspace owner invitation')
   }
