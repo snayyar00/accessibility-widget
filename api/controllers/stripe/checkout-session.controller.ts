@@ -163,7 +163,8 @@ export async function createCheckoutSession(req: Request, res: Response) {
           },
         ],
         customer: customer.id,
-        allow_promotion_codes: true,
+        // Only allow promotion codes if no referral discount is applied
+        ...(user.referral ? {} : { allow_promotion_codes: true }),
         success_url: `${returnUrl}`,
         cancel_url: returnUrl,
         ...(user.referral && {
@@ -224,7 +225,8 @@ export async function createCheckoutSession(req: Request, res: Response) {
             },
           ],
           customer: customer.id,
-          allow_promotion_codes: true,
+          // Only allow promotion codes if no referral discount is applied
+          ...(user.referral ? {} : { allow_promotion_codes: true }),
           success_url: `${returnUrl}`,
           cancel_url: returnUrl,
           ...(user.referral && {
