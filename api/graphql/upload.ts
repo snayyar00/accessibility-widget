@@ -10,8 +10,11 @@ let _Upload: any = null
 
 export async function initializeGraphQLUpload() {
   try {
-    const uploadModule = await import('graphql-upload/GraphQLUpload.mjs')
-    const uploadTypeModule = await import('graphql-upload/Upload.mjs')
+    // Use dynamic import wrapper to avoid CommonJS/ESM issues in production
+    const importESM = new Function('specifier', 'return import(specifier)')
+
+    const uploadModule = await importESM('graphql-upload/GraphQLUpload.mjs')
+    const uploadTypeModule = await importESM('graphql-upload/Upload.mjs')
 
     _GraphQLUpload = uploadModule.default
     _Upload = uploadTypeModule.default

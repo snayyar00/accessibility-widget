@@ -65,7 +65,10 @@ async function initializeServer() {
   serverGraph = createGraphQLServer(httpServer)
 
   // Dynamically import ES module to avoid CommonJS/ESM conflict
-  const { default: graphqlUploadExpress } = await import('graphql-upload/graphqlUploadExpress.mjs')
+  // Use Function constructor to bypass TypeScript's import compilation
+  const importESM = new Function('specifier', 'return import(specifier)')
+  const graphqlUploadModule = await importESM('graphql-upload/graphqlUploadExpress.mjs')
+  const graphqlUploadExpress = graphqlUploadModule.default
 
   await serverGraph.start()
 
