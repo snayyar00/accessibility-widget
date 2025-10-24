@@ -27,6 +27,7 @@
     "@browserbasehq/sdk": "^2.6.0",
     "@clickhouse/client": "^1.12.1",
     "@getbrevo/brevo": "^2.5.0",
+    "@imgproxy/imgproxy-node": "^1.1.0",
     "@sentry/node": "^5.30.0",
     "@types/cors": "^2.8.19",
     "@types/jspdf": "^2.0.0",

@@ -335,7 +335,7 @@ const Organization: React.FC = () => {
               value={logoFiles}
               onChange={handleLogoChange}
               maxFiles={1}
-              acceptedExt={['.jpg', '.jpeg', '.png', '.svg']}
+              acceptedExt={['.png', '.svg']}
               maxFileSize={5e6}
               disabled={uploadingLogo}
             />

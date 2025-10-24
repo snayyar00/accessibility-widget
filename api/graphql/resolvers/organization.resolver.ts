@@ -3,6 +3,7 @@ import FileUpload from 'graphql-upload/Upload.mjs'
 
 import { OrganizationUserRole } from '../../constants/organization.constant'
 import { GraphQLContext } from '../../graphql/types'
+import { generateOrganizationFaviconUrl, generateOrganizationLogoUrl } from '../../helpers/imgproxy.helper'
 import { Organization } from '../../repository/organization.repository'
 import { addOrganization, CreateOrganizationInput, editOrganization, getOrganizationByDomainService, getOrganizationById, getOrganizations, removeOrganization, removeUserFromOrganization } from '../../services/organization/organization.service'
 import { changeOrganizationUserRole, getOrganizationUsers } from '../../services/organization/organization_users.service'
@@ -12,6 +13,19 @@ import { ValidationError } from '../../utils/graphql-errors.helper'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 const organizationResolver = {
+  Organization: {
+    logo_url: (parent: Organization) => {
+      if (!parent.logo_url) return null
+
+      return generateOrganizationLogoUrl(parent.logo_url)
+    },
+    favicon: (parent: Organization) => {
+      if (!parent.favicon) return null
+
+      return generateOrganizationFaviconUrl(parent.favicon)
+    },
+  },
+
   Query: {
     getUserOrganizations: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, __: unknown, { user }): Promise<Organization[]> => {
       const orgs = await getOrganizations(user)

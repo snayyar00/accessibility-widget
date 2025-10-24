@@ -27,7 +27,7 @@ const s3 = new S3Client({
 
 const MAX_LOGO_SIZE = 5 * 1024 * 1024 // 5MB
 const MAX_FAVICON_SIZE = 5 * 1024 * 1024 // 5MB
-const ALLOWED_LOGO_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml']
+const ALLOWED_LOGO_TYPES = ['image/png', 'image/svg+xml']
 const ALLOWED_FAVICON_TYPES = ['image/png', 'image/svg+xml']
 
 async function uploadToR2(stream: Readable, key: string, contentType: string): Promise<string> {
@@ -56,6 +56,40 @@ async function uploadToR2(stream: Readable, key: string, contentType: string): P
   throw new ApolloError('R2_PUBLIC_URL not configured. Please set R2_PUBLIC_URL in environment variables or enable public access on your R2 bucket.')
 }
 
+export async function uploadOrganizationLogo(organizationId: number, file: FileUploadResolved, user: UserProfile): Promise<string> {
+  await checkOrganizationUploadAccess(user, organizationId)
+  await validateImageUpload(file, MAX_LOGO_SIZE, ALLOWED_LOGO_TYPES)
+
+  const { createReadStream, filename, mimetype } = file
+  const stream = createReadStream()
+
+  const ext = filename.split('.').pop()
+  const uniqueFilename = `organizations/${organizationId}/logo-${uuidv4()}.${ext}`
+
+  const originalUrl = await uploadToR2(stream, uniqueFilename, mimetype)
+
+  await updateOrganization(organizationId, { logo_url: originalUrl })
+
+  return originalUrl
+}
+
+export async function uploadOrganizationFavicon(organizationId: number, file: FileUploadResolved, user: UserProfile): Promise<string> {
+  await checkOrganizationUploadAccess(user, organizationId)
+  await validateImageUpload(file, MAX_FAVICON_SIZE, ALLOWED_FAVICON_TYPES)
+
+  const { createReadStream, filename, mimetype } = file
+  const stream = createReadStream()
+
+  const ext = filename.split('.').pop()
+  const uniqueFilename = `organizations/${organizationId}/favicon-${uuidv4()}.${ext}`
+
+  const originalUrl = await uploadToR2(stream, uniqueFilename, mimetype)
+
+  await updateOrganization(organizationId, { favicon: originalUrl })
+
+  return originalUrl
+}
+
 async function validateImageUpload(file: FileUploadResolved, maxSize: number, allowedTypes: string[]): Promise<void> {
   const { mimetype } = file
 
@@ -77,38 +111,4 @@ async function checkOrganizationUploadAccess(user: UserProfile, organizationId: 
   if (!isAllowed) {
     throw new ApolloError(`Only ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can upload organization files`)
   }
-}
-
-export async function uploadOrganizationLogo(organizationId: number, file: FileUploadResolved, user: UserProfile): Promise<string> {
-  await checkOrganizationUploadAccess(user, organizationId)
-  await validateImageUpload(file, MAX_LOGO_SIZE, ALLOWED_LOGO_TYPES)
-
-  const { createReadStream, filename, mimetype } = file
-  const stream = createReadStream()
-
-  const ext = filename.split('.').pop()
-  const uniqueFilename = `organizations/${organizationId}/logo-${uuidv4()}.${ext}`
-
-  const url = await uploadToR2(stream, uniqueFilename, mimetype)
-
-  await updateOrganization(organizationId, { logo_url: url })
-
-  return url
-}
-
-export async function uploadOrganizationFavicon(organizationId: number, file: FileUploadResolved, user: UserProfile): Promise<string> {
-  await checkOrganizationUploadAccess(user, organizationId)
-  await validateImageUpload(file, MAX_FAVICON_SIZE, ALLOWED_FAVICON_TYPES)
-
-  const { createReadStream, filename, mimetype } = file
-  const stream = createReadStream()
-
-  const ext = filename.split('.').pop()
-  const uniqueFilename = `organizations/${organizationId}/favicon-${uuidv4()}.${ext}`
-
-  const url = await uploadToR2(stream, uniqueFilename, mimetype)
-
-  await updateOrganization(organizationId, { favicon: url })
-
-  return url
 }
