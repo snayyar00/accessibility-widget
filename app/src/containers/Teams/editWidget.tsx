@@ -30,6 +30,7 @@ export interface Colors {
   logoImage: string;
   accessibilityStatementLinkUrl: string;
   logoUrl: string;
+  footerText: string; // Custom footer branding text
 }
 
 export interface Toggles {
@@ -137,6 +138,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     logoImage: '',
     accessibilityStatementLinkUrl: 'https://www.webability.io/statement',
     logoUrl: 'https://webability.io',
+    footerText: 'Webability',
   };
 
   const DefaultDarkColors: Colors = {
@@ -153,6 +155,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     logoImage: '',
     accessibilityStatementLinkUrl: 'https://www.webability.io/statement',
     logoUrl: 'https://webability.io',
+    footerText: 'Webability',
   };
   const DefaultToggles = {
     language: true,
@@ -244,6 +247,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     accessibilityStatementLinkUrl:
       DefaultLightColors.accessibilityStatementLinkUrl,
     logoUrl: DefaultLightColors.logoUrl,
+    footerText: DefaultLightColors.footerText,
     toggleLanguage: DefaultToggles.language ? 1 : 0,
     toggledarkMode: DefaultToggles.darkMode ? 1 : 0,
     'togglescreen-reader': DefaultToggles.screenReader ? 1 : 0,
@@ -317,6 +321,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
       accessibilityStatementLinkUrl:
         lightModeColors.accessibilityStatementLinkUrl,
       logoUrl: lightModeColors.logoUrl,
+      footerText: lightModeColors.footerText,
       toggleLanguage: toggles.language ? 1 : 0,
       toggledarkMode: toggles.darkMode ? 1 : 0,
       'togglescreen-reader': toggles.screenReader ? 1 : 0,
@@ -521,6 +526,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
             fetchedSettings['accessibilityStatementLinkUrl'] ||
             DefaultLightColors.accessibilityStatementLinkUrl,
           logoUrl: fetchedSettings['logoUrl'] || DefaultLightColors.logoUrl,
+          footerText:
+            fetchedSettings['footerText'] || DefaultLightColors.footerText,
         });
 
         // Load dark mode grouped colors
@@ -554,6 +561,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
             fetchedSettings['accessibilityStatementLinkUrl'] ||
             DefaultDarkColors.accessibilityStatementLinkUrl,
           logoUrl: fetchedSettings['logoUrl'] || DefaultDarkColors.logoUrl,
+          footerText:
+            fetchedSettings['footerText'] || DefaultDarkColors.footerText,
         });
 
         // Update toggles.
@@ -704,6 +713,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
             fetchedSettings['accessibilityStatementLinkUrl'] ||
             DefaultLightColors.accessibilityStatementLinkUrl,
           logoUrl: fetchedSettings['logoUrl'] || DefaultLightColors.logoUrl,
+          footerText:
+            fetchedSettings['footerText'] || DefaultLightColors.footerText,
         });
 
         // Load dark mode grouped colors
@@ -737,6 +748,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
             fetchedSettings['accessibilityStatementLinkUrl'] ||
             DefaultDarkColors.accessibilityStatementLinkUrl,
           logoUrl: fetchedSettings['logoUrl'] || DefaultDarkColors.logoUrl,
+          footerText:
+            fetchedSettings['footerText'] || DefaultDarkColors.footerText,
         });
 
         // Update toggles.

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import Stripe from 'stripe'
 
-import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from '../../constants/billing.constant'
+import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, REWARDFUL_COUPON } from '../../constants/billing.constant'
 import { findProductAndPriceByType } from '../../repository/products.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { getSitePlanBySiteId, getSitesPlanByUserId } from '../../repository/sites_plans.repository'
@@ -38,7 +38,6 @@ export async function createSubscription(req: Request, res: Response) {
       console.error('[REWARDFUL] Failed to reload user referral code:', error)
     }
   }
-
   const [price, sites, customers] = await Promise.all([
     findProductAndPriceByType(planName, billingInterval),
     getSitesPlanByUserId(Number(user.id)),
@@ -128,13 +127,6 @@ export async function createSubscription(req: Request, res: Response) {
 
         const { lastCustomCode, nonCustomCodes } = await customTokenCount(user.id, tokenUsed)
 
-        // Add Rewardful referral ID if present
-        if (user.referral) {
-          console.log('[REWARDFUL] Creating subscription with referral:', user.referral)
-        } else {
-          console.log('[REWARDFUL] No referral code found for user')
-        }
-
         subscription = await stripe.subscriptions.create({
           customer: customer.id,
           items: [{ price: price.price_stripe_id, quantity: 1 }],
@@ -151,25 +143,17 @@ export async function createSubscription(req: Request, res: Response) {
           description: `Plan for ${domainUrl}(${lastCustomCode ? [lastCustomCode, ...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
         })
 
-        console.log('[REWARDFUL] Subscription created:', subscription.id)
-
         cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.current_organization_id, user.email)]
       } else if (promoCode && promoCode.length > 0) {
         return res.json({ valid: false, error: 'Invalid promo code' })
       } else if (cardTrial) {
-        // Add Rewardful referral ID if present
-        if (user.referral) {
-          console.log('[REWARDFUL] Creating trial subscription with referral:', user.referral)
-        } else {
-          console.log('[REWARDFUL] No referral code found for user')
-        }
-
         subscription = await stripe.subscriptions.create({
           trial_period_days: 30,
           customer: customer.id,
           items: [{ price: price.price_stripe_id, quantity: 1 }],
           expand: ['latest_invoice.payment_intent'],
           default_payment_method: customer.invoice_settings.default_payment_method,
+          ...(user.referral && { coupon: REWARDFUL_COUPON }),
           metadata: {
             domainId,
             userId: user.id,
@@ -182,18 +166,12 @@ export async function createSubscription(req: Request, res: Response) {
 
         console.log('[REWARDFUL] Trial subscription created:', subscription.id)
       } else {
-        // Add Rewardful referral ID if present
-        if (user.referral) {
-          console.log('[REWARDFUL] Creating subscription with referral:', user.referral)
-        } else {
-          console.log('[REWARDFUL] No referral code found for user')
-        }
-
         subscription = await stripe.subscriptions.create({
           customer: customer.id,
           items: [{ price: price.price_stripe_id, quantity: 1 }],
           expand: ['latest_invoice.payment_intent'],
           default_payment_method: customer.invoice_settings.default_payment_method,
+          ...(user.referral && { coupon: REWARDFUL_COUPON }),
           metadata: {
             domainId,
             userId: user.id,
