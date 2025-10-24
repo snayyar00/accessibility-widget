@@ -7,6 +7,7 @@ import { createCheckoutSession } from '../controllers/stripe/checkout-session.co
 import { createSubscription } from '../controllers/stripe/create-subscription.controller'
 import { createCustomerPortalSession } from '../controllers/stripe/customer-portal.controller'
 import { applyRetentionDiscount } from '../controllers/stripe/retention-discount.controller'
+import { getRewardfulDiscount } from '../controllers/stripe/rewardful-discount.controller'
 import { validateCoupon } from '../controllers/stripe/validate-coupon.controller'
 import { allowedOrganization, isAuthenticated } from '../middlewares/auth.middleware'
 import { moderateLimiter, strictLimiter } from '../middlewares/limiters.middleware'
@@ -20,6 +21,8 @@ router.post('/create-customer-portal-session', strictLimiter, allowedOrganizatio
 router.post('/billing-portal-session', strictLimiter, allowedOrganization, isAuthenticated, validateBody(billingPortalSessionValidation), createBillingPortalSession)
 
 router.post('/validate-coupon', strictLimiter, allowedOrganization, isAuthenticated, validateBody(validateCouponValidation), validateCoupon)
+
+router.get('/rewardful-discount', moderateLimiter, getRewardfulDiscount)
 
 router.post('/create-checkout-session', strictLimiter, allowedOrganization, isAuthenticated, validateBody(validateCreateCheckoutSession), createCheckoutSession)
 

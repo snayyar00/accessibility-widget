@@ -1,11 +1,12 @@
 import { Request, Response } from 'express'
 import Stripe from 'stripe'
 
-import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON } from '../../constants/billing.constant'
+import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, REWARDFUL_COUPON } from '../../constants/billing.constant'
 import { findProductAndPriceByType } from '../../repository/products.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { getSitePlanBySiteId, getSitesPlanByUserId } from '../../repository/sites_plans.repository'
 import { getUserTokens } from '../../repository/user_plan_tokens.repository'
+import { findUserById } from '../../repository/user.repository'
 import { createSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service'
 import findPromo from '../../services/stripe/findPromo'
 import { appSumoPromoCount } from '../../utils/appSumoPromoCount'
@@ -25,6 +26,18 @@ export async function createSubscription(req: Request, res: Response) {
     return res.status(403).json({ error: 'User does not own this domain' })
   }
 
+  // If user doesn't have referral in session but might have it in database, reload it
+  if (!user.referral) {
+    try {
+      const freshUser = await findUserById(user.id)
+      if (freshUser.referral) {
+        user.referral = freshUser.referral
+        console.log('[REWARDFUL] Loaded existing referral code from database:', freshUser.referral)
+      }
+    } catch (error) {
+      console.error('[REWARDFUL] Failed to reload user referral code:', error)
+    }
+  }
   const [price, sites, customers] = await Promise.all([
     findProductAndPriceByType(planName, billingInterval),
     getSitesPlanByUserId(Number(user.id)),
@@ -125,6 +138,7 @@ export async function createSubscription(req: Request, res: Response) {
             userId: user.id,
             maxDomains: 1,
             usedDomains: 1,
+            ...(user.referral && { referral: user.referral }),
           },
           description: `Plan for ${domainUrl}(${lastCustomCode ? [lastCustomCode, ...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
         })
@@ -139,28 +153,36 @@ export async function createSubscription(req: Request, res: Response) {
           items: [{ price: price.price_stripe_id, quantity: 1 }],
           expand: ['latest_invoice.payment_intent'],
           default_payment_method: customer.invoice_settings.default_payment_method,
+          ...(user.referral && { coupon: REWARDFUL_COUPON }),
           metadata: {
             domainId,
             userId: user.id,
             maxDomains: 1,
             usedDomains: 1,
+            ...(user.referral && { referral: user.referral }),
           },
           description: `Plan for ${domainUrl}`,
         })
+
+        console.log('[REWARDFUL] Trial subscription created:', subscription.id)
       } else {
         subscription = await stripe.subscriptions.create({
           customer: customer.id,
           items: [{ price: price.price_stripe_id, quantity: 1 }],
           expand: ['latest_invoice.payment_intent'],
           default_payment_method: customer.invoice_settings.default_payment_method,
+          ...(user.referral && { coupon: REWARDFUL_COUPON }),
           metadata: {
             domainId,
             userId: user.id,
             maxDomains: 1,
             usedDomains: 1,
+            ...(user.referral && { referral: user.referral }),
           },
           description: `Plan for ${domainUrl}`,
         })
+
+        console.log('[REWARDFUL] Subscription created:', subscription.id)
       }
 
       try {

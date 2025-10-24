@@ -22,6 +22,7 @@ type Register = {
   email: string
   password: string
   name: string
+  referralCode?: string
 }
 
 type Login = {
@@ -93,8 +94,8 @@ const resolvers = {
     hasWorkspace: (parent: OrganizationUser) => Boolean(parent.current_workspace_id),
   },
   Mutation: {
-    register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name }: Register, { organization }) => {
-      const result = await registerUser(normalizeEmail(email), password, name, organization)
+    register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name, referralCode }: Register, { organization }) => {
+      const result = await registerUser(normalizeEmail(email), password, name, organization, referralCode)
 
       return result
     }),

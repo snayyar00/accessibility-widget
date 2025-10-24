@@ -26,3 +26,7 @@ export const APP_SUMO_DISCOUNT_COUPON = 'byYg4Q7W' // prod
 
 // export const RETENTION_COUPON_ID = '006HOMLM'; //Test
 export const RETENTION_COUPON_ID = 'iLPvrYMc' // Prod
+
+// export const REWARDFUL_COUPON = 'YxwpPYCl'//Test
+
+export const REWARDFUL_COUPON = 'E3VIKu97' // Prod

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -43,6 +43,36 @@ const SignIn: React.FC = () => {
     useMutation<LoginMutation>(loginQuery);
 
   const history = useHistory();
+
+  // Check for Rewardful referral link and save to localStorage
+  useEffect(() => {
+    const checkAndSaveReferralLink = () => {
+      // Check if Rewardful is available and has a referral
+      const referralId = (window as any).Rewardful?.referral;
+
+      if (referralId) {
+        // Save to localStorage for persistence across sessions
+        localStorage.setItem('rewardful_referral', referralId);
+      } else {
+        // Check if we have a stored referral from previous visit
+        const storedReferral = localStorage.getItem('rewardful_referral');
+        if (storedReferral) {
+          // Set it in Rewardful if available
+          if ((window as any).Rewardful) {
+            (window as any).Rewardful.referral = storedReferral;
+          }
+        }
+      }
+    };
+
+    // Check immediately
+    checkAndSaveReferralLink();
+
+    // Also check after a short delay in case Rewardful loads asynchronously
+    const timeoutId = setTimeout(checkAndSaveReferralLink, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   async function onSubmit(params: Payload) {
     try {

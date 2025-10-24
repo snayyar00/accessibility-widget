@@ -75,7 +75,8 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
       await Promise.all([updateSitePlanById(sitePlan.id, { is_active: false })])
     }
 
-    const { subcription_id, customer_id } = await createNewSubcription(paymentMethodToken, user.email, user.name, product.price_stripe_id, paymentMethodToken === 'Trial', coupon)
+    console.log('[REWARDFUL] Creating site plan with referral code:', user.referral || 'none')
+    const { subcription_id, customer_id } = await createNewSubcription(paymentMethodToken, user.email, user.name, product.price_stripe_id, paymentMethodToken === 'Trial', coupon, user.referral || '')
     if (subcription_id && customer_id) {
       const INFINITE_TIMESTAMP = '9999-12-31 23:59:59'
       let expiry = formatDateDB(dayjs().add(paymentMethodToken === 'Trial' ? 15 : 1, paymentMethodToken === 'Trial' ? 'day' : product.price_type === 'yearly' ? 'y' : 'M'))
