@@ -1,10 +1,12 @@
 import { combineResolvers } from 'graphql-resolvers'
+import FileUpload from 'graphql-upload/Upload.mjs'
 
 import { OrganizationUserRole } from '../../constants/organization.constant'
 import { GraphQLContext } from '../../graphql/types'
 import { Organization } from '../../repository/organization.repository'
 import { addOrganization, CreateOrganizationInput, editOrganization, getOrganizationByDomainService, getOrganizationById, getOrganizations, removeOrganization, removeUserFromOrganization } from '../../services/organization/organization.service'
 import { changeOrganizationUserRole, getOrganizationUsers } from '../../services/organization/organization_users.service'
+import { FileUploadResolved, uploadOrganizationFavicon, uploadOrganizationLogo } from '../../services/upload/organizationUpload.service'
 import { getOrganizationWorkspaces } from '../../services/workspaces/workspaces.service'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
@@ -84,6 +86,22 @@ const organizationResolver = {
       } catch (err) {
         return err
       }
+    }),
+
+    uploadOrganizationLogo: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { organizationId: string; logo: Promise<FileUpload> }, { user }): Promise<Organization | null> => {
+      const file = (await args.logo) as unknown as FileUploadResolved
+      await uploadOrganizationLogo(Number(args.organizationId), file, user)
+
+      const org = await getOrganizationById(args.organizationId, user)
+      return org || null
+    }),
+
+    uploadOrganizationFavicon: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { organizationId: string; favicon: Promise<FileUpload> }, { user }): Promise<Organization | null> => {
+      const file = (await args.favicon) as unknown as FileUploadResolved
+      await uploadOrganizationFavicon(Number(args.organizationId), file, user)
+
+      const org = await getOrganizationById(args.organizationId, user)
+      return org || null
     }),
   },
 }

@@ -311,17 +311,14 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
     throw new ApolloError('You can only remove members that you invited')
   }
 
-  // Get all members for validation checks
   const allMembers = await getWorkspaceMembersRepo({ workspaceId: workspace.id })
   const activeMembers = allMembers.filter((member) => member.status === WORKSPACE_USER_STATUS_ACTIVE)
   const activeOwners = activeMembers.filter((member) => member.role === WORKSPACE_USER_ROLE_OWNER)
 
-  // Only organization managers can remove workspace owners
   if (workspaceMember.role === WORKSPACE_USER_ROLE_OWNER && !isOrgManager) {
     throw new ForbiddenError('Only organization admin can remove workspace owner')
   }
 
-  // Owner cannot leave workspace if they are the last owner
   if (user.id === workspaceMember.user_id && workspaceMember.role === WORKSPACE_USER_ROLE_OWNER) {
     if (activeOwners.length === 1) {
       throw new ForbiddenError('Cannot leave workspace as the last owner. Transfer ownership first.')
@@ -352,16 +349,10 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
   try {
     transaction = await database.transaction()
 
-    // Remove all domains owned by this user from the workspace
     const removedDomainsCount = await removeWorkspaceDomainsBySiteOwner(workspace.id, workspaceMember.user_id, transaction)
-
-    // Get invitation tokens created by this user BEFORE deleting invitations
     const tokens = await getInvitationTokensByCreator(workspaceMember.user_id, workspace.id, undefined, transaction)
 
-    // Remove PENDING workspace members (real records) invited by this user
     await deletePendingWorkspaceMembersByTokens(workspace.id, tokens, transaction)
-
-    // Remove PENDING invitations created by this user
     await deletePendingInvitationsByCreator(workspaceMember.user_id, workspace.id, undefined, transaction)
 
     // Delete the workspace_user record

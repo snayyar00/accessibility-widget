@@ -5,6 +5,7 @@ import { expressMiddleware } from '@as-integrations/express5'
 import bodyParser, { json } from 'body-parser'
 import cookieParser from 'cookie-parser'
 import express from 'express'
+import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.mjs'
 import { createServer } from 'http'
 
 import { initializeSentry } from './config/sentry.config'
@@ -60,6 +61,14 @@ async function initializeServer() {
   await serverGraph.start()
 
   app.use('/graphql', graphqlTimeoutMiddleware)
+
+  app.use(
+    '/graphql',
+    graphqlUploadExpress({
+      maxFileSize: 50 * 1024 * 1024, // 50 МБ
+      maxFiles: 10,
+    }),
+  )
 
   app.use(
     '/graphql',

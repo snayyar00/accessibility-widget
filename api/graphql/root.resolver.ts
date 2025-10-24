@@ -1,3 +1,5 @@
+import GraphQLUpload from 'graphql-upload/GraphQLUpload.mjs'
+
 import accessibilityResolves from './resolvers/accessibilityReport.resolver'
 import { aiReadinessResolvers } from './resolvers/aiReadiness.resolver'
 import allowedSitesResolves from './resolvers/allowedSites.resolver'
@@ -17,6 +19,9 @@ import workspaceResolvers from './resolvers/workspace.resolver'
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default [
+  {
+    Upload: GraphQLUpload,
+  },
   userResolves,
   allowedSitesResolves,
   uniqueVisitorResolves,

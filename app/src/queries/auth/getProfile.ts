@@ -18,6 +18,7 @@ export default gql`
         name
         domain
         logo_url
+        favicon
         settings
         created_at
         updated_at

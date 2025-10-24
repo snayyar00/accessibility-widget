@@ -9,7 +9,7 @@ import routes from '@/routes';
 import { GoGear } from 'react-icons/go';
 import { GrInstallOption } from 'react-icons/gr';
 import OrganizationsSelect from '@/containers/Dashboard/OrganizationsSelect';
-import { Folders, UserIcon } from 'lucide-react';
+import { Building, Building2, Folders, UserIcon } from 'lucide-react';
 import DomainsSelect from '@/containers/Dashboard/DomainsSelect';
 
 const Sidebar = ({
@@ -225,6 +225,26 @@ const Sidebar = ({
                     </div>
                     <span className="menu-text text-lg text-white-blue ml-4">
                       Users
+                    </span>
+                  </NavLink>
+                </li>
+
+                <li key="/organization" className="h-[60px] flex items-center">
+                  <NavLink
+                    to="/organization"
+                    activeClassName="active"
+                    onClick={closeSidebar}
+                    className="w-full h-full flex items-center px-2 border-l-2 border-transparent [&.active]:bg-regular-primary [&.active]:border-primary [&.active>.menu-text]:text-primary [&.active>.menu-text]:font-medium [&.active>.menu-icon>.menu-icon]:text-primary transition-all duration-200 [&.active>.menu-icon>svg_*[fill]]:fill-primary [&.active>.menu-icon>svg_*[stroke]]:stroke-primary"
+                  >
+                    <div className="menu-icon flex items-center justify-center w-12 h-6">
+                      <Building2
+                        className="menu-icon text-white-blue transition-colors duration-200"
+                        size={25}
+                        aria-label="User navigation icon"
+                      />
+                    </div>
+                    <span className="menu-text text-lg text-white-blue ml-4">
+                      Organization
                     </span>
                   </NavLink>
                 </li>

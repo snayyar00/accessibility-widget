@@ -94,12 +94,27 @@ export async function editOrganization(data: Partial<Organization>, user: UserPr
   try {
     const updateData = { ...data }
 
-    if (data.domain) {
+    if ('logo_url' in updateData && updateData.logo_url === null) {
+      updateData.logo_url = ''
+    }
+    if ('favicon' in updateData && updateData.favicon === null) {
+      updateData.favicon = ''
+    }
+
+    if (data.domain && !user.is_super_admin) {
+      throw new ApolloError('Organization domain cannot be changed. Please contact support if you need to change the domain.')
+    }
+
+    if (data.domain && user.is_super_admin) {
       const exists = await getOrganizationByDomainExcludeId(data.domain, Number(organizationId))
 
       if (exists) {
         throw new ApolloError('Organization domain already exists, please choose another one')
       }
+    }
+
+    if (!user.is_super_admin) {
+      delete updateData.domain
     }
 
     if ('settings' in updateData) {
@@ -147,21 +162,6 @@ export async function removeOrganization(user: UserProfile, organizationId: numb
   }
 }
 
-export async function getOrganizations(user: UserProfile): Promise<Organization[]> {
-  try {
-    const orgLinks = await getOrganizationsByUserId(user.id)
-    const orgIds = orgLinks.map((link) => link.organization_id)
-
-    if (!orgIds.length) return []
-
-    return await getOrganizationByIdsRepo(orgIds)
-  } catch (error) {
-    logger.error('Error fetching organizations by user:', error)
-
-    throw error
-  }
-}
-
 export async function getOrganizationById(id: number | string, user: UserProfile): Promise<Organization | undefined> {
   if (!user.is_super_admin) {
     await checkOrganizationAccess(user, id, 'You can only access your own organizations')
@@ -172,23 +172,6 @@ export async function getOrganizationById(id: number | string, user: UserProfile
   } catch (error) {
     logger.error('Error fetching organization by id:', error)
 
-    throw error
-  }
-}
-
-export async function getOrganizationByDomainService(domain: string): Promise<Organization | ValidationError | undefined> {
-  const validateResult = validateGetOrganizationByDomain({ domain })
-
-  if (Array.isArray(validateResult) && validateResult.length) {
-    return new ValidationError(validateResult.map((it) => it.message).join(','))
-  }
-
-  const normalizedDomain = normalizeDomain(domain)
-
-  try {
-    return await getOrganizationByDomain(normalizedDomain)
-  } catch (error) {
-    logger.error('Error fetching organization by domain:', error)
     throw error
   }
 }
@@ -246,16 +229,11 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
       await updateUser(userId, { current_organization_id: newOrgId }, trx)
     }
 
-    // Remove all domains owned by this user from all workspaces in this organization
     const removedDomainsCount = await removeWorkspaceDomainsBySiteOwnerInOrganization(userId, organizationId, trx)
-
-    // Get invitation tokens created by this user BEFORE deleting invitations
     const tokens = await getInvitationTokensByCreator(userId, undefined, organizationId, trx)
 
-    // Remove PENDING workspace members (real records) invited by this user in all workspaces
     await deletePendingWorkspaceMembersByTokensInOrganization(organizationId, tokens, trx)
 
-    // Remove PENDING invitations for this user
     if (targetUser && targetUser.email) {
       await deletePendingInvitationsByEmail(targetUser.email, organizationId, trx)
     }
@@ -279,6 +257,38 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
     return result
   } catch (error) {
     await trx.rollback()
+    throw error
+  }
+}
+
+export async function getOrganizations(user: UserProfile): Promise<Organization[]> {
+  try {
+    const orgLinks = await getOrganizationsByUserId(user.id)
+    const orgIds = orgLinks.map((link) => link.organization_id)
+
+    if (!orgIds.length) return []
+
+    return await getOrganizationByIdsRepo(orgIds)
+  } catch (error) {
+    logger.error('Error fetching organizations by user:', error)
+
+    throw error
+  }
+}
+
+export async function getOrganizationByDomainService(domain: string): Promise<Organization | ValidationError | undefined> {
+  const validateResult = validateGetOrganizationByDomain({ domain })
+
+  if (Array.isArray(validateResult) && validateResult.length) {
+    return new ValidationError(validateResult.map((it) => it.message).join(','))
+  }
+
+  const normalizedDomain = normalizeDomain(domain)
+
+  try {
+    return await getOrganizationByDomain(normalizedDomain)
+  } catch (error) {
+    logger.error('Error fetching organization by domain:', error)
     throw error
   }
 }

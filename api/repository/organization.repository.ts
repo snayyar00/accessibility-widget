@@ -21,6 +21,7 @@ export type Organization = {
   domain: string
   logo_url?: string
   settings?: string | object
+  favicon?: string
   created_at?: string
   updated_at?: string
 }
