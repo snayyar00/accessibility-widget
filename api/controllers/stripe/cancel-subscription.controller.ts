@@ -3,10 +3,10 @@ import { Request, Response } from 'express'
 import { addCancelFeedback, CancelFeedbackProps } from '../../repository/cancel_feedback.repository'
 import { deleteSiteWithRelatedRecords, findSiteByURL } from '../../repository/sites_allowed.repository'
 import { getAnySitePlanBySiteId } from '../../repository/sites_plans.repository'
-import { UserProfile } from '../../repository/user.repository'
 import { deleteExpiredSitesPlan, deleteSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service'
+import { UserLogined } from '../../services/authentication/get-user-logined.service'
 
-export async function cancelSiteSubscription(req: Request & { user: UserProfile }, res: Response) {
+export async function cancelSiteSubscription(req: Request & { user: UserLogined }, res: Response) {
   const { domainId, domainUrl, status, cancelReason, otherReason } = req.body
 
   let previous_plan: any[]

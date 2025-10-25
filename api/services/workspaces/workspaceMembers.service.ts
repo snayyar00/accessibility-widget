@@ -5,7 +5,6 @@ import { INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
 import { WORKSPACE_MANAGEMENT_ROLES, WORKSPACE_USER_ROLE_OWNER, WORKSPACE_USER_STATUS_ACTIVE, WORKSPACE_USER_STATUS_DECLINE, WORKSPACE_USER_STATUS_INACTIVE, WORKSPACE_USER_STATUS_PENDING, WorkspaceUserRole } from '../../constants/workspace.constant'
 import { deletePendingInvitationsByCreator, deleteWorkspaceInvitations, getDetailWorkspaceInvitations, getInvitationTokensByCreator, getWorkspaceInvitation, updateWorkspaceInvitationByToken } from '../../repository/invitations.repository'
-import { UserProfile } from '../../repository/user.repository'
 import { GetAllWorkspaceResponse, getWorkspace, getWorkspaceMembers as getWorkspaceMembersRepo } from '../../repository/workspace.repository'
 import { removeWorkspaceDomainsBySiteOwner } from '../../repository/workspace_allowed_sites.repository'
 import { deletePendingWorkspaceMembersByTokens, deleteWorkspaceUsers, getWorkspaceUser, updateWorkspaceUser } from '../../repository/workspace_users.repository'
@@ -13,7 +12,7 @@ import { canManageOrganization, canManageWorkspace, isWorkspaceMember } from '..
 import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateChangeWorkspaceMemberRole, validateRemoveWorkspaceMember } from '../../validations/workspace.validation'
-import { getUserOrganization } from '../organization/organization_users.service'
+import { UserLogined } from '../authentication/get-user-logined.service'
 import { createVirtualUsersFromInvitations } from './workspaceInvitations.service'
 
 type WorkspaceMemberWithUser = GetAllWorkspaceResponse & {
@@ -32,10 +31,10 @@ type WorkspaceMemberWithUser = GetAllWorkspaceResponse & {
  * Super admins and organization managers can also see members
  *
  * @param number workspaceId ID of the workspace to get members for
- * @param UserProfile user User requesting the workspace members
+ * @param UserLogined user User requesting the workspace members
  * @returns Promise<GetAllWorkspaceResponse[]> Array of workspace members
  */
-export async function getWorkspaceMembers(workspaceId: number, user?: UserProfile): Promise<GetAllWorkspaceResponse[]> {
+export async function getWorkspaceMembers(workspaceId: number, user?: UserLogined): Promise<GetAllWorkspaceResponse[]> {
   if (!workspaceId) {
     throw new ValidationError('Workspace ID is required')
   }
@@ -61,9 +60,7 @@ export async function getWorkspaceMembers(workspaceId: number, user?: UserProfil
     return members
   }
 
-  const userOrganization = await getUserOrganization(user.id, Number(user.current_organization_id))
-
-  if (!user.is_super_admin && (!userOrganization || !canManageOrganization(userOrganization.role))) {
+  if (!user.is_super_admin && (!user.currentOrganizationUser || !canManageOrganization(user.currentOrganizationUser.role))) {
     return []
   }
 
@@ -76,10 +73,10 @@ export async function getWorkspaceMembers(workspaceId: number, user?: UserProfil
  * Only organization owner and admin can see all workspace members
  *
  * @param string alias Alias of the workspace to get members for
- * @param UserProfile user User requesting the workspace members
+ * @param UserLogined user User requesting the workspace members
  * @returns Promise<GetAllWorkspaceResponse[]> Array of workspace members
  */
-export async function getWorkspaceMembersByAlias(alias: string, user: UserProfile): Promise<GetAllWorkspaceResponse[]> {
+export async function getWorkspaceMembersByAlias(alias: string, user: UserLogined): Promise<GetAllWorkspaceResponse[]> {
   if (!alias) {
     throw new ValidationError('Workspace alias is required')
   }
@@ -111,9 +108,7 @@ export async function getWorkspaceMembersByAlias(alias: string, user: UserProfil
     return [...invitedMembers, ...members]
   }
 
-  const userOrganization = await getUserOrganization(user.id, Number(user.current_organization_id))
-
-  if (!user.is_super_admin && (!userOrganization || !canManageOrganization(userOrganization.role))) {
+  if (!user.is_super_admin && (!user.currentOrganizationUser || !canManageOrganization(user.currentOrganizationUser.role))) {
     return []
   }
 
@@ -130,12 +125,12 @@ export async function getWorkspaceMembersByAlias(alias: string, user: UserProfil
 
 /**
  * Function to change workspace member role
- * @param UserProfile user User who wants to change role
+ * @param UserLogined user User who wants to change role
  * @param number id ID of the workspace_user record
  * @param WorkspaceUserRole role New role to assign
  * @returns Promise<boolean> True if role was changed successfully
  */
-export async function changeWorkspaceMemberRole(user: UserProfile, id: number, role: WorkspaceUserRole): Promise<boolean> {
+export async function changeWorkspaceMemberRole(user: UserLogined, id: number, role: WorkspaceUserRole): Promise<boolean> {
   const validateResult = validateChangeWorkspaceMemberRole({ id, role })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -159,8 +154,7 @@ export async function changeWorkspaceMemberRole(user: UserProfile, id: number, r
   }
 
   if (user.id === workspaceMember.user_id) {
-    const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-    const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+    const isOrgManager = user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
     if (!isOrgManager) {
       throw new ApolloError('You cannot change your own role')
@@ -168,16 +162,14 @@ export async function changeWorkspaceMemberRole(user: UserProfile, id: number, r
   }
 
   if (role === WORKSPACE_USER_ROLE_OWNER) {
-    const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-    const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+    const isOrgManager = user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
     if (!isOrgManager) {
       throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can assign ${WORKSPACE_USER_ROLE_OWNER} role`)
     }
   }
 
-  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+  const isOrgManager = user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
   const currentUserWorkspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id: workspace.id })
   const isWorkspaceManager = currentUserWorkspaceMember && canManageWorkspace(currentUserWorkspaceMember.role)
@@ -257,11 +249,11 @@ export async function changeWorkspaceMemberRole(user: UserProfile, id: number, r
 
 /**
  * Function to remove workspace member
- * @param UserProfile user User who wants to remove member
+ * @param UserLogined user User who wants to remove member
  * @param number id ID of the workspace_user record
  * @returns Promise<boolean> True if member was removed successfully
  */
-export async function removeWorkspaceMember(user: UserProfile, id: number): Promise<boolean> {
+export async function removeWorkspaceMember(user: UserLogined, id: number): Promise<boolean> {
   const validateResult = validateRemoveWorkspaceMember({ id })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -284,8 +276,7 @@ export async function removeWorkspaceMember(user: UserProfile, id: number): Prom
     throw new ApolloError('Workspace not found')
   }
 
-  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+  const isOrgManager = user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
   const currentUserWorkspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id: workspace.id })
   const isWorkspaceManager = currentUserWorkspaceMember && canManageWorkspace(currentUserWorkspaceMember.role)

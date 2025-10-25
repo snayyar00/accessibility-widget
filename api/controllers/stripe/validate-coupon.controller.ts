@@ -1,13 +1,13 @@
 import { Request, Response } from 'express'
 
 import { APP_SUMO_COUPON_IDS } from '../../constants/billing.constant'
-import { UserProfile } from '../../repository/user.repository'
+import { UserLogined } from '../../services/authentication/get-user-logined.service'
 import findPromo from '../../services/stripe/findPromo'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
-export async function validateCoupon(req: Request & { user: UserProfile }, res: Response) {
+export async function validateCoupon(req: Request & { user: UserLogined }, res: Response) {
   const { couponCode } = req.body
 
   try {

@@ -12,7 +12,7 @@ import {
   toggleSiteMonitoring as toggleSiteMonitoringRepo,
   updateAllowedSiteURL,
 } from '../../repository/sites_allowed.repository'
-import { findUserNotificationByUserId, getUserbyId, UserProfile } from '../../repository/user.repository'
+import { findUserNotificationByUserId, getUserbyId } from '../../repository/user.repository'
 import { hasWorkspaceAccessToSite } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { normalizeDomain } from '../../utils/domain.utils'
@@ -22,6 +22,7 @@ import logger from '../../utils/logger'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 import { validateChangeURL, validateDomain } from '../../validations/allowedSites.validation'
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service'
+import { UserLogined } from '../authentication/get-user-logined.service'
 import { EmailAttachment, sendEmailWithRetries } from '../email/email.service'
 import { getUserOrganization } from '../organization/organization_users.service'
 import { createSitesPlan } from './plans-sites.service'
@@ -29,13 +30,12 @@ import { createSitesPlan } from './plans-sites.service'
 /**
  * Check if user is super admin or organization manager
  */
-async function isAdminOrManager(user: UserProfile): Promise<boolean> {
+async function isAdminOrManager(user: UserLogined): Promise<boolean> {
   if (user.is_super_admin) {
     return true
   }
 
-  const userOrganization = await getUserOrganization(user.id, user.current_organization_id)
-  return userOrganization ? canManageOrganization(userOrganization.role) : false
+  return user.currentOrganizationUser ? canManageOrganization(user.currentOrganizationUser.role) : false
 }
 
 export async function checkScript(url: string) {
@@ -65,10 +65,10 @@ export async function checkScript(url: string) {
 /**
  * Create Document
  *
- * @param {UserProfile} user
+ * @param {UserLogined} user
  * @param {string} url
  */
-export async function addSite(user: UserProfile, url: string): Promise<string> {
+export async function addSite(user: UserLogined, url: string): Promise<string> {
   const year = new Date().getFullYear()
 
   const validateResult = validateDomain({ url })
@@ -190,7 +190,7 @@ export async function addSite(user: UserProfile, url: string): Promise<string> {
   }
 }
 
-export async function findUserSites(user: UserProfile): Promise<IUserSites[]> {
+export async function findUserSites(user: UserLogined): Promise<IUserSites[]> {
   if (!user.current_organization_id) {
     return []
   }
@@ -212,7 +212,7 @@ export async function findUserSites(user: UserProfile): Promise<IUserSites[]> {
  * For admins/managers: Returns ALL organization sites
  * For regular users: Returns ONLY their own sites
  */
-export async function findAvailableSitesForWorkspaceAssignment(user: UserProfile): Promise<IUserSites[]> {
+export async function findAvailableSitesForWorkspaceAssignment(user: UserLogined): Promise<IUserSites[]> {
   if (!user.current_organization_id) {
     return []
   }
@@ -415,7 +415,7 @@ function addOwnershipFlag(sites: IUserSites[], userId: number): IUserSites[] {
  * - Super admin or organization manager: full access
  * - Regular user: only own sites or workspace sites where they are active member
  */
-export async function canAccessSite(user: UserProfile, site: FindAllowedSitesProps): Promise<boolean> {
+export async function canAccessSite(user: UserLogined, site: FindAllowedSitesProps): Promise<boolean> {
   // Check organization match
   if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
     return false
@@ -431,13 +431,9 @@ export async function canAccessSite(user: UserProfile, site: FindAllowedSitesPro
     return true
   }
 
-  // Organization manager has full access
-  const userOrganization = await getUserOrganization(user.id, user.current_organization_id)
-
-  if (userOrganization && canManageOrganization(userOrganization.role)) {
+  if (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role)) {
     return true
   }
 
-  // Check workspace access via repository layer
   return hasWorkspaceAccessToSite(user.id, site.id)
 }

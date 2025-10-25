@@ -4,10 +4,9 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
 import { updateOrganization } from '../../repository/organization.repository'
-import { getOrganizationUser } from '../../repository/organization_user.repository'
-import { UserProfile } from '../../repository/user.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { ApolloError } from '../../utils/graphql-errors.helper'
+import { UserLogined } from '../authentication/get-user-logined.service'
 
 export interface FileUploadResolved {
   filename: string
@@ -56,7 +55,7 @@ async function uploadToR2(stream: Readable, key: string, contentType: string): P
   throw new ApolloError('R2_PUBLIC_URL not configured. Please set R2_PUBLIC_URL in environment variables or enable public access on your R2 bucket.')
 }
 
-export async function uploadOrganizationLogo(organizationId: number, file: FileUploadResolved, user: UserProfile): Promise<string> {
+export async function uploadOrganizationLogo(organizationId: number, file: FileUploadResolved, user: UserLogined): Promise<string> {
   await checkOrganizationUploadAccess(user, organizationId)
   await validateImageUpload(file, MAX_LOGO_SIZE, ALLOWED_LOGO_TYPES)
 
@@ -73,7 +72,7 @@ export async function uploadOrganizationLogo(organizationId: number, file: FileU
   return originalUrl
 }
 
-export async function uploadOrganizationFavicon(organizationId: number, file: FileUploadResolved, user: UserProfile): Promise<string> {
+export async function uploadOrganizationFavicon(organizationId: number, file: FileUploadResolved, user: UserLogined): Promise<string> {
   await checkOrganizationUploadAccess(user, organizationId)
   await validateImageUpload(file, MAX_FAVICON_SIZE, ALLOWED_FAVICON_TYPES)
 
@@ -98,14 +97,14 @@ async function validateImageUpload(file: FileUploadResolved, maxSize: number, al
   }
 }
 
-async function checkOrganizationUploadAccess(user: UserProfile, organizationId: number): Promise<void> {
+async function checkOrganizationUploadAccess(user: UserLogined, organizationId: number): Promise<void> {
   if (user.is_super_admin) return
 
   if (user.current_organization_id !== organizationId) {
     throw new ApolloError('You can only upload files to your current organization')
   }
 
-  const orgUser = await getOrganizationUser(user.id, organizationId)
+  const orgUser = user.currentOrganizationUser
   const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
   if (!isAllowed) {

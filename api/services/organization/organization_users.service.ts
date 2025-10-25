@@ -8,6 +8,7 @@ import { findUsersByEmails, UserProfile } from '../../repository/user.repository
 import { canManageOrganization } from '../../utils/access.helper'
 import { ApolloError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
+import { UserLogined } from '../authentication/get-user-logined.service'
 
 export async function addUserToOrganization(user_id: number, organization_id: number, role: OrganizationUserRole = ORGANIZATION_USER_ROLE_MEMBER, status: OrganizationUserStatus = ORGANIZATION_USER_STATUS_ACTIVE, trx?: Knex.Transaction): Promise<number[]> {
   try {
@@ -58,7 +59,7 @@ export async function removeUserFromOrganization(id: number, trx?: Knex.Transact
   }
 }
 
-export async function getOrganizationUsers(user: UserProfile) {
+export async function getOrganizationUsers(user: UserLogined) {
   const { id: userId, current_organization_id: organizationId } = user
 
   if (!userId || !organizationId) {
@@ -67,17 +68,15 @@ export async function getOrganizationUsers(user: UserProfile) {
   }
 
   if (!user.is_super_admin) {
-    const orgUser = await getUserOrganization(userId, organizationId)
-
-    if (!orgUser || !canManageOrganization(orgUser.role)) {
-      logger.warn('getOrganizationUsers: No permission to view organization users', { userId, organizationId, orgUser })
+    if (!user.currentOrganizationUser || !canManageOrganization(user.currentOrganizationUser.role)) {
+      logger.warn('getOrganizationUsers: No permission to view organization users', { userId, organizationId, orgUser: user.currentOrganizationUser })
       return []
     }
   }
 
   const users = await getOrganizationUsersWithUserInfo(organizationId)
   const myOrgs = await getOrganizationsByUserId(userId)
-  const allowedOrgIds = user.is_super_admin ? users.flatMap((u) => u.organizations.map((o) => o.id)) : myOrgs.filter((o) => canManageOrganization(o.role)).map((o) => o.organization_id)
+  const allowedOrgIds = user.is_super_admin ? users.flatMap((u) => u.organizations.map((o) => o.id)) : myOrgs.filter((o) => o.role && canManageOrganization(o.role)).map((o) => o.organization_id)
 
   const existingUsers = users.map((user) => ({
     ...user,
@@ -109,7 +108,7 @@ export async function getOrganizationUsers(user: UserProfile) {
   return [...mergedOrgUsers, ...invitedWorkspaceUsers, ...existingUsers]
 }
 
-export async function changeOrganizationUserRole(initiator: UserProfile, targetUserId: number, newRole: OrganizationUserRole): Promise<boolean> {
+export async function changeOrganizationUserRole(initiator: UserLogined, targetUserId: number, newRole: OrganizationUserRole): Promise<boolean> {
   const organizationId = initiator.current_organization_id
 
   if (!organizationId) {
@@ -131,8 +130,7 @@ export async function changeOrganizationUserRole(initiator: UserProfile, targetU
   }
 
   if (!initiator.is_super_admin) {
-    const initiatorOrgUser = await getUserOrganization(initiator.id, organizationId)
-    const isAllowed = initiatorOrgUser && canManageOrganization(initiatorOrgUser.role)
+    const isAllowed = initiator.currentOrganizationUser && canManageOrganization(initiator.currentOrganizationUser.role)
 
     if (!isAllowed) {
       throw new ApolloError(`Only ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can change user roles`)

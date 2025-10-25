@@ -5,14 +5,13 @@ import { INVITATION_STATUS_ACCEPTED } from '../../constants/invitation.constant'
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
 import { WORKSPACE_USER_ROLE_OWNER, WORKSPACE_USER_STATUS_PENDING } from '../../constants/workspace.constant'
 import { deleteOrganizationInvitations, deleteWorkspaceInvitations, GetDetailWorkspaceInvitation, getDetailWorkspaceInvitations, getOrganizationInvitation, getWorkspaceInvitation } from '../../repository/invitations.repository'
-import { UserProfile } from '../../repository/user.repository'
 import { GetAllWorkspaceResponse, getWorkspace, Workspace } from '../../repository/workspace.repository'
 import { deleteWorkspaceUsers, getWorkspaceUser } from '../../repository/workspace_users.repository'
 import { canManageOrganization, canManageWorkspace } from '../../utils/access.helper'
 import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateRemoveWorkspaceInvitation } from '../../validations/workspace.validation'
-import { getUserOrganization } from '../organization/organization_users.service'
+import { UserLogined } from '../authentication/get-user-logined.service'
 
 type WorkspaceMemberWithUser = GetAllWorkspaceResponse & {
   user?: {
@@ -27,10 +26,10 @@ type WorkspaceMemberWithUser = GetAllWorkspaceResponse & {
 /**
  * Get workspace invitations by workspace alias
  * @param alias - Workspace alias
- * @param user - User profile
+ * @param UserLogined - User profile
  * @returns Promise<GetDetailWorkspaceInvitation[]> Array of workspace invitations
  */
-export async function getWorkspaceInvitationsByAlias(alias: string, user: UserProfile): Promise<GetDetailWorkspaceInvitation[]> {
+export async function getWorkspaceInvitationsByAlias(alias: string, user: UserLogined): Promise<GetDetailWorkspaceInvitation[]> {
   if (!alias) {
     throw new ValidationError('Workspace alias is required')
   }
@@ -45,8 +44,7 @@ export async function getWorkspaceInvitationsByAlias(alias: string, user: UserPr
     return []
   }
 
-  const userOrganization = await getUserOrganization(user.id, user.current_organization_id)
-  const isOrgManager = user.is_super_admin || (userOrganization && canManageOrganization(userOrganization.role))
+  const isOrgManager = user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
   const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id: workspace.id })
   const isWorkspaceMember = !!workspaceMember // Any workspace member can view invitations
@@ -62,11 +60,11 @@ export async function getWorkspaceInvitationsByAlias(alias: string, user: UserPr
 
 /**
  * Remove a workspace invitation
- * @param user - User profile
+ * @param UserLogined - User profile
  * @param id - Invitation ID
  * @returns Promise<boolean> True if invitation was removed successfully
  */
-export async function removeWorkspaceInvitation(user: UserProfile, id: number): Promise<boolean> {
+export async function removeWorkspaceInvitation(user: UserLogined, id: number): Promise<boolean> {
   const validateResult = validateRemoveWorkspaceInvitation({ id })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -89,8 +87,7 @@ export async function removeWorkspaceInvitation(user: UserProfile, id: number): 
     throw new ApolloError('Workspace not found or access denied')
   }
 
-  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+  const isOrgManager = user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
   const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id: workspace.id })
   const isWorkspaceManager = workspaceMember && canManageWorkspace(workspaceMember.role)
@@ -157,17 +154,16 @@ export async function removeWorkspaceInvitation(user: UserProfile, id: number): 
 
 /**
  * Remove all workspace invitations for a user by email
- * @param user - User profile
+ * @param UserLogined - User profile
  * @param email - Email of the user whose invitations should be removed
  * @returns Promise<boolean> True if invitations were removed successfully
  */
-export async function removeAllUserInvitations(user: UserProfile, email: string): Promise<boolean> {
+export async function removeAllUserInvitations(user: UserLogined, email: string): Promise<boolean> {
   if (!user.current_organization_id) {
     throw new ApolloError('No current organization selected')
   }
 
-  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isAllowed = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+  const isAllowed = user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
   if (!isAllowed) {
     throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can remove workspace invitations`)

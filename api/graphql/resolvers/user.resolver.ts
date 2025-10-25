@@ -7,8 +7,6 @@ import { loginUser } from '../../services/authentication/login.service'
 import { registerUser } from '../../services/authentication/register.service'
 import { resetPasswordUser } from '../../services/authentication/reset-password.service'
 import { resendEmailAction, verifyEmail } from '../../services/authentication/verify-email.service'
-import { getOrganizationById } from '../../services/organization/organization.service'
-import { getUserOrganization } from '../../services/organization/organization_users.service'
 import { deleteUser } from '../../services/user/delete-user.service'
 import { getLicenseOwnerInfo, updateLicenseOwnerInfo } from '../../services/user/license-owner.service'
 import { getUserNotificationSettingsService, updateProfile, updateUserNotificationSettings } from '../../services/user/update-user.service'
@@ -55,26 +53,11 @@ const resolvers = {
       return await getLicenseOwnerInfo(user.id)
     }),
   },
+
   User: {
-    currentOrganization: async (parent: { current_organization_id?: number; id?: number }) => {
-      if (!parent.current_organization_id || !parent.id) return null
-
-      const org = await getOrganizationById(parent.current_organization_id, parent)
-
-      return org || null
-    },
-
-    currentOrganizationUser: async (parent: { id?: number; current_organization_id?: number }) => {
-      if (!parent.id || !parent.current_organization_id) return null
-
-      const orgUser = await getUserOrganization(parent.id, parent.current_organization_id)
-
-      return orgUser || null
-    },
-
     hasOrganization: (parent: { current_organization_id?: number }) => Boolean(parent.current_organization_id),
   },
-  OrganizationUser: {},
+
   Mutation: {
     register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name }: Register, { organization }) => {
       const result = await registerUser(normalizeEmail(email), password, name, organization)

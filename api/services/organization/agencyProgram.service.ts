@@ -7,11 +7,11 @@
  */
 
 import { ORGANIZATION_USER_ROLE_OWNER } from '../../constants/organization.constant'
-import { getOrganizationUser, updateOrganizationUserAgencyAccount } from '../../repository/organization_user.repository'
-import { UserProfile } from '../../repository/user.repository'
+import { updateOrganizationUserAgencyAccount } from '../../repository/organization_user.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
+import { UserLogined } from '../authentication/get-user-logined.service'
 
 /**
  * Response type for Agency Program connection
@@ -52,7 +52,7 @@ function isValidUrl(url: string): boolean {
  * @TODO: Implement actual Stripe Express Account creation
  * Current implementation returns a mock URL for testing
  */
-export async function connectToAgencyProgram(user: UserProfile, successUrl: string): Promise<AgencyProgramConnectionResponse> {
+export async function connectToAgencyProgram(user: UserLogined, successUrl: string): Promise<AgencyProgramConnectionResponse> {
   try {
     // Validate input parameters
     if (!successUrl || typeof successUrl !== 'string') {
@@ -69,24 +69,17 @@ export async function connectToAgencyProgram(user: UserProfile, successUrl: stri
       throw new ValidationError('No current organization selected')
     }
 
-    // Get organization user relationship
-    const orgUser = await getOrganizationUser(userId, organizationId)
-
-    if (!orgUser) {
-      throw new ValidationError('User is not a member of this organization')
-    }
-
     // Only owners can connect to agency program
-    if (orgUser.role !== ORGANIZATION_USER_ROLE_OWNER) {
+    if (user.currentOrganizationUser.role !== ORGANIZATION_USER_ROLE_OWNER) {
       throw new ApolloError('Only organization owners can connect to the Agency Program', 'FORBIDDEN')
     }
 
     // Check if already connected
-    if (orgUser.agencyAccountId) {
+    if (user.currentOrganizationUser.agencyAccountId) {
       logger.warn('Attempt to connect already connected organization', {
         userId,
         organizationId,
-        agencyAccountId: orgUser.agencyAccountId,
+        agencyAccountId: user.currentOrganizationUser.agencyAccountId,
       })
       // Allow reconnection/update, don't throw error
     }
@@ -100,7 +93,7 @@ export async function connectToAgencyProgram(user: UserProfile, successUrl: stri
     logger.info('Agency Program connection requested (MOCK)', {
       userId,
       organizationId,
-      orgUserId: orgUser.id,
+      orgUserId: user.currentOrganizationUser.id,
       successUrl,
     })
 
@@ -125,7 +118,7 @@ export async function connectToAgencyProgram(user: UserProfile, successUrl: stri
  *
  * @TODO: Implement actual Stripe account disconnection/deletion
  */
-export async function disconnectFromAgencyProgram(user: UserProfile): Promise<AgencyProgramDisconnectionResponse> {
+export async function disconnectFromAgencyProgram(user: UserLogined): Promise<AgencyProgramDisconnectionResponse> {
   try {
     const { id: userId, current_organization_id: organizationId } = user
 
@@ -133,18 +126,16 @@ export async function disconnectFromAgencyProgram(user: UserProfile): Promise<Ag
       throw new ValidationError('No current organization selected')
     }
 
-    const orgUser = await getOrganizationUser(userId, organizationId)
-
-    if (!orgUser) {
+    if (!user?.currentOrganizationUser?.id) {
       throw new ValidationError('User is not a member of this organization')
     }
 
     // Only owners or admins can disconnect
-    if (!canManageOrganization(orgUser.role)) {
+    if (!user.currentOrganizationUser.role || !canManageOrganization(user.currentOrganizationUser.role)) {
       throw new ApolloError('Only organization owners/admins can disconnect from the Agency Program', 'FORBIDDEN')
     }
 
-    if (!orgUser.agencyAccountId) {
+    if (!user.currentOrganizationUser.agencyAccountId) {
       throw new ValidationError('Organization is not connected to the Agency Program')
     }
 
@@ -154,12 +145,12 @@ export async function disconnectFromAgencyProgram(user: UserProfile): Promise<Ag
      */
 
     // Remove agencyAccountId from database
-    await updateOrganizationUserAgencyAccount(orgUser.id, null)
+    await updateOrganizationUserAgencyAccount(user.currentOrganizationUser.id, null)
 
     logger.info('Disconnected from Agency Program', {
       userId,
       organizationId,
-      agencyAccountId: orgUser.agencyAccountId,
+      agencyAccountId: user.currentOrganizationUser.agencyAccountId,
     })
 
     return {
@@ -182,7 +173,7 @@ export async function disconnectFromAgencyProgram(user: UserProfile): Promise<Ag
  *
  * @TODO: Add validation that the account exists in Stripe
  */
-export async function updateAgencyAccount(user: UserProfile, agencyAccountId: string): Promise<boolean> {
+export async function updateAgencyAccount(user: UserLogined, agencyAccountId: string): Promise<boolean> {
   try {
     // Validate input parameters
     if (!agencyAccountId || typeof agencyAccountId !== 'string') {
@@ -204,14 +195,12 @@ export async function updateAgencyAccount(user: UserProfile, agencyAccountId: st
       throw new ValidationError('No current organization selected')
     }
 
-    const orgUser = await getOrganizationUser(userId, organizationId)
-
-    if (!orgUser) {
+    if (!user?.currentOrganizationUser?.id) {
       throw new ValidationError('User is not a member of this organization')
     }
 
     // Only owners can update agency account
-    if (orgUser.role !== ORGANIZATION_USER_ROLE_OWNER) {
+    if (user?.currentOrganizationUser?.role !== ORGANIZATION_USER_ROLE_OWNER) {
       throw new ApolloError('Only organization owners can update the Agency Account', 'FORBIDDEN')
     }
 
@@ -227,7 +216,7 @@ export async function updateAgencyAccount(user: UserProfile, agencyAccountId: st
      * }
      */
 
-    await updateOrganizationUserAgencyAccount(orgUser.id, agencyAccountId)
+    await updateOrganizationUserAgencyAccount(user?.currentOrganizationUser?.id, agencyAccountId)
 
     logger.info('Updated agency account ID', {
       userId,

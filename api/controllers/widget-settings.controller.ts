@@ -1,11 +1,11 @@
 import { Request, Response } from 'express'
 
 import { findSiteByURL } from '../repository/sites_allowed.repository'
-import { UserProfile } from '../repository/user.repository'
 import { addWidgetSettings, getWidgetSettingsBySiteId } from '../repository/widget_settings.repository'
 import { canAccessSite } from '../services/allowedSites/allowedSites.service'
+import { UserLogined } from '../services/authentication/get-user-logined.service'
 
-export async function updateSiteWidgetSettings(req: Request & { user: UserProfile }, res: Response) {
+export async function updateSiteWidgetSettings(req: Request & { user: UserLogined }, res: Response) {
   const { user } = req
   const { settings, site_url } = req.body
 
@@ -36,7 +36,7 @@ export async function updateSiteWidgetSettings(req: Request & { user: UserProfil
   }
 }
 
-export async function getSiteWidgetSettings(req: Request & { user: UserProfile }, res: Response) {
+export async function getSiteWidgetSettings(req: Request & { user: UserLogined }, res: Response) {
   const { user } = req
   const { site_url } = req.body
 

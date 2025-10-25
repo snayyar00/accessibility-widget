@@ -4,9 +4,9 @@ import database from '../../config/database.config'
 import { INVITATION_STATUS_EXPIRED, INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
 import { WORKSPACE_USER_STATUS_INACTIVE, WORKSPACE_USER_STATUS_PENDING } from '../../constants/workspace.constant'
 import { GetDetailOrganizationInvitation, getDetailOrganizationInvitations, GetDetailWorkspaceInvitation, getDetailWorkspaceInvitations, updateOrganizationInvitationByToken, updateWorkspaceInvitationByToken } from '../../repository/invitations.repository'
-import { UserProfile } from '../../repository/user.repository'
 import { createWorkspaceUser, getWorkspaceUser, updateWorkspaceUser } from '../../repository/workspace_users.repository'
 import { ApolloError } from '../../utils/graphql-errors.helper'
+import { UserLogined } from '../authentication/get-user-logined.service'
 
 export type VerifyInvitationResponse = (GetDetailWorkspaceInvitation | GetDetailOrganizationInvitation) & {
   type: 'workspace' | 'organization'
@@ -15,7 +15,7 @@ export type VerifyInvitationResponse = (GetDetailWorkspaceInvitation | GetDetail
 /**
  * Verify invitation token (workspace or organization)
  */
-export async function verifyInvitation(token: string, user: UserProfile): Promise<VerifyInvitationResponse> {
+export async function verifyInvitation(token: string, user: UserLogined): Promise<VerifyInvitationResponse> {
   const trx = await database.transaction()
 
   try {

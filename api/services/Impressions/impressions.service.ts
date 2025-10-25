@@ -13,7 +13,6 @@ import {
   updateImpressions as updateImpressionsSQL,
 } from '../../repository/impressions.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
-import { UserProfile } from '../../repository/user.repository'
 import { findVisitorByIp as findVisitorByIpClickHouse } from '../../repository/visitors.clickhouse.repository'
 import { findVisitorByIp as findVisitorByIpSQL } from '../../repository/visitors.repository'
 import { getCurrentDatabaseType, isClickHouseDisabled } from '../../utils/database.utils'
@@ -22,6 +21,7 @@ import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateAddImpressionsURL, validateAddInteraction, validateAddProfileCount, validateFindImpressionsByURLAndDate, validateGetEngagementRates } from '../../validations/impression.validation'
 import { canAccessSite, findSite } from '../allowedSites/allowedSites.service'
+import { UserLogined } from '../authentication/get-user-logined.service'
 import { addNewVisitor } from '../uniqueVisitors/uniqueVisitor.service'
 
 export async function addImpressionsURL(ipAddress: string, url: string) {
@@ -74,7 +74,7 @@ export async function addImpressionsURL(ipAddress: string, url: string) {
   }
 }
 
-export async function findImpressionsByURLAndDate(user: UserProfile, url: string, startDate: Date, endDate: Date) {
+export async function findImpressionsByURLAndDate(user: UserLogined, url: string, startDate: Date, endDate: Date) {
   const validateResult = validateFindImpressionsByURLAndDate({ url, startDate, endDate })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -172,7 +172,7 @@ export async function addProfileCount(impressionId: number, profileCount: any): 
   }
 }
 
-export async function getEngagementRates(user: UserProfile, url: string, startDate: string, endDate: string) {
+export async function getEngagementRates(user: UserLogined, url: string, startDate: string, endDate: string) {
   const validateResult = validateGetEngagementRates({ url, startDate, endDate })
 
   if (Array.isArray(validateResult) && validateResult.length) {

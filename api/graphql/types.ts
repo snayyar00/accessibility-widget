@@ -3,7 +3,7 @@ import { Request, Response } from 'express'
 import { GraphQLError } from 'graphql/error'
 
 import { Organization } from '../repository/organization.repository'
-import { UserLoginedResponse } from '../services/authentication/get-user-logined.service'
+import { UserLogined } from '../services/authentication/get-user-logined.service'
 
 export type ContextParams = {
   req: Request
@@ -13,7 +13,7 @@ export type ContextParams = {
 export interface GraphQLContext {
   req: Request
   res: Response
-  user: UserLoginedResponse
+  user: UserLogined
   domainFromRequest: string | null
   allowedFrontendUrl: string | null
   organization: Organization | null

@@ -4,10 +4,10 @@ import { ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.co
 import { WORKSPACE_USER_STATUS_ACTIVE, WORKSPACE_USER_STATUS_DECLINE } from '../../constants/workspace.constant'
 import { getDetailOrganizationInvitations, getDetailWorkspaceInvitations, updateOrganizationInvitationByToken, updateWorkspaceInvitationByToken } from '../../repository/invitations.repository'
 import { updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
-import { UserProfile } from '../../repository/user.repository'
 import { updateWorkspaceUser } from '../../repository/workspace_users.repository'
+import { UserLogined } from '../authentication/get-user-logined.service'
 
-export async function acceptInvitation(token: string, type: 'accept' | 'decline' | undefined, user: UserProfile): Promise<boolean> {
+export async function acceptInvitation(token: string, type: 'accept' | 'decline' | undefined, user: UserLogined): Promise<boolean> {
   const trx = await database.transaction()
 
   try {

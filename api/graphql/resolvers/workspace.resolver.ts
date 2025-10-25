@@ -2,8 +2,9 @@ import { combineResolvers } from 'graphql-resolvers'
 
 import { WorkspaceUserRole } from '../../constants/workspace.constant'
 import { GraphQLContext } from '../../graphql/types'
-import { findUser, UserProfile } from '../../repository/user.repository'
+import { findUser } from '../../repository/user.repository'
 import { WorkspaceWithDomains } from '../../repository/workspace_allowed_sites.repository'
+import { UserLogined } from '../../services/authentication/get-user-logined.service'
 import { addWorkspaceDomains, getWorkspaceDomainsService, removeWorkspaceDomains } from '../../services/workspaces/workspaceDomains.service'
 import { getWorkspaceInvitationsByAlias, removeAllUserInvitations, removeWorkspaceInvitation } from '../../services/workspaces/workspaceInvitations.service'
 import { changeWorkspaceMemberRole, getWorkspaceMembers, getWorkspaceMembersByAlias, removeWorkspaceMember } from '../../services/workspaces/workspaceMembers.service'
@@ -102,7 +103,7 @@ const resolvers = {
   },
 
   WorkspaceUser: {
-    user: async (parent: { user_id?: number; user?: UserProfile }) => {
+    user: async (parent: { user_id?: number; user?: UserLogined }) => {
       if (parent.user) {
         return parent.user
       }

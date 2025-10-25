@@ -1,4 +1,3 @@
-import { UserProfile } from '../../repository/user.repository'
 import { findVisitorByURL as findVisitorByURLClickHouse, insertVisitor as insertVisitorClickHouse } from '../../repository/visitors.clickhouse.repository'
 import { findVisitorByURL as findVisitorByURLSQL, insertVisitor as insertVisitorSQL } from '../../repository/visitors.repository'
 import { getCurrentDatabaseType, isClickHouseDisabled } from '../../utils/database.utils'
@@ -7,13 +6,8 @@ import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateGetSiteVisitorsByURL } from '../../validations/uniqueVisitor.validation'
 import { findUserSites } from '../allowedSites/allowedSites.service'
+import { UserLogined } from '../authentication/get-user-logined.service'
 
-/**
- * Create Document
- *
- * @param {number} userId
- * @param {string} url
- */
 export async function addNewVisitor(ipAddress: string, siteId: number): Promise<number[]> {
   try {
     const data = {
@@ -33,7 +27,7 @@ export async function addNewVisitor(ipAddress: string, siteId: number): Promise<
   }
 }
 
-export async function getSiteVisitorsByURL(url: string, user: UserProfile) {
+export async function getSiteVisitorsByURL(url: string, user: UserLogined) {
   const validateResult = validateGetSiteVisitorsByURL({ url })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -50,7 +44,7 @@ export async function getSiteVisitorsByURL(url: string, user: UserProfile) {
 
     logger.info(`Using ${getCurrentDatabaseType()} for visitor lookup`)
 
-    const filteredVisitors = visitors.filter((v: any) => userSiteIds.includes(v.siteId))
+    const filteredVisitors = visitors.filter((v) => userSiteIds.includes(v.siteId))
 
     return { visitors: filteredVisitors, count: filteredVisitors.length }
   } catch (e) {

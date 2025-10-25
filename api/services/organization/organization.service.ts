@@ -3,8 +3,8 @@ import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_ADMIN, ORGANIZATI
 import { objectToString } from '../../helpers/string.helper'
 import { deletePendingInvitationsByCreator, deletePendingInvitationsByEmail, deletePendingOrganizationInvitationsByCreator, getInvitationTokensByCreator } from '../../repository/invitations.repository'
 import { createOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization, updateOrganization } from '../../repository/organization.repository'
-import { findUser } from '../../repository/user.repository'
-import { updateUser, UserProfile } from '../../repository/user.repository'
+import { findUser, UserProfile } from '../../repository/user.repository'
+import { updateUser } from '../../repository/user.repository'
 import { removeWorkspaceDomainsBySiteOwnerInOrganization } from '../../repository/workspace_allowed_sites.repository'
 import { deletePendingWorkspaceMembersByTokensInOrganization, deleteWorkspaceUsersByOrganization } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
@@ -13,6 +13,7 @@ import { getMatchingFrontendUrl } from '../../utils/env.utils'
 import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateAddOrganization, validateEditOrganization, validateGetOrganizationByDomain, validateRemoveOrganization } from '../../validations/organization.validation'
+import { UserLogined } from '../authentication/get-user-logined.service'
 import { addUserToOrganization, getOrganizationsByUserId, getUserOrganization, removeUserFromOrganization as removeUserFromOrganizationService } from './organization_users.service'
 export interface CreateOrganizationInput {
   name: string
@@ -21,7 +22,7 @@ export interface CreateOrganizationInput {
   settings?: any
 }
 
-export async function addOrganization(data: CreateOrganizationInput, user: UserProfile & { isActive?: number }): Promise<number | ValidationError> {
+export async function addOrganization(data: CreateOrganizationInput, user: UserLogined): Promise<number | ValidationError> {
   const validateResult = validateAddOrganization(data)
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -71,7 +72,7 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
   }
 }
 
-export async function editOrganization(data: Partial<Organization>, user: UserProfile, organizationId: number | string): Promise<number | ValidationError> {
+export async function editOrganization(data: Partial<Organization>, user: UserLogined, organizationId: number | string): Promise<number | ValidationError> {
   const validateResult = validateEditOrganization({ ...data, id: organizationId })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -81,7 +82,7 @@ export async function editOrganization(data: Partial<Organization>, user: UserPr
   if (!user.is_super_admin) {
     await checkOrganizationAccess(user, organizationId, 'You can only edit your own organizations')
 
-    const orgUser = await getUserOrganization(user.id, Number(organizationId))
+    const orgUser = Number(organizationId) === Number(user.current_organization_id) && user.currentOrganizationUser ? user.currentOrganizationUser : await getUserOrganization(user.id, Number(organizationId))
     const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
     if (!isAllowed) {
@@ -134,7 +135,7 @@ export async function editOrganization(data: Partial<Organization>, user: UserPr
   }
 }
 
-export async function removeOrganization(user: UserProfile, organizationId: number | string): Promise<number | ValidationError> {
+export async function removeOrganization(user: UserLogined, organizationId: number | string): Promise<number | ValidationError> {
   const validateResult = validateRemoveOrganization({ id: organizationId })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -176,7 +177,7 @@ export async function getOrganizationById(id: number | string, user: UserProfile
   }
 }
 
-export async function removeUserFromOrganization(initiator: UserProfile, userId: number): Promise<number> {
+export async function removeUserFromOrganization(initiator: UserLogined, userId: number): Promise<number> {
   const organizationId = initiator.current_organization_id
 
   if (!organizationId) {
@@ -188,7 +189,7 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
   }
 
   if (!initiator.is_super_admin) {
-    const orgUser = await getUserOrganization(initiator.id, organizationId)
+    const orgUser = initiator.currentOrganizationUser
     const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
     if (!isAllowed) {
@@ -261,7 +262,7 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
   }
 }
 
-export async function getOrganizations(user: UserProfile): Promise<Organization[]> {
+export async function getOrganizations(user: UserLogined): Promise<Organization[]> {
   try {
     const orgLinks = await getOrganizationsByUserId(user.id)
     const orgIds = orgLinks.map((link) => link.organization_id)

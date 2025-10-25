@@ -2,11 +2,10 @@ import { Request, Response } from 'express'
 
 import { getProblemReportsBySiteIds } from '../repository/problem_reports.repository'
 import { findUserSitesWithPlansWithWorkspaces } from '../repository/sites_allowed.repository'
-import { UserProfile } from '../repository/user.repository'
-import { getUserOrganization } from '../services/organization/organization_users.service'
+import { UserLogined } from '../services/authentication/get-user-logined.service'
 import { canManageOrganization } from '../utils/access.helper'
 
-export async function getProblemReports(req: Request & { user: UserProfile }, res: Response) {
+export async function getProblemReports(req: Request & { user: UserLogined }, res: Response) {
   const { user } = req
 
   try {
@@ -15,8 +14,7 @@ export async function getProblemReports(req: Request & { user: UserProfile }, re
     }
 
     const isSuperAdmin = user.is_super_admin
-    const userOrganization = !isSuperAdmin ? await getUserOrganization(user.id, user.current_organization_id) : null
-    const isAdmin = isSuperAdmin || (userOrganization && canManageOrganization(userOrganization.role))
+    const isAdmin = isSuperAdmin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
     const sites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isAdmin)
     const allReports = await getProblemReportsBySiteIds(sites.map((site) => site.id))

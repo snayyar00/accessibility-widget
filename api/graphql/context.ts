@@ -14,12 +14,18 @@ export async function createGraphQLContext({ req, res }: ContextParams): Promise
   const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
 
   const user = await getUserLogined(bearerToken)
+
   const domainFromRequest = getDomainFromRequest(req)
-
-  console.log(user)
-
   const allowedFrontendUrl = getMatchingFrontendUrl(domainFromRequest)
-  const organization = await getOrganizationByDomainService(allowedFrontendUrl)
+
+  let organization = user?.currentOrganization || null
+
+  if (!organization) {
+    const orgFromDomain = await getOrganizationByDomainService(allowedFrontendUrl)
+    organization = orgFromDomain instanceof ValidationError ? null : orgFromDomain
+  }
+
+  console.log('user', user)
 
   return {
     req,
@@ -27,6 +33,6 @@ export async function createGraphQLContext({ req, res }: ContextParams): Promise
     user,
     domainFromRequest,
     allowedFrontendUrl,
-    organization: organization instanceof ValidationError ? null : organization,
+    organization,
   }
 }

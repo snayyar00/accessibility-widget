@@ -4,13 +4,13 @@ import database from '../../config/database.config'
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
 import { WORKSPACE_MANAGEMENT_ROLES } from '../../constants/workspace.constant'
 import { stringToSlug } from '../../helpers/string.helper'
-import { UserProfile } from '../../repository/user.repository'
 import { createNewWorkspaceAndMember, deleteWorkspaceById, getAllWorkspace, GetAllWorkspaceResponse, getWorkspace, updateWorkspace as updateWorkspaceRepo, Workspace } from '../../repository/workspace.repository'
 import { getWorkspaceUser } from '../../repository/workspace_users.repository'
 import { canManageOrganization, canManageWorkspace } from '../../utils/access.helper'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateCreateWorkspace, validateUpdateWorkspace } from '../../validations/workspace.validation'
+import { UserLogined } from '../authentication/get-user-logined.service'
 import { getUserOrganization } from '../organization/organization_users.service'
 
 type CreateWorkspaceResponse = {
@@ -25,17 +25,15 @@ type CreateWorkspaceResponse = {
  * Users with organization management rights see all organization workspaces
  * Regular users see only workspaces they are members of
  *
- * @param UserProfile user User who execute this function
+ * @param UserLogined user User who execute this function
  * @returns Promise<GetAllWorkspaceResponse[]> Array of user's workspaces
  */
-export async function getAllWorkspaces(user: UserProfile): Promise<GetAllWorkspaceResponse[]> {
+export async function getAllWorkspaces(user: UserLogined): Promise<GetAllWorkspaceResponse[]> {
   if (!user.current_organization_id) {
     return []
   }
 
-  const userOrganization = await getUserOrganization(user.id, user.current_organization_id)
-
-  if (user.is_super_admin || (userOrganization && canManageOrganization(userOrganization.role))) {
+  if (user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))) {
     const allWorkspaces = await getAllWorkspace({ organizationId: user.current_organization_id })
     return removeDuplicateWorkspaces(allWorkspaces)
   }
@@ -50,10 +48,10 @@ export async function getAllWorkspaces(user: UserProfile): Promise<GetAllWorkspa
  * Only organization members with management rights can access workspaces within their organization
  *
  * @param string alias Alias of the workspace to get
- * @param UserProfile user User requesting the workspace
+ * @param UserLogined user User requesting the workspace
  * @returns Promise<Workspace | null> Workspace or null if not found/no access
  */
-export async function getWorkspaceByAlias(alias: string, user: UserProfile): Promise<Workspace | null> {
+export async function getWorkspaceByAlias(alias: string, user: UserLogined): Promise<Workspace | null> {
   if (!alias) {
     throw new ValidationError('Workspace alias is required')
   }
@@ -78,9 +76,7 @@ export async function getWorkspaceByAlias(alias: string, user: UserProfile): Pro
     return workspace
   }
 
-  const userOrganization = await getUserOrganization(user.id, Number(user.current_organization_id))
-
-  if (!user.is_super_admin && (!userOrganization || !canManageOrganization(userOrganization.role))) {
+  if (!user.is_super_admin && (!user.currentOrganizationUser || !canManageOrganization(user.currentOrganizationUser.role))) {
     return null
   }
 
@@ -90,11 +86,11 @@ export async function getWorkspaceByAlias(alias: string, user: UserProfile): Pro
 /**
  * Function to create workspace
  *
- * @param UserProfile user User who creates workspace
+ * @param UserLogined user User who creates workspace
  * @param string workspaceName Name of new workspace
  * @returns Promise<CreateWorkspaceResponse> Created workspace info
  */
-export async function createWorkspace(user: UserProfile, workspaceName: string): Promise<CreateWorkspaceResponse> {
+export async function createWorkspace(user: UserLogined, workspaceName: string): Promise<CreateWorkspaceResponse> {
   const validateResult = validateCreateWorkspace({ name: workspaceName })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -105,9 +101,7 @@ export async function createWorkspace(user: UserProfile, workspaceName: string):
     throw new ApolloError('No current organization selected')
   }
 
-  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-
-  if (!orgUser) {
+  if (!user.currentOrganizationUser) {
     throw new ApolloError('You are not a member of this organization')
   }
 
@@ -132,11 +126,11 @@ export async function createWorkspace(user: UserProfile, workspaceName: string):
 
 /**
  * Function to delete workspace
- * @param UserProfile user User who wants to delete workspace
+ * @param UserLogined user User who wants to delete workspace
  * @param number workspace_id ID of the workspace to delete
  * @returns Promise<boolean> True if workspace was deleted successfully
  */
-export async function deleteWorkspace(user: UserProfile, workspace_id: number): Promise<boolean> {
+export async function deleteWorkspace(user: UserLogined, workspace_id: number): Promise<boolean> {
   if (!user.current_organization_id) {
     throw new ApolloError('No current organization selected')
   }
@@ -147,8 +141,7 @@ export async function deleteWorkspace(user: UserProfile, workspace_id: number): 
     throw new ApolloError('Workspace not found')
   }
 
-  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+  const isOrgManager = user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
   const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id })
   const isWorkspaceManager = workspaceMember && canManageWorkspace(workspaceMember.role)
@@ -190,12 +183,12 @@ export async function deleteWorkspace(user: UserProfile, workspace_id: number): 
 
 /**
  * Function to update workspace
- * @param UserProfile user User who wants to update workspace
+ * @param UserLogined user User who wants to update workspace
  * @param number workspace_id ID of the workspace to update
  * @param Partial<Workspace> data Object with fields to update
  * @returns Promise<Workspace> Updated workspace
  */
-export async function updateWorkspace(user: UserProfile, workspace_id: number, data: Partial<Workspace>): Promise<Workspace> {
+export async function updateWorkspace(user: UserLogined, workspace_id: number, data: Partial<Workspace>): Promise<Workspace> {
   const validateResult = validateUpdateWorkspace(data)
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -211,8 +204,7 @@ export async function updateWorkspace(user: UserProfile, workspace_id: number, d
     throw new ApolloError('Workspace not found')
   }
 
-  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+  const isOrgManager = user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
   const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id })
   const isWorkspaceManager = workspaceMember && canManageWorkspace(workspaceMember.role)
@@ -261,10 +253,10 @@ export async function updateWorkspace(user: UserProfile, workspace_id: number, d
  * Users with management rights see all workspaces, regular users see only their workspaces
  *
  * @param number organizationId Organization ID to get workspaces for
- * @param UserProfile user User requesting the workspaces
+ * @param UserLogined user User requesting the workspaces
  * @returns Promise<Workspace[]> Array of workspaces belonging to the organization
  */
-export async function getOrganizationWorkspaces(organizationId: number, user: UserProfile): Promise<Workspace[]> {
+export async function getOrganizationWorkspaces(organizationId: number, user: UserLogined): Promise<Workspace[]> {
   if (!organizationId) {
     throw new ValidationError('Organization ID is required')
   }
@@ -278,7 +270,8 @@ export async function getOrganizationWorkspaces(organizationId: number, user: Us
     return removeDuplicateWorkspaces(workspaces)
   }
 
-  const userOrganization = await getUserOrganization(user.id, organizationId)
+  // Optimize: if requesting current organization, use cached data
+  const userOrganization = Number(organizationId) === Number(user.current_organization_id) && user.currentOrganizationUser ? user.currentOrganizationUser : await getUserOrganization(user.id, organizationId)
 
   if (!userOrganization) {
     return []

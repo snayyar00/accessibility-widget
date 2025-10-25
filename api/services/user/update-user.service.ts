@@ -1,11 +1,12 @@
 import { ORGANIZATION_MANAGEMENT_ROLES } from '../../constants/organization.constant'
-import { checkOnboardingEmailsEnabled, findUser, findUserNotificationByUserId, getUserNotificationSettings, insertUserNotification, updateUser, updateUserNotificationFlags, UserProfile } from '../../repository/user.repository'
+import { checkOnboardingEmailsEnabled, findUser, findUserNotificationByUserId, getUserNotificationSettings, insertUserNotification, updateUser, updateUserNotificationFlags } from '../../repository/user.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { ApolloError, ForbiddenError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
 import { createMultipleValidationErrors, createValidationError, getValidationErrorCode } from '../../utils/validation-errors.helper'
 import { profileUpdateValidation } from '../../validations/authenticate.validation'
+import { UserLogined } from '../authentication/get-user-logined.service'
 import { getUserOrganization } from '../organization/organization_users.service'
 
 export async function updateProfile(id: number, name: string, company: string, position: string): Promise<true | ApolloError> {
@@ -143,7 +144,7 @@ export async function getUserNotificationSettingsService(userId: number, organiz
   }
 }
 
-export async function changeCurrentOrganization(initiator: UserProfile, targetOrganizationId: number, userId?: number): Promise<true | ApolloError> {
+export async function changeCurrentOrganization(initiator: UserLogined, targetOrganizationId: number, userId?: number): Promise<true | ApolloError> {
   try {
     if (!initiator.current_organization_id) {
       throw new ForbiddenError('Current organization not found')
@@ -169,7 +170,7 @@ export async function changeCurrentOrganization(initiator: UserProfile, targetOr
   }
 }
 
-async function checkCanSwitchEntity(initiator: UserProfile, targetUserId: number, targetOrganizationId: number, requireAdmin = false) {
+async function checkCanSwitchEntity(initiator: UserLogined, targetUserId: number, targetOrganizationId: number, requireAdmin = false) {
   const targetOrgUser = await getUserOrganization(targetUserId, targetOrganizationId)
 
   if (!targetOrgUser) {

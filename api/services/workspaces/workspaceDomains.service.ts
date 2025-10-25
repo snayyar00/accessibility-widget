@@ -1,19 +1,18 @@
 import { findSitesByIds } from '../../repository/sites_allowed.repository'
-import { UserProfile } from '../../repository/user.repository'
 import { getWorkspace, Workspace } from '../../repository/workspace.repository'
 import { addWorkspaceDomainsRepo, getWorkspaceDomains, removeWorkspaceDomainsRepo, WorkspaceWithDomains } from '../../repository/workspace_allowed_sites.repository'
 import { getWorkspaceUser } from '../../repository/workspace_users.repository'
 import { canManageOrganization, canManageWorkspace } from '../../utils/access.helper'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
-import { getUserOrganization } from '../organization/organization_users.service'
+import { UserLogined } from '../authentication/get-user-logined.service'
 
 /**
  * Get all domains for a workspace
  * @param workspaceId - ID of workspace
- * @param user - User requesting the domains
+ * @param UserLogined - User requesting the domains
  * @returns Promise<WorkspaceWithDomains[]> - Array of domains for the workspace
  */
-export async function getWorkspaceDomainsService(workspaceId: number, user: UserProfile): Promise<WorkspaceWithDomains[]> {
+export async function getWorkspaceDomainsService(workspaceId: number, user: UserLogined): Promise<WorkspaceWithDomains[]> {
   if (!user.current_organization_id) {
     throw new ApolloError('No current organization selected')
   }
@@ -24,8 +23,7 @@ export async function getWorkspaceDomainsService(workspaceId: number, user: User
     return []
   }
 
-  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+  const isOrgManager = user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
   const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id: workspaceId })
   const isWorkspaceManager = workspaceMember && canManageWorkspace(workspaceMember.role)
@@ -40,12 +38,12 @@ export async function getWorkspaceDomainsService(workspaceId: number, user: User
 
 /**
  * Add domains to workspace
- * @param user - User who wants to add domains
+ * @param UserLogined - User who wants to add domains
  * @param workspace_id - ID of the workspace
  * @param siteIds - Array of site IDs to add
  * @returns Promise<Workspace> Updated workspace
  */
-export async function addWorkspaceDomains(user: UserProfile, workspace_id: number, siteIds: number[]): Promise<Workspace> {
+export async function addWorkspaceDomains(user: UserLogined, workspace_id: number, siteIds: number[]): Promise<Workspace> {
   if (!user.current_organization_id) {
     throw new ApolloError('No current organization selected')
   }
@@ -63,8 +61,7 @@ export async function addWorkspaceDomains(user: UserProfile, workspace_id: numbe
     throw new ApolloError('Workspace not found')
   }
 
-  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+  const isOrgManager = user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
   const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id })
   const isWorkspaceManager = workspaceMember && canManageWorkspace(workspaceMember.role)
@@ -109,12 +106,12 @@ export async function addWorkspaceDomains(user: UserProfile, workspace_id: numbe
 
 /**
  * Remove domains from workspace
- * @param user - User who wants to remove domains
+ * @param UserLogined - User who wants to remove domains
  * @param workspace_id - ID of the workspace
  * @param siteIds - Array of site IDs to remove
  * @returns Promise<Workspace> Updated workspace
  */
-export async function removeWorkspaceDomains(user: UserProfile, workspace_id: number, siteIds: number[]): Promise<Workspace> {
+export async function removeWorkspaceDomains(user: UserLogined, workspace_id: number, siteIds: number[]): Promise<Workspace> {
   if (!user.current_organization_id) {
     throw new ApolloError('No current organization selected')
   }
@@ -130,8 +127,7 @@ export async function removeWorkspaceDomains(user: UserProfile, workspace_id: nu
     throw new ApolloError('Workspace not found')
   }
 
-  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isOrgManager = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+  const isOrgManager = user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
   const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id })
   const isWorkspaceManager = workspaceMember && canManageWorkspace(workspaceMember.role)

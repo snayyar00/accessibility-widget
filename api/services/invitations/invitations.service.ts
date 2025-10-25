@@ -19,9 +19,8 @@ import {
   getWorkspaceInvitation,
   VALID_PERIOD_DAYS,
 } from '../../repository/invitations.repository'
-import { getOrganizationById } from '../../repository/organization.repository'
 import { getOrganizationUsersByOrganizationId } from '../../repository/organization_user.repository'
-import { findUser, UserProfile } from '../../repository/user.repository'
+import { findUser } from '../../repository/user.repository'
 import { getWorkspace, getWorkspaceMembers } from '../../repository/workspace.repository'
 import { createMemberAndInviteToken, deleteWorkspaceUsers, getWorkspaceUser } from '../../repository/workspace_users.repository'
 import { canManageOrganization, validateWorkspaceInvitePermissions } from '../../utils/access.helper'
@@ -29,6 +28,7 @@ import formatDateDB from '../../utils/format-date-db'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateInviteWorkspaceMember } from '../../validations/workspace.validation'
+import { UserLogined } from '../authentication/get-user-logined.service'
 import { sendMail } from '../email/email.service'
 import { addUserToOrganization, getUserOrganization } from '../organization/organization_users.service'
 
@@ -52,7 +52,7 @@ export type InviteUserParams = {
 /**
  * Universal function to invite user to organization or workspace
  */
-export async function inviteUser(user: UserProfile, params: InviteUserParams): Promise<InvitationResponse> {
+export async function inviteUser(user: UserLogined, params: InviteUserParams): Promise<InvitationResponse> {
   const { type, invitee_email, role, allowedFrontendUrl, workspace_id } = params
 
   if (type === 'workspace') {
@@ -65,7 +65,7 @@ export async function inviteUser(user: UserProfile, params: InviteUserParams): P
 /**
  * Invite user to workspace
  */
-async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, invitee_email: string, role: WorkspaceUserRole = WORKSPACE_USER_ROLE_MEMBER, allowedFrontendUrl: string): Promise<InvitationResponse> {
+async function inviteUserToWorkspace(user: UserLogined, workspaceId: number, invitee_email: string, role: WorkspaceUserRole = WORKSPACE_USER_ROLE_MEMBER, allowedFrontendUrl: string): Promise<InvitationResponse> {
   const validateResult = validateInviteWorkspaceMember({ workspaceId, email: invitee_email, role })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -87,10 +87,9 @@ async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, inv
       throw new ApolloError('Workspace not found')
     }
 
-    const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
     const workspaceMember = await getWorkspaceUser({ user_id: user.id, workspace_id: workspace.id })
 
-    const permissions = validateWorkspaceInvitePermissions(user.is_super_admin || false, orgUser?.role, workspaceMember?.role, role)
+    const permissions = validateWorkspaceInvitePermissions(user.is_super_admin || false, user.currentOrganizationUser?.role, workspaceMember?.role, role)
 
     if (!permissions.canInvite) {
       const allowedRolesStr = permissions.allowedRoles.length > 0 ? permissions.allowedRoles.join(', ') : 'none'
@@ -232,7 +231,7 @@ async function inviteUserToWorkspace(user: UserProfile, workspaceId: number, inv
 /**
  * Invite user to organization
  */
-async function inviteUserToOrganization(user: UserProfile, invitee_email: string, role: OrganizationUserRole = ORGANIZATION_USER_ROLE_MEMBER, allowedFrontendUrl: string): Promise<InvitationResponse> {
+async function inviteUserToOrganization(user: UserLogined, invitee_email: string, role: OrganizationUserRole = ORGANIZATION_USER_ROLE_MEMBER, allowedFrontendUrl: string): Promise<InvitationResponse> {
   if (!user.current_organization_id) {
     throw new ApolloError('No current organization selected')
   }
@@ -242,7 +241,7 @@ async function inviteUserToOrganization(user: UserProfile, invitee_email: string
   }
 
   if (role === ORGANIZATION_USER_ROLE_OWNER) {
-    const organization = await getOrganizationById(user.current_organization_id)
+    const organization = user.currentOrganization
 
     if (!organization) {
       throw new ApolloError('Organization not found')
@@ -263,8 +262,7 @@ async function inviteUserToOrganization(user: UserProfile, invitee_email: string
     }
   }
 
-  const orgUser = await getUserOrganization(user.id, Number(user.current_organization_id))
-  const isAllowed = user.is_super_admin || (orgUser && canManageOrganization(orgUser.role))
+  const isAllowed = user.is_super_admin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
 
   if (!isAllowed) {
     throw new ApolloError(`Only organization ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can invite to organization`)
@@ -275,7 +273,7 @@ async function inviteUserToOrganization(user: UserProfile, invitee_email: string
   try {
     transaction = await database.transaction()
 
-    const organization = await getOrganizationById(user.current_organization_id)
+    const organization = user.currentOrganization
 
     if (!organization) {
       throw new ApolloError('Organization not found')
