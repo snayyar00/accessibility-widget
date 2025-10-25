@@ -204,7 +204,7 @@ export function getRootDomain(urlOrHostname: string, options?: RootDomainOptions
 /**
  * Helper function to extract client domain from request headers
  */
-export function extractClientDomain(req: Request): string | null {
+export function getDomainFromRequest(req: Request): string | null {
   const origin = req.headers.origin || req.headers.referer
 
   if (origin) {

@@ -8,7 +8,7 @@ import { AuthenticationError, ForbiddenError } from '../../utils/graphql-errors.
 type Context = {
   user?: UserProfile
   res?: Response
-  clientDomain: string | null
+  domainFromRequest: string | null
   allowedFrontendUrl: string | null
   organization: Organization | null
 }

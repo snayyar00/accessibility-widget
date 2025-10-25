@@ -14,7 +14,7 @@ export interface GraphQLContext {
   req: Request
   res: Response
   user: UserLoginedResponse
-  clientDomain: string | null
+  domainFromRequest: string | null
   allowedFrontendUrl: string | null
   organization: Organization | null
   sentryTransaction?: ReturnType<typeof Sentry.startTransaction>

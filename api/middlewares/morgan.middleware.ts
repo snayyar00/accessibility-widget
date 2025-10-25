@@ -3,7 +3,7 @@ import { Request, Response } from 'express'
 import morgan from 'morgan'
 
 import { IS_LOCAL } from '../config/env'
-import { extractClientDomain } from '../utils/domain.utils'
+import { getDomainFromRequest } from '../utils/domain.utils'
 import { getOperationName } from '../utils/logger.utils'
 
 morgan.token('operation_name', (req) => getOperationName((req as Request).body))
@@ -37,7 +37,7 @@ const gdprSafeJsonFormat = (tokens: any, req: Request, res: Response) => {
     content_length: contentLength,
     response_time_ms: Number(tokens['response-time'](req, res)),
     operation_name: tokens.operation_name(req, res),
-    domain: extractClientDomain(req),
+    domain: getDomainFromRequest(req),
   }
 
   if (IS_LOCAL) {

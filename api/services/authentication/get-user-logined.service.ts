@@ -26,10 +26,10 @@ export default async function getUserLogined(bearerToken: string | null): Promis
       if (typeof verifyToken === 'object') {
         const { user, iat } = verifyToken
 
-        const userInfo = await findUser({ email: user.email })
+        const [userInfo, workspaceInvitations, organizationInvitations] = await Promise.all([findUser({ email: user.email }), getWorkspaceInvitation({ email: user.email, status: INVITATION_STATUS_PENDING }), getOrganizationInvitation({ email: user.email, status: INVITATION_STATUS_PENDING })])
 
-        const [workspaceInvitationToken] = await getWorkspaceInvitation({ email: user.email, status: INVITATION_STATUS_PENDING })
-        const [organizationInvitationToken] = await getOrganizationInvitation({ email: user.email, status: INVITATION_STATUS_PENDING })
+        const [workspaceInvitationToken] = workspaceInvitations
+        const [organizationInvitationToken] = organizationInvitations
 
         const invitationToken = organizationInvitationToken || workspaceInvitationToken
 

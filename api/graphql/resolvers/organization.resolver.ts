@@ -47,8 +47,8 @@ const organizationResolver = {
       return await getOrganizationWorkspaces(user.current_organization_id, user)
     }),
 
-    getOrganizationByDomain: combineResolvers(allowedOrganization, async (_: unknown, __: unknown, { clientDomain }: GraphQLContext): Promise<Organization | null | ValidationError> => {
-      const org = await getOrganizationByDomainService(clientDomain)
+    getOrganizationByDomain: combineResolvers(allowedOrganization, async (_: unknown, __: unknown, { domainFromRequest }: GraphQLContext): Promise<Organization | null | ValidationError> => {
+      const org = await getOrganizationByDomainService(domainFromRequest)
 
       return org || null
     }),
