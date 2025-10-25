@@ -25,8 +25,6 @@ export async function createGraphQLContext({ req, res }: ContextParams): Promise
     organization = orgFromDomain instanceof ValidationError ? null : orgFromDomain
   }
 
-  console.log('user', user)
-
   return {
     req,
     res,

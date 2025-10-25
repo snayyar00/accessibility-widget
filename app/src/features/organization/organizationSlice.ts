@@ -34,6 +34,7 @@ const organizationSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(setProfileUser, (state, action) => {
       const currentOrg = action.payload.data?.currentOrganization;
+
       if (currentOrg) {
         state.data = currentOrg;
         state.loading = false;
