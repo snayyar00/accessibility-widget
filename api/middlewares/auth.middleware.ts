@@ -43,6 +43,7 @@ export async function isAuthenticated(req: Request & { organization: Organizatio
 
     req.user = user
 
+    // Store user's current organization in request if available
     if (user.currentOrganization) {
       req.organization = user.currentOrganization
     }
@@ -54,20 +55,18 @@ export async function isAuthenticated(req: Request & { organization: Organizatio
   }
 }
 
-export async function allowedOrganization(req: Request & { organization: Organization | ValidationError; user: UserLogined; startTime: 0 }, res: Response, next: NextFunction) {
-  // If organization already loaded by isAuthenticated, reuse it
+export async function allowedOrganization(req: Request & { organization: Organization | ValidationError; startTime: 0 }, res: Response, next: NextFunction) {
   let organization = req.organization || null
 
   if (!organization) {
     const domainFromRequest = getDomainFromRequest(req)
-    const allowedFrontendUrl = getMatchingFrontendUrl(domainFromRequest)
+    const allowedFrontendUrlFromRequest = getMatchingFrontendUrl(domainFromRequest)
+    const organizationByDomain = await getOrganizationByDomainService(allowedFrontendUrlFromRequest)
 
-    organization = await getOrganizationByDomainService(allowedFrontendUrl)
+    organization = organizationByDomain instanceof ValidationError ? null : organizationByDomain
   }
 
-  const hasOrganization = organization instanceof ValidationError ? null : organization
-
-  if (!hasOrganization) {
+  if (!organization) {
     logAuthenticationFailure(req, res, 'Provided domain is not in the list of allowed organizations', 'FORBIDDEN', 403)
     return res.status(403).json({ error: 'Provided domain is not in the list of allowed organizations' })
   }

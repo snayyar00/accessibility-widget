@@ -23,7 +23,7 @@ type RegisterResponse = {
   token: string
 }
 
-async function registerUser(email: string, password: string, name: string, organization: Organization): Promise<ApolloError | RegisterResponse> {
+async function registerUser(email: string, password: string, name: string, organization: Organization, allowedFrontendUrl: string): Promise<ApolloError | RegisterResponse> {
   const sanitizedInput = sanitizeUserInput({ email, name })
 
   email = sanitizedInput.email
@@ -106,7 +106,7 @@ async function registerUser(email: string, password: string, name: string, organ
     // The email sequence will be handled by the daily cron job
     if (newUserId) {
       try {
-        const welcomeEmailSent = await EmailSequenceService.sendWelcomeEmail(email, name, newUserId, organization.id)
+        const welcomeEmailSent = await EmailSequenceService.sendWelcomeEmail(email, name, newUserId, organization.id, allowedFrontendUrl)
         if (welcomeEmailSent) {
           logger.info(`Welcome email sent successfully to new user: ${email}`)
         } else {

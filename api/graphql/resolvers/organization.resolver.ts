@@ -6,7 +6,7 @@ import { generateOrganizationFaviconUrl, generateOrganizationLogoUrl } from '../
 import { Organization } from '../../repository/organization.repository'
 import { OrganizationUser } from '../../repository/organization_user.repository'
 import { AgencyProgramConnectionResponse, AgencyProgramDisconnectionResponse, connectToAgencyProgram, disconnectFromAgencyProgram, updateAgencyAccount } from '../../services/organization/agencyProgram.service'
-import { addOrganization, CreateOrganizationInput, editOrganization, getOrganizationByDomainService, getOrganizationById, getOrganizations, removeOrganization, removeUserFromOrganization } from '../../services/organization/organization.service'
+import { addOrganization, CreateOrganizationInput, editOrganization, getOrganizationById, getOrganizations, removeOrganization, removeUserFromOrganization } from '../../services/organization/organization.service'
 import { changeOrganizationUserRole, getOrganizationUsers } from '../../services/organization/organization_users.service'
 import { FileUploadResolved, uploadOrganizationFavicon, uploadOrganizationLogo } from '../../services/upload/organizationUpload.service'
 import { getOrganizationWorkspaces } from '../../services/workspaces/workspaces.service'
@@ -47,10 +47,8 @@ const organizationResolver = {
       return await getOrganizationWorkspaces(user.current_organization_id, user)
     }),
 
-    getOrganizationByDomain: combineResolvers(allowedOrganization, async (_: unknown, __: unknown, { domainFromRequest }: GraphQLContext): Promise<Organization | null | ValidationError> => {
-      const org = await getOrganizationByDomainService(domainFromRequest)
-
-      return org || null
+    getOrganizationByDomain: combineResolvers(allowedOrganization, async (_: unknown, __: unknown, { organization }: GraphQLContext): Promise<Organization | null | ValidationError> => {
+      return organization
     }),
   },
 

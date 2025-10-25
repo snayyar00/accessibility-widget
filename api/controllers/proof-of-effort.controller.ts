@@ -12,7 +12,6 @@ interface SendToolkitEmailRequest {
 }
 
 export async function sendProofOfEffortToolkit(req: Request, res: Response) {
-  const { user } = req as any
   const { email, domain, zipFileBase64, reportDate }: SendToolkitEmailRequest = req.body
 
   try {

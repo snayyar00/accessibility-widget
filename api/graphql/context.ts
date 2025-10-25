@@ -16,21 +16,25 @@ export async function createGraphQLContext({ req, res }: ContextParams): Promise
   const user = await getUserLogined(bearerToken)
 
   const domainFromRequest = getDomainFromRequest(req)
-  const allowedFrontendUrl = getMatchingFrontendUrl(domainFromRequest)
 
   let organization = user?.currentOrganization || null
 
   if (!organization) {
-    const orgFromDomain = await getOrganizationByDomainService(allowedFrontendUrl)
-    organization = orgFromDomain instanceof ValidationError ? null : orgFromDomain
+    const allowedFrontendUrlFromRequest = getMatchingFrontendUrl(domainFromRequest)
+    const organizationByDomain = await getOrganizationByDomainService(allowedFrontendUrlFromRequest)
+
+    organization = organizationByDomain instanceof ValidationError ? null : organizationByDomain
   }
+
+  const allowedFrontendUrl = organization?.domain ? getMatchingFrontendUrl(organization.domain) : getMatchingFrontendUrl(domainFromRequest)
 
   return {
     req,
     res,
     user,
+    organization,
+
     domainFromRequest,
     allowedFrontendUrl,
-    organization,
   }
 }

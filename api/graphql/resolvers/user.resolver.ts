@@ -59,8 +59,8 @@ const resolvers = {
   },
 
   Mutation: {
-    register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name }: Register, { organization }) => {
-      const result = await registerUser(normalizeEmail(email), password, name, organization)
+    register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name }: Register, { organization, allowedFrontendUrl }) => {
+      const result = await registerUser(normalizeEmail(email), password, name, organization, allowedFrontendUrl)
 
       return result
     }),
