@@ -19,7 +19,7 @@ import {
 } from '@/features/whatsNew/whatsNewSlice';
 
 // Actions
-import { toggleSidebar } from '@/features/admin/sidebar';
+import { toggleSidebar, setSidebarLockedOpen } from '@/features/admin/sidebar';
 
 import type { RootState } from '@/config/store';
 import { resolveAvatarPath } from '@/helpers/avatar.helper';
@@ -91,7 +91,7 @@ const Topbar: React.FC<Props> = ({
   } = useSelector((state: RootState) => state.user);
 
   const { data } = useSelector((state: RootState) => state.user);
-  const { isOpen: isSidebarOpen } = useSelector(
+  const { isOpen: isSidebarOpen, lockedOpen } = useSelector(
     (state: RootState) => state.sidebar,
   );
 
@@ -194,15 +194,20 @@ const Topbar: React.FC<Props> = ({
             {/* Sidebar Toggle Button */}
             <button
               onClick={() => {
-                if (isSidebarOpen) {
-                  // Close the sidebar
+                if (lockedOpen) {
+                  // Unlock and close
+                  dispath(setSidebarLockedOpen(false));
                   dispath(toggleSidebar(false));
-                  // For desktop: trigger collapse behavior
                   window.dispatchEvent(new CustomEvent('collapseSidebar'));
-                } else {
-                  // Open the sidebar
+                } else if (isSidebarOpen) {
+                  // Currently open but not locked: lock it open
+                  dispath(setSidebarLockedOpen(true));
                   dispath(toggleSidebar(true));
-                  // For desktop: trigger hover behavior by dispatching a custom event
+                  window.dispatchEvent(new CustomEvent('expandSidebar'));
+                } else {
+                  // Currently closed: open and lock
+                  dispath(setSidebarLockedOpen(true));
+                  dispath(toggleSidebar(true));
                   window.dispatchEvent(new CustomEvent('expandSidebar'));
                 }
               }}
