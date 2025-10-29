@@ -42,6 +42,7 @@ const Sidebar = ({
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [billingClicked, setBillingClicked] = useState(false);
+  const [isOpenedByToggle, setIsOpenedByToggle] = useState(false);
 
   // Get colors configuration
   // Using baseColors directly
@@ -54,11 +55,13 @@ const Sidebar = ({
     const handleExpandSidebar = () => {
       setIsCollapsed(false);
       setIsHovered(true);
+      setIsOpenedByToggle(true);
     };
 
     const handleCollapseSidebar = () => {
       setIsCollapsed(true);
       setIsHovered(false);
+      setIsOpenedByToggle(false);
     };
 
     window.addEventListener('expandSidebar', handleExpandSidebar);
@@ -95,6 +98,7 @@ const Sidebar = ({
 
   function closeSidebar() {
     dispatch(toggleSidebar(false));
+    setIsOpenedByToggle(false);
   }
 
   const handleRedirect = () => {
@@ -104,11 +108,18 @@ const Sidebar = ({
   function handleMouseEnter() {
     setIsHovered(true);
     setIsCollapsed(false);
+    // If sidebar is opened by toggle, don't change the toggle state
+    if (!isOpenedByToggle) {
+      setIsOpenedByToggle(false);
+    }
   }
 
   function handleMouseLeave() {
     setIsHovered(false);
-    setIsCollapsed(true);
+    // Only collapse if the sidebar wasn't opened by the toggle button
+    if (!isOpenedByToggle) {
+      setIsCollapsed(true);
+    }
   }
 
   const handleBillingClick = async () => {
@@ -600,7 +611,7 @@ const Sidebar = ({
                   <LuCircleDollarSign size={24} className="text-[#94BFFF]" />
                 </div>
                 <span className="text-sm font-medium text-[#656565] whitespace-nowrap">
-                 Join Referral Program
+                  Join Referral Program
                 </span>
               </a>
             </div>
