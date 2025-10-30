@@ -73,10 +73,10 @@ const Modal: React.FC<ModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60 backdrop-blur-sm">
-      <div className="w-full max-w-md mx-4">
+    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50">
+      <div className="modal-perfect-center w-full max-w-md max-h-[90vh] overflow-y-auto no-scrollbar modal-container p-4">
         {/* Content */}
-        <div>{children}</div>
+        <div className="w-full">{children}</div>
       </div>
     </div>
   );
@@ -561,7 +561,7 @@ const TrialBannerAndModal: React.FC<any> = ({
               customerData={customerData}
             />
           ) : (
-            <div className="w-full max-w-md px-4 md:px-6 lg:px-8 py-3 md:py-4 flex flex-col bg-white rounded-lg shadow-lg sm:min-h-screen sm:max-h-screen md:min-h-0 sm:overflow-y-auto relative">
+            <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 flex flex-col bg-white rounded-lg shadow-lg sm:min-h-screen sm:max-h-screen md:min-h-0 sm:overflow-y-auto no-scrollbar relative w-full">
               {/* Close button - visible on all screen sizes */}
               <button
                 className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-2xl hover:bg-gray-100 transition-colors duration-200 p-1 rounded-full z-10"
@@ -608,7 +608,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                   </p>
                 </div>
 
-                <div className="sm:flex-none md:flex-1 sm:overflow-visible md:overflow-y-auto sm:overflow-y-auto">
+                <div className="sm:flex-none md:flex-1 sm:overflow-visible md:overflow-y-auto sm:overflow-y-auto no-scrollbar">
                   <form
                     id="bannerForm"
                     onSubmit={handleSubmit}

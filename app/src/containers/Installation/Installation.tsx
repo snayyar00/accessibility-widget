@@ -9,6 +9,7 @@ import { FaWordpressSimple } from 'react-icons/fa6';
 import { FaWebflow } from 'react-icons/fa6';
 import { FaWix } from 'react-icons/fa';
 import { FaShopify } from 'react-icons/fa';
+import { SiGoogletagmanager } from 'react-icons/si';
 import { baseColors } from '@/config/colors';
 
 export default function Installation({ domain }: any) {
@@ -448,6 +449,66 @@ export default function Installation({ domain }: any) {
                     </svg>
                   </div>
                 </a>
+
+                {/* GTM Card */}
+                <a
+                  href="https://www.webability.io/installation/how-to-install-webability-using-google-tag-manager"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white border rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
+                  style={{
+                    borderColor: '#A2ADF3',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
+                        <SiGoogletagmanager
+                          className="w-10 h-10"
+                          style={{ color: '#3343AD' }}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3
+                          className="text-xs sm:text-sm md:text-base lg:text-lg font-medium text-gray-900 transition-colors leading-tight"
+                          style={{ color: 'inherit' }}
+                          onMouseEnter={(e) =>
+                            ((e.target as HTMLElement).style.color =
+                              baseColors.blueDark)
+                          }
+                          onMouseLeave={(e) =>
+                            ((e.target as HTMLElement).style.color = 'inherit')
+                          }
+                        >
+                          Step by step guides to install the widget on a Google
+                          Tag Manager
+                        </h3>
+                      </div>
+                    </div>
+                    <svg
+                      className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-colors flex-shrink-0"
+                      style={{ color: '#3343AD' }}
+                      onMouseEnter={(e) =>
+                        ((e.target as HTMLElement).style.color = '#2a3a9a')
+                      }
+                      onMouseLeave={(e) =>
+                        ((e.target as HTMLElement).style.color = '#3343AD')
+                      }
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </a>
               </div>
             </div>
           </div>
@@ -481,7 +542,7 @@ export default function Installation({ domain }: any) {
               ></div>
             </div>
 
-            <div >
+            <div>
               <img
                 src="/images/Installation_page_image.png"
                 alt="Installation guide"

@@ -409,11 +409,11 @@ const PlanSetting: React.FC<{
     if (!isOpen) return null;
 
     return (
-      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-        <div className="bg-white rounded-lg p-4 w-1/3">
-          <div className="flex justify-end">
+      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 p-4">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto no-scrollbar modal-container">
+          <div className="flex justify-end mb-4">
             <button
-              className="text-gray-800 text-3xl hover:text-gray-700"
+              className="text-gray-800 text-3xl hover:text-gray-700 hover:bg-gray-100 rounded-full p-1 transition-colors duration-200"
               onClick={onClose}
             >
               ×
@@ -560,7 +560,7 @@ const PlanSetting: React.FC<{
 
                       <Button
                         color="primary"
-                        className="checkout-button get-start-btn w-full mt-4"
+                        className="checkout-button get-start-btn w-full mt-4 min-h-[48px]"
                         onClick={() => {
                           handleSubscription(false);
                         }}
@@ -586,7 +586,7 @@ const PlanSetting: React.FC<{
 
                       <Button
                         color="primary"
-                        className="checkout-button get-start-btn mt-4"
+                        className="checkout-button get-start-btn w-full mt-4 min-h-[48px]"
                         onClick={() => {
                           handleCheckout(false);
                         }}

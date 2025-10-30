@@ -178,14 +178,14 @@ const Plans: React.FC<Props> = ({
     appSumoPlan = 'Enterprise';
   }
   return (
-    <div className="plan-selection-area flex flex-wrap sm:flex-col justify-center">
+    <div className="plan-selection-area flex flex-wrap sm:flex-col justify-center gap-4">
       {currentPlan ? (
         <div
           // onClick={() => onChange(String(currentPlan?.id))}
           key={currentPlan?.id}
           role="presentation"
           className={classNames(
-            'flex flex-col w-[400px] border border-solid border-dark-gray rounded-[10px] p-6 cursor-pointer m-2 sm:w-full sm:max-w-full sm:mr-0 sm:mb-[15px]',
+            'flex flex-col w-[400px] border border-solid border-dark-gray rounded-[10px] p-6 cursor-pointer sm:w-full sm:max-w-full',
             {
               'plan-wrapper': planChanged
                 ? currentPlan?.id === planChanged.id
@@ -270,7 +270,7 @@ const Plans: React.FC<Props> = ({
                 key={plan.id}
                 role="presentation"
                 className={classNames(
-                  'flex flex-col w-fit border border-solid border-dark-gray rounded-[10px] p-6 m-2 sm:w-full sm:max-w-full sm:mr-0 sm:mb-[15px]',
+                  'flex flex-col w-fit border border-solid border-dark-gray rounded-[10px] p-6 sm:w-full sm:max-w-full',
                   {
                     'plan-wrapper': false,
                   },
@@ -312,7 +312,7 @@ const Plans: React.FC<Props> = ({
                     </span>
                   </div>
                 </div>
-                <ul className="feature-list pt-6 pb-8 border-t border-solid border-dark-gray flex-grow">
+                <ul className="feature-list pt-6 pb-8 border-t border-solid border-dark-gray flex-grow no-scrollbar">
                   {plan.features.map((feature) => (
                     <li
                       key={feature}
@@ -353,7 +353,7 @@ const Plans: React.FC<Props> = ({
                 key={plan.id}
                 role="presentation"
                 className={classNames(
-                  'flex flex-col w-fit border border-solid border-dark-gray rounded-[10px] p-6 m-2 sm:w-full sm:max-w-full sm:mr-0 sm:mb-[15px]',
+                  'flex flex-col w-fit border border-solid border-dark-gray rounded-[10px] p-6 sm:w-full sm:max-w-full',
                   {
                     'plan-wrapper': false,
                   },
@@ -455,7 +455,7 @@ const Plans: React.FC<Props> = ({
                     )}
                   </div>
                 </div>
-                <ul className="feature-list pt-6 pb-8 border-t border-solid border-dark-gray flex-grow">
+                <ul className="feature-list pt-6 pb-8 border-t border-solid border-dark-gray flex-grow no-scrollbar">
                   {plan.features.map((feature) => (
                     <li
                       key={feature}
