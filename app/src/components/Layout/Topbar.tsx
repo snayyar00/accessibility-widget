@@ -35,6 +35,7 @@ import { useTourGuidance } from '@/hooks/useTourGuidance';
 import { useMutation, useQuery } from '@apollo/client';
 import { gql } from '@apollo/client';
 import { baseColors } from '@/config/colors';
+import { openHubSpotChat, openSupportEmail } from '@/utils/hubspot';
 
 const GET_USER_NOTIFICATION_SETTINGS = gql`
   query GetUserNotificationSettings {
@@ -318,9 +319,7 @@ const Topbar: React.FC<Props> = ({
               {/* Support */}
               <button
                 className="p-2 rounded-lg hover:bg-blue-200 transition-colors duration-200"
-                onClick={() =>
-                  window.open('mailto:support@webability.io', '_blank')
-                }
+                onClick={openHubSpotChat}
                 title="Contact Support"
               >
                 <Headset className="w-5 h-5" style={{ color: '#484848' }} />
