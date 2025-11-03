@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
+import { uploadWidgetLogo, deleteWidgetLogo } from '@/utils/uploadLogo';
 import {
   ChevronDown,
   ChevronUp,
@@ -31,6 +32,7 @@ interface CustomizeWidgetProps {
   onSave: () => void;
   onReset: () => void;
   buttonDisable: boolean;
+  selectedSite?: string;
 }
 
 const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
@@ -47,6 +49,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   onSave,
   onReset,
   buttonDisable,
+  selectedSite,
 }) => {
   const [activeTab, setActiveTab] = useState<'appearance' | 'preference'>(
     'appearance',
@@ -449,7 +452,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     return regex.test(str);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (file) {
@@ -461,28 +464,50 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         return; // Prevent the file from being processed if the type is invalid
       }
 
-      // Validate file size (should not exceed 10 KB)
+      // Validate file size (should not exceed 75 KB)
       if (file.size > 76800) {
         toast.error('File size should not exceed 75 KB.');
         e.target.value = ''; // Reset the input field to remove the file name
         return; // Prevent the file from being processed if the size is too large
       }
 
-      // If valid, read the file as base64
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64String = event.target?.result as string;
-        setLogoInput(base64String); // Store the base64 data
-        setColors((prev) => ({
-          ...prev,
-          logoImage: base64String, // Update the logoImage state
-        }));
-      };
-      reader.readAsDataURL(file); // Only proceed if the file passed validation
+      // Show loading state
+      toast.loading('Uploading logo...', { id: 'logo-upload' });
 
-      // Disable the URL input once file input is used
-      setIsUrlInput(false);
-      setIsFileInput(true);
+      try {
+        // Use the selectedSite prop as the site URL
+        const siteUrl = selectedSite || window.location.hostname;
+        
+        
+        
+        // Upload to R2
+        const result = await uploadWidgetLogo(file, siteUrl);
+        
+        if (result.success && result.logoUrl) {
+          const cleanUrl = result.logoUrl.replace(/\/$/, '')
+          // Update both logoInput and colors.logoImage with the R2 URL
+          setLogoInput(cleanUrl);
+          setColors((prev) => ({
+            ...prev,
+            logoImage: cleanUrl!, // Update with R2 URL
+          }));
+          
+          
+          
+          toast.success('Logo uploaded successfully!', { id: 'logo-upload' });
+          
+          // Set the input states to reflect the upload
+          setIsUrlInput(false);
+          setIsFileInput(false); // Disable file input since we have a logo now
+        } else {
+          toast.error(result.error || 'Failed to upload logo', { id: 'logo-upload' });
+          e.target.value = ''; // Reset the input field
+        }
+      } catch (error) {
+        console.error('Error uploading logo:', error);
+        toast.error('Failed to upload logo', { id: 'logo-upload' });
+        e.target.value = ''; // Reset the input field
+      }
     }
   };
 
@@ -1965,7 +1990,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
                     {/* Displaying the logo */}
                     <div className="mb-4 max-w-xs">
-                      {colors.logoImage.length ? (
+                      {colors.logoImage && colors.logoImage.length > 0 ? (
                         <img
                           src={
                             colors.logoImage.length
