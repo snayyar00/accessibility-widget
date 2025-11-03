@@ -1,8 +1,8 @@
 import { gql } from 'graphql.macro';
 
 export default gql`
-  mutation UpdateWorkspace($id: ID!, $name: String, $allowedSiteIds: [ID!]) {
-    updateWorkspace(id: $id, name: $name, allowedSiteIds: $allowedSiteIds) {
+  mutation UpdateWorkspace($id: ID!, $name: String) {
+    updateWorkspace(id: $id, name: $name) {
       id
       name
       alias
@@ -10,6 +10,10 @@ export default gql`
       domains {
         id
         url
+        added_by_user_id
+        added_by_user_email
+        site_owner_user_id
+        site_owner_user_email
       }
     }
   }

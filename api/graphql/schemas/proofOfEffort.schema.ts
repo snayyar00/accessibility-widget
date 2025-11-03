@@ -16,4 +16,4 @@ const proofOfEffortSchema = `
   }
 `
 
-export default proofOfEffortSchema 
+export default proofOfEffortSchema

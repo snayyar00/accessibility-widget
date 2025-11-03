@@ -1,4 +1,5 @@
 import { Router } from 'express'
+
 import { handleMonitoringNotification } from '../controllers/monitoring.controller'
 import { moderateLimiter } from '../middlewares/limiters.middleware'
 
@@ -9,7 +10,7 @@ const router = Router()
 router.post(
   '/notify',
   moderateLimiter, // Use existing rate limiter
-  handleMonitoringNotification
+  handleMonitoringNotification,
 )
 
 export default router

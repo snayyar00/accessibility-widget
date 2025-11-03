@@ -3,6 +3,7 @@ import { aiReadinessResolvers } from './resolvers/aiReadiness.resolver'
 import allowedSitesResolves from './resolvers/allowedSites.resolver'
 import domainAnalysisResolves from './resolvers/domainAnalysis.resolver'
 import impressionResolves from './resolvers/impressions.resolver'
+import invitationResolvers from './resolvers/invitation.resolver'
 import organizationResolver from './resolvers/organization.resolver'
 import proofOfEffortResolves from './resolvers/proofOfEffort.resolver'
 import problemReportResolves from './resolvers/reportProblem.resolver'
@@ -13,22 +14,31 @@ import uniqueVisitorResolves from './resolvers/uniqueVisitor.resolver'
 import userResolves from './resolvers/user.resolver'
 import widgetResolvers from './resolvers/widget.resolver'
 import workspaceResolvers from './resolvers/workspace.resolver'
+import { getGraphQLUploadType } from './upload'
 
-// eslint-disable-next-line import/no-anonymous-default-export
-export default [
-  userResolves,
-  allowedSitesResolves,
-  uniqueVisitorResolves,
-  impressionResolves,
-  accessibilityResolves,
-  sitePlanResolves,
-  problemReportResolves,
-  organizationResolver,
-  translationResolves,
-  uniqueTokenResolver,
-  proofOfEffortResolves,
-  widgetResolvers,
-  domainAnalysisResolves,
-  workspaceResolvers,
-  aiReadinessResolvers,
-]
+export function createResolvers() {
+  return [
+    {
+      Upload: getGraphQLUploadType(),
+    },
+    userResolves,
+    allowedSitesResolves,
+    uniqueVisitorResolves,
+    impressionResolves,
+    accessibilityResolves,
+    sitePlanResolves,
+    problemReportResolves,
+    organizationResolver,
+    translationResolves,
+    uniqueTokenResolver,
+    proofOfEffortResolves,
+    widgetResolvers,
+    domainAnalysisResolves,
+    workspaceResolvers,
+    invitationResolvers,
+    aiReadinessResolvers,
+  ]
+}
+
+// For backward compatibility - will be called after initialization
+export default createResolvers

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express'
+
 import { sendWidgetInstallationInstructions } from '../services/widget/widget-installation.service'
 import logger from '../utils/logger'
 import { emailValidation } from '../validations/email.validation'

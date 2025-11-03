@@ -2,15 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Compass } from 'lucide-react';
 import { PiBellBold } from 'react-icons/pi';
 import { FiChevronDown } from 'react-icons/fi';
 import { FaRocket } from 'react-icons/fa6';
 import { Headset } from 'lucide-react';
 import { HiOutlinePlay } from 'react-icons/hi';
 
-import Dropdown from '@/containers/Dashboard/DropDown';
-import WorkspacesSelect from '@/containers/Dashboard/WorkspacesSelect';
 import OrganizationsSelect from '@/containers/Dashboard/OrganizationsSelect';
 import WhatsNewModal from '@/components/Common/WhatsNewModal';
 import {
@@ -19,15 +16,10 @@ import {
 } from '@/features/whatsNew/whatsNewSlice';
 
 // Actions
-import { toggleSidebar } from '@/features/admin/sidebar';
+import { toggleSidebar, setSidebarLockedOpen } from '@/features/admin/sidebar';
 
 import type { RootState } from '@/config/store';
-import { resolveAvatarPath } from '@/helpers/avatar.helper';
-import Avatar from '@/assets/images/avatar.jpg';
 import InitialAvatar from '@/components/Common/InitialAvatar';
-import { ReactComponent as ArrowDownIcon } from '@/assets/images/svg/arrow-down-18.svg';
-import { ReactComponent as MenuIcon } from '@/assets/images/svg/menu.svg';
-import Input from '@/components/Common/Input';
 import { handleBilling } from '@/containers/Profile/BillingPortalLink';
 import { CircularProgress } from '@mui/material';
 import EmailVerificationBanner from '../Auth/EmailVerificationBanner';
@@ -35,6 +27,7 @@ import { useTourGuidance } from '@/hooks/useTourGuidance';
 import { useMutation, useQuery } from '@apollo/client';
 import { gql } from '@apollo/client';
 import { baseColors } from '@/config/colors';
+import DomainsSelect from '@/containers/Dashboard/DomainsSelect';
 import { openHubSpotChat, openSupportEmail } from '@/utils/hubspot';
 
 const GET_USER_NOTIFICATION_SETTINGS = gql`
@@ -92,7 +85,7 @@ const Topbar: React.FC<Props> = ({
   } = useSelector((state: RootState) => state.user);
 
   const { data } = useSelector((state: RootState) => state.user);
-  const { isOpen: isSidebarOpen } = useSelector(
+  const { isOpen: isSidebarOpen, lockedOpen } = useSelector(
     (state: RootState) => state.sidebar,
   );
 
@@ -195,15 +188,20 @@ const Topbar: React.FC<Props> = ({
             {/* Sidebar Toggle Button */}
             <button
               onClick={() => {
-                if (isSidebarOpen) {
-                  // Close the sidebar
+                if (lockedOpen) {
+                  // Unlock and close
+                  dispath(setSidebarLockedOpen(false));
                   dispath(toggleSidebar(false));
-                  // For desktop: trigger collapse behavior
                   window.dispatchEvent(new CustomEvent('collapseSidebar'));
-                } else {
-                  // Open the sidebar
+                } else if (isSidebarOpen) {
+                  // Currently open but not locked: lock it open
+                  dispath(setSidebarLockedOpen(true));
                   dispath(toggleSidebar(true));
-                  // For desktop: trigger hover behavior by dispatching a custom event
+                  window.dispatchEvent(new CustomEvent('expandSidebar'));
+                } else {
+                  // Currently closed: open and lock
+                  dispath(setSidebarLockedOpen(true));
+                  dispath(toggleSidebar(true));
                   window.dispatchEvent(new CustomEvent('expandSidebar'));
                 }
               }}
@@ -236,7 +234,7 @@ const Topbar: React.FC<Props> = ({
             {/* Selectors Container */}
             <div className="flex flex-col md:flex-row gap-2 md:gap-3 w-full md:w-auto">
               {/* Organization/Domain Selector - Only for admin users */}
-              {data?.isAdminOrOwner && (
+              {data?.isAdminOrOwnerOrSuper && (
                 <div className="w-full md:w-auto min-w-[200px]">
                   <div className="bg-gray-50 rounded-lg border border-gray-200">
                     <OrganizationsSelect />
@@ -244,22 +242,13 @@ const Topbar: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* Workspace Selector - Only for admin users
-              {data?.isAdminOrOwner && (
-                <div className="w-full md:w-auto min-w-[150px]">
-                  <div className="bg-gray-50 rounded-lg border border-gray-200">
-                    <WorkspacesSelect />
-                  </div>
-                </div>
-              )} */}
-
               {/* Site Selector */}
               <div className="w-full md:w-auto">
                 {options &&
                 setReloadSites &&
                 selectedOption &&
                 setSelectedOption ? (
-                  <Dropdown
+                  <DomainsSelect
                     data={options}
                     setReloadSites={setReloadSites}
                     selectedOption={selectedOption}

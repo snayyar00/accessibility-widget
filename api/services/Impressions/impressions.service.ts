@@ -12,14 +12,16 @@ import {
   updateImpressionProfileCount as updateImpressionProfileCountSQL,
   updateImpressions as updateImpressionsSQL,
 } from '../../repository/impressions.repository'
+import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { findVisitorByIp as findVisitorByIpClickHouse } from '../../repository/visitors.clickhouse.repository'
 import { findVisitorByIp as findVisitorByIpSQL } from '../../repository/visitors.repository'
+import { getCurrentDatabaseType, isClickHouseDisabled } from '../../utils/database.utils'
 import { getRootDomain, normalizeDomain } from '../../utils/domain.utils'
-import { isClickHouseDisabled, getCurrentDatabaseType } from '../../utils/database.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateAddImpressionsURL, validateAddInteraction, validateAddProfileCount, validateFindImpressionsByURLAndDate, validateGetEngagementRates } from '../../validations/impression.validation'
-import { findSite } from '../allowedSites/allowedSites.service'
+import { canAccessSite, findSite } from '../allowedSites/allowedSites.service'
+import { UserLogined } from '../authentication/get-user-logined.service'
 import { addNewVisitor } from '../uniqueVisitors/uniqueVisitor.service'
 
 export async function addImpressionsURL(ipAddress: string, url: string) {
@@ -72,7 +74,7 @@ export async function addImpressionsURL(ipAddress: string, url: string) {
   }
 }
 
-export async function findImpressionsByURLAndDate(userId: number, url: string, startDate: Date, endDate: Date) {
+export async function findImpressionsByURLAndDate(user: UserLogined, url: string, startDate: Date, endDate: Date) {
   const validateResult = validateFindImpressionsByURLAndDate({ url, startDate, endDate })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -82,14 +84,27 @@ export async function findImpressionsByURLAndDate(userId: number, url: string, s
   const domain = normalizeDomain(url)
 
   try {
-    const impressions = isClickHouseDisabled() ? await findImpressionsURLDateSQL(userId, domain, startDate, endDate) : await findImpressionsURLDateClickHouse(userId, domain, startDate, endDate)
+    // Verify that the site exists
+    const site = await findSiteByURL(domain)
+
+    if (!site) {
+      throw new Error('Site not found')
+    }
+
+    // Check if user has access to this site
+    const hasAccess = await canAccessSite(user, site)
+    if (!hasAccess) {
+      throw new Error('Access denied: You do not have permission to view this site')
+    }
+
+    const impressions = isClickHouseDisabled() ? await findImpressionsURLDateSQL(user.id, domain, startDate, endDate) : await findImpressionsURLDateClickHouse(user.id, domain, startDate, endDate)
 
     logger.info(`Using ${getCurrentDatabaseType()} for impressions lookup by URL and date`)
 
     return { impressions, count: impressions.length }
   } catch (e) {
     logger.error('Error finding impressions by URL and date', {
-      userId,
+      userId: user.id,
       domain: domain.substring(0, 50),
       dateRange: `${startDate.toISOString()} to ${endDate.toISOString()}`,
       error: e.message,
@@ -157,7 +172,7 @@ export async function addProfileCount(impressionId: number, profileCount: any): 
   }
 }
 
-export async function getEngagementRates(userId: number, url: string, startDate: string, endDate: string) {
+export async function getEngagementRates(user: UserLogined, url: string, startDate: string, endDate: string) {
   const validateResult = validateGetEngagementRates({ url, startDate, endDate })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -167,7 +182,20 @@ export async function getEngagementRates(userId: number, url: string, startDate:
   const domain = normalizeDomain(url)
 
   try {
-    const impressions = isClickHouseDisabled() ? await findEngagementURLDateSQL(userId, domain, startDate, endDate) : await findEngagementURLDateClickHouse(userId, domain, startDate, endDate)
+    // Verify that the site exists
+    const site = await findSiteByURL(domain)
+
+    if (!site) {
+      throw new Error('Site not found')
+    }
+
+    // Check if user has access to this site
+    const hasAccess = await canAccessSite(user, site)
+    if (!hasAccess) {
+      throw new Error('Access denied: You do not have permission to view this site')
+    }
+
+    const impressions = isClickHouseDisabled() ? await findEngagementURLDateSQL(user.id, domain, startDate, endDate) : await findEngagementURLDateClickHouse(user.id, domain, startDate, endDate)
 
     logger.info(`Using ${getCurrentDatabaseType()} for engagement rates lookup`)
     return impressions

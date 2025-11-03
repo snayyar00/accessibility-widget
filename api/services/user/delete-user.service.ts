@@ -2,8 +2,8 @@ import { Knex } from 'knex'
 
 import database from '../../config/database.config'
 import { TABLES } from '../../constants/database.constant'
-import { UserProfile } from '../../repository/user.repository'
 import { getToken } from '../../repository/user_tokens.repository'
+import { UserLogined } from '../authentication/get-user-logined.service'
 
 type TokenParams = {
   id?: number
@@ -15,7 +15,7 @@ type TokenParams = {
   updated_at?: string
 }
 
-export async function deleteUser(currentUser: UserProfile): Promise<boolean> {
+export async function deleteUser(currentUser: UserLogined): Promise<boolean> {
   const tokens = await getToken({ user_id: currentUser.id })
 
   const activeTokens = tokens.filter((token) => token.is_active)
@@ -26,7 +26,7 @@ export async function deleteUser(currentUser: UserProfile): Promise<boolean> {
   return true
 }
 
-function disableAllField(user: UserProfile, tokens: TokenParams[]): Promise<unknown> {
+function disableAllField(user: UserLogined, tokens: TokenParams[]): Promise<unknown> {
   return database.transaction((trx: Knex.Transaction) => {
     const queries = []
     queries.push(database(TABLES.users).where({ id: user.id }).update({ deleted_at: new Date() }).transacting(trx))

@@ -3,10 +3,10 @@ import { Request, Response } from 'express'
 import { addCancelFeedback, CancelFeedbackProps } from '../../repository/cancel_feedback.repository'
 import { deleteSiteWithRelatedRecords, findSiteByURL } from '../../repository/sites_allowed.repository'
 import { getAnySitePlanBySiteId } from '../../repository/sites_plans.repository'
-import { UserProfile } from '../../repository/user.repository'
 import { deleteExpiredSitesPlan, deleteSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service'
+import { UserLogined } from '../../services/authentication/get-user-logined.service'
 
-export async function cancelSiteSubscription(req: Request & { user: UserProfile }, res: Response) {
+export async function cancelSiteSubscription(req: Request & { user: UserLogined }, res: Response) {
   const { domainId, domainUrl, status, cancelReason, otherReason, isCancel } = req.body
 
   let previous_plan: any[]
@@ -17,6 +17,11 @@ export async function cancelSiteSubscription(req: Request & { user: UserProfile 
 
   if (!site || site.user_id !== user.id) {
     return res.status(403).json({ error: 'User does not own this domain' })
+  }
+
+  // Check organization_id if user has current organization
+  if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
+    return res.status(403).json({ error: 'Site does not belong to current organization' })
   }
 
   try {
@@ -82,7 +87,7 @@ export async function cancelSiteSubscription(req: Request & { user: UserProfile 
 
   try {
     if (!isCancel) {
-      await deleteSiteWithRelatedRecords(domainUrl, user.id)
+      await deleteSiteWithRelatedRecords(domainUrl, user.id, user.current_organization_id)
     }
   } catch (error) {
     console.error('Error deleting site:', error)

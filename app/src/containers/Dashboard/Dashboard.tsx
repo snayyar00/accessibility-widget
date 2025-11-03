@@ -182,10 +182,10 @@ const Dashboard: React.FC<any> = ({
   const [statusClass, setStatusClass] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (domain != 'Select a Domain' || domain != 'Add a new Domain') {
+    if (domain != 'Select a Domain' || domain != 'No domains available') {
       setLoadingAnimation(false);
     }
-    if (domain != 'Select a Domain' && domain != 'Add a new Domain') {
+    if (domain != 'Select a Domain' && domain != 'No domains available') {
       setLoadingAnimation(true);
       loadDashboard({
         variables: { url: domain, startDate, endDate },

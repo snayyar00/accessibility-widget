@@ -1,0 +1,33 @@
+<mjml>
+  <mj-body background-color="#f1f1f1">
+    <mj-section background-color="#fff">
+      <mj-column>
+        <mj-image
+          width="100px"
+          src="https://jslancer.com/assets/images/logo/jslancer.png"
+        ></mj-image>
+      </mj-column>
+    </mj-section>
+    <mj-section background-color="#fff">
+      <mj-column>
+        <mj-text font-size="30px" align="center">
+          Organization Invitation
+        </mj-text>
+        <mj-text font-size="18px" align="center" color="#555" line-height="30px"
+          >
+          You have been invited to join organization "{{organizationName}}"
+        </mj-text
+        >
+        <mj-button
+          background-color="#06adef"
+          border-radius="50px"
+          color="white"
+          font-size="15px"
+          href="{{url}}"
+        >
+          Join
+        </mj-button>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

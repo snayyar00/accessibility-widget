@@ -1,18 +1,19 @@
 import database from '../../config/database.config'
-import { IS_PROD } from '../../config/env'
-import { ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
+import { ORGANIZATION_MANAGEMENT_ROLES, ORGANIZATION_USER_ROLE_ADMIN, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
 import { objectToString } from '../../helpers/string.helper'
+import { deletePendingInvitationsByCreator, deletePendingInvitationsByEmail, deletePendingOrganizationInvitationsByCreator, getInvitationTokensByCreator } from '../../repository/invitations.repository'
 import { createOrganization, deleteOrganization, getOrganizationByDomain, getOrganizationByDomainExcludeId, getOrganizationById as getOrganizationByIdRepo, getOrganizationsByIds as getOrganizationByIdsRepo, Organization, updateOrganization } from '../../repository/organization.repository'
-import { findUser } from '../../repository/user.repository'
-import { updateUser, UserProfile } from '../../repository/user.repository'
-import { deleteWorkspaceInvitations } from '../../repository/workspace_invitations.repository'
-import { deleteWorkspaceUsersByOrganization } from '../../repository/workspace_users.repository'
+import { findUser, UserProfile } from '../../repository/user.repository'
+import { updateUser } from '../../repository/user.repository'
+import { removeWorkspaceDomainsBySiteOwnerInOrganization } from '../../repository/workspace_allowed_sites.repository'
+import { deletePendingWorkspaceMembersByTokensInOrganization, deleteWorkspaceUsersByOrganization } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
 import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateAddOrganization, validateEditOrganization, validateGetOrganizationByDomain, validateRemoveOrganization } from '../../validations/organization.validation'
+import { UserLogined } from '../authentication/get-user-logined.service'
 import { addUserToOrganization, getOrganizationsByUserId, getUserOrganization, removeUserFromOrganization as removeUserFromOrganizationService } from './organization_users.service'
 export interface CreateOrganizationInput {
   name: string
@@ -21,11 +22,15 @@ export interface CreateOrganizationInput {
   settings?: any
 }
 
-export async function addOrganization(data: CreateOrganizationInput, user: UserProfile & { isActive?: number }): Promise<number | ValidationError> {
+export async function addOrganization(data: CreateOrganizationInput, user: UserLogined): Promise<number | ValidationError> {
   const validateResult = validateAddOrganization(data)
 
   if (Array.isArray(validateResult) && validateResult.length) {
     return new ValidationError(validateResult.map((it) => it.message).join(','))
+  }
+
+  if (!user.is_super_admin) {
+    throw new ForbiddenError('Only super admin can create organizations')
   }
 
   const currentUrl = getMatchingFrontendUrl(data.domain)
@@ -33,15 +38,6 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
 
   if (!currentUrl) {
     throw new ForbiddenError('Provided domain is not in the list of allowed URLs')
-  }
-
-  const orgLinks = await getOrganizationsByUserId(user.id)
-  const maxOrgs = user.isActive ? 3 : 1
-
-  if (IS_PROD) {
-    if (orgLinks.length >= maxOrgs) {
-      throw new ApolloError(user.isActive ? 'You have reached the limit of organizations you can create (3 for verified users).' : 'Please verify your email to create more than one organization.')
-    }
   }
 
   const trx = await database.transaction()
@@ -62,7 +58,7 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
     const ids = await createOrganization(orgToCreate, trx)
     const newOrgId = Number(ids[0])
 
-    await addUserToOrganization(user.id, newOrgId, ORGANIZATION_USER_ROLE_OWNER, ORGANIZATION_USER_STATUS_ACTIVE, trx)
+    await addUserToOrganization(user.id, newOrgId, ORGANIZATION_USER_ROLE_ADMIN, ORGANIZATION_USER_STATUS_ACTIVE, trx)
     await updateUser(user.id, { current_organization_id: newOrgId }, trx)
 
     await trx.commit()
@@ -76,20 +72,22 @@ export async function addOrganization(data: CreateOrganizationInput, user: UserP
   }
 }
 
-export async function editOrganization(data: Partial<Organization>, user: UserProfile, organizationId: number | string): Promise<number | ValidationError> {
+export async function editOrganization(data: Partial<Organization>, user: UserLogined, organizationId: number | string): Promise<number | ValidationError> {
   const validateResult = validateEditOrganization({ ...data, id: organizationId })
 
   if (Array.isArray(validateResult) && validateResult.length) {
     return new ValidationError(validateResult.map((it) => it.message).join(','))
   }
 
-  await checkOrganizationAccess(user, organizationId, 'You can only edit your own organizations')
+  if (!user.is_super_admin) {
+    await checkOrganizationAccess(user, organizationId, 'You can only edit your own organizations')
 
-  const orgUser = await getUserOrganization(user.id, Number(organizationId))
-  const isAllowed = orgUser && canManageOrganization(orgUser.role)
+    const orgUser = Number(organizationId) === Number(user.current_organization_id) && user.currentOrganizationUser ? user.currentOrganizationUser : await getUserOrganization(user.id, Number(organizationId))
+    const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
-  if (!isAllowed) {
-    throw new ApolloError('Only owner or admin can edit the organization')
+    if (!isAllowed) {
+      throw new ApolloError(`Only ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can edit the organization`)
+    }
   }
 
   const trx = await database.transaction()
@@ -97,12 +95,27 @@ export async function editOrganization(data: Partial<Organization>, user: UserPr
   try {
     const updateData = { ...data }
 
-    if (data.domain) {
+    if ('logo_url' in updateData && updateData.logo_url === null) {
+      updateData.logo_url = ''
+    }
+    if ('favicon' in updateData && updateData.favicon === null) {
+      updateData.favicon = ''
+    }
+
+    if (data.domain && !user.is_super_admin) {
+      throw new ApolloError('Organization domain cannot be changed. Please contact support if you need to change the domain.')
+    }
+
+    if (data.domain && user.is_super_admin) {
       const exists = await getOrganizationByDomainExcludeId(data.domain, Number(organizationId))
 
       if (exists) {
         throw new ApolloError('Organization domain already exists, please choose another one')
       }
+    }
+
+    if (!user.is_super_admin) {
+      delete updateData.domain
     }
 
     if ('settings' in updateData) {
@@ -122,20 +135,15 @@ export async function editOrganization(data: Partial<Organization>, user: UserPr
   }
 }
 
-export async function removeOrganization(user: UserProfile, organizationId: number | string): Promise<number | ValidationError> {
+export async function removeOrganization(user: UserLogined, organizationId: number | string): Promise<number | ValidationError> {
   const validateResult = validateRemoveOrganization({ id: organizationId })
 
   if (Array.isArray(validateResult) && validateResult.length) {
     return new ValidationError(validateResult.map((it) => it.message).join(','))
   }
 
-  await checkOrganizationAccess(user, organizationId, 'You can only remove your own organizations')
-
-  const orgUser = await getUserOrganization(user.id, Number(organizationId))
-  const isAllowed = orgUser && canManageOrganization(orgUser.role)
-
-  if (!isAllowed) {
-    throw new ApolloError('Only owner or admin can remove the organization')
+  if (!user.is_super_admin) {
+    throw new ForbiddenError('Only super admin can delete organizations')
   }
 
   const trx = await database.transaction()
@@ -155,23 +163,10 @@ export async function removeOrganization(user: UserProfile, organizationId: numb
   }
 }
 
-export async function getOrganizations(user: UserProfile): Promise<Organization[]> {
-  try {
-    const orgLinks = await getOrganizationsByUserId(user.id)
-    const orgIds = orgLinks.map((link) => link.organization_id)
-
-    if (!orgIds.length) return []
-
-    return await getOrganizationByIdsRepo(orgIds)
-  } catch (error) {
-    logger.error('Error fetching organizations by user:', error)
-
-    throw error
-  }
-}
-
 export async function getOrganizationById(id: number | string, user: UserProfile): Promise<Organization | undefined> {
-  await checkOrganizationAccess(user, id, 'You can only access your own organizations')
+  if (!user.is_super_admin) {
+    await checkOrganizationAccess(user, id, 'You can only access your own organizations')
+  }
 
   try {
     return await getOrganizationByIdRepo(Number(id))
@@ -182,24 +177,7 @@ export async function getOrganizationById(id: number | string, user: UserProfile
   }
 }
 
-export async function getOrganizationByDomainService(domain: string): Promise<Organization | ValidationError | undefined> {
-  const validateResult = validateGetOrganizationByDomain({ domain })
-
-  if (Array.isArray(validateResult) && validateResult.length) {
-    return new ValidationError(validateResult.map((it) => it.message).join(','))
-  }
-
-  const normalizedDomain = normalizeDomain(domain)
-
-  try {
-    return await getOrganizationByDomain(normalizedDomain)
-  } catch (error) {
-    logger.error('Error fetching organization by domain:', error)
-    throw error
-  }
-}
-
-export async function removeUserFromOrganization(initiator: UserProfile, userId: number): Promise<number> {
+export async function removeUserFromOrganization(initiator: UserLogined, userId: number): Promise<number> {
   const organizationId = initiator.current_organization_id
 
   if (!organizationId) {
@@ -210,11 +188,13 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
     throw new ForbiddenError('You cannot remove yourself from the organization')
   }
 
-  const orgUser = await getUserOrganization(initiator.id, organizationId)
-  const isAllowed = orgUser && canManageOrganization(orgUser.role)
+  if (!initiator.is_super_admin) {
+    const orgUser = initiator.currentOrganizationUser
+    const isAllowed = orgUser && canManageOrganization(orgUser.role)
 
-  if (!isAllowed) {
-    throw new ForbiddenError('Only owner or admin can remove users from the organization')
+    if (!isAllowed) {
+      throw new ForbiddenError(`Only ${ORGANIZATION_MANAGEMENT_ROLES.join(', ')} can remove users from the organization`)
+    }
   }
 
   const trx = await database.transaction()
@@ -226,8 +206,8 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
       throw new ValidationError('User is not a member of this organization')
     }
 
-    if (target.role === ORGANIZATION_USER_ROLE_OWNER) {
-      throw new ForbiddenError('Cannot remove the owner of the organization')
+    if (target.role === ORGANIZATION_USER_ROLE_OWNER && !initiator.is_super_admin) {
+      throw new ForbiddenError(`Cannot remove the ${ORGANIZATION_USER_ROLE_OWNER} of the organization`)
     }
 
     const targetUser = await findUser({ id: userId })
@@ -250,22 +230,66 @@ export async function removeUserFromOrganization(initiator: UserProfile, userId:
       await updateUser(userId, { current_organization_id: newOrgId }, trx)
     }
 
-    await deleteWorkspaceUsersByOrganization(userId, organizationId, trx)
+    const removedDomainsCount = await removeWorkspaceDomainsBySiteOwnerInOrganization(userId, organizationId, trx)
+    const tokens = await getInvitationTokensByCreator(userId, undefined, organizationId, trx)
+
+    await deletePendingWorkspaceMembersByTokensInOrganization(organizationId, tokens, trx)
 
     if (targetUser && targetUser.email) {
-      await deleteWorkspaceInvitations({ email: targetUser.email, organization_id: organizationId }, trx)
+      await deletePendingInvitationsByEmail(targetUser.email, organizationId, trx)
     }
 
-    // Also remove invitations created by this user in this organization
-    await deleteWorkspaceInvitations({ invited_by: userId, organization_id: organizationId }, trx)
+    await deletePendingInvitationsByCreator(userId, undefined, organizationId, trx)
+    await deletePendingOrganizationInvitationsByCreator(userId, organizationId, trx)
+
+    await deleteWorkspaceUsersByOrganization(userId, organizationId, trx)
 
     const result = await removeUserFromOrganizationService(target.id, trx)
 
     await trx.commit()
 
+    logger.info('User removed from organization', {
+      organization_id: organizationId,
+      removed_user_id: userId,
+      removed_by: initiator.id,
+      removed_domains_count: removedDomainsCount,
+    })
+
     return result
   } catch (error) {
     await trx.rollback()
+    throw error
+  }
+}
+
+export async function getOrganizations(user: UserLogined): Promise<Organization[]> {
+  try {
+    const orgLinks = await getOrganizationsByUserId(user.id)
+    const orgIds = orgLinks.map((link) => link.organization_id)
+
+    if (!orgIds.length) return []
+
+    return await getOrganizationByIdsRepo(orgIds)
+  } catch (error) {
+    logger.error('Error fetching organizations by user:', error)
+
+    throw error
+  }
+}
+
+export async function getOrganizationByDomainService(domain: string): Promise<Organization | ValidationError | undefined> {
+  const validateResult = validateGetOrganizationByDomain({ domain })
+
+  if (Array.isArray(validateResult) && validateResult.length) {
+    return new ValidationError(validateResult.map((it) => it.message).join(','))
+  }
+
+  const normalizedDomain = normalizeDomain(domain)
+
+  try {
+    return await getOrganizationByDomain(normalizedDomain)
+  } catch (error) {
+    logger.error('Error fetching organization by domain:', error)
     throw error
   }
 }

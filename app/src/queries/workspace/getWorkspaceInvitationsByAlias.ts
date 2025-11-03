@@ -5,8 +5,10 @@ export default gql`
     getWorkspaceInvitationsByAlias(alias: $alias) {
       id
       invited_by
+      invited_by_id
       email
       status
+      role
       workspace_id
       created_at
     }

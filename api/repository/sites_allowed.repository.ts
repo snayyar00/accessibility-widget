@@ -9,6 +9,7 @@ export const siteColumns = {
   url: `${TABLE}.url`,
   createAt: `${TABLE}.created_at`,
   updatedAt: `${TABLE}.updated_at`,
+  organizationId: `${TABLE}.organization_id`,
 }
 
 export type FindAllowedSitesProps = {
@@ -17,73 +18,146 @@ export type FindAllowedSitesProps = {
   url?: string
   createAt?: string
   updatedAt?: string
+  organization_id?: number
 }
 
 export interface IUserSites extends FindAllowedSitesProps {
   expiredAt?: string | null | undefined
   trial?: number | null | undefined
+  is_owner?: boolean // true if current user is the owner of this site
+  workspaces?: Array<{ id: number; name: string }> // Array of all workspaces this site belongs to
+  user_email?: string // Email of the site owner
 }
 
 export type allowedSites = {
   id?: number
   user_id?: number
   url?: string
+  organization_id: number // Required for creation
 }
 
 export async function findSitesByUserId(id: number): Promise<IUserSites[]> {
   return database(TABLE).where({ [siteColumns.user_id]: id })
 }
 
-/**
- * Find user sites with workspace support and site plans in a single optimized query
- * @param userId - User ID
- * @param organizationId - Organization ID (optional)
- * @param currentWorkspaceId - Current workspace ID (optional)
- * @returns Promise<IUserSites[]> - Sites with plan information
- */
-export async function findUserSitesWithPlans(userId: number, organizationId?: number, currentWorkspaceId?: number | null): Promise<IUserSites[]> {
-  let query = database(TABLE)
-
-  if (organizationId && currentWorkspaceId) {
-    // User is in a workspace - get workspace sites
-    query = query.join(TABLES.workspace_allowed_sites, `${TABLES.workspace_allowed_sites}.allowed_site_id`, `${TABLE}.id`).where(`${TABLES.workspace_allowed_sites}.workspace_id`, currentWorkspaceId)
-  } else {
-    // User is not in workspace - get personal sites
-    query = query.where(`${TABLE}.user_id`, userId)
-  }
-
-  // Get sites first, then join with latest plan info
-  const sites = await query
-    .leftJoin(TABLES.sitesPlans, function () {
-      this.on(`${TABLES.sitesPlans}.allowed_site_id`, '=', `${TABLE}.id`).andOn(`${TABLES.sitesPlans}.id`, '=', database.raw(`(SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)`))
-    })
-    .select(
-      `${TABLE}.id`,
-      `${TABLE}.user_id`,
-      `${TABLE}.url`,
-      `${TABLE}.created_at as createAt`,
-      `${TABLE}.updated_at as updatedAt`,
-      `${TABLES.sitesPlans}.expired_at as expiredAt`,
-      `${TABLES.sitesPlans}.is_trial as trial`,
-      `${TABLE}.monitor_enabled`,
-      `${TABLE}.status`,
-      `${TABLE}.monitor_priority`,
-      `${TABLE}.last_monitor_check`,
-      `${TABLE}.is_currently_down`,
-      `${TABLE}.monitor_consecutive_fails`,
-    )
-    .distinct()
-
-  return sites
+export async function findSiteById(id: number): Promise<FindAllowedSitesProps | undefined> {
+  return database(TABLE).where({ id }).first()
 }
 
-export async function findSiteById(id: number): Promise<any> {
-  return database(TABLE).where({ id }).first()
+/**
+ * Get sites by array of IDs
+ * @param ids - Array of site IDs
+ * @returns Array of sites with id, organization_id, and user_id
+ */
+export async function findSitesByIds(ids: number[]): Promise<Array<{ id: number; organization_id: number; user_id: number }>> {
+  if (ids.length === 0) return []
+  return database(TABLE).whereIn('id', ids).select('id', 'organization_id', 'user_id')
+}
+
+/**
+ * For admins: Returns ALL organization sites with workspace data aggregated via LEFT JOIN
+ * For regular users: Returns own sites + workspace sites (with active membership check) in single query
+ *
+ * @param userId - User ID
+ * @param organizationId - Organization ID
+ * @param isAdmin - If true, returns ALL sites in organization (for super admin / org managers)
+ * @returns Promise<IUserSites[]> - Sites with plan information and workspace data pre-aggregated
+ */
+export async function findUserSitesWithPlansWithWorkspaces(userId: number, organizationId: number, isAdmin: boolean): Promise<IUserSites[]> {
+  if (isAdmin) {
+    // Admin path: Get ALL sites in organization with workspace info via subquery to avoid GROUP BY issues
+    return buildSitesBaseQuery()
+      .where(`${TABLE}.organization_id`, organizationId)
+      .select(...selectSiteFieldsWithMonitoring())
+  } else {
+    // Regular user path: Single query with OR condition (own sites OR workspace membership)
+    // Workspace array aggregated in subquery to avoid GROUP BY complexity
+    const sites = await database.raw(
+      `
+      SELECT DISTINCT
+        ${TABLE}.id,
+        ${TABLE}.user_id,
+        ${TABLE}.url,
+        ${TABLE}.created_at as createAt,
+        ${TABLE}.updated_at as updatedAt,
+        ${TABLE}.organization_id,
+        sp.expired_at as expiredAt,
+        sp.is_trial as trial,
+        ${TABLE}.monitor_enabled,
+        ${TABLE}.status,
+        ${TABLE}.monitor_priority,
+        ${TABLE}.last_monitor_check,
+        ${TABLE}.is_currently_down,
+        ${TABLE}.monitor_consecutive_fails,
+        users.email as user_email,
+        (
+          SELECT JSON_ARRAYAGG(JSON_OBJECT('id', w.id, 'name', w.name))
+          FROM ${TABLES.workspace_allowed_sites} was
+          JOIN ${TABLES.workspaces} w ON was.workspace_id = w.id
+          WHERE was.allowed_site_id = ${TABLE}.id
+        ) as workspaces
+      FROM ${TABLE}
+      LEFT JOIN (
+        SELECT sp2.allowed_site_id, sp2.expired_at, sp2.is_trial
+        FROM ${TABLES.sitesPlans} sp2
+        INNER JOIN (
+          SELECT allowed_site_id, MAX(id) as max_id
+          FROM ${TABLES.sitesPlans}
+          GROUP BY allowed_site_id
+        ) sp3 ON sp2.id = sp3.max_id
+      ) sp ON sp.allowed_site_id = ${TABLE}.id
+      LEFT JOIN ${TABLES.users} users ON ${TABLE}.user_id = users.id
+      WHERE ${TABLE}.organization_id = ?
+        AND (
+          ${TABLE}.user_id = ?
+          OR EXISTS (
+            SELECT 1
+            FROM ${TABLES.workspace_allowed_sites} was2
+            JOIN ${TABLES.workspaces} w2 ON was2.workspace_id = w2.id
+            JOIN ${TABLES.workspace_users} wu ON w2.id = wu.workspace_id
+            WHERE was2.allowed_site_id = ${TABLE}.id
+              AND wu.user_id = ?
+              AND wu.status = 'active'
+          )
+        )
+      `,
+      [organizationId, userId, userId],
+    )
+
+    return sites[0] // raw() returns [rows, fields]
+  }
+}
+
+/**
+ * Get sites available for adding to a workspace
+ * For admins: Returns ALL organization sites
+ * For regular users: Returns ONLY their own sites (user_id matches)
+ *
+ * @param userId - User ID
+ * @param organizationId - Organization ID
+ * @param isAdmin - If true, returns ALL sites in organization
+ * @returns Promise<IUserSites[]> - Sites available for workspace assignment
+ */
+export async function findUserSitesWithPlansForWorkspace(userId: number, organizationId: number, isAdmin: boolean): Promise<IUserSites[]> {
+  const query = buildSitesBaseQuery()
+
+  if (isAdmin) {
+    // Admin path: Get ALL sites in organization
+    query.where(`${TABLE}.organization_id`, organizationId)
+  } else {
+    // Regular user path: Returns ONLY their own sites
+    query.where({
+      [`${TABLE}.organization_id`]: organizationId,
+      [`${TABLE}.user_id`]: userId,
+    })
+  }
+
+  return query.select(...selectSiteFields())
 }
 
 export async function findSiteByURL(url: string): Promise<FindAllowedSitesProps> {
   const result = await database(TABLE)
-    .select(siteColumns)
+    .select(`${TABLE}.id`, `${TABLE}.user_id`, `${TABLE}.url`, `${TABLE}.created_at as createAt`, `${TABLE}.updated_at as updatedAt`, `${TABLE}.organization_id`)
     .where({ [siteColumns.url]: url })
     .first()
   return result
@@ -91,7 +165,7 @@ export async function findSiteByURL(url: string): Promise<FindAllowedSitesProps>
 
 export async function findSiteByUserIdAndSiteId(user_id: number, site_id: number): Promise<FindAllowedSitesProps> {
   return database(TABLE)
-    .select(siteColumns)
+    .select(`${TABLE}.id`, `${TABLE}.user_id`, `${TABLE}.url`, `${TABLE}.created_at as createAt`, `${TABLE}.updated_at as updatedAt`, `${TABLE}.organization_id`)
     .where({ [siteColumns.user_id]: user_id, [siteColumns.id]: site_id })
     .first()
 }
@@ -117,6 +191,7 @@ export async function insertSite(data: allowedSites): Promise<FindAllowedSitesPr
         id: site_id[0],
         user_id: data.user_id,
         url: data.url,
+        organization_id: data.organization_id,
         createAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
@@ -136,14 +211,20 @@ export async function deleteSiteByURL(url: string, user_id: number): Promise<num
  * Safely deletes a site and all its related records to avoid foreign key constraint violations
  * Uses a transaction to ensure atomicity - either all records are deleted or none are
  */
-export async function deleteSiteWithRelatedRecords(url: string, user_id: number): Promise<number> {
+export async function deleteSiteWithRelatedRecords(url: string, user_id: number, organization_id?: number): Promise<number> {
   return database.transaction(async (trx) => {
     try {
       // Find the site within the transaction
-      const site = await trx(TABLE)
-        .select(siteColumns)
-        .where({ [siteColumns.url]: url, [siteColumns.user_id]: user_id })
-        .first()
+      const whereClause: Record<string, string | number> = {
+        [siteColumns.url]: url,
+        [siteColumns.user_id]: user_id,
+      }
+
+      if (organization_id) {
+        whereClause[siteColumns.organizationId] = organization_id
+      }
+
+      const site = await trx(TABLE).select(siteColumns).where(whereClause).first()
 
       if (!site) {
         throw new Error(`Site not found: ${url} for user ${user_id}`)
@@ -217,8 +298,78 @@ export async function updateAllowedSiteURL(site_id: number, url: string, user_id
     })
 }
 
-export async function toggleSiteMonitoring(site_id: number, enabled: boolean, user_id: number): Promise<boolean> {
-  const updated = await database(TABLE).where({ id: site_id, user_id }).update({ monitor_enabled: enabled })
+export async function toggleSiteMonitoring(site_id: number, enabled: boolean, user_id: number, organization_id?: number): Promise<boolean> {
+  const whereClause: Record<string, number> = { id: site_id, user_id }
+
+  if (organization_id) {
+    whereClause.organization_id = organization_id
+  }
+
+  const updated = await database(TABLE).where(whereClause).update({ monitor_enabled: enabled })
 
   return updated > 0
+}
+
+/**
+ * Helper function to build base query for sites with plans and workspaces
+ */
+function buildSitesBaseQuery() {
+  return database(TABLE)
+    .leftJoin(TABLES.sitesPlans, function () {
+      this.on(`${TABLES.sitesPlans}.allowed_site_id`, '=', `${TABLE}.id`).andOn(`${TABLES.sitesPlans}.id`, '=', database.raw(`(SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)`))
+    })
+    .leftJoin(TABLES.users, `${TABLE}.user_id`, `${TABLES.users}.id`)
+}
+
+/**
+ * Helper function to get workspace aggregation subquery
+ */
+function getWorkspacesSubquery(): string {
+  return `(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', w.id, 'name', w.name))
+    FROM ${TABLES.workspace_allowed_sites} was
+    JOIN ${TABLES.workspaces} w ON was.workspace_id = w.id
+    WHERE was.allowed_site_id = ${TABLE}.id
+  )`
+}
+
+/**
+ * Helper function to select common site fields (for workspace assignment)
+ */
+function selectSiteFields() {
+  return [
+    `${TABLE}.id`,
+    `${TABLE}.user_id`,
+    `${TABLE}.url`,
+    `${TABLE}.created_at as createAt`,
+    `${TABLE}.updated_at as updatedAt`,
+    `${TABLE}.organization_id`,
+    `${TABLES.sitesPlans}.expired_at as expiredAt`,
+    `${TABLES.sitesPlans}.is_trial as trial`,
+    `${TABLES.users}.email as user_email`,
+    database.raw(`${getWorkspacesSubquery()} as workspaces`),
+  ]
+}
+
+/**
+ * Helper function to select site fields with monitoring info
+ */
+function selectSiteFieldsWithMonitoring() {
+  return [
+    `${TABLE}.id`,
+    `${TABLE}.user_id`,
+    `${TABLE}.url`,
+    `${TABLE}.created_at as createAt`,
+    `${TABLE}.updated_at as updatedAt`,
+    `${TABLE}.organization_id`,
+    `${TABLES.sitesPlans}.expired_at as expiredAt`,
+    `${TABLES.sitesPlans}.is_trial as trial`,
+    `${TABLE}.monitor_enabled`,
+    `${TABLE}.status`,
+    `${TABLE}.monitor_priority`,
+    `${TABLE}.last_monitor_check`,
+    `${TABLE}.is_currently_down`,
+    `${TABLE}.monitor_consecutive_fails`,
+    `${TABLES.users}.email as user_email`,
+    database.raw(`${getWorkspacesSubquery()} as workspaces`),
+  ]
 }

@@ -36,7 +36,7 @@ export const DeleteUserFromOrganization: React.FC<
   const handleDelete = async () => {
     try {
       const { errors, data } = await removeUser({
-        variables: { organizationId, userId: Number(userId) },
+        variables: { userId: Number(userId) },
       });
 
       if (errors?.length) {
