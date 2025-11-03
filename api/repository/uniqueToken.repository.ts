@@ -41,14 +41,15 @@ export async function ValidateToken(url: string): Promise<{
       organization = null
     } else {
       const user = await getUserbyId(site.user_id)
+      if (!user) {
+        widgetSettings = {}
+        organization = null
+      } else {
+        const [orgResult, widgetResult] = await Promise.all([getOrganizationById(user.current_organization_id, user), getWidgetSettingsBySiteId(site.id)])
 
-      const [orgResult, widgetResult] = await Promise.all([
-        getOrganizationById(user.current_organization_id, user),
-        getWidgetSettingsBySiteId(site.id),
-      ])
-
-      organization = orgResult
-      widgetSettings = widgetResult?.settings || {}
+        organization = orgResult
+        widgetSettings = widgetResult?.settings || {}
+      }
     }
   } catch (error) {
     console.error(error)

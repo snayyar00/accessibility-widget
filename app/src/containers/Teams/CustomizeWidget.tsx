@@ -457,7 +457,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
     if (file) {
       // Validate file type
-      const validTypes = ['image/png', 'image/svg+xml', 'image/webp'];
+      const validTypes = ['image/png', 'image/svg+xml', 'image/webp', 'image/jpeg', 'image/jpg'];
       if (!validTypes.includes(file.type)) {
         toast.error('Only PNG, SVG, or WebP images are allowed.');
         e.target.value = ''; // Reset the input field to remove the file name
@@ -475,8 +475,12 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       toast.loading('Uploading logo...', { id: 'logo-upload' });
 
       try {
-        // Use the selectedSite prop as the site URL
-        const siteUrl = selectedSite || window.location.hostname;
+        // Require an explicit selected site
+        if (!selectedSite) {
+          toast.error('Please select a site before uploading a logo.', { id: 'logo-upload' });
+          return;
+        }
+        const siteUrl = selectedSite;
         
         
         
