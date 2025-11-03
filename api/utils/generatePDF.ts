@@ -1440,8 +1440,11 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
     // After fetching base64
     for (const issue of translatedIssues) {
       if (issue.screenshotUrl && !issue.screenshotBase64) {
-        issue.screenshotBase64 = await fetchImageAsBase64(issue.screenshotUrl)
-        // console.log('Fetched base64 for', issue.screenshotUrl, '->', !!issue.screenshotBase64);
+        try {
+          issue.screenshotBase64 = await fetchImageAsBase64(issue.screenshotUrl)
+        } catch (e) {
+          console.warn('Skipping screenshot:', issue.screenshotUrl)
+        }
       }
     }
 
