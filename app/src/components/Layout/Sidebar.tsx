@@ -4,7 +4,7 @@ import { ReactComponent as DashboardIcon } from '@/assets/images/svg/dashboard.s
 import { HiOutlineDocumentMagnifyingGlass } from 'react-icons/hi2';
 import { BiBarChartAlt2 } from 'react-icons/bi';
 import type { RootState } from '@/config/store';
-import { toggleSidebar } from '@/features/admin/sidebar';
+import { toggleSidebar, setSidebarLockedOpen } from '@/features/admin/sidebar';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import routes from '@/routes';
 import { GoGear } from 'react-icons/go';
@@ -26,7 +26,7 @@ import { PiNotebookBold, PiBookOpenBold } from 'react-icons/pi';
 import { MdLightbulbOutline } from 'react-icons/md';
 import WorkspacesSelect from '@/containers/Dashboard/WorkspacesSelect';
 import Dropdown from '../../containers/Dashboard/DropDown';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { handleBilling } from '@/containers/Profile/BillingPortalLink';
 import { CircularProgress } from '@mui/material';
 import { baseColors } from '@/config/colors';
@@ -42,12 +42,26 @@ const Sidebar = ({
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [billingClicked, setBillingClicked] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Get colors configuration
   // Using baseColors directly
 
-  const { isOpen } = useSelector((state: RootState) => state.sidebar);
+  const { isOpen, lockedOpen } = useSelector(
+    (state: RootState) => state.sidebar,
+  );
   const history = useHistory();
+
+  // Detect narrow mode (treat <768px as mobile-like: applies to sm and md)
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 770);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Listen for custom expand/collapse events from Topbar
   useEffect(() => {
@@ -69,6 +83,59 @@ const Sidebar = ({
       window.removeEventListener('collapseSidebar', handleCollapseSidebar);
     };
   }, []);
+
+  // Sync collapsed state with Redux isOpen and lockedOpen state
+  useEffect(() => {
+    if (!isOpen && !lockedOpen) {
+      setIsCollapsed(true);
+      setIsHovered(false);
+    } else if (isOpen || lockedOpen) {
+      setIsCollapsed(false);
+    }
+  }, [isOpen, lockedOpen]);
+
+  // Close sidebar in mobile mode on navigation (only when route changes, not on initial mount)
+  const prevPathname = useRef(location.pathname);
+  const isInitialNavigationMount = useRef(true);
+  useEffect(() => {
+    // Skip on initial mount
+    if (isInitialNavigationMount.current) {
+      isInitialNavigationMount.current = false;
+      prevPathname.current = location.pathname;
+      return;
+    }
+
+    if (isMobile && location.pathname !== prevPathname.current && isOpen) {
+      prevPathname.current = location.pathname;
+      dispatch(toggleSidebar(false));
+      if (lockedOpen) {
+        dispatch(setSidebarLockedOpen(false));
+      }
+    } else if (location.pathname !== prevPathname.current) {
+      prevPathname.current = location.pathname;
+    }
+  }, [location.pathname, isMobile, isOpen, lockedOpen, dispatch]);
+
+  // Close sidebar only when switching to mobile mode from desktop (not on initial mount)
+  const prevIsMobile = useRef(isMobile);
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    // Skip on initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      prevIsMobile.current = isMobile;
+      return;
+    }
+
+    // Only close if switching from desktop to mobile while sidebar is open
+    if (!prevIsMobile.current && isMobile && isOpen) {
+      dispatch(toggleSidebar(false));
+      if (lockedOpen) {
+        dispatch(setSidebarLockedOpen(false));
+      }
+    }
+    prevIsMobile.current = isMobile;
+  }, [isMobile, isOpen, lockedOpen, dispatch]);
 
   const { data: userData } = useSelector((state: RootState) => state.user);
   const { data: user } = useSelector((state: RootState) => state.user);
@@ -94,7 +161,14 @@ const Sidebar = ({
   );
 
   function closeSidebar() {
+    // In mobile mode, always allow closing
+    // In desktop mode, only close if not locked
+    if (!isMobile && lockedOpen) return;
     dispatch(toggleSidebar(false));
+    // Also unlock when closing in mobile mode
+    if (isMobile && lockedOpen) {
+      dispatch(setSidebarLockedOpen(false));
+    }
   }
 
   const handleRedirect = () => {
@@ -108,7 +182,9 @@ const Sidebar = ({
 
   function handleMouseLeave() {
     setIsHovered(false);
-    setIsCollapsed(true);
+    if (!lockedOpen) {
+      setIsCollapsed(true);
+    }
   }
 
   const handleBillingClick = async () => {
@@ -600,7 +676,7 @@ const Sidebar = ({
                   <LuCircleDollarSign size={24} className="text-[#94BFFF]" />
                 </div>
                 <span className="text-sm font-medium text-[#656565] whitespace-nowrap">
-                 Join Referral Program
+                  Join Referral Program
                 </span>
               </a>
             </div>
