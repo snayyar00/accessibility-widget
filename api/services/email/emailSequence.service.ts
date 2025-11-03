@@ -38,7 +38,7 @@ export class EmailSequenceService {
   /**
    * Send welcome email immediately upon user registration (Production)
    */
-  static async sendWelcomeEmail(userEmail: string, userName: string, userId: number, organizationId: number): Promise<boolean> {
+  static async sendWelcomeEmail(userEmail: string, userName: string, userId: number, organizationId: number, allowedFrontendUrl: string): Promise<boolean> {
     try {
       // Email sequence kill switch for staging
       if (process.env.DISABLE_EMAIL_SEQUENCE === 'true') {
@@ -62,7 +62,7 @@ export class EmailSequenceService {
       }
 
       // Extract first URL from comma-separated FRONTEND_URL
-      const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim() || 'http://localhost:3000'
+      const frontendUrl = allowedFrontendUrl
 
       // Gmail-optimized logo approach
       // Gmail requires properly hosted images with specific characteristics

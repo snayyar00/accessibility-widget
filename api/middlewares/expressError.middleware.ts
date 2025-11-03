@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 
 import { IS_DEV, IS_LOCAL, IS_PROD } from '../config/env'
-import { extractClientDomain } from '../utils/domain.utils'
+import { getDomainFromRequest } from '../utils/domain.utils'
 import { getOperationName } from '../utils/logger.utils'
 
 interface ErrorWithStatus extends Error {
@@ -27,7 +27,7 @@ export const expressErrorMiddleware = (error: ErrorWithStatus, req: Request, res
     response_time_ms: responseTime,
     content_length: contentLength,
     operation_name: getOperationName(req.body),
-    domain: extractClientDomain(req),
+    domain: getDomainFromRequest(req),
     error: {
       message: error.message || 'Unknown error',
       code: error.code || 'INTERNAL_ERROR',

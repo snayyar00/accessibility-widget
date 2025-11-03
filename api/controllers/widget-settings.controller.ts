@@ -2,17 +2,25 @@ import { Request, Response } from 'express'
 
 import { findSiteByURL } from '../repository/sites_allowed.repository'
 import { addWidgetSettings, getWidgetSettingsBySiteId } from '../repository/widget_settings.repository'
+import { canAccessSite } from '../services/allowedSites/allowedSites.service'
+import { UserLogined } from '../services/authentication/get-user-logined.service'
 
-export async function updateSiteWidgetSettings(req: Request, res: Response) {
-  // const { user } = req as any
+export async function updateSiteWidgetSettings(req: Request & { user: UserLogined }, res: Response) {
+  const { user } = req
   const { settings, site_url } = req.body
 
   try {
     const site = await findSiteByURL(site_url)
 
-    // if (!site || site.user_id !== user.id) {
-    //   return res.status(403).json({ error: 'User does not own this site' })
-    // }
+    if (!site) {
+      return res.status(404).json({ error: 'Site not found' })
+    }
+
+    const hasAccess = await canAccessSite(user, site)
+
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Access denied: You do not have permission to modify this site' })
+    }
 
     await addWidgetSettings({
       site_url,
@@ -28,16 +36,22 @@ export async function updateSiteWidgetSettings(req: Request, res: Response) {
   }
 }
 
-export async function getSiteWidgetSettings(req: Request, res: Response) {
-  // const { user } = req as any
+export async function getSiteWidgetSettings(req: Request & { user: UserLogined }, res: Response) {
+  const { user } = req
   const { site_url } = req.body
 
   try {
     const site = await findSiteByURL(site_url)
 
-    // if (site?.user_id !== user.id) {
-    //   return res.status(403).json({ error: 'User does not own this site' })
-    // }
+    if (!site) {
+      return res.status(404).json({ error: 'Site not found' })
+    }
+
+    const hasAccess = await canAccessSite(user, site)
+
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Access denied: You do not have permission to view this site' })
+    }
 
     const widgetSettings = await getWidgetSettingsBySiteId(site?.id)
     const response = widgetSettings?.settings || {}

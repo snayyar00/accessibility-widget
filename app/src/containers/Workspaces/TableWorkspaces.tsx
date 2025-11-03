@@ -6,32 +6,29 @@ import { Link } from 'react-router-dom';
 
 import { useQuery } from '@apollo/client';
 import GET_ORGANIZATION_WORKSPACES from '@/queries/workspace/getOrganizationWorkspaces';
-import GET_ALL_USER_SITES from '@/queries/sites/getAllUserSites';
 import { Query, WorkspaceUser, AllowedSite } from '@/generated/graphql';
 import { CreateWorkspace } from './CreateWorkspace';
 import { EditWorkspace } from './EditWorkspace';
 import { DeleteWorkspace } from './DeleteWorkspace';
-import { InviteWorkspaceMember } from '@/components/Invite/InviteWorkspaceMember';
+import { InviteUser } from '@/components/Invite/InviteUser';
+import { RootState } from '@/config/store';
+import { useSelector } from 'react-redux';
+import { canManageWorkspace } from '@/helpers/permissions';
 
 type TableWorkspacesProps = {
   onUpdate: () => void;
 };
 
 export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
+  const { data: userData } = useSelector((state: RootState) => state.user);
+
   const [pageSize, setPageSize] = React.useState<number>(50);
 
   const { data, loading, error, refetch } = useQuery<Query>(
     GET_ORGANIZATION_WORKSPACES,
   );
 
-  const { data: allUserSitesData, loading: allUserSitesLoading } =
-    useQuery<Query>(GET_ALL_USER_SITES);
-
   const workspaces = data?.getOrganizationWorkspaces || [];
-
-  const allUserSites = (allUserSitesData?.getAllUserSites || []).filter(
-    (site): site is NonNullable<typeof site> => site !== null,
-  );
 
   const rows = React.useMemo(
     () =>
@@ -204,35 +201,54 @@ export const TableWorkspaces = ({ onUpdate }: TableWorkspacesProps) => {
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
-      renderCell: (params) => (
-        <div style={{ display: 'flex', gap: 4 }}>
-          <InviteWorkspaceMember
-            disableSelect
-            preSelectedWorkspace={params.row.id}
-            onUserInvited={handleUpdate}
-            buttonSize="medium"
-            allWorkspaces={workspaces}
-            workspacesLoading={loading}
-          />
+      renderCell: (params) => {
+        const canEdit = canManageWorkspace(
+          userData?.isAdminOrOwnerOrSuper || false,
+          params.row.members,
+          Number(userData?.id),
+        );
 
-          <Link to={`/workspaces/${params.row.alias}`}>
-            <IconButton size="medium" color="primary">
-              <VisibilityIcon fontSize="inherit" />
-            </IconButton>
-          </Link>
+        const currentUserMember = (params.row.members as WorkspaceUser[])?.find(
+          (member) => member.user_id === Number(userData?.id),
+        );
 
-          <EditWorkspace
-            workspace={params.row}
-            onWorkspaceUpdated={handleUpdate}
-            userSites={allUserSites}
-            userSitesLoading={allUserSitesLoading}
-          />
-          <DeleteWorkspace
-            workspace={params.row}
-            onWorkspaceDeleted={handleUpdate}
-          />
-        </div>
-      ),
+        const userWorkspaceRole = currentUserMember?.role || null;
+
+        return (
+          <div style={{ display: 'flex', gap: 4 }}>
+            <InviteUser
+              mode="workspace"
+              disableSelect
+              preSelectedWorkspace={params.row.id}
+              onUserInvited={handleUpdate}
+              buttonSize="medium"
+              allWorkspaces={workspaces}
+              workspacesLoading={loading}
+              isAdminOrOwnerOrSuper={userData?.isAdminOrOwnerOrSuper || false}
+              userWorkspaceRole={userWorkspaceRole}
+            />
+
+            <Link to={`/workspaces/${params.row.alias}`}>
+              <IconButton size="medium" color="primary">
+                <VisibilityIcon fontSize="inherit" />
+              </IconButton>
+            </Link>
+
+            {canEdit && (
+              <>
+                <EditWorkspace
+                  workspace={params.row}
+                  onWorkspaceUpdated={handleUpdate}
+                />
+                <DeleteWorkspace
+                  workspace={params.row}
+                  onWorkspaceDeleted={handleUpdate}
+                />
+              </>
+            )}
+          </div>
+        );
+      },
     },
   ];
 

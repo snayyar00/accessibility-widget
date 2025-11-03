@@ -6,12 +6,12 @@ import {
 import {
   ApolloClient,
   ApolloLink,
-  HttpLink,
   InMemoryCache,
   NormalizedCacheObject,
 } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { createNetworkStatusNotifier } from 'react-apollo-network-status';
+import { createUploadLink } from 'apollo-upload-client';
 
 export const { link: networkStatusNotifierLink, useApolloNetworkStatus } =
   createNetworkStatusNotifier();
@@ -38,12 +38,14 @@ export function createClient(): ApolloClient<NormalizedCacheObject> {
   // the browser)
   const cache = new InMemoryCache();
 
-  // Create a HTTP client (both server/client). It takes the GraphQL
-  // server from the `GRAPHQL` environment variable, which by default is
-  // set to an external playground at https://graphqlhub.com/graphql
-  const httpLink = new HttpLink({
+  // Create upload link that supports file uploads
+  const uploadLink = createUploadLink({
     uri: process.env.REACT_APP_GRAPHQL_URL,
-  });
+    credentials: 'include',
+    headers: {
+      'Apollo-Require-Preflight': 'true',
+    },
+  }) as unknown as ApolloLink;
 
   // Return a new Apollo Client back, with the cache we've just created,
   // and an array of 'links' (Apollo parlance for GraphQL middleware)
@@ -87,8 +89,9 @@ export function createClient(): ApolloClient<NormalizedCacheObject> {
         }
       }),
       authLink,
-      // Split on HTTP and WebSockets
-      httpLink,
+      networkStatusNotifierLink,
+      // Upload link supports file uploads
+      uploadLink,
     ]),
     defaultOptions: {
       watchQuery: {

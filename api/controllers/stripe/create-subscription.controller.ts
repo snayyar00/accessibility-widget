@@ -5,9 +5,10 @@ import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, REWARDFUL_COUPON } from 
 import { findProductAndPriceByType } from '../../repository/products.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { getSitePlanBySiteId, getSitesPlanByUserId } from '../../repository/sites_plans.repository'
-import { getUserTokens } from '../../repository/user_plan_tokens.repository'
 import { findUserById } from '../../repository/user.repository'
+import { getUserTokens } from '../../repository/user_plan_tokens.repository'
 import { createSitesPlan, deleteTrialPlan } from '../../services/allowedSites/plans-sites.service'
+import { UserLogined } from '../../services/authentication/get-user-logined.service'
 import findPromo from '../../services/stripe/findPromo'
 import { appSumoPromoCount } from '../../utils/appSumoPromoCount'
 import { customTokenCount } from '../../utils/customTokenCount'
@@ -16,14 +17,19 @@ import { expireUsedPromo } from '../../utils/expireUsedPromo'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
-export async function createSubscription(req: Request, res: Response) {
+export async function createSubscription(req: Request & { user: UserLogined }, res: Response) {
   const { planName, billingInterval, domainId, domainUrl, cardTrial, promoCode } = req.body
 
-  const { user } = req as any
+  const { user } = req
   const site = await findSiteByURL(domainUrl)
 
   if (!site || site.user_id !== user.id) {
     return res.status(403).json({ error: 'User does not own this domain' })
+  }
+
+  // Check organization_id if user has current organization
+  if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
+    return res.status(403).json({ error: 'Site does not belong to current organization' })
   }
 
   // If user doesn't have referral in session but might have it in database, reload it
@@ -38,6 +44,7 @@ export async function createSubscription(req: Request, res: Response) {
       console.error('[REWARDFUL] Failed to reload user referral code:', error)
     }
   }
+
   const [price, sites, customers] = await Promise.all([
     findProductAndPriceByType(planName, billingInterval),
     getSitesPlanByUserId(Number(user.id)),

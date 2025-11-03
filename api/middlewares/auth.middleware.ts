@@ -1,13 +1,14 @@
 import { NextFunction, Request, Response } from 'express'
 
-import getUserLogined from '../services/authentication/get-user-logined.service'
+import { Organization } from '../repository/organization.repository'
+import getUserLogined, { UserLogined } from '../services/authentication/get-user-logined.service'
 import { getOrganizationByDomainService } from '../services/organization/organization.service'
-import { extractClientDomain } from '../utils/domain.utils'
+import { getDomainFromRequest } from '../utils/domain.utils'
 import { getMatchingFrontendUrl } from '../utils/env.utils'
 import { ValidationError } from '../utils/graphql-errors.helper'
 import { getOperationName } from '../utils/logger.utils'
 
-export const logAuthenticationFailure = (req: Request, _: Response, message: string, code: string, status = 401) => {
+export const logAuthenticationFailure = (req: Request & { startTime: 0 }, _: Response, message: string, code: string, status = 401) => {
   const authLog = JSON.stringify({
     timestamp: new Date().toISOString(),
     level: 'warn',
@@ -15,10 +16,10 @@ export const logAuthenticationFailure = (req: Request, _: Response, message: str
     method: req.method,
     url: req.url,
     status,
-    response_time_ms: Date.now() - (req as any).startTime || 0,
+    response_time_ms: Date.now() - req.startTime || 0,
     content_length: 0,
     operation_name: getOperationName(req.body),
-    domain: extractClientDomain(req),
+    domain: getDomainFromRequest(req),
     error: {
       message,
       code,
@@ -28,7 +29,7 @@ export const logAuthenticationFailure = (req: Request, _: Response, message: str
   console.warn(authLog)
 }
 
-export async function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+export async function isAuthenticated(req: Request & { organization: Organization; user: UserLogined; startTime: 0 }, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization || ''
   const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
 
@@ -40,7 +41,12 @@ export async function isAuthenticated(req: Request, res: Response, next: NextFun
       return res.status(401).json({ error: 'Not authenticated' })
     }
 
-    ;(req as any).user = user
+    req.user = user
+
+    // Store user's current organization in request if available
+    if (user.currentOrganization) {
+      req.organization = user.currentOrganization
+    }
 
     next()
   } catch {
@@ -49,24 +55,27 @@ export async function isAuthenticated(req: Request, res: Response, next: NextFun
   }
 }
 
-export async function allowedOrganization(req: Request, res: Response, next: NextFunction) {
-  const clientDomain = extractClientDomain(req)
-  const allowedFrontendUrl = getMatchingFrontendUrl(clientDomain)
+export async function allowedOrganization(req: Request & { organization: Organization | ValidationError; startTime: 0 }, res: Response, next: NextFunction) {
+  let organization = req.organization || null
 
-  const organization = await getOrganizationByDomainService(allowedFrontendUrl)
+  if (!organization) {
+    const domainFromRequest = getDomainFromRequest(req)
+    const allowedFrontendUrlFromRequest = getMatchingFrontendUrl(domainFromRequest)
+    const organizationByDomain = await getOrganizationByDomainService(allowedFrontendUrlFromRequest)
 
-  const hasOrganization = organization instanceof ValidationError ? null : organization
+    organization = organizationByDomain instanceof ValidationError ? null : organizationByDomain
+  }
 
-  if (!hasOrganization) {
+  if (!organization) {
     logAuthenticationFailure(req, res, 'Provided domain is not in the list of allowed organizations', 'FORBIDDEN', 403)
     return res.status(403).json({ error: 'Provided domain is not in the list of allowed organizations' })
   }
 
-  ;(req as any).organization = organization
+  req.organization = organization
   next()
 }
 
-export async function authenticateApiKey(req: Request, res: Response, next: NextFunction) {
+export async function authenticateApiKey(req: Request & { startTime: 0 }, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization || ''
   const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
 

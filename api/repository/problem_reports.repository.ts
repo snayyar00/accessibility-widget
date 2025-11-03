@@ -36,3 +36,11 @@ export async function toggleProblemReportFixedStatus(id: number) {
       fixed: database.raw('NOT fixed'),
     })
 }
+
+export async function getProblemReportsBySiteIds(site_ids: number[]) {
+  if (site_ids.length === 0) {
+    return []
+  }
+
+  return database(TABLE).join(TABLES.allowed_sites, problemReportsColumns.site_id, siteColumns.id).select(problemReportsColumns, `${siteColumns.url} as site_url`).whereIn('site_id', site_ids)
+}

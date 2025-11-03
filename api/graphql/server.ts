@@ -9,17 +9,21 @@ import { Server } from 'http'
 import { IS_LOCAL, IS_PROD } from '../config/env'
 import { rateLimitDirectiveTransformer, rateLimitDirectiveTypeDefs } from './directives/rateLimit'
 import { createSentryPlugin } from './plugins/sentry.plugin'
-import RootResolver from './root.resolver'
+import { createResolvers } from './root.resolver'
 import RootSchema from './root.schema'
 import { GraphQLContext } from './types'
 
 /**
  * Creates and configures Apollo GraphQL server
+ * Must be called after initializeGraphQLUpload()
  */
 export function createGraphQLServer(httpServer: Server) {
+  // Call createResolvers() to get resolvers after GraphQL Upload is initialized
+  const resolvers = createResolvers()
+
   let schema = makeExecutableSchema({
     typeDefs: [rateLimitDirectiveTypeDefs, RootSchema],
-    resolvers: RootResolver as IResolvers[],
+    resolvers: resolvers as IResolvers[],
   })
 
   schema = rateLimitDirectiveTransformer(schema)

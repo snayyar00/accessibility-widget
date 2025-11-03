@@ -7,6 +7,7 @@ export default gql`
       email
       name
       isActive
+      is_super_admin
       company
       position
       avatarUrl
@@ -17,6 +18,7 @@ export default gql`
         name
         domain
         logo_url
+        favicon
         settings
         created_at
         updated_at
@@ -27,14 +29,9 @@ export default gql`
         organization_id
         role
         status
+        hasAgencyAccountId
         created_at
         updated_at
-        current_workspace_id
-        currentWorkspace {
-          id
-          name
-          alias
-        }
       }
     }
   }

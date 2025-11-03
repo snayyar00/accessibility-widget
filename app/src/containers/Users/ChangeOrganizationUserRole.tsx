@@ -8,7 +8,8 @@ import { OrganizationUserRole } from '@/generated/graphql';
 type ChangeOrganizationUserRoleProps = {
   initialValue: string;
   userId: number;
-  disabled: boolean;
+  disabled?: boolean;
+  isSuperAdmin?: boolean;
   onRoleChanged: () => void;
 };
 
@@ -20,12 +21,32 @@ const ROLE_OPTIONS = [
 
 export const ChangeOrganizationUserRole: React.FC<
   ChangeOrganizationUserRoleProps
-> = ({ initialValue, userId, disabled, onRoleChanged }) => {
+> = ({
+  initialValue,
+  userId,
+  disabled = false,
+  isSuperAdmin = false,
+  onRoleChanged,
+}) => {
   const [selected, setSelected] = React.useState<string>(initialValue);
 
   const [changeOrganizationUserRoleMutation, { loading }] = useMutation(
     CHANGE_ORGANIZATION_USER_ROLE,
   );
+
+  // Filter out owner role if user is not super admin
+  const availableRoles = React.useMemo(() => {
+    if (isSuperAdmin) {
+      return ROLE_OPTIONS;
+    }
+    // If current role is owner, keep it in the list (read-only scenario)
+    if (initialValue === OrganizationUserRole.Owner) {
+      return ROLE_OPTIONS;
+    }
+    return ROLE_OPTIONS.filter(
+      (role) => role.value !== OrganizationUserRole.Owner,
+    );
+  }, [isSuperAdmin, initialValue]);
 
   React.useEffect(() => {
     setSelected(initialValue);
@@ -80,7 +101,7 @@ export const ChangeOrganizationUserRole: React.FC<
         height: '36px',
       }}
     >
-      {ROLE_OPTIONS.map((option) => (
+      {availableRoles.map((option) => (
         <MenuItem
           sx={{
             fontSize: '0.875rem',

@@ -5,12 +5,23 @@ import { TABLES } from '../constants/database.constant'
 
 const TABLE = TABLES.organizations
 
+export const organizationsColumns = {
+  id: `${TABLE}.id`,
+  name: `${TABLE}.name`,
+  domain: `${TABLE}.domain`,
+  logoUrl: `${TABLE}.logo_url`,
+  settings: `${TABLE}.settings`,
+  createdAt: `${TABLE}.created_at`,
+  updatedAt: `${TABLE}.updated_at`,
+}
+
 export type Organization = {
   id?: number
   name: string
   domain: string
   logo_url?: string
   settings?: string | object
+  favicon?: string
   created_at?: string
   updated_at?: string
 }

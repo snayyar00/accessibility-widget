@@ -21,9 +21,9 @@ async function sendMail(to: string, subject: string, html: string, attachments?:
     // Create the email content
     const sendSmtpEmail = new SendSmtpEmail()
     sendSmtpEmail.to = [{ email: to }]
-    sendSmtpEmail.sender = { 
+    sendSmtpEmail.sender = {
       email: process.env.EMAIL_FROM || 'your-email@domain.com',
-      name: 'WebAbility Monitoring'  // Add sender name
+      name: 'WebAbility Monitoring', // Add sender name
     }
     sendSmtpEmail.subject = subject
     sendSmtpEmail.htmlContent = html

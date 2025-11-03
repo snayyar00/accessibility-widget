@@ -7,7 +7,7 @@ import { Redirect } from 'react-router-dom';
 const Users: React.FC = () => {
   const { data: userData } = useSelector((state: RootState) => state.user);
 
-  if (!userData.isAdminOrOwner) {
+  if (!userData.isAdminOrOwnerOrSuper) {
     return <Redirect to="/" />;
   }
 
@@ -19,8 +19,10 @@ const Users: React.FC = () => {
 
       {userData.current_organization_id && userData.id && (
         <TableUsers
-          userId={userData.id}
+          userId={Number(userData.id)}
           organizationId={userData.current_organization_id}
+          isSuperAdmin={userData.is_super_admin || false}
+          isAdminOrOwnerOrSuper={userData.isAdminOrOwnerOrSuper || false}
         />
       )}
     </section>

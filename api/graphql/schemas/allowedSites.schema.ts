@@ -1,4 +1,9 @@
 export const AllowedSitesSchema = `#graphql
+  type SiteWorkspace {
+    id: Int!
+    name: String!
+  }
+
   type Site {
     id: Int
     user_id: Int
@@ -7,17 +12,21 @@ export const AllowedSitesSchema = `#graphql
     createAt: String
     expiredAt: String
     trial: Int
+    organization_id: Int
     monitor_enabled: Boolean
     status: String
     monitor_priority: Int
     last_monitor_check: String
     is_currently_down: Int
     monitor_consecutive_fails: Int
+    is_owner: Boolean
+    workspaces: [SiteWorkspace]
+    user_email: String
   }
 
   extend type Query {
     getUserSites: [Site] @rateLimit(limit: 60, duration: 60, message: "Too many site list requests. Please try again later.")
-    getAllUserSites: [Site] @rateLimit(limit: 60, duration: 60, message: "Too many site list requests. Please try again later.")
+    getAvailableSitesForWorkspace: [Site] @rateLimit(limit: 60, duration: 60, message: "Too many site list requests. Please try again later.")
     isDomainAlreadyAdded(url: String!): Boolean! @rateLimit(limit: 10, duration: 60, message: "Too many domain check attempts. Please try again later.")
   }
 

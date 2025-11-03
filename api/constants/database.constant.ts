@@ -18,7 +18,6 @@ export const TABLES = {
   organization_users: 'organization_users',
   workspaces: 'workspaces',
   workspace_users: 'workspace_users',
-  workspace_invitations: 'workspace_invitations',
   workspace_allowed_sites: 'workspace_allowed_sites',
   monitoringEvents: 'monitoring_events',
   invitations: 'invitations',

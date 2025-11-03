@@ -2,7 +2,7 @@ import { Knex } from 'knex'
 
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
-import { updateOrganizationUserByOrganizationAndUserId } from './organization_user.repository'
+import { WORKSPACE_USER_ROLE_OWNER, WORKSPACE_USER_STATUS_ACTIVE } from '../constants/workspace.constant'
 import { createWorkspaceUser, WorkspaceUser, workspaceUsersColumns } from './workspace_users.repository'
 
 export type Workspace = {
@@ -87,7 +87,7 @@ export async function updateWorkspace(workspaceId: number, data: Workspace, tran
  */
 export async function getAllWorkspace({ workspaceId, userId, organizationId }: GetAllWorkspace): Promise<GetAllWorkspaceResponse[]> {
   const condition: Condition = {
-    [workspaceUsersColumns.status]: 'active',
+    [workspaceUsersColumns.status]: WORKSPACE_USER_STATUS_ACTIVE,
   }
 
   if (workspaceId) condition[workspaceUsersColumns.workspaceId] = workspaceId
@@ -113,8 +113,7 @@ export async function createNewWorkspaceAndMember({ name, alias, organization_id
     transaction = await database.transaction()
     const [workspaceId] = await insertWorkspace({ name, alias, organization_id, created_by: user_id }, transaction)
 
-    await createWorkspaceUser({ user_id: user_id, workspace_id: workspaceId, role: 'owner', status: 'active' }, transaction)
-    await updateOrganizationUserByOrganizationAndUserId(organization_id, user_id, { current_workspace_id: workspaceId }, transaction)
+    await createWorkspaceUser({ user_id: user_id, workspace_id: workspaceId, role: WORKSPACE_USER_ROLE_OWNER, status: WORKSPACE_USER_STATUS_ACTIVE }, transaction)
 
     await transaction.commit()
 
@@ -132,6 +131,7 @@ export async function getWorkspaceMembers({ workspaceId, userId, organizationId 
   const query = database(TABLE)
     .join('workspace_users', 'workspaces.id', 'workspace_users.workspace_id')
     .join('users', 'workspace_users.user_id', 'users.id')
+    .leftJoin('invitations', 'workspace_users.invitation_token', 'invitations.token')
     .select(
       'workspace_users.id',
       'workspace_users.user_id',
@@ -140,6 +140,7 @@ export async function getWorkspaceMembers({ workspaceId, userId, organizationId 
       'workspace_users.status',
       'workspace_users.created_at',
       'workspace_users.updated_at',
+      'invitations.invited_by_id as invited_by',
       database.raw(`JSON_OBJECT(
         'id', users.id,
         'name', users.name,

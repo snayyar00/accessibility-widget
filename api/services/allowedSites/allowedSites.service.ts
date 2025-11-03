@@ -1,9 +1,21 @@
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '../../constants/billing.constant'
 import { QUEUE_PRIORITY } from '../../constants/queue-priority.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
-import { getOrganizationUser } from '../../repository/organization_user.repository'
-import { deleteSiteWithRelatedRecords, findSiteById, findSiteByURL, findUserSitesWithPlans, insertSite, IUserSites, updateAllowedSiteURL } from '../../repository/sites_allowed.repository'
-import { findUserNotificationByUserId, getUserbyId, UserProfile } from '../../repository/user.repository'
+import {
+  deleteSiteWithRelatedRecords,
+  FindAllowedSitesProps,
+  findSiteById,
+  findSiteByURL,
+  findUserSitesWithPlansForWorkspace,
+  findUserSitesWithPlansWithWorkspaces,
+  insertSite,
+  IUserSites,
+  toggleSiteMonitoring as toggleSiteMonitoringRepo,
+  updateAllowedSiteURL,
+} from '../../repository/sites_allowed.repository'
+import { findUserNotificationByUserId, getUserbyId } from '../../repository/user.repository'
+import { hasWorkspaceAccessToSite } from '../../repository/workspace_users.repository'
+import { canManageOrganization } from '../../utils/access.helper'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { generatePDF } from '../../utils/generatePDF'
 import { ValidationError } from '../../utils/graphql-errors.helper'
@@ -11,8 +23,21 @@ import logger from '../../utils/logger'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 import { validateChangeURL, validateDomain } from '../../validations/allowedSites.validation'
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service'
+import { UserLogined } from '../authentication/get-user-logined.service'
 import { EmailAttachment, sendEmailWithRetries } from '../email/email.service'
+import { getUserOrganization } from '../organization/organization_users.service'
 import { createSitesPlan } from './plans-sites.service'
+
+/**
+ * Check if user is super admin or organization manager
+ */
+async function isAdminOrManager(user: UserLogined): Promise<boolean> {
+  if (user.is_super_admin) {
+    return true
+  }
+
+  return user.currentOrganizationUser ? canManageOrganization(user.currentOrganizationUser.role) : false
+}
 
 export async function checkScript(url: string) {
   const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${url}`
@@ -41,10 +66,10 @@ export async function checkScript(url: string) {
 /**
  * Create Document
  *
- * @param {UserProfile} user
+ * @param {UserLogined} user
  * @param {string} url
  */
-export async function addSite(user: UserProfile, url: string): Promise<string> {
+export async function addSite(user: UserLogined, url: string): Promise<string> {
   const year = new Date().getFullYear()
 
   const validateResult = validateDomain({ url })
@@ -172,29 +197,39 @@ export async function addSite(user: UserProfile, url: string): Promise<string> {
   }
 }
 
-/**
- * Get List Documents
- *
- * @param {number} offset
- * @param {number} limit
- *
- */
+export async function findUserSites(user: UserLogined): Promise<IUserSites[]> {
+  if (!user.current_organization_id) {
+    return []
+  }
 
-export async function findUserSites(user: UserProfile, ignoreWorkspace = false): Promise<IUserSites[]> {
   try {
-    let currentWorkspaceId: number | null = null
+    const isAdmin = await isAdminOrManager(user)
+    const allSites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isAdmin)
+    const sitesWithOwnership = addOwnershipFlag(allSites, user.id)
 
-    if (!ignoreWorkspace) {
-      // Get workspace info if user has organization
-      if (user.current_organization_id) {
-        const organizationUser = await getOrganizationUser(user.id, user.current_organization_id)
-        currentWorkspaceId = organizationUser?.current_workspace_id || null
-      }
-    }
+    return sortSitesByPriorityAndAlphabetically(sitesWithOwnership)
+  } catch (e) {
+    logger.error(e)
+    throw e
+  }
+}
 
-    const sites = await findUserSitesWithPlans(user.id, ignoreWorkspace ? null : user.current_organization_id, ignoreWorkspace ? null : currentWorkspaceId)
+/**
+ * Get sites available for adding to a workspace
+ * For admins/managers: Returns ALL organization sites
+ * For regular users: Returns ONLY their own sites
+ */
+export async function findAvailableSitesForWorkspaceAssignment(user: UserLogined): Promise<IUserSites[]> {
+  if (!user.current_organization_id) {
+    return []
+  }
 
-    return sites
+  try {
+    const isAdmin = await isAdminOrManager(user)
+    const allSites = await findUserSitesWithPlansForWorkspace(user.id, user.current_organization_id, isAdmin)
+    const sitesWithOwnership = addOwnershipFlag(allSites, user.id)
+
+    return sortSitesByPriorityAndAlphabetically(sitesWithOwnership)
   } catch (e) {
     logger.error(e)
     throw e
@@ -211,7 +246,7 @@ export async function findSite(url: string) {
   }
 }
 
-export async function deleteSite(userId: number, url: string) {
+export async function deleteSite(userId: number, url: string, organizationId?: number) {
   const validateResult = validateDomain({ url })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -221,7 +256,7 @@ export async function deleteSite(userId: number, url: string) {
   const domain = normalizeDomain(url)
 
   try {
-    const deletedRecs = await deleteSiteWithRelatedRecords(domain, userId)
+    const deletedRecs = await deleteSiteWithRelatedRecords(domain, userId, organizationId)
 
     return deletedRecs
   } catch (e) {
@@ -230,7 +265,7 @@ export async function deleteSite(userId: number, url: string) {
   }
 }
 
-export async function changeURL(siteId: number, userId: number, url: string) {
+export async function changeURL(siteId: number, userId: number, url: string, organizationId?: number, isSuperAdmin?: boolean) {
   const validateResult = validateChangeURL({ url, siteId })
 
   if (Array.isArray(validateResult) && validateResult.length) {
@@ -242,11 +277,32 @@ export async function changeURL(siteId: number, userId: number, url: string) {
   try {
     const site = await findSiteById(siteId)
 
-    if (!site || site.user_id !== userId) {
+    if (!site) {
+      throw new ValidationError('Site not found.')
+    }
+
+    // Check organization_id if provided
+    if (organizationId && site.organization_id !== organizationId) {
       throw new ValidationError('You do not have permission to change this site.')
     }
 
-    const x = await updateAllowedSiteURL(siteId, domain, userId)
+    // Only super admin, organization manager, or site owner can change URL
+    const isOwner = site.user_id === userId
+
+    if (!isSuperAdmin && !isOwner) {
+      if (!organizationId) {
+        throw new ValidationError('Organization ID is required.')
+      }
+
+      const userOrganization = await getUserOrganization(userId, organizationId)
+
+      if (!userOrganization || !canManageOrganization(userOrganization.role)) {
+        throw new ValidationError('Only site owner or organization administrators can change site URLs.')
+      }
+    }
+
+    // Use the original site owner's user_id for the update
+    const x = await updateAllowedSiteURL(siteId, domain, site.user_id)
 
     if (x > 0) return 'Successfully updated URL'
     return 'Could not change URL'
@@ -278,4 +334,113 @@ export async function isDomainAlreadyAdded(url: string): Promise<boolean> {
     logger.error(error)
     throw error
   }
+}
+
+export async function toggleSiteMonitoring(siteId: number, enabled: boolean, userId: number, organizationId?: number, isSuperAdmin?: boolean): Promise<boolean> {
+  try {
+    const site = await findSiteById(siteId)
+
+    if (!site) {
+      throw new ValidationError('Site not found.')
+    }
+
+    // Check organization_id if provided
+    if (organizationId && site.organization_id !== organizationId) {
+      throw new ValidationError('You do not have permission to modify this site.')
+    }
+
+    // Only super admin, organization manager, or site owner can toggle site monitoring
+    const isOwner = site.user_id === userId
+
+    if (!isSuperAdmin && !isOwner) {
+      if (!organizationId) {
+        throw new ValidationError('Organization ID is required.')
+      }
+
+      const userOrganization = await getUserOrganization(userId, organizationId)
+
+      if (!userOrganization || !canManageOrganization(userOrganization.role)) {
+        throw new ValidationError('Only site owner or organization administrators can toggle site monitoring.')
+      }
+    }
+
+    // Use the original site owner's user_id for the update
+    return toggleSiteMonitoringRepo(siteId, enabled, site.user_id, organizationId)
+  } catch (e) {
+    logger.error(e)
+    throw e
+  }
+}
+
+/**
+ * Sort sites by priority and alphabetically
+ * Priority order:
+ * 1. My sites (owner) without workspace
+ * 2. Other people's sites without workspace
+ * 3. My sites (owner) in workspace
+ * 4. Other people's sites in workspace
+ */
+function sortSitesByPriorityAndAlphabetically(sites: IUserSites[]): IUserSites[] {
+  return sites.sort((a, b) => {
+    const getPriority = (site: IUserSites) => {
+      const hasWorkspace = (site.workspaces?.length || 0) > 0
+
+      if (site.is_owner && !hasWorkspace) return 1
+      if (!site.is_owner && !hasWorkspace) return 2
+      if (site.is_owner && hasWorkspace) return 3
+      if (!site.is_owner && hasWorkspace) return 4
+
+      return 5
+    }
+
+    const priorityA = getPriority(a)
+    const priorityB = getPriority(b)
+
+    // First sort by priority
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB
+    }
+
+    // Then sort alphabetically by URL within the same priority
+    return a.url.localeCompare(b.url)
+  })
+}
+
+/**
+ * Add ownership flag to sites
+ */
+function addOwnershipFlag(sites: IUserSites[], userId: number): IUserSites[] {
+  return sites.map((site) => ({
+    ...site,
+    is_owner: site.user_id === userId,
+    workspaces: site.workspaces || [],
+  }))
+}
+
+/**
+ * Check if user has access to a site:
+ * - Super admin or organization manager: full access
+ * - Regular user: only own sites or workspace sites where they are active member
+ */
+export async function canAccessSite(user: UserLogined, site: FindAllowedSitesProps): Promise<boolean> {
+  // Check organization match
+  if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
+    return false
+  }
+
+  // Super admin has full access
+  if (user.is_super_admin) {
+    return true
+  }
+
+  // Owner has access
+  if (site.user_id === user.id) {
+    return true
+  }
+
+  if (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role)) {
+    return true
+  }
+
+  return hasWorkspaceAccessToSite(user.id, site.id)
 }

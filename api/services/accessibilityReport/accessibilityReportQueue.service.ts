@@ -446,5 +446,5 @@ process.on('SIGTERM', async () => {
   process.exit(0)
 })
 
-export { accessibilityReportQueue, AccessibilityReportQueue }
+export { AccessibilityReportQueue, accessibilityReportQueue }
 export type { QueueStats, QueueTask }

@@ -1,7 +1,7 @@
 import { Request } from 'express'
 import { GraphQLError } from 'graphql/error'
 
-import { extractClientDomain } from '../utils/domain.utils'
+import { getDomainFromRequest } from '../utils/domain.utils'
 
 /**
  * Determines log level and type based on error type
@@ -49,7 +49,7 @@ export function logGraphQLErrors(errors: readonly GraphQLError[], req: Request, 
     method: req.method,
     url: req.originalUrl || req.url,
     operation_name: operationName || '-',
-    domain: extractClientDomain(req),
+    domain: getDomainFromRequest(req),
     errors: errors.map((err) => ({
       message: err.message,
       code: err.extensions?.code || 'UNKNOWN',

@@ -1,47 +1,29 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { NavLink, useLocation, useHistory } from 'react-router-dom';
-import { ReactComponent as DashboardIcon } from '@/assets/images/svg/dashboard.svg';
 import { HiOutlineDocumentMagnifyingGlass } from 'react-icons/hi2';
 import { BiBarChartAlt2 } from 'react-icons/bi';
 import type { RootState } from '@/config/store';
 import { toggleSidebar } from '@/features/admin/sidebar';
-import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
-import routes from '@/routes';
-import { GoGear } from 'react-icons/go';
 import { RiStackLine } from 'react-icons/ri';
-import OrganizationsSelect from '@/containers/Dashboard/OrganizationsSelect';
 import {
   Folders,
   UserIcon,
   Plus,
   Pencil,
-  Layers,
   Monitor,
   Sparkles,
-  Accessibility,
+  Building2,
 } from 'lucide-react';
 import { LuCircleDollarSign } from 'react-icons/lu';
-import { HiOutlineUser } from 'react-icons/hi';
 import { PiNotebookBold, PiBookOpenBold } from 'react-icons/pi';
 import { MdLightbulbOutline } from 'react-icons/md';
-import WorkspacesSelect from '@/containers/Dashboard/WorkspacesSelect';
-import Dropdown from '../../containers/Dashboard/DropDown';
 import { useState, useEffect } from 'react';
-import { handleBilling } from '@/containers/Profile/BillingPortalLink';
-import { CircularProgress } from '@mui/material';
 import { baseColors } from '@/config/colors';
 
-const Sidebar = ({
-  options,
-  setReloadSites,
-  selectedOption,
-  setSelectedOption,
-}: any) => {
+const Sidebar = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
-  const [billingClicked, setBillingClicked] = useState(false);
 
   // Get colors configuration
   // Using baseColors directly
@@ -53,12 +35,10 @@ const Sidebar = ({
   useEffect(() => {
     const handleExpandSidebar = () => {
       setIsCollapsed(false);
-      setIsHovered(true);
     };
 
     const handleCollapseSidebar = () => {
       setIsCollapsed(true);
-      setIsHovered(false);
     };
 
     window.addEventListener('expandSidebar', handleExpandSidebar);
@@ -71,7 +51,6 @@ const Sidebar = ({
   }, []);
 
   const { data: userData } = useSelector((state: RootState) => state.user);
-  const { data: user } = useSelector((state: RootState) => state.user);
 
   // Helper function to check if a route is active
   const isActiveRoute = (path: string) => {
@@ -102,18 +81,12 @@ const Sidebar = ({
   };
 
   function handleMouseEnter() {
-    setIsHovered(true);
     setIsCollapsed(false);
   }
 
   function handleMouseLeave() {
-    setIsHovered(false);
     setIsCollapsed(true);
   }
-
-  const handleBillingClick = async () => {
-    await handleBilling(setBillingClicked, user?.email);
-  };
 
   return (
     <>
@@ -508,7 +481,7 @@ const Sidebar = ({
                 </NavLink>
 
                 {/* Admin Controls - Only visible for admin/owner roles */}
-                {userData?.isAdminOrOwner && (
+                {userData?.isAdminOrOwnerOrSuper && (
                   <>
                     {/* Users Management */}
                     <NavLink
@@ -583,6 +556,43 @@ const Sidebar = ({
                         </span>
                       )}
                     </NavLink>
+
+                    {/* Organization Management */}
+                    <NavLink
+                      to="/organization"
+                      onClick={closeSidebar}
+                      className={`flex items-center rounded-lg transition-all duration-200 ${
+                        isActiveRoute('/organization')
+                          ? isCollapsed
+                            ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                            : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                          : isCollapsed
+                          ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <div className="w-6 h-6 flex items-center justify-center">
+                        <Building2
+                          size={24}
+                          className={
+                            isActiveRoute('/organization')
+                              ? 'text-[#445AE7]'
+                              : 'text-[#656565]'
+                          }
+                        />
+                      </div>
+                      {!isCollapsed && (
+                        <span
+                          className={`text-sm whitespace-nowrap ${
+                            isActiveRoute('/organization')
+                              ? 'text-[#445AE7]'
+                              : 'text-[#656565]'
+                          }`}
+                        >
+                          Organization
+                        </span>
+                      )}
+                    </NavLink>
                   </>
                 )}
               </nav>
@@ -600,7 +610,7 @@ const Sidebar = ({
                   <LuCircleDollarSign size={24} className="text-[#94BFFF]" />
                 </div>
                 <span className="text-sm font-medium text-[#656565] whitespace-nowrap">
-                 Join Referral Program
+                  Join Referral Program
                 </span>
               </a>
             </div>
@@ -846,7 +856,7 @@ const Sidebar = ({
                 </NavLink> */}
 
                 {/* Admin Controls - Only visible for admin/owner roles */}
-                {userData?.isAdminOrOwner && (
+                {userData?.isAdminOrOwnerOrSuper && (
                   <>
                     {/* Users Management */}
                     <NavLink
@@ -885,6 +895,28 @@ const Sidebar = ({
                           size={24}
                           className={
                             isActiveRoute('/workspaces')
+                              ? 'text-[#445AE7]'
+                              : 'text-[#656565]'
+                          }
+                        />
+                      </div>
+                    </NavLink>
+
+                    {/* Organization Management */}
+                    <NavLink
+                      to="/organization"
+                      onClick={closeSidebar}
+                      className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
+                        isActiveRoute('/organization')
+                          ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                          : 'text-black hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <div className="w-6 h-6 flex items-center justify-center">
+                        <Building2
+                          size={24}
+                          className={
+                            isActiveRoute('/organization')
                               ? 'text-[#445AE7]'
                               : 'text-[#656565]'
                           }

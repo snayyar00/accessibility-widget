@@ -4,7 +4,7 @@ import { FaTrash, FaCheck, FaTimes, FaPencilAlt } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
-import { CircularProgress, Tooltip } from '@mui/material';
+import { CircularProgress, Tooltip, Chip } from '@mui/material';
 import deleteSite from '@/queries/sites/deleteSite';
 import updateSite from '@/queries/sites/updateSite';
 import toggleSiteMonitoring from '@/queries/sites/toggleSiteMonitoring';
@@ -19,19 +19,7 @@ import { getAuthenticationCookie } from '@/utils/cookie';
 import { RED_BG } from '@/utils/applyStatusClass';
 import MobileDomainCard from './MobileDomainCard';
 import notFoundImage from '@/assets/images/not_found_image.png';
-
-export interface Domain {
-  id: number;
-  url: string;
-  expiredAt: string;
-  status: string;
-  trial: number;
-  monitor_enabled?: boolean;
-  monitor_priority?: number;
-  last_monitor_check?: string;
-  is_currently_down?: number;
-  monitor_consecutive_fails?: number;
-}
+import { Site } from '@/generated/graphql';
 
 interface DomainTableProps {
   data: any;
@@ -50,7 +38,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
   setOptionalDomain,
   customerData,
 }) => {
-  const [domains, setDomains] = useState<Domain[]>([]);
+  const [domains, setDomains] = useState<Site[]>([]);
   const { data: userData } = useSelector((state: RootState) => state.user);
   const [billingLoading, setBillingLoading] = useState(false);
   const [activePlan, setActivePlan] = useState('');
@@ -64,7 +52,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [tempDomain, setTempDomain] = useState('');
   const [expiryDays, setExpiryDays] = useState(-1);
-  const selectedDomain = useRef<Domain | null>(null);
+  const selectedDomain = useRef<Site | null>(null);
   const [showActivateModal, setShowActivateModal] = useState(false);
   // Local state for monitoring toggles (temporary until DB is updated)
   const [monitoringStates, setMonitoringStates] = useState<{
@@ -166,12 +154,12 @@ const DomainTable: React.FC<DomainTableProps> = ({
     setDomains(domains.filter((domain) => domain.id !== id));
   };
 
-  const handleEdit = (domain: Domain) => {
+  const handleEdit = (domain: Site) => {
     // toast.info('Warning: You can only edit up to 3 characters in the URL.', {
     //   position: 'top-center',
     // });
-    setEditingId(domain.id);
-    setTempDomain(domain.url);
+    setEditingId(domain.id ?? null);
+    setTempDomain(domain.url ?? '');
   };
 
   const handleCancel = () => {
@@ -227,7 +215,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
 
     // Duplicate check using root domain comparison
     const isDuplicate = domains.some((d) => {
-      const existingRootDomain = getRootDomain(d.url);
+      const existingRootDomain = getRootDomain(d.url ?? '');
       return existingRootDomain === rootDomain && d.id !== id;
     });
     if (isDuplicate) {
@@ -255,7 +243,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [codeCount, setCodeCount] = useState(0);
   const [isStripeCustomer, setIsStripeCustomer] = useState(false);
 
-  const handleSubscription = async (selectedDomain: Domain) => {
+  const handleSubscription = async (selectedDomain: Site) => {
     setBillingLoading(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
     const bodyData = {
@@ -314,7 +302,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
     setShowActivateModal(false);
   };
 
-  const handleOpenActivateModal = (domain: Domain) => {
+  const handleOpenActivateModal = (domain: Site) => {
     setShowActivateModal(true);
     selectedDomain.current = domain;
   };
@@ -334,13 +322,12 @@ const DomainTable: React.FC<DomainTableProps> = ({
 
   // Filter domains based on search term and active tab
   const filteredDomains = domains.filter((domain) => {
-    const matchesSearch = domain.url
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      domain?.url ?? ''.toLowerCase().includes(searchTerm.toLowerCase());
     const domainStatus = getDomainStatus(
-      domain.url,
-      domain.expiredAt,
-      domain.trial,
+      domain?.url ?? '',
+      domain?.expiredAt ?? '',
+      domain.trial ?? 0,
       appSumoDomains,
     );
     const isActive = domainStatus === 'Active' || domainStatus === 'Life Time';
@@ -551,6 +538,19 @@ const DomainTable: React.FC<DomainTableProps> = ({
                         Domain
                       </span>
                     </div>
+                    <div className="flex-shrink-0 mr-4 w-32 flex items-center">
+                      <Tooltip
+                        title="Domain ownership status and workspace sharing"
+                        placement="top"
+                      >
+                        <span
+                          className="uppercase cursor-help"
+                          style={{ color: '#445AE7' }}
+                        >
+                          Ownership
+                        </span>
+                      </Tooltip>
+                    </div>
                     <div className="flex-shrink-0 mr-16 w-16 flex items-center">
                       <span className="uppercase" style={{ color: '#445AE7' }}>
                         Plan
@@ -580,9 +580,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   {filteredDomains.map((domain) => {
                     const isEditing = editingId === domain.id;
                     const domainStatus = getDomainStatus(
-                      domain.url,
-                      domain.expiredAt,
-                      domain.trial,
+                      domain.url ?? '',
+                      domain.expiredAt ?? '',
+                      domain.trial ?? 0,
                       appSumoDomains,
                     );
 
@@ -618,7 +618,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                           {/* Favicon */}
                           <div className="flex-shrink-0 mr-2">
                             <img
-                              src={getFaviconUrl(domain.url)}
+                              src={getFaviconUrl(domain.url ?? '')}
                               alt={`${domain.url} favicon`}
                               className="w-6 h-6 rounded"
                               onError={(e) => {
@@ -641,11 +641,48 @@ const DomainTable: React.FC<DomainTableProps> = ({
                               />
                             ) : (
                               <div className="text-sm font-medium text-gray-900 truncate">
-                                {domain.url
-                                  .replace(/^https?:\/\//, '')
-                                  .replace(/^www\./, '')}
+                                {domain.url ??
+                                  ''
+                                    .replace(/^https?:\/\//, '')
+                                    .replace(/^www\./, '')}
                               </div>
                             )}
+                          </div>
+
+                          {/* Ownership */}
+                          <div className="flex-shrink-0 mr-4 w-32">
+                            <div className="flex flex-nowrap gap-1">
+                              {!domain.is_owner &&
+                                !domain?.workspaces?.length && (
+                                  <Chip
+                                    variant="outlined"
+                                    color="info"
+                                    size="small"
+                                    label={domain.user_email || 'Shared'}
+                                    sx={{ fontSize: '0.65rem', height: '20px' }}
+                                  />
+                                )}
+
+                              {!!domain?.workspaces?.length && (
+                                <Chip
+                                  variant="outlined"
+                                  color="primary"
+                                  size="small"
+                                  label="Workspace"
+                                  sx={{ fontSize: '0.65rem', height: '20px' }}
+                                />
+                              )}
+
+                              {domain.is_owner && (
+                                <Chip
+                                  variant="outlined"
+                                  color="success"
+                                  size="small"
+                                  label="Owner"
+                                  sx={{ fontSize: '0.65rem', height: '20px' }}
+                                />
+                              )}
+                            </div>
                           </div>
 
                           {/* Plan Status */}
@@ -674,9 +711,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
                             >
                               <span
                                 className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium cursor-help whitespace-nowrap ${applyStatusClass(
-                                  domain.url,
-                                  domain.expiredAt,
-                                  domain.trial,
+                                  domain.url ?? '',
+                                  domain.expiredAt ?? '',
+                                  domain.trial ?? 0,
                                   appSumoDomains,
                                 )}`}
                               >
@@ -707,55 +744,58 @@ const DomainTable: React.FC<DomainTableProps> = ({
 
                           {/* Monitor Toggle */}
                           <div className="flex-shrink-0 mr-8 w-20 my-sites-monitor-toggle">
-                            <Tooltip
-                              title={
-                                monitoringStates[domain.id] ??
-                                domain.monitor_enabled
-                                  ? 'Click to disable monitoring'
-                                  : 'Click to enable monitoring'
-                              }
-                              placement="top"
-                            >
-                              <button
-                                onClick={() =>
-                                  handleMonitoringToggle(
-                                    domain.id,
-                                    monitoringStates[domain.id] ??
-                                      domain.monitor_enabled ??
-                                      false,
-                                  )
-                                }
-                                role="switch"
-                                aria-checked={
-                                  monitoringStates[domain.id] ??
-                                  domain.monitor_enabled ??
-                                  false
-                                }
-                                aria-label={`Toggle monitoring for ${domain.url}`}
-                                className={`relative inline-flex h-4 w-7 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 ${
-                                  monitoringStates[domain.id] ??
+                            {(userData.isAdminOrOwnerOrSuper ||
+                              domain.is_owner) && (
+                              <Tooltip
+                                title={
+                                  monitoringStates[domain.id ?? 0] ??
                                   domain.monitor_enabled
-                                    ? 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500'
-                                    : 'bg-gray-200 hover:bg-gray-300 focus:ring-gray-300'
-                                }`}
-                                disabled={isEditing}
+                                    ? 'Click to disable monitoring'
+                                    : 'Click to enable monitoring'
+                                }
+                                placement="top"
                               >
-                                <span
-                                  aria-hidden="true"
-                                  className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-all duration-300 ${
-                                    monitoringStates[domain.id] ??
+                                <button
+                                  onClick={() =>
+                                    handleMonitoringToggle(
+                                      domain.id ?? 0,
+                                      monitoringStates[domain.id ?? 0] ??
+                                        domain.monitor_enabled ??
+                                        false,
+                                    )
+                                  }
+                                  role="switch"
+                                  aria-checked={
+                                    monitoringStates[domain.id ?? 0] ??
+                                    domain.monitor_enabled ??
+                                    false
+                                  }
+                                  aria-label={`Toggle monitoring for ${domain.url}`}
+                                  className={`relative inline-flex h-4 w-7 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                                    monitoringStates[domain.id ?? 0] ??
                                     domain.monitor_enabled
-                                      ? 'translate-x-3'
-                                      : 'translate-x-0.5'
+                                      ? 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500'
+                                      : 'bg-gray-200 hover:bg-gray-300 focus:ring-gray-300'
                                   }`}
-                                />
-                              </button>
-                            </Tooltip>
+                                  disabled={isEditing}
+                                >
+                                  <span
+                                    aria-hidden="true"
+                                    className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-all duration-300 ${
+                                      monitoringStates[domain.id ?? 0] ??
+                                      domain.monitor_enabled
+                                        ? 'translate-x-3'
+                                        : 'translate-x-0.5'
+                                    }`}
+                                  />
+                                </button>
+                              </Tooltip>
+                            )}
                           </div>
 
                           {/* Status Indicator */}
                           <div className="flex-shrink-0 mr-3 w-24 my-sites-status-indicator">
-                            {monitoringStates[domain.id] ??
+                            {monitoringStates[domain.id ?? 0] ??
                             domain.monitor_enabled ? (
                               domain.is_currently_down !== null &&
                               domain.is_currently_down !== undefined ? (
@@ -877,7 +917,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                               <>
                                 <Tooltip title="Save changes" placement="top">
                                   <button
-                                    onClick={() => handleSave(domain.id)}
+                                    onClick={() => handleSave(domain.id ?? 0)}
                                     className="inline-flex items-center p-1 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all duration-200"
                                     disabled={editLoading}
                                   >
@@ -901,105 +941,123 @@ const DomainTable: React.FC<DomainTableProps> = ({
                             ) : (
                               <>
                                 {/* Conditionally show Activate/Buy button for non-active domains */}
-                                {domainStatus === 'Trial' ||
-                                domainStatus === 'Trial Expired' ? (
+                                {domain.is_owner && (
                                   <>
-                                    {activePlan !== '' && tierPlan ? (
+                                    {(domainStatus === 'Trial' ||
+                                      domainStatus === 'Trial Expired') && (
+                                      <>
+                                        {activePlan !== '' && tierPlan ? (
+                                          <Tooltip
+                                            title="Activate subscription"
+                                            placement="top"
+                                          >
+                                            <button
+                                              disabled={billingLoading}
+                                              onClick={() =>
+                                                handleSubscription(domain)
+                                              }
+                                              className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                              {billingLoading
+                                                ? 'Processing...'
+                                                : 'Activate'}
+                                            </button>
+                                          </Tooltip>
+                                        ) : appSumoCount < codeCount ? (
+                                          <Tooltip
+                                            title="Activate with promo code"
+                                            placement="top"
+                                          >
+                                            <button
+                                              onClick={() =>
+                                                handleOpenActivateModal(domain)
+                                              }
+                                              className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
+                                            >
+                                              Activate
+                                            </button>
+                                          </Tooltip>
+                                        ) : (
+                                          <Tooltip
+                                            title="Buy license"
+                                            placement="top"
+                                          >
+                                            <button
+                                              onClick={() => {
+                                                setPaymentView(true);
+                                                openModal();
+                                                setOptionalDomain(
+                                                  domain.url ?? '',
+                                                );
+                                              }}
+                                              className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
+                                            >
+                                              Buy License
+                                            </button>
+                                          </Tooltip>
+                                        )}
+                                      </>
+                                    )}
+                                  </>
+                                )}
+                                {(userData.isAdminOrOwnerOrSuper ||
+                                  domain.is_owner) && (
+                                  <Tooltip title="Edit domain" placement="top">
+                                    <button
+                                      onClick={() => handleEdit(domain)}
+                                      className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                      aria-label={`Edit domain ${domain.url}`}
+                                    >
+                                      <FaPencilAlt className="w-4 h-4" />
+                                    </button>
+                                  </Tooltip>
+                                )}
+                                {domain.is_owner && (
+                                  <Tooltip
+                                    title="Delete domain"
+                                    placement="top"
+                                  >
+                                    <button
+                                      onClick={() => {
+                                        setDeleteSiteID(domain.id ?? 0);
+                                        setDeleteSiteStatus(domainStatus);
+                                        setShowModal(true);
+                                        setIsCancel(false);
+                                      }}
+                                      className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                      aria-label={`Delete domain ${domain.url}`}
+                                    >
+                                      <FaTrash className="w-4 h-4" />
+                                    </button>
+                                  </Tooltip>
+                                )}
+                                {/* Cancel Button for Active/Life Time domains */}
+                                {domain.is_owner && (
+                                  <>
+                                    {(domainStatus === 'Active' ||
+                                      domainStatus === 'Life Time') && (
                                       <Tooltip
-                                        title="Activate subscription"
+                                        title={
+                                          'Cancel Subscription for this domain'
+                                        }
                                         placement="top"
                                       >
                                         <button
-                                          disabled={billingLoading}
+                                          type="button"
+                                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer whitespace-nowrap ${RED_BG}`}
                                           onClick={() =>
-                                            handleSubscription(domain)
+                                            handleCancelSubscription(
+                                              domain.id ?? 0,
+                                              domainStatus,
+                                            )
                                           }
-                                          className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                          {billingLoading
-                                            ? 'Processing...'
-                                            : 'Activate'}
-                                        </button>
-                                      </Tooltip>
-                                    ) : appSumoCount < codeCount ? (
-                                      <Tooltip
-                                        title="Activate with promo code"
-                                        placement="top"
-                                      >
-                                        <button
-                                          onClick={() =>
-                                            handleOpenActivateModal(domain)
-                                          }
-                                          className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                                        >
-                                          Activate
-                                        </button>
-                                      </Tooltip>
-                                    ) : (
-                                      <Tooltip
-                                        title="Buy license"
-                                        placement="top"
-                                      >
-                                        <button
-                                          onClick={() => {
-                                            setPaymentView(true);
-                                            openModal();
-                                            setOptionalDomain(domain.url);
-                                          }}
-                                          className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                                        >
-                                          Buy License
+                                          <FaTimes className="w-3 h-3 text-red-500 mr-1 flex-shrink-0" />
+                                          Cancel Subscription
                                         </button>
                                       </Tooltip>
                                     )}
                                   </>
-                                ) : null}
-                                <Tooltip title="Edit domain" placement="top">
-                                  <button
-                                    onClick={() => handleEdit(domain)}
-                                    className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
-                                    aria-label={`Edit domain ${domain.url}`}
-                                  >
-                                    <FaPencilAlt className="w-4 h-4" />
-                                  </button>
-                                </Tooltip>
-                                <Tooltip title="Delete domain" placement="top">
-                                  <button
-                                    onClick={() => {
-                                      setDeleteSiteID(domain.id);
-                                      setDeleteSiteStatus(domainStatus);
-                                      setShowModal(true);
-                                      setIsCancel(false);
-                                    }}
-                                    className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
-                                    aria-label={`Delete domain ${domain.url}`}
-                                  >
-                                    <FaTrash className="w-4 h-4" />
-                                  </button>
-                                </Tooltip>
-                                {/* Cancel Button for Active/Life Time domains */}
-                                {(domainStatus === 'Active' ||
-                                  domainStatus === 'Life Time') && (
-                                  <Tooltip
-                                    title={
-                                      'Cancel Subscription for this domain'
-                                    }
-                                    placement="top"
-                                  >
-                                    <button
-                                      type="button"
-                                      className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer whitespace-nowrap ${RED_BG}`}
-                                      onClick={() =>
-                                        handleCancelSubscription(
-                                          domain.id,
-                                          domainStatus,
-                                        )
-                                      }
-                                    >
-                                      <FaTimes className="w-3 h-3 text-red-500 mr-1 flex-shrink-0" />
-                                      Cancel Subscription
-                                    </button>
-                                  </Tooltip>
                                 )}
                               </>
                             )}
@@ -1056,9 +1114,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
             filteredDomains.map((domain) => {
               const isEditing = editingId === domain.id;
               const domainStatus = getDomainStatus(
-                domain.url,
-                domain.expiredAt,
-                domain.trial,
+                domain.url ?? '',
+                domain.expiredAt ?? '',
+                domain.trial ?? 0,
                 appSumoDomains,
               );
 
@@ -1078,6 +1136,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   appSumoCount={appSumoCount}
                   codeCount={codeCount}
                   appSumoDomains={appSumoDomains}
+                  userData={userData}
                   onEdit={handleEdit}
                   onCancel={handleCancel}
                   onSave={handleSave}
@@ -1092,7 +1151,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   onPaymentView={() => {
                     setPaymentView(true);
                     openModal();
-                    setOptionalDomain(domain.url);
+                    setOptionalDomain(domain.url ?? '');
                   }}
                   onCancelSubscription={handleCancelSubscription}
                 />

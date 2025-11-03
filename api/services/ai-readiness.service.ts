@@ -1,5 +1,6 @@
-import { BrowserbaseService } from '../utils/browserbase-service.js'
 import OpenAI from 'openai'
+
+import { BrowserbaseService } from '../utils/browserbase-service.js'
 
 // AI Readiness Service for website analysis
 
@@ -79,7 +80,7 @@ export class AIReadinessService {
     const headingLevels = headings.map((h) => parseInt(h.match(/<h([1-6])/i)?.[1] || '0'))
 
     let headingScore = 100
-    let headingIssues: string[] = []
+    const headingIssues: string[] = []
 
     // Check for single H1
     if (h1Count === 0) {
@@ -159,7 +160,7 @@ export class AIReadinessService {
 
     // Enhanced scoring - be more generous
     let metaScore = 30 // Base score for having a page
-    let metaDetails: string[] = []
+    const metaDetails: string[] = []
 
     if (hasOgTitle) {
       metaScore += 30

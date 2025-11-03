@@ -2,9 +2,11 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 
 import database from '../../config/database.config'
-import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE } from '../../constants/organization.constant'
+import { INVITATION_STATUS_PENDING } from '../../constants/invitation.constant'
+import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE, ORGANIZATION_USER_STATUS_PENDING, OrganizationUserRole } from '../../constants/organization.constant'
 import { generatePassword } from '../../helpers/hashing.helper'
 import { sign } from '../../helpers/jwt.helper'
+import { getOrganizationInvitation, getWorkspaceInvitation } from '../../repository/invitations.repository'
 import { Organization } from '../../repository/organization.repository'
 import { createUser, findUser, insertUserNotification, updateUser } from '../../repository/user.repository'
 import EmailSequenceService from '../../services/email/emailSequence.service'
@@ -21,7 +23,7 @@ type RegisterResponse = {
   token: string
 }
 
-async function registerUser(email: string, password: string, name: string, organization: Organization, referralCode?: string): Promise<ApolloError | RegisterResponse> {
+async function registerUser(email: string, password: string, name: string, organization: Organization, allowedFrontendUrl: string, referralCode?: string): Promise<ApolloError | RegisterResponse> {
   const sanitizedInput = sanitizeUserInput({ email, name })
 
   email = sanitizedInput.email
@@ -76,29 +78,40 @@ async function registerUser(email: string, password: string, name: string, organ
 
       newUserId = userId
 
+      const [workspaceInvitation] = await getWorkspaceInvitation({ email, status: INVITATION_STATUS_PENDING })
+      const [organizationInvitation] = !workspaceInvitation ? await getOrganizationInvitation({ email, status: INVITATION_STATUS_PENDING }) : [null]
+
+      const invitation = workspaceInvitation || organizationInvitation
+      const invitationOrgId = invitation?.organization_id
+
+      const invitationRole = (organizationInvitation?.organization_role || ORGANIZATION_USER_ROLE_MEMBER) as OrganizationUserRole
+
+      const targetOrgId = invitationOrgId || organization.id
+      const userStatus = invitation ? ORGANIZATION_USER_STATUS_PENDING : ORGANIZATION_USER_STATUS_ACTIVE
+
       // Create user_notifications record with onboarding emails enabled (within transaction)
       try {
-        await insertUserNotification(userId, organization.id, trx)
+        await insertUserNotification(userId, targetOrgId, trx)
         logger.info(`Created user_notifications record for user: ${email}`)
       } catch (error) {
         logger.error(`Failed to create user_notifications: ${email}`, error)
         throw error // Fail the transaction if user_notifications creation fails
       }
 
-      const ids = await addUserToOrganization(userId, organization.id, ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE, trx)
+      const ids = await addUserToOrganization(userId, targetOrgId, invitationRole, userStatus, trx)
 
       if (!Array.isArray(ids) || ids.length === 0) {
         throw new ApolloError('Failed to add user to organization.')
       }
 
-      await updateUser(userId, { current_organization_id: organization.id }, trx)
+      await updateUser(userId, { current_organization_id: targetOrgId }, trx)
     })
 
     // Send welcome email after transaction completes successfully
     // The email sequence will be handled by the daily cron job
     if (newUserId) {
       try {
-        const welcomeEmailSent = await EmailSequenceService.sendWelcomeEmail(email, name, newUserId, organization.id)
+        const welcomeEmailSent = await EmailSequenceService.sendWelcomeEmail(email, name, newUserId, organization.id, allowedFrontendUrl)
         if (welcomeEmailSent) {
           logger.info(`Welcome email sent successfully to new user: ${email}`)
         } else {

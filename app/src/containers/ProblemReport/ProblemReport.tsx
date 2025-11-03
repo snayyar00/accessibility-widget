@@ -104,7 +104,7 @@ const ProblemReport: React.FC = () => {
 
   useEffect(() => {
     fetchProblemReports();
-  }, []);
+  }, [data.current_organization_id]);
 
   // First filter by domain and issue type (without status filter)
   const issuesFilteredByDomainAndType = problemArray.filter((problem) => {
