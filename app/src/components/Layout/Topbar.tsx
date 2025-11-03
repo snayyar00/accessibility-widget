@@ -16,7 +16,7 @@ import {
 } from '@/features/whatsNew/whatsNewSlice';
 
 // Actions
-import { toggleSidebar } from '@/features/admin/sidebar';
+import { toggleSidebar, setSidebarLockedOpen } from '@/features/admin/sidebar';
 
 import type { RootState } from '@/config/store';
 import InitialAvatar from '@/components/Common/InitialAvatar';
@@ -28,6 +28,7 @@ import { useMutation, useQuery } from '@apollo/client';
 import { gql } from '@apollo/client';
 import { baseColors } from '@/config/colors';
 import DomainsSelect from '@/containers/Dashboard/DomainsSelect';
+import { openHubSpotChat, openSupportEmail } from '@/utils/hubspot';
 
 const GET_USER_NOTIFICATION_SETTINGS = gql`
   query GetUserNotificationSettings {
@@ -84,7 +85,7 @@ const Topbar: React.FC<Props> = ({
   } = useSelector((state: RootState) => state.user);
 
   const { data } = useSelector((state: RootState) => state.user);
-  const { isOpen: isSidebarOpen } = useSelector(
+  const { isOpen: isSidebarOpen, lockedOpen } = useSelector(
     (state: RootState) => state.sidebar,
   );
 
@@ -187,15 +188,20 @@ const Topbar: React.FC<Props> = ({
             {/* Sidebar Toggle Button */}
             <button
               onClick={() => {
-                if (isSidebarOpen) {
-                  // Close the sidebar
+                if (lockedOpen) {
+                  // Unlock and close
+                  dispath(setSidebarLockedOpen(false));
                   dispath(toggleSidebar(false));
-                  // For desktop: trigger collapse behavior
                   window.dispatchEvent(new CustomEvent('collapseSidebar'));
-                } else {
-                  // Open the sidebar
+                } else if (isSidebarOpen) {
+                  // Currently open but not locked: lock it open
+                  dispath(setSidebarLockedOpen(true));
                   dispath(toggleSidebar(true));
-                  // For desktop: trigger hover behavior by dispatching a custom event
+                  window.dispatchEvent(new CustomEvent('expandSidebar'));
+                } else {
+                  // Currently closed: open and lock
+                  dispath(setSidebarLockedOpen(true));
+                  dispath(toggleSidebar(true));
                   window.dispatchEvent(new CustomEvent('expandSidebar'));
                 }
               }}
@@ -302,9 +308,7 @@ const Topbar: React.FC<Props> = ({
               {/* Support */}
               <button
                 className="p-2 rounded-lg hover:bg-blue-200 transition-colors duration-200"
-                onClick={() =>
-                  window.open('mailto:support@webability.io', '_blank')
-                }
+                onClick={openHubSpotChat}
                 title="Contact Support"
               >
                 <Headset className="w-5 h-5" style={{ color: '#484848' }} />
