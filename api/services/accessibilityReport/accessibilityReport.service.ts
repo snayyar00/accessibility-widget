@@ -681,6 +681,8 @@ export const _fetchAccessibilityReportInternal = async (url: string, useCache?: 
       result.issuesByFunction = issuesByFunction
       result.functionalityNames = functionalityNames
       result.totalStats = totalStats
+      // Update result.score to match totalStats.score for consistency across PDF and UI
+      result.score = totalStats.score
 
       if (result) {
         if (result.ByFunctions && Array.isArray(result.ByFunctions) && result.ByFunctions.length > 0) {
