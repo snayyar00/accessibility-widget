@@ -1071,7 +1071,15 @@ function calculateTotalStats(
   const severityCounts = countIssuesBySeverity(issues)
   const baseScore = report?.score || 0
   console.log(`Base score: ${baseScore}, Critical: ${severityCounts.criticalIssues}, Warnings: ${severityCounts.warnings}, Moderate: ${severityCounts.moderateIssues}`)
-  const enhancedScore = webabilityEnabled ? Math.min(95, baseScore + 45) : baseScore
+  
+  // If no issues are detected (displayed to user), set score to 95
+  let enhancedScore
+  if (issues.length === 0) {
+    enhancedScore = 95
+    console.log('No issues found - setting score to 95%')
+  } else {
+    enhancedScore = webabilityEnabled ? Math.min(95, baseScore + 45) : baseScore
+  }
 
   return {
     score: enhancedScore,
