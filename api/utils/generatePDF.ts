@@ -1,8 +1,9 @@
-import getWidgetSettings from './getWidgetSettings'
-import { translateText, translateMultipleTexts, LANGUAGES, deduplicateIssuesByMessage } from './translator'
-import * as path from 'path'
 import * as fs from 'fs'
 import autoTable, { __createTable, __drawTable } from 'jspdf-autotable'
+import * as path from 'path'
+
+import getWidgetSettings from './getWidgetSettings'
+import { deduplicateIssuesByMessage, LANGUAGES, translateMultipleTexts, translateText } from './translator'
 
 // Helper function to load images from file system
 const loadImageAsBase64 = (imagePath: string): string | null => {
@@ -296,31 +297,43 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
 
     let logoBottomY = 0
 
-    // Handle logo loading like pdfGenerator.ts
+    // Handle logo loading - backward compatible with base64, HTTP URLs, and local paths
     let logoBase64 = null
-    let logopath: string | undefined
+    let logoBuffer: Buffer | undefined
 
     if (logoImage && logoImage.startsWith('data:image')) {
-      // Already base64
+      // Already base64 - backward compatible
       logoBase64 = logoImage.split(',')[1]
-      logopath = logoImage.split(',')[1]
+      logoBuffer = Buffer.from(logoBase64, 'base64')
+    } else if (logoImage && (logoImage.startsWith('http://') || logoImage.startsWith('https://'))) {
+      // HTTP/HTTPS URL (e.g., R2 storage URL) - backward compatible
+      try {
+        const response = await fetch(logoImage)
+        if (response.ok) {
+          logoBuffer = Buffer.from(await response.arrayBuffer())
+          logoBase64 = logoBuffer.toString('base64')
+        }
+      } catch (error) {
+        console.warn('Failed to fetch logo from URL:', logoImage, error)
+      }
     } else if (logoImage && fs.existsSync(logoImage)) {
-      logoBase64 = fs.readFileSync(logoImage, { encoding: 'base64' })
-      logopath = logoImage
+      // Local file path - backward compatible
+      logoBuffer = fs.readFileSync(logoImage)
+      logoBase64 = logoBuffer.toString('base64')
     } else {
       // fallback: try to load from default path
       const fallbackLogoPath = path.join(process.cwd(), 'email-templates', 'logo.png')
-      logopath = fallbackLogoPath
       if (fs.existsSync(fallbackLogoPath)) {
-        logoBase64 = fs.readFileSync(fallbackLogoPath, { encoding: 'base64' })
+        logoBuffer = fs.readFileSync(fallbackLogoPath)
+        logoBase64 = logoBuffer.toString('base64')
       }
     }
 
     try {
-      if (logoBase64) {
+      if (logoBase64 && logoBuffer) {
         // Use sharp to get proper dimensions like pdfGenerator.ts
         const sharp = (await import('sharp')).default
-        const image = sharp(Buffer.from(logoBase64, 'base64'))
+        const image = sharp(logoBuffer)
 
         const maxWidth = 48
         const maxHeight = 36 // increased size for a bigger logo
@@ -507,7 +520,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
     doc.setTextColor(71, 85, 105) // Gray color for message
     // Split message into lines if it contains \n
     const messageLines = message.split('\n')
-    let messageY = statusTextY + 14 // Maintained spacing below status text
+    const messageY = statusTextY + 14 // Maintained spacing below status text
     messageLines.forEach((line, index) => {
       doc.text(line, statusTextX, messageY + index * 6) // 6px spacing between lines
     })
@@ -883,7 +896,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
       doc.text(translatedIssuesDetectedByCategory, 12, nextY + 8, {
         align: 'left',
       })
-      let currentY = nextY + 18
+      const currentY = nextY + 18
 
       // Define category colors to match the Figma design - all blue theme
       const categoryColors = new Map<string, [number, number, number]>([
@@ -1202,7 +1215,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
           // Split text into multiple lines if it's too long
           const words = titleText.split(' ')
           let currentLine = ''
-          let lines: string[] = []
+          const lines: string[] = []
 
           for (const word of words) {
             const testLine = currentLine ? `${currentLine} ${word}` : word
@@ -1445,7 +1458,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
       }
     }
 
-    let fitToPage = false
+    const fitToPage = false
 
     for (const [index, issue] of translatedIssues.entries()) {
       // Add page break before each issue (except the first one)
@@ -2116,8 +2129,8 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
       if (issue.screenshotBase64) {
         // Get actual image dimensions from base64 data
         const dimensions = await getImageDimensions(issue.screenshotBase64)
-        let drawWidth = dimensions.width
-        let drawHeight = dimensions.height
+        const drawWidth = dimensions.width
+        const drawHeight = dimensions.height
 
         // Scale down if image is too large for PDF
         const maxWidth = 120
