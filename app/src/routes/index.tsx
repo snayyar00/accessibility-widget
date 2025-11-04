@@ -11,6 +11,7 @@ import Users from '@/containers/Users';
 import ProofOfEffortToolkit from '@/containers/ProofOfEffortToolkit/ProofOfEffortToolkit';
 import AIInsights from '@/containers/AIInsights/AIInsights';
 import Workspaces from '@/containers/Workspaces';
+import Organization from '@/containers/Organization';
 
 const routes = [
   {
@@ -110,6 +111,13 @@ const routes = [
     name: 'Users',
     exact: true,
     component: Users,
+    isSidebar: false,
+  },
+  {
+    path: '/organization',
+    name: 'Organization',
+    exact: true,
+    component: Organization,
     isSidebar: false,
   },
 ];

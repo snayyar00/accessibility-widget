@@ -1,12 +1,12 @@
 import React from 'react';
 import { FaCheck, FaTimes, FaPencilAlt, FaTrash } from 'react-icons/fa';
-import { Tooltip, CircularProgress } from '@mui/material';
-import { Domain } from './DomainTable';
+import { Tooltip, CircularProgress, Chip } from '@mui/material';
+import { Site } from '@/generated/graphql';
 import applyStatusClass from '@/utils/applyStatusClass';
 import { RED_BG } from '@/utils/applyStatusClass';
 
 interface MobileDomainCardProps {
-  domain: Domain;
+  domain: Site;
   isEditing: boolean;
   tempDomain: string;
   setTempDomain: (value: string) => void;
@@ -19,13 +19,14 @@ interface MobileDomainCardProps {
   appSumoCount: number;
   codeCount: number;
   appSumoDomains: string[];
-  onEdit: (domain: Domain) => void;
+  userData: any;
+  onEdit: (domain: Site) => void;
   onCancel: () => void;
   onSave: (id: number) => void;
   onDelete: (id: number, status: string) => void;
   onMonitoringToggle: (siteId: number, currentValue: boolean) => void;
-  onSubscription: (domain: Domain) => void;
-  onOpenActivateModal: (domain: Domain) => void;
+  onSubscription: (domain: Site) => void;
+  onOpenActivateModal: (domain: Site) => void;
   onPaymentView: () => void;
   onCancelSubscription: (domainId: number, domainStatus: string) => void;
 }
@@ -44,6 +45,7 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
   appSumoCount,
   codeCount,
   appSumoDomains,
+  userData,
   onEdit,
   onCancel,
   onSave,
@@ -84,7 +86,7 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
         {/* Favicon */}
         <div className="flex-shrink-0 mr-3">
           <img
-            src={getFaviconUrl(domain.url)}
+            src={getFaviconUrl(domain.url ?? '')}
             alt={`${domain.url} favicon`}
             className="w-6 h-6 rounded"
             onError={(e) => {
@@ -108,14 +110,15 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
           ) : (
             <div className="text-sm font-medium text-gray-900">
               <span className="hidden sm:inline">
-                {domain.url
+                {(domain.url ?? '')
                   .replace(/^https?:\/\//, '')
                   .replace(/^www\./, '')
                   .substring(0, 7)}
-                {domain.url.replace(/^https?:\/\//, '').replace(/^www\./, '')
-                  .length > 7 && '...'}
+                {(domain.url ?? '')
+                  .replace(/^https?:\/\//, '')
+                  .replace(/^www\./, '').length > 7 && '...'}
               </span>
-              <span className="sm:hidden truncate">{domain.url}</span>
+              <span className="sm:hidden truncate">{domain.url ?? ''}</span>
             </div>
           )}
         </div>
@@ -126,7 +129,7 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
             <div className="flex items-center space-x-1">
               <Tooltip title="Save changes" placement="top">
                 <button
-                  onClick={() => onSave(domain.id)}
+                  onClick={() => onSave(domain.id ?? 0)}
                   className="inline-flex items-center p-1 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all duration-200"
                   disabled={editLoading}
                 >
@@ -148,21 +151,61 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
               </Tooltip>
             </div>
           ) : (
-            <Tooltip title="Edit domain" placement="top">
-              <button
-                onClick={() => onEdit(domain)}
-                className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
-                aria-label={`Edit domain ${domain.url}`}
-              >
-                <FaPencilAlt className="w-4 h-4" />
-              </button>
-            </Tooltip>
+            <>
+              {(userData?.isAdminOrOwnerOrSuper || domain.is_owner) && (
+                <Tooltip title="Edit domain" placement="top">
+                  <button
+                    onClick={() => onEdit(domain)}
+                    className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                    aria-label={`Edit domain ${domain.url}`}
+                  >
+                    <FaPencilAlt className="w-4 h-4" />
+                  </button>
+                </Tooltip>
+              )}
+            </>
           )}
         </div>
       </div>
 
       {/* Column Layout for Mobile */}
       <div className="space-y-3 mt-3 pt-3 border-t border-gray-100">
+        {/* Ownership */}
+        <div className="flex items-center space-x-2">
+          <span className="text-xs text-gray-500">Ownership:</span>
+          <div className="flex flex-wrap gap-1">
+            {!domain.is_owner && !domain?.workspaces?.length && (
+              <Chip
+                variant="outlined"
+                color="info"
+                size="small"
+                label={domain.user_email || 'Shared'}
+                sx={{ fontSize: '0.65rem', height: '20px' }}
+              />
+            )}
+
+            {!!domain?.workspaces?.length && (
+              <Chip
+                variant="outlined"
+                color="primary"
+                size="small"
+                label="Workspace"
+                sx={{ fontSize: '0.65rem', height: '20px' }}
+              />
+            )}
+
+            {domain.is_owner && (
+              <Chip
+                variant="outlined"
+                color="success"
+                size="small"
+                label="Owner"
+                sx={{ fontSize: '0.65rem', height: '20px' }}
+              />
+            )}
+          </div>
+        </div>
+
         {/* Plan Status */}
         <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-2">
           <div className="flex items-center space-x-2">
@@ -191,9 +234,9 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
             >
               <span
                 className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium cursor-help ${applyStatusClass(
-                  domain.url,
-                  domain.expiredAt,
-                  domain.trial,
+                  domain.url ?? '',
+                  domain.expiredAt ?? '',
+                  domain.trial ?? 0,
                   appSumoDomains,
                 )}`}
               >
@@ -222,30 +265,33 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
             </Tooltip>
           </div>
           {/* Cancel Button for Active/Life Time domains */}
-          {(domainStatus === 'Active' || domainStatus === 'Life Time') && (
-            <div className="flex items-center">
-              <Tooltip
-                title={'Cancel Subscription for this domain'}
-                placement="top"
-              >
-                <button
-                  type="button"
-                  className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer ${RED_BG} w-fit`}
-                  onClick={() => onCancelSubscription(domain.id, domainStatus)}
+          {domain.is_owner &&
+            (domainStatus === 'Active' || domainStatus === 'Life Time') && (
+              <div className="flex items-center">
+                <Tooltip
+                  title={'Cancel Subscription for this domain'}
+                  placement="top"
                 >
-                  <FaTimes className="w-4 h-4 text-red-500 mr-1" />
-                  <span className="hidden md:inline">Cancel</span>
-                  <span className="md:hidden">Cancel Subscription</span>
-                </button>
-              </Tooltip>
-            </div>
-          )}
+                  <button
+                    type="button"
+                    className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer ${RED_BG} w-fit`}
+                    onClick={() =>
+                      onCancelSubscription(domain.id ?? 0, domainStatus)
+                    }
+                  >
+                    <FaTimes className="w-4 h-4 text-red-500 mr-1" />
+                    <span className="hidden md:inline">Cancel</span>
+                    <span className="md:hidden">Cancel Subscription</span>
+                  </button>
+                </Tooltip>
+              </div>
+            )}
         </div>
 
         {/* Status Indicator */}
         <div className="flex items-center space-x-2">
           <span className="text-xs text-gray-500">Status:</span>
-          {monitoringStates[domain.id] ?? domain.monitor_enabled ? (
+          {monitoringStates[domain.id ?? 0] ?? domain.monitor_enabled ? (
             domain.is_currently_down !== null &&
             domain.is_currently_down !== undefined ? (
               <>
@@ -352,95 +398,102 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
         </div>
 
         {/* Activate/Buy Button (if applicable) */}
-        {domainStatus === 'Trial' || domainStatus === 'Trial Expired' ? (
-          <div className="flex items-center space-x-2">
-            {activePlan !== '' && tierPlan ? (
-              <Tooltip title="Activate subscription" placement="top">
-                <button
-                  disabled={billingLoading}
-                  onClick={() => onSubscription(domain)}
-                  className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {billingLoading ? 'Processing...' : 'Activate'}
-                </button>
-              </Tooltip>
-            ) : appSumoCount < codeCount ? (
-              <Tooltip title="Activate with promo code" placement="top">
-                <button
-                  onClick={() => onOpenActivateModal(domain)}
-                  className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                >
-                  Activate
-                </button>
-              </Tooltip>
-            ) : (
-              <Tooltip title="Buy license" placement="top">
-                <button
-                  onClick={onPaymentView}
-                  className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                >
-                  Buy License
-                </button>
-              </Tooltip>
-            )}
-          </div>
-        ) : null}
+        {domain.is_owner &&
+          (domainStatus === 'Trial' || domainStatus === 'Trial Expired') && (
+            <div className="flex items-center space-x-2">
+              {activePlan !== '' && tierPlan ? (
+                <Tooltip title="Activate subscription" placement="top">
+                  <button
+                    disabled={billingLoading}
+                    onClick={() => onSubscription(domain)}
+                    className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {billingLoading ? 'Processing...' : 'Activate'}
+                  </button>
+                </Tooltip>
+              ) : appSumoCount < codeCount ? (
+                <Tooltip title="Activate with promo code" placement="top">
+                  <button
+                    onClick={() => onOpenActivateModal(domain)}
+                    className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
+                  >
+                    Activate
+                  </button>
+                </Tooltip>
+              ) : (
+                <Tooltip title="Buy license" placement="top">
+                  <button
+                    onClick={onPaymentView}
+                    className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
+                  >
+                    Buy License
+                  </button>
+                </Tooltip>
+              )}
+            </div>
+          )}
 
         {/* Monitor Toggle and Delete Button in Same Row */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-500">Monitor:</span>
-            <Tooltip
-              title={
-                monitoringStates[domain.id] ?? domain.monitor_enabled
-                  ? 'Click to disable monitoring'
-                  : 'Click to enable monitoring'
-              }
-              placement="top"
-            >
-              <button
-                onClick={() =>
-                  onMonitoringToggle(
-                    domain.id,
-                    monitoringStates[domain.id] ??
-                      domain.monitor_enabled ??
-                      false,
-                  )
+          {(userData?.isAdminOrOwnerOrSuper || domain.is_owner) && (
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-500">Monitor:</span>
+              <Tooltip
+                title={
+                  monitoringStates[domain.id ?? 0] ?? domain.monitor_enabled
+                    ? 'Click to disable monitoring'
+                    : 'Click to enable monitoring'
                 }
-                role="switch"
-                aria-checked={
-                  monitoringStates[domain.id] ?? domain.monitor_enabled ?? false
-                }
-                aria-label={`Toggle monitoring for ${domain.url}`}
-                className={`relative inline-flex h-4 w-7 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 ${
-                  monitoringStates[domain.id] ?? domain.monitor_enabled
-                    ? 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500'
-                    : 'bg-gray-200 hover:bg-gray-300 focus:ring-gray-300'
-                }`}
-                disabled={isEditing}
+                placement="top"
               >
-                <span
-                  aria-hidden="true"
-                  className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-all duration-300 ${
-                    monitoringStates[domain.id] ?? domain.monitor_enabled
-                      ? 'translate-x-3'
-                      : 'translate-x-0.5'
+                <button
+                  onClick={() =>
+                    onMonitoringToggle(
+                      domain.id ?? 0,
+                      monitoringStates[domain.id ?? 0] ??
+                        domain.monitor_enabled ??
+                        false,
+                    )
+                  }
+                  role="switch"
+                  aria-checked={
+                    monitoringStates[domain.id ?? 0] ??
+                    domain.monitor_enabled ??
+                    false
+                  }
+                  aria-label={`Toggle monitoring for ${domain.url}`}
+                  className={`relative inline-flex h-4 w-7 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                    monitoringStates[domain.id ?? 0] ?? domain.monitor_enabled
+                      ? 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500'
+                      : 'bg-gray-200 hover:bg-gray-300 focus:ring-gray-300'
                   }`}
-                />
-              </button>
-            </Tooltip>
-          </div>
+                  disabled={isEditing}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-all duration-300 ${
+                      monitoringStates[domain.id ?? 0] ?? domain.monitor_enabled
+                        ? 'translate-x-3'
+                        : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+              </Tooltip>
+            </div>
+          )}
 
           {/* Delete Button */}
-          <Tooltip title="Delete domain" placement="top">
-            <button
-              onClick={() => onDelete(domain.id, domainStatus)}
-              className="text-red-400 hover:text-red-600 p-1 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 transition-all duration-200"
-              aria-label={`Delete domain ${domain.url}`}
-            >
-              <FaTrash className="w-4 h-4" />
-            </button>
-          </Tooltip>
+          {domain.is_owner && (
+            <Tooltip title="Delete domain" placement="top">
+              <button
+                onClick={() => onDelete(domain.id ?? 0, domainStatus)}
+                className="text-red-400 hover:text-red-600 p-1 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 transition-all duration-200"
+                aria-label={`Delete domain ${domain.url}`}
+              >
+                <FaTrash className="w-4 h-4" />
+              </button>
+            </Tooltip>
+          )}
         </div>
       </div>
     </div>

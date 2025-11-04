@@ -2,13 +2,13 @@ import { Response } from 'express'
 import { skip } from 'graphql-resolvers'
 
 import { Organization } from '../../repository/organization.repository'
-import { UserProfile } from '../../repository/user.repository'
+import { UserLogined } from '../../services/authentication/get-user-logined.service'
 import { AuthenticationError, ForbiddenError } from '../../utils/graphql-errors.helper'
 
 type Context = {
-  user?: UserProfile
+  user?: UserLogined
   res?: Response
-  clientDomain: string | null
+  domainFromRequest: string | null
   allowedFrontendUrl: string | null
   organization: Organization | null
 }

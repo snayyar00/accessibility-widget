@@ -1,8 +1,9 @@
-import getWidgetSettings from './getWidgetSettings'
-import { translateText, translateMultipleTexts, LANGUAGES, deduplicateIssuesByMessage } from './translator'
-import * as path from 'path'
 import * as fs from 'fs'
 import autoTable, { __createTable, __drawTable } from 'jspdf-autotable'
+import * as path from 'path'
+
+import getWidgetSettings from './getWidgetSettings'
+import { deduplicateIssuesByMessage, LANGUAGES, translateMultipleTexts, translateText } from './translator'
 
 // Helper function to load images from file system
 const loadImageAsBase64 = (imagePath: string): string | null => {
@@ -507,7 +508,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
     doc.setTextColor(71, 85, 105) // Gray color for message
     // Split message into lines if it contains \n
     const messageLines = message.split('\n')
-    let messageY = statusTextY + 14 // Maintained spacing below status text
+    const messageY = statusTextY + 14 // Maintained spacing below status text
     messageLines.forEach((line, index) => {
       doc.text(line, statusTextX, messageY + index * 6) // 6px spacing between lines
     })
@@ -883,7 +884,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
       doc.text(translatedIssuesDetectedByCategory, 12, nextY + 8, {
         align: 'left',
       })
-      let currentY = nextY + 18
+      const currentY = nextY + 18
 
       // Define category colors to match the Figma design - all blue theme
       const categoryColors = new Map<string, [number, number, number]>([
@@ -1202,7 +1203,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
           // Split text into multiple lines if it's too long
           const words = titleText.split(' ')
           let currentLine = ''
-          let lines: string[] = []
+          const lines: string[] = []
 
           for (const word of words) {
             const testLine = currentLine ? `${currentLine} ${word}` : word
@@ -1448,7 +1449,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
       }
     }
 
-    let fitToPage = false
+    const fitToPage = false
 
     for (const [index, issue] of translatedIssues.entries()) {
       // Add page break before each issue (except the first one)
@@ -2119,8 +2120,8 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
       if (issue.screenshotBase64) {
         // Get actual image dimensions from base64 data
         const dimensions = await getImageDimensions(issue.screenshotBase64)
-        let drawWidth = dimensions.width
-        let drawHeight = dimensions.height
+        const drawWidth = dimensions.width
+        const drawHeight = dimensions.height
 
         // Scale down if image is too large for PDF
         const maxWidth = 120

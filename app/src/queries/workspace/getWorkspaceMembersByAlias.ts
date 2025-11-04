@@ -11,6 +11,7 @@ export default gql`
       created_at
       updated_at
       invitationId
+      invited_by
       user {
         id
         name

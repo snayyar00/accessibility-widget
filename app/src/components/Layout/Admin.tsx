@@ -21,7 +21,7 @@ import { getAuthenticationCookie } from '@/utils/cookie';
 import { setSelectedDomain } from '@/features/report/reportSlice';
 import Topbar from './Topbar';
 import Sidebar from './Sidebar';
-import { WorkspaceMembers } from '@/containers/Workspaces/members';
+import { WorkspaceDetails } from '@/containers/Workspaces/details';
 
 type Props = {
   signout: () => void;
@@ -118,7 +118,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
         setSelectedOption(data.getUserSites[0].url);
         setDomainData(data.getUserSites[0]);
       } else {
-        setSelectedOption('Add a new Domain');
+        setSelectedOption('No domains available');
         setDomainData(null);
       }
     }
@@ -190,12 +190,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
 
       {/* Main content area with sidebar and content */}
       <div className="flex flex-grow">
-        <Sidebar
-          options={data}
-          setReloadSites={setReloadSites}
-          selectedOption={selectedOption}
-          setSelectedOption={setSelectedOption}
-        />
+        <Sidebar />
         <div className="flex-grow bg-body overflow-y-auto px-[15px] py-[32px] sm:min-h-[calc(100vh_-_64px)]">
           <Switch>
             {routes.map((route) => (
@@ -282,8 +277,8 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
             />
             <Route
               path="/workspaces/:alias"
-              component={WorkspaceMembers}
-              key="/workspace-members"
+              component={WorkspaceDetails}
+              key="/workspace-details"
               exact={false}
             />
             <Redirect from="*" to="/dashboard" />

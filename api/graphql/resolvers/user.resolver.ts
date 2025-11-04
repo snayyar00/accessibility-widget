@@ -1,20 +1,16 @@
 import { combineResolvers } from 'graphql-resolvers'
 
 import { normalizeEmail } from '../../helpers/string.helper'
-import { type OrganizationUser } from '../../repository/organization_user.repository'
-import { getWorkspace } from '../../repository/workspace.repository'
 import { changePasswordUser } from '../../services/authentication/change-password.service'
 import { forgotPasswordUser } from '../../services/authentication/forgot-password.service'
 import { loginUser } from '../../services/authentication/login.service'
 import { registerUser } from '../../services/authentication/register.service'
 import { resetPasswordUser } from '../../services/authentication/reset-password.service'
 import { resendEmailAction, verifyEmail } from '../../services/authentication/verify-email.service'
-import { getOrganizationById } from '../../services/organization/organization.service'
-import { getUserOrganization } from '../../services/organization/organization_users.service'
 import { deleteUser } from '../../services/user/delete-user.service'
 import { getLicenseOwnerInfo, updateLicenseOwnerInfo } from '../../services/user/license-owner.service'
 import { getUserNotificationSettingsService, updateProfile, updateUserNotificationSettings } from '../../services/user/update-user.service'
-import { changeCurrentOrganization, changeCurrentWorkspace } from '../../services/user/update-user.service'
+import { changeCurrentOrganization } from '../../services/user/update-user.service'
 import { isEmailAlreadyRegistered } from '../../services/user/user.service'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
@@ -58,44 +54,14 @@ const resolvers = {
       return await getLicenseOwnerInfo(user.id)
     }),
   },
+
   User: {
-    currentOrganization: async (parent: { current_organization_id?: number; id?: number }) => {
-      if (!parent.current_organization_id || !parent.id) return null
-
-      const org = await getOrganizationById(parent.current_organization_id, parent)
-
-      return org || null
-    },
-
-    currentOrganizationUser: async (parent: { id?: number; current_organization_id?: number }) => {
-      if (!parent.id || !parent.current_organization_id) return null
-
-      const orgUser = await getUserOrganization(parent.id, parent.current_organization_id)
-
-      return orgUser || null
-    },
-
     hasOrganization: (parent: { current_organization_id?: number }) => Boolean(parent.current_organization_id),
   },
-  OrganizationUser: {
-    currentWorkspace: async (parent: OrganizationUser) => {
-      if (!parent.current_workspace_id || !parent.organization_id) return null
 
-      try {
-        return await getWorkspace({
-          id: parent.current_workspace_id,
-          organization_id: parent.organization_id,
-        })
-      } catch {
-        return null
-      }
-    },
-
-    hasWorkspace: (parent: OrganizationUser) => Boolean(parent.current_workspace_id),
-  },
   Mutation: {
-    register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name, referralCode }: Register, { organization }) => {
-      const result = await registerUser(normalizeEmail(email), password, name, organization, referralCode)
+    register: combineResolvers(allowedOrganization, async (_: unknown, { email, password, name, referralCode }: Register, { organization, allowedFrontendUrl }) => {
+      const result = await registerUser(normalizeEmail(email), password, name, organization, allowedFrontendUrl, referralCode)
 
       return result
     }),
@@ -147,10 +113,6 @@ const resolvers = {
 
     changeCurrentOrganization: combineResolvers(allowedOrganization, isAuthenticated, async (_, { organizationId, userId }, { user }) => {
       return await changeCurrentOrganization(user, organizationId, userId)
-    }),
-
-    changeCurrentWorkspace: combineResolvers(allowedOrganization, isAuthenticated, async (_, { workspaceId, userId }, { user }) => {
-      return await changeCurrentWorkspace(user, workspaceId, userId)
     }),
   },
 }

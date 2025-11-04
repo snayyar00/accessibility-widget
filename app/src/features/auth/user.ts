@@ -1,5 +1,5 @@
 import { Organization, OrganizationUser } from '@/generated/graphql';
-import { isAdminOrOwner } from '@/helpers/organizationRole';
+import { isAdminOrOwner } from '@/helpers/permissions';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 type Profile = {
@@ -7,6 +7,7 @@ type Profile = {
   avatarUrl?: string;
   email?: string;
   isActive?: boolean;
+  is_super_admin?: boolean;
   position?: string;
   company?: string;
   name?: string;
@@ -14,7 +15,7 @@ type Profile = {
   current_organization_id?: number | null;
   currentOrganization?: Organization | null;
   currentOrganizationUser?: OrganizationUser | null;
-  isAdminOrOwner?: boolean;
+  isAdminOrOwnerOrSuper?: boolean;
 };
 
 type Error = {
@@ -53,7 +54,8 @@ const user = createSlice({
       state.data = {
         ...state.data,
         ...dataUser,
-        isAdminOrOwner: isAdminOrOwner(organizationUser),
+        isAdminOrOwnerOrSuper:
+          isAdminOrOwner(organizationUser) || dataUser.is_super_admin,
       };
 
       state.loading = loading;

@@ -3,6 +3,7 @@ import { aiReadinessSchema } from './schemas/aiReadiness.schema'
 import { AllowedSitesSchema } from './schemas/allowedSites.schema'
 import { DomainAnalysisSchema } from './schemas/domainAnalysis.schema'
 import { ImpressionsSchema } from './schemas/impressions.schema'
+import { InvitationSchema } from './schemas/invitation.schema'
 import { OrganizationSchema } from './schemas/organization.schema'
 import proofOfEffortSchema from './schemas/proofOfEffort.schema'
 import { reportProblemSchema } from './schemas/reportProblem.schema'
@@ -49,5 +50,6 @@ export default [
   widgetTypeDefs,
   DomainAnalysisSchema,
   WorkspaceSchema,
+  InvitationSchema,
   aiReadinessSchema,
 ]

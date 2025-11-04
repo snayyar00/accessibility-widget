@@ -1,0 +1,261 @@
+import * as React from 'react';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { Chip } from '@mui/material';
+import { useQuery } from '@apollo/client';
+import GET_WORKSPACE_MEMBERS_BY_ALIAS from '@/queries/workspace/getWorkspaceMembersByAlias';
+
+import {
+  Query,
+  WorkspaceUserStatus,
+  WorkspaceUserRole,
+} from '@/generated/graphql';
+import { RoleSelector } from './RoleSelector';
+import { RemoveWorkspaceMember } from './RemoveWorkspaceMember';
+import { RemoveWorkspaceInvitation } from './RemoveWorkspaceInvitation';
+import {
+  canDeleteWorkspaceMember,
+  canChangeTargetMemberRole,
+  getAvailableRolesToAssign,
+} from '@/helpers/permissions';
+
+type TableMembersProps = {
+  alias: string;
+  onUpdate: () => void;
+  hasAccess?: boolean;
+  isAdminOrOwnerOrSuper?: boolean;
+  userWorkspaceRole?: string | null;
+  currentUserId?: number;
+};
+
+const STATUS_STYLES = {
+  [WorkspaceUserStatus.Active]: { backgroundColor: '#22c55e', color: '#fff' },
+  [WorkspaceUserStatus.Pending]: { backgroundColor: '#f59e0b', color: '#fff' },
+  [WorkspaceUserStatus.Inactive]: { backgroundColor: '#ef4444', color: '#fff' },
+  [WorkspaceUserStatus.Decline]: { backgroundColor: '#dc2626', color: '#fff' },
+  invited: { backgroundColor: '#3b82f6', color: '#fff' },
+} as const;
+
+export const TableMembers = ({
+  alias,
+  onUpdate,
+  hasAccess = true,
+  isAdminOrOwnerOrSuper = false,
+  userWorkspaceRole = null,
+  currentUserId,
+}: TableMembersProps) => {
+  const [pageSize, setPageSize] = React.useState<number>(50);
+
+  const { data, loading, error, refetch } = useQuery<Query>(
+    GET_WORKSPACE_MEMBERS_BY_ALIAS,
+    {
+      variables: { alias },
+      skip: !alias,
+    },
+  );
+
+  const members = data?.getWorkspaceMembersByAlias || [];
+
+  const rows = React.useMemo(
+    () =>
+      members.map((member, idx) => {
+        const isInvitedUser = member.user_id < 0;
+
+        return {
+          number: idx + 1,
+          id: member.id,
+          user_id: isInvitedUser ? '—' : member.user_id,
+          workspace_id: member.workspace_id,
+          email: member.user?.email ?? '',
+          name: isInvitedUser ? '—' : member.user?.name ?? '',
+          role: member.role ?? '',
+          status: member.status,
+          created_at: member.created_at ?? '',
+          updated_at: member.updated_at ?? '',
+          avatarUrl: member.user?.avatarUrl ?? '',
+          isInvitedUser,
+          invitationId: member.invitationId,
+          invited_by: member.invited_by,
+        };
+      }),
+    [members],
+  );
+
+  const handleUpdate = () => {
+    refetch();
+    onUpdate();
+  };
+
+  const columns: GridColDef[] = [
+    {
+      field: 'number',
+      headerName: '№',
+      width: 60,
+    },
+    {
+      field: 'user_id',
+      headerName: 'User ID',
+      width: 100,
+    },
+    {
+      field: 'email',
+      headerName: 'Email',
+      width: 280,
+      minWidth: 200,
+      flex: 1,
+      renderCell: (params) => <span className="truncate">{params.value}</span>,
+    },
+    {
+      field: 'name',
+      headerName: 'Name',
+      width: 220,
+      minWidth: 160,
+      flex: 1,
+      renderCell: (params) => <span className="truncate">{params.value}</span>,
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 120,
+      renderCell: (params) => {
+        const status = params.value as WorkspaceUserStatus | 'invited';
+        const chipStyle = STATUS_STYLES[status] || {
+          backgroundColor: '#6b7280',
+          color: '#fff',
+        };
+
+        return (
+          <Chip
+            key={`status-${params.row.id}-${params.row.number}`}
+            label={status}
+            size="small"
+            variant="filled"
+            sx={{ textTransform: 'capitalize', ...chipStyle }}
+          />
+        );
+      },
+    },
+    {
+      field: 'role',
+      headerName: 'Role',
+      width: 140,
+      renderCell: (params) => {
+        const currentRole = params.value as WorkspaceUserRole;
+        const isInvited = params.row.isInvitedUser;
+
+        if (isInvited) {
+          return <span>—</span>;
+        }
+
+        if (!hasAccess) {
+          return <span>{currentRole}</span>;
+        }
+
+        // Check if user can change this specific member's role
+        const canChangeThisMemberRole = canChangeTargetMemberRole(
+          isAdminOrOwnerOrSuper,
+          userWorkspaceRole,
+          currentRole,
+          params.row.user_id,
+          currentUserId,
+          params.row.status,
+        );
+
+        // Get available roles user can assign
+        const availableRoles = getAvailableRolesToAssign(
+          isAdminOrOwnerOrSuper,
+          userWorkspaceRole,
+        );
+
+        return (
+          <RoleSelector
+            disabled={!canChangeThisMemberRole}
+            initialRole={currentRole}
+            workspaceUserId={params.row.id}
+            availableRoles={availableRoles}
+            onRoleChanged={handleUpdate}
+          />
+        );
+      },
+    },
+
+    {
+      field: 'actions',
+      headerName: '',
+      width: 80,
+      align: 'center',
+      headerAlign: 'center',
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      renderCell: (params) => {
+        const memberName = params.row.name;
+        const memberEmail = params.row.email;
+
+        const isInvited = params.row.isInvitedUser;
+        const invitedBy = params.row.invited_by;
+        const targetMemberRole = params.row.role;
+
+        if (!hasAccess) {
+          return null;
+        }
+
+        // Check if user can delete using helper function
+        const canDelete = canDeleteWorkspaceMember(
+          isAdminOrOwnerOrSuper,
+          userWorkspaceRole,
+          invitedBy,
+          currentUserId,
+          targetMemberRole,
+        );
+
+        if (!canDelete) {
+          return null;
+        }
+
+        if (isInvited) {
+          return (
+            <RemoveWorkspaceInvitation
+              invitationId={params.row.invitationId}
+              inviteeEmail={memberEmail}
+              onInvitationRemoved={handleUpdate}
+            />
+          );
+        }
+
+        return (
+          <RemoveWorkspaceMember
+            workspaceUserId={params.row.id}
+            memberName={memberName}
+            memberEmail={memberEmail}
+            onMemberRemoved={handleUpdate}
+          />
+        );
+      },
+    },
+  ];
+
+  return (
+    <div className="h-[calc(100vh-367px)]">
+      <DataGrid
+        style={{ background: 'white' }}
+        error={error}
+        loading={loading}
+        pageSize={pageSize}
+        onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+        rowsPerPageOptions={[25, 50, 100]}
+        rows={rows}
+        columns={columns}
+        disableSelectionOnClick
+        sx={{
+          '.MuiDataGrid-columnHeader:focus, .MuiDataGrid-cell:focus': {
+            outline: 'none !important',
+          },
+          '.MuiDataGrid-columnHeader:focus-within, .MuiDataGrid-cell:focus-within':
+            {
+              outline: 'none !important',
+            },
+        }}
+      />
+    </div>
+  );
+};

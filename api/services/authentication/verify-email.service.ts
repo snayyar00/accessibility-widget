@@ -5,13 +5,13 @@ import compileEmailTemplate from '../../helpers/compile-email-template'
 import generateRandomKey from '../../helpers/genarateRandomkey'
 import { normalizeEmail } from '../../helpers/string.helper'
 import { Organization } from '../../repository/organization.repository'
-import type { UserProfile } from '../../repository/user.repository'
 import { activeUser, getUserbyId } from '../../repository/user.repository'
 import { changeTokenStatus, createToken, findToken } from '../../repository/user_tokens.repository'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
 import { ApolloError, ForbiddenError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sendMail } from '../email/email.service'
+import { UserLogined } from './get-user-logined.service'
 
 function isValidDate(createdAt: string): boolean {
   // console.log(createdAt);
@@ -86,7 +86,7 @@ export async function verifyEmail(authToken: string): Promise<true | ApolloError
   }
 }
 
-export async function resendEmailAction(user: UserProfile, type: 'verify_email' | 'forgot_password', organization: Organization): Promise<boolean> {
+export async function resendEmailAction(user: UserLogined, type: 'verify_email' | 'forgot_password', organization: Organization): Promise<boolean> {
   try {
     let template
     let subject
@@ -100,7 +100,7 @@ export async function resendEmailAction(user: UserProfile, type: 'verify_email' 
 
     switch (type) {
       case SEND_MAIL_TYPE.VERIFY_EMAIL:
-        if (user.is_active) {
+        if (user.isActive) {
           throw new ApolloError('Account verified')
         }
         subject = 'Resend confirm your email address'

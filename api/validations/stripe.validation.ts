@@ -76,7 +76,7 @@ export function validateCreateSubscription(data: CreateSubscriptionInfo): true |
       type: 'array',
       items: {
         type: 'any',
-        custom: (value: any) => {
+        custom: (value: string | number) => {
           if (typeof value === 'string') {
             return (value.length >= 1 && value.length <= 32) || 'String must be between 1 and 32 characters'
           }
@@ -121,7 +121,7 @@ export function validateCreateCheckoutSession(data: CreateCheckoutSessionInfo): 
       type: 'array',
       items: {
         type: 'any',
-        custom: (value: any) => {
+        custom: (value: string | number) => {
           if (typeof value === 'string') {
             return (value.length >= 1 && value.length <= 32) || 'String must be between 1 and 32 characters'
           }

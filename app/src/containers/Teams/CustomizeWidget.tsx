@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
+import { uploadWidgetLogo, deleteWidgetLogo } from '@/utils/uploadLogo';
 import {
   ChevronDown,
   ChevronUp,
@@ -31,6 +32,7 @@ interface CustomizeWidgetProps {
   onSave: () => void;
   onReset: () => void;
   buttonDisable: boolean;
+  selectedSite?: string;
 }
 
 const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
@@ -47,6 +49,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   onSave,
   onReset,
   buttonDisable,
+  selectedSite,
 }) => {
   const [activeTab, setActiveTab] = useState<'appearance' | 'preference'>(
     'appearance',
@@ -76,10 +79,69 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     setColors((prev) => ({ ...prev, [key]: color }));
   };
 
+  // Helper function to query elements in both light DOM and Shadow DOM
+  const queryInWidget = (
+    iframeDoc: Document,
+    selector: string,
+  ): Element | null => {
+    // First try to find in light DOM
+    let element = iframeDoc.querySelector(selector);
+    if (element) return element;
+
+    // Then try to find in Shadow DOM
+    const shadowHost = iframeDoc.getElementById('asw-shadow-host');
+    if (shadowHost && shadowHost.shadowRoot) {
+      element = shadowHost.shadowRoot.querySelector(selector);
+      if (element) return element;
+    }
+
+    // Also check all shadow roots in the document
+    const allElements = iframeDoc.querySelectorAll('*');
+    for (let el of allElements) {
+      if (el.shadowRoot) {
+        element = el.shadowRoot.querySelector(selector);
+        if (element) return element;
+      }
+    }
+
+    return null;
+  };
+
+  // Helper function to query all elements in both light DOM and Shadow DOM
+  const queryAllInWidget = (
+    iframeDoc: Document,
+    selector: string,
+  ): Element[] => {
+    const results: Element[] = [];
+
+    // First check light DOM
+    const lightElements = iframeDoc.querySelectorAll(selector);
+    results.push(...lightElements);
+
+    // Then check Shadow DOM
+    const shadowHost = iframeDoc.getElementById('asw-shadow-host');
+    if (shadowHost && shadowHost.shadowRoot) {
+      const shadowElements = shadowHost.shadowRoot.querySelectorAll(selector);
+      results.push(...shadowElements);
+    }
+
+    // Also check all shadow roots in the document
+    const allElements = iframeDoc.querySelectorAll('*');
+    for (let el of allElements) {
+      if (el.shadowRoot) {
+        const shadowElements = el.shadowRoot.querySelectorAll(selector);
+        results.push(...shadowElements);
+      }
+    }
+
+    return results;
+  };
+
   // Function to apply logo to widget
   const applyLogoToWidget = (iframeDoc: Document, logoImage: string) => {
-    // Find the specific logo container div
-    const logoContainer = iframeDoc.querySelector(
+    // Find the specific logo container div using Shadow DOM aware query
+    const logoContainer = queryInWidget(
+      iframeDoc,
       '.asw-footer-logo',
     ) as HTMLElement;
 
@@ -130,8 +192,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   const applyFooterTextToWidget = (iframeDoc: Document, text: string) => {
     if (!text) return;
 
-    // Find the footer text element using the correct class name
-    const footerTextElement = iframeDoc.querySelector(
+    // Find the footer text element using Shadow DOM aware query
+    const footerTextElement = queryInWidget(
+      iframeDoc,
       '.footer-main-title',
     ) as HTMLElement;
 
@@ -254,9 +317,10 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       head.appendChild(styleElement);
     }
 
-    // Also apply font directly to existing elements as a backup
+    // Also apply font directly to existing elements as a backup using Shadow DOM aware queries
     const applyFontToElements = () => {
-      const elements = iframeDoc.querySelectorAll(
+      const elements = queryAllInWidget(
+        iframeDoc,
         '.asw-container .asw-menu *:not(svg):not(path):not(circle):not(rect):not(line):not(polyline):not(polygon)',
       );
       elements.forEach((element: any) => {
@@ -297,8 +361,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       });
     });
 
-    // Start observing the widget container for changes
-    const widgetContainer = iframeDoc.querySelector('.asw-container');
+    // Start observing the widget container for changes using Shadow DOM aware query
+    const widgetContainer = queryInWidget(iframeDoc, '.asw-container');
     if (widgetContainer) {
       observer.observe(widgetContainer, {
         childList: true,
@@ -449,40 +513,66 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     return regex.test(str);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (file) {
       // Validate file type
-      const validTypes = ['image/png', 'image/svg+xml', 'image/webp'];
+      const validTypes = ['image/png', 'image/svg+xml', 'image/webp', 'image/jpeg', 'image/jpg'];
       if (!validTypes.includes(file.type)) {
         toast.error('Only PNG, SVG, or WebP images are allowed.');
         e.target.value = ''; // Reset the input field to remove the file name
         return; // Prevent the file from being processed if the type is invalid
       }
 
-      // Validate file size (should not exceed 10 KB)
+      // Validate file size (should not exceed 75 KB)
       if (file.size > 76800) {
         toast.error('File size should not exceed 75 KB.');
         e.target.value = ''; // Reset the input field to remove the file name
         return; // Prevent the file from being processed if the size is too large
       }
 
-      // If valid, read the file as base64
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64String = event.target?.result as string;
-        setLogoInput(base64String); // Store the base64 data
-        setColors((prev) => ({
-          ...prev,
-          logoImage: base64String, // Update the logoImage state
-        }));
-      };
-      reader.readAsDataURL(file); // Only proceed if the file passed validation
+      // Show loading state
+      toast.loading('Uploading logo...', { id: 'logo-upload' });
 
-      // Disable the URL input once file input is used
-      setIsUrlInput(false);
-      setIsFileInput(true);
+      try {
+        // Require an explicit selected site
+        if (!selectedSite) {
+          toast.error('Please select a site before uploading a logo.', { id: 'logo-upload' });
+          return;
+        }
+        const siteUrl = selectedSite;
+        
+        
+        
+        // Upload to R2
+        const result = await uploadWidgetLogo(file, siteUrl);
+        
+        if (result.success && result.logoUrl) {
+          const cleanUrl = result.logoUrl.replace(/\/$/, '')
+          // Update both logoInput and colors.logoImage with the R2 URL
+          setLogoInput(cleanUrl);
+          setColors((prev) => ({
+            ...prev,
+            logoImage: cleanUrl!, // Update with R2 URL
+          }));
+          
+          
+          
+          toast.success('Logo uploaded successfully!', { id: 'logo-upload' });
+          
+          // Set the input states to reflect the upload
+          setIsUrlInput(false);
+          setIsFileInput(false); // Disable file input since we have a logo now
+        } else {
+          toast.error(result.error || 'Failed to upload logo', { id: 'logo-upload' });
+          e.target.value = ''; // Reset the input field
+        }
+      } catch (error) {
+        console.error('Error uploading logo:', error);
+        toast.error('Failed to upload logo', { id: 'logo-upload' });
+        e.target.value = ''; // Reset the input field
+      }
     }
   };
 
@@ -580,10 +670,13 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   };
 
   // Helper function to apply toggle visibility to widget elements
-  const applyToggleVisibility = ($menu: HTMLElement, toggles: Toggles) => {
+  const applyToggleVisibility = (iframeDoc: Document, toggles: Toggles) => {
     // Helper to find and hide/show profile buttons by text content
     const toggleProfileByName = (name: string, isVisible: boolean) => {
-      const profileButtons = $menu.querySelectorAll('.profile-grid .asw-btn');
+      const profileButtons = queryAllInWidget(
+        iframeDoc,
+        '.profile-grid .asw-btn',
+      );
       profileButtons.forEach((btn: Element) => {
         const text = btn.textContent?.trim();
         if (text?.includes(name)) {
@@ -594,7 +687,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
     // Helper to find and hide/show tool/feature buttons by text content
     const toggleButtonByName = (name: string, isVisible: boolean) => {
-      const buttons = $menu.querySelectorAll(
+      const buttons = queryAllInWidget(
+        iframeDoc,
         '.asw-btn:not(.profile-grid .asw-btn)',
       );
       buttons.forEach((btn: Element) => {
@@ -607,7 +701,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
     // Helper to find and hide/show color adjustment buttons by text content
     const toggleColorButtonByName = (name: string, isVisible: boolean) => {
-      const colorButtons = $menu.querySelectorAll('.asw-filter');
+      const colorButtons = queryAllInWidget(iframeDoc, '.asw-filter');
       colorButtons.forEach((btn: Element) => {
         const text = btn.textContent?.trim();
         if (text?.includes(name)) {
@@ -617,14 +711,18 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     };
 
     // Apply toggles for header elements
-    const headerLangSelector = $menu.querySelector('.asw-header-lang-selector');
+    const headerLangSelector = queryInWidget(
+      iframeDoc,
+      '.asw-header-lang-selector',
+    );
     if (headerLangSelector) {
       (headerLangSelector as HTMLElement).style.display = toggles.language
         ? ''
         : 'none';
     }
 
-    const oversizeWidget = $menu.querySelector(
+    const oversizeWidget = queryInWidget(
+      iframeDoc,
       '.asw-oversize-widget-container',
     );
     if (oversizeWidget) {
@@ -654,7 +752,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     toggleButtonByName('Dark Mode', toggles.darkMode);
 
     // Widget Position - specific dropdown element
-    const widgetPositionDropdown = $menu.querySelector(
+    const widgetPositionDropdown = queryInWidget(
+      iframeDoc,
       '#widget-position-dropdown-toggle',
     );
     if (widgetPositionDropdown) {
@@ -671,7 +770,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     }
 
     // Apply toggles for content adjustments
-    const adjustFont = $menu.querySelector('.asw-adjust-font');
+    const adjustFont = queryInWidget(iframeDoc, '.asw-adjust-font');
     if (adjustFont) {
       (adjustFont as HTMLElement).style.display = toggles.fontSize
         ? ''
@@ -699,7 +798,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     toggleColorButtonByName('Monochrome', toggles.monochrome);
 
     // Apply toggles for color sections
-    const colorSections = $menu.querySelectorAll('.asw-color-section');
+    const colorSections = queryAllInWidget(iframeDoc, '.asw-color-section');
     colorSections.forEach((section: Element) => {
       const titleText = section
         .querySelector('.asw-color-title')
@@ -821,10 +920,61 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           defer></script>
   
   <script>
+    // Shadow DOM helper functions
+    function queryInWidget(selector) {
+      // First try to find in light DOM
+      let element = document.querySelector(selector);
+      if (element) return element;
+      
+      // Then try to find in Shadow DOM
+      const shadowHost = document.getElementById('asw-shadow-host');
+      if (shadowHost && shadowHost.shadowRoot) {
+        element = shadowHost.shadowRoot.querySelector(selector);
+        if (element) return element;
+      }
+      
+      // Also check all shadow roots in the document
+      const allElements = document.querySelectorAll('*');
+      for (let el of allElements) {
+        if (el.shadowRoot) {
+          element = el.shadowRoot.querySelector(selector);
+          if (element) return element;
+        }
+      }
+      
+      return null;
+    }
+    
+    function queryAllInWidget(selector) {
+      const results = [];
+      
+      // First check light DOM
+      const lightElements = document.querySelectorAll(selector);
+      results.push(...lightElements);
+      
+      // Then check Shadow DOM
+      const shadowHost = document.getElementById('asw-shadow-host');
+      if (shadowHost && shadowHost.shadowRoot) {
+        const shadowElements = shadowHost.shadowRoot.querySelectorAll(selector);
+        results.push(...shadowElements);
+      }
+      
+      // Also check all shadow roots in the document
+      const allElements = document.querySelectorAll('*');
+      for (let el of allElements) {
+        if (el.shadowRoot) {
+          const shadowElements = el.shadowRoot.querySelectorAll(selector);
+          results.push(...shadowElements);
+        }
+      }
+      
+      return results;
+    }
+    
     // Check when widget is loaded and enable the button
     function checkWidgetLoaded() {
       const checkInterval = setInterval(() => {
-        const widgetBtn = document.querySelector('.asw-menu-btn');
+        const widgetBtn = queryInWidget('.asw-menu-btn');
         const previewBtn = document.getElementById('widgetBtn');
         
         if (widgetBtn && previewBtn) {
@@ -854,7 +1004,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     function openWidget() {
       // Wait for widget to be fully loaded
       const checkWidget = setInterval(() => {
-        const widgetBtn = document.querySelector('.asw-menu-btn');
+        const widgetBtn = queryInWidget('.asw-menu-btn');
         if (widgetBtn) {
           clearInterval(checkWidget);
           widgetBtn.click();
@@ -878,7 +1028,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       ];
       
       for (const selector of selectors) {
-        const element = document.querySelector(selector);
+        const element = queryInWidget(selector);
         if (element) {
           return element;
         }
@@ -981,7 +1131,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       let attempts = 0;
       const checkMenu = setInterval(() => {
         attempts++;
-        const menu = document.querySelector('.asw-menu');
+        const menu = queryInWidget('.asw-menu');
         
         if (menu) {
           clearInterval(checkMenu);
@@ -1033,7 +1183,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
             if (iframeDoc) {
               // Wait for widget to load
               const checkWidget = setInterval(() => {
-                const widget = iframeDoc.querySelector(
+                const widget = queryInWidget(
+                  iframeDoc,
                   '.asw-widget, .asw-menu',
                 );
                 if (widget) {
@@ -1084,8 +1235,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
       // Wait for the widget to be loaded inside the iframe
       const checkWidget = setInterval(() => {
-        const $menu = iframeDoc.querySelector('.asw-menu') as HTMLElement;
-        const container = iframeDoc.querySelector(
+        const $menu = queryInWidget(iframeDoc, '.asw-menu') as HTMLElement;
+        const container = queryInWidget(
+          iframeDoc,
           '.asw-container',
         ) as HTMLElement;
 
@@ -1093,7 +1245,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           clearInterval(checkWidget);
 
           // Apply toggle visibility settings
-          applyToggleVisibility($menu, toggles);
+          applyToggleVisibility(iframeDoc, toggles);
 
           // Apply colors based on dark mode setting
           const isDarkMode = colorMode === 'dark';
@@ -1187,8 +1339,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         iframe.contentDocument || iframe.contentWindow?.document;
       if (!iframeDoc) return;
 
-      const $menu = iframeDoc.querySelector('.asw-menu') as HTMLElement;
-      const container = iframeDoc.querySelector(
+      const $menu = queryInWidget(iframeDoc, '.asw-menu') as HTMLElement;
+      const container = queryInWidget(
+        iframeDoc,
         '.asw-container',
       ) as HTMLElement;
 
@@ -1965,7 +2118,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
                     {/* Displaying the logo */}
                     <div className="mb-4 max-w-xs">
-                      {colors.logoImage.length ? (
+                      {colors.logoImage && colors.logoImage.length > 0 ? (
                         <img
                           src={
                             colors.logoImage.length

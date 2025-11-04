@@ -6,11 +6,11 @@ import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 // TODO Security - Consider comprehensive security measures for this location
 const resolvers = {
   Query: {
-    getEngagementRates: combineResolvers(allowedOrganization, isAuthenticated, (_, { url, startDate, endDate }, { user }) => getEngagementRates(user.id, url, startDate, endDate)),
+    getEngagementRates: combineResolvers(allowedOrganization, isAuthenticated, (_, { url, startDate, endDate }, { user }) => getEngagementRates(user, url, startDate, endDate)),
 
     getImpressionsByURLAndDate: combineResolvers(allowedOrganization, isAuthenticated, async (_, { url, startDate, endDate }, { user }) => {
       try {
-        const result = await findImpressionsByURLAndDate(user.id, url, new Date(startDate), new Date(endDate))
+        const result = await findImpressionsByURLAndDate(user, url, new Date(startDate), new Date(endDate))
         return result
       } catch (error) {
         console.error(error)

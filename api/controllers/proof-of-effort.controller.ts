@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
-import { sendMail, EmailAttachment } from '../services/email/email.service'
+
 import compileEmailTemplate from '../helpers/compile-email-template'
+import { EmailAttachment, sendMail } from '../services/email/email.service'
 import { emailValidation } from '../validations/email.validation'
 
 interface SendToolkitEmailRequest {
@@ -11,7 +12,6 @@ interface SendToolkitEmailRequest {
 }
 
 export async function sendProofOfEffortToolkit(req: Request, res: Response) {
-  const { user } = req as any
   const { email, domain, zipFileBase64, reportDate }: SendToolkitEmailRequest = req.body
 
   try {

@@ -13,34 +13,44 @@ import {
 import { ChangeOrganizationSelect } from './ChangeOrganizationSelect';
 import { ChangeOrganizationUserRole } from './ChangeOrganizationUserRole';
 import { DeleteUserFromOrganization } from './DeleteUserFromOrganization';
-import { InviteWorkspaceMember } from '@/components/Invite/InviteWorkspaceMember';
+import { InviteUser } from '@/components/Invite/InviteUser';
 import { RemoveAllUserInvitations } from '@/components/Invite/RemoveAllUserInvitations';
 
 type TableUsersProps = {
   organizationId: number;
   userId: number;
+  isSuperAdmin: boolean;
+  isAdminOrOwnerOrSuper: boolean;
 };
 
-const STATUS_STYLES = {
+const STATUS_STYLES: Record<
+  string,
+  { backgroundColor: string; color: string }
+> = {
   [OrganizationUserStatus.Active]: {
     backgroundColor: '#22c55e',
-    color: '#fff',
-  },
-  [OrganizationUserStatus.Invited]: {
-    backgroundColor: '#3b82f6',
     color: '#fff',
   },
   [OrganizationUserStatus.Pending]: {
     backgroundColor: '#f59e0b',
     color: '#fff',
   },
-  [OrganizationUserStatus.Removed]: {
+  [OrganizationUserStatus.Inactive]: {
     backgroundColor: '#ef4444',
     color: '#fff',
   },
-} as const;
+  [OrganizationUserStatus.Decline]: {
+    backgroundColor: '#ef4444',
+    color: '#fff',
+  },
+};
 
-export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
+export const TableUsers = ({
+  organizationId,
+  userId,
+  isSuperAdmin = false,
+  isAdminOrOwnerOrSuper = false,
+}: TableUsersProps) => {
   const [pageSize, setPageSize] = React.useState<number>(50);
 
   const { data, loading, error, refetch } = useQuery<Query>(
@@ -58,7 +68,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
     () =>
       users.map((row, idx) => ({
         number: idx + 1,
-        id: row.user?.id,
+        id: Number(row.user_id),
         name: row.user?.name ?? '',
         email: row.user?.email ?? '',
         isActive: row.user?.isActive ?? false,
@@ -81,13 +91,13 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       headerName: 'User ID',
       width: 100,
       renderCell: (params) => {
-        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+        const isVirtualUser = params.row.id < 0;
 
-        if (isInvited) {
+        if (isVirtualUser) {
           return <span>—</span>;
         }
 
-        return params.value;
+        return params.row.id;
       },
     },
     {
@@ -98,11 +108,11 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       flex: 1,
       renderCell: (params) => {
         const rowUserId = params.row.id;
-        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+        const isVirtualUser = params.row.id < 0;
 
         let name = params.value;
 
-        if (isInvited) {
+        if (isVirtualUser) {
           return <span>—</span>;
         }
 
@@ -135,9 +145,9 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
       headerName: 'Account',
       width: 150,
       renderCell: (params) => {
-        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+        const isVirtualUser = params.row.id < 0;
 
-        if (isInvited) {
+        if (isVirtualUser) {
           return <span>—</span>;
         }
 
@@ -235,9 +245,9 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
         const value = params.row.currentOrganizationId;
         const rowUserId = params.row.id || null;
         const NonActive = params.row?.status !== OrganizationUserStatus.Active;
-        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+        const isVirtualUser = params.row.id < 0;
 
-        if (isInvited) {
+        if (isVirtualUser) {
           return <span>—</span>;
         }
 
@@ -265,7 +275,7 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
     },
     {
       field: 'status',
-      headerName: 'Org Status',
+      headerName: 'Status',
       width: 140,
       renderCell: (params) => {
         const status = params.value as OrganizationUserStatus;
@@ -287,22 +297,23 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
     },
     {
       field: 'role',
-      headerName: 'Org Role',
+      headerName: 'Role',
       width: 140,
       renderCell: (params) => {
         const rowUserId = params.row.id;
         const isSelf = rowUserId === userId;
-        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+        const isVirtualUser = params.row.id < 0;
 
-        if (isInvited) {
+        if (isVirtualUser) {
           return <span>—</span>;
         }
 
         return (
           <ChangeOrganizationUserRole
-            disabled={isSelf}
+            disabled={isSelf && !isSuperAdmin}
             initialValue={params.value}
             userId={rowUserId}
+            isSuperAdmin={isSuperAdmin}
             onRoleChanged={refetch}
           />
         );
@@ -323,28 +334,32 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
         const rowOwner = params.row.role === OrganizationUserRole.Owner;
         const userEmail = params.row.email;
         const userWorkspaces = params.row.workspaces || [];
-        const isInvited = params.row.status === OrganizationUserStatus.Invited;
+        const isVirtualUser = !rowUserId || rowUserId < 0;
 
         return (
           <div className="flex">
             {rowUserId !== userId && (
-              <InviteWorkspaceMember
+              <InviteUser
+                mode="workspace"
                 userEmail={userEmail}
                 userWorkspaces={userWorkspaces}
                 onUserInvited={refetch}
                 buttonSize="medium"
                 allWorkspaces={allWorkspaces}
                 workspacesLoading={workspacesLoading}
+                isSuperAdmin={isSuperAdmin}
+                isAdminOrOwnerOrSuper={isAdminOrOwnerOrSuper}
               />
             )}
-            {isInvited ? (
+
+            {isVirtualUser ? (
               <RemoveAllUserInvitations
                 email={userEmail}
                 onInvitationRemoved={refetch}
               />
             ) : (
               <DeleteUserFromOrganization
-                disabled={rowUserId === userId || rowOwner}
+                disabled={(rowUserId === userId || rowOwner) && !isSuperAdmin}
                 userId={rowUserId}
                 organizationId={organizationId}
                 onUserDeleted={refetch}
@@ -359,10 +374,10 @@ export const TableUsers = ({ organizationId, userId }: TableUsersProps) => {
   return (
     <>
       <div className="static mb-5 top-[15px] right-[17px] lg:absolute lg:mb-0">
-        <InviteWorkspaceMember
+        <InviteUser
+          mode="organization"
           onUserInvited={refetch}
-          allWorkspaces={allWorkspaces}
-          workspacesLoading={workspacesLoading}
+          isSuperAdmin={isSuperAdmin}
         />
       </div>
 

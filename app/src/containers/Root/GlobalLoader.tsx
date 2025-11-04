@@ -1,20 +1,24 @@
 import React, { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useQuery } from '@apollo/client';
 import { setOrganization } from '@/features/organization/organizationSlice';
 import GET_ORGANIZATION from '@/queries/organization/getOrganization';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Query } from '@/generated/graphql';
+import { RootState } from '@/config/store';
 
 export const GlobalLoader: React.FC = () => {
   const dispatch = useDispatch();
   const { data, loading } = useQuery<Query>(GET_ORGANIZATION);
+  const user = useSelector((state: RootState) => state.user.data);
 
   useEffect(() => {
-    if (data && data.getOrganizationByDomain) {
+    const isUserLoggedIn = user && user.id;
+
+    if (!isUserLoggedIn && data && data.getOrganizationByDomain) {
       dispatch(setOrganization(data.getOrganizationByDomain));
     }
-  }, [data, dispatch]);
+  }, [data, user, dispatch]);
 
   if (loading) {
     return (

@@ -17,9 +17,9 @@ export type OrganizationUser = {
   organization_id: number
   role?: OrganizationUserRole
   status?: OrganizationUserStatus
+  agencyAccountId?: string | null
   created_at?: string
   updated_at?: string
-  current_workspace_id?: number | null
 }
 
 export type OrganizationUserWithUserInfo = OrganizationUser & {
@@ -71,6 +71,16 @@ export async function deleteOrganizationUser(id: number, trx?: Knex.Transaction)
   return query.transacting(trx)
 }
 
+export async function updateOrganizationUserAgencyAccount(id: number, agencyAccountId: string | null, trx?: Knex.Transaction): Promise<number> {
+  const query = database(TABLE).where({ id }).update({ agencyAccountId })
+
+  if (!trx) {
+    return query
+  }
+
+  return query.transacting(trx)
+}
+
 type OrganizationByUser = {
   user_id: number
   org_id: number
@@ -107,7 +117,7 @@ export async function getOrganizationUsersWithUserInfo(organization_id: number):
       .where({ organization_id })
       .join('users', `${TABLE}.user_id`, 'users.id')
       .leftJoin('organizations', 'users.current_organization_id', 'organizations.id')
-      .select([`${TABLE}.*`, 'users.id as user_id', 'users.email', 'users.name', 'users.current_organization_id', 'users.is_active', 'organizations.id as org_id', 'organizations.name as org_name', 'organizations.domain as org_domain'])
+      .select([`${TABLE}.*`, 'users.id as user_id', 'users.email', 'users.name', 'users.current_organization_id', 'users.is_active', 'users.is_super_admin', 'organizations.id as org_id', 'organizations.name as org_name', 'organizations.domain as org_domain'])
       .orderBy(`${TABLE}.updated_at`, 'desc')
 
     if (!rows?.length) return []
@@ -150,7 +160,6 @@ export async function getOrganizationUsersWithUserInfo(organization_id: number):
       status: row.status,
       created_at: row.created_at,
       updated_at: row.updated_at,
-      current_workspace_id: row.current_workspace_id,
       organizations: orgsByUser[row.user_id] || [],
       workspaces: workspacesByUser[row.user_id] || [],
       user: {

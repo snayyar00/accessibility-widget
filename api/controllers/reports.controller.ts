@@ -1,24 +1,23 @@
 import { Request, Response } from 'express'
 
-import { getProblemReportsBySiteId, toggleProblemReportFixedStatus } from '../repository/problem_reports.repository'
-import { findSitesByUserId, IUserSites } from '../repository/sites_allowed.repository'
+import { getProblemReportsBySiteIds, toggleProblemReportFixedStatus } from '../repository/problem_reports.repository'
+import { findUserSitesWithPlansWithWorkspaces } from '../repository/sites_allowed.repository'
+import { UserLogined } from '../services/authentication/get-user-logined.service'
+import { canManageOrganization } from '../utils/access.helper'
 
-export async function getProblemReports(req: Request, res: Response) {
-  const { user } = req as any
+export async function getProblemReports(req: Request & { user: UserLogined }, res: Response) {
+  const { user } = req
 
   try {
-    // Fetch sites by user ID
-    const Sites: IUserSites[] = await findSitesByUserId(user.id)
+    if (!user.current_organization_id) {
+      return res.status(400).send('No organization selected')
+    }
 
-    // Use Promise.all to fetch problem reports for all sites concurrently
-    const allReports = (
-      await Promise.all(
-        Sites.map(async (site: IUserSites) => {
-          const reports = await getProblemReportsBySiteId(site.id)
-          return reports // Return reports for each site
-        }),
-      )
-    ).flat() // Flatten the array of arrays into a single array
+    const isSuperAdmin = user.is_super_admin
+    const isAdmin = isSuperAdmin || (user.currentOrganizationUser && canManageOrganization(user.currentOrganizationUser.role))
+
+    const sites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isAdmin)
+    const allReports = await getProblemReportsBySiteIds(sites.map((site) => site.id))
 
     res.status(200).send(allReports)
   } catch (error) {
@@ -28,7 +27,6 @@ export async function getProblemReports(req: Request, res: Response) {
 }
 
 export async function toggleProblemReportFixed(req: Request, res: Response) {
-  const { user } = req as any
   const { id } = req.params
 
   try {

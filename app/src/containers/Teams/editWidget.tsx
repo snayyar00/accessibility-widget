@@ -876,6 +876,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           onSave={handleSave}
           onReset={resetAll}
           buttonDisable={buttonDisable}
+          selectedSite={selectedSite}
         />
       </div>
 
