@@ -6,7 +6,9 @@ import {
   updateImpressions as updateImpressionsClickHouse,
 } from '../../repository/impressions.clickhouse.repository'
 import {
+  findEngagementBySiteIdAndDate,
   findEngagementURLDate as findEngagementURLDateSQL,
+  findImpressionsBySiteIdAndDate,
   findImpressionsURLDate as findImpressionsURLDateSQL,
   insertImpressionURL as insertImpressionURLSQL,
   updateImpressionProfileCount as updateImpressionProfileCountSQL,
@@ -82,6 +84,7 @@ export async function findImpressionsByURLAndDate(user: UserLogined, url: string
   }
 
   const domain = normalizeDomain(url)
+  const perfStart = Date.now()
 
   try {
     // Verify that the site exists
@@ -97,9 +100,15 @@ export async function findImpressionsByURLAndDate(user: UserLogined, url: string
       throw new Error('Access denied: You do not have permission to view this site')
     }
 
-    const impressions = isClickHouseDisabled() ? await findImpressionsURLDateSQL(user.id, domain, startDate, endDate) : await findImpressionsURLDateClickHouse(user.id, domain, startDate, endDate)
-
-    logger.info(`Using ${getCurrentDatabaseType()} for impressions lookup by URL and date`)
+    // OPTIMIZATION: Use site_id directly (no JOIN needed)
+    let impressions
+    if (isClickHouseDisabled()) {
+      impressions = await findImpressionsBySiteIdAndDate(site.id, startDate, endDate)
+      logger.info(`Using SQL for impressions lookup (optimized): ${Date.now() - perfStart}ms`)
+    } else {
+      impressions = await findImpressionsURLDateClickHouse(user.id, domain, startDate, endDate)
+      logger.info(`Using ClickHouse for impressions lookup: ${Date.now() - perfStart}ms`)
+    }
 
     return { impressions, count: impressions.length }
   } catch (e) {
@@ -180,6 +189,7 @@ export async function getEngagementRates(user: UserLogined, url: string, startDa
   }
 
   const domain = normalizeDomain(url)
+  const perfStart = Date.now()
 
   try {
     // Verify that the site exists
@@ -195,9 +205,16 @@ export async function getEngagementRates(user: UserLogined, url: string, startDa
       throw new Error('Access denied: You do not have permission to view this site')
     }
 
-    const impressions = isClickHouseDisabled() ? await findEngagementURLDateSQL(user.id, domain, startDate, endDate) : await findEngagementURLDateClickHouse(user.id, domain, startDate, endDate)
+    // OPTIMIZATION: Use site_id directly (no JOIN needed)
+    let impressions
+    if (isClickHouseDisabled()) {
+      impressions = await findEngagementBySiteIdAndDate(site.id, startDate, endDate)
+      logger.info(`Using SQL for engagement rates (optimized): ${Date.now() - perfStart}ms`)
+    } else {
+      impressions = await findEngagementURLDateClickHouse(user.id, domain, startDate, endDate)
+      logger.info(`Using ClickHouse for engagement rates: ${Date.now() - perfStart}ms`)
+    }
 
-    logger.info(`Using ${getCurrentDatabaseType()} for engagement rates lookup`)
     return impressions
   } catch (e) {
     logger.error(e)
