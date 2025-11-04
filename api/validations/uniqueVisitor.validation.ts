@@ -1,6 +1,6 @@
 import Validator, { ValidationError } from 'fastest-validator'
 
-export function validateGetSiteVisitorsByURL(input: { url: string }): true | ValidationError[] | Promise<true | ValidationError[]> {
+export function validateGetSiteVisitorsByURL(input: { url: string; startDate?: Date; endDate?: Date }): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator()
 
   const schema = {
@@ -14,6 +14,22 @@ export function validateGetSiteVisitorsByURL(input: { url: string }): true | Val
         stringMin: 'URL must not be empty',
         stringMax: 'URL must not exceed 2048 characters',
         stringPattern: 'URL must be a valid domain (e.g., example.com, https://example.com)',
+      },
+    },
+    startDate: {
+      type: 'date',
+      optional: true,
+      convert: true,
+      messages: {
+        date: 'Start date must be a valid date',
+      },
+    },
+    endDate: {
+      type: 'date',
+      optional: true,
+      convert: true,
+      messages: {
+        date: 'End date must be a valid date',
       },
     },
   }
