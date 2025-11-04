@@ -482,13 +482,14 @@ export const generatePDF = async (
   const pillH = 4; // Increased height for better appearance
   const pillX = statusTextX + doc.getTextWidth(status) + 34; // Increased spacing from status text to prevent overlap
   const pillY = statusTextY - 6; // Align with status text
+  const pillTotalHeight = pillH + 4; // Total height of the pill
   // Convert #222D73 to RGB: R=34, G=45, B=115
   doc.setFillColor(34, 45, 115);
   doc.setTextColor(255, 255, 255);
-  doc.roundedRect(pillX, pillY, pillTextWidth, pillH + 4, 4, 4, 'F'); // Increased corner radius for more pill-like appearance
-  // Center the text horizontally within the pill
+  doc.roundedRect(pillX, pillY, pillTextWidth, pillTotalHeight, 4, 4, 'F'); // Increased corner radius for more pill-like appearance
+  // Center the text both horizontally and vertically within the pill
   const textX = pillX + (pillTextWidth - textWidth) / 2;
-  const textY = pillY + pillH + 2;
+  const textY = pillY + pillTotalHeight / 2 + 1.5; // Center vertically with baseline offset
   doc.text(pillText, textX, textY);
 
   // Sub message positioned below the status text and percentage pill - Figma design
@@ -3395,13 +3396,14 @@ export const generateShortPDF = async (
   const pillH = 4; // Increased height for better appearance
   const pillX = statusTextX + doc.getTextWidth(status) + 34; // Increased spacing from status text to prevent overlap
   const pillY = statusTextY - 6; // Align with status text
+  const pillTotalHeight = pillH + 4; // Total height of the pill
   // Convert #222D73 to RGB: R=34, G=45, B=115
   doc.setFillColor(34, 45, 115);
   doc.setTextColor(255, 255, 255);
-  doc.roundedRect(pillX, pillY, pillTextWidth, pillH + 4, 4, 4, 'F'); // Increased corner radius for more pill-like appearance
-  // Center the text horizontally within the pill
+  doc.roundedRect(pillX, pillY, pillTextWidth, pillTotalHeight, 4, 4, 'F'); // Increased corner radius for more pill-like appearance
+  // Center the text both horizontally and vertically within the pill
   const textX = pillX + (pillTextWidth - textWidth) / 2;
-  const textY = pillY + pillH + 2;
+  const textY = pillY + pillTotalHeight / 2 + 1.5; // Center vertically with baseline offset
   doc.text(pillText, textX, textY);
 
   // Sub message positioned below the status text and percentage pill - Figma design
