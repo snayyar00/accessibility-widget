@@ -127,39 +127,21 @@ export async function down(knex: Knex): Promise<void> {
   console.log('⏮  Rolling back performance indexes...')
 
   // Drop impressions indexes
-  const hasImpressionsTable = await knex.schema.hasTable(IMPRESSIONS_TABLE)
-  if (hasImpressionsTable) {
-    try {
-      await knex.raw(`DROP INDEX idx_impressions_site_date_widgets ON ${IMPRESSIONS_TABLE}`)
-      console.log(`✓ Dropped idx_impressions_site_date_widgets`)
-    } catch (e) {
-      console.log(`⚠ Could not drop idx_impressions_site_date_widgets (may not exist)`)
-    }
-
-    try {
-      await knex.raw(`DROP INDEX idx_impressions_date_site ON ${IMPRESSIONS_TABLE}`)
-      console.log(`✓ Dropped idx_impressions_date_site`)
-    } catch (e) {
-      console.log(`⚠ Could not drop idx_impressions_date_site (may not exist)`)
-    }
+  if (await knex.schema.hasTable(IMPRESSIONS_TABLE)) {
+    await knex.schema.alterTable(IMPRESSIONS_TABLE, (table) => {
+      table.dropIndex(['site_id', 'created_at', 'widget_opened', 'widget_closed'], 'idx_impressions_site_date_widgets')
+      table.dropIndex(['created_at', 'site_id'], 'idx_impressions_date_site')
+    })
+    console.log(`✓ Dropped indexes from ${IMPRESSIONS_TABLE}`)
   }
 
   // Drop visitor indexes
-  const hasVisitorsTable = await knex.schema.hasTable(VISITORS_TABLE)
-  if (hasVisitorsTable) {
-    try {
-      await knex.raw(`DROP INDEX idx_visitors_site_only ON ${VISITORS_TABLE}`)
-      console.log(`✓ Dropped idx_visitors_site_only`)
-    } catch (e) {
-      console.log(`⚠ Could not drop idx_visitors_site_only (may not exist)`)
-    }
-
-    try {
-      await knex.raw(`DROP INDEX idx_visitors_site_date ON ${VISITORS_TABLE}`)
-      console.log(`✓ Dropped idx_visitors_site_date`)
-    } catch (e) {
-      console.log(`⚠ Could not drop idx_visitors_site_date (may not exist)`)
-    }
+  if (await knex.schema.hasTable(VISITORS_TABLE)) {
+    await knex.schema.alterTable(VISITORS_TABLE, (table) => {
+      table.dropIndex(['site_id'], 'idx_visitors_site_only')
+      table.dropIndex(['site_id', 'first_visit'], 'idx_visitors_site_date')
+    })
+    console.log(`✓ Dropped indexes from ${VISITORS_TABLE}`)
   }
 
   console.log('✅ Rollback completed')
