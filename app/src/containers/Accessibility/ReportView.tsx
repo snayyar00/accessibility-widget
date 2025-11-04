@@ -146,6 +146,7 @@ const fullUrl = queryParams.get('domain') || '';
 
 // Add this helper function near the top (outside the component)
 async function fetchImageAsBase64(url: string): Promise<string | null> {
+  if (!url) return null;
   try {
     const response = await fetch(url);
     const blob = await response.blob();
