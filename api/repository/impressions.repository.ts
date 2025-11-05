@@ -55,7 +55,10 @@ export async function findEngagementURLDate(user_id: number, site_url: string, s
     // Convert the UTC date to the desired time zone
     const localDate = new Date(`${result.date}Z`) // Assuming result.date is in 'YYYY-MM-DD' format
 
-    const engagementRate = (Number(result.engagedImpressions) / Number(result.totalImpressions)) * 100
+    const totalImpressions = Number(result.totalImpressions)
+    const engagementRate = totalImpressions > 0
+      ? (Number(result.engagedImpressions) / totalImpressions) * 100
+      : 0
 
     return {
       date: localDate.toISOString().split('T')[0],
@@ -157,7 +160,10 @@ export async function findEngagementBySiteIdAndDate(
 
   return results.map((result: any) => {
     const localDate = new Date(`${result.date}Z`)
-    const engagementRate = (Number(result.engagedImpressions) / Number(result.totalImpressions)) * 100
+    const totalImpressions = Number(result.totalImpressions)
+    const engagementRate = totalImpressions > 0
+      ? (Number(result.engagedImpressions) / totalImpressions) * 100
+      : 0
 
     return {
       date: localDate.toISOString().split('T')[0],
