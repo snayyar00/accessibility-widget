@@ -8,8 +8,8 @@ import GET_PROFILE from '@/queries/auth/getProfile';
 
 import { setProfileUser } from '@/features/auth/user';
 import { CircularProgress } from '@mui/material';
-import { redirectToUserOrganization } from '@/helpers/redirectToOrganization';
 import { IS_LOCAL } from '@/config/env';
+import { clearAuthenticationCookie } from '@/utils/cookie';
 
 type Props = {
   render: RouteProps['render'];
@@ -33,10 +33,17 @@ const PrivateRoute: React.FC<Props> = ({ render }) => {
     if (userProfile && userProfile.profileUser) {
       const domain = userProfile?.profileUser?.currentOrganization?.domain;
 
+      // Check if current domain matches user's organization domain
       if (domain && !IS_LOCAL) {
-        const redirected = redirectToUserOrganization(domain);
+        const currentHost = window.location.host.toLowerCase();
 
-        if (redirected) return;
+        if (currentHost !== domain) {
+          // Domain mismatch - different user is logged in here
+          // Clear auth and redirect to login instead of creating redirect loop
+          clearAuthenticationCookie();
+          window.location.href = '/auth/signin';
+          return;
+        }
       }
 
       if (userProfile?.profileUser?.invitationToken) {
