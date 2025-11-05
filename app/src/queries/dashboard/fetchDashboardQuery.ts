@@ -6,7 +6,7 @@ export default gql`
     $startDate: String!
     $endDate: String!
   ) {
-    getSiteVisitorsByURL(url: $url) {
+    getSiteVisitorsByURL(url: $url, startDate: $startDate, endDate: $endDate) {
       count
     }
 

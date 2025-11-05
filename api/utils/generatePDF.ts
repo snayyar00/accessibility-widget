@@ -297,31 +297,43 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
 
     let logoBottomY = 0
 
-    // Handle logo loading like pdfGenerator.ts
+    // Handle logo loading - backward compatible with base64, HTTP URLs, and local paths
     let logoBase64 = null
-    let logopath: string | undefined
+    let logoBuffer: Buffer | undefined
 
     if (logoImage && logoImage.startsWith('data:image')) {
-      // Already base64
+      // Already base64 - backward compatible
       logoBase64 = logoImage.split(',')[1]
-      logopath = logoImage.split(',')[1]
+      logoBuffer = Buffer.from(logoBase64, 'base64')
+    } else if (logoImage && (logoImage.startsWith('http://') || logoImage.startsWith('https://'))) {
+      // HTTP/HTTPS URL (e.g., R2 storage URL) - backward compatible
+      try {
+        const response = await fetch(logoImage)
+        if (response.ok) {
+          logoBuffer = Buffer.from(await response.arrayBuffer())
+          logoBase64 = logoBuffer.toString('base64')
+        }
+      } catch (error) {
+        console.warn('Failed to fetch logo from URL:', logoImage, error)
+      }
     } else if (logoImage && fs.existsSync(logoImage)) {
-      logoBase64 = fs.readFileSync(logoImage, { encoding: 'base64' })
-      logopath = logoImage
+      // Local file path - backward compatible
+      logoBuffer = fs.readFileSync(logoImage)
+      logoBase64 = logoBuffer.toString('base64')
     } else {
       // fallback: try to load from default path
       const fallbackLogoPath = path.join(process.cwd(), 'email-templates', 'logo.png')
-      logopath = fallbackLogoPath
       if (fs.existsSync(fallbackLogoPath)) {
-        logoBase64 = fs.readFileSync(fallbackLogoPath, { encoding: 'base64' })
+        logoBuffer = fs.readFileSync(fallbackLogoPath)
+        logoBase64 = logoBuffer.toString('base64')
       }
     }
 
     try {
-      if (logoBase64) {
+      if (logoBase64 && logoBuffer) {
         // Use sharp to get proper dimensions like pdfGenerator.ts
         const sharp = (await import('sharp')).default
-        const image = sharp(Buffer.from(logoBase64, 'base64'))
+        const image = sharp(logoBuffer)
 
         const maxWidth = 48
         const maxHeight = 36 // increased size for a bigger logo
@@ -493,13 +505,14 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
     const pillH = 4 // Increased height for better appearance
     const pillX = statusTextX + doc.getTextWidth(status) + 34 // Increased spacing from status text to prevent overlap
     const pillY = statusTextY - 6 // Align with status text
+    const pillTotalHeight = pillH + 4 // Total height of the pill
     // Convert #222D73 to RGB: R=34, G=45, B=115
     doc.setFillColor(34, 45, 115)
     doc.setTextColor(255, 255, 255)
-    doc.roundedRect(pillX, pillY, pillTextWidth, pillH + 4, 4, 4, 'F') // Increased corner radius for more pill-like appearance
-    // Center the text horizontally within the pill
+    doc.roundedRect(pillX, pillY, pillTextWidth, pillTotalHeight, 4, 4, 'F') // Increased corner radius for more pill-like appearance
+    // Center the text both horizontally and vertically within the pill
     const textX = pillX + (pillTextWidth - textWidth) / 2
-    const textY = pillY + pillH + 2
+    const textY = pillY + pillTotalHeight / 2 + 1.5 // Center vertically with baseline offset
     doc.text(pillText, textX, textY)
 
     // Sub message positioned below the status text and percentage pill - Figma design
@@ -1441,8 +1454,11 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
     // After fetching base64
     for (const issue of translatedIssues) {
       if (issue.screenshotUrl && !issue.screenshotBase64) {
-        issue.screenshotBase64 = await fetchImageAsBase64(issue.screenshotUrl)
-        // console.log('Fetched base64 for', issue.screenshotUrl, '->', !!issue.screenshotBase64);
+        try {
+          issue.screenshotBase64 = await fetchImageAsBase64(issue.screenshotUrl)
+        } catch (e) {
+          console.warn('Skipping screenshot:', issue.screenshotUrl)
+        }
       }
     }
 

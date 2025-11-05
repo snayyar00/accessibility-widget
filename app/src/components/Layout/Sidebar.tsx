@@ -166,7 +166,6 @@ const Sidebar = () => {
   }
 
   function handleMouseLeave() {
-    setIsCollapsed(true);
     setIsHovered(false);
     if (!lockedOpen) {
       setIsCollapsed(true);

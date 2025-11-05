@@ -204,26 +204,44 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
   // console.log("url of image is ",logoImage);
 
   let logoBase64 = null
-  let logopath: string | undefined
+  let logopath: string | Buffer | undefined
+  let logoBuffer: Buffer | undefined
 
   if (logoImage && logoImage.startsWith('data:image')) {
-    // Already base64
+    // Already base64 - backward compatible
     logoBase64 = logoImage.split(',')[1]
     logopath = logoImage.split(',')[1]
+    logoBuffer = Buffer.from(logoBase64, 'base64')
+  } else if (logoImage && (logoImage.startsWith('http://') || logoImage.startsWith('https://'))) {
+    // HTTP/HTTPS URL (e.g., R2 storage URL) - backward compatible
+    try {
+      const response = await fetch(logoImage)
+      if (response.ok) {
+        logoBuffer = Buffer.from(await response.arrayBuffer())
+        logoBase64 = logoBuffer.toString('base64')
+        logopath = logoBuffer // Use buffer for sharp processing
+      }
+    } catch (error) {
+      console.warn('Failed to fetch logo from URL:', logoImage, error)
+    }
   } else if (logoImage && fs.existsSync(logoImage)) {
-    logoBase64 = fs.readFileSync(logoImage, { encoding: 'base64' })
-    logopath = fs.readFileSync(logoImage, { encoding: 'base64' })
+    // Local file path - backward compatible
+    logoBuffer = fs.readFileSync(logoImage)
+    logoBase64 = logoBuffer.toString('base64')
+    logopath = logoImage
   } else {
     // fallback: try to load from default path
     const fallbackLogoPath = path.join(process.cwd(), 'email-templates', 'logo.png')
     logopath = fallbackLogoPath
     if (fs.existsSync(fallbackLogoPath)) {
-      logoBase64 = fs.readFileSync(fallbackLogoPath, { encoding: 'base64' })
+      logoBuffer = fs.readFileSync(fallbackLogoPath)
+      logoBase64 = logoBuffer.toString('base64')
     }
   }
   try {
     if (logoBase64) {
-      const image = sharp(logopath)
+      // sharp can accept Buffer or string path
+      const image = logoBuffer ? sharp(logoBuffer) : sharp(logopath!)
 
       const maxWidth = 48
       const maxHeight = 36 // increased size for a bigger logo
@@ -404,9 +422,11 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
   // After fetching base64
   for (const issue of translatedIssues) {
     if (issue.screenshotUrl && !issue.screenshotBase64) {
-      issue.screenshotBase64 = await fetchImageAsBase64(issue.screenshotUrl)
-
-      // console.log('Fetched base64 for', issue.screenshotUrl, '->', !!issue.screenshotBase64);
+      try {
+        issue.screenshotBase64 = await fetchImageAsBase64(issue.screenshotUrl)
+      } catch (e) {
+        console.warn('Skipping screenshot:', issue.screenshotUrl)
+      }
     }
   }
 
