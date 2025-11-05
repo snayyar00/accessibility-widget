@@ -4,7 +4,7 @@ import { comparePassword } from '../../helpers/hashing.helper'
 import { sign } from '../../helpers/jwt.helper'
 import { incrementFailedAttempts, isAccountLocked, lockAccount, resetFailedAttempts } from '../../repository/failed_login_attempts.repository'
 import { Organization } from '../../repository/organization.repository'
-import { updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
+import { getOrganizationUser, updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
 import { findUser, findUserNotificationByUserId, insertUserNotification, updateUser } from '../../repository/user.repository'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
 import { ApolloError, AuthenticationError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
@@ -98,7 +98,23 @@ export async function loginUser(email: string, password: string, organization: O
     }
   }
 
-  const currentUrl = getMatchingFrontendUrl(userOrganization.domain)
+  // Check if user is logging in to a different organization than their current one
+  let targetOrganization = userOrganization
+
+  if (organization.id !== userOrganization.id) {
+    // User is logging in to a different organization domain
+    const isUserMemberOfLoginOrganization = await getOrganizationUser(user.id, organization.id)
+
+    if (isUserMemberOfLoginOrganization && isUserMemberOfLoginOrganization.status === ORGANIZATION_USER_STATUS_ACTIVE) {
+      // User IS a member of the login organization, switch to it
+      await updateUser(user.id, { current_organization_id: organization.id })
+      targetOrganization = organization
+    }
+    // If user is NOT a member, targetOrganization stays as userOrganization
+    // Frontend will redirect them to their correct organization domain
+  }
+
+  const currentUrl = getMatchingFrontendUrl(targetOrganization.domain)
 
   if (!currentUrl) {
     throw new ForbiddenError('Provided domain is not in the list of allowed URLs')

@@ -7,10 +7,11 @@ import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE, ORGANIZ
 import { generatePassword } from '../../helpers/hashing.helper'
 import { sign } from '../../helpers/jwt.helper'
 import { getOrganizationInvitation, getWorkspaceInvitation } from '../../repository/invitations.repository'
-import { Organization } from '../../repository/organization.repository'
+import { getOrganizationById as getOrganizationByIdRepo, Organization } from '../../repository/organization.repository'
 import { createUser, findUser, insertUserNotification, updateUser } from '../../repository/user.repository'
 import EmailSequenceService from '../../services/email/emailSequence.service'
-import { ApolloError } from '../../utils/graphql-errors.helper'
+import { getMatchingFrontendUrl } from '../../utils/env.utils'
+import { ApolloError, ForbiddenError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
 import { createMultipleValidationErrors, createValidationError, getValidationErrorCode } from '../../utils/validation-errors.helper'
@@ -21,6 +22,7 @@ dayjs.extend(utc)
 
 type RegisterResponse = {
   token: string
+  url: string
 }
 
 async function registerUser(email: string, password: string, name: string, organization: Organization, allowedFrontendUrl: string, referralCode?: string): Promise<ApolloError | RegisterResponse> {
@@ -54,11 +56,20 @@ async function registerUser(email: string, password: string, name: string, organ
     }
 
     let newUserId: number | undefined
+    let targetOrgId: number
 
     await database.transaction(async (trx) => {
       const passwordHashed = await generatePassword(password)
 
-      const userData: any = {
+      interface UserData {
+        email: string
+        password: string
+        name: string
+        password_changed_at: string
+        referral?: string
+      }
+
+      const userData: UserData = {
         email,
         password: passwordHashed,
         name,
@@ -86,7 +97,7 @@ async function registerUser(email: string, password: string, name: string, organ
 
       const invitationRole = (organizationInvitation?.organization_role || ORGANIZATION_USER_ROLE_MEMBER) as OrganizationUserRole
 
-      const targetOrgId = invitationOrgId || organization.id
+      targetOrgId = invitationOrgId || organization.id
       const userStatus = invitation ? ORGANIZATION_USER_STATUS_PENDING : ORGANIZATION_USER_STATUS_ACTIVE
 
       // Create user_notifications record with onboarding emails enabled (within transaction)
@@ -123,9 +134,22 @@ async function registerUser(email: string, password: string, name: string, organ
       }
     }
 
+    // Get the target organization to return the correct URL
+    const targetOrg = await getOrganizationByIdRepo(targetOrgId)
+
+    if (!targetOrg) {
+      throw new ApolloError('Target organization not found')
+    }
+
+    const targetUrl = getMatchingFrontendUrl(targetOrg.domain)
+
+    if (!targetUrl) {
+      throw new ForbiddenError('Provided domain is not in the list of allowed URLs')
+    }
+
     const token = sign({ email, name })
 
-    return { token }
+    return { token, url: targetUrl }
   } catch (error) {
     logger.error(error)
     throw error

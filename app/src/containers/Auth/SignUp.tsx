@@ -23,6 +23,7 @@ import isValidDomain from '@/utils/verifyDomain';
 import DOMPurify from 'dompurify';
 import LinkifyIt from 'linkify-it';
 import { setAuthenticationCookie } from '@/utils/cookie';
+import { IS_LOCAL } from '@/config/env';
 
 const linkify = new LinkifyIt();
 
@@ -172,11 +173,20 @@ const SignUp: React.FC = () => {
 
       const { data } = await registerMutation({ variables });
 
-      if (data?.register?.token) {
-        setAuthenticationCookie(data?.register?.token);
-        toast.success('Account created successfully!');
+      if (data?.register?.token && data?.register?.url) {
+        const currentHost = window.location.hostname;
+        const targetHost = new URL(data.register.url).hostname;
 
-        return true;
+        if (currentHost !== targetHost && !IS_LOCAL) {
+          // Need to redirect to different domain
+          window.location.href = `${data.register.url}/auth-redirect?token=${data.register.token}`;
+          return true;
+        } else {
+          // Same domain, just set cookie and continue
+          setAuthenticationCookie(data.register.token);
+          toast.success('Account created successfully!');
+          return true;
+        }
       }
 
       return false;
