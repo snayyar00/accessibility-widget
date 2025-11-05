@@ -323,7 +323,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
   // Filter domains based on search term and active tab
   const filteredDomains = domains.filter((domain) => {
     const matchesSearch =
-      domain?.url ?? ''.toLowerCase().includes(searchTerm.toLowerCase());
+      (domain?.url ?? '').toLowerCase().includes(searchTerm.toLowerCase());
     const domainStatus = getDomainStatus(
       domain?.url ?? '',
       domain?.expiredAt ?? '',

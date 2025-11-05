@@ -1,12 +1,14 @@
 [variables]
 CI = 'false'
-NODE_OPTIONS = '--max-old-space-size=8192'
+NODE_OPTIONS = '--max-old-space-size=16384'
+GENERATE_SOURCEMAP = 'false'
+NODE_ENV = 'production'
 
 [phases.setup]
 nixPkgs = ["nodejs_20", "curl", "wget", "nano"]
 
 [phases.install]
-cmds = ["npm install --legacy-peer-deps"]
+cmds = ["npm install --legacy-peer-deps --production=false"]
 
 [phases.build]
 cmds = ["npm run build"]

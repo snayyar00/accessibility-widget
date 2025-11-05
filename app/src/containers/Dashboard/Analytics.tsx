@@ -303,6 +303,10 @@ export default function AnalyticsDashboard({
   timeRange,
   setTimeRange,
   profileCounts,
+  // ⚡ Progressive loading states
+  visitorLoading = false,
+  engagementLoading = false,
+  impressionsLoading = false,
 }: any) {
   // Using baseColors directly
   // Filter data based on time range
@@ -402,9 +406,27 @@ export default function AnalyticsDashboard({
 
   const [showMoreMetrics, setShowMoreMetrics] = useState(false);
 
+  // Skeleton components for progressive loading
+  const SkeletonInlineMetric = () => (
+    <div className="flex-1 px-3 md:px-4 py-3 flex flex-col items-center sm:items-center md:items-center lg:items-center justify-center animate-pulse">
+      <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+      <div className="h-8 bg-gray-200 rounded w-16"></div>
+    </div>
+  );
+
+  const SkeletonChartCard = () => (
+    <div className="bg-white rounded-lg shadow p-4 animate-pulse">
+      <div className="flex items-center justify-between mb-4">
+        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+        <div className="h-8 bg-gray-200 rounded w-24"></div>
+      </div>
+      <div className="h-[200px] bg-gray-200 rounded"></div>
+    </div>
+  );
+
   return (
     <div>
-      {/* Grouped top metrics card to match Figma: single card with separators */}
+      {/* Grouped top metrics card - Progressive loading per metric */}
       <div
         className="analytics-metrics-card rounded-2xl shadow p-2 md:p-3 border h-auto md:h-auto md:min-h-0 lg:h-[120px] lg:min-h-[120px]"
         style={{
@@ -421,21 +443,39 @@ export default function AnalyticsDashboard({
             } as React.CSSProperties
           }
         >
-          <InlineMetric
-            title={mainMetrics[0].title}
-            value={mainMetrics[0].value as unknown as number}
-          />
-          <InlineMetric
-            title={mainMetrics[1].title}
-            value={mainMetrics[1].value as unknown as number}
-          />
-          <InlineMetric
-            title={mainMetrics[2].title}
-            value={mainMetrics[2].value as unknown as number}
-          />
+          {/* ⚡ Impressions Metric - Shows skeleton while loading */}
+          {impressionsLoading ? (
+            <SkeletonInlineMetric />
+          ) : (
+            <InlineMetric
+              title={mainMetrics[0].title}
+              value={mainMetrics[0].value as unknown as number}
+            />
+          )}
+          
+          {/* ⚡ Visitor Metric - Shows skeleton while loading */}
+          {visitorLoading ? (
+            <SkeletonInlineMetric />
+          ) : (
+            <InlineMetric
+              title={mainMetrics[1].title}
+              value={mainMetrics[1].value as unknown as number}
+            />
+          )}
+          
+          {/* ⚡ Widget Opened Metric - Shows skeleton while loading */}
+          {impressionsLoading ? (
+            <SkeletonInlineMetric />
+          ) : (
+            <InlineMetric
+              title={mainMetrics[2].title}
+              value={mainMetrics[2].value as unknown as number}
+            />
+          )}
         </div>
       </div>
 
+      {/* ⚡ Profile Counts Section - Shows skeleton while impressions loading */}
       <div
         className={`flex flex-col-reverse gap-4 pt-4 ${
           Object.keys(profileCounts).length
@@ -443,20 +483,24 @@ export default function AnalyticsDashboard({
             : 'md:flex-row-reverse'
         } justify-between md:items-end`}
       >
-        {Object.keys(profileCounts).length ? (
-          <button
-            className="show-more-metrics-button hover:brightness-110 py-2 px-4 rounded-lg focus:outline-none"
-            style={{
-              backgroundColor: baseColors.brandPrimary,
-              color: baseColors.white,
-            }}
-            onClick={() => setShowMoreMetrics(!showMoreMetrics)}
-          >
-            {showMoreMetrics ? 'Show Less' : 'Show More'}
-          </button>
-        ) : null}
+        {impressionsLoading ? (
+          <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
+        ) : (
+          Object.keys(profileCounts).length ? (
+            <button
+              className="show-more-metrics-button hover:brightness-110 py-2 px-4 rounded-lg focus:outline-none"
+              style={{
+                backgroundColor: baseColors.brandPrimary,
+                color: baseColors.white,
+              }}
+              onClick={() => setShowMoreMetrics(!showMoreMetrics)}
+            >
+              {showMoreMetrics ? 'Show Less' : 'Show More'}
+            </button>
+          ) : null
+        )}
       </div>
-      {showMoreMetrics && (
+      {showMoreMetrics && !impressionsLoading && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
           {additionalMetrics.map((metric, index) => (
             <MetricCard key={index} {...metric} />
@@ -464,20 +508,31 @@ export default function AnalyticsDashboard({
         </div>
       )}
       <div className="analytics-charts-section grid gap-4 md:grid-cols-2 pt-4">
-        <ChartCard
-          title="Engagement"
-          data={data.engagement}
-          dataKey="value"
-          timeRange={timeRange}
-          onChangeTimeRange={changeTimePeriod}
-        />
-        <ChartCard
-          title="Impressions"
-          data={data.impressions}
-          dataKey="value"
-          timeRange={timeRange}
-          onChangeTimeRange={changeTimePeriod}
-        />
+        {/* ⚡ Engagement Chart - Shows skeleton while loading */}
+        {engagementLoading ? (
+          <SkeletonChartCard />
+        ) : (
+          <ChartCard
+            title="Engagement"
+            data={data.engagement}
+            dataKey="value"
+            timeRange={timeRange}
+            onChangeTimeRange={changeTimePeriod}
+          />
+        )}
+        
+        {/* ⚡ Impressions Chart - Shows skeleton while loading */}
+        {impressionsLoading ? (
+          <SkeletonChartCard />
+        ) : (
+          <ChartCard
+            title="Impressions"
+            data={data.impressions}
+            dataKey="value"
+            timeRange={timeRange}
+            onChangeTimeRange={changeTimePeriod}
+          />
+        )}
       </div>
     </div>
   );

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import fetchDashboardQuery from '@/queries/dashboard/fetchDashboardQuery';
-import { useLazyQuery, useQuery } from '@apollo/client';
+import getVisitorCountQuery from '@/queries/dashboard/getVisitorCount';
+import getEngagementQuery from '@/queries/dashboard/getEngagement';
+import getImpressionsQuery from '@/queries/dashboard/getImpressions';
+import { useQuery } from '@apollo/client';
 import './Dashboard.css';
 import TrialBannerAndModal from './TrialBannerAndModal';
 import AnalyticsDashboard from './Analytics';
 import AnalyticsDashboardSkeleton from './skeletonanalytics';
+import DataOnlySkeleton from './DataOnlySkeleton';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { FaCheckCircle } from 'react-icons/fa';
 import { useHistory } from 'react-router-dom';
@@ -169,29 +172,51 @@ const Dashboard: React.FC<any> = ({
     undefined,
   );
 
-  const [loadDashboard, { data, loading, error }] = useLazyQuery(
-    fetchDashboardQuery,
-    {
-      fetchPolicy: 'cache-first',
-      onCompleted: () => setLoadingAnimation(false),
-    },
-  );
+  // ⚡ PROGRESSIVE LOADING: Three separate queries
+  // Each completes independently and displays as soon as ready!
+  
+  const skipQuery = !domain || domain === 'Select a Domain' || domain === 'No domains available';
+
+  // Query 1: Visitor Count (fastest - ~873ms) ⚡
+  const { 
+    data: visitorData, 
+    loading: visitorLoading 
+  } = useQuery(getVisitorCountQuery, {
+    variables: { url: domain, startDate, endDate },
+    skip: skipQuery,
+    fetchPolicy: 'cache-first',
+  });
+
+  // Query 2: Engagement Rates (fast - ~870ms) ⚡
+  const { 
+    data: engagementData, 
+    loading: engagementLoading 
+  } = useQuery(getEngagementQuery, {
+    variables: { url: domain, startDate, endDate },
+    skip: skipQuery,
+    fetchPolicy: 'cache-first',
+  });
+
+  // Query 3: Impressions (slower - ~4088ms) 🐌
+  const { 
+    data: impressionsData, 
+    loading: impressionsLoading 
+  } = useQuery(getImpressionsQuery, {
+    variables: { url: domain, startDate, endDate },
+    skip: skipQuery,
+    fetchPolicy: 'cache-first',
+  });
+
+  // Combined loading state for backward compatibility
+  const loading = visitorLoading || engagementLoading || impressionsLoading;
+  
   const [domainStatus, setDomainStatus] = useState<string | undefined>(
     undefined,
   );
   const [statusClass, setStatusClass] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
-    if (domain != 'Select a Domain' || domain != 'No domains available') {
-      setLoadingAnimation(false);
-    }
-    if (domain != 'Select a Domain' && domain != 'No domains available') {
-      setLoadingAnimation(true);
-      loadDashboard({
-        variables: { url: domain, startDate, endDate },
-      });
-    }
-  }, [domain, startDate, endDate, loadDashboard]);
+  // REMOVED: No longer using single loadingAnimation state
+  // Each section will show its own loading state independently!
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -208,49 +233,58 @@ const Dashboard: React.FC<any> = ({
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
+  // ⚡ Process visitor data as soon as it arrives!
   useEffect(() => {
-    if (data) {
-      setChart(data);
-      setUniqueVisitors(data.getSiteVisitorsByURL.count);
-      // console.log("data = ",data);
+    if (visitorData?.getSiteVisitorsByURL) {
+      setUniqueVisitors(visitorData.getSiteVisitorsByURL.count);
+      console.log('✓ Visitor count displayed:', visitorData.getSiteVisitorsByURL.count);
+    }
+  }, [visitorData]);
+
+  // ⚡ Process engagement data as soon as it arrives!
+  useEffect(() => {
+    if (engagementData?.getEngagementRates) {
+      setChart({ getEngagementRates: engagementData.getEngagementRates });
+      console.log('✓ Engagement chart displayed with', engagementData.getEngagementRates.length, 'data points');
+    }
+  }, [engagementData]);
+
+  // ⚡ Process impressions data as soon as it arrives!
+  useEffect(() => {
+    if (impressionsData?.getImpressionsByURLAndDate) {
+      const impressionsOutput = impressionsData.getImpressionsByURLAndDate.impressions;
+      
       let combinedProfileCounts: any = {};
-
-      data.getImpressionsByURLAndDate?.impressions.forEach(
-        (impression: any) => {
-          // Check if profileCounts is not null
-          if (impression.profileCounts !== null) {
-            // console.log("non null",impression.profileCounts);
-            Object.entries(impression.profileCounts).forEach(([key, value]) => {
-              combinedProfileCounts[key] =
-                (combinedProfileCounts[key] || 0) + value;
-            });
-          }
-        },
-      );
-
-      setProfileCounts(combinedProfileCounts);
-
-      const impressionsOutput = data.getImpressionsByURLAndDate?.impressions;
-      // console.log(data);
       let wC = 0;
       let wO = 0;
       let i = 0;
-      if (impressionsOutput?.length > 0) {
-        impressionsOutput.forEach((imp: any) => {
-          if (imp.widget_opened) {
-            wO += 1;
-          }
-          if (imp.widget_closed) {
-            wC += 1;
-          }
-          i += 1;
-        });
-      }
+
+      impressionsOutput.forEach((impression: any) => {
+        // Check if profileCounts is not null
+        if (impression.profileCounts !== null) {
+          Object.entries(impression.profileCounts).forEach(([key, value]) => {
+            combinedProfileCounts[key] =
+              (combinedProfileCounts[key] || 0) + value;
+          });
+        }
+        
+        if (impression.widget_opened) {
+          wO += 1;
+        }
+        if (impression.widget_closed) {
+          wC += 1;
+        }
+        i += 1;
+      });
+
+      setProfileCounts(combinedProfileCounts);
       setWidgetOpened(wO);
       setWidgetClosed(wC);
       setImpressions(i);
+      
+      console.log('✓ Impressions displayed:', i, 'records,', wO, 'opened,', wC, 'closed');
     }
-  }, [data]);
+  }, [impressionsData]);
 
   useEffect(() => {
     setCards([
@@ -363,103 +397,79 @@ const Dashboard: React.FC<any> = ({
         customStyles={defaultTourStyles}
       />
 
-      {loadingAnimation ? (
-        <>
-          <div className="flex flex-col items-center justify-center w-full mb-8 pl-0 pr-3"></div>
-          <AnalyticsDashboardSkeleton />
-        </>
-      ) : (
-        <>
-          {/* {domainData ? (
-            <div className="flex gap-3">
-              <p
-                className={`p-1.5 text-xs font-semibold rounded w-fit whitespace-no-wrap ${statusClass}`}
-              >
-                {domainStatus}
-              </p>
-              {domainStatus != 'Life Time' && (
-                <p className="text-gray-900 whitespace-no-wrap">
-                  {domainData?.expiredAt
-                    ? new Date(
-                        parseInt(domainData?.expiredAt),
-                      ).toLocaleString() ?? '-'
-                    : '-'}
-                </p>
-              )}
-            </div>
-          ) : (
-            <p>-</p>
-          )} */}
+      {/* ✅ ALWAYS show static hero banner - NO skeleton loading! */}
+      <div className="w-full py-4">
+        <div className="flex flex-col items-center justify-center w-full mb-4 px-4">
+          <div className="w-full mb-3 flex">
+            <div
+              className="dashboard-welcome-banner w-full grid grid-cols-1 lg:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 min-h-[320px] sm:min-h-[380px] md:min-h-[450px] lg:min-h-[500px]"
+              style={{
+                backgroundImage: `url(${dashboardImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: isSmallScreen
+                  ? 'center left'
+                  : 'center right',
+                backgroundRepeat: 'no-repeat',
+                color: baseColors.white,
+              }}
+            >
+              {/* Left Column - Content */}
+              <div className="px-6 sm:px-8 md:px-10 py-8 md:py-10 h-full flex flex-col justify-center items-center md:items-start space-y-4 md:space-y-6 text-center md:text-left">
+                <div className="space-y-6 md:pr-96 lg:pr-0">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl  leading-tight tracking-tight">
+                    Design for Everyone
+                  </h1>
+                  <p className="text-base sm:text-xs md:text-xs lg:text-xl  font-normal leading-relaxed opacity-90 max-w-md md:max-w-20">
+                    Achieve seamless ADA & WCAG compliance effortlessly with
+                    WebAbility
+                  </p>
+                </div>
 
-          <div className="w-full py-4">
-            <div className="flex flex-col items-center justify-center w-full mb-4 px-4">
-              <div className="w-full mb-3 flex">
-                <div
-                  className="dashboard-welcome-banner w-full grid grid-cols-1 lg:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 min-h-[320px] sm:min-h-[380px] md:min-h-[450px] lg:min-h-[500px]"
-                  style={{
-                    backgroundImage: `url(${dashboardImage})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: isSmallScreen
-                      ? 'center left'
-                      : 'center right',
-                    backgroundRepeat: 'no-repeat',
-                    color: baseColors.white,
-                  }}
-                >
-                  {/* Left Column - Content */}
-                  <div className="px-6 sm:px-8 md:px-10 py-8 md:py-10 h-full flex flex-col justify-center items-center md:items-start space-y-4 md:space-y-6 text-center md:text-left">
-                    <div className="space-y-6 md:pr-96 lg:pr-0">
-                      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl  leading-tight tracking-tight">
-                        Design for Everyone
-                      </h1>
-                      <p className="text-base sm:text-xs md:text-xs lg:text-xl  font-normal leading-relaxed opacity-90 max-w-md md:max-w-20">
-                        Achieve seamless ADA & WCAG compliance effortlessly with
-                        WebAbility
-                      </p>
-                    </div>
+                {/* Action Buttons */}
+                <div className="flex flex-col flex-wrap lg:flex-row items-center justify-center gap-3 pt-4">
+                  <button
+                    className="get-compliant-button w-full sm:w-48 md:w-64 px-6 py-4 h-14 text-blue-900 text-lg font-medium rounded-2xl bg-blue-100 hover:bg-blue-200 border-0 transition-all duration-300 cursor-pointer"
+                    onClick={handleRedirect}
+                  >
+                    Get compliant
+                  </button>
 
-                    {/* Action Buttons */}
-                    <div className="flex flex-col flex-wrap lg:flex-row items-center justify-center gap-3 pt-4">
-                      <button
-                        className="get-compliant-button w-full sm:w-48 md:w-64 px-6 py-4 h-14 text-blue-900 text-lg font-medium rounded-2xl bg-blue-100 hover:bg-blue-200 border-0 transition-all duration-300 cursor-pointer"
-                        onClick={handleRedirect}
-                      >
-                        Get compliant
-                      </button>
-
-                      <button
-                        className="app-sumo-button w-full sm:w-48 md:w-64 lg:w-64 flex justify-center px-6 py-4 h-14 text-white text-lg font-medium rounded-2xl bg-slate-800 hover:bg-slate-700 border-2 border-blue-400/50 transition-all duration-300 shadow-lg shadow-blue-400/20 hover:shadow-blue-400/30 cursor-pointer"
-                        style={{ alignItems: 'center' }}
-                        onClick={handleRedirect}
-                      >
-                        <span className=" lg:hidden">Appsumo</span>
-                        <span className="hidden lg:inline">Redeem Appsumo</span>
-                      </button>
-                    </div>
-                  </div>
+                  <button
+                    className="app-sumo-button w-full sm:w-48 md:w-64 lg:w-64 flex justify-center px-6 py-4 h-14 text-white text-lg font-medium rounded-2xl bg-slate-800 hover:bg-slate-700 border-2 border-blue-400/50 transition-all duration-300 shadow-lg shadow-blue-400/20 hover:shadow-blue-400/30 cursor-pointer"
+                    style={{ alignItems: 'center' }}
+                    onClick={handleRedirect}
+                  >
+                    <span className=" lg:hidden">Appsumo</span>
+                    <span className="hidden lg:inline">Redeem Appsumo</span>
+                  </button>
                 </div>
               </div>
             </div>
-
-            <div className="analytics-dashboard">
-              <AnalyticsDashboard
-                impressionCount={impressions}
-                widgetOpenCount={widgetOpened}
-                visitorCount={uniqueVisitors}
-                chartData={chartData}
-                setStartDate={setStartDate}
-                weekStart={getStartOfWeek()}
-                monthStart={getStartOfMonth()}
-                yearStart={getStartOfYear()}
-                timeRange={timeRange}
-                setTimeRange={setTimeRange}
-                profileCounts={profileCounts}
-                loading={loading}
-              />
-            </div>
           </div>
-        </>
-      )}
+        </div>
+      </div>
+
+      {/* ⚡ PROGRESSIVE LOADING: Pass individual loading states */}
+      <div className="analytics-dashboard">
+        <AnalyticsDashboard
+          impressionCount={impressions}
+          widgetOpenCount={widgetOpened}
+          visitorCount={uniqueVisitors}
+          chartData={chartData}
+          setStartDate={setStartDate}
+          weekStart={getStartOfWeek()}
+          monthStart={getStartOfMonth()}
+          yearStart={getStartOfYear()}
+          timeRange={timeRange}
+          setTimeRange={setTimeRange}
+          profileCounts={profileCounts}
+          loading={loading}
+          // ⚡ Individual loading states for progressive display
+          visitorLoading={visitorLoading}
+          engagementLoading={engagementLoading}
+          impressionsLoading={impressionsLoading}
+        />
+      </div>
     </>
   );
 };

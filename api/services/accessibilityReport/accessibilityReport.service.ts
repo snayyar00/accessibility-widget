@@ -290,7 +290,7 @@ export async function detectAccessibilityWidget(page: any): Promise<{
   const widgetScripts = await page.evaluate(() => {
     // @ts-ignore - This code runs in browser context where document is available
     const scripts = Array.from(document.querySelectorAll('script[src]'))
-    const widgetUrls = ['https://widget.access-widget.com/widget.min.js', 'https://widget.webability.io/widget.min.js']
+    const widgetUrls = ['https://widget.access-widget.com/widget.min.js', 'https://widget.webability.io/widget.min.js','https://widget-v2.webability.io/widget.min.js']
 
     const foundWidgets: Array<{ url: string; isExactMatch: boolean }> = []
 

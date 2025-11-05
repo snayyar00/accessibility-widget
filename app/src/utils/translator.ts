@@ -229,7 +229,7 @@ export const translateText = async (
       },
     );
 
-    return response.data;
+    return response.data as Issue[];
   } catch (err: any) {
     console.error('Translation failed:', err?.response?.data || err.message);
     return issues;
@@ -268,7 +268,7 @@ export const translateSingleText = async (
       },
     );
     // The backend returns an array of issues, so we extract the translated 'code' field
-    return response.data?.[0]?.code || text;
+    return (response.data as any)?.[0]?.code || text;
   } catch (error: any) {
     console.error('Translation error:', error?.response?.data || error.message);
     return text; // return original text as fallback
