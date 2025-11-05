@@ -1,8 +1,16 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useDispatch } from 'react-redux';
-import { useForm } from 'react-hook-form';
+import { useDispatch, useSelector } from 'react-redux';
+import { useForm, Controller } from 'react-hook-form';
 import { useMutation, useLazyQuery } from '@apollo/client';
-import { TextField, Button, Grid, Paper, Typography } from '@mui/material';
+import {
+  TextField,
+  Button,
+  Grid,
+  Paper,
+  Typography,
+  Switch,
+  FormControlLabel,
+} from '@mui/material';
 import { toast } from 'react-toastify';
 import { getErrorMessage } from '@/helpers/error.helper';
 
@@ -13,10 +21,12 @@ import GET_PROFILE from '@/queries/auth/getProfile';
 import { setProfileUser } from '@/features/auth/user';
 import FileUploader, { IFile } from '@/components/Common/Input/FileUploader';
 import { Organization } from '@/generated/graphql';
+import { RootState } from '@/config/store';
 
 interface OrganizationFormData {
   name: string;
   domain: string;
+  toggle_referral_program?: boolean;
 }
 
 interface SettingsProps {
@@ -26,17 +36,20 @@ interface SettingsProps {
 const Settings: React.FC<SettingsProps> = ({ organization }) => {
   const dispatch = useDispatch();
 
+  const { data: userData } = useSelector((state: RootState) => state.user);
   const [logoFiles, setLogoFiles] = useState<IFile[]>([]);
   const [faviconFiles, setFaviconFiles] = useState<IFile[]>([]);
 
   const [editOrganization, { loading: saving }] =
     useMutation(EDIT_ORGANIZATION);
+
   const [uploadLogo, { loading: uploadingLogo }] = useMutation(
     UPLOAD_ORGANIZATION_LOGO,
   );
   const [uploadFavicon, { loading: uploadingFavicon }] = useMutation(
     UPLOAD_ORGANIZATION_FAVICON,
   );
+
   const [getProfile, { loading: profileLoading }] = useLazyQuery(GET_PROFILE);
 
   const updateProfile = useCallback(async () => {
@@ -192,11 +205,12 @@ const Settings: React.FC<SettingsProps> = ({ organization }) => {
     }
   };
 
-  const { register, handleSubmit, reset, formState } =
+  const { register, handleSubmit, reset, control, formState } =
     useForm<OrganizationFormData>({
       defaultValues: {
         name: organization?.name || '',
         domain: organization?.domain || '',
+        toggle_referral_program: !!organization?.toggle_referral_program,
       },
     });
 
@@ -215,9 +229,39 @@ const Settings: React.FC<SettingsProps> = ({ organization }) => {
       reset({
         name: organization.name,
         domain: organization.domain,
+        toggle_referral_program: !!organization.toggle_referral_program,
       });
     }
   }, [organization, reset]);
+
+  const handleToggleChange = async (value: boolean) => {
+    try {
+      await editOrganization({
+        variables: {
+          id: organization.id,
+          toggle_referral_program: value,
+        },
+      });
+
+      const updatedOrg = await updateProfile();
+
+      if (updatedOrg) {
+        reset({
+          name: updatedOrg.name,
+          domain: updatedOrg.domain,
+          toggle_referral_program: !!updatedOrg.toggle_referral_program,
+        });
+      }
+
+      toast.success('Referral program setting saved');
+    } catch (error: unknown) {
+      const message = getErrorMessage(
+        error,
+        'Failed to update referral program setting.',
+      );
+      toast.error(message);
+    }
+  };
 
   const onSubmit = async (formData: OrganizationFormData) => {
     try {
@@ -234,6 +278,7 @@ const Settings: React.FC<SettingsProps> = ({ organization }) => {
         reset({
           name: updatedOrg.name,
           domain: updatedOrg.domain,
+          toggle_referral_program: !!updatedOrg.toggle_referral_program,
         });
 
         toast.success('Organization updated successfully!');
@@ -299,6 +344,32 @@ const Settings: React.FC<SettingsProps> = ({ organization }) => {
                 Save Changes
               </Button>
             </Grid>
+
+            {!!userData.is_super_admin && (
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="toggle_referral_program"
+                  control={control}
+                  defaultValue={false}
+                  render={(props) => (
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={!!props.value}
+                          onChange={(e) => {
+                            const val = e.target.checked;
+                            props.onChange(val);
+                            handleToggleChange(val);
+                          }}
+                          disabled={saving}
+                        />
+                      }
+                      label="Enable referral program"
+                    />
+                  )}
+                />
+              </Grid>
+            )}
           </Grid>
         </form>
       </Paper>

@@ -682,22 +682,29 @@ const Sidebar = () => {
               </nav>
             </div>
 
-            {/* Billing Button - Always at the end */}
-            <div className="px-4 pb-4 mt-auto">
-              <a
-                href="https://webability.getrewardful.com/signup"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full bg-white border border-[#445AE7] rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md py-3 px-4 space-x-3 hover:bg-gray-50"
-              >
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <LuCircleDollarSign size={24} className="text-[#94BFFF]" />
+            {!!userData?.currentOrganization?.toggle_referral_program && (
+              <>
+                {/* Billing Button - Always at the end */}
+                <div className="px-4 pb-4 mt-auto">
+                  <a
+                    href="https://webability.getrewardful.com/signup"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full bg-white border border-[#445AE7] rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md py-3 px-4 space-x-3 hover:bg-gray-50"
+                  >
+                    <div className="w-6 h-6 flex items-center justify-center">
+                      <LuCircleDollarSign
+                        size={24}
+                        className="text-[#94BFFF]"
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-[#656565] whitespace-nowrap">
+                      Join Referral Program
+                    </span>
+                  </a>
                 </div>
-                <span className="text-sm font-medium text-[#656565] whitespace-nowrap">
-                  Join Referral Program
-                </span>
-              </a>
-            </div>
+              </>
+            )}
           </div>
         ) : (
           /* Collapsed Mode - Direct navigation without card */
@@ -1012,19 +1019,26 @@ const Sidebar = () => {
               </nav>
             </div>
 
-            {/* Billing Button - Collapsed - Always at the end */}
-            <div className="pb-4 mt-auto">
-              <a
-                href="https://webability.getrewardful.com/signup"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-12 h-12 bg-white border border-[#C5D9E0] rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md mx-auto hover:bg-gray-50"
-              >
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <LuCircleDollarSign size={24} className="text-[#94BFFF]" />
+            {!!userData?.currentOrganization?.toggle_referral_program && (
+              <>
+                {/* Billing Button - Collapsed - Always at the end */}
+                <div className="pb-4 mt-auto">
+                  <a
+                    href="https://webability.getrewardful.com/signup"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-12 h-12 bg-white border border-[#C5D9E0] rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md mx-auto hover:bg-gray-50"
+                  >
+                    <div className="w-6 h-6 flex items-center justify-center">
+                      <LuCircleDollarSign
+                        size={24}
+                        className="text-[#94BFFF]"
+                      />
+                    </div>
+                  </a>
                 </div>
-              </a>
-            </div>
+              </>
+            )}
           </div>
         )}
       </div>
