@@ -329,7 +329,8 @@ export async function findUserWithOrganization(email: string): Promise<UserProfi
               'favicon', o.favicon,
               'settings', o.settings,
               'created_at', o.created_at,
-              'updated_at', o.updated_at
+              'updated_at', o.updated_at,
+              'toggle_referral_program', o.toggle_referral_program
             )
           ELSE NULL
         END as currentOrganization

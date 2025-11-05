@@ -19,6 +19,7 @@ export const OrganizationSchema = `#graphql
     favicon: String
     logo_url: String
     settings: JSON
+    toggle_referral_program: Boolean
     created_at: Date
     updated_at: Date
   }
@@ -59,7 +60,7 @@ export const OrganizationSchema = `#graphql
 
   extend type Mutation {
     addOrganization(name: String!, domain: String!, logo_url: String, settings: JSON): Organization @rateLimit(limit: 5, duration: 60, message: "Too many add attempts. Please try again later.")
-    editOrganization(id: ID!, name: String, domain: String, logo_url: String, favicon: String, settings: JSON): Organization @rateLimit(limit: 10, duration: 60, message: "Too many edit attempts. Please try again later.")
+    editOrganization(id: ID!, name: String, domain: String, logo_url: String, favicon: String, settings: JSON, toggle_referral_program: Boolean): Organization @rateLimit(limit: 10, duration: 60, message: "Too many edit attempts. Please try again later.")
     uploadOrganizationLogo(organizationId: ID!, logo: Upload!): Organization @rateLimit(limit: 10, duration: 60, message: "Too many upload attempts. Please try again later.")
     uploadOrganizationFavicon(organizationId: ID!, favicon: Upload!): Organization @rateLimit(limit: 10, duration: 60, message: "Too many upload attempts. Please try again later.")
     removeOrganization(id: ID!): Boolean @rateLimit(limit: 5, duration: 60, message: "Too many remove attempts. Please try again later.")

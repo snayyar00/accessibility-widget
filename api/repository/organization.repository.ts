@@ -22,6 +22,7 @@ export type Organization = {
   logo_url?: string
   settings?: string | object
   favicon?: string
+  toggle_referral_program?: boolean
   created_at?: string
   updated_at?: string
 }
