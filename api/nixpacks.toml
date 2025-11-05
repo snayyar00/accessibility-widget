@@ -18,10 +18,10 @@ nixPkgs = [
 ]
 
 [phases.install]
-cmds = ["npm install --legacy-peer-deps --ignore-scripts --omit=dev"]
+cmds = ["npm install --legacy-peer-deps --ignore-scripts"]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = ["npm run build", "npm prune --omit=dev --legacy-peer-deps"]
 
 [start]
 cmd = 'npm start'
