@@ -68,6 +68,12 @@ export async function loginUser(email: string, password: string, organization: O
   if (user.current_organization_id) {
     userOrganization = await getOrganizationById(user.current_organization_id, user)
 
+    // If user is logging in on a different organization domain, switch to it
+    if (userOrganization.id !== organization.id) {
+      await updateUser(user.id, { current_organization_id: organization.id })
+      userOrganization = organization
+    }
+
     await updateOrganizationUserByOrganizationAndUserId(userOrganization.id, user.id, { status: ORGANIZATION_USER_STATUS_ACTIVE })
     await resetFailedAttempts(user.id)
   } else {
