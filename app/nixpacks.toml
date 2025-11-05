@@ -1,7 +1,6 @@
 [variables]
 CI = 'false'
 NODE_OPTIONS = '--max-old-space-size=16384'
-GENERATE_SOURCEMAP = 'false'
 
 [phases.setup]
 nixPkgs = ["nodejs_20", "curl", "wget", "nano"]
@@ -10,7 +9,7 @@ nixPkgs = ["nodejs_20", "curl", "wget", "nano"]
 cmds = ["npm install --legacy-peer-deps"]
 
 [phases.build]
-cmds = ["NODE_OPTIONS='--max-old-space-size=16384' npm run build"]
+cmds = ["npm run build"]
 
 [start]
 cmd = ''
