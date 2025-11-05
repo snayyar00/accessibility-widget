@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "craco start",
-    "build": "node --max-old-space-size=8192 node_modules/.bin/craco build --no-audit",
+    "build": "node --max-old-space-size=16384 node_modules/.bin/craco build --no-audit",
     "codegen": "graphql-codegen --config codegen.ts"
   },
   "dependencies": {
