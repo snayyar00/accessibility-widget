@@ -83,7 +83,6 @@
     "@graphql-tools/schema": "^10.0.24",
     "@graphql-tools/utils": "^10.9.0",
     "@next/eslint-plugin-next": "^15.4.2",
-    "@types/axios": "^0.9.36",
     "@types/bcryptjs": "^3.0.0",
     "@types/bunyan": "^1.8.11",
     "@types/cookie-parser": "^1.4.9",
