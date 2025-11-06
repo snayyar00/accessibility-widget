@@ -20,6 +20,7 @@ export default gql`
         logo_url
         favicon
         settings
+        toggle_referral_program
         created_at
         updated_at
       }

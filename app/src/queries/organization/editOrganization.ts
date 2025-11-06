@@ -6,12 +6,14 @@ export default gql`
     $name: String
     $logo_url: String
     $favicon: String
+    $toggle_referral_program: Boolean
   ) {
     editOrganization(
       id: $id
       name: $name
       logo_url: $logo_url
       favicon: $favicon
+      toggle_referral_program: $toggle_referral_program
     ) {
       id
       name
@@ -19,6 +21,7 @@ export default gql`
       logo_url
       favicon
       settings
+      toggle_referral_program
       created_at
       updated_at
     }

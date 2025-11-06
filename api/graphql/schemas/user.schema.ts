@@ -38,6 +38,7 @@ export const UserSchema = `#graphql
 
   type RegisterPayload {
     token: String!
+    url: String!
   }
 
   type LoginPayload {
