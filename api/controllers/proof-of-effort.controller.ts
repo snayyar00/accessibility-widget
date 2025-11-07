@@ -85,7 +85,7 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
     }
 
     // Send the email
-    const emailSent = await sendMail(email, `Your Proof of Effort Toolkit for ${domain}`, emailHtml, [attachment])
+    const emailSent = await sendMail(email, `Your Proof of Effort Toolkit for ${domain}`, emailHtml, [attachment], 'WebAbility Team')
 
     if (emailSent) {
       res.status(200).json({

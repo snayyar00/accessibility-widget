@@ -184,7 +184,7 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
           },
         ]
 
-        await sendEmailWithRetries(user.email, template, `Accessibility Report for ${url}`, 5, 2000, attachments)
+        await sendEmailWithRetries(user.email, template, `Accessibility Report for ${url}`, 5, 2000, attachments, 'WebAbility Reports')
       } catch (error) {
         logger.error('Async email/report task failed:', error)
       }

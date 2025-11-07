@@ -178,7 +178,7 @@ const sendMonthlyEmails = async () => {
               console.error(`Failed to generate PDF for site ${site?.url}:`, pdfError)
             }
 
-            await sendEmailWithRetries(user.email, template, `Monthly Accessibility Report for ${site?.url}`, 2, 2000, attachments)
+            await sendEmailWithRetries(user.email, template, `Monthly Accessibility Report for ${site?.url}`, 2, 2000, attachments, 'WebAbility Reports')
             console.log(`Email with PDF attachment successfully sent to ${user.email} for site ${site?.url}`)
           } catch (error) {
             console.error(`Error processing sitePlan ${sitePlan.siteId}:`, error)

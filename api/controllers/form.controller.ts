@@ -55,6 +55,8 @@ export async function handleFormSubmission(req: Request, res: Response) {
       </body>
           </html>
       `,
+      undefined,
+      'WebAbility Team',
     )
 
     return res.status(200).json({ success: true, message: 'Email sent successfully' })

@@ -132,7 +132,7 @@ async function sendStatusChangeNotification(result: MonitoringResult, lastStatus
 
     const subject = currentStatus === 'down' ? `🔴 WebAbility Alert: ${result.url} is DOWN` : `✅ WebAbility Recovery: ${result.url} is back UP`
 
-    const emailSent = await sendMail(userEmail, subject, emailHtml)
+    const emailSent = await sendMail(userEmail, subject, emailHtml, undefined, 'WebAbility Monitoring')
 
     if (emailSent) {
       logger.info(`✅ Email sent to ${userEmail} for site ${result.url}`)

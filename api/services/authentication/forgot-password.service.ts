@@ -53,7 +53,7 @@ export async function forgotPasswordUser(email: string, organization: Organizati
       },
     })
 
-    await sendMail(session.email, 'Reset Password from WebAbility', template)
+    await sendMail(session.email, 'Reset Password from WebAbility', template, undefined, 'WebAbility Support')
 
     return true
   } catch (error) {
