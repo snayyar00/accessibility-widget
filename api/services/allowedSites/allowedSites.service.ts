@@ -39,26 +39,46 @@ async function isAdminOrManager(user: UserLogined): Promise<boolean> {
   return user.currentOrganizationUser ? canManageOrganization(user.currentOrganizationUser.role) : false
 }
 
-export async function checkScript(url: string) {
-  const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${url}`
+export async function checkScript(url: string, retries = 3): Promise<string> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${url}`
 
-  // Fetch the data from the secondary server
-  const response = await fetch(apiUrl)
+      // Set up timeout to prevent hanging requests
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000)
 
-  // Check if the response is successful
-  if (!response.ok) {
-    throw new Error(`Failed to fetch the script check. Status: ${response.status}`)
-  }
+      const response = await fetch(apiUrl, {
+        signal: controller.signal,
+      })
 
-  // Parse the response as JSON
-  const responseData = await response.json()
+      clearTimeout(timeoutId)
 
-  // Access the result and respond accordingly
-  if ((responseData as { result: string }).result === 'WebAbility') {
-    return 'Web Ability'
-  }
-  if ((responseData as { result: string }).result != 'Not Found') {
-    return 'true'
+      if (!response.ok) {
+        if (attempt === retries) {
+          logger.warn(`Failed to check script for ${url} after ${retries} attempts, returning 'false'`)
+          return 'false'
+        }
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1000))
+        continue
+      }
+
+      const responseData = await response.json()
+
+      if ((responseData as { result: string }).result === 'WebAbility') {
+        return 'Web Ability'
+      }
+      if ((responseData as { result: string }).result !== 'Not Found') {
+        return 'true'
+      }
+      return 'false'
+    } catch (error) {
+      if (attempt === retries) {
+        logger.warn(`Failed to check script for ${url} after ${retries} attempts: ${error.message}`)
+        return 'false'
+      }
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1000))
+    }
   }
   return 'false'
 }
@@ -110,19 +130,12 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
         let status: string
         let score: number
 
-        try {
-          widgetStatus = await checkScript(domain)
-          status = widgetStatus == 'true' || widgetStatus == 'Web Ability' ? 'Compliant' : 'Not Compliant'
-          // For WebAbility, use the original report score - the PDF generator will add the bonus
-          // For other cases, use the original report score
-          score = report.score
-        } catch (error) {
-          logger.warn(`Failed to check script for domain ${domain}:`, error)
-          // Fallback to default values when checkScript fails
-          widgetStatus = 'false'
-          status = 'Not Compliant'
-          score = report.score
-        }
+        // Use widget status from report (Puppeteer detection) if available, otherwise fallback to API check
+        widgetStatus = (report as any)?.scriptCheckResult ?? (await checkScript(domain))
+        status = widgetStatus === 'true' || widgetStatus === 'Web Ability' ? 'Compliant' : 'Not Compliant'
+        // For WebAbility, use the original report score - the PDF generator will add the bonus
+        // For other cases, use the original report score
+        score = report.score
 
         // Calculate total counts from both AXE and HTML_CS
         const errorsCount = (report?.axe?.errors?.length || 0) + (report?.htmlcs?.errors?.length || 0)
