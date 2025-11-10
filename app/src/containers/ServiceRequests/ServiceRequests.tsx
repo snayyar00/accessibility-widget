@@ -65,7 +65,7 @@ const ServiceRequests: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 border border-amber-200';
+        return 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 ';
       case 'reviewed':
         return 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200';
       case 'quoted':
@@ -327,11 +327,10 @@ const ServiceRequests: React.FC = () => {
                 >
                   {/* Name & Details */}
                   <div className="col-span-1 md:col-span-2">
-                    <div className="flex items-start gap-2 mb-2">
-                      <div className="mt-1 w-2 h-2 rounded-full bg-gradient-to-r from-[#445AE7] to-[#667eea] flex-shrink-0"></div>
+                    <div className="mb-2">
                       <div className="font-bold text-gray-900 group-hover:text-[#445AE7] transition-colors duration-200">{quote.project_name}</div>
                     </div>
-                    <div className="text-sm text-gray-500 line-clamp-2 ml-4">{quote.project_details}</div>
+                    <div className="text-sm text-gray-500 line-clamp-2">{quote.project_details}</div>
                   </div>
 
                   {/* Frequency */}

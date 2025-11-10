@@ -12,7 +12,7 @@ interface BookMeetingModalProps {
 const BookMeetingModal: React.FC<BookMeetingModalProps> = ({ isOpen, onClose }) => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [countryCode, setCountryCode] = useState('+92');
+  const [countryCode, setCountryCode] = useState('+1');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [service, setService] = useState('');
   const [message, setMessage] = useState('');
@@ -41,7 +41,7 @@ const BookMeetingModal: React.FC<BookMeetingModalProps> = ({ isOpen, onClose }) 
         // Reset form
         setFullName('');
         setEmail('');
-        setCountryCode('+92');
+        setCountryCode('+1');
         setPhoneNumber('');
         setService('');
         setMessage('');
@@ -133,7 +133,7 @@ const BookMeetingModal: React.FC<BookMeetingModalProps> = ({ isOpen, onClose }) 
                   type="tel"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="3104601270"
+                  placeholder="555-123-4567"
                   className="w-full sm:flex-grow px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200"
                   required
                 />
