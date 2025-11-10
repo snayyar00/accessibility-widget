@@ -68,7 +68,7 @@ export async function sendQuoteRequestNotification(data: QuoteRequestEmailData):
     })
 
     // Send to admin email (can be configured via environment variable)
-    const adminEmail = process.env.ADMIN_EMAIL || 'talhashahzad899@gmail.com'
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@webability.io'
     await sendMail(adminEmail, `🎯 New Quote Request: ${data.projectName}`, template)
 
     logger.info(`Quote request notification sent to ${adminEmail}`)
@@ -102,7 +102,7 @@ export async function sendMeetingRequestNotification(data: MeetingRequestEmailDa
     })
 
     // Send to admin email (can be configured via environment variable)
-    const adminEmail = process.env.ADMIN_EMAIL || 'talhashahzad899@gmail.com'
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@webability.io'
     await sendMail(adminEmail, `📅 New Meeting Request: ${data.fullName}`, template)
 
     logger.info(`Meeting request notification sent to ${adminEmail}`)
