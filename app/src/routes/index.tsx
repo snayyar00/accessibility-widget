@@ -4,7 +4,7 @@ import { MdBugReport } from 'react-icons/md';
 import ProblemReport from '@/containers/ProblemReport/ProblemReport';
 import { TbReportSearch } from 'react-icons/tb';
 import { MdOutlineGavel, MdOutlineInsights } from 'react-icons/md';
-import { FiFile } from 'react-icons/fi';
+import { FiFile, FiShoppingBag } from 'react-icons/fi';
 import ReportView from '@/containers/Accessibility/ReportView';
 import StatementGenerator from '@/containers/StatementGenerator/StatementGenerator';
 import Users from '@/containers/Users';
@@ -12,6 +12,7 @@ import ProofOfEffortToolkit from '@/containers/ProofOfEffortToolkit/ProofOfEffor
 import AIInsights from '@/containers/AIInsights/AIInsights';
 import Workspaces from '@/containers/Workspaces';
 import Organization from '@/containers/Organization';
+import ServiceRequests from '@/containers/ServiceRequests';
 
 const routes = [
   {
@@ -73,6 +74,20 @@ const routes = [
         className="menu-icon text-white-blue transition-colors duration-200"
         size={25}
         aria-label="Proof of Effort Toolkit navigation icon"
+      />
+    ),
+    isSidebar: true,
+  },
+  {
+    path: '/service-requests',
+    name: 'Service Requests',
+    exact: true,
+    component: ServiceRequests,
+    icon: (
+      <FiShoppingBag
+        className="menu-icon text-white-blue transition-colors duration-200"
+        size={25}
+        aria-label="Service Requests navigation icon"
       />
     ),
     isSidebar: true,
