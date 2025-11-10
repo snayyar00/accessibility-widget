@@ -181,7 +181,25 @@ function injectSelectedButtonStyles(
     .asw-container .asw-menu .profile-grid .asw-btn.asw-selected span {
       color: #ffffff !important;
     }
-    
+        /* Page Structure filter buttons when active */
+    .asw-container .asw-menu .asw-filter-btn.active,
+    .asw-container .asw-page-structure-widget .asw-filter-btn.active {
+      background-color: ${customColor} !important;
+      border-color: ${customColor} !important;
+      color: #ffffff !important;
+    }
+
+    .asw-container .asw-menu .asw-filter-btn.active span,
+    .asw-container .asw-page-structure-widget .asw-filter-btn.active span {
+      color: #ffffff !important;
+    }
+
+    .asw-container .asw-menu .asw-filter-btn.active svg,
+    .asw-container .asw-page-structure-widget .asw-filter-btn.active svg {
+      color: #ffffff !important;
+      stroke: #ffffff !important;
+    }
+
     /* Filter buttons when selected */
     .asw-container .asw-menu .asw-filter.asw-selected svg,
     .asw-container .asw-menu .asw-filter.asw-selected svg path {
@@ -1342,6 +1360,197 @@ function injectSelectedItemsStyles(
   document.head.appendChild(styleElement);
 }
 
+
+// Helper function to inject CSS for Page Structure tab styling
+function injectPageStructureStyles(iconsTextColor: string, backgroundColor: string) {
+  const styleId = 'asw-page-structure-styles';
+  
+  // Remove existing style if present
+  const existingStyle = document.getElementById(styleId);
+  if (existingStyle) {
+    existingStyle.remove();
+  }
+
+  // Create new style element with CSS rules
+  const styleElement = document.createElement('style');
+  styleElement.id = styleId;
+  styleElement.textContent = `
+    /* Page Structure widget background - applies to entire widget */
+    .asw-container .asw-page-structure-widget,
+    .asw-container .asw-page-structure-widget .asw-widget-body,
+    .asw-container .asw-page-structure-widget .asw-widget-header,
+    .asw-container .asw-page-structure-widget .asw-filter-buttons {
+      background-color: ${backgroundColor} !important;
+    }
+
+    /* Page Structure icons and text - controlled by all-icons-and-text */
+    .asw-container .asw-page-structure-widget .asw-structure-icon,
+    .asw-container .asw-page-structure-widget .asw-structure-text {
+      color: ${iconsTextColor} !important;
+    }
+
+    /* Page Structure SVG icons - HIGHER SPECIFICITY */
+    .asw-container .asw-page-structure-widget .asw-structure-icon svg,
+    .asw-container .asw-page-structure-widget .asw-structure-icon svg path,
+    .asw-container .asw-menu .asw-page-structure-widget .asw-structure-icon svg,
+    .asw-container .asw-menu .asw-page-structure-widget .asw-structure-icon svg path {
+      stroke: ${iconsTextColor} !important;
+      fill: none !important;
+      color: ${iconsTextColor} !important;
+    }
+
+    /* Page Structure filter buttons - unselected state */
+    .asw-container .asw-page-structure-widget .asw-filter-btn:not(.active),
+    .asw-container .asw-menu .asw-page-structure-widget .asw-filter-btn:not(.active) {
+      color: ${iconsTextColor} !important;
+      border-color: ${iconsTextColor} !important;
+      background-color: transparent !important;
+    }
+
+    .asw-container .asw-page-structure-widget .asw-filter-btn:not(.active) span,
+    .asw-container .asw-menu .asw-page-structure-widget .asw-filter-btn:not(.active) span {
+      color: ${iconsTextColor} !important;
+    }
+
+    .asw-container .asw-page-structure-widget .asw-filter-btn:not(.active) svg,
+    .asw-container .asw-menu .asw-page-structure-widget .asw-filter-btn:not(.active) svg,
+    .asw-container .asw-page-structure-widget .asw-filter-btn:not(.active) svg path,
+    .asw-container .asw-menu .asw-page-structure-widget .asw-filter-btn:not(.active) svg path {
+      color: ${iconsTextColor} !important;
+      stroke: ${iconsTextColor} !important;
+      fill: none !important;
+    }
+
+    /* Page Structure widget title */
+    .asw-container .asw-page-structure-widget .asw-widget-title {
+      color: ${iconsTextColor} !important;
+    }
+
+    /* Page Structure close button */
+    .asw-container .asw-page-structure-widget .asw-widget-close {
+      color: ${iconsTextColor} !important;
+    }
+
+    .asw-container .asw-page-structure-widget .asw-widget-close svg,
+    .asw-container .asw-page-structure-widget .asw-widget-close svg path {
+      stroke: ${iconsTextColor} !important;
+      fill: none !important;
+      color: ${iconsTextColor} !important;
+    }
+
+    /* Page Structure close button hover */
+    .asw-container .asw-page-structure-widget .asw-widget-close:hover {
+      background-color: rgba(${hexToRgb(iconsTextColor)}, 0.1) !important;
+    }
+
+    /* Page Structure items hover state */
+    .asw-container .asw-page-structure-widget .asw-structure-item:hover {
+      background-color: rgba(${hexToRgb(iconsTextColor)}, 0.1) !important;
+    }
+
+    /* Page Structure filter buttons hover - unselected state */
+    .asw-container .asw-page-structure-widget .asw-filter-btn:not(.active):hover {
+      background-color: rgba(${hexToRgb(iconsTextColor)}, 0.05) !important;
+      border-color: ${iconsTextColor} !important;
+    }
+  `;
+
+  // Append to document head
+  document.head.appendChild(styleElement);
+  
+  // Force immediate visual update by directly applying styles to any visible Page Structure elements
+  forceRefreshPageStructureIcons(iconsTextColor, backgroundColor);
+}
+
+// Helper function to force immediate visual update of Page Structure icons
+function forceRefreshPageStructureIcons(iconsTextColor: string, backgroundColor: string) {
+  const pageStructureWidget = document.querySelector('.asw-page-structure-widget') as HTMLElement;
+  
+  if (!pageStructureWidget || pageStructureWidget.style.display === 'none') {
+    // Page Structure is not visible, no need to force refresh
+    return;
+  }
+  
+  console.log('[PageStructure] Force refreshing icon colors:', iconsTextColor);
+  
+  // Update all structure icons
+  const structureIcons = pageStructureWidget.querySelectorAll('.asw-structure-icon');
+  structureIcons.forEach((icon: Element) => {
+    const htmlIcon = icon as HTMLElement;
+    htmlIcon.style.setProperty('color', iconsTextColor, 'important');
+    
+    // Update SVGs inside icons
+    const svgs = htmlIcon.querySelectorAll('svg, svg path');
+    svgs.forEach((svg: Element) => {
+      const htmlSvg = svg as HTMLElement;
+      htmlSvg.style.setProperty('stroke', iconsTextColor, 'important');
+      htmlSvg.style.setProperty('fill', 'none', 'important');
+      htmlSvg.style.setProperty('color', iconsTextColor, 'important');
+    });
+  });
+  
+  // Update filter button icons (unselected)
+  const filterButtons = pageStructureWidget.querySelectorAll('.asw-filter-btn:not(.active)');
+  filterButtons.forEach((btn: Element) => {
+    const htmlBtn = btn as HTMLElement;
+    htmlBtn.style.setProperty('color', iconsTextColor, 'important');
+    htmlBtn.style.setProperty('border-color', iconsTextColor, 'important');
+    
+    // Update SVGs in filter buttons
+    const svgs = htmlBtn.querySelectorAll('svg, svg path');
+    svgs.forEach((svg: Element) => {
+      const htmlSvg = svg as HTMLElement;
+      htmlSvg.style.setProperty('stroke', iconsTextColor, 'important');
+      htmlSvg.style.setProperty('color', iconsTextColor, 'important');
+      htmlSvg.style.setProperty('fill', 'none', 'important');
+    });
+    
+    const spans = htmlBtn.querySelectorAll('span');
+    spans.forEach((span: Element) => {
+      (span as HTMLElement).style.setProperty('color', iconsTextColor, 'important');
+    });
+  });
+  
+  // Update close button
+  const closeButton = pageStructureWidget.querySelector('.asw-widget-close');
+  if (closeButton) {
+    const htmlClose = closeButton as HTMLElement;
+    htmlClose.style.setProperty('color', iconsTextColor, 'important');
+    
+    const svgs = htmlClose.querySelectorAll('svg, svg path');
+    svgs.forEach((svg: Element) => {
+      const htmlSvg = svg as HTMLElement;
+      htmlSvg.style.setProperty('stroke', iconsTextColor, 'important');
+      htmlSvg.style.setProperty('color', iconsTextColor, 'important');
+      htmlSvg.style.setProperty('fill', 'none', 'important');
+    });
+  }
+  
+  // Update widget title
+  const widgetTitle = pageStructureWidget.querySelector('.asw-widget-title');
+  if (widgetTitle) {
+    (widgetTitle as HTMLElement).style.setProperty('color', iconsTextColor, 'important');
+  }
+  
+  // Update structure text
+  const structureTexts = pageStructureWidget.querySelectorAll('.asw-structure-text');
+  structureTexts.forEach((text: Element) => {
+    (text as HTMLElement).style.setProperty('color', iconsTextColor, 'important');
+  });
+  
+  // Update backgrounds
+  const bgElements = pageStructureWidget.querySelectorAll('.asw-widget-body, .asw-widget-header, .asw-filter-buttons');
+  bgElements.forEach((el: Element) => {
+    (el as HTMLElement).style.setProperty('background-color', backgroundColor, 'important');
+  });
+  pageStructureWidget.style.setProperty('background-color', backgroundColor, 'important');
+  
+  // Force a reflow to ensure changes are applied
+  void pageStructureWidget.offsetHeight;
+  
+  console.log('[PageStructure] Icon colors force-refreshed');
+}
+
 // Helper function to style a selected item
 function styleSelectedItem(element: HTMLElement, selectedItemsColor: string) {
   // Apply background color
@@ -1381,7 +1590,7 @@ export const sectionSelectors: Record<string, string | string[]> = {
     '.asw-report-issue-btn',
     '.asw-header-lang-selector',
   ],
-  'widget-background': ['.asw-menu-content', '.asw-menu', '.asw-modal-content'],
+  'widget-background': ['.asw-menu-content', '.asw-menu', '.asw-modal-content',".asw-page-structure-widget",".asw-widget-body",".asw-widget-header",".asw-filter-buttons"],
   'selected-language': [
     '.asw-language-list .asw-language-option.asw-language-selected',
     ".asw-custom-dropdown-item[aria-selected='true']",
@@ -1446,8 +1655,9 @@ export const sectionSelectors: Record<string, string | string[]> = {
     '.asw-btn.asw-selected',
     '.asw-font-size-btn.asw-selected',
     '.asw-filter.asw-selected',
-    '.profile-grid .asw-btn.asw-selected',
-  ],
+    ".profile-grid .asw-btn.asw-selected",
+    ".asw-filter-btn.active"
+    ],
 
   // New section to target all SVG icons and text (excluding header and footer)
   'header-text': [
@@ -1556,7 +1766,12 @@ export const sectionSelectors: Record<string, string | string[]> = {
     'h3',
     'h4',
     'h5',
-    'h6',
+    'h6',   
+    ".asw-structure-icon",
+    ".asw-structure-text",
+    ".asw-filter-btn:not(.active)",
+    ".asw-filter-btn:not(.active) span",
+    ".asw-filter-btn:not(.active) svg",
   ],
   'toggle-icon-color': [
     '.asw-header-toggle-switch .sun svg',
@@ -1660,8 +1875,26 @@ export default function applyMenuColor(
             mutation.attributeName === 'class'
           ) {
             const target = mutation.target as HTMLElement;
-            if (target.classList.contains('asw-selected')) {
+   
+            // ONLY handle Page Structure filter buttons - regular buttons are handled by "all-icons-and-text" section
+            const isPageStructureButton = target.classList.contains('asw-filter-btn') || 
+                                         target.closest('.asw-page-structure-widget');
+            
+            if (!isPageStructureButton) {
+              return; // Skip regular menu buttons
+            }
+            
+            if (target.classList.contains('asw-selected') || target.classList.contains('active')) {
+              // Element is now selected/active - apply selected styles
               styleSelectedItem(target, color);
+            } else {
+              // Element is now deselected - remove inline styles so CSS rules take over
+              target.style.removeProperty('background-color');
+              target.querySelectorAll('.asw-label, .asw-icon, svg, svg path, svg circle, svg rect, svg line, svg polyline, svg polygon, span').forEach((el: any) => {
+                el.style.removeProperty('fill');
+                el.style.removeProperty('stroke');
+                el.style.removeProperty('color');
+              });             
             }
           }
         });
@@ -1669,7 +1902,7 @@ export default function applyMenuColor(
 
       // Observe all potential selectable elements for class changes (excluding dropdowns)
       $menu
-        .querySelectorAll('.asw-btn, .asw-font-size-btn, .asw-filter')
+        .querySelectorAll('.asw-btn, .asw-font-size-btn, .asw-filter, .asw-filter-btn')
         .forEach((el: Element) => {
           observer.observe(el, {
             attributes: true,
@@ -1701,6 +1934,14 @@ export default function applyMenuColor(
         });
       }
 
+            // Store the background color for future reference (used by Page Structure)
+            $menu.setAttribute('data-widget-background-color', color);
+      
+            // Update Page Structure styles if icons/text color is available
+            const iconsColor = $menu.getAttribute('data-custom-icon-color');
+            if (iconsColor) {
+              injectPageStructureStyles(iconsColor, color);
+            }
       return;
     }
 
@@ -2025,16 +2266,21 @@ export default function applyMenuColor(
 
       // Store the custom color for future reference
       $menu.setAttribute('data-custom-icon-color', color);
-
+  // Update Page Structure styles if background color is available
+  const bgColor = $menu.getAttribute('data-widget-background-color');
+  if (bgColor) {
+    injectPageStructureStyles(color, bgColor);
+  }
       // Set CSS custom properties for button borders
       setButtonBorderColors(color, $menu);
-
-      // Inject CSS styles for selected buttons
-      injectSelectedButtonStyles(color, targetDocument);
-
+      // Get the selected items color (should use the color from "selected-items" section, not theme color)
+      const selectedItemsColor = $menu.getAttribute('data-selected-items-color') || color;
+      
+      // Inject CSS styles for selected buttons using the selected items color
+      injectSelectedButtonStyles(selectedItemsColor);
       // Helper function to style selected buttons
       const styleSelectedButton = (btn: any) => {
-        btn.style.setProperty('background-color', color, 'important');
+        btn.style.setProperty('background-color', selectedItemsColor, 'important');
         // Border color is now handled by CSS custom properties
 
         // Set all text and icons to white
