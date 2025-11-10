@@ -56,7 +56,7 @@ const ServiceRequests: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 ';
+        return 'bg-yellow-200 text-amber-900 ';
       case 'reviewed':
         return 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200';
       case 'quoted':
@@ -161,9 +161,9 @@ const ServiceRequests: React.FC = () => {
             borderColor: '#A2ADF3',
           }}
         >
-          <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 items-center p-8 md:p-12 lg:p-16">
+          <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-6 items-center p-6 md:p-8 lg:p-10">
             {/* Left Column - Text Content */}
-            <div className="space-y-6 z-10">
+            <div className="space-y-4 z-10">
               <div 
                 className="inline-flex items-center gap-2 px-4 py-2 backdrop-blur-md rounded-full text-sm font-semibold border shadow-lg"
                 style={{
@@ -178,8 +178,8 @@ const ServiceRequests: React.FC = () => {
                 Premium Expert Services
               </div>
               
-              <div className="space-y-3">
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight text-white">
+              <div className="space-y-2">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight text-white">
                   Professional<br />
                   <span className="text-white">
                     Accessibility Services
@@ -187,44 +187,46 @@ const ServiceRequests: React.FC = () => {
                 </h1>
               </div>
               
-              <p className="text-blue-100 text-base md:text-lg leading-relaxed max-w-xl">
+              <p className="text-blue-100 text-sm md:text-base leading-relaxed max-w-xl">
                 Partner with industry-leading accessibility experts to make your digital content inclusive, compliant, and accessible to everyone.
               </p>
 
               {/* Stats/Features */}
-              <div className="grid grid-cols-3 gap-4 pt-4">
+              <div className="grid grid-cols-3 gap-3 pt-2">
                 <div className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-white">500+</div>
-                  <div className="text-xs md:text-sm text-blue-100">Projects</div>
+                  <div className="text-xl md:text-2xl font-bold text-white">500+</div>
+                  <div className="text-xs text-blue-100">Projects</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-white">24/7</div>
-                  <div className="text-xs md:text-sm text-blue-100">Support</div>
+                  <div className="text-xl md:text-2xl font-bold text-white">24/7</div>
+                  <div className="text-xs text-blue-100">Support</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-white">WCAG</div>
-                  <div className="text-xs md:text-sm text-blue-100">Compliant</div>
+                  <div className="text-xl md:text-2xl font-bold text-white">WCAG</div>
+                  <div className="text-xs text-blue-100">Compliant</div>
                 </div>
               </div>
               
-              <div className="flex flex-wrap gap-3 pt-2">
+              <div className="flex flex-wrap gap-2 pt-1">
                 <a 
                 
                 href="https://meetings.hubspot.com/webability"
                 target="_blank"
-                  className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base transition-colors bg-white"
+                  className="inline-flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 bg-white shadow-lg hover:shadow-2xl"
                   style={{
                     color: '#344288',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = '#f0f0f0';
+                    e.currentTarget.style.transform = 'scale(1.05)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = '#ffffff';
+                    e.currentTarget.style.transform = 'scale(1)';
                   }}
                 >
                   Book a Meeting
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </a>
@@ -234,35 +236,35 @@ const ServiceRequests: React.FC = () => {
 
             {/* Right Column - Service Showcase */}
             <div className="relative hidden lg:block">
-              <div className="relative h-[450px]">
+              <div className="relative h-[320px]">
                 {/* Main Card - File Accessibility */}
                 <div 
-                  className="absolute top-0 right-0 bg-white rounded-xl shadow-md p-6 w-72 transform hover:scale-105 transition-all duration-300 border"
+                  className="absolute top-0 right-0 bg-white rounded-lg shadow-md p-4 w-60 transform hover:scale-105 transition-all duration-300 border"
                   style={{ borderColor: '#A2ADF3' }}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3">
                     <div 
-                      className="p-3 rounded-xl"
+                      className="p-2 rounded-lg"
                       style={{ backgroundColor: '#3343AD' }}
                     >
-                      <FiFile className="w-6 h-6 text-white" />
+                      <FiFile className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-gray-900 mb-1">File Accessibility</h3>
-                      <p className="text-sm text-gray-600 mb-3">PDFs, Word, Excel & More</p>
-                      <div className="flex items-center gap-2">
-                        <div className="flex -space-x-2">
+                      <h3 className="font-bold text-gray-900 mb-1 text-sm">File Accessibility</h3>
+                      <p className="text-xs text-gray-600 mb-2">PDFs, Word, Excel & More</p>
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex -space-x-1.5">
                           <div 
-                            className="w-6 h-6 rounded-full border-2 border-white"
+                            className="w-5 h-5 rounded-full border-2 border-white"
                             style={{ backgroundColor: '#3343AD' }}
                           ></div>
-                          <div className="w-6 h-6 rounded-full bg-green-500 border-2 border-white"></div>
+                          <div className="w-5 h-5 rounded-full bg-green-500 border-2 border-white"></div>
                           <div 
-                            className="w-6 h-6 rounded-full border-2 border-white"
+                            className="w-5 h-5 rounded-full border-2 border-white"
                             style={{ backgroundColor: '#7383ED' }}
                           ></div>
                         </div>
-                        <span className="text-xs text-gray-500">150+ completed</span>
+                        <span className="text-xs text-gray-500">150+</span>
                       </div>
                     </div>
                   </div>
@@ -270,24 +272,24 @@ const ServiceRequests: React.FC = () => {
 
                 {/* VPAT Card */}
                 <div 
-                  className="absolute top-32 left-0 bg-white rounded-xl shadow-md p-6 w-64 transform hover:scale-105 transition-all duration-300 border"
+                  className="absolute top-24 left-0 bg-white rounded-lg shadow-md p-4 w-56 transform hover:scale-105 transition-all duration-300 border"
                   style={{ borderColor: '#A2ADF3' }}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3">
                     <div 
-                      className="p-3 rounded-xl"
+                      className="p-2 rounded-lg"
                       style={{ backgroundColor: '#3343AD' }}
                     >
-                      <FiFileText className="w-6 h-6 text-white" />
+                      <FiFileText className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-gray-900 mb-1">VPAT Reports</h3>
-                      <p className="text-sm text-gray-600">Section 508 Compliance</p>
+                      <h3 className="font-bold text-gray-900 mb-1 text-sm">VPAT Reports</h3>
+                      <p className="text-xs text-gray-600">Section 508</p>
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">Certified</span>
-                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Certified</span>
+                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
                     </svg>
                   </div>
@@ -295,43 +297,43 @@ const ServiceRequests: React.FC = () => {
 
                 {/* Expert Audit Card */}
                 <div 
-                  className="absolute bottom-0 right-8 bg-white rounded-xl shadow-md p-6 w-68 transform hover:scale-105 transition-all duration-300 border"
+                  className="absolute bottom-0 right-6 bg-white rounded-lg shadow-md p-4 w-58 transform hover:scale-105 transition-all duration-300 border"
                   style={{ borderColor: '#A2ADF3' }}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3">
                     <div 
-                      className="p-3 rounded-xl"
+                      className="p-2 rounded-lg"
                       style={{ backgroundColor: '#3343AD' }}
                     >
-                      <FiSearch className="w-6 h-6 text-white" />
+                      <FiSearch className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-gray-900 mb-1">Expert Audit</h3>
-                      <p className="text-sm text-gray-600 mb-3">Comprehensive Analysis</p>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                      <h3 className="font-bold text-gray-900 mb-1 text-sm">Expert Audit</h3>
+                      <p className="text-xs text-gray-600 mb-2">Comprehensive Analysis</p>
+                      <div className="w-full bg-gray-200 rounded-full h-1.5 mb-1.5">
                         <div 
-                          className="h-2 rounded-full" 
+                          className="h-1.5 rounded-full" 
                           style={{
                             width: '85%',
                             backgroundColor: '#3343AD',
                           }}
                         ></div>
                       </div>
-                      <p className="text-xs text-gray-500">85% Score Average</p>
+                      <p className="text-xs text-gray-500">85% Average</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Floating Badge */}
                 <div 
-                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 backdrop-blur-lg rounded-full p-4 border shadow-xl"
+                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 backdrop-blur-lg rounded-full p-3 border shadow-xl"
                   style={{
                     backgroundColor: `rgba(255, 255, 255, 0.2)`,
                     borderColor: 'rgba(255, 255, 255, 0.3)',
                   }}
                 >
                   <svg 
-                    className="w-12 h-12" 
+                    className="w-9 h-9" 
                     fill="none" 
                     stroke="currentColor" 
                     viewBox="0 0 24 24"
