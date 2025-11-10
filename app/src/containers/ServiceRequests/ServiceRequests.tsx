@@ -361,6 +361,72 @@ const ServiceRequests: React.FC = () => {
         </div>
       </div>
 
+      {/* Service Cards Section */}
+      <div id="services" className="w-full mb-6">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {services.map((service, index) => (
+            <div 
+              key={service.id}
+              className="w-full"
+              style={{
+                background: 'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
+                borderRadius: '12px',
+                padding: '16px',
+                position: 'relative',
+                minHeight: '120px',
+                border: `1px solid ${baseColors.cardBorderPurple}`,
+              }}
+            >
+              <div className="flex items-start space-x-3">
+                <div
+                  className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
+                  style={{
+                    backgroundColor: baseColors.grayIcon,
+                  }}
+                >
+                  {React.cloneElement(service.icon as React.ReactElement, {
+                    className: 'w-6 h-6',
+                    style: { color: '#222D73' }
+                  })}
+                </div>
+                <div className="flex-1">
+                  <h2
+                    className="text-base sm:text-lg font-bold mb-2"
+                    style={{ color: baseColors.white }}
+                  >
+                    {service.title}
+                  </h2>
+                  <p
+                    className="text-xs sm:text-sm leading-tight mb-3"
+                    style={{ color: baseColors.blueStats }}
+                  >
+                    {service.description}
+                  </p>
+                  
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-2">
+                    {service.tags.map((tag, tagIndex) => (
+                      <span 
+                        key={tagIndex}
+                        className="px-2 py-1 text-xs rounded font-medium"
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          color: baseColors.white,
+                          border: `1px solid rgba(255, 255, 255, 0.2)`,
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Manage Projects Section */}
       <div className="w-full mb-6">
         <div 
@@ -600,100 +666,6 @@ const ServiceRequests: React.FC = () => {
               </p>
             </div>
           )}
-        </div>
-      </div>
-
-
-      {/* Service Cards Section */}
-      <div id="services" className="w-full mb-8">
-        <div className="text-center mb-12">
-          <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-2 leading-tight">
-            Our Services
-          </h2>
-          <p className="text-gray-600 text-sm sm:text-base md:text-lg max-w-2xl mx-auto">Choose the perfect solution for your accessibility needs</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-          {services.map((service, index) => (
-            <div 
-              key={service.id}
-              className="group relative bg-white rounded-xl shadow-md border p-3 sm:p-4 md:p-6 lg:p-8 hover:shadow-md transition-shadow duration-300 overflow-hidden"
-              style={{
-                borderColor: '#A2ADF3',
-              }}
-            >
-              
-              {/* Content */}
-              <div className="relative">
-                {/* Icon */}
-                <div className="mb-6 relative inline-block">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
-                    {React.cloneElement(service.icon as React.ReactElement, {
-                      className: 'w-8 h-8 sm:w-10 sm:h-10',
-                      style: { color: '#3343AD' }
-                    })}
-                  </div>
-                </div>
-
-                {/* Title */}
-                <h3 
-                  className="text-xs sm:text-sm md:text-base lg:text-lg font-medium text-gray-900 transition-colors leading-tight mb-4"
-                  style={{
-                    color: 'inherit',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = baseColors.blueDark;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'inherit';
-                  }}
-                >
-                  {service.title}
-                </h3>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mb-5">
-                  {service.tags.map((tag, tagIndex) => (
-                    <span 
-                      key={tagIndex}
-                      className="px-2 py-1 text-xs rounded-lg font-medium border"
-                      style={{
-                        backgroundColor: '#f8f9ff',
-                        color: '#3343AD',
-                        borderColor: '#A2ADF3',
-                      }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Description */}
-                <p className="text-gray-600 mb-6 leading-relaxed text-sm">
-                  {service.description}
-                </p>
-
-                {/* CTA Button */}
-                <button
-                  onClick={handleGetQuote}
-                  className="group/btn flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 border rounded-lg transition-colors font-medium text-sm sm:text-base"
-                  style={{
-                    borderColor: '#A2ADF3',
-                    color: '#3343AD',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f8f9ff';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  Get a Quote
-                  <FiArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform duration-300" />
-                </button>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
