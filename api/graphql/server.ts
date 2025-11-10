@@ -31,7 +31,8 @@ export function createGraphQLServer(httpServer: Server) {
   let landingPagePlugin
 
   if (IS_PROD) {
-    landingPagePlugin = ApolloServerPluginLandingPageDisabled()
+    // landingPagePlugin = ApolloServerPluginLandingPageDisabled()
+    landingPagePlugin = ApolloServerPluginLandingPageProductionDefault({ footer: false })
   } else if (IS_LOCAL) {
     landingPagePlugin = ApolloServerPluginLandingPageLocalDefault({ footer: false })
   } else {

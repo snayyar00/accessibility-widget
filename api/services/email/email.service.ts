@@ -23,7 +23,7 @@ async function sendMail(to: string, subject: string, html: string, attachments?:
     sendSmtpEmail.to = [{ email: to }]
     sendSmtpEmail.sender = {
       email: process.env.EMAIL_FROM || 'your-email@domain.com',
-      name: 'WebAbility Monitoring', // Add sender name
+      name: 'WebAbility Team',
     }
     sendSmtpEmail.subject = subject
     sendSmtpEmail.htmlContent = html
@@ -67,7 +67,10 @@ async function sendMailMultiple(recipients: string[], subject: string, html: str
     // Create the email content
     const sendSmtpEmail = new SendSmtpEmail()
     sendSmtpEmail.to = recipients.map((email) => ({ email }))
-    sendSmtpEmail.sender = { email: process.env.EMAIL_FROM || 'your-email@domain.com' }
+    sendSmtpEmail.sender = {
+      email: process.env.EMAIL_FROM || 'your-email@domain.com',
+      name: 'WebAbility Team',
+    }
     sendSmtpEmail.subject = subject
     sendSmtpEmail.htmlContent = html
 
