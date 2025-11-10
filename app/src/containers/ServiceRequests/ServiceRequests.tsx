@@ -209,7 +209,9 @@ const ServiceRequests: React.FC = () => {
               
               <div className="flex flex-wrap gap-3 pt-2">
                 <a 
-                  href="#services" 
+                
+                href="https://meetings.hubspot.com/webability"
+                target="_blank"
                   className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base transition-colors bg-white"
                   style={{
                     color: '#344288',
@@ -221,29 +223,12 @@ const ServiceRequests: React.FC = () => {
                     e.currentTarget.style.backgroundColor = '#ffffff';
                   }}
                 >
-                  Explore Services
+                  Book a Meeting
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </a>
-                <a
-                  href="https://meetings.hubspot.com/webability"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base border transition-colors text-white"
-                  style={{
-                    borderColor: 'rgba(255, 255, 255, 0.3)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                  }}
-                >
-                  Book Meeting
-                </a>
+             
               </div>
             </div>
 
@@ -364,56 +349,62 @@ const ServiceRequests: React.FC = () => {
       {/* Service Cards Section */}
       <div id="services" className="w-full mb-6">
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {services.map((service, index) => (
             <div 
               key={service.id}
-              className="w-full"
+              className="w-full transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
               style={{
-                background: 'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
-                borderRadius: '12px',
-                padding: '16px',
+                background: 'linear-gradient(135deg, #2E3A7D 0%, #4A5AA0 100%)',
+                borderRadius: '16px',
+                padding: '28px',
                 position: 'relative',
-                minHeight: '120px',
-                border: `1px solid ${baseColors.cardBorderPurple}`,
+                minHeight: '220px',
+                border: `2px solid ${baseColors.cardBorderPurple}`,
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
               }}
             >
-              <div className="flex items-start space-x-3">
+              <div className="flex items-start space-x-4">
                 <div
-                  className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
+                  className="flex-shrink-0 w-16 h-16 rounded-xl flex items-center justify-center"
                   style={{
                     backgroundColor: baseColors.grayIcon,
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                   }}
                 >
                   {React.cloneElement(service.icon as React.ReactElement, {
-                    className: 'w-6 h-6',
+                    className: 'w-9 h-9',
                     style: { color: '#222D73' }
                   })}
                 </div>
                 <div className="flex-1">
                   <h2
-                    className="text-base sm:text-lg font-bold mb-2"
+                    className="text-xl sm:text-2xl font-bold mb-3"
                     style={{ color: baseColors.white }}
                   >
                     {service.title}
                   </h2>
                   <p
-                    className="text-xs sm:text-sm leading-tight mb-3"
-                    style={{ color: baseColors.blueStats }}
+                    className="text-sm sm:text-base leading-relaxed mb-4"
+                    style={{ 
+                      color: baseColors.blueStats,
+                      opacity: 0.95,
+                      lineHeight: '1.6',
+                    }}
                   >
                     {service.description}
                   </p>
                   
                   {/* Tags */}
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5">
                     {service.tags.map((tag, tagIndex) => (
                       <span 
                         key={tagIndex}
-                        className="px-2 py-1 text-xs rounded font-medium"
+                        className="px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 hover:bg-white hover:bg-opacity-20 cursor-pointer"
                         style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.12)',
                           color: baseColors.white,
-                          border: `1px solid rgba(255, 255, 255, 0.2)`,
+                          border: `1.5px solid rgba(255, 255, 255, 0.25)`,
                         }}
                       >
                         {tag}
