@@ -163,98 +163,143 @@ const ServiceRequests: React.FC = () => {
     <div className="w-full min-h-screen bg-body">
       {/* Hero Section */}
       <div className="w-full mb-6">
-        <div className="relative bg-gradient-to-br from-[#445AE7] to-[#667eea] rounded-3xl shadow-2xl overflow-hidden min-h-[500px]">
-          {/* Animated Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 left-0 w-full h-full" style={{
-              backgroundImage: `radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 50%),
-                               radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
-                               radial-gradient(circle at 40% 90%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)`
-            }}></div>
+        <div className="relative bg-gradient-to-br from-[#445AE7] via-[#5468ea] to-[#667eea] rounded-3xl shadow-2xl overflow-hidden">
+          {/* Abstract Background Shapes */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-purple-400/10 rounded-full blur-2xl"></div>
           </div>
-          
-          {/* Grid Pattern Overlay */}
-          <div className="absolute inset-0 opacity-5" style={{
-            backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)',
-            backgroundSize: '50px 50px'
+
+          {/* Dot Pattern Overlay */}
+          <div className="absolute inset-0 opacity-[0.15]" style={{
+            backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+            backgroundSize: '30px 30px'
           }}></div>
           
-          <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-12 items-center p-8 md:p-12 lg:p-16">
+          <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 items-center p-8 md:p-12 lg:p-16">
             {/* Left Column - Text Content */}
-            <div className="space-y-8 text-white z-10">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold border border-white/30">
-                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                Premium Services
+            <div className="space-y-6 text-white z-10">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/15 backdrop-blur-md rounded-full text-sm font-semibold border border-white/20 shadow-lg">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+                Premium Expert Services
               </div>
               
-              <div className="space-y-4">
-                <h1 className="text-2xl md:text-2xl lg:text-7xl font-bold leading-tight tracking-tight">
-                  Accessibility<br />Expertise
+              <div className="space-y-3">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight">
+                  Professional<br />
+                  <span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                    Accessibility Services
+                  </span>
                 </h1>
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-blue-100">
-                  You Can Count On
-                </h2>
               </div>
               
-              <p className="text-blue-50 text-lg md:text-xl leading-relaxed max-w-xl">
-                Our industry-leading web accessibility experts are ready to take your website, 
-                apps, and digital assets to the next level.
+              <p className="text-blue-50 text-base md:text-lg leading-relaxed max-w-xl">
+                Partner with industry-leading accessibility experts to make your digital content inclusive, compliant, and accessible to everyone.
               </p>
+
+              {/* Stats/Features */}
+              <div className="grid grid-cols-3 gap-4 pt-4">
+                <div className="text-center">
+                  <div className="text-2xl md:text-3xl font-bold text-white">500+</div>
+                  <div className="text-xs md:text-sm text-blue-100">Projects</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl md:text-3xl font-bold text-white">24/7</div>
+                  <div className="text-xs md:text-sm text-blue-100">Support</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl md:text-3xl font-bold text-white">WCAG</div>
+                  <div className="text-xs md:text-sm text-blue-100">Compliant</div>
+                </div>
+              </div>
               
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-3 pt-2">
                 <a 
                   href="#services" 
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#445AE7] rounded-xl font-bold hover:bg-blue-50 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[#445AE7] rounded-xl font-bold hover:bg-blue-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
                   Explore Services
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </a>
-                
+                <button
+                  onClick={handleBookMeeting}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-md text-white rounded-xl font-bold border border-white/30 hover:bg-white/20 transition-all duration-300"
+                >
+                  Book Meeting
+                </button>
               </div>
             </div>
 
-            {/* Right Column - Service Icons */}
-            <div className="relative hidden lg:flex items-center justify-center">
-              <div className="relative w-full h-[400px]">
-                {/* PDF Card */}
-                <div className="absolute top-0 left-12 bg-white/25 backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-white/30 hover:bg-white/35 transition-all duration-300 transform hover:scale-110">
-                  <div className="bg-white/20 p-4 rounded-xl mb-3 flex items-center justify-center">
-                    <FiFile className="w-10 h-10 text-white" />
-                  </div>
-                  <span className="block text-center text-sm font-bold text-white">PDF</span>
-                </div>
-
-                {/* CC Card */}
-                <div className="absolute top-4 right-8 bg-white/25 backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-white/30 hover:bg-white/35 transition-all duration-300 transform hover:scale-110">
-                  <div className="bg-white/20 p-4 rounded-xl mb-3 flex items-center justify-center">
-                    <MdClosedCaption className="w-10 h-10 text-white" />
-                  </div>
-                  <span className="block text-center text-sm font-bold text-white">CC</span>
-                </div>
-
-                {/* Video Player Card */}
-                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-white rounded-2xl shadow-2xl p-6 w-80 hover:scale-105 transition-transform duration-300">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="bg-gradient-to-br from-[#445AE7] to-[#667eea] p-3 rounded-xl shadow-lg">
-                        <FiVideo className="w-7 h-7 text-white" />
-                      </div>
-                      <div className="absolute inset-0 bg-[#445AE7] rounded-xl blur-md opacity-30"></div>
+            {/* Right Column - Service Showcase */}
+            <div className="relative hidden lg:block">
+              <div className="relative h-[450px]">
+                {/* Main Card - File Accessibility */}
+                <div className="absolute top-0 right-0 bg-white rounded-2xl shadow-2xl p-6 w-72 transform hover:scale-105 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl">
+                      <FiFile className="w-6 h-6 text-white" />
                     </div>
-                    <div className="flex-grow">
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
-                        <div className="h-full w-2/3 bg-gradient-to-r from-[#445AE7] to-[#667eea] rounded-full relative">
-                          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md"></div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-900 mb-1">File Accessibility</h3>
+                      <p className="text-sm text-gray-600 mb-3">PDFs, Word, Excel & More</p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex -space-x-2">
+                          <div className="w-6 h-6 rounded-full bg-blue-500 border-2 border-white"></div>
+                          <div className="w-6 h-6 rounded-full bg-green-500 border-2 border-white"></div>
+                          <div className="w-6 h-6 rounded-full bg-purple-500 border-2 border-white"></div>
                         </div>
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <span>05:26</span>
-                        <span className="font-bold text-[#445AE7]">08:14</span>
+                        <span className="text-xs text-gray-500">150+ completed</span>
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* VPAT Card */}
+                <div className="absolute top-32 left-0 bg-white rounded-2xl shadow-2xl p-6 w-64 transform hover:scale-105 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
+                      <FiFileText className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-900 mb-1">VPAT Reports</h3>
+                      <p className="text-sm text-gray-600">Section 508 Compliance</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">Certified</span>
+                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Expert Audit Card */}
+                <div className="absolute bottom-0 right-8 bg-white rounded-2xl shadow-2xl p-6 w-68 transform hover:scale-105 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl">
+                      <FiSearch className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-900 mb-1">Expert Audit</h3>
+                      <p className="text-sm text-gray-600 mb-3">Comprehensive Analysis</p>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                        <div className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full" style={{width: '85%'}}></div>
+                      </div>
+                      <p className="text-xs text-gray-500">85% Score Average</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floating Badge */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-lg rounded-full p-4 border border-white/30 shadow-xl">
+                  <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </div>
               </div>
             </div>
