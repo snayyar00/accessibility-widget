@@ -5,7 +5,6 @@ import { useQuery } from '@apollo/client';
 import { FiFile, FiVideo, FiUser, FiPlus, FiFolderPlus, FiFolder, FiSearch, FiFileText, FiUsers, FiArrowRight } from 'react-icons/fi';
 import { MdClosedCaption, MdCheckCircle } from 'react-icons/md';
 import GetQuoteModal from './GetQuoteModal';
-import BookMeetingModal from './BookMeetingModal';
 import getUserQuoteRequestsQuery from '@/queries/serviceRequests/getUserQuoteRequests';
 import { baseColors } from '@/config/colors';
 
@@ -14,7 +13,6 @@ const ServiceRequests: React.FC = () => {
   useDocumentHeader({ title: 'Service Requests' });
 
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
-  const [isBookMeetingModalOpen, setIsBookMeetingModalOpen] = useState(false);
 
   // Fetch user's quote requests
   const { data: quoteRequestsData, loading: quotesLoading, refetch: refetchQuotes } = useQuery(getUserQuoteRequestsQuery);
@@ -23,18 +21,10 @@ const ServiceRequests: React.FC = () => {
     setIsQuoteModalOpen(true);
   };
 
-  const handleBookMeeting = () => {
-    setIsBookMeetingModalOpen(true);
-  };
-
   const handleCloseQuoteModal = () => {
     setIsQuoteModalOpen(false);
     // Refetch quotes after closing modal to get updated data
     refetchQuotes();
-  };
-
-  const handleCloseBookMeetingModal = () => {
-    setIsBookMeetingModalOpen(false);
   };
 
   // Helper function to format date
@@ -236,8 +226,10 @@ const ServiceRequests: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </a>
-                <button
-                  onClick={handleBookMeeting}
+                <a
+                  href="https://meetings.hubspot.com/webability"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base border transition-colors text-white"
                   style={{
                     borderColor: 'rgba(255, 255, 255, 0.3)',
@@ -251,7 +243,7 @@ const ServiceRequests: React.FC = () => {
                   }}
                 >
                   Book Meeting
-                </button>
+                </a>
               </div>
             </div>
 
@@ -396,24 +388,6 @@ const ServiceRequests: React.FC = () => {
             
             {/* Action Buttons */}
             <div className="flex flex-row gap-3">
-              <button
-                onClick={handleBookMeeting}
-                className="flex items-center justify-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 bg-white border rounded-lg font-medium text-sm sm:text-base transition-colors"
-                style={{
-                  borderColor: '#A2ADF3',
-                  color: '#3343AD',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f8f9ff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = baseColors.white;
-                }}
-              >
-                <FiUser className="w-5 h-5" />
-                Book a Meeting
-              </button>
-              
               <button
                 onClick={handleGetQuote}
                 className="flex items-center justify-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 text-white rounded-lg font-medium text-sm sm:text-base transition-colors"
@@ -629,74 +603,6 @@ const ServiceRequests: React.FC = () => {
         </div>
       </div>
 
-      {/* Workflow Steps Section */}
-      <div className="w-full mb-6">
-        <div 
-          className="relative rounded-2xl shadow-sm border overflow-hidden"
-          style={{
-            backgroundColor: '#ecf0fd',
-            borderColor: '#A2ADF3',
-          }}
-        >
-          
-          <div className="relative p-4 sm:p-6 lg:p-8 md:p-12">
-            <div className="text-center mb-10">
-              <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-2 leading-tight">
-                How It Works
-              </h3>
-              <p className="text-gray-600 text-sm sm:text-base md:text-lg">Follow these easy steps to get started</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              {workflowSteps.map((step, index) => (
-                <div key={step.number} className="flex flex-col items-center text-center group">
-                  {/* Step Container */}
-                  <div className="relative w-full">
-                    {/* Connecting Line (hidden on mobile and after last step) */}
-                    {index < workflowSteps.length - 1 && (
-                      <div 
-                        className="hidden md:block absolute top-8 left-1/2 w-full h-0.5 -z-10"
-                        style={{
-                          background: `linear-gradient(to right, #A2ADF3, transparent)`,
-                        }}
-                      ></div>
-                    )}
-                    
-                    {/* Step Number Circle */}
-                    <div 
-                      className="relative mx-auto w-16 h-16 text-white rounded-full flex items-center justify-center text-2xl font-bold mb-4 shadow-lg group-hover:shadow-2xl transition-all duration-300 z-10"
-                      style={{
-                        backgroundColor: '#3343AD',
-                      }}
-                    >
-                      <span className="relative z-10">{step.number}</span>
-                      <div className="absolute inset-0 bg-white/0 group-hover:bg-white/20 rounded-full transition-all duration-300"></div>
-                    </div>
-                    
-                    {/* Step Text */}
-                    <div 
-                      className="bg-white rounded-xl p-4 min-h-[120px] flex items-center justify-center border shadow-sm group-hover:shadow-md transition-all duration-300"
-                      style={{
-                        borderColor: '#A2ADF3',
-                      }}
-                    >
-                      <p className="text-gray-600 text-sm leading-relaxed">
-                        {step.text}
-                        <span 
-                          className="font-medium block mt-1 text-gray-900"
-                        >
-                          {step.highlight}
-                        </span>
-                        {step.lastText && <span>{step.lastText}</span>}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Service Cards Section */}
       <div id="services" className="w-full mb-8">
@@ -795,11 +701,6 @@ const ServiceRequests: React.FC = () => {
       <GetQuoteModal 
         isOpen={isQuoteModalOpen}
         onClose={handleCloseQuoteModal}
-      />
-
-      <BookMeetingModal 
-        isOpen={isBookMeetingModalOpen}
-        onClose={handleCloseBookMeetingModal}
       />
     </div>
   );
