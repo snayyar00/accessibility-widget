@@ -110,19 +110,12 @@ const sendMonthlyEmails = async () => {
             let status: string
             let score: number
 
-            try {
-              widgetStatus = await checkScript(site?.url)
-              status = widgetStatus === 'true' || widgetStatus === 'Web Ability' ? 'Compliant' : 'Not Compliant'
-              // For WebAbility, use the original report score - the PDF generator will add the bonus
-              // For other cases, use the original report score
-              score = report.score
-            } catch (error) {
-              logger.warn(`Failed to check script for domain ${site?.url}:`, error)
-              // Fallback to default values when checkScript fails
-              widgetStatus = 'false'
-              status = 'Not Compliant'
-              score = report.score
-            }
+            // Use widget status from report (Puppeteer detection) if available, otherwise fallback to API check
+            widgetStatus = (report as any)?.scriptCheckResult ?? (await checkScript(site?.url))
+            status = widgetStatus === 'true' || widgetStatus === 'Web Ability' ? 'Compliant' : 'Not Compliant'
+            // For WebAbility, use the original report score - the PDF generator will add the bonus
+            // For other cases, use the original report score
+            score = report.score
 
             // Generate secure unsubscribe link for monthly reports
             const unsubscribeLink = generateSecureUnsubscribeLink(user.email, getUnsubscribeTypeForEmail('monthly'), user.id)
@@ -136,6 +129,11 @@ const sendMonthlyEmails = async () => {
 
             const complianceByScore = displayedScore >= 80 ? 'Compliant' : displayedScore >= 50 ? 'Partially Compliant' : 'Not Compliant'
 
+            // Calculate total counts from both AXE and HTML_CS (same logic as new domain emails)
+            const errorsCount = (report?.axe?.errors?.length || 0) + (report?.htmlcs?.errors?.length || 0)
+            const warningsCount = (report?.axe?.warnings?.length || 0) + (report?.htmlcs?.warnings?.length || 0)
+            const noticesCount = (report?.axe?.notices?.length || 0) + (report?.htmlcs?.notices?.length || 0)
+
             const template = await compileEmailTemplate({
               fileName: 'accessReport.mjml',
               data: {
@@ -144,9 +142,9 @@ const sendMonthlyEmails = async () => {
                 statusImage: report.siteImg,
                 statusDescription: complianceByScore,
                 score: displayedScore,
-                errorsCount: report.htmlcs.errors.length,
-                warningsCount: report.htmlcs.warnings.length,
-                noticesCount: report.htmlcs.notices.length,
+                errorsCount: errorsCount,
+                warningsCount: warningsCount,
+                noticesCount: noticesCount,
                 reportLink: 'https://app.webability.io/accessibility-test',
                 unsubscribeLink,
                 year,
@@ -159,7 +157,7 @@ const sendMonthlyEmails = async () => {
               const pdfBlob = await generatePDF(
                 {
                   ...report, // Pass the full report data
-                  score: score,
+                  score: report.score,
                   widgetInfo: { result: widgetStatus },
                   scriptCheckResult: widgetStatus,
                   url: site?.url,
@@ -178,7 +176,7 @@ const sendMonthlyEmails = async () => {
               console.error(`Failed to generate PDF for site ${site?.url}:`, pdfError)
             }
 
-            await sendEmailWithRetries(user.email, template, `Monthly Accessibility Report for ${site?.url}`, 2, 2000, attachments)
+            await sendEmailWithRetries(user.email, template, `Monthly Accessibility Report for ${site?.url}`, 2, 2000, attachments, 'WebAbility Reports')
             console.log(`Email with PDF attachment successfully sent to ${user.email} for site ${site?.url}`)
           } catch (error) {
             console.error(`Error processing sitePlan ${sitePlan.siteId}:`, error)
