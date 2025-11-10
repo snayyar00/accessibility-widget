@@ -25,6 +25,15 @@ interface WhatsNewModalProps {
 const newsData: NewsItem[] = [
   {
     id: '1',
+    type: 'App',
+    date: '2025.11.10',
+    title: 'Premium Expert Services',
+    description:
+      'Our widget just got a major refresh faster, cleaner, and easier to use! Plus, check out our new Widget Customization Page to personalize colors, layout, and placement in just a few clicks.',
+    link: '/service-requests',
+  },
+  {
+    id: '2',
     type: 'Widget',
     date: '2025.10.15',
     title: 'New Widget Interface is Here',
@@ -33,7 +42,7 @@ const newsData: NewsItem[] = [
     link: '/widget-selection',
   },
   {
-    id: '2',
+    id: '3',
     type: 'App',
     date: '2025.10.15',
     title: 'Experience Our Refreshed App Design',
@@ -42,7 +51,7 @@ const newsData: NewsItem[] = [
     link: 'https://app.webability.io',
   },
   {
-    id: '3',
+    id: '4',
     type: 'App',
     date: '2025.10.20',
     title: 'Earn Rewards by Referring Others',
