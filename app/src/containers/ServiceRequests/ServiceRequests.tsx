@@ -207,11 +207,10 @@ const ServiceRequests: React.FC = () => {
                 </div>
               </div>
               
-              <div className="flex flex-wrap gap-2 pt-1">
+              <div className="flex flex-wrap gap-3 pt-1">
                 <a 
-                
-                href="https://meetings.hubspot.com/webability"
-                target="_blank"
+                  href="https://meetings.hubspot.com/webability"
+                  target="_blank"
                   className="inline-flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 bg-white shadow-lg hover:shadow-2xl"
                   style={{
                     color: '#344288',
@@ -230,7 +229,18 @@ const ServiceRequests: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </a>
-             
+                
+                <a 
+                  href="#services"
+                  className="inline-flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 border-2 border-white text-white shadow-lg hover:shadow-2xl hover:bg-white hover:bg-opacity-10"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  View Services
+                  <FiArrowRight className="w-6 h-6" />
+                </a>
               </div>
             </div>
 
@@ -345,78 +355,6 @@ const ServiceRequests: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Service Cards Section */}
-      <div id="services" className="w-full mb-6">
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {services.map((service, index) => (
-            <div 
-              key={service.id}
-              className="w-full transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
-              style={{
-                background: 'linear-gradient(135deg, #2E3A7D 0%, #4A5AA0 100%)',
-                borderRadius: '16px',
-                padding: '28px',
-                position: 'relative',
-                minHeight: '220px',
-                border: `2px solid ${baseColors.cardBorderPurple}`,
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
-              }}
-            >
-              <div className="flex items-start space-x-4">
-                <div
-                  className="flex-shrink-0 w-16 h-16 rounded-xl flex items-center justify-center"
-                  style={{
-                    backgroundColor: baseColors.grayIcon,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                  }}
-                >
-                  {React.cloneElement(service.icon as React.ReactElement, {
-                    className: 'w-9 h-9',
-                    style: { color: '#222D73' }
-                  })}
-                </div>
-                <div className="flex-1">
-                  <h2
-                    className="text-xl sm:text-2xl font-bold mb-3"
-                    style={{ color: baseColors.white }}
-                  >
-                    {service.title}
-                  </h2>
-                  <p
-                    className="text-sm sm:text-base leading-relaxed mb-4"
-                    style={{ 
-                      color: baseColors.blueStats,
-                      opacity: 0.95,
-                      lineHeight: '1.6',
-                    }}
-                  >
-                    {service.description}
-                  </p>
-                  
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2.5">
-                    {service.tags.map((tag, tagIndex) => (
-                      <span 
-                        key={tagIndex}
-                        className="px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 hover:bg-white hover:bg-opacity-20 cursor-pointer"
-                        style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                          color: baseColors.white,
-                          border: `1.5px solid rgba(255, 255, 255, 0.25)`,
-                        }}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -659,6 +597,90 @@ const ServiceRequests: React.FC = () => {
               </p>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Service Cards Section */}
+      <div id="services" className="w-full mb-6">
+        {/* Section Heading */}
+        <div className="text-center mb-8">
+          <h2 
+            className="text-3xl md:text-4xl font-extrabold mb-3"
+            style={{ color: baseColors.grayDark2 }}
+          >
+            Our Services
+          </h2>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            Comprehensive accessibility solutions tailored to your needs
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {services.map((service, index) => (
+            <div 
+              key={service.id}
+              className="w-full transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
+              style={{
+                background: 'linear-gradient(135deg, #2E3A7D 0%, #4A5AA0 100%)',
+                borderRadius: '16px',
+                padding: '28px',
+                position: 'relative',
+                minHeight: '220px',
+                border: `2px solid ${baseColors.cardBorderPurple}`,
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+              }}
+            >
+              <div className="flex items-start space-x-4">
+                <div
+                  className="flex-shrink-0 w-16 h-16 rounded-xl flex items-center justify-center"
+                  style={{
+                    backgroundColor: baseColors.grayIcon,
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  {React.cloneElement(service.icon as React.ReactElement, {
+                    className: 'w-9 h-9',
+                    style: { color: '#222D73' }
+                  })}
+                </div>
+                <div className="flex-1">
+                  <h2
+                    className="text-xl sm:text-2xl font-bold mb-3"
+                    style={{ color: baseColors.white }}
+                  >
+                    {service.title}
+                  </h2>
+                  <p
+                    className="text-sm sm:text-base leading-relaxed mb-4"
+                    style={{ 
+                      color: baseColors.blueStats,
+                      opacity: 0.95,
+                      lineHeight: '1.6',
+                    }}
+                  >
+                    {service.description}
+                  </p>
+                  
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-2.5">
+                    {service.tags.map((tag, tagIndex) => (
+                      <span 
+                        key={tagIndex}
+                        className="px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 hover:bg-white hover:bg-opacity-20 cursor-pointer"
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                          color: baseColors.white,
+                          border: `1.5px solid rgba(255, 255, 255, 0.25)`,
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
