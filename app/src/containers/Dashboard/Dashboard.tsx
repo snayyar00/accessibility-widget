@@ -75,6 +75,7 @@ const Dashboard: React.FC<any> = ({
   const [paymentView, setPaymentView] = useState(false);
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
   const [isSmallScreen, setIsSmallScreen] = useState<boolean>(false);
+  const [isMediumScreen, setIsMediumScreen] = useState<boolean>(false);
   const history = useHistory();
 
   const handleRedirect = () => {
@@ -221,6 +222,7 @@ const Dashboard: React.FC<any> = ({
   useEffect(() => {
     const checkScreenSize = () => {
       setIsSmallScreen(window.innerWidth < 640); // 640px is Tailwind's sm breakpoint
+      setIsMediumScreen(window.innerWidth >= 640 && window.innerWidth < 1024); // md breakpoint (640px - 1024px)
     };
 
     // Check on mount
@@ -404,13 +406,14 @@ const Dashboard: React.FC<any> = ({
             <div
               className="dashboard-welcome-banner w-full grid grid-cols-1 lg:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 min-h-[320px] sm:min-h-[380px] md:min-h-[450px] lg:min-h-[500px]"
               style={{
-                backgroundImage: `url(${dashboardImage})`,
+                backgroundImage: isMediumScreen ? 'none' : `url(${dashboardImage})`,
                 backgroundSize: 'cover',
                 backgroundPosition: isSmallScreen
                   ? 'center left'
                   : 'center right',
                 backgroundRepeat: 'no-repeat',
                 color: baseColors.white,
+                backgroundColor: isMediumScreen ? '#000000' : 'transparent', // Black background for md screens
               }}
             >
               {/* Left Column - Content */}
