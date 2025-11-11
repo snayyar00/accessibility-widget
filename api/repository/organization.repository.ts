@@ -23,6 +23,7 @@ export type Organization = {
   settings?: string | object
   favicon?: string
   toggle_referral_program?: boolean
+  stripe_account_id?: string | null
   created_at?: string
   updated_at?: string
 }

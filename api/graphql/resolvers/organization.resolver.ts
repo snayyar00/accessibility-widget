@@ -3,7 +3,7 @@ import { combineResolvers } from 'graphql-resolvers'
 import { OrganizationUserRole } from '../../constants/organization.constant'
 import { GraphQLContext } from '../../graphql/types'
 import { generateOrganizationFaviconUrl, generateOrganizationLogoUrl } from '../../helpers/imgproxy.helper'
-import { Organization } from '../../repository/organization.repository'
+import { Organization, getOrganizationById as getOrgById } from '../../repository/organization.repository'
 import { OrganizationUser } from '../../repository/organization_user.repository'
 import { AgencyProgramConnectionResponse, AgencyProgramDisconnectionResponse, connectToAgencyProgram, disconnectFromAgencyProgram, updateAgencyAccount } from '../../services/organization/agencyProgram.service'
 import { addOrganization, CreateOrganizationInput, editOrganization, getOrganizationById, getOrganizations, removeOrganization, removeUserFromOrganization } from '../../services/organization/organization.service'
@@ -29,7 +29,27 @@ const organizationResolver = {
   },
 
   OrganizationUser: {
-    hasAgencyAccountId: (parent: OrganizationUser) => {
+    hasAgencyAccountId: async (parent: OrganizationUser) => {
+      // Handle null/undefined parent
+      if (!parent) {
+        return false
+      }
+
+      // Check if organization has stripe_account_id (new way)
+      if (parent.organization_id) {
+        try {
+          // Use repository version (no permission check needed)
+          const org = await getOrgById(parent.organization_id)
+          if (org?.stripe_account_id) {
+            return true
+          }
+        } catch (error) {
+          // If organization lookup fails, fall back to legacy check
+          console.error('Error fetching organization for hasAgencyAccountId:', error)
+        }
+      }
+      
+      // Fallback to legacy agencyAccountId on user for backward compatibility
       return !!parent.agencyAccountId
     },
   },
