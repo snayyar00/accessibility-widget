@@ -66,11 +66,24 @@ const AgencyProgram: React.FC<AgencyProgramProps> = ({
 
       const response = res.data?.connectToAgencyProgram;
 
-      if (response?.success && response?.onboardingUrl) {
+      if (response?.success) {
+        // Check if account is already fully connected
+        if (response.onboardingUrl === 'ALREADY_CONNECTED') {
+          toast.success(
+            response.message || 
+            'Your account is already connected to the Agency Program!'
+          );
+          return;
+        }
+        
         // Redirect to Stripe onboarding
-        window.location.href = response.onboardingUrl;
+        if (response.onboardingUrl) {
+          window.location.href = response.onboardingUrl;
+        } else {
+          toast.error('Failed to get onboarding URL.');
+        }
       } else {
-        toast.error('Failed to get onboarding URL.');
+        toast.error('Failed to connect to Agency Program.');
       }
     } catch (error: unknown) {
       const message = getErrorMessage(

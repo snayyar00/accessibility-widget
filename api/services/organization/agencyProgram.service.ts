@@ -26,6 +26,7 @@ const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY, {
 export interface AgencyProgramConnectionResponse {
   onboardingUrl: string
   success: boolean
+  message?: string
 }
 
 /**
@@ -105,6 +106,64 @@ export async function connectToAgencyProgram(user: UserLogined, successUrl: stri
     } else {
       // No account exists - create new Stripe Express Account
       stripeAccountId = await createStripeExpressAccount(user, organization)
+    }
+
+    // Check if account is already fully verified
+    let accountDetails
+    try {
+      accountDetails = await stripe.accounts.retrieve(stripeAccountId)
+      
+      // 🧪 TESTING: Log account details
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.log('🧪 STRIPE ACCOUNT DETAILS (Testing):')
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.log('Account ID:', accountDetails.id)
+      console.log('Type:', accountDetails.type)
+      console.log('Country:', accountDetails.country)
+      console.log('Email:', accountDetails.email)
+      console.log('Business Type:', accountDetails.business_type)
+      console.log('Charges Enabled:', accountDetails.charges_enabled)
+      console.log('Payouts Enabled:', accountDetails.payouts_enabled)
+      console.log('Details Submitted:', accountDetails.details_submitted)
+      console.log('Capabilities:', JSON.stringify(accountDetails.capabilities, null, 2))
+      console.log('Requirements:', JSON.stringify(accountDetails.requirements, null, 2))
+      console.log('Metadata:', JSON.stringify(accountDetails.metadata, null, 2))
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      
+      // Check if account is fully onboarded
+      const isFullyOnboarded = 
+        accountDetails.charges_enabled === true &&
+        accountDetails.payouts_enabled === true &&
+        accountDetails.requirements?.currently_due?.length === 0
+      
+      if (isFullyOnboarded) {
+        logger.info('✅ Account is already fully onboarded - skipping onboarding link', {
+          userId,
+          organizationId,
+          stripeAccountId,
+          charges_enabled: accountDetails.charges_enabled,
+          payouts_enabled: accountDetails.payouts_enabled,
+          currently_due: accountDetails.requirements?.currently_due,
+        })
+        
+        return {
+          onboardingUrl: 'ALREADY_CONNECTED',
+          success: true,
+          message: 'Your account is already fully connected to the Agency Program. No further action needed.',
+        }
+      }
+      
+      logger.info('⚠️ Account needs onboarding - creating link', {
+        userId,
+        organizationId,
+        stripeAccountId,
+        charges_enabled: accountDetails.charges_enabled,
+        payouts_enabled: accountDetails.payouts_enabled,
+        currently_due: accountDetails.requirements?.currently_due,
+      })
+    } catch (stripeError) {
+      logger.error('❌ Error retrieving Stripe account:', stripeError)
+      // Continue with account link creation even if retrieval fails
     }
 
     // Generate account link for onboarding/update
