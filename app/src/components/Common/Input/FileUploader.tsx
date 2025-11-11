@@ -1,7 +1,6 @@
 import React from 'react';
 import { FileRejection, useDropzone } from 'react-dropzone';
-import { toast } from 'react-toastify';
-import cn from 'classnames';
+import { toast } from 'sonner';import cn from 'classnames';
 import { Button } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 

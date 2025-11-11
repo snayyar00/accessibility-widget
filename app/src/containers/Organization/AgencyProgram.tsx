@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useApolloClient, useLazyQuery, useMutation } from '@apollo/client';
 import { Paper, Typography, Button, Alert, Box } from '@mui/material';
-import { toast } from 'react-toastify';
-import { useDispatch } from 'react-redux';
+import { toast } from 'sonner';import { useDispatch } from 'react-redux';
 import { getErrorMessage } from '@/helpers/error.helper';
 import {
   CONNECT_TO_AGENCY_PROGRAM,

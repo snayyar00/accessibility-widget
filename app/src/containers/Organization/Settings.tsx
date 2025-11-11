@@ -11,8 +11,7 @@ import {
   Switch,
   FormControlLabel,
 } from '@mui/material';
-import { toast } from 'react-toastify';
-import { getErrorMessage } from '@/helpers/error.helper';
+import { toast } from 'sonner';import { getErrorMessage } from '@/helpers/error.helper';
 
 import EDIT_ORGANIZATION from '@/queries/organization/editOrganization';
 import UPLOAD_ORGANIZATION_LOGO from '@/queries/organization/uploadOrganizationLogo';
