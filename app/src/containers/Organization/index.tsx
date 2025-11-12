@@ -5,6 +5,7 @@ import { Redirect } from 'react-router-dom';
 
 import Settings from './Settings';
 import AgencyProgram from './AgencyProgram';
+import AgencyBillingPortal from './AgencyBillingPortal';
 import { isOwner } from '@/helpers/permissions';
 
 const Organization: React.FC = () => {
@@ -37,7 +38,10 @@ const Organization: React.FC = () => {
 
         {/* For Example. */}
         <AgencyProgram hasAgencyAccountId={false} isOwner={true} />
-        <AgencyProgram hasAgencyAccountId={true} isOwner={true} />
+        {/* <AgencyProgram hasAgencyAccountId={true} isOwner={true} />
+         */}
+        {/* Agency Billing Portal - Separate Card */}
+        <AgencyBillingPortal hasAgencyAccountId={true}  />
       </div>
     </section>
   );
