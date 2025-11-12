@@ -3,8 +3,7 @@ import type React from 'react';
 import { Colors, Toggles } from './editWidget_old';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import { useEffect, useRef, useState } from 'react';
-import { toast } from 'react-toastify';
-import { useSelector } from 'react-redux';
+import { toast } from 'sonner';import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 
 interface CustomizeWidgetProps {

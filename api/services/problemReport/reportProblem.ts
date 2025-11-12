@@ -74,7 +74,7 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
       },
     })
 
-    sendMail(problem.reporter_email, 'Problem reported', template)
+    sendMail(problem.reporter_email, 'Problem reported', template, undefined, 'WebAbility Support')
       .then(() => console.log('Mail sent successfully'))
       .catch((mailError) => console.error('Error sending mail:', mailError))
 
@@ -82,7 +82,7 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
     if (site.user_id) {
       const owner = await getUserbyId(site.user_id)
       if (owner && owner.email) {
-        sendMail(owner.email, 'A problem was reported for your site', template1)
+        sendMail(owner.email, 'A problem was reported for your site', template1, undefined, 'WebAbility Support')
           .then(() => console.log('Owner mail sent successfully'))
           .catch((mailError) => console.error('Error sending owner mail:', mailError))
       }

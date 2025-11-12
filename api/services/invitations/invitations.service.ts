@@ -205,7 +205,7 @@ async function inviteUserToWorkspace(user: UserLogined, workspaceId: number, inv
     await transaction.commit()
 
     try {
-      await sendMail(normalizeEmail(invitee_email), 'Workspace invitation', template)
+      await sendMail(normalizeEmail(invitee_email), 'Workspace invitation', template, undefined, 'WebAbility Team')
       console.log('Workspace Invitation Token', token)
     } catch (emailError) {
       logger.error('Failed to send workspace invitation email:', {
@@ -346,7 +346,7 @@ async function inviteUserToOrganization(user: UserLogined, invitee_email: string
     await transaction.commit()
 
     try {
-      await sendMail(normalizeEmail(invitee_email), 'Organization invitation', template)
+      await sendMail(normalizeEmail(invitee_email), 'Organization invitation', template, undefined, 'WebAbility Team')
       console.log('Organization Invitation Token', token)
     } catch (emailError) {
       logger.error('Failed to send organization invitation email:', {

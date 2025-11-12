@@ -51,7 +51,7 @@ export async function changePasswordUser(userId: number, currentPassword: string
       },
     })
 
-    await sendMail(user.email, 'Change Password from WebAbility', template)
+    await sendMail(user.email, 'Change Password from WebAbility', template, undefined, 'WebAbility Support')
     return { token: newToken }
   } catch (error) {
     logger.error(error)

@@ -69,15 +69,15 @@ export async function verifyEmail(authToken: string): Promise<true | ApolloError
 
     const user = await getUserbyId(token.user_id)
 
-    const template = await compileEmailTemplate({
-      fileName: 'WelcomeEmail.mjml',
-      data: {
-        name: user?.name,
-        date: dayjs().format('dddd, MMMM D, YYYY h:mm A'),
-      },
-    })
+  const template = await compileEmailTemplate({
+    fileName: 'WelcomeEmail.mjml',
+    data: {
+      name: user?.name,
+      date: dayjs().format('dddd, MMMM D, YYYY h:mm A'),
+    },
+  })
 
-    await sendMail(user?.email, "Welcome to WebAbility ! Let's Make the Web Accessible Together", template)
+  await sendMail(user?.email, "Welcome to WebAbility ! Let's Make the Web Accessible Together", template, undefined, 'WebAbility Team')
 
     return true
   } catch (error) {

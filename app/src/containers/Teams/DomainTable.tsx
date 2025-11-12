@@ -61,7 +61,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
 
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'active' | 'disabled'>('active');
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'disabled'>('all');
 
   const [deleteSiteMutation] = useMutation(deleteSite, {
     onCompleted: (response) => {
@@ -333,7 +333,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
     const isActive = domainStatus === 'Active' || domainStatus === 'Life Time';
     const isDisabled = !isActive;
 
-    if (activeTab === 'active') {
+    if (activeTab === 'all') {
+      return matchesSearch;
+    } else if (activeTab === 'active') {
       return matchesSearch && isActive;
     } else {
       return matchesSearch && isDisabled;
@@ -430,6 +432,16 @@ const DomainTable: React.FC<DomainTableProps> = ({
               {/* Navigation Tabs - Left */}
               <div className="flex items-center space-x-8 my-sites-tabs">
                 <button
+                  onClick={() => setActiveTab('all')}
+                  className={`font-normal text-base pb-2 transition-colors ${
+                    activeTab === 'all'
+                      ? 'text-black'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  All
+                </button>
+                <button
                   onClick={() => setActiveTab('active')}
                   className={`font-normal text-base pb-2 transition-colors ${
                     activeTab === 'active'
@@ -507,14 +519,16 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     You currently have no sites in this list
                   </h3>
                   <p className="text-sm text-gray-500">
-                    {activeTab === 'active'
+                    {activeTab === 'all'
                       ? 'Add your first domain to get started with accessibility monitoring.'
-                      : 'No Trial sites found. Switch to Active sites to view your domains.'}
+                      : activeTab === 'active'
+                      ? 'No Active sites found. Add your first domain or switch to All to view all your domains.'
+                      : 'No Trial sites found. Switch to All or Active sites to view your domains.'}
                   </p>
                 </div>
 
                 {/* Add New Domain Button */}
-                {activeTab === 'active' && (
+                {(activeTab === 'all' || activeTab === 'active') && (
                   <button
                     onClick={() => {
                       openModal();
@@ -1091,14 +1105,16 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   You currently have no sites in this list
                 </h3>
                 <p className="text-sm text-gray-500">
-                  {activeTab === 'active'
+                  {activeTab === 'all'
                     ? 'Add your first domain to get started with accessibility monitoring.'
-                    : 'No Trial sites found. Switch to Active sites to view your domains.'}
+                    : activeTab === 'active'
+                    ? 'No Active sites found. Add your first domain or switch to All to view all your domains.'
+                    : 'No Trial sites found. Switch to All or Active sites to view your domains.'}
                 </p>
               </div>
 
               {/* Add New Domain Button */}
-              {activeTab === 'active' && (
+              {(activeTab === 'all' || activeTab === 'active') && (
                 <button
                   onClick={() => {
                     openModal();

@@ -29,7 +29,7 @@ export async function sendWidgetInstallationInstructions(data: WidgetInstallatio
     })
 
     // Send the email
-    await sendMail(email, 'Your WebAbility Widget Installation Instructions', template)
+    await sendMail(email, 'Your WebAbility Widget Installation Instructions', template, undefined, 'WebAbility Team')
 
     logger.info(`Widget installation instructions sent successfully to ${email}`)
     return true

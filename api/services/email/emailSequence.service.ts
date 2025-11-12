@@ -103,7 +103,7 @@ export class EmailSequenceService {
 
       // Send the email
       const emailToSend = this.getEmailForSending(userEmail)
-      await sendEmailWithRetries(emailToSend, template, welcomeStep.subject)
+      await sendEmailWithRetries(emailToSend, template, welcomeStep.subject, 3, 2000, undefined, 'WebAbility Team')
 
       // Mark email as sent in tracking system
       await this.markEmailAsSent(userId, welcomeStep.day, organizationId)
@@ -449,7 +449,7 @@ export class EmailSequenceService {
 
       // Send the email
       const emailToSend = this.getEmailForSending(user.email)
-      await sendEmailWithRetries(emailToSend, template, compiledSubject)
+      await sendEmailWithRetries(emailToSend, template, compiledSubject, 3, 2000, undefined, 'WebAbility Team')
 
       if (!user.current_organization_id) {
         logger.error(`Cannot mark email as sent - user ${user.id} has no current_organization_id`)

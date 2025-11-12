@@ -44,6 +44,7 @@ export const OrganizationSchema = `#graphql
   type AgencyProgramConnectionResponse {
     onboardingUrl: String!
     success: Boolean!
+    message: String
   }
 
   type AgencyProgramDisconnectionResponse {

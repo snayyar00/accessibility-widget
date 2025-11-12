@@ -5,7 +5,7 @@ interface EmailAttachment {
   name: string
 }
 
-async function sendMail(to: string, subject: string, html: string, attachments?: EmailAttachment[]) {
+async function sendMail(to: string, subject: string, html: string, attachments?: EmailAttachment[], senderName: string = 'WebAbility') {
   if (!to || to.trim() === '') {
     console.error('Recipient email address is missing or empty.')
     return false
@@ -51,7 +51,7 @@ async function sendMail(to: string, subject: string, html: string, attachments?:
   }
 }
 
-async function sendMailMultiple(recipients: string[], subject: string, html: string, attachments?: EmailAttachment[]) {
+async function sendMailMultiple(recipients: string[], subject: string, html: string, attachments?: EmailAttachment[], senderName: string = 'WebAbility') {
   if (!recipients || recipients.length === 0) {
     console.error('No recipients provided.')
     return false
@@ -104,6 +104,7 @@ async function sendEmailWithRetries(
   maxRetries = 3, // Default to 3 retries
   delay = 2000, // Default to 2 seconds delay
   attachments?: EmailAttachment[],
+  senderName: string = 'WebAbility',
 ): Promise<void> {
   let attempt = 0
 
@@ -112,7 +113,7 @@ async function sendEmailWithRetries(
 
     try {
       console.log(`Attempt ${attempt} to send email to ${email}`)
-      await sendMail(email, subject, template, attachments)
+      await sendMail(email, subject, template, attachments, senderName)
       console.log(`Email sent successfully to ${email}`)
       return // Exit the function if email is sent successfully
     } catch (error) {
