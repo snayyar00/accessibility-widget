@@ -31,17 +31,14 @@ const Organization: React.FC = () => {
       <div className="space-y-6 empty:hidden">
         <Settings organization={organization} />
 
-        {/* <AgencyProgram
-              hasAgencyAccountId={hasAgencyAccountId}
-              isOwner={isOrganizationOwner}
-            /> */}
-
-        {/* For Example. */}
-        <AgencyProgram hasAgencyAccountId={false} isOwner={true} />
-        {/* <AgencyProgram hasAgencyAccountId={true} isOwner={true} />
-         */}
-        {/* Agency Billing Portal - Separate Card */}
-        <AgencyBillingPortal hasAgencyAccountId={true}  />
+        {/* Agency Program - Only show to owners */}
+        <AgencyProgram
+          hasAgencyAccountId={hasAgencyAccountId}
+          isOwner={isOrganizationOwner}
+        />
+        
+        {/* Agency Billing Portal - Only show when fully onboarded */}
+        <AgencyBillingPortal hasAgencyAccountId={hasAgencyAccountId} />
       </div>
     </section>
   );
