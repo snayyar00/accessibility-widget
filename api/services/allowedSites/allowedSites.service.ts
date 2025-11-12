@@ -436,8 +436,9 @@ function addOwnershipFlag(sites: IUserSites[], userId: number): IUserSites[] {
  * - Regular user: only own sites or workspace sites where they are active member
  */
 export async function canAccessSite(user: UserLogined, site: FindAllowedSitesProps): Promise<boolean> {
-  // Check organization match
-  if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
+  // Check organization match - only deny if both have org IDs and they don't match
+  // Sites without organization_id (NULL) should fall through to ownership/workspace checks
+  if (user.current_organization_id && site.organization_id && site.organization_id !== user.current_organization_id) {
     return false
   }
 
