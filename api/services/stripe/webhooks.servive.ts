@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import Stripe from 'stripe'
 
 import { REWARDFUL_COUPON } from '../../constants/billing.constant'
+import { getAgencyRevenueSharePercent } from '../../helpers/agency-revenue.helper'
 import { getOrganizationById } from '../../repository/organization.repository'
 import { findProductById, findProductByStripeId, insertProduct, updateProduct } from '../../repository/products.repository'
 import { getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId } from '../../repository/sites_plans.repository'
@@ -208,10 +209,11 @@ export const stripeWebhook = async (req: Request, res: Response) => {
             planInterval = 'YEARLY'
           }
 
-          // Get user to check for referral code and organization
+          // Get user to check for referral code, organization, and revenue share %
           const { findUserById } = require('../../repository/user.repository')
           let referralCode = null
           let agencyAccountId: string | null = null
+          let revenueSharePercent = 50 // Default
           
           try {
             const user = await findUserById(Number(session.metadata.userId))
@@ -220,13 +222,17 @@ export const stripeWebhook = async (req: Request, res: Response) => {
               console.log('[REWARDFUL] Found referral code for webhook subscription:', referralCode)
             }
             
-            // Fetch organization's stripe_account_id for Agency Program
+            // Fetch organization's stripe_account_id and revenue share % for Agency Program
             if (user && user.current_organization_id) {
               try {
                 const organization = await getOrganizationById(user.current_organization_id)
+                revenueSharePercent = getAgencyRevenueSharePercent(organization)
+                
                 if (organization?.stripe_account_id) {
                   agencyAccountId = organization.stripe_account_id
-                  console.log('[AGENCY_PROGRAM] Webhook subscription with revenue sharing:', agencyAccountId)
+                  console.log(`[AGENCY_PROGRAM] Webhook subscription with revenue sharing: Platform ${revenueSharePercent}% | Agency ${100 - revenueSharePercent}%`, {
+                    agencyAccountId,
+                  })
                 }
               } catch (error) {
                 console.error('[AGENCY_PROGRAM] Failed to fetch organization in webhook:', error)
@@ -251,9 +257,9 @@ export const stripeWebhook = async (req: Request, res: Response) => {
               ...(agencyAccountId && { agency_account_id: agencyAccountId }),
             },
             description: `Plan for ${session.metadata.domain}`,
-            // Agency Program: Platform keeps 40%, Agency gets 60%
+            // Agency Program: Configurable revenue share per organization
             ...(agencyAccountId && {
-              application_fee_percent: 40,
+              application_fee_percent: revenueSharePercent,
               transfer_data: {
                 destination: agencyAccountId,
               },

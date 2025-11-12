@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import Stripe from 'stripe'
 
 import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, REWARDFUL_COUPON } from '../../constants/billing.constant'
+import { getAgencyRevenueSharePercent } from '../../helpers/agency-revenue.helper'
 import { getOrganizationById } from '../../repository/organization.repository'
 import { findProductAndPriceByType } from '../../repository/products.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
@@ -59,8 +60,9 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
     return res.status(403).json({ error: 'Site does not belong to current organization' })
   }
 
-  // Fetch organization's stripe_account_id for Agency Program revenue sharing
+  // Fetch organization's stripe_account_id and revenue share % for Agency Program
   let agencyAccountId: string | null = null
+  let organization: Awaited<ReturnType<typeof getOrganizationById>> = undefined
   
   console.log('[AGENCY_PROGRAM] Checking for agency account...', {
     userId: user.id,
@@ -70,11 +72,14 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
   
   if (user.current_organization_id) {
     try {
-      const organization = await getOrganizationById(user.current_organization_id)
+      organization = await getOrganizationById(user.current_organization_id)
+      const revenueSharePercent = getAgencyRevenueSharePercent(organization)
+      
       console.log('[AGENCY_PROGRAM] Organization found:', {
         organizationId: organization?.id,
         hasStripeAccount: !!organization?.stripe_account_id,
         stripeAccountId: organization?.stripe_account_id || 'NOT_SET',
+        revenueSharePercent: `${revenueSharePercent}%`,
       })
       
       if (organization?.stripe_account_id) {
@@ -82,6 +87,8 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
         console.log('[AGENCY_PROGRAM] ✅ Adding agency account to checkout:', {
           organizationId: user.current_organization_id,
           stripeAccountId: agencyAccountId,
+          platformKeeps: `${revenueSharePercent}%`,
+          agencyGets: `${100 - revenueSharePercent}%`,
         })
       } else {
         console.log('[AGENCY_PROGRAM] ⚠️  Organization has NO stripe_account_id - skipping revenue sharing')
@@ -170,11 +177,11 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
           ...(agencyAccountId && { agency_account_id: agencyAccountId }),
         },
         description: `Plan for ${domain}(${lastCustomCode ? [lastCustomCode, ...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
-        // Agency Program: Platform keeps 40%, Agency gets 60%
+        // Agency Program: Configurable revenue share per organization
         ...(agencyAccountId && {
-          application_fee_percent: 40, // Platform keeps 40%
+          application_fee_percent: getAgencyRevenueSharePercent(organization), // Platform's share
           transfer_data: {
-            destination: agencyAccountId, // Remaining 60% goes to agency
+            destination: agencyAccountId, // Remaining goes to agency
           },
           on_behalf_of: agencyAccountId, // Fixes cross-region settlement issues
         }),
@@ -237,9 +244,9 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
             ...(agencyAccountId && { agency_account_id: agencyAccountId }),
           },
           description: `Plan for ${domain}`,
-          // Agency Program: Platform keeps 40%, Agency gets 60%
+          // Agency Program: Configurable revenue share per organization
           ...(agencyAccountId && {
-            application_fee_percent: 40,
+            application_fee_percent: getAgencyRevenueSharePercent(organization),
             transfer_data: {
               destination: agencyAccountId,
             },
@@ -311,9 +318,9 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
               ...(agencyAccountId && { agency_account_id: agencyAccountId }),
             },
             description: `Plan for ${domain}`,
-            // Agency Program: Platform keeps 40%, Agency gets 60%
+            // Agency Program: Configurable revenue share per organization
             ...(agencyAccountId && {
-              application_fee_percent: 40,
+              application_fee_percent: getAgencyRevenueSharePercent(organization),
               transfer_data: {
                 destination: agencyAccountId,
               },

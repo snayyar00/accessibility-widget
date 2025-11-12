@@ -24,6 +24,7 @@ export type Organization = {
   favicon?: string
   toggle_referral_program?: boolean
   stripe_account_id?: string | null
+  agency_revenue_share_percent?: number // Platform's revenue share % (0-100), default 50
   created_at?: string
   updated_at?: string
 }

@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 
+import { getAgencyRevenueSharePercent } from '../../helpers/agency-revenue.helper'
 import { getOrganizationById } from '../../repository/organization.repository'
 import { findProductAndPriceByType, FindProductAndPriceByTypeResponse } from '../../repository/products.repository'
 import { findSiteByUserIdAndSiteId } from '../../repository/sites_allowed.repository'
@@ -89,14 +90,20 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
       await Promise.all([updateSitePlanById(sitePlan.id, { is_active: false })])
     }
 
-    // Fetch organization's stripe_account_id for Agency Program
+    // Fetch organization's stripe_account_id and revenue share % for Agency Program
     let agencyAccountId: string | null = null
+    let revenueSharePercent = 50 // Default
+    
     if (user.current_organization_id) {
       try {
         const organization = await getOrganizationById(user.current_organization_id)
+        revenueSharePercent = getAgencyRevenueSharePercent(organization)
+        
         if (organization?.stripe_account_id) {
           agencyAccountId = organization.stripe_account_id
-          console.log('[AGENCY_PROGRAM] Site plan will include revenue sharing:', agencyAccountId)
+          console.log(`[AGENCY_PROGRAM] Site plan will include revenue sharing: Platform ${revenueSharePercent}% | Agency ${100 - revenueSharePercent}%`, {
+            agencyAccountId,
+          })
         }
       } catch (error) {
         console.error('[AGENCY_PROGRAM] Failed to fetch organization stripe_account_id:', error)
@@ -104,7 +111,7 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
     }
 
     console.log('[REWARDFUL] Creating site plan with referral code:', user.referral || 'none')
-    const { subcription_id, customer_id } = await createNewSubcription(paymentMethodToken, user.email, user.name, product.price_stripe_id, paymentMethodToken === 'Trial', coupon, user.referral || '', agencyAccountId)
+    const { subcription_id, customer_id } = await createNewSubcription(paymentMethodToken, user.email, user.name, product.price_stripe_id, paymentMethodToken === 'Trial', coupon, user.referral || '', agencyAccountId, revenueSharePercent)
     if (subcription_id && customer_id) {
       const INFINITE_TIMESTAMP = '9999-12-31 23:59:59'
       let expiry = formatDateDB(dayjs().add(paymentMethodToken === 'Trial' ? 15 : 1, paymentMethodToken === 'Trial' ? 'day' : product.price_type === 'yearly' ? 'y' : 'M'))
