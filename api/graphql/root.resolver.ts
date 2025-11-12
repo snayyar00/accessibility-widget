@@ -14,6 +14,7 @@ import uniqueVisitorResolves from './resolvers/uniqueVisitor.resolver'
 import userResolves from './resolvers/user.resolver'
 import widgetResolvers from './resolvers/widget.resolver'
 import workspaceResolvers from './resolvers/workspace.resolver'
+import serviceRequestResolvers from './resolvers/serviceRequest.resolver'
 import { getGraphQLUploadType } from './upload'
 
 export function createResolvers() {
@@ -37,6 +38,7 @@ export function createResolvers() {
     workspaceResolvers,
     invitationResolvers,
     aiReadinessResolvers,
+    serviceRequestResolvers,
   ]
 }
 
