@@ -159,7 +159,8 @@ const AgencyProgram: React.FC<AgencyProgramProps> = ({
             revenue share on eligible subscriptions.
           </Alert>
 
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, flex: 'none' }}>
+          {/* Commented out for testing purposes */}
+          {/* <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, flex: 'none' }}>
             <Button
               variant="outlined"
               color="primary"
@@ -179,7 +180,7 @@ const AgencyProgram: React.FC<AgencyProgramProps> = ({
             >
               Disconnect
             </Button>
-          </Box>
+          </Box> */}
         </Box>
       ) : (
         <Box>
