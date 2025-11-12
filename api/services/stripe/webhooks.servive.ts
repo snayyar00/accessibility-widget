@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import Stripe from 'stripe'
 
 import { REWARDFUL_COUPON } from '../../constants/billing.constant'
+import { getOrganizationById } from '../../repository/organization.repository'
 import { findProductById, findProductByStripeId, insertProduct, updateProduct } from '../../repository/products.repository'
 import { getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId } from '../../repository/sites_plans.repository'
 import { createSitesPlan, deleteSitesPlan, deleteTrialPlan, updateSitesPlan } from '../allowedSites/plans-sites.service'
@@ -207,14 +208,29 @@ export const stripeWebhook = async (req: Request, res: Response) => {
             planInterval = 'YEARLY'
           }
 
-          // Get user to check for referral code
+          // Get user to check for referral code and organization
           const { findUserById } = require('../../repository/user.repository')
           let referralCode = null
+          let agencyAccountId: string | null = null
+          
           try {
             const user = await findUserById(Number(session.metadata.userId))
             if (user && user.referral) {
               referralCode = user.referral
               console.log('[REWARDFUL] Found referral code for webhook subscription:', referralCode)
+            }
+            
+            // Fetch organization's stripe_account_id for Agency Program
+            if (user && user.current_organization_id) {
+              try {
+                const organization = await getOrganizationById(user.current_organization_id)
+                if (organization?.stripe_account_id) {
+                  agencyAccountId = organization.stripe_account_id
+                  console.log('[AGENCY_PROGRAM] Webhook subscription with revenue sharing:', agencyAccountId)
+                }
+              } catch (error) {
+                console.error('[AGENCY_PROGRAM] Failed to fetch organization in webhook:', error)
+              }
             }
           } catch (error) {
             console.error('[REWARDFUL] Failed to load user referral:', error)
@@ -232,8 +248,17 @@ export const stripeWebhook = async (req: Request, res: Response) => {
               maxDomains: 1,
               usedDomains: 1,
               ...(referralCode && { referral: referralCode }),
+              ...(agencyAccountId && { agency_account_id: agencyAccountId }),
             },
             description: `Plan for ${session.metadata.domain}`,
+            // Agency Program: Platform keeps 40%, Agency gets 60%
+            ...(agencyAccountId && {
+              application_fee_percent: 40,
+              transfer_data: {
+                destination: agencyAccountId,
+              },
+              on_behalf_of: agencyAccountId,
+            }),
           })
           let previous_plan
           try {

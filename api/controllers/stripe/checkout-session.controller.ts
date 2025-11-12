@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import Stripe from 'stripe'
 
 import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, REWARDFUL_COUPON } from '../../constants/billing.constant'
+import { getOrganizationById } from '../../repository/organization.repository'
 import { findProductAndPriceByType } from '../../repository/products.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { getSitePlanBySiteId } from '../../repository/sites_plans.repository'
@@ -56,6 +57,41 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
   // Check organization_id if user has current organization
   if (user.current_organization_id && site.organization_id !== user.current_organization_id) {
     return res.status(403).json({ error: 'Site does not belong to current organization' })
+  }
+
+  // Fetch organization's stripe_account_id for Agency Program revenue sharing
+  let agencyAccountId: string | null = null
+  
+  console.log('[AGENCY_PROGRAM] Checking for agency account...', {
+    userId: user.id,
+    currentOrgId: user.current_organization_id,
+    hasOrgId: !!user.current_organization_id,
+  })
+  
+  if (user.current_organization_id) {
+    try {
+      const organization = await getOrganizationById(user.current_organization_id)
+      console.log('[AGENCY_PROGRAM] Organization found:', {
+        organizationId: organization?.id,
+        hasStripeAccount: !!organization?.stripe_account_id,
+        stripeAccountId: organization?.stripe_account_id || 'NOT_SET',
+      })
+      
+      if (organization?.stripe_account_id) {
+        agencyAccountId = organization.stripe_account_id
+        console.log('[AGENCY_PROGRAM] ✅ Adding agency account to checkout:', {
+          organizationId: user.current_organization_id,
+          stripeAccountId: agencyAccountId,
+        })
+      } else {
+        console.log('[AGENCY_PROGRAM] ⚠️  Organization has NO stripe_account_id - skipping revenue sharing')
+      }
+    } catch (error) {
+      console.error('[AGENCY_PROGRAM] ❌ Failed to fetch organization stripe_account_id:', error)
+      // Continue without agency account - not a critical error
+    }
+  } else {
+    console.log('[AGENCY_PROGRAM] ⚠️  User has NO current_organization_id - skipping revenue sharing')
   }
 
   try {
@@ -131,8 +167,17 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
           maxDomains: 1,
           usedDomains: 1,
           ...(user.referral && { referral: user.referral }),
+          ...(agencyAccountId && { agency_account_id: agencyAccountId }),
         },
         description: `Plan for ${domain}(${lastCustomCode ? [lastCustomCode, ...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
+        // Agency Program: Platform keeps 40%, Agency gets 60%
+        ...(agencyAccountId && {
+          application_fee_percent: 40, // Platform keeps 40%
+          transfer_data: {
+            destination: agencyAccountId, // Remaining 60% goes to agency
+          },
+          on_behalf_of: agencyAccountId, // Fixes cross-region settlement issues
+        }),
       })
 
       const cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.current_organization_id, user.email)]
@@ -181,6 +226,7 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
           domainId,
           userId: user.id,
           updateMetaData: 'true',
+          ...(agencyAccountId && { agency_account_id: agencyAccountId }),
         },
         subscription_data: {
           trial_period_days: 30,
@@ -188,12 +234,24 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
             domainId,
             userId: user.id,
             updateMetaData: 'true',
+            ...(agencyAccountId && { agency_account_id: agencyAccountId }),
           },
           description: `Plan for ${domain}`,
+          // Agency Program: Platform keeps 40%, Agency gets 60%
+          ...(agencyAccountId && {
+            application_fee_percent: 40,
+            transfer_data: {
+              destination: agencyAccountId,
+            },
+            on_behalf_of: agencyAccountId,
+          }),
         },
       })
 
       console.log('[REWARDFUL] Checkout session created:', session.id)
+      if (agencyAccountId) {
+        console.log('[AGENCY_PROGRAM] Trial checkout with revenue sharing:', agencyAccountId)
+      }
     } else {
       console.log('normal')
 
@@ -243,16 +301,30 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
             domainId,
             userId: user.id,
             updateMetaData: 'true',
+            ...(agencyAccountId && { agency_account_id: agencyAccountId }),
           },
           subscription_data: {
             metadata: {
               domainId,
               userId: user.id,
               updateMetaData: 'true',
+              ...(agencyAccountId && { agency_account_id: agencyAccountId }),
             },
             description: `Plan for ${domain}`,
+            // Agency Program: Platform keeps 40%, Agency gets 60%
+            ...(agencyAccountId && {
+              application_fee_percent: 40,
+              transfer_data: {
+                destination: agencyAccountId,
+              },
+              on_behalf_of: agencyAccountId,
+            }),
           },
         })
+        
+        if (agencyAccountId) {
+          console.log('[AGENCY_PROGRAM] Normal checkout with revenue sharing:', agencyAccountId)
+        }
       }
     }
 
