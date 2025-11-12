@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import Stripe from 'stripe'
 
 import { APP_SUMO_COUPON_IDS, APP_SUMO_DISCOUNT_COUPON, REWARDFUL_COUPON } from '../../constants/billing.constant'
+import { getOrganizationById } from '../../repository/organization.repository'
 import { findProductAndPriceByType } from '../../repository/products.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { getSitePlanBySiteId, getSitesPlanByUserId } from '../../repository/sites_plans.repository'
@@ -79,6 +80,41 @@ export async function createSubscription(req: Request & { user: UserLogined }, r
       return res.status(404).json({ error: 'Customer not found' })
     }
 
+    // Fetch organization's stripe_account_id for Agency Program revenue sharing
+    let agencyAccountId: string | null = null
+    
+    console.log('[AGENCY_PROGRAM] Checking for agency account...', {
+      userId: user.id,
+      currentOrgId: user.current_organization_id,
+      hasOrgId: !!user.current_organization_id,
+    })
+    
+    if (user.current_organization_id) {
+      try {
+        const organization = await getOrganizationById(user.current_organization_id)
+        console.log('[AGENCY_PROGRAM] Organization found:', {
+          organizationId: organization?.id,
+          hasStripeAccount: !!organization?.stripe_account_id,
+          stripeAccountId: organization?.stripe_account_id || 'NOT_SET',
+        })
+        
+        if (organization?.stripe_account_id) {
+          agencyAccountId = organization.stripe_account_id
+          console.log('[AGENCY_PROGRAM] ✅ Adding agency account to subscription metadata:', {
+            organizationId: user.current_organization_id,
+            stripeAccountId: agencyAccountId,
+          })
+        } else {
+          console.log('[AGENCY_PROGRAM] ⚠️  Organization has NO stripe_account_id - skipping revenue sharing')
+        }
+      } catch (error) {
+        console.error('[AGENCY_PROGRAM] ❌ Failed to fetch organization stripe_account_id:', error)
+        // Continue without agency account - not a critical error
+      }
+    } else {
+      console.log('[AGENCY_PROGRAM] ⚠️  User has NO current_organization_id - skipping revenue sharing')
+    }
+
     const [subscriptions, price_data] = await Promise.all([
       stripe.subscriptions.list({
         customer: customer.id,
@@ -146,8 +182,17 @@ export async function createSubscription(req: Request & { user: UserLogined }, r
             maxDomains: 1,
             usedDomains: 1,
             ...(user.referral && { referral: user.referral }),
+            ...(agencyAccountId && { agency_account_id: agencyAccountId }),
           },
           description: `Plan for ${domainUrl}(${lastCustomCode ? [lastCustomCode, ...nonCustomCodes] : tokenUsed.length ? tokenUsed : orderedCodes})`,
+          // Agency Program: Platform keeps 40%, Agency gets 60%
+          ...(agencyAccountId && {
+            application_fee_percent: 40, // Platform keeps 40%
+            transfer_data: {
+              destination: agencyAccountId, // Remaining 60% goes to agency
+            },
+            on_behalf_of: agencyAccountId, // Fixes cross-region settlement issues
+          }),
         })
 
         cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.current_organization_id, user.email)]
@@ -167,8 +212,17 @@ export async function createSubscription(req: Request & { user: UserLogined }, r
             maxDomains: 1,
             usedDomains: 1,
             ...(user.referral && { referral: user.referral }),
+            ...(agencyAccountId && { agency_account_id: agencyAccountId }),
           },
           description: `Plan for ${domainUrl}`,
+          // Agency Program: Platform keeps 40%, Agency gets 60%
+          ...(agencyAccountId && {
+            application_fee_percent: 40, // Platform keeps 40%
+            transfer_data: {
+              destination: agencyAccountId, // Remaining 60% goes to agency
+            },
+            on_behalf_of: agencyAccountId, // Fixes cross-region settlement issues
+          }),
         })
 
         console.log('[REWARDFUL] Trial subscription created:', subscription.id)
@@ -185,11 +239,26 @@ export async function createSubscription(req: Request & { user: UserLogined }, r
             maxDomains: 1,
             usedDomains: 1,
             ...(user.referral && { referral: user.referral }),
+            ...(agencyAccountId && { agency_account_id: agencyAccountId }),
           },
           description: `Plan for ${domainUrl}`,
+          // Agency Program: Platform keeps 40%, Agency gets 60%
+          ...(agencyAccountId && {
+            application_fee_percent: 40, // Platform keeps 40%
+            transfer_data: {
+              destination: agencyAccountId, // Remaining 60% goes to agency
+            },
+            on_behalf_of: agencyAccountId, // Fixes cross-region settlement issues
+          }),
         })
 
         console.log('[REWARDFUL] Subscription created:', subscription.id)
+        if (agencyAccountId) {
+          console.log('[AGENCY_PROGRAM] Revenue sharing enabled: Platform 40% | Agency 60%', {
+            agencyAccountId,
+            subscriptionId: subscription.id,
+          })
+        }
       }
 
       try {

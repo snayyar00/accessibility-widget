@@ -39,9 +39,10 @@ const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY, {
  * @param {boolean} isTrial
  * @param {string} couponCode
  * @param {string} referralCode
+ * @param {string} agencyAccountId - Optional Stripe account ID for revenue sharing
  * @returns {Promise<any>}
  */
-export async function createNewSubcription(token: string, email: string, name: string, priceId: string, isTrial = false, couponCode = '', referralCode = ''): Promise<NewSubcription> {
+export async function createNewSubcription(token: string, email: string, name: string, priceId: string, isTrial = false, couponCode = '', referralCode = '', agencyAccountId: string | null = null): Promise<NewSubcription> {
   if (!token) {
     throw new ApolloError('Invalid token')
   }
@@ -138,6 +139,20 @@ export async function createNewSubcription(token: string, email: string, name: s
         console.log('[REWARDFUL] Adding referral to trial subscription metadata:', referralCode)
       }
 
+      // Agency Program: Add revenue sharing for trial subscriptions
+      if (agencyAccountId) {
+        if (!dataSubcription.metadata) {
+          dataSubcription.metadata = {}
+        }
+        dataSubcription.metadata.agency_account_id = agencyAccountId
+        ;(dataSubcription as any).application_fee_percent = 40
+        ;(dataSubcription as any).transfer_data = {
+          destination: agencyAccountId,
+        }
+        ;(dataSubcription as any).on_behalf_of = agencyAccountId
+        console.log('[AGENCY_PROGRAM] Trial subscription with revenue sharing:', agencyAccountId)
+      }
+
       // Create the actual Stripe subscription for trial plans too
       const result = await stripe.subscriptions.create(dataSubcription)
 
@@ -154,6 +169,20 @@ export async function createNewSubcription(token: string, email: string, name: s
       }
       dataSubcription.metadata.referral = referralCode
       console.log('[REWARDFUL] Adding referral to subscription metadata:', referralCode)
+    }
+
+    // Agency Program: Add revenue sharing
+    if (agencyAccountId) {
+      if (!dataSubcription.metadata) {
+        dataSubcription.metadata = {}
+      }
+      dataSubcription.metadata.agency_account_id = agencyAccountId
+      ;(dataSubcription as any).application_fee_percent = 40
+      ;(dataSubcription as any).transfer_data = {
+        destination: agencyAccountId,
+      }
+      ;(dataSubcription as any).on_behalf_of = agencyAccountId
+      console.log('[AGENCY_PROGRAM] Subscription with revenue sharing:', agencyAccountId)
     }
 
     const result = await stripe.subscriptions.create(dataSubcription)

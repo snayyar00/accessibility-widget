@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 
+import { getOrganizationById } from '../../repository/organization.repository'
 import { findProductAndPriceByType, FindProductAndPriceByTypeResponse } from '../../repository/products.repository'
 import { findSiteByUserIdAndSiteId } from '../../repository/sites_allowed.repository'
 import { deleteSitePlanById, getAnySitePlanById, getSitePlanById, getSitePlanBySiteId, insertSitePlan, SitesPlanData, updateSitePlanById } from '../../repository/sites_plans.repository'
@@ -88,8 +89,22 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
       await Promise.all([updateSitePlanById(sitePlan.id, { is_active: false })])
     }
 
+    // Fetch organization's stripe_account_id for Agency Program
+    let agencyAccountId: string | null = null
+    if (user.current_organization_id) {
+      try {
+        const organization = await getOrganizationById(user.current_organization_id)
+        if (organization?.stripe_account_id) {
+          agencyAccountId = organization.stripe_account_id
+          console.log('[AGENCY_PROGRAM] Site plan will include revenue sharing:', agencyAccountId)
+        }
+      } catch (error) {
+        console.error('[AGENCY_PROGRAM] Failed to fetch organization stripe_account_id:', error)
+      }
+    }
+
     console.log('[REWARDFUL] Creating site plan with referral code:', user.referral || 'none')
-    const { subcription_id, customer_id } = await createNewSubcription(paymentMethodToken, user.email, user.name, product.price_stripe_id, paymentMethodToken === 'Trial', coupon, user.referral || '')
+    const { subcription_id, customer_id } = await createNewSubcription(paymentMethodToken, user.email, user.name, product.price_stripe_id, paymentMethodToken === 'Trial', coupon, user.referral || '', agencyAccountId)
     if (subcription_id && customer_id) {
       const INFINITE_TIMESTAMP = '9999-12-31 23:59:59'
       let expiry = formatDateDB(dayjs().add(paymentMethodToken === 'Trial' ? 15 : 1, paymentMethodToken === 'Trial' ? 'day' : product.price_type === 'yearly' ? 'y' : 'M'))
