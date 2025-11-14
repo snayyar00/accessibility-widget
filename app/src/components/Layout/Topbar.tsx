@@ -29,6 +29,7 @@ import { gql } from '@apollo/client';
 import { baseColors } from '@/config/colors';
 import DomainsSelect from '@/containers/Dashboard/DomainsSelect';
 import { openHubSpotChat, openSupportEmail } from '@/utils/hubspot';
+import Logo from '@/components/Common/Logo';
 
 const GET_USER_NOTIFICATION_SETTINGS = gql`
   query GetUserNotificationSettings {
@@ -176,12 +177,7 @@ const Topbar: React.FC<Props> = ({
             {/* Logo */}
             <div className="flex items-center space-x-3">
               <div className="flex items-center justify-center origin-left scale-90 md:scale-95 lg:scale-100">
-                {/* WebAbility Logo */}
-                <img
-                  src="/images/logo.png"
-                  alt="WebAbility Logo"
-                  className="h-12"
-                />
+                <Logo className="mb-0" />
               </div>
             </div>
 
