@@ -23,7 +23,7 @@ async function sendMail(to: string, subject: string, html: string, attachments?:
     sendSmtpEmail.to = [{ email: to }]
     sendSmtpEmail.sender = {
       email: process.env.EMAIL_FROM || 'your-email@domain.com',
-      name: senderName,
+      name: 'WebAbility Team',
     }
     sendSmtpEmail.subject = subject
     sendSmtpEmail.htmlContent = html
@@ -69,7 +69,7 @@ async function sendMailMultiple(recipients: string[], subject: string, html: str
     sendSmtpEmail.to = recipients.map((email) => ({ email }))
     sendSmtpEmail.sender = {
       email: process.env.EMAIL_FROM || 'your-email@domain.com',
-      name: senderName,
+      name: 'WebAbility Team',
     }
     sendSmtpEmail.subject = subject
     sendSmtpEmail.htmlContent = html

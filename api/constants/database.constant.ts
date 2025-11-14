@@ -22,6 +22,8 @@ export const TABLES = {
   monitoringEvents: 'monitoring_events',
   invitations: 'invitations',
   userNotifications: 'user_notifications',
+  serviceQuoteRequests: 'service_quote_requests',
+  serviceMeetingRequests: 'service_meeting_requests',
 }
 
 export const DEFAULT_LIMIT = 25

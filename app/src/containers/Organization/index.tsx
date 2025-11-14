@@ -5,6 +5,7 @@ import { Redirect } from 'react-router-dom';
 
 import Settings from './Settings';
 import AgencyProgram from './AgencyProgram';
+import AgencyBillingPortal from './AgencyBillingPortal';
 import { isOwner } from '@/helpers/permissions';
 
 const Organization: React.FC = () => {
@@ -30,14 +31,14 @@ const Organization: React.FC = () => {
       <div className="space-y-6 empty:hidden">
         <Settings organization={organization} />
 
-        {/* <AgencyProgram
-              hasAgencyAccountId={hasAgencyAccountId}
-              isOwner={isOrganizationOwner}
-            /> */}
-
-        {/* For Example. */}
-        <AgencyProgram hasAgencyAccountId={false} isOwner={true} />
-        <AgencyProgram hasAgencyAccountId={true} isOwner={true} />
+        {/* Agency Program - Only show to owners */}
+        <AgencyProgram
+          hasAgencyAccountId={hasAgencyAccountId}
+          isOwner={isOrganizationOwner}
+        />
+        
+        {/* Agency Billing Portal - Only show when fully onboarded */}
+        <AgencyBillingPortal hasAgencyAccountId={hasAgencyAccountId} />
       </div>
     </section>
   );

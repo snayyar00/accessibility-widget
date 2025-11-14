@@ -14,6 +14,7 @@ import { UniqueVisitorSchema } from './schemas/uniqueVisitor.schema'
 import { UserSchema } from './schemas/user.schema'
 import { widgetTypeDefs } from './schemas/widget.schema'
 import { WorkspaceSchema } from './schemas/workspace.schema'
+import serviceRequestSchema from './schemas/serviceRequest.schema'
 
 const rootSchema = `
   scalar Date
@@ -52,4 +53,5 @@ export default [
   WorkspaceSchema,
   InvitationSchema,
   aiReadinessSchema,
+  serviceRequestSchema,
 ]

@@ -16,8 +16,7 @@ import {
 import { useMutation, useQuery } from '@apollo/client';
 import ADD_WORKSPACE_DOMAINS from '@/queries/workspace/addWorkspaceDomains';
 import GET_AVAILABLE_SITES_FOR_WORKSPACE from '@/queries/sites/getAvailableSitesForWorkspace';
-import { toast } from 'react-toastify';
-import { Query } from '@/generated/graphql';
+import { toast } from 'sonner';import { Query } from '@/generated/graphql';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 
