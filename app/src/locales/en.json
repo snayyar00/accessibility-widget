@@ -6,19 +6,19 @@
     },
     "title": {
       "profile": "Account Profile - {{domain}} Accessibility Dashboard",
-      "Billing": "Billing & Subscription Plans - WebAbility.io ADA Compliance",
-      "sign_in": "Sign In - WebAbility.io ADA & WCAG Compliance Platform",
+      "Billing": "Billing & Subscription Plans - {{organizationName}} ADA Compliance",
+      "sign_in": "Sign In - {{organizationName}} ADA & WCAG Compliance Platform",
       "sign_out": "Sign Out",
-      "sign_up": "Get Started Free - WebAbility.io ADA Compliance Solutions",
-      "customize_widget": "Customize Accessibility Solutions - WebAbility.io ADA Tools",
-      "add_domain": "Add Website Domain - WebAbility.io ADA Compliance Setup",
-      "problem_reports": "Website Accessibility Issues - WebAbility.io Support",
+      "sign_up": "Get Started Free - {{organizationName}} ADA Compliance Solutions",
+      "customize_widget": "Customize Accessibility Solutions - {{organizationName}} ADA Tools",
+      "add_domain": "Add Website Domain - {{organizationName}} ADA Compliance Setup",
+      "problem_reports": "Website Accessibility Issues - {{organizationName}} Support",
       "report": "Free Accessibility Scanner - WCAG & ADA Compliance Checker",
-      "dashboard": "Accessibility Dashboard - WebAbility.io ADA WCAG Analytics",
-      "installation": "Website Accessibility Solutions Installation - WebAbility.io",
-      "statement_generator": "AI Accessibility Statement Generator - WebAbility.io",
-      "forgot_password": "Reset Password - WebAbility.io Account Recovery",
-      "reset_password": "Create New Password - WebAbility.io Security",
+      "dashboard": "Accessibility Dashboard - {{organizationName}} ADA WCAG Analytics",
+      "installation": "Website Accessibility Solutions Installation - {{organizationName}}",
+      "statement_generator": "AI Accessibility Statement Generator - {{organizationName}}",
+      "forgot_password": "Reset Password - {{organizationName}} Account Recovery",
+      "reset_password": "Create New Password - {{organizationName}} Security",
       "new_document": "New Document",
       "teams": "Teams",
       "license_owner_info": "License Owner Info"
@@ -100,7 +100,7 @@
       "name": "David",
       "confirm_password": "Confirm your password",
       "search": "Search..",
-      "g_email": "yourname@WebAbility.io"
+      "g_email": "yourname@{{organizationName}}"
     },
     "status": {
       "update_success": "Update profile successfully!",
@@ -157,7 +157,7 @@
   },
   "Forgot_password": {
     "description": "Enter your username, or the email address you used to register. We will send you an email containing your username and a link to reset your password.",
-    "footer": "If you still need help, contact <0>WebAbility Support</0>",
+    "footer": "If you still need help, contact <0>{{organizationName}} Support</0>",
     "confirm": "We've sent you an email with a link to reset password. Please check your email so create new password",
     "go_to": "Go to <0>Sign In</0>"
   },
@@ -165,12 +165,12 @@
     "change_success": "Change password successfully!",
     "description": "Enter your username, or the email address you used to register. We will send you an email containing your username and a link to reset your password.",
     "footer": "If you still need help, contact",
-    "support": "WebAbility Support",
+    "support": "{{organizationName}} Support",
     "please_wait": "Please wait ..."
   },
   "Advertisement": {
     "ad1_title": "Ultimate WCAG Compliance Widget",
-    "ad1": "Easily Navigate ADA & WCAG Compliance with WebAbility.io's Accessibility Widget",
+    "ad1": "Easily Navigate ADA & WCAG Compliance with {{organizationName}}'s Accessibility Widget",
     "ad2_title": "A Profile for Every Disability",
     "ad2": "Whether You Have An Issue With Your Vision Or Mental Health Condition That Makes It Harder To Concentrate, We Have A Profile To Help You Out! ",
     "ad3_title": "Become an Web Ability partner",

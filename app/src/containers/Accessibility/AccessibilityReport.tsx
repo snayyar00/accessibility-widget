@@ -20,6 +20,7 @@ import Accordion from '@mui/joy/Accordion';
 import ToggleButtonGroup from '@mui/joy/ToggleButtonGroup';
 import Stack from '@mui/joy/Stack';
 import { generatePDF, generateShortPDF } from '@/utils/generatePDF';
+import useOrganizationName from '@/hooks/useOrganizationName';
 import {
   translateText,
   translateMultipleTexts,
@@ -112,6 +113,7 @@ const normalizeDomain = (url: string) =>
 
 const AccessibilityReport = ({ currentDomain }: any) => {
   const { t } = useTranslation();
+  const organizationName = useOrganizationName();
   useDocumentHeader({ title: t('Common.title.report') });
   const dispatch = useDispatch();
   // Using baseColors directly instead of getColors()
@@ -3487,6 +3489,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                               fetchedReportData.fetchReportByR2Key,
                                               currentLanguage,
                                               row.url,
+                                              organizationName,
                                             );
                                             toast.dismiss(pdfToastId);
                                             const url =
@@ -3797,6 +3800,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                           fetchedReportData.fetchReportByR2Key,
                                           currentLanguage,
                                           row.url,
+                                          organizationName,
                                         );
                                         toast.dismiss(pdfToastId);
                                         const url =

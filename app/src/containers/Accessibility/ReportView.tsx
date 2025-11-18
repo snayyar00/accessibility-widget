@@ -53,6 +53,7 @@ import { CircularProgress } from '@mui/material';
 import GET_PROFILE from '@/queries/auth/getProfile';
 import getWidgetSettings from '@/utils/getWidgetSettings';
 import { FloatingChatbot } from './FloatingChatbot'; // Adjust path as needed
+import useOrganizationName from '@/hooks/useOrganizationName';
 
 // Add this array near the top of the file
 const accessibilityFacts = [
@@ -78,7 +79,6 @@ const accessibilityFacts = [
   'Accessibility is a continuous process, not a one-time fix',
   'The global market of people with disabilities has over $13 trillion in disposable income',
   'Accessible websites often have up to 30% better usability for all users',
-  'WebAbility offers solutions that address over 90% of common WCAG violations',
 ];
 
 type ReportParams = {
@@ -184,6 +184,7 @@ const ReportView: React.FC = () => {
   const location = useLocation();
   const history = useHistory();
   const adjustedKey = `reports/${r2_key}`;
+  const organizationName = useOrganizationName();
   const [fetchReport, { data, loading, error }] = useLazyQuery(
     FETCH_REPORT_BY_R2_KEY,
   );
@@ -275,6 +276,14 @@ const ReportView: React.FC = () => {
   const issuesByFunction = report.issuesByFunction || {};
   const functionalityNames = report.functionalityNames || [];
 
+  // Add organization-specific fact dynamically
+  const allAccessibilityFacts = useMemo(() => {
+    return [
+      ...accessibilityFacts,
+      `${organizationName} offers solutions that address over 90% of common WCAG violations`,
+    ];
+  }, [organizationName]);
+
   // Update the filtered issues logic to include severity filtering
   const filteredIssues = useMemo(() => {
     if (!issues.length) return [];
@@ -338,11 +347,11 @@ const ReportView: React.FC = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setFactIndex((prevIndex) => (prevIndex + 1) % accessibilityFacts.length);
-    }, 6000); // Change fact every 5 seconds
+      setFactIndex((prevIndex) => (prevIndex + 1) % allAccessibilityFacts.length);
+    }, 6000); // Change fact every 6 seconds
 
     return () => clearInterval(interval); // Cleanup the interval on component unmount
-  }, []);
+  }, [allAccessibilityFacts.length]);
 
   // Conditional rendering in the return statement
   if (loading || isProcessing || getProfileLoading) {
@@ -381,7 +390,7 @@ const ReportView: React.FC = () => {
                         className="text-center"
                       >
                         <p className="text-xl text-blue-100 max-w-2xl">
-                          {accessibilityFacts[factIndex]}
+                          {allAccessibilityFacts[factIndex]}
                         </p>
                       </motion.div>
                     )}
@@ -618,7 +627,7 @@ const ReportView: React.FC = () => {
                               isCodeCompliant(issue.wcag_code) && (
                                 <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full w-fit flex-shrink-0">
                                   <CheckCircle className="w-3 h-3" />
-                                  Fixed by WebAbility
+                                  Fixed by {organizationName}
                                 </span>
                               )}
                           </div>
@@ -1316,7 +1325,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     setIsDownloading(true); // <-- Set loading state
     try {
       // Generate PDF using the same logic as ScannerHero
-      const pdfBlob = await generatePDF(results, currentLanguage, fullUrl);
+      const pdfBlob = await generatePDF(results, currentLanguage, fullUrl, organizationName);
       // Create download link for immediate download
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');

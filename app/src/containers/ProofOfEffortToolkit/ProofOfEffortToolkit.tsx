@@ -19,6 +19,7 @@ import FETCH_ACCESSIBILITY_REPORT_KEYS from '@/queries/accessibility/fetchAccess
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
 import { SEND_PROOF_OF_EFFORT_TOOLKIT } from '@/queries/proofOfEffort/sendToolkit';
 import { RootState } from '@/config/store';
+import useOrganizationName from '@/hooks/useOrganizationName';
 import {
   translateText,
   translateMultipleTexts,
@@ -149,7 +150,7 @@ const extractIssuesFromReport = (report: any) => {
 };
 
 // Function to generate "Intro to the toolkit" PDF
-const generateIntroToToolkitPDF = async (): Promise<Blob> => {
+const generateIntroToToolkitPDF = async (organizationName: string = 'WebAbility.io'): Promise<Blob> => {
   try {
     const { jsPDF } = await import('jspdf');
 
@@ -238,7 +239,7 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     const introText = [
       "You've taken steps to make your website accessible. The proof of effort toolkit compiles key documentation that showcases your commitment to accessibility. If your website's accessibility is ever challenged (i.e. you receive a demand letter), you'll have evidence to demonstrate your efforts and respond with confidence.",
       "The proof of effort toolkit provides documentation that will help you draft a response to generic claims regarding alleged accessibility barriers. A generic claim is a broad, unspecific assertion about your website's accessibility, often without concrete evidence or a clear connection to your website.",
-      'Please note that WebAbility.io does not offer or provide legal advice or counseling and the information contained in this document or in the toolkit documents should not be taken as such. WebAbility.io encourages you to seek firm legal advice based on your specific circumstances.',
+      `Please note that ${organizationName} does not offer or provide legal advice or counseling and the information contained in this document or in the toolkit documents should not be taken as such. ${organizationName} encourages you to seek firm legal advice based on your specific circumstances.`,
     ];
 
     doc.setFontSize(11);
@@ -302,7 +303,7 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
           'Your built-in accessibility statement shows your efforts to comply with the ADA in adherence to WCAG, and can be accessed by users at any time.',
       },
       {
-        title: '● Webability Widget latest invoice:',
+        title: `● ${organizationName} Widget latest invoice:`,
         description:
           'Proof that you paid to make your website more accessible. Invoices are also available under Billing and Payments in the Customer Portal.',
       },
@@ -362,7 +363,7 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
     doc.setFontSize(10);
     doc.setTextColor(51, 65, 85);
     doc.text(
-      'Note: There are excluded issues that are not identified or remediated by Webability Widget. See Excluded issues',
+      `Note: There are excluded issues that are not identified or remediated by ${organizationName} Widget. See Excluded issues`,
       margin,
       currentY + 3,
     );
@@ -379,7 +380,7 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
       doc.setFont('NotoSans_Condensed-Regular', 'normal');
     }
     doc.text(
-      'WebAbility.io - Making the web accessible for everyone - www.webability.io',
+      `${organizationName} - Making the web accessible for everyone - www.webability.io`,
       margin,
       footerY + 6,
     );
@@ -474,7 +475,7 @@ const generateIntroToToolkitPDF = async (): Promise<Blob> => {
       doc.setFont('NotoSans_Condensed-Regular', 'normal');
     }
     doc.text(
-      'WebAbility.io - Making the web accessible for everyone - www.webability.io',
+      `${organizationName} - Making the web accessible for everyone - www.webability.io`,
       margin,
       footerY2 + 6,
     );
@@ -527,6 +528,7 @@ const getIssueColors = (issue: any, hasWebAbility: boolean) => {
 };
 
 const ProofOfEffortToolkit: React.FC = () => {
+  const organizationName = useOrganizationName();
   const [viewFilesExpanded, setViewFilesExpanded] = useState(false);
   const [isProcessingReport, setIsProcessingReport] = useState(false);
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
@@ -699,7 +701,7 @@ const ProofOfEffortToolkit: React.FC = () => {
 
       //  console.log('Step 4: Generating PDFs...');
       // Generate intro PDF
-      const introPdf = await generateIntroToToolkitPDF();
+      const introPdf = await generateIntroToToolkitPDF(organizationName);
       zip.file('Introduction to Proof of Effort Toolkit.pdf', introPdf);
 
       // Generate monthly audit report PDF
@@ -708,6 +710,7 @@ const ProofOfEffortToolkit: React.FC = () => {
           reportDataForPdfs,
           'en',
           currentDomain,
+          organizationName,
         );
         zip.file('Monthly audit report.pdf', monthlyPdf);
       } catch (error) {
@@ -854,7 +857,7 @@ const ProofOfEffortToolkit: React.FC = () => {
   const generateReportPDF = async (reportData: any, domain: string) => {
     try {
       // Generate the full accessibility report PDF
-      const pdfBlob = await generatePDF(reportData, 'en', domain); // Using English as default language
+      const pdfBlob = await generatePDF(reportData, 'en', domain, organizationName); // Using English as default language
 
       // Download the PDF
       const url = URL.createObjectURL(pdfBlob);
@@ -875,7 +878,7 @@ const ProofOfEffortToolkit: React.FC = () => {
   const viewReportPDF = async (reportData: any, domain: string) => {
     try {
       // Generate the full accessibility report PDF
-      const pdfBlob = await generatePDF(reportData, 'en', domain); // Using English as default language
+      const pdfBlob = await generatePDF(reportData, 'en', domain, organizationName); // Using English as default language
 
       // Open the PDF in a new window/tab for viewing
       const url = URL.createObjectURL(pdfBlob);
@@ -1101,7 +1104,7 @@ const ProofOfEffortToolkit: React.FC = () => {
         doc.setFont('NotoSans_Condensed-Regular', 'normal');
       }
       doc.text(
-        'WebAbility.io - Making the web accessible for everyone - www.webability.io',
+        `${organizationName} - Making the web accessible for everyone - www.webability.io`,
         margin,
         footerY + 10,
       );
@@ -1182,7 +1185,7 @@ const ProofOfEffortToolkit: React.FC = () => {
 
       // 1. Generate Intro to Toolkit PDF
       try {
-        pdfs['1-Intro-to-Toolkit.pdf'] = await generateIntroToToolkitPDF();
+        pdfs['1-Intro-to-Toolkit.pdf'] = await generateIntroToToolkitPDF(organizationName);
       } catch (error) {
         console.error('Error generating intro PDF for zip:', error);
         toast.error('Failed to generate intro PDF');
@@ -1384,7 +1387,7 @@ const ProofOfEffortToolkit: React.FC = () => {
           doc.setFont('NotoSans_Condensed-Regular', 'normal');
         }
         doc.text(
-          'WebAbility.io - Making the web accessible for everyone - www.webability.io',
+          `${organizationName} - Making the web accessible for everyone - www.webability.io`,
           margin,
           footerY + 10,
         );
@@ -1416,6 +1419,7 @@ const ProofOfEffortToolkit: React.FC = () => {
             fullReportData.fetchReportByR2Key,
             'en',
             currentDomain,
+            organizationName,
           );
           pdfs['3-Monthly-Audit-Report.pdf'] = reportPdfBlob;
         } else {
@@ -1544,6 +1548,7 @@ const ProofOfEffortToolkit: React.FC = () => {
               fullReportData.fetchReportByR2Key,
               'en',
               currentDomain,
+              organizationName,
             );
 
             toast.dismiss(); // Remove loading toast
@@ -1567,7 +1572,7 @@ const ProofOfEffortToolkit: React.FC = () => {
         toast.loading('Generating intro document...', {
           id: 'generating-intro',
         });
-        pdfBlob = await generateIntroToToolkitPDF();
+        pdfBlob = await generateIntroToToolkitPDF(organizationName);
         toast.dismiss('generating-intro');
       } else {
         throw new Error('Unknown document type');
@@ -1752,7 +1757,7 @@ const ProofOfEffortToolkit: React.FC = () => {
       try {
         //toast.loading('Generating intro PDF...');
 
-        const pdfBlob = await generateIntroToToolkitPDF();
+        const pdfBlob = await generateIntroToToolkitPDF(organizationName);
 
         // Download the PDF
         const url = URL.createObjectURL(pdfBlob);
