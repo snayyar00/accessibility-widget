@@ -508,9 +508,16 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
   // Function to validate URL
   const isValidUrl = (str: any) => {
-    const regex =
-      /^(http:\/\/|https:\/\/)([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+)(\/[a-zA-Z0-9\-._~:?#\[\]@!$&'()*+,;=]*)?$/;
-    return regex.test(str);
+    if (!str || typeof str !== 'string') {
+      return false;
+    }
+    try {
+      const url = new URL(str);
+      // Only allow http and https protocols
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
