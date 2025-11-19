@@ -104,6 +104,9 @@ const TrialBannerAndModal: React.FC<any> = ({
   const { data: userData, loading: userLoading } = useSelector(
     (state: RootState) => state.user,
   );
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
   const organizationName = useOrganizationName();
   const [isStripeCustomer, setIsStripeCustomer] = useState(false);
   const [activePlan, setActivePlan] = useState('');
@@ -574,7 +577,16 @@ const TrialBannerAndModal: React.FC<any> = ({
               <div className="flex flex-col gap-3 sm:flex-none md:flex-1 sm:overflow-visible md:overflow-hidden">
                 {/* Logo Section */}
                 <div className="flex justify-center mb-4">
-                  <LogoIcon className="w-26 h-7 sm:w-26 sm:h-7 md:w-40 md:h-10 lg:w-48 lg:h-12" />
+                  {organization?.logo_url ? (
+                    <img
+                      src={organization.logo_url}
+                      alt={organization.name || 'Organization logo'}
+                      className="h-7 sm:h-7 md:h-10 lg:h-12 object-contain"
+                      style={{ maxWidth: '100%', maxHeight: '48px' }}
+                    />
+                  ) : (
+                    <LogoIcon className="w-26 h-7 sm:w-26 sm:h-7 md:w-40 md:h-10 lg:w-48 lg:h-12" />
+                  )}
                 </div>
 
                 <div className="space-y-2 lg:pt-4">
