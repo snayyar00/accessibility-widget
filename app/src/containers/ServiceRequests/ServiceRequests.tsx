@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { Redirect } from 'react-router-dom';
+import { RootState } from '@/config/store';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useQuery } from '@apollo/client';
 import { FiFile, FiVideo, FiUser, FiPlus, FiFolderPlus, FiFolder, FiSearch, FiFileText, FiUsers, FiArrowRight } from 'react-icons/fi';
@@ -10,7 +13,16 @@ import getUserQuoteRequestsQuery from '@/queries/serviceRequests/getUserQuoteReq
 
 const ServiceRequests: React.FC = () => {
   const { t } = useTranslation();
+  const { data: userData } = useSelector((state: RootState) => state.user);
   useDocumentHeader({ title: 'Service Requests' });
+
+  // Check if user's organization ID is 1 or 87
+  const currentOrganizationId = userData?.current_organization_id;
+  const hasAccess = currentOrganizationId === 1 || currentOrganizationId === 87;
+
+  if (!hasAccess) {
+    return <Redirect to="/dashboard" />;
+  }
 
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [isBookMeetingModalOpen, setIsBookMeetingModalOpen] = useState(false);

@@ -528,42 +528,45 @@ const Sidebar = () => {
                   )}
                 </NavLink>
 
-                {/* Service Requests */}
-                <NavLink
-                  to="/service-requests"
-                  onClick={closeSidebar}
-                  className={`flex items-center rounded-lg transition-all duration-200 ${
-                    isActiveRoute('/service-requests')
-                      ? isCollapsed
-                        ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
-                      : isCollapsed
-                      ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    <ShoppingBag
-                      size={24}
-                      className={
-                        isActiveRoute('/service-requests')
-                          ? 'text-[#445AE7]'
-                          : 'text-[#656565]'
-                      }
-                    />
-                  </div>
-                  {!isCollapsed && (
-                    <span
-                      className={`text-sm whitespace-nowrap ${
-                        isActiveRoute('/service-requests')
-                          ? 'text-[#445AE7]'
-                          : 'text-[#656565]'
-                      }`}
-                    >
-                      Service Requests
-                    </span>
-                  )}
-                </NavLink>
+                {/* Service Requests - Only show for organization ID 1 or 87 */}
+                {(userData?.current_organization_id === 1 ||
+                  userData?.current_organization_id === 87) && (
+                  <NavLink
+                    to="/service-requests"
+                    onClick={closeSidebar}
+                    className={`flex items-center rounded-lg transition-all duration-200 ${
+                      isActiveRoute('/service-requests')
+                        ? isCollapsed
+                          ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
+                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        : isCollapsed
+                        ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <div className="w-6 h-6 flex items-center justify-center">
+                      <ShoppingBag
+                        size={24}
+                        className={
+                          isActiveRoute('/service-requests')
+                            ? 'text-[#445AE7]'
+                            : 'text-[#656565]'
+                        }
+                      />
+                    </div>
+                    {!isCollapsed && (
+                      <span
+                        className={`text-sm whitespace-nowrap ${
+                          isActiveRoute('/service-requests')
+                            ? 'text-[#445AE7]'
+                            : 'text-[#656565]'
+                        }`}
+                      >
+                        Service Requests
+                      </span>
+                    )}
+                  </NavLink>
+                )}
 
                 {/* AI Insights */}
                 <NavLink
@@ -940,27 +943,30 @@ const Sidebar = () => {
                   </div>
                 </NavLink>
 
-                {/* Service Requests */}
-                <NavLink
-                  to="/service-requests"
-                  onClick={closeSidebar}
-                  className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
-                    isActiveRoute('/service-requests')
-                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
-                      : 'text-black hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    <ShoppingBag
-                      size={24}
-                      className={
-                        isActiveRoute('/service-requests')
-                          ? 'text-[#445AE7]'
-                          : 'text-[#656565]'
-                      }
-                    />
-                  </div>
-                </NavLink>
+                {/* Service Requests - Only show for organization ID 1 or 87 */}
+                {(userData?.current_organization_id === 1 ||
+                  userData?.current_organization_id === 87) && (
+                  <NavLink
+                    to="/service-requests"
+                    onClick={closeSidebar}
+                    className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
+                      isActiveRoute('/service-requests')
+                        ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        : 'text-black hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <div className="w-6 h-6 flex items-center justify-center">
+                      <ShoppingBag
+                        size={24}
+                        className={
+                          isActiveRoute('/service-requests')
+                            ? 'text-[#445AE7]'
+                            : 'text-[#656565]'
+                        }
+                      />
+                    </div>
+                  </NavLink>
+                )}
 
                 {/* AI Insights */}
                 <NavLink

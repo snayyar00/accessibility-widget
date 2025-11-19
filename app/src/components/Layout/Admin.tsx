@@ -193,14 +193,23 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
         <Sidebar />
         <div className="flex-grow bg-body overflow-y-auto px-[15px] py-[32px] sm:min-h-[calc(100vh_-_64px)]">
           <Switch>
-            {routes.map((route) => (
-              <Route
-                path={route.path}
-                component={route.component}
-                key={route.path}
-                exact={route.exact}
-              />
-            ))}
+            {routes
+              .filter((route) => {
+                // Hide service-requests route if organization ID is not 1 or 87
+                if (route.path === '/service-requests') {
+                  const currentOrganizationId = userData?.current_organization_id;
+                  return currentOrganizationId === 1 || currentOrganizationId === 87;
+                }
+                return true;
+              })
+              .map((route) => (
+                <Route
+                  path={route.path}
+                  component={route.component}
+                  key={route.path}
+                  exact={route.exact}
+                />
+              ))}
             <Route
               path="/dashboard"
               render={() => (
