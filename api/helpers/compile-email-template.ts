@@ -47,6 +47,11 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
     if (fileName.includes('day1FollowUp')) {
       mjmlContent = preprocessHandlebarsConditionals(mjmlContent, data)
     }
+    
+    // Preprocess billingLink template for pastCustomerLogo conditional
+    if (fileName.includes('billingLink')) {
+      mjmlContent = preprocessBillingLinkConditionals(mjmlContent, data)
+    }
 
     const { html, errors } = mjml2html(mjmlContent, {
       keepComments: false,
@@ -59,11 +64,18 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
     }
 
     // Escape all string values in data using entities
+    // BUT don't escape image URLs (base64 data URLs or HTTP URLs) as they need to remain intact
     const escapedData: typeof data = {}
 
     for (const key in data) {
       if (typeof data[key] === 'string') {
-        escapedData[key] = escapeHandlebarsExpressions(data[key])
+        const value = data[key].toString()
+        // Don't escape image URLs (base64 data URLs or HTTP/HTTPS URLs)
+        if (key === 'pastCustomerLogo' && (value.startsWith('data:image') || value.startsWith('http://') || value.startsWith('https://'))) {
+          escapedData[key] = data[key]
+        } else {
+          escapedData[key] = escapeHandlebarsExpressions(data[key])
+        }
       } else {
         escapedData[key] = data[key]
       }
@@ -107,5 +119,23 @@ function preprocessHandlebarsConditionals(mjmlContent: string, data: Record<stri
     })
   }
 
+  return mjmlContent
+}
+
+/**
+ * Preprocess billingLink template to handle pastCustomerLogo conditional
+ */
+function preprocessBillingLinkConditionals(mjmlContent: string, data: Record<string, unknown>): string {
+  if (data.pastCustomerLogo !== undefined) {
+    const hasLogo = Boolean(data.pastCustomerLogo && String(data.pastCustomerLogo).trim().length > 0)
+    
+    // Process block conditionals: {{#if pastCustomerLogo}}...{{/if}}
+    const blockConditionalRegex = /{{#if pastCustomerLogo}}([\s\S]*?){{\/if}}/g
+    
+    mjmlContent = mjmlContent.replace(blockConditionalRegex, (match, content) => {
+      return hasLogo ? content : ''
+    })
+  }
+  
   return mjmlContent
 }

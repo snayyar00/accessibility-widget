@@ -9,6 +9,8 @@ import { createCustomerPortalSession } from '../controllers/stripe/customer-port
 import { applyRetentionDiscount } from '../controllers/stripe/retention-discount.controller'
 import { getRewardfulDiscount } from '../controllers/stripe/rewardful-discount.controller'
 import { validateCoupon } from '../controllers/stripe/validate-coupon.controller'
+import { sendBillingLinks, uploadMiddleware } from '../controllers/stripe/send-billing-links.controller'
+import { lookupBillingCodes } from '../controllers/stripe/lookup-billing-codes.controller'
 import { allowedOrganization, isAuthenticated } from '../middlewares/auth.middleware'
 import { moderateLimiter, strictLimiter } from '../middlewares/limiters.middleware'
 import { validateBody } from '../middlewares/validation.middleware'
@@ -33,5 +35,9 @@ router.post('/create-subscription', strictLimiter, allowedOrganization, isAuthen
 router.post('/apply-retention-discount', strictLimiter, allowedOrganization, isAuthenticated, validateBody(validateApplyRetentionDiscount), applyRetentionDiscount)
 
 router.post('/check-customer', moderateLimiter, allowedOrganization, isAuthenticated, checkCustomer)
+
+router.post('/send-billing-links', strictLimiter, allowedOrganization, isAuthenticated, uploadMiddleware, sendBillingLinks)
+
+router.post('/lookup-billing-codes', strictLimiter, allowedOrganization, isAuthenticated, lookupBillingCodes)
 
 export default router

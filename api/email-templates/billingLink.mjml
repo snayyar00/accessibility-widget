@@ -1,0 +1,156 @@
+<mjml>
+  <mj-head>
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+    <mj-attributes>
+      <mj-all font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif" />
+      <mj-text font-size="16px" line-height="1.7" color="#374151" />
+      <mj-button font-weight="600" border-radius="8px" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#ffffff">
+    <!-- Header with Logo -->
+    <mj-section background-color="#ffffff" padding="24px 24px 16px">
+      <mj-column>
+        <mj-image 
+          src="https://cdn.webability.io/organizations/88/logo-b3c155df-3aab-43f4-b17b-e9b738a2ca4e.png" 
+          alt="WebAbility" 
+          width="150px"
+          align="left"
+          padding="0"
+        />
+      </mj-column>
+    </mj-section>
+
+    <!-- Past Customer Banner Image -->
+    {{#if pastCustomerLogo}}
+    <mj-section background-color="#ffffff" padding="0">
+      <mj-column>
+        <mj-image 
+          src="https://cdn.webability.io/organizations/86/logo-7c77cc04-7d5f-47ef-a590-8bb855edddf9.png" 
+          alt="WebAbility - Rebuilt, Refined and Reimagined"
+          width="600px"
+          align="center"
+          padding="0"
+        />
+      </mj-column>
+    </mj-section>
+    {{/if}}
+
+    <!-- Main Content - Simple Text -->
+    <mj-section background-color="#ffffff" padding="0 24px 32px">
+      <mj-column>
+        <mj-text font-size="24px" font-weight="700" color="#0052cc" padding="0 0 16px">
+          We'd love to have you back
+        </mj-text>
+        
+        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 16px">
+          Your account is intact and ready to roll. We've made significant improvements since you last used WebAbility, and we'd love for you to experience them.
+        </mj-text>
+        
+        <mj-text font-size="16px" color="#0052cc" font-weight="600" padding="0 0 24px">
+          Log in to try everything out, and if you like what you see, you can complete your payment to unlock unlimited access.
+        </mj-text>
+
+        <mj-text font-size="18px" font-weight="600" color="#0052cc" padding="0 0 12px">
+          We've been busy improving things
+        </mj-text>
+        
+        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 20px">
+          Your WebAbility experience just got better. We've rolled out some exciting updates that make our widget and app more powerful and easier to use.
+        </mj-text>
+
+        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 8px">
+          • <strong style="color: #0052cc;">Faster performance</strong> – Your widget loads quicker and runs smoother
+        </mj-text>
+        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 8px">
+          • <strong style="color: #0052cc;">More customization</strong> – Tailor the widget to match your brand perfectly
+        </mj-text>
+        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 8px">
+          • <strong style="color: #0052cc;">Better insights</strong> – New analytics help you understand your impact
+        </mj-text>
+        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 24px">
+          • <strong style="color: #0052cc;">Enhanced accessibility</strong> – Even more tools to help your visitors
+        </mj-text>
+
+        <mj-text font-size="18px" font-weight="600" color="#0052cc" padding="0 0 12px">
+          Try it out first
+        </mj-text>
+        
+        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 20px">
+          Your account is ready to go. Log in and explore all the improvements we've made. Take your time, test everything out, and see how WebAbility can help your website.
+        </mj-text>
+
+        <mj-button 
+          background-color="#0052cc" 
+          color="#ffffff"
+          font-size="16px"
+          padding="12px 24px"
+          href="https://app.webability.io/"
+        >
+          Log In & Explore
+        </mj-button>
+
+        <mj-divider border-color="#e5e7eb" border-width="1px" padding="32px 0" />
+
+        <mj-text font-size="18px" font-weight="600" color="#0052cc" padding="0 0 12px">
+          Love what you see?
+        </mj-text>
+        
+        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 12px">
+          If you're happy with the improvements, complete your payment to unlock unlimited access to all features.
+        </mj-text>
+
+        <mj-text font-size="24px" font-weight="700" color="#0052cc" padding="0 0 20px">
+          $30.00
+        </mj-text>
+
+        <mj-button 
+          background-color="#0052cc" 
+          color="#ffffff"
+          font-size="16px"
+          padding="14px 32px"
+          href="{{paymentLink}}"
+        >
+          Complete Payment
+        </mj-button>
+
+        <mj-text font-size="14px" color="#6b7280" padding="16px 0 0">
+          Or copy and paste this link into your browser:<br>
+          <a href="{{paymentLink}}" style="color: #0052cc; text-decoration: underline; word-break: break-all;">{{paymentLink}}</a>
+        </mj-text>
+
+        <mj-divider border-color="#e5e7eb" border-width="1px" padding="32px 0" />
+
+        <mj-text font-size="18px" font-weight="600" color="#0052cc" padding="0 0 12px">
+          Questions? We're here to help
+        </mj-text>
+        
+        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 8px">
+          If you have any questions about your payment or need assistance with anything, just reply to this email. We typically respond within a few hours.
+        </mj-text>
+        
+        <mj-text font-size="14px" color="#6b7280" padding="0">
+          Our support team is standing by to assist you.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f9fafb" padding="32px 24px">
+      <mj-column>
+        <mj-text font-size="14px" color="#0052cc" font-weight="600" align="center" padding="0 0 8px">
+          WebAbility
+        </mj-text>
+        <mj-text font-size="14px" color="#6b7280" align="center" padding="0 0 16px">
+          Making the web accessible for everyone
+        </mj-text>
+        <mj-text font-size="12px" color="#9ca3af" align="center" padding="0">
+          © {{year}} WebAbility. All rights reserved.
+        </mj-text>
+        <mj-text font-size="12px" color="#9ca3af" align="center" padding="12px 0 0">
+          You're receiving this email because a billing link was generated for your account.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

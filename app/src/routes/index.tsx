@@ -12,6 +12,7 @@ import ProofOfEffortToolkit from '@/containers/ProofOfEffortToolkit/ProofOfEffor
 import AIInsights from '@/containers/AIInsights/AIInsights';
 import Workspaces from '@/containers/Workspaces';
 import Organization from '@/containers/Organization';
+import BillingLinks from '@/containers/BillingLinks/BillingLinks';
 
 const routes = [
   {
@@ -118,6 +119,13 @@ const routes = [
     name: 'Organization',
     exact: true,
     component: Organization,
+    isSidebar: false,
+  },
+  {
+    path: '/billing-links',
+    name: 'Billing Links',
+    exact: true,
+    component: BillingLinks,
     isSidebar: false,
   },
 ];
