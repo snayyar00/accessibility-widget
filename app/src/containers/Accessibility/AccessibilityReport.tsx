@@ -114,6 +114,9 @@ const normalizeDomain = (url: string) =>
 const AccessibilityReport = ({ currentDomain }: any) => {
   const { t } = useTranslation();
   const organizationName = useOrganizationName();
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
   useDocumentHeader({ title: t('Common.title.report') });
   const dispatch = useDispatch();
   // Using baseColors directly instead of getColors()
@@ -3490,6 +3493,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                               currentLanguage,
                                               row.url,
                                               organizationName,
+                                              organization?.logo_url || undefined,
                                             );
                                             toast.dismiss(pdfToastId);
                                             const url =
@@ -3801,6 +3805,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                           currentLanguage,
                                           row.url,
                                           organizationName,
+                                          organization?.logo_url || undefined,
                                         );
                                         toast.dismiss(pdfToastId);
                                         const url =

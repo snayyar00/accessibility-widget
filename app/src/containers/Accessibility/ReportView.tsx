@@ -54,6 +54,8 @@ import GET_PROFILE from '@/queries/auth/getProfile';
 import getWidgetSettings from '@/utils/getWidgetSettings';
 import { FloatingChatbot } from './FloatingChatbot'; // Adjust path as needed
 import useOrganizationName from '@/hooks/useOrganizationName';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/config/store';
 
 // Add this array near the top of the file
 const accessibilityFacts = [
@@ -185,6 +187,9 @@ const ReportView: React.FC = () => {
   const history = useHistory();
   const adjustedKey = `reports/${r2_key}`;
   const organizationName = useOrganizationName();
+  const organizationData = useSelector(
+    (state: RootState) => state.organization.data,
+  );
   const [fetchReport, { data, loading, error }] = useLazyQuery(
     FETCH_REPORT_BY_R2_KEY,
   );
@@ -1288,6 +1293,10 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
   score,
   results,
 }) => {
+  const organizationName = useOrganizationName();
+  const organizationData = useSelector(
+    (state: RootState) => state.organization.data,
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [isDownloading, setIsDownloading] = useState(false); // <-- Add this line
@@ -1325,7 +1334,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
     setIsDownloading(true); // <-- Set loading state
     try {
       // Generate PDF using the same logic as ScannerHero
-      const pdfBlob = await generatePDF(results, currentLanguage, fullUrl, organizationName);
+      const pdfBlob = await generatePDF(results, currentLanguage, fullUrl, organizationName, organizationData?.logo_url || undefined);
       // Create download link for immediate download
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');

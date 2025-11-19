@@ -529,6 +529,9 @@ const getIssueColors = (issue: any, hasWebAbility: boolean) => {
 
 const ProofOfEffortToolkit: React.FC = () => {
   const organizationName = useOrganizationName();
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
   const [viewFilesExpanded, setViewFilesExpanded] = useState(false);
   const [isProcessingReport, setIsProcessingReport] = useState(false);
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
@@ -711,6 +714,7 @@ const ProofOfEffortToolkit: React.FC = () => {
           'en',
           currentDomain,
           organizationName,
+          organization?.logo_url || undefined,
         );
         zip.file('Monthly audit report.pdf', monthlyPdf);
       } catch (error) {
@@ -857,7 +861,7 @@ const ProofOfEffortToolkit: React.FC = () => {
   const generateReportPDF = async (reportData: any, domain: string) => {
     try {
       // Generate the full accessibility report PDF
-      const pdfBlob = await generatePDF(reportData, 'en', domain, organizationName); // Using English as default language
+      const pdfBlob = await generatePDF(reportData, 'en', domain, organizationName, organization?.logo_url || undefined); // Using English as default language
 
       // Download the PDF
       const url = URL.createObjectURL(pdfBlob);
@@ -878,7 +882,7 @@ const ProofOfEffortToolkit: React.FC = () => {
   const viewReportPDF = async (reportData: any, domain: string) => {
     try {
       // Generate the full accessibility report PDF
-      const pdfBlob = await generatePDF(reportData, 'en', domain, organizationName); // Using English as default language
+      const pdfBlob = await generatePDF(reportData, 'en', domain, organizationName, organization?.logo_url || undefined); // Using English as default language
 
       // Open the PDF in a new window/tab for viewing
       const url = URL.createObjectURL(pdfBlob);
@@ -1420,6 +1424,7 @@ const ProofOfEffortToolkit: React.FC = () => {
             'en',
             currentDomain,
             organizationName,
+            organization?.logo_url || undefined,
           );
           pdfs['3-Monthly-Audit-Report.pdf'] = reportPdfBlob;
         } else {
@@ -1549,6 +1554,7 @@ const ProofOfEffortToolkit: React.FC = () => {
               'en',
               currentDomain,
               organizationName,
+              organization?.logo_url || undefined,
             );
 
             toast.dismiss(); // Remove loading toast
