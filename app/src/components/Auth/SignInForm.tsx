@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/config/store';
 
 import FormControl from '@/components/Common/FormControl';
 import Input from '@/components/Common/Input/Input';
@@ -28,6 +30,10 @@ const SignInForm: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
+  const organizationName = organization?.name || 'WebAbility';
 
   return (
     <div className="bg-white max-w-[400px] w-[400px] mt-16">
@@ -164,7 +170,7 @@ const SignInForm: React.FC<Props> = ({
         />
       )}
       <div className="mt-8 text-center text-[14px] text-gray-600">
-        New to WebAbility?{' '}
+        New to {organizationName}?{' '}
         <Link
           to="/auth/signup"
           className="text-blue-600 hover:text-blue-800 font-medium"
