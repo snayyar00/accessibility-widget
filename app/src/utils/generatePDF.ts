@@ -177,10 +177,14 @@ export const generatePDF = async (
   const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
     await getWidgetSettings(reportData.url);
   
-  // Prioritize organization logo URL over widget logo
-  // If organization logo is provided, use it; otherwise use widget logo
-  const finalLogoImage = organizationLogoUrl || logoImage;
-  const finalLogoUrl = organizationLogoUrl || logoUrl || undefined;
+  // Prioritize widget logo first - check if widget logo exists and is not the fallback
+  const WIDGET_FALLBACK_LOGO = '/images/logo.png';
+  const hasValidWidgetLogo = logoImage && logoImage !== WIDGET_FALLBACK_LOGO;
+  const hasValidWidgetLogoUrl = logoUrl && logoUrl.trim() !== '';
+  
+  // Use widget logo if available, otherwise fall back to organization logo
+  const finalLogoImage = hasValidWidgetLogo ? logoImage : (organizationLogoUrl || logoImage);
+  const finalLogoUrl = hasValidWidgetLogoUrl ? logoUrl : (organizationLogoUrl || logoUrl || undefined);
   
   const WEBABILITY_SCORE_BONUS = 45;
   const MAX_TOTAL_SCORE = 95;
@@ -321,9 +325,17 @@ export const generatePDF = async (
     let logoToTry = finalLogoImage;
     let fallbackLogo: string | null = null;
 
-    // If we're using organization logo, set widget logo as fallback
-    if (organizationLogoUrl && finalLogoImage === organizationLogoUrl) {
-      fallbackLogo = logoImage;
+    // Set fallback logo based on which logo we're using
+    if (hasValidWidgetLogo && finalLogoImage === logoImage) {
+      // Using widget logo - set organization logo as fallback if available
+      if (organizationLogoUrl) {
+        fallbackLogo = organizationLogoUrl;
+      }
+    } else if (organizationLogoUrl && finalLogoImage === organizationLogoUrl) {
+      // Using organization logo - set widget logo as fallback only if it's valid (not fallback)
+      if (hasValidWidgetLogo) {
+        fallbackLogo = logoImage;
+      }
     }
 
     try {
@@ -3174,10 +3186,14 @@ export const generateShortPDF = async (
   const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
     await getWidgetSettings(reportData.url);
   
-  // Prioritize organization logo URL over widget logo
-  // If organization logo is provided, use it; otherwise use widget logo
-  const finalLogoImage = organizationLogoUrl || logoImage;
-  const finalLogoUrl = organizationLogoUrl || logoUrl || undefined;
+  // Prioritize widget logo first - check if widget logo exists and is not the fallback
+  const WIDGET_FALLBACK_LOGO = '/images/logo.png';
+  const hasValidWidgetLogo = logoImage && logoImage !== WIDGET_FALLBACK_LOGO;
+  const hasValidWidgetLogoUrl = logoUrl && logoUrl.trim() !== '';
+  
+  // Use widget logo if available, otherwise fall back to organization logo
+  const finalLogoImage = hasValidWidgetLogo ? logoImage : (organizationLogoUrl || logoImage);
+  const finalLogoUrl = hasValidWidgetLogoUrl ? logoUrl : (organizationLogoUrl || logoUrl || undefined);
   
   const WEBABILITY_SCORE_BONUS = 45;
   const MAX_TOTAL_SCORE = 95;
@@ -3338,9 +3354,17 @@ export const generateShortPDF = async (
     let logoToTry = finalLogoImage;
     let fallbackLogo: string | null = null;
 
-    // If we're using organization logo, set widget logo as fallback
-    if (organizationLogoUrl && finalLogoImage === organizationLogoUrl) {
-      fallbackLogo = logoImage;
+    // Set fallback logo based on which logo we're using
+    if (hasValidWidgetLogo && finalLogoImage === logoImage) {
+      // Using widget logo - set organization logo as fallback if available
+      if (organizationLogoUrl) {
+        fallbackLogo = organizationLogoUrl;
+      }
+    } else if (organizationLogoUrl && finalLogoImage === organizationLogoUrl) {
+      // Using organization logo - set widget logo as fallback only if it's valid (not fallback)
+      if (hasValidWidgetLogo) {
+        fallbackLogo = logoImage;
+      }
     }
 
     try {
