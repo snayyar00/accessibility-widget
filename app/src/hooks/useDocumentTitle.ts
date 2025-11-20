@@ -1,15 +1,29 @@
 import { useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/config/store';
 
 type PropsTitle = {
   title: string;
 };
 
 const useDocumentHeader = ({ title }: PropsTitle): void => {
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
+  const userOrganization = useSelector(
+    (state: RootState) => state.user.data?.currentOrganization,
+  );
+  
+  const organizationName = organization?.name || userOrganization?.name || 'WebAbility.io';
+
   useEffect(() => {
     if (!title) return;
 
-    document.title = title;
-  }, [title]);
+    // Replace {{organizationName}} with actual organization name
+    const processedTitle = title.replace(/\{\{organizationName\}\}/g, organizationName);
+
+    document.title = processedTitle;
+  }, [title, organizationName]);
 };
 
 type PropsDescription = {

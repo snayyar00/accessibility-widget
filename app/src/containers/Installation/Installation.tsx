@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import CodeContainer from './CodeContainer';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
+import useOrganizationName from '@/hooks/useOrganizationName';
 import { useTranslation } from 'react-i18next';
 import TourGuide from '@/components/Common/TourGuide';
 import { defaultTourStyles } from '@/config/tourStyles';
-import { installationTourSteps, tourKeys } from '@/constants/toursteps';
+import { getInstallationTourSteps, tourKeys } from '@/constants/toursteps';
 import { FaWordpressSimple } from 'react-icons/fa6';
 import { FaWebflow } from 'react-icons/fa6';
 import { FaWix } from 'react-icons/fa';
@@ -14,6 +15,7 @@ import { baseColors } from '@/config/colors';
 
 export default function Installation({ domain }: any) {
   const { t } = useTranslation();
+  const organizationName = useOrganizationName();
   useDocumentHeader({ title: t('Common.title.installation') });
 
   // Using baseColors directly
@@ -143,7 +145,7 @@ export default function Installation({ domain }: any) {
   return (
     <>
       <TourGuide
-        steps={installationTourSteps}
+        steps={getInstallationTourSteps(organizationName)}
         tourKey={tourKeys.installation}
         autoStart={true}
         onTourComplete={handleTourComplete}

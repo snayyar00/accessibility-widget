@@ -63,7 +63,14 @@ const getIssueCountIcon = (impact: string) => {
 };
 async function fetchImageAsBase64(url: string): Promise<string | null> {
   try {
-    const response = await fetch(url);
+    // Try fetch first
+    const response = await fetch(url, {
+      mode: 'cors',
+      credentials: 'omit',
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const blob = await response.blob();
     return await new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -72,8 +79,44 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
       reader.readAsDataURL(blob);
     });
   } catch (e) {
-    console.warn('Failed to fetch image for PDF:', url, e);
-    return null;
+    // If fetch fails due to CORS, try canvas-based approach
+    try {
+      return await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              reject(new Error('Could not get canvas context'));
+              return;
+            }
+            ctx.drawImage(img, 0, 0);
+            const dataUrl = canvas.toDataURL('image/png');
+            resolve(dataUrl);
+          } catch (canvasError) {
+            reject(canvasError);
+          }
+        };
+        
+        img.onerror = () => {
+          reject(new Error('Image failed to load'));
+        };
+        
+        // Set a timeout
+        setTimeout(() => {
+          reject(new Error('Image load timeout'));
+        }, 10000);
+        
+        img.src = url;
+      });
+    } catch (canvasError) {
+      return null;
+    }
   }
 }
 
@@ -103,6 +146,8 @@ export const generatePDF = async (
   },
   currentLanguage: string,
   domain?: string,
+  organizationName: string = 'WebAbility',
+  organizationLogoUrl?: string,
 ): Promise<Blob> => {
   const { jsPDF } = await import('jspdf');
   const { isCodeCompliant } = await import('@/utils/translator');
@@ -131,11 +176,20 @@ export const generatePDF = async (
 
   const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
     await getWidgetSettings(reportData.url);
+  
+  // Prioritize widget logo first - check if widget logo exists and is not the fallback
+  const WIDGET_FALLBACK_LOGO = '/images/logo.png';
+  const hasValidWidgetLogo = logoImage && logoImage !== WIDGET_FALLBACK_LOGO;
+  const hasValidWidgetLogoUrl = logoUrl && logoUrl.trim() !== '';
+  
+  // Use widget logo if available, otherwise fall back to organization logo
+  const finalLogoImage = hasValidWidgetLogo ? logoImage : (organizationLogoUrl || logoImage);
+  const finalLogoUrl = hasValidWidgetLogoUrl ? logoUrl : (organizationLogoUrl || logoUrl || undefined);
+  
   const WEBABILITY_SCORE_BONUS = 45;
   const MAX_TOTAL_SCORE = 95;
   const issues = extractIssuesFromReport(reportData);
 
-  //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
   const baseScore = reportData.score || 0;
   const scriptCheckResult = reportData.scriptCheckResult;
   const widgetInfoResult = reportData.widgetInfo?.result;
@@ -231,7 +285,7 @@ export const generatePDF = async (
       '✓ ACCESSIBILITY COMPLIANCE ACHIEVED',
       'Your website is now compliant with accessibility standards',
       'COMPLIANCE STATUS:',
-      '✓ WebAbility widget is actively protecting your site',
+      `✓ ${organizationName} widget is actively protecting your site`,
       '✓ Automated accessibility fixes are applied',
       ' CRITICAL ACCESSIBILITY VIOLATIONS DETECTED',
       'Your website may face legal action and lose customers',
@@ -241,7 +295,7 @@ export const generatePDF = async (
       '• Google SEO penalties reducing search rankings',
       '• Damage to brand reputation and customer trust',
       'TIME-SENSITIVE ACTION REQUIRED:',
-      '✓ WebAbility can fix most issues automatically',
+      `✓ ${organizationName} can fix most issues automatically`,
       '✓ Instant compliance improvement',
       '✓ Protect your business from legal risks TODAY',
       'Accessibility Statement',
@@ -251,7 +305,7 @@ export const generatePDF = async (
       'Need Action',
       '⚠ Review required',
       'Fix with AI',
-      'use webability to fix',
+      `use ${organizationName.toLowerCase()} to fix`,
       'Critical compliance gaps exposing your business to legal action',
     ],
     currentLanguage,
@@ -274,55 +328,163 @@ export const generatePDF = async (
 
   let logoBottomY = 0;
 
-  if (logoImage) {
-    const img = new Image();
+  if (finalLogoImage) {
     let imageLoadError = false;
-    img.src = logoImage;
+    let logoBase64: string | null = null;
+    let img: HTMLImageElement | null = null;
+    let logoToTry = finalLogoImage;
+    let fallbackLogo: string | null = null;
+
+    // Set fallback logo based on which logo we're using
+    if (hasValidWidgetLogo && finalLogoImage === logoImage) {
+      // Using widget logo - set organization logo as fallback if available
+      if (organizationLogoUrl) {
+        fallbackLogo = organizationLogoUrl;
+      }
+    } else if (organizationLogoUrl && finalLogoImage === organizationLogoUrl) {
+      // Using organization logo - set widget logo as fallback only if it's valid (not fallback)
+      if (hasValidWidgetLogo) {
+        fallbackLogo = logoImage;
+      }
+    }
 
     try {
-      await new Promise<void>((resolve, reject) => {
-        let settled = false;
-        const TIMEOUT_MS = 5000; // 5 seconds
+      // Check if it's a cross-origin URL (http/https) - use fetch to avoid CORS issues
+      if (logoToTry.startsWith('http://') || logoToTry.startsWith('https://')) {
+        // For cross-origin URLs, use fetch to avoid CORS issues
+        logoBase64 = await fetchImageAsBase64(logoToTry);
+        if (!logoBase64) {
+          // Fetch failed - try fallback logo if available
+          if (fallbackLogo && fallbackLogo !== logoToTry) {
+            logoToTry = fallbackLogo;
+            logoBase64 = await fetchImageAsBase64(fallbackLogo);
+            if (logoBase64) {
+              const base64Img = new Image();
+              base64Img.src = logoBase64;
+              await new Promise<void>((resolve, reject) => {
+                let settled = false;
+                const TIMEOUT_MS = 5000;
+                const cleanup = () => {
+                  base64Img.onload = null;
+                  base64Img.onerror = null;
+                };
+                const timeoutId = setTimeout(() => {
+                  if (!settled) {
+                    settled = true;
+                    cleanup();
+                    reject(new Error('Fallback logo load timed out'));
+                  }
+                }, TIMEOUT_MS);
+                base64Img.onload = () => {
+                  if (settled) return;
+                  settled = true;
+                  clearTimeout(timeoutId);
+                  cleanup();
+                  resolve();
+                };
+                base64Img.onerror = () => {
+                  if (settled) return;
+                  settled = true;
+                  clearTimeout(timeoutId);
+                  cleanup();
+                  reject(new Error('Fallback logo failed to load'));
+                };
+              });
+              img = base64Img;
+            } else {
+              // Fallback also failed
+              imageLoadError = true;
+            }
+          } else {
+            // No fallback available
+            imageLoadError = true;
+          }
+        } else {
+          // Create image from base64 to get dimensions
+          const base64Img = new Image();
+          base64Img.src = logoBase64;
+          await new Promise<void>((resolve, reject) => {
+            let settled = false;
+            const TIMEOUT_MS = 5000;
 
-        const cleanup = () => {
-          img.onload = null;
-          img.onerror = null;
-        };
+            const cleanup = () => {
+              base64Img.onload = null;
+              base64Img.onerror = null;
+            };
 
-        const timeoutId = setTimeout(() => {
-          if (!settled) {
+            const timeoutId = setTimeout(() => {
+              if (!settled) {
+                settled = true;
+                cleanup();
+                reject(new Error('Logo image load timed out'));
+              }
+            }, TIMEOUT_MS);
+
+            base64Img.onload = () => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timeoutId);
+              cleanup();
+              resolve();
+            };
+
+            base64Img.onerror = () => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timeoutId);
+              cleanup();
+              reject(new Error('Logo image failed to load'));
+            };
+          });
+          img = base64Img;
+        }
+      } else {
+        // Data URL or local path - use direct image loading
+        const directImg = new Image();
+        directImg.src = logoToTry;
+        await new Promise<void>((resolve, reject) => {
+          let settled = false;
+          const TIMEOUT_MS = 5000;
+
+          const cleanup = () => {
+            directImg.onload = null;
+            directImg.onerror = null;
+          };
+
+          const timeoutId = setTimeout(() => {
+            if (!settled) {
+              settled = true;
+              cleanup();
+              imageLoadError = true;
+              reject(new Error('Logo image load timed out'));
+            }
+          }, TIMEOUT_MS);
+
+          directImg.onload = () => {
+            if (settled) return;
             settled = true;
+            clearTimeout(timeoutId);
+            cleanup();
+            resolve();
+          };
+
+          directImg.onerror = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
             cleanup();
             imageLoadError = true;
-            reject(new Error('Logo image load timed out'));
-          }
-        }, TIMEOUT_MS);
-
-        img.onload = () => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timeoutId);
-          cleanup();
-          resolve();
-        };
-        img.onerror = () => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timeoutId);
-          cleanup();
-          imageLoadError = true;
-          reject(new Error('Logo image failed to load'));
-        };
-      });
+            reject(new Error('Logo image failed to load'));
+          };
+        });
+        img = directImg;
+      }
     } catch (err) {
-      // Log the error for debugging, but continue PDF generation
-      // eslint-disable-next-line no-console
-      console.warn('Logo image could not be loaded for PDF:', err);
       logoBottomY = 0;
       imageLoadError = true;
     }
 
-    if (!imageLoadError) {
+    if (!imageLoadError && img) {
       // Make the logo and container bigger
       const maxWidth = 48,
         maxHeight = 36; // increased size for a bigger logo
@@ -337,17 +499,24 @@ export const generatePDF = async (
       const logoX = logoPadding;
       const logoY = logoPadding;
 
-      // Add logo image directly without white container
-      doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
+      // Add logo image - use base64 if available (for cross-origin), otherwise use img element
+      try {
+        if (logoBase64) {
+          doc.addImage(logoBase64, 'PNG', logoX, logoY, drawWidth, drawHeight);
+        } else if (img) {
+          doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
+        }
+      } catch (addImageError) {
+      }
 
-      if (logoUrl) {
+      if (finalLogoUrl) {
         doc.link(logoX, logoY, drawWidth, drawHeight, {
-          url: logoUrl,
+          url: finalLogoUrl,
           target: '_blank',
         });
       }
 
-      logoBottomY = logoY + drawHeight;
+      logoBottomY = logoY + drawHeight
     }
   }
 
@@ -756,7 +925,6 @@ export const generatePDF = async (
         });
       }
     } catch (error) {
-      console.warn('Failed to load SVG icon for category:', category, error);
     }
     return null;
   };
@@ -1443,10 +1611,6 @@ export const generatePDF = async (
         // Add the image to PDF
         doc.addImage(img, 'PNG', shieldX, shieldY, shieldSize, shieldSize);
       } catch (error) {
-        console.warn(
-          'Failed to load green success image, falling back to drawn shield:',
-          error,
-        );
 
         // Fallback: Draw green shield background if image fails to load
         doc.setFillColor(34, 197, 94); // Bright green
@@ -1769,7 +1933,6 @@ export const generatePDF = async (
       try {
         issue.screenshotBase64 = await fetchImageAsBase64(issue.screenshotUrl);
       } catch (e) {
-        console.warn('Skipping screenshot:', issue.screenshotUrl);
       }
     }
   }
@@ -2506,7 +2669,6 @@ export const generatePDF = async (
               iconSize,
             );
           } catch (error) {
-            console.warn('Failed to load message icon:', error);
           }
 
           // Reset text color for the content
@@ -2537,7 +2699,6 @@ export const generatePDF = async (
               iconSize,
             );
           } catch (error) {
-            console.warn('Failed to load issue count icon:', error);
           }
         }
 
@@ -2566,7 +2727,6 @@ export const generatePDF = async (
               iconSize, // Keep height the same
             );
           } catch (error) {
-            console.warn('Failed to load impact icon:', error);
           }
         }
       },
@@ -3005,6 +3165,8 @@ export const generateShortPDF = async (
   },
   currentLanguage: string,
   domain: string,
+  organizationName: string = 'WebAbility',
+  organizationLogoUrl?: string,
 ): Promise<Blob> => {
   const { jsPDF } = await import('jspdf');
   const { isCodeCompliant } = await import('@/utils/translator');
@@ -3033,13 +3195,20 @@ export const generateShortPDF = async (
 
   const { logoImage, logoUrl, accessibilityStatementLinkUrl } =
     await getWidgetSettings(reportData.url);
+  
+  // Prioritize widget logo first - check if widget logo exists and is not the fallback
+  const WIDGET_FALLBACK_LOGO = '/images/logo.png';
+  const hasValidWidgetLogo = logoImage && logoImage !== WIDGET_FALLBACK_LOGO;
+  const hasValidWidgetLogoUrl = logoUrl && logoUrl.trim() !== '';
+  
+  // Use widget logo if available, otherwise fall back to organization logo
+  const finalLogoImage = hasValidWidgetLogo ? logoImage : (organizationLogoUrl || logoImage);
+  const finalLogoUrl = hasValidWidgetLogoUrl ? logoUrl : (organizationLogoUrl || logoUrl || undefined);
+  
   const WEBABILITY_SCORE_BONUS = 45;
   const MAX_TOTAL_SCORE = 95;
   const issues = extractIssuesFromReport(reportData);
 
-  // Debug: Log the issues count to verify it's showing actual errors
-
-  //console.log("logoUrl",logoImage,logoUrl,accessibilityStatementLinkUrl);
   const baseScore = reportData.score || 0;
   const scriptCheckResult = reportData.scriptCheckResult;
   const widgetInfoResult = reportData.widgetInfo?.result;
@@ -3134,7 +3303,7 @@ export const generateShortPDF = async (
       '✓ ACCESSIBILITY COMPLIANCE ACHIEVED',
       'Your website is now compliant with accessibility standards',
       'COMPLIANCE STATUS:',
-      '✓ WebAbility widget is actively protecting your site',
+      `✓ ${organizationName} widget is actively protecting your site`,
       '✓ Automated accessibility fixes are applied',
       ' CRITICAL ACCESSIBILITY VIOLATIONS DETECTED',
       'Your website may face legal action and lose customers',
@@ -3144,7 +3313,7 @@ export const generateShortPDF = async (
       '• Google SEO penalties reducing search rankings',
       '• Damage to brand reputation and customer trust',
       'TIME-SENSITIVE ACTION REQUIRED:',
-      '✓ WebAbility can fix most issues automatically',
+      `✓ ${organizationName} can fix most issues automatically`,
       '✓ Instant compliance improvement',
       '✓ Protect your business from legal risks TODAY',
       'Accessibility Statement',
@@ -3154,7 +3323,7 @@ export const generateShortPDF = async (
       'Need Action',
       '⚠ Review required',
       'Fix with AI',
-      'use webability to fix',
+      `use ${organizationName.toLowerCase()} to fix`,
       'Critical compliance gaps exposing your business to legal action',
     ],
     currentLanguage,
@@ -3197,55 +3366,163 @@ export const generateShortPDF = async (
 
   let logoBottomY = 0;
 
-  if (logoImage) {
-    const img = new Image();
+  if (finalLogoImage) {
     let imageLoadError = false;
-    img.src = logoImage;
+    let logoBase64: string | null = null;
+    let img: HTMLImageElement | null = null;
+    let logoToTry = finalLogoImage;
+    let fallbackLogo: string | null = null;
+
+    // Set fallback logo based on which logo we're using
+    if (hasValidWidgetLogo && finalLogoImage === logoImage) {
+      // Using widget logo - set organization logo as fallback if available
+      if (organizationLogoUrl) {
+        fallbackLogo = organizationLogoUrl;
+      }
+    } else if (organizationLogoUrl && finalLogoImage === organizationLogoUrl) {
+      // Using organization logo - set widget logo as fallback only if it's valid (not fallback)
+      if (hasValidWidgetLogo) {
+        fallbackLogo = logoImage;
+      }
+    }
 
     try {
-      await new Promise<void>((resolve, reject) => {
-        let settled = false;
-        const TIMEOUT_MS = 5000; // 5 seconds
+      // Check if it's a cross-origin URL (http/https) - use fetch to avoid CORS issues
+      if (logoToTry.startsWith('http://') || logoToTry.startsWith('https://')) {
+        // For cross-origin URLs, use fetch to avoid CORS issues
+        logoBase64 = await fetchImageAsBase64(logoToTry);
+        if (!logoBase64) {
+          // Fetch failed - try fallback logo if available
+          if (fallbackLogo && fallbackLogo !== logoToTry) {
+            logoToTry = fallbackLogo;
+            logoBase64 = await fetchImageAsBase64(fallbackLogo);
+            if (logoBase64) {
+              const base64Img = new Image();
+              base64Img.src = logoBase64;
+              await new Promise<void>((resolve, reject) => {
+                let settled = false;
+                const TIMEOUT_MS = 5000;
+                const cleanup = () => {
+                  base64Img.onload = null;
+                  base64Img.onerror = null;
+                };
+                const timeoutId = setTimeout(() => {
+                  if (!settled) {
+                    settled = true;
+                    cleanup();
+                    reject(new Error('Fallback logo load timed out'));
+                  }
+                }, TIMEOUT_MS);
+                base64Img.onload = () => {
+                  if (settled) return;
+                  settled = true;
+                  clearTimeout(timeoutId);
+                  cleanup();
+                  resolve();
+                };
+                base64Img.onerror = () => {
+                  if (settled) return;
+                  settled = true;
+                  clearTimeout(timeoutId);
+                  cleanup();
+                  reject(new Error('Fallback logo failed to load'));
+                };
+              });
+              img = base64Img;
+            } else {
+              // Fallback also failed
+              imageLoadError = true;
+            }
+          } else {
+            // No fallback available
+            imageLoadError = true;
+          }
+        } else {
+          // Create image from base64 to get dimensions
+          const base64Img = new Image();
+          base64Img.src = logoBase64;
+          await new Promise<void>((resolve, reject) => {
+            let settled = false;
+            const TIMEOUT_MS = 5000;
 
-        const cleanup = () => {
-          img.onload = null;
-          img.onerror = null;
-        };
+            const cleanup = () => {
+              base64Img.onload = null;
+              base64Img.onerror = null;
+            };
 
-        const timeoutId = setTimeout(() => {
-          if (!settled) {
+            const timeoutId = setTimeout(() => {
+              if (!settled) {
+                settled = true;
+                cleanup();
+                reject(new Error('Logo image load timed out'));
+              }
+            }, TIMEOUT_MS);
+
+            base64Img.onload = () => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timeoutId);
+              cleanup();
+              resolve();
+            };
+
+            base64Img.onerror = () => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timeoutId);
+              cleanup();
+              reject(new Error('Logo image failed to load'));
+            };
+          });
+          img = base64Img;
+        }
+      } else {
+        // Data URL or local path - use direct image loading
+        const directImg = new Image();
+        directImg.src = logoToTry;
+        await new Promise<void>((resolve, reject) => {
+          let settled = false;
+          const TIMEOUT_MS = 5000;
+
+          const cleanup = () => {
+            directImg.onload = null;
+            directImg.onerror = null;
+          };
+
+          const timeoutId = setTimeout(() => {
+            if (!settled) {
+              settled = true;
+              cleanup();
+              imageLoadError = true;
+              reject(new Error('Logo image load timed out'));
+            }
+          }, TIMEOUT_MS);
+
+          directImg.onload = () => {
+            if (settled) return;
             settled = true;
+            clearTimeout(timeoutId);
+            cleanup();
+            resolve();
+          };
+
+          directImg.onerror = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
             cleanup();
             imageLoadError = true;
-            reject(new Error('Logo image load timed out'));
-          }
-        }, TIMEOUT_MS);
-
-        img.onload = () => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timeoutId);
-          cleanup();
-          resolve();
-        };
-        img.onerror = () => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timeoutId);
-          cleanup();
-          imageLoadError = true;
-          reject(new Error('Logo image failed to load'));
-        };
-      });
+            reject(new Error('Logo image failed to load'));
+          };
+        });
+        img = directImg;
+      }
     } catch (err) {
-      // Log the error for debugging, but continue PDF generation
-      // eslint-disable-next-line no-console
-      console.warn('Logo image could not be loaded for PDF:', err);
       logoBottomY = 0;
       imageLoadError = true;
     }
 
-    if (!imageLoadError) {
+    if (!imageLoadError && img) {
       // Make the logo and container bigger
       const maxWidth = 48,
         maxHeight = 36; // increased size for a bigger logo
@@ -3260,17 +3537,24 @@ export const generateShortPDF = async (
       const logoX = logoPadding;
       const logoY = logoPadding;
 
-      // Add logo image directly without white container
-      doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
+      // Add logo image - use base64 if available (for cross-origin), otherwise use img element
+      try {
+        if (logoBase64) {
+          doc.addImage(logoBase64, 'PNG', logoX, logoY, drawWidth, drawHeight);
+        } else if (img) {
+          doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
+        }
+      } catch (addImageError) {
+      }
 
-      if (logoUrl) {
+      if (finalLogoUrl) {
         doc.link(logoX, logoY, drawWidth, drawHeight, {
-          url: logoUrl,
+          url: finalLogoUrl,
           target: '_blank',
         });
       }
 
-      logoBottomY = logoY + drawHeight;
+      logoBottomY = logoY + drawHeight
     }
   }
 
@@ -3679,7 +3963,6 @@ export const generateShortPDF = async (
         });
       }
     } catch (error) {
-      console.warn('Failed to load SVG icon for category:', category, error);
     }
     return null;
   };
@@ -4366,10 +4649,6 @@ export const generateShortPDF = async (
         // Add the image to PDF
         doc.addImage(img, 'PNG', shieldX, shieldY, shieldSize, shieldSize);
       } catch (error) {
-        console.warn(
-          'Failed to load green success image, falling back to drawn shield:',
-          error,
-        );
 
         // Fallback: Draw green shield background if image fails to load
         doc.setFillColor(34, 197, 94); // Bright green
@@ -4843,7 +5122,6 @@ export const generateShortPDF = async (
         });
       }
     } catch (error) {
-      console.warn('Failed to load shield SVG icon:', error);
     }
 
     // Left-aligned text with shield icon
@@ -4931,9 +5209,7 @@ export const generateShortPDF = async (
     // Load eye SVG icon once for reuse
     let eyeIconDataUrl: string | null = null;
     try {
-      // console.log('Loading eye SVG icon...');
       const response = await fetch('/images/report_icons/eye.svg');
-      //console.log('Eye SVG response status:', response.status);
       if (response.ok) {
         const svgText = await response.text();
 
@@ -4949,7 +5225,6 @@ export const generateShortPDF = async (
           canvas.height = size;
 
           img.onload = () => {
-            //   console.log('Eye SVG image loaded successfully');
             if (ctx) {
               // Enable smooth scaling for better quality
               ctx.imageSmoothingEnabled = true;
@@ -4961,16 +5236,13 @@ export const generateShortPDF = async (
 
               // Convert to high-quality PNG data URL
               const pngDataUrl = canvas.toDataURL('image/png', 1.0);
-              // console.log('Eye icon converted to PNG data URL');
               resolve(pngDataUrl);
             } else {
-              console.warn('Canvas context not available for eye icon');
               resolve(null);
             }
           };
 
           img.onerror = (error) => {
-            console.error('Failed to load eye SVG image:', error);
             resolve(null);
           };
 
@@ -4979,13 +5251,10 @@ export const generateShortPDF = async (
           img.src = svgDataUrl;
         });
       } else {
-        console.error('Failed to fetch eye SVG, status:', response.status);
       }
     } catch (error) {
-      console.error('Failed to load eye SVG icon:', error);
     }
 
-    // console.log('Eye icon data URL result:', eyeIconDataUrl ? 'Loaded' : 'Failed');
 
     wcagCardData.forEach(
       (
@@ -5088,7 +5357,6 @@ export const generateShortPDF = async (
           } else {
             // Eye icon for can be fixed with WebAbility (very small)
             if (eyeIconDataUrl) {
-              // console.log('Adding eye icon to PDF at position:', iconX, iconY);
               // Very small eye icon in top right corner
               const iconSize = 4; // Reduced from 7 to 4
               const iconOffsetX = -iconSize / 2; // Center horizontally
@@ -5102,7 +5370,6 @@ export const generateShortPDF = async (
                 iconSize,
               );
             } else {
-              //  console.log('Eye icon not available, using yellow circle fallback');
               // Fallback to yellow circle if eye icon failed to load (very small)
               doc.setFillColor(202, 138, 4);
               doc.setDrawColor(161, 98, 7);

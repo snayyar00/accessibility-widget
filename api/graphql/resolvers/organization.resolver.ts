@@ -3,7 +3,7 @@ import { combineResolvers } from 'graphql-resolvers'
 import { OrganizationUserRole } from '../../constants/organization.constant'
 import { GraphQLContext } from '../../graphql/types'
 import { generateOrganizationFaviconUrl, generateOrganizationLogoUrl } from '../../helpers/imgproxy.helper'
-import { Organization } from '../../repository/organization.repository'
+import { Organization, getOrganizationById as getOrgById } from '../../repository/organization.repository'
 import { OrganizationUser } from '../../repository/organization_user.repository'
 import { AgencyProgramConnectionResponse, AgencyProgramDisconnectionResponse, connectToAgencyProgram, disconnectFromAgencyProgram, updateAgencyAccount } from '../../services/organization/agencyProgram.service'
 import { addOrganization, CreateOrganizationInput, editOrganization, getOrganizationById, getOrganizations, removeOrganization, removeUserFromOrganization } from '../../services/organization/organization.service'
@@ -29,7 +29,52 @@ const organizationResolver = {
   },
 
   OrganizationUser: {
-    hasAgencyAccountId: (parent: OrganizationUser) => {
+    hasAgencyAccountId: async (parent: OrganizationUser) => {
+      // Handle null/undefined parent
+      if (!parent) {
+        return false
+      }
+
+         // Check if organization has stripe_account_id AND if it's fully onboarded
+      if (parent.organization_id) {
+        try {
+          // Use repository version (no permission check needed)
+          const org = await getOrgById(parent.organization_id)
+          if (org?.stripe_account_id) {
+            // Account ID exists - now verify it's fully onboarded
+            try {
+              const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
+              const account = await stripe.accounts.retrieve(org.stripe_account_id)
+              
+              // Check if account is fully onboarded
+              const isFullyOnboarded = 
+                account.charges_enabled === true &&
+                account.payouts_enabled === true &&
+                account.requirements?.currently_due?.length === 0
+              
+              console.log('[AGENCY_STATUS]', {
+                organizationId: org.id,
+                stripeAccountId: org.stripe_account_id,
+                charges_enabled: account.charges_enabled,
+                payouts_enabled: account.payouts_enabled,
+                currently_due: account.requirements?.currently_due?.length || 0,
+                isFullyOnboarded,
+              })
+              
+              return isFullyOnboarded
+            } catch (stripeError) {
+              console.error('Error checking Stripe account onboarding status:', stripeError)
+              // If Stripe API fails, return false (account not accessible)
+              return false
+            }
+          }
+        } catch (error) {
+          // If organization lookup fails, fall back to legacy check
+          console.error('Error fetching organization for hasAgencyAccountId:', error)
+        }
+      }
+      
+      // Fallback to legacy agencyAccountId on user for backward compatibility
       return !!parent.agencyAccountId
     },
   },

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useApolloClient, useLazyQuery, useMutation } from '@apollo/client';
 import { Paper, Typography, Button, Alert, Box } from '@mui/material';
-import { toast } from 'react-toastify';
-import { useDispatch } from 'react-redux';
+import { toast } from 'sonner';import { useDispatch } from 'react-redux';
 import { getErrorMessage } from '@/helpers/error.helper';
 import {
   CONNECT_TO_AGENCY_PROGRAM,
@@ -66,11 +65,24 @@ const AgencyProgram: React.FC<AgencyProgramProps> = ({
 
       const response = res.data?.connectToAgencyProgram;
 
-      if (response?.success && response?.onboardingUrl) {
+      if (response?.success) {
+        // Check if account is already fully connected
+        if (response.onboardingUrl === 'ALREADY_CONNECTED') {
+          toast.success(
+            response.message || 
+            'Your account is already connected to the Agency Program!'
+          );
+          return;
+        }
+        
         // Redirect to Stripe onboarding
-        window.location.href = response.onboardingUrl;
+        if (response.onboardingUrl) {
+          window.location.href = response.onboardingUrl;
+        } else {
+          toast.error('Failed to get onboarding URL.');
+        }
       } else {
-        toast.error('Failed to get onboarding URL.');
+        toast.error('Failed to connect to Agency Program.');
       }
     } catch (error: unknown) {
       const message = getErrorMessage(
@@ -147,7 +159,8 @@ const AgencyProgram: React.FC<AgencyProgramProps> = ({
             revenue share on eligible subscriptions.
           </Alert>
 
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, flex: 'none' }}>
+          {/* Commented out for testing purposes */}
+          {/* <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, flex: 'none' }}>
             <Button
               variant="outlined"
               color="primary"
@@ -167,7 +180,7 @@ const AgencyProgram: React.FC<AgencyProgramProps> = ({
             >
               Disconnect
             </Button>
-          </Box>
+          </Box> */}
         </Box>
       ) : (
         <Box>

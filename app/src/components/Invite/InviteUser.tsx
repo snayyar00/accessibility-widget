@@ -16,8 +16,7 @@ import {
 import { Add as AddIcon } from '@mui/icons-material';
 import { useMutation } from '@apollo/client';
 import INVITE_USER from '@/queries/invitations/inviteUser';
-import { toast } from 'react-toastify';
-import {
+import { toast } from 'sonner';import {
   Workspace,
   WorkspaceUserRole,
   OrganizationUserRole,

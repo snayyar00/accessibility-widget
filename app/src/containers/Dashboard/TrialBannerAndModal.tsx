@@ -21,6 +21,7 @@ import {
 import PlanSetting from '../SiteDetail/PlanSetting';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
+import useOrganizationName from '@/hooks/useOrganizationName';
 import classNames from 'classnames';
 import { APP_SUMO_BUNDLE_NAMES } from '@/constants';
 import {
@@ -103,6 +104,10 @@ const TrialBannerAndModal: React.FC<any> = ({
   const { data: userData, loading: userLoading } = useSelector(
     (state: RootState) => state.user,
   );
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
+  const organizationName = useOrganizationName();
   const [isStripeCustomer, setIsStripeCustomer] = useState(false);
   const [activePlan, setActivePlan] = useState('');
   const [isYearly, setIsYearly] = useState(false);
@@ -572,7 +577,16 @@ const TrialBannerAndModal: React.FC<any> = ({
               <div className="flex flex-col gap-3 sm:flex-none md:flex-1 sm:overflow-visible md:overflow-hidden">
                 {/* Logo Section */}
                 <div className="flex justify-center mb-4">
-                  <LogoIcon className="w-26 h-7 sm:w-26 sm:h-7 md:w-40 md:h-10 lg:w-48 lg:h-12" />
+                  {organization?.logo_url ? (
+                    <img
+                      src={organization.logo_url}
+                      alt={organization.name || 'Organization logo'}
+                      className="h-7 sm:h-7 md:h-10 lg:h-12 object-contain"
+                      style={{ maxWidth: '100%', maxHeight: '48px' }}
+                    />
+                  ) : (
+                    <LogoIcon className="w-26 h-7 sm:w-26 sm:h-7 md:w-40 md:h-10 lg:w-48 lg:h-12" />
+                  )}
                 </div>
 
                 <div className="space-y-2 lg:pt-4">
@@ -580,7 +594,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                     Make your business accessible today!
                   </h1>
                   <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                    Streamline web accessibility with WebAbilityWidget, the #1
+                    Streamline web accessibility with {organizationName}Widget, the #1
                     web accessibility, WCAG and ADA compliance solution.
                   </p>
                 </div>
@@ -888,7 +902,7 @@ const TrialBannerAndModal: React.FC<any> = ({
             <div className="flex flex-col p-4 flex-1 relative z-10">
               <div className="flex justify-between items-center">
                 <h1 className="text-lg font-semibold">
-                  Experience WebAbility PRO free for 7 days
+                  Experience {organizationName} PRO free for 7 days
                 </h1>
               </div>
               <button
@@ -925,7 +939,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                 {/* Content */}
                 <div className="col-span-full pt-4 px-4 lg:px-6 flex flex-col justify-center relative z-10">
                   <h1 className="text-2xl lg:text-3xl xxl:text-4xl mb-12  leading-tight">
-                    Experience WebAbility PRO free for 7 days
+                    Experience {organizationName} PRO free for 7 days
                   </h1>
 
                   {/* Action Buttons */}
@@ -963,7 +977,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                   {/* Content */}
                   <div className="col-span-full pt-2 px-4 flex flex-col justify-center relative z-10">
                     <h1 className="text-2xl mb-4 xxl:text-4xl">
-                      Experience WebAbility PRO free for 7 days
+                      Experience {organizationName} PRO free for 7 days
                     </h1>
                   </div>
 

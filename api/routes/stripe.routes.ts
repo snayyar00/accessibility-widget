@@ -1,5 +1,6 @@
 import { Router } from 'express'
 
+import { createAgencyDashboardLink } from '../controllers/stripe/agency-dashboard.controller'
 import { createBillingPortalSession } from '../controllers/stripe/billing-portal.controller'
 import { cancelSiteSubscription } from '../controllers/stripe/cancel-subscription.controller'
 import { checkCustomer } from '../controllers/stripe/check-customer.controller'
@@ -19,6 +20,8 @@ const router = Router()
 router.post('/create-customer-portal-session', strictLimiter, allowedOrganization, isAuthenticated, validateBody(createCustomerPortalSessionValidation), createCustomerPortalSession)
 
 router.post('/billing-portal-session', strictLimiter, allowedOrganization, isAuthenticated, validateBody(billingPortalSessionValidation), createBillingPortalSession)
+
+router.post('/agency-dashboard-link', strictLimiter, allowedOrganization, isAuthenticated, createAgencyDashboardLink)
 
 router.post('/validate-coupon', strictLimiter, allowedOrganization, isAuthenticated, validateBody(validateCouponValidation), validateCoupon)
 

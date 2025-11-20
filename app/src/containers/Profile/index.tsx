@@ -8,6 +8,7 @@ import PasswordSetting from './PasswordSetting';
 import BillingPortalLink from './BillingPortalLink';
 import LicenseOwnerInfo from '../LicenseOwnerInfo';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
+import useOrganizationName from '@/hooks/useOrganizationName';
 import { User, Lock, CreditCard, FileText } from 'lucide-react';
 
 const Profile: React.FC = () => {
@@ -16,8 +17,9 @@ const Profile: React.FC = () => {
   );
 
   const { t } = useTranslation();
+  const organizationName = useOrganizationName();
 
-  const domain = organization?.domain || 'WebAbility.io';
+  const domain = organization?.domain || organizationName;
 
   useDocumentHeader({ title: t('Common.title.profile', { domain }) });
 

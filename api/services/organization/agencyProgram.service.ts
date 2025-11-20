@@ -6,12 +6,19 @@
  * to enable revenue sharing through the Webability Agency Program.
  */
 
+import Stripe from 'stripe'
 import { ORGANIZATION_USER_ROLE_OWNER } from '../../constants/organization.constant'
+import { getOrganizationById, updateOrganization } from '../../repository/organization.repository'
 import { updateOrganizationUserAgencyAccount } from '../../repository/organization_user.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { UserLogined } from '../authentication/get-user-logined.service'
+
+// Initialize Stripe with API version
+const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY, {
+  apiVersion: '2020-08-27',
+})
 
 /**
  * Response type for Agency Program connection
@@ -19,6 +26,7 @@ import { UserLogined } from '../authentication/get-user-logined.service'
 export interface AgencyProgramConnectionResponse {
   onboardingUrl: string
   success: boolean
+  message?: string
 }
 
 /**
@@ -48,9 +56,6 @@ function isValidUrl(url: string): boolean {
  * @param user - Current user profile
  * @param successUrl - URL to redirect after successful Stripe onboarding
  * @returns Object with onboarding URL and success status
- *
- * @TODO: Implement actual Stripe Express Account creation
- * Current implementation returns a mock URL for testing
  */
 export async function connectToAgencyProgram(user: UserLogined, successUrl: string): Promise<AgencyProgramConnectionResponse> {
   try {
@@ -69,43 +74,165 @@ export async function connectToAgencyProgram(user: UserLogined, successUrl: stri
       throw new ValidationError('No current organization selected')
     }
 
+    // Check if user has organization membership
+    if (!user.currentOrganizationUser) {
+      throw new ValidationError('User is not a member of this organization')
+    }
+
     // Only owners can connect to agency program
     if (user.currentOrganizationUser.role !== ORGANIZATION_USER_ROLE_OWNER) {
       throw new ApolloError('Only organization owners can connect to the Agency Program', 'FORBIDDEN')
     }
 
-    // Check if already connected
-    if (user.currentOrganizationUser.agencyAccountId) {
-      logger.warn('Attempt to connect already connected organization', {
-        userId,
-        organizationId,
-        agencyAccountId: user.currentOrganizationUser.agencyAccountId,
-      })
-      // Allow reconnection/update, don't throw error
+    // Get organization details
+    const organization = await getOrganizationById(organizationId)
+    
+    if (!organization) {
+      throw new ValidationError('Organization not found')
     }
 
-    /**
-     * @TODO: Replace with actual Stripe Express Account creation
-     *
-     */
+    let stripeAccountId: string
+    
+    // Check if Stripe account already exists in our database
+    if (organization.stripe_account_id) {
+      // Use existing account ID
+      stripeAccountId = organization.stripe_account_id
+      
+      logger.info('Using existing Stripe account for Agency Program', {
+        userId,
+        organizationId,
+        stripeAccountId,
+      })
+    } else {
+      // No account exists - create new Stripe Express Account
+      stripeAccountId = await createStripeExpressAccount(user, organization)
+    }
 
-    // MOCK: Return a fake Stripe URL for testing
-    logger.info('Agency Program connection requested (MOCK)', {
-      userId,
-      organizationId,
-      orgUserId: user.currentOrganizationUser.id,
-      successUrl,
+    // Check if account is already fully verified
+    let accountDetails
+    try {
+      accountDetails = await stripe.accounts.retrieve(stripeAccountId)
+      
+      // 🧪 TESTING: Log account details
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.log('🧪 STRIPE ACCOUNT DETAILS (Testing):')
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.log('Account ID:', accountDetails.id)
+      console.log('Type:', accountDetails.type)
+      console.log('Country:', accountDetails.country)
+      console.log('Email:', accountDetails.email)
+      console.log('Business Type:', accountDetails.business_type)
+      console.log('Charges Enabled:', accountDetails.charges_enabled)
+      console.log('Payouts Enabled:', accountDetails.payouts_enabled)
+      console.log('Details Submitted:', accountDetails.details_submitted)
+      console.log('Capabilities:', JSON.stringify(accountDetails.capabilities, null, 2))
+      console.log('Requirements:', JSON.stringify(accountDetails.requirements, null, 2))
+      console.log('Metadata:', JSON.stringify(accountDetails.metadata, null, 2))
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      
+      // Check if account is fully onboarded
+      const isFullyOnboarded = 
+        accountDetails.charges_enabled === true &&
+        accountDetails.payouts_enabled === true &&
+        accountDetails.requirements?.currently_due?.length === 0
+      
+      if (isFullyOnboarded) {
+        logger.info('✅ Account is already fully onboarded - skipping onboarding link', {
+          userId,
+          organizationId,
+          stripeAccountId,
+          charges_enabled: accountDetails.charges_enabled,
+          payouts_enabled: accountDetails.payouts_enabled,
+          currently_due: accountDetails.requirements?.currently_due,
+        })
+        
+        return {
+          onboardingUrl: 'ALREADY_CONNECTED',
+          success: true,
+          message: 'Your account is already fully connected to the Agency Program. No further action needed.',
+        }
+      }
+      
+      logger.info('⚠️ Account needs onboarding - creating link', {
+        userId,
+        organizationId,
+        stripeAccountId,
+        charges_enabled: accountDetails.charges_enabled,
+        payouts_enabled: accountDetails.payouts_enabled,
+        currently_due: accountDetails.requirements?.currently_due,
+      })
+    } catch (stripeError) {
+      logger.error('❌ Error retrieving Stripe account:', stripeError)
+      // Continue with account link creation even if retrieval fails
+    }
+
+    // Generate account link for onboarding/update
+    // Stripe will handle if account is invalid and show appropriate error
+    const accountLink = await stripe.accountLinks.create({
+      account: stripeAccountId,
+      refresh_url: successUrl, // Where to send if they need to restart
+      return_url: successUrl,  // Where to send after completion
+      type: 'account_onboarding',
     })
 
-    const mockStripeUrl = `https://connect.stripe.com/setup/mock?state=${organizationId}-${userId}&return_url=${encodeURIComponent(successUrl)}`
+    logger.info('Agency Program onboarding link created', {
+      userId,
+      organizationId,
+      stripeAccountId,
+    })
 
     return {
-      onboardingUrl: mockStripeUrl,
+      onboardingUrl: accountLink.url,
       success: true,
     }
   } catch (error) {
     logger.error('Error connecting to Agency Program:', error)
     throw error
+  }
+}
+
+/**
+ * Create a new Stripe Express Account for the organization
+ * 
+ * @param user - Current user profile
+ * @param organization - Organization details
+ * @returns Stripe account ID
+ */
+async function createStripeExpressAccount(user: UserLogined, organization: any): Promise<string> {
+  try {
+    // Create Stripe Express Account
+    const account = await stripe.accounts.create({
+      type: 'express',
+      country: 'US', // You may want to make this configurable
+      email: user.email,
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+      business_type: 'company', // or 'individual' based on your use case
+      metadata: {
+        organization_id: organization.id.toString(),
+        organization_name: organization.name,
+        organization_domain: organization.domain,
+        user_id: user.id.toString(),
+      },
+    })
+
+    // Save account ID to organization table
+    await updateOrganization(organization.id, {
+      stripe_account_id: account.id,
+    })
+
+    logger.info('Created new Stripe Express Account', {
+      userId: user.id,
+      organizationId: organization.id,
+      stripeAccountId: account.id,
+    })
+
+    return account.id
+  } catch (error) {
+    logger.error('Error creating Stripe Express Account:', error)
+    throw new ApolloError('Failed to create Stripe account. Please try again.')
   }
 }
 
