@@ -1,14 +1,14 @@
 import React from 'react';
 import { Step, Placement } from 'react-joyride';
 
-// Dashboard Tour Steps
-export const dashboardTourSteps: Step[] = [
+// Dashboard Tour Steps - Function to generate steps with organization name
+export const getDashboardTourSteps = (organizationName: string = 'WebAbility'): Step[] => [
   {
     target: '.dashboard-welcome-banner',
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">
-          Welcome to WebAbility Dashboard! 🎉
+          Welcome to {organizationName} Dashboard! 🎉
         </h3>
         <p>
           This is your central hub for managing accessibility compliance. Let's
@@ -79,7 +79,7 @@ export const dashboardTourSteps: Step[] = [
       <div>
         <h3 className="text-lg font-semibold mb-2">Tour Complete! 🎉</h3>
         <p>
-          You're all set! You now know how to navigate your WebAbility
+          You're all set! You now know how to navigate your {organizationName}
           dashboard. Start by adding domains, monitor your analytics, and make
           your websites accessible to everyone. Need help? Check out our
           documentation or contact support.
@@ -90,6 +90,9 @@ export const dashboardTourSteps: Step[] = [
     disableBeacon: true,
   },
 ];
+
+// Backward compatibility - export default steps
+export const dashboardTourSteps = getDashboardTourSteps();
 
 // Add Domain Tour Steps (Unified Tour)
 export const addDomainTourSteps: Step[] = [
@@ -232,8 +235,8 @@ export const addDomainTourSteps: Step[] = [
   },
 ];
 
-// Installation Tour Steps
-export const installationTourSteps: Step[] = [
+// Installation Tour Steps - Function to generate steps with organization name
+export const getInstallationTourSteps = (organizationName: string = 'WebAbility'): Step[] => [
   {
     target: '.installation-welcome-banner',
     content: (
@@ -242,7 +245,7 @@ export const installationTourSteps: Step[] = [
           Welcome to Widget Installation! 🎉
         </h3>
         <p>
-          This page will help you install the WebAbility widget on your website.
+          This page will help you install the {organizationName} widget on your website.
           Let's walk through the process step by step!
         </p>
       </div>
@@ -344,7 +347,7 @@ export const installationTourSteps: Step[] = [
       <div>
         <h3 className="text-lg font-semibold mb-2">Tour Complete! 🎉</h3>
         <p>
-          You're all set! You now know how to install the WebAbility widget on
+          You're all set! You now know how to install the {organizationName} widget on
           your website. The customization options allow you to tailor the widget
           to your needs, and the installation code is ready to be added to your
           website. Need help? Check out our documentation or contact support.
@@ -355,6 +358,9 @@ export const installationTourSteps: Step[] = [
     disableBeacon: true,
   },
 ];
+
+// Backward compatibility - export default steps
+export const installationTourSteps = getInstallationTourSteps();
 
 // Accessibility Scanner Tour Steps
 export const accessibilityTourSteps: Step[] = [

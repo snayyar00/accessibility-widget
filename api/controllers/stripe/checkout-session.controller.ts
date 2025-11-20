@@ -101,6 +101,19 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
     console.log('[AGENCY_PROGRAM] ⚠️  User has NO current_organization_id - skipping revenue sharing')
   }
 
+  // Helper function to prepare branding settings
+  const prepareBrandingSettings = (): any => {
+    const brandingSettings: any = {}
+    const logoUrl = user.currentOrganization?.logo_url || organization?.logo_url
+    if (logoUrl) {
+      brandingSettings.logo = {
+        type: 'url',
+        url: logoUrl,
+      }
+    }
+    return Object.keys(brandingSettings).length > 0 ? brandingSettings : null
+  }
+
   try {
     const [price, customers] = await Promise.all([
       findProductAndPriceByType(planName, billingInterval),
@@ -211,6 +224,8 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
     if (cardTrial) {
       console.log('trial')
 
+      const brandingSettings = prepareBrandingSettings()
+
       session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         mode: 'subscription',
@@ -229,6 +244,7 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
           client_reference_id: user.referral,
           discounts: [{ coupon: REWARDFUL_COUPON }],
         }),
+        ...(brandingSettings && { branding_settings: brandingSettings }),
         metadata: {
           domainId,
           userId: user.id,
@@ -265,6 +281,8 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
       if (subscriptions.data.length > 0) {
         console.log('setup intent only')
 
+        const brandingSettings = prepareBrandingSettings()
+
         session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           mode: 'setup',
@@ -273,6 +291,7 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
           success_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`, // you can include the session id to later verify the setup
           cancel_url: returnUrl,
           ...(user.referral && { client_reference_id: user.referral }),
+          ...(brandingSettings && { branding_settings: brandingSettings }),
           metadata: {
             price_id: price.price_stripe_id,
             domainId,
@@ -285,6 +304,8 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
         console.log('[REWARDFUL] Setup session created:', session.id)
       } else {
         console.log('checkout intent')
+
+        const brandingSettings = prepareBrandingSettings()
 
         session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
@@ -304,6 +325,7 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
             client_reference_id: user.referral,
             discounts: [{ coupon: REWARDFUL_COUPON }],
           }),
+          ...(brandingSettings && { branding_settings: brandingSettings }),
           metadata: {
             domainId,
             userId: user.id,

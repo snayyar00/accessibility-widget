@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import { toast } from 'sonner';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
+import useOrganizationName from '@/hooks/useOrganizationName';
 import { useTranslation } from 'react-i18next';
 import { head } from 'lodash';
 import TourGuide from '@/components/Common/TourGuide';
@@ -76,6 +77,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
   selectedSite,
 }: any) => {
   const { t } = useTranslation();
+  const organizationName = useOrganizationName();
   useDocumentHeader({ title: t('Common.title.customize_widget') });
   const [toggles, setToggles] = useState({
     language: true,
@@ -138,7 +140,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     logoImage: '',
     accessibilityStatementLinkUrl: 'https://www.webability.io/statement',
     logoUrl: 'https://webability.io',
-    footerText: 'Webability',
+    footerText: organizationName,
   };
 
   const DefaultDarkColors: Colors = {
@@ -155,7 +157,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     logoImage: '',
     accessibilityStatementLinkUrl: 'https://www.webability.io/statement',
     logoUrl: 'https://webability.io',
-    footerText: 'Webability',
+    footerText: organizationName,
   };
   const DefaultToggles = {
     language: true,

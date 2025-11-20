@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import useOrganizationName from '@/hooks/useOrganizationName';
 import { Slide } from 'react-slideshow-image';
 import 'react-slideshow-image/dist/styles.css';
 import '@/assets/css/react-slide-custom.css';
@@ -8,6 +9,7 @@ import squareRadiusPrimary from '@/assets/images/svg/square-radius-primary.svg';
 
 const AuthAdsArea: React.FC = () => {
   const { t } = useTranslation();
+  const organizationName = useOrganizationName();
 
   return (
     <div className="flex justify-center items-center h-full relative">
@@ -33,7 +35,7 @@ const AuthAdsArea: React.FC = () => {
                 {t('Advertisement.ad1_title')}
               </h4>
               <div className="text-[14px] leading-6 text-center text-white">
-                {t('Advertisement.ad1')}
+                {t('Advertisement.ad1', { organizationName })}
               </div>
             </div>
           </div>

@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@apollo/client';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
+import useOrganizationName from '@/hooks/useOrganizationName';
 import {
   TextField,
   Button,
@@ -39,6 +40,7 @@ interface StatementFormData {
 
 const StatementGenerator: React.FC = () => {
   const { t } = useTranslation();
+  const organizationName = useOrganizationName();
   useDocumentHeader({ title: t('Common.title.statement_generator') });
 
   const [formData, setFormData] = useState<StatementFormData>({
@@ -47,7 +49,7 @@ const StatementGenerator: React.FC = () => {
     contactEmail: '',
     language: 'en',
     industry: '',
-    widgetBrandName: 'WebAbility.io',
+    widgetBrandName: organizationName,
     widgetBrandUrl: 'https://webability.io',
     phoneNumber: '',
     visitorAddress: '',
@@ -271,7 +273,7 @@ Return ONLY a valid JSON object with the same structure, with all values profess
     brandName?: string,
     brandUrl?: string,
   ) => {
-    const widgetBrand = brandName || 'WebAbility.io';
+    const widgetBrand = brandName || organizationName;
     const widgetUrl = brandUrl || 'https://webability.io';
     const baseTemplate = {
       title: 'Accessibility Statement for',
@@ -948,10 +950,10 @@ ${t.whatWeDoList}
 
 ## ${t.compliance}
 ${
-  data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io'
+  data.widgetBrandName && data.widgetBrandName !== organizationName
     ? `${t.statementGenerated} ${currentDate} using professional accessibility assessment tools. ${t.lastReviewed} ${lastReviewDate}.`
     : `${t.statementGenerated} ${currentDate} using [${
-        data.widgetBrandName || 'WebAbility.io'
+        data.widgetBrandName || organizationName
       }'s ${
         t.aiGenerator
       }](https://app.webability.io/statement-generator) and manual accessibility assessment tools. ${
@@ -978,10 +980,10 @@ ${t.approvedBy}
 ### ${t.aboutStatement}
 
 ${
-  data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io'
+  data.widgetBrandName && data.widgetBrandName !== organizationName
     ? `*${t.statementGenerated} ${currentDate}. This statement reflects our current accessibility features and our ongoing commitment to digital inclusion.*`
     : `*${t.statementGenerated} [${
-        data.widgetBrandName || 'WebAbility.io'
+        data.widgetBrandName || organizationName
       }'s Professional ${
         t.aiGenerator
       }](https://app.webability.io/statement-generator) ${currentDate}. This statement reflects our current accessibility features and our ongoing commitment to digital inclusion.*`
@@ -1000,11 +1002,11 @@ ${
     })}
 
 ${
-  data.widgetBrandName && data.widgetBrandName !== 'WebAbility.io'
+  data.widgetBrandName && data.widgetBrandName !== organizationName
     ? `**${t.poweredBy} [${data.widgetBrandName}](${
         data.widgetBrandUrl || data.websiteUrl
       }) - ${t.makingWebAccessible}**`
-    : `**${t.poweredBy} [${data.widgetBrandName || 'WebAbility.io'}](${
+    : `**${t.poweredBy} [${data.widgetBrandName || organizationName}](${
         data.widgetBrandUrl || 'https://webability.io'
       }) - ${t.makingWebAccessible}**`
 }`;
@@ -1977,7 +1979,7 @@ ${
                           <div className="mb-4">
                             <p className="text-sm text-gray-600 mb-3">
                               Customize widget branding (leave empty to use
-                              WebAbility.io)
+                              {organizationName})
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <TextField
@@ -1985,7 +1987,7 @@ ${
                                 label="Widget Brand Name"
                                 value={formData.widgetBrandName}
                                 onChange={handleInputChange('widgetBrandName')}
-                                placeholder="WebAbility.io"
+                                placeholder={organizationName}
                                 variant="outlined"
                                 size="small"
                               />

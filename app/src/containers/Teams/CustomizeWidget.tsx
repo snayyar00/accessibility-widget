@@ -508,9 +508,16 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
 
   // Function to validate URL
   const isValidUrl = (str: any) => {
-    const regex =
-      /^(http:\/\/|https:\/\/)([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+)(\/[a-zA-Z0-9\-._~:?#\[\]@!$&'()*+,;=]*)?$/;
-    return regex.test(str);
+    if (!str || typeof str !== 'string') {
+      return false;
+    }
+    try {
+      const url = new URL(str);
+      // Only allow http and https protocols
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2273,21 +2280,53 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         </div>
                         <input
                           type="text"
-                          placeholder="Enter Accessibility Statement URL (e.g., https://yourwebsite.com/statement)"
+                          placeholder="Enter URL (e.g., https://yourwebsite.com/statement or /accessibility)"
                           className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white"
                           value={accessibilityStatementLinkUrl}
                           onChange={(e) => {
-                            const url = e.target.value.trim();
-                            if (url) {
+                            const inputValue = e.target.value.trim();
+                            let finalUrl = inputValue;
+                            
+                            // If the input is a relative path (starts with /) and we have a selected site
+                            if (inputValue.startsWith('/') && selectedSite) {
+                              // Remove any trailing slashes from the domain
+                              let domain = selectedSite.replace(/\/$/, '');
+                              
+                              // Add protocol if not present
+                              if (!domain.startsWith('http://') && !domain.startsWith('https://')) {
+                                domain = `https://${domain}`;
+                              }
+                              
+                              // Combine domain with relative path
+                              finalUrl = `${domain}${inputValue}`;
+                            }
+                            
+                            if (finalUrl) {
                               setColors((prev) => ({
                                 ...prev,
-                                accessibilityStatementLinkUrl: url,
+                                accessibilityStatementLinkUrl: finalUrl,
                               }));
                             }
-                            setAccessibilityStatementLinkUrl(url);
+                            setAccessibilityStatementLinkUrl(inputValue);
                           }}
                         />
                       </div>
+                      {accessibilityStatementLinkUrl.startsWith('/') && selectedSite && (
+                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs text-blue-700">
+                            <span className="font-medium">Will be saved as: </span>
+                            <span className="font-mono">
+                              {(() => {
+                                let domain = selectedSite.replace(/\/$/, '');
+                                if (!domain.startsWith('http://') && !domain.startsWith('https://')) {
+                                  domain = `https://${domain}`;
+                                }
+                                return `${domain}${accessibilityStatementLinkUrl}`;
+                              })()}
+                            </span>
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <button

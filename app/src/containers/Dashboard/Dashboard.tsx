@@ -10,11 +10,12 @@ import AnalyticsDashboard from './Analytics';
 import AnalyticsDashboardSkeleton from './skeletonanalytics';
 import DataOnlySkeleton from './DataOnlySkeleton';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
+import useOrganizationName from '@/hooks/useOrganizationName';
 import { FaCheckCircle } from 'react-icons/fa';
 import { useHistory } from 'react-router-dom';
 import TourGuide from '@/components/Common/TourGuide';
 import { defaultTourStyles } from '@/config/tourStyles';
-import { dashboardTourSteps, tourKeys } from '@/constants/toursteps';
+import { getDashboardTourSteps, tourKeys } from '@/constants/toursteps';
 import getDomainStatus from '@/utils/getDomainStatus';
 import applyStatusClass from '@/utils/applyStatusClass';
 import dashboardImage from '@/assets/images/dashboard_image.png';
@@ -54,6 +55,7 @@ const Dashboard: React.FC<any> = ({
   customerData,
 }: any) => {
   const { t } = useTranslation();
+  const organizationName = useOrganizationName();
   useDocumentHeader({ title: t('Common.title.dashboard') });
 
   // Get colors configuration
@@ -392,7 +394,7 @@ const Dashboard: React.FC<any> = ({
   return (
     <>
       <TourGuide
-        steps={dashboardTourSteps}
+        steps={getDashboardTourSteps(organizationName)}
         tourKey={tourKeys.dashboard}
         autoStart={true}
         onTourComplete={handleTourComplete}
@@ -424,7 +426,7 @@ const Dashboard: React.FC<any> = ({
                   </h1>
                   <p className="text-base sm:text-xs md:text-xs lg:text-xl  font-normal leading-relaxed opacity-90 max-w-md md:max-w-20">
                     Achieve seamless ADA & WCAG compliance effortlessly with
-                    WebAbility
+                    {organizationName}
                   </p>
                 </div>
 
