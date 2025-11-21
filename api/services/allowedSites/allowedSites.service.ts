@@ -120,7 +120,7 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
 
     setImmediate(async () => {
       try {
-        await createSitesPlan(userId, 'Trial', TRIAL_PLAN_NAME, TRIAL_PLAN_INTERVAL, site.id, '')
+        await createSitesPlan(userId, 'Trial', TRIAL_PLAN_NAME, TRIAL_PLAN_INTERVAL, site.id, '', currentOrganizationId)
 
         const report = await fetchAccessibilityReport({ url: domain, priority: QUEUE_PRIORITY.LOW })
         const user = await getUserbyId(userId)
