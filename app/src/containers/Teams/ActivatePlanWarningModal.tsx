@@ -101,7 +101,6 @@ const ActivatePlanWarningModal: React.FC<ActivatePlanWarningModalProps> = ({
               fetchSitePlan({
                 variables: { siteId: domain.id },
               });
-              window.location.reload();
             }
           });
         })

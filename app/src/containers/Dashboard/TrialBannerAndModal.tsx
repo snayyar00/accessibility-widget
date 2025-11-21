@@ -311,7 +311,7 @@ const TrialBannerAndModal: React.FC<any> = ({
         setBillingLoading(false);
         closeModal();
         setPaymentView(false);
-        window.location.reload();
+        setReloadSites(true);
       }
     } catch (error) {
       // Handle error
@@ -511,9 +511,7 @@ const TrialBannerAndModal: React.FC<any> = ({
         }
       } else {
         toast.success('The domain was added successfully. Please Wait');
-        if (trialReload.current == true) {
-          window.location.reload();
-        }
+        setReloadSites(true);
         // window.location.href = '/add-domain';
       }
     } catch (error) {
