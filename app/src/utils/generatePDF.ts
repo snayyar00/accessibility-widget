@@ -192,8 +192,18 @@ export const generatePDF = async (
 
   const baseScore = reportData.score || 0;
   const scriptCheckResult = reportData.scriptCheckResult;
-  const hasWebAbility = scriptCheckResult === 'Web Ability';
+  const widgetInfoResult = reportData.widgetInfo?.result;
+  // Check both scriptCheckResult and widgetInfo.result for Web Ability
+  // Handle variations: 'Web Ability', 'WebAbility', etc.
+  const hasWebAbility = 
+    scriptCheckResult === 'Web Ability' || 
+    widgetInfoResult === 'Web Ability' ||
+    scriptCheckResult === 'WebAbility' ||
+    widgetInfoResult === 'WebAbility' ||
+    scriptCheckResult === 'true' ||
+    widgetInfoResult === 'true';
 
+    console.log('hasWebAbility', scriptCheckResult, widgetInfoResult, hasWebAbility);
   const enhancedScore = hasWebAbility
     ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
     : baseScore;
@@ -3201,7 +3211,16 @@ export const generateShortPDF = async (
 
   const baseScore = reportData.score || 0;
   const scriptCheckResult = reportData.scriptCheckResult;
-  const hasWebAbility = scriptCheckResult === 'Web Ability';
+  const widgetInfoResult = reportData.widgetInfo?.result;
+  // Check both scriptCheckResult and widgetInfo.result for Web Ability
+  // Handle variations: 'Web Ability', 'WebAbility', 'true', etc.
+  const hasWebAbility = 
+    scriptCheckResult === 'Web Ability' || 
+    widgetInfoResult === 'Web Ability' ||
+    scriptCheckResult === 'WebAbility' ||
+    widgetInfoResult === 'WebAbility' ||
+    scriptCheckResult === 'true' ||
+    widgetInfoResult === 'true';
 
   const enhancedScore = hasWebAbility
     ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
