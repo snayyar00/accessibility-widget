@@ -118,10 +118,17 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
 
     const site = response
 
+    // Create plan synchronously BEFORE returning to avoid race condition
+    try {
+      await createSitesPlan(userId, 'Trial', TRIAL_PLAN_NAME, TRIAL_PLAN_INTERVAL, site.id, '')
+    } catch (error) {
+      logger.error('Failed to create trial plan:', error)
+      // Don't throw - allow site creation to succeed even if plan creation fails
+    }
+
+    // Move email/report generation to async (can run after response)
     setImmediate(async () => {
       try {
-        await createSitesPlan(userId, 'Trial', TRIAL_PLAN_NAME, TRIAL_PLAN_INTERVAL, site.id, '')
-
         const report = await fetchAccessibilityReport({ url: domain, priority: QUEUE_PRIORITY.LOW })
         const user = await getUserbyId(userId)
         // Check user_notifications flag for new_domain_flag
