@@ -118,10 +118,17 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
 
     const site = response
 
-    setImmediate(async () => {
-      try {
-        await createSitesPlan(userId, 'Trial', TRIAL_PLAN_NAME, TRIAL_PLAN_INTERVAL, site.id, '', currentOrganizationId)
+    // Create trial plan synchronously to avoid race condition where domain list is fetched before plan exists
+    try {
+      await createSitesPlan(userId, 'Trial', TRIAL_PLAN_NAME, TRIAL_PLAN_INTERVAL, site.id, '', currentOrganizationId)
+    } catch (planError) {
+      logger.error('Failed to create trial plan for site:', planError)
+      // Continue with email/report generation even if plan creation fails
+    }
 
+    // Generate accessibility report and send email asynchronously (fire-and-forget)
+    ;(async () => {
+      try {
         const report = await fetchAccessibilityReport({ url: domain, priority: QUEUE_PRIORITY.LOW })
         const user = await getUserbyId(userId)
         // Check user_notifications flag for new_domain_flag
@@ -144,7 +151,7 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
         const notification = (await findUserNotificationByUserId(user.id, user.current_organization_id)) as { new_domain_flag?: boolean } | null
         if (!notification || !notification.new_domain_flag) {
           console.log(`Skipping new domain email for user ${user.email} (no notification flag)`)
-          return 'The site was successfully added.'
+          return
         }
         // Generate secure unsubscribe link for new domain alerts
         const unsubscribeLink = generateSecureUnsubscribeLink(user.email, getUnsubscribeTypeForEmail('domain'), user.id)
@@ -201,7 +208,7 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
       } catch (error) {
         logger.error('Async email/report task failed:', error)
       }
-    })
+    })()
 
     return 'The site was successfully added.'
   } catch (error) {
