@@ -64,14 +64,35 @@ export async function findSitesByIds(ids: number[]): Promise<Array<{ id: number;
  * @returns Promise<IUserSites[]> - Sites with plan information and workspace data pre-aggregated
  */
 export async function findUserSitesWithPlansWithWorkspaces(userId: number, organizationId: number, isAdmin: boolean): Promise<IUserSites[]> {
+  console.log('[findUserSitesWithPlansWithWorkspaces] ========== START ==========')
+  console.log('[findUserSitesWithPlansWithWorkspaces] Params:', { userId, organizationId, isAdmin })
+  
   if (isAdmin) {
+    console.log('[findUserSitesWithPlansWithWorkspaces] Admin path - using buildSitesBaseQuery')
     // Admin path: Get ALL sites in organization with workspace info via subquery to avoid GROUP BY issues
-    return buildSitesBaseQuery()
+    const sites = await buildSitesBaseQuery()
       .where(`${TABLE}.organization_id`, organizationId)
       .select(...selectSiteFieldsWithMonitoring())
+    
+    console.log('[findUserSitesWithPlansWithWorkspaces] Admin query returned sites:', sites.length)
+    sites.forEach((site: any, index: number) => {
+      console.log(`[findUserSitesWithPlansWithWorkspaces] Admin Site ${index + 1}:`, {
+        id: site.id,
+        url: site.url,
+        expiredAt: site.expiredAt,
+        expiredAt_type: typeof site.expiredAt,
+        trial: site.trial,
+        trial_type: typeof site.trial,
+      })
+    })
+    
+    console.log('[findUserSitesWithPlansWithWorkspaces] ========== END (admin) ==========')
+    return sites
   } else {
+    console.log('[findUserSitesWithPlansWithWorkspaces] Regular user path - using raw SQL')
     // Regular user path: Single query with OR condition (own sites OR workspace membership)
     // Workspace array aggregated in subquery to avoid GROUP BY complexity
+    console.log('[findUserSitesWithPlansWithWorkspaces] Executing raw SQL query...')
     const sites = await database.raw(
       `
       SELECT DISTINCT
@@ -81,8 +102,8 @@ export async function findUserSitesWithPlansWithWorkspaces(userId: number, organ
         ${TABLE}.created_at as createAt,
         ${TABLE}.updated_at as updatedAt,
         ${TABLE}.organization_id,
-        sp.expired_at as expiredAt,
-        sp.is_trial as trial,
+        COALESCE(UNIX_TIMESTAMP(sp.expired_at) * 1000, 0) as expiredAt,
+        COALESCE(sp.is_trial, 0) as trial,
         ${TABLE}.monitor_enabled,
         ${TABLE}.status,
         ${TABLE}.monitor_priority,
@@ -124,7 +145,28 @@ export async function findUserSitesWithPlansWithWorkspaces(userId: number, organ
       [organizationId, userId, userId],
     )
 
-    return sites[0] // raw() returns [rows, fields]
+    const result = sites[0] // raw() returns [rows, fields]
+    console.log('[findUserSitesWithPlansWithWorkspaces] Raw SQL query returned sites:', result?.length || 0)
+    
+    if (result && result.length > 0) {
+      result.forEach((site: any, index: number) => {
+        console.log(`[findUserSitesWithPlansWithWorkspaces] SQL Site ${index + 1}:`, {
+          id: site.id,
+          url: site.url,
+          expiredAt: site.expiredAt,
+          expiredAt_type: typeof site.expiredAt,
+          expiredAt_raw: site.expiredAt,
+          trial: site.trial,
+          trial_type: typeof site.trial,
+          trial_raw: site.trial,
+        })
+      })
+    } else {
+      console.log('[findUserSitesWithPlansWithWorkspaces] No sites returned from query')
+    }
+    
+    console.log('[findUserSitesWithPlansWithWorkspaces] ========== END (regular user) ==========')
+    return result
   }
 }
 
@@ -343,8 +385,8 @@ function selectSiteFields() {
     `${TABLE}.created_at as createAt`,
     `${TABLE}.updated_at as updatedAt`,
     `${TABLE}.organization_id`,
-    `${TABLES.sitesPlans}.expired_at as expiredAt`,
-    `${TABLES.sitesPlans}.is_trial as trial`,
+    database.raw(`COALESCE(UNIX_TIMESTAMP(${TABLES.sitesPlans}.expired_at) * 1000, 0) as expiredAt`),
+    database.raw(`COALESCE(${TABLES.sitesPlans}.is_trial, 0) as trial`),
     `${TABLES.users}.email as user_email`,
     database.raw(`${getWorkspacesSubquery()} as workspaces`),
   ]
@@ -361,8 +403,8 @@ function selectSiteFieldsWithMonitoring() {
     `${TABLE}.created_at as createAt`,
     `${TABLE}.updated_at as updatedAt`,
     `${TABLE}.organization_id`,
-    `${TABLES.sitesPlans}.expired_at as expiredAt`,
-    `${TABLES.sitesPlans}.is_trial as trial`,
+    database.raw(`COALESCE(UNIX_TIMESTAMP(${TABLES.sitesPlans}.expired_at) * 1000, 0) as expiredAt`),
+    database.raw(`COALESCE(${TABLES.sitesPlans}.is_trial, 0) as trial`),
     `${TABLE}.monitor_enabled`,
     `${TABLE}.status`,
     `${TABLE}.monitor_priority`,
