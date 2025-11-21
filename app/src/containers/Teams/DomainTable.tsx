@@ -279,7 +279,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
               'The domain was successfully added to your active plan',
             );
             setBillingLoading(false);
-            window.location.reload();
+            setReloadSites(true);
           });
         })
         .catch((error) => {

@@ -103,10 +103,8 @@ export async function findUserSitesWithPlansWithWorkspaces(userId: number, organ
         INNER JOIN (
           SELECT allowed_site_id, MAX(id) as max_id
           FROM ${TABLES.sitesPlans}
-          WHERE deleted_at IS NULL
           GROUP BY allowed_site_id
         ) sp3 ON sp2.id = sp3.max_id
-        WHERE sp2.deleted_at IS NULL
       ) sp ON sp.allowed_site_id = ${TABLE}.id
       LEFT JOIN ${TABLES.users} users ON ${TABLE}.user_id = users.id
       WHERE ${TABLE}.organization_id = ?
@@ -318,9 +316,7 @@ export async function toggleSiteMonitoring(site_id: number, enabled: boolean, us
 function buildSitesBaseQuery() {
   return database(TABLE)
     .leftJoin(TABLES.sitesPlans, function () {
-      this.on(`${TABLES.sitesPlans}.allowed_site_id`, '=', `${TABLE}.id`)
-        .andOn(`${TABLES.sitesPlans}.id`, '=', database.raw(`(SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id AND sp2.deleted_at IS NULL)`))
-        .andOn(`${TABLES.sitesPlans}.deleted_at`, 'IS', database.raw('NULL'))
+      this.on(`${TABLES.sitesPlans}.allowed_site_id`, '=', `${TABLE}.id`).andOn(`${TABLES.sitesPlans}.id`, '=', database.raw(`(SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)`))
     })
     .leftJoin(TABLES.users, `${TABLE}.user_id`, `${TABLES.users}.id`)
 }
