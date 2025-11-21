@@ -128,7 +128,6 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
         subcription_id,
         is_trial: paymentMethodToken === 'Trial' ? 1 : 0,
         expired_at: expiry,
-        is_active: 1, // Explicitly set is_active to 1 so the plan is immediately queryable
       }
 
       await insertSitePlan(dataUserPlan as any)
