@@ -65,7 +65,28 @@ export async function getPlanBySiteIdAndUserId(userId: number, siteId: number, o
 
 export async function createSitesPlan(userId: number, paymentMethodToken: string, planName: string, billingType: 'MONTHLY' | 'YEARLY', siteId: number, couponCode: string, organizationId?: number): Promise<true> {
   try {
-    const [user, site, product, sitePlan] = await Promise.all([findUser({ id: userId }), findSiteByUserIdAndSiteId(userId, siteId), findProductAndPriceByType(planName, billingType), getSitePlanBySiteId(siteId).catch((): null => null)])
+    logger.info(`[createSitesPlan] Starting plan creation`, { userId, siteId, planName, billingType, paymentMethodToken })
+    
+    // Retry site lookup to handle potential replication lag in production
+    let site = null
+    let retries = 3
+    while (!site && retries > 0) {
+      site = await findSiteByUserIdAndSiteId(userId, siteId)
+      if (!site && retries > 1) {
+        logger.warn(`[createSitesPlan] Site not found, retrying... (${retries - 1} retries left)`, { userId, siteId })
+        await new Promise((resolve) => setTimeout(resolve, 100 * (4 - retries))) // Exponential backoff: 100ms, 200ms, 300ms
+      }
+      retries--
+    }
+    
+    const [user, product, sitePlan] = await Promise.all([findUser({ id: userId }), findProductAndPriceByType(planName, billingType), getSitePlanBySiteId(siteId).catch((): null => null)])
+    
+    logger.info(`[createSitesPlan] Fetched data`, { 
+      userFound: !!user, 
+      siteFound: !!site, 
+      productFound: !!product, 
+      existingPlanFound: !!sitePlan 
+    })
 
     const coupon = couponCode || ''
 
@@ -83,7 +104,8 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
     }
 
     if (!product) {
-      throw new ApolloError('Can not find any plan')
+      logger.error(`[createSitesPlan] Product not found`, { planName, billingType })
+      throw new ApolloError(`Can not find any plan: ${planName} (${billingType})`)
     }
 
     if (sitePlan) {
@@ -111,7 +133,21 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
     }
 
     console.log('[REWARDFUL] Creating site plan with referral code:', user.referral || 'none')
+    logger.info(`[createSitesPlan] Creating Stripe subscription`, { 
+      priceStripeId: product.price_stripe_id, 
+      isTrial: paymentMethodToken === 'Trial',
+      email: user.email 
+    })
+    
     const { subcription_id, customer_id } = await createNewSubcription(paymentMethodToken, user.email, user.name, product.price_stripe_id, paymentMethodToken === 'Trial', coupon, user.referral || '', agencyAccountId, revenueSharePercent)
+    
+    if (!subcription_id || !customer_id) {
+      logger.error(`[createSitesPlan] Stripe subscription creation returned null values`, { subcription_id, customer_id })
+      throw new ApolloError('Failed to create Stripe subscription - missing subscription_id or customer_id')
+    }
+    
+    logger.info(`[createSitesPlan] Stripe subscription created`, { subcription_id, customer_id })
+    
     if (subcription_id && customer_id) {
       const INFINITE_TIMESTAMP = '9999-12-31 23:59:59'
       let expiry = formatDateDB(dayjs().add(paymentMethodToken === 'Trial' ? 15 : 1, paymentMethodToken === 'Trial' ? 'day' : product.price_type === 'yearly' ? 'y' : 'M'))
@@ -129,6 +165,20 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
         is_trial: paymentMethodToken === 'Trial' ? 1 : 0,
         expired_at: expiry,
       }
+
+      // Safety check: recompute expired_at if it's null (15 days from current date for trials)
+      if (!dataUserPlan.expired_at || dataUserPlan.expired_at === null) {
+        logger.warn('[createSitesPlan] expired_at is null, recomputing to 15 days from now', { 
+          originalExpiry: expiry, 
+          siteId, 
+          isTrial: dataUserPlan.is_trial 
+        })
+        dataUserPlan.expired_at = formatDateDB(dayjs().add(15, 'day'))
+        console.log('[createSitesPlan] Recomputed expired_at:', dataUserPlan.expired_at)
+      }
+
+      console.log('[createSitesPlan] Site plan object to be saved to database:', JSON.stringify(dataUserPlan, null, 2))
+      logger.info('[createSitesPlan] Site plan object to be saved', dataUserPlan)
 
       await insertSitePlan(dataUserPlan as any)
     }
@@ -175,7 +225,8 @@ export async function updateSitesPlan(userId: number, sitePlanId: number, planNa
     const product: FindProductAndPriceByTypeResponse = await findProductAndPriceByType(planName, billingType)
 
     if (!product) {
-      throw new ApolloError('Can not find any plan')
+      logger.error(`[updateSitesPlan] Product not found`, { planName, billingType })
+      throw new ApolloError(`Can not find any plan: ${planName} (${billingType})`)
     }
 
     if (hook === false) {
