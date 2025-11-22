@@ -199,7 +199,7 @@ export async function createNewSubcription(token: string, email: string, name: s
   } catch (error) {
     console.log('Sub Func error = ', error)
     logger.error(error)
-    throw new ApolloError('Payment failed! Please check your card.')
+    throw error
   }
 }
 
