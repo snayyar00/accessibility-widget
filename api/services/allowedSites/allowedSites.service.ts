@@ -121,87 +121,87 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
     await createSitesPlan(userId, 'Trial', TRIAL_PLAN_NAME, TRIAL_PLAN_INTERVAL, site.id, '', currentOrganizationId)
 
     // setImmediate(async () => {
-    try {
+    // try {
 
-      const report = await fetchAccessibilityReport({ url: domain, priority: QUEUE_PRIORITY.LOW })
-      const user = await getUserbyId(userId)
-      // Check user_notifications flag for new_domain_flag
+    //   const report = await fetchAccessibilityReport({ url: domain, priority: QUEUE_PRIORITY.LOW })
+    //   const user = await getUserbyId(userId)
+    //   // Check user_notifications flag for new_domain_flag
 
-      let widgetStatus: string
-      let status: string
-      let score: number
+    //   let widgetStatus: string
+    //   let status: string
+    //   let score: number
 
-      // Use widget status from report (Puppeteer detection) if available, otherwise fallback to API check
-      widgetStatus = (report as any)?.scriptCheckResult ?? (await checkScript(domain))
-      status = widgetStatus === 'true' || widgetStatus === 'Web Ability' ? 'Compliant' : 'Not Compliant'
-      // For WebAbility, use the original report score - the PDF generator will add the bonus
-      // For other cases, use the original report score
-      score = report.score
+    //   // Use widget status from report (Puppeteer detection) if available, otherwise fallback to API check
+    //   widgetStatus = (report as any)?.scriptCheckResult ?? (await checkScript(domain))
+    //   status = widgetStatus === 'true' || widgetStatus === 'Web Ability' ? 'Compliant' : 'Not Compliant'
+    //   // For WebAbility, use the original report score - the PDF generator will add the bonus
+    //   // For other cases, use the original report score
+    //   score = report.score
 
-      // Calculate total counts from both AXE and HTML_CS
-      const errorsCount = (report?.axe?.errors?.length || 0) + (report?.htmlcs?.errors?.length || 0)
-      const warningsCount = (report?.axe?.warnings?.length || 0) + (report?.htmlcs?.warnings?.length || 0)
-      const noticesCount = (report?.axe?.notices?.length || 0) + (report?.htmlcs?.notices?.length || 0)
-      const notification = (await findUserNotificationByUserId(user.id, user.current_organization_id)) as { new_domain_flag?: boolean } | null
-      if (!notification || !notification.new_domain_flag) {
-        console.log(`Skipping new domain email for user ${user.email} (no notification flag)`)
-        return 'The site was successfully added.'
-      }
-      // Generate secure unsubscribe link for new domain alerts
-      const unsubscribeLink = generateSecureUnsubscribeLink(user.email, getUnsubscribeTypeForEmail('domain'), user.id)
+    //   // Calculate total counts from both AXE and HTML_CS
+    //   const errorsCount = (report?.axe?.errors?.length || 0) + (report?.htmlcs?.errors?.length || 0)
+    //   const warningsCount = (report?.axe?.warnings?.length || 0) + (report?.htmlcs?.warnings?.length || 0)
+    //   const noticesCount = (report?.axe?.notices?.length || 0) + (report?.htmlcs?.notices?.length || 0)
+    //   const notification = (await findUserNotificationByUserId(user.id, user.current_organization_id)) as { new_domain_flag?: boolean } | null
+    //   if (!notification || !notification.new_domain_flag) {
+    //     console.log(`Skipping new domain email for user ${user.email} (no notification flag)`)
+    //     return 'The site was successfully added.'
+    //   }
+    //   // Generate secure unsubscribe link for new domain alerts
+    //   const unsubscribeLink = generateSecureUnsubscribeLink(user.email, getUnsubscribeTypeForEmail('domain'), user.id)
 
-      // Match PDF scoring logic for emails
-      const enhancedFromReport = (report as any)?.totalStats?.score
-      const displayedScore = typeof enhancedFromReport === 'number' ? enhancedFromReport : widgetStatus === 'true' || widgetStatus === 'Web Ability' ? Math.min((score || 0) + 45, 95) : score || 0
+    //   // Match PDF scoring logic for emails
+    //   const enhancedFromReport = (report as any)?.totalStats?.score
+    //   const displayedScore = typeof enhancedFromReport === 'number' ? enhancedFromReport : widgetStatus === 'true' || widgetStatus === 'Web Ability' ? Math.min((score || 0) + 45, 95) : score || 0
 
-      const complianceByScore = displayedScore >= 80 ? 'Compliant' : displayedScore >= 50 ? 'Partially Compliant' : 'Not Compliant'
+    //   const complianceByScore = displayedScore >= 80 ? 'Compliant' : displayedScore >= 50 ? 'Partially Compliant' : 'Not Compliant'
 
-      const template = await compileEmailTemplate({
-        fileName: 'accessReport.mjml',
-        data: {
-          status,
-          url: domain,
-          statusImage: report?.siteImg,
-          statusDescription: complianceByScore,
-          score: displayedScore,
-          errorsCount: errorsCount,
-          warningsCount: warningsCount,
-          noticesCount: noticesCount,
-          reportLink: 'https://app.webability.io/accessibility-test',
-          unsubscribeLink,
-          year,
-        },
-      })
+    //   const template = await compileEmailTemplate({
+    //     fileName: 'accessReport.mjml',
+    //     data: {
+    //       status,
+    //       url: domain,
+    //       statusImage: report?.siteImg,
+    //       statusDescription: complianceByScore,
+    //       score: displayedScore,
+    //       errorsCount: errorsCount,
+    //       warningsCount: warningsCount,
+    //       noticesCount: noticesCount,
+    //       reportLink: 'https://app.webability.io/accessibility-test',
+    //       unsubscribeLink,
+    //       year,
+    //     },
+    //   })
 
-      console.log('Starting PDF generation for domain:', domain)
-      console.log('Report data keys:', Object.keys(report))
-      console.log('Widget status:', widgetStatus)
+    //   console.log('Starting PDF generation for domain:', domain)
+    //   console.log('Report data keys:', Object.keys(report))
+    //   console.log('Widget status:', widgetStatus)
 
-      const pdfBlob = await generatePDF(
-        {
-          ...report, // Pass the full report data
-          score: report.score,
-          widgetInfo: { result: widgetStatus },
-          scriptCheckResult: widgetStatus,
-          url: domain,
-        },
-        'en',
-        domain,
-      )
-      console.log('PDF generation completed, blob size:', pdfBlob.size)
-      const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
+    //   const pdfBlob = await generatePDF(
+    //     {
+    //       ...report, // Pass the full report data
+    //       score: report.score,
+    //       widgetInfo: { result: widgetStatus },
+    //       scriptCheckResult: widgetStatus,
+    //       url: domain,
+    //     },
+    //     'en',
+    //     domain,
+    //   )
+    //   console.log('PDF generation completed, blob size:', pdfBlob.size)
+    //   const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
 
-      const attachments: EmailAttachment[] = [
-        {
-          content: pdfBuffer,
-          name: `accessibility-report-${url.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`,
-        },
-      ]
+    //   const attachments: EmailAttachment[] = [
+    //     {
+    //       content: pdfBuffer,
+    //       name: `accessibility-report-${url.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`,
+    //     },
+    //   ]
 
-      await sendEmailWithRetries(user.email, template, `Accessibility Report for ${url}`, 5, 2000, attachments, 'WebAbility Reports')
-    } catch (error) {
-      logger.error('Async email/report task failed:', error)
-    }
+    //   await sendEmailWithRetries(user.email, template, `Accessibility Report for ${url}`, 5, 2000, attachments, 'WebAbility Reports')
+    // } catch (error) {
+    //   logger.error('Async email/report task failed:', error)
+    // }
     // })
 
     return 'The site was successfully added.'
