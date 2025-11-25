@@ -113,8 +113,17 @@ export async function getUserQuoteRequests(userId: number) {
 }
 
 export async function getUserMeetingRequests(userId: number) {
-  return database(TABLES.serviceMeetingRequests)
-    .where({ user_id: userId })
-    .orderBy('created_at', 'desc')
+  try {
+    return await database(TABLES.serviceMeetingRequests)
+      .where({ user_id: userId })
+      .orderBy('created_at', 'desc')
+  } catch (error: any) {
+    console.error('❌ Database error in getUserMeetingRequests:', {
+      error: error.message,
+      userId,
+      tableName: TABLES.serviceMeetingRequests,
+    })
+    throw error
+  }
 }
 
