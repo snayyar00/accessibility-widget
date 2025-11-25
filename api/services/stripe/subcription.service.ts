@@ -131,34 +131,6 @@ export async function createNewSubcription(token: string, email: string, name: s
         },
       }
 
-      // PENDING TO BE REMOVED
-      // // Add referral code to trial subscription metadata if present
-      // if (referralCode) {
-      //   if (!dataSubcription.metadata) {
-      //     dataSubcription.metadata = {}
-      //   }
-      //   dataSubcription.metadata.referral = referralCode
-      //   console.log('[REWARDFUL] Adding referral to trial subscription metadata:', referralCode)
-      // }
-
-      // // Agency Program: Add revenue sharing for trial subscriptions
-      // if (agencyAccountId) {
-      //   if (!dataSubcription.metadata) {
-      //     dataSubcription.metadata = {}
-      //   }
-      //   dataSubcription.metadata.agency_account_id = agencyAccountId
-      //   ;(dataSubcription as any).application_fee_percent = revenueSharePercent
-      //   ;(dataSubcription as any).transfer_data = {
-      //     destination: agencyAccountId,
-      //   }
-      //   ;(dataSubcription as any).on_behalf_of = agencyAccountId
-      //   console.log(`[AGENCY_PROGRAM] Trial subscription with revenue sharing: Platform ${revenueSharePercent}% | Agency ${100 - revenueSharePercent}%`, {
-      //     agencyAccountId,
-      //   })
-      // }
-
-      // // Create the actual Stripe subscription for trial plans too
-      // const result = await stripe.subscriptions.create(dataSubcription)
 
       return {
         customer_id: customer.id,
