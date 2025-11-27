@@ -1,5 +1,5 @@
-import React from 'react';
-import { FaCheck, FaTimes, FaPencilAlt, FaTrash } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaCheck, FaTimes, FaPencilAlt, FaTrash, FaCog } from 'react-icons/fa';
 import { Tooltip, CircularProgress, Chip } from '@mui/material';
 import { Site } from '@/generated/graphql';
 import applyStatusClass from '@/utils/applyStatusClass';
@@ -75,6 +75,9 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
   const getTraffic = () => {
     return '572K';
   };
+
+  // State to track if actions are visible
+  const [showActions, setShowActions] = useState(false);
 
   return (
     <div
@@ -152,7 +155,16 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
             </div>
           ) : (
             <>
-              {(userData?.isAdminOrOwnerOrSuper || domain.is_owner) && (
+              <Tooltip title="Domain actions" placement="top">
+                <button
+                  onClick={() => setShowActions(!showActions)}
+                  className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                  aria-label={`Actions for domain ${domain.url}`}
+                >
+                  <FaCog className="w-4 h-4" />
+                </button>
+              </Tooltip>
+              {showActions && (userData?.isAdminOrOwnerOrSuper || domain.is_owner) && (
                 <Tooltip title="Edit domain" placement="top">
                   <button
                     onClick={() => onEdit(domain)}
@@ -265,7 +277,8 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
             </Tooltip>
           </div>
           {/* Cancel Button for Active/Life Time domains */}
-          {domain.is_owner &&
+          {showActions &&
+            domain.is_owner &&
             (domainStatus === 'Active' || domainStatus === 'Life Time') && (
               <div className="flex items-center">
                 <Tooltip
@@ -398,7 +411,8 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
         </div>
 
         {/* Activate/Buy Button (if applicable) */}
-        {domain.is_owner &&
+        {showActions &&
+          domain.is_owner &&
           (domainStatus === 'Trial' || domainStatus === 'Trial Expired') && (
             <div className="flex items-center space-x-2">
               {activePlan !== '' && tierPlan ? (
@@ -483,7 +497,7 @@ const MobileDomainCard: React.FC<MobileDomainCardProps> = ({
           )}
 
           {/* Delete Button */}
-          {domain.is_owner && (
+          {showActions && domain.is_owner && (
             <Tooltip title="Delete domain" placement="top">
               <button
                 onClick={() => onDelete(domain.id ?? 0, domainStatus)}
