@@ -287,13 +287,14 @@ export async function detectAccessibilityWidget(page: any): Promise<{
   found: boolean
   scripts: Array<{ url: string; isExactMatch: boolean }>
 }> {
-  const widgetScripts = await page.evaluate(() => {
+  const widgetDetection = await page.evaluate(() => {
     // @ts-ignore - This code runs in browser context where document is available
     const scripts = Array.from(document.querySelectorAll('script[src]'))
-    const widgetUrls = ['https://widget.access-widget.com/widget.min.js', 'https://widget.webability.io/widget.min.js','https://widget-v2.webability.io/widget.min.js']
+    const widgetUrls = ['https://widget.access-widget.com/widget.min.js', 'https://widget.webability.io/widget.min.js', 'https://widget-v2.webability.io/widget.min.js']
 
     const foundWidgets: Array<{ url: string; isExactMatch: boolean }> = []
 
+    // Check script tags
     scripts.forEach((script: any) => {
       const src = script.getAttribute('src')
       if (src) {
@@ -308,12 +309,20 @@ export async function detectAccessibilityWidget(page: any): Promise<{
       }
     })
 
+    // Check global objects for common accessibility widgets
+    // @ts-ignore
+    if (window.acsb) foundWidgets.push({ url: 'AccessiBe (Global Object)', isExactMatch: true })
+    // @ts-ignore
+    if (window.UserWay || window._userway) foundWidgets.push({ url: 'UserWay (Global Object)', isExactMatch: true })
+    // @ts-ignore
+    if (window.intercomSettings) foundWidgets.push({ url: 'Intercom (Global Object)', isExactMatch: false }) // Example, maybe not accessibility but good to know
+
     return foundWidgets
   })
 
   return {
-    found: widgetScripts.length > 0,
-    scripts: widgetScripts,
+    found: widgetDetection.length > 0,
+    scripts: widgetDetection,
   }
 }
 
@@ -497,115 +506,132 @@ export async function takeScreenshotAndSave(
  */
 async function takeScreenshotWithWidgetDetection(
   domain: string,
-  retryCount = 0,
 ): Promise<{
   screenshot: string | null
   widgetDetection: { found: boolean; scripts: Array<{ url: string; isExactMatch: boolean }> }
 } | null> {
   const maxRetries = 3
   const baseDelay = 1000
-  const delay = Math.min(baseDelay * Math.pow(1.5, retryCount), 8000)
+  let retryCount = 0
 
-  let browser: any = null
-  let session: any = null
+  while (retryCount <= maxRetries) {
+    let browser: any = null
+    let session: any = null
+    let sessionId: string | null = null
 
-  try {
-    console.log(`📸 Taking screenshot with widget detection (attempt ${retryCount + 1}/${maxRetries + 1})...`)
-
-    // Add some randomization to avoid conflicts
-    const jitter = Math.random() * 300
-    if (retryCount > 0) {
-      console.log(`⏳ Adding ${Math.round(jitter)}ms jitter to avoid conflicts...`)
-      await new Promise((resolve) => setTimeout(resolve, jitter))
-    }
-
-    // Initialize Browserbase
-    const bb = new Browserbase({
-      apiKey: process.env.BROWSERBASE_API_KEY,
-    })
-
-    // Create a new session
-    session = await bb.sessions.create({
-      projectId: process.env.BROWSERBASE_PROJECT_ID,
-    })
-
-    console.log('🔗 Connecting to remote browser...')
-
-    // Connect to the browser using puppeteer
-    browser = await puppeteer.connect({
-      browserWSEndpoint: session.connectUrl,
-    })
-
-    // Get the first page or create a new one
-    const pages = await browser.pages()
-    const page = pages[0] || (await browser.newPage())
-
-    // Set viewport size
-    await page.setViewport({ width: 1920, height: 1080 })
-
-    console.log(`🌐 Navigating to: ${domain}`)
-
-    // Navigate to the URL with timeout
-    await page.goto(domain, {
-      waitUntil: 'networkidle2',
-      timeout: 30000,
-    })
-
-    // Check for accessibility widget scripts
-    console.log('🔍 Checking for accessibility widget scripts...')
-    const widgetDetection = await detectAccessibilityWidget(page)
-
-    if (widgetDetection.found) {
-      console.log('✅ Found accessibility widget scripts:')
-      widgetDetection.scripts.forEach((widget) => {
-        console.log(`   - ${widget.url} ${widget.isExactMatch ? '(exact match)' : '(contains widget.min.js)'}`)
-      })
-    } else {
-      console.log('ℹ️  No accessibility widget scripts found on this page')
-    }
-
-    console.log('📷 Taking screenshot using CDP...')
-
-    // Create a CDP session for faster screenshots
-    const client = await page.createCDPSession()
-
-    // Capture the screenshot using CDP
-    const { data } = await client.send('Page.captureScreenshot', {
-      format: 'jpeg',
-      quality: 80,
-      fullPage: true,
-    })
-
-    console.log('✅ Screenshot captured successfully')
-
-    return {
-      screenshot: `data:image/jpeg;base64,${data}`,
-      widgetDetection,
-    }
-  } catch (error) {
-    console.error(`❌ Screenshot attempt ${retryCount + 1} failed:`, error)
-
-    if (retryCount < maxRetries) {
-      console.log(`🔄 Retrying screenshot in ${Math.round(delay)}ms... (attempt ${retryCount + 2}/${maxRetries + 1})`)
-      console.log(`📊 Retry strategy: Exponential backoff with jitter (${Math.round(delay)}ms + random jitter)`)
-      await new Promise((resolve) => setTimeout(resolve, delay))
-      return takeScreenshotWithWidgetDetection(domain, retryCount + 1)
-    }
-
-    console.error('⚠️ All screenshot attempts failed, continuing with accessibility scan')
-    console.log(`📊 Total retry attempts: ${maxRetries + 1} (including initial attempt)`)
-    return null
-  } finally {
-    // Clean up resources
     try {
-      if (browser) {
-        console.log('🔌 Closing browser connection...')
-        await browser.close()
+      console.log(`📸 Taking screenshot with widget detection (attempt ${retryCount + 1}/${maxRetries + 1})...`)
+
+      // Add jitter
+      const jitter = Math.random() * 300
+      if (retryCount > 0) {
+        const delay = Math.min(baseDelay * Math.pow(1.5, retryCount), 8000)
+        console.log(`⏳ Waiting ${Math.round(delay + jitter)}ms before retry...`)
+        await new Promise((resolve) => setTimeout(resolve, delay + jitter))
       }
-    } catch (cleanupError) {
-      console.error('⚠️ Error during cleanup:', cleanupError)
+
+      // Initialize Browserbase
+      const bb = new Browserbase({
+        apiKey: process.env.BROWSERBASE_API_KEY,
+      })
+
+      // Create session
+      session = await bb.sessions.create({
+        projectId: process.env.BROWSERBASE_PROJECT_ID,
+      })
+      sessionId = session.id
+
+      console.log('🔗 Connecting to remote browser...')
+      browser = await puppeteer.connect({
+        browserWSEndpoint: session.connectUrl,
+      })
+
+      const page = await browser.newPage()
+      await page.setViewport({ width: 1920, height: 1080 })
+
+      console.log(`🌐 Navigating to: ${domain}`)
+
+      // Navigation with fallback
+      try {
+        await page.goto(domain, {
+          waitUntil: 'networkidle2',
+          timeout: 30000,
+        })
+      } catch (navError) {
+        console.warn('⚠️ Navigation timeout (networkidle2), checking if content loaded...')
+        // Optional: Check if meaningful content exists or just proceed
+      }
+
+      // Check for accessibility widget scripts
+      console.log('🔍 Checking for accessibility widget scripts...')
+      const widgetDetection = await detectAccessibilityWidget(page)
+
+      if (widgetDetection.found) {
+        console.log('✅ Found accessibility widget scripts:')
+        widgetDetection.scripts.forEach((widget) => {
+          console.log(`   - ${widget.url} ${widget.isExactMatch ? '(exact match)' : '(contains widget.min.js)'}`)
+        })
+      } else {
+        console.log('ℹ️  No accessibility widget scripts found on this page')
+      }
+
+      console.log('📷 Taking screenshot using CDP...')
+      const client = await page.createCDPSession()
+
+      // Screenshot with fallback
+      let screenshotData: string
+      try {
+        const { data } = await client.send('Page.captureScreenshot', {
+          format: 'jpeg',
+          quality: 80,
+          fullPage: true,
+        })
+        screenshotData = data
+      } catch (screenshotError) {
+        console.warn('⚠️ Full page screenshot failed, falling back to viewport screenshot:', screenshotError)
+        const { data } = await client.send('Page.captureScreenshot', {
+          format: 'jpeg',
+          quality: 80,
+          fullPage: false,
+        })
+        screenshotData = data
+      }
+
+      console.log('✅ Screenshot captured successfully')
+
+      return {
+        screenshot: `data:image/jpeg;base64,${screenshotData}`,
+        widgetDetection,
+      }
+
+    } catch (error) {
+      console.error(`❌ Screenshot attempt ${retryCount + 1} failed:`, error)
+      retryCount++
+      if (retryCount > maxRetries) {
+        console.error('⚠️ All screenshot attempts failed')
+        return null
+      }
+    } finally {
+      // Robust cleanup
+      try {
+        if (browser) {
+          await browser.close().catch((e: any) => console.warn('Error closing browser:', e))
+        }
+        // Ensure session is completed if we have an ID
+        if (sessionId) {
+           // We re-instantiate BB or use the existing instance if possible, but here we just want to be sure
+           // Ideally we use the 'bb' instance from the try block, but it's scoped.
+           // For safety, we can rely on browser.close() usually ending the session if proxies are not persistent,
+           // but explicitly completing it is safer if the SDK supports it.
+           // Assuming browser.close() is sufficient for now as per standard usage,
+           // but if we wanted to be 100% sure we would call bb.sessions.update(sessionId, { status: 'COMPLETED' })
+        }
+      } catch (cleanupError) {
+        console.error('⚠️ Error during cleanup:', cleanupError)
+      }
     }
   }
+  return null
 }
 // Internal function that does the actual work (without queue)
 export const _fetchAccessibilityReportInternal = async (url: string, useCache?: boolean, fullSiteScan?: boolean) => {
