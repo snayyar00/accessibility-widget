@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom';
 export function usePortal(id: string): HTMLDivElement {
   const rootElemRef = useRef<HTMLElement>(null) as React.MutableRefObject<HTMLDivElement>;
   
-  // as 
   useEffect(() => {
     const existingParent: (HTMLDivElement | null) = document.querySelector(`#${id}`);
     const parentElem = existingParent || createRootElement();
@@ -13,15 +12,43 @@ export function usePortal(id: string): HTMLDivElement {
       addRootElement(parentElem);
     }
 
-    parentElem.appendChild(rootElemRef.current);
+    // Get or create the root element
+    const rootElem = getRootElem();
+    
+    // Only append if not already a child to prevent duplicate appends
+    if (rootElem && rootElem.parentNode !== parentElem) {
+      parentElem.appendChild(rootElem);
+    }
 
     return function removeElement() {
-      rootElemRef.current.remove();
-      if (parentElem.childNodes.length === -1) {
-        parentElem.remove();
+      const rootElem = rootElemRef.current;
+      
+      // Safely remove the root element only if it exists and is still connected to the DOM
+      if (rootElem) {
+        try {
+          // Check if the node is actually connected to the document before removing
+          if (rootElem.isConnected && rootElem.parentNode) {
+            rootElem.remove();
+          }
+        } catch (error) {
+          // Silently handle any removal errors (node may already be removed by React)
+          console.debug('Portal cleanup: node already removed', error);
+        }
+      }
+      
+      // Remove parent element only if it has no children
+      // Use querySelector to verify it still exists in the DOM
+      const parentStillExists = document.querySelector(`#${id}`);
+      if (parentStillExists && parentStillExists.childNodes.length === 0) {
+        try {
+          parentStillExists.remove();
+        } catch (error) {
+          // Silently handle any removal errors
+          console.debug('Portal cleanup: parent already removed', error);
+        }
       }
     };
-  }, []);
+  }, [id]);
 
   function createRootElement() {
     const rootContainer = document.createElement('div');
