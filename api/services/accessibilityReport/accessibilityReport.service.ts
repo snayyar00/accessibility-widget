@@ -519,22 +519,23 @@ async function takeScreenshotWithWidgetDetection(
     let session: any = null
     let sessionId: string | null = null
 
+
+    console.log(`📸 Taking screenshot with widget detection (attempt ${retryCount + 1}/${maxRetries + 1})...`)
+
+    // Add jitter
+    const jitter = Math.random() * 300
+    if (retryCount > 0) {
+      const delay = Math.min(baseDelay * Math.pow(1.5, retryCount), 8000)
+      console.log(`⏳ Waiting ${Math.round(delay + jitter)}ms before retry...`)
+      await new Promise((resolve) => setTimeout(resolve, delay + jitter))
+    }
+
+    // Initialize Browserbase
+    const bb = new Browserbase({
+      apiKey: process.env.BROWSERBASE_API_KEY,
+    })
+
     try {
-      console.log(`📸 Taking screenshot with widget detection (attempt ${retryCount + 1}/${maxRetries + 1})...`)
-
-      // Add jitter
-      const jitter = Math.random() * 300
-      if (retryCount > 0) {
-        const delay = Math.min(baseDelay * Math.pow(1.5, retryCount), 8000)
-        console.log(`⏳ Waiting ${Math.round(delay + jitter)}ms before retry...`)
-        await new Promise((resolve) => setTimeout(resolve, delay + jitter))
-      }
-
-      // Initialize Browserbase
-      const bb = new Browserbase({
-        apiKey: process.env.BROWSERBASE_API_KEY,
-      })
-
       // Create session
       session = await bb.sessions.create({
         projectId: process.env.BROWSERBASE_PROJECT_ID,
@@ -618,13 +619,13 @@ async function takeScreenshotWithWidgetDetection(
           await browser.close().catch((e: any) => console.warn('Error closing browser:', e))
         }
         // Ensure session is completed if we have an ID
-        if (sessionId) {
-           // We re-instantiate BB or use the existing instance if possible, but here we just want to be sure
-           // Ideally we use the 'bb' instance from the try block, but it's scoped.
-           // For safety, we can rely on browser.close() usually ending the session if proxies are not persistent,
-           // but explicitly completing it is safer if the SDK supports it.
-           // Assuming browser.close() is sufficient for now as per standard usage,
-           // but if we wanted to be 100% sure we would call bb.sessions.update(sessionId, { status: 'COMPLETED' })
+        if (sessionId && bb) {
+          try {
+            await bb.sessions.update(sessionId, { projectId: process.env.BROWSERBASE_PROJECT_ID, status: 'REQUEST_RELEASE'});
+            console.log('✅ Browserbase session marked as COMPLETED')
+          } catch (sessionError) {
+            console.warn('⚠️ Failed to update Browserbase session status:', sessionError)
+          }
         }
       } catch (cleanupError) {
         console.error('⚠️ Error during cleanup:', cleanupError)
@@ -1100,7 +1101,7 @@ function calculateTotalStats(
   const severityCounts = countIssuesBySeverity(issues)
   const baseScore = report?.score || 0
   console.log(`Base score: ${baseScore}, Critical: ${severityCounts.criticalIssues}, Warnings: ${severityCounts.warnings}, Moderate: ${severityCounts.moderateIssues}`)
-  
+
   // If no issues are detected (displayed to user), set score to 95
   let enhancedScore
   if (issues.length === 0) {
