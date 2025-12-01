@@ -110,6 +110,9 @@ const Plans: React.FC<Props> = ({
   const { data: subscribedPlan } = useSelector(
     (state: RootState) => state.sitePlan,
   );
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
 
   const [rewardfulDiscount, setRewardfulDiscount] = useState<{
     valid: boolean;
@@ -246,8 +249,8 @@ const Plans: React.FC<Props> = ({
           </Button>
         </div>
       ) : null}
-      {validatedCoupons.length > 0 ||
-      (appSumoCount !== 0 && maxSites > activeSites)
+      {organization?.id === '1' && (validatedCoupons.length > 0 ||
+      (appSumoCount !== 0 && maxSites > activeSites))
         ? (planChanged ||
             Object.keys(subscribedPlan).length == 0 ||
             subscribedPlan.isTrial) &&
