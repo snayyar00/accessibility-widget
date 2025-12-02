@@ -136,7 +136,7 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
   } catch (error) {
     console.log('error = ', error)
     logger.error(error)
-    throw new ApolloError('Something went wrong!')
+    throw error
   }
 }
 

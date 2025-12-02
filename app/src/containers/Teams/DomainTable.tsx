@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@apollo/client';
-import { FaTrash, FaCheck, FaTimes, FaPencilAlt } from 'react-icons/fa';
+import { FaTrash, FaCheck, FaTimes, FaPencilAlt, FaCog } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
@@ -62,6 +62,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'disabled'>('all');
+  
+  // State to track which domain's actions are visible
+  const [openActionsMenuId, setOpenActionsMenuId] = useState<number | null>(null);
 
   const [deleteSiteMutation] = useMutation(deleteSite, {
     onCompleted: (response) => {
@@ -954,122 +957,141 @@ const DomainTable: React.FC<DomainTableProps> = ({
                               </>
                             ) : (
                               <>
-                                {/* Conditionally show Activate/Buy button for non-active domains */}
-                                {domain.is_owner && (
+                                <Tooltip title="Domain actions" placement="top">
+                                  <button
+                                    onClick={() =>
+                                      setOpenActionsMenuId(
+                                        openActionsMenuId === domain.id
+                                          ? null
+                                          : domain.id ?? null,
+                                      )
+                                    }
+                                    className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                    aria-label={`Actions for domain ${domain.url}`}
+                                  >
+                                    <FaCog className="w-4 h-4" />
+                                  </button>
+                                </Tooltip>
+                                {openActionsMenuId === domain.id && (
                                   <>
-                                    {(domainStatus === 'Trial' ||
-                                      domainStatus === 'Trial Expired') && (
+                                    {/* Conditionally show Activate/Buy button for non-active domains */}
+                                    {domain.is_owner && (
                                       <>
-                                        {activePlan !== '' && tierPlan ? (
+                                        {(domainStatus === 'Trial' ||
+                                          domainStatus === 'Trial Expired') && (
+                                          <>
+                                            {activePlan !== '' && tierPlan ? (
+                                              <Tooltip
+                                                title="Activate subscription"
+                                                placement="top"
+                                              >
+                                                <button
+                                                  disabled={billingLoading}
+                                                  onClick={() =>
+                                                    handleSubscription(domain)
+                                                  }
+                                                  className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                  {billingLoading
+                                                    ? 'Processing...'
+                                                    : 'Activate'}
+                                                </button>
+                                              </Tooltip>
+                                            ) : appSumoCount < codeCount ? (
+                                              <Tooltip
+                                                title="Activate with promo code"
+                                                placement="top"
+                                              >
+                                                <button
+                                                  onClick={() =>
+                                                    handleOpenActivateModal(domain)
+                                                  }
+                                                  className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
+                                                >
+                                                  Activate
+                                                </button>
+                                              </Tooltip>
+                                            ) : (
+                                              <Tooltip
+                                                title="Buy license"
+                                                placement="top"
+                                              >
+                                                <button
+                                                  onClick={() => {
+                                                    setPaymentView(true);
+                                                    openModal();
+                                                    setOptionalDomain(
+                                                      domain.url ?? '',
+                                                    );
+                                                  }}
+                                                  className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
+                                                >
+                                                  Buy License
+                                                </button>
+                                              </Tooltip>
+                                            )}
+                                          </>
+                                        )}
+                                      </>
+                                    )}
+                                    {(userData.isAdminOrOwnerOrSuper ||
+                                      domain.is_owner) && (
+                                      <Tooltip title="Edit domain" placement="top">
+                                        <button
+                                          onClick={() => handleEdit(domain)}
+                                          className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                          aria-label={`Edit domain ${domain.url}`}
+                                        >
+                                          <FaPencilAlt className="w-4 h-4" />
+                                        </button>
+                                      </Tooltip>
+                                    )}
+                                    {domain.is_owner && (
+                                      <Tooltip
+                                        title="Delete domain"
+                                        placement="top"
+                                      >
+                                        <button
+                                          onClick={() => {
+                                            setDeleteSiteID(domain.id ?? 0);
+                                            setDeleteSiteStatus(domainStatus);
+                                            setShowModal(true);
+                                            setIsCancel(false);
+                                          }}
+                                          className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                          aria-label={`Delete domain ${domain.url}`}
+                                        >
+                                          <FaTrash className="w-4 h-4" />
+                                        </button>
+                                      </Tooltip>
+                                    )}
+                                    {/* Cancel Button for Active/Life Time domains */}
+                                    {domain.is_owner && (
+                                      <>
+                                        {(domainStatus === 'Active' ||
+                                          domainStatus === 'Life Time') && (
                                           <Tooltip
-                                            title="Activate subscription"
+                                            title={
+                                              'Cancel Subscription for this domain'
+                                            }
                                             placement="top"
                                           >
                                             <button
-                                              disabled={billingLoading}
+                                              type="button"
+                                              className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer whitespace-nowrap ${RED_BG}`}
                                               onClick={() =>
-                                                handleSubscription(domain)
+                                                handleCancelSubscription(
+                                                  domain.id ?? 0,
+                                                  domainStatus,
+                                                )
                                               }
-                                              className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                              {billingLoading
-                                                ? 'Processing...'
-                                                : 'Activate'}
-                                            </button>
-                                          </Tooltip>
-                                        ) : appSumoCount < codeCount ? (
-                                          <Tooltip
-                                            title="Activate with promo code"
-                                            placement="top"
-                                          >
-                                            <button
-                                              onClick={() =>
-                                                handleOpenActivateModal(domain)
-                                              }
-                                              className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                                            >
-                                              Activate
-                                            </button>
-                                          </Tooltip>
-                                        ) : (
-                                          <Tooltip
-                                            title="Buy license"
-                                            placement="top"
-                                          >
-                                            <button
-                                              onClick={() => {
-                                                setPaymentView(true);
-                                                openModal();
-                                                setOptionalDomain(
-                                                  domain.url ?? '',
-                                                );
-                                              }}
-                                              className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                                            >
-                                              Buy License
+                                              <FaTimes className="w-3 h-3 text-red-500 mr-1 flex-shrink-0" />
+                                              Cancel Subscription
                                             </button>
                                           </Tooltip>
                                         )}
                                       </>
-                                    )}
-                                  </>
-                                )}
-                                {(userData.isAdminOrOwnerOrSuper ||
-                                  domain.is_owner) && (
-                                  <Tooltip title="Edit domain" placement="top">
-                                    <button
-                                      onClick={() => handleEdit(domain)}
-                                      className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
-                                      aria-label={`Edit domain ${domain.url}`}
-                                    >
-                                      <FaPencilAlt className="w-4 h-4" />
-                                    </button>
-                                  </Tooltip>
-                                )}
-                                {domain.is_owner && (
-                                  <Tooltip
-                                    title="Delete domain"
-                                    placement="top"
-                                  >
-                                    <button
-                                      onClick={() => {
-                                        setDeleteSiteID(domain.id ?? 0);
-                                        setDeleteSiteStatus(domainStatus);
-                                        setShowModal(true);
-                                        setIsCancel(false);
-                                      }}
-                                      className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
-                                      aria-label={`Delete domain ${domain.url}`}
-                                    >
-                                      <FaTrash className="w-4 h-4" />
-                                    </button>
-                                  </Tooltip>
-                                )}
-                                {/* Cancel Button for Active/Life Time domains */}
-                                {domain.is_owner && (
-                                  <>
-                                    {(domainStatus === 'Active' ||
-                                      domainStatus === 'Life Time') && (
-                                      <Tooltip
-                                        title={
-                                          'Cancel Subscription for this domain'
-                                        }
-                                        placement="top"
-                                      >
-                                        <button
-                                          type="button"
-                                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer whitespace-nowrap ${RED_BG}`}
-                                          onClick={() =>
-                                            handleCancelSubscription(
-                                              domain.id ?? 0,
-                                              domainStatus,
-                                            )
-                                          }
-                                        >
-                                          <FaTimes className="w-3 h-3 text-red-500 mr-1 flex-shrink-0" />
-                                          Cancel Subscription
-                                        </button>
-                                      </Tooltip>
                                     )}
                                   </>
                                 )}
