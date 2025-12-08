@@ -58,38 +58,35 @@ export async function findSitesByIds(ids: number[]): Promise<Array<{ id: number;
  * Get total count of sites for a user/organization with optional filter
  */
 export async function findUserSitesCount(userId: number, organizationId: number, isAdmin: boolean, filter?: 'all' | 'active' | 'disabled'): Promise<number> {
-  const now = Date.now();
   let filterCondition = '';
   const params: any[] = [];
   
-  if (filter === 'active') {
-    // Active: trial === 0 AND expiredAt > now
-    filterCondition = `
-      AND EXISTS (
-        SELECT 1 FROM ${TABLES.sitesPlans} sp_count
-        WHERE sp_count.allowed_site_id = ${TABLE}.id
-        AND sp_count.is_trial = 0
-        AND sp_count.expired_at IS NOT NULL
-        AND sp_count.expired_at > ?
-        AND sp_count.id = (SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)
-      )
-    `;
-    params.push(now);
-  } else if (filter === 'disabled') {
-    // Trial/Disabled: trial === 1 OR expiredAt is null OR expiredAt <= now
-    filterCondition = `
-      AND (
-        NOT EXISTS (
+  if (filter === 'active' || filter === 'disabled') {
+    const latestPlanSubquery = `(SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)`;
+    
+    if (filter === 'active') {
+      // Active: trial === 0 AND expiredAt > now
+      filterCondition = `
+        AND EXISTS (
           SELECT 1 FROM ${TABLES.sitesPlans} sp_count
           WHERE sp_count.allowed_site_id = ${TABLE}.id
           AND sp_count.is_trial = 0
           AND sp_count.expired_at IS NOT NULL
-          AND sp_count.expired_at > ?
-          AND sp_count.id = (SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)
+          AND sp_count.expired_at > NOW()
+          AND sp_count.id = ${latestPlanSubquery}
         )
-      )
-    `;
-    params.push(now);
+      `;
+    } else { // filter === 'disabled'
+      // Disabled: trial === 1 OR expiredAt is null OR expiredAt <= now
+      filterCondition = `
+        AND EXISTS (
+          SELECT 1 FROM ${TABLES.sitesPlans} sp_count
+          WHERE sp_count.allowed_site_id = ${TABLE}.id
+          AND (sp_count.is_trial = 1 OR sp_count.expired_at IS NULL OR sp_count.expired_at <= NOW())
+          AND sp_count.id = ${latestPlanSubquery}
+        )
+      `;
+    }
   }
   
   if (isAdmin) {
@@ -140,7 +137,7 @@ export async function findUserSitesCount(userId: number, organizationId: number,
  * @returns Promise<IUserSites[]> - Sites with plan information and workspace data pre-aggregated
  */
 export async function findUserSitesWithPlansWithWorkspaces(userId: number, organizationId: number, isAdmin: boolean, limit?: number, offset?: number, filter?: 'all' | 'active' | 'disabled'): Promise<IUserSites[]> {
-  const now = Date.now();
+  const now = database.raw('NOW()');
   if (isAdmin) {
     // Admin path: Get ALL sites in organization with workspace info via subquery to avoid GROUP BY issues
     let query = buildSitesBaseQuery()
@@ -179,11 +176,11 @@ export async function findUserSitesWithPlansWithWorkspaces(userId: number, organ
       filterCondition = `
         AND sp.is_trial = 0
         AND sp.expired_at IS NOT NULL
-        AND sp.expired_at > ?
+        AND sp.expired_at > NOW()
       `;
     } else if (filter === 'disabled') {
       filterCondition = `
-        AND (sp.is_trial = 1 OR sp.expired_at IS NULL OR sp.expired_at <= ?)
+        AND (sp.is_trial = 1 OR sp.expired_at IS NULL OR sp.expired_at <= NOW())
       `;
     }
     
@@ -238,9 +235,6 @@ export async function findUserSitesWithPlansWithWorkspaces(userId: number, organ
     `
     
     const params: any[] = [organizationId, userId, userId];
-    if (filter === 'active' || filter === 'disabled') {
-      params.push(now);
-    }
     
     if (limit !== undefined) {
       sql += ` LIMIT ?`

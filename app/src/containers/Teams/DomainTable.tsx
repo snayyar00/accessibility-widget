@@ -101,7 +101,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
       if (response.deleteSite === 1) {
         toast.success('The domain was successfully deleted.');
       }
-      // Refetch paginated data
+      // Refetch both paginated data for the table and total count for pagination
+      if (refetchSites) {
+        refetchSites();
+      }
       if (refetchPaginated) {
         await refetchPaginated({ 
           limit: paginationLimit, 
@@ -121,7 +124,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
       if (response?.changeURL?.includes('Successfully')) {
         toast.success('The domain name was successfully updated.');
       }
-      // Refetch paginated data
+      // Refetch both paginated data for the table and total count for pagination
+      if (refetchSites) {
+        refetchSites();
+      }
       if (refetchPaginated) {
         await refetchPaginated({ 
           limit: paginationLimit, 
@@ -141,7 +147,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
     onCompleted: async () => {
       setReloadSites(true);
       toast.success('Monitoring settings updated successfully.');
-      // Refetch paginated data
+      // Refetch both paginated data for the table and total count for pagination
+      if (refetchSites) {
+        refetchSites();
+      }
       if (refetchPaginated) {
         await refetchPaginated({ 
           limit: paginationLimit, 
@@ -286,9 +295,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
     });
     if (response.errors) {
       toast.error(response.errors[0].message);
-    } else {
-      setReloadSites(true);
     }
+    // Refetch is handled in updateSiteMutation's onCompleted handler
     setEditLoading(false);
     setEditingId(null);
   };
@@ -387,12 +395,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
     return matchesSearch;
   });
   
-  // Sync paginationOffset state when tab changes (for consistency)
-  useEffect(() => {
-    if (activeTab !== previousTabRef.current && paginationOffset !== 0) {
-      setPaginationOffset(0);
-    }
-  }, [activeTab, paginationOffset]);
+  // The useEffect hook that was here has been removed to avoid redundant re-renders.
+  // The `currentOffset` computed with `useMemo` already handles resetting the offset
+  // for the GraphQL query when the active tab changes.
 
   useEffect(() => {
     if (customerData) {
