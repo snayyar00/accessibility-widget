@@ -469,6 +469,11 @@ const TrialBannerAndModal: React.FC<any> = ({
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     const sanitizedDomain = getRootDomain(formData.domainName);
+    const effectiveDomain =
+      sanitizedDomain === 'us.com' &&
+      formData.domainName.toLowerCase().includes('name.us.com')
+        ? 'name.us.com'
+        : sanitizedDomain;
     if (
       sanitizedDomain !== 'localhost' &&
       !isIpAddress(sanitizedDomain) &&
@@ -480,7 +485,7 @@ const TrialBannerAndModal: React.FC<any> = ({
 
     try {
       const response = await addSiteMutation({
-        variables: { url: sanitizedDomain },
+        variables: { url: effectiveDomain },
       });
 
       if (response.errors) {
