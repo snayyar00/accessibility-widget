@@ -160,9 +160,10 @@ export async function findUserSitesWithPlansWithWorkspaces(userId: number, organ
     
     if (limit !== undefined) {
       query = query.limit(limit)
-    }
-    if (offset !== undefined) {
-      query = query.offset(offset)
+      // Only add OFFSET if LIMIT is also defined (MySQL requires LIMIT when using OFFSET)
+      if (offset !== undefined) {
+        query = query.offset(offset)
+      }
     }
     
     return query
@@ -239,10 +240,11 @@ export async function findUserSitesWithPlansWithWorkspaces(userId: number, organ
     if (limit !== undefined) {
       sql += ` LIMIT ?`
       params.push(limit)
-    }
-    if (offset !== undefined) {
-      sql += ` OFFSET ?`
-      params.push(offset)
+      // Only add OFFSET if LIMIT is also defined (MySQL requires LIMIT when using OFFSET)
+      if (offset !== undefined) {
+        sql += ` OFFSET ?`
+        params.push(offset)
+      }
     }
     
     const sites = await database.raw(sql, params)
