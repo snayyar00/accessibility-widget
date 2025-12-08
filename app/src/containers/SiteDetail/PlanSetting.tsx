@@ -86,6 +86,9 @@ const PlanSetting: React.FC<{
   const { data: currentPlan } = useSelector(
     (state: RootState) => state.sitePlan,
   );
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
   const [
     updateSitePlanMutation,
     { error: errorUpdate, loading: isUpdatingSitePlan },
@@ -464,6 +467,7 @@ const PlanSetting: React.FC<{
               </p>
             </div>
           ) : null}
+          {organization?.id === '1' && (
           <>
             <div className="flex sm:flex-col md:flex-row">
               {validatedCoupons.length > 0 && (
@@ -515,6 +519,7 @@ const PlanSetting: React.FC<{
               </div>
             </div>
           </>
+          )}
 
           <Plans
             plans={
