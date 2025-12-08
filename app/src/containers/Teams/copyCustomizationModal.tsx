@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, Copy, X, Globe } from 'lucide-react';
+import { Site } from '@/generated/graphql';
 
 interface CopyCustomizationModalProps {
   isOpen: boolean;
@@ -77,11 +78,11 @@ const CopyCustomizationModal: React.FC<CopyCustomizationModalProps> = ({
                 onChange={(e) => setCopyDomain(e.target.value)}
               >
                 <option value={''}>Choose a domain to copy from</option>
-                {allDomains?.getUserSites
-                  ?.filter((domain: any) => domain.url !== selectedSite)
-                  .map((domain: any) => (
-                    <option key={domain.id} value={domain.url}>
-                      {domain.url}
+                {allDomains?.getUserSites?.sites
+                  ?.filter((domain: Site | null | undefined) => domain?.url !== selectedSite)
+                  .map((domain: Site | null | undefined) => (
+                    <option key={domain?.id} value={domain?.url || ''}>
+                      {domain?.url || ''}
                     </option>
                   ))}
               </select>

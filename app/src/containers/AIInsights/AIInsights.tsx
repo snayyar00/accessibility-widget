@@ -9,7 +9,8 @@ import {
 import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
 import { ANALYZE_DOMAIN } from '@/queries/domainAnalysis/analyzeDomain';
 import { ANALYZE_AI_READINESS } from '@/queries/aiReadiness/analyzeAIReadiness';
-import { GetUserSitesDocument } from '@/generated/graphql';
+import GET_USER_SITES from '@/queries/sites/getSites';
+import { Site } from '@/generated/graphql';
 import { CircularProgress } from '@mui/material';
 import { toast } from 'sonner';
 import Select from 'react-select/creatable';
@@ -37,14 +38,14 @@ const AIInsights: React.FC = () => {
 
   // Fetch user sites for domain selector
   const { data: sitesData, loading: sitesLoading } =
-    useQuery(GetUserSitesDocument);
+    useQuery(GET_USER_SITES);
 
   // Combine options for existing sites and a custom "Enter a new domain" option
   const siteOptions = useMemo(
     () =>
-      sitesData?.getUserSites?.map((domain: any) => ({
-        value: domain.url,
-        label: domain.url,
+      sitesData?.getUserSites?.sites?.map((domain: Site | null | undefined) => ({
+        value: domain?.url || '',
+        label: domain?.url || '',
       })) || [],
     [sitesData],
   );
