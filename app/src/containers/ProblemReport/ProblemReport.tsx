@@ -10,7 +10,8 @@ import { defaultTourStyles } from '@/config/tourStyles';
 import { reportsTourSteps, tourKeys } from '@/constants/toursteps';
 import { getAuthenticationCookie } from '@/utils/cookie';
 import { useQuery } from '@apollo/client';
-import { GetUserSitesDocument } from '@/generated/graphql';
+import GET_USER_SITES from '@/queries/sites/getSites';
+import { Site } from '@/generated/graphql';
 import notFoundImage from '@/assets/images/not_found_image.png';
 import Favicon from '@/components/Common/Favicon';
 
@@ -44,7 +45,7 @@ const ProblemReport: React.FC = () => {
 
   // Fetch user sites
   const { data: sitesData, loading: sitesLoading } =
-    useQuery(GetUserSitesDocument);
+    useQuery(GET_USER_SITES);
 
   useEffect(() => {
     return () => {
@@ -131,7 +132,7 @@ const ProblemReport: React.FC = () => {
 
   // Filter domains based on search term
   const filteredDomains =
-    sitesData?.getUserSites?.filter((site) =>
+    sitesData?.getUserSites?.sites?.filter((site: Site | null | undefined) =>
       site?.url?.toLowerCase().includes(domainSearchTerm.toLowerCase()),
     ) || [];
 
@@ -150,8 +151,8 @@ const ProblemReport: React.FC = () => {
       setSelectedDomain('all');
     } else {
       // Check if the typed value exactly matches a domain
-      const exactMatch = sitesData?.getUserSites?.find(
-        (site) => site?.url === value,
+      const exactMatch = sitesData?.getUserSites?.sites?.find(
+        (site: Site | null | undefined) => site?.url === value,
       );
       if (exactMatch) {
         setSelectedDomain(value);
@@ -303,7 +304,7 @@ const ProblemReport: React.FC = () => {
                     {isDomainDropdownOpen && (
                       <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                         <div className="py-1">
-                          {filteredDomains.map((site) => (
+                          {filteredDomains.map((site: Site | null | undefined) => (
                             <div
                               key={site?.id}
                               className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center"

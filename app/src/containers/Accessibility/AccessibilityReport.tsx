@@ -11,6 +11,7 @@ import SAVE_ACCESSIBILITY_REPORT from '@/queries/accessibility/saveAccessibility
 import GET_USER_SITES from '@/queries/sites/getSites';
 import FETCH_ACCESSIBILITY_REPORT_KEYS from '@/queries/accessibility/fetchAccessibilityReport';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
+import { Site } from '@/generated/graphql';
 import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import isValidDomain from '@/utils/verifyDomain';
@@ -228,9 +229,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   // Combine options for existing sites and a custom "Enter a new domain" option
   const siteOptions = useMemo(
     () =>
-      sitesData?.getUserSites?.map((domain: any) => ({
-        value: domain.url,
-        label: domain.url,
+      sitesData?.getUserSites?.sites?.map((domain: Site | null | undefined) => ({
+        value: domain?.url || '',
+        label: domain?.url || '',
       })) || [],
     [sitesData],
   );
