@@ -37,7 +37,10 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
   const [reloadSites, setReloadSites] = useState(false);
   const [selectedOption, setSelectedOption] = useState(SITE_SELECTOR_TEXT);
   const [domainData, setDomainData] = useState(null);
-  const { data, refetch, startPolling, stopPolling } = useQuery(getSites);
+  // Fetch all sites for dropdown (no pagination params = fetch all)
+  const { data, refetch, startPolling, stopPolling } = useQuery(getSites, {
+    variables: {}, // No limit/offset = fetch all for backward compatibility
+  });
   const { data: userData, loading } = useSelector(
     (state: RootState) => state.user,
   );
@@ -100,7 +103,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
       refetch();
       setReloadSites(false);
     }
-  }, [reloadSites]);
+  }, [reloadSites, refetch]);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -114,9 +117,11 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
 
   useEffect(() => {
     if (data) {
-      if (data.getUserSites.length > 0) {
-        setSelectedOption(data.getUserSites[0].url);
-        setDomainData(data.getUserSites[0]);
+      // Handle both old structure (array) and new structure (PaginatedSites)
+      const sites = data.getUserSites?.sites || data.getUserSites || [];
+      if (sites.length > 0) {
+        setSelectedOption(sites[0].url);
+        setDomainData(sites[0]);
       } else {
         setSelectedOption('No domains available');
         setDomainData(null);
@@ -128,19 +133,21 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
 
   useEffect(() => {
     if (data?.getUserSites) {
+      const sites = data.getUserSites?.sites || data.getUserSites || [];
       setDomainData(
-        data.getUserSites.filter(
+        sites.filter(
           (site: siteDetails) => site.url === selectedOption,
         )[0],
       );
     }
-  }, [selectedOption]);
+  }, [selectedOption, data]);
 
   useEffect(() => {
     if (domainData) {
       try {
         if (window.location.pathname.startsWith('/domain-plans/')) {
-          const { id } = data.getUserSites.filter(
+          const sites = data?.getUserSites?.sites || data?.getUserSites || [];
+          const { id } = sites.filter(
             (site: siteDetails) => site.url === selectedOption,
           )[0];
           history.push(`/domain-plans/${id}`);
@@ -149,7 +156,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
         console.log('error', error);
       }
     }
-  }, [domainData]);
+  }, [domainData, data, selectedOption, history]);
 
   useEffect(() => {
     if (domainData) {
@@ -157,16 +164,19 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
         if (window.location.pathname.startsWith('/domain-plans/')) {
           const numberPattern = /\d+/; // Regular expression to match one or more digits
           const match = Number(window.location.pathname.match(numberPattern));
-          const id = data.getUserSites.filter(
+          const sites = data?.getUserSites?.sites || data?.getUserSites || [];
+          const id = sites.filter(
             (site: siteDetails) => site.id === match,
           )[0];
-          setSelectedOption(id.url);
+          if (id) {
+            setSelectedOption(id.url);
+          }
         }
       } catch (error) {
         console.log('error', error);
       }
     }
-  }, [window.location.pathname]);
+  }, [window.location.pathname, domainData, data]);
 
   // Sync selectedOption with Redux selectedDomain
   useEffect(() => {
@@ -231,6 +241,8 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
                   domains={data}
                   customerData={customerData}
                   setReloadSites={setReloadSites}
+                  refetchSites={refetch}
+                  totalCount={data?.getUserSites?.total}
                 />
               )}
               key="/Add-Domain"

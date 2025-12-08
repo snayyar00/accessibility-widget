@@ -69,7 +69,7 @@ export async function sendQuoteRequestNotification(data: QuoteRequestEmailData):
 
     // Send to admin email (can be configured via environment variable)
     const adminEmail = process.env.EMAIL_TO || 'admin@webability.io'
-    await sendMail(adminEmail, `🎯 New Quote Request: ${data.projectName}`, template)
+    await sendMail(adminEmail, `New Quote Request: ${data.projectName}`, template)
 
     logger.info(`Quote request notification sent to ${adminEmail}`)
   } catch (error) {

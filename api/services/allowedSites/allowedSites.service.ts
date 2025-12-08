@@ -8,6 +8,7 @@ import {
   findSiteByURL,
   findUserSitesWithPlansForWorkspace,
   findUserSitesWithPlansWithWorkspaces,
+  findUserSitesCount,
   insertSite,
   IUserSites,
   toggleSiteMonitoring as toggleSiteMonitoringRepo,
@@ -210,17 +211,28 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
   }
 }
 
-export async function findUserSites(user: UserLogined): Promise<IUserSites[]> {
+export interface PaginatedSitesResponse {
+  sites: IUserSites[]
+  total: number
+}
+
+export async function findUserSites(user: UserLogined, limit?: number, offset?: number, filter?: 'all' | 'active' | 'disabled'): Promise<PaginatedSitesResponse> {
   if (!user.current_organization_id) {
-    return []
+    return { sites: [], total: 0 }
   }
 
   try {
     const isAdmin = await isAdminOrManager(user)
-    const allSites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isAdmin)
+    
+    // Get total count first (before pagination, with filter)
+    const total = await findUserSitesCount(user.id, user.current_organization_id, isAdmin, filter)
+    
+    // Get sites (paginated if limit provided, otherwise all, with filter)
+    const allSites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isAdmin, limit, offset, filter)
     const sitesWithOwnership = addOwnershipFlag(allSites, user.id)
+    const sortedSites = sortSitesByPriorityAndAlphabetically(sitesWithOwnership)
 
-    return sortSitesByPriorityAndAlphabetically(sitesWithOwnership)
+    return { sites: sortedSites, total }
   } catch (e) {
     logger.error(e)
     throw e

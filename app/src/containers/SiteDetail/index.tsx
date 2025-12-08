@@ -24,7 +24,9 @@ const SiteDetail = ({ domains, setReloadSites }: any) => {
   useEffect(() => {
     const siteId = match.params.id;
     if (domains) {
-      const domain = domains.getUserSites.filter((site: any) => site.id == siteId)[0];
+      // Handle both old structure (array) and new structure (PaginatedSites)
+      const sites = domains.getUserSites?.sites || domains.getUserSites || [];
+      const domain = sites.filter((site: any) => site.id == siteId)[0];
       setDomain(domain)
     }
   }, [domains,match]);

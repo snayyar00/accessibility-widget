@@ -1,182 +1,90 @@
 <mjml>
   <mj-head>
-    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" />
-    <mj-font name="Poppins" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" />
     <mj-preview>New Quote Request - {{projectName}}</mj-preview>
-    <mj-attributes>
-      <mj-all font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" />
-      <mj-text font-size="16px" line-height="1.6" color="#374151" />
-      <mj-button font-weight="600" border-radius="8px" />
-    </mj-attributes>
-    <mj-style>
-      .title-text { 
-        font-size: 36px !important; 
-        font-weight: 800 !important; 
-        color: #ffffff !important; 
-        line-height: 1.2 !important; 
-      }
-      .subtitle-text { 
-        font-size: 18px !important; 
-        color: rgba(255,255,255,0.95) !important; 
-        line-height: 1.6 !important; 
-      }
-      .field-label { 
-        font-size: 14px !important; 
-        font-weight: 700 !important; 
-        color: #667eea !important; 
-        text-transform: uppercase !important; 
-        letter-spacing: 0.5px !important; 
-        margin-bottom: 8px !important; 
-      }
-      .field-value { 
-        font-size: 16px !important; 
-        color: #1f2937 !important; 
-        line-height: 1.7 !important; 
-      }
-      .field-card { 
-        background: #f9fafb !important; 
-        border-left: 4px solid #667eea !important; 
-        border-radius: 8px !important; 
-        padding: 20px !important; 
-        margin-bottom: 16px !important; 
-      }
-      .badge { 
-        display: inline-block !important; 
-        padding: 8px 16px !important; 
-        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important; 
-        color: #78350f !important; 
-        border-radius: 24px !important; 
-        font-size: 14px !important; 
-        font-weight: 700 !important; 
-        text-transform: uppercase !important; 
-        letter-spacing: 0.5px !important; 
-      }
-      .link-item { 
-        display: block !important; 
-        padding: 10px 16px !important; 
-        background: #ffffff !important; 
-        border: 1px solid #e5e7eb !important; 
-        border-radius: 6px !important; 
-        margin-bottom: 8px !important; 
-        color: #667eea !important; 
-        text-decoration: none !important; 
-        word-break: break-all !important; 
-      }
-      .footer-text { 
-        font-size: 14px !important; 
-        color: #6b7280 !important; 
-      }
-    </mj-style>
   </mj-head>
   
-  <mj-body background-color="#f3f4f6">
-    <!-- Header with Gradient -->
-    <mj-section background-color="#667eea" padding="48px 24px">
+  <mj-body background-color="#f1f1f1">
+    <mj-section background-color="#0152cc" padding="40px 24px">
       <mj-column>
-        <!-- Title -->
-        <mj-text css-class="title-text" align="center">
-           New Quote Request
+        <mj-text font-size="32px" align="center" font-weight="bold" color="#ffffff" padding="0 0 16px">
+          New Quote Request
         </mj-text>
-        
-        <!-- Subtitle -->
-        <mj-text css-class="subtitle-text" align="center" padding="16px 20px 0">
+        <mj-text font-size="16px" align="center" color="#ffffff" line-height="24px" padding="0 0 32px">
           A new service quote request has been submitted and requires your attention
         </mj-text>
       </mj-column>
     </mj-section>
 
-    <!-- Main Content -->
-    <mj-section background-color="#ffffff" padding="40px 24px">
+    <mj-section background-color="#fff" padding="32px 24px 24px">
       <mj-column>
-        <!-- Status Badge -->
-        <mj-text align="center" padding="0 0 32px">
-          <span class="badge"> PENDING REVIEW</span>
+        <mj-text font-size="16px" align="left" color="#333" font-weight="bold" padding="0 0 8px">
+          Project Name
+        </mj-text>
+        <mj-text font-size="16px" align="left" color="#555" line-height="24px" padding="0 0 24px">
+          {{projectName}}
         </mj-text>
 
-        <!-- Project Name -->
-        <mj-text css-class="field-card">
-          <div class="field-label">📋 Project Name</div>
-          <div class="field-value">{{projectName}}</div>
+        <mj-text font-size="16px" align="left" color="#333" font-weight="bold" padding="0 0 8px">
+          Project Type
+        </mj-text>
+        <mj-text font-size="16px" align="left" color="#555" line-height="24px" padding="0 0 24px">
+          {{projectType}}
         </mj-text>
 
-        <!-- Project Type -->
-        <mj-text css-class="field-card">
-          <div class="field-label">🏷️ Project Type</div>
-          <div class="field-value">{{projectType}}</div>
+        <mj-text font-size="16px" align="left" color="#333" font-weight="bold" padding="0 0 8px">
+          Project Details
+        </mj-text>
+        <mj-text font-size="16px" align="left" color="#555" line-height="24px" padding="0 0 24px">
+          {{projectDetails}}
         </mj-text>
 
-        <!-- Project Details -->
-        <mj-text css-class="field-card">
-          <div class="field-label">📝 Project Details</div>
-          <div class="field-value">{{projectDetails}}</div>
-        </mj-text>
-
-        <!-- Frequency (if provided) -->
         {{#if frequency}}
-        <mj-text css-class="field-card">
-          <div class="field-label">🔄 Frequency</div>
-          <div class="field-value">{{frequency}}</div>
+        <mj-text font-size="16px" align="left" color="#333" font-weight="bold" padding="0 0 8px">
+          Frequency
+        </mj-text>
+        <mj-text font-size="16px" align="left" color="#555" line-height="24px" padding="0 0 24px">
+          {{frequency}}
         </mj-text>
         {{/if}}
 
-        <!-- Project Links -->
-        <mj-text css-class="field-card">
-          <div class="field-label">🔗 Project Links</div>
-          <div style="margin-top: 12px;">
-            {{#each projectLinks}}
-            <a href="{{this}}" class="link-item" target="_blank">{{this}}</a>
-            {{/each}}
-          </div>
+        <mj-text font-size="16px" align="left" color="#333" font-weight="bold" padding="0 0 8px">
+          Project Links
+        </mj-text>
+        <mj-text font-size="16px" align="left" color="#555" line-height="24px" padding="0 0 24px">
+          {{#each projectLinks}}
+          <a href="{{this}}" style="color: #0152cc; text-decoration: none; word-break: break-all;">{{this}}</a><br>
+          {{/each}}
         </mj-text>
 
-        <!-- User Information -->
-        <mj-text css-class="field-card">
-          <div class="field-label">👤 User Information</div>
-          <div class="field-value">
-            <strong>User ID:</strong> {{userId}}<br>
-            <strong>Email:</strong> <a href="mailto:{{userEmail}}" style="color: #667eea;">{{userEmail}}</a>
-            {{#if userName}}
-            <br><strong>Name:</strong> {{userName}}
-            {{/if}}
-          </div>
+        <mj-text font-size="16px" align="left" color="#333" font-weight="bold" padding="0 0 8px">
+          User Information
+        </mj-text>
+        <mj-text font-size="16px" align="left" color="#555" line-height="24px" padding="0 0 32px">
+          <strong>User ID:</strong> {{userId}}<br>
+          <strong>Email:</strong> <a href="mailto:{{userEmail}}" style="color: #0152cc; text-decoration: none;">{{userEmail}}</a>
+          {{#if userName}}
+          <br><strong>Name:</strong> {{userName}}
+          {{/if}}
         </mj-text>
 
-        <!-- CTA Button -->
-        <mj-button 
-          background-color="#667eea" 
-          color="#ffffff"
+        <mj-button
+          background-color="#0152cc"
+          border-radius="8px"
+          color="white"
           font-size="16px"
-          padding="16px 40px"
+          font-weight="600"
           href="{{dashboardLink}}"
+          padding="16px 32px"
         >
-          View in Dashboard →
+          View in Dashboard
         </mj-button>
       </mj-column>
     </mj-section>
 
-    <!-- Tips Section -->
-    <mj-section background-color="#f9fafb" padding="32px 24px">
+    <mj-section background-color="#fff" padding="32px 24px">
       <mj-column>
-        <mj-text font-size="18px" font-weight="700" color="#1f2937" align="center" padding="0 0 16px">
-          💡 Next Steps
-        </mj-text>
-        <mj-text font-size="15px" color="#4b5563" line-height="1.8">
-          • Review the project details and links provided<br>
-          • Assess the scope and complexity of the request<br>
-          • Prepare a detailed quote with pricing and timeline<br>
-          • Reach out to the client within 24-48 hours
-        </mj-text>
-      </mj-column>
-    </mj-section>
-
-    <!-- Footer -->
-    <mj-section background-color="#ffffff" padding="32px 24px">
-      <mj-column>
-        <mj-text css-class="footer-text" align="center">
-          <strong>WebAbility - Accessibility Expertise</strong><br>
-          Making the web accessible for everyone
-        </mj-text>
-        <mj-text css-class="footer-text" align="center" padding="16px 0 0">
+        <mj-divider border-color="#e5e7eb" border-width="1px" padding="0 0 24px"></mj-divider>
+        <mj-text font-size="14px" align="center" color="#666" line-height="20px">
           This is an automated notification from the WebAbility Service Requests system.<br>
           © {{year}} WebAbility. All rights reserved.
         </mj-text>

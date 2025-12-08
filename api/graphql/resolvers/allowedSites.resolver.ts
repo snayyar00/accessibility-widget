@@ -5,7 +5,15 @@ import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 const resolvers = {
   Query: {
-    getUserSites: combineResolvers(allowedOrganization, isAuthenticated, (_, t, { user }) => findUserSites(user)),
+    getUserSites: combineResolvers(allowedOrganization, isAuthenticated, (_, { limit, offset, filter }, { user }) => {
+      // If limit is not provided (undefined), fetch all (for backward compatibility)
+      // If limit is 0 or negative, also fetch all
+      // Otherwise use provided limit for pagination
+      const paginationLimit = limit !== undefined && limit !== null && limit > 0 ? limit : undefined
+      const paginationOffset = offset !== undefined && offset !== null && offset >= 0 ? offset : 0
+      const filterValue = filter === 'active' || filter === 'disabled' ? filter : 'all'
+      return findUserSites(user, paginationLimit, paginationOffset, filterValue)
+    }),
 
     getAvailableSitesForWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_, t, { user }) => findAvailableSitesForWorkspaceAssignment(user)),
 

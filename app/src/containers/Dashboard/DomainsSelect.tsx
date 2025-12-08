@@ -9,9 +9,11 @@ const DomainsSelect = ({ data, selectedOption, setSelectedOption }: any) => {
     setSelectedOption(event.target.value);
   };
 
-  if (!data?.getUserSites?.length) return null;
+  // Handle both old structure (array) and new structure (PaginatedSites)
+  const sites = data?.getUserSites?.sites || data?.getUserSites || [];
+  if (!sites || sites.length === 0) return null;
 
-  const options: Site[] = data.getUserSites;
+  const options: Site[] = sites;
 
   return (
     <FormControl fullWidth>
