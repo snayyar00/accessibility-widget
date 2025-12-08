@@ -10,7 +10,8 @@ const resolvers = {
       // If limit is 0 or negative, also fetch all
       // Otherwise use provided limit for pagination
       const paginationLimit = limit !== undefined && limit !== null && limit > 0 ? limit : undefined
-      const paginationOffset = offset !== undefined && offset !== null && offset >= 0 ? offset : 0
+      // Only pass offset if limit is also defined (MySQL requires LIMIT when using OFFSET)
+      const paginationOffset = paginationLimit !== undefined && offset !== undefined && offset !== null && offset >= 0 ? offset : undefined
       const filterValue = filter === 'active' || filter === 'disabled' ? filter : 'all'
       return findUserSites(user, paginationLimit, paginationOffset, filterValue)
     }),
