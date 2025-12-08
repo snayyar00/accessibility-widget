@@ -24,8 +24,13 @@ export const AllowedSitesSchema = `#graphql
     user_email: String
   }
 
+  type PaginatedSites {
+    sites: [Site]!
+    total: Int!
+  }
+
   extend type Query {
-    getUserSites: [Site] @rateLimit(limit: 60, duration: 60, message: "Too many site list requests. Please try again later.")
+    getUserSites(limit: Int, offset: Int, filter: String): PaginatedSites @rateLimit(limit: 60, duration: 60, message: "Too many site list requests. Please try again later.")
     getAvailableSitesForWorkspace: [Site] @rateLimit(limit: 60, duration: 60, message: "Too many site list requests. Please try again later.")
     isDomainAlreadyAdded(url: String!): Boolean! @rateLimit(limit: 10, duration: 60, message: "Too many domain check attempts. Please try again later.")
   }

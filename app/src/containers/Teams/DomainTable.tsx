@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useMutation } from '@apollo/client';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useMutation, useQuery } from '@apollo/client';
+import getSites from '@/queries/sites/getSites';
 import { FaTrash, FaCheck, FaTimes, FaPencilAlt, FaCog } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
@@ -20,6 +21,7 @@ import { RED_BG } from '@/utils/applyStatusClass';
 import MobileDomainCard from './MobileDomainCard';
 import notFoundImage from '@/assets/images/not_found_image.png';
 import { Site } from '@/generated/graphql';
+import Pagination from '@/components/Common/Pagination';
 
 interface DomainTableProps {
   data: any;
@@ -28,6 +30,8 @@ interface DomainTableProps {
   openModal: () => void;
   setOptionalDomain: (domain: string) => void;
   customerData: any;
+  refetchSites?: () => void;
+  totalCount?: number;
 }
 
 const DomainTable: React.FC<DomainTableProps> = ({
@@ -37,8 +41,37 @@ const DomainTable: React.FC<DomainTableProps> = ({
   openModal,
   setOptionalDomain,
   customerData,
+  refetchSites,
+  totalCount,
 }) => {
   const [domains, setDomains] = useState<Site[]>([]);
+  const [paginationLimit] = useState(20);
+  const [paginationOffset, setPaginationOffset] = useState(0);
+  
+  // Search and filter states (must be before useQuery)
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'disabled'>('all');
+  const previousTabRef = useRef<'all' | 'active' | 'disabled'>('all');
+  
+  // Reset offset when tab changes - compute synchronously to prevent race condition
+  const currentOffset = useMemo(() => {
+    if (activeTab !== previousTabRef.current) {
+      previousTabRef.current = activeTab;
+      return 0;
+    }
+    return paginationOffset;
+  }, [activeTab, paginationOffset]);
+  
+  // Separate paginated query for DomainTable
+  const getFilterValue = () => activeTab === 'all' ? 'all' : activeTab === 'active' ? 'active' : 'disabled';
+  const { data: paginatedData, refetch: refetchPaginated } = useQuery(getSites, {
+    variables: { 
+      limit: paginationLimit, 
+      offset: currentOffset,
+      filter: getFilterValue()
+    },
+    skip: false,
+  });
   const { data: userData } = useSelector((state: RootState) => state.user);
   const [billingLoading, setBillingLoading] = useState(false);
   const [activePlan, setActivePlan] = useState('');
@@ -58,19 +91,23 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [monitoringStates, setMonitoringStates] = useState<{
     [key: number]: boolean;
   }>({});
-
-  // Search and filter states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'disabled'>('all');
   
   // State to track which domain's actions are visible
   const [openActionsMenuId, setOpenActionsMenuId] = useState<number | null>(null);
 
   const [deleteSiteMutation] = useMutation(deleteSite, {
-    onCompleted: (response) => {
+    onCompleted: async (response) => {
       setReloadSites(true);
       if (response.deleteSite === 1) {
         toast.success('The domain was successfully deleted.');
+      }
+      // Refetch paginated data
+      if (refetchPaginated) {
+        await refetchPaginated({ 
+          limit: paginationLimit, 
+          offset: paginationOffset,
+          filter: getFilterValue()
+        });
       }
     },
     onError: () => {
@@ -79,10 +116,18 @@ const DomainTable: React.FC<DomainTableProps> = ({
   });
 
   const [updateSiteMutation] = useMutation(updateSite, {
-    onCompleted: (response) => {
+    onCompleted: async (response) => {
       setReloadSites(true);
       if (response?.changeURL?.includes('Successfully')) {
         toast.success('The domain name was successfully updated.');
+      }
+      // Refetch paginated data
+      if (refetchPaginated) {
+        await refetchPaginated({ 
+          limit: paginationLimit, 
+          offset: paginationOffset,
+          filter: getFilterValue()
+        });
       }
     },
     onError: (error) => {
@@ -93,9 +138,17 @@ const DomainTable: React.FC<DomainTableProps> = ({
   });
 
   const [toggleMonitoringMutation] = useMutation(toggleSiteMonitoring, {
-    onCompleted: () => {
+    onCompleted: async () => {
       setReloadSites(true);
       toast.success('Monitoring settings updated successfully.');
+      // Refetch paginated data
+      if (refetchPaginated) {
+        await refetchPaginated({ 
+          limit: paginationLimit, 
+          offset: paginationOffset,
+          filter: getFilterValue()
+        });
+      }
     },
     onError: (error) => {
       toast.error(`Failed to update monitoring settings. ${error.message}`);
@@ -318,32 +371,28 @@ const DomainTable: React.FC<DomainTableProps> = ({
   };
 
   useEffect(() => {
-    if (data) {
-      setDomains(data.getUserSites);
+    // Use paginated data if available, otherwise fall back to props data
+    const dataSource = paginatedData || data;
+    if (dataSource) {
+      // Handle both old structure (array) and new structure (PaginatedSites)
+      const sites = dataSource.getUserSites?.sites || dataSource.getUserSites || [];
+      setDomains(sites);
     }
-  }, [data]);
+  }, [paginatedData, data]);
 
-  // Filter domains based on search term and active tab
+  // Filter domains based on search term only (backend handles status filtering)
   const filteredDomains = domains.filter((domain) => {
     const matchesSearch =
       (domain?.url ?? '').toLowerCase().includes(searchTerm.toLowerCase());
-    const domainStatus = getDomainStatus(
-      domain?.url ?? '',
-      domain?.expiredAt ?? '',
-      domain.trial ?? 0,
-      appSumoDomains,
-    );
-    const isActive = domainStatus === 'Active' || domainStatus === 'Life Time';
-    const isDisabled = !isActive;
-
-    if (activeTab === 'all') {
-      return matchesSearch;
-    } else if (activeTab === 'active') {
-      return matchesSearch && isActive;
-    } else {
-      return matchesSearch && isDisabled;
-    }
+    return matchesSearch;
   });
+  
+  // Sync paginationOffset state when tab changes (for consistency)
+  useEffect(() => {
+    if (activeTab !== previousTabRef.current && paginationOffset !== 0) {
+      setPaginationOffset(0);
+    }
+  }, [activeTab, paginationOffset]);
 
   useEffect(() => {
     if (customerData) {
@@ -1197,6 +1246,27 @@ const DomainTable: React.FC<DomainTableProps> = ({
             })
           )}
         </div>
+
+        {/* Pagination */}
+        {(() => {
+          const displayTotal = paginatedData?.getUserSites?.total || totalCount || domains.length;
+          return displayTotal > paginationLimit ? (
+            <div className="px-4 sm:px-6 lg:px-8 py-4 w-full overflow-hidden">
+              <Pagination
+                total={displayTotal}
+                size={paginationLimit}
+                onPageChange={(offset: number) => {
+                  setPaginationOffset(offset);
+                  refetchPaginated({ 
+                    limit: paginationLimit, 
+                    offset,
+                    filter: getFilterValue()
+                  });
+                }}
+              />
+            </div>
+          ) : null;
+        })()}
       </div>
     </>
   );

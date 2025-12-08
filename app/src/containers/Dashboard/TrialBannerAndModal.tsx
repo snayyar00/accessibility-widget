@@ -359,17 +359,21 @@ const TrialBannerAndModal: React.FC<any> = ({
 
   useEffect(() => {
     if (allDomains) {
+      // Handle both old structure (array) and new structure (PaginatedSites)
+      const sites = allDomains.getUserSites?.sites || allDomains.getUserSites || [];
+      const total = allDomains.getUserSites?.total || sites.length;
+      
       if (domainName) {
-        const newdomain = allDomains.getUserSites.filter(
+        const newdomain = sites.filter(
           (site: any) => site.url == domainName,
         )[0];
-        setDomainCount(allDomains.getUserSites.length);
+        setDomainCount(total);
         if (newdomain) {
           setAddedDomain(newdomain);
         }
       }
       let trialSites = 0;
-      for (let site of allDomains?.getUserSites) {
+      for (let site of sites) {
         if (site?.trial == 1) {
           trialSites++;
         }
@@ -381,10 +385,14 @@ const TrialBannerAndModal: React.FC<any> = ({
 
   useEffect(() => {
     if (allDomains) {
-      const newdomain = allDomains.getUserSites.filter(
+      // Handle both old structure (array) and new structure (PaginatedSites)
+      const sites = allDomains.getUserSites?.sites || allDomains.getUserSites || [];
+      const total = allDomains.getUserSites?.total || sites.length;
+      
+      const newdomain = sites.filter(
         (site: any) => site.url == optionalDomain,
       )[0];
-      setDomainCount(allDomains.getUserSites.length);
+      setDomainCount(total);
       if (newdomain) {
         setAddedDomain(newdomain);
       }

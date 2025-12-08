@@ -34,7 +34,9 @@ export const processAndSaveReport = createAsyncThunk(
     let allowed_sites_id = null;
 
     if (sitesData && sitesData.getUserSites) {
-      const matchedSite = sitesData.getUserSites.find(
+      // Handle both old structure (array) and new structure (PaginatedSites)
+      const sites = sitesData.getUserSites?.sites || sitesData.getUserSites || [];
+      const matchedSite = sites.find(
         (site: any) =>
           (site.url || '')
             .replace(/^https?:\/\//, '')

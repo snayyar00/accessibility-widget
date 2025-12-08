@@ -55,35 +55,76 @@ const Pagination: React.FC<Props> = ({ total, size = 20, onPageChange }) => {
     }
   }
 
+  // For mobile, show fewer pages (only current and adjacent) but ensure all fit
+  const getMobilePages = (): Array<'...' | number> => {
+    // If 5 or fewer pages, show all
+    if (totalPage <= 5) {
+      return Array.from(Array(totalPage > 0 ? totalPage : 0).keys());
+    }
+    // At start: show first 3, ellipsis, last page
+    if (currentPage <= 1) {
+      return [0, 1, 2, '...', totalPage - 1];
+    }
+    // At end: show first page, ellipsis, last 3
+    if (currentPage >= totalPage - 2) {
+      return [0, '...', totalPage - 3, totalPage - 2, totalPage - 1];
+    }
+    // Middle: show first, ellipsis, current-1, current, current+1, ellipsis, last
+    return [0, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPage - 1];
+  };
+
+  const mobilePages = getMobilePages();
+
   return pages && pages.length > 1 ? (
-    <div className="flex justify-end mt-4">
-      <Button
-        type="button"
-        onClick={() => handleControl('prev')}
-        className="w-[33px] h-9 flex justify-center items-center p-0"
-        disabled={currentPage === 0}
-      >
-        &lt;
-      </Button>
-      {pages.map((page) => (
-        <Button
-          type="button"
-          color={currentPage === page ? 'primary' : 'default'}
-          key={page}
-          className="w-[33px] h-9 flex justify-center items-center p-0 ml-2"
-          onClick={() => handleClickPage(page)}
-        >
-          {page !== '...' ? page + 1 : page}
-        </Button>
-      ))}
-      <Button
-        type="button"
-        onClick={() => handleControl('next')}
-        className="w-[33px] h-9 flex justify-center items-center p-0 ml-2"
-        disabled={currentPage === totalPage - 1}
-      >
-        &gt;
-      </Button>
+    <div className="w-full mt-4">
+      <div className="flex justify-center sm:justify-end items-center overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex items-center gap-1 sm:gap-2 flex-nowrap min-w-max">
+          <Button
+            type="button"
+            onClick={() => handleControl('prev')}
+            className="w-8 h-8 sm:w-[33px] sm:h-9 flex justify-center items-center p-0 flex-shrink-0"
+            disabled={currentPage === 0}
+          >
+            &lt;
+          </Button>
+          {/* Desktop: Show full pagination */}
+          <div className="hidden sm:flex items-center gap-2 flex-nowrap">
+            {pages.map((page) => (
+              <Button
+                type="button"
+                color={currentPage === page ? 'primary' : 'default'}
+                key={page}
+                className="w-[33px] h-9 flex justify-center items-center p-0 flex-shrink-0"
+                onClick={() => handleClickPage(page)}
+              >
+                {page !== '...' ? page + 1 : page}
+              </Button>
+            ))}
+          </div>
+          {/* Mobile: Show simplified pagination with scroll */}
+          <div className="flex sm:hidden items-center gap-1 flex-nowrap">
+            {mobilePages.map((page, index) => (
+              <Button
+                type="button"
+                color={currentPage === page ? 'primary' : 'default'}
+                key={`mobile-${page}-${index}`}
+                className="w-8 h-8 flex justify-center items-center p-0 text-xs flex-shrink-0 min-w-[32px]"
+                onClick={() => handleClickPage(page)}
+              >
+                {page !== '...' ? page + 1 : page}
+              </Button>
+            ))}
+          </div>
+          <Button
+            type="button"
+            onClick={() => handleControl('next')}
+            className="w-8 h-8 sm:w-[33px] sm:h-9 flex justify-center items-center p-0 flex-shrink-0"
+            disabled={currentPage === totalPage - 1}
+          >
+            &gt;
+          </Button>
+        </div>
+      </div>
     </div>
   ) : null;
 };

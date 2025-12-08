@@ -17,7 +17,7 @@ interface DomainFormData {
   domainName: string;
 }
 
-const Teams = ({ domains, setReloadSites, customerData }: any) => {
+const Teams = ({ domains, setReloadSites, customerData, refetchSites, totalCount }: any) => {
   const { t } = useTranslation();
   useDocumentHeader({ title: t('Common.title.add_domain') });
   const location = useLocation();
@@ -43,8 +43,8 @@ const Teams = ({ domains, setReloadSites, customerData }: any) => {
   const [optionalDomain, setOptionalDomain] = useState('yes');
 
   // Check if user has no domains for tour condition
-  const hasNoDomains =
-    !domains?.getUserSites || domains.getUserSites.length === 0;
+  const sites = domains?.getUserSites?.sites || domains?.getUserSites || [];
+  const hasNoDomains = !sites || sites.length === 0;
 
   // Check if modal should open automatically (coming from dashboard)
   const searchParams = new URLSearchParams(location.search);
@@ -158,6 +158,8 @@ const Teams = ({ domains, setReloadSites, customerData }: any) => {
           setPaymentView={setPaymentView}
           openModal={openModal}
           setOptionalDomain={setOptionalDomain}
+          refetchSites={refetchSites}
+          totalCount={totalCount}
         />
       </div>
     </>
