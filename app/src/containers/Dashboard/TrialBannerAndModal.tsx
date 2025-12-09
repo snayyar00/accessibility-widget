@@ -477,15 +477,19 @@ const TrialBannerAndModal: React.FC<any> = ({
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     const sanitizedDomain = getRootDomain(formData.domainName);
-    const effectiveDomain =
-      sanitizedDomain === 'us.com' &&
-      formData.domainName.toLowerCase().includes('name.us.com')
-        ? 'name.us.com'
-        : sanitizedDomain;
+    const lowerDomain = formData.domainName.toLowerCase().trim();
+    const isUsComSubdomain = lowerDomain.endsWith('.us.com') && lowerDomain !== 'us.com';
+    // For *.us.com subdomains, preserve the full domain; otherwise use root domain
+    const effectiveDomain = isUsComSubdomain 
+      ? lowerDomain.replace(/^(https?:\/\/)?(www\.)?/, '').split(/[\/?#]/)[0]
+      : sanitizedDomain;
+    const isUsComDomain = sanitizedDomain === 'us.com' || lowerDomain.endsWith('.us.com');
+    // Only bypass validation for *.us.com subdomains, validate all other domains normally
     if (
       sanitizedDomain !== 'localhost' &&
       !isIpAddress(sanitizedDomain) &&
-      !isValidRootDomainFormat(sanitizedDomain)
+      !isValidRootDomainFormat(sanitizedDomain) &&
+      !isUsComDomain
     ) {
       toast.error('You must enter a valid domain name!');
       return;
