@@ -55,25 +55,137 @@ export async function findSitesByIds(ids: number[]): Promise<Array<{ id: number;
 }
 
 /**
+ * Get total count of sites for a user/organization with optional filter
+ */
+export async function findUserSitesCount(userId: number, organizationId: number, isAdmin: boolean, filter?: 'all' | 'active' | 'disabled'): Promise<number> {
+  let filterCondition = '';
+  const params: any[] = [];
+  
+  if (filter === 'active' || filter === 'disabled') {
+    const latestPlanSubquery = `(SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)`;
+    
+    if (filter === 'active') {
+      // Active: trial === 0 AND expiredAt > now
+      filterCondition = `
+        AND EXISTS (
+          SELECT 1 FROM ${TABLES.sitesPlans} sp_count
+          WHERE sp_count.allowed_site_id = ${TABLE}.id
+          AND sp_count.is_trial = 0
+          AND sp_count.expired_at IS NOT NULL
+          AND sp_count.expired_at > NOW()
+          AND sp_count.id = ${latestPlanSubquery}
+        )
+      `;
+    } else { // filter === 'disabled'
+      // Disabled: trial === 1 OR expiredAt is null OR expiredAt <= now
+      filterCondition = `
+        AND EXISTS (
+          SELECT 1 FROM ${TABLES.sitesPlans} sp_count
+          WHERE sp_count.allowed_site_id = ${TABLE}.id
+          AND (sp_count.is_trial = 1 OR sp_count.expired_at IS NULL OR sp_count.expired_at <= NOW())
+          AND sp_count.id = ${latestPlanSubquery}
+        )
+      `;
+    }
+  }
+  
+  if (isAdmin) {
+    const result = await database.raw(
+      `
+      SELECT COUNT(*) as count
+      FROM ${TABLE}
+      WHERE ${TABLE}.organization_id = ?${filterCondition}
+      `,
+      [organizationId, ...params],
+    );
+    return Number(result[0]?.[0]?.count || 0);
+  } else {
+    const result = await database.raw(
+      `
+      SELECT COUNT(DISTINCT ${TABLE}.id) as count
+      FROM ${TABLE}
+      WHERE ${TABLE}.organization_id = ?
+        AND (
+          ${TABLE}.user_id = ?
+          OR EXISTS (
+            SELECT 1
+            FROM ${TABLES.workspace_allowed_sites} was2
+            JOIN ${TABLES.workspaces} w2 ON was2.workspace_id = w2.id
+            JOIN ${TABLES.workspace_users} wu ON w2.id = wu.workspace_id
+            WHERE was2.allowed_site_id = ${TABLE}.id
+              AND wu.user_id = ?
+              AND wu.status = 'active'
+          )
+        )${filterCondition}
+      `,
+      [organizationId, userId, userId, ...params],
+    );
+    return Number(result[0]?.[0]?.count || 0);
+  }
+}
+
+/**
  * For admins: Returns ALL organization sites with workspace data aggregated via LEFT JOIN
  * For regular users: Returns own sites + workspace sites (with active membership check) in single query
  *
  * @param userId - User ID
  * @param organizationId - Organization ID
  * @param isAdmin - If true, returns ALL sites in organization (for super admin / org managers)
+ * @param limit - Optional limit for pagination
+ * @param offset - Optional offset for pagination
+ * @param filter - Optional filter: 'all' | 'active' | 'disabled'
  * @returns Promise<IUserSites[]> - Sites with plan information and workspace data pre-aggregated
  */
-export async function findUserSitesWithPlansWithWorkspaces(userId: number, organizationId: number, isAdmin: boolean): Promise<IUserSites[]> {
+export async function findUserSitesWithPlansWithWorkspaces(userId: number, organizationId: number, isAdmin: boolean, limit?: number, offset?: number, filter?: 'all' | 'active' | 'disabled'): Promise<IUserSites[]> {
+  const now = database.raw('NOW()');
   if (isAdmin) {
     // Admin path: Get ALL sites in organization with workspace info via subquery to avoid GROUP BY issues
-    return buildSitesBaseQuery()
+    let query = buildSitesBaseQuery()
       .where(`${TABLE}.organization_id`, organizationId)
       .select(...selectSiteFieldsWithMonitoring())
+    
+    // Apply filter
+    if (filter === 'active') {
+      query = query
+        .where(`${TABLES.sitesPlans}.is_trial`, 0)
+        .whereNotNull(`${TABLES.sitesPlans}.expired_at`)
+        .where(`${TABLES.sitesPlans}.expired_at`, '>', now);
+    } else if (filter === 'disabled') {
+      query = query.where(function() {
+        this.where(`${TABLES.sitesPlans}.is_trial`, 1)
+          .orWhereNull(`${TABLES.sitesPlans}.expired_at`)
+          .orWhere(`${TABLES.sitesPlans}.expired_at`, '<=', now);
+      });
+    }
+    
+    if (limit !== undefined) {
+      query = query.limit(limit)
+      // Only add OFFSET if LIMIT is also defined (MySQL requires LIMIT when using OFFSET)
+      if (offset !== undefined) {
+        query = query.offset(offset)
+      }
+    }
+    
+    return query
   } else {
     // Regular user path: Single query with OR condition (own sites OR workspace membership)
     // Workspace array aggregated in subquery to avoid GROUP BY complexity
-    const sites = await database.raw(
-      `
+    
+    // Build filter condition first
+    let filterCondition = '';
+    if (filter === 'active') {
+      filterCondition = `
+        AND sp.is_trial = 0
+        AND sp.expired_at IS NOT NULL
+        AND sp.expired_at > NOW()
+      `;
+    } else if (filter === 'disabled') {
+      filterCondition = `
+        AND (sp.is_trial = 1 OR sp.expired_at IS NULL OR sp.expired_at <= NOW())
+      `;
+    }
+    
+    let sql = `
       SELECT DISTINCT
         ${TABLE}.id,
         ${TABLE}.user_id,
@@ -120,10 +232,22 @@ export async function findUserSitesWithPlansWithWorkspaces(userId: number, organ
               AND wu.status = 'active'
           )
         )
-      `,
-      [organizationId, userId, userId],
-    )
-
+        ${filterCondition}
+    `
+    
+    const params: any[] = [organizationId, userId, userId];
+    
+    if (limit !== undefined) {
+      sql += ` LIMIT ?`
+      params.push(limit)
+      // Only add OFFSET if LIMIT is also defined (MySQL requires LIMIT when using OFFSET)
+      if (offset !== undefined) {
+        sql += ` OFFSET ?`
+        params.push(offset)
+      }
+    }
+    
+    const sites = await database.raw(sql, params)
     return sites[0] // raw() returns [rows, fields]
   }
 }

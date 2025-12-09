@@ -20,6 +20,8 @@ import getDomainStatus from '@/utils/getDomainStatus';
 import applyStatusClass from '@/utils/applyStatusClass';
 import dashboardImage from '@/assets/images/dashboard_image.png';
 import { baseColors } from '@/config/colors';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/config/store';
 
 interface ChartData {
   date: string;
@@ -57,6 +59,9 @@ const Dashboard: React.FC<any> = ({
   const { t } = useTranslation();
   const organizationName = useOrganizationName();
   useDocumentHeader({ title: t('Common.title.dashboard') });
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
 
   // Get colors configuration
   // Using baseColors directly
@@ -439,6 +444,7 @@ const Dashboard: React.FC<any> = ({
                     Get compliant
                   </button>
 
+                  {organization?.id === '1' && (
                   <button
                     className="app-sumo-button w-full sm:w-48 md:w-64 lg:w-64 flex justify-center px-6 py-4 h-14 text-white text-lg font-medium rounded-2xl bg-slate-800 hover:bg-slate-700 border-2 border-blue-400/50 transition-all duration-300 shadow-lg shadow-blue-400/20 hover:shadow-blue-400/30 cursor-pointer"
                     style={{ alignItems: 'center' }}
@@ -447,6 +453,7 @@ const Dashboard: React.FC<any> = ({
                     <span className=" lg:hidden">Appsumo</span>
                     <span className="hidden lg:inline">Redeem Appsumo</span>
                   </button>
+                  )}
                 </div>
               </div>
             </div>

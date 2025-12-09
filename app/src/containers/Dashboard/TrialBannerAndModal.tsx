@@ -367,17 +367,21 @@ const TrialBannerAndModal: React.FC<any> = ({
 
   useEffect(() => {
     if (allDomains) {
+      // Handle both old structure (array) and new structure (PaginatedSites)
+      const sites = allDomains.getUserSites?.sites || allDomains.getUserSites || [];
+      const total = allDomains.getUserSites?.total || sites.length;
+      
       if (domainName) {
-        const newdomain = allDomains.getUserSites.filter(
+        const newdomain = sites.filter(
           (site: any) => site.url == domainName,
         )[0];
-        setDomainCount(allDomains.getUserSites.length);
+        setDomainCount(total);
         if (newdomain) {
           setAddedDomain(newdomain);
         }
       }
       let trialSites = 0;
-      for (let site of allDomains?.getUserSites) {
+      for (let site of sites) {
         if (site?.trial == 1) {
           trialSites++;
         }
@@ -389,10 +393,14 @@ const TrialBannerAndModal: React.FC<any> = ({
 
   useEffect(() => {
     if (allDomains) {
-      const newdomain = allDomains.getUserSites.filter(
+      // Handle both old structure (array) and new structure (PaginatedSites)
+      const sites = allDomains.getUserSites?.sites || allDomains.getUserSites || [];
+      const total = allDomains.getUserSites?.total || sites.length;
+      
+      const newdomain = sites.filter(
         (site: any) => site.url == optionalDomain,
       )[0];
-      setDomainCount(allDomains.getUserSites.length);
+      setDomainCount(total);
       if (newdomain) {
         setAddedDomain(newdomain);
       }
@@ -857,6 +865,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                     </div>
 
                     {/* AppSumo User Notice */}
+                    {organization?.id === '1' && (
                     <div className="relative mt-3 p-3 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg shadow-md border border-yellow-300 overflow-hidden">
                       {/* Background decoration */}
                       <div className="absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 bg-yellow-300 rounded-full opacity-20"></div>
@@ -892,6 +901,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                         </div>
                       </div>
                     </div>
+                    )}
                   </form>
                 </div>
               </div>
@@ -1078,7 +1088,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                             </div>
 
                             {/* card 2 */}
-                            {appSumoCount > 0 && (
+                            {organization?.id === '1' && appSumoCount > 0 && (
                               <div className="w-full md:w-auto text-center md:text-left">
                                 <div className="bg-blue-50 p-3 rounded-full flex justify-center">
                                   <FaUsers className="h-6 w-6 text-[#ffbc00]" />
@@ -1363,7 +1373,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                             )}
                           </div>
                         </div>
-                        {APP_SUMO_BUNDLE_NAMES.slice(0, -1).includes(
+                        {organization?.id === '1' && APP_SUMO_BUNDLE_NAMES.slice(0, -1).includes(
                           activePlan.toLowerCase(),
                         ) ? (
                           <div className="flex my-4 items-center">
