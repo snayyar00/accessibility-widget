@@ -134,16 +134,24 @@ const TrialBannerAndModal: React.FC<any> = ({
 
   const showPaymentModal = async () => {
     const sanitizedDomain = getRootDomain(formData.domainName);
+    const lowerDomain = formData.domainName.toLowerCase().trim();
+    const isUsComSubdomain = lowerDomain.endsWith('.us.com') && lowerDomain !== 'us.com';
+    // For *.us.com subdomains, preserve the full domain; otherwise use root domain
+    const effectiveDomain = isUsComSubdomain 
+      ? lowerDomain.replace(/^(https?:\/\/)?(www\.)?/, '').split(/[\/?#]/)[0]
+      : sanitizedDomain;
+    const isUsComDomain = sanitizedDomain === 'us.com' || formData.domainName.toLowerCase().endsWith('.us.com');
     if (
       sanitizedDomain !== 'localhost' &&
       !isIpAddress(sanitizedDomain) &&
-      !isValidRootDomainFormat(sanitizedDomain)
+      !isValidRootDomainFormat(sanitizedDomain) &&
+      !isUsComDomain
     ) {
       toast.error('You must enter a valid domain name!');
       return;
     }
     const response = await addSiteMutation({
-      variables: { url: sanitizedDomain },
+      variables: { url: effectiveDomain },
     });
     if (response.errors) {
       try {
@@ -178,7 +186,7 @@ const TrialBannerAndModal: React.FC<any> = ({
       if (window.location.pathname == '/dashboard') {
         window.location.href = '/add-domain';
       }
-      setDomainName(sanitizedDomain);
+      setDomainName(effectiveDomain);
       setBillingLoading(true);
     }
   };
