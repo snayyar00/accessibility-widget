@@ -1,6 +1,7 @@
 import { AccessibilitySchema } from './schemas/accessibilityReport.schema'
 import { aiReadinessSchema } from './schemas/aiReadiness.schema'
 import { AllowedSitesSchema } from './schemas/allowedSites.schema'
+import bulkEmailSchema from './schemas/bulkEmail.schema'
 import { DomainAnalysisSchema } from './schemas/domainAnalysis.schema'
 import { ImpressionsSchema } from './schemas/impressions.schema'
 import { InvitationSchema } from './schemas/invitation.schema'
@@ -54,4 +55,5 @@ export default [
   InvitationSchema,
   aiReadinessSchema,
   serviceRequestSchema,
+  bulkEmailSchema,
 ]

@@ -1,6 +1,7 @@
 import accessibilityResolves from './resolvers/accessibilityReport.resolver'
 import { aiReadinessResolvers } from './resolvers/aiReadiness.resolver'
 import allowedSitesResolves from './resolvers/allowedSites.resolver'
+import bulkEmailResolvers from './resolvers/bulkEmail.resolver'
 import domainAnalysisResolves from './resolvers/domainAnalysis.resolver'
 import impressionResolves from './resolvers/impressions.resolver'
 import invitationResolvers from './resolvers/invitation.resolver'
@@ -39,6 +40,7 @@ export function createResolvers() {
     invitationResolvers,
     aiReadinessResolvers,
     serviceRequestResolvers,
+    bulkEmailResolvers,
   ]
 }
 

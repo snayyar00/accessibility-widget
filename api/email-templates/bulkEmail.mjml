@@ -1,0 +1,116 @@
+<mjml>
+  <mj-head>
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+    <mj-attributes>
+      <mj-all font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif" />
+      <mj-text font-size="16px" line-height="1.7" color="#374151" />
+      <mj-button font-weight="600" border-radius="8px" />
+    </mj-attributes>
+    <mj-preview>{{ subject }}</mj-preview>
+  </mj-head>
+  <mj-body background-color="#ffffff">
+    <!-- Header with Logo -->
+    <mj-section background-color="#ffffff" padding="24px 24px 16px">
+      <mj-column>
+        <mj-image 
+          src="https://cdn.webability.io/organizations/88/logo-b3c155df-3aab-43f4-b17b-e9b738a2ca4e.png" 
+          alt="WebAbility" 
+          width="150px"
+          align="left"
+          padding="0"
+        />
+      </mj-column>
+    </mj-section>
+
+    <!-- Banner Image -->
+    <mj-section background-color="#ffffff" padding="0">
+      <mj-column>
+        <mj-image 
+          src="https://cdn.webability.io/organizations/86/logo-7c77cc04-7d5f-47ef-a590-8bb855edddf9.png" 
+          alt="WebAbility - Rebuilt, Refined and Reimagined"
+          width="600px"
+          align="center"
+          padding="0"
+        />
+      </mj-column>
+    </mj-section>
+
+    <!-- Main Content -->
+    <mj-section background-color="#ffffff" padding="0 24px 32px">
+      <mj-column>
+        <mj-text font-size="24px" font-weight="700" color="#0052cc" padding="16px 0 16px" align="center">
+          {{ subject }}
+        </mj-text>
+        
+        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 16px">
+          We're excited to introduce the <strong style="color: #0052cc;">WebAbility Agency Franchise Program</strong>  a powerful opportunity for agencies like yours to offer world-class accessibility widgets directly to your clients.
+        </mj-text>
+
+        <mj-text font-size="18px" font-weight="600" color="#0052cc" padding="0 0 12px">
+          As a WebAbility Agency Partner, you can:
+        </mj-text>
+        
+        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 8px">
+          • <strong style="color: #0052cc;">Sell accessibility plans</strong> from your own branded website
+        </mj-text>
+        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 8px">
+          • <strong style="color: #0052cc;">Earn 50% commission</strong> on every plan sold
+        </mj-text>
+        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 24px">
+          • <strong style="color: #0052cc;">Expand your service offerings</strong> with zero technical complexity
+        </mj-text>
+
+        <mj-text font-size="18px" font-weight="600" color="#0052cc" padding="0 0 12px">
+          Getting started is simple
+        </mj-text>
+        
+        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 20px">
+          Just connect your branded subdomain to our server following the steps in the guide below:
+        </mj-text>
+
+        <mj-button 
+          background-color="#0052cc" 
+          color="#ffffff"
+          font-size="16px"
+          padding="12px 24px"
+          href="https://docs.google.com/document/d/1V9vO9iSIDR85wdp81yHJDC8kgWfPMu0jzLHTEGkk25M/edit?tab=t.0"
+        >
+          View Setup Guide
+        </mj-button>
+
+        <mj-divider border-color="#e5e7eb" border-width="1px" padding="32px 0" />
+
+        <mj-text font-size="18px" font-weight="600" color="#0052cc" padding="0 0 12px">
+          Need help? We're here to assist
+        </mj-text>
+        
+        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 8px">
+          If you need help with your setup or have any questions, our team is ready to assist anytime, just reply to this email.
+        </mj-text>
+        
+        <mj-text font-size="14px" color="#6b7280" padding="0">
+          Our support team is standing by to help you get started.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#f9fafb" padding="32px 24px">
+      <mj-column>
+        <mj-text font-size="14px" color="#0052cc" font-weight="600" align="center" padding="0 0 8px">
+          WebAbility
+        </mj-text>
+        <mj-text font-size="14px" color="#6b7280" align="center" padding="0 0 16px">
+          Making the web accessible for everyone
+        </mj-text>
+        <mj-text font-size="12px" color="#9ca3af" align="center" padding="0">
+          © {{year}} WebAbility. All rights reserved.
+        </mj-text>
+        <mj-text font-size="12px" color="#9ca3af" align="center" padding="12px 0 0">
+          <a href="mailto:support@webability.io" style="color: #0052cc; text-decoration: none;">support@webability.io</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
+

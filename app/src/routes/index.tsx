@@ -3,7 +3,7 @@ import Accessibility from '@/containers/Accessibility/Accessibility';
 import { MdBugReport } from 'react-icons/md';
 import ProblemReport from '@/containers/ProblemReport/ProblemReport';
 import { TbReportSearch } from 'react-icons/tb';
-import { MdOutlineGavel, MdOutlineInsights } from 'react-icons/md';
+import { MdOutlineGavel, MdOutlineInsights, MdEmail } from 'react-icons/md';
 import { FiFile, FiShoppingBag } from 'react-icons/fi';
 import ReportView from '@/containers/Accessibility/ReportView';
 import StatementGenerator from '@/containers/StatementGenerator/StatementGenerator';
@@ -13,6 +13,7 @@ import AIInsights from '@/containers/AIInsights/AIInsights';
 import Workspaces from '@/containers/Workspaces';
 import Organization from '@/containers/Organization';
 import ServiceRequests from '@/containers/ServiceRequests';
+import BulkEmail from '@/containers/BulkEmail/BulkEmail';
 
 const routes = [
   {
@@ -134,6 +135,20 @@ const routes = [
     exact: true,
     component: Organization,
     isSidebar: false,
+  },
+  {
+    path: '/bulk-email',
+    name: 'Bulk Email',
+    exact: true,
+    component: BulkEmail,
+    icon: (
+      <MdEmail
+        className="menu-icon text-white-blue transition-colors duration-200"
+        size={25}
+        aria-label="Bulk Email navigation icon"
+      />
+    ),
+    isSidebar: true,
   },
 ];
 
