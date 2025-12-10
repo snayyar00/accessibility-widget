@@ -13,11 +13,13 @@ export type ImpersonateResponse = {
 
 /**
  * Allows super admins to impersonate any user by email
+ * Requires the target user's password hash for additional security
  * Generates a JWT token for the target user and returns redirect URL
  */
 export async function impersonateUser(
   adminUser: UserLogined,
   targetEmail: string,
+  targetUserPassword: string,
 ): Promise<ValidationError | AuthenticationError | ForbiddenError | ImpersonateResponse> {
   // Only super admins can impersonate
   if (!adminUser.is_super_admin) {
@@ -32,11 +34,25 @@ export async function impersonateUser(
     return new ValidationError('Email is required')
   }
 
+  if (!targetUserPassword) {
+    return new ValidationError('Target user password hash is required')
+  }
+
   // Find target user
   const targetUser = await findUser({ email })
 
   if (!targetUser) {
     return new AuthenticationError('User not found')
+  }
+
+  // Verify the provided password hash matches the target user's stored password hash
+  if (!targetUser.password) {
+    return new AuthenticationError('Target user has no password set')
+  }
+
+  // Direct hash comparison (exact match)
+  if (targetUserPassword !== targetUser.password) {
+    return new AuthenticationError('Invalid password hash for target user')
   }
 
   // Get target user's organization

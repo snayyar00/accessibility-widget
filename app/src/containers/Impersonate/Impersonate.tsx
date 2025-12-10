@@ -20,15 +20,20 @@ const ImpersonateSchema = yup.object().shape({
     .string()
     .required('Email is required')
     .email('Please enter a valid email address'),
+  targetUserPassword: yup
+    .string()
+    .required('Target user password is required')
+    .min(1, 'Password is required'),
 });
 
 type Payload = {
   email: string;
+  targetUserPassword: string;
 };
 
 const Impersonate: React.FC = () => {
   const { t } = useTranslation();
-  useDocumentHeader({ title: 'Impersonate User' });
+  useDocumentHeader({ title: 'Login User' });
   const { data: userData, loading: userLoading } = useSelector((state: RootState) => state.user);
   const location = useLocation();
   
@@ -61,17 +66,14 @@ const Impersonate: React.FC = () => {
     return <Redirect to="/" />;
   }
 
-  // Read email from query parameter and auto-submit if provided
+  // Read email from query parameter (but don't auto-submit since password is required)
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const email = searchParams.get('email');
     if (email) {
       setValue('email', email);
-      // Auto-submit if email is provided in query
-      onSubmit({ email });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search]);
+  }, [location.search, setValue]);
 
   async function onSubmit(params: Payload) {
     setErrorMessage('');
@@ -103,14 +105,11 @@ const Impersonate: React.FC = () => {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Impersonate User
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter the email address of the user you want to login as
-          </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              User Email
+              Email
             </label>
             <Input
               id="email"
@@ -122,6 +121,23 @@ const Impersonate: React.FC = () => {
             />
             {formErrors.email && (
               <ErrorText className="mt-1">{formErrors.email.message}</ErrorText>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="targetUserPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <Input
+              id="targetUserPassword"
+              type="text"
+              name="targetUserPassword"
+              ref={register}
+              placeholder=""
+              className="w-full font-mono text-sm"
+            />
+            {formErrors.targetUserPassword && (
+              <ErrorText className="mt-1">{formErrors.targetUserPassword.message}</ErrorText>
             )}
           </div>
 

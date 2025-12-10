@@ -92,7 +92,7 @@ export const UserSchema = `#graphql
 
     changeCurrentOrganization(organizationId: Int!, userId: Int): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many organization change requests. Please try again later.")
 
-    impersonateUser(email: String!): ImpersonatePayload! @rateLimit(limit: 10, duration: 60, message: "Too many impersonation attempts. Please try again later.")
+    impersonateUser(email: String!, targetUserPassword: String!): ImpersonatePayload! @rateLimit(limit: 10, duration: 60, message: "Too many impersonation attempts. Please try again later.")
 
     logout: Boolean!
   }

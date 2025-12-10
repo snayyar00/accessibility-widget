@@ -13,7 +13,7 @@ import { getLicenseOwnerInfo, updateLicenseOwnerInfo } from '../../services/user
 import { getUserNotificationSettingsService, updateProfile, updateUserNotificationSettings } from '../../services/user/update-user.service'
 import { changeCurrentOrganization } from '../../services/user/update-user.service'
 import { isEmailAlreadyRegistered } from '../../services/user/user.service'
-import { allowedOrganization, isAuthenticated } from './authorization.resolver'
+import { allowedOrganization, isAuthenticated, isSuperAdmin } from './authorization.resolver'
 
 type Register = {
   email: string
@@ -116,8 +116,8 @@ const resolvers = {
       return await changeCurrentOrganization(user, organizationId, userId)
     }),
 
-    impersonateUser: combineResolvers(allowedOrganization, isAuthenticated, async (_, { email }, { user }) => {
-      const result = await impersonateUser(user, normalizeEmail(email))
+    impersonateUser: combineResolvers(allowedOrganization, isAuthenticated, isSuperAdmin, async (_, { email, targetUserPassword }, { user }) => {
+      const result = await impersonateUser(user, normalizeEmail(email), targetUserPassword)
       return result
     }),
   },
