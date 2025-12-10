@@ -29,7 +29,7 @@ type Payload = {
 const Impersonate: React.FC = () => {
   const { t } = useTranslation();
   useDocumentHeader({ title: 'Impersonate User' });
-  const { data: userData } = useSelector((state: RootState) => state.user);
+  const { data: userData, loading: userLoading } = useSelector((state: RootState) => state.user);
   const location = useLocation();
   
   const {
@@ -44,7 +44,19 @@ const Impersonate: React.FC = () => {
   const [impersonateMutation, { error, loading }] = useMutation(impersonateUserQuery);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
-  // Only super admins can access this page
+  // Wait for user data to load before checking permissions
+  if (userLoading || !userData || !userData.id) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only super admins can access this page - strict check
   if (!userData.is_super_admin) {
     return <Redirect to="/" />;
   }
