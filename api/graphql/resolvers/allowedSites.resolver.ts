@@ -5,7 +5,7 @@ import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 const resolvers = {
   Query: {
-    getUserSites: combineResolvers(allowedOrganization, isAuthenticated, (_, { limit, offset, filter }, { user }) => {
+    getUserSites: combineResolvers(allowedOrganization, isAuthenticated, (_, { limit, offset, filter, search }, { user }) => {
       // If limit is not provided (undefined), fetch all (for backward compatibility)
       // If limit is 0 or negative, also fetch all
       // Otherwise use provided limit for pagination
@@ -13,7 +13,8 @@ const resolvers = {
       // Only pass offset if limit is also defined (MySQL requires LIMIT when using OFFSET)
       const paginationOffset = paginationLimit !== undefined && offset !== undefined && offset !== null && offset >= 0 ? offset : undefined
       const filterValue = filter === 'active' || filter === 'disabled' ? filter : 'all'
-      return findUserSites(user, paginationLimit, paginationOffset, filterValue)
+      const searchTerm = search && typeof search === 'string' && search.trim().length > 0 ? search.trim() : undefined
+      return findUserSites(user, paginationLimit, paginationOffset, filterValue, searchTerm)
     }),
 
     getAvailableSitesForWorkspace: combineResolvers(allowedOrganization, isAuthenticated, (_, t, { user }) => findAvailableSitesForWorkspaceAssignment(user)),
