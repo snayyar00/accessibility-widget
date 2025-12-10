@@ -92,8 +92,8 @@ export const TableUsers = ({
     const searchLower = searchTerm.toLowerCase();
     return rows.filter(
       (row) =>
-        row.name.toLowerCase().includes(searchLower) ||
-        row.email.toLowerCase().includes(searchLower) ||
+        (row.name || '').toLowerCase().includes(searchLower) ||
+        (row.email || '').toLowerCase().includes(searchLower) ||
         row.id.toString().includes(searchLower),
     );
   }, [rows, searchTerm]);
