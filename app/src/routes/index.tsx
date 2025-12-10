@@ -143,6 +143,20 @@ const routes = [
     component: Impersonate,
     isSidebar: true,
   },
+  {
+    path: '/impersonate',
+    name: 'Impersonate User',
+    exact: true,
+    component: Impersonate,
+    isSidebar: true,
+  },
+  {
+    path: '/impersonate',
+    name: 'Impersonate User',
+    exact: true,
+    component: Impersonate,
+    isSidebar: true,
+  },
 ];
 
 export default routes;
