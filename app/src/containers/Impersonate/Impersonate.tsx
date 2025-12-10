@@ -3,12 +3,11 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { useMutation } from '@apollo/client';
-import { useSelector } from 'react-redux';
+import { useMutation, useLazyQuery } from '@apollo/client';
 import { Redirect, useLocation } from 'react-router-dom';
-import { RootState } from '@/config/store';
 import { setAuthenticationCookie } from '@/utils/cookie';
 import impersonateUserQuery from '@/queries/auth/impersonateUser';
+import GET_PROFILE from '@/queries/auth/getProfile';
 import { IS_LOCAL } from '@/config/env';
 import Input from '@/components/Common/Input/Input';
 import Button from '@/components/Common/Button';
@@ -34,7 +33,6 @@ type Payload = {
 const Impersonate: React.FC = () => {
   const { t } = useTranslation();
   useDocumentHeader({ title: 'Login User' });
-  const { data: userData, loading: userLoading } = useSelector((state: RootState) => state.user);
   const location = useLocation();
   
   const {
@@ -48,22 +46,39 @@ const Impersonate: React.FC = () => {
 
   const [impersonateMutation, { error, loading }] = useMutation(impersonateUserQuery);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  
+  // Backend validation: Check super admin status from server
+  const [validateSuperAdmin, { data: profileData, loading: validating, error: validationError }] = useLazyQuery(GET_PROFILE, {
+    fetchPolicy: 'no-cache', // Always fetch fresh from backend
+  });
 
-  // Wait for user data to load before checking permissions
-  if (userLoading || !userData || !userData.id) {
+  // Validate super admin status on component mount
+  useEffect(() => {
+    validateSuperAdmin();
+  }, [validateSuperAdmin]);
+
+  // Show loading while validating with backend
+  if (validating || !profileData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600">Validating permissions...</p>
         </div>
       </div>
     );
   }
 
-  // Only super admins can access this page - strict check
-  if (!userData.is_super_admin) {
+  // Backend validation: Check is_super_admin from server response (not Redux)
+  const isSuperAdmin = profileData?.profileUser?.is_super_admin;
+  
+  if (!isSuperAdmin) {
     return <Redirect to="/" />;
+  }
+
+  // If validation error (e.g., not authenticated), redirect
+  if (validationError) {
+    return <Redirect to="/auth/signin" />;
   }
 
   // Read email from query parameter (but don't auto-submit since password is required)
