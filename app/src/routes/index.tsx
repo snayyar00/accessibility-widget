@@ -13,7 +13,6 @@ import AIInsights from '@/containers/AIInsights/AIInsights';
 import Workspaces from '@/containers/Workspaces';
 import Organization from '@/containers/Organization';
 import ServiceRequests from '@/containers/ServiceRequests';
-import BulkEmail from '@/containers/BulkEmail/BulkEmail';
 import Impersonate from '@/containers/Impersonate/Impersonate';
 
 const routes = [
@@ -136,20 +135,6 @@ const routes = [
     exact: true,
     component: Organization,
     isSidebar: false,
-  },
-  {
-    path: '/bulk-email',
-    name: 'Bulk Email',
-    exact: true,
-    component: BulkEmail,
-    icon: (
-      <MdEmail
-        className="menu-icon text-white-blue transition-colors duration-200"
-        size={25}
-        aria-label="Bulk Email navigation icon"
-      />
-    ),
-    isSidebar: true,
   },
   {
     path: '/impersonate',
