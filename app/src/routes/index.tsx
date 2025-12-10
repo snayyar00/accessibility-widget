@@ -137,15 +137,8 @@ const routes = [
     isSidebar: false,
   },
   {
-    path: '/impersonate',
-    name: 'Impersonate User',
-    exact: true,
-    component: Impersonate,
-    isSidebar: true,
-  },
-  {
-    path: '/impersonate',
-    name: 'Impersonate User',
+    path: '/bulk-email',
+    name: 'Bulk Email',
     exact: true,
     component: Impersonate,
     isSidebar: true,
