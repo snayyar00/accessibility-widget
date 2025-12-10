@@ -57,8 +57,18 @@ const Impersonate: React.FC = () => {
     validateSuperAdmin();
   }, [validateSuperAdmin]);
 
+  // Read email from query parameter (but don't auto-submit since password is required)
+  // This hook must be called before any conditional returns (Rules of Hooks)
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const email = searchParams.get('email');
+    if (email) {
+      setValue('email', email);
+    }
+  }, [location.search, setValue]);
+
   // Show loading while validating with backend
-  if (validating || !profileData) {
+  if (validating) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -69,26 +79,30 @@ const Impersonate: React.FC = () => {
     );
   }
 
-  // Backend validation: Check is_super_admin from server response (not Redux)
-  const isSuperAdmin = profileData?.profileUser?.is_super_admin;
-  
-  if (!isSuperAdmin) {
-    return <Redirect to="/" />;
-  }
-
   // If validation error (e.g., not authenticated), redirect
   if (validationError) {
     return <Redirect to="/auth/signin" />;
   }
 
-  // Read email from query parameter (but don't auto-submit since password is required)
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const email = searchParams.get('email');
-    if (email) {
-      setValue('email', email);
-    }
-  }, [location.search, setValue]);
+  // Backend validation: Check is_super_admin from server response (not Redux)
+  // Response structure: { data: { profileUser: { is_super_admin: true/false } } }
+  const isSuperAdmin = profileData?.profileUser?.is_super_admin;
+  
+  // If no profile data yet, still loading
+  if (!profileData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!isSuperAdmin) {
+    return <Redirect to="/" />;
+  }
 
   async function onSubmit(params: Payload) {
     setErrorMessage('');
@@ -109,7 +123,6 @@ const Impersonate: React.FC = () => {
     } catch (e: any) {
       const errorMsg = e?.graphQLErrors?.[0]?.message || e?.message || 'Failed to impersonate user';
       setErrorMessage(errorMsg);
-      console.error('Impersonation error:', e);
     }
   }
 
