@@ -135,10 +135,12 @@ const TrialBannerAndModal: React.FC<any> = ({
   const showPaymentModal = async () => {
     const sanitizedDomain = getRootDomain(formData.domainName);
     const lowerDomain = formData.domainName.toLowerCase().trim();
-    const isUsComSubdomain = lowerDomain.endsWith('.us.com') && lowerDomain !== 'us.com';
+    // Clean the domain first (remove protocol and path) before checking
+    const cleanedDomain = lowerDomain.replace(/^(https?:\/\/)?(www\.)?/, '').split(/[\/?#]/)[0];
+    const isUsComSubdomain = cleanedDomain.endsWith('.us.com') && cleanedDomain !== 'us.com';
     // For *.us.com subdomains, preserve the full domain; otherwise use root domain
     const effectiveDomain = isUsComSubdomain 
-      ? lowerDomain.replace(/^(https?:\/\/)?(www\.)?/, '').split(/[\/?#]/)[0]
+      ? cleanedDomain
       : sanitizedDomain;
     // Only bypass validation for *.us.com subdomains, validate all other domains normally
     if (
@@ -486,10 +488,12 @@ const TrialBannerAndModal: React.FC<any> = ({
     e.preventDefault();
     const sanitizedDomain = getRootDomain(formData.domainName);
     const lowerDomain = formData.domainName.toLowerCase().trim();
-    const isUsComSubdomain = lowerDomain.endsWith('.us.com') && lowerDomain !== 'us.com';
+    // Clean the domain first (remove protocol and path) before checking
+    const cleanedDomain = lowerDomain.replace(/^(https?:\/\/)?(www\.)?/, '').split(/[\/?#]/)[0];
+    const isUsComSubdomain = cleanedDomain.endsWith('.us.com') && cleanedDomain !== 'us.com';
     // For *.us.com subdomains, preserve the full domain; otherwise use root domain
     const effectiveDomain = isUsComSubdomain 
-      ? lowerDomain.replace(/^(https?:\/\/)?(www\.)?/, '').split(/[\/?#]/)[0]
+      ? cleanedDomain
       : sanitizedDomain;
     // Only bypass validation for *.us.com subdomains, validate all other domains normally
     if (

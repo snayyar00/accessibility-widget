@@ -50,17 +50,39 @@ const DomainTable: React.FC<DomainTableProps> = ({
   
   // Search and filter states (must be before useQuery)
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'disabled'>('all');
   const previousTabRef = useRef<'all' | 'active' | 'disabled'>('all');
+  const previousSearchRef = useRef<string>('');
   
-  // Reset offset when tab changes - compute synchronously to prevent race condition
+  // Debounce search term to avoid too many API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms debounce delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset pagination offset when search term changes
+  useEffect(() => {
+    if (debouncedSearchTerm !== previousSearchRef.current) {
+      setPaginationOffset(0);
+    }
+  }, [debouncedSearchTerm]);
+
+  // Reset offset when tab or search changes - compute synchronously to prevent race condition
   const currentOffset = useMemo(() => {
     if (activeTab !== previousTabRef.current) {
       previousTabRef.current = activeTab;
       return 0;
     }
+    if (debouncedSearchTerm !== previousSearchRef.current) {
+      previousSearchRef.current = debouncedSearchTerm;
+      return 0;
+    }
     return paginationOffset;
-  }, [activeTab, paginationOffset]);
+  }, [activeTab, paginationOffset, debouncedSearchTerm]);
   
   // Separate paginated query for DomainTable
   const getFilterValue = () => activeTab === 'all' ? 'all' : activeTab === 'active' ? 'active' : 'disabled';
@@ -68,7 +90,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
     variables: { 
       limit: paginationLimit, 
       offset: currentOffset,
-      filter: getFilterValue()
+      filter: getFilterValue(),
+      search: debouncedSearchTerm || undefined
     },
     skip: false,
   });
@@ -109,7 +132,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
         await refetchPaginated({ 
           limit: paginationLimit, 
           offset: paginationOffset,
-          filter: getFilterValue()
+          filter: getFilterValue(),
+          search: debouncedSearchTerm || undefined
         });
       }
     },
@@ -132,7 +156,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
         await refetchPaginated({ 
           limit: paginationLimit, 
           offset: paginationOffset,
-          filter: getFilterValue()
+          filter: getFilterValue(),
+          search: debouncedSearchTerm || undefined
         });
       }
     },
@@ -155,7 +180,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
         await refetchPaginated({ 
           limit: paginationLimit, 
           offset: paginationOffset,
-          filter: getFilterValue()
+          filter: getFilterValue(),
+          search: debouncedSearchTerm || undefined
         });
       }
     },
@@ -388,12 +414,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
     }
   }, [paginatedData, data]);
 
-  // Filter domains based on search term only (backend handles status filtering)
-  const filteredDomains = domains.filter((domain) => {
-    const matchesSearch =
-      (domain?.url ?? '').toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
+  // No local filtering needed - backend handles search and filtering
+  const filteredDomains = domains;
   
   // The useEffect hook that was here has been removed to avoid redundant re-renders.
   // The `currentOffset` computed with `useMemo` already handles resetting the offset
@@ -1265,7 +1287,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   refetchPaginated({ 
                     limit: paginationLimit, 
                     offset,
-                    filter: getFilterValue()
+                    filter: getFilterValue(),
+                    search: debouncedSearchTerm || undefined
                   });
                 }}
               />
