@@ -1,8 +1,8 @@
 import { gql } from 'graphql.macro';
 
 export default gql`
-  query GetUserSites($limit: Int, $offset: Int, $filter: String) {
-    getUserSites(limit: $limit, offset: $offset, filter: $filter) {
+  query GetUserSites($limit: Int, $offset: Int, $filter: String, $search: String) {
+    getUserSites(limit: $limit, offset: $offset, filter: $filter, search: $search) {
       sites {
         url
         id
