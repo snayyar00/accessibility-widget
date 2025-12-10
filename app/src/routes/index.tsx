@@ -141,7 +141,7 @@ const routes = [
     name: 'Impersonate User',
     exact: true,
     component: Impersonate,
-    isSidebar: true,
+    isSidebar: false,
   },
 ];
 

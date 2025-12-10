@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useMutation } from '@apollo/client';
 import { useSelector } from 'react-redux';
-import { Redirect } from 'react-router-dom';
+import { Redirect, useLocation } from 'react-router-dom';
 import { RootState } from '@/config/store';
 import { setAuthenticationCookie } from '@/utils/cookie';
 import impersonateUserQuery from '@/queries/auth/impersonateUser';
@@ -30,11 +30,13 @@ const Impersonate: React.FC = () => {
   const { t } = useTranslation();
   useDocumentHeader({ title: 'Impersonate User' });
   const { data: userData } = useSelector((state: RootState) => state.user);
+  const location = useLocation();
   
   const {
     register,
     handleSubmit,
     errors: formErrors,
+    setValue,
   } = useForm<Payload>({
     resolver: yupResolver(ImpersonateSchema),
   });
@@ -46,6 +48,18 @@ const Impersonate: React.FC = () => {
   if (!userData.is_super_admin) {
     return <Redirect to="/" />;
   }
+
+  // Read email from query parameter and auto-submit if provided
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const email = searchParams.get('email');
+    if (email) {
+      setValue('email', email);
+      // Auto-submit if email is provided in query
+      onSubmit({ email });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   async function onSubmit(params: Payload) {
     setErrorMessage('');
