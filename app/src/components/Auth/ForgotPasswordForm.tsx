@@ -47,7 +47,7 @@ const ForgotPasswordForm: React.FC<Props> = ({
           {/* Email Input */}
           <div className="space-y-2">
             <label htmlFor="forgot-password-email" className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">
-              {t('Common.label.your_email')}
+              {t('Common.label.your_email')} <span className="text-red-600" aria-label="required">*</span>
             </label>
             <div className="relative">
               <Input
@@ -57,12 +57,14 @@ const ForgotPasswordForm: React.FC<Props> = ({
                 name="email"
                 ref={register}
                 aria-label="Your Email"
+                aria-invalid={errors?.email ? 'true' : 'false'}
+                aria-describedby={errors?.email ? 'forgot-password-email-error' : undefined}
                 className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-[#4B5563]"
               />
             </div>
             {errors?.email?.message && (
               <div className="mt-2">
-                <ErrorText message={String(t(errors.email.message))} />
+                <ErrorText id="forgot-password-email-error" message={String(t(errors.email.message))} />
               </div>
             )}
           </div>

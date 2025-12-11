@@ -441,11 +441,13 @@ const SignUpForm: React.FC<CustomProps> = ({
                   value={formData.name}
                   onChange={handleInputChange}
                   aria-label="Your Name"
+                  aria-invalid={formErrors?.name ? 'true' : 'false'}
+                  aria-describedby={formErrors?.name ? 'signup-name-error' : undefined}
                   className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
                 />
               </div>
               {formErrors?.name?.message && (
-                <ErrorText message={String(t(formErrors.name.message))} />
+                <ErrorText id="signup-name-error" message={String(t(formErrors.name.message))} />
               )}
             </FormControl>
           </div>
@@ -482,11 +484,13 @@ const SignUpForm: React.FC<CustomProps> = ({
                   value={formData.email}
                   onChange={handleInputChange}
                   aria-label="Email"
+                  aria-invalid={formErrors?.email ? 'true' : 'false'}
+                  aria-describedby={formErrors?.email ? 'signup-email-error' : undefined}
                   className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#6C7586]"
                 />
               </div>
               {formErrors?.email?.message && (
-                <ErrorText message={String(t(formErrors.email.message))} />
+                <ErrorText id="signup-email-error" message={String(t(formErrors.email.message))} />
               )}
             </FormControl>
           </div>
@@ -524,11 +528,13 @@ const SignUpForm: React.FC<CustomProps> = ({
                   value={formData.websiteUrl}
                   onChange={handleInputChange}
                   aria-label="Website URL"
+                  aria-invalid={formErrors?.websiteUrl ? 'true' : 'false'}
+                  aria-describedby={formErrors?.websiteUrl ? 'signup-website-url-error' : undefined}
                   className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
                 />
               </div>
               {formErrors?.websiteUrl?.message && (
-                <ErrorText message={String(t(formErrors.websiteUrl.message))} />
+                <ErrorText id="signup-website-url-error" message={String(t(formErrors.websiteUrl.message))} />
               )}
             </FormControl>
           </div>
@@ -565,6 +571,8 @@ const SignUpForm: React.FC<CustomProps> = ({
                   value={formData.password}
                   onChange={handleInputChange}
                   aria-label="Password"
+                  aria-invalid={formErrors?.password ? 'true' : 'false'}
+                  aria-describedby={formErrors?.password ? 'signup-password-error' : undefined}
                   className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
                 />
                 <button
@@ -614,7 +622,7 @@ const SignUpForm: React.FC<CustomProps> = ({
                 </button>
               </div>
               {formErrors?.password?.message && (
-                <ErrorText message={String(t(formErrors.password.message))} />
+                <ErrorText id="signup-password-error" message={String(t(formErrors.password.message))} />
               )}
             </FormControl>
           </div>
@@ -651,6 +659,8 @@ const SignUpForm: React.FC<CustomProps> = ({
                   value={formData.passwordConfirmation}
                   onChange={handleInputChange}
                   aria-label="Confirm password"
+                  aria-invalid={formErrors?.passwordConfirmation ? 'true' : 'false'}
+                  aria-describedby={formErrors?.passwordConfirmation ? 'signup-confirm-password-error' : undefined}
                   className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
                 />
                 <button
@@ -699,11 +709,19 @@ const SignUpForm: React.FC<CustomProps> = ({
                   )}
                 </button>
               </div>
-              {formErrors?.passwordConfirmation?.message && (
-                <ErrorText
-                  message={String(t(formErrors.passwordConfirmation.message))}
-                />
-              )}
+              <div 
+                id="signup-confirm-password-error" 
+                role="alert" 
+                aria-live="assertive" 
+                aria-atomic="true"
+                className="min-h-[20px]"
+              >
+                {formErrors?.passwordConfirmation?.message ? (
+                  <span className="text-[12px] mt-[5px] mb-[7px] block text-left" style={{ color: '#E7074F' }}>
+                    {String(t(formErrors.passwordConfirmation.message))}
+                  </span>
+                ) : null}
+              </div>
             </FormControl>
           </div>
         </div>
