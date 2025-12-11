@@ -6,6 +6,7 @@ import * as yup from 'yup';
 import { useMutation } from '@apollo/client';
 import { useHistory } from 'react-router-dom';
 import SignInForm from '@/components/Auth/SignInForm';
+import AccessibilityBanner from '@/components/Auth/AccessibilityBanner';
 import loginQuery from '@/queries/auth/login';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { setAuthenticationCookie } from '@/utils/cookie';
@@ -174,6 +175,7 @@ const SignIn: React.FC = () => {
           className="h-[95vh] object-contain ml-auto"
           style={{ maxWidth: '90%' }}
         />
+        <AccessibilityBanner />
       </div>
     </div>
   );

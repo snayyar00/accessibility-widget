@@ -9,6 +9,7 @@ import { useHistory } from 'react-router-dom';
 
 import SignUpForm from '@/components/Auth/SignUpForm';
 import AuthAdsArea from '@/components/Auth/AuthAds';
+import AccessibilityBanner from '@/components/Auth/AccessibilityBanner';
 import registerQuery from '@/queries/auth/register';
 import getQueryParam from '@/utils/getQueryParam';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
@@ -279,6 +280,7 @@ const SignUp: React.FC = () => {
           className="h-[95vh] object-contain ml-auto"
           style={{ maxWidth: '90%' }}
         />
+        <AccessibilityBanner />
       </div>
     </div>
   );
