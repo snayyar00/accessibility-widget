@@ -54,14 +54,45 @@ export const TableUsers = ({
   const [paginationLimit] = React.useState<number>(50);
   const [paginationOffset, setPaginationOffset] = React.useState(0);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = React.useState('');
+  const previousSearchRef = React.useRef<string>('');
+
+  // Debounce search term to avoid too many API calls
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms debounce delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset pagination offset when search term changes
+  React.useEffect(() => {
+    if (debouncedSearchTerm !== previousSearchRef.current) {
+      previousSearchRef.current = debouncedSearchTerm;
+      setPaginationOffset(0);
+    }
+  }, [debouncedSearchTerm]);
 
   const { data, loading, error, refetch } = useQuery<Query>(
     GET_ORGANIZATION_USERS,
+    {
+      variables: {
+        search: debouncedSearchTerm || undefined,
+      },
+    },
   );
 
   const { data: workspacesData, loading: workspacesLoading } = useQuery<Query>(
     GET_ORGANIZATION_WORKSPACES,
   );
+
+  // Wrapper to ensure refetch always includes current search term
+  const refetchWithSearch = React.useCallback(() => {
+    return refetch({
+      search: debouncedSearchTerm || undefined,
+    });
+  }, [refetch, debouncedSearchTerm]);
 
   const users = data?.getOrganizationUsers || [];
   const allWorkspaces = workspacesData?.getOrganizationWorkspaces || [];
@@ -86,17 +117,8 @@ export const TableUsers = ({
     [users],
   );
 
-  // Filter rows based on search term
-  const filteredRows = React.useMemo(() => {
-    if (!searchTerm) return rows;
-    const searchLower = searchTerm.toLowerCase();
-    return rows.filter(
-      (row) =>
-        (row.name || '').toLowerCase().includes(searchLower) ||
-        (row.email || '').toLowerCase().includes(searchLower) ||
-        row.id.toString().includes(searchLower),
-    );
-  }, [rows, searchTerm]);
+  // No local filtering needed - backend handles search
+  const filteredRows = rows;
 
   // Paginate filtered rows
   const paginatedRows = React.useMemo(() => {
@@ -146,7 +168,6 @@ export const TableUsers = ({
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
-                    setPaginationOffset(0); // Reset to first page on search
                   }}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   style={{ border: '1px solid #A2ADF3' }}
@@ -157,7 +178,7 @@ export const TableUsers = ({
               <div className="static md:static lg:absolute lg:top-[15px] lg:right-[17px] md:mt-0">
                 <InviteUser
                   mode="organization"
-                  onUserInvited={refetch}
+                  onUserInvited={refetchWithSearch}
                   isSuperAdmin={isSuperAdmin}
                 />
               </div>
@@ -427,7 +448,7 @@ export const TableUsers = ({
                                   initialValue={row.role}
                                   userId={rowUserId}
                                   isSuperAdmin={isSuperAdmin}
-                                  onRoleChanged={refetch}
+                                  onRoleChanged={refetchWithSearch}
                                 />
                               )}
                             </div>
@@ -439,7 +460,7 @@ export const TableUsers = ({
                                   mode="workspace"
                                   userEmail={row.email}
                                   userWorkspaces={row.workspaces}
-                                  onUserInvited={refetch}
+                                  onUserInvited={refetchWithSearch}
                                   buttonSize="medium"
                                   allWorkspaces={allWorkspaces}
                                   workspacesLoading={workspacesLoading}
@@ -451,7 +472,7 @@ export const TableUsers = ({
                               {isVirtualUser ? (
                                 <RemoveAllUserInvitations
                                   email={row.email}
-                                  onInvitationRemoved={refetch}
+                                  onInvitationRemoved={refetchWithSearch}
                                 />
                               ) : (
                                 <DeleteUserFromOrganization
@@ -461,7 +482,7 @@ export const TableUsers = ({
                                   }
                                   userId={rowUserId}
                                   organizationId={organizationId}
-                                  onUserDeleted={refetch}
+                                  onUserDeleted={refetchWithSearch}
                                 />
                               )}
                             </div>
@@ -632,7 +653,7 @@ export const TableUsers = ({
                               mode="workspace"
                               userEmail={row.email}
                               userWorkspaces={row.workspaces}
-                              onUserInvited={refetch}
+                              onUserInvited={refetchWithSearch}
                               buttonSize="medium"
                               allWorkspaces={allWorkspaces}
                               workspacesLoading={workspacesLoading}

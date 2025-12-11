@@ -111,14 +111,25 @@ function getOrganizationWorkspacesByUserIds(userIds: number[], organization_id: 
     .select(['workspace_users.user_id', 'workspaces.id as workspace_id', 'workspaces.name as workspace_name', 'workspaces.alias as workspace_alias'])
 }
 
-export async function getOrganizationUsersWithUserInfo(organization_id: number): Promise<OrganizationUserWithUserInfo[]> {
+export async function getOrganizationUsersWithUserInfo(organization_id: number, search?: string): Promise<OrganizationUserWithUserInfo[]> {
   try {
-    const rows = await database(TABLE)
+    let query = database(TABLE)
       .where({ organization_id })
       .join('users', `${TABLE}.user_id`, 'users.id')
       .leftJoin('organizations', 'users.current_organization_id', 'organizations.id')
       .select([`${TABLE}.*`, 'users.id as user_id', 'users.email', 'users.name', 'users.current_organization_id', 'users.is_active', 'users.is_super_admin', 'organizations.id as org_id', 'organizations.name as org_name', 'organizations.domain as org_domain'])
-      .orderBy(`${TABLE}.updated_at`, 'desc')
+
+    // Apply search filter
+    if (search && search.trim().length > 0) {
+      const searchTerm = `%${search.trim()}%`
+      query = query.where(function() {
+        this.where('users.name', 'like', searchTerm)
+          .orWhere('users.email', 'like', searchTerm)
+          .orWhere('users.id', 'like', searchTerm)
+      })
+    }
+
+    const rows = await query.orderBy(`${TABLE}.updated_at`, 'desc')
 
     if (!rows?.length) return []
 
