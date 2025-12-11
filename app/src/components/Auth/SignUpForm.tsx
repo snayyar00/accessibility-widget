@@ -411,8 +411,8 @@ const SignUpForm: React.FC<CustomProps> = ({
         <div className="space-y-6">
           {/* Name Field */}
           <div className="group">
-            <label className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
-              {t('Common.label.your_name')}
+            <label htmlFor="signup-name" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+              {t('Common.label.your_name')} <span className="text-red-600" aria-label="required">*</span>
             </label>
             <FormControl>
               <div className="relative">
@@ -422,6 +422,7 @@ const SignUpForm: React.FC<CustomProps> = ({
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -433,12 +434,14 @@ const SignUpForm: React.FC<CustomProps> = ({
                 </div>
                 <Input
                   type="text"
+                  id="signup-name"
                   placeholder="Enter your full name"
                   name="name"
                   ref={register}
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder-gray-500"
+                  aria-label="Your Name"
+                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
                 />
               </div>
               {formErrors?.name?.message && (
@@ -449,8 +452,8 @@ const SignUpForm: React.FC<CustomProps> = ({
 
           {/* Email Field */}
           <div className="group">
-            <label className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
-              {t('Common.label.email')}
+            <label htmlFor="signup-email" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+              {t('Common.label.email')} <span className="text-red-600" aria-label="required">*</span>
             </label>
             <FormControl>
               <div className="relative">
@@ -460,6 +463,7 @@ const SignUpForm: React.FC<CustomProps> = ({
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -471,12 +475,14 @@ const SignUpForm: React.FC<CustomProps> = ({
                 </div>
                 <Input
                   type="email"
+                  id="signup-email"
                   placeholder="yourname@yourbusiness.com"
                   name="email"
                   ref={register}
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder-gray-500"
+                  aria-label="Email"
+                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#6C7586]"
                 />
               </div>
               {formErrors?.email?.message && (
@@ -487,7 +493,7 @@ const SignUpForm: React.FC<CustomProps> = ({
 
           {/* Website URL Field */}
           <div className="group">
-            <label className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+            <label htmlFor="signup-website-url" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
               {t('Common.label.website_url')}{' '}
               <span className="text-gray-500 font-normal">(Optional)</span>
             </label>
@@ -499,6 +505,7 @@ const SignUpForm: React.FC<CustomProps> = ({
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -510,12 +517,14 @@ const SignUpForm: React.FC<CustomProps> = ({
                 </div>
                 <Input
                   type="url"
+                  id="signup-website-url"
                   placeholder="example.com"
                   name="websiteUrl"
                   ref={register}
                   value={formData.websiteUrl}
                   onChange={handleInputChange}
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder-gray-500"
+                  aria-label="Website URL"
+                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
                 />
               </div>
               {formErrors?.websiteUrl?.message && (
@@ -526,8 +535,8 @@ const SignUpForm: React.FC<CustomProps> = ({
 
           {/* Password Field */}
           <div className="group">
-            <label className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
-              {t('Common.label.password')}
+            <label htmlFor="signup-password" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+              {t('Common.label.password')} <span className="text-red-600" aria-label="required">*</span>
             </label>
             <FormControl>
               <div className="relative">
@@ -537,6 +546,7 @@ const SignUpForm: React.FC<CustomProps> = ({
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -548,24 +558,29 @@ const SignUpForm: React.FC<CustomProps> = ({
                 </div>
                 <Input
                   type={passwordVisible ? 'text' : 'password'}
+                  id="signup-password"
                   placeholder="Create a strong password"
                   name="password"
                   ref={register}
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder-gray-500"
+                  aria-label="Password"
+                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
                 />
                 <button
                   type="button"
                   onClick={togglePasswordVisibility}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center hover:text-gray-600 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center transition-colors"
+                  style={{ color: '#6C7586' }}
+                  aria-label={passwordVisible ? 'Hide password' : 'Show password'}
                 >
                   {passwordVisible ? (
                     <svg
-                      className="h-5 w-5 text-gray-400 hover:text-gray-600"
+                      className="h-5 w-5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      style={{ color: '#6C7586' }}
                     >
                       <path
                         strokeLinecap="round"
@@ -576,10 +591,11 @@ const SignUpForm: React.FC<CustomProps> = ({
                     </svg>
                   ) : (
                     <svg
-                      className="h-5 w-5 text-gray-400 hover:text-gray-600"
+                      className="h-5 w-5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      style={{ color: '#6C7586' }}
                     >
                       <path
                         strokeLinecap="round"
@@ -605,8 +621,8 @@ const SignUpForm: React.FC<CustomProps> = ({
 
           {/* Confirm Password Field */}
           <div className="group">
-            <label className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
-              {t('Common.label.confirm_password')}
+            <label htmlFor="signup-confirm-password" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+              {t('Common.label.confirm_password')} <span className="text-red-600" aria-label="required">*</span>
             </label>
             <FormControl>
               <div className="relative">
@@ -616,6 +632,7 @@ const SignUpForm: React.FC<CustomProps> = ({
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -627,24 +644,29 @@ const SignUpForm: React.FC<CustomProps> = ({
                 </div>
                 <Input
                   type={confirmPasswordVisible ? 'text' : 'password'}
+                  id="signup-confirm-password"
                   placeholder="Confirm your password"
                   name="passwordConfirmation"
                   ref={register}
                   value={formData.passwordConfirmation}
                   onChange={handleInputChange}
-                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder-gray-500"
+                  aria-label="Confirm password"
+                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
                 />
                 <button
                   type="button"
                   onClick={toggleConfirmPasswordVisibility}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center hover:text-gray-600 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center transition-colors"
+                  style={{ color: '#6C7586' }}
+                  aria-label={confirmPasswordVisible ? 'Hide confirm password' : 'Show confirm password'}
                 >
                   {confirmPasswordVisible ? (
                     <svg
-                      className="h-5 w-5 text-gray-400 hover:text-gray-600"
+                      className="h-5 w-5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      style={{ color: '#6C7586' }}
                     >
                       <path
                         strokeLinecap="round"
@@ -655,10 +677,11 @@ const SignUpForm: React.FC<CustomProps> = ({
                     </svg>
                   ) : (
                     <svg
-                      className="h-5 w-5 text-gray-400 hover:text-gray-600"
+                      className="h-5 w-5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      style={{ color: '#6C7586' }}
                     >
                       <path
                         strokeLinecap="round"

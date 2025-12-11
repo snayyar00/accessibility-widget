@@ -157,7 +157,7 @@ const SignIn: React.FC = () => {
   }
   return (
     <div className="flex min-h-screen sm:flex-col">
-      <div className="w-[45%] flex justify-center items-center sm:w-full">
+      <main className="w-[45%] flex justify-center items-center sm:w-full">
         <SignInForm
           onSubmit={handleSubmit(onSubmit)}
           register={register}
@@ -167,7 +167,7 @@ const SignIn: React.FC = () => {
           customErrorMessage={getErrorMessage(currentErrorCode)}
           showForgotPasswordLink={isAccountLocked(currentErrorCode)}
         />
-      </div>
+      </main>
       <div className="w-[55%] sm:hidden flex items-center justify-end p-5 relative">
         <img
           src="/images/auth/auth_image1.png"

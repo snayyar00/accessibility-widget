@@ -94,7 +94,7 @@ const EmailModal: React.FC<EmailModalProps> = ({
                 disabled={isLoading}
                 required
               />
-              {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+              {error && <p className="mt-1 text-sm" style={{ color: '#E7074F' }}>{error}</p>}
             </div>
 
             {/* Buttons */}

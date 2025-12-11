@@ -53,7 +53,7 @@ const ResetPasswordForm: React.FC<Props> = ({
               placeholder={t('Common.placeholder.password')}
               name="password"
               ref={register}
-              className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-gray-400"
+              className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-[#4B5563]"
             />
           </div>
           {errors?.password?.message && (
@@ -74,7 +74,7 @@ const ResetPasswordForm: React.FC<Props> = ({
               placeholder={t('Common.placeholder.confirm_password')}
               name="passwordConfirmation"
               ref={register}
-              className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-gray-400"
+              className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-[#4B5563]"
             />
           </div>
           {errors?.passwordConfirmation?.message && (

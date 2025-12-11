@@ -46,16 +46,18 @@ const ForgotPasswordForm: React.FC<Props> = ({
         <form onSubmit={onSubmit} className="space-y-6">
           {/* Email Input */}
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">
+            <label htmlFor="forgot-password-email" className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">
               {t('Common.label.your_email')}
             </label>
             <div className="relative">
               <Input
                 type="email"
+                id="forgot-password-email"
                 placeholder={t('Common.placeholder.email')}
                 name="email"
                 ref={register}
-                className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-gray-400"
+                aria-label="Your Email"
+                className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-[#4B5563]"
               />
             </div>
             {errors?.email?.message && (
