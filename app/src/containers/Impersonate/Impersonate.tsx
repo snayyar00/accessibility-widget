@@ -158,11 +158,12 @@ const Impersonate: React.FC = () => {
             </label>
             <Input
               id="targetUserPassword"
-              type="text"
+              type="password"
               name="targetUserPassword"
               ref={register}
-              placeholder=""
+              placeholder="••••••••••••••••"
               className="w-full font-mono text-sm"
+              autoComplete="off"
             />
             {formErrors.targetUserPassword && (
               <ErrorText className="mt-1">{formErrors.targetUserPassword.message}</ErrorText>
