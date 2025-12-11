@@ -44,23 +44,31 @@ const ForgotPasswordForm: React.FC<Props> = ({
 
       {!isSubmitted ? (
         <form onSubmit={onSubmit} className="space-y-6">
+          <p className="text-xs text-gray-600 mb-4">
+            Fields marked with an asterisk (*) are required.
+          </p>
           {/* Email Input */}
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">
-              {t('Common.label.your_email')}
+            <label htmlFor="forgot-password-email" className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">
+              {t('Common.label.your_email')} <span className="text-red-600" aria-label="required">*</span>
             </label>
             <div className="relative">
               <Input
                 type="email"
+                id="forgot-password-email"
                 placeholder={t('Common.placeholder.email')}
                 name="email"
                 ref={register}
-                className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-gray-400"
+                autoComplete="username"
+                aria-label="Your Email"
+                aria-invalid={errors?.email ? 'true' : 'false'}
+                aria-describedby={errors?.email ? 'forgot-password-email-error' : undefined}
+                className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-[#4B5563]"
               />
             </div>
             {errors?.email?.message && (
               <div className="mt-2">
-                <ErrorText message={String(t(errors.email.message))} />
+                <ErrorText id="forgot-password-email-error" message={String(t(errors.email.message))} />
               </div>
             )}
           </div>
