@@ -44,6 +44,9 @@ const ForgotPasswordForm: React.FC<Props> = ({
 
       {!isSubmitted ? (
         <form onSubmit={onSubmit} className="space-y-6">
+          <p className="text-xs text-gray-600 mb-4">
+            Fields marked with an asterisk (*) are required.
+          </p>
           {/* Email Input */}
           <div className="space-y-2">
             <label htmlFor="forgot-password-email" className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">

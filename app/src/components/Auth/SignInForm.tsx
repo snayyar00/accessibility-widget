@@ -49,6 +49,9 @@ const SignInForm: React.FC<Props> = ({
 
       <form onSubmit={onSubmit} className="mb-[24px]">
         <div>
+          <p className="text-xs text-gray-600 mb-4">
+            Fields marked with an asterisk (*) are required.
+          </p>
           <div className="mb-4 w-full block">
             <FormControl>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">

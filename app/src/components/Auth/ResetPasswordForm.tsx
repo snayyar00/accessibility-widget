@@ -42,6 +42,9 @@ const ResetPasswordForm: React.FC<Props> = ({
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6">
+        <p className="text-xs text-gray-600 mb-4">
+          Fields marked with an asterisk (*) are required.
+        </p>
         {/* Password Input */}
         <div className="space-y-2">
           <label htmlFor="reset-password" className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">

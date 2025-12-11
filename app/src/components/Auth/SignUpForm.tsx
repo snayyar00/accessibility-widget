@@ -408,6 +408,9 @@ const SignUpForm: React.FC<CustomProps> = ({
           </p>
         </div>
 
+        <p className="text-xs text-gray-600 mb-4 text-left">
+          Fields marked with an asterisk (*) are required.
+        </p>
         <div className="space-y-6">
           {/* Name Field */}
           <div className="group">
