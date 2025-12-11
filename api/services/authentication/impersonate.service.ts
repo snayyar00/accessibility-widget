@@ -6,6 +6,9 @@ import { AuthenticationError, ForbiddenError, ValidationError } from '../../util
 import { sanitizeUserInput } from '../../utils/sanitization.helper'
 import { getOrganizationById } from '../organization/organization.service'
 import { UserLogined } from './get-user-logined.service'
+import { sendMail } from '../email/email.service'
+import logger from '../../utils/logger'
+import compileEmailTemplate from '../../helpers/compile-email-template'
 
 export type ImpersonateResponse = {
   token: string
@@ -108,25 +111,19 @@ export async function impersonateUser(
 
   // Get frontend URL - use organization domain if available, otherwise use admin's organization domain
   const domain = organization?.domain || adminUser.currentOrganization?.domain
-  const currentUrl = domain ? getMatchingFrontendUrl(domain) : null
+  let currentUrl = domain ? getMatchingFrontendUrl(domain) : null
 
+  // Fallback: try to get any allowed frontend URL if currentUrl is null
   if (!currentUrl) {
-    // Fallback: try to get any allowed frontend URL
     const fallbackUrl = getMatchingFrontendUrl(adminUser.currentOrganization?.domain || '')
     if (!fallbackUrl) {
       throw new ForbiddenError('No valid frontend URL found')
     }
-    return {
-      token: sign({
-        email: targetUser.email,
-        name: targetUser.name,
-        createdAt: targetUser.created_at,
-      }),
-      url: fallbackUrl,
-    }
+    currentUrl = fallbackUrl
   }
 
-  return {
+  // Prepare impersonation response
+  const impersonateResult = {
     token: sign({
       email: targetUser.email,
       name: targetUser.name,
@@ -134,5 +131,51 @@ export async function impersonateUser(
     }),
     url: currentUrl,
   }
+
+  // Send email notification about impersonation (non-blocking)
+  setImmediate(async () => {
+    try {
+      const now = new Date()
+      const impersonationTimeUTC = now.toISOString()
+      const impersonationTime = now.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZoneName: 'short',
+      })
+      const adminEmail = adminUser.email
+      const targetUserEmail = targetUser.email
+
+      // Compile email template
+      const emailHtml = await compileEmailTemplate({
+        fileName: 'impersonationNotification.mjml',
+        data: {
+          targetUserEmail,
+          adminEmail,
+          impersonationTime,
+          impersonationTimeUTC,
+        },
+      })
+
+      const subject = `User Impersonation Alert - ${targetUserEmail}`
+      const notificationEmail = 'talhashahzad899@gmail.com'
+
+      const emailSent = await sendMail(notificationEmail, subject, emailHtml, undefined, 'WebAbility Security')
+
+      if (emailSent) {
+        logger.info(`Impersonation notification email sent successfully to ${notificationEmail} for user ${targetUserEmail}`)
+      } else {
+        logger.error(`Failed to send impersonation notification email to ${notificationEmail}`)
+      }
+    } catch (error) {
+      // Log error but don't fail the impersonation if email fails
+      logger.error('Error sending impersonation notification email:', error)
+    }
+  })
+
+  return impersonateResult
 }
 
