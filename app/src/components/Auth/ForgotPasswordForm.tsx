@@ -61,6 +61,7 @@ const ForgotPasswordForm: React.FC<Props> = ({
                 ref={register}
                 autoComplete="username"
                 aria-label="Your Email"
+                aria-required="true"
                 aria-invalid={errors?.email ? 'true' : 'false'}
                 aria-describedby={errors?.email ? 'forgot-password-email-error' : undefined}
                 className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-[#4B5563]"
