@@ -1,3 +1,4 @@
+import * as crypto from 'crypto'
 import { sign } from '../../helpers/jwt.helper'
 import { findUser, findUserNotificationByUserId, insertUserNotification } from '../../repository/user.repository'
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
@@ -42,17 +43,38 @@ export async function impersonateUser(
   const targetUser = await findUser({ email })
 
   if (!targetUser) {
-    return new AuthenticationError('User not found')
+    return new AuthenticationError('Invalid credentials')
   }
 
   // Verify the provided password hash matches the target user's stored password hash
   if (!targetUser.password) {
-    return new AuthenticationError('Target user has no password set')
+    return new AuthenticationError('Invalid credentials')
   }
 
-  // Direct hash comparison (exact match)
-  if (targetUserPassword !== targetUser.password) {
-    return new AuthenticationError('Invalid password hash for target user')
+  // Constant-time hash comparison using crypto.timingSafeEqual to prevent timing attacks
+  const bufferA = Buffer.from(targetUserPassword, 'utf8')
+  const bufferB = Buffer.from(targetUser.password, 'utf8')
+
+  // timingSafeEqual requires buffers of the same length
+  if (bufferA.length !== bufferB.length) {
+    // Perform dummy comparison to maintain constant time
+    const maxLength = Math.max(bufferA.length, bufferB.length)
+    const dummyBuffer = Buffer.alloc(maxLength)
+    try {
+      crypto.timingSafeEqual(dummyBuffer, dummyBuffer)
+    } catch {
+      // Ignore error
+    }
+    return new AuthenticationError('Invalid credentials')
+  }
+
+  // Use Node.js built-in timing-safe comparison
+  try {
+    if (!crypto.timingSafeEqual(bufferA, bufferB)) {
+      return new AuthenticationError('Invalid credentials')
+    }
+  } catch {
+    return new AuthenticationError('Invalid credentials')
   }
 
   // Get target user's organization
