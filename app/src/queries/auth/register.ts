@@ -14,6 +14,7 @@ export default gql`
       referralCode: $referralCode
     ) {
       token
+      url
     }
   }
 `;

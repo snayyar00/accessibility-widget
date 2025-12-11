@@ -46,6 +46,11 @@ export const UserSchema = `#graphql
     url: String!
   }
 
+  type ImpersonatePayload {
+    token: String!
+    url: String!
+  }
+
   type NotificationSettings {
     monthly_report_flag: Boolean!
     new_domain_flag: Boolean!
@@ -86,6 +91,8 @@ export const UserSchema = `#graphql
     updateLicenseOwnerInfo(name: String, license_owner_email: String, phone_number: String): Boolean! @rateLimit(limit: 20, duration: 3600, message: "Too many license owner info updates. Please try again later.")
 
     changeCurrentOrganization(organizationId: Int!, userId: Int): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many organization change requests. Please try again later.")
+
+    impersonateUser(email: String!, targetUserPassword: String!): ImpersonatePayload! @rateLimit(limit: 10, duration: 60, message: "Too many impersonation attempts. Please try again later.")
 
     logout: Boolean!
   }

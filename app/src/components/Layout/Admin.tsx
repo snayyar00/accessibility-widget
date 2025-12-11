@@ -210,6 +210,10 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
                   const currentOrganizationId = userData?.current_organization_id;
                   return currentOrganizationId === 1 || currentOrganizationId === 87;
                 }
+                // Hide impersonate route if user is not a super admin
+                if (route.path === '/impersonate') {
+                  return userData?.is_super_admin === true;
+                }
                 return true;
               })
               .map((route) => (

@@ -1,0 +1,87 @@
+<mjml>
+  <mj-body background-color="#f1f1f1">
+    <mj-section background-color="#fff">
+      <mj-column>
+        <mj-image
+          width="150px"
+          src="https://www.webability.io/images/logo.png"
+          alt="WebAbility"
+          align="center"
+          padding="20px 0"
+        ></mj-image>
+      </mj-column>
+    </mj-section>
+    
+    <mj-section background-color="#fff">
+      <mj-column>
+        <mj-text font-size="30px" align="center" color="#DC2626">
+          🔐 User Impersonation Alert
+        </mj-text>
+        
+        <mj-text font-size="18px" align="center" color="#555" line-height="30px">
+          A user impersonation has been performed in the system.
+        </mj-text>
+        
+        <mj-divider border-color="#DC2626" width="100px" border-width="2px"></mj-divider>
+        
+        <mj-text font-size="16px" color="#333" line-height="24px" padding="20px 0">
+          <div style="background-color: #f9f9f9; border-left: 4px solid #4CAF50; padding: 15px; margin: 15px 0;">
+            <strong style="color: #555;">Impersonated User Email:</strong><br/>
+            <span style="color: #333; font-size: 18px;">{{targetUserEmail}}</span>
+          </div>
+        </mj-text>
+        
+        <mj-text font-size="16px" color="#333" line-height="24px" padding="10px 0">
+          <div style="background-color: #f9f9f9; border-left: 4px solid #FF9800; padding: 15px; margin: 15px 0;">
+            <strong style="color: #555;">Impersonated By (Admin):</strong><br/>
+            <span style="color: #333; font-size: 18px;">{{adminEmail}}</span>
+          </div>
+        </mj-text>
+        
+        <mj-text font-size="16px" color="#333" line-height="24px" padding="10px 0">
+          <div style="background-color: #f9f9f9; border-left: 4px solid #2196F3; padding: 15px; margin: 15px 0;">
+            <strong style="color: #555;">Impersonation Time:</strong><br/>
+            <span style="color: #333; font-size: 18px;">{{impersonationTime}}</span><br/>
+            <small style="color: #888; font-size: 14px;">({{impersonationTimeUTC}} UTC)</small>
+          </div>
+        </mj-text>
+        
+        <mj-text font-size="14px" color="#666" line-height="22px" padding="20px 0">
+          This notification is sent automatically whenever a super admin uses the impersonate feature to access another user's account.
+        </mj-text>
+        
+        <mj-button
+          background-color="#06adef"
+          border-radius="50px"
+          color="white"
+          font-size="15px"
+          href="https://app.webability.io/"
+          padding="15px 30px"
+        >
+          View Dashboard
+        </mj-button>
+        
+        <mj-divider border-color="#e0e0e0" width="100%"></mj-divider>
+        
+        <mj-text font-size="12px" align="center" color="#999">
+          This is an automated security notification from the WebAbility system.<br/>
+          If you did not expect this notification, please contact your system administrator immediately.
+        </mj-text>
+        
+        <mj-social icon-size="30px" mode="horizontal">
+          <mj-social-element name="facebook" href="https://www.facebook.com/webability">
+          </mj-social-element>
+          <mj-social-element
+            name="twitter"
+            href="https://twitter.com/webability"
+            padding="0 20px"
+          >
+          </mj-social-element>
+          <mj-social-element name="linkedin" href="https://www.linkedin.com/company/webability">
+          </mj-social-element>
+        </mj-social>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
+
