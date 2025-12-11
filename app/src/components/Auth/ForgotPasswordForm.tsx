@@ -59,6 +59,7 @@ const ForgotPasswordForm: React.FC<Props> = ({
                 placeholder={t('Common.placeholder.email')}
                 name="email"
                 ref={register}
+                autoComplete="username"
                 aria-label="Your Email"
                 aria-invalid={errors?.email ? 'true' : 'false'}
                 aria-describedby={errors?.email ? 'forgot-password-email-error' : undefined}
