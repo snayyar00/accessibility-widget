@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Joyride, {
   CallBackProps,
   STATUS,
@@ -52,6 +52,7 @@ const TourGuide: React.FC<TourGuideProps> = ({
   const [tourStepIndex, setTourStepIndex] = useState(initialStepIndex);
   const [waitingForModal, setWaitingForModal] = useState(false);
   const [waitingForPayment, setWaitingForPayment] = useState(false);
+  const previousActiveElementRef = useRef<HTMLElement | null>(null);
 
   // Check if user has completed this tour
   const isCompleted = localStorage.getItem(`${tourKey}_completed`) === 'true';
@@ -140,6 +141,16 @@ const TourGuide: React.FC<TourGuideProps> = ({
   // Handle tour callback
   const handleTourCallback = (data: CallBackProps) => {
     const { status, type, index, action } = data;
+
+    // Move focus to tooltip when step changes
+    if (type === 'step:after' || type === 'tour:start') {
+      setTimeout(() => {
+        const focusableElements = getFocusableElements();
+        if (focusableElements.length > 0) {
+          focusableElements[0].focus();
+        }
+      }, 50);
+    }
 
     // Call step change callback if provided
     if (onStepChange) {
@@ -287,6 +298,112 @@ const TourGuide: React.FC<TourGuideProps> = ({
       checkAndStartPaymentTour();
     }
   }, [waitingForPayment, currentState.isPaymentView]);
+
+  // Get all focusable elements within the tour tooltip
+  const getFocusableElements = useCallback(() => {
+    const tooltip = document.querySelector('[data-testid="react-joyride-tooltip"]') || 
+                    document.querySelector('.react-joyride__tooltip') ||
+                    document.querySelector('[role="dialog"]');
+    if (!tooltip) return [];
+    const selector = [
+      'a[href]',
+      'button:not([disabled])',
+      'textarea:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(', ');
+    return Array.from(
+      tooltip.querySelectorAll<HTMLElement>(selector),
+    ).filter(
+      (el) =>
+        !el.hasAttribute('disabled') &&
+        !el.getAttribute('aria-hidden') &&
+        el.offsetParent !== null,
+    );
+  }, []);
+
+  // Focus trap handler
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!runTour) return;
+
+      // Handle Escape key
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        localStorage.setItem(`${tourKey}_completed`, 'true');
+        setRunTour(false);
+        if (previousActiveElementRef.current) {
+          previousActiveElementRef.current.focus();
+        }
+        return;
+      }
+
+      // Handle Tab key for focus trapping
+      if (e.key === 'Tab') {
+        const focusableElements = getFocusableElements();
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          // Shift + Tab
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          // Tab
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+    },
+    [runTour, tourKey, getFocusableElements],
+  );
+
+  // Handle focus management when tour starts/stops
+  useEffect(() => {
+    if (runTour) {
+      // Store the previously focused element
+      previousActiveElementRef.current =
+        document.activeElement as HTMLElement;
+
+      // Focus the tooltip when it appears
+      setTimeout(() => {
+        const focusableElements = getFocusableElements();
+        if (focusableElements.length > 0) {
+          focusableElements[0].focus();
+        } else {
+          // Fallback: find the tooltip container
+          const tooltip = document.querySelector('[data-testid="react-joyride-tooltip"]') || 
+                          document.querySelector('.react-joyride__tooltip') ||
+                          document.querySelector('[role="dialog"]');
+          if (tooltip && tooltip instanceof HTMLElement) {
+            tooltip.focus();
+          }
+        }
+      }, 100);
+
+      // Add event listeners
+      document.addEventListener('keydown', handleKeyDown);
+      // Prevent body scroll
+      document.body.style.overflow = 'hidden';
+
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = '';
+        // Restore focus to previously focused element
+        if (previousActiveElementRef.current) {
+          previousActiveElementRef.current.focus();
+        }
+      };
+    }
+    return () => {};
+  }, [runTour, handleKeyDown, getFocusableElements]);
 
   // Start tour for new users
   useEffect(() => {

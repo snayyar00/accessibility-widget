@@ -870,18 +870,30 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                     monitoringStates[domain.id ?? 0] ??
                                     domain.monitor_enabled
                                       ? 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500'
-                                      : 'bg-gray-200 hover:bg-gray-300 focus:ring-gray-300'
+                                      : 'focus:ring-gray-300'
                                   }`}
+                                  style={
+                                    monitoringStates[domain.id ?? 0] ??
+                                    domain.monitor_enabled
+                                      ? {}
+                                      : { backgroundColor: '#E5E7EB' }
+                                  }
                                   disabled={isEditing}
                                 >
                                   <span
                                     aria-hidden="true"
-                                    className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-all duration-300 ${
+                                    className={`inline-block h-3 w-3 transform rounded-full shadow transition-all duration-300 ${
                                       monitoringStates[domain.id ?? 0] ??
                                       domain.monitor_enabled
-                                        ? 'translate-x-3'
+                                        ? 'translate-x-3 bg-white'
                                         : 'translate-x-0.5'
                                     }`}
+                                    style={
+                                      monitoringStates[domain.id ?? 0] ??
+                                      domain.monitor_enabled
+                                        ? {}
+                                        : { backgroundColor: '#848484' }
+                                    }
                                   />
                                 </button>
                               </Tooltip>
@@ -906,12 +918,12 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                       }`}
                                       placement="top"
                                     >
-                                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-green-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-help border border-green-400">
+                                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg hover:shadow-xl transition-all duration-300 cursor-help border border-green-400" style={{ backgroundColor: '#178841', color: '#FFFFFF' }}>
                                         <span className="relative flex h-2 w-2 mr-2">
                                           <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span>
                                           <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                                         </span>
-                                        <span className="text-white font-medium tracking-wide">
+                                        <span className="font-medium tracking-wide" style={{ color: '#FFFFFF' }}>
                                           ONLINE
                                         </span>
                                       </span>
