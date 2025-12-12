@@ -485,7 +485,7 @@ const Topbar: React.FC<Props> = ({
                         e.currentTarget.click();
                       }
                     }}
-                    className="flex items-center px-4 py-3 text-sm font-medium hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset transition-all duration-200 cursor-pointer"
+                    className="flex items-center px-4 py-3 text-sm font-medium text-[#0074E8] hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset transition-all duration-200 cursor-pointer"
                     style={{ color: '#0074E8' }}
                     tabIndex={0}
                   >
