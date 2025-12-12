@@ -620,56 +620,59 @@ const DomainTable: React.FC<DomainTableProps> = ({
               </div>
             ) : (
               <>
-                {/* Column Headers - Desktop Only */}
+                {/* Table - Desktop Only */}
                 <div className="hidden lg:block">
-                  <div className="flex items-center text-sm font-medium text-gray-700 mb-4 pr-8 my-sites-table-headers">
-                    <div className="flex-shrink-0 mr-2 w-6">
-                      {/* Empty space for favicon alignment */}
-                    </div>
-                    <div className="flex-1 min-w-0 mr-2 flex items-center">
-                      <span className="uppercase" style={{ color: '#445AE7' }}>
-                        Domain
-                      </span>
-                    </div>
-                    <div className="flex-shrink-0 mr-4 w-32 flex items-center">
-                      <Tooltip
-                        title="Domain ownership status and workspace sharing"
-                        placement="top"
-                      >
-                        <span
-                          className="uppercase cursor-help"
-                          style={{ color: '#445AE7' }}
-                        >
-                          Ownership
-                        </span>
-                      </Tooltip>
-                    </div>
-                    <div className="flex-shrink-0 mr-16 w-16 flex items-center">
-                      <span className="uppercase" style={{ color: '#445AE7' }}>
-                        Plan
-                      </span>
-                    </div>
-                    <div className="flex-shrink-0 mr-8 w-20 flex items-center">
-                      <span className="uppercase" style={{ color: '#445AE7' }}>
-                        Monitor
-                      </span>
-                    </div>
-                    <div className="flex-shrink-0 mr-3 w-24 flex items-center">
-                      <span className="uppercase" style={{ color: '#445AE7' }}>
-                        Status
-                      </span>
-                    </div>
-                    <div className="flex-shrink-0 w-56 flex items-center">
-                      <span className="uppercase" style={{ color: '#445AE7' }}>
-                        Actions
-                      </span>
-                    </div>
-                  </div>
-                  <div className="border-b border-gray-200 mb-4"></div>
-                </div>
-
-                {/* Desktop Cards */}
-                <div className="hidden lg:block space-y-2">
+                  <table className="w-full pr-8 my-sites-table-headers" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+                    <caption className="sr-only">Experience WebAbility PRO free for 7 days</caption>
+                    <thead>
+                      <tr className="text-sm font-medium text-gray-700 mb-4 pr-8" style={{ display: 'flex', alignItems: 'center', padding: '0 2rem 0 1.5rem' }}>
+                        <th scope="col" className="flex-shrink-0 mr-2 w-6" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          {/* Empty space for favicon alignment */}
+                        </th>
+                        <th scope="col" className="flex-1 min-w-0 mr-2" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          <span className="uppercase flex items-center" style={{ color: '#445AE7' }}>
+                            Domain
+                          </span>
+                        </th>
+                        <th scope="col" className="flex-shrink-0 mr-4 w-32" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          <Tooltip
+                            title="Domain ownership status and workspace sharing"
+                            placement="top"
+                          >
+                            <span
+                              className="uppercase cursor-help flex items-center"
+                              style={{ color: '#445AE7' }}
+                            >
+                              Ownership
+                            </span>
+                          </Tooltip>
+                        </th>
+                        <th scope="col" className="flex-shrink-0 mr-16 w-16" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          <span className="uppercase flex items-center" style={{ color: '#445AE7' }}>
+                            Plan
+                          </span>
+                        </th>
+                        <th scope="col" className="flex-shrink-0 mr-8 w-20" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          <span className="uppercase flex items-center" style={{ color: '#445AE7' }}>
+                            Monitor
+                          </span>
+                        </th>
+                        <th scope="col" className="flex-shrink-0 mr-3 w-24" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          <span className="uppercase flex items-center" style={{ color: '#445AE7' }}>
+                            Status
+                          </span>
+                        </th>
+                        <th scope="col" className="flex-shrink-0 w-56" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          <span className="uppercase flex items-center" style={{ color: '#445AE7' }}>
+                            Actions
+                          </span>
+                        </th>
+                      </tr>
+                      <tr aria-hidden="true" style={{ display: 'block' }}>
+                        <td colSpan={7} style={{ padding: 0, border: 'none', borderBottom: '1px solid #e5e7eb', marginBottom: '1rem', height: '1px' }}></td>
+                      </tr>
+                    </thead>
+                    <tbody className="space-y-2">
                   {filteredDomains.map((domain) => {
                     const isEditing = editingId === domain.id;
                     const domainStatus = getDomainStatus(
@@ -702,14 +705,13 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     };
 
                     return (
-                      <div
+                      <tr
                         key={domain.id}
                         className="bg-white border p-6 pr-8 hover:shadow-md transition-shadow rounded-lg min-h-[80px] my-sites-domain-row"
-                        style={{ borderColor: '#A2ADF3' }}
+                        style={{ borderColor: '#A2ADF3', display: 'flex' }}
                       >
-                        <div className="flex items-center">
-                          {/* Favicon */}
-                          <div className="flex-shrink-0 mr-2">
+                        {/* Favicon */}
+                        <td className="flex-shrink-0 mr-2" style={{ display: 'block', padding: 0, border: 'none' }}>
                             <img
                               src={getFaviconUrl(domain.url ?? '')}
                               alt={`${domain.url} favicon`}
@@ -719,10 +721,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 e.currentTarget.style.display = 'none';
                               }}
                             />
-                          </div>
+                        </td>
 
-                          {/* Domain Name */}
-                          <div className="flex-1 min-w-0 mr-2">
+                        {/* Domain Name */}
+                        <td className="flex-1 min-w-0 mr-2" style={{ display: 'block', padding: 0, border: 'none' }}>
                             {isEditing ? (
                               <input
                                 type="text"
@@ -740,10 +742,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                     .replace(/^www\./, '')}
                               </div>
                             )}
-                          </div>
+                        </td>
 
-                          {/* Ownership */}
-                          <div className="flex-shrink-0 mr-4 w-32">
+                        {/* Ownership */}
+                        <td className="flex-shrink-0 mr-4 w-32" style={{ display: 'block', padding: 0, border: 'none' }}>
                             <div className="flex flex-nowrap gap-1">
                               {!domain.is_owner &&
                                 !domain?.workspaces?.length && (
@@ -776,10 +778,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 />
                               )}
                             </div>
-                          </div>
+                        </td>
 
-                          {/* Plan Status */}
-                          <div className="flex-shrink-0 mr-16 w-16 my-sites-plan-status">
+                        {/* Plan Status */}
+                        <td className="flex-shrink-0 mr-16 w-16 my-sites-plan-status" style={{ display: 'block', padding: 0, border: 'none' }}>
                             <Tooltip
                               title={
                                 domainStatus === 'Life Time'
@@ -833,10 +835,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 {domainStatus}
                               </span>
                             </Tooltip>
-                          </div>
+                        </td>
 
-                          {/* Monitor Toggle */}
-                          <div className="flex-shrink-0 mr-8 w-20 my-sites-monitor-toggle">
+                        {/* Monitor Toggle */}
+                        <td className="flex-shrink-0 mr-8 w-20 my-sites-monitor-toggle" style={{ display: 'block', padding: 0, border: 'none' }}>
                             {(userData.isAdminOrOwnerOrSuper ||
                               domain.is_owner) && (
                               <Tooltip
@@ -884,10 +886,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 </button>
                               </Tooltip>
                             )}
-                          </div>
+                        </td>
 
-                          {/* Status Indicator */}
-                          <div className="flex-shrink-0 mr-3 w-24 my-sites-status-indicator">
+                        {/* Status Indicator */}
+                        <td className="flex-shrink-0 mr-3 w-24 my-sites-status-indicator" style={{ display: 'block', padding: 0, border: 'none' }}>
                             {monitoringStates[domain.id ?? 0] ??
                             domain.monitor_enabled ? (
                               domain.is_currently_down !== null &&
@@ -1002,10 +1004,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 </span>
                               </Tooltip>
                             )}
-                          </div>
+                        </td>
 
-                          {/* Actions Menu */}
-                          <div className="flex-shrink-0 w-56 flex items-center space-x-1 my-sites-actions">
+                        {/* Actions Menu */}
+                        <td className="flex-shrink-0 w-56 flex items-center space-x-1 my-sites-actions" style={{ display: 'flex', padding: 0, border: 'none' }}>
                             {isEditing ? (
                               <>
                                 <Tooltip title="Save changes" placement="top">
@@ -1173,11 +1175,12 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 )}
                               </>
                             )}
-                          </div>
-                        </div>
-                      </div>
+                        </td>
+                      </tr>
                     );
                   })}
+                    </tbody>
+                  </table>
                 </div>
               </>
             )}
