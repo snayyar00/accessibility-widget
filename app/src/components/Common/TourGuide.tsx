@@ -50,6 +50,7 @@ const TourGuide: React.FC<TourGuideProps> = ({
 }) => {
   const [runTour, setRunTour] = useState(false);
   const [tourStepIndex, setTourStepIndex] = useState(initialStepIndex);
+  const [effectiveSteps, setEffectiveSteps] = useState<Step[]>(steps);
   const [waitingForModal, setWaitingForModal] = useState(false);
   const [waitingForPayment, setWaitingForPayment] = useState(false);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
@@ -138,18 +139,37 @@ const TourGuide: React.FC<TourGuideProps> = ({
     };
   };
 
+  // Shared completion handler to keep end-of-tour logic consistent
+  const completeTour = useCallback(() => {
+    localStorage.setItem(`${tourKey}_completed`, 'true');
+    setRunTour(false);
+    setWaitingForModal(false);
+    setWaitingForPayment(false);
+
+    // Notify listeners that this tour has completed
+    try {
+      const event = new CustomEvent('tourCompleted', { detail: { tourKey } });
+      window.dispatchEvent(event);
+    } catch {}
+
+    if (onTourComplete) {
+      onTourComplete();
+    }
+  }, [tourKey, onTourComplete]);
+
   // Handle tour callback
   const handleTourCallback = (data: CallBackProps) => {
     const { status, type, index, action } = data;
+    const totalSteps = effectiveSteps.length;
 
-    // Move focus to tooltip when step changes
+    // Move focus to tooltip when step changes or tour starts
     if (type === 'step:after' || type === 'tour:start') {
       setTimeout(() => {
         const focusableElements = getFocusableElements();
         if (focusableElements.length > 0) {
           focusableElements[0].focus();
         }
-      }, 50);
+      }, 150);
     }
 
     // Call step change callback if provided
@@ -157,44 +177,28 @@ const TourGuide: React.FC<TourGuideProps> = ({
       onStepChange(data);
     }
 
+    // Auto-skip steps when targets are missing so the tour keeps progressing
+    if (type === 'error:target_not_found') {
+      const nextIndex =
+        action === ACTIONS.PREV ? Math.max(0, index - 1) : index + 1;
+
+      if (nextIndex >= totalSteps) {
+        completeTour();
+        return;
+      }
+
+      setTourStepIndex(nextIndex);
+      return;
+    }
+
     // Handle close button (X) click
     if (action === ACTIONS.CLOSE) {
-      // Mark tour as completed and stop the tour
-      localStorage.setItem(`${tourKey}_completed`, 'true');
-      setRunTour(false);
-      setWaitingForModal(false);
-      setWaitingForPayment(false);
-
-      // Notify listeners that this tour has completed
-      try {
-        const event = new CustomEvent('tourCompleted', { detail: { tourKey } });
-        window.dispatchEvent(event);
-      } catch {}
-
-      // Call completion callback if provided
-      if (onTourComplete) {
-        onTourComplete();
-      }
+      completeTour();
       return;
     }
 
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
-      // Mark tour as completed (same behavior for both finish and skip)
-      localStorage.setItem(`${tourKey}_completed`, 'true');
-      setRunTour(false);
-      setWaitingForModal(false);
-      setWaitingForPayment(false);
-
-      // Notify listeners that this tour has completed
-      try {
-        const event = new CustomEvent('tourCompleted', { detail: { tourKey } });
-        window.dispatchEvent(event);
-      } catch {}
-
-      // Call completion callback if provided (same for both finish and skip)
-      if (onTourComplete) {
-        onTourComplete();
-      }
+      completeTour();
       return;
     }
 
@@ -214,23 +218,8 @@ const TourGuide: React.FC<TourGuideProps> = ({
       }
 
       // If we've reached the last step, finish the tour
-      if (nextIndex >= steps.length) {
-        localStorage.setItem(`${tourKey}_completed`, 'true');
-        setRunTour(false);
-        setWaitingForModal(false);
-        setWaitingForPayment(false);
-
-        // Notify listeners that this tour has completed
-        try {
-          const event = new CustomEvent('tourCompleted', {
-            detail: { tourKey },
-          });
-          window.dispatchEvent(event);
-        } catch {}
-
-        if (onTourComplete) {
-          onTourComplete();
-        }
+      if (nextIndex >= totalSteps) {
+        completeTour();
         return;
       }
 
@@ -259,6 +248,41 @@ const TourGuide: React.FC<TourGuideProps> = ({
       setTourStepIndex(nextIndex);
     }
   };
+
+  // Keep effective steps in sync and drop steps whose targets are missing for static tours
+  const shouldFilterMissingTargets =
+    !currentState ||
+    (!currentState.hasOwnProperty('isModalOpen') &&
+      !currentState.hasOwnProperty('isPaymentView'));
+
+  useEffect(() => {
+    const alignEffectiveSteps = () => {
+      if (!shouldFilterMissingTargets) {
+        setEffectiveSteps(steps);
+        return;
+      }
+
+      const filtered = steps.filter(
+        (step) => step.target === 'body' || !!document.querySelector(step.target as string),
+      );
+
+      // Fallback to original steps if everything filtered out to avoid empty tour
+      setEffectiveSteps(filtered.length > 0 ? filtered : steps);
+    };
+
+    // Run immediately and also after small delay to allow DOM paint
+    alignEffectiveSteps();
+    const timer = setTimeout(alignEffectiveSteps, 300);
+
+    return () => clearTimeout(timer);
+  }, [steps, shouldFilterMissingTargets, isLoading, runTour]);
+
+  // Reset index when effective steps change to stay in bounds
+  useEffect(() => {
+    if (tourStepIndex >= effectiveSteps.length) {
+      setTourStepIndex(Math.max(0, effectiveSteps.length - 1));
+    }
+  }, [effectiveSteps.length, tourStepIndex]);
 
   // Auto-restart tour when UI state changes
   useEffect(() => {
@@ -323,21 +347,20 @@ const TourGuide: React.FC<TourGuideProps> = ({
     );
   }, []);
 
-  // Focus trap handler
+  // Focus trap handler - only trap when focus is within tooltip
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!runTour) return;
 
-      // Handle Escape key
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        localStorage.setItem(`${tourKey}_completed`, 'true');
-        setRunTour(false);
-        if (previousActiveElementRef.current) {
-          previousActiveElementRef.current.focus();
-        }
-        return;
-      }
+      // Check if tooltip is actually visible
+      const tooltip = document.querySelector('[data-testid="react-joyride-tooltip"]') || 
+                      document.querySelector('.react-joyride__tooltip') ||
+                      document.querySelector('[role="dialog"]');
+      if (!tooltip) return;
+
+      // Only trap if focus is within the tooltip
+      const activeElement = document.activeElement;
+      if (!tooltip.contains(activeElement)) return;
 
       // Handle Tab key for focus trapping
       if (e.key === 'Tab') {
@@ -349,20 +372,22 @@ const TourGuide: React.FC<TourGuideProps> = ({
 
         if (e.shiftKey) {
           // Shift + Tab
-          if (document.activeElement === firstElement) {
+          if (activeElement === firstElement || activeElement === tooltip) {
             e.preventDefault();
+            e.stopPropagation();
             lastElement.focus();
           }
         } else {
           // Tab
-          if (document.activeElement === lastElement) {
+          if (activeElement === lastElement) {
             e.preventDefault();
+            e.stopPropagation();
             firstElement.focus();
           }
         }
       }
     },
-    [runTour, tourKey, getFocusableElements],
+    [runTour, getFocusableElements],
   );
 
   // Handle focus management when tour starts/stops
@@ -372,30 +397,31 @@ const TourGuide: React.FC<TourGuideProps> = ({
       previousActiveElementRef.current =
         document.activeElement as HTMLElement;
 
-      // Focus the tooltip when it appears
-      setTimeout(() => {
-        const focusableElements = getFocusableElements();
-        if (focusableElements.length > 0) {
-          focusableElements[0].focus();
-        } else {
-          // Fallback: find the tooltip container
-          const tooltip = document.querySelector('[data-testid="react-joyride-tooltip"]') || 
-                          document.querySelector('.react-joyride__tooltip') ||
-                          document.querySelector('[role="dialog"]');
-          if (tooltip && tooltip instanceof HTMLElement) {
+      // Focus the tooltip when it appears (with delay to ensure it's rendered)
+      const focusTimer = setTimeout(() => {
+        const tooltip = document.querySelector('[data-testid="react-joyride-tooltip"]') || 
+                        document.querySelector('.react-joyride__tooltip') ||
+                        document.querySelector('[role="dialog"]');
+        if (tooltip) {
+          const focusableElements = getFocusableElements();
+          if (focusableElements.length > 0) {
+            focusableElements[0].focus();
+          } else if (tooltip instanceof HTMLElement) {
+            tooltip.setAttribute('tabindex', '-1');
             tooltip.focus();
           }
         }
+      }, 300);
+
+      // Add event listeners with a small delay to not interfere with tour initialization
+      const listenerTimer = setTimeout(() => {
+        document.addEventListener('keydown', handleKeyDown, true);
       }, 100);
 
-      // Add event listeners
-      document.addEventListener('keydown', handleKeyDown);
-      // Prevent body scroll
-      document.body.style.overflow = 'hidden';
-
       return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-        document.body.style.overflow = '';
+        clearTimeout(focusTimer);
+        clearTimeout(listenerTimer);
+        document.removeEventListener('keydown', handleKeyDown, true);
         // Restore focus to previously focused element
         if (previousActiveElementRef.current) {
           previousActiveElementRef.current.focus();
@@ -428,8 +454,8 @@ const TourGuide: React.FC<TourGuideProps> = ({
       callback={handleTourCallback}
       continuous={true}
       run={runTour}
-      stepIndex={Math.min(tourStepIndex, steps.length - 1)}
-      steps={steps}
+      stepIndex={Math.min(tourStepIndex, effectiveSteps.length - 1)}
+      steps={effectiveSteps}
       showProgress={true}
       showSkipButton={true}
       styles={customStyles || defaultStyles}
