@@ -242,12 +242,13 @@ const ChartCard: React.FC<{
     >
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h3
+          <h2
             className="text-lg font-semibold"
             style={{ color: baseColors.grayText }}
+            aria-level={2}
           >
             {title}
-          </h3>
+          </h2>
           {subtitle && (
             <p className="text-xs" style={{ color: baseColors.grayText }}>
               {subtitle}

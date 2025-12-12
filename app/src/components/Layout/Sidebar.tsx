@@ -21,7 +21,7 @@ import {
 import { LuCircleDollarSign } from 'react-icons/lu';
 import { PiNotebookBold, PiBookOpenBold } from 'react-icons/pi';
 import { MdLightbulbOutline } from 'react-icons/md';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { handleBilling } from '@/containers/Profile/BillingPortalLink';
 import { CircularProgress } from '@mui/material';
 import { baseColors } from '@/config/colors';
@@ -126,6 +126,10 @@ const Sidebar = () => {
   }, [isMobile, isOpen, lockedOpen, dispatch]);
 
   const { data: userData } = useSelector((state: RootState) => state.user);
+  const showServiceRequests =
+    userData?.current_organization_id === 1 ||
+    userData?.current_organization_id === 87;
+  const showAdminControls = Boolean(userData?.isAdminOrOwnerOrSuper);
 
   // Helper function to check if a route is active
   const isActiveRoute = (path: string) => {
@@ -142,6 +146,59 @@ const Sidebar = () => {
     }
 
     return false;
+  };
+
+  const navItems = useMemo(
+    () => {
+      const items = [
+        { id: 'dashboard', label: 'Dashboard' },
+        { id: 'installation', label: 'Installation' },
+        { id: 'customization', label: 'Customization' },
+        { id: 'my-sites', label: 'My sites' },
+        { id: 'scanner', label: 'Scanner' },
+        { id: 'issues', label: 'Issues' },
+        { id: 'ai-statement', label: 'AI statement' },
+        { id: 'proof-of-effort', label: 'Proof of effort' },
+      ];
+
+      if (showServiceRequests) {
+        items.push({ id: 'service-requests', label: 'Service Requests' });
+      }
+
+      items.push({ id: 'ai-insights', label: 'AI insights' });
+
+      if (showAdminControls) {
+        items.push(
+          { id: 'users', label: 'Users' },
+          { id: 'workspaces', label: 'Workspaces' },
+          { id: 'organization', label: 'Organization' },
+        );
+      }
+
+      return items;
+    },
+    [showAdminControls, showServiceRequests],
+  );
+
+  const navItemPositions = useMemo(
+    () =>
+      navItems.reduce<
+        Record<string, { label: string; index: number; total: number }>
+      >((acc, item, idx) => {
+        acc[item.id] = {
+          label: item.label,
+          index: idx + 1,
+          total: navItems.length,
+        };
+        return acc;
+      }, {}),
+    [navItems],
+  );
+
+  const buildAriaLabel = (id: string) => {
+    const meta = navItemPositions[id];
+    if (!meta) return undefined;
+    return `${meta.label}. Item ${meta.index} of ${meta.total}`;
   };
   const organization = useSelector(
     (state: RootState) => state.organization.data,
@@ -230,6 +287,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/dashboard"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('dashboard')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/dashboard')
                       ? isCollapsed
@@ -267,6 +325,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/installation"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('installation')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/installation')
                       ? isCollapsed
@@ -304,6 +363,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/widget-selection"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('customization')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/widget-selection') ||
                     isActiveRoute('/customize-widget') ||
@@ -347,6 +407,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/add-domain"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('my-sites')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/add-domain')
                       ? isCollapsed
@@ -384,6 +445,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/scanner"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('scanner')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/scanner')
                       ? isCollapsed
@@ -421,6 +483,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/problem-reports"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('issues')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/problem-reports')
                       ? isCollapsed
@@ -458,6 +521,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/statement-generator"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('ai-statement')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/statement-generator')
                       ? isCollapsed
@@ -495,6 +559,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/proof-of-effort-toolkit"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('proof-of-effort')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/proof-of-effort-toolkit')
                       ? isCollapsed
@@ -529,11 +594,11 @@ const Sidebar = () => {
                 </NavLink>
 
                 {/* Service Requests - Only show for organization ID 1 or 87 */}
-                {(userData?.current_organization_id === 1 ||
-                  userData?.current_organization_id === 87) && (
+                {showServiceRequests && (
                   <NavLink
                     to="/service-requests"
                     onClick={closeSidebar}
+                    aria-label={buildAriaLabel('service-requests')}
                     className={`flex items-center rounded-lg transition-all duration-200 ${
                       isActiveRoute('/service-requests')
                         ? isCollapsed
@@ -572,6 +637,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/ai-insights"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('ai-insights')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/ai-insights')
                       ? isCollapsed
@@ -606,12 +672,13 @@ const Sidebar = () => {
                 </NavLink>
 
                 {/* Admin Controls - Only visible for admin/owner roles */}
-                {userData?.isAdminOrOwnerOrSuper && (
+                {showAdminControls && (
                   <>
                     {/* Users Management */}
                     <NavLink
                       to="/users"
                       onClick={closeSidebar}
+                      aria-label={buildAriaLabel('users')}
                       className={`flex items-center rounded-lg transition-all duration-200 ${
                         isActiveRoute('/users')
                           ? isCollapsed
@@ -649,6 +716,7 @@ const Sidebar = () => {
                     <NavLink
                       to="/workspaces"
                       onClick={closeSidebar}
+                      aria-label={buildAriaLabel('workspaces')}
                       className={`flex items-center rounded-lg transition-all duration-200 ${
                         isActiveRoute('/workspaces')
                           ? isCollapsed
@@ -686,6 +754,7 @@ const Sidebar = () => {
                     <NavLink
                       to="/organization"
                       onClick={closeSidebar}
+                      aria-label={buildAriaLabel('organization')}
                       className={`flex items-center rounded-lg transition-all duration-200 ${
                         isActiveRoute('/organization')
                           ? isCollapsed
@@ -768,6 +837,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/dashboard"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('dashboard')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/dashboard')
                       ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
@@ -790,6 +860,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/installation"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('installation')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/installation')
                       ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
@@ -812,6 +883,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/widget-selection"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('customization')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/widget-selection') ||
                     isActiveRoute('/customize-widget') ||
@@ -838,6 +910,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/add-domain"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('my-sites')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/add-domain')
                       ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
@@ -860,6 +933,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/scanner"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('scanner')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/scanner')
                       ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
@@ -882,6 +956,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/problem-reports"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('issues')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/problem-reports')
                       ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
@@ -904,6 +979,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/statement-generator"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('ai-statement')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/statement-generator')
                       ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
@@ -926,6 +1002,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/proof-of-effort-toolkit"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('proof-of-effort')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/proof-of-effort-toolkit')
                       ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
@@ -945,11 +1022,11 @@ const Sidebar = () => {
                 </NavLink>
 
                 {/* Service Requests - Only show for organization ID 1 or 87 */}
-                {(userData?.current_organization_id === 1 ||
-                  userData?.current_organization_id === 87) && (
+                {showServiceRequests && (
                   <NavLink
                     to="/service-requests"
                     onClick={closeSidebar}
+                    aria-label={buildAriaLabel('service-requests')}
                     className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                       isActiveRoute('/service-requests')
                       ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
@@ -973,6 +1050,7 @@ const Sidebar = () => {
                 <NavLink
                   to="/ai-insights"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('ai-insights')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/ai-insights')
                       ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
@@ -1014,12 +1092,13 @@ const Sidebar = () => {
                 </NavLink> */}
 
                 {/* Admin Controls - Only visible for admin/owner roles */}
-                {userData?.isAdminOrOwnerOrSuper && (
+                {showAdminControls && (
                   <>
                     {/* Users Management */}
                     <NavLink
                       to="/users"
                       onClick={closeSidebar}
+                      aria-label={buildAriaLabel('users')}
                       className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                         isActiveRoute('/users')
                         ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
@@ -1042,6 +1121,7 @@ const Sidebar = () => {
                     <NavLink
                       to="/workspaces"
                       onClick={closeSidebar}
+                      aria-label={buildAriaLabel('workspaces')}
                       className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                         isActiveRoute('/workspaces')
                         ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
@@ -1064,6 +1144,7 @@ const Sidebar = () => {
                     <NavLink
                       to="/organization"
                       onClick={closeSidebar}
+                      aria-label={buildAriaLabel('organization')}
                       className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                         isActiveRoute('/organization')
                         ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
