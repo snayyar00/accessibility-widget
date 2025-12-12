@@ -10,7 +10,7 @@ import {
   FaUser,
   FaWheelchair,
 } from 'react-icons/fa';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -115,6 +115,60 @@ const ChartCard: React.FC<{
 }) => {
   // Using baseColors directly
   // Custom tooltip to match the dark bubble style with a value and change percentage
+  const [activeIndex, setActiveIndex] = useState(
+    Math.max((data?.length ?? 1) - 1, 0),
+  );
+  const [isChartFocused, setIsChartFocused] = useState(false);
+  const chartRef = React.useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setActiveIndex(Math.max((data?.length ?? 1) - 1, 0));
+  }, [data]);
+
+  const getPercentChange = () => {
+    if (!data || !data.length) return 0;
+    const current = data?.[activeIndex];
+    if (!current) return 0;
+    const previousValue =
+      activeIndex > 0 ? Number(data[activeIndex - 1]?.[dataKey] ?? 0) : 0;
+    const currentValue = Number(current?.[dataKey] ?? 0);
+    return previousValue > 0
+      ? ((currentValue - previousValue) / previousValue) * 100
+      : 0;
+  };
+
+  const activePoint = data?.[activeIndex];
+  const percentChange = getPercentChange();
+  const isUp = percentChange >= 0;
+
+  const formattedDate = activePoint
+    ? new Date(activePoint.date).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+      })
+    : '';
+  const formattedValue = activePoint
+    ? Number(activePoint[dataKey] ?? 0).toLocaleString()
+    : '';
+  const indicatorLeftPercent =
+    (data?.length ?? 0) > 1
+      ? (activeIndex / Math.max((data?.length ?? 1) - 1, 1)) * 100
+      : 0;
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    e.preventDefault();
+    if (e.key === 'ArrowLeft') {
+      setActiveIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === 'ArrowRight') {
+      setActiveIndex((i) => Math.min(i + 1, (data?.length ?? 1) - 1));
+    } else if (e.key === 'Home') {
+      setActiveIndex(0);
+    } else if (e.key === 'End') {
+      setActiveIndex(Math.max((data?.length ?? 1) - 1, 0));
+    }
+  };
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const currentValue = Number(payload[0].value ?? 0);
@@ -134,7 +188,7 @@ const ChartCard: React.FC<{
             style={{
               background: baseColors.blueTooltip,
               color: 'white',
-              boxShadow: '0 12px 28px rgba(11,75,102,0.25)',
+              boxShadow: '0 12px 28px rgba(11,75,102,0.25)',          
               minWidth: 160,
             }}
           >
@@ -188,12 +242,13 @@ const ChartCard: React.FC<{
     >
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h3
+          <h2
             className="text-lg font-semibold"
             style={{ color: baseColors.grayText }}
+            aria-level={2}
           >
             {title}
-          </h3>
+          </h2>
           {subtitle && (
             <p className="text-xs" style={{ color: baseColors.grayText }}>
               {subtitle}
@@ -202,17 +257,37 @@ const ChartCard: React.FC<{
         </div>
         {timeRange && onChangeTimeRange && (
           <select
-            className="border border-gray-300 py-1.5 px-3 rounded-lg focus:outline-none text-sm appearance-none bg-no-repeat pr-6"
+            className="py-1.5 px-3 rounded-lg focus:outline-none text-sm appearance-none bg-no-repeat pr-6"
             style={{
-              backgroundColor: baseColors.brandPrimary,
-              color: baseColors.white,
+              backgroundColor: '#006BD6',
+              color: '#E4F2FF',
               backgroundImage:
-                "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23A7CAFF' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e\")",
-              backgroundSize: '12px 12px',
-              backgroundPosition: 'calc(100% - 8px) center',
+                "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%23E4F2FF' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m7 10 5 5 5-5'/%3e%3c/svg%3e\")",
+              backgroundSize: '18px 18px',
+              backgroundPosition: 'calc(100% - 12px) center',
+              paddingRight: '2.8rem',
+              minHeight: '40px',
+              border: 'none',
+              outline: 'none',
+              boxShadow: 'none',
+              cursor: 'pointer',
             }}
             value={timeRange}
             onChange={onChangeTimeRange}
+            aria-label={`${title} time range`}
+            onKeyDown={(e) => {
+              if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                e.currentTarget.click();
+              }
+            }}
+            onFocus={(e) =>
+              (e.currentTarget.style.boxShadow =
+                '0 0 0 4px rgba(0,107,214,0.65)')
+            }
+            onBlur={(e) =>
+              (e.currentTarget.style.boxShadow = 'none')
+            }
           >
             <option value="week">Last 7 days</option>
             <option value="month">Last 30 days</option>
@@ -220,11 +295,39 @@ const ChartCard: React.FC<{
           </select>
         )}
       </div>
-      <div className="h-[260px]">
+      <div
+        ref={chartRef}
+        className="h-[260px] focus:outline-none relative"
+        tabIndex={0}
+        role="group"
+        aria-label={`${title} chart. Use left and right arrow keys to explore data points.`}
+        onKeyDown={handleKeyDown}
+        onFocus={() => setActiveIndex(Math.max((data?.length ?? 1) - 1, 0))}
+        onFocusCapture={() => setIsChartFocused(true)}
+        onBlurCapture={() => setIsChartFocused(false)}
+        style={{
+          borderRadius: 12,
+          outline: 'none',
+          boxShadow: isChartFocused
+            ? '0 0 0 3px rgba(0,107,214,0.45)'
+            : 'none',
+        }}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}
             margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            onMouseMove={(state: any) => {
+              if (
+                state?.activeTooltipIndex !== undefined &&
+                state?.activeTooltipIndex !== null
+              ) {
+                setActiveIndex(state.activeTooltipIndex);
+              }
+            }}
+            onMouseLeave={() =>
+              setActiveIndex(Math.max((data?.length ?? 1) - 1, 0))
+            }
           >
             <defs>
               <linearGradient id="primaryGradient" x1="0" y1="0" x2="0" y2="1">
@@ -265,7 +368,15 @@ const ChartCard: React.FC<{
             />
             <Tooltip
               cursor={{ stroke: '#94a3b8', strokeDasharray: '4 4' }}
+              active={!!activePoint}
+              payload={
+                activePoint
+                  ? [{ name: dataKey, value: activePoint[dataKey] }]
+                  : []
+              }
+              label={activePoint?.date}
               content={<CustomTooltip />}
+              wrapperStyle={{ display: 'none' }}
             />
             <Area
               type="monotone"
@@ -286,6 +397,87 @@ const ChartCard: React.FC<{
             />
           </AreaChart>
         </ResponsiveContainer>
+        {activePoint && (
+          <>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-4"
+              style={{
+                left: `${indicatorLeftPercent}%`,
+                transform: 'translateX(-50%)',
+                borderLeft: '1px dashed #94a3b8',
+              }}
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute"
+              style={{
+                left: `${indicatorLeftPercent}%`,
+                bottom: 12,
+                transform: 'translateX(-50%)',
+                background: baseColors.blueTooltip,
+                color: 'white',
+                padding: '6px 10px',
+                borderRadius: 10,
+                boxShadow: '0 12px 28px rgba(11,75,102,0.25)',
+                whiteSpace: 'nowrap',
+                fontSize: 12,
+              }}
+            >
+              <div className="font-semibold text-sm leading-tight">
+                {formattedValue}
+              </div>
+              <div className={`${isUp ? 'text-emerald-200' : 'text-red-200'}`}>
+                {isUp ? '▲' : '▼'} {Math.abs(percentChange).toFixed(0)}%{' '}
+                {compareLabel}
+              </div>
+            </div>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute"
+              style={{
+                left: `${indicatorLeftPercent}%`,
+                bottom: 8,
+                transform: 'translateX(-50%)',
+                width: 10,
+                height: 10,
+                borderRadius: '9999px',
+                background: baseColors.brandNumbers,
+                boxShadow: '0 0 0 4px rgba(68, 90, 231, 0.35)',
+              }}
+            />
+          </>
+        )}
+        <div className="sr-only" aria-live="polite">
+          {activePoint
+            ? `${new Date(activePoint.date).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+              })}: ${Number(activePoint[dataKey] ?? 0).toLocaleString()} (${Math.abs(
+                percentChange,
+              ).toFixed(0)}% ${percentChange >= 0 ? 'up' : 'down'} ${compareLabel})`
+            : 'No data available'}
+        </div>
+      </div>
+      <div
+        className="mt-2 text-sm flex items-center gap-2"
+        style={{ color: baseColors.grayText }}
+      >
+        {activePoint ? (
+          <>
+            <span className="font-semibold">{formattedDate}</span>
+            <span>{formattedValue}</span>
+            <span className={isUp ? 'text-green-600' : 'text-red-600'}>
+              {isUp ? '▲' : '▼'} {Math.abs(percentChange).toFixed(0)}%{' '}
+              {compareLabel}
+            </span>
+          </>
+        ) : (
+          <span>No data available</span>
+        )}
+        <span className="ml-auto text-xs opacity-70">
+          Keyboard: ← → Home End
+        </span>
       </div>
     </div>
   );

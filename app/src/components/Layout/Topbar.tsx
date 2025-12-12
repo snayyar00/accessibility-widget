@@ -95,9 +95,9 @@ const Topbar: React.FC<Props> = ({
   const [isShowMenu, setIsShowMenu] = useState(false);
   const [isShowNotificationSettings, setIsShowNotificationSettings] =
     useState(false);
-  const profileRef = useRef<HTMLElement>(
-    null,
-  ) as React.MutableRefObject<HTMLDivElement>;
+  const toggleOnColor = '#0A6C30'; // >=3:1 on white
+  const toggleOffColor = '#6B7280'; // >=3:1 on white
+  const profileRef = useRef<HTMLButtonElement>(null);
   const notificationRef = useRef<HTMLButtonElement>(null);
 
   // GraphQL queries and mutations
@@ -202,7 +202,8 @@ const Topbar: React.FC<Props> = ({
                 }
               }}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center"
-              title="Toggle Sidebar"
+              aria-label="Sidebar"
+              aria-expanded={isSidebarOpen || lockedOpen}
             >
               <svg
                 width="25"
@@ -213,7 +214,7 @@ const Topbar: React.FC<Props> = ({
               >
                 <path
                   d="M9.5 20.5V4.5M9.5 20.5H17.3031C18.421 20.5 18.98 20.5 19.4074 20.2822C19.7837 20.0905 20.0905 19.7837 20.2822 19.4074C20.5 18.98 20.5 18.421 20.5 17.3031V7.69691C20.5 6.57899 20.5 6.0192 20.2822 5.5918C20.0905 5.21547 19.7837 4.90973 19.4074 4.71799C18.9796 4.5 18.4203 4.5 17.3002 4.5H9.5M9.5 20.5H7.69692C6.57901 20.5 6.0192 20.5 5.5918 20.2822C5.21547 20.0905 4.90973 19.7837 4.71799 19.4074C4.5 18.9796 4.5 18.4203 4.5 17.3002V7.7002C4.5 6.58009 4.5 6.01962 4.71799 5.5918C4.90973 5.21547 5.21547 4.90973 5.5918 4.71799C6.01962 4.5 6.58009 4.5 7.7002 4.5H9.5"
-                  stroke="#A5BACC"
+                  stroke="#6D8FAC"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -293,9 +294,19 @@ const Topbar: React.FC<Props> = ({
               <button
                 ref={notificationRef}
                 className="p-2 rounded-lg hover:bg-blue-200 transition-colors duration-200"
+                type="button"
+                aria-haspopup="true"
+                aria-expanded={isShowNotificationSettings}
+                aria-controls="notification-settings-dropdown"
                 onClick={() =>
                   setIsShowNotificationSettings(!isShowNotificationSettings)
                 }
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setIsShowNotificationSettings(!isShowNotificationSettings);
+                  }
+                }}
                 title="Notification Settings"
               >
                 <PiBellBold className="w-5 h-5" style={{ color: '#484848' }} />
@@ -311,10 +322,20 @@ const Topbar: React.FC<Props> = ({
               </button>
 
               {/* User Avatar */}
-              <div
+              <button
+                type="button"
                 onClick={() => setIsShowMenu(!isShowMenu)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setIsShowMenu(!isShowMenu);
+                  }
+                }}
                 ref={profileRef}
-                className="flex items-center justify-center cursor-pointer"
+                className="flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg transition-all duration-200"
+                aria-label={`Profile picture for ${name || 'User'}`}
+                title={`${name || 'User'} - Profile Picture`}
+                tabIndex={0}
               >
                 <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-300 flex items-center justify-center">
                   <InitialAvatar
@@ -323,17 +344,20 @@ const Topbar: React.FC<Props> = ({
                     className="rounded-lg"
                   />
                 </div>
-              </div>
+              </button>
             </div>
           </div>
 
           {/* Notification Settings Dropdown */}
           {isShowNotificationSettings && (
-            <div className="absolute top-full right-0 mt-3 w-[280px] sm:w-[260px] z-50">
+            <div
+              id="notification-settings-dropdown"
+              className="absolute top-full right-0 mt-3 w-[280px] sm:w-[260px] z-50"
+            >
               <div className="relative p-4 border border-solid border-dark-grey rounded-[5px] shadow-xsl bg-white">
-                <h3 className="text-lg font-semibold text-sapphire-blue mb-4">
+                <h2 className="text-lg font-semibold text-sapphire-blue mb-4">
                   Notification Settings
-                </h3>
+                </h2>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 pr-4">
@@ -345,14 +369,22 @@ const Topbar: React.FC<Props> = ({
                       </p>
                     </div>
                     <button
+                      type="button"
+                      role="switch"
+                      aria-label="Monthly Reports"
+                      aria-checked={notificationSettings.monthly_report_flag}
                       onClick={(e) =>
                         handleNotificationToggle('monthly_report_flag', e)
                       }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                        notificationSettings.monthly_report_flag
-                          ? 'bg-green-500 focus:ring-green-500'
-                          : 'bg-gray-300 focus:ring-gray-300'
-                      }`}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      style={{
+                        backgroundColor: notificationSettings.monthly_report_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                        borderColor: notificationSettings.monthly_report_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                      }}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
@@ -374,14 +406,22 @@ const Topbar: React.FC<Props> = ({
                       </p>
                     </div>
                     <button
+                      type="button"
+                      role="switch"
+                      aria-label="New Domain Alerts"
+                      aria-checked={notificationSettings.new_domain_flag}
                       onClick={(e) =>
                         handleNotificationToggle('new_domain_flag', e)
                       }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                        notificationSettings.new_domain_flag
-                          ? 'bg-green-500 focus:ring-green-500'
-                          : 'bg-gray-300 focus:ring-gray-300'
-                      }`}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      style={{
+                        backgroundColor: notificationSettings.new_domain_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                        borderColor: notificationSettings.new_domain_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                      }}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
@@ -403,14 +443,22 @@ const Topbar: React.FC<Props> = ({
                       </p>
                     </div>
                     <button
+                      type="button"
+                      role="switch"
+                      aria-label="Issue Reports"
+                      aria-checked={notificationSettings.issue_reported_flag}
                       onClick={(e) =>
                         handleNotificationToggle('issue_reported_flag', e)
                       }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                        notificationSettings.issue_reported_flag
-                          ? 'bg-green-500 focus:ring-green-500'
-                          : 'bg-gray-300 focus:ring-gray-300'
-                      }`}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      style={{
+                        backgroundColor: notificationSettings.issue_reported_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                        borderColor: notificationSettings.issue_reported_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                      }}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
@@ -432,14 +480,22 @@ const Topbar: React.FC<Props> = ({
                       </p>
                     </div>
                     <button
+                      type="button"
+                      role="switch"
+                      aria-label="Onboarding Emails"
+                      aria-checked={notificationSettings.onboarding_emails_flag}
                       onClick={(e) =>
                         handleNotificationToggle('onboarding_emails_flag', e)
                       }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                        notificationSettings.onboarding_emails_flag
-                          ? 'bg-green-500 focus:ring-green-500'
-                          : 'bg-gray-300 focus:ring-gray-300'
-                      }`}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      style={{
+                        backgroundColor: notificationSettings.onboarding_emails_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                        borderColor: notificationSettings.onboarding_emails_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                      }}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
@@ -470,7 +526,16 @@ const Topbar: React.FC<Props> = ({
                         document.dispatchEvent(new MouseEvent('click'));
                       }
                     }}
-                    className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 cursor-pointer"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.currentTarget.click();
+                      }
+                    }}
+                    className="flex items-center px-4 py-3 text-sm font-medium text-[#0074E8] hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset transition-all duration-200 cursor-pointer"
+                    style={{ color: '#0074E8' }}
+                    tabIndex={0}
+                    aria-label={`${t('Common.label.profile')} (menu item 1 of 3 in list)`}
                   >
                     <svg
                       className="w-4 h-4 mr-3 text-gray-400"
@@ -489,6 +554,8 @@ const Topbar: React.FC<Props> = ({
                   </NavLink>
 
                   <button
+                    type="button"
+                    aria-label="Billing & Plans (item 2 of 3)"
                     disabled={clicked}
                     onClick={async (e) => {
                       e.stopPropagation();
@@ -498,7 +565,16 @@ const Topbar: React.FC<Props> = ({
                       // Manually trigger a click outside to close the menu
                       document.dispatchEvent(new MouseEvent('click'));
                     }}
-                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 cursor-pointer border-none outline-none bg-transparent"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (!clicked) {
+                          e.currentTarget.click();
+                        }
+                      }
+                    }}
+                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset transition-all duration-200 cursor-pointer border-none bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                    tabIndex={0}
                   >
                     <svg
                       className="w-4 h-4 mr-3 text-gray-400"
@@ -528,9 +604,19 @@ const Topbar: React.FC<Props> = ({
 
                   <button
                     type="button"
+                    aria-label="Sign Out (item 3 of 3)"
                     disabled={clicked}
                     onClick={signout}
-                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 cursor-pointer border-none outline-none bg-transparent"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (!clicked) {
+                          signout();
+                        }
+                      }
+                    }}
+                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 focus:bg-red-50 focus:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-inset transition-all duration-200 cursor-pointer border-none bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                    tabIndex={0}
                   >
                     <svg
                       className="w-4 h-4 mr-3 text-gray-400"

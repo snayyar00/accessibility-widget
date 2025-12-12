@@ -67,15 +67,60 @@ const Modal: React.FC<ModalProps> = ({
   domainCount,
   closeModal,
 }) => {
-  if (!isOpen) return null;
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const organization = useSelector(
     (state: RootState) => state.organization.data,
   );
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const getFocusableElements = () => {
+      if (!modalRef.current) return [];
+      return Array.from(
+        modalRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => !el.hasAttribute('disabled') && el.offsetParent !== null);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    setTimeout(() => {
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length > 0) {
+        focusableElements[0].focus();
+      }
+    }, 0);
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50">
-      <div className="modal-perfect-center w-full max-w-md max-h-[90vh] overflow-y-auto no-scrollbar modal-container p-4">
+      <div
+        ref={modalRef}
+        className="modal-perfect-center w-full max-w-md max-h-[90vh] overflow-y-auto no-scrollbar modal-container p-4"
+      >
         {/* Content */}
         <div className="w-full">{children}</div>
       </div>
@@ -599,6 +644,7 @@ const TrialBannerAndModal: React.FC<any> = ({
               <button
                 className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-2xl hover:bg-gray-100 transition-colors duration-200 p-1 rounded-full z-10"
                 onClick={closeModal}
+                aria-label="Close"
               >
                 ×
               </button>
@@ -613,7 +659,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                       style={{ maxWidth: '100%', maxHeight: '48px' }}
                     />
                   ) : (
-                    <LogoIcon className="w-26 h-7 sm:w-26 sm:h-7 md:w-40 md:h-10 lg:w-48 lg:h-12" />
+                    <LogoIcon className="w-26 h-7 sm:w-26 sm:h-7 md:w-40 md:h-10 lg:w-48 lg:h-12" aria-label="Webability logo" role="img" />
                   )}
                 </div>
 
@@ -640,8 +686,10 @@ const TrialBannerAndModal: React.FC<any> = ({
                       placeholder="example.com"
                       value={formData.domainName}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-3 text-base border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 placeholder-gray-400 bg-gray-50 hover:bg-white focus:bg-white"
+                      className="w-full px-3 py-3 text-base border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 placeholder:text-[#6E7788] bg-gray-50 hover:bg-white focus:bg-white"
                       form="bannerForm"
+                      aria-label="Your Domain"
+                      aria-required="true"
                     />
                   </div>
                   <p className="text-xs text-gray-600 mt-2">
@@ -701,7 +749,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                               </div>
                             </div>
                             <div>
-                              <h4 className="text-sm font-semibold text-gray-900">
+                              <h4 className="text-sm font-semibold text-gray-900" role="presentation">
                                 30 Day Trial
                               </h4>
                               <p className="text-xs text-gray-600">
@@ -776,7 +824,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                               </div>
                             </div>
                             <div>
-                              <h4 className="text-sm font-semibold text-gray-900">
+                              <h4 className="text-sm font-semibold text-gray-900" role="presentation">
                                 15 Day Trial
                               </h4>
                               <p className="text-xs text-gray-600">
