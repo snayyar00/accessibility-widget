@@ -292,9 +292,19 @@ const Topbar: React.FC<Props> = ({
               <button
                 ref={notificationRef}
                 className="p-2 rounded-lg hover:bg-blue-200 transition-colors duration-200"
+                type="button"
+                aria-haspopup="true"
+                aria-expanded={isShowNotificationSettings}
+                aria-controls="notification-settings-dropdown"
                 onClick={() =>
                   setIsShowNotificationSettings(!isShowNotificationSettings)
                 }
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setIsShowNotificationSettings(!isShowNotificationSettings);
+                  }
+                }}
                 title="Notification Settings"
               >
                 <PiBellBold className="w-5 h-5" style={{ color: '#484848' }} />
@@ -338,7 +348,10 @@ const Topbar: React.FC<Props> = ({
 
           {/* Notification Settings Dropdown */}
           {isShowNotificationSettings && (
-            <div className="absolute top-full right-0 mt-3 w-[280px] sm:w-[260px] z-50">
+            <div
+              id="notification-settings-dropdown"
+              className="absolute top-full right-0 mt-3 w-[280px] sm:w-[260px] z-50"
+            >
               <div className="relative p-4 border border-solid border-dark-grey rounded-[5px] shadow-xsl bg-white">
                 <h3 className="text-lg font-semibold text-sapphire-blue mb-4">
                   Notification Settings
@@ -488,6 +501,7 @@ const Topbar: React.FC<Props> = ({
                     className="flex items-center px-4 py-3 text-sm font-medium text-[#0074E8] hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset transition-all duration-200 cursor-pointer"
                     style={{ color: '#0074E8' }}
                     tabIndex={0}
+                    aria-label={`${t('Common.label.profile')} (menu item 1 of 3 in list)`}
                   >
                     <svg
                       className="w-4 h-4 mr-3 text-gray-400"
@@ -507,6 +521,7 @@ const Topbar: React.FC<Props> = ({
 
                   <button
                     type="button"
+                    aria-label="Billing & Plans (item 2 of 3)"
                     disabled={clicked}
                     onClick={async (e) => {
                       e.stopPropagation();
@@ -526,7 +541,6 @@ const Topbar: React.FC<Props> = ({
                     }}
                     className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset transition-all duration-200 cursor-pointer border-none bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                     tabIndex={0}
-                    aria-label="Billing & Plans"
                   >
                     <svg
                       className="w-4 h-4 mr-3 text-gray-400"
@@ -556,6 +570,7 @@ const Topbar: React.FC<Props> = ({
 
                   <button
                     type="button"
+                    aria-label="Sign Out (item 3 of 3)"
                     disabled={clicked}
                     onClick={signout}
                     onKeyDown={(e) => {
@@ -568,7 +583,6 @@ const Topbar: React.FC<Props> = ({
                     }}
                     className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 focus:bg-red-50 focus:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-inset transition-all duration-200 cursor-pointer border-none bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                     tabIndex={0}
-                    aria-label="Sign Out"
                   >
                     <svg
                       className="w-4 h-4 mr-3 text-gray-400"

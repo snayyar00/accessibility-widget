@@ -114,6 +114,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [monitoringStates, setMonitoringStates] = useState<{
     [key: number]: boolean;
   }>({});
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
   
   // State to track which domain's actions are visible
   const [openActionsMenuId, setOpenActionsMenuId] = useState<number | null>(null);
@@ -421,6 +422,29 @@ const DomainTable: React.FC<DomainTableProps> = ({
   // The `currentOffset` computed with `useMemo` already handles resetting the offset
   // for the GraphQL query when the active tab changes.
 
+  // Announce result counts to assistive tech when search/filter changes
+  useEffect(() => {
+    const term = debouncedSearchTerm.trim();
+    const tabLabel =
+      activeTab === 'active'
+        ? 'Active sites'
+        : activeTab === 'disabled'
+        ? 'Trial sites'
+        : 'All sites';
+
+    const count = filteredDomains.length;
+    const resultsText =
+      count === 0
+        ? 'No sites found'
+        : `${count} ${count === 1 ? 'site' : 'sites'} found`;
+
+    const message = term
+      ? `${resultsText} in ${tabLabel} for "${term}"`
+      : `${resultsText} in ${tabLabel}`;
+
+    setLiveAnnouncement(message);
+  }, [filteredDomains.length, debouncedSearchTerm, activeTab]);
+
   useEffect(() => {
     if (customerData) {
       if (customerData.submeta) {
@@ -546,6 +570,25 @@ const DomainTable: React.FC<DomainTableProps> = ({
 
               {/* Search Bar - Right */}
               <div className="relative w-full md:w-80 md:max-w-md my-sites-search">
+              <div
+                className="sr-only"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                style={{
+                  position: 'absolute',
+                  width: '1px',
+                  height: '1px',
+                  padding: 0,
+                  margin: '-1px',
+                  overflow: 'hidden',
+                  clip: 'rect(0, 0, 0, 0)',
+                  whiteSpace: 'nowrap',
+                  border: 0,
+                }}
+              >
+                {liveAnnouncement}
+              </div>
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg
                     className="h-4 w-4 text-gray-400"
@@ -593,7 +636,12 @@ const DomainTable: React.FC<DomainTableProps> = ({
                 </div>
 
                 {/* Empty State Message */}
-                <div className="text-center mb-6">
+                <div
+                  className="text-center mb-6"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     You currently have no sites in this list
                   </h3>
@@ -1213,7 +1261,12 @@ const DomainTable: React.FC<DomainTableProps> = ({
               </div>
 
               {/* Empty State Message */}
-              <div className="text-center mb-6">
+              <div
+                className="text-center mb-6"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+              >
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   You currently have no sites in this list
                 </h3>
