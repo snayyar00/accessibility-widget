@@ -95,6 +95,8 @@ const Topbar: React.FC<Props> = ({
   const [isShowMenu, setIsShowMenu] = useState(false);
   const [isShowNotificationSettings, setIsShowNotificationSettings] =
     useState(false);
+  const toggleOnColor = '#0A6C30'; // >=3:1 on white
+  const toggleOffColor = '#6B7280'; // >=3:1 on white
   const profileRef = useRef<HTMLButtonElement>(null);
   const notificationRef = useRef<HTMLButtonElement>(null);
 
@@ -353,9 +355,9 @@ const Topbar: React.FC<Props> = ({
               className="absolute top-full right-0 mt-3 w-[280px] sm:w-[260px] z-50"
             >
               <div className="relative p-4 border border-solid border-dark-grey rounded-[5px] shadow-xsl bg-white">
-                <h3 className="text-lg font-semibold text-sapphire-blue mb-4">
+                <h2 className="text-lg font-semibold text-sapphire-blue mb-4">
                   Notification Settings
-                </h3>
+                </h2>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 pr-4">
@@ -367,14 +369,22 @@ const Topbar: React.FC<Props> = ({
                       </p>
                     </div>
                     <button
+                      type="button"
+                      role="switch"
+                      aria-label="Monthly Reports"
+                      aria-checked={notificationSettings.monthly_report_flag}
                       onClick={(e) =>
                         handleNotificationToggle('monthly_report_flag', e)
                       }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                        notificationSettings.monthly_report_flag
-                          ? 'bg-green-500 focus:ring-green-500'
-                          : 'bg-gray-300 focus:ring-gray-300'
-                      }`}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      style={{
+                        backgroundColor: notificationSettings.monthly_report_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                        borderColor: notificationSettings.monthly_report_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                      }}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
@@ -396,14 +406,22 @@ const Topbar: React.FC<Props> = ({
                       </p>
                     </div>
                     <button
+                      type="button"
+                      role="switch"
+                      aria-label="New Domain Alerts"
+                      aria-checked={notificationSettings.new_domain_flag}
                       onClick={(e) =>
                         handleNotificationToggle('new_domain_flag', e)
                       }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                        notificationSettings.new_domain_flag
-                          ? 'bg-green-500 focus:ring-green-500'
-                          : 'bg-gray-300 focus:ring-gray-300'
-                      }`}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      style={{
+                        backgroundColor: notificationSettings.new_domain_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                        borderColor: notificationSettings.new_domain_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                      }}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
@@ -425,14 +443,22 @@ const Topbar: React.FC<Props> = ({
                       </p>
                     </div>
                     <button
+                      type="button"
+                      role="switch"
+                      aria-label="Issue Reports"
+                      aria-checked={notificationSettings.issue_reported_flag}
                       onClick={(e) =>
                         handleNotificationToggle('issue_reported_flag', e)
                       }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                        notificationSettings.issue_reported_flag
-                          ? 'bg-green-500 focus:ring-green-500'
-                          : 'bg-gray-300 focus:ring-gray-300'
-                      }`}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      style={{
+                        backgroundColor: notificationSettings.issue_reported_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                        borderColor: notificationSettings.issue_reported_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                      }}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
@@ -454,14 +480,22 @@ const Topbar: React.FC<Props> = ({
                       </p>
                     </div>
                     <button
+                      type="button"
+                      role="switch"
+                      aria-label="Onboarding Emails"
+                      aria-checked={notificationSettings.onboarding_emails_flag}
                       onClick={(e) =>
                         handleNotificationToggle('onboarding_emails_flag', e)
                       }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                        notificationSettings.onboarding_emails_flag
-                          ? 'bg-green-500 focus:ring-green-500'
-                          : 'bg-gray-300 focus:ring-gray-300'
-                      }`}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      style={{
+                        backgroundColor: notificationSettings.onboarding_emails_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                        borderColor: notificationSettings.onboarding_emails_flag
+                          ? toggleOnColor
+                          : toggleOffColor,
+                      }}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
