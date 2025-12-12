@@ -566,7 +566,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   placeholder="Search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-[#6E7788]"
                   style={{ border: '1px solid #A2ADF3' }}
                 />
               </div>
@@ -597,7 +597,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     You currently have no sites in this list
                   </h3>
-                  <p className="text-sm text-[#646C7B]">
+                  <p className="text-sm text-[#656C79]">
                     {activeTab === 'all'
                       ? 'Add your first domain to get started with accessibility monitoring.'
                       : activeTab === 'active'
@@ -1202,7 +1202,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   You currently have no sites in this list
                 </h3>
-                <p className="text-sm text-[#646C7B]">
+                <p className="text-sm text-[#656C79]">
                   {activeTab === 'all'
                     ? 'Add your first domain to get started with accessibility monitoring.'
                     : activeTab === 'active'

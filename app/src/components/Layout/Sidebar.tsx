@@ -225,7 +225,7 @@ const Sidebar = () => {
 
             {/* Navigation Section */}
             <div className="flex-grow px-4">
-              <nav className="space-y-2">
+              <nav className="space-y-2" aria-label="Side">
                 {/* Dashboard */}
                 <NavLink
                   to="/dashboard"
@@ -755,6 +755,7 @@ const Sidebar = () => {
               <button
                 onClick={handleRedirect}
                 className="bg-[#000000] hover:bg-[#000000] text-white font-medium rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md w-12 h-12 mx-auto focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-offset-2"
+                aria-label="Add new domain"
               >
                 <Plus size={24} className="text-white" />
               </button>
@@ -762,7 +763,7 @@ const Sidebar = () => {
 
             {/* Navigation Section */}
             <div className="flex-grow">
-              <nav className="space-y-2">
+              <nav className="space-y-2" aria-label="Side">
                 {/* Dashboard */}
                 <NavLink
                   to="/dashboard"

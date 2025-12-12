@@ -200,8 +200,8 @@ const Topbar: React.FC<Props> = ({
                 }
               }}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center"
-              title="Toggle Sidebar"
-              aria-label={isSidebarOpen || lockedOpen ? 'Hide navigation' : 'Show navigation'}
+              aria-label="Sidebar"
+              aria-expanded={isSidebarOpen || lockedOpen}
             >
               <svg
                 width="25"
