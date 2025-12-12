@@ -67,15 +67,60 @@ const Modal: React.FC<ModalProps> = ({
   domainCount,
   closeModal,
 }) => {
-  if (!isOpen) return null;
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const organization = useSelector(
     (state: RootState) => state.organization.data,
   );
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const getFocusableElements = () => {
+      if (!modalRef.current) return [];
+      return Array.from(
+        modalRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => !el.hasAttribute('disabled') && el.offsetParent !== null);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    setTimeout(() => {
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length > 0) {
+        focusableElements[0].focus();
+      }
+    }, 0);
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50">
-      <div className="modal-perfect-center w-full max-w-md max-h-[90vh] overflow-y-auto no-scrollbar modal-container p-4">
+      <div
+        ref={modalRef}
+        className="modal-perfect-center w-full max-w-md max-h-[90vh] overflow-y-auto no-scrollbar modal-container p-4"
+      >
         {/* Content */}
         <div className="w-full">{children}</div>
       </div>
