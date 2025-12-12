@@ -204,12 +204,15 @@ const ChartCard: React.FC<{
           <select
             className="border border-gray-300 py-1.5 px-3 rounded-lg focus:outline-none text-sm appearance-none bg-no-repeat pr-6"
             style={{
-              backgroundColor: baseColors.brandPrimary,
-              color: baseColors.white,
+              backgroundColor: '#006BD6',
+              color: '#E4F2FF',
               backgroundImage:
-                "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23A7CAFF' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e\")",
-              backgroundSize: '12px 12px',
-              backgroundPosition: 'calc(100% - 8px) center',
+                "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%23E4F2FF' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m7 10 5 5 5-5'/%3e%3c/svg%3e\")",
+              backgroundSize: '18px 18px',
+              backgroundPosition: 'calc(100% - 12px) center',
+              paddingRight: '2.8rem',
+              minHeight: '40px',
+              borderColor: '#006BD6',
             }}
             value={timeRange}
             onChange={onChangeTimeRange}
