@@ -515,7 +515,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   className={`font-normal text-base pb-2 transition-colors ${
                     activeTab === 'all'
                       ? 'text-black'
-                      : 'text-gray-400 hover:text-gray-600'
+                      : 'text-[#646C7B] hover:text-gray-600'
                   }`}
                 >
                   All
@@ -525,7 +525,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   className={`font-normal text-base pb-2 transition-colors ${
                     activeTab === 'active'
                       ? 'text-black'
-                      : 'text-gray-400 hover:text-gray-600'
+                      : 'text-[#646C7B] hover:text-gray-600'
                   }`}
                 >
                   Active sites
@@ -535,7 +535,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   className={`font-normal text-base pb-2 transition-colors ${
                     activeTab === 'disabled'
                       ? 'text-black'
-                      : 'text-gray-400 hover:text-gray-600'
+                      : 'text-[#646C7B] hover:text-gray-600'
                   }`}
                 >
                   Trial sites
@@ -597,7 +597,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     You currently have no sites in this list
                   </h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-[#646C7B]">
                     {activeTab === 'all'
                       ? 'Add your first domain to get started with accessibility monitoring.'
                       : activeTab === 'active'
@@ -1202,7 +1202,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   You currently have no sites in this list
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[#646C7B]">
                   {activeTab === 'all'
                     ? 'Add your first domain to get started with accessibility monitoring.'
                     : activeTab === 'active'
