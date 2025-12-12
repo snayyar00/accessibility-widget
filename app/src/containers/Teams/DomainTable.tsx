@@ -612,7 +612,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     onClick={() => {
                       openModal();
                     }}
-                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
+                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-4 transition-all duration-200 shadow-sm"
                   >
                     Add new domain
                   </button>
@@ -1218,7 +1218,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     openModal();
                     setIsCancel(false);
                   }}
-                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-4 transition-all duration-200 shadow-sm"
                 >
                   Add new domain
                 </button>

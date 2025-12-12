@@ -206,7 +206,7 @@ const Sidebar = () => {
             <div className="p-4">
               <button
                 onClick={handleRedirect}
-                className="font-medium rounded-lg flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md w-full py-2 px-4 space-x-2"
+                className="font-medium rounded-lg flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md w-full py-2 px-4 space-x-2 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-offset-2"
                 style={{
                   backgroundColor: baseColors.black,
                   color: baseColors.white,
@@ -754,7 +754,7 @@ const Sidebar = () => {
             <div className="pt-4 mb-4">
               <button
                 onClick={handleRedirect}
-                className="bg-[#000000] hover:bg-[#000000] text-white font-medium rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md w-12 h-12 mx-auto"
+                className="bg-[#000000] hover:bg-[#000000] text-white font-medium rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md w-12 h-12 mx-auto focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-offset-2"
               >
                 <Plus size={24} className="text-white" />
               </button>
