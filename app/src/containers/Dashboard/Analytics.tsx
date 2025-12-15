@@ -120,10 +120,22 @@ const ChartCard: React.FC<{
   );
   const [isChartFocused, setIsChartFocused] = useState(false);
   const chartRef = React.useRef<HTMLDivElement | null>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
     setActiveIndex(Math.max((data?.length ?? 1) - 1, 0));
+    setShowTooltip(false);
   }, [data]);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowTooltip(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
 
   const getPercentChange = () => {
     if (!data || !data.length) return 0;
@@ -156,8 +168,13 @@ const ChartCard: React.FC<{
       : 0;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape') {
+      setShowTooltip(false);
+      return;
+    }
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
     e.preventDefault();
+    setShowTooltip(true);
     if (e.key === 'ArrowLeft') {
       setActiveIndex((i) => Math.max(i - 1, 0));
     } else if (e.key === 'ArrowRight') {
@@ -302,9 +319,13 @@ const ChartCard: React.FC<{
         role="group"
         aria-label={`${title} chart. Use left and right arrow keys to explore data points.`}
         onKeyDown={handleKeyDown}
-        onFocus={() => setActiveIndex(Math.max((data?.length ?? 1) - 1, 0))}
+        onFocus={() => {
+          setActiveIndex(Math.max((data?.length ?? 1) - 1, 0));
+          setShowTooltip(true);
+        }}
         onFocusCapture={() => setIsChartFocused(true)}
         onBlurCapture={() => setIsChartFocused(false)}
+        onMouseEnter={() => setShowTooltip(true)}
         style={{
           borderRadius: 12,
           outline: 'none',
@@ -323,10 +344,11 @@ const ChartCard: React.FC<{
                 state?.activeTooltipIndex !== null
               ) {
                 setActiveIndex(state.activeTooltipIndex);
+                setShowTooltip(true);
               }
             }}
             onMouseLeave={() =>
-              setActiveIndex(Math.max((data?.length ?? 1) - 1, 0))
+              setShowTooltip(false)
             }
           >
             <defs>
@@ -368,7 +390,7 @@ const ChartCard: React.FC<{
             />
             <Tooltip
               cursor={{ stroke: '#94a3b8', strokeDasharray: '4 4' }}
-              active={!!activePoint}
+              active={!!activePoint && showTooltip}
               payload={
                 activePoint
                   ? [{ name: dataKey, value: activePoint[dataKey] }]
@@ -397,23 +419,14 @@ const ChartCard: React.FC<{
             />
           </AreaChart>
         </ResponsiveContainer>
-        {activePoint && (
+        {activePoint && showTooltip && (
           <>
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-y-4"
-              style={{
-                left: `${indicatorLeftPercent}%`,
-                transform: 'translateX(-50%)',
-                borderLeft: '1px dashed #94a3b8',
-              }}
-            />
             <div
               aria-hidden="true"
               className="pointer-events-none absolute"
               style={{
-                left: `${indicatorLeftPercent}%`,
-                bottom: 12,
+                left: `${indicatorLeftPercent + 2}%`,
+                bottom: 40,
                 transform: 'translateX(-50%)',
                 background: baseColors.blueTooltip,
                 color: 'white',
@@ -427,25 +440,11 @@ const ChartCard: React.FC<{
               <div className="font-semibold text-sm leading-tight">
                 {formattedValue}
               </div>
-              <div className={`${isUp ? 'text-emerald-200' : 'text-red-200'}`}>
+               <div className={`${isUp ? 'text-emerald-200' : 'text-red-200'}`}>
                 {isUp ? '▲' : '▼'} {Math.abs(percentChange).toFixed(0)}%{' '}
                 {compareLabel}
               </div>
             </div>
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute"
-              style={{
-                left: `${indicatorLeftPercent}%`,
-                bottom: 8,
-                transform: 'translateX(-50%)',
-                width: 10,
-                height: 10,
-                borderRadius: '9999px',
-                background: baseColors.brandNumbers,
-                boxShadow: '0 0 0 4px rgba(68, 90, 231, 0.35)',
-              }}
-            />
           </>
         )}
         <div className="sr-only" aria-live="polite">
@@ -680,12 +679,13 @@ export default function AnalyticsDashboard({
         ) : (
           Object.keys(profileCounts).length ? (
             <button
-              className="show-more-metrics-button hover:brightness-110 py-2 px-4 rounded-lg focus:outline-none"
+              className="show-more-metrics-button hover:brightness-110 py-2 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-offset-2"
               style={{
                 backgroundColor: baseColors.brandPrimary,
                 color: baseColors.white,
               }}
               onClick={() => setShowMoreMetrics(!showMoreMetrics)}
+              tabIndex={0}
             >
               {showMoreMetrics ? 'Show Less' : 'Show More'}
             </button>
