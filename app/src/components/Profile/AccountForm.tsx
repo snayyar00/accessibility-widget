@@ -40,6 +40,7 @@ const AccountForm: React.FC<Props> = ({
             id="account-name"
             name="name"
             ref={register}
+            autoComplete="name"
             aria-label={t('Common.label.your_name')}
             aria-describedby={errors?.name?.message ? 'name-error' : undefined}
             aria-required="true"

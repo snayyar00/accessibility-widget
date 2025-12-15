@@ -272,6 +272,7 @@ const LicenseOwnerInfo: React.FC = () => {
                   id="owner-name"
                   name="ownerName"
                   ref={register}
+                  autoComplete="name"
                   placeholder={
                     t('Common.license_owner.enter_owner_name') ||
                     "Enter website owner's name"
@@ -319,6 +320,7 @@ const LicenseOwnerInfo: React.FC = () => {
                   name="ownerEmail"
                   ref={register}
                   type="email"
+                  autoComplete="email"
                   placeholder={
                     t('Common.license_owner.enter_owner_email') ||
                     "Enter website owner's email"
