@@ -18,23 +18,63 @@ const AccountForm: React.FC<Props> = ({
   loading,
   apiError,
   openPopupDeleteAccount,
+  errors,
 }) => {
   const { t } = useTranslation();
 
   return (
     <form onSubmit={onSubmit} className="space-y-4 md:space-y-6">
+      <p className="text-xs text-gray-600 mb-4">
+        Fields marked with an asterisk (*) are required.
+      </p>
       <div className="space-y-3 md:space-y-4">
         <div className="block w-full">
-          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">
-            {t('Common.label.your_name')}
+          <label
+            htmlFor="account-name"
+            className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2"
+          >
+            {t('Common.label.your_name')}{' '}
+            <span className="text-red-600" aria-label="required">*</span>
           </label>
-          <Input name="name" ref={register} />
+          <Input
+            id="account-name"
+            name="name"
+            ref={register}
+            aria-label={t('Common.label.your_name')}
+            aria-describedby={errors?.name?.message ? 'name-error' : undefined}
+            aria-required="true"
+            aria-invalid={!!errors?.name?.message}
+          />
+          {errors?.name?.message && (
+            <div
+              id="name-error"
+              className="mt-2 text-sm text-red-600"
+              role="alert"
+              aria-live="assertive"
+              aria-atomic="true"
+              aria-relevant="additions text"
+            >
+              {String(t(errors.name.message))}
+            </div>
+          )}
         </div>
         <div className="block w-full">
-          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">
-            {t('Common.label.email')}
+          <label
+            htmlFor="account-email"
+            className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2"
+          >
+            {t('Common.label.email')}{' '}
+            <span className="text-red-600" aria-label="required">*</span>
           </label>
-          <Input type="email" name="email" ref={register} disabled />
+          <Input
+            id="account-email"
+            type="email"
+            name="email"
+            ref={register}
+            disabled
+            aria-label={t('Common.label.email')}
+            aria-required="true"
+          />
         </div>
       </div>
 

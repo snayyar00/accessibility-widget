@@ -18,7 +18,7 @@ const ErrorText: React.FC<Props> = ({ message = "", position = "left", id, ...pr
       'text-center': position === 'center',
       'text-right': position === 'right'
     })}
-    style={{ color: '#E7074F' }}
+    style={{ color: '#E30661', backgroundColor: '#F9FAFB' }}
     {...props}
   >
     {message}
