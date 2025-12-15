@@ -252,43 +252,70 @@ const LicenseOwnerInfo: React.FC = () => {
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-3 sm:space-y-4 md:space-y-6 max-w-full min-w-0"
           >
+            <p className="text-xs text-gray-600 mb-4">
+              Fields marked with an asterisk (*) are required.
+            </p>
             {/* Website Owner's Name */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
-              <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
+              <label 
+                htmlFor="owner-name"
+                className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2"
+              >
                 <HiOutlineUser className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
                 <span>
-                  {t('Common.license_owner.owner_name') || 'Website owner name'}
+                  {t('Common.license_owner.owner_name') || 'Website owner name'}{' '}
+                  <span className="text-red-600" aria-label="required">*</span>
                 </span>
               </label>
               <div className="md:col-span-1 lg:col-span-2">
                 <Input
+                  id="owner-name"
                   name="ownerName"
                   ref={register}
                   placeholder={
                     t('Common.license_owner.enter_owner_name') ||
                     "Enter website owner's name"
                   }
+                  aria-label={`License owner ${t('Common.license_owner.owner_name') || 'Name'}`}
+                  aria-invalid={!!errors.ownerName}
+                  aria-describedby="owner-name-error"
                   className={errors.ownerName ? 'border-red-500' : ''}
                 />
-                {errors.ownerName && (
-                  <p className="text-red-500 text-xs sm:text-sm mt-1">
-                    {errors.ownerName.message}
-                  </p>
-                )}
+                <div
+                  id="owner-name-error"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                  aria-relevant="additions text"
+                >
+                  {errors.ownerName && (
+                    <p 
+                      className="text-xs sm:text-sm mt-1"
+                      style={{ color: '#E51414', backgroundColor: '#F9FAFB' }}
+                    >
+                      {errors.ownerName.message}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Website Owner's Email */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
-              <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
+              <label 
+                htmlFor="owner-email"
+                className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2"
+              >
                 <HiOutlineMail className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
                 <span>
                   {t('Common.license_owner.owner_email') ||
-                    "Website owner's email"}
+                    "Website owner's email"}{' '}
+                  <span className="text-red-600" aria-label="required">*</span>
                 </span>
               </label>
               <div className="md:col-span-1 lg:col-span-2">
                 <Input
+                  id="owner-email"
                   name="ownerEmail"
                   ref={register}
                   type="email"
@@ -296,22 +323,40 @@ const LicenseOwnerInfo: React.FC = () => {
                     t('Common.license_owner.enter_owner_email') ||
                     "Enter website owner's email"
                   }
+                  aria-label={`License owner ${t('Common.license_owner.owner_email') || 'Email'}`}
+                  aria-invalid={!!errors.ownerEmail}
+                  aria-describedby="owner-email-error"
                   className={errors.ownerEmail ? 'border-red-500' : ''}
                 />
-                {errors.ownerEmail && (
-                  <p className="text-red-500 text-xs sm:text-sm mt-1">
-                    {errors.ownerEmail.message}
-                  </p>
-                )}
+                <div
+                  id="owner-email-error"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                  aria-relevant="additions text"
+                >
+                  {errors.ownerEmail && (
+                    <p 
+                      className="text-xs sm:text-sm mt-1"
+                      style={{ color: '#E51414', backgroundColor: '#F9FAFB' }}
+                    >
+                      {errors.ownerEmail.message}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Phone Number */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
-              <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
+              <label 
+                htmlFor="phone-number"
+                className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2"
+              >
                 <HiOutlinePhone className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
                 <span>
-                  {t('Common.license_owner.phone_number') || 'Phone number'}
+                  {t('Common.license_owner.phone_number') || 'Phone number'}{' '}
+                  <span className="text-red-600" aria-label="required">*</span>
                 </span>
               </label>
               <div className="md:col-span-1 lg:col-span-2">
@@ -322,11 +367,16 @@ const LicenseOwnerInfo: React.FC = () => {
                     className="relative flex-shrink-0 md:w-1/3"
                     ref={dropdownRef}
                   >
+                    <label htmlFor="country-code" className="sr-only">
+                      License owner Country code
+                    </label>
                     <button
+                      id="country-code"
                       type="button"
                       onClick={() =>
                         setIsCountryDropdownOpen(!isCountryDropdownOpen)
                       }
+                      aria-label="License owner Country code"
                       className="flex items-center gap-2 bg-light-gray border border-white-blue rounded-[10px] px-[10px] py-[10.5px] text-[13px] sm:text-[14px] md:text-[16px] text-white-gray w-full hover:border-light-primary transition-colors h-[42px]"
                     >
                       <span className="text-base sm:text-lg">
@@ -362,21 +412,36 @@ const LicenseOwnerInfo: React.FC = () => {
                   {/* Phone Number Input */}
                   <div className="flex-1">
                     <Input
+                      id="phone-number"
                       name="phoneNumber"
                       ref={register}
                       placeholder={
                         t('Common.license_owner.enter_phone_number') ||
                         'Enter phone number'
                       }
+                      aria-label={`License owner ${t('Common.license_owner.phone_number') || 'Phone number'}`}
+                      aria-invalid={!!errors.phoneNumber}
+                      aria-describedby="phone-number-error"
                       className={`${
                         errors.phoneNumber ? 'border-red-500' : ''
                       } h-[42px]`}
                     />
-                    {errors.phoneNumber && (
-                      <p className="text-red-500 text-xs sm:text-sm mt-1">
-                        {errors.phoneNumber.message}
-                      </p>
-                    )}
+                    <div
+                      id="phone-number-error"
+                      role="alert"
+                      aria-live="assertive"
+                      aria-atomic="true"
+                      aria-relevant="additions text"
+                    >
+                      {errors.phoneNumber && (
+                        <p 
+                          className="text-xs sm:text-sm mt-1"
+                          style={{ color: '#E51414', backgroundColor: '#F9FAFB' }}
+                        >
+                          {errors.phoneNumber.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
