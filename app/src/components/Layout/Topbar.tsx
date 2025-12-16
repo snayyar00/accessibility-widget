@@ -168,7 +168,7 @@ const Topbar: React.FC<Props> = ({
   };
 
   return (
-    <div style={{ backgroundColor: baseColors.blueLight }}>
+    <header role="banner" aria-label="Banner" style={{ backgroundColor: baseColors.blueLight }}>
       {!isActive && <EmailVerificationBanner email={email as string} />}
       <div className="mx-4 mt-4 mb-2">
         <div className="bg-body rounded-lg flex items-center justify-between relative h-auto md:h-auto lg:h-16 px-3 md:px-4 lg:px-6 flex-wrap md:flex-wrap lg:flex-nowrap gap-3 md:gap-4 lg:gap-0">
@@ -334,6 +334,9 @@ const Topbar: React.FC<Props> = ({
                 ref={profileRef}
                 className="flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg transition-all duration-200"
                 aria-label={`Profile picture for ${name || 'User'}`}
+                aria-expanded={isShowMenu}
+                aria-haspopup="menu"
+                aria-controls="profile-menu"
                 title={`${name || 'User'} - Profile Picture`}
                 tabIndex={0}
               >
@@ -514,10 +517,15 @@ const Topbar: React.FC<Props> = ({
           {/* Profile Menu */}
           {isShowMenu && (
             <div className="absolute top-full right-0 mt-3 w-[200px] z-50">
-              <div className="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
+              <div 
+                id="profile-menu"
+                role="menu"
+                className="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
+              >
                 <div className="py-2">
                   <NavLink
                     to="/profile"
+                    role="menuitem"
                     onClick={(e) => {
                       e.stopPropagation(); // Prevents menu from closing
                       if (clicked) {
@@ -538,7 +546,8 @@ const Topbar: React.FC<Props> = ({
                     aria-label={`${t('Common.label.profile')} (menu item 1 of 3 in list)`}
                   >
                     <svg
-                      className="w-4 h-4 mr-3 text-gray-400"
+                      className="w-4 h-4 mr-3"
+                      style={{ color: '#8D95A3' }}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -555,6 +564,7 @@ const Topbar: React.FC<Props> = ({
 
                   <button
                     type="button"
+                    role="menuitem"
                     aria-label="Billing & Plans (item 2 of 3)"
                     disabled={clicked}
                     onClick={async (e) => {
@@ -577,7 +587,8 @@ const Topbar: React.FC<Props> = ({
                     tabIndex={0}
                   >
                     <svg
-                      className="w-4 h-4 mr-3 text-gray-400"
+                      className="w-4 h-4 mr-3"
+                      style={{ color: '#8D95A3' }}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -604,6 +615,7 @@ const Topbar: React.FC<Props> = ({
 
                   <button
                     type="button"
+                    role="menuitem"
                     aria-label="Sign Out (item 3 of 3)"
                     disabled={clicked}
                     onClick={signout}
@@ -619,7 +631,8 @@ const Topbar: React.FC<Props> = ({
                     tabIndex={0}
                   >
                     <svg
-                      className="w-4 h-4 mr-3 text-gray-400"
+                      className="w-4 h-4 mr-3"
+                      style={{ color: '#8D95A3' }}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -642,7 +655,7 @@ const Topbar: React.FC<Props> = ({
           <WhatsNewModal autoShow={true} />
         </div>
       </div>
-    </div>
+    </header>
   );
 };
 

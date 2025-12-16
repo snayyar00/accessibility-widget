@@ -276,7 +276,8 @@ const SignUp: React.FC = () => {
       <div className="w-[55%] sm:hidden flex items-center justify-end p-5 relative overflow-hidden">
         <img
           src="/images/auth/auth_image1.png"
-          alt="Authentication"
+          alt=""
+          role="presentation"
           className="h-[95vh] object-contain ml-auto"
           style={{ maxWidth: '90%' }}
         />

@@ -111,7 +111,7 @@ const ForgotPasswordForm: React.FC<Props> = ({
                 components={[
                   <a
                     href="mailto:support@webability.com"
-                    className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                    className="text-blue-600 hover:text-blue-700 font-medium underline transition-colors duration-200"
                   ></a>,
                 ]}
               />
@@ -148,7 +148,7 @@ const ForgotPasswordForm: React.FC<Props> = ({
               components={[
                 <Link
                   to="/auth/signin"
-                  className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                  className="text-blue-600 hover:text-blue-700 font-medium underline transition-colors duration-200"
                 ></Link>,
               ]}
             >

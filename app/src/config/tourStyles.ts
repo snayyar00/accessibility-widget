@@ -23,7 +23,8 @@ export const defaultTourStyles = {
     overflowWrap: 'anywhere' as const,
   },
   buttonNext: {
-    backgroundColor: '#0080FF', // Use theme primary color
+    backgroundColor: '#006BD6', // Contrast-compliant primary
+    color: '#E4F2FF', // Ensures 4.5:1 contrast on button
     fontSize: '14px',
     padding: '8px 16px',
     borderRadius: '6px',
@@ -34,7 +35,7 @@ export const defaultTourStyles = {
     padding: '8px 16px',
   },
   buttonSkip: {
-    color: '#999',
+    color: '#767676', // Meets 4.5:1 contrast on white
     fontSize: '12px',
   },
   floater: {
