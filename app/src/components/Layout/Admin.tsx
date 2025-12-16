@@ -23,6 +23,7 @@ import Topbar from './Topbar';
 import Sidebar from './Sidebar';
 import { WorkspaceDetails } from '@/containers/Workspaces/details';
 import TrialBannerAndModal from '@/containers/Dashboard/TrialBannerAndModal';
+import ActivatePlanWarningModal from '@/containers/Teams/ActivatePlanWarningModal';
 
 type Props = {
   signout: () => void;
@@ -52,6 +53,9 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [paymentView, setPaymentView] = useState(false);
   const [optionalDomain, setOptionalDomain] = useState('');
+  const [showActivateModal, setShowActivateModal] = useState(false);
+  const [selectedDomainForActivate, setSelectedDomainForActivate] = useState<any>(null);
+  const [billingLoading, setBillingLoading] = useState(false);
   
   const openModal = () => {
     setIsModalOpen(true);
@@ -61,6 +65,16 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
     setIsModalOpen(false);
     setPaymentView(false);
     setOptionalDomain('');
+  };
+
+  const handleOpenActivateModal = (domain: any) => {
+    setSelectedDomainForActivate(domain);
+    setShowActivateModal(true);
+  };
+
+  const handleCloseActivateModal = () => {
+    setShowActivateModal(false);
+    setSelectedDomainForActivate(null);
   };
 
   const customerCheck = async () => {
@@ -219,6 +233,28 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
         hideBanner={true}
       />
       
+      {/* Activate Plan Modal for AppSumo users (shared) */}
+      {customerData && (
+        <ActivatePlanWarningModal
+          billingLoading={billingLoading}
+          setBillingLoading={setBillingLoading}
+          domain={selectedDomainForActivate}
+          promoCode={
+            (customerData as any).appSumoCount &&
+            (customerData as any).codeCount &&
+            (customerData as any).appSumoCount <= (customerData as any).codeCount
+              ? [(customerData as any).appSumoCount]
+              : []
+          }
+          setReloadSites={setReloadSites}
+          isOpen={showActivateModal}
+          onClose={handleCloseActivateModal}
+          isStripeCustomer={
+            (customerData as any).isCustomer === true && (customerData as any).card ? true : false
+          }
+        />
+      )}
+      
       {/* Header spans full width above everything */}
       <Topbar
         signout={signout}
@@ -230,6 +266,10 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
         openTrialModal={openModal}
         setPaymentView={setPaymentView}
         setOptionalDomain={setOptionalDomain}
+        customerData={customerData}
+        onOpenActivateModal={handleOpenActivateModal}
+        billingLoading={billingLoading}
+        setBillingLoading={setBillingLoading}
       />
 
       {/* Main content area with sidebar and content */}
