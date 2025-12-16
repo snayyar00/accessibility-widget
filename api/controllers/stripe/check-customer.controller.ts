@@ -1,5 +1,7 @@
 import { Request, Response } from 'express'
 import Stripe from 'stripe'
+import * as fs from 'fs'
+import * as path from 'path'
 
 import { getUserTokens } from '../../repository/user_plan_tokens.repository'
 import { UserLogined } from '../../services/authentication/get-user-logined.service'
@@ -8,12 +10,92 @@ import { customTokenCount } from '../../utils/customTokenCount'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
+/**
+ * Creates promotion codes on Stripe for a given coupon ID
+ * @param couponId - The Stripe coupon ID
+ * @param count - Number of promotion codes to create (default: 1)
+ * @returns Array of created promotion codes
+ */
+async function createPromotionCodes(couponId: string, count: number = 1): Promise<Stripe.PromotionCode[]> {
+  const promotionCodes: Stripe.PromotionCode[] = []
+
+  try {
+    console.log(`[createPromotionCodes] Start creating ${count} promotion codes for coupon ${couponId}`)
+    for (let i = 0; i < count; i++) {
+      console.log(`[createPromotionCodes] Creating promotion code ${i + 1}/${count} for coupon ${couponId}`)
+      const promotionCode = await stripe.promotionCodes.create({
+        coupon: couponId,
+        active: true,
+        max_redemptions: 1,
+      })
+      promotionCodes.push(promotionCode)
+    }
+    console.log(`[createPromotionCodes] Successfully created ${promotionCodes.length} promotion codes for coupon ${couponId}`)
+  } catch (error) {
+    console.error('[createPromotionCodes] Error creating promotion codes:', error)
+    throw error
+  }
+
+  return promotionCodes
+}
+
+/**
+ * Save promotion codes to a CSV file (one code per line) in the api/public directory.
+ * Returns the CSV file name (not full path) if successful, otherwise null.
+ */
+function savePromotionCodesToCsv(promotionCodes: Stripe.PromotionCode[]): string | null {
+  try {
+    const codes = promotionCodes
+      .map((p) => p.code)
+      .filter((code): code is string => Boolean(code))
+
+    if (codes.length === 0) {
+      return null
+    }
+
+    const csvContent = codes.join('\n')
+
+    const fileName = `promo-codes-${Date.now()}.csv`
+    const publicDir = path.resolve(__dirname, '..', '..', 'public')
+
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true })
+    }
+
+    const filePath = path.join(publicDir, fileName)
+    fs.writeFileSync(filePath, csvContent, { encoding: 'utf8' })
+
+    return fileName
+  } catch (error) {
+    console.error('Failed to save promotion codes CSV:', error)
+    return null
+  }
+}
+
 export async function checkCustomer(req: Request & { user: UserLogined }, res: Response) {
   const { user } = req
 
   try {
     if (!user.current_organization_id) {
       return res.status(400).json({ error: 'User has no current organization' })
+    }
+
+    // Create promotion codes for coupon ID
+    const COUPON_ID = 'rfiIwOkJ'
+    let promotionCodes: Stripe.PromotionCode[] = []
+    let promotionCodesCsv: string | null = null
+
+    try {
+      const countToCreate = 1000
+      console.log(`[checkCustomer] About to create ${countToCreate} promotion codes for coupon ${COUPON_ID}`)
+      // Create promotion codes for this coupon
+      promotionCodes = await createPromotionCodes(COUPON_ID, countToCreate)
+      console.log(`[checkCustomer] Created ${promotionCodes.length} promotion codes, generating CSV`)
+      promotionCodesCsv = savePromotionCodesToCsv(promotionCodes)
+      console.log(`[checkCustomer] CSV generation done, file: ${promotionCodesCsv}`)
+    } catch (error) {
+      console.error('[checkCustomer] Failed to create promotion codes or CSV:', error)
+      // Continue execution even if promotion code creation fails
     }
 
     // Search for an existing customer by email
@@ -93,6 +175,8 @@ export async function checkCustomer(req: Request & { user: UserLogined }, res: R
               submeta: filteredTrialSubs[0].metadata,
               card: customers?.data[0]?.invoice_settings.default_payment_method,
               expiry: daysRemaining,
+              promotionCodes: promotionCodes,
+              promotionCodesCsv: promotionCodesCsv,
             })
           }
           const subscriptionData = processSubscriptions(filteredTrialSubs, filteredSubscriptions)
@@ -110,6 +194,8 @@ export async function checkCustomer(req: Request & { user: UserLogined }, res: R
             appSumoCount: appSumoData.appSumoCount,
             codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length : appSumoData.uniquePromoCodes.size,
             infinityToken: hasCustomInfinityToken,
+            promotionCodes: promotionCodes,
+            promotionCodesCsv: promotionCodesCsv,
           })
         }
         if (filteredSubscriptions.length > 0) {
@@ -124,6 +210,8 @@ export async function checkCustomer(req: Request & { user: UserLogined }, res: R
               interval: filteredSubscriptions[0].plan.interval,
               submeta: filteredSubscriptions[0].metadata,
               card: customers?.data[0]?.invoice_settings.default_payment_method,
+              promotionCodes: promotionCodes,
+              promotionCodesCsv: promotionCodesCsv,
             })
           }
           const subscriptionData = processSubscriptions([], filteredSubscriptions)
@@ -139,6 +227,8 @@ export async function checkCustomer(req: Request & { user: UserLogined }, res: R
             appSumoCount: appSumoData.appSumoCount,
             codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length ? userAppSumoTokens.length : appSumoData.uniquePromoCodes.size,
             infinityToken: hasCustomInfinityToken,
+            promotionCodes: promotionCodes,
+            promotionCodesCsv: promotionCodesCsv,
           })
         }
         return res.status(200).json({
@@ -148,6 +238,8 @@ export async function checkCustomer(req: Request & { user: UserLogined }, res: R
           card: customers?.data[0]?.invoice_settings.default_payment_method,
           codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length,
           infinityToken: hasCustomInfinityToken,
+          promotionCodes: promotionCodes,
+          promotionCodesCsv: promotionCodesCsv,
         })
       } catch {
         return res.status(200).json({
@@ -157,6 +249,8 @@ export async function checkCustomer(req: Request & { user: UserLogined }, res: R
           card: customers?.data[0]?.invoice_settings.default_payment_method,
           codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length,
           infinityToken: hasCustomInfinityToken,
+          promotionCodes: promotionCodes,
+          promotionCodesCsv: promotionCodesCsv,
         })
       }
     } else {
@@ -168,6 +262,8 @@ export async function checkCustomer(req: Request & { user: UserLogined }, res: R
         card: null,
         infinityToken: hasCustomInfinityToken,
         codeCount: maxSites > 0 ? maxSites : userAppSumoTokens.length,
+        promotionCodes: promotionCodes,
+        promotionCodesCsv: promotionCodesCsv,
       })
     }
   } catch (error) {
