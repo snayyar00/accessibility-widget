@@ -100,6 +100,7 @@ const TrialBannerAndModal: React.FC<any> = ({
   setPaymentView,
   optionalDomain,
   customerData,
+  hideBanner = false, // New prop to hide banner content
 }: any) => {
   const { data: userData, loading: userLoading } = useSelector(
     (state: RootState) => state.user,
@@ -913,6 +914,7 @@ const TrialBannerAndModal: React.FC<any> = ({
           )}
         </Modal>
       </div>
+      {!hideBanner && (
       <>
         {/* Mobile View (visible on small screens only) */}
         <div className="hidden">
@@ -1431,6 +1433,7 @@ const TrialBannerAndModal: React.FC<any> = ({
           )}
         </div>
       </>
+      )}
     </>
   );
 };
