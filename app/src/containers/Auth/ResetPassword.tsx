@@ -79,7 +79,7 @@ const ResetPassword: React.FC = () => {
       <div className="absolute bottom-20 left-20 w-24 h-24 bg-blue-300/20 rounded-full blur-2xl animate-pulse delay-1000" />
 
       {/* Main card container */}
-      <div className="relative w-full max-w-md mx-auto px-6 py-8">
+      <main className="relative w-full max-w-md mx-auto px-6 py-8">
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 relative overflow-hidden">
           {/* Card glow effect */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-blue-50/30 rounded-2xl" />
@@ -95,7 +95,7 @@ const ResetPassword: React.FC = () => {
             />
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
