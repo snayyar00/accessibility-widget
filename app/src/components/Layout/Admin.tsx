@@ -22,6 +22,7 @@ import { setSelectedDomain } from '@/features/report/reportSlice';
 import Topbar from './Topbar';
 import Sidebar from './Sidebar';
 import { WorkspaceDetails } from '@/containers/Workspaces/details';
+import TrialBannerAndModal from '@/containers/Dashboard/TrialBannerAndModal';
 
 type Props = {
   signout: () => void;
@@ -38,7 +39,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
   const [selectedOption, setSelectedOption] = useState(SITE_SELECTOR_TEXT);
   const [domainData, setDomainData] = useState(null);
   // Fetch all sites for dropdown (no pagination params = fetch all)
-  const { data, refetch, startPolling, stopPolling } = useQuery(getSites, {
+  const { data, loading: sitesLoading, refetch, startPolling, stopPolling } = useQuery(getSites, {
     variables: {}, // No limit/offset = fetch all for backward compatibility
   });
   const { data: userData, loading } = useSelector(
@@ -46,6 +47,21 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
   );
   const [customerData, setCustomerData] = useState(null);
   const dispatch = useDispatch();
+  
+  // Modal state for trial expiration banner
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [paymentView, setPaymentView] = useState(false);
+  const [optionalDomain, setOptionalDomain] = useState('');
+  
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+  
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setPaymentView(false);
+    setOptionalDomain('');
+  };
 
   const customerCheck = async () => {
     const url = `${process.env.REACT_APP_BACKEND_URL}/check-customer`;
@@ -189,13 +205,31 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 overflow-x-hidden">
+      {/* Trial Banner Modal - Global modal for trial expiration banner */}
+      <TrialBannerAndModal
+        allDomains={data}
+        setReloadSites={setReloadSites}
+        customerData={customerData}
+        isModalOpen={isModalOpen}
+        closeModal={closeModal}
+        openModal={openModal}
+        paymentView={paymentView}
+        setPaymentView={setPaymentView}
+        optionalDomain={optionalDomain}
+        hideBanner={true}
+      />
+      
       {/* Header spans full width above everything */}
       <Topbar
         signout={signout}
         options={data}
+        sitesLoading={sitesLoading}
         setReloadSites={setReloadSites}
         selectedOption={selectedOption}
         setSelectedOption={setSelectedOption}
+        openTrialModal={openModal}
+        setPaymentView={setPaymentView}
+        setOptionalDomain={setOptionalDomain}
       />
 
       {/* Main content area with sidebar and content */}
