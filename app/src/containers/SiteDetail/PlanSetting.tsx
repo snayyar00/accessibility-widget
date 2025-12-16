@@ -467,7 +467,7 @@ const PlanSetting: React.FC<{
               </p>
             </div>
           ) : null}
-          {organization?.id === '1' && (
+          { organization?.id === (process.env.REACT_APP_CURRENT_ORG || '1') && (
           <>
             <div className="flex sm:flex-col md:flex-row">
               {validatedCoupons.length > 0 && (
