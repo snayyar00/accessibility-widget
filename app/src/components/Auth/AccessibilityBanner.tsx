@@ -18,22 +18,18 @@ const AccessibilityBanner: React.FC = () => {
             boxShadow: '0 12px 32px rgba(0, 0, 0, 0.25)',
           }}
         >
-          {/* Learn more button - white, overlapping top-right corner, extends into background */}
-          <button
-            className="absolute -top-2 -right-2 bg-white rounded-lg px-6 py-3 font-medium hover:bg-blue-50 transition-all duration-200 cursor-pointer"
+          {/* Learn more text - white, overlapping top-right corner, extends into background */}
+          <span
+            className="absolute -top-2 -right-2 bg-white rounded-lg px-6 py-3 font-medium inline-block"
             style={{
               fontSize: '14px',
               color: '#445AE7',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.18)',
               fontFamily: 'inherit',
             }}
-            onClick={(e) => {
-              e.preventDefault();
-              // Add navigation or action here if needed
-            }}
           >
             Learn more
-          </button>
+          </span>
 
           {/* Title - white text at top */}
           <h2 className="text-[34px] mb-5 pr-28 leading-[1.2]" style={{ color: '#FFF' }}>

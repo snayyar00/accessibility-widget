@@ -993,16 +993,16 @@ const SignUpForm: React.FC<CustomProps> = ({
           <div className="sm:px-6 mt-4 md:px-0 text-[14px] leading-6 text-sapphire-blue">
             <Trans
               components={[
-                <Link to="##" key="terms"></Link>,
-                <Link to="##" key="privacy"></Link>,
-                <Link to="##" key="security"></Link>,
+                <Link to="##" key="terms" className="underline"></Link>,
+                <Link to="##" key="privacy" className="underline"></Link>,
+                <Link to="##" key="security" className="underline"></Link>,
               ]}
             >
               {t('Sign_up.text.footer_desc')}
             </Trans>
           </div>
           <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center pb-8">
-            <Trans components={[<Link to="/auth/signin"></Link>]}>
+            <Trans components={[<Link to="/auth/signin" className="underline"></Link>]}>
               {t('Sign_up.text.have_account')}
             </Trans>
           </div>
@@ -1011,7 +1011,7 @@ const SignUpForm: React.FC<CustomProps> = ({
 
       {currentStep === 3 && (
         <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center pb-8">
-          <Trans components={[<Link to="/auth/signin"></Link>]}>
+          <Trans components={[<Link to="/auth/signin" className="underline"></Link>]}>
             {t('Sign_up.text.have_account')}
           </Trans>
         </div>

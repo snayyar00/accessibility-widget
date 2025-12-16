@@ -591,7 +591,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
               </div>
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg
-                    className="h-4 w-4 text-gray-400"
+                    className="h-4 w-4"
+                    style={{ color: '#8D95A3' }}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -941,7 +942,9 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                       monitoringStates[domain.id ?? 0] ??
                                       domain.monitor_enabled
                                         ? {}
-                                        : { backgroundColor: '#848484' }
+                                        : { 
+                                            backgroundColor: '#848484'
+                                          }
                                     }
                                   />
                                 </button>
@@ -1105,7 +1108,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                           : domain.id ?? null,
                                       )
                                     }
-                                    className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                    className="p-1 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                    style={{ color: '#8D95A3' }}
                                     aria-label={`Actions for domain ${domain.url}`}
                                   >
                                     <FaCog className="w-4 h-4" />
@@ -1178,7 +1182,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                       <Tooltip title="Edit domain" placement="top">
                                         <button
                                           onClick={() => handleEdit(domain)}
-                                          className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                          className="p-1 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                          style={{ color: '#8D95A3' }}
                                           aria-label={`Edit domain ${domain.url}`}
                                         >
                                           <FaPencilAlt className="w-4 h-4" />
@@ -1197,7 +1202,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                             setShowModal(true);
                                             setIsCancel(false);
                                           }}
-                                          className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                          className="p-1 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                          style={{ color: '#8D95A3' }}
                                           aria-label={`Delete domain ${domain.url}`}
                                         >
                                           <FaTrash className="w-4 h-4" />
