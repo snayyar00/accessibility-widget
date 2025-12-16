@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 
-import { sendMailMultiple } from '../services/email/email.service'
+import { sendMail } from '../services/email/email.service'
 import { emailValidation } from '../validations/email.validation'
 import compileEmailTemplate from '../helpers/compile-email-template'
 
@@ -33,11 +33,23 @@ export async function sendBulkEmail(req: Request, res: Response) {
       })
     }
 
+    // Deduplicate and normalize email addresses (case-insensitive, trimmed)
+    const uniqueEmails = new Set<string>()
+    const normalizedRecipients: string[] = []
+    
+    for (const email of recipients) {
+      const normalizedEmail = email.trim().toLowerCase()
+      if (!uniqueEmails.has(normalizedEmail)) {
+        uniqueEmails.add(normalizedEmail)
+        normalizedRecipients.push(email.trim()) // Keep original case for display
+      }
+    }
+
     // Validate all email addresses
     const validRecipients: string[] = []
     const invalidEmails: string[] = []
 
-    for (const email of recipients) {
+    for (const email of normalizedRecipients) {
       const emailValidationResult = emailValidation(email)
       if (Array.isArray(emailValidationResult) && emailValidationResult.length > 0) {
         invalidEmails.push(email)
@@ -51,7 +63,7 @@ export async function sendBulkEmail(req: Request, res: Response) {
         success: false,
         message: 'No valid email addresses provided',
         sentCount: 0,
-        failedCount: recipients.length,
+        failedCount: normalizedRecipients.length,
       })
     }
 
@@ -60,7 +72,7 @@ export async function sendBulkEmail(req: Request, res: Response) {
     const fallbackLogoUrl = 'https://cdn.jsdelivr.net/gh/webability-io/assets/logo.png'
     const altFallbackUrl = 'https://via.placeholder.com/150x40/1565C0/FFFFFF?text=WebAbility'
 
-    // Compile the email template using MJML
+    // Compile the email template using MJML (compile once, reuse for all recipients)
     const emailHtml = await compileEmailTemplate({
       fileName: 'bulkEmail.mjml',
       data: {
@@ -73,22 +85,46 @@ export async function sendBulkEmail(req: Request, res: Response) {
       },
     })
 
-    // Send email to all valid recipients
-    const emailSent = await sendMailMultiple(validRecipients, subject, emailHtml)
+    // Send email individually to each recipient to ensure privacy and one email per recipient
+    let sentCount = 0
+    let failedCount = 0
+    const failedEmails: string[] = []
 
-    if (emailSent) {
+    for (const recipient of validRecipients) {
+      try {
+        const emailSent = await sendMail(recipient, subject, emailHtml)
+        if (emailSent) {
+          sentCount++
+        } else {
+          failedCount++
+          failedEmails.push(recipient)
+        }
+        // Add a small delay between emails to avoid rate limiting (100ms)
+        if (sentCount + failedCount < validRecipients.length) {
+          await new Promise((resolve) => setTimeout(resolve, 100))
+        }
+      } catch (error) {
+        console.error(`Error sending email to ${recipient}:`, error)
+        failedCount++
+        failedEmails.push(recipient)
+      }
+    }
+
+    if (sentCount > 0) {
       res.status(200).json({
         success: true,
-        message: `Email sent successfully to ${validRecipients.length} recipient(s)${invalidEmails.length > 0 ? `. ${invalidEmails.length} invalid email(s) skipped.` : ''}`,
-        sentCount: validRecipients.length,
-        failedCount: invalidEmails.length,
+        message: `Email sent successfully to ${sentCount} recipient(s)${failedCount > 0 ? `. ${failedCount} email(s) failed to send.` : ''}${invalidEmails.length > 0 ? ` ${invalidEmails.length} invalid email(s) skipped.` : ''}`,
+        sentCount: sentCount,
+        failedCount: failedCount + invalidEmails.length,
+        failedEmails: failedEmails.length > 0 ? failedEmails : undefined,
       })
     } else {
       res.status(500).json({
         success: false,
-        message: 'Failed to send email',
+        message: 'Failed to send emails to all recipients',
         sentCount: 0,
-        failedCount: validRecipients.length,
+        failedCount: validRecipients.length + invalidEmails.length,
+        failedEmails: failedEmails,
       })
     }
   } catch (error) {
