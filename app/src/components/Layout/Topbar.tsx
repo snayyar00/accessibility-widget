@@ -72,6 +72,10 @@ type Props = {
   openTrialModal?: () => void;
   setPaymentView?: (value: boolean) => void;
   setOptionalDomain?: (domain: string) => void;
+  customerData?: any;
+  onOpenActivateModal?: (domain: any) => void;
+  billingLoading?: boolean;
+  setBillingLoading?: (value: boolean) => void;
 };
 
 const Topbar: React.FC<Props> = ({
@@ -84,6 +88,10 @@ const Topbar: React.FC<Props> = ({
   openTrialModal,
   setPaymentView,
   setOptionalDomain,
+  customerData,
+  onOpenActivateModal,
+  billingLoading,
+  setBillingLoading,
 }) => {
   const dispath = useDispatch();
   const { t } = useTranslation();
@@ -198,6 +206,10 @@ const Topbar: React.FC<Props> = ({
         setPaymentView={setPaymentView}
         setOptionalDomain={setOptionalDomain}
         onVisibilityChange={setIsTrialBannerVisible}
+        customerData={customerData}
+        onOpenActivateModal={onOpenActivateModal}
+        billingLoading={billingLoading}
+        setBillingLoading={setBillingLoading}
       />
       <div className="mx-4 mt-4 mb-2">
         <div className="bg-body rounded-lg flex items-center justify-between relative h-auto md:h-auto lg:h-16 px-3 md:px-4 lg:px-6 flex-wrap md:flex-wrap lg:flex-nowrap gap-3 md:gap-4 lg:gap-0">
