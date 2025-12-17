@@ -115,6 +115,11 @@ const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({
       return null;
     }
 
+    // Only show banner for domain owners
+    if (!selectedSite.is_owner) {
+      return null;
+    }
+
     // If not marked as trial but has an expiration date, skip (likely paid/active)
     // If not marked as trial and no expiration date, treat as expired (mirrors DomainTable "Trial Expired")
     if (selectedSite.trial !== 1 && selectedSite.expiredAt) {
