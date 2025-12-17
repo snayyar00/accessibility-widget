@@ -97,6 +97,7 @@ import getWidgetSettings from '@/utils/getWidgetSettings';
 import startAccessibilityReportJob from '@/queries/accessibility/startAccessibilityReportJob';
 import getAccessibilityReportByJobId from '@/queries/accessibility/getAccessibilityReportByJobId';
 import { baseColors } from '@/config/colors';
+import LatestReportCard from '@/containers/Dashboard/LatestReportCard';
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
 
@@ -3236,6 +3237,15 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               </Card>
             </div>
           </div>
+
+          {/* Latest Report Card */}
+          {selectedSite && (
+            <div className="w-full border-none shadow-none flex flex-col justify-center items-center">
+              <div className="w-full mt-6">
+                <LatestReportCard siteUrl={selectedSite} />
+              </div>
+            </div>
+          )}
 
           <div className="w-full">
             {siteOptions.some(
