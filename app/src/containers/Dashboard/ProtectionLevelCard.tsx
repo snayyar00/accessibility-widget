@@ -338,19 +338,28 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
           return (
             <div
               key={level}
-              className="relative rounded-lg border-2 p-4 sm:p-5 flex flex-col items-center"
+              className="relative rounded-xl border p-4 sm:p-5 flex flex-col items-center transition-all duration-300 ease-out cursor-pointer transform hover:scale-105 hover:-translate-y-1"
               style={{
                 backgroundColor: getBackgroundColor(),
                 borderColor: getBorderColor(),
+                boxShadow: isActive
+                  ? '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+                transform: isActive ? 'translateY(-4px) scale(1.02)' : 'translateY(0) scale(1)',
+                transformStyle: 'preserve-3d',
+                perspective: '1000px',
               }}
             >
               {/* YOU ARE HERE Tag for active level */}
               {isActive && (
                 <div
-                  className="absolute -top-3 right-2 px-2 py-0.5 rounded text-xs font-semibold"
+                  className="absolute -top-3 right-2 px-2 py-0.5 rounded text-xs font-semibold transition-all duration-300"
                   style={{
                     backgroundColor: getTagColor(),
                     color: baseColors.white,
+                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                    transform: 'translateZ(10px)',
+                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
                   }}
                 >
                   YOU ARE HERE
@@ -358,9 +367,15 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
               )}
 
               {/* Icon */}
-              <div className="mb-3 sm:mb-4">
+              <div 
+                className="mb-3 sm:mb-4 transition-transform duration-300"
+                style={{
+                  transform: isActive ? 'translateZ(20px) scale(1.1)' : 'translateZ(0) scale(1)',
+                  filter: isActive ? 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15))' : 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
+                }}
+              >
                 <IconComponent
-                  className="w-10 h-10 sm:w-12 sm:h-12"
+                  className="w-10 h-10 sm:w-12 sm:h-12 transition-all duration-300"
                   style={{
                     color: isActive && isManaged
                       ? '#0d9488' // Teal for Managed when active

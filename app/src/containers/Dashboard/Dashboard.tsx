@@ -23,6 +23,7 @@ import { baseColors } from '@/config/colors';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import ProtectionLevelCard from './ProtectionLevelCard';
+import DashboardAccessibilityCard from './DashboardAccessibilityCard';
 
 interface ChartData {
   date: string;
@@ -472,6 +473,13 @@ const Dashboard: React.FC<any> = ({
               siteId={domainData.id}
               siteUrl={domainData.url}
             />
+          </div>
+        )}
+
+        {/* Dashboard Accessibility Report Card */}
+        {domainData && (
+          <div className="mb-6">
+            <DashboardAccessibilityCard siteUrl={domainData.url} />
           </div>
         )}
         
