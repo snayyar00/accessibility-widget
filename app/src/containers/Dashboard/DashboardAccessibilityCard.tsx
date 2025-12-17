@@ -314,13 +314,15 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
   if (reportKeysLoading || reportLoading) {
     return (
       <div
-        className="rounded-xl shadow-sm border w-full overflow-hidden"
+        className="rounded-xl w-full overflow-hidden"
         style={{
           backgroundColor: baseColors.white,
-          borderColor: '#a2adf3',
+          border: 'none',
           padding: 'clamp(1rem, 3vw, 1.5rem)',
           maxWidth: '100%',
           boxSizing: 'border-box',
+          boxShadow: '0 20px 40px rgba(51, 67, 173, 0.2), 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(51, 67, 173, 0.05)',
+          transform: 'perspective(1000px) rotateX(0deg) translateZ(0)',
         }}
       >
         <div className="text-center py-8">
@@ -337,13 +339,15 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
   if (hasAttemptedFetch && !reportKeysLoading && !hasReportKeys) {
     return (
       <div
-        className="rounded-xl shadow-sm border w-full overflow-hidden"
+        className="rounded-xl w-full overflow-hidden"
         style={{
           backgroundColor: baseColors.white,
-          borderColor: '#a2adf3',
+          border: 'none',
           padding: 'clamp(1rem, 3vw, 1.5rem)',
           maxWidth: '100%',
           boxSizing: 'border-box',
+          boxShadow: '0 20px 40px rgba(51, 67, 173, 0.2), 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(51, 67, 173, 0.05)',
+          transform: 'perspective(1000px) rotateX(0deg) translateZ(0)',
         }}
       >
         <div className="text-center py-8">
@@ -360,13 +364,15 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
   if (hasReportKeys && !reportData && reportLoading) {
     return (
       <div
-        className="rounded-xl shadow-sm border w-full overflow-hidden"
+        className="rounded-xl w-full overflow-hidden"
         style={{
           backgroundColor: baseColors.white,
-          borderColor: '#a2adf3',
+          border: 'none',
           padding: 'clamp(1rem, 3vw, 1.5rem)',
           maxWidth: '100%',
           boxSizing: 'border-box',
+          boxShadow: '0 20px 40px rgba(51, 67, 173, 0.2), 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(51, 67, 173, 0.05)',
+          transform: 'perspective(1000px) rotateX(0deg) translateZ(0)',
         }}
       >
         <div className="text-center py-8">
@@ -380,13 +386,15 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
   if (hasReportKeys && !reportData && !reportLoading) {
     return (
       <div
-        className="rounded-xl shadow-sm border w-full overflow-hidden"
+        className="rounded-xl w-full overflow-hidden"
         style={{
           backgroundColor: baseColors.white,
-          borderColor: '#a2adf3',
+          border: 'none',
           padding: 'clamp(1rem, 3vw, 1.5rem)',
           maxWidth: '100%',
           boxSizing: 'border-box',
+          boxShadow: '0 20px 40px rgba(51, 67, 173, 0.2), 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(51, 67, 173, 0.05)',
+          transform: 'perspective(1000px) rotateX(0deg) translateZ(0)',
         }}
       >
         <div className="text-center py-8">
@@ -401,12 +409,15 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
 
   return (
     <div
-      className="rounded-xl shadow-sm w-full overflow-hidden"
+      className="rounded-xl w-full overflow-hidden"
       style={{
         backgroundColor: baseColors.white,
+        border: 'none',
         padding: 'clamp(1rem, 3vw, 1.5rem)',
         width: '100%',
         boxSizing: 'border-box',
+        boxShadow: '0 20px 40px rgba(51, 67, 173, 0.2), 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(51, 67, 173, 0.05)',
+        transform: 'perspective(1000px) rotateX(0deg) translateZ(0)',
       }}
     >
       {/* Header */}
@@ -419,10 +430,29 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
         </h2>
         <button
           onClick={handleViewFullReport}
-          className="flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 hover:opacity-90 w-full md:w-auto"
+          className="flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm w-full md:w-auto button-3d"
           style={{
-            backgroundColor: '#445ae7',
+            backgroundColor: '#3343ad',
             color: baseColors.white,
+            boxShadow: '0 4px 12px rgba(51, 67, 173, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)',
+            transform: 'perspective(1000px) translateZ(0)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(8px) translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(0) translateY(0px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(51, 67, 173, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(-4px) translateY(1px)';
+            e.currentTarget.style.boxShadow = '0 2px 6px rgba(51, 67, 173, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15)';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(8px) translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25)';
           }}
         >
           <span>View Full Report</span>
@@ -434,24 +464,35 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
       <div className={`grid gap-6 mb-4 sm:mb-6 ${categoryStats.length > 0 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
         {/* Score Breakdown */}
         <div
-          className="rounded-xl p-4 relative transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
+          className="rounded-xl p-4 relative stat-card-3d"
           style={{
             backgroundColor: baseColors.white,
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            border: 'none',
+            boxShadow: '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)',
+            transform: 'perspective(1000px) translateZ(0) rotateY(0deg)',
             transformStyle: 'preserve-3d',
-            perspective: '1000px',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(30px) translateY(-10px) rotateY(5deg)';
+            e.currentTarget.style.boxShadow = '0 20px 40px rgba(51, 67, 173, 0.25), 0 10px 20px rgba(0, 0, 0, 0.15)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(0) translateY(0px) rotateY(0deg)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)';
           }}
         >
           {hasWebAbility && (
             <div 
-              className="absolute top-2 right-2 text-white px-3 py-1 text-xs font-medium rounded-full"
+              className="absolute top-2 right-2 text-white px-3 py-1 text-xs font-medium rounded-full z-10"
               style={{ backgroundColor: '#445ae7' }}
             >
               Enhanced
             </div>
           )}
           <h3
-            className="text-sm font-semibold mb-4 uppercase tracking-wide"
+            className={`text-sm font-semibold mb-4 uppercase tracking-wide ${hasWebAbility ? 'pr-20 sm:pr-24' : ''}`}
             style={{ color: baseColors.grayText }}
           >
             Accessibility Score
@@ -498,12 +539,23 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
         {/* Issues by Category - Only show when there are issues */}
         {categoryStats.length > 0 && (
           <div
-            className="rounded-xl p-4 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
+            className="rounded-xl p-4 stat-card-3d"
             style={{
               backgroundColor: baseColors.white,
-              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+              border: 'none',
+              boxShadow: '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)',
+              transform: 'perspective(1000px) translateZ(0) rotateY(0deg)',
               transformStyle: 'preserve-3d',
-              perspective: '1000px',
+              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'perspective(1000px) translateZ(30px) translateY(-10px) rotateY(-5deg)';
+              e.currentTarget.style.boxShadow = '0 20px 40px rgba(51, 67, 173, 0.25), 0 10px 20px rgba(0, 0, 0, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'perspective(1000px) translateZ(0) translateY(0px) rotateY(0deg)';
+              e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)';
             }}
           >
             <div className="flex items-center gap-2 mb-2">

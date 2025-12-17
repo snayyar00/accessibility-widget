@@ -151,19 +151,21 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
 
   return (
     <div
-      className="rounded-xl shadow-sm border w-full overflow-hidden"
+      className="rounded-xl w-full overflow-hidden"
       style={{
         backgroundColor: baseColors.white,
-        borderColor: baseColors.grayCard,
+        border: 'none',
         padding: 'clamp(1rem, 3vw, 1.5rem)',
         maxWidth: '100%',
         boxSizing: 'border-box',
+        boxShadow: '0 20px 40px rgba(51, 67, 173, 0.2), 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(51, 67, 173, 0.05)',
+        transform: 'perspective(1000px) rotateX(0deg) translateZ(0)',
       }}
     >
       {/* Warning Banner - Only show for "No protection" */}
       {isNoProtection && (
         <div
-          className="rounded-lg mb-4 sm:mb-6 flex items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4"
+          className="rounded-lg mb-4 sm:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 p-3 sm:p-4"
           style={{
             backgroundColor: '#FEF3F2',
             border: '1px solid #EF4444',
@@ -182,7 +184,7 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
             </p>
           </div>
           <button
-            className="px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm md:text-base text-white flex-shrink-0 transition-all duration-200 hover:opacity-90 whitespace-nowrap"
+            className="px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm md:text-base text-white flex-shrink-0 transition-all duration-200 hover:opacity-90 whitespace-nowrap w-full md:w-auto"
             style={{
               backgroundColor: '#EF4444',
             }}
@@ -198,7 +200,7 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
       {/* Info Banner - Show for "Automation" */}
       {isAutomation && (
         <div
-          className="rounded-lg mb-4 sm:mb-6 flex items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4"
+          className="rounded-lg mb-4 sm:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 p-3 sm:p-4"
           style={{
             backgroundColor: baseColors.infoBackground,
             border: `1px solid ${baseColors.blueInfo}`,
@@ -217,7 +219,7 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
             </p>
           </div>
           <button
-            className="px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm md:text-base text-white flex-shrink-0 transition-all duration-200 hover:opacity-90 whitespace-nowrap"
+            className="px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm md:text-base text-white flex-shrink-0 transition-all duration-200 hover:opacity-90 whitespace-nowrap w-full md:w-auto"
             style={{
               backgroundColor: baseColors.blueInfo,
             }}
@@ -233,7 +235,7 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
       {/* Info Banner - Show for "Managed" */}
       {currentLevel === 'Managed' && (
         <div
-          className="rounded-lg mb-4 sm:mb-6 flex items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4"
+          className="rounded-lg mb-4 sm:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 p-3 sm:p-4"
           style={{
             backgroundColor: '#CCFBF1',
             border: '1px solid #0d9488',
@@ -252,7 +254,7 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
             </p>
           </div>
           <button
-            className="px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm md:text-base text-white flex-shrink-0 transition-all duration-200 hover:opacity-90 whitespace-nowrap"
+            className="px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm md:text-base text-white flex-shrink-0 transition-all duration-200 hover:opacity-90 whitespace-nowrap w-full md:w-auto"
             style={{
               backgroundColor: '#0d9488',
             }}
@@ -276,7 +278,7 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
           </h2>
           {shouldShowCheckButton && (
             <button
-              className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 whitespace-nowrap w-full sm:w-auto md:w-auto"
+              className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 whitespace-nowrap w-full md:w-auto"
               style={{
                 backgroundColor: baseColors.brandPrimary,
                 color: baseColors.white,
@@ -290,7 +292,7 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
         </div>
         {!isManagedAssurance && (
           <p 
-            className="text-xs sm:text-sm md:text-base break-words" 
+            className="text-xs sm:text-sm md:text-base break-words mb-6 sm:mb-8" 
             style={{ color: baseColors.grayMuted }}
           >
             Upgrade to reduce legal risk and improve accessibility
@@ -299,7 +301,7 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
       </div>
 
       {/* Protection Level Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 sm:mt-6">
         {protectionLevels.map((level) => {
           const levelData = protectionLevelData[level];
           const IconComponent = levelData.icon;
@@ -338,16 +340,28 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
           return (
             <div
               key={level}
-              className="relative rounded-xl border p-4 sm:p-5 flex flex-col items-center transition-all duration-300 ease-out cursor-pointer transform hover:scale-105 hover:-translate-y-1"
+              className="relative rounded-xl p-4 sm:p-5 flex flex-col items-center cursor-pointer stat-card-3d"
               style={{
                 backgroundColor: getBackgroundColor(),
-                borderColor: getBorderColor(),
+                border: 'none',
                 boxShadow: isActive
-                  ? '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                  : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-                transform: isActive ? 'translateY(-4px) scale(1.02)' : 'translateY(0) scale(1)',
+                  ? '0 12px 24px rgba(51, 67, 173, 0.2), 0 6px 12px rgba(0, 0, 0, 0.15)'
+                  : '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)',
+                transform: isActive ? 'perspective(1000px) translateZ(20px) translateY(-6px) rotateY(0deg)' : 'perspective(1000px) translateZ(0) translateY(0px) rotateY(0deg)',
                 transformStyle: 'preserve-3d',
-                perspective: '1000px',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.transform = 'perspective(1000px) translateZ(25px) translateY(-8px) rotateY(3deg)';
+                  e.currentTarget.style.boxShadow = '0 16px 32px rgba(51, 67, 173, 0.25), 0 8px 16px rgba(0, 0, 0, 0.15)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.transform = 'perspective(1000px) translateZ(0) translateY(0px) rotateY(0deg)';
+                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)';
+                }
               }}
             >
               {/* YOU ARE HERE Tag for active level */}

@@ -308,13 +308,15 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
   if (reportKeysLoading || reportLoading) {
     return (
       <div
-        className="rounded-xl shadow-sm border-2 w-full overflow-hidden"
+        className="rounded-xl w-full overflow-hidden"
         style={{
           backgroundColor: baseColors.white,
-          borderColor: '#a2adf3',
+          border: 'none',
           padding: 'clamp(1rem, 3vw, 1.5rem)',
           maxWidth: '100%',
           boxSizing: 'border-box',
+          boxShadow: '0 20px 40px rgba(51, 67, 173, 0.2), 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(51, 67, 173, 0.05)',
+          transform: 'perspective(1000px) rotateX(0deg) translateZ(0)',
         }}
       >
         <div className="text-center py-8">
@@ -331,13 +333,15 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
   if (hasAttemptedFetch && !reportKeysLoading && !hasReportKeys) {
     return (
       <div
-        className="rounded-xl shadow-sm border-2 w-full overflow-hidden"
+        className="rounded-xl w-full overflow-hidden"
         style={{
           backgroundColor: baseColors.white,
-          borderColor: '#a2adf3',
+          border: 'none',
           padding: 'clamp(1rem, 3vw, 1.5rem)',
           maxWidth: '100%',
           boxSizing: 'border-box',
+          boxShadow: '0 20px 40px rgba(51, 67, 173, 0.2), 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(51, 67, 173, 0.05)',
+          transform: 'perspective(1000px) rotateX(0deg) translateZ(0)',
         }}
       >
         <div className="text-center py-8">
@@ -354,13 +358,15 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
   if (hasReportKeys && !reportData && reportLoading) {
     return (
       <div
-        className="rounded-xl shadow-sm border-2 w-full overflow-hidden"
+        className="rounded-xl w-full overflow-hidden"
         style={{
           backgroundColor: baseColors.white,
-          borderColor: '#a2adf3',
+          border: 'none',
           padding: 'clamp(1rem, 3vw, 1.5rem)',
           maxWidth: '100%',
           boxSizing: 'border-box',
+          boxShadow: '0 20px 40px rgba(51, 67, 173, 0.2), 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(51, 67, 173, 0.05)',
+          transform: 'perspective(1000px) rotateX(0deg) translateZ(0)',
         }}
       >
         <div className="text-center py-8">
@@ -374,13 +380,15 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
   if (hasReportKeys && !reportData && !reportLoading) {
     return (
       <div
-        className="rounded-xl shadow-sm border-2 w-full overflow-hidden"
+        className="rounded-xl w-full overflow-hidden"
         style={{
           backgroundColor: baseColors.white,
-          borderColor: '#a2adf3',
+          border: 'none',
           padding: 'clamp(1rem, 3vw, 1.5rem)',
           maxWidth: '100%',
           boxSizing: 'border-box',
+          boxShadow: '0 20px 40px rgba(51, 67, 173, 0.2), 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(51, 67, 173, 0.05)',
+          transform: 'perspective(1000px) rotateX(0deg) translateZ(0)',
         }}
       >
         <div className="text-center py-8">
@@ -395,13 +403,15 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
 
   return (
     <div
-      className="rounded-xl shadow-sm border w-full overflow-hidden"
+      className="rounded-xl w-full overflow-hidden card-3d"
       style={{
         backgroundColor: baseColors.white,
-        borderColor: '#a2adf3',
+        border: 'none',
         padding: 'clamp(1rem, 3vw, 1.5rem)',
         width: '100%',
         boxSizing: 'border-box',
+        boxShadow: '0 20px 40px rgba(51, 67, 173, 0.2), 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(51, 67, 173, 0.05)',
+        transform: 'perspective(1000px) rotateX(0deg) translateZ(0)',
       }}
     >
       {/* Header */}
@@ -414,10 +424,29 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
         </h2>
         <button
           onClick={handleViewFullReport}
-          className="flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 hover:opacity-90 w-full md:w-auto"
+          className="flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm w-full md:w-auto button-3d"
           style={{
             backgroundColor: '#3343ad',
             color: baseColors.white,
+            boxShadow: '0 4px 12px rgba(51, 67, 173, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)',
+            transform: 'perspective(1000px) translateZ(0)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(8px) translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(0) translateY(0px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(51, 67, 173, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(-4px) translateY(1px)';
+            e.currentTarget.style.boxShadow = '0 2px 6px rgba(51, 67, 173, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15)';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(8px) translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25)';
           }}
         >
           <span>View Full Report</span>
@@ -429,10 +458,22 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 sm:mb-6">
         {/* Score Card */}
         <div
-          className="rounded-lg border-2 p-4"
+          className="rounded-lg p-4 stat-card-3d"
           style={{
             backgroundColor: baseColors.white,
-            borderColor: '#a2adf3',
+            border: 'none',
+            boxShadow: '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)',
+            transform: 'perspective(1000px) translateZ(0) rotateY(0deg)',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(30px) translateY(-10px) rotateY(5deg)';
+            e.currentTarget.style.boxShadow = '0 20px 40px rgba(51, 67, 173, 0.25), 0 10px 20px rgba(0, 0, 0, 0.15)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(0) translateY(0px) rotateY(0deg)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)';
           }}
         >
           <div className="flex items-center justify-between mb-2">
@@ -448,10 +489,22 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
 
         {/* Critical Issues */}
         <div
-          className="rounded-lg border-2 p-4"
+          className="rounded-lg p-4 stat-card-3d"
           style={{
             backgroundColor: '#FEF3F2',
-            borderColor: '#EF4444',
+            border: 'none',
+            boxShadow: '0 8px 20px rgba(239, 68, 68, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1)',
+            transform: 'perspective(1000px) translateZ(0) rotateY(0deg)',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(30px) translateY(-10px) rotateY(-5deg)';
+            e.currentTarget.style.boxShadow = '0 20px 40px rgba(239, 68, 68, 0.3), 0 10px 20px rgba(0, 0, 0, 0.15)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(0) translateY(0px) rotateY(0deg)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(239, 68, 68, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1)';
           }}
         >
           <div className="flex items-center justify-between mb-2">
@@ -467,10 +520,22 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
 
         {/* Moderate Issues */}
         <div
-          className="rounded-lg border-2 p-4"
+          className="rounded-lg p-4 stat-card-3d"
           style={{
             backgroundColor: baseColors.blueLight,
-            borderColor: '#a2adf3',
+            border: 'none',
+            boxShadow: '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)',
+            transform: 'perspective(1000px) translateZ(0) rotateY(0deg)',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(30px) translateY(-10px) rotateY(5deg)';
+            e.currentTarget.style.boxShadow = '0 20px 40px rgba(51, 67, 173, 0.25), 0 10px 20px rgba(0, 0, 0, 0.15)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(0) translateY(0px) rotateY(0deg)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)';
           }}
         >
           <div className="flex items-center justify-between mb-2">
@@ -486,10 +551,22 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
 
         {/* Total Issues */}
         <div
-          className="rounded-lg border-2 p-4"
+          className="rounded-lg p-4 stat-card-3d"
           style={{
             backgroundColor: baseColors.white,
-            borderColor: '#a2adf3',
+            border: 'none',
+            boxShadow: '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)',
+            transform: 'perspective(1000px) translateZ(0) rotateY(0deg)',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(30px) translateY(-10px) rotateY(-5deg)';
+            e.currentTarget.style.boxShadow = '0 20px 40px rgba(51, 67, 173, 0.25), 0 10px 20px rgba(0, 0, 0, 0.15)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) translateZ(0) translateY(0px) rotateY(0deg)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)';
           }}
         >
           <div className="flex items-center justify-between mb-2">
@@ -510,7 +587,7 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setActiveCategory('all')}
-              className={`px-3 sm:px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              className={`px-3 sm:px-4 py-2 text-sm font-medium flex items-center gap-1.5 tab-3d ${
                 activeCategory === 'all'
                   ? 'border-b-2'
                   : 'text-gray-600 hover:text-gray-900'
@@ -518,6 +595,18 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
               style={{
                 color: activeCategory === 'all' ? '#3343ad' : baseColors.grayMuted,
                 borderBottomColor: activeCategory === 'all' ? '#3343ad' : 'transparent',
+                transform: activeCategory === 'all' ? 'translateY(-2px)' : 'translateY(0px)',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              onMouseEnter={(e) => {
+                if (activeCategory !== 'all') {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeCategory !== 'all') {
+                  e.currentTarget.style.transform = 'translateY(0px)';
+                }
               }}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -525,7 +614,7 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
             </button>
             <button
               onClick={() => setActiveCategory('content')}
-              className={`px-3 sm:px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              className={`px-3 sm:px-4 py-2 text-sm font-medium flex items-center gap-1.5 tab-3d ${
                 activeCategory === 'content'
                   ? 'border-b-2'
                   : 'text-gray-600 hover:text-gray-900'
@@ -533,6 +622,18 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
               style={{
                 color: activeCategory === 'content' ? '#3343ad' : baseColors.grayMuted,
                 borderBottomColor: activeCategory === 'content' ? '#3343ad' : 'transparent',
+                transform: activeCategory === 'content' ? 'translateY(-2px)' : 'translateY(0px)',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              onMouseEnter={(e) => {
+                if (activeCategory !== 'content') {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeCategory !== 'content') {
+                  e.currentTarget.style.transform = 'translateY(0px)';
+                }
               }}
             >
               <FileText className="w-4 h-4" />
@@ -540,7 +641,7 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
             </button>
             <button
               onClick={() => setActiveCategory('navigation')}
-              className={`px-3 sm:px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              className={`px-3 sm:px-4 py-2 text-sm font-medium flex items-center gap-1.5 tab-3d ${
                 activeCategory === 'navigation'
                   ? 'border-b-2'
                   : 'text-gray-600 hover:text-gray-900'
@@ -548,6 +649,18 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
               style={{
                 color: activeCategory === 'navigation' ? '#3343ad' : baseColors.grayMuted,
                 borderBottomColor: activeCategory === 'navigation' ? '#3343ad' : 'transparent',
+                transform: activeCategory === 'navigation' ? 'translateY(-2px)' : 'translateY(0px)',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              onMouseEnter={(e) => {
+                if (activeCategory !== 'navigation') {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeCategory !== 'navigation') {
+                  e.currentTarget.style.transform = 'translateY(0px)';
+                }
               }}
             >
               <NavigationIcon className="w-4 h-4" />
@@ -555,7 +668,7 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
             </button>
             <button
               onClick={() => setActiveCategory('forms')}
-              className={`px-3 sm:px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              className={`px-3 sm:px-4 py-2 text-sm font-medium flex items-center gap-1.5 tab-3d ${
                 activeCategory === 'forms'
                   ? 'border-b-2'
                   : 'text-gray-600 hover:text-gray-900'
@@ -563,6 +676,18 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
               style={{
                 color: activeCategory === 'forms' ? '#3343ad' : baseColors.grayMuted,
                 borderBottomColor: activeCategory === 'forms' ? '#3343ad' : 'transparent',
+                transform: activeCategory === 'forms' ? 'translateY(-2px)' : 'translateY(0px)',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              onMouseEnter={(e) => {
+                if (activeCategory !== 'forms') {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeCategory !== 'forms') {
+                  e.currentTarget.style.transform = 'translateY(0px)';
+                }
               }}
             >
               <FormInput className="w-4 h-4" />
@@ -579,7 +704,7 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
                 <button
                   key={funcName}
                   onClick={() => setActiveCategory(funcName)}
-                  className={`px-3 sm:px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  className={`px-3 sm:px-4 py-2 text-sm font-medium flex items-center gap-1.5 tab-3d ${
                     activeCategory === funcName
                       ? 'border-b-2'
                       : 'text-gray-600 hover:text-gray-900'
@@ -587,6 +712,18 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
                   style={{
                     color: activeCategory === funcName ? '#3343ad' : baseColors.grayMuted,
                     borderBottomColor: activeCategory === funcName ? '#3343ad' : 'transparent',
+                    transform: activeCategory === funcName ? 'translateY(-2px)' : 'translateY(0px)',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activeCategory !== funcName) {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeCategory !== funcName) {
+                      e.currentTarget.style.transform = 'translateY(0px)';
+                    }
                   }}
                 >
                   {isCognitive ? <Brain className="w-4 h-4" /> : <NavigationIcon className="w-4 h-4" />}
@@ -607,14 +744,27 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
           >
             {activeCategory === 'all' ? 'Recent Issues' : `${activeCategory} Issues`}
           </h3>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
+          <div className="space-y-3 max-h-96 overflow-y-auto px-2 sm:px-4">
             {issues.slice(0, 10).map((issue: any, index: number) => (
               <div
                 key={index}
-                className="rounded-lg border-2 p-3 sm:p-4"
+                className="rounded-lg p-3 sm:p-4 issue-card-3d mx-auto"
                 style={{
                   backgroundColor: baseColors.white,
-                  borderColor: '#a2adf3',
+                  border: 'none',
+                  boxShadow: '0 6px 16px rgba(51, 67, 173, 0.12), 0 2px 6px rgba(0, 0, 0, 0.1)',
+                  transform: 'perspective(1000px) translateZ(0) rotateX(0deg)',
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  cursor: 'pointer',
+                  maxWidth: '95%',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'perspective(1000px) translateZ(25px) translateY(-8px) rotateX(4deg)';
+                  e.currentTarget.style.boxShadow = '0 16px 32px rgba(51, 67, 173, 0.22), 0 8px 16px rgba(0, 0, 0, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'perspective(1000px) translateZ(0) translateY(0px) rotateX(0deg)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(51, 67, 173, 0.12), 0 2px 6px rgba(0, 0, 0, 0.1)';
                 }}
               >
                 <div className="flex items-start gap-3">
@@ -695,10 +845,29 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
           {allIssues.length > 10 && (
             <button
               onClick={handleViewFullReport}
-              className="mt-4 w-full text-center px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 hover:opacity-90"
+              className="mt-4 w-full text-center px-4 py-2 rounded-lg font-medium text-sm button-3d"
               style={{
                 backgroundColor: '#3343ad',
                 color: baseColors.white,
+                boxShadow: '0 4px 12px rgba(51, 67, 173, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)',
+                transform: 'perspective(1000px) translateZ(0)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'perspective(1000px) translateZ(8px) translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'perspective(1000px) translateZ(0) translateY(0px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(51, 67, 173, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)';
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.transform = 'perspective(1000px) translateZ(-4px) translateY(1px)';
+                e.currentTarget.style.boxShadow = '0 2px 6px rgba(51, 67, 173, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15)';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.transform = 'perspective(1000px) translateZ(8px) translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25)';
               }}
             >
               View All {allIssues.length} Issues
