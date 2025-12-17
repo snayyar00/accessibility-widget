@@ -198,7 +198,7 @@ const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({
   }, [selectedDomain, sitesData]);
 
   const handleActivateSubscription = async () => {
-    if (!selectedSiteObject || !setBillingLoading) return;
+    if (!selectedSiteObject || !setBillingLoading || billingLoading) return;
 
     setBillingLoading(true);
     let url = `${process.env.REACT_APP_BACKEND_URL}/create-subscription`;
