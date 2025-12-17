@@ -220,6 +220,7 @@ export async function findUserSitesWithPlansWithWorkspaces(userId: number, organ
         ${TABLE}.last_monitor_check,
         ${TABLE}.is_currently_down,
         ${TABLE}.monitor_consecutive_fails,
+        ${TABLE}.protection_level,
         users.email as user_email,
         (
           SELECT JSON_ARRAYAGG(JSON_OBJECT('id', w.id, 'name', w.name))
@@ -456,6 +457,18 @@ export async function toggleSiteMonitoring(site_id: number, enabled: boolean, us
   return updated > 0
 }
 
+export async function updateSiteProtectionLevel(site_id: number, protection_level: string, user_id: number, organization_id?: number): Promise<boolean> {
+  const whereClause: Record<string, number> = { id: site_id, user_id }
+
+  if (organization_id) {
+    whereClause.organization_id = organization_id
+  }
+
+  const updated = await database(TABLE).where(whereClause).update({ protection_level })
+
+  return updated > 0
+}
+
 /**
  * Helper function to build base query for sites with plans and workspaces
  */
@@ -515,6 +528,7 @@ function selectSiteFieldsWithMonitoring() {
     `${TABLE}.last_monitor_check`,
     `${TABLE}.is_currently_down`,
     `${TABLE}.monitor_consecutive_fails`,
+    `${TABLE}.protection_level`,
     `${TABLES.users}.email as user_email`,
     database.raw(`${getWorkspacesSubquery()} as workspaces`),
   ]

@@ -13,6 +13,7 @@ import {
   IUserSites,
   toggleSiteMonitoring as toggleSiteMonitoringRepo,
   updateAllowedSiteURL,
+  updateSiteProtectionLevel as updateSiteProtectionLevelRepo,
 } from '../../repository/sites_allowed.repository'
 import { findUserNotificationByUserId, getUserbyId } from '../../repository/user.repository'
 import { hasWorkspaceAccessToSite } from '../../repository/workspace_users.repository'
@@ -391,6 +392,41 @@ export async function toggleSiteMonitoring(siteId: number, enabled: boolean, use
 
     // Use the original site owner's user_id for the update
     return toggleSiteMonitoringRepo(siteId, enabled, site.user_id, organizationId)
+  } catch (e) {
+    logger.error(e)
+    throw e
+  }
+}
+
+export async function updateSiteProtectionLevel(siteId: number, protectionLevel: string, userId: number, organizationId?: number, isSuperAdmin?: boolean): Promise<boolean> {
+  try {
+    const site = await findSiteById(siteId)
+
+    if (!site) {
+      throw new ValidationError('Site not found.')
+    }
+
+    // Check organization_id if provided
+    if (organizationId && site.organization_id !== organizationId) {
+      throw new ValidationError('You do not have permission to modify this site.')
+    }
+
+    // Only super admin, organization manager, or site owner can update protection level
+    const isOwner = site.user_id === userId
+
+    if (!isSuperAdmin && !isOwner) {
+      if (!organizationId) {
+        throw new ValidationError('Organization ID is required.')
+      }
+
+      const userOrganization = await getUserOrganization(userId, organizationId)
+
+      if (!userOrganization || !canManageOrganization(userOrganization.role)) {
+        throw new ValidationError('Only site owner or organization administrators can update protection level.')
+      }
+    }
+
+    return updateSiteProtectionLevelRepo(siteId, protectionLevel, site.user_id, organizationId)
   } catch (e) {
     logger.error(e)
     throw e

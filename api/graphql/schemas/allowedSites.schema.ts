@@ -22,6 +22,7 @@ export const AllowedSitesSchema = `#graphql
     is_owner: Boolean
     workspaces: [SiteWorkspace]
     user_email: String
+    protection_level: String
   }
 
   type PaginatedSites {
@@ -40,5 +41,6 @@ export const AllowedSitesSchema = `#graphql
     deleteSite(url: String!): Int! @rateLimit(limit: 10, duration: 60, message: "Too many site deletions. Please try again later.")
     changeURL(newURL: String!, siteId: Int!): String @rateLimit(limit: 10, duration: 60, message: "Too many URL changes. Please try again later.")
     toggleSiteMonitoring(siteId: Int!, enabled: Boolean!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many monitoring toggle attempts. Please try again later.")
+    updateSiteProtectionLevel(siteId: Int!, protectionLevel: String!): Boolean! @rateLimit(limit: 30, duration: 60, message: "Too many protection level updates. Please try again later.")
   }
 `

@@ -22,6 +22,7 @@ import dashboardImage from '@/assets/images/dashboard_image.png';
 import { baseColors } from '@/config/colors';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
+import ProtectionLevelCard from './ProtectionLevelCard';
 
 interface ChartData {
   date: string;
@@ -462,7 +463,18 @@ const Dashboard: React.FC<any> = ({
       </div>
 
       {/* ⚡ PROGRESSIVE LOADING: Pass individual loading states */}
-      <div className="analytics-dashboard">
+      <div className="analytics-dashboard px-4">
+        {/* Protection Level Card */}
+        {domainData && (
+          <div className="mb-6">
+            <ProtectionLevelCard 
+              protectionLevel={domainData.protection_level}
+              siteId={domainData.id}
+              siteUrl={domainData.url}
+            />
+          </div>
+        )}
+        
         <AnalyticsDashboard
           impressionCount={impressions}
           widgetOpenCount={widgetOpened}

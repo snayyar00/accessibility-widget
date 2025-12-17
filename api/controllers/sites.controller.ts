@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 
 import { findSiteByURL } from '../repository/sites_allowed.repository'
+import { checkScript } from '../services/allowedSites/allowedSites.service'
 
 /**
  * Find if domain URL is added using query parameter
@@ -34,6 +35,33 @@ export async function searchSiteByURL(req: Request, res: Response): Promise<Resp
     return res.status(500).json({
       error: 'Internal server error',
       message: 'An error occurred while searching for the site',
+    })
+  }
+}
+
+/**
+ * Check if accessibility widget script is installed on a site
+ * Endpoint: POST /check-script
+ * Body: { siteUrl: string }
+ */
+export async function checkSiteScript(req: Request, res: Response): Promise<Response> {
+  try {
+    const { siteUrl } = req.body
+
+    if (!siteUrl || typeof siteUrl !== 'string') {
+      return res.status(400).json({
+        error: 'siteUrl is required',
+        message: 'Please provide a valid siteUrl in the request body',
+      })
+    }
+
+    const result = await checkScript(siteUrl)
+    return res.json(result)
+  } catch (error: any) {
+    console.error('Error checking script:', error)
+    return res.status(500).json({
+      error: 'Internal server error',
+      message: error.message || 'An error occurred while checking for the script',
     })
   }
 }
