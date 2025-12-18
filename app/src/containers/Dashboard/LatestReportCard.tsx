@@ -744,11 +744,11 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
           >
             {activeCategory === 'all' ? 'Recent Issues' : `${activeCategory} Issues`}
           </h3>
-          <div className="space-y-3 max-h-96 overflow-y-auto px-2 sm:px-4">
+          <div className="space-y-3 max-h-96 overflow-y-auto px-1">
             {issues.slice(0, 10).map((issue: any, index: number) => (
               <div
                 key={index}
-                className="rounded-lg p-3 sm:p-4 issue-card-3d mx-auto"
+                className="rounded-lg p-3 sm:p-4 issue-card-3d"
                 style={{
                   backgroundColor: baseColors.white,
                   border: 'none',
@@ -756,7 +756,7 @@ const LatestReportCard: React.FC<LatestReportCardProps> = ({ siteUrl }) => {
                   transform: 'perspective(1000px) translateZ(0) rotateX(0deg)',
                   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                   cursor: 'pointer',
-                  maxWidth: '95%',
+                  width: '100%',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'perspective(1000px) translateZ(25px) translateY(-8px) rotateX(4deg)';
