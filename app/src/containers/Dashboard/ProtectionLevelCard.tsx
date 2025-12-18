@@ -412,20 +412,6 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
                 {level}
               </h3>
 
-              {/* Percentage */}
-              <p
-                className="text-sm mb-4 sm:mb-5"
-                style={{
-                  color: isManagedAssurance 
-                    ? '#22c55e' 
-                    : isManaged 
-                    ? '#0d9488' 
-                    : baseColors.grayMuted,
-                }}
-              >
-                {levelData.percentage}% Protected
-              </p>
-
             </div>
           );
         })}
