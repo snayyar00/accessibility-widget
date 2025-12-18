@@ -568,7 +568,7 @@ const Sidebar = () => {
                   </NavLink>
                 )}
 
-                {/* AI Insights */}
+                {/* Content and Web Analysis */}
                 <NavLink
                   to="/ai-insights"
                   onClick={closeSidebar}
@@ -576,13 +576,13 @@ const Sidebar = () => {
                     isActiveRoute('/ai-insights')
                       ? isCollapsed
                         ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        : 'w-full min-h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
-                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                      : 'w-full min-h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
-                  <div className="w-6 h-6 flex items-center justify-center">
+                  <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
                     <Sparkles
                       size={24}
                       className={
@@ -594,13 +594,13 @@ const Sidebar = () => {
                   </div>
                   {!isCollapsed && (
                     <span
-                      className={`text-sm whitespace-nowrap ${
+                      className={`text-sm leading-tight ${
                         isActiveRoute('/ai-insights')
                           ? 'text-[#445AE7]'
                           : 'text-[#656565]'
                       }`}
                     >
-                      AI insights
+                      Content and Web Analysis
                     </span>
                   )}
                 </NavLink>
@@ -968,7 +968,7 @@ const Sidebar = () => {
                   </NavLink>
                 )}
 
-                {/* AI Insights */}
+                {/* Content and Web Analysis */}
                 <NavLink
                   to="/ai-insights"
                   onClick={closeSidebar}

@@ -172,7 +172,7 @@ const AIInsights: React.FC = () => {
           <div className="mb-6 sm:mb-8">
             <div className="flex flex-row sm:flex-col  gap-2 sm:gap-3">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
-                AI Heatmap Insights
+                Content and Web Analysis
               </h1>
             </div>
           </div>
