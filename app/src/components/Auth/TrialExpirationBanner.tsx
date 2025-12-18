@@ -270,19 +270,19 @@ const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({
 
   return (
     <div 
-      className="text-white w-full z-50 relative shadow-md"
+      className="text-white w-full md:w-auto shrink-0 md:max-w-md relative shadow-md rounded-lg"
       style={{ backgroundColor: '#3b82f6' }} // Using blue-500 for better visibility
     >
-      {/* Right-aligned dismiss button - positioned absolutely */}
-      <button
-        onClick={handleDismiss}
-        className="absolute top-4 right-2 md:top-4 md:right-4 text-white hover:text-blue-100 transition-colors p-1 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-500 rounded z-10"
-        aria-label="Dismiss"
-      >
-        <FaTimes className="h-4 w-4 md:h-5 md:w-5" />
-      </button>
+        {/* Right-aligned dismiss button - positioned absolutely */}
+        <button
+          onClick={handleDismiss}
+          className="absolute top-4 right-2 md:top-4 md:right-4 text-white hover:text-blue-100 transition-colors p-1 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-500 rounded z-10"
+          aria-label="Dismiss"
+        >
+          <FaTimes className="h-4 w-4 md:h-5 md:w-5" />
+        </button>
 
-      <div className="container mx-auto px-3 md:px-4 py-2 md:py-3">
+        <div className="px-4 md:px-6 py-2 md:py-2 pr-10 md:pr-12">
         {/* Mobile Layout: Stacked (screens ≤ 768px) */}
         <div className="flex flex-col md:hidden gap-2">
           
@@ -312,7 +312,7 @@ const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({
         </div>
 
         {/* Desktop Layout: Horizontal (screens ≥ 768px) */}
-        <div className="hidden md:flex items-center justify-center min-h-[48px]">
+        <div className="hidden md:flex items-center justify-center h-[44px]">
           {/* Text with icon and Buy License button - centered */}
           <div className="flex items-center justify-center space-x-3">
             <FaClock className="text-white h-5 w-5 flex-shrink-0" />
