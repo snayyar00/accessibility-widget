@@ -334,6 +334,41 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     if (isMounted.current) {
       setcorrectDomain(validDomain);
     }
+
+    // For full site scans, don't show loading and show email notification instead
+    if (isFullSiteScan) {
+      dispatch(setSelectedDomain(validDomain));
+      try {
+        const { data } = await startJobQuery({
+          variables: {
+            url: encodeURIComponent(validDomain),
+            use_cache: scanType === 'cached' && !isFullSiteScan,
+            full_site_scan: isFullSiteScan,
+          },
+        });
+        if (
+          data &&
+          data.startAccessibilityReportJob &&
+          data.startAccessibilityReportJob.jobId
+        ) {
+          toast.success(
+            'Full site scan started! We will email you the report when it\'s ready.',
+            {
+              duration: 5000,
+            },
+          );
+          // Don't set jobId or isGenerating - let it run in background
+          // The backend will email the user when the report is ready
+        } else {
+          toast.error('Failed to start report job.');
+        }
+      } catch (error) {
+        toast.error('Failed to start report job.');
+      }
+      return;
+    }
+
+    // Normal scan flow (non-full site scan)
     dispatch(setIsGenerating(true));
     dispatch(setSelectedDomain(validDomain));
     try {
