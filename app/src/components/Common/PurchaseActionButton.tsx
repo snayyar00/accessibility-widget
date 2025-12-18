@@ -65,6 +65,8 @@ const PurchaseActionButton: React.FC<PurchaseActionButtonProps> = ({
   const disabled = billingLoading && actionConfig.action === 'activate-subscription';
 
   const handleClick = () => {
+    if (disabled) return;
+
     if (actionConfig.action === 'activate-subscription' && onActivateSubscription) {
       onActivateSubscription();
       return;
