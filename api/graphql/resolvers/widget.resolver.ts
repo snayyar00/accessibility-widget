@@ -25,10 +25,14 @@ const widgetResolvers = {
         }
 
         // Validate email format
-        const emailValidationResult = emailValidation(email)
+        const emailValidationResult = await emailValidation(email)
 
         if (Array.isArray(emailValidationResult) && emailValidationResult.length > 0) {
-          throw new Error('Invalid email format')
+          // Extract validation error messages for better error reporting
+          const errorMessages = emailValidationResult
+            .map((err) => err.message || 'Invalid email format')
+            .join('; ')
+          throw new Error(`Invalid email format: ${errorMessages}`)
         }
 
         // Send the installation instructions
