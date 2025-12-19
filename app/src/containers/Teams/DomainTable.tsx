@@ -610,7 +610,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   placeholder="Search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-[#6E7788]"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-[#4A5568]"
                   style={{ border: '1px solid #A2ADF3' }}
                 />
               </div>
@@ -943,7 +943,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                       domain.monitor_enabled
                                         ? {}
                                         : { 
-                                            backgroundColor: '#848484'
+                                            backgroundColor: '#374151'
                                           }
                                     }
                                   />

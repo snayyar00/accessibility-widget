@@ -25,7 +25,7 @@ const Input = React.forwardRef(
       type={type}
       defaultValue={defaultValue}
       placeholder={placeholder}
-      className={`bg-[#FAFCFE] border border-[#8892A4] rounded-xl px-4 py-3 text-gray-900 text-base w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200 hover:border-[#8892A4] placeholder:text-[#6C7586] ${className}`}
+      className={`bg-[#FAFCFE] border border-[#8892A4] rounded-xl px-4 py-3 text-gray-900 text-base w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200 hover:border-[#8892A4] placeholder:text-[#4A5568] ${className}`}
       style={{
         backgroundColor: '#FAFCFE',
         borderColor: '#8892A4',

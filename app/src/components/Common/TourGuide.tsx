@@ -85,7 +85,7 @@ const TourGuide: React.FC<TourGuideProps> = ({
   // Default styles for the tour using theme colors
   const defaultStyles = {
     options: {
-      primaryColor: '#0080FF', // Use theme primary color
+      primaryColor: '#006BD6', // Matches buttonNext backgroundColor for consistency
       textColor: '#333',
       backgroundColor: '#fff',
       overlayColor: 'rgba(0, 0, 0, 0.4)',
@@ -109,7 +109,7 @@ const TourGuide: React.FC<TourGuideProps> = ({
     },
     buttonNext: {
       backgroundColor: '#006BD6', // Contrast-compliant primary
-      color: '#E4F2FF', // Ensures 4.5:1 contrast on button
+      color: '#E4F2FF', // 4.53:1 contrast ratio on #006BD6 (WCAG AA compliant)
       fontSize: '14px',
       padding: '8px 16px',
       borderRadius: '6px',
@@ -120,7 +120,7 @@ const TourGuide: React.FC<TourGuideProps> = ({
       padding: '8px 16px',
     },
     buttonSkip: {
-      color: '#767676', // Meets 4.5:1 contrast on white
+      color: '#595959', // Meets 7:1 contrast on white (WCAG AAA)
       fontSize: '12px',
     },
     floater: {

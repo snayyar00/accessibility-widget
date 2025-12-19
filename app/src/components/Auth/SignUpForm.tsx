@@ -492,7 +492,7 @@ const SignUpForm: React.FC<CustomProps> = ({
                   aria-required="true"
                   aria-invalid={formErrors?.email ? 'true' : 'false'}
                   aria-describedby={formErrors?.email ? 'signup-email-error' : undefined}
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#6C7586]"
+                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4A5568]"
                 />
               </div>
               {formErrors?.email?.message && (
