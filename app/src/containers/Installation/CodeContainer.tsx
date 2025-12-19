@@ -182,6 +182,7 @@ export default function CodeContainer({
     useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [isOffsetTooltipVisible, setIsOffsetTooltipVisible] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const iconTypeDropdownRef = useRef<HTMLDivElement>(null);
   const widgetSizeDropdownRef = useRef<HTMLDivElement>(null);
@@ -418,6 +419,27 @@ export default function CodeContainer({
     }
   }, [shouldOpenCustomization, showCustomization, onCustomizationOpened]);
 
+  // Handle Esc key to dismiss tooltip
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOffsetTooltipVisible) {
+        setIsOffsetTooltipVisible(false);
+        // Optionally blur the button to remove focus
+        const button = document.querySelector('[aria-describedby="offset-tooltip"]') as HTMLElement;
+        if (button) {
+          button.blur();
+        }
+      }
+    };
+
+    if (isOffsetTooltipVisible) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+    
+    return undefined;
+  }, [isOffsetTooltipVisible]);
+
   return (
     <div
       className="w-full bg-white rounded-2xl overflow-hidden border shadow-sm"
@@ -520,7 +542,7 @@ export default function CodeContainer({
                     >
                       <div className="p-3 border-b border-gray-100">
                         <div className="relative">
-                          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" aria-hidden="true" />
                           <input
                             type="text"
                             placeholder="Search languages..."
@@ -528,11 +550,26 @@ export default function CodeContainer({
                             onChange={(e) =>
                               setLanguageSearchTerm(e.target.value)
                             }
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white language-search-input"
+                            style={{
+                              color: '#111827', // Dark gray - 16.5:1 contrast ratio on white (WCAG AAA compliant)
+                            }}
                           />
                         </div>
                       </div>
-                      <div className="max-h-36 overflow-y-auto">
+                      <style>{`
+                        .language-search-input {
+                          color: #111827 !important; /* Dark gray - 16.5:1 contrast ratio on white (WCAG AAA compliant) */
+                        }
+                        .language-search-input::placeholder {
+                          color: #6B7280 !important; /* 4.5:1 contrast ratio on white (WCAG AA compliant) */
+                          opacity: 1;
+                        }
+                        .language-search-input:focus::placeholder {
+                          color: #6B7280 !important;
+                        }
+                      `}</style>
+                      <div className="max-h-36 overflow-y-auto" aria-live="polite" aria-atomic="true">
                         {filteredLanguages.length > 0 ? (
                           filteredLanguages.map((lang) => (
                             <button
@@ -543,7 +580,7 @@ export default function CodeContainer({
                               <div className="flex items-center gap-3">
                                 {lang.code === 'auto' ? (
                                   <span className="w-6 h-6 bg-gray-200 group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-blue-600 group-hover:text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-sm">
-                                    <FaMagic className="w-4 h-4" />
+                                    <FaMagic className="w-4 h-4" aria-hidden="true" />
                                   </span>
                                 ) : (
                                   <span className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold">
@@ -555,7 +592,7 @@ export default function CodeContainer({
                                 </span>
                               </div>
                               {language === lang.code && (
-                                <FaCheck className="w-4 h-4 text-blue-500" />
+                                <FaCheck className="w-4 h-4 text-blue-500" aria-hidden="true" />
                               )}
                             </button>
                           ))
@@ -750,12 +787,36 @@ export default function CodeContainer({
           {/* Header */}
           <div className="flex items-center gap-2 mb-4">
             <h4 className="text-sm font-bold text-gray-800">Set offset</h4>
-            <div className="relative group">
-              <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center cursor-help">
+            <div 
+              className="relative"
+              onMouseLeave={() => setIsOffsetTooltipVisible(false)}
+            >
+              <button
+                type="button"
+                className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center cursor-help focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                aria-label="Help: Adjust the widget position from the corner (in pixels)"
+                aria-describedby="offset-tooltip"
+                aria-expanded={isOffsetTooltipVisible}
+                onMouseEnter={() => setIsOffsetTooltipVisible(true)}
+                onFocus={() => setIsOffsetTooltipVisible(true)}
+                onBlur={(e) => {
+                  // Only hide if focus is not moving to a child element
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    setIsOffsetTooltipVisible(false);
+                  }
+                }}
+                tabIndex={0}
+              >
                 <span className="text-white text-xs font-bold">?</span>
-              </div>
+              </button>
               {/* Tooltip */}
-              <div className="absolute top-1/2 left-full transform -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-[9999] shadow-lg">
+              <div
+                id="offset-tooltip"
+                role="tooltip"
+                className={`absolute top-1/2 left-full transform -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg transition-opacity duration-200 whitespace-nowrap z-[9999] shadow-lg ${
+                  isOffsetTooltipVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+              >
                 Adjust the widget position from the corner (in pixels)
                 <div className="absolute top-1/2 right-full transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-gray-900"></div>
               </div>
@@ -920,14 +981,14 @@ export default function CodeContainer({
               selectedScript === 'new'
                 ? copySuccessNew
                   ? 'bg-green-600 hover:bg-green-700'
-                  : 'hover:opacity-80'
+                  : 'text-white hover:opacity-80'
                 : selectedScript === 'gtm'
                 ? copySuccessGtm
                   ? 'bg-green-600 hover:bg-green-700'
-                  : 'hover:opacity-80'
+                  : 'text-white hover:opacity-80'
                 : copySuccess
-                ? 'bg-green-600 hover:bg-green-700'
-                : 'hover:opacity-80'
+                ? ''
+                : 'text-white hover:opacity-80'
             }`}
             style={{
               backgroundColor:
@@ -942,40 +1003,52 @@ export default function CodeContainer({
                   : copySuccess
                   ? undefined
                   : '#3343AD',
+              color:
+                selectedScript === 'new'
+                  ? copySuccessNew
+                    ? '#E6E6E6' // 4.53:1 contrast ratio on #107736 (WCAG AA compliant)
+                    : '#FFFFFF' // White text on dark blue background
+                  : selectedScript === 'gtm'
+                  ? copySuccessGtm
+                    ? '#E6E6E6' // 4.53:1 contrast ratio on #107736 (WCAG AA compliant)
+                    : '#FFFFFF' // White text on dark blue background
+                  : copySuccess
+                  ? '#E6E6E6' // 4.53:1 contrast ratio on #107736 (WCAG AA compliant)
+                  : '#FFFFFF', // White text on dark blue background
             }}
           >
             {selectedScript === 'new' ? (
               copySuccessNew ? (
                 <>
-                  <FaCheck className="w-3 h-3" />
+                  <FaCheck className="w-3 h-3" aria-hidden="true" />
                   Copied!
                 </>
               ) : (
                 <>
-                  <FaRegCopy className="w-3 h-3" />
+                  <FaRegCopy className="w-3 h-3" aria-hidden="true" />
                   Copy Snippet
                 </>
               )
             ) : selectedScript === 'gtm' ? (
               copySuccessGtm ? (
                 <>
-                  <FaCheck className="w-3 h-3" />
+                  <FaCheck className="w-3 h-3" aria-hidden="true" />
                   Copied!
                 </>
               ) : (
                 <>
-                  <FaRegCopy className="w-3 h-3" />
+                  <FaRegCopy className="w-3 h-3" aria-hidden="true" />
                   Copy Snippet
                 </>
               )
             ) : copySuccess ? (
               <>
-                <FaCheck className="w-3 h-3" />
+                <FaCheck className="w-3 h-3" aria-hidden="true" />
                 Copied!
               </>
             ) : (
               <>
-                <FaRegCopy className="w-3 h-3" />
+                <FaRegCopy className="w-3 h-3" aria-hidden="true" />
                 Copy Snippet
               </>
             )}
