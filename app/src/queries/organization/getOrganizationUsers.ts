@@ -1,8 +1,8 @@
 import { gql } from 'graphql.macro';
 
 export default gql`
-  query GetOrganizationUsers {
-    getOrganizationUsers {
+  query GetOrganizationUsers($search: String) {
+    getOrganizationUsers(search: $search) {
       id
       user_id
       organization_id

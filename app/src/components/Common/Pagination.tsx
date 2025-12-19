@@ -82,7 +82,7 @@ const Pagination: React.FC<Props> = ({ total, size = 20, onPageChange }) => {
           <Button
             type="button"
             onClick={() => handleControl('prev')}
-            className="w-8 h-8 sm:w-[33px] sm:h-9 flex justify-center items-center p-0 flex-shrink-0"
+            className="w-8 h-8 sm:w-[33px] sm:h-9 flex justify-center items-center p-0 flex-shrink-0 focus:ring-0 focus:ring-offset-0"
             disabled={currentPage === 0}
           >
             &lt;
@@ -94,7 +94,7 @@ const Pagination: React.FC<Props> = ({ total, size = 20, onPageChange }) => {
                 type="button"
                 color={currentPage === page ? 'primary' : 'default'}
                 key={page}
-                className="w-[33px] h-9 flex justify-center items-center p-0 flex-shrink-0"
+                className="w-[33px] h-9 flex justify-center items-center p-0 flex-shrink-0 focus:ring-0 focus:ring-offset-0"
                 onClick={() => handleClickPage(page)}
               >
                 {page !== '...' ? page + 1 : page}
@@ -108,7 +108,7 @@ const Pagination: React.FC<Props> = ({ total, size = 20, onPageChange }) => {
                 type="button"
                 color={currentPage === page ? 'primary' : 'default'}
                 key={`mobile-${page}-${index}`}
-                className="w-8 h-8 flex justify-center items-center p-0 text-xs flex-shrink-0 min-w-[32px]"
+                className="w-8 h-8 flex justify-center items-center p-0 text-xs flex-shrink-0 min-w-[32px] focus:ring-0 focus:ring-offset-0"
                 onClick={() => handleClickPage(page)}
               >
                 {page !== '...' ? page + 1 : page}
@@ -118,7 +118,7 @@ const Pagination: React.FC<Props> = ({ total, size = 20, onPageChange }) => {
           <Button
             type="button"
             onClick={() => handleControl('next')}
-            className="w-8 h-8 sm:w-[33px] sm:h-9 flex justify-center items-center p-0 flex-shrink-0"
+            className="w-8 h-8 sm:w-[33px] sm:h-9 flex justify-center items-center p-0 flex-shrink-0 focus:ring-0 focus:ring-offset-0"
             disabled={currentPage === totalPage - 1}
           >
             &gt;

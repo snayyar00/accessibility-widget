@@ -12,11 +12,14 @@ import {
   MenuItem,
   SelectChangeEvent,
   IconButton,
+  Typography,
+  Divider,
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useMutation } from '@apollo/client';
 import INVITE_USER from '@/queries/invitations/inviteUser';
-import { toast } from 'sonner';import {
+import { toast } from 'sonner';
+import {
   Workspace,
   WorkspaceUserRole,
   OrganizationUserRole,
@@ -262,10 +265,31 @@ export const InviteUser: React.FC<InviteUserProps> = ({
         </IconButton>
       )}
 
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>{getDialogTitle()}</DialogTitle>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0px 16px 48px rgba(15, 23, 42, 0.18)',
+            border: '1px solid #E5E7EB',
+          },
+        }}
+      >
+        <DialogTitle sx={{ pb: 0 }}>
+          <Typography variant="h6" fontWeight={700}>
+            {getDialogTitle()}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Send an invite by selecting the destination and role.
+          </Typography>
+        </DialogTitle>
 
-        <DialogContent>
+        <Divider sx={{ mt: 2, mb: 0 }} />
+
+        <DialogContent sx={{ pt: 3 }}>
           <TextField
             label="User email"
             fullWidth
@@ -273,11 +297,20 @@ export const InviteUser: React.FC<InviteUserProps> = ({
             onChange={handleEmailChange}
             autoFocus
             margin="normal"
+            placeholder="name@email.com"
+            InputLabelProps={{ shrink: true }}
+            size="medium"
           />
 
           {mode === 'workspace' && (
-            <FormControl fullWidth margin="normal">
-              <InputLabel id="workspace-select-label">Workspace</InputLabel>
+            <FormControl fullWidth margin="normal" size="medium">
+              <InputLabel
+                id="workspace-select-label"
+                shrink
+                sx={{ backgroundColor: '#fff', px: 0.5 }}
+              >
+                Workspace
+              </InputLabel>
               <Select
                 labelId="workspace-select-label"
                 id="workspace-select"
@@ -285,7 +318,20 @@ export const InviteUser: React.FC<InviteUserProps> = ({
                 onChange={handleWorkspaceChange}
                 label="Workspace"
                 disabled={workspacesLoading || disableSelect}
+                displayEmpty
+                renderValue={(value) =>
+                  value
+                    ? availableWorkspaces.find(
+                        (workspace) => workspace.id.toString() === value,
+                      )?.name
+                    : 'Select a workspace'
+                }
               >
+                {!availableWorkspaces.length && (
+                  <MenuItem value="" disabled>
+                    No available workspaces
+                  </MenuItem>
+                )}
                 {availableWorkspaces.map((workspace) => (
                   <MenuItem key={workspace.id} value={workspace.id.toString()}>
                     {workspace.name}
@@ -295,8 +341,14 @@ export const InviteUser: React.FC<InviteUserProps> = ({
             </FormControl>
           )}
 
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="role-select-label">{getRoleLabel()}</InputLabel>
+          <FormControl fullWidth margin="normal" size="medium">
+            <InputLabel
+              id="role-select-label"
+              shrink
+              sx={{ backgroundColor: '#fff', px: 0.5 }}
+            >
+              {getRoleLabel()}
+            </InputLabel>
             <Select
               labelId="role-select-label"
               id="role-select"
@@ -311,12 +363,20 @@ export const InviteUser: React.FC<InviteUserProps> = ({
           </FormControl>
         </DialogContent>
 
-        <DialogActions>
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 2.5,
+            backgroundColor: '#F8FAFC',
+            borderTop: '1px solid #E5E7EB',
+          }}
+        >
           <Button
             color="primary"
             variant="outlined"
             size="large"
             onClick={handleClose}
+            sx={{ textTransform: 'none', borderRadius: 2 }}
           >
             Cancel
           </Button>
@@ -333,6 +393,7 @@ export const InviteUser: React.FC<InviteUserProps> = ({
               inviteLoading ||
               (mode === 'workspace' && workspacesLoading)
             }
+            sx={{ textTransform: 'none', borderRadius: 2, minWidth: 110 }}
           >
             Invite
           </Button>

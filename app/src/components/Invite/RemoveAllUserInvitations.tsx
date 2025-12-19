@@ -7,6 +7,7 @@ import {
   DialogActions,
   IconButton,
   Typography,
+  Divider,
 } from '@mui/material';
 import { useMutation } from '@apollo/client';
 import REMOVE_ALL_USER_INVITATIONS from '@/queries/workspace/removeAllUserInvitations';
@@ -72,22 +73,51 @@ export const RemoveAllUserInvitations: React.FC<
         <DeleteIcon fontSize="inherit" />
       </IconButton>
 
-      <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
-        <DialogTitle>Remove invitation</DialogTitle>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0px 16px 48px rgba(15, 23, 42, 0.18)',
+            border: '1px solid #E5E7EB',
+          },
+        }}
+      >
+        <DialogTitle sx={{ pb: 0 }}>
+          <Typography variant="h6" fontWeight={700}>
+            Remove invitation
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            This action cannot be undone.
+          </Typography>
+        </DialogTitle>
 
-        <DialogContent>
-          <Typography>
+        <Divider sx={{ mt: 2, mb: 0 }} />
+
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography variant="body1" color="text.primary">
             Are you sure you want to remove the invitation for{' '}
-            <strong>{email}</strong>? This action cannot be undone.
+            <strong>{email}</strong>?
           </Typography>
         </DialogContent>
 
-        <DialogActions>
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 2.5,
+            backgroundColor: '#F8FAFC',
+            borderTop: '1px solid #E5E7EB',
+          }}
+        >
           <Button
             color="primary"
             variant="outlined"
             size="medium"
             onClick={handleClose}
+            sx={{ textTransform: 'none', borderRadius: 2 }}
           >
             Cancel
           </Button>
@@ -98,6 +128,7 @@ export const RemoveAllUserInvitations: React.FC<
             variant="contained"
             disableElevation
             disabled={loading}
+            sx={{ textTransform: 'none', borderRadius: 2, minWidth: 110 }}
           >
             Remove
           </Button>

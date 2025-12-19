@@ -59,7 +59,7 @@ export async function removeUserFromOrganization(id: number, trx?: Knex.Transact
   }
 }
 
-export async function getOrganizationUsers(user: UserLogined) {
+export async function getOrganizationUsers(user: UserLogined, search?: string) {
   const { id: userId, current_organization_id: organizationId } = user
 
   if (!userId || !organizationId) {
@@ -74,7 +74,7 @@ export async function getOrganizationUsers(user: UserLogined) {
     }
   }
 
-  const users = await getOrganizationUsersWithUserInfo(organizationId)
+  const users = await getOrganizationUsersWithUserInfo(organizationId, search)
   const myOrgs = await getOrganizationsByUserId(userId)
   const allowedOrgIds = user.is_super_admin ? users.flatMap((u) => u.organizations.map((o) => o.id)) : myOrgs.filter((o) => o.role && canManageOrganization(o.role)).map((o) => o.organization_id)
 
@@ -105,7 +105,20 @@ export async function getOrganizationUsers(user: UserLogined) {
 
   const mergedOrgUsers = mergeInvitedUsers(invitedOrgUsers, pendingWorkspaceInvitations)
 
-  return [...mergedOrgUsers, ...invitedWorkspaceUsers, ...existingUsers]
+  const allUsers = [...mergedOrgUsers, ...invitedWorkspaceUsers, ...existingUsers]
+
+  // Apply search filter to all users (including invited users)
+  if (search && search.trim().length > 0) {
+    const searchLower = search.trim().toLowerCase()
+    return allUsers.filter((user) => {
+      const matchesName = (user.user?.name || '').toLowerCase().includes(searchLower)
+      const matchesEmail = (user.user?.email || '').toLowerCase().includes(searchLower)
+      const matchesId = user.user_id?.toString().includes(searchLower)
+      return matchesName || matchesEmail || matchesId
+    })
+  }
+
+  return allUsers
 }
 
 export async function changeOrganizationUserRole(initiator: UserLogined, targetUserId: number, newRole: OrganizationUserRole): Promise<boolean> {

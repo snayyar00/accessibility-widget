@@ -86,7 +86,10 @@ const organizationResolver = {
       return orgs || []
     }),
 
-    getOrganizationUsers: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, __: unknown, { user }) => getOrganizationUsers(user)),
+    getOrganizationUsers: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, { search }: { search?: string }, { user }) => {
+      const searchTerm = search && typeof search === 'string' && search.trim().length > 0 ? search.trim() : undefined
+      return getOrganizationUsers(user, searchTerm)
+    }),
 
     getOrganizationWorkspaces: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, __: unknown, { user }) => {
       return await getOrganizationWorkspaces(user.current_organization_id, user)
