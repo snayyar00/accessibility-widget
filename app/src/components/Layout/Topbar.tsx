@@ -715,7 +715,7 @@ const Topbar: React.FC<Props> = ({
           <WhatsNewModal autoShow={true} />
         </div>
       </div>
-    </header>
+    </div>
   );
 };
 
