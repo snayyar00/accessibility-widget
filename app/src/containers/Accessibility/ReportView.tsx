@@ -150,12 +150,30 @@ const fullUrl = queryParams.get('domain') || '';
 async function fetchImageAsBase64(url: string): Promise<string | null> {
   if (!url) return null;
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      mode: 'cors',
+      credentials: 'omit',
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const blob = await response.blob();
     return await new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
+      reader.onloadend = () => {
+        try {
+          resolve(reader.result as string);
+        } catch (e) {
+          console.warn('Error processing image data:', e);
+          resolve(null);
+        }
+      };
+      reader.onerror = () => {
+        console.warn('FileReader error for image:', url);
+        resolve(null); // Resolve with null instead of rejecting
+      };
       reader.readAsDataURL(blob);
     });
   } catch (e) {
@@ -1048,18 +1066,38 @@ const IssuesSummary: React.FC<IssuesSummaryProps> = ({
 };
 
 const ScanningPreview: React.FC<{ siteImg: string }> = ({ siteImg }) => {
+  const [imageError, setImageError] = useState(false);
+  const [imageSrc, setImageSrc] = useState(siteImg);
+
   // Only render if siteImg is available
   if (!siteImg) {
     return null;
   }
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    console.warn('Failed to load screenshot image:', siteImg);
+    setImageError(true);
+    // Prevent the error from bubbling up as unhandled
+    e.preventDefault();
+  };
+
   return (
     <div className="relative w-full rounded-lg overflow-hidden bg-gray-100 mb-8">
-      <img
-        src={siteImg}
-        alt="Screenshot of scanned website"
-        className="w-full h-auto"
-      />
+      {!imageError ? (
+        <img
+          src={imageSrc}
+          alt="Screenshot of scanned website"
+          className="w-full h-auto"
+          onError={handleImageError}
+        />
+      ) : (
+        <div className="w-full h-64 flex items-center justify-center bg-gray-200 text-gray-500">
+          <div className="text-center">
+            <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Screenshot unavailable</p>
+          </div>
+        </div>
+      )}
 
       {/* Scanning line animation */}
       <motion.div
