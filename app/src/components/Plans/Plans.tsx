@@ -249,7 +249,7 @@ const Plans: React.FC<Props> = ({
           </Button>
         </div>
       ) : null}
-      {organization?.id === '1' && (validatedCoupons.length > 0 ||
+      { organization?.id === (process.env.REACT_APP_CURRENT_ORG || '1') && (validatedCoupons.length > 0 ||
       (appSumoCount !== 0 && maxSites > activeSites))
         ? (planChanged ||
             Object.keys(subscribedPlan).length == 0 ||
