@@ -1,5 +1,7 @@
 import { combineResolvers } from 'graphql-resolvers'
 import { v4 as uuidv4 } from 'uuid'
+// @ts-ignore - adm-zip doesn't have TypeScript definitions
+import AdmZip from 'adm-zip'
 
 import { JOB_EXPIRY_MS } from '../../config/env'
 import { QUEUE_PRIORITY } from '../../constants/queue-priority.constant'
@@ -205,13 +207,13 @@ async function processAccessibilityReportJob(jobId: string, url: string, useCach
             let pdfBuffer: Buffer
             if (pdfBlob instanceof Buffer) {
               pdfBuffer = pdfBlob
-            } else if (pdfBlob.arrayBuffer) {
-              pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
             } else if (pdfBlob instanceof Uint8Array) {
               pdfBuffer = Buffer.from(pdfBlob)
+            } else if (typeof pdfBlob === 'object' && pdfBlob !== null && typeof (pdfBlob as any).arrayBuffer === 'function') {
+              pdfBuffer = Buffer.from(await (pdfBlob as any).arrayBuffer())
             } else {
-              // Try to get the buffer directly if it's a jsPDF output
-              pdfBuffer = Buffer.from(pdfBlob as any)
+              // The object from generatePDF is not a recognizable buffer or blob-like structure.
+              throw new Error('PDF blob is not in a recognized format (Buffer, Uint8Array, or Blob-like with arrayBuffer method)')
             }
             
             // Validate PDF buffer has content
@@ -224,9 +226,7 @@ async function processAccessibilityReportJob(jobId: string, url: string, useCach
             console.log(`PDF size for full site scan ${emailUrl}: ${pdfSizeMB.toFixed(2)}MB`)
             
             // Use adm-zip to compress PDF into a zip file
-            // Note: Requires npm install adm-zip (or yarn add adm-zip)
             try {
-              const AdmZip = require('adm-zip')
               const zip = new AdmZip()
               const pdfFileName = `accessibility-report-${emailUrl.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`
               
