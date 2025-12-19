@@ -165,7 +165,8 @@ export default function CodeContainer({
 }: CodeProps) {
   const [copySuccess, setCopySuccess] = useState(false);
   const [copySuccessNew, setCopySuccessNew] = useState(false);
-  const [selectedScript, setSelectedScript] = useState<'old' | 'new'>('new');
+  const [copySuccessGtm, setCopySuccessGtm] = useState(false);
+  const [selectedScript, setSelectedScript] = useState<'old' | 'new' | 'gtm'>('new');
   const [position, setPosition] = useState('bottom-left');
   const [language, setLanguage] = useState('auto');
   const [iconType, setIconType] = useState<'full' | 'compact' | 'hidden'>(
@@ -262,6 +263,34 @@ export default function CodeContainer({
     }
   };
 
+  const copyToClipboardGtm = async () => {
+    try {
+      await navigator.clipboard.writeText(gtmFormattedCodeString);
+      setCopySuccessGtm(true);
+      setTimeout(() => setCopySuccessGtm(false), 3000);
+    } catch (err) {
+      console.log('Failed to copy text: ', err);
+      // Fallback for older browsers
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = gtmFormattedCodeString;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+        setCopySuccessGtm(true);
+        setTimeout(() => setCopySuccessGtm(false), 3000);
+      } catch (fallbackErr) {
+        console.log('Fallback copy failed: ', fallbackErr);
+        alert('Failed to copy to clipboard. Please copy manually.');
+      }
+    }
+  };
+
   const handleLanguageSelect = (lang: typeof languages[0]) => {
     setLanguage(lang.code);
     setIsLanguageDropdownOpen(false);
@@ -292,11 +321,34 @@ export default function CodeContainer({
       ? `<script src="https://widget-v2.webability.io/widget.min.js" data-asw-position="${position}" data-asw-lang="${language}" data-asw-icon-type="hidden" defer></script>`
       : `<script src="https://widget-v2.webability.io/widget.min.js" data-asw-position="${position}-x-${offsetX}-y-${offsetY}" data-asw-lang="${language}" data-asw-icon-type="${widgetSize}-${iconType}" defer></script>`;
 
+  const gtmFormattedCodeString =
+    iconType === 'hidden'
+      ? `<script>
+  var s = document.createElement("script");
+  s.src = "https://widget-v2.webability.io/widget.min.js";
+  s.setAttribute("data-asw-position", "${position}");
+  s.setAttribute("data-asw-lang", "${language}");
+  s.setAttribute("data-asw-icon-type", "hidden");
+  document.head.appendChild(s);
+</script>`
+      : `<script>
+  var s = document.createElement("script");
+  s.src = "https://widget-v2.webability.io/widget.min.js";
+  s.setAttribute("data-asw-position", "${position}-x-${offsetX}-y-${offsetY}");
+  s.setAttribute("data-asw-lang", "${language}");
+  s.setAttribute("data-asw-icon-type", "${widgetSize}-${iconType}");
+  document.head.appendChild(s);
+</script>`;
+
   const handleSendInstructions = async (emailAddress: string) => {
     try {
       // Use the correct script based on user selection
       const codeToSend =
-        selectedScript === 'new' ? newFormattedCodeString : formattedCodeString;
+        selectedScript === 'new'
+          ? newFormattedCodeString
+          : selectedScript === 'gtm'
+          ? gtmFormattedCodeString
+          : formattedCodeString;
 
       const result = await sendWidgetInstallation({
         variables: {
@@ -806,7 +858,7 @@ export default function CodeContainer({
         </div>
 
         {/* Script Toggle Buttons */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex flex-col md:flex-row gap-2 mb-4">
           <button
             onClick={() => setSelectedScript('new')}
             className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
@@ -827,30 +879,50 @@ export default function CodeContainer({
           >
             Old Widget Script
           </button>
+          <button
+            onClick={() => setSelectedScript('gtm')}
+            className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
+              selectedScript === 'gtm'
+                ? 'bg-[#445AE7] text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            GTM Script
+          </button>
         </div>
 
         {/* Code Block with integrated Copy Button */}
         <div
-          className="rounded-lg p-8 mb-4 relative min-h-[160px] installation-code-block"
+          className="rounded-lg p-4 md:p-8 mb-4 relative min-h-[160px] installation-code-block overflow-x-auto max-w-full"
           style={{ backgroundColor: '#D0D5F9' }}
         >
           <code
-            className="text-sm lg:text-base font-mono break-all pb-16 block"
+            className="text-sm lg:text-base font-mono break-all pb-16 block whitespace-pre-wrap md:whitespace-pre"
             style={{ color: '#3343AD' }}
           >
             {selectedScript === 'new'
               ? newFormattedCodeString
+              : selectedScript === 'gtm'
+              ? gtmFormattedCodeString
               : formattedCodeString}
           </code>
 
           {/* Copy Button in bottom left corner of the code box */}
           <button
             onClick={
-              selectedScript === 'new' ? copyToClipboardNew : copyToClipboard
+              selectedScript === 'new'
+                ? copyToClipboardNew
+                : selectedScript === 'gtm'
+                ? copyToClipboardGtm
+                : copyToClipboard
             }
             className={`absolute bottom-3 left-3 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-white font-medium text-sm transition-all duration-200 copy-code-button ${
               selectedScript === 'new'
                 ? copySuccessNew
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'hover:opacity-80'
+                : selectedScript === 'gtm'
+                ? copySuccessGtm
                   ? 'bg-green-600 hover:bg-green-700'
                   : 'hover:opacity-80'
                 : copySuccess
@@ -863,6 +935,10 @@ export default function CodeContainer({
                   ? copySuccessNew
                     ? undefined
                     : '#3343AD'
+                  : selectedScript === 'gtm'
+                  ? copySuccessGtm
+                    ? undefined
+                    : '#3343AD'
                   : copySuccess
                   ? undefined
                   : '#3343AD',
@@ -870,6 +946,18 @@ export default function CodeContainer({
           >
             {selectedScript === 'new' ? (
               copySuccessNew ? (
+                <>
+                  <FaCheck className="w-3 h-3" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <FaRegCopy className="w-3 h-3" />
+                  Copy Snippet
+                </>
+              )
+            ) : selectedScript === 'gtm' ? (
+              copySuccessGtm ? (
                 <>
                   <FaCheck className="w-3 h-3" />
                   Copied!
