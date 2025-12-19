@@ -20,10 +20,10 @@ import { getAuthenticationCookie } from '@/utils/cookie';
 export interface Colors {
   // Grouped color properties (customizable)
   colorGroup1: string; // Light: #232e72, Dark: #d0d5f8
-  colorGroup2: string; // Light: #e0eceb, Dark: #465ce4
+  colorGroup2: string; // Light: #e0eceb, Dark: #6678f0
   colorGroup3: string; // Light: #111639, Dark: #232e72
   colorGroup4: string; // Light: #232e72, Dark: #111639
-  colorGroup5: string; // Light: #465ce4, Dark: #e6f2f2
+  colorGroup5: string; // Light: #6577ec, Dark: #e6f2f2
   colorGroup6: string; // Light: #ffffff, Dark: #333d7c
 
   // Keep existing properties for compatibility
@@ -132,7 +132,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     colorGroup2: '#e0eceb', // Header text and icons
     colorGroup3: '#111639', // Header background
     colorGroup4: '#232e72', // Footer background
-    colorGroup5: '#465ce4', // Header button borders
+    colorGroup5: '#6577ec', // Header button borders
     colorGroup6: '#ffffff', // White backgrounds
 
     // Existing properties
@@ -146,7 +146,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
   const DefaultDarkColors: Colors = {
     // Grouped colors for dark mode
     colorGroup1: '#d0d5f8', // Light text and icons
-    colorGroup2: '#465ce4', // Primary accent
+    colorGroup2: '#6678f0', // Primary accent
     colorGroup3: '#232e72', // Mid-tone background
     colorGroup4: '#111639', // Dark backgrounds
     colorGroup5: '#e6f2f2', // Light accent text
