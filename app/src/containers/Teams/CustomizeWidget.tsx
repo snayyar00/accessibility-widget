@@ -598,15 +598,15 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         'header-icons': colors.colorGroup1 || '#d0d5f8',
         'numbered-buttons': colors.colorGroup1 || '#d0d5f8',
 
-        // Color group 2: #465ce4 - Primary accent
-        'toggle-icon-color': colors.colorGroup2 || '#465ce4',
-        'report-issue-button-background': colors.colorGroup2 || '#465ce4',
-        'selected-items': colors.colorGroup2 || '#465ce4',
-        'footer-background': colors.colorGroup2 || '#465ce4',
-        'all-hover-states': colors.colorGroup2 || '#465ce4',
-        'selected-language': colors.colorGroup2 || '#465ce4',
-        'header-buttons-border': colors.colorGroup2 || '#465ce4',
-        'all-border-lines': colors.colorGroup2 || '#465ce4',
+        // Color group 2: #6678f0 - Primary accent
+        'toggle-icon-color': colors.colorGroup2 || '#6678f0',
+        'report-issue-button-background': colors.colorGroup2 || '#6678f0',
+        'selected-items': colors.colorGroup2 || '#6678f0',
+        'footer-background': colors.colorGroup2 || '#6678f0',
+        'all-hover-states': colors.colorGroup2 || '#6678f0',
+        'selected-language': colors.colorGroup2 || '#6678f0',
+        'header-buttons-border': colors.colorGroup2 || '#6678f0',
+        'all-border-lines': colors.colorGroup2 || '#6678f0',
 
         // Color group 3: #232e72 - Mid-tone background
         'report-issue-textbox-background': colors.colorGroup3 || '#232e72',
@@ -656,8 +656,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         // Color group 4: #232e72 - Footer background (same as group1)
         'footer-background': colors.colorGroup4 || '#232e72',
 
-        // Color group 5: #465ce4 - Header button borders
-        'header-buttons-border': colors.colorGroup5 || '#465ce4',
+        // Color group 5: #6577ec - Header button borders
+        'header-buttons-border': colors.colorGroup5 || '#6577ec',
 
         // Color group 6: #ffffff - White backgrounds
         'widget-background': colors.colorGroup6 || '#ffffff',
@@ -2011,15 +2011,95 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         ({colorMode === 'light' ? 'Light' : 'Dark'} Mode)
                       </span>
                     </h3>
-                    <p className="text-sm text-[#757575] mb-6">
+                    <p className="text-sm text-[#757575] mb-4">
                       Customize colors for {colorMode} mode. Changes are saved
                       separately for each mode.
                     </p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+                      <div className="flex items-start gap-2">
+                        <HelpCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-blue-900 mb-1">
+                            WCAG Contrast Ratio
+                          </p>
+                          <p className="text-xs text-blue-700 leading-relaxed">
+                            Contrast ratios are displayed for all colors to ensure WCAG 2.1 AA compliance.
+                            For text colors, we check contrast against their backgrounds. For background colors,
+                            we check if the text that appears on them has sufficient contrast. Normal text requires
+                            a minimum contrast ratio of 4.5:1. Green checkmarks indicate the color combination
+                            meets accessibility standards.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                     <div className="space-y-4">
                       {colorPickers.map(({ key, label, description }) => {
                         const colorValue = colors[key as keyof typeof colors];
                         const defaultValue =
                           DefaultColors[key as keyof typeof DefaultColors];
+                        
+                        // Determine contrast checking parameters
+                        let backgroundColor: string | undefined;
+                        let foregroundColor: string | undefined;
+                        
+                        if (colorMode === 'light') {
+                            switch (key) {
+                              case 'colorGroup1':
+                                // Text color: check text (value) on white background (colorGroup6)
+                                backgroundColor = colors.colorGroup6 || DefaultColors.colorGroup6 || '#ffffff';
+                                break;
+                              case 'colorGroup2':
+                                // Header text: check text (value) on header background (colorGroup3)
+                                backgroundColor = colors.colorGroup3 || DefaultColors.colorGroup3 || '#111639';
+                                break;
+                              case 'colorGroup3':
+                                // Header background: check header text (colorGroup2) on this background (value)
+                                foregroundColor = colors.colorGroup2 || DefaultColors.colorGroup2 || '#e0eceb';
+                                break;
+                              case 'colorGroup4':
+                                // Footer background: check white text (static) on this background (value)
+                                // Footer uses white text, not colorGroup1, so check white on footer background
+                                foregroundColor = '#ffffff';
+                                break;
+                              case 'colorGroup5':
+                                // Border color: check border (value) on header background (colorGroup3)
+                                backgroundColor = colors.colorGroup3 || DefaultColors.colorGroup3 || '#111639';
+                                break;
+                              case 'colorGroup6':
+                                // White background: check primary text (colorGroup1) on this background (value)
+                                foregroundColor = colors.colorGroup1 || DefaultColors.colorGroup1 || '#232e72';
+                                break;
+                            }
+                          } else {
+                            // Dark mode
+                            switch (key) {
+                              case 'colorGroup1':
+                                // Light text: check text (value) on dark background (colorGroup4)
+                                backgroundColor = colors.colorGroup4 || DefaultColors.colorGroup4 || '#111639';
+                                break;
+                              case 'colorGroup2':
+                                // Primary accent: check accent (value) on widget background (colorGroup4)
+                                backgroundColor = colors.colorGroup4 || DefaultColors.colorGroup4 || '#111639';
+                                break;
+                              case 'colorGroup3':
+                                // Mid-tone background: check light text (colorGroup1) on this background (value)
+                                foregroundColor = colors.colorGroup1 || DefaultColors.colorGroup1 || '#d0d5f8';
+                                break;
+                              case 'colorGroup4':
+                                // Dark background: check light text (colorGroup1) on this background (value)
+                                foregroundColor = colors.colorGroup1 || DefaultColors.colorGroup1 || '#d0d5f8';
+                                break;
+                              case 'colorGroup5':
+                                // Light accent text: check text (value) on header background (colorGroup6)
+                                backgroundColor = colors.colorGroup6 || DefaultColors.colorGroup6 || '#333d7c';
+                                break;
+                              case 'colorGroup6':
+                                // Header background: check light accent text (colorGroup5) on this background (value)
+                                foregroundColor = colors.colorGroup5 || DefaultColors.colorGroup5 || '#e6f2f2';
+                                break;
+                            }
+                        }
+                        
                         return (
                           <ColorPicker
                             key={key}
@@ -2028,6 +2108,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             value={colorValue || defaultValue || '#000000'}
                             onChange={updateColor(key as keyof Colors)}
                             onReset={resetColor(key as keyof Colors)}
+                            backgroundColor={backgroundColor}
+                            foregroundColor={foregroundColor}
+                            isLargeText={false}
                           />
                         );
                       })}
