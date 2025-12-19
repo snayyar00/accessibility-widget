@@ -111,7 +111,8 @@ const iconTypes = [
       <div className="w-8 h-8 flex items-center justify-center">
         <img
           src="/images/svg/full_widget_icon.svg"
-          alt="Full Widget Icon"
+          alt=""
+          role="presentation"
           width={32}
           height={32}
           className="object-contain"
@@ -396,7 +397,7 @@ export default function CodeContainer({
             >
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
                 <div>
-                  <h4 className="text-sm font-bold text-gray-800 mb-1">
+                  <h4 id="position-label" className="text-sm font-bold text-gray-800 mb-1">
                     Position
                   </h4>
                   <p className="text-xs text-gray-600">
@@ -407,6 +408,9 @@ export default function CodeContainer({
                   <select
                     value={position}
                     onChange={(e) => setPosition(e.target.value)}
+                    tabIndex={0}
+                    aria-labelledby="position-label"
+                    aria-label="Position combo box"
                     className="w-full md:w-auto px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900 font-medium appearance-none min-w-[120px]"
                     style={{ borderColor: '#A2ADF3' }}
                   >
@@ -419,7 +423,7 @@ export default function CodeContainer({
                   <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                     <FaChevronDown
                       className="w-3 h-3"
-                      style={{ color: '#A2ADF3' }}
+                      style={{ color: '#7E8EEE' }} // 3:1 contrast ratio on white (WCAG AA compliant for graphical objects)
                     />
                   </div>
                 </div>
@@ -434,7 +438,7 @@ export default function CodeContainer({
             >
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
                 <div>
-                  <h4 className="text-sm font-bold text-gray-800 mb-1">
+                  <h4 id="language-label" className="text-sm font-bold text-gray-800 mb-1">
                     Language
                   </h4>
                   <p className="text-xs text-gray-600">
@@ -447,6 +451,13 @@ export default function CodeContainer({
                     onClick={() =>
                       setIsLanguageDropdownOpen(!isLanguageDropdownOpen)
                     }
+                    aria-labelledby="language-label"
+                    aria-label="Language combo box"
+                    aria-expanded={isLanguageDropdownOpen}
+                    aria-haspopup="listbox"
+                    aria-controls="language-listbox"
+                    aria-autocomplete="list"
+                    role="combobox"
                     className="w-full md:w-auto px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center justify-between hover:border-gray-300 transition-colors min-w-[180px]"
                     style={{ borderColor: '#A2ADF3' }}
                   >
@@ -457,12 +468,15 @@ export default function CodeContainer({
                       className={`w-3 h-3 transition-transform ${
                         isLanguageDropdownOpen ? 'rotate-180' : ''
                       }`}
-                      style={{ color: '#A2ADF3' }}
+                      style={{ color: '#7E8EEE' }} // 3:1 contrast ratio on white (WCAG AA compliant for graphical objects)
                     />
                   </button>
 
                   {isLanguageDropdownOpen && (
                     <div
+                      id="language-listbox"
+                      role="listbox"
+                      aria-labelledby="language-label"
                       className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-hidden min-w-[200px]"
                       style={{ borderColor: '#A2ADF3' }}
                     >
@@ -476,15 +490,29 @@ export default function CodeContainer({
                             onChange={(e) =>
                               setLanguageSearchTerm(e.target.value)
                             }
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white language-search-input"
+                            style={{
+                              color: '#1F2937', // Text color
+                            }}
                           />
                         </div>
                       </div>
+                      <style>{`
+                        .language-search-input::placeholder {
+                          color: #6B7280 !important; /* 4.5:1 contrast ratio on white (WCAG AA compliant) */
+                          opacity: 1;
+                        }
+                        .language-search-input:focus::placeholder {
+                          color: #6B7280 !important;
+                        }
+                      `}</style>
                       <div className="max-h-36 overflow-y-auto">
                         {filteredLanguages.length > 0 ? (
                           filteredLanguages.map((lang) => (
                             <button
                               key={lang.code}
+                              role="option"
+                              aria-selected={language === lang.code}
                               onClick={() => handleLanguageSelect(lang)}
                               className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center justify-between text-sm border-b border-gray-50 last:border-b-0"
                             >
@@ -530,7 +558,7 @@ export default function CodeContainer({
               >
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-sm font-bold text-gray-800 mb-1">
+                    <h4 id="trigger-icon-label" className="text-sm font-bold text-gray-800 mb-1">
                       Trigger icon
                     </h4>
                     <p className="text-xs text-gray-600">
@@ -544,6 +572,13 @@ export default function CodeContainer({
                       onClick={() =>
                         setIsIconTypeDropdownOpen(!isIconTypeDropdownOpen)
                       }
+                      aria-labelledby="trigger-icon-label"
+                      aria-label="Trigger icon combo box"
+                      aria-expanded={isIconTypeDropdownOpen}
+                      aria-haspopup="listbox"
+                      aria-controls="trigger-icon-listbox"
+                      aria-autocomplete="list"
+                      role="combobox"
                       className="w-full px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center hover:border-gray-300 transition-colors relative"
                       style={{ borderColor: '#A2ADF3' }}
                     >
@@ -557,12 +592,15 @@ export default function CodeContainer({
                         className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 transition-transform ${
                           isIconTypeDropdownOpen ? 'rotate-180' : ''
                         }`}
-                        style={{ color: '#A2ADF3' }}
+                        style={{ color: '#7E8EEE' }} // 3:1 contrast ratio on white (WCAG AA compliant for graphical objects)
                       />
                     </button>
 
                     {isIconTypeDropdownOpen && (
                       <div
+                        id="trigger-icon-listbox"
+                        role="listbox"
+                        aria-labelledby="trigger-icon-label"
                         className="absolute z-50 right-0 left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-hidden"
                         style={{ borderColor: '#A2ADF3' }}
                       >
@@ -570,6 +608,8 @@ export default function CodeContainer({
                           {iconTypes.map((type) => (
                             <button
                               key={type.value}
+                              role="option"
+                              aria-selected={iconType === type.value}
                               onClick={() => handleIconTypeSelect(type)}
                               className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center justify-between text-sm border-b border-gray-50 last:border-b-0"
                             >
@@ -601,7 +641,7 @@ export default function CodeContainer({
                 >
                   <div className="space-y-4">
                     <div>
-                      <h4 className="text-sm font-bold text-gray-800 mb-1">
+                      <h4 id="trigger-size-label" className="text-sm font-bold text-gray-800 mb-1">
                         Trigger size
                       </h4>
                       <p className="text-xs text-gray-600">
@@ -614,6 +654,13 @@ export default function CodeContainer({
                         onClick={() =>
                           setIsWidgetSizeDropdownOpen(!isWidgetSizeDropdownOpen)
                         }
+                        aria-labelledby="trigger-size-label"
+                        aria-label="Trigger size combo box"
+                        aria-expanded={isWidgetSizeDropdownOpen}
+                        aria-haspopup="listbox"
+                        aria-controls="trigger-size-listbox"
+                        aria-autocomplete="list"
+                        role="combobox"
                         className="w-full px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center justify-between hover:border-gray-300 transition-colors"
                         style={{ borderColor: '#A2ADF3' }}
                       >
@@ -624,12 +671,15 @@ export default function CodeContainer({
                           className={`w-3 h-3 transition-transform ${
                             isWidgetSizeDropdownOpen ? 'rotate-180' : ''
                           }`}
-                          style={{ color: '#A2ADF3' }}
+                          style={{ color: '#7E8EEE' }} // 3:1 contrast ratio on white (WCAG AA compliant for graphical objects)
                         />
                       </button>
 
                       {isWidgetSizeDropdownOpen && (
                         <div
+                          id="trigger-size-listbox"
+                          role="listbox"
+                          aria-labelledby="trigger-size-label"
                           className="absolute z-50 right-0 left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-hidden"
                           style={{ borderColor: '#A2ADF3' }}
                         >
@@ -637,6 +687,8 @@ export default function CodeContainer({
                             {widgetSizes.map((size) => (
                               <button
                                 key={size.value}
+                                role="option"
+                                aria-selected={widgetSize === size.value}
                                 onClick={() => handleWidgetSizeSelect(size)}
                                 className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center justify-between text-sm border-b border-gray-50 last:border-b-0"
                               >
@@ -738,12 +790,16 @@ export default function CodeContainer({
             <div className="grid grid-cols-2 gap-4">
               {/* Horizontal Offset */}
               <div>
-                <label className="block text-xs font-medium text-blue-600 mb-2">
+                <label htmlFor="horizontal-offset-input" id="horizontal-offset-label" className="block text-xs font-medium text-blue-600 mb-2">
                   Horizontal
                 </label>
                 <div className="relative">
                   <input
+                    id="horizontal-offset-input"
                     type="number"
+                    role="spinbutton"
+                    aria-labelledby="horizontal-offset-label"
+                    aria-label="Horizontal spin button"
                     value={offsetX}
                     onChange={(e) => setOffsetX(parseInt(e.target.value) || 0)}
                     className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900"
@@ -765,12 +821,16 @@ export default function CodeContainer({
 
               {/* Vertical Offset */}
               <div>
-                <label className="block text-xs font-medium text-blue-600 mb-2">
+                <label htmlFor="vertical-offset-input" id="vertical-offset-label" className="block text-xs font-medium text-blue-600 mb-2">
                   Vertical
                 </label>
                 <div className="relative">
                   <input
+                    id="vertical-offset-input"
                     type="number"
+                    role="spinbutton"
+                    aria-labelledby="vertical-offset-label"
+                    aria-label="Vertical spin button"
                     value={offsetY}
                     onChange={(e) => setOffsetY(parseInt(e.target.value) || 0)}
                     className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900"
@@ -797,18 +857,33 @@ export default function CodeContainer({
       {/* Installation Snippet - Matches Figma exactly */}
       <div className="p-4 installation-instructions">
         <div className="mb-3">
-          <h4 className="text-sm font-semibold text-gray-900 mb-1">
+          <p className="text-sm font-semibold text-gray-900 mb-1">
             Installation snippet
-          </h4>
+          </p>
           <p className="text-sm text-gray-500">
             Paste before closing {'</body>'} tag
           </p>
         </div>
 
         {/* Script Toggle Buttons */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4" role="tablist" aria-label="Widget script selection">
           <button
             onClick={() => setSelectedScript('new')}
+            role="tab"
+            aria-selected={selectedScript === 'new'}
+            aria-controls="new-widget-script-panel"
+            id="new-widget-script-tab"
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                setSelectedScript('old');
+                document.getElementById('old-widget-script-tab')?.focus();
+              } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setSelectedScript('old');
+                document.getElementById('old-widget-script-tab')?.focus();
+              }
+            }}
             className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
               selectedScript === 'new'
                 ? 'bg-[#445AE7] text-white shadow-md'
@@ -819,6 +894,21 @@ export default function CodeContainer({
           </button>
           <button
             onClick={() => setSelectedScript('old')}
+            role="tab"
+            aria-selected={selectedScript === 'old'}
+            aria-controls="old-widget-script-panel"
+            id="old-widget-script-tab"
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                setSelectedScript('new');
+                document.getElementById('new-widget-script-tab')?.focus();
+              } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setSelectedScript('new');
+                document.getElementById('new-widget-script-tab')?.focus();
+              }
+            }}
             className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
               selectedScript === 'old'
                 ? 'bg-[#445AE7] text-white shadow-md'
@@ -831,6 +921,9 @@ export default function CodeContainer({
 
         {/* Code Block with integrated Copy Button */}
         <div
+          role="tabpanel"
+          id={selectedScript === 'new' ? 'new-widget-script-panel' : 'old-widget-script-panel'}
+          aria-labelledby={selectedScript === 'new' ? 'new-widget-script-tab' : 'old-widget-script-tab'}
           className="rounded-lg p-8 mb-4 relative min-h-[160px] installation-code-block"
           style={{ backgroundColor: '#D0D5F9' }}
         >
@@ -848,24 +941,32 @@ export default function CodeContainer({
             onClick={
               selectedScript === 'new' ? copyToClipboardNew : copyToClipboard
             }
-            className={`absolute bottom-3 left-3 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-white font-medium text-sm transition-all duration-200 copy-code-button ${
+            className={`absolute bottom-3 left-3 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md font-medium text-sm transition-all duration-200 copy-code-button ${
               selectedScript === 'new'
                 ? copySuccessNew
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'hover:opacity-80'
+                  ? ''
+                  : 'text-white hover:opacity-80'
                 : copySuccess
-                ? 'bg-green-600 hover:bg-green-700'
-                : 'hover:opacity-80'
+                ? ''
+                : 'text-white hover:opacity-80'
             }`}
             style={{
               backgroundColor:
                 selectedScript === 'new'
                   ? copySuccessNew
-                    ? undefined
+                    ? '#107736' // 4.53:1 contrast ratio with #E6E6E6 (WCAG AA compliant)
                     : '#3343AD'
                   : copySuccess
-                  ? undefined
+                  ? '#107736' // 4.53:1 contrast ratio with #E6E6E6 (WCAG AA compliant)
                   : '#3343AD',
+              color:
+                selectedScript === 'new'
+                  ? copySuccessNew
+                    ? '#E6E6E6' // 4.53:1 contrast ratio on #107736 (WCAG AA compliant)
+                    : undefined
+                  : copySuccess
+                  ? '#E6E6E6' // 4.53:1 contrast ratio on #107736 (WCAG AA compliant)
+                  : undefined,
             }}
           >
             {selectedScript === 'new' ? (
@@ -921,7 +1022,7 @@ export default function CodeContainer({
 
         {/* Support Contact - Matches the image */}
         <div className="mt-6">
-          <p className="text-sm mb-1" style={{ color: '#A1A1A1' }}>
+          <p className="text-sm mb-1" style={{ color: '#747493' }}>
             Need help for the next step?
           </p>
           <a
