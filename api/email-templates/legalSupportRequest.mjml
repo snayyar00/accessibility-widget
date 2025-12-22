@@ -1,0 +1,69 @@
+<mjml>
+  <mj-head>
+    <mj-preview>Legal Support Request - {{complaintType}}</mj-preview>
+  </mj-head>
+  
+  <mj-body background-color="#f1f1f1">
+    <mj-section background-color="#0152cc" padding="40px 24px">
+      <mj-column>
+        <mj-text font-size="32px" align="center" font-weight="bold" color="#ffffff" padding="0 0 16px">
+          Legal Support Request
+        </mj-text>
+        <mj-text font-size="16px" align="center" color="#ffffff" line-height="24px" padding="0 0 32px">
+          A new legal support request has been submitted and requires your attention
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#fff" padding="32px 24px 24px">
+      <mj-column>
+        <mj-text font-size="16px" align="left" color="#333" font-weight="bold" padding="0 0 8px">
+          Type of Complaint
+        </mj-text>
+        <mj-text font-size="16px" align="left" color="#555" line-height="24px" padding="0 0 24px">
+          {{complaintType}}
+        </mj-text>
+
+        <mj-text font-size="16px" align="left" color="#333" font-weight="bold" padding="0 0 8px">
+          Date of Complaint
+        </mj-text>
+        <mj-text font-size="16px" align="left" color="#555" line-height="24px" padding="0 0 24px">
+          {{complaintDate}}
+        </mj-text>
+
+        <mj-text font-size="16px" align="left" color="#333" font-weight="bold" padding="0 0 8px">
+          Requester Information
+        </mj-text>
+        <mj-text font-size="16px" align="left" color="#555" line-height="24px" padding="0 0 24px">
+          <strong>Name:</strong> {{name}}<br>
+          <strong>Email:</strong> <a href="mailto:{{email}}" style="color: #0152cc; text-decoration: none;">{{email}}</a>
+          {{#if userId}}
+          <br><strong>User ID:</strong> {{userId}}
+          {{/if}}
+        </mj-text>
+
+        <mj-text font-size="16px" align="left" color="#333" font-weight="bold" padding="0 0 8px">
+          Request Date
+        </mj-text>
+        <mj-text font-size="16px" align="left" color="#555" line-height="24px" padding="0 0 32px">
+          {{requestDate}}
+        </mj-text>
+
+        <mj-text font-size="14px" align="left" color="#666" line-height="20px" padding="0 0 24px">
+          Please contact the requester within 48 hours to discuss available options and next steps.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#fff" padding="32px 24px">
+      <mj-column>
+        <mj-divider border-color="#e5e7eb" border-width="1px" padding="0 0 24px"></mj-divider>
+        <mj-text font-size="14px" align="center" color="#666" line-height="20px">
+          This is an automated notification from the WebAbility Legal Resources system.<br>
+          © {{year}} WebAbility. All rights reserved.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
+

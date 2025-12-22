@@ -13,6 +13,7 @@ import AIInsights from '@/containers/AIInsights/AIInsights';
 import Workspaces from '@/containers/Workspaces';
 import Organization from '@/containers/Organization';
 import ServiceRequests from '@/containers/ServiceRequests';
+import Impersonate from '@/containers/Impersonate/Impersonate';
 
 const routes = [
   {
@@ -66,14 +67,14 @@ const routes = [
   },
   {
     path: '/proof-of-effort-toolkit',
-    name: 'Proof of Effort',
+    name: 'Legal resources',
     exact: true,
     component: ProofOfEffortToolkit,
     icon: (
       <FiFile
         className="menu-icon text-white-blue transition-colors duration-200"
         size={25}
-        aria-label="Proof of Effort Toolkit navigation icon"
+        aria-label="Legal resources navigation icon"
       />
     ),
     isSidebar: true,
@@ -133,6 +134,13 @@ const routes = [
     name: 'Organization',
     exact: true,
     component: Organization,
+    isSidebar: false,
+  },
+  {
+    path: '/impersonate',
+    name: 'Impersonate User',
+    exact: true,
+    component: Impersonate,
     isSidebar: false,
   },
 ];
