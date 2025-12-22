@@ -1416,9 +1416,33 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       {/* Header */}
       <div className=" px-6 pb-4">
         {/* Tabs */}
-        <div className="flex space-x-8 mt-4 widget-tabs-section">
+        <div className="flex space-x-8 mt-4 widget-tabs-section" role="tablist">
           <button
             onClick={() => setActiveTab('appearance')}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                setActiveTab('preference');
+                document.getElementById('preference-tab')?.focus();
+              } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setActiveTab('preference');
+                document.getElementById('preference-tab')?.focus();
+              } else if (e.key === 'Home') {
+                e.preventDefault();
+                setActiveTab('appearance');
+                document.getElementById('appearance-tab')?.focus();
+              } else if (e.key === 'End') {
+                e.preventDefault();
+                setActiveTab('preference');
+                document.getElementById('preference-tab')?.focus();
+              }
+            }}
+            role="tab"
+            aria-selected={activeTab === 'appearance'}
+            aria-controls="appearance-tabpanel"
+            id="appearance-tab"
+            tabIndex={0}
             className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors appearance-tab focus:outline-none focus:ring-2 focus:ring-[#445AE7] focus:ring-offset-2 rounded-t ${
               activeTab === 'appearance'
                 ? 'border-[#0F64F1] text-[#0F64F1] bg-[#E8F2FE]'
@@ -1429,6 +1453,30 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('preference')}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                setActiveTab('appearance');
+                document.getElementById('appearance-tab')?.focus();
+              } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setActiveTab('appearance');
+                document.getElementById('appearance-tab')?.focus();
+              } else if (e.key === 'Home') {
+                e.preventDefault();
+                setActiveTab('appearance');
+                document.getElementById('appearance-tab')?.focus();
+              } else if (e.key === 'End') {
+                e.preventDefault();
+                setActiveTab('preference');
+                document.getElementById('preference-tab')?.focus();
+              }
+            }}
+            role="tab"
+            aria-selected={activeTab === 'preference'}
+            aria-controls="preference-tabpanel"
+            id="preference-tab"
+            tabIndex={0}
             className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors preference-tab focus:outline-none focus:ring-2 focus:ring-[#445AE7] focus:ring-offset-2 rounded-t ${
               activeTab === 'preference'
                 ? 'border-[#0F64F1] text-[#0F64F1] bg-[#E8F2FE]'
@@ -1450,16 +1498,26 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         >
           <div className="space-y-6">
             {activeTab === 'preference' && (
-              <>
+              <div
+                id="preference-tabpanel"
+                role="tabpanel"
+                aria-labelledby="preference-tab"
+                tabIndex={0}
+              >
                 {/* Live Preview Section */}
                 <div className="px-2">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base sm:text-lg font-semibold text-[#333333]">
+                    <h2 className="text-base sm:text-lg font-semibold text-[#333333]">
                       Live preview
-                    </h3>
+                    </h2>
                     <Switch
                       checked={livePreview}
                       onChange={(e) => setLivePreview(e.target.checked)}
+                      inputProps={{
+                        'aria-label': `Live preview switch, ${livePreview ? 'on' : 'off'}`,
+                        role: 'switch',
+                        'aria-checked': livePreview,
+                      }}
                       sx={{
                         '& .MuiSwitch-switchBase': {
                           color: '#222D73',
@@ -1474,14 +1532,10 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           backgroundColor: '#718096',
                         },
                         '& .MuiSwitch-switchBase:focus-visible': {
-                          outline: '1px solid #4A8CDE',
-                          outlineOffset: '2px',
-                          borderRadius: '14px',
+                          outline: 'none',
                         },
                         '& .MuiSwitch-switchBase.Mui-focusVisible': {
-                          outline: '1px solid #4A8CDE',
-                          outlineOffset: '2px',
-                          borderRadius: '14px',
+                          outline: 'none',
                         },
                       }}
                     />
@@ -1492,7 +1546,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                 <h3 className="text-base md:text-lg font-semibold text-[#333333] mb-2 px-2">
                   Toggle Features
                 </h3>
-                <p className="text-xs sm:text-sm md:text-sm text-[#757575] mb-4 px-2">
+                <p className="text-xs sm:text-sm md:text-sm mb-4 px-2" style={{ color: '#6D6D6D' }}>
                   Toggle which accessibility features you want to show or hide
                 </p>
                 <div className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 sm:p-3 md:p-4 toggle-features-panel">
@@ -1511,6 +1565,11 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                               language: e.target.checked,
                             }))
                           }
+                          inputProps={{
+                            'aria-label': `Language switch, ${toggles.language ? 'on' : 'off'}`,
+                            role: 'switch',
+                            'aria-checked': toggles.language,
+                          }}
                           color="primary"
                         />
                       </div>
@@ -1530,6 +1589,11 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                               oversizeWidget: e.target.checked,
                             }))
                           }
+                          inputProps={{
+                            'aria-label': `Oversize widget switch, ${toggles.oversizeWidget ? 'on' : 'off'}`,
+                            role: 'switch',
+                            'aria-checked': toggles.oversizeWidget,
+                          }}
                           color="primary"
                         />
                       </div>
@@ -1566,6 +1630,29 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 seizureAndEpileptic: checked,
                                 adhd: checked,
                               }));
+                            }}
+                            inputProps={{
+                              'aria-label': `Accessibility Profiles switch, ${Boolean(
+                                toggles.motorImpaired ||
+                                  toggles.blind ||
+                                  toggles.colorBlind ||
+                                  toggles.dyslexia ||
+                                  toggles.visuallyImpaired ||
+                                  toggles.cognitiveAndLearning ||
+                                  toggles.seizureAndEpileptic ||
+                                  toggles.adhd,
+                              ) ? 'on' : 'off'}`,
+                              role: 'switch',
+                              'aria-checked': Boolean(
+                                toggles.motorImpaired ||
+                                  toggles.blind ||
+                                  toggles.colorBlind ||
+                                  toggles.dyslexia ||
+                                  toggles.visuallyImpaired ||
+                                  toggles.cognitiveAndLearning ||
+                                  toggles.seizureAndEpileptic ||
+                                  toggles.adhd,
+                              ),
                             }}
                             color="primary"
                           />
@@ -1620,6 +1707,11 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                     [key]: e.target.checked,
                                   }))
                                 }
+                                inputProps={{
+                                  'aria-label': `${label} switch, ${Boolean(toggles[key as keyof Toggles]) ? 'on' : 'off'}`,
+                                  role: 'switch',
+                                  'aria-checked': Boolean(toggles[key as keyof Toggles]),
+                                }}
                                 color="primary"
                                 size="small"
                               />
@@ -1658,6 +1750,27 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 lineHeight: checked,
                                 fontWeight: checked,
                               }));
+                            }}
+                            inputProps={{
+                              'aria-label': `Content Adjustments switch, ${Boolean(
+                                toggles.fontSize ||
+                                  toggles.highlightTitle ||
+                                  toggles.highlightLinks ||
+                                  toggles.dyslexiaFont ||
+                                  toggles.letterSpacing ||
+                                  toggles.lineHeight ||
+                                  toggles.fontWeight,
+                              ) ? 'on' : 'off'}`,
+                              role: 'switch',
+                              'aria-checked': Boolean(
+                                toggles.fontSize ||
+                                  toggles.highlightTitle ||
+                                  toggles.highlightLinks ||
+                                  toggles.dyslexiaFont ||
+                                  toggles.letterSpacing ||
+                                  toggles.lineHeight ||
+                                  toggles.fontWeight,
+                              ),
                             }}
                             color="primary"
                           />
@@ -1700,6 +1813,11 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                     [key]: e.target.checked,
                                   }))
                                 }
+                                inputProps={{
+                                  'aria-label': `${label} switch, ${Boolean(toggles[key as keyof Toggles]) ? 'on' : 'off'}`,
+                                  role: 'switch',
+                                  'aria-checked': Boolean(toggles[key as keyof Toggles]),
+                                }}
                                 color="primary"
                                 size="small"
                               />
@@ -1742,6 +1860,31 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 titleColor: checked,
                                 backgroundColor: checked,
                               }));
+                            }}
+                            inputProps={{
+                              'aria-label': `Color Adjustments switch, ${Boolean(
+                                toggles.darkContrast ||
+                                  toggles.lightContrast ||
+                                  toggles.highContrast ||
+                                  toggles.highSaturation ||
+                                  toggles.lowSaturation ||
+                                  toggles.monochrome ||
+                                  toggles.textColor ||
+                                  toggles.titleColor ||
+                                  toggles.backgroundColor,
+                              ) ? 'on' : 'off'}`,
+                              role: 'switch',
+                              'aria-checked': Boolean(
+                                toggles.darkContrast ||
+                                  toggles.lightContrast ||
+                                  toggles.highContrast ||
+                                  toggles.highSaturation ||
+                                  toggles.lowSaturation ||
+                                  toggles.monochrome ||
+                                  toggles.textColor ||
+                                  toggles.titleColor ||
+                                  toggles.backgroundColor,
+                              ),
                             }}
                             color="primary"
                           />
@@ -1786,6 +1929,11 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                     [key]: e.target.checked,
                                   }))
                                 }
+                                inputProps={{
+                                  'aria-label': `${label} switch, ${Boolean(toggles[key as keyof Toggles]) ? 'on' : 'off'}`,
+                                  role: 'switch',
+                                  'aria-checked': Boolean(toggles[key as keyof Toggles]),
+                                }}
                                 color="primary"
                                 size="small"
                               />
@@ -1826,6 +1974,29 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 bigCursor: checked,
                                 voiceNavigation: checked,
                               }));
+                            }}
+                            inputProps={{
+                              'aria-label': `Tools switch, ${Boolean(
+                                toggles.pageStructure ||
+                                  toggles.keyboardNavigation ||
+                                  toggles.darkMode ||
+                                  toggles.screenReader ||
+                                  toggles.readingGuide ||
+                                  toggles.stopAnimations ||
+                                  toggles.bigCursor ||
+                                  toggles.voiceNavigation,
+                              ) ? 'on' : 'off'}`,
+                              role: 'switch',
+                              'aria-checked': Boolean(
+                                toggles.pageStructure ||
+                                  toggles.keyboardNavigation ||
+                                  toggles.darkMode ||
+                                  toggles.screenReader ||
+                                  toggles.readingGuide ||
+                                  toggles.stopAnimations ||
+                                  toggles.bigCursor ||
+                                  toggles.voiceNavigation,
+                              ),
                             }}
                             color="primary"
                           />
@@ -1875,6 +2046,11 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                     [key]: e.target.checked,
                                   }))
                                 }
+                                inputProps={{
+                                  'aria-label': `${label} switch, ${Boolean(toggles[key as keyof Toggles]) ? 'on' : 'off'}`,
+                                  role: 'switch',
+                                  'aria-checked': Boolean(toggles[key as keyof Toggles]),
+                                }}
                                 color="primary"
                                 size="small"
                               />
@@ -1898,6 +2074,11 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                               widgetPosition: e.target.checked,
                             }))
                           }
+                          inputProps={{
+                            'aria-label': `Widget position switch, ${toggles.widgetPosition ? 'on' : 'off'}`,
+                            role: 'switch',
+                            'aria-checked': toggles.widgetPosition,
+                          }}
                           color="primary"
                         />
                       </div>
@@ -1922,20 +2103,30 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </button>
                   </div>
                 </div>
-              </>
+              </div>
             )}
 
             {activeTab === 'appearance' && (
-              <>
+              <div
+                id="appearance-tabpanel"
+                role="tabpanel"
+                aria-labelledby="appearance-tab"
+                tabIndex={0}
+              >
                 {/* Live Preview Section */}
                 <div className="px-2 live-preview-toggle">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base sm:text-lg font-semibold text-[#333333]">
+                    <h2 className="text-base sm:text-lg font-semibold text-[#333333]">
                       Live preview
-                    </h3>
+                    </h2>
                     <Switch
                       checked={livePreview}
                       onChange={(e) => setLivePreview(e.target.checked)}
+                      inputProps={{
+                        'aria-label': `Live preview switch, ${livePreview ? 'on' : 'off'}`,
+                        role: 'switch',
+                        'aria-checked': livePreview,
+                      }}
                       sx={{
                         '& .MuiSwitch-switchBase': {
                           color: '#222D73',
@@ -1950,14 +2141,10 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           backgroundColor: '#718096',
                         },
                         '& .MuiSwitch-switchBase:focus-visible': {
-                          outline: '1px solid #4A8CDE',
-                          outlineOffset: '2px',
-                          borderRadius: '14px',
+                          outline: 'none',
                         },
                         '& .MuiSwitch-switchBase.Mui-focusVisible': {
-                          outline: '1px solid #4A8CDE',
-                          outlineOffset: '2px',
-                          borderRadius: '14px',
+                          outline: 'none',
                         },
                       }}
                     />
@@ -2038,6 +2225,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             onChange={(e) =>
                               setColorMode(e.target.value as 'light' | 'dark')
                             }
+                            aria-label="Choose Your Mode"
                             className="w-full pl-8 sm:pl-10 md:pl-10 pr-8 sm:pr-10 md:pr-10 py-2 sm:py-2.5 md:py-3 border border-[#D1D5DB] rounded-lg text-xs sm:text-sm md:text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white appearance-none cursor-pointer"
                           >
                             <option value="light">Light Mode</option>
@@ -2638,7 +2826,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     </button>
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>

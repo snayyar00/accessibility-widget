@@ -122,7 +122,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer focus:outline-none z-10"
-            aria-label={`Select color for ${label.toLowerCase()}`}
+            aria-label={label}
           />
 
           {/* Visible control - container fits to content */}
@@ -133,6 +133,15 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
                 : 'border-[#A7B0FF]'
             }`}
             onClick={() => colorInputRef.current?.click()}
+            role="button"
+            aria-label={label}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                colorInputRef.current?.click();
+              }
+            }}
           >
             {/* Color preview square - matches Figma specs exactly */}
             <div
