@@ -208,12 +208,13 @@ export default function Installation({ domain }: any) {
                         color: baseColors.white,
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor =
-                          baseColors.brandPrimaryHover;
+                        e.currentTarget.style.backgroundColor = '#3E748E'; // 4.5:1 contrast ratio with #F0F0F0 (WCAG AA compliant)
+                        e.currentTarget.style.color = '#F0F0F0'; // 4.5:1 contrast ratio on #3E748E (WCAG AA compliant)
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor =
                           baseColors.brandPrimary;
+                        e.currentTarget.style.color = baseColors.white;
                       }}
                     >
                       <span>View all guides</span>
@@ -229,6 +230,7 @@ export default function Installation({ domain }: any) {
                   href="https://www.webability.io/installation/how-to-install-webability-wordpress"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Step by step guides to install the widget on a WordPress website. Contains a list with 5 items."
                   className="border rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
                   style={{
                     backgroundColor: baseColors.white,

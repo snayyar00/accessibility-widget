@@ -71,7 +71,9 @@ const PasswordSetting: React.FC = () => {
         </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-auto md:w-auto flex-shrink-0 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg text-xs md:text-sm font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center space-x-2 shadow-sm"
+          aria-expanded={isOpen}
+          aria-controls="update-password-form"
+          className="w-auto md:w-auto flex-shrink-0 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg text-xs md:text-sm font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center space-x-2 shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-offset-2"
         >
           <Settings className="w-3 h-3 md:w-4 md:h-4 text-white" />
           <span className="text-white">
@@ -90,6 +92,7 @@ const PasswordSetting: React.FC = () => {
 
       {/* Expandable Form Section */}
       <div
+        id="update-password-form"
         className={cn(
           'transition-all duration-300 ease-in-out overflow-hidden',
           {
@@ -97,6 +100,8 @@ const PasswordSetting: React.FC = () => {
             'max-h-[1000px] opacity-100': isOpen,
           },
         )}
+        aria-hidden={!isOpen}
+        style={!isOpen ? { display: 'none' } : { display: 'block' }}
       >
         <div className="bg-gray-50 rounded-lg p-4 md:p-6">
           <SecurityForm
