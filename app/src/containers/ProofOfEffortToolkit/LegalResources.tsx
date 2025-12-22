@@ -38,6 +38,7 @@ const LegalResources: React.FC = () => {
 
   // Generate Legal Action Response Plan HTML content
   const generateLegalActionResponsePlanHTML = () => {
+    const currentYear = new Date().getFullYear();
     const content = `
 <!DOCTYPE html>
 <html lang="en">
@@ -61,109 +62,261 @@ const LegalResources: React.FC = () => {
       background: #fff;
     }
     h1 {
-      font-size: 28px;
-      font-weight: bold;
-      margin-bottom: 10px;
-      color: #111827;
-    }
-    h2 {
+      background: #091844;
+      color: white;
       font-size: 20px;
       font-weight: 600;
-      margin-top: 30px;
-      margin-bottom: 15px;
-      color: #111827;
+      padding: 12px 20px;
+      border-radius: 25px;
+      margin: 30px 0 20px 0;
+      display: inline-block;
+    }
+    h2 {
+      background: #091844;
+      color: white;
+      font-size: 20px;
+      font-weight: 600;
+      padding: 12px 20px;
+      border-radius: 25px;
+      margin: 30px 0 15px 0;
+      display: inline-block;
     }
     p {
       margin-bottom: 15px;
       text-align: justify;
+      color: #333;
     }
-    ul {
-      margin-left: 30px;
+    .card-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+    }
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      background: #445AE7;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+    .card-content {
+      flex: 1;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #111827;
+    }
+    .card-text {
+      color: #333;
+      line-height: 1.6;
+    }
+    .notes-box {
+      background-color: #f3f4f6;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 30px 0;
+    }
+    .notes-box h3 {
+      font-size: 18px;
+      font-weight: 600;
       margin-bottom: 15px;
+      color: #111827;
     }
-    li {
+    .notes-box ol {
+      margin-left: 20px;
+    }
+    .notes-box li {
       margin-bottom: 10px;
+      color: #333;
     }
-    .intro {
-      font-style: italic;
-      margin-bottom: 20px;
-      color: #555;
-    }
-    .section {
-      margin-bottom: 25px;
-    }
-    .footnote {
-      font-size: 12px;
-      color: #666;
-      margin-top: 30px;
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 40px;
       padding-top: 20px;
       border-top: 1px solid #e5e7eb;
     }
-    .footnote p {
-      margin-bottom: 10px;
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #6b7280;
+      font-weight: 600;
+    }
+    .footer-info {
+      font-size: 12px;
+      color: #6b7280;
     }
   </style>
 </head>
 <body>
-  <h1>Legal Action Response Plan</h1>
+  <h1>Purpose of This Document</h1>
   
-  <p class="intro">Our solutions seek to improve the web's usability, providing everyone with an accessible and inclusive digital experience.</p>
+  <p>This Legal Action Response Plan outlines the proactive and ongoing measures adopted by the website owner, manager, or sponsor to ensure equal access, effective communication, and digital accessibility for individuals with disabilities. These efforts are implemented in collaboration with ${organizationName}, a third-party digital accessibility specialist.</p>
   
-  <h2>${organizationName} Attestation with Respect to the Website</h2>
+  <h2>${organizationName} Accessibility Attestation</h2>
   
-  <p>In an effort to help ensure that individuals with disabilities have equal opportunity and effective communication needed to fully access the Website<sup>1</sup>, the Website's owner, manager, or sponsor (the "Sponsor") has adopted a sustainable, long-term digital accessibility strategy. The Sponsor has taken, or is in the process of taking, the following actions to help make its website equally accessible to all individuals, regardless of their abilities.</p>
+  <p>The Sponsor has adopted a sustainable, long-term digital accessibility strategy designed to improve usability and promote inclusive access to its website and associated digital assets.</p>
   
-  <p>Sponsor (or a representative of Sponsor) subscribed to accessibility offerings from ${organizationName}, a third-party web accessibility specialist that employs Certified Professionals in Accessibility Core Competencies<sup>2</sup> and experienced assistive technology testers (some of whom are individuals with disabilities).</p>
+  <p>To support this commitment, the Sponsor has subscribed to ${organizationName}'s accessibility services, which are provided by certified accessibility professionals and experienced assistive technology testers, including individuals with disabilities.</p>
   
-  <p>This Legal Action Response Plan shall remain applicable from the date of enablement of the JavaScript relating to ${organizationName}'s website offering through the date such enablement remains active and so long as Sponsor's ${organizationName} Subscription remains active.</p>
+  <p>This Legal Action Response Plan remains applicable for the duration in which ${organizationName}'s services are enabled and the Sponsor's subscription remains active.</p>
   
-  <p>The Sponsor is improving and will continue to strengthen its conformance with ${organizationName}'s interpretation of the guidance provided by the World Wide Web Consortium's Web Content Accessibility Guidelines (WCAG).</p>
+  <h2>Accessibility Commitment and Standards</h2>
   
-  <p>Through the adoption of the ${organizationName} accessibility offerings, Sponsor has established and began to execute a formal strategic plan to provide the equitable use of its digital assets and an optimal user experience for everyone.</p>
+  <p>The Sponsor is actively improving and strengthening its conformance with ${organizationName}'s interpretation of the guidance provided by the World Wide Web Consortium (W3C), specifically the Web Content Accessibility Guidelines (WCAG) 2.2 Level AA.</p>
   
-  <h2>Below are the key tenets and proactive steps of Sponsor's Legal Action Response Plan:</h2>
+  <p>Through the adoption of ${organizationName}'s solutions, the Sponsor has established a formal and ongoing strategy to promote equitable access, reduce accessibility barriers, and deliver an improved user experience for all users.</p>
   
-  <div class="section">
-    <p><strong>Effectuate and Maintain a Comprehensive Plan:</strong> Upon Activation, and in collaboration with ${organizationName}, the Sponsor has established a sustainable plan for addressing digital accessibility.</p>
+  <h2>Key Tenets and Proactive Measures</h2>
+  
+  <div class="card-container">
+    <div class="card">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="white"/>
+          <path d="M14 2v6h6" fill="white"/>
+          <circle cx="18" cy="18" r="3" fill="#445AE7"/>
+          <path d="M17 18l2 2 4-4" stroke="white" stroke-width="2" fill="none"/>
+        </svg>
+      </div>
+      <div class="card-content">
+        <div class="card-title">Comprehensive Accessibility Plan</div>
+        <div class="card-text">The Sponsor has implemented a structured and sustainable digital accessibility plan in collaboration with ${organizationName} to address accessibility on an ongoing basis.</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="3" fill="white"/>
+          <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24" stroke="white" stroke-width="2" fill="none"/>
+        </svg>
+      </div>
+      <div class="card-content">
+        <div class="card-title">Accessibility Expertise</div>
+        <div class="card-text">${organizationName} has been engaged as a third-party accessibility specialist. Its services are supported by certified professionals in accessibility core competencies who oversee monitoring, testing, and remediation efforts.</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="3" fill="white"/>
+          <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24" stroke="white" stroke-width="2" fill="none"/>
+        </svg>
+      </div>
+      <div class="card-content">
+        <div class="card-title">Training and Tooling</div>
+        <div class="card-text">The Sponsor has access to accessibility training resources and tools designed to promote best practices and support continued awareness of digital accessibility requirements.</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" fill="white"/>
+          <circle cx="9" cy="7" r="4" fill="white"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" fill="white"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" fill="white"/>
+        </svg>
+      </div>
+      <div class="card-content">
+        <div class="card-title">Public Grievance Process</div>
+        <div class="card-text">A public accessibility feedback mechanism enables users to report accessibility concerns. Submissions are reviewed and prioritized by ${organizationName}'s accessibility experts, with two-way communication maintained until resolution.</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="white"/>
+          <path d="M14 2v6h6" fill="white"/>
+          <path d="M16 13H8M16 17H8M10 9H8" stroke="white" stroke-width="2"/>
+          <circle cx="18" cy="18" r="3" fill="#445AE7"/>
+          <path d="M17 18l2 2 4-4" stroke="white" stroke-width="2" fill="none"/>
+        </svg>
+      </div>
+      <div class="card-content">
+        <div class="card-title">Accessibility Statement</div>
+        <div class="card-text">The Sponsor publishes and maintains a public-facing Accessibility Statement describing its accessibility efforts, ongoing improvements, and commitment to digital inclusion.</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 3v18h18" stroke="white" stroke-width="2" fill="none"/>
+          <path d="M7 16l4-4 4 4 6-6" stroke="white" stroke-width="2" fill="none"/>
+          <circle cx="18" cy="6" r="2" fill="white"/>
+        </svg>
+      </div>
+      <div class="card-content">
+        <div class="card-title">Continuous Monitoring and Testing</div>
+        <div class="card-text">${organizationName} conducts automated and usage-based accessibility monitoring on a recurring basis. This continuous evaluation focuses on pages most relevant to the end-user experience and remains active for the duration of the service engagement.</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 3v18h18" stroke="white" stroke-width="2" fill="none"/>
+          <path d="M7 12h2v6H7zm4-4h2v10h-2zm4-4h2v14h-2z" fill="white"/>
+          <path d="M18 6l2 2-2 2" stroke="white" stroke-width="2" fill="none"/>
+        </svg>
+      </div>
+      <div class="card-content">
+        <div class="card-title">Progress Toward Accessibility Conformance</div>
+        <div class="card-text">${organizationName}'s technology dynamically applies remediations for certain programmatically detectable accessibility issues, supporting continuous improvement toward WCAG 2.2 Level AA conformance.</div>
+      </div>
+    </div>
   </div>
   
-  <div class="section">
-    <p><strong>Employ Accessibility Specialists:</strong> Upon Activation, the Sponsor has employed ${organizationName}, a third-party web accessibility specialist that employs Certified Professionals in Accessibility Core Competencies to monitor and maintain the Sponsor's plan.</p>
+  <h2>Accessibility Help Desk and Personalization Tools</h2>
+  
+  <p>The ${organizationName} Accessibility Help Desk enables users to report accessibility barriers for further investigation. The platform also provides personalization tools that allow users to adjust their browsing experience based on individual needs. These tools benefit a broad range of users, including individuals with visual, auditory, motor, cognitive, or neurological disabilities.</p>
+  
+  <h2>Ongoing Improvement and Certification</h2>
+  
+  <p>Through continual testing, remediation, validation, and feedback-driven updates, the Sponsor establishes and maintains an evolving accessibility baseline. Where appropriate, additional design or source-level improvements may be implemented to further enhance usability and accessibility.</p>
+  
+  <p>Based on ongoing monitoring and remediation efforts, ${organizationName} has granted the Sponsor ${organizationName} Trusted Certification Status. The Sponsor intends to report its accessibility status publicly through a certification statement made available on its website, reflecting current conformance levels and ongoing improvements.</p>
+  
+  <div class="notes-box">
+    <h3>Additional Notes:</h3>
+    <ol>
+      <li>This Legal Action Response Plan applies to the primary domain and all associated subdomains listed by the Sponsor.</li>
+      <li>${organizationName}'s accessibility services are delivered or overseen by certified professionals, including CPACC, WAS, and CPWA credential holders, in accordance with recognized accessibility standards and best practices.</li>
+    </ol>
   </div>
   
-  <div class="section">
-    <p><strong>Accessibility Training & Tooling:</strong> Upon Activation, the Sponsor gained access to an online training library to keep Sponsor up to date on accessibility best practices, as well as activating the Accessibility Help Desk for users with disabilities.</p>
-  </div>
-  
-  <div class="section">
-    <p><strong>Provide a Public "Grievance Process":</strong> Upon Activation, the ${organizationName} solution provided anyone the ability to submit an accessibility complaint which, complete with a feedback loop, allows end-users of the Website to report accessibility and usability issues to the dedicated Web Accessibility Subject Matter Experts at ${organizationName}. As issues are reported, ${organizationName} validates and prioritizes issues based on the end-user feedback. Submissions are responded to in a timely manner and two-way communication is available until issue resolution.</p>
-  </div>
-  
-  <div class="section">
-    <p><strong>Publish and Maintain Digital Accessibility Policy Statement:</strong> Upon Activation, the Sponsor began publishing an Accessibility Statement to inform end-users regarding the steps taken/ being taken to ensure equal access and to promote the Sponsor's ongoing commitment to address and prioritize digital inclusion.</p>
-  </div>
-  
-  <div class="section">
-    <p><strong>Regular Automated Testing:</strong> Upon Activation, ${organizationName} began tracking usage analytics. On regular intervals, ${organizationName} began conducting ongoing and continuous monitoring based on the usage analytics tracked by ${organizationName}. This always-on monitoring ensures that the pages being accessed by our Sponsor's end-users – the pertinent pages relative to the end-user's experience - are being evaluated for accessibility conformance. So long as the ${organizationName} Services remain active, ${organizationName} will maintain the always-on monitoring service.</p>
-  </div>
-  
-  <div class="section">
-    <p><strong>Continuous Progress towards Conformance with Prevailing Digital Accessibility Standards Current as of Effective Date: Web Content Accessibility Guidelines "WCAG" 2.2 Level AA:</strong> Upon Activation, the ${organizationName} solution began to dynamically apply remediations to address certain common issues that are programmatically detected. From the date of Activation, the Website began to improve accessibility by eliminating access barriers for end users.</p>
-  </div>
-  
-  <p>After activation, the Sponsor has invested in and made available tools to aid users in reporting accessibility issues and personalization options for those seeking access to the site.</p>
-  
-  <p>The ${organizationName} Accessibility Help Desk allows organizations to provide their site visitors with a form for reporting accessibility barriers for further investigation by ${organizationName}.</p>
-  
-  <p>The Help Desk also provides personalization tools for users to customize their browsing experience. These tools have benefits for all site visitors, but, in particular, aging populations and individuals who have vision, hearing, motor and intellectual (cognitive) disabilities, those who are epileptic, color blind, dyslexic, or learning to read.</p>
-  
-  <p>With continual testing, remediation, and validation, coupled with the ability to make changes based on feedback, a new accessibility baseline and substantial conformance is achieved. The Sponsors can work with ${organizationName} to address the website-specific accessibility issues. To the extent warranted, Sponsor may implement design and source improvements to further improve usability and maximize conformance with accessibility best practices and standards. With remediation validated, ongoing monitoring enabled, and an ongoing remediation strategy in place, ${organizationName} has granted Sponsor ${organizationName} Trusted certification status.</p>
-  
-  <p>As the Sponsor continues to mature its accessibility policy, the Sponsor intends to report its conformance level publicly through a public-facing Certification Statement made available from the Website. The Certification Statement informs end-users of the current, up to date ${organizationName} Trusted Status and conformance level as the site continues to be updated regularly via the continuous monitoring services supplied by ${organizationName}.</p>
-  
-  <div class="footnote">
-    <p><sup>1</sup> The Legal Action Response Plan applies to the domain and all subdomains listed on the front page.</p>
-    <p><sup>2</sup> ${organizationName} engineers and SMEs include Certified Professionals in Accessibility Core Competencies (CPACC), Certified Web Accessibility Specialists (WAS), and/or Certified Professionals in Web Accessibility (CPWA) as maintained through the International Association of Accessibility Professionals (IAAP). All work supplied in fulfillment of the accessibility audits are conducted by ${organizationName} team members certified as a CPACC, WAS or CPWA, or their work is overseen by such a certified team member. Manual assistive technology (AT) testing is overseen by ${organizationName}'s Senior AT Testers, including credentialed Freedom Scientific JAWS Certified Tester(s). Over the past few years, the ${organizationName} team of accessibility engineers, SMEs, and testers has audited and remediated thousands of web domains and web applications. Today, on a daily basis, ${organizationName} – through the application of leading-edge dynamic remediation technology – serves billions of accessibility fixes across a network of clients who encompass some of the largest and most influential businesses and organizations in the world. ${organizationName}'s mission is to eradicate all barriers to digital accessibility.</p>
+  <div class="footer">
+    <div class="footer-logo">
+      <span style="color: #445AE7; font-size: 24px; font-weight: bold;">W</span>
+      <span>${organizationName}</span>
+    </div>
+    <div class="footer-info">
+      © ${organizationName} ${currentYear} | ${organizationName.toLowerCase().replace(/\s+/g, '')}.io | support@${organizationName.toLowerCase().replace(/\s+/g, '')}.io
+    </div>
   </div>
 </body>
 </html>
@@ -173,7 +326,7 @@ const LegalResources: React.FC = () => {
 
   // Generate Trusted Certification HTML content
   const generateTrustedCertificationHTML = () => {
-    const domain = currentDomain || 'your website';
+    const currentYear = new Date().getFullYear();
     const content = `
 <!DOCTYPE html>
 <html lang="en">
@@ -197,83 +350,142 @@ const LegalResources: React.FC = () => {
       background: #fff;
     }
     h1 {
-      font-size: 28px;
-      font-weight: bold;
-      margin-bottom: 10px;
-      color: #111827;
-    }
-    h2 {
+      background: #091844;
+      color: white;
       font-size: 20px;
       font-weight: 600;
-      margin-top: 30px;
-      margin-bottom: 15px;
-      color: #111827;
+      padding: 12px 20px;
+      border-radius: 25px;
+      margin: 30px 0 20px 0;
+      display: inline-block;
+    }
+    h2 {
+      background: #091844;
+      color: white;
+      font-size: 20px;
+      font-weight: 600;
+      padding: 12px 20px;
+      border-radius: 25px;
+      margin: 30px 0 15px 0;
+      display: inline-block;
     }
     p {
       margin-bottom: 15px;
       text-align: justify;
+      color: #333;
+    }
+    strong {
+      font-weight: 600;
     }
     ul {
       margin-left: 30px;
       margin-bottom: 15px;
+      list-style-type: disc;
     }
     li {
       margin-bottom: 10px;
-    }
-    .domain {
-      font-weight: 600;
-      color: #111827;
-    }
-    .section {
-      margin-bottom: 25px;
+      color: #333;
     }
     .highlight-box {
       background-color: #f3f4f6;
-      border-left: 4px solid #445AE7;
-      padding: 15px;
+      border-radius: 8px;
+      padding: 20px;
       margin: 20px 0;
+    }
+    .highlight-box p {
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .highlight-box ul {
+      margin-top: 10px;
+    }
+    .certification-box {
+      background-color: #f3f4f6;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .tagline {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 16px;
+      font-weight: 600;
+      font-style: italic;
+      color: #445AE7;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 12px;
+      color: #6b7280;
     }
   </style>
 </head>
 <body>
-  <h1>Trusted Certification</h1>
+  <h1>Certification Overview</h1>
   
-  <div class="section">
-    <p><strong>This statement applies to:</strong> <span class="domain">${domain}</span></p>
-  </div>
+  <p>The <strong>Trusted by ${organizationName}</strong> certification represents a commitment to digital accessibility and inclusive user experiences. This certification confirms that the above-referenced website has partnered with ${organizationName} to help provide an accessible experience for website visitors.</p>
   
-  <h2>How to use this document</h2>
-  <p>If you receive a legal demand letter, send your Legal Action Response Plan and the ${organizationName} Trusted Certification to your attorney. These documents prove that you have partnered with ${organizationName} to provide an accessible experience for your website visitors.</p>
+  <p>${organizationName}'s web accessibility certification process may involve a combination of automated testing and accessibility expert evaluation with the goals of identifying and reducing accessibility barriers, supporting conformance with recognized accessibility standards, and ensuring an optimal user experience for all users, regardless of individual ability.</p>
   
-  <p>The Trusted by ${organizationName} badge represents a commitment to accessibility and digital inclusion. The ${organizationName} web accessibility certification process may involve a combination of automatic and accessibility expert testing with the goals of (i) identifying and resolving access barriers, (ii) conforming with the World Wide Web Consortium's (W3C) Web Content Accessibility Guidelines (WCAG) 2.2 Level AA Success Criteria, and (iii) ensuring an optimal user experience for all users, regardless of their individual abilities.</p>
+  <h2>Accessibility Standards and Compliance</h2>
+  
+  <p>${organizationName} continually monitors the most recent <strong>Web Content Accessibility Guidelines (WCAG)</strong> published by the <strong>World Wide Web Consortium (W3C)</strong>. The accessibility services applied to this website are intended to support ongoing progress toward WCAG 2.2 Level AA Success Criteria.</p>
+  
+  <p>${organizationName} monitors this website and, where applicable, the platform hosting it for potential accessibility issues related to WCAG Success Criteria. The services applied are routinely evaluated to support ongoing accessibility improvements. ${organizationName} also monitors relevant digital accessibility laws, regulations, and practices, including the Americans with Disabilities Act (ADA) and applicable state and international requirements.</p>
+  
+  <h2>Monitoring and User Support</h2>
   
   <div class="highlight-box">
-    <p><strong>While ${organizationName}'s underlying JavaScript is active, ${organizationName} attests to the following:</strong></p>
+    <p><strong>While ${organizationName}'s JavaScript is active, ${organizationName} attests that:</strong></p>
     <ul>
-      <li>${organizationName} Activation is complete.</li>
+      <li>${organizationName} activation has been completed.</li>
       <li>Testing & Discovery is ongoing with continuous monitoring.</li>
-      <li>Remediation & Validation is ongoing.</li>
+      <li>Remediation and validation efforts are ongoing.</li>
       <li>The ${organizationName} Accessibility Help Desk is active.</li>
     </ul>
   </div>
   
-  <p>${organizationName} certifies that the website is being monitored and remediated with a goal of increasing conformance with WCAG 2.2 AA. In this ongoing effort, ${organizationName}'s technology has already made progress in removing access barriers and will continue to enhance this website for optimal accessibility and usability for all users.</p>
+  <p>These services may include automated evaluations, continuous monitoring, regularly scheduled expert audits, and periodic releases designed to improve accessibility and usability, including for users of assistive technologies. In this ongoing effort, ${organizationName}'s technology has already made progress in removing accessibility barriers and will continue to enhance the website over time.</p>
   
-  <p>This service may also include regularly scheduled expert audits, and regular releases that help to improve access and usability for all users, including users of assistive technology.</p>
+  <p>${organizationName} provides a 24/7 Accessibility Help Desk, allowing website visitors to report accessibility barriers or grievances should they be encountered. Submissions are reviewed and prioritized for resolution. The Help Desk also provides personalization tools that allow users to customize their browsing experience based on individual accessibility needs.</p>
   
-  <p>If you encounter access barriers or issues with any page or feature on this website that may present a challenge for website visitors looking to access this website, please submit your feedback through the Accessibility Help Desk.</p>
+  <h2>${organizationName} Statements</h2>
   
-  <h2>${organizationName} statements</h2>
-  <ul>
-    <li>${organizationName} continually monitors the most recent Web Content Accessibility Guidelines (WCAG) set forth by the World Wide Web Consortium (W3C).</li>
-    <li>${organizationName} has taken steps to help improve and maintain accessibility of this website.</li>
-    <li>While the related JavaScript is active, ${organizationName} monitors this website and/or the platform hosting this website for possible violations of certain WCAG Success Criteria.</li>
-    <li>${organizationName} routinely evaluates the services that are applied to this website and/or the platform hosting this website to help improve conformance with WCAG Success Criteria.</li>
-    <li>${organizationName} offers support and resources that promote accessibility best practices.</li>
-    <li>${organizationName} periodically monitors laws, regulations and practices regarding digital accessibility compliance, including but not limited to the Americans with Disabilities Act (ADA) and other similar state and international laws and regulations.</li>
-    <li>While the related JavaScript is active, ${organizationName} supports a 24/7 Accessibility Help Desk for website visitors, which gives website visitors the ability to report accessibility issues and grievances should they be encountered. ${organizationName} prioritizes fixing accessibility issues when submitted via the Help Desk.</li>
-    <li>While the related JavaScript is active, the ${organizationName} Accessibility Help Desk also provides web personalization tools permitting website visitors to address specific accessibility issues and to customize their user experience.</li>
-  </ul>
+  <div class="highlight-box">
+    <ul>
+      <li>${organizationName} continually monitors the most recent WCAG guidance issued by the W3C</li>
+      <li>${organizationName} has taken steps to help improve and maintain the accessibility of this website</li>
+      <li>While the related JavaScript is active, ${organizationName} monitors this website and/or the platform hosting it for potential WCAG Success Criteria issues</li>
+      <li>${organizationName} routinely evaluates the services applied to improve accessibility conformance.</li>
+      <li>While the related JavaScript is active, ${organizationName} supports a 24/7 Accessibility Help Desk for reporting accessibility issues and grievances.</li>
+      <li>${organizationName} offers support resources that promote accessibility best practices.</li>
+      <li>While the related JavaScript is active, personalization tools are provided to help users customize their browsing experience.</li>
+      <li>${organizationName} periodically monitors applicable digital accessibility laws and regulations, including the ADA and relevant international standards.</li>
+    </ul>
+  </div>
+  
+  <h2>Certification Status</h2>
+  
+  <p>Based on ongoing monitoring, remediation, validation, and support activities, ${organizationName} certifies that this website is actively monitored and remediated to improve accessibility conformance and overall usability.</p>
+  
+  <p>Accessibility efforts are reviewed on an ongoing basis, and adjustments may be applied to address identified barriers and support users of assistive technologies.</p>
+  
+  <p>Accordingly, the website has been granted <strong>${organizationName} Trusted Certification Status</strong>, which reflects an active accessibility program and remains valid while ${organizationName}'s services and related JavaScript remain enabled.</p>
+  
+  <div class="certification-box">
+    <p>This certification reflects ongoing accessibility monitoring, remediation, and support activities conducted by ${organizationName}. Certification status remains valid only while ${organizationName} services and related JavaScript remain active on the website.</p>
+  </div>
+  
+  <div class="tagline">
+    <strong><em>${organizationName} - Making the web accessible for everyone</em></strong>
+  </div>
+  
+  <div class="footer" style="margin-top: 40px;">
+    TryWebAbility © TryWebAbility 2025 | trywebability.io | support@trywebability.io
+  </div>
 </body>
 </html>
     `;
@@ -302,661 +514,86 @@ const LegalResources: React.FC = () => {
     setPreviewContent('');
   };
 
-  // Helper function to add header with logo and date
-  const addPDFHeader = async (doc: any, pageWidth: number, margin: number, fontLoaded: boolean, organizationLogoUrl?: string | null) => {
-    let logoBottomY = 0;
-    
-    // Try to add organization logo
-    if (organizationLogoUrl) {
-      try {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = organizationLogoUrl;
-        
-        await new Promise<void>((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Logo load timeout')), 3000);
-          img.onload = () => {
-            clearTimeout(timeout);
-            resolve();
-          };
-          img.onerror = () => {
-            clearTimeout(timeout);
-            reject(new Error('Logo load failed'));
-          };
-        });
-
-        const maxWidth = 45;
-        const maxHeight = 35;
-        const aspectRatio = img.width / img.height;
-        let drawWidth = maxWidth;
-        let drawHeight = maxWidth / aspectRatio;
-        if (drawHeight > maxHeight) {
-          drawHeight = maxHeight;
-          drawWidth = maxHeight * aspectRatio;
-        }
-
-        const logoX = pageWidth - margin - drawWidth;
-        const logoY = 15;
-        doc.addImage(img, 'PNG', logoX, logoY, drawWidth, drawHeight);
-        logoBottomY = logoY + drawHeight;
-      } catch (e) {
-        console.warn('Could not load logo:', e);
-      }
-    }
-
-    // Add date in top-right corner with brand color
-    const formattedDate = new Date().toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'long',
-      day: '2-digit',
-      year: 'numeric',
-    });
-    doc.setFontSize(9);
-    doc.setTextColor(68, 90, 231); // Darker brand blue #445AE7
-    if (fontLoaded) {
-      doc.setFont('NotoSans_Condensed-Regular', 'normal');
-    } else {
-      doc.setFont('helvetica', 'normal');
-    }
-    doc.text(formattedDate, pageWidth - margin, 12, { align: 'right' });
-
-    return Math.max(logoBottomY, 30);
-  };
-
-  // Helper function to add footer
-  const addPDFFooter = (doc: any, pageWidth: number, pageHeight: number, margin: number, fontLoaded: boolean, pageNum: number, totalPages: number) => {
-    const footerY = pageHeight - 15;
-    
-    // Footer line
-    doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(0.5);
-    doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
-    
-    // Footer text
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    if (fontLoaded) {
-      doc.setFont('NotoSans_Condensed-Regular', 'normal');
-    } else {
-      doc.setFont('helvetica', 'normal');
-    }
-    doc.text(
-      `${organizationName} - Making the web accessible for everyone`,
-      margin,
-      footerY,
-    );
-    doc.text(`Page ${pageNum} of ${totalPages}`, pageWidth - margin, footerY, { align: 'right' });
-  };
-
-  // Generate PDF for Legal Action Response Plan
+  // Download PDF for Legal Action Response Plan from server
   const generateLegalActionResponsePlanPDF = async () => {
     try {
       setIsDownloading((prev) => ({ ...prev, 'legal-action-response-plan': true }));
       
-      const { jsPDF } = await import('jspdf');
+      const token = getAuthenticationCookie();
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
       
-      // Load custom font
-      let fontLoaded = true;
-      try {
-        // @ts-ignore
-        window.jsPDF = jsPDF;
-        // @ts-ignore
-        require('@/assets/fonts/NotoSans-normal.js');
-        // @ts-ignore
-        delete window.jsPDF;
-      } catch (e) {
-        console.error('Failed to load custom font for jsPDF:', e);
-        fontLoaded = false;
-      }
-
-      const doc = new jsPDF();
+      // Add domain as query parameter if available
+      console.log('Downloading PDF - Current Domain:', currentDomain);
+      const domainParam = currentDomain ? `?domain=${encodeURIComponent(currentDomain)}` : '';
+      console.log('Downloading PDF - Domain Param:', domainParam);
       
-      if (!fontLoaded) {
-        doc.setFont('helvetica', 'normal');
-      }
-
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 25;
-      const contentWidth = pageWidth - margin * 2;
-      
-      // White background
-      doc.setFillColor(255, 255, 255);
-      doc.rect(0, 0, pageWidth, pageHeight, 'F');
-
-      // Add header
-      let currentY = await addPDFHeader(doc, pageWidth, margin, fontLoaded, organization?.logo_url || undefined);
-      currentY += 10;
-      let pageNum = 1;
-
-      // Professional title with brand color
-      doc.setFontSize(28);
-      doc.setTextColor(37, 99, 235); // Brand blue #2563EB
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'bold');
-      } else {
-        doc.setFont('helvetica', 'bold');
-      }
-      doc.text('Legal Action Response Plan', margin, currentY);
-      currentY += 12;
-
-      // Horizontal divider line
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.7);
-      doc.line(margin, currentY, pageWidth - margin, currentY);
-      currentY += 15;
-
-      // Intro
-      doc.setFontSize(11);
-      doc.setTextColor(85, 85, 85);
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'italic');
-      } else {
-        doc.setFont('helvetica', 'italic');
-      }
-      const introText = 'Our solutions seek to improve the web\'s usability, providing everyone with an accessible and inclusive digital experience.';
-      const introLines = doc.splitTextToSize(introText, contentWidth);
-      doc.text(introLines, margin, currentY);
-      currentY += introLines.length * 6 + 10;
-
-      // Section: Attestation
-      doc.setFontSize(14);
-      doc.setTextColor(17, 24, 39);
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'bold');
-      } else {
-        doc.setFont('helvetica', 'bold');
-      }
-      doc.text(`${organizationName} Attestation with Respect to the Website`, margin, currentY);
-      currentY += 10;
-
-      // Content paragraphs
-      doc.setFontSize(10);
-      doc.setTextColor(51, 51, 51);
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'normal');
-      } else {
-        doc.setFont('helvetica', 'normal');
-      }
-
-      const paragraphs = [
-        `In an effort to help ensure that individuals with disabilities have equal opportunity and effective communication needed to fully access the Website¹, the Website's owner, manager, or sponsor (the "Sponsor") has adopted a sustainable, long-term digital accessibility strategy. The Sponsor has taken, or is in the process of taking, the following actions to help make its website equally accessible to all individuals, regardless of their abilities.`,
-        `Sponsor (or a representative of Sponsor) subscribed to accessibility offerings from ${organizationName}, a third-party web accessibility specialist that employs Certified Professionals in Accessibility Core Competencies² and experienced assistive technology testers (some of whom are individuals with disabilities).`,
-        `This Legal Action Response Plan shall remain applicable from the date of enablement of the JavaScript relating to ${organizationName}'s website offering through the date such enablement remains active and so long as Sponsor's ${organizationName} Subscription remains active.`,
-        `The Sponsor is improving and will continue to strengthen its conformance with ${organizationName}'s interpretation of the guidance provided by the World Wide Web Consortium's Web Content Accessibility Guidelines (WCAG).`,
-        `Through the adoption of the ${organizationName} accessibility offerings, Sponsor has established and began to execute a formal strategic plan to provide the equitable use of its digital assets and an optimal user experience for everyone.`,
-      ];
-
-      paragraphs.forEach((para) => {
-        if (currentY > pageHeight - 40) {
-          doc.addPage();
-          currentY = 30;
-        }
-        const lines = doc.splitTextToSize(para, contentWidth);
-        doc.text(lines, margin, currentY);
-        currentY += lines.length * 5 + 5;
+      const response = await fetch(`${backendUrl}/download-pdf/legal-action-response-plan${domainParam}`, {
+        method: 'GET',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
 
-      // Key tenets section with divider
-      if (currentY > pageHeight - 60) {
-        addPDFFooter(doc, pageWidth, pageHeight, margin, fontLoaded, pageNum, 0);
-        doc.addPage();
-        pageNum++;
-        doc.setFillColor(255, 255, 255);
-        doc.rect(0, 0, pageWidth, pageHeight, 'F');
-        addPDFHeader(doc, pageWidth, margin, fontLoaded, organization?.logo_url || undefined).then((y) => {
-          // Header will be added asynchronously
-        });
-        currentY = 40;
-      }
-      
-      // Section divider
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.7);
-      doc.line(margin, currentY - 5, pageWidth - margin, currentY - 5);
-      currentY += 5;
-      
-      doc.setFontSize(16);
-      doc.setTextColor(37, 99, 235); // Brand blue
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'bold');
-      } else {
-        doc.setFont('helvetica', 'bold');
-      }
-      doc.text('Key Tenets and Proactive Steps', margin, currentY);
-      currentY += 12;
-
-      const tenets = [
-        { title: 'Effectuate and Maintain a Comprehensive Plan:', text: `Upon Activation, and in collaboration with ${organizationName}, the Sponsor has established a sustainable plan for addressing digital accessibility.` },
-        { title: 'Employ Accessibility Specialists:', text: `Upon Activation, the Sponsor has employed ${organizationName}, a third-party web accessibility specialist that employs Certified Professionals in Accessibility Core Competencies to monitor and maintain the Sponsor's plan.` },
-        { title: 'Accessibility Training & Tooling:', text: `Upon Activation, the Sponsor gained access to an online training library to keep Sponsor up to date on accessibility best practices, as well as activating the Accessibility Help Desk for users with disabilities.` },
-        { title: 'Provide a Public "Grievance Process":', text: `Upon Activation, the ${organizationName} solution provided anyone the ability to submit an accessibility complaint which, complete with a feedback loop, allows end-users of the Website to report accessibility and usability issues to the dedicated Web Accessibility Subject Matter Experts at ${organizationName}. As issues are reported, ${organizationName} validates and prioritizes issues based on the end-user feedback. Submissions are responded to in a timely manner and two-way communication is available until issue resolution.` },
-        { title: 'Publish and Maintain Digital Accessibility Policy Statement:', text: `Upon Activation, the Sponsor began publishing an Accessibility Statement to inform end-users regarding the steps taken/ being taken to ensure equal access and to promote the Sponsor's ongoing commitment to address and prioritize digital inclusion.` },
-        { title: 'Regular Automated Testing:', text: `Upon Activation, ${organizationName} began tracking usage analytics. On regular intervals, ${organizationName} began conducting ongoing and continuous monitoring based on the usage analytics tracked by ${organizationName}. This always-on monitoring ensures that the pages being accessed by our Sponsor's end-users – the pertinent pages relative to the end-user's experience - are being evaluated for accessibility conformance. So long as the ${organizationName} Services remain active, ${organizationName} will maintain the always-on monitoring service.` },
-        { title: 'Continuous Progress towards Conformance with Prevailing Digital Accessibility Standards Current as of Effective Date: Web Content Accessibility Guidelines "WCAG" 2.2 Level AA:', text: `Upon Activation, the ${organizationName} solution began to dynamically apply remediations to address certain common issues that are programmatically detected. From the date of Activation, the Website began to improve accessibility by eliminating access barriers for end users.` },
-      ];
-
-      tenets.forEach((tenet, index) => {
-        if (currentY > pageHeight - 50) {
-          addPDFFooter(doc, pageWidth, pageHeight, margin, fontLoaded, pageNum, 0);
-          doc.addPage();
-          pageNum++;
-          doc.setFillColor(255, 255, 255);
-          doc.rect(0, 0, pageWidth, pageHeight, 'F');
-          addPDFHeader(doc, pageWidth, margin, fontLoaded, organization?.logo_url || undefined).then((y) => {
-            // Header will be added asynchronously
-          });
-          currentY = 40;
-        }
-        
-        // Tenet number and title
-        doc.setFontSize(11);
-        doc.setTextColor(37, 99, 235); // Brand blue
-        if (fontLoaded) {
-          doc.setFont('NotoSans_Condensed-Regular', 'bold');
-        } else {
-          doc.setFont('helvetica', 'bold');
-        }
-        const titleLines = doc.splitTextToSize(`${index + 1}. ${tenet.title}`, contentWidth);
-        doc.text(titleLines, margin, currentY);
-        currentY += titleLines.length * 5.5 + 4;
-        
-        // Tenet description
-        doc.setFontSize(10);
-        doc.setTextColor(51, 65, 85);
-        if (fontLoaded) {
-          doc.setFont('NotoSans_Condensed-Regular', 'normal');
-        } else {
-          doc.setFont('helvetica', 'normal');
-        }
-        const textLines = doc.splitTextToSize(tenet.text, contentWidth);
-        doc.text(textLines, margin, currentY);
-        currentY += textLines.length * 5.5 + 10;
-      });
-
-      // Additional paragraphs
-      const additionalParagraphs = [
-        `After activation, the Sponsor has invested in and made available tools to aid users in reporting accessibility issues and personalization options for those seeking access to the site.`,
-        `The ${organizationName} Accessibility Help Desk allows organizations to provide their site visitors with a form for reporting accessibility barriers for further investigation by ${organizationName}.`,
-        `The Help Desk also provides personalization tools for users to customize their browsing experience. These tools have benefits for all site visitors, but, in particular, aging populations and individuals who have vision, hearing, motor and intellectual (cognitive) disabilities, those who are epileptic, color blind, dyslexic, or learning to read.`,
-        `With continual testing, remediation, and validation, coupled with the ability to make changes based on feedback, a new accessibility baseline and substantial conformance is achieved. The Sponsors can work with ${organizationName} to address the website-specific accessibility issues. To the extent warranted, Sponsor may implement design and source improvements to further improve usability and maximize conformance with accessibility best practices and standards. With remediation validated, ongoing monitoring enabled, and an ongoing remediation strategy in place, ${organizationName} has granted Sponsor ${organizationName} Trusted certification status.`,
-        `As the Sponsor continues to mature its accessibility policy, the Sponsor intends to report its conformance level publicly through a public-facing Certification Statement made available from the Website. The Certification Statement informs end-users of the current, up to date ${organizationName} Trusted Status and conformance level as the site continues to be updated regularly via the continuous monitoring services supplied by ${organizationName}.`,
-      ];
-
-      // Additional content section
-      if (currentY > pageHeight - 60) {
-        addPDFFooter(doc, pageWidth, pageHeight, margin, fontLoaded, pageNum, 0);
-        doc.addPage();
-        pageNum++;
-        doc.setFillColor(255, 255, 255);
-        doc.rect(0, 0, pageWidth, pageHeight, 'F');
-        addPDFHeader(doc, pageWidth, margin, fontLoaded, organization?.logo_url || undefined).then((y) => {
-          // Header will be added asynchronously
-        });
-        currentY = 40;
-      }
-      
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.7);
-      doc.line(margin, currentY - 5, pageWidth - margin, currentY - 5);
-      currentY += 10;
-
-      additionalParagraphs.forEach((para) => {
-        if (currentY > pageHeight - 50) {
-          addPDFFooter(doc, pageWidth, pageHeight, margin, fontLoaded, pageNum, 0);
-          doc.addPage();
-          pageNum++;
-          doc.setFillColor(255, 255, 255);
-          doc.rect(0, 0, pageWidth, pageHeight, 'F');
-          addPDFHeader(doc, pageWidth, margin, fontLoaded, organization?.logo_url || undefined).then((y) => {
-            // Header will be added asynchronously
-          });
-          currentY = 40;
-        }
-        const lines = doc.splitTextToSize(para, contentWidth);
-        doc.text(lines, margin, currentY);
-        currentY += lines.length * 5.5 + 6;
-      });
-
-      // Footnotes section
-      if (currentY > pageHeight - 80) {
-        addPDFFooter(doc, pageWidth, pageHeight, margin, fontLoaded, pageNum, 0);
-        doc.addPage();
-        pageNum++;
-        doc.setFillColor(255, 255, 255);
-        doc.rect(0, 0, pageWidth, pageHeight, 'F');
-        addPDFHeader(doc, pageWidth, margin, fontLoaded, organization?.logo_url || undefined).then((y) => {
-          // Header will be added asynchronously
-        });
-        currentY = 40;
-      }
-      
-      // Footnotes divider
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.7);
-      doc.line(margin, currentY - 5, pageWidth - margin, currentY - 5);
-      currentY += 10;
-      
-      doc.setFontSize(9);
-      doc.setTextColor(100, 116, 139);
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'normal');
-      } else {
-        doc.setFont('helvetica', 'normal');
-      }
-      doc.text('¹ The Legal Action Response Plan applies to the domain and all subdomains listed on the front page.', margin, currentY);
-      currentY += 8;
-      const footnote2 = `² ${organizationName} engineers and SMEs include Certified Professionals in Accessibility Core Competencies (CPACC), Certified Web Accessibility Specialists (WAS), and/or Certified Professionals in Web Accessibility (CPWA) as maintained through the International Association of Accessibility Professionals (IAAP). All work supplied in fulfillment of the accessibility audits are conducted by ${organizationName} team members certified as a CPACC, WAS or CPWA, or their work is overseen by such a certified team member. Manual assistive technology (AT) testing is overseen by ${organizationName}'s Senior AT Testers, including credentialed Freedom Scientific JAWS Certified Tester(s). Over the past few years, the ${organizationName} team of accessibility engineers, SMEs, and testers has audited and remediated thousands of web domains and web applications. Today, on a daily basis, ${organizationName} – through the application of leading-edge dynamic remediation technology – serves billions of accessibility fixes across a network of clients who encompass some of the largest and most influential businesses and organizations in the world. ${organizationName}'s mission is to eradicate all barriers to digital accessibility.`;
-      const footnote2Lines = doc.splitTextToSize(footnote2, contentWidth);
-      doc.text(footnote2Lines, margin, currentY);
-
-      // Add footer to all pages
-      for (let i = 1; i <= pageNum; i++) {
-        doc.setPage(i);
-        addPDFFooter(doc, pageWidth, pageHeight, margin, fontLoaded, i, pageNum);
+      if (!response.ok) {
+        throw new Error('Failed to download PDF');
       }
 
-      // Save PDF
-      doc.save('Legal-Action-Response-Plan.pdf');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Legal-Action-Response-Plan.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
       toast.success('Legal Action Response Plan downloaded successfully!');
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Error downloading PDF:', error);
       toast.error('Failed to download PDF. Please try again.');
     } finally {
       setIsDownloading((prev) => ({ ...prev, 'legal-action-response-plan': false }));
     }
   };
 
-  // Generate PDF for Trusted Certification
+  // Download PDF for Trusted Certification from server
   const generateTrustedCertificationPDF = async () => {
     try {
       setIsDownloading((prev) => ({ ...prev, 'trusted-certification': true }));
       
-      const { jsPDF } = await import('jspdf');
+      const token = getAuthenticationCookie();
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
       
-      // Load custom font
-      let fontLoaded = true;
-      try {
-        // @ts-ignore
-        window.jsPDF = jsPDF;
-        // @ts-ignore
-        require('@/assets/fonts/NotoSans-normal.js');
-        // @ts-ignore
-        delete window.jsPDF;
-      } catch (e) {
-        console.error('Failed to load custom font for jsPDF:', e);
-        fontLoaded = false;
-      }
-
-      const doc = new jsPDF();
+      // Add domain as query parameter if available
+      console.log('Downloading PDF - Current Domain:', currentDomain);
+      const domainParam = currentDomain ? `?domain=${encodeURIComponent(currentDomain)}` : '';
+      console.log('Downloading PDF - Domain Param:', domainParam);
       
-      if (!fontLoaded) {
-        doc.setFont('helvetica', 'normal');
-      }
-
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 25;
-      const contentWidth = pageWidth - margin * 2;
-      
-      // White background
-      doc.setFillColor(255, 255, 255);
-      doc.rect(0, 0, pageWidth, pageHeight, 'F');
-
-      // Add header
-      let currentY = await addPDFHeader(doc, pageWidth, margin, fontLoaded, organization?.logo_url || undefined);
-      currentY += 10;
-      let pageNum = 1;
-      const domain = currentDomain || 'your website';
-
-      // Professional title with brand color
-      doc.setFontSize(28);
-      doc.setTextColor(37, 99, 235); // Brand blue #2563EB
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'bold');
-      } else {
-        doc.setFont('helvetica', 'bold');
-      }
-      doc.text('Trusted Certification', margin, currentY);
-      currentY += 12;
-
-      // Horizontal divider line
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.7);
-      doc.line(margin, currentY, pageWidth - margin, currentY);
-      currentY += 15;
-
-      // Statement applies to
-      doc.setFontSize(11);
-      doc.setTextColor(51, 65, 85);
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'normal');
-      } else {
-        doc.setFont('helvetica', 'normal');
-      }
-      doc.text(`This statement applies to: `, margin, currentY);
-      doc.setFontSize(11);
-      doc.setTextColor(17, 24, 39);
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'bold');
-      } else {
-        doc.setFont('helvetica', 'bold');
-      }
-      const domainWidth = doc.getTextWidth('This statement applies to: ');
-      doc.text(domain, margin + domainWidth, currentY);
-      currentY += 15;
-
-      // How to use section with divider
-      doc.setFontSize(16);
-      doc.setTextColor(37, 99, 235); // Brand blue
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'bold');
-      } else {
-        doc.setFont('helvetica', 'bold');
-      }
-      doc.text('How to use this document', margin, currentY);
-      currentY += 12;
-
-      doc.setFontSize(10);
-      doc.setTextColor(51, 65, 85);
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'normal');
-      } else {
-        doc.setFont('helvetica', 'normal');
-      }
-
-      const paragraphs = [
-        `If you receive a legal demand letter, send your Legal Action Response Plan and the ${organizationName} Trusted Certification to your attorney. These documents prove that you have partnered with ${organizationName} to provide an accessible experience for your website visitors.`,
-        `The Trusted by ${organizationName} badge represents a commitment to accessibility and digital inclusion. The ${organizationName} web accessibility certification process may involve a combination of automatic and accessibility expert testing with the goals of (i) identifying and resolving access barriers, (ii) conforming with the World Wide Web Consortium's (W3C) Web Content Accessibility Guidelines (WCAG) 2.2 Level AA Success Criteria, and (iii) ensuring an optimal user experience for all users, regardless of their individual abilities.`,
-      ];
-
-      paragraphs.forEach((para) => {
-        if (currentY > pageHeight - 50) {
-          addPDFFooter(doc, pageWidth, pageHeight, margin, fontLoaded, pageNum, 0);
-          doc.addPage();
-          pageNum++;
-          doc.setFillColor(255, 255, 255);
-          doc.rect(0, 0, pageWidth, pageHeight, 'F');
-          addPDFHeader(doc, pageWidth, margin, fontLoaded, organization?.logo_url || undefined).then((y) => {
-            // Header will be added asynchronously
-          });
-          currentY = 40;
-        }
-        const lines = doc.splitTextToSize(para, contentWidth);
-        doc.text(lines, margin, currentY);
-        currentY += lines.length * 5.5 + 6;
+      const response = await fetch(`${backendUrl}/download-pdf/trusted-certification${domainParam}`, {
+        method: 'GET',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
 
-      // Attestation box with professional styling
-      // Calculate box dimensions based on content
-      const attestationTitle = `While ${organizationName}'s underlying JavaScript is active, ${organizationName} attests to the following:`;
-      const attestationTitleLines = doc.splitTextToSize(attestationTitle, contentWidth - 20);
-      const titleHeight = attestationTitleLines.length * 5.5;
-      
-      const attestations = [
-        `${organizationName} Activation is complete.`,
-        `Testing & Discovery is ongoing with continuous monitoring.`,
-        `Remediation & Validation is ongoing.`,
-        `The ${organizationName} Accessibility Help Desk is active.`,
-      ];
-      const bulletHeight = attestations.length * 7;
-      const boxPadding = 12;
-      const attestationBoxHeight = titleHeight + bulletHeight + boxPadding * 2 + 8;
-      
-      // Check if box fits on current page
-      if (currentY + attestationBoxHeight > pageHeight - 50) {
-        addPDFFooter(doc, pageWidth, pageHeight, margin, fontLoaded, pageNum, 0);
-        doc.addPage();
-        pageNum++;
-        doc.setFillColor(255, 255, 255);
-        doc.rect(0, 0, pageWidth, pageHeight, 'F');
-        addPDFHeader(doc, pageWidth, margin, fontLoaded, organization?.logo_url || undefined).then((y) => {
-          // Header will be added asynchronously
-        });
-        currentY = 40;
-      }
-      
-      // Professional highlight box with white background and blue border
-      const boxStartY = currentY;
-      const boxPaddingX = 10;
-      
-      // Draw box with white background
-      doc.setFillColor(255, 255, 255);
-      doc.roundedRect(margin - boxPaddingX, boxStartY, contentWidth + boxPaddingX * 2, attestationBoxHeight, 4, 4, 'F');
-      
-      // Draw blue border
-      doc.setDrawColor(68, 90, 231); // Brand primary blue #445AE7
-      doc.setLineWidth(1.5);
-      doc.roundedRect(margin - boxPaddingX, boxStartY, contentWidth + boxPaddingX * 2, attestationBoxHeight, 4, 4, 'D');
-      
-      // Title inside box - bold blue text
-      currentY = boxStartY + boxPadding;
-      doc.setFontSize(11);
-      doc.setTextColor(68, 90, 231); // Brand primary blue
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'bold');
-      } else {
-        doc.setFont('helvetica', 'bold');
-      }
-      doc.text(attestationTitleLines, margin, currentY);
-      currentY += titleHeight + 8;
-
-      // Bullet points inside box - black text
-      attestations.forEach((attestation) => {
-        doc.setFontSize(10);
-        doc.setTextColor(0, 0, 0); // Black text for bullets
-        if (fontLoaded) {
-          doc.setFont('NotoSans_Condensed-Regular', 'normal');
-        } else {
-          doc.setFont('helvetica', 'normal');
-        }
-        doc.text(`• ${attestation}`, margin + 5, currentY);
-        currentY += 7;
-      });
-      
-      // Move to after the box
-      currentY = boxStartY + attestationBoxHeight + 15;
-
-      // More paragraphs
-      const moreParagraphs = [
-        `${organizationName} certifies that the website is being monitored and remediated with a goal of increasing conformance with WCAG 2.2 AA. In this ongoing effort, ${organizationName}'s technology has already made progress in removing access barriers and will continue to enhance this website for optimal accessibility and usability for all users.`,
-        `This service may also include regularly scheduled expert audits, and regular releases that help to improve access and usability for all users, including users of assistive technology.`,
-        `If you encounter access barriers or issues with any page or feature on this website that may present a challenge for website visitors looking to access this website, please submit your feedback through the Accessibility Help Desk.`,
-      ];
-
-      moreParagraphs.forEach((para) => {
-        if (currentY > pageHeight - 50) {
-          addPDFFooter(doc, pageWidth, pageHeight, margin, fontLoaded, pageNum, 0);
-          doc.addPage();
-          pageNum++;
-          doc.setFillColor(255, 255, 255);
-          doc.rect(0, 0, pageWidth, pageHeight, 'F');
-          addPDFHeader(doc, pageWidth, margin, fontLoaded, organization?.logo_url || undefined).then((y) => {
-            // Header will be added asynchronously
-          });
-          currentY = 40;
-        }
-        const lines = doc.splitTextToSize(para, contentWidth);
-        doc.text(lines, margin, currentY);
-        currentY += lines.length * 5.5 + 6;
-      });
-
-      // Statements section with divider
-      if (currentY > pageHeight - 60) {
-        addPDFFooter(doc, pageWidth, pageHeight, margin, fontLoaded, pageNum, 0);
-        doc.addPage();
-        pageNum++;
-        doc.setFillColor(255, 255, 255);
-        doc.rect(0, 0, pageWidth, pageHeight, 'F');
-        addPDFHeader(doc, pageWidth, margin, fontLoaded, organization?.logo_url || undefined).then((y) => {
-          // Header will be added asynchronously
-        });
-        currentY = 40;
-      }
-      
-      // Section divider
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.7);
-      doc.line(margin, currentY - 5, pageWidth - margin, currentY - 5);
-      currentY += 5;
-      
-      doc.setFontSize(16);
-      doc.setTextColor(37, 99, 235); // Brand blue
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'bold');
-      } else {
-        doc.setFont('helvetica', 'bold');
-      }
-      doc.text(`${organizationName} Statements`, margin, currentY);
-      currentY += 12;
-
-      doc.setFontSize(10);
-      doc.setTextColor(51, 65, 85);
-      if (fontLoaded) {
-        doc.setFont('NotoSans_Condensed-Regular', 'normal');
-      } else {
-        doc.setFont('helvetica', 'normal');
+      if (!response.ok) {
+        throw new Error('Failed to download PDF');
       }
 
-      const statements = [
-        `${organizationName} continually monitors the most recent Web Content Accessibility Guidelines (WCAG) set forth by the World Wide Web Consortium (W3C).`,
-        `${organizationName} has taken steps to help improve and maintain accessibility of this website.`,
-        `While the related JavaScript is active, ${organizationName} monitors this website and/or the platform hosting this website for possible violations of certain WCAG Success Criteria.`,
-        `${organizationName} routinely evaluates the services that are applied to this website and/or the platform hosting this website to help improve conformance with WCAG Success Criteria.`,
-        `${organizationName} offers support and resources that promote accessibility best practices.`,
-        `${organizationName} periodically monitors laws, regulations and practices regarding digital accessibility compliance, including but not limited to the Americans with Disabilities Act (ADA) and other similar state and international laws and regulations.`,
-        `While the related JavaScript is active, ${organizationName} supports a 24/7 Accessibility Help Desk for website visitors, which gives website visitors the ability to report accessibility issues and grievances should they be encountered. ${organizationName} prioritizes fixing accessibility issues when submitted via the Help Desk.`,
-        `While the related JavaScript is active, the ${organizationName} Accessibility Help Desk also provides web personalization tools permitting website visitors to address specific accessibility issues and to customize their user experience.`,
-      ];
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Trusted-Certification.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
-      statements.forEach((statement) => {
-        if (currentY > pageHeight - 40) {
-          addPDFFooter(doc, pageWidth, pageHeight, margin, fontLoaded, pageNum, 0);
-          doc.addPage();
-          pageNum++;
-          doc.setFillColor(255, 255, 255);
-          doc.rect(0, 0, pageWidth, pageHeight, 'F');
-          addPDFHeader(doc, pageWidth, margin, fontLoaded, organization?.logo_url || undefined).then((y) => {
-            // Header will be added asynchronously
-          });
-          currentY = 40;
-        }
-        const lines = doc.splitTextToSize(`• ${statement}`, contentWidth);
-        doc.text(lines, margin, currentY);
-        currentY += lines.length * 5.5 + 6;
-      });
-
-      // Add footer to all pages
-      for (let i = 1; i <= pageNum; i++) {
-        doc.setPage(i);
-        addPDFFooter(doc, pageWidth, pageHeight, margin, fontLoaded, i, pageNum);
-      }
-
-      // Save PDF
-      doc.save('Trusted-Certification.pdf');
       toast.success('Trusted Certification downloaded successfully!');
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Error downloading PDF:', error);
       toast.error('Failed to download PDF. Please try again.');
     } finally {
       setIsDownloading((prev) => ({ ...prev, 'trusted-certification': false }));
