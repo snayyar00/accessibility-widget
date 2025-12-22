@@ -274,7 +274,7 @@ const ChartCard: React.FC<{
         </div>
         {timeRange && onChangeTimeRange && (
           <select
-            className="py-1.5 px-3 rounded-lg focus:outline-none text-sm appearance-none bg-no-repeat pr-6"
+            className="py-1.5 px-3 rounded-lg text-sm appearance-none bg-no-repeat pr-6"
             style={{
               backgroundColor: '#006BD6',
               color: '#E4F2FF',
@@ -284,7 +284,7 @@ const ChartCard: React.FC<{
               backgroundPosition: 'calc(100% - 12px) center',
               paddingRight: '2.8rem',
               minHeight: '40px',
-              border: 'none',
+              border: '2px solid transparent',
               outline: 'none',
               boxShadow: 'none',
               cursor: 'pointer',
@@ -298,13 +298,14 @@ const ChartCard: React.FC<{
                 e.currentTarget.click();
               }
             }}
-            onFocus={(e) =>
-              (e.currentTarget.style.boxShadow =
-                '0 0 0 4px rgba(0,107,214,0.65)')
-            }
-            onBlur={(e) =>
-              (e.currentTarget.style.boxShadow = 'none')
-            }
+            onFocus={(e) => {
+              e.currentTarget.style.border = '3px solid #FFFFFF';
+              e.currentTarget.style.boxShadow = '0 0 0 2px #006BD6';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.border = '2px solid transparent';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
             <option value="week">Last 7 days</option>
             <option value="month">Last 30 days</option>

@@ -275,7 +275,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
       {/* Main content area with sidebar and content */}
       <div className="flex flex-grow">
         <Sidebar />
-        <main role="main" aria-label="Main" className="flex-grow bg-body overflow-y-auto px-[15px] py-[32px] sm:min-h-[calc(100vh_-_64px)]">
+        <main role="main" className="flex-grow bg-body overflow-y-auto px-[15px] py-[32px] sm:min-h-[calc(100vh_-_64px)]">
           <Switch>
             {routes
               .filter((route) => {

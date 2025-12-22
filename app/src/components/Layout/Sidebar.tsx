@@ -1175,12 +1175,14 @@ const Sidebar = () => {
                     href="https://webability.getrewardful.com/signup"
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label="Join Referral Program"
                     className="w-12 h-12 bg-white border border-[#C5D9E0] rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md mx-auto hover:bg-gray-50"
                   >
                     <div className="w-6 h-6 flex items-center justify-center">
                       <LuCircleDollarSign
                         size={24}
                         className="text-[#94BFFF]"
+                        aria-hidden="true"
                       />
                     </div>
                   </a>
