@@ -21,6 +21,7 @@ import { RED_BG } from '@/utils/applyStatusClass';
 import MobileDomainCard from './MobileDomainCard';
 import notFoundImage from '@/assets/images/not_found_image.png';
 import { Site } from '@/generated/graphql';
+import PurchaseActionButton from '@/components/Common/PurchaseActionButton';
 import Pagination from '@/components/Common/Pagination';
 
 interface DomainTableProps {
@@ -96,6 +97,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
     skip: false,
   });
   const { data: userData } = useSelector((state: RootState) => state.user);
+  const organization = useSelector((state: RootState) => state.organization.data);
   const [billingLoading, setBillingLoading] = useState(false);
   const [activePlan, setActivePlan] = useState('');
   const [isYearly, setIsYearly] = useState(false);
@@ -332,6 +334,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [appSumoCount, setAppSumoCount] = useState(0);
   const [codeCount, setCodeCount] = useState(0);
   const [isStripeCustomer, setIsStripeCustomer] = useState(false);
+  const isAppSumoOrg =
+    organization?.id === (process.env.REACT_APP_CURRENT_ORG || '1');
 
   const handleSubscription = async (selectedDomain: Site) => {
     setBillingLoading(true);
@@ -1051,65 +1055,31 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 {openActionsMenuId === domain.id && (
                                   <>
                                     {/* Conditionally show Activate/Buy button for non-active domains */}
-                                    {domain.is_owner && (
-                                      <>
-                                        {(domainStatus === 'Trial' ||
-                                          domainStatus === 'Trial Expired') && (
-                                          <>
-                                            {activePlan !== '' && tierPlan ? (
-                                              <Tooltip
-                                                title="Activate subscription"
-                                                placement="top"
-                                              >
-                                                <button
-                                                  disabled={billingLoading}
-                                                  onClick={() =>
-                                                    handleSubscription(domain)
-                                                  }
-                                                  className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                                >
-                                                  {billingLoading
-                                                    ? 'Processing...'
-                                                    : 'Activate'}
-                                                </button>
-                                              </Tooltip>
-                                            ) : appSumoCount < codeCount ? (
-                                              <Tooltip
-                                                title="Activate with promo code"
-                                                placement="top"
-                                              >
-                                                <button
-                                                  onClick={() =>
-                                                    handleOpenActivateModal(domain)
-                                                  }
-                                                  className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                                                >
-                                                  Activate
-                                                </button>
-                                              </Tooltip>
-                                            ) : (
-                                              <Tooltip
-                                                title="Buy license"
-                                                placement="top"
-                                              >
-                                                <button
-                                                  onClick={() => {
-                                                    setPaymentView(true);
-                                                    openModal();
-                                                    setOptionalDomain(
-                                                      domain.url ?? '',
-                                                    );
-                                                  }}
-                                                  className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                                                >
-                                                  Buy License
-                                                </button>
-                                              </Tooltip>
-                                            )}
-                                          </>
-                                        )}
-                                      </>
-                                    )}
+                                    {domain.is_owner &&
+                                      (domainStatus === 'Trial' ||
+                                        domainStatus === 'Trial Expired') && (
+                                        <PurchaseActionButton
+                                          isAppSumoOrg={isAppSumoOrg}
+                                          activePlan={activePlan}
+                                          tierPlan={tierPlan}
+                                          appSumoCount={appSumoCount}
+                                          codeCount={codeCount}
+                                          billingLoading={billingLoading}
+                                          onActivateSubscription={() =>
+                                            handleSubscription(domain)
+                                          }
+                                          onOpenActivateModal={() =>
+                                            handleOpenActivateModal(domain)
+                                          }
+                                          onBuyLicense={() => {
+                                            setPaymentView(true);
+                                            openModal();
+                                            setOptionalDomain(domain.url ?? '');
+                                          }}
+                                          className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                          useTooltip
+                                        />
+                                      )}
                                     {(userData.isAdminOrOwnerOrSuper ||
                                       domain.is_owner) && (
                                       <Tooltip title="Edit domain" placement="top">

@@ -62,6 +62,8 @@ const getIssueCountIcon = (impact: string) => {
   }
 };
 async function fetchImageAsBase64(url: string): Promise<string | null> {
+  if (!url) return null;
+  
   try {
     // Try fetch first
     const response = await fetch(url, {
@@ -72,49 +74,67 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const blob = await response.blob();
-    return await new Promise((resolve, reject) => {
+    return await new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
+      reader.onloadend = () => {
+        try {
+          resolve(reader.result as string);
+        } catch (e) {
+          console.warn('Error processing image data:', e);
+          resolve(null);
+        }
+      };
+      reader.onerror = () => {
+        console.warn('FileReader error for image:', url);
+        resolve(null); // Resolve with null instead of rejecting
+      };
       reader.readAsDataURL(blob);
     });
   } catch (e) {
     // If fetch fails due to CORS, try canvas-based approach
     try {
-      return await new Promise<string>((resolve, reject) => {
+      return await new Promise<string | null>((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
+        let timeoutId: NodeJS.Timeout | null = null;
         
         img.onload = () => {
+          if (timeoutId) clearTimeout(timeoutId);
           try {
             const canvas = document.createElement('canvas');
             canvas.width = img.width;
             canvas.height = img.height;
             const ctx = canvas.getContext('2d');
             if (!ctx) {
-              reject(new Error('Could not get canvas context'));
+              console.warn('Could not get canvas context for image:', url);
+              resolve(null);
               return;
             }
             ctx.drawImage(img, 0, 0);
             const dataUrl = canvas.toDataURL('image/png');
             resolve(dataUrl);
           } catch (canvasError) {
-            reject(canvasError);
+            console.warn('Canvas error for image:', url, canvasError);
+            resolve(null);
           }
         };
         
         img.onerror = () => {
-          reject(new Error('Image failed to load'));
+          if (timeoutId) clearTimeout(timeoutId);
+          console.warn('Image failed to load:', url);
+          resolve(null);
         };
         
         // Set a timeout
-        setTimeout(() => {
-          reject(new Error('Image load timeout'));
+        timeoutId = setTimeout(() => {
+          console.warn('Image load timeout:', url);
+          resolve(null);
         }, 10000);
         
         img.src = url;
       });
     } catch (canvasError) {
+      console.warn('Canvas fallback error for image:', url, canvasError);
       return null;
     }
   }
