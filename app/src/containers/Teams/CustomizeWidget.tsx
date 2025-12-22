@@ -1419,7 +1419,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         <div className="flex space-x-8 mt-4 widget-tabs-section">
           <button
             onClick={() => setActiveTab('appearance')}
-            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors appearance-tab ${
+            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors appearance-tab focus:outline-none focus:ring-2 focus:ring-[#445AE7] focus:ring-offset-2 rounded-t ${
               activeTab === 'appearance'
                 ? 'border-[#0F64F1] text-[#0F64F1] bg-[#E8F2FE]'
                 : 'border-transparent text-[#666666] hover:text-[#4A4A4A]'
@@ -1429,7 +1429,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('preference')}
-            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors preference-tab ${
+            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors preference-tab focus:outline-none focus:ring-2 focus:ring-[#445AE7] focus:ring-offset-2 rounded-t ${
               activeTab === 'preference'
                 ? 'border-[#0F64F1] text-[#0F64F1] bg-[#E8F2FE]'
                 : 'border-transparent text-[#666666] hover:text-[#4A4A4A]'
@@ -1472,6 +1472,16 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         },
                         '& .MuiSwitch-track': {
                           backgroundColor: '#718096',
+                        },
+                        '& .MuiSwitch-switchBase:focus-visible': {
+                          outline: '1px solid #4A8CDE',
+                          outlineOffset: '2px',
+                          borderRadius: '14px',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                          outline: '1px solid #4A8CDE',
+                          outlineOffset: '2px',
+                          borderRadius: '14px',
                         },
                       }}
                     />
@@ -1563,7 +1573,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             onClick={() =>
                               toggleSection('accessibilityProfiles')
                             }
-                            className="p-1"
+                            className="p-1 focus:outline-none focus:ring-2 focus:ring-[#445AE7] focus:ring-offset-2 rounded"
                           >
                             {expandedSections.accessibilityProfiles ? (
                               <ChevronUp className="w-4 h-4" />
@@ -1653,7 +1663,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           />
                           <button
                             onClick={() => toggleSection('contentAdjustments')}
-                            className="p-1"
+                            className="p-1 focus:outline-none focus:ring-2 focus:ring-[#445AE7] focus:ring-offset-2 rounded"
                           >
                             {expandedSections.contentAdjustments ? (
                               <ChevronUp className="w-4 h-4" />
@@ -1737,7 +1747,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           />
                           <button
                             onClick={() => toggleSection('colorAdjustments')}
-                            className="p-1"
+                            className="p-1 focus:outline-none focus:ring-2 focus:ring-[#445AE7] focus:ring-offset-2 rounded"
                           >
                             {expandedSections.colorAdjustments ? (
                               <ChevronUp className="w-4 h-4" />
@@ -1821,7 +1831,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           />
                           <button
                             onClick={() => toggleSection('tools')}
-                            className="p-1"
+                            className="p-1 focus:outline-none focus:ring-2 focus:ring-[#445AE7] focus:ring-offset-2 rounded"
                           >
                             {expandedSections.tools ? (
                               <ChevronUp className="w-4 h-4" />
@@ -1899,14 +1909,14 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <button
                       onClick={onReset}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                     >
                       Reset
                     </button>
                     <button
                       onClick={onSave}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#445AE7] hover:bg-[#3A4BC7] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#445AE7] hover:bg-[#3A4BC7] focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#808EEB] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                     >
                       Save
                     </button>
@@ -1938,6 +1948,16 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         },
                         '& .MuiSwitch-track': {
                           backgroundColor: '#718096',
+                        },
+                        '& .MuiSwitch-switchBase:focus-visible': {
+                          outline: '1px solid #4A8CDE',
+                          outlineOffset: '2px',
+                          borderRadius: '14px',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                          outline: '1px solid #4A8CDE',
+                          outlineOffset: '2px',
+                          borderRadius: '14px',
                         },
                       }}
                     />
@@ -2162,8 +2182,17 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     {/* File Upload Area */}
                     <div className="mb-6">
                       <div
-                        className="relative border-2 border-dashed border-[#E5E7EB] rounded-xl p-6 text-center hover:border-[#445AE7] hover:bg-[#F8FAFF] transition-all duration-200 cursor-pointer group"
+                        className="relative border-2 border-dashed border-[#E5E7EB] rounded-xl p-6 text-center hover:border-[#445AE7] hover:bg-[#F8FAFF] transition-all duration-200 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-[#445AE7] focus:ring-offset-2"
                         onClick={() => fileInputRef.current?.click()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            fileInputRef.current?.click();
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        aria-label="Choose file to upload widget logo"
                       >
                         <input
                           type="file"
@@ -2267,7 +2296,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <div className="flex gap-3">
                       <button
                         onClick={handleReset}
-                        className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
+                        className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#445AE7] focus:ring-offset-2 shadow-sm hover:shadow-md"
                       >
                         Reset
                       </button>
@@ -2291,7 +2320,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             toast.error('Please provide a valid Image or URL.');
                           }
                         }}
-                        className="px-6 py-2.5 bg-[#445AE7] text-white rounded-lg text-sm font-medium hover:bg-[#3A4BC7] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:outline-none shadow-sm hover:shadow-md"
+                        className="px-6 py-2.5 bg-[#445AE7] text-white rounded-lg text-sm font-medium hover:bg-[#3A4BC7] transition-all duration-200 focus:ring-4 focus:ring-[#808EEB] focus:ring-offset-2 focus:outline-none shadow-sm hover:shadow-md"
                       >
                         Set Logo
                       </button>
@@ -2354,7 +2383,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         }));
                         setLogoUrl(DefaultColors.logoUrl);
                       }}
-                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
+                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#445AE7] focus:ring-offset-2 shadow-sm hover:shadow-md"
                     >
                       Reset
                     </button>
@@ -2451,7 +2480,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           DefaultColors.accessibilityStatementLinkUrl,
                         );
                       }}
-                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
+                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#445AE7] focus:ring-offset-2 shadow-sm hover:shadow-md"
                     >
                       Reset
                     </button>
@@ -2525,7 +2554,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                       onClick={() => {
                         setSelectedFont('auto');
                       }}
-                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
+                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#445AE7] focus:ring-offset-2 shadow-sm hover:shadow-md"
                     >
                       Reset
                     </button>
@@ -2585,7 +2614,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         }));
                         setFooterText(DefaultColors.footerText);
                       }}
-                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
+                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#445AE7] focus:ring-offset-2 shadow-sm hover:shadow-md"
                     >
                       Reset
                     </button>
@@ -2596,14 +2625,14 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <button
                       onClick={onReset}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                     >
                       Reset
                     </button>
                     <button
                       onClick={onSave}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#445AE7] hover:bg-[#3A4BC7] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#445AE7] hover:bg-[#3A4BC7] focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#808EEB] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                     >
                       Save
                     </button>

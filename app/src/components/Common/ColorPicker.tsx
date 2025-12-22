@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { ChevronDown, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { 
   getContrastResult, 
@@ -63,6 +63,10 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
   // Check if the compliance message is WCAG AAA
   const isWCAGAAA = complianceMessage?.includes('WCAG AAA');
 
+  // Track focus state for color input
+  const colorInputRef = useRef<HTMLInputElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
+
   return (
     <div className="flex flex-col sm:flex-col md:flex-row md:items-center md:justify-between w-full py-3 gap-3 sm:gap-3 md:gap-0">
       {/* Left side - Label and Description */}
@@ -111,15 +115,25 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
         <div className="relative">
           {/* Hidden color input */}
           <input
+            ref={colorInputRef}
             type="color"
             value={safeValue}
             onChange={(e) => onChange(e.target.value)}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer focus:outline-none z-10"
             aria-label={`Select color for ${label.toLowerCase()}`}
           />
 
           {/* Visible control - container fits to content */}
-          <div className="inline-flex items-center bg-white border border-[#A7B0FF] rounded-lg px-2 py-2 cursor-pointer hover:border-[#8B9AFF] transition-all duration-200 shadow-sm h-10">
+          <div 
+            className={`inline-flex items-center bg-white border rounded-lg px-2 py-2 cursor-pointer hover:border-[#8B9AFF] transition-all duration-200 shadow-sm h-10 ${
+              isFocused 
+                ? 'outline-none ring-4 ring-[#445AE7] ring-offset-2 border-[#445AE7]' 
+                : 'border-[#A7B0FF]'
+            }`}
+            onClick={() => colorInputRef.current?.click()}
+          >
             {/* Color preview square - matches Figma specs exactly */}
             <div
               className="w-8 h-8 rounded-lg mr-2 flex-shrink-0"
@@ -135,7 +149,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
         {/* Reset button */}
         <button
           onClick={onReset}
-          className="px-3 py-2 text-xs text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+          className="px-3 py-2 text-xs text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-[#445AE7] focus:ring-offset-2 transition-colors whitespace-nowrap"
           aria-label={`Reset ${label.toLowerCase()} to default`}
         >
           Reset
