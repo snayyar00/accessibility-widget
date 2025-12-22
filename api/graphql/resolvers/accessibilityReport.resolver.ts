@@ -14,6 +14,7 @@ import { EmailAttachment, sendEmailWithRetries } from '../../services/email/emai
 import { normalizeDomain } from '../../utils/domain.utils'
 import { UserInputError, ValidationError } from '../../utils/graphql-errors.helper'
 import { deleteReportFromR2, fetchReportFromR2, saveReportToR2 } from '../../utils/r2Storage'
+import { generatePDF } from '../../utils/generatePDF'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 import { validateAccessibilityReport, validateAccessibilityReportR2Filter, validateR2Key, validateSaveAccessibilityReportInput } from '../../validations/accesability.validation'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
