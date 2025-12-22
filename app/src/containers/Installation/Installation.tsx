@@ -202,19 +202,10 @@ export default function Installation({ domain }: any) {
                       href="https://www.webability.io/installation"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full md:w-auto px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base flex items-center justify-center gap-2 transition-colors installation-guide-link"
+                      className="w-full md:w-auto px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg installation-guide-link"
                       style={{
                         backgroundColor: baseColors.brandPrimary,
                         color: baseColors.white,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#3E748E'; // 4.5:1 contrast ratio with #F0F0F0 (WCAG AA compliant)
-                        e.currentTarget.style.color = '#F0F0F0'; // 4.5:1 contrast ratio on #3E748E (WCAG AA compliant)
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor =
-                          baseColors.brandPrimary;
-                        e.currentTarget.style.color = baseColors.white;
                       }}
                     >
                       <span>View all guides</span>
@@ -239,6 +230,7 @@ export default function Installation({ domain }: any) {
                     color: 'inherit',
                   }}
                 >
+                  <span className="sr-only">List with 5 items</span>
                   <div className="flex items-center justify-between gap-2 sm:gap-3">
                     <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">

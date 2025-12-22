@@ -1421,7 +1421,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
             onClick={() => setActiveTab('appearance')}
             className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors appearance-tab ${
               activeTab === 'appearance'
-                ? 'border-[#4285F4] text-[#4285F4]'
+                ? 'border-[#0F64F1] text-[#0F64F1] bg-[#E8F2FE]'
                 : 'border-transparent text-[#666666] hover:text-[#4A4A4A]'
             }`}
           >
@@ -1431,7 +1431,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
             onClick={() => setActiveTab('preference')}
             className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors preference-tab ${
               activeTab === 'preference'
-                ? 'border-[#4285F4] text-[#4285F4]'
+                ? 'border-[#0F64F1] text-[#0F64F1] bg-[#E8F2FE]'
                 : 'border-transparent text-[#666666] hover:text-[#4A4A4A]'
             }`}
           >
@@ -1460,7 +1460,20 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <Switch
                       checked={livePreview}
                       onChange={(e) => setLivePreview(e.target.checked)}
-                      color="primary"
+                      sx={{
+                        '& .MuiSwitch-switchBase': {
+                          color: '#222D73',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked': {
+                          color: '#145DA6',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                          backgroundColor: '#82B2E7',
+                        },
+                        '& .MuiSwitch-track': {
+                          backgroundColor: '#718096',
+                        },
+                      }}
                     />
                   </div>
                 </div>
@@ -1913,7 +1926,20 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <Switch
                       checked={livePreview}
                       onChange={(e) => setLivePreview(e.target.checked)}
-                      color="primary"
+                      sx={{
+                        '& .MuiSwitch-switchBase': {
+                          color: '#222D73',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked': {
+                          color: '#145DA6',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                          backgroundColor: '#82B2E7',
+                        },
+                        '& .MuiSwitch-track': {
+                          backgroundColor: '#718096',
+                        },
+                      }}
                     />
                   </div>
                 </div>
@@ -1922,10 +1948,12 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                 <h3 className="text-base md:text-lg font-semibold text-[#333333] mb-2 px-2">
                   Color Customization
                 </h3>
-                <p className="text-xs sm:text-sm md:text-sm text-[#757575] mb-4 px-2">
-                  Customize the appearance and colors of your accessibility
-                  widget to match your brand
-                </p>
+                <div className="bg-[#EBEFFD] border border-[#a3aef1] rounded-lg p-2 sm:p-3 md:p-4 mb-4">
+                  <p className="text-xs sm:text-sm md:text-sm text-[#6D6D6D]">
+                    Customize the appearance and colors of your accessibility
+                    widget to match your brand
+                  </p>
+                </div>
 
                 <div className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 sm:p-3 md:p-4 color-customization-panel">
                   {/* Widget Button Color */}
@@ -1996,7 +2024,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             <option value="dark">Dark Mode</option>
                           </select>
                           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:pr-3 md:pr-3 pointer-events-none">
-                            <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 text-[#9CA3AF]" />
+                            <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 text-[#8D95A3]" />
                           </div>
                         </div>
                       </div>
@@ -2164,7 +2192,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           <p className="text-sm font-medium text-[#374151] mb-1">
                             Choose file
                           </p>
-                          <p className="text-xs text-[#9CA3AF]">
+                          <p className="text-xs text-[#6E7788]">
                             PNG, JPG, SVG up to 5MB
                           </p>
                         </div>

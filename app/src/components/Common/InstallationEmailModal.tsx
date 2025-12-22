@@ -327,7 +327,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                       if (emailError) setEmailError('');
                     }}
                     placeholder="Enter your email address"
-                    className={`w-full px-5 py-4 border-2 rounded-xl focus:outline-none transition-all duration-200 text-gray-800 font-medium ${
+                    className={`w-full px-5 py-4 border-2 rounded-xl focus:outline-none transition-all duration-200 text-gray-800 font-medium email-input ${
                       emailError
                         ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100'
                         : 'border-gray-200 focus:border-[#445AE7] focus:ring-4 focus:ring-[#445AE7]/20'
@@ -490,12 +490,14 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
           }
         }
         
-        #email::placeholder {
-          color: #4B5563 !important; /* Gray-600 - 7:1 contrast ratio on white (WCAG AAA compliant) */
+        #email::placeholder,
+        .email-input::placeholder {
+          color: #4B5563 !important; /* Gray-600 - 7:1 contrast ratio on white (WCAG AAA compliant, exceeds 4.5:1 requirement) */
           opacity: 1;
         }
         
-        #email:focus::placeholder {
+        #email:focus::placeholder,
+        .email-input:focus::placeholder {
           color: #4B5563 !important;
         }
       `}</style>

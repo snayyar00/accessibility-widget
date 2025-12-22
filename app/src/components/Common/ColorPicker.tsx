@@ -60,6 +60,9 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
     ? getComplianceMessage(contrastResult, isLargeText)
     : null;
 
+  // Check if the compliance message is WCAG AAA
+  const isWCAGAAA = complianceMessage?.includes('WCAG AAA');
+
   return (
     <div className="flex flex-col sm:flex-col md:flex-row md:items-center md:justify-between w-full py-3 gap-3 sm:gap-3 md:gap-0">
       {/* Left side - Label and Description */}
@@ -87,7 +90,11 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
             </div>
             <span
               className={`text-xs font-medium ${
-                passesWCAG ? 'text-green-600' : 'text-red-600'
+                isWCAGAAA
+                  ? 'text-[#12883E]'
+                  : passesWCAG
+                  ? 'text-green-600'
+                  : 'text-red-600'
               }`}
             >
               {complianceMessage}
