@@ -25,7 +25,7 @@ type RegisterResponse = {
   url: string
 }
 
-async function registerUser(email: string, password: string, name: string, organization: Organization, allowedFrontendUrl: string, referralCode?: string): Promise<ApolloError | RegisterResponse> {
+async function registerUser(email: string, password: string, name: string, organization: Organization, allowedFrontendUrl: string, referralCode?: string): Promise<RegisterResponse> {
   const sanitizedInput = sanitizeUserInput({ email, name })
 
   email = sanitizedInput.email
@@ -48,11 +48,11 @@ async function registerUser(email: string, password: string, name: string, organ
     const user = await findUser({ email })
 
     if (user) {
-      return new ApolloError('Email address has been used')
+      throw new ApolloError('Email address has been used', 'BAD_USER_INPUT')
     }
 
     if (user && !user.is_active) {
-      return new ApolloError('Your account is not yet verify')
+      throw new ApolloError('Your account is not yet verify', 'BAD_USER_INPUT')
     }
 
     let newUserId: number | undefined
@@ -150,8 +150,22 @@ async function registerUser(email: string, password: string, name: string, organ
     const token = sign({ email, name })
 
     return { token, url: targetUrl }
-  } catch (error) {
-    logger.error(error)
+  } catch (error: any) {
+    // Handle duplicate entry errors (race condition where two requests try to register the same email)
+    if (
+      error?.code === 'ER_DUP_ENTRY' ||
+      error?.errno === 1062 ||
+      (error?.message && 
+       typeof error.message === 'string' && 
+       error.message.includes('Duplicate entry') &&
+       error.message.includes('for key'))
+    ) {
+      logger.warn(`Duplicate registration attempt for email: ${email}`, error)
+      // Throw a user-friendly error instead of the database error
+      throw new ApolloError('Email address has been used', 'BAD_USER_INPUT')
+    }
+
+    logger.error('Registration error:', error)
     throw error
   }
 }

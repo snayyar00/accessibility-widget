@@ -12,8 +12,7 @@ import { checkScript } from '../../services/allowedSites/allowedSites.service'
 import { fetchAccessibilityReport } from '../../services/accessibilityReport/accessibilityReport.service'
 import { EmailAttachment, sendEmailWithRetries } from '../../services/email/email.service'
 import { normalizeDomain } from '../../utils/domain.utils'
-import { generatePDF } from '../../utils/generatePDF'
-import { ValidationError } from '../../utils/graphql-errors.helper'
+import { UserInputError, ValidationError } from '../../utils/graphql-errors.helper'
 import { deleteReportFromR2, fetchReportFromR2, saveReportToR2 } from '../../utils/r2Storage'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 import { validateAccessibilityReport, validateAccessibilityReportR2Filter, validateR2Key, validateSaveAccessibilityReportInput } from '../../validations/accesability.validation'
@@ -399,7 +398,8 @@ const resolvers = {
         const report = await getAccessibilityReportByR2Key(r2_key)
 
         if (!report || !report?.url) {
-          throw new Error('Report not found')
+          // Report not found is a user input error, not a system error
+          throw new UserInputError('Report not found')
         }
 
         // const site = await findSiteByURL(report.url);
@@ -410,6 +410,11 @@ const resolvers = {
 
         return await fetchReportFromR2(r2_key)
       } catch (error) {
+        // If it's already a GraphQLError (like UserInputError), re-throw it
+        if (error instanceof UserInputError || error instanceof ValidationError) {
+          throw error
+        }
+        // For other errors (like R2 fetch failures), wrap them appropriately
         throw new Error(`Failed to fetch report by R2 key: ${error.message}`)
       }
     }),

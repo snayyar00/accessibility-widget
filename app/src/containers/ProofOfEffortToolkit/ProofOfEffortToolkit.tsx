@@ -36,6 +36,7 @@ import threeIssuesIconImage from '@/assets/images/3_issues_icon.png';
 import getWidgetSettings from '@/utils/getWidgetSettings';
 import InstallationEmailModal from '@/components/Common/InstallationEmailModal';
 import { CircularProgress } from '@mui/material';
+import LegalResources from './LegalResources';
 import TourGuide from '@/components/Common/TourGuide';
 import { defaultTourStyles } from '@/config/tourStyles';
 import { proofOfEffortTourSteps, tourKeys } from '@/constants/toursteps';
@@ -1804,11 +1805,19 @@ const ProofOfEffortToolkit: React.FC = () => {
         {/* Page Header */}
         <div className="mb-6 poe-page-header">
           <h1 className="text-3xl font-bold text-gray-900 poe-title">
-            Proof of effort toolkit
+            Legal resources
           </h1>
         </div>
 
-        <div className="flex lg:h-[calc(100vh-8rem)] h-auto lg:flex-row flex-col gap-6 overflow-hidden">
+        {/* Legal Resources Section */}
+        <LegalResources />
+
+        {/* Proof of Effort Toolkit Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Proof of effort toolkit
+          </h2>
+          <div className="flex lg:h-[calc(100vh-8rem)] h-auto lg:flex-row flex-col gap-6 overflow-hidden">
           {/* Left Panel - Document Content */}
           <div
             className="poe-left-panel flex-1 bg-white flex flex-col lg:min-h-0 min-h-[50vh] sm:min-h-[60vh] border-2 rounded-xl overflow-hidden"
@@ -2107,6 +2116,7 @@ const ProofOfEffortToolkit: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
 

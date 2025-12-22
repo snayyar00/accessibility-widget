@@ -19,7 +19,7 @@ import { hasWorkspaceAccessToSite } from '../../repository/workspace_users.repos
 import { canManageOrganization } from '../../utils/access.helper'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { generatePDF } from '../../utils/generatePDF'
-import { ValidationError } from '../../utils/graphql-errors.helper'
+import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 import { validateChangeURL, validateDomain } from '../../validations/allowedSites.validation'
@@ -114,7 +114,14 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
     const response = await insertSite(data)
 
     if (typeof response === 'string') {
-      throw new Error(response)
+      // Distinguish between validation errors (duplicate site) and system errors (insert failures)
+      if (response === 'You have already added this site.') {
+        // This is a validation error - user tried to add a duplicate site
+        throw new ValidationError(response)
+      } else {
+        // This is a system error (e.g., "insert failed: ...")
+        throw new ApolloError(response)
+      }
     }
 
     const site = response

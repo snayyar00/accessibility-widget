@@ -67,14 +67,14 @@ const routes = [
   },
   {
     path: '/proof-of-effort-toolkit',
-    name: 'Proof of Effort',
+    name: 'Legal resources',
     exact: true,
     component: ProofOfEffortToolkit,
     icon: (
       <FiFile
         className="menu-icon text-white-blue transition-colors duration-200"
         size={25}
-        aria-label="Proof of Effort Toolkit navigation icon"
+        aria-label="Legal resources navigation icon"
       />
     ),
     isSidebar: true,

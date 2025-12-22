@@ -37,7 +37,11 @@ export interface ContrastResult {
  * Matches webAbilityFrontend implementation
  */
 export function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  let hexClean = hex.replace(/^#/, '');
+  if (hexClean.length === 3) {
+    hexClean = hexClean.split('').map((c) => c + c).join('');
+  }
+  const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexClean);
   return result
     ? {
         r: parseInt(result[1], 16),
