@@ -195,40 +195,43 @@ export async function downloadLegalPDF(req: Request & { user?: UserLogined }, re
     const firstPage = pages[0]
     const { width, height } = firstPage.getSize()
 
-    // Embed a standard font
-    const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
-    const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+    // Only add user information for Legal Action Response Plan, not for Trusted Certification
+    if (type === 'legal-action-response-plan') {
+      // Embed a standard font
+      const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
+      const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
-    // Add user information at the top of the page
-    // Positioned lower to avoid overlapping with existing PDF content
-    const topMargin = 100 // Distance from top (moved down further to avoid layout conflicts)
-    const leftMargin = 25 // Distance from left
-    const lineHeight = 14 // Space between lines
-    let currentY = height - topMargin
+      // Add user information at the top of the page
+      // Positioned lower to avoid overlapping with existing PDF content
+      const topMargin = 100 // Distance from top (moved down further to avoid layout conflicts)
+      const leftMargin = 25 // Distance from left
+      const lineHeight = 14 // Space between lines
+      let currentY = height - topMargin
 
-    // Add "Hi" and user name (not bold, smaller)
-    if (user.name) {
-      const nameText = `Hi ${user.name}`
-      firstPage.drawText(nameText, {
-        x: leftMargin,
-        y: currentY,
-        size: 10, // Reduced from 12
-        font: helveticaFont, // Not bold
-        color: rgb(0, 0, 0), // Black
-      })
-      currentY -= lineHeight + 5 // Extra space before URL
-    }
+      // Add "Hi" and user name (not bold, smaller)
+      if (user.name) {
+        const nameText = `Hi ${user.name}`
+        firstPage.drawText(nameText, {
+          x: leftMargin,
+          y: currentY,
+          size: 10, // Reduced from 12
+          font: helveticaFont, // Not bold
+          color: rgb(0, 0, 0), // Black
+        })
+        currentY -= lineHeight + 5 // Extra space before URL
+      }
 
-    // Add website URL (bold, larger) instead of email
-    // Always show something - either website URL or email as fallback
-    if (websiteUrl) {
-      firstPage.drawText(websiteUrl, {
-        x: leftMargin,
-        y: currentY,
-        size: 12, // Increased from 10
-        font: helveticaBoldFont, // Bold
-        color: rgb(0.2, 0.2, 0.2), // Dark gray
-      })
+      // Add website URL (bold, larger) instead of email
+      // Always show something - either website URL or email as fallback
+      if (websiteUrl) {
+        firstPage.drawText(websiteUrl, {
+          x: leftMargin,
+          y: currentY,
+          size: 12, // Increased from 10
+          font: helveticaBoldFont, // Bold
+          color: rgb(0.2, 0.2, 0.2), // Dark gray
+        })
+      }
     }
 
     // Serialize the PDF to bytes
