@@ -56,6 +56,10 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
   const handleSendEmail = async () => {
     if (!validateEmail(email)) {
       setEmailError('Please enter a valid email address');
+      // Focus the input so screen reader can announce the error via aria-describedby
+      setTimeout(() => {
+        emailInputRef.current?.focus();
+      }, 100);
       return;
     }
 
@@ -78,6 +82,10 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
       const errorMessage = getErrorMessage(error, 'Failed to send email. Please try again.');
       setStatusAnnouncement('');
       setEmailError(errorMessage);
+      // Focus the input so screen reader can announce the error via aria-describedby
+      setTimeout(() => {
+        emailInputRef.current?.focus();
+      }, 100);
     }
   };
 
@@ -200,6 +208,13 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
     };
   }, [isOpen, isLoading]);
 
+  // Announce loading state when parent toggles isLoading
+  useEffect(() => {
+    if (isLoading) {
+      setStatusAnnouncement('Sending email. Please wait.');
+    }
+  }, [isLoading]);
+
   if (!isOpen) return null;
 
   return (
@@ -281,7 +296,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
           {/* Status announcement region - announces loading and success states */}
           <div
             role="status"
-            aria-live="polite"
+            aria-live="assertive"
             aria-atomic="true"
             className="sr-only"
             id="email-status-announcement"
@@ -339,7 +354,13 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                   Required field
                 </p>
                 {emailError && (
-                  <p id="email-error" className="text-red-500 text-sm mt-2 font-medium flex items-center gap-1" role="alert">
+                  <p 
+                    id="email-error" 
+                    className="text-red-500 text-sm mt-2 font-medium flex items-center gap-1" 
+                    role="alert"
+                    aria-live="polite"
+                    aria-atomic="true"
+                  >
                     <span className="w-1 h-1 bg-red-500 rounded-full" aria-hidden="true"></span>
                     {emailError}
                   </p>
