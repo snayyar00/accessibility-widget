@@ -1136,18 +1136,6 @@ export default function CodeContainer({
                   Copy Snippet
                 </>
               )
-            ) : selectedScript === 'gtm' ? (
-              copySuccessGtm ? (
-                <>
-                  <FaCheck className="w-3 h-3" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <FaRegCopy className="w-3 h-3" />
-                  Copy Snippet
-                </>
-              )
             ) : copySuccess ? (
               <>
                 <FaCheck className="w-3 h-3" aria-hidden="true" />
