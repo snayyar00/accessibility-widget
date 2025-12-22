@@ -1096,25 +1096,25 @@ export default function CodeContainer({
             className={`absolute bottom-3 left-3 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md font-medium text-sm transition-all duration-200 copy-code-button ${
               selectedScript === 'new'
                 ? copySuccessNew
-                  ? 'bg-green-600 hover:bg-green-700'
+                  ? 'hover:opacity-90'
                   : 'text-white hover:opacity-80'
                 : selectedScript === 'gtm'
                 ? copySuccessGtm
-                  ? 'bg-green-600 hover:bg-green-700'
+                  ? 'hover:opacity-90'
                   : 'text-white hover:opacity-80'
                 : copySuccess
-                ? ''
+                ? 'hover:opacity-90'
                 : 'text-white hover:opacity-80'
             }`}
             style={{
               backgroundColor:
                 selectedScript === 'new'
                   ? copySuccessNew
-                    ? undefined
+                    ? '#107736' // 4.53:1 contrast ratio with #E6E6E6 (WCAG AA compliant)
                     : '#3343AD'
                   : selectedScript === 'gtm'
                   ? copySuccessGtm
-                    ? undefined
+                    ? '#107736' // 4.53:1 contrast ratio with #E6E6E6 (WCAG AA compliant)
                     : '#3343AD'
                   : copySuccess
                   ? '#107736' // 4.53:1 contrast ratio with #E6E6E6 (WCAG AA compliant)

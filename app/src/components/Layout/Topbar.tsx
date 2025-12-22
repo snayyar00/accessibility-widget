@@ -392,7 +392,8 @@ const Topbar: React.FC<Props> = ({
                   }
                 }}
                 ref={profileRef}
-                className="flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg transition-all duration-200"
+                className="flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg transition-transform duration-200 hover:scale-110 active:scale-95 hover:bg-transparent hover:!bg-transparent"
+                style={{ backgroundColor: 'transparent' }}
                 aria-label={`Profile picture for ${name || 'User'}`}
                 aria-expanded={isShowMenu}
                 aria-haspopup="menu"
@@ -400,7 +401,7 @@ const Topbar: React.FC<Props> = ({
                 title={`${name || 'User'} - Profile Picture`}
                 tabIndex={0}
               >
-                <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-300 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-300 flex items-center justify-center hover:border-gray-300">
                   <InitialAvatar
                     name={name || 'User'}
                     size={40}
@@ -435,7 +436,7 @@ const Topbar: React.FC<Props> = ({
                       type="button"
                       role="switch"
                       aria-label="Monthly Reports"
-                      aria-checked={notificationSettings.monthly_report_flag}
+                      aria-checked={notificationSettings.monthly_report_flag ? 'true' : 'false'}
                       onClick={(e) =>
                         handleNotificationToggle('monthly_report_flag', e)
                       }
@@ -472,7 +473,7 @@ const Topbar: React.FC<Props> = ({
                       type="button"
                       role="switch"
                       aria-label="New Domain Alerts"
-                      aria-checked={notificationSettings.new_domain_flag}
+                      aria-checked={notificationSettings.new_domain_flag ? 'true' : 'false'}
                       onClick={(e) =>
                         handleNotificationToggle('new_domain_flag', e)
                       }
@@ -509,7 +510,7 @@ const Topbar: React.FC<Props> = ({
                       type="button"
                       role="switch"
                       aria-label="Issue Reports"
-                      aria-checked={notificationSettings.issue_reported_flag}
+                      aria-checked={notificationSettings.issue_reported_flag ? 'true' : 'false'}
                       onClick={(e) =>
                         handleNotificationToggle('issue_reported_flag', e)
                       }
@@ -546,7 +547,7 @@ const Topbar: React.FC<Props> = ({
                       type="button"
                       role="switch"
                       aria-label="Onboarding Emails"
-                      aria-checked={notificationSettings.onboarding_emails_flag}
+                      aria-checked={notificationSettings.onboarding_emails_flag ? 'true' : 'false'}
                       onClick={(e) =>
                         handleNotificationToggle('onboarding_emails_flag', e)
                       }
@@ -600,7 +601,7 @@ const Topbar: React.FC<Props> = ({
                         e.currentTarget.click();
                       }
                     }}
-                    className="flex items-center px-4 py-3 text-sm font-medium text-[#0074E8] hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset transition-all duration-200 cursor-pointer"
+                    className="flex items-center px-4 py-3 text-sm font-medium text-[#0074E8] hover:translate-x-1 focus:translate-x-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset focus:bg-transparent transition-transform duration-200 cursor-pointer hover:bg-transparent"
                     style={{ color: '#0074E8' }}
                     tabIndex={0}
                     aria-label={`${t('Common.label.profile')} (menu item 1 of 3 in list)`}
@@ -643,7 +644,7 @@ const Topbar: React.FC<Props> = ({
                         }
                       }
                     }}
-                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset transition-all duration-200 cursor-pointer border-none bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:translate-x-1 focus:translate-x-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset focus:bg-transparent transition-transform duration-200 cursor-pointer border-none bg-transparent hover:bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                     tabIndex={0}
                   >
                     <svg
@@ -687,7 +688,7 @@ const Topbar: React.FC<Props> = ({
                         }
                       }
                     }}
-                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 focus:bg-red-50 focus:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-inset transition-all duration-200 cursor-pointer border-none bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:translate-x-1 focus:translate-x-1 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-inset focus:bg-transparent transition-transform duration-200 cursor-pointer border-none bg-transparent hover:bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                     tabIndex={0}
                   >
                     <svg

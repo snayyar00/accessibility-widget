@@ -379,6 +379,9 @@ const LicenseOwnerInfo: React.FC = () => {
                         setIsCountryDropdownOpen(!isCountryDropdownOpen)
                       }
                       aria-label="License owner Country code"
+                      aria-expanded={isCountryDropdownOpen}
+                      aria-haspopup="listbox"
+                      aria-controls="country-code-listbox"
                       className="flex items-center gap-2 bg-light-gray border border-white-blue rounded-[10px] px-[10px] py-[10.5px] text-[13px] sm:text-[14px] md:text-[16px] text-white-gray w-full hover:border-light-primary transition-colors h-[42px]"
                     >
                       <span className="text-base sm:text-lg">
@@ -391,11 +394,17 @@ const LicenseOwnerInfo: React.FC = () => {
                     </button>
 
                     {isCountryDropdownOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto w-full">
+                      <div 
+                        id="country-code-listbox"
+                        role="listbox"
+                        className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto w-full"
+                      >
                         {countryCodes.map((country) => (
                           <button
                             key={country.code + country.name}
                             type="button"
+                            role="option"
+                            aria-selected={selectedCountry.code === country.code && selectedCountry.name === country.name}
                             onClick={() => handleCountrySelect(country)}
                             className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-2 hover:bg-gray-50 text-left transition-colors text-xs sm:text-sm md:text-base min-h-[44px] sm:min-h-[40px]"
                           >
