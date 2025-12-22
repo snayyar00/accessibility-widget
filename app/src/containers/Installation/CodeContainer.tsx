@@ -485,11 +485,13 @@ export default function CodeContainer({
                     tabIndex={0}
                     aria-labelledby="position-label"
                     aria-label="Position combo box"
+                    aria-expanded={false}
+                    role="combobox"
                     className="w-full md:w-auto px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900 font-medium appearance-none min-w-[120px]"
                     style={{ borderColor: '#A2ADF3' }}
                   >
                     {positions.map((pos) => (
-                      <option key={pos.value} value={pos.value}>
+                      <option key={pos.value} value={pos.value} aria-selected={position === pos.value}>
                         {pos.label}
                       </option>
                     ))}
@@ -497,7 +499,8 @@ export default function CodeContainer({
                   <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                     <FaChevronDown
                       className="w-3 h-3"
-                      style={{ color: '#7E8EEE' }} // 3:1 contrast ratio on white (WCAG AA compliant for graphical objects)
+                      style={{ color: '#7E8EEE' }}
+                      aria-hidden="true"
                     />
                   </div>
                 </div>
@@ -532,19 +535,23 @@ export default function CodeContainer({
                     aria-controls="language-listbox"
                     aria-autocomplete="list"
                     role="combobox"
+                    aria-describedby={isLanguageDropdownOpen ? 'language-expanded' : 'language-collapsed'}
                     className="w-full md:w-auto px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center justify-between hover:border-gray-300 transition-colors min-w-[180px]"
                     style={{ borderColor: '#A2ADF3' }}
                   >
-                    <span className="text-gray-900 font-medium">
+                    <span className="text-gray-900 font-medium" aria-label={`${selectedLanguage.name}, Selected`}>
                       {selectedLanguage.name}
                     </span>
                     <FaChevronDown
                       className={`w-3 h-3 transition-transform ${
                         isLanguageDropdownOpen ? 'rotate-180' : ''
                       }`}
-                      style={{ color: '#7E8EEE' }} // 3:1 contrast ratio on white (WCAG AA compliant for graphical objects)
+                      style={{ color: '#7E8EEE' }}
+                      aria-hidden="true"
                     />
                   </button>
+                  <span id="language-expanded" className="sr-only">Expanded</span>
+                  <span id="language-collapsed" className="sr-only">Collapsed</span>
 
                   {isLanguageDropdownOpen && (
                     <div
@@ -559,7 +566,7 @@ export default function CodeContainer({
                           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" aria-hidden="true" />
                           <input
                             type="text"
-                            placeholder="Search languages..."
+                            placeholder="Search Language's name"
                             value={languageSearchTerm}
                             onChange={(e) =>
                               setLanguageSearchTerm(e.target.value)
@@ -568,6 +575,7 @@ export default function CodeContainer({
                             style={{
                               color: '#111827', // Dark gray - 16.5:1 contrast ratio on white (WCAG AAA compliant)
                             }}
+                            aria-label="Search Language's name"
                           />
                         </div>
                       </div>
@@ -576,14 +584,17 @@ export default function CodeContainer({
                           color: #111827 !important; /* Dark gray - 16.5:1 contrast ratio on white (WCAG AAA compliant) */
                         }
                         .language-search-input::placeholder {
-                          color: #6B7280 !important; /* 4.5:1 contrast ratio on white (WCAG AA compliant) */
+                          color: #4B5563 !important; /* Gray-600 - 7:1 contrast ratio on white (WCAG AAA compliant, exceeds 4.5:1 requirement) */
                           opacity: 1;
                         }
                         .language-search-input:focus::placeholder {
-                          color: #6B7280 !important;
+                          color: #4B5563 !important;
                         }
                       `}</style>
-                      <div className="max-h-36 overflow-y-auto" aria-live="polite" aria-atomic="true">
+                      <div className="max-h-36 overflow-y-auto" role="listbox" aria-labelledby="language-label">
+                        <div aria-live="polite" aria-atomic="true" className="sr-only">
+                          {filteredLanguages.length === 0 && languageSearchTerm ? 'No languages found' : ''}
+                        </div>
                         {filteredLanguages.length > 0 ? (
                           filteredLanguages.map((lang) => (
                             <button
@@ -603,7 +614,7 @@ export default function CodeContainer({
                                     {lang.code.toUpperCase().slice(0, 2)}
                                   </span>
                                 )}
-                                <span className="text-gray-900 font-medium">
+                                <span className="text-gray-900 font-medium" style={{ color: '#111827' }}>
                                   {lang.name}
                                 </span>
                               </div>
@@ -613,7 +624,7 @@ export default function CodeContainer({
                             </button>
                           ))
                         ) : (
-                          <div className="px-4 py-3 text-gray-500 text-sm">
+                          <div className="px-4 py-3 text-sm" style={{ color: '#4B5563' }} aria-live="polite" role="status">
                             No languages found
                           </div>
                         )}
@@ -656,11 +667,12 @@ export default function CodeContainer({
                       aria-controls="trigger-icon-listbox"
                       aria-autocomplete="list"
                       role="combobox"
+                      aria-describedby={isIconTypeDropdownOpen ? 'trigger-icon-expanded' : 'trigger-icon-collapsed'}
                       className="w-full px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center hover:border-gray-300 transition-colors relative"
                       style={{ borderColor: '#A2ADF3' }}
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-gray-900 font-medium">
+                        <span className="text-gray-900 font-medium" aria-label={`${selectedIconType.label}, Selected`}>
                           {selectedIconType.label}
                         </span>
                         {selectedIconType.preview()}
@@ -669,9 +681,12 @@ export default function CodeContainer({
                         className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 transition-transform ${
                           isIconTypeDropdownOpen ? 'rotate-180' : ''
                         }`}
-                        style={{ color: '#7E8EEE' }} // 3:1 contrast ratio on white (WCAG AA compliant for graphical objects)
+                        style={{ color: '#7E8EEE' }}
+                        aria-hidden="true"
                       />
                     </button>
+                    <span id="trigger-icon-expanded" className="sr-only">Expanded</span>
+                    <span id="trigger-icon-collapsed" className="sr-only">Collapsed</span>
 
                     {isIconTypeDropdownOpen && (
                       <div
@@ -738,19 +753,23 @@ export default function CodeContainer({
                         aria-controls="trigger-size-listbox"
                         aria-autocomplete="list"
                         role="combobox"
+                        aria-describedby={isWidgetSizeDropdownOpen ? 'trigger-size-expanded' : 'trigger-size-collapsed'}
                         className="w-full px-3 py-2 pr-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white flex items-center justify-between hover:border-gray-300 transition-colors"
                         style={{ borderColor: '#A2ADF3' }}
                       >
-                        <span className="text-gray-900 font-medium">
+                        <span className="text-gray-900 font-medium" aria-label={`${selectedWidgetSize.label}, Selected`}>
                           {selectedWidgetSize.label}
                         </span>
                         <FaChevronDown
                           className={`w-3 h-3 transition-transform ${
                             isWidgetSizeDropdownOpen ? 'rotate-180' : ''
                           }`}
-                          style={{ color: '#7E8EEE' }} // 3:1 contrast ratio on white (WCAG AA compliant for graphical objects)
+                          style={{ color: '#7E8EEE' }}
+                          aria-hidden="true"
                         />
                       </button>
+                      <span id="trigger-size-expanded" className="sr-only">Expanded</span>
+                      <span id="trigger-size-collapsed" className="sr-only">Collapsed</span>
 
                       {isWidgetSizeDropdownOpen && (
                         <div
@@ -924,11 +943,12 @@ export default function CodeContainer({
                     min="0"
                     max="100"
                   />
-                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2" aria-hidden="true">
                     <svg
                       className="w-4 h-4 text-blue-500"
                       fill="currentColor"
                       viewBox="0 0 20 20"
+                      aria-hidden="true"
                     >
                       <path d="M3 8h14v1H3V8z" />
                       <path d="M3 11h14v1H3v-1z" />
@@ -955,11 +975,12 @@ export default function CodeContainer({
                     min="0"
                     max="100"
                   />
-                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2" aria-hidden="true">
                     <svg
                       className="w-4 h-4 text-blue-500"
                       fill="currentColor"
                       viewBox="0 0 20 20"
+                      aria-hidden="true"
                     >
                       <path d="M8 3v14h1V3H8z" />
                       <path d="M11 3v14h1V3h-1z" />
@@ -975,9 +996,9 @@ export default function CodeContainer({
       {/* Installation Snippet - Matches Figma exactly */}
       <div className="p-4 installation-instructions">
         <div className="mb-3">
-          <p className="text-sm font-semibold text-gray-900 mb-1">
+          <span className="text-sm font-semibold text-gray-900 mb-1 block">
             Installation snippet
-          </p>
+          </span>
           <p className="text-sm text-gray-500">
             Paste before closing {'</body>'} tag
           </p>
@@ -1176,7 +1197,7 @@ export default function CodeContainer({
         </div>
 
         {/* Support Contact - Matches the image */}
-        <div className="mt-6">
+        <div className="mt-6" style={{ backgroundColor: '#FFFFFF' }}>
           <p className="text-sm mb-1" style={{ color: '#747493' }}>
             Need help for the next step?
           </p>
