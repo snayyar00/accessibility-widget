@@ -829,7 +829,13 @@ export default function CodeContainer({
             <h4 className="text-sm font-bold text-gray-800">Set offset</h4>
             <div 
               className="relative"
-              onMouseLeave={() => setIsOffsetTooltipVisible(false)}
+              onMouseLeave={(e) => {
+                // Only hide if mouse is leaving the entire container (button + tooltip)
+                const relatedTarget = e.relatedTarget as HTMLElement;
+                if (!e.currentTarget.contains(relatedTarget)) {
+                  setIsOffsetTooltipVisible(false);
+                }
+              }}
             >
               <button
                 type="button"
@@ -853,9 +859,20 @@ export default function CodeContainer({
               <div
                 id="offset-tooltip"
                 role="tooltip"
+                tabIndex={0}
                 className={`absolute top-1/2 left-full transform -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg transition-opacity duration-200 whitespace-nowrap z-[9999] shadow-lg ${
                   isOffsetTooltipVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 }`}
+                onMouseLeave={() => setIsOffsetTooltipVisible(false)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setIsOffsetTooltipVisible(false);
+                    const button = document.querySelector('[aria-describedby="offset-tooltip"]') as HTMLElement;
+                    if (button) {
+                      button.focus();
+                    }
+                  }
+                }}
               >
                 Adjust the widget position from the corner (in pixels)
                 <div className="absolute top-1/2 right-full transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-gray-900"></div>

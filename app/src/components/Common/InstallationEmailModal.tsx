@@ -60,7 +60,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
     }
 
     setEmailError('');
-    setStatusAnnouncement('Sending email...');
+    setStatusAnnouncement('Sending email... Loading.');
 
     try {
       await onSubmit(email);
@@ -251,7 +251,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
               </div>
               <div>
                 <h2 id="modal-title" className="text-xl font-bold mb-1">{title}</h2>
-                <p id="modal-description" className="text-white text-sm font-medium">
+                <p id="modal-description" className="text-white text-sm font-medium" style={{ color: '#FFFFFF' }}>
                   {description}
                 </p>
               </div>
@@ -270,7 +270,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
               <FaTimes 
                 className="w-5 h-5" 
                 aria-hidden="true"
-                style={{ color: '#FFFFFF' }}
+                style={{ color: '#111827' }}
               />
             </button>
           </div>
@@ -291,12 +291,15 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
 
           {!sendSuccess ? (
             <>
+              <p className="text-sm text-gray-700 mb-4" style={{ color: '#374151' }}>
+                Fields marked with an asterisk (*) are required.
+              </p>
               <div className="mb-6">
                 <label
                   htmlFor="email"
                   className="block text-sm font-bold text-gray-800 mb-3"
                 >
-                  Email Address <span className="text-red-500" aria-label="required">*</span>
+                  Email Address <span className="text-red-500" aria-label="required">*</span> <span className="sr-only">Required</span>
                 </label>
                 <div className="relative">
                   <input
@@ -380,6 +383,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                 onClick={handleSendEmail}
                 disabled={isLoading || !email.trim()}
                 aria-busy={isLoading}
+                aria-describedby={isLoading ? 'loading-announcement' : undefined}
                 className="w-full py-4 px-6 text-white rounded-xl font-bold transition-all duration-200 flex items-center justify-center gap-3 disabled:cursor-not-allowed disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]"
                 style={{
                   background:
@@ -409,6 +413,17 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                   </>
                 )}
               </button>
+              {isLoading && (
+                <div
+                  id="loading-announcement"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className="sr-only"
+                >
+                  Loading. Sending email.
+                </div>
+              )}
             </>
           ) : (
             <div className="text-center py-12">
