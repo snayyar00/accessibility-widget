@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaEnvelope, FaTimes, FaCheck, FaMagic } from 'react-icons/fa';
 import { CircularProgress } from '@mui/material';
+import { getErrorMessage } from '@/helpers/error.helper';
 
 interface BulletPoint {
   text: string;
@@ -73,8 +74,10 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
       // If not showing success state, parent component handles the feedback
     } catch (error) {
       console.error('Error sending email:', error);
-      setEmailError('Failed to send email. Please try again.');
+      // Extract the actual error message from GraphQL errors
+      const errorMessage = getErrorMessage(error, 'Failed to send email. Please try again.');
       setStatusAnnouncement('');
+      setEmailError(errorMessage);
     }
   };
 
