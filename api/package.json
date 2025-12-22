@@ -33,6 +33,7 @@
     "@types/jspdf": "^2.0.0",
     "@types/linkify-it": "^5.0.0",
     "@types/multer": "^2.0.0",
+    "adm-zip": "^0.5.16",
     "ai": "^5.0.21",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.13.2",

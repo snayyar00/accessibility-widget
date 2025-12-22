@@ -15,3 +15,4 @@ type Context = {
 
 export const allowedOrganization = (parent: unknown, args: unknown, { organization }: Context): ForbiddenError => (organization?.domain ? skip : new ForbiddenError('Provided domain is not in the list of allowed organizations'))
 export const isAuthenticated = (parent: unknown, args: unknown, { user }: Context): AuthenticationError => (user?.email ? skip : new AuthenticationError('Authentication fail'))
+export const isSuperAdmin = (parent: unknown, args: unknown, { user }: Context): ForbiddenError => (user?.is_super_admin ? skip : new ForbiddenError('Only super admins can perform this action'))

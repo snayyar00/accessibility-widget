@@ -3,13 +3,18 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { JOB_EXPIRY_MS } from '../../config/env'
 import { QUEUE_PRIORITY } from '../../constants/queue-priority.constant'
+import compileEmailTemplate from '../../helpers/compile-email-template'
 import { deleteAccessibilityReportByR2Key, getAccessibilityReportByR2Key, getR2KeysByParams, insertAccessibilityReport } from '../../repository/accessibilityReports.repository'
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { fetchTechStackFromAPI } from '../../repository/techStack.repository'
+import { getUserbyId } from '../../repository/user.repository'
+import { checkScript } from '../../services/allowedSites/allowedSites.service'
 import { fetchAccessibilityReport } from '../../services/accessibilityReport/accessibilityReport.service'
+import { EmailAttachment, sendEmailWithRetries } from '../../services/email/email.service'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { UserInputError, ValidationError } from '../../utils/graphql-errors.helper'
 import { deleteReportFromR2, fetchReportFromR2, saveReportToR2 } from '../../utils/r2Storage'
+import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 import { validateAccessibilityReport, validateAccessibilityReportR2Filter, validateR2Key, validateSaveAccessibilityReportInput } from '../../validations/accesability.validation'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
@@ -60,8 +65,9 @@ async function processAccessibilityReportJob(jobId: string, url: string, useCach
     // --- Backend save logic ---
     const normalizedUrl = normalizeDomain(url)
     let allowed_sites_id = null
+    let site = null
     try {
-      const site = await findSiteByURL(normalizedUrl)
+      site = await findSiteByURL(normalizedUrl)
       allowed_sites_id = site ? site.id : null
     } catch {
       allowed_sites_id = null
@@ -108,6 +114,173 @@ async function processAccessibilityReportJob(jobId: string, url: string, useCach
           report: meta,
         },
       }
+    }
+
+    // If this is a full site scan, send email notification when report is ready
+    if (fullSiteScan && site && site.user_id) {
+      // Capture variables for the async closure
+      const emailReportKey = reportKey
+      const emailResult = result
+      const emailUrl = url
+      const emailNormalizedUrl = normalizedUrl
+      
+      setImmediate(async () => {
+        try {
+          const user = await getUserbyId(site.user_id)
+          if (!user || !user.email) {
+            console.log(`Skipping full site scan email - user ${site.user_id} not found or has no email`)
+            return
+          }
+
+          let widgetStatus: string
+          let status: string
+          let score: number
+
+          // Use widget status from report (Puppeteer detection) if available, otherwise fallback to API check
+          widgetStatus = (emailResult as any)?.scriptCheckResult ?? (await checkScript(emailUrl))
+          status = widgetStatus === 'true' || widgetStatus === 'Web Ability' ? 'Compliant' : 'Not Compliant'
+          score = emailResult.score
+
+          // Use the same score shown in the PDF:
+          // 1) Prefer processed enhanced score when available
+          // 2) Otherwise, if WebAbility is active, add the 45 bonus (capped at 95)
+          // 3) Otherwise, use the raw scanner score
+          const enhancedFromReport = (emailResult as any)?.totalStats?.score
+          const displayedScore = typeof enhancedFromReport === 'number' ? enhancedFromReport : widgetStatus === 'true' || widgetStatus === 'Web Ability' ? Math.min((score || 0) + 45, 95) : score || 0
+
+          const complianceByScore = displayedScore >= 80 ? 'Compliant' : displayedScore >= 50 ? 'Partially Compliant' : 'Not Compliant'
+
+          // Calculate total counts from both AXE and HTML_CS
+          const errorsCount = (emailResult?.axe?.errors?.length || 0) + (emailResult?.htmlcs?.errors?.length || 0)
+          const warningsCount = (emailResult?.axe?.warnings?.length || 0) + (emailResult?.htmlcs?.warnings?.length || 0)
+          const noticesCount = (emailResult?.axe?.notices?.length || 0) + (emailResult?.htmlcs?.notices?.length || 0)
+
+          const year = new Date().getFullYear()
+
+          // Generate secure unsubscribe link for full site scan reports (using 'domain' type as it's domain-specific)
+          const unsubscribeLink = generateSecureUnsubscribeLink(user.email, getUnsubscribeTypeForEmail('domain'), user.id)
+
+          // Get frontend URL from environment (handle comma-separated values)
+          const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim() || 'https://app.webability.io'
+
+          // Generate direct link to the report - use the r2_key without the "reports/" prefix for the URL path
+          // The frontend will add the prefix when fetching
+          const r2KeyForUrl = emailReportKey.replace(/^reports\//, '')
+          const reportLink = `${frontendUrl}/reports/${r2KeyForUrl}?domain=${encodeURIComponent(emailNormalizedUrl)}`
+
+          const template = await compileEmailTemplate({
+            fileName: 'accessReport.mjml',
+            data: {
+              status,
+              url: emailUrl,
+              statusImage: emailResult.siteImg,
+              statusDescription: complianceByScore,
+              score: displayedScore,
+              errorsCount: errorsCount,
+              warningsCount: warningsCount,
+              noticesCount: noticesCount,
+              reportLink: reportLink,
+              unsubscribeLink: unsubscribeLink,
+              year,
+            },
+          })
+
+          // Generate PDF and compress it into a zip file to reduce email size
+          let attachments: EmailAttachment[] = []
+          try {
+            const pdfBlob = await generatePDF(
+              {
+                ...emailResult, // Pass the full report data
+                score: emailResult.score,
+                widgetInfo: { result: widgetStatus },
+                scriptCheckResult: widgetStatus,
+                url: emailUrl,
+              },
+              'en',
+              emailUrl,
+            )
+            
+            // Convert Blob to Buffer - handle both browser Blob and Node.js compatible formats
+            let pdfBuffer: Buffer
+            if (pdfBlob instanceof Buffer) {
+              pdfBuffer = pdfBlob
+            } else if (pdfBlob.arrayBuffer) {
+              pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
+            } else if (pdfBlob instanceof Uint8Array) {
+              pdfBuffer = Buffer.from(pdfBlob)
+            } else {
+              // Try to get the buffer directly if it's a jsPDF output
+              pdfBuffer = Buffer.from(pdfBlob as any)
+            }
+            
+            // Validate PDF buffer has content
+            if (!pdfBuffer || pdfBuffer.length === 0) {
+              throw new Error('Generated PDF buffer is empty')
+            }
+            
+            // Check PDF size and compress into zip file to reduce email size
+            const pdfSizeMB = pdfBuffer.length / (1024 * 1024)
+            console.log(`PDF size for full site scan ${emailUrl}: ${pdfSizeMB.toFixed(2)}MB`)
+            
+            // Use adm-zip to compress PDF into a zip file
+            // Note: Requires npm install adm-zip (or yarn add adm-zip)
+            try {
+              const AdmZip = require('adm-zip')
+              const zip = new AdmZip()
+              const pdfFileName = `accessibility-report-${emailUrl.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`
+              
+              // Add the PDF file to the zip - ensure buffer is valid
+              if (pdfBuffer && pdfBuffer.length > 0) {
+                zip.addFile(pdfFileName, pdfBuffer)
+                
+                // Verify the file was added to the zip
+                const zipEntries = zip.getEntries()
+                if (zipEntries.length === 0) {
+                  throw new Error('No files were added to the zip')
+                }
+                console.log(`Added ${zipEntries.length} file(s) to zip: ${zipEntries.map((e: any) => e.entryName).join(', ')}`)
+                
+                const zipBuffer = zip.toBuffer()
+                
+                // Validate zip buffer has content
+                if (!zipBuffer || zipBuffer.length === 0) {
+                  throw new Error('Generated zip buffer is empty')
+                }
+                
+                const zipSizeMB = zipBuffer.length / (1024 * 1024)
+                console.log(`Zipped PDF size for full site scan ${emailUrl}: ${zipSizeMB.toFixed(2)}MB (compression: ${((1 - zipSizeMB / pdfSizeMB) * 100).toFixed(1)}%)`)
+                
+                // Only use zip if it's smaller than 18MB (leave some margin under 20MB email limit)
+                if (zipSizeMB < 18) {
+                  attachments = [
+                    {
+                      content: zipBuffer,
+                      name: `accessibility-report-${emailUrl.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.zip`,
+                    },
+                  ]
+                  console.log(`Successfully created zip file with ${pdfFileName} (${zipSizeMB.toFixed(2)}MB)`)
+                } else {
+                  console.log(`Zipped PDF still too large (${zipSizeMB.toFixed(2)}MB), skipping attachment. Report available at: ${reportLink}`)
+                }
+              } else {
+                throw new Error('PDF buffer is empty or invalid')
+              }
+            } catch (zipError) {
+              // If adm-zip is not installed or fails, skip attachment
+              console.error(`Failed to create zip file (adm-zip may not be installed):`, zipError)
+              console.log(`Skipping PDF attachment. Report available at: ${reportLink}`)
+            }
+          } catch (pdfError) {
+            console.error(`Failed to generate PDF/ZIP for full site scan ${emailUrl}:`, pdfError)
+            // Continue without attachment - the email will still have the link to view the report
+          }
+
+          await sendEmailWithRetries(user.email, template, `Full Site Accessibility Report for ${emailUrl}`, 2, 2000, attachments, 'WebAbility Reports')
+          console.log(`Full site scan email successfully sent to ${user.email} for site ${emailUrl} with report key ${emailReportKey}`)
+        } catch (error) {
+          console.error(`Error sending full site scan email for ${emailUrl}:`, error)
+        }
+      })
     }
   } catch (error: any) {
     const job = accessibilityReportJobs.get(jobId)
