@@ -3,6 +3,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Chip from '@mui/material/Chip';
 import { Site } from '@/generated/graphql';
+import { SITE_SELECTOR_TEXT } from '@/constants';
 
 const DomainsSelect = ({ data, selectedOption, setSelectedOption }: any) => {
   const handleChange = (event: SelectChangeEvent) => {
@@ -14,17 +15,32 @@ const DomainsSelect = ({ data, selectedOption, setSelectedOption }: any) => {
   if (!sites || sites.length === 0) return null;
 
   const options: Site[] = sites;
+  
+  // Get valid option values (domain URLs)
+  const validOptionValues = options.map((site: Site) => site.url ?? '').filter(Boolean);
+  
+  // Check if selectedOption is a valid option value
+  // If it's "Select a Domain" or not in the valid options, use empty string
+  const isValidValue = selectedOption && 
+    selectedOption !== SITE_SELECTOR_TEXT && 
+    validOptionValues.includes(selectedOption);
+  
+  const selectValue = isValidValue ? selectedOption : '';
 
   return (
     <FormControl fullWidth>
       <Select
         size="small"
-        value={selectedOption || ''}
+        value={selectValue}
         onChange={handleChange}
-        label={selectedOption || ''}
+        label={selectValue || ''}
         className="[&>fieldset>legend>span]:hidden"
-        renderValue={(value) => value}
+        renderValue={(value) => value || SITE_SELECTOR_TEXT}
+        displayEmpty
       >
+        <MenuItem value="" disabled>
+          {SITE_SELECTOR_TEXT}
+        </MenuItem>
         {options.map((site: Site, idx: number) => (
           <MenuItem key={site.id ?? site.url ?? idx} value={site.url ?? ''}>
             <div className="flex flex-nowrap items-center min-w-0 max-w-full text-[15px] justify-between w-full">
