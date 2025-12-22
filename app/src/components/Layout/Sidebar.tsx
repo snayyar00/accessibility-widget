@@ -281,7 +281,7 @@ const Sidebar = () => {
             </div>
 
             {/* Navigation Section */}
-            <div className="flex-grow px-4">
+            <div className="flex-grow px-4 overflow-y-auto min-h-0">
               <nav className="space-y-2" aria-label="Side">
                 {/* Dashboard */}
                 <NavLink
@@ -831,7 +831,7 @@ const Sidebar = () => {
             </div>
 
             {/* Navigation Section */}
-            <div className="flex-grow">
+            <div className="flex-grow overflow-y-auto min-h-0">
               <nav className="space-y-2" aria-label="Side">
                 {/* Dashboard */}
                 <NavLink
