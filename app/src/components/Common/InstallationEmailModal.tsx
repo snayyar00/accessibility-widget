@@ -327,6 +327,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                       if (emailError) setEmailError('');
                     }}
                     placeholder="Enter your email address"
+                    autoComplete="email"
                     className={`w-full px-5 py-4 border-2 rounded-xl focus:outline-none transition-all duration-200 text-gray-800 font-medium email-input ${
                       emailError
                         ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100'

@@ -91,6 +91,7 @@ const EmailModal: React.FC<EmailModalProps> = ({
                   error ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter email address"
+                autoComplete="email"
                 disabled={isLoading}
                 required
               />

@@ -169,6 +169,7 @@ const DeleteAccountModal: React.FC<Props> = ({
                   ref={emailInputCallbackRef}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors text-gray-900 placeholder-gray-500"
                   placeholder="Enter your email address"
+                  autoComplete="email"
                   disabled={loading}
                   aria-describedby="email-error"
                   aria-required="true"

@@ -1205,6 +1205,7 @@ export default function CodeContainer({
             href="https://www.webability.io/"
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Contact Support"
             className="text-sm font-medium hover:underline transition-all cursor-pointer"
             style={{
               color: '#445AE7',
