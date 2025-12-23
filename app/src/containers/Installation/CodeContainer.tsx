@@ -167,6 +167,7 @@ export default function CodeContainer({
   const [copySuccess, setCopySuccess] = useState(false);
   const [copySuccessNew, setCopySuccessNew] = useState(false);
   const [copySuccessGtm, setCopySuccessGtm] = useState(false);
+  const [copyAnnouncement, setCopyAnnouncement] = useState('');
   const [selectedScript, setSelectedScript] = useState<'old' | 'new' | 'gtm'>('new');
   const [position, setPosition] = useState('bottom-left');
   const [language, setLanguage] = useState('auto');
@@ -213,7 +214,11 @@ export default function CodeContainer({
     try {
       await navigator.clipboard.writeText(formattedCodeString);
       setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 3000);
+      setCopyAnnouncement('Copied! Installation snippet copied to clipboard.');
+      setTimeout(() => {
+        setCopySuccess(false);
+        setCopyAnnouncement('');
+      }, 3000);
     } catch (err) {
       console.log('Failed to copy text: ', err);
       // Fallback for older browsers
@@ -229,7 +234,11 @@ export default function CodeContainer({
         document.execCommand('copy');
         textArea.remove();
         setCopySuccess(true);
-        setTimeout(() => setCopySuccess(false), 3000);
+        setCopyAnnouncement('Copied! Installation snippet copied to clipboard.');
+        setTimeout(() => {
+          setCopySuccess(false);
+          setCopyAnnouncement('');
+        }, 3000);
       } catch (fallbackErr) {
         console.log('Fallback copy failed: ', fallbackErr);
         alert('Failed to copy to clipboard. Please copy manually.');
@@ -241,7 +250,11 @@ export default function CodeContainer({
     try {
       await navigator.clipboard.writeText(newFormattedCodeString);
       setCopySuccessNew(true);
-      setTimeout(() => setCopySuccessNew(false), 3000);
+      setCopyAnnouncement('Copied! Installation snippet copied to clipboard.');
+      setTimeout(() => {
+        setCopySuccessNew(false);
+        setCopyAnnouncement('');
+      }, 3000);
     } catch (err) {
       console.log('Failed to copy text: ', err);
       // Fallback for older browsers
@@ -257,7 +270,11 @@ export default function CodeContainer({
         document.execCommand('copy');
         textArea.remove();
         setCopySuccessNew(true);
-        setTimeout(() => setCopySuccessNew(false), 3000);
+        setCopyAnnouncement('Copied! Installation snippet copied to clipboard.');
+        setTimeout(() => {
+          setCopySuccessNew(false);
+          setCopyAnnouncement('');
+        }, 3000);
       } catch (fallbackErr) {
         console.log('Fallback copy failed: ', fallbackErr);
         alert('Failed to copy to clipboard. Please copy manually.');
@@ -269,7 +286,11 @@ export default function CodeContainer({
     try {
       await navigator.clipboard.writeText(gtmFormattedCodeString);
       setCopySuccessGtm(true);
-      setTimeout(() => setCopySuccessGtm(false), 3000);
+      setCopyAnnouncement('Copied! Installation snippet copied to clipboard.');
+      setTimeout(() => {
+        setCopySuccessGtm(false);
+        setCopyAnnouncement('');
+      }, 3000);
     } catch (err) {
       console.log('Failed to copy text: ', err);
       // Fallback for older browsers
@@ -285,7 +306,11 @@ export default function CodeContainer({
         document.execCommand('copy');
         textArea.remove();
         setCopySuccessGtm(true);
-        setTimeout(() => setCopySuccessGtm(false), 3000);
+        setCopyAnnouncement('Copied! Installation snippet copied to clipboard.');
+        setTimeout(() => {
+          setCopySuccessGtm(false);
+          setCopyAnnouncement('');
+        }, 3000);
       } catch (fallbackErr) {
         console.log('Fallback copy failed: ', fallbackErr);
         alert('Failed to copy to clipboard. Please copy manually.');
@@ -446,6 +471,16 @@ export default function CodeContainer({
       className="w-full bg-white rounded-2xl overflow-hidden border shadow-sm"
       style={{ borderColor: '#A2ADF3' }}
     >
+      {/* Screen reader announcement for copy success */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+        id="copy-announcement"
+      >
+        {copyAnnouncement}
+      </div>
       {/* Customization Section - Hidden by default, matches Figma */}
       {showCustomization && (
         <div className="p-4 border-b border-gray-100 bg-gray-50 widget-customization-options">
