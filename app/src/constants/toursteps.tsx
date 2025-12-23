@@ -10,9 +10,23 @@ export const getDashboardTourSteps = (organizationName: string = 'WebAbility'): 
         <h3 className="text-lg font-semibold mb-2">
           Welcome to {organizationName} Dashboard! 🎉
         </h3>
-        <p>
-          This is your central hub for managing accessibility compliance. Let's
-          take a quick tour to get you started!
+        <p className="mb-2">
+          This is your central command center for managing accessibility compliance across all your websites. From this dashboard, you can monitor protection levels, track accessibility scores, manage user-reported issues, and analyze widget engagement metrics in real-time.
+        </p>
+        <p className="mb-2 text-sm">
+          <strong>What you'll learn in this tour:</strong>
+        </p>
+        <ul className="text-sm space-y-1 mb-2 ml-4 list-disc">
+          <li>How to add new domains and manage multiple websites</li>
+          <li>Understanding protection levels and ensuring widget installation</li>
+          <li>Reading accessibility reports and compliance scores</li>
+          <li>Managing user-reported bugs and accessibility issues</li>
+          <li>Analyzing widget performance and user engagement</li>
+          <li>Using time range selectors and interactive charts</li>
+          <li>Understanding which accessibility features users need most</li>
+        </ul>
+        <p className="text-sm text-gray-600">
+          💡 <strong>Pro Tip:</strong> Bookmark this dashboard and check it regularly to stay on top of accessibility compliance and improve user experience. The dashboard updates in real-time as users interact with your widget!
         </p>
       </div>
     ),
@@ -23,66 +37,204 @@ export const getDashboardTourSteps = (organizationName: string = 'WebAbility'): 
     target: '.get-compliant-button',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Get Compliant 🚀</h3>
-        <p>
-          Click here to add new domains and start making your websites
-          accessible. This is where you'll manage all your sites.
+        <h3 className="text-lg font-semibold mb-2">Get Compliant Button 🚀</h3>
+        <p className="mb-2">
+          This is your starting point for making websites accessible! Clicking this button will take you to the domain management page where you can add new websites to your account and start the compliance process.
+        </p>
+        <p className="mb-2 text-sm">
+          <strong>What happens when you click:</strong>
+        </p>
+        <ul className="text-sm space-y-1 mb-2 ml-4 list-disc">
+          <li><strong>Add New Domains</strong> - Register your websites to start monitoring and protection</li>
+          <li><strong>Choose a Plan</strong> - Select from 30-day trial, 15-day trial, or purchase directly</li>
+          <li><strong>Get Installation Code</strong> - Receive widget code to install on your website</li>
+          <li><strong>Activate Protection</strong> - Enable automated accessibility fixes and monitoring</li>
+        </ul>
+        <p className="text-sm text-gray-600 mb-2">
+          💡 <strong>Tip:</strong> You can add multiple domains based on your subscription plan. Each domain gets its own protection level, analytics, and accessibility reports.
+        </p>
+        <p className="text-sm text-gray-600">
+          ⚠️ <strong>Important:</strong> After adding a domain, make sure to install the widget code on your website to activate protection. Without the widget installed, your site remains at "No Protection" level.
         </p>
       </div>
     ),
     placement: 'top' as Placement,
   },
   {
-    target: '.app-sumo-button',
+    target: '.dashboard-protection-level-card',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">
-          Get Started with your App Sumo Sites 🚀
-        </h3>
-        <p>Click here to add new domains and redeem your App Sumo sites.</p>
+        <h3 className="text-lg font-semibold mb-2">Protection Level Card 🛡️</h3>
+        <p className="mb-2">
+          This card shows your website's current protection status against accessibility lawsuits. There are four protection levels:
+        </p>
+        <ul className="text-sm space-y-1 mb-2">
+          <li>🔴 <strong>No Protection</strong> - Widget not installed (highest risk). You'll see a warning banner with an "Install WebAbility" button.</li>
+          <li>🔵 <strong>Automation</strong> - Widget installed, automated fixes active. Real-time accessibility adjustments are working.</li>
+          <li>🟢 <strong>Managed</strong> - Full monitoring, automated fixes, and ongoing support. Higher level of protection.</li>
+          <li>✅ <strong>Managed + Assurance</strong> - Complete protection including legal support and documentation. Maximum protection level.</li>
+        </ul>
+        <p className="text-sm text-gray-600">
+          Use the "Check Protection Level" button to automatically verify if your widget is properly installed. The "YOU ARE HERE" badge shows your current level.
+        </p>
       </div>
     ),
-    placement: 'top' as Placement,
+    placement: 'bottom' as Placement,
+    disableBeacon: true,
+  },
+  {
+    target: '.dashboard-accessibility-card',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Accessibility Report Card 📈</h3>
+        <p className="mb-2">
+          This card displays your latest accessibility scan results based on WCAG 2.1 AA standards, including:
+        </p>
+        <ul className="text-sm space-y-1 mb-2">
+          <li>📊 <strong>Compliance Score</strong> - Overall accessibility rating (0-100%). Scores above 80% are considered compliant.</li>
+          <li>⚠️ <strong>Issue Breakdown</strong> - Counts of Critical, Serious, and Moderate issues. Critical issues need immediate attention.</li>
+          <li>📅 <strong>Last Scan Date</strong> - When the report was generated. Regular scans help track improvements.</li>
+          <li>🔗 <strong>View Report</strong> - Opens detailed report with specific WCAG violations, screenshots, and fix recommendations.</li>
+          <li>📊 <strong>Category Statistics</strong> - Breakdown by issue type (Content, Navigation, Forms, etc.) to prioritize fixes.</li>
+        </ul>
+        <p className="text-sm text-gray-600">
+          Click "View Report" to see detailed findings. If you have the widget installed, your score includes a bonus for automated fixes!
+        </p>
+      </div>
+    ),
+    placement: 'bottom' as Placement,
+    disableBeacon: true,
+  },
+  {
+    target: '.dashboard-issues-card',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Issues Tracking Card 🐛</h3>
+        <p className="mb-2">
+          This card shows all problems that users have reported directly from your website using the accessibility widget:
+        </p>
+        <ul className="text-sm space-y-1 mb-2">
+          <li>🐛 <strong>Bugs</strong> - Technical issues like broken links or form errors (red badge)</li>
+          <li>♿ <strong>Accessibility Issues</strong> - WCAG compliance problems like missing alt text or poor contrast (orange badge)</li>
+          <li>📝 <strong>Issue Details</strong> - Description, reporter email, timestamp, and site URL</li>
+          <li>✅ <strong>Status</strong> - "Fixed" (green) or "Pending" (gray) to track resolution</li>
+        </ul>
+        <p className="text-sm text-gray-600">
+          Click on any issue to view full details and mark it as fixed when resolved. Responding quickly improves user satisfaction!
+        </p>
+      </div>
+    ),
+    placement: 'bottom' as Placement,
+    disableBeacon: true,
   },
   {
     target: '.analytics-metrics-card',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Key Metrics Overview 📊</h3>
-        <p>
-          Here you can see your most important metrics: impressions, unique
-          visitors, and widget interactions. These help you understand your
-          accessibility widget's impact on your website.
+        <h3 className="text-lg font-semibold mb-2">Key Metrics Cards 📊</h3>
+        <p className="mb-2">
+          These three cards display your most important accessibility widget metrics that update in real-time:
+        </p>
+        <ul className="text-sm space-y-1 mb-2">
+          <li>👁️ <strong>Impressions</strong> - Total number of times your widget was displayed/loaded on your website</li>
+          <li>👥 <strong>Visitors</strong> - Unique users who have seen the widget during the selected time period</li>
+          <li>🔓 <strong>Widget Opened</strong> - How many times users actually clicked to open and interact with the widget</li>
+        </ul>
+        <p className="text-sm text-gray-600">
+          Each metric shows the current value (formatted for readability like "1.5k" or "500") and percentage change from the previous period. A high "Widget Opened" to "Impressions" ratio indicates strong engagement!
         </p>
       </div>
     ),
     placement: 'bottom' as Placement,
   },
   {
-    target: '.analytics-dashboard',
+    target: 'body',
     content: (
       <div>
-        <h3 className="text-lg font-semibold mb-2">Analytics Dashboard 📈</h3>
-        <p>
-          View detailed engagement and impression trends over time. Use the time
-          range selector to switch between weekly, monthly, and yearly views.
-          This is your complete analytics dashboard where you can track
-          engagement rates, impressions, and detailed accessibility metrics.
+        <h3 className="text-lg font-semibold mb-2">Time Range Selector 📅</h3>
+        <p className="mb-2">
+          Located in the top-right of each chart, this dropdown lets you analyze widget performance across different time periods:
+        </p>
+        <ul className="text-sm space-y-1 mb-2">
+          <li>📆 <strong>Week</strong> - Last 7 days of data. Perfect for daily monitoring and recent trends</li>
+          <li>📅 <strong>Month</strong> - Last 30 days of data. Ideal for weekly performance reviews</li>
+          <li>📆 <strong>Year</strong> - Last 365 days of data. Great for long-term analysis and reporting</li>
+        </ul>
+        <p className="text-sm text-gray-600">
+          All charts, metrics, and data visualizations automatically update when you change the time range. The date range is calculated from today backwards.
         </p>
       </div>
     ),
-    placement: 'top' as Placement,
+    placement: 'center' as Placement,
+    disableBeacon: true,
+  },
+  {
+    target: 'body',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Engagement & Impressions Charts 📈</h3>
+        <p className="mb-2">
+          These two interactive area charts visualize your widget's performance over time:
+        </p>
+        <ul className="text-sm space-y-1 mb-2">
+          <li>📊 <strong>Engagement Chart</strong> - Shows user interactions with accessibility features. Higher engagement means more users are using your accessibility tools.</li>
+          <li>👁️ <strong>Impressions Chart</strong> - Displays total widget views/loads. Compare with engagement to understand conversion rates.</li>
+          <li>🖱️ <strong>Interactive Tooltips</strong> - Hover over any data point to see exact values, date, and percentage change</li>
+          <li>📱 <strong>Responsive Design</strong> - Charts automatically adjust to your screen size for optimal viewing</li>
+        </ul>
+        <p className="text-sm text-gray-600">
+          Look for upward trends to identify growing usage. If impressions are high but engagement is low, consider making your widget more visible!
+        </p>
+      </div>
+    ),
+    placement: 'center' as Placement,
+    disableBeacon: true,
+  },
+  {
+    target: 'body',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Profile Usage Breakdown 👥</h3>
+        <p className="mb-2">
+          This section reveals which specific accessibility profiles and features your users are selecting most frequently:
+        </p>
+        <ul className="text-sm space-y-1 mb-2">
+          <li>♿ <strong>Motor Impairments</strong> - Users needing keyboard navigation or larger click targets</li>
+          <li>👁️ <strong>Visual Impairments</strong> - Users needing screen readers, high contrast, or text scaling</li>
+          <li>🧠 <strong>Cognitive Impairments</strong> - Users with ADHD, dyslexia, or learning disabilities</li>
+          <li>🎨 <strong>Color Adjustments</strong> - Users adjusting colors for contrast or color blindness</li>
+          <li>📝 <strong>Content Adjustments</strong> - Users modifying text size, spacing, or fonts</li>
+          <li>⚡ <strong>Seizure Safe</strong> - Users who need to disable animations or flashing content</li>
+        </ul>
+        <p className="text-sm text-gray-600">
+          Click "Show More" to see all available profile metrics. High usage of a specific profile indicates areas where you should prioritize improvements on your website.
+        </p>
+      </div>
+    ),
+    placement: 'center' as Placement,
+    disableBeacon: true,
   },
   {
     target: 'body',
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Tour Complete! 🎉</h3>
-        <p>
-          You're all set! You now know how to navigate your {organizationName}
-          dashboard. Start by adding domains, monitor your analytics, and make
-          your websites accessible to everyone. Need help? Check out our
-          documentation or contact support.
+        <p className="mb-3">
+          Congratulations! You now have a complete understanding of your {organizationName} dashboard.
+        </p>
+        <div className="text-sm space-y-2 mb-3">
+          <p><strong>Quick Recap:</strong></p>
+          <ul className="space-y-1 ml-4 list-disc">
+            <li>✅ Monitor your protection level and ensure widget installation</li>
+            <li>✅ Track accessibility scores and view detailed reports</li>
+            <li>✅ Manage user-reported issues and bugs</li>
+            <li>✅ Analyze widget engagement and user behavior</li>
+            <li>✅ Use time range selectors to view different periods</li>
+            <li>✅ Understand which accessibility features users need most</li>
+          </ul>
+        </div>
+        <p className="text-sm text-gray-600">
+          💡 <strong>Pro Tip:</strong> Check your dashboard regularly to stay on top of accessibility compliance and user needs. Need help? Check our documentation or contact support anytime!
         </p>
       </div>
     ),

@@ -468,7 +468,7 @@ const Dashboard: React.FC<any> = ({
       <div className="analytics-dashboard px-4">
         {/* Protection Level Card */}
         {domainData && (
-          <div className="mb-6">
+          <div className="mb-6 dashboard-protection-level-card">
             <ProtectionLevelCard 
               protectionLevel={domainData.protection_level}
               siteId={domainData.id}
@@ -479,14 +479,14 @@ const Dashboard: React.FC<any> = ({
 
         {/* Dashboard Accessibility Report Card */}
         {domainData && (
-          <div className="mb-6">
+          <div className="mb-6 dashboard-accessibility-card">
             <DashboardAccessibilityCard siteUrl={domainData.url} />
           </div>
         )}
 
         {/* Dashboard Issues Card */}
         {domainData && (
-          <div className="mb-6">
+          <div className="mb-6 dashboard-issues-card">
             <DashboardIssuesCard siteUrl={domainData.url} />
           </div>
         )}
