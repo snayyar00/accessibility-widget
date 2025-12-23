@@ -1523,7 +1523,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           color: '#222D73',
                         },
                         '& .MuiSwitch-switchBase.Mui-checked': {
-                          color: '#878993',
+                          color: '#145DA6',
                         },
                         '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
                           backgroundColor: '#82B2E7',
@@ -1576,6 +1576,31 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             'aria-checked': toggles.language,
                           }}
                           color="primary"
+                          sx={{
+                            '& .MuiSwitch-switchBase': {
+                              color: '#222D73',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                              color: '#145DA6',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                              backgroundColor: '#82B2E7',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-switchBase:focus-visible': {
+                              outline: 'none',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                              outline: 'none',
+                            },
+                          }}
                         />
                       </div>
                     </div>
@@ -1600,6 +1625,31 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             'aria-checked': toggles.oversizeWidget,
                           }}
                           color="primary"
+                          sx={{
+                            '& .MuiSwitch-switchBase': {
+                              color: '#222D73',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                              color: '#145DA6',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                              backgroundColor: '#82B2E7',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-switchBase:focus-visible': {
+                              outline: 'none',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                              outline: 'none',
+                            },
+                          }}
                         />
                       </div>
                     </div>
@@ -1651,6 +1701,31 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                               ),
                             }}
                             color="primary"
+                            sx={{
+                              '& .MuiSwitch-switchBase': {
+                                color: '#222D73',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#145DA6',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#82B2E7',
+                              },
+                              '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-switchBase:focus-visible': {
+                                outline: 'none',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                outline: 'none',
+                              },
+                            }}
                           />
                           <button
                             onClick={() =>
@@ -1710,6 +1785,31 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 }}
                                 color="primary"
                                 size="small"
+                                sx={{
+                                  '& .MuiSwitch-switchBase': {
+                                    color: '#222D73',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: '#145DA6',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: '#82B2E7',
+                                  },
+                                  '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-switchBase:focus-visible': {
+                                    outline: 'none',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                    outline: 'none',
+                                  },
+                                }}
                               />
                             </div>
                           ))}
@@ -1761,6 +1861,31 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                               ),
                             }}
                             color="primary"
+                            sx={{
+                              '& .MuiSwitch-switchBase': {
+                                color: '#222D73',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#145DA6',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#82B2E7',
+                              },
+                              '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-switchBase:focus-visible': {
+                                outline: 'none',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                outline: 'none',
+                              },
+                            }}
                           />
                           <button
                             onClick={() => toggleSection('contentAdjustments')}
@@ -1808,6 +1933,31 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 }}
                                 color="primary"
                                 size="small"
+                                sx={{
+                                  '& .MuiSwitch-switchBase': {
+                                    color: '#222D73',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: '#145DA6',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: '#82B2E7',
+                                  },
+                                  '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-switchBase:focus-visible': {
+                                    outline: 'none',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                    outline: 'none',
+                                  },
+                                }}
                               />
                             </div>
                           ))}
@@ -1865,6 +2015,31 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                               ),
                             }}
                             color="primary"
+                            sx={{
+                              '& .MuiSwitch-switchBase': {
+                                color: '#222D73',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#145DA6',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#82B2E7',
+                              },
+                              '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-switchBase:focus-visible': {
+                                outline: 'none',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                outline: 'none',
+                              },
+                            }}
                           />
                           <button
                             onClick={() => toggleSection('colorAdjustments')}
@@ -1914,6 +2089,31 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 }}
                                 color="primary"
                                 size="small"
+                                sx={{
+                                  '& .MuiSwitch-switchBase': {
+                                    color: '#222D73',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: '#145DA6',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: '#82B2E7',
+                                  },
+                                  '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-switchBase:focus-visible': {
+                                    outline: 'none',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                    outline: 'none',
+                                  },
+                                }}
                               />
                             </div>
                           ))}
@@ -1968,6 +2168,31 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                               ),
                             }}
                             color="primary"
+                            sx={{
+                              '& .MuiSwitch-switchBase': {
+                                color: '#222D73',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#145DA6',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#82B2E7',
+                              },
+                              '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-switchBase:focus-visible': {
+                                outline: 'none',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                outline: 'none',
+                              },
+                            }}
                           />
                           <button
                             onClick={() => toggleSection('tools')}
@@ -2022,6 +2247,31 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 }}
                                 color="primary"
                                 size="small"
+                                sx={{
+                                  '& .MuiSwitch-switchBase': {
+                                    color: '#222D73',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: '#145DA6',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: '#82B2E7',
+                                  },
+                                  '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-switchBase:focus-visible': {
+                                    outline: 'none',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                    outline: 'none',
+                                  },
+                                }}
                               />
                             </div>
                           ))}
@@ -2049,6 +2299,31 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             'aria-checked': toggles.widgetPosition,
                           }}
                           color="primary"
+                          sx={{
+                            '& .MuiSwitch-switchBase': {
+                              color: '#222D73',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                              color: '#145DA6',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                              backgroundColor: '#82B2E7',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-switchBase:focus-visible': {
+                              outline: 'none',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                              outline: 'none',
+                            },
+                          }}
                         />
                       </div>
                     </div>
@@ -2101,7 +2376,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           color: '#222D73',
                         },
                         '& .MuiSwitch-switchBase.Mui-checked': {
-                          color: '#222D73',
+                          color: '#145DA6',
                         },
                         '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
                           backgroundColor: '#82B2E7',
