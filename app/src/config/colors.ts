@@ -57,7 +57,7 @@ export const baseColors = {
   grayLighter: '#e9ecef',
   grayBorder: '#dee2e6',
   grayText: '#434343',
-  grayMuted: '#9ca3af',
+  grayMuted: '#6B7484',
   grayDark2: '#111827',
   grayPlaceholder: '#9ca3af',
   grayLabel: '#374151',

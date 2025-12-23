@@ -2764,12 +2764,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           >
             {/* Description text */}
             <div className="mb-6 text-left">
-              <p
+              <h2
                 className="text-2xl font-semibold"
                 style={{ color: baseColors.grayDark2 }}
               >
                 Scanner
-              </p>
+              </h2>
               <p
                 className="text-base mt-2"
                 style={{ color: baseColors.grayText }}
@@ -2824,7 +2824,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                       <svg
                         className="w-4 h-4"
-                        style={{ color: baseColors.grayMuted }}
+                        style={{ color: '#767676' }}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -2845,6 +2845,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               <div className="w-full flex-1">
                 <Select
                   options={siteOptions}
+                  aria-label="Domain to scan"
                   value={
                     selectedOption ||
                     (selectedDomainFromRedux
@@ -2916,6 +2917,23 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       color: baseColors.grayDark,
                       fontSize: '16px',
                     }),
+                    indicatorSeparator: () => ({
+                      display: 'none',
+                    }),
+                    dropdownIndicator: (provided: any) => ({
+                      ...provided,
+                      color: '#767676',
+                      '&:hover': {
+                        color: '#767676',
+                      },
+                    }),
+                    clearIndicator: (provided: any) => ({
+                      ...provided,
+                      color: '#767676',
+                      '&:hover': {
+                        color: '#767676',
+                      },
+                    }),
                   }}
                 />
               </div>
@@ -2960,7 +2978,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       className={`w-4 h-4 transition-transform ${
                         isDropdownOpen ? 'rotate-180' : ''
                       }`}
-                      style={{ color: baseColors.grayMuted }}
+                      style={{ color: '#767676' }}
                     />
                   </button>
 
@@ -3293,12 +3311,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       borderBottom: `2px solid ${baseColors.cardBorderPurple}`,
                     }}
                   >
-                    <h3
+                    <h2
                       className="text-xl sm:text-2xl font-medium"
                       style={{ color: baseColors.grayDark2 }}
                     >
                       Scan history
-                    </h3>
+                    </h2>
                   </div>
 
                   {/* Column Headers */}
@@ -3373,11 +3391,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       return (
                         <div
                           key={row.r2_key}
-                          className="block md:grid md:grid-cols-4 gap-4 md:items-center p-3 sm:p-4 rounded-lg border hover:shadow-md transition-all duration-200 group relative overflow-hidden md:overflow-visible w-full cursor-pointer"
+                          className="block md:grid md:grid-cols-4 gap-4 md:items-center p-3 sm:p-4 rounded-lg border hover:shadow-md transition-all duration-200 group relative overflow-hidden md:overflow-visible w-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7]"
                           style={{
                             backgroundColor: baseColors.cardLight,
                             borderColor: baseColors.cardBorder,
                           }}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`View accessibility scan report for ${row.url} with score ${actualScore}`}
                           onClick={() => {
                             setReportUrl(
                               `/${row.r2_key}?domain=${encodeURIComponent(
@@ -3385,6 +3406,19 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                               )}`,
                             );
                             setIsSuccessModalOpen(true);
+                          }}
+                          onKeyDown={(e) => {
+                            // Only trigger when the card itself is focused, not when interacting with inner controls
+                            if (e.currentTarget !== e.target) return;
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setReportUrl(
+                                `/${row.r2_key}?domain=${encodeURIComponent(
+                                  row.url,
+                                )}`,
+                              );
+                              setIsSuccessModalOpen(true);
+                            }
                           }}
                         >
                           {/* Mobile Layout */}
@@ -3975,12 +4009,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       borderBottom: `2px solid ${baseColors.cardBorderPurple}`,
                     }}
                   >
-                    <h3
+                    <h2
                       className="text-xl sm:text-2xl font-medium"
                       style={{ color: baseColors.grayDark2 }}
                     >
                       Scan history
-                    </h3>
+                    </h2>
                   </div>
 
                   {/* Empty State Content */}
