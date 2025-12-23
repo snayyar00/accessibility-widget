@@ -133,15 +133,8 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
                 : 'border-[#A7B0FF]'
             }`}
             onClick={() => colorInputRef.current?.click()}
-            role="button"
-            aria-label={label}
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                colorInputRef.current?.click();
-              }
-            }}
+            role="presentation"
+            aria-hidden="true"
           >
             {/* Color preview square - matches Figma specs exactly */}
             <div

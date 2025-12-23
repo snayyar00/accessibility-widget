@@ -611,6 +611,8 @@ export default function CodeContainer({
                               color: '#111827', // Dark gray - 16.5:1 contrast ratio on white (WCAG AAA compliant)
                             }}
                             aria-label="Search Language's name"
+                            aria-describedby="language-search-results-announcement"
+                            aria-controls="language-listbox"
                           />
                         </div>
                       </div>
@@ -627,8 +629,12 @@ export default function CodeContainer({
                         }
                       `}</style>
                       <div className="max-h-36 overflow-y-auto" role="listbox" aria-labelledby="language-label">
-                        <div aria-live="polite" aria-atomic="true" className="sr-only">
-                          {filteredLanguages.length === 0 && languageSearchTerm ? 'No languages found' : ''}
+                        <div aria-live="polite" aria-atomic="true" className="sr-only" id="language-search-results-announcement">
+                          {languageSearchTerm
+                            ? filteredLanguages.length === 0
+                              ? 'No languages found'
+                              : `${filteredLanguages.length} ${filteredLanguages.length === 1 ? 'language' : 'languages'} found`
+                            : ''}
                         </div>
                         {filteredLanguages.length > 0 ? (
                           filteredLanguages.map((lang) => (

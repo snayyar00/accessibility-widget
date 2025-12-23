@@ -314,7 +314,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                   htmlFor="email"
                   className="block text-sm font-bold text-gray-800 mb-3"
                 >
-                  Email Address <span className="text-red-500" aria-label="required">*</span> <span className="sr-only">Required</span>
+                  Email Address <span className="text-red-500" aria-hidden="true">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -352,7 +352,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                   </div>
                 </div>
                 <p id="email-hint" className="sr-only">
-                  Required field
+                  Required
                 </p>
                 {emailError && (
                   <p 
