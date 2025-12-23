@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Problem } from './ProblemReport';
 import Favicon from '@/components/Common/Favicon';
+import baseColors from '@/config/colors';
 import './ProblemCard.css';
 
 interface ProblemCardProps {
@@ -41,9 +42,13 @@ const ProblemCard: React.FC<ProblemCardProps> = ({
 
   return (
     <div
-      className={`bg-white border border-[#A2ADF3] rounded-lg p-3 sm:p-4 md:p-5 transition-all duration-300 ease-in-out ${
-        isExpanded ? 'shadow-md' : 'shadow-sm hover:shadow-md'
+      className={`bg-white border rounded-lg p-3 sm:p-4 md:p-5 transform transition-all duration-300 ease-in-out shadow-sm hover:shadow-lg hover:-translate-y-1 ${
+        isExpanded ? 'shadow-md' : ''
       }`}
+      style={{
+        backgroundColor: baseColors.white,
+        borderColor: baseColors.cardBorderPurple,
+      }}
       onClick={() => setIsExpanded(!isExpanded)}
     >
       {/* Header with logo, site URL, and status icon */}
@@ -66,9 +71,17 @@ const ProblemCard: React.FC<ProblemCardProps> = ({
         <div
           className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-2 cursor-pointer transition-all duration-200 hover:scale-110 ${
             problem.fixed
-              ? 'border-[#445AE7] bg-transparent'
+              ? 'bg-transparent'
               : 'border-gray-400 bg-white hover:border-gray-500'
           }`}
+          style={
+            problem.fixed
+              ? {
+                  borderColor: baseColors.brandPrimary,
+                  color: baseColors.brandPrimary,
+                }
+              : undefined
+          }
           onClick={handleToggleFixed}
           title={problem.fixed ? 'Mark as unfixed' : 'Mark as fixed'}
         >
@@ -79,7 +92,6 @@ const ProblemCard: React.FC<ProblemCardProps> = ({
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className="text-[#445AE7]"
             >
               <path
                 d="M7 12l3 3 7-7"

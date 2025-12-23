@@ -11,16 +11,16 @@ const ISSUES_LIST_MAX_HEIGHT = 384; // 96 * 4 (max-h-96 in pixels)
 
 const ISSUE_TYPE_COLORS = {
   bug: {
-    primary: '#EF4444',
-    background: '#FEF3F2',
+    primary: baseColors.error,
+    background: baseColors.errorBackground,
   },
   accessibility: {
-    primary: '#F59E0B',
-    background: '#FFFBEB',
+    primary: baseColors.warning,
+    background: baseColors.warningBackground,
   },
   success: {
-    primary: '#22c55e',
-    background: '#F0FDF4',
+    primary: baseColors.success,
+    background: baseColors.successBackground,
   },
 } as const;
 
@@ -105,10 +105,9 @@ const IssueItem: React.FC<IssueItemProps> = ({ issue }) => {
 
   return (
     <div
-      className="flex items-start gap-3 p-3 rounded-lg transition-all hover:shadow-sm"
+      className="flex items-start gap-3 p-3 rounded-lg border bg-white shadow-sm hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
       style={{
-        backgroundColor: typeConfig.background,
-        borderLeft: `3px solid ${typeConfig.primary}`,
+        borderColor: baseColors.grayBorder,
       }}
       role="listitem"
       aria-label={`${issue.issue_type} issue: ${issue.description}`}
@@ -122,10 +121,11 @@ const IssueItem: React.FC<IssueItemProps> = ({ issue }) => {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span
-            className="text-xs font-semibold uppercase px-2 py-0.5 rounded"
+            className="text-xs font-semibold uppercase px-2 py-0.5 rounded border"
             style={{
-              backgroundColor: typeConfig.primary,
-              color: '#fff',
+              backgroundColor: baseColors.white,
+              color: typeConfig.primary,
+              borderColor: typeConfig.primary,
             }}
             aria-label={`Issue type: ${issue.issue_type}`}
           >
