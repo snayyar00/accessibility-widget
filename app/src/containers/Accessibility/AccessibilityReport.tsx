@@ -98,6 +98,7 @@ import startAccessibilityReportJob from '@/queries/accessibility/startAccessibil
 import getAccessibilityReportByJobId from '@/queries/accessibility/getAccessibilityReportByJobId';
 import { baseColors } from '@/config/colors';
 import LatestReportCard from '@/containers/Dashboard/LatestReportCard';
+import InstallWidgetModal from '@/components/Common/InstallWidgetModal';
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
 
@@ -180,6 +181,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [isFullSiteScan, setIsFullSiteScan] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showInstallWidgetModal, setShowInstallWidgetModal] = useState(false);
+  const [pendingScanDomain, setPendingScanDomain] = useState<string | null>(null);
 
   type ScanTypeOption = {
     value: 'cached' | 'fresh';
@@ -314,6 +317,99 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   }, [selectedDomainFromRedux, siteOptions]);
 
+  // Helper function to get protection level for a domain
+  const getProtectionLevelForDomain = (domainToCheck: string): string | null => {
+    if (!sitesData?.getUserSites?.sites) return null;
+    
+    const normalizedCheckDomain = normalizeDomain(domainToCheck);
+    
+    const matchedSite = sitesData.getUserSites.sites.find((site: Site | null | undefined) => {
+      if (!site?.url) return false;
+      const normalizedSiteUrl = normalizeDomain(site.url);
+      return normalizedSiteUrl === normalizedCheckDomain;
+    });
+    
+    return matchedSite?.protection_level || null;
+  };
+
+  // Format protection level to match the expected format
+  const formatProtectionLevel = (level: string | null | undefined): string => {
+    if (!level) return 'No protection';
+    
+    switch (level.toLowerCase()) {
+      case 'no protection':
+        return 'No protection';
+      case 'automation':
+        return 'Automation';
+      case 'managed':
+        return 'Managed';
+      case 'managed + assurance':
+      case 'managed +assurance':
+      case 'managed+assurance':
+        return 'Managed + Assurance';
+      default:
+        return 'No protection';
+    }
+  };
+
+  // Function to proceed with scan (called from modal)
+  const proceedWithScan = async () => {
+    if (!pendingScanDomain) return;
+    
+    const sanitizedDomain = getFullDomain(pendingScanDomain);
+    if (
+      sanitizedDomain !== 'localhost' &&
+      !isIpAddress(sanitizedDomain) &&
+      !isValidFullDomainFormat(sanitizedDomain)
+    ) {
+      if (isMounted.current) {
+        setDomain(currentDomain);
+      }
+      toast.error('You must enter a valid domain name!');
+      setPendingScanDomain(null);
+      return;
+    }
+    const validDomain = sanitizedDomain;
+    if (!validDomain) {
+      toast.error('Please enter a valid domain!');
+      setPendingScanDomain(null);
+      return;
+    }
+    if (isMounted.current) {
+      setcorrectDomain(validDomain);
+    }
+    dispatch(setIsGenerating(true));
+    dispatch(setSelectedDomain(validDomain));
+    try {
+      const { data } = await startJobQuery({
+        variables: {
+          url: encodeURIComponent(validDomain),
+          use_cache: scanType === 'cached' && !isFullSiteScan,
+          full_site_scan: isFullSiteScan,
+        },
+      });
+      if (
+        data &&
+        data.startAccessibilityReportJob &&
+        data.startAccessibilityReportJob.jobId
+      ) {
+        const jobId = data.startAccessibilityReportJob.jobId;
+
+        dispatch(setJobId(jobId));
+
+        toast.info('Report generation started. This may take a few seconds.');
+      } else {
+        dispatch(setIsGenerating(false));
+        toast.error('Failed to start report job.');
+      }
+    } catch (error) {
+      dispatch(setIsGenerating(false));
+      toast.error('Failed to start report job.');
+    } finally {
+      setPendingScanDomain(null);
+    }
+  };
+
   const handleSubmit = async () => {
     const sanitizedDomain = getFullDomain(domain);
     if (
@@ -332,6 +428,19 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       toast.error('Please enter a valid domain!');
       return;
     }
+
+    // Check protection level for the domain
+    const protectionLevel = getProtectionLevelForDomain(validDomain);
+    const formattedLevel = formatProtectionLevel(protectionLevel);
+
+    // If protection level is "No protection", show modal
+    if (formattedLevel === 'No protection') {
+      setPendingScanDomain(validDomain);
+      setShowInstallWidgetModal(true);
+      return;
+    }
+
+    // Otherwise, proceed with scan normally
     if (isMounted.current) {
       setcorrectDomain(validDomain);
     }
@@ -4040,6 +4149,17 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           </Modal>
         </div>
       </div>
+
+      {/* Install Widget Modal */}
+      <InstallWidgetModal
+        isOpen={showInstallWidgetModal}
+        onClose={() => {
+          setShowInstallWidgetModal(false);
+          setPendingScanDomain(null);
+        }}
+        onContinueScan={proceedWithScan}
+        domain={pendingScanDomain || undefined}
+      />
     </div>
   );
 };
