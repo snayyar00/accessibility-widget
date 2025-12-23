@@ -57,11 +57,30 @@ export function usePortal(id: string): HTMLDivElement {
   }
 
   function addRootElement(rootElem: HTMLDivElement) {
-    document.body.insertBefore(
-      rootElem,
-      document?.body?.lastElementChild?.nextElementSibling ?? null
-    );
+    // Check if element already exists in DOM to prevent duplicate insertions
+    if (rootElem.parentNode === document.body) {
+      return;
+    }
     
+    // Check if an element with the same ID already exists
+    const existingElement = document.querySelector(`#${id}`);
+    if (existingElement && existingElement !== rootElem) {
+      return;
+    }
+    
+    try {
+      // Use appendChild instead of insertBefore for safer DOM manipulation
+      // This avoids race conditions with React's DOM updates
+      document.body.appendChild(rootElem);
+    } catch (error) {
+      // Fallback: try insertBefore with null (which should append to end)
+      // This handles edge cases where appendChild might fail
+      try {
+        document.body.insertBefore(rootElem, null);
+      } catch (fallbackError) {
+        console.error('Failed to add portal root element:', fallbackError);
+      }
+    }
   }
 
   function getRootElem() {

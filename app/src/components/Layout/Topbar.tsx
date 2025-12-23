@@ -23,6 +23,7 @@ import InitialAvatar from '@/components/Common/InitialAvatar';
 import { handleBilling } from '@/containers/Profile/BillingPortalLink';
 import { CircularProgress } from '@mui/material';
 import EmailVerificationBanner from '../Auth/EmailVerificationBanner';
+import TrialExpirationBanner from '../Auth/TrialExpirationBanner';
 import { useTourGuidance } from '@/hooks/useTourGuidance';
 import { useMutation, useQuery } from '@apollo/client';
 import { gql } from '@apollo/client';
@@ -64,17 +65,33 @@ const UPDATE_NOTIFICATION_SETTINGS = gql`
 type Props = {
   signout: () => void;
   options?: any;
+  sitesLoading?: boolean;
   setReloadSites?: any;
   selectedOption?: string;
   setSelectedOption?: any;
+  openTrialModal?: () => void;
+  setPaymentView?: (value: boolean) => void;
+  setOptionalDomain?: (domain: string) => void;
+  customerData?: any;
+  onOpenActivateModal?: (domain: any) => void;
+  billingLoading?: boolean;
+  setBillingLoading?: (value: boolean) => void;
 };
 
 const Topbar: React.FC<Props> = ({
   signout,
   options,
+  sitesLoading = false,
   setReloadSites,
   selectedOption,
   setSelectedOption,
+  openTrialModal,
+  setPaymentView,
+  setOptionalDomain,
+  customerData,
+  onOpenActivateModal,
+  billingLoading,
+  setBillingLoading,
 }) => {
   const dispath = useDispatch();
   const { t } = useTranslation();
@@ -167,11 +184,38 @@ const Topbar: React.FC<Props> = ({
     }
   };
 
+  // Get selected domain from Redux
+  const selectedDomain = useSelector(
+    (state: RootState) => state.report.selectedDomain,
+  );
+
+  // Track if trial banner is visible (updated via callback from TrialExpirationBanner)
+  const [isTrialBannerVisible, setIsTrialBannerVisible] = useState(false);
+
+  // Determine which banner to show - wait for data to load before deciding
+  // Don't show email banner while sites are loading (to avoid flicker)
+  const showEmailBanner = !isActive && !sitesLoading && !isTrialBannerVisible;
+  
   return (
     <div style={{ backgroundColor: baseColors.blueLight }}>
-      {!isActive && <EmailVerificationBanner email={email as string} />}
+      {/* Only show email verification banner if trial banner is not showing and data has loaded */}
+      {showEmailBanner && <EmailVerificationBanner email={email as string} />}
+      {/* Trial Banner for mobile - shown above topbar on small screens */}
+      <div className="md:hidden mx-4 mt-4 mb-2">
+        <TrialExpirationBanner 
+          sitesData={options} 
+          openModal={openTrialModal}
+          setPaymentView={setPaymentView}
+          setOptionalDomain={setOptionalDomain}
+          onVisibilityChange={setIsTrialBannerVisible}
+          customerData={customerData}
+          onOpenActivateModal={onOpenActivateModal}
+          billingLoading={billingLoading}
+          setBillingLoading={setBillingLoading}
+        />
+      </div>
       <div className="mx-4 mt-4 mb-2">
-        <div className="bg-body rounded-lg flex items-center justify-between relative h-auto md:h-auto lg:h-16 px-3 md:px-4 lg:px-6 flex-wrap md:flex-wrap lg:flex-nowrap gap-3 md:gap-4 lg:gap-0">
+        <div className="bg-body rounded-lg flex items-center justify-between relative h-auto md:h-auto lg:h-16 px-3 md:px-4 lg:px-6 flex-wrap md:flex-wrap lg:flex-nowrap gap-3 md:gap-4 lg:gap-4">
           {/* Left side - Sidebar Toggle and Logo */}
           <div className="flex items-center -ml-0 md:-ml-2 lg:-ml-4 gap-2 lg:gap-0 lg:space-x-4">
             {/* Logo */}
@@ -222,9 +266,25 @@ const Topbar: React.FC<Props> = ({
             </button>
           </div>
 
+          {/* Trial Expiration Banner - between logo and tooltip, matches tooltip width */}
+          {/* Hidden on mobile, shown on md+ screens */}
+          <div className="hidden md:flex flex-1 justify-end min-w-0">
+            <TrialExpirationBanner 
+              sitesData={options} 
+              openModal={openTrialModal}
+              setPaymentView={setPaymentView}
+              setOptionalDomain={setOptionalDomain}
+              onVisibilityChange={setIsTrialBannerVisible}
+              customerData={customerData}
+              onOpenActivateModal={onOpenActivateModal}
+              billingLoading={billingLoading}
+              setBillingLoading={setBillingLoading}
+            />
+          </div>
+
           {/* Right side - Selectors and user actions */}
           <div
-            className="rounded-lg px-3 md:px-3 lg:px-4 py-2 shadow-sm border border-gray-200 flex w-auto shrink-0 flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 lg:gap-0 space-y-2 md:space-y-0 md:space-x-4 sm:w-full  sm:items-center sm:justify-between"
+            className="rounded-lg px-3 md:px-3 lg:px-4 py-2 shadow-sm border border-gray-200 flex w-auto shrink-0 flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 lg:gap-0 space-y-2 md:space-y-0 md:space-x-4 sm:w-full sm:items-center sm:justify-between ml-auto"
             style={{ backgroundColor: baseColors.white }}
           >
             {/* Selectors Container */}

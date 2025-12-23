@@ -83,6 +83,26 @@ export function createClient(): ApolloClient<NormalizedCacheObject> {
           }
         }
         if (networkError) {
+          // Ignore AbortError - these occur when users navigate away or cancel requests
+          // This is expected behavior and doesn't need to be logged
+          if (
+            networkError.name === 'AbortError' ||
+            (networkError.message && 
+              (networkError.message.includes('aborted a request') ||
+               networkError.message.includes('The user aborted a request')))
+          ) {
+            return; // Silently ignore abort errors
+          }
+          
+          // Ignore "Failed to fetch" errors - these often occur after request aborts
+          // and are expected during navigation or component unmounting
+          if (
+            networkError.message === 'Failed to fetch' ||
+            (networkError instanceof Error && networkError.message === 'Failed to fetch')
+          ) {
+            return; // Silently ignore "Failed to fetch" errors
+          }
+          
           if (IS_DEV || IS_LOCAL) {
             console.log(`[Network error]: ${networkError}`);
           }

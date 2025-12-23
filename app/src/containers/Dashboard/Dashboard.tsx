@@ -447,7 +447,7 @@ const Dashboard: React.FC<any> = ({
                     Get compliant
                   </button>
 
-                  {organization?.id === '1' && (
+                  { organization?.id === (process.env.REACT_APP_CURRENT_ORG || '1') && (
                   <button
                     className="app-sumo-button w-full sm:w-48 md:w-64 lg:w-64 flex justify-center px-6 py-4 h-14 text-white text-lg font-medium rounded-2xl bg-slate-800 hover:bg-slate-700 border-2 border-blue-400/50 transition-all duration-300 shadow-lg shadow-blue-400/20 hover:shadow-blue-400/30 cursor-pointer"
                     style={{ alignItems: 'center' }}
