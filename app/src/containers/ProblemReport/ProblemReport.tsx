@@ -284,9 +284,10 @@ const ProblemReport: React.FC = () => {
                         }
                       >
                         <svg
-                          className={`h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-gray-400 transition-transform ${
+                          className={`h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 transition-transform ${
                             isDomainDropdownOpen ? 'rotate-180' : ''
                           }`}
+                          style={{ color: '#767676' }}
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
