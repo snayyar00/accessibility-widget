@@ -24,6 +24,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
 import ProtectionLevelCard from './ProtectionLevelCard';
 import DashboardAccessibilityCard from './DashboardAccessibilityCard';
+import DashboardIssuesCard from './DashboardIssuesCard';
 
 interface ChartData {
   date: string;
@@ -480,6 +481,13 @@ const Dashboard: React.FC<any> = ({
         {domainData && (
           <div className="mb-6">
             <DashboardAccessibilityCard siteUrl={domainData.url} />
+          </div>
+        )}
+
+        {/* Dashboard Issues Card */}
+        {domainData && (
+          <div className="mb-6">
+            <DashboardIssuesCard siteUrl={domainData.url} />
           </div>
         )}
         
