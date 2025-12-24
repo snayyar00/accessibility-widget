@@ -3312,36 +3312,48 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     </h2>
                   </div>
 
-                  {/* Column Headers */}
-                  <div className="hidden md:grid grid-cols-4 gap-4 mb-4 px-4">
-                    <div
-                      className="text-sm font-medium uppercase tracking-wider"
-                      style={{ color: baseColors.brandPrimary }}
-                    >
-                      Sites
-                    </div>
-                    <div
-                      className="text-sm font-medium uppercase tracking-wider text-center"
-                      style={{ color: baseColors.brandPrimary }}
-                    >
-                      Last scanned
-                    </div>
-                    <div
-                      className="text-sm font-medium uppercase tracking-wider text-center"
-                      style={{ color: baseColors.brandPrimary }}
-                    >
-                      Score
-                    </div>
-                    <div
-                      className="text-sm font-medium uppercase tracking-wider text-center"
-                      style={{ color: baseColors.brandPrimary }}
-                    >
-                      Action
-                    </div>
-                  </div>
-
-                  {/* Site Cards */}
-                  <div className="space-y-3 max-w-full">
+                  {/* Table for Desktop - Semantic HTML for accessibility */}
+                  <table 
+                    className="hidden md:table w-full" 
+                    aria-label="Scan history"
+                    style={{ borderCollapse: 'separate', borderSpacing: '0 1rem' }}
+                  >
+                    <caption className="sr-only">
+                      Table showing scan history with site URLs, last scanned dates, accessibility scores, and action menus
+                    </caption>
+                    <thead>
+                      <tr className="mb-4">
+                        <th
+                          className="text-sm font-medium uppercase tracking-wider text-left px-4 pb-4"
+                          style={{ color: baseColors.brandPrimary }}
+                          scope="col"
+                        >
+                          Sites
+                        </th>
+                        <th
+                          className="text-sm font-medium uppercase tracking-wider text-center px-4 pb-4"
+                          style={{ color: baseColors.brandPrimary }}
+                          scope="col"
+                        >
+                          Last scanned
+                        </th>
+                        <th
+                          className="text-sm font-medium uppercase tracking-wider text-center px-4 pb-4"
+                          style={{ color: baseColors.brandPrimary }}
+                          scope="col"
+                        >
+                          Score
+                        </th>
+                        <th
+                          className="text-sm font-medium uppercase tracking-wider text-center px-4 pb-4"
+                          style={{ color: baseColors.brandPrimary }}
+                          scope="col"
+                        >
+                          <div className="flex justify-center items-center">Action</div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="max-w-full">
                     {processedReportKeys.map((row: any, idx: number) => {
                       const dateObj = new Date(Number(row.created_at));
                       const timeAgo = (() => {
@@ -3382,9 +3394,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       const actualScore = Math.round(row.enhancedScore || 0);
 
                       return (
-                        <div
+                        <tr
                           key={row.r2_key}
-                          className="block md:grid md:grid-cols-4 gap-4 md:items-center p-3 sm:p-4 rounded-lg border hover:shadow-md transition-all duration-200 group relative overflow-hidden md:overflow-visible w-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7]"
+                          className="block md:table-row p-3 sm:p-4 rounded-lg border hover:shadow-md transition-all duration-200 group relative overflow-hidden md:overflow-visible w-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] mb-4"
                           style={{
                             backgroundColor: baseColors.cardLight,
                             borderColor: baseColors.cardBorder,
@@ -3414,8 +3426,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             }
                           }}
                         >
-                          {/* Mobile Layout */}
-                          <div className="md:hidden space-y-3 w-full max-w-full overflow-hidden">
+                          {/* Mobile Layout - Wrapped in td for valid HTML */}
+                          <td colSpan={4} className="md:hidden space-y-3 w-full max-w-full overflow-hidden block">
                             {/* Site Info with 3-dots menu */}
                             <div className="flex items-center justify-between w-full max-w-full">
                               <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -3703,66 +3715,57 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                 </div>
                               </div>
                             </div>
-                          </div>
+                          </td>
 
                           {/* Site Info - Desktop Only */}
-                          <div className="hidden md:flex items-center gap-3">
-                            <div className="flex-shrink-0">
-                              {getFaviconUrl(row.url) ? (
-                                <img
-                                  src={getFaviconUrl(row.url)!}
-                                  alt=""
-                                  className="w-8 h-8 rounded"
-                                  onError={(e) => {
-                                    (
-                                      e.target as HTMLImageElement
-                                    ).style.display = 'none';
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-8 h-8 rounded bg-red-500 flex items-center justify-center">
-                                  <span className="text-white text-xs font-bold">
-                                    {row.url.charAt(0).toUpperCase()}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              {/* Mobile (≤768px): Show 5 letters, Desktop (>768px): Show full with truncate */}
-                              <div
-                                className="font-medium"
-                                style={{ color: baseColors.grayDark2 }}
-                              >
-                                <span className="hidden sm:inline">
-                                  {row.url
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/^www\./, '')
-                                    .substring(0, 7)}
-                                  {row.url
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/^www\./, '').length > 7 && '...'}
-                                </span>
-                                <span className="sm:hidden truncate">
+                          <td className="hidden md:table-cell p-3 sm:p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-shrink-0">
+                                {getFaviconUrl(row.url) ? (
+                                  <img
+                                    src={getFaviconUrl(row.url)!}
+                                    alt=""
+                                    className="w-8 h-8 rounded"
+                                    onError={(e) => {
+                                      (
+                                        e.target as HTMLImageElement
+                                      ).style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded bg-red-500 flex items-center justify-center">
+                                    <span className="text-white text-xs font-bold">
+                                      {row.url.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                {/* Mobile (≤768px): Show 5 letters, Desktop (>768px): Show full with truncate */}
+                                <div
+                                  className="font-medium"
+                                  style={{ color: baseColors.grayDark2 }}
+                                >
                                   {row.url
                                     .replace(/^https?:\/\//, '')
                                     .replace(/^www\./, '')}
-                                </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          </td>
 
                           {/* Last Scanned - Desktop Only */}
-                          <div className="hidden md:block text-center">
+                          <td className="hidden md:table-cell text-center p-3 sm:p-4">
                             <div
                               className="text-sm"
                               style={{ color: baseColors.grayMuted }}
                             >
                               {timeAgo}
                             </div>
-                          </div>
+                          </td>
 
                           {/* Desktop Score */}
-                          <div className="hidden md:block text-center">
+                          <td className="hidden md:table-cell text-center p-3 sm:p-4">
                             <span
                               className="inline-flex items-center justify-center w-10 h-10 rounded text-sm font-semibold"
                               style={{
@@ -3776,43 +3779,44 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             >
                               {actualScore}
                             </span>
-                          </div>
+                          </td>
 
                           {/* Desktop 3-Dots Menu */}
-                          <div
-                            className="hidden md:flex justify-center relative"
+                          <td
+                            className="hidden md:table-cell text-center p-3 sm:p-4"
                             data-dropdown
                           >
-                            <button
-                              className="p-1 rounded hover:bg-gray-100 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenDropdown(
-                                  openDropdown === row.r2_key
-                                    ? null
-                                    : row.r2_key,
-                                );
-                              }}
-                              aria-label={`Open actions menu for ${row.url}`}
-                              style={{
-                                backgroundColor:
-                                  openDropdown === row.r2_key
-                                    ? baseColors.white
-                                    : 'transparent',
-                              }}
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                                style={{ color: baseColors.brandPrimary }}
+                            <div className="flex justify-center items-center relative">
+                              <button
+                                className="p-1 rounded hover:bg-gray-100 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenDropdown(
+                                    openDropdown === row.r2_key
+                                      ? null
+                                      : row.r2_key,
+                                  );
+                                }}
+                                aria-label={`Open actions menu for ${row.url}`}
+                                style={{
+                                  backgroundColor:
+                                    openDropdown === row.r2_key
+                                      ? baseColors.white
+                                      : 'transparent',
+                                }}
                               >
-                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                              </svg>
-                            </button>
+                                <svg
+                                  className="w-5 h-5"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                  style={{ color: baseColors.brandPrimary }}
+                                >
+                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                </svg>
+                              </button>
 
-                            {/* Desktop Dropdown Menu */}
-                            {openDropdown === row.r2_key && (
+                              {/* Desktop Dropdown Menu */}
+                              {openDropdown === row.r2_key && (
                               <div
                                 className="absolute top-10 w-48 rounded-lg shadow-lg z-50 py-2"
                                 style={{
@@ -3970,12 +3974,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   )}
                                 </button>
                               </div>
-                            )}
-                          </div>
-                        </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
                       );
                     })}
-                  </div>
+                    </tbody>
+                  </table>
                 </div>
               )}
 
