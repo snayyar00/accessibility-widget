@@ -264,8 +264,15 @@ const ProblemReport: React.FC = () => {
                   </div>
 
                   <div className="w-full lg:flex-1 relative">
+                    <label
+                      htmlFor="site-url-search"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Search by site URL
+                    </label>
                     <div className="relative">
                       <input
+                        id="site-url-search"
                         type="text"
                         className="w-full px-3 py-2 sm:px-4 sm:py-2 md:px-5 md:py-3 border border-gray-300 rounded-md text-xs sm:text-sm md:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 pr-8 sm:pr-10"
                         placeholder="Search by site URL"
@@ -351,11 +358,13 @@ const ProblemReport: React.FC = () => {
                     <div className="flex gap-8 mb-3">
                       {/* Active Issues Filter */}
                       <div
-                        className={`cursor-pointer transition-all duration-200 ${
-                          statusFilter === 'active'
-                            ? 'text-gray-800'
-                            : 'text-gray-400 hover:text-gray-600'
-                        }`}
+                        className="cursor-pointer transition-all duration-200"
+                        style={{
+                          color:
+                            statusFilter === 'active'
+                              ? '#1f2937'
+                              : '#656D7D',
+                        }}
                         onClick={() => setStatusFilter('active')}
                       >
                         <h3 className="text-base font-medium">Active issues</h3>
@@ -366,11 +375,13 @@ const ProblemReport: React.FC = () => {
 
                       {/* Solved Issues Filter */}
                       <div
-                        className={`cursor-pointer transition-all duration-200 ${
-                          statusFilter === 'solved'
-                            ? 'text-gray-800'
-                            : 'text-gray-400 hover:text-gray-600'
-                        }`}
+                        className="cursor-pointer transition-all duration-200"
+                        style={{
+                          color:
+                            statusFilter === 'solved'
+                              ? '#1f2937'
+                              : '#656D7D',
+                        }}
                         onClick={() => setStatusFilter('solved')}
                       >
                         <h3 className="text-base font-medium">Solved issues</h3>
@@ -402,14 +413,15 @@ const ProblemReport: React.FC = () => {
                         <div className="mx-auto mb-6">
                           <img
                             src={notFoundImage}
-                            alt="No reports found"
+                            alt=""
+                            role="presentation"
                             className="mx-auto h-32 w-auto"
                           />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900 mb-2">
                           No problem reports
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm" style={{ color: '#676D7B' }}>
                           You haven't received any problem reports yet. They
                           will appear here when users report issues with your
                           websites.
@@ -422,7 +434,8 @@ const ProblemReport: React.FC = () => {
                         <div className="mx-auto mb-6">
                           <img
                             src={notFoundImage}
-                            alt="No reports found"
+                            alt=""
+                            role="presentation"
                             className="mx-auto h-32 w-auto"
                           />
                         </div>
