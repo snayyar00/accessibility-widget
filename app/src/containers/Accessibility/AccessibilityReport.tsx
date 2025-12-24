@@ -79,6 +79,7 @@ import { json } from 'stream/consumers';
 import jsPDF from 'jspdf';
 import autoTable, { __createTable, __drawTable } from 'jspdf-autotable';
 import Select from 'react-select/creatable';
+import { components } from 'react-select';
 import Favicon from '@/components/Common/Favicon';
 import { set } from 'lodash';
 import Modal from '@/components/Common/Modal';
@@ -172,6 +173,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   // Modal state for success message with report link
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [reportUrl, setReportUrl] = useState<string>('');
+  const screenReaderAnnouncementRef = useRef<HTMLDivElement>(null);
 
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
   const [showLangTooltip, setShowLangTooltip] = useState(false);
@@ -290,6 +292,25 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       }
     }
   }, [selectedDomainFromRedux]);
+
+  // Show toast and announce to screen readers when success modal opens
+  useEffect(() => {
+    if (isSuccessModalOpen) {
+      // Show toast notification
+      toast.success('Report Generated Successfully');
+      
+      // Announce to screen readers
+      if (screenReaderAnnouncementRef.current) {
+        screenReaderAnnouncementRef.current.textContent = 'Report Generated Successfully! Your accessibility report is ready to view.';
+        // Clear after announcement to allow re-announcement if modal opens again
+        setTimeout(() => {
+          if (screenReaderAnnouncementRef.current) {
+            screenReaderAnnouncementRef.current.textContent = '';
+          }
+        }, 1000);
+      }
+    }
+  }, [isSuccessModalOpen]);
 
   useEffect(() => {
     if (selectedDomainFromRedux && siteOptions.length > 0) {
@@ -2701,6 +2722,21 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
   return (
     <div>
+      {/* Screen reader announcement region */}
+      <div
+        ref={screenReaderAnnouncementRef}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+        style={{
+          position: 'absolute',
+          left: '-10000px',
+          width: '1px',
+          height: '1px',
+          overflow: 'hidden',
+        }}
+      />
       <TourGuide
         steps={accessibilityTourSteps}
         tourKey={tourKeys.accessibility}
@@ -2868,6 +2904,50 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   }
                   classNamePrefix="react-select"
                   className="w-full"
+                  components={{
+                    ClearIndicator: (props: any) => {
+                      const {
+                        innerProps,
+                        isDisabled,
+                        clearValue,
+                      } = props;
+                      
+                      // Enhance innerProps to make it focusable and keyboard accessible
+                      const enhancedInnerProps = {
+                        ...innerProps,
+                        tabIndex: isDisabled ? -1 : 0,
+                        role: 'button',
+                        'aria-label': 'Clear selection',
+                        onClick: (e: React.MouseEvent) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!isDisabled && clearValue) {
+                            clearValue();
+                          }
+                          // Also call original onClick if it exists
+                          if (innerProps.onClick) {
+                            innerProps.onClick(e);
+                          }
+                        },
+                        onKeyDown: (e: React.KeyboardEvent) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!isDisabled && clearValue) {
+                              clearValue();
+                            }
+                          } else if (innerProps.onKeyDown) {
+                            innerProps.onKeyDown(e);
+                          }
+                        },
+                      };
+
+                      return components.ClearIndicator({
+                        ...props,
+                        innerProps: enhancedInnerProps,
+                      });
+                    },
+                  }}
                   styles={{
                     control: (provided: any, state: any) => ({
                       ...provided,
@@ -3314,14 +3394,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
                   {/* Table for Desktop - Semantic HTML for accessibility */}
                   <table 
-                    className="hidden md:table w-full" 
+                    className="block md:table w-full" 
                     aria-label="Scan history"
                     style={{ borderCollapse: 'separate', borderSpacing: '0 1rem' }}
                   >
                     <caption className="sr-only">
                       Table showing scan history with site URLs, last scanned dates, accessibility scores, and action menus
                     </caption>
-                    <thead>
+                    <thead className="hidden md:table-header-group">
                       <tr className="mb-4">
                         <th
                           className="text-sm font-medium uppercase tracking-wider text-left px-4 pb-4"
@@ -3396,7 +3476,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       return (
                         <tr
                           key={row.r2_key}
-                          className="block md:table-row p-3 sm:p-4 rounded-lg border hover:shadow-md transition-all duration-200 group relative overflow-hidden md:overflow-visible w-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] mb-4"
+                          className="block md:table-row p-3 sm:p-4 rounded-lg border hover:shadow-md transition-all duration-200 group relative overflow-visible w-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] mb-4"
                           style={{
                             backgroundColor: baseColors.cardLight,
                             borderColor: baseColors.cardBorder,
@@ -3427,7 +3507,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                           }}
                         >
                           {/* Mobile Layout - Wrapped in td for valid HTML */}
-                          <td colSpan={4} className="md:hidden space-y-3 w-full max-w-full overflow-hidden block">
+                          <td colSpan={4} className="md:hidden space-y-3 w-full max-w-full overflow-visible block">
                             {/* Site Info with 3-dots menu */}
                             <div className="flex items-center justify-between w-full max-w-full">
                               <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -3512,7 +3592,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                 {/* Mobile Dropdown Menu */}
                                 {openDropdown === row.r2_key && (
                                   <div
-                                    className="absolute top-10 w-44 sm:w-48 rounded-lg shadow-lg z-50 py-2"
+                                    className="absolute top-10 w-44 sm:w-48 rounded-lg shadow-lg py-2"
                                     style={{
                                       backgroundColor: baseColors.white,
                                       border: `1px solid ${baseColors.cardBorderPurple}`,
@@ -3520,6 +3600,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                       minWidth: '180px',
                                       right: '0',
                                       left: 'auto',
+                                      zIndex: 9999,
+                                      position: 'absolute',
                                     }}
                                     onClick={(e) => e.stopPropagation()}
                                   >
@@ -3818,7 +3900,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                               {/* Desktop Dropdown Menu */}
                               {openDropdown === row.r2_key && (
                               <div
-                                className="absolute top-10 w-48 rounded-lg shadow-lg z-50 py-2"
+                                className="absolute top-10 w-48 rounded-lg shadow-lg py-2"
                                 style={{
                                   backgroundColor: baseColors.white,
                                   border: `1px solid ${baseColors.cardBorderPurple}`,
@@ -3826,6 +3908,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   minWidth: '180px',
                                   right: '0',
                                   left: 'auto',
+                                  zIndex: 9999,
+                                  position: 'absolute',
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                               >
@@ -4039,12 +4123,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           </div>
 
           {/* Success Modal with link to open report */}
-          <Modal isOpen={isSuccessModalOpen}>
+          <Modal 
+            isOpen={isSuccessModalOpen}
+            ariaLabelledBy="success-modal-title"
+            ariaDescribedBy="success-modal-description"
+          >
             <div className="p-8 text-center relative">
               <button
                 onClick={() => setIsSuccessModalOpen(false)}
                 className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
-                aria-label="Close modal"
+                aria-label="Close"
               >
                 <svg
                   className="w-5 h-5 mx-auto"
@@ -4067,10 +4155,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   color="green"
                   className="mx-auto mb-4"
                 />
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                <h2 
+                  id="success-modal-title" 
+                  className="text-2xl font-bold text-gray-800 mb-2"
+                  tabIndex={-1}
+                >
                   Report Generated Successfully!
                 </h2>
-                <p className="text-gray-600">
+                <p id="success-modal-description" className="text-gray-600">
                   Your accessibility report is ready to view.
                 </p>
               </div>
