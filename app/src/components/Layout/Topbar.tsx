@@ -626,7 +626,13 @@ const Topbar: React.FC<Props> = ({
                   <button
                     type="button"
                     role="menuitem"
-                    aria-label="Billing & Plans (item 2 of 3)"
+                    aria-label={
+                      clicked
+                        ? 'Loading, opening Billing & Plans '
+                        : 'Billing & Plans '
+                    }
+                    aria-busy={clicked}
+                    aria-describedby="billing-menu-loading-announcement"
                     disabled={clicked}
                     onClick={async (e) => {
                       e.stopPropagation();
@@ -664,13 +670,25 @@ const Topbar: React.FC<Props> = ({
                     {!clicked ? (
                       t('Common.label.billing')
                     ) : (
-                      <CircularProgress
-                        size={16}
-                        sx={{ color: '#3B82F6' }}
-                        className="mr-3"
-                      />
+                      <>
+                        <CircularProgress
+                          size={16}
+                          sx={{ color: '#3B82F6' }}
+                          className="mr-3"
+                        />
+                        <span className="sr-only">Loading, opening billing portal</span>
+                      </>
                     )}
                   </button>
+                  <div
+                    id="billing-menu-loading-announcement"
+                    role="status"
+                    aria-live="assertive"
+                    aria-atomic="true"
+                    className="sr-only"
+                  >
+                    {clicked ? 'Loading, opening billing portal' : ''}
+                  </div>
 
                   <div className="border-t border-gray-100 my-1"></div>
 

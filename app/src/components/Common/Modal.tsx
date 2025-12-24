@@ -9,12 +9,14 @@ type Overlay = {
 type Props = {
   isOpen: Overlay["isOpen"];
   children: React.ReactNode | React.ReactNode[];
+  ariaLabelledBy?: string;
+  ariaDescribedBy?: string;
 }
 
 const focusableSelectors =
   'a[href], area[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-const Modal: React.FC<Props> = ({ isOpen, children }) => {
+const Modal: React.FC<Props> = ({ isOpen, children, ariaLabelledBy, ariaDescribedBy }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const lastActiveRef = useRef<Element | null>(null);
 
@@ -31,11 +33,28 @@ const Modal: React.FC<Props> = ({ isOpen, children }) => {
         dialog.querySelectorAll<HTMLElement>(focusableSelectors),
       ).filter((el) => !el.hasAttribute('disabled') && !el.getAttribute('aria-hidden'));
 
-    const focusables = getFocusable();
-    const first = focusables[0];
+    // Prioritize focusing the element with aria-labelledby if it exists
+    let elementToFocus: HTMLElement | null = null;
+    if (ariaLabelledBy) {
+      const labelledElement = dialog.querySelector(`#${ariaLabelledBy}`) as HTMLElement;
+      if (labelledElement) {
+        // Make it focusable if it isn't already
+        if (!labelledElement.hasAttribute('tabindex')) {
+          labelledElement.setAttribute('tabindex', '-1');
+        }
+        elementToFocus = labelledElement;
+      }
+    }
 
-    if (first) {
-      first.focus();
+    // If no labelled element found, use first focusable element
+    if (!elementToFocus) {
+      const focusables = getFocusable();
+      elementToFocus = focusables[0] || null;
+    }
+
+    if (elementToFocus) {
+      // Small delay to ensure modal is fully rendered
+      setTimeout(() => elementToFocus?.focus(), 50);
     } else {
       dialog.focus();
     }
@@ -94,6 +113,8 @@ const Modal: React.FC<Props> = ({ isOpen, children }) => {
         className="bg-white w-[765px] max-w-[70%] sm:max-w-[90%] rounded-[10px] z-50 focus:outline-none max-h-[90vh] overflow-y-auto relative"
         role="dialog"
         aria-modal="true"
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
         tabIndex={-1}
       >
         {children}
