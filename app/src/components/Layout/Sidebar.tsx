@@ -555,7 +555,7 @@ const Sidebar = () => {
                   )}
                 </NavLink>
 
-                {/* Proof of effort */}
+                {/* Legal resources */}
                 <NavLink
                   to="/proof-of-effort-toolkit"
                   onClick={closeSidebar}
@@ -588,7 +588,7 @@ const Sidebar = () => {
                           : 'text-[#656565]'
                       }`}
                     >
-                      Proof of effort
+                      Legal resources
                     </span>
                   )}
                 </NavLink>
@@ -998,7 +998,7 @@ const Sidebar = () => {
                   </div>
                 </NavLink>
 
-                {/* Proof of effort */}
+                {/* Legal resources */}
                 <NavLink
                   to="/proof-of-effort-toolkit"
                   onClick={closeSidebar}

@@ -174,6 +174,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [reportUrl, setReportUrl] = useState<string>('');
   const screenReaderAnnouncementRef = useRef<HTMLDivElement>(null);
+  // Modal state for full site scan notification
+  const [isFullSiteScanModalOpen, setIsFullSiteScanModalOpen] = useState(false);
 
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
   const [showLangTooltip, setShowLangTooltip] = useState(false);
@@ -355,6 +357,37 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     if (isMounted.current) {
       setcorrectDomain(validDomain);
     }
+
+    // For full site scans, don't show loading and show email notification instead
+    if (isFullSiteScan) {
+      dispatch(setSelectedDomain(validDomain));
+      try {
+        const { data } = await startJobQuery({
+          variables: {
+            url: encodeURIComponent(validDomain),
+            use_cache: scanType === 'cached' && !isFullSiteScan,
+            full_site_scan: isFullSiteScan,
+          },
+        });
+        if (
+          data &&
+          data.startAccessibilityReportJob &&
+          data.startAccessibilityReportJob.jobId
+        ) {
+          // Show modal instead of toast
+          setIsFullSiteScanModalOpen(true);
+          // Don't set jobId or isGenerating - let it run in background
+          // The backend will email the user when the report is ready
+        } else {
+          toast.error('Failed to start report job.');
+        }
+      } catch (error) {
+        toast.error('Failed to start report job.');
+      }
+      return;
+    }
+
+    // Normal scan flow (non-full site scan)
     dispatch(setIsGenerating(true));
     dispatch(setSelectedDomain(validDomain));
     try {
@@ -4121,6 +4154,162 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 </div>
               )}
           </div>
+
+          {/* Full Site Scan Modal */}
+          <Modal isOpen={isFullSiteScanModalOpen}>
+            <div 
+              className="relative w-full overflow-hidden"
+              style={{
+                background: 'transparent',
+              }}
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setIsFullSiteScanModalOpen(false)}
+                className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 z-10 hover:scale-110"
+                style={{
+                  backgroundColor: baseColors.grayLight,
+                  color: baseColors.grayMedium,
+                }}
+                aria-label="Close modal"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+
+              {/* Gradient Header */}
+              <div
+                className="px-8 pt-10 pb-6"
+                style={{
+                  background: `linear-gradient(135deg, ${baseColors.brandPrimary} 0%, ${baseColors.brandPrimaryDark} 100%)`,
+                }}
+              >
+                {/* Animated Icon */}
+                <div className="flex justify-center mb-4">
+                  <div 
+                    className="relative w-20 h-20 rounded-full flex items-center justify-center shadow-xl animate-pulse"
+                    style={{
+                      background: `linear-gradient(135deg, ${baseColors.white} 0%, ${baseColors.blueLight} 100%)`,
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-full animate-ping opacity-20"
+                      style={{ backgroundColor: baseColors.white }}
+                    ></div>
+                    {/* Clock Icon */}
+                    <svg
+                      className="w-10 h-10 relative z-10"
+                      style={{ color: baseColors.brandPrimary }}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <h2 
+                  className="text-3xl font-bold mb-2"
+                  style={{ color: baseColors.white }}
+                >
+                  Full Site Scan Started
+                </h2>
+                <p 
+                  className="text-base opacity-90"
+                  style={{ color: baseColors.white }}
+                >
+                  Your comprehensive scan is in progress
+                </p>
+              </div>
+
+              {/* Content */}
+              <div className="px-8 py-6 rounded-b-[10px]">
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-start space-x-3">
+                    <div 
+                      className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5"
+                      style={{ backgroundColor: baseColors.blueLight }}
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        style={{ color: baseColors.brandPrimary }}
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <p 
+                      className="text-base leading-relaxed"
+                      style={{ color: baseColors.grayDark2 }}
+                    >
+                      Full site scan takes time as it scans multiple pages across your website to provide a comprehensive accessibility analysis.
+                    </p>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <div 
+                      className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5"
+                      style={{ backgroundColor: baseColors.infoBackground }}
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        style={{ color: baseColors.brandPrimary }}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                    <p 
+                      className="text-base leading-relaxed"
+                      style={{ color: baseColors.grayDark2 }}
+                    >
+                      We will inform you once the scan is complete through email. You'll receive a detailed report with all the findings.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <button
+                  onClick={() => setIsFullSiteScanModalOpen(false)}
+                  className="w-full py-3.5 px-6 rounded-xl font-semibold text-base transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
+                  style={{
+                    background: `linear-gradient(135deg, ${baseColors.brandPrimary} 0%, ${baseColors.brandPrimaryDark} 100%)`,
+                    color: baseColors.white,
+                  }}
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
+          </Modal>
 
           {/* Success Modal with link to open report */}
           <Modal 
