@@ -879,7 +879,7 @@ Return ONLY a valid JSON object with the same structure, with all values profess
 
     const t = await getTranslations(data.language);
 
-    return `# ${t.title} ${data.companyName}
+    return `## ${t.title} ${data.companyName}
 
 *Last updated: ${currentDate}*
 
@@ -1780,6 +1780,7 @@ ${
                   <div className="flex items-center mb-6">
                     <button
                       onClick={() => setShowEnhancePage(false)}
+                      aria-label="Back"
                       className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                     >
                       <svg
@@ -1787,6 +1788,7 @@ ${
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
+                        aria-hidden="true"
                       >
                         <path
                           strokeLinecap="round"
@@ -1819,7 +1821,11 @@ ${
                       <div className="font-medium mb-1">
                         Add testing details
                       </div>
-                      <div className="text-sm opacity-80">
+                      <div className={`text-sm ${
+                        selectedEnhancements.includes('add-testing')
+                          ? 'text-white'
+                          : 'opacity-80'
+                      }`}>
                         Include automated testing tools and procedures
                       </div>
                     </button>
@@ -1833,7 +1839,11 @@ ${
                       }`}
                     >
                       <div className="font-medium mb-1">Add Response Time</div>
-                      <div className="text-sm opacity-80">
+                      <div className={`text-sm ${
+                        selectedEnhancements.includes('add-timeline')
+                          ? 'text-white'
+                          : 'opacity-80'
+                      }`}>
                         Include specific response times for feedback
                       </div>
                     </button>
@@ -1847,7 +1857,11 @@ ${
                       }`}
                     >
                       <div className="font-medium mb-1">Add Staff Training</div>
-                      <div className="text-sm opacity-80">
+                      <div className={`text-sm ${
+                        selectedEnhancements.includes('add-training')
+                          ? 'text-white'
+                          : 'opacity-80'
+                      }`}>
                         Include information about accessibility training
                       </div>
                     </button>
@@ -1861,7 +1875,11 @@ ${
                       }`}
                     >
                       <div className="font-medium mb-1">Add More Standards</div>
-                      <div className="text-sm opacity-80">
+                      <div className={`text-sm ${
+                        selectedEnhancements.includes('add-standards')
+                          ? 'text-white'
+                          : 'opacity-80'
+                      }`}>
                         Include EN 301 549 and Section 508 compliance
                       </div>
                     </button>
